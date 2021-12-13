@@ -28,12 +28,12 @@ public:
   }
 };
 
-class fake_ngap_transmitter : public srsgnb::sdap_packet_notifier
+class fake_sdap_to_ngu_relay : public srsgnb::sdap_packet_notifier
 {
 public:
   void on_new_packet(srsgnb::byte_buffer& data)
   {
-    std::printf("[RELAY] Receiving a fake packet of size = %u\n", (unsigned)data.size());
+    std::printf("[SDAP-NGU-RELAY] Receiving a fake packet of size = %u\n", (unsigned)data.size());
     std::printf("  Forwarding packet to NG-U to be delivered to UPF\n");
   }
 };
@@ -45,12 +45,12 @@ int main()
   /// Creation order is from upper to lower layer. Dependency injection is done at object construction, in case of
   /// further flexibility, setters can be implemented instead.
 
-  fake_ngap_transmitter ngap_tx;
-  auto                  sdap = srsgnb::create_sdap(ngap_tx);
-  sdap_packet_handler   pdcp_sdap_adapter(*sdap);
-  auto                  pdcp = srsgnb::create_pdcp(pdcp_sdap_adapter);
-  pdcp_packet_handler   f1u_pdcp_adapter(*pdcp);
-  auto                  F1u = srsgnb::create_F1u_interface(f1u_pdcp_adapter);
+  fake_sdap_to_ngu_relay ngap_tx;
+  auto                   sdap = srsgnb::create_sdap(ngap_tx);
+  sdap_packet_handler    pdcp_sdap_adapter(*sdap);
+  auto                   pdcp = srsgnb::create_pdcp(pdcp_sdap_adapter);
+  pdcp_packet_handler    f1u_pdcp_adapter(*pdcp);
+  auto                   F1u = srsgnb::create_F1u_interface(f1u_pdcp_adapter);
 
   fake_receiver rx(*F1u);
   rx.receive();
