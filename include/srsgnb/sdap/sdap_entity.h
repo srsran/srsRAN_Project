@@ -12,7 +12,7 @@ public:
   virtual ~sdap_entity() = default;
 
   /// Decapsulates the SDAP header in the provided PDU converting it into an SDAP SDU.
-  void decapsulate(byte_buffer& data);
+  virtual bool decapsulate(byte_buffer& data) = 0;
 };
 
 } // namespace srsgnb

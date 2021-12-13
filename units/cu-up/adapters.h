@@ -3,6 +3,7 @@
 
 #include "srsgnb/F1_interface/F1u.h"
 #include "srsgnb/pdcp/pdcp.h"
+#include "srsgnb/sdap/sdap.h"
 #include <cstdio>
 
 namespace cu_up {
@@ -16,12 +17,17 @@ namespace cu_up {
 /// Adapter interface from PDCP to SDAP.
 class sdap_packet_handler : public srsgnb::pdcp_packet_notifier
 {
+  srsgnb::sdap_input_gateway& sdap;
+
 public:
+  explicit sdap_packet_handler(srsgnb::sdap_input_gateway& sdap) : sdap(sdap) {}
+
   void on_new_packet(srsgnb::byte_buffer& data) override
   {
     std::printf("[PDCP-SDAP-ADAPTER] Received a packet from PDCP layer, forwarding data packet of size = %u bytes to "
                 "upper layer (SDAP)\n",
                 (unsigned)data.size());
+    sdap.handle(data);
   }
 };
 
