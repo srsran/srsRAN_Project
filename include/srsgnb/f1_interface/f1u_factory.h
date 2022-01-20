@@ -1,7 +1,7 @@
 #ifndef SRSGNB_F1_INTERFACE_F1U_FACTORY_H
 #define SRSGNB_F1_INTERFACE_F1U_FACTORY_H
 
-#include "srsgnb/F1_interface/F1u.h"
+#include "srsgnb/f1_interface/f1u.h"
 #include <memory>
 
 /// This factory header file depends on the F1u interfaces (see above include list). It is kept separate as clients of
@@ -10,7 +10,7 @@
 namespace srsgnb {
 
 /// Creates an instance of an F1u interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<F1u_input_gateway> create_F1u_interface(F1u_packet_notifier& listener);
+std::unique_ptr<f1u_input_gateway> create_f1u_interface(f1u_packet_notifier& listener);
 
 } // namespace srsgnb
 

@@ -1,7 +1,7 @@
 #ifndef ADAPTERS_H
 #define ADAPTERS_H
 
-#include "srsgnb/F1_interface/F1u.h"
+#include "srsgnb/f1_interface/f1u.h"
 #include "srsgnb/pdcp/pdcp.h"
 #include "srsgnb/sdap/sdap.h"
 #include <cstdio>
@@ -32,7 +32,7 @@ public:
 };
 
 /// Adapter interface from F1u to PDCP.
-class pdcp_packet_handler : public srsgnb::F1u_packet_notifier
+class pdcp_packet_handler : public srsgnb::f1u_packet_notifier
 {
   srsgnb::pdcp_input_gateway& pdcp;
 

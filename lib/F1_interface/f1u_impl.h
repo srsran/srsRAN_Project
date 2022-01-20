@@ -2,14 +2,14 @@
 #define SRSGNB_F1_INTERFACE_F1_IMPL_H
 
 /// Notice that we are not using any implementation specific header files. We are decoupled.
-#include "srsgnb/F1_interface/F1u.h"
-#include "srsgnb/F1_interface/F1u_packet_procedures.h"
+#include "srsgnb/f1_interface/f1u.h"
+#include "srsgnb/f1_interface/f1u_packet_procedures.h"
 #include <cstdio>
 #include <memory>
 
 namespace srsgnb {
 
-class f1u_packet_handler : public F1u_input_gateway
+class f1u_packet_handler : public f1u_input_gateway
 {
   /// In reality, as the interfaces grow, this would become a reference or ptr and ownership would be managed from a
   /// different class. For simplicity, we keep it this way for now.

@@ -1,7 +1,7 @@
 #ifndef SRSGNB_SDAP_SDAP_H
 #define SRSGNB_SDAP_SDAP_H
 
-#include "srsgnb/ADT/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer.h"
 
 namespace srsgnb {
 

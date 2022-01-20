@@ -1,5 +1,5 @@
 #include "adapters.h"
-#include "srsgnb/F1_interface/F1u_factory.h"
+#include "srsgnb/f1_interface/f1u_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
 
@@ -11,10 +11,10 @@ namespace {
 /// No concrete class dependencies.
 class fake_receiver
 {
-  srsgnb::F1u_input_gateway& notifier;
+  srsgnb::f1u_input_gateway& notifier;
 
 public:
-  explicit fake_receiver(srsgnb::F1u_input_gateway& notifier) : notifier(notifier) {}
+  explicit fake_receiver(srsgnb::f1u_input_gateway& notifier) : notifier(notifier) {}
 
   void receive()
   {
@@ -50,9 +50,9 @@ int main()
   sdap_packet_handler    pdcp_sdap_adapter(*sdap);
   auto                   pdcp = srsgnb::create_pdcp(pdcp_sdap_adapter);
   pdcp_packet_handler    f1u_pdcp_adapter(*pdcp);
-  auto                   F1u = srsgnb::create_F1u_interface(f1u_pdcp_adapter);
+  auto                   f1u = srsgnb::create_f1u_interface(f1u_pdcp_adapter);
 
-  fake_receiver rx(*F1u);
+  fake_receiver rx(*f1u);
   rx.receive();
 
   return 0;

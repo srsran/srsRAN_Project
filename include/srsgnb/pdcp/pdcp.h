@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PDCP_PDCP_H
 #define SRSGNB_PDCP_PDCP_H
 
-#include "srsgnb/ADT/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer.h"
 
 namespace srsgnb
 {
