@@ -13,9 +13,8 @@
 #ifndef SRSASN_COMMON_UTILS_H
 #define SRSASN_COMMON_UTILS_H
 
-#include "srsran/common/buffer_pool.h"
-#include "srsran/srslog/srslog.h"
-#include "srsran/support/srsran_assert.h"
+#include "srsgnb/srslog/srslog.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <array>
 #include <cmath>
 #include <cstdint>
@@ -1317,8 +1316,8 @@ public:
   ~varlength_field_pack_guard();
 
 private:
-  using byte_array_t   = std::array<uint8_t, srsran::byte_buffer_pool::BLOCK_SIZE>;
-  using byte_array_ptr = srsran::any_pool_ptr<byte_array_t>;
+  using byte_array_t   = std::array<uint8_t, 4096>;
+  using byte_array_ptr = std::unique_ptr<byte_array_t>;
 
   bit_ref        brefstart;
   bit_ref*       bref_tracker;

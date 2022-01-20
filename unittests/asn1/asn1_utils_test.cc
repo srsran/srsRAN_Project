@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsran/asn1/asn1_utils.h"
+#include "srsgnb/asn1/asn1_utils.h"
 #include "srsran/common/test_common.h"
 #include <cmath>
 #include <numeric>

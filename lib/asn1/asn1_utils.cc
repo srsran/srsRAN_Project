@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsran/asn1/asn1_utils.h"
+#include "srsgnb/asn1/asn1_utils.h"
 
 namespace asn1 {
 
@@ -1299,7 +1299,6 @@ SRSASN_CODE unpack(std::string& s, cbit_ref& bref, size_t lb, size_t ub, size_t 
   size_t b              = asn_string_utils::get_nof_bits_per_char(lb, ub, aligned);
   bool   octet_aligned  = asn_string_utils::is_octet_aligned(b, alb, aub, aligned);
   bool   length_encoded = asn_string_utils::is_length_encoded(alb, aub, aligned);
-  size_t max_nof_bits   = b * aub;
   if (octet_aligned) {
     bref.align_bytes();
   }
@@ -1413,7 +1412,7 @@ SRSASN_CODE ext_groups_unpacker_guard::unpack(cbit_ref& bref)
 *********************/
 
 varlength_field_pack_guard::varlength_field_pack_guard(bit_ref& bref, bool align_) :
-  buffer_ptr(srsran::make_buffer_pool_obj<byte_array_t>())
+  buffer_ptr(std::make_unique<byte_array_t>())
 {
   if (buffer_ptr == nullptr) {
     // failed to allocate from global byte buffer pool. Fallback to malloc
