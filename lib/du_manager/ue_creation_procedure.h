@@ -51,7 +51,7 @@ public:
     // 6. Signal F1AP the UE creation outcome
     du_ue_create_response_message f1ap_resp{};
     f1ap_resp.ue_index = resp.ue_index;
-    du_ctxt.f1ap_notifier->du_ue_create_response(f1ap_resp);
+    du_ctxt.f1ap_notifier->on_du_ue_create_response(f1ap_resp);
   }
 
 private:

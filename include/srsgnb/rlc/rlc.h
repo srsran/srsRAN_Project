@@ -97,10 +97,10 @@ public:
 class rlc_config_notifier
 {
 public:
-  virtual void ue_create_response(const rlc_ue_create_response_message& resp)                   = 0;
-  virtual void ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) = 0;
-  virtual void ue_delete_response(const rlc_ue_delete_response_message& resp)                   = 0;
-  virtual void ue_reestablishment_response(const rlc_ue_reestablishment_response_message& resp) = 0;
+  virtual void on_ue_create_complete(const rlc_ue_create_response_message& resp)                   = 0;
+  virtual void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) = 0;
+  virtual void on_ue_delete_complete(const rlc_ue_delete_response_message& resp)                   = 0;
+  virtual void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) = 0;
 };
 
 class ul_ccch_pdu_notifier

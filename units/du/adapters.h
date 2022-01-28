@@ -33,19 +33,19 @@ class rlc_cfg_adapter : public rlc_config_notifier
 public:
   void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
 
-  void ue_create_response(const rlc_ue_create_response_message& resp) override
+  void on_ue_create_complete(const rlc_ue_create_response_message& resp) override
   {
-    du_manager->rlc_ue_create_response(resp);
+    du_manager->handle_rlc_ue_create_response(resp);
   }
-  void ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override
+  void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) override
   {
-    du_manager->rlc_ue_reconfiguration_response(resp);
+    du_manager->handle_rlc_ue_reconfiguration_response(resp);
   }
-  void ue_delete_response(const rlc_ue_delete_response_message& resp) override
+  void on_ue_delete_complete(const rlc_ue_delete_response_message& resp) override
   {
-    du_manager->rlc_ue_delete_response(resp);
+    du_manager->handle_rlc_ue_delete_response(resp);
   }
-  void ue_reestablishment_response(const rlc_ue_reestablishment_response_message& resp) override {}
+  void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) override {}
 
 private:
   du_manager_interface* du_manager = nullptr;
@@ -59,12 +59,12 @@ class mac_cfg_adapter : public mac_config_notifier
 public:
   void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
 
-  void ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
+  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
   {
-    du_manager->mac_ue_create_response(resp);
+    du_manager->handle_mac_ue_create_response(resp);
   }
-  void ue_reconfiguration_complete() override {}
-  void ue_delete_complete() override {}
+  void on_ue_reconfiguration_complete() override {}
+  void on_ue_delete_complete() override {}
 
 private:
   du_manager_interface* du_manager = nullptr;
@@ -97,7 +97,7 @@ class du_f1ap_cfg_adapter : public du_manager_config_notifier
 public:
   void connect(f1ap_du_config_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void du_ue_create_response(const du_ue_create_response_message& resp) { f1ap->ue_creation_response(resp); }
+  void on_du_ue_create_response(const du_ue_create_response_message& resp) { f1ap->ue_creation_response(resp); }
 
 private:
   f1ap_du_config_interface* f1ap = nullptr;

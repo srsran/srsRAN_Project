@@ -67,9 +67,9 @@ public:
 class mac_config_notifier
 {
 public:
-  virtual void ue_create_request_complete(const mac_ue_create_request_response_message& resp) = 0;
-  virtual void ue_reconfiguration_complete()                                                  = 0;
-  virtual void ue_delete_complete()                                                           = 0;
+  virtual void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) = 0;
+  virtual void on_ue_reconfiguration_complete()                                                  = 0;
+  virtual void on_ue_delete_complete()                                                           = 0;
 };
 
 } // namespace srsgnb

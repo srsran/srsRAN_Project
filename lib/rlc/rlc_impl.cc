@@ -13,7 +13,7 @@ void rlc_impl::ue_create(const rlc_ue_create_message& msg)
   resp.cell_index = msg.cell_index;
   resp.ue_index   = msg.ue_index;
   resp.result     = true;
-  config_notifier.ue_create_response(resp);
+  config_notifier.on_ue_create_complete(resp);
 }
 
 void rlc_impl::start_ue_reconfiguration(const rlc_ue_reconfiguration_message& msg)
@@ -22,7 +22,7 @@ void rlc_impl::start_ue_reconfiguration(const rlc_ue_reconfiguration_message& ms
   resp.cell_index = msg.cell_index;
   resp.ue_index   = msg.ue_index;
   resp.result     = true;
-  config_notifier.ue_reconfiguration_response(resp);
+  config_notifier.on_ue_reconfiguration_complete(resp);
 }
 
 } // namespace srsgnb

@@ -21,7 +21,7 @@ void mac_impl::ue_create_request(const mac_ue_create_request_message& cfg)
   resp.ue_index   = cfg.ue_index;
   resp.cell_index = cfg.cell_index;
   resp.result     = true;
-  cfg_notifier.ue_create_request_complete(resp);
+  cfg_notifier.on_ue_create_request_complete(resp);
 }
 
 } // namespace srsgnb

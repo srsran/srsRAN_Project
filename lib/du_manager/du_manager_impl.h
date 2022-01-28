@@ -25,13 +25,13 @@ public:
   void ue_create(const du_ue_create_message& msg) override;
 
   // RLC interface
-  void rlc_ue_create_response(const rlc_ue_create_response_message& resp) override;
-  void rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override {}
-  void rlc_ue_delete_response(const rlc_ue_delete_response_message& resp) override {}
+  void handle_rlc_ue_create_response(const rlc_ue_create_response_message& resp) override;
+  void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override {}
+  void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp) override {}
 
   // MAC interface
-  void mac_ue_create_response(const mac_ue_create_request_response_message& resp) override;
-  void mac_ue_reconfiguration_response() override {}
+  void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp) override;
+  void handle_mac_ue_reconfiguration_response() override {}
 
   std::string get_ues() override;
 

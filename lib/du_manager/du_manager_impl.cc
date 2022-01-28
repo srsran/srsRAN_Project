@@ -22,12 +22,12 @@ void du_manager_impl::ue_create(const du_ue_create_message& msg)
   });
 }
 
-void du_manager_impl::rlc_ue_create_response(const rlc_ue_create_response_message& resp)
+void du_manager_impl::handle_rlc_ue_create_response(const rlc_ue_create_response_message& resp)
 {
   du_mng_exec.execute([this, resp]() { ue_create_proc->rlc_ue_create_response(resp); });
 }
 
-void du_manager_impl::mac_ue_create_response(const mac_ue_create_request_response_message& resp)
+void du_manager_impl::handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp)
 {
   du_mng_exec.execute([this, resp]() {
     ue_create_proc->mac_ue_create_response(resp);
