@@ -1,0 +1,8 @@
+
+add_executable(srsvec_add_test srsvec_add_test.cpp)
+target_link_libraries(srsvec_add_test srsvec)
+add_test(srsvec_add_test srsvec_add_test)
+
+add_executable(srsvec_aligned_test srsvec_aligned_test.cpp)
+target_link_libraries(srsvec_aligned_test srsvec)
+add_test(srsvec_aligned_test srsvec_aligned_test)
