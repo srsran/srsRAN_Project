@@ -4,7 +4,8 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener, du_manager_interface_f1ap& du_manager)
+f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener, du_manager_interface_f1ap& du_manager) :
+  logger(srslog::fetch_basic_logger("F1AP"))
 {
   ctxt.du_manager = &du_manager;
 }

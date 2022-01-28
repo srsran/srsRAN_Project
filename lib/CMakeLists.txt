@@ -1,5 +1,6 @@
 
 add_subdirectory(srslog)
+add_subdirectory(support)
 add_subdirectory(asn1)
 add_subdirectory(F1_interface)
 add_subdirectory(pdcp)

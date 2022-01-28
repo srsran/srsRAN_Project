@@ -4,6 +4,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/common/id_types.h"
+#include <string>
 
 namespace srsgnb {
 
@@ -53,9 +54,16 @@ public:
   virtual void ue_create(const du_ue_create_message& msg) = 0;
 };
 
+class du_manager_interface_query
+{
+public:
+  virtual std::string get_ues() = 0;
+};
+
 class du_manager_interface : public du_manager_interface_rlc,
                              public du_manager_interface_mac,
-                             public du_manager_interface_f1ap
+                             public du_manager_interface_f1ap,
+                             public du_manager_interface_query
 {
 public:
   virtual ~du_manager_interface() = default;

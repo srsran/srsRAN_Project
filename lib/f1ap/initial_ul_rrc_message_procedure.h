@@ -20,11 +20,15 @@ public:
     ue_ctxt.gnb_du_f1ap_ue_id   = f1ap_ctx.ue_ctxt_manager.size() - 1;
     ue_ctxt.crnti               = ccch_msg.crnti;
 
+    ue_index = ue_ctxt.gnb_du_f1ap_ue_id;
+    srslog::fetch_basic_logger("F1AP").info(
+        "UL\t0x%x\tCCCH indication. Creating UE ID=%d", ccch_msg.crnti, ue_ctxt.gnb_du_f1ap_ue_id);
+
     // 2. Initiate UE creation in DU manager
     du_ue_create_message msg{};
     msg.cell_index = msg.cell_index;
-    msg.ue_index   = ue_ctxt.gnb_du_f1ap_ue_id;
-    msg.crnti      = ue_ctxt.crnti;
+    msg.ue_index   = ue_index;
+    msg.crnti      = msg.crnti;
     f1ap_ctx.du_manager->ue_create(msg);
   }
 
@@ -41,10 +45,13 @@ private:
   {
     // fill ASN.1 message
 
+    srslog::fetch_basic_logger("F1AP").info("UL\tUE ID=%d. Initial UL RRC message to CU", ue_index);
+
     // send message via socket
     //    gateway.push_pdu(std::move(ccch_msg));
   }
 
+  du_ue_index_t              ue_index;
   ul_ccch_indication_message ccch_msg;
 };
 

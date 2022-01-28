@@ -6,13 +6,16 @@
 #include "srsgnb/f1ap/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
+#include "srsgnb/support/task_executor.h"
 #include <memory>
 
 namespace srsgnb {
 
 /// Creates an instance of a PDCP interface.
-std::unique_ptr<du_manager_interface>
-create_du_manager(mac_config_interface& mac, rlc_config_interface& rlc, du_manager_config_notifier& f1ap_notifier);
+std::unique_ptr<du_manager_interface> create_du_manager(mac_config_interface&       mac,
+                                                        rlc_config_interface&       rlc,
+                                                        du_manager_config_notifier& f1ap_notifier,
+                                                        task_executor&              du_mng_exec);
 
 } // namespace srsgnb
 

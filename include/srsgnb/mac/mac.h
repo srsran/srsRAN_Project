@@ -55,7 +55,7 @@ public:
 class mac_southbound_interface
 {
 public:
-  virtual void push_ul_ccch_msg(rnti_t rnti, lcid_t lcid, byte_buffer pdu) = 0;
+  virtual void push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer pdu) = 0;
 };
 
 class mac_interface : public mac_config_interface, public mac_southbound_interface

@@ -24,6 +24,8 @@ public:
   void push_sdu(const byte_buffer& sdu) override {}
 
 private:
+  srslog::basic_logger& logger;
+
   f1ap_du_context ctxt;
 
   //  std::unique_ptr<f1ap_du_packet_handler> packet_handler;

@@ -97,7 +97,7 @@ class du_f1ap_cfg_adapter : public du_manager_config_notifier
 public:
   void connect(f1ap_du_config_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void du_ue_create_response(const du_ue_create_response_message& resp) {}
+  void du_ue_create_response(const du_ue_create_response_message& resp) { f1ap->ue_creation_response(resp); }
 
 private:
   f1ap_du_config_interface* f1ap = nullptr;
