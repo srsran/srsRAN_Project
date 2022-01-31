@@ -3,7 +3,7 @@
 #define SRSGNB_RLC_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/common/id_types.h"
+#include "srsgnb/common/nr_id_types.h"
 
 namespace srsgnb {
 

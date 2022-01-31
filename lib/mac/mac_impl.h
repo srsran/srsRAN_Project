@@ -6,7 +6,6 @@
 #include "mac_logical_channel.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/optional_array.h"
-#include "srsgnb/adt/shared_mutex.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/task_executor.h"

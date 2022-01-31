@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_ID_TYPES_H
-#define SRSGNB_ID_TYPES_H
+#ifndef SRSGNB_NR_ID_TYPES_H
+#define SRSGNB_NR_ID_TYPES_H
 
 #include <cstdint>
 
@@ -17,4 +17,4 @@ constexpr rnti_t        INVALID_RNTI = 0;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ID_TYPES_H
+#endif // SRSGNB_NR_ID_TYPES_H

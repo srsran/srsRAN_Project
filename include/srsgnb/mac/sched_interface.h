@@ -2,7 +2,7 @@
 #ifndef SRSGNB_SCHED_INTERFACE_H
 #define SRSGNB_SCHED_INTERFACE_H
 
-#include "srsgnb/common/id_types.h"
+#include "srsgnb/common/nr_id_types.h"
 
 namespace srsgnb {
 
