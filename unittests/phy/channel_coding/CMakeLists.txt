@@ -1,0 +1,4 @@
+
+add_executable(crc_calculator_test crc_calculator_test.cpp)
+target_link_libraries(crc_calculator_test crc_calculator)
+add_test(crc_calculator_test crc_calculator_test)
