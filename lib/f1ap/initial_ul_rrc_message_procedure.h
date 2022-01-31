@@ -28,7 +28,7 @@ public:
     du_ue_create_message msg{};
     msg.cell_index = msg.cell_index;
     msg.ue_index   = ue_index;
-    msg.crnti      = msg.crnti;
+    msg.crnti      = ccch_msg.crnti;
     f1ap_ctx.du_manager->ue_create(msg);
   }
 

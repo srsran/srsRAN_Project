@@ -18,11 +18,15 @@ du::du()
   workers.push_back(std::make_unique<task_worker>("DU-DL", task_worker_queue_size, true));
   ctrl_exec = make_task_executor(*workers[0]);
   ul_exec   = make_task_executor(*workers[1]);
-  dl_exec   = make_task_executor(*workers[2]);
+  dl_execs.push_back(make_task_executor(*workers[2]));
 
   // Create layers
-  rlc        = create_rlc(rlc_cfg_notifier);
-  mac        = create_mac(mac_cfg_notifier, mac_ul_sdu_notifier);
+  rlc = create_rlc(rlc_cfg_notifier);
+  std::vector<task_executor*> execs;
+  for (auto& w : dl_execs) {
+    execs.push_back(w.get());
+  }
+  mac        = create_mac(mac_cfg_notifier, mac_ul_sdu_notifier, *ul_exec, execs);
   du_manager = create_du_manager(*mac, *rlc, f1ap_cfg_notifier, *ctrl_exec);
   f1ap       = create_f1ap_du(f1ap_pdu_adapter, *du_manager);
 

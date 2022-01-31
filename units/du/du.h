@@ -39,8 +39,9 @@ private:
   du_f1ap_cfg_adapter    f1ap_cfg_notifier;
   f1ap_du_rlc_connector  f1ap_pdu_adapter;
 
-  std::vector<std::unique_ptr<task_worker> > workers;
-  std::unique_ptr<task_executor>             ul_exec, dl_exec, ctrl_exec;
+  std::vector<std::unique_ptr<task_worker> >   workers;
+  std::unique_ptr<task_executor>               ul_exec, ctrl_exec;
+  std::vector<std::unique_ptr<task_executor> > dl_execs;
 };
 
 } // namespace srsgnb

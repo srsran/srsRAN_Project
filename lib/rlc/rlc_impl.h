@@ -3,6 +3,7 @@
 #define SRSGNB_RLC_IMPL_H
 
 #include "srsgnb/rlc/rlc.h"
+#include "srsran/srslog/srslog.h"
 
 namespace srsgnb {
 
@@ -18,6 +19,7 @@ public:
 
 private:
   rlc_config_notifier& config_notifier;
+  srslog::basic_logger& logger;
 };
 
 } // namespace srsgnb

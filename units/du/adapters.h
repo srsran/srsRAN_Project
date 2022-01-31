@@ -64,7 +64,10 @@ public:
     du_manager->handle_mac_ue_create_response(resp);
   }
   void on_ue_reconfiguration_complete() override {}
-  void on_ue_delete_complete() override {}
+  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override
+  {
+    du_manager->handle_mac_ue_delete_response(resp);
+  }
 
 private:
   du_manager_interface* du_manager = nullptr;
@@ -75,13 +78,15 @@ class mac_northbound_adapter : public mac_northbound_notifier
 public:
   void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void push_sdu(rnti_t rnti, lcid_t lcid, byte_buffer pdu)
+  void push_sdu(rnti_t rnti, lcid_t lcid, byte_buffer pdu) override
   {
     ul_ccch_indication_message ul_ccch_msg;
     ul_ccch_msg.crnti      = rnti;
     ul_ccch_msg.cell_index = 0;
     f1ap->ul_ccch_message_indication(std::move(ul_ccch_msg));
   }
+
+  void read_pdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer& pdu) override {}
 
 private:
   f1ap_du_ul_interface* f1ap = nullptr;

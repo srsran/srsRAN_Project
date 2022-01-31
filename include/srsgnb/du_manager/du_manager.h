@@ -12,6 +12,7 @@ struct rlc_ue_create_response_message;
 struct rlc_ue_delete_response_message;
 struct rlc_ue_reconfiguration_response_message;
 struct mac_ue_create_request_response_message;
+struct mac_ue_delete_response_message;
 
 class du_manager_interface_rlc
 {
@@ -26,7 +27,7 @@ class du_manager_interface_mac
 public:
   virtual void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp) = 0;
   virtual void handle_mac_ue_reconfiguration_response()                                          = 0;
-  //  virtual void mac_ue_delete_response()          = 0;
+  virtual void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp)         = 0;
   //  virtual void mac_rach_resource_response()      = 0;
   //  virtual void ue_reset_response()               = 0;
   //  virtual void sync_status_indication()          = 0;

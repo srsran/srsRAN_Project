@@ -3,10 +3,14 @@
 
 namespace srsgnb {
 
-rlc_impl::rlc_impl(rlc_config_notifier& config_notifier_) : config_notifier(config_notifier_) {}
+rlc_impl::rlc_impl(rlc_config_notifier& config_notifier_) :
+  config_notifier(config_notifier_), logger(srslog::fetch_basic_logger("RLC"))
+{}
 
 void rlc_impl::ue_create(const rlc_ue_create_message& msg)
 {
+  logger.info("CFG ueID=%d: UE Create", msg.ue_index);
+
   // TODO: Create UE
 
   rlc_ue_create_response_message resp{};
