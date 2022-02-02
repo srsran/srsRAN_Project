@@ -9,6 +9,8 @@ namespace srsgnb {
 class polar_encoder
 {
 public:
+  virtual ~polar_encoder() = default;
+
   /*!
    * Encodes the input vector into a codeword with the specified polar encoder.
    * \param[in] input The encoder input vector.

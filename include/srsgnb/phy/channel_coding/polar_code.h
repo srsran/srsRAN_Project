@@ -10,6 +10,7 @@ namespace srsgnb {
 class polar_code
 {
 public:
+  virtual ~polar_code()                           = default;
   virtual uint16_t             get_N() const      = 0;
   virtual uint16_t             get_K() const      = 0;
   virtual uint16_t             get_nPC() const    = 0;

@@ -27,27 +27,16 @@ void  mem_free(void* ptr);
 template <typename T>
 class aligned_vec : public span<T>
 {
-private:
-  bool owner = false; // Indicates if the data can be deallocated at destructors
-
-  void dealloc()
-  {
-    if (this->data() != nullptr and owner) {
-      detail::mem_free(this->data());
-    }
-  }
-  aligned_vec<T>& operator=(aligned_vec<T>&& other) = default;
-  explicit aligned_vec(std::size_t size, bool owner_) :
-    span<T>((T*)detail::mem_alloc(sizeof(T) * size), size), owner(owner_)
-  {}
+  void dealloc() { detail::mem_free(this->data()); }
 
 public:
+  aligned_vec<T>& operator=(aligned_vec<T>&& other) = delete;
   aligned_vec<T>& operator=(const aligned_vec<T>& other) = delete;
   aligned_vec(const aligned_vec<T>& other)               = delete;
   aligned_vec(aligned_vec<T>&& other) noexcept           = delete;
 
-  aligned_vec() = default;
-  explicit aligned_vec(std::size_t size) : aligned_vec(size, true) {}
+  aligned_vec() : span<T>(nullptr, 0UL){};
+  explicit aligned_vec(std::size_t size) { resize(size); }
 
   void resize(unsigned new_size)
   {
@@ -56,8 +45,9 @@ public:
     }
     dealloc();
 
-    *this       = aligned_vec<T>(new_size, false);
-    this->owner = true;
+    T*      ptr     = (T*)detail::mem_alloc(sizeof(T) * new_size);
+    span<T> o       = span<T>(ptr, new_size);
+    *(span<T>*)this = o;
   }
 
   ~aligned_vec() { dealloc(); }

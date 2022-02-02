@@ -23,6 +23,8 @@ using crc_calculator_checksum_t = unsigned;
 class crc_calculator
 {
 public:
+  virtual ~crc_calculator() = default;
+
   virtual crc_calculator_checksum_t calculate(const byte_buffer& data) = 0;
 };
 

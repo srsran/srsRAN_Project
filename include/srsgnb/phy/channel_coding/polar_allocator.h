@@ -8,6 +8,8 @@ namespace srsgnb {
 class polar_allocator
 {
 public:
+  virtual ~polar_allocator() = default;
+
   virtual void allocate(bit_buffer& message, bit_buffer& input_encoder, const polar_code& code) = 0;
 };
 

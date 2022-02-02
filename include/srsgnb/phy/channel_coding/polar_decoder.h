@@ -12,6 +12,8 @@ namespace srsgnb {
 class polar_decoder
 {
 public:
+  virtual ~polar_decoder() = default;
+
   /*!
    * Decodes the input (int8_t) codeword with the specified polar decoder.
    * \param[in] q A pointer to the desired polar decoder.

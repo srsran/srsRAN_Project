@@ -8,6 +8,8 @@ namespace srsgnb {
 class polar_deallocator
 {
 public:
+  virtual ~polar_deallocator() = default;
+
   virtual void deallocate(bit_buffer& output_decoder, bit_buffer& message, const polar_code& code) = 0;
 };
 

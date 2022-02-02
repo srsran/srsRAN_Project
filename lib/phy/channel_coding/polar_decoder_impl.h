@@ -135,7 +135,6 @@ private:
 
 public:
   polar_decoder_impl(std::unique_ptr<polar_encoder>& enc_, uint8_t nMax);
-  ~polar_decoder_impl() = default;
   void decode(span<const int8_t>   input_llr,
               bit_buffer           data_decoded,
               const uint8_t        code_size_log,
