@@ -15,7 +15,7 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include <stdint.h>
+#include <cstdint>
 
 /**
  * The supported vector data types are:
@@ -28,11 +28,6 @@
  * To make the span constant follow srsgnb::span<const T>
  *
  */
-
-#define srsgnb_srsvec_assert_type(T)                                                                                   \
-  static_assert(std::is_same<T, cf_t>::value or std::is_same<T, float>::value or std::is_same<T, int16_t>::value or    \
-                    std::is_same<T, int8_t>::value or std::is_same<T, uint8_t>::value,                                 \
-                "Function requires cf_t, float, int16_t, int8_t, or uint8_t types")
 
 #define srsgnb_srsvec_assert_size(X, Y) assert(X.size() == Y.size())
 

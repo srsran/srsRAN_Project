@@ -2,3 +2,7 @@
 add_executable(crc_calculator_test crc_calculator_test.cpp)
 target_link_libraries(crc_calculator_test crc_calculator)
 add_test(crc_calculator_test crc_calculator_test)
+
+add_executable(polar_chain_test polar_chain_test.cpp)
+target_link_libraries(polar_chain_test polar_code polar_encoder polar_decoder srsvec)
+add_test(polar_chain_test polar_chain_test)

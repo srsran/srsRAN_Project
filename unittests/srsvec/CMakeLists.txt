@@ -6,3 +6,7 @@ add_test(srsvec_add_test srsvec_add_test)
 add_executable(srsvec_aligned_test srsvec_aligned_test.cpp)
 target_link_libraries(srsvec_aligned_test srsvec)
 add_test(srsvec_aligned_test srsvec_aligned_test)
+
+add_executable(srsvec_binary_test srsvec_binary_test.cpp)
+target_link_libraries(srsvec_binary_test srsvec)
+add_test(srsvec_binary_test srsvec_binary_test)

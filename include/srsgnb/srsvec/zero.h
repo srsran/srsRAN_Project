@@ -21,7 +21,6 @@ namespace srsvec {
 template <typename T>
 void zero(span<T> x)
 {
-  srsgnb_srsvec_assert_type(T);
   std::fill(x.begin(), x.end(), 0);
 }
 

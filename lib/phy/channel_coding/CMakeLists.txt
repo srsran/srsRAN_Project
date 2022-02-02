@@ -6,10 +6,9 @@
 # the distribution.
 #
 
-set(SOURCES
-        crc_calculator_impl.cpp
-        )
-
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/channel_coding)
 
-add_library(crc_calculator STATIC ${SOURCES})
+add_library(crc_calculator STATIC crc_calculator_impl.cpp)
+add_library(polar_code STATIC polar_code_impl.cpp)
+add_library(polar_encoder STATIC polar_encoder_impl.cpp polar_allocator_impl.cpp)
+add_library(polar_decoder STATIC polar_decoder_impl.cpp polar_deallocator_impl.cpp)

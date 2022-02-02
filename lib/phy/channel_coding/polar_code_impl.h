@@ -1,0 +1,159 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2021 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#ifndef SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
+#define SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
+
+#include "srsgnb/phy/channel_coding/polar_code.h"
+#include "srsgnb/srsvec/aligned_vec.h"
+
+namespace srsgnb {
+
+class polar_code_impl : public polar_code
+{
+private:
+  /*!
+   * \brief Maximum rate-matched codeword length
+   */
+  static const uint16_t EMAX = 8192;
+
+  /*!
+   * \brief Maximum codeword length
+   */
+  static const uint16_t NMAX = 1024;
+
+  /*!
+   * \brief Base 2 logarithm of maximum codeword length
+   */
+  static const unsigned NMAX_LOG = 10U;
+
+  /*!
+   * \brief \f$log_2(EMAX)\f$
+   */
+  static const uint16_t eMAX = 13; // log2(EMAX);
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 5.
+   */
+  static const std::array<uint16_t, 32> mother_code_5;
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 6.
+   */
+  static const std::array<uint16_t, 64> mother_code_6;
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 7.
+   */
+  static const std::array<uint16_t, 128> mother_code_7;
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 8.
+   */
+  static const std::array<uint16_t, 256> mother_code_8;
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 9.
+   */
+  static const std::array<uint16_t, 512> mother_code_9;
+
+  /*!
+   * \brief Look-up table for the mother code with code_size_log = 10.
+   */
+  static const std::array<uint16_t, 1024> mother_code_10;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 5.
+   */
+  static const std::array<uint16_t, 32> blk_interleaver_5;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 6.
+   */
+  static const std::array<uint16_t, 64> blk_interleaver_6;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 7.
+   */
+  static const std::array<uint16_t, 128> blk_interleaver_7;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 8.
+   */
+  static const std::array<uint16_t, 256> blk_interleaver_8;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 9.
+   */
+  static const std::array<uint16_t, 512> blk_interleaver_9;
+
+  /*!
+   * \brief Look-up table for the block interleaver for code_size_log = 10.
+   */
+  static const std::array<uint16_t, 1024> blk_interleaver_10;
+
+  /*!
+   * Returns a pointer to the desired mother code.
+   */
+  static span<const uint16_t> get_mother_code(uint8_t n);
+
+  /*!
+   * Returns a pointer to the desired blk_interleaver.
+   */
+  static span<const uint16_t> get_blk_interleaver(uint8_t n);
+
+  /*!
+   * Extracts the elements in x that are smaller than T or are in y.
+   * Returns the length of the output vector z.
+   */
+  static uint16_t setdiff_stable(const uint16_t* x,
+                                 const uint16_t* y,
+                                 uint16_t*       z,
+                                 const int       T,
+                                 const uint16_t  len1,
+                                 const uint16_t  len2);
+
+  /*!
+   * Gets the codeword length N, nPC and nWmPC depending on the code parameters.
+   * Returns -1 if not supported configuration, otherwise returns 0.
+   */
+  void set_code_params(const uint16_t K, const uint16_t E, const uint8_t nMax);
+
+  uint16_t       N;          /*!< \brief Number of coded bits (N). */
+  uint8_t        n;          /*!< \brief \f$ log_2(N)\f$.*/
+  uint16_t       K;          /*!< \brief Number of message bits (data and CRC). */
+  uint16_t       nPC;        /*!< \brief Number of parity check bits. */
+  uint16_t       nWmPC;      /*!< \brief Number of parity bits of minimum bandwidth type. */
+  uint16_t       F_set_size; /*!< \brief Number of frozen bits. */
+  span<uint16_t> K_set; /*!< \brief Pointer to the indices of the encoder input vector containing data and CRC bits. */
+  srsvec::aligned_vec<uint16_t> tmp_K_set; /*!< \brief Temporal Pointer. */
+  std::array<uint16_t, 4>
+      PC_set; /*!< \brief Pointer to the indices of the encoder input vector containing the parity bits.*/
+  srsvec::aligned_vec<uint16_t>
+      F_set; /*!< \brief Pointer to the indices of the encoder input vector containing frozen bits.*/
+
+public:
+  polar_code_impl();
+  ~polar_code_impl() = default;
+
+  uint16_t             get_N() const override;
+  uint16_t             get_K() const override;
+  uint16_t             get_nPC() const override;
+  span<const uint16_t> get_K_set() const override;
+  span<const uint16_t> get_PC_set() const override;
+
+  void set(const uint16_t K, const uint16_t E, const uint8_t nMax) override;
+};
+
+} // namespace srsgnb
+
+#endif // SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_

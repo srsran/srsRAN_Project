@@ -21,7 +21,14 @@ namespace srsvec {
 template <typename T>
 void copy(span<T> dst, span<T> src)
 {
-  srsgnb_srsvec_assert_type(T);
+  srsgnb_srsvec_assert_size(dst, src);
+
+  std::copy(src.begin(), src.end(), dst.begin());
+}
+
+template <typename T>
+void copy(span<T> dst, span<const T> src)
+{
   srsgnb_srsvec_assert_size(dst, src);
 
   std::copy(src.begin(), src.end(), dst.begin());
