@@ -101,10 +101,10 @@ polar_decoder_impl::tmp_node_s::tmp_node_s(uint8_t nMax)
   i_even.resize(max_code_half_size);
 }
 
-void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*> node_type,
-                                             const uint16_t*       frozen_set,
-                                             const uint16_t        code_size_log,
-                                             const uint16_t        frozen_set_size)
+void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
+                                             const uint16_t*        frozen_set,
+                                             const uint16_t         code_size_log,
+                                             const uint16_t         frozen_set_size)
 {
   uint8_t s = 0; // stage
 
@@ -354,9 +354,10 @@ void polar_decoder_impl::simplified_node(bit_buffer message)
 void polar_decoder_impl::decode(span<const int8_t>   input_llr,
                                 bit_buffer           data_decoded,
                                 const uint8_t        code_size_log,
-                                span<const uint16_t> frozen_set,
-                                span<const uint16_t> frozen_set_size)
+                                span<const uint16_t> frozen_set)
 {
+  init(input_llr, data_decoded, code_size_log, frozen_set.data(), frozen_set.size());
+
   simplified_node(data_decoded);
 }
 

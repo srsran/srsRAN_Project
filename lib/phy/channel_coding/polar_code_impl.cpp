@@ -399,16 +399,9 @@ srsgnb::polar_code_impl::polar_code_impl() : tmp_K_set(NMAX + 1), F_set(NMAX)
 /*!
  * Compares two uint16_t
  */
-int cmpfunc(const uint16_t ai, const uint16_t bi)
+bool cmpfunc(const uint16_t ai, const uint16_t bi)
 {
-  if (ai < bi) {
-    return -1;
-  }
-  if (ai > bi) {
-    return 1;
-  }
-
-  return 0;
+  return (ai < bi);
 }
 
 void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uint8_t nMax)
@@ -447,7 +440,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
   int tmp_K = setdiff_stable(mother_code.data(), F_set.data(), tmp_K_set.data(), T, N, tmp_F_set_size);
 
   // Select only the most reliable (message and parity)
-  K_set = {tmp_K_set.data() + tmp_K - K - nPC, (std::size_t)(K + nPC)};
+  K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC);
 
   // take the nPC - nWmPC less reliable
   for (int i = 0; i < nPC - nWmPC; i++) {
@@ -487,8 +480,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
   }
 
   // mark the end of the sets (useful at subchannel allocation)
-  K_set[K + nPC] = 1024;
-  PC_set[nPC]    = 1024;
+  PC_set[nPC] = 1024;
 }
 
 uint16_t polar_code_impl::get_N() const
@@ -512,6 +504,11 @@ span<const uint16_t> polar_code_impl::get_K_set() const
 span<const uint16_t> polar_code_impl::get_PC_set() const
 {
   return PC_set;
+}
+
+span<const uint16_t> polar_code_impl::get_F_set() const
+{
+  return F_set.subspan(0, F_set_size);
 }
 
 std::unique_ptr<polar_code> srsgnb::create_polar_code()

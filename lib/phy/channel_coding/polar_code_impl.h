@@ -150,6 +150,7 @@ public:
   uint16_t             get_nPC() const override;
   span<const uint16_t> get_K_set() const override;
   span<const uint16_t> get_PC_set() const override;
+  span<const uint16_t> get_F_set() const override;
 
   void set(const uint16_t K, const uint16_t E, const uint8_t nMax) override;
 };

@@ -16,6 +16,7 @@ public:
   virtual uint16_t             get_nPC() const    = 0;
   virtual span<const uint16_t> get_K_set() const  = 0;
   virtual span<const uint16_t> get_PC_set() const = 0;
+  virtual span<const uint16_t> get_F_set() const  = 0;
 
   virtual void set(const uint16_t K, const uint16_t E, const uint8_t nMax) = 0;
 };

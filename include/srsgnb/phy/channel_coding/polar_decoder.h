@@ -27,8 +27,7 @@ public:
   virtual void decode(span<const int8_t>   input_llr,
                       bit_buffer           data_decoded,
                       const uint8_t        code_size_log,
-                      span<const uint16_t> frozen_set,
-                      span<const uint16_t> frozen_set_size) = 0;
+                      span<const uint16_t> frozen_set) = 0;
 };
 
 /*!

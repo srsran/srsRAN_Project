@@ -78,10 +78,10 @@ private:
      * \param[in] frozen_set The position of the frozen bits in the codeword.
      * \param[in] frozen_set_size The size of the frozen set.
      */
-    void compute(std::vector<uint8_t*> node_type,
-                 const uint16_t*       frozen_set,
-                 const uint16_t        code_size_log,
-                 const uint16_t        frozen_set_size);
+    void compute(std::vector<uint8_t*>& node_type,
+                 const uint16_t*        frozen_set,
+                 const uint16_t         code_size_log,
+                 const uint16_t         frozen_set_size);
   };
 
   srsvec::aligned_vec<int8_t>    llr_alloc;
@@ -138,8 +138,7 @@ public:
   void decode(span<const int8_t>   input_llr,
               bit_buffer           data_decoded,
               const uint8_t        code_size_log,
-              span<const uint16_t> frozen_set,
-              span<const uint16_t> frozen_set_size) override;
+              span<const uint16_t> frozen_set) override;
 };
 
 } // namespace srsgnb
