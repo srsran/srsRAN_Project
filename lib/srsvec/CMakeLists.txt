@@ -9,6 +9,7 @@
 set(SOURCES
         aligned_vec.cpp
         add.cpp
+        bit.cpp
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srsvec)

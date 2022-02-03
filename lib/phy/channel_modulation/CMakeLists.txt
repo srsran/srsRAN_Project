@@ -6,5 +6,10 @@
 # the distribution.
 #
 
-add_subdirectory(channel_coding)
-add_subdirectory(channel_modulation)
+set(SOURCES
+        modulation_mapper_impl.cpp
+        )
+
+include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/channel_modulation)
+
+add_library(modulation_mapper STATIC ${SOURCES})
