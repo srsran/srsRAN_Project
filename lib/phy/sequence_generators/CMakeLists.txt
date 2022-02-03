@@ -6,6 +6,10 @@
 # the distribution.
 #
 
-add_subdirectory(channel_coding)
-add_subdirectory(channel_modulation)
-add_subdirectory(sequence_generators)
+set(SOURCES
+        pseudo_random_generator_impl.cpp
+        )
+
+include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/sequence_generators)
+
+add_library(pseudo_random_generator STATIC ${SOURCES})
