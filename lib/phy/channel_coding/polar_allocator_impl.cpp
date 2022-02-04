@@ -23,7 +23,8 @@ void polar_allocator_impl::allocate(bit_buffer& message, bit_buffer& input_encod
   span<const uint16_t> K_set  = code.get_K_set();
   span<const uint16_t> PC_set = code.get_PC_set();
 
-  srsvec::zero(input_encoder.subspan(0, N));
+  assert(input_encoder.size() == N);
+  srsvec::zero(input_encoder);
 
   uint16_t i_o = 0;
   if (nPC == 0) {

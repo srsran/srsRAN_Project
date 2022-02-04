@@ -307,10 +307,13 @@ uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
   return o;
 }
 
-void srsgnb::polar_code_impl::set_code_params(const uint16_t K_, const uint16_t E, const uint8_t nMax)
+void srsgnb::polar_code_impl::set_code_params(const uint16_t K_, const uint16_t E_, const uint8_t nMax)
 {
   // Set internal K
   K = K_;
+
+  // Set internal E
+  E = E_;
 
   // include here also npc and nwmPC computatoins
   assert(E <= EMAX);
@@ -404,10 +407,10 @@ bool cmpfunc(const uint16_t ai, const uint16_t bi)
   return (ai < bi);
 }
 
-void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uint8_t nMax)
+void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const uint8_t nMax)
 {
   // check polar code parameters
-  set_code_params(K_, E, nMax);
+  set_code_params(K_, E_, nMax);
 
   span<const uint16_t> blk_interleaver = get_blk_interleaver(n);
   span<const uint16_t> mother_code     = get_mother_code(n);
@@ -427,7 +430,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
         T = 9 * N / 16 - (E >> 2U);
       }
       srsvec::copy(F_set.subspan(0, tmp_F_set_size),
-                   blk_interleaver); // The first (less reliable) after interleaving
+                   blk_interleaver.subspan(0, tmp_F_set_size)); // The first (less reliable) after interleaving
 
     } else { // Shortening
       srsvec::copy(F_set.subspan(0, tmp_F_set_size),
@@ -440,7 +443,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
   int tmp_K = setdiff_stable(mother_code.data(), F_set.data(), tmp_K_set.data(), T, N, tmp_F_set_size);
 
   // Select only the most reliable (message and parity)
-  K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC);
+  K_set = tmp_K_set.subspan(tmp_K - K - nPC, K + nPC + 1);
 
   // take the nPC - nWmPC less reliable
   for (int i = 0; i < nPC - nWmPC; i++) {
@@ -458,7 +461,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
   }
 
   // sorted K_set (includes parity bits)
-  std::sort(K_set.begin(), K_set.end(), cmpfunc);
+  std::sort(K_set.begin(), K_set.end() - 1, cmpfunc);
 
   // sorted PC_set
   if (nPC > 0) {
@@ -480,7 +483,13 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E, const uin
   }
 
   // mark the end of the sets (useful at subchannel allocation)
-  PC_set[nPC] = 1024;
+  K_set[K + nPC] = 1024;
+  PC_set[nPC]    = 1024;
+}
+
+uint16_t polar_code_impl::get_n() const
+{
+  return n;
 }
 
 uint16_t polar_code_impl::get_N() const
@@ -490,6 +499,10 @@ uint16_t polar_code_impl::get_N() const
 uint16_t polar_code_impl::get_K() const
 {
   return K;
+}
+uint16_t polar_code_impl::get_E() const
+{
+  return E;
 }
 uint16_t polar_code_impl::get_nPC() const
 {
@@ -509,6 +522,16 @@ span<const uint16_t> polar_code_impl::get_PC_set() const
 span<const uint16_t> polar_code_impl::get_F_set() const
 {
   return F_set.subspan(0, F_set_size);
+}
+
+span<const uint16_t> polar_code_impl::get_mother_code() const
+{
+  return get_mother_code(n);
+}
+
+span<const uint16_t> polar_code_impl::get_blk_interleaver() const
+{
+  return get_blk_interleaver(n);
 }
 
 std::unique_ptr<polar_code> srsgnb::create_polar_code()

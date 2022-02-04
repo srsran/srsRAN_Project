@@ -15,6 +15,8 @@
 #include "srsgnb/phy/channel_coding/polar_deallocator.h"
 #include "srsgnb/phy/channel_coding/polar_decoder.h"
 #include "srsgnb/phy/channel_coding/polar_encoder.h"
+#include "srsgnb/phy/channel_coding/polar_rate_dematcher.h"
+#include "srsgnb/phy/channel_coding/polar_rate_matcher.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <getopt.h>
 #include <random>
@@ -144,6 +146,12 @@ int main(int argc, char** argv)
   // Create deallocator
   std::unique_ptr<polar_deallocator> deallocator = create_polar_deallocator();
 
+  // Create rate matcher
+  std::unique_ptr<polar_rate_matcher> rate_matcher = create_polar_rate_matcher();
+
+  // Create rate dematcher
+  std::unique_ptr<polar_rate_dematcher> rate_dematcher = create_polar_rate_dematcher();
+
   // Create Tx data and fill
   srsvec::aligned_vec<uint8_t> data_tx(K);
   for (uint8_t& v : data_tx) {
@@ -158,22 +166,30 @@ int main(int argc, char** argv)
   allocator->allocate(data_tx, allocated_tx, *code);
 
   // Encoder TX data
-  srsvec::aligned_vec<uint8_t> encoded_tx(E);
-  encoder->encode(allocated_tx, nMax, encoded_tx);
+  srsvec::aligned_vec<uint8_t> encoded_tx(code->get_N());
+  encoder->encode(allocated_tx, code->get_n(), encoded_tx);
+
+  // Rate matching
+  srsvec::aligned_vec<uint8_t> rate_matched_tx(E);
+  rate_matcher->rate_match(encoded_tx, rate_matched_tx, *code, bil);
 
   // Modulate
-  srsvec::aligned_vec<int8_t> llr(E);
-  for (std::size_t i = 0, size = llr.size(); i != size; ++i) {
-    llr[i] = (encoded_tx[i] == 0) ? +1 : -1;
+  srsvec::aligned_vec<int8_t> rate_matched_rx(E);
+  for (std::size_t i = 0, size = rate_matched_rx.size(); i != size; ++i) {
+    rate_matched_rx[i] = (rate_matched_tx[i] == 0) ? +1 : -1;
   }
+
+  // Undo rate matching
+  srsvec::aligned_vec<int8_t> encoded_rx(code->get_N());
+  rate_dematcher->rate_dematch(rate_matched_rx, encoded_rx, *code, bil);
 
   // Decode Rx data
   srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());
-  decoder->decode(llr, allocated_rx, nMax, code->get_F_set());
+  decoder->decode(encoded_rx, allocated_rx, code->get_n(), code->get_F_set());
 
   // Deallocate RX data
   srsvec::aligned_vec<uint8_t> data_rx(K);
-  deallocator->deallocate(allocated_tx, data_rx, *code);
+  deallocator->deallocate(allocated_rx, data_rx, *code);
 
   // Assert decoded message
   assert(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()));

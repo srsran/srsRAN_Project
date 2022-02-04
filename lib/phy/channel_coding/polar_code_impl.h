@@ -22,26 +22,6 @@ class polar_code_impl : public polar_code
 {
 private:
   /*!
-   * \brief Maximum rate-matched codeword length
-   */
-  static const uint16_t EMAX = 8192;
-
-  /*!
-   * \brief Maximum codeword length
-   */
-  static const uint16_t NMAX = 1024;
-
-  /*!
-   * \brief Base 2 logarithm of maximum codeword length
-   */
-  static const unsigned NMAX_LOG = 10U;
-
-  /*!
-   * \brief \f$log_2(EMAX)\f$
-   */
-  static const uint16_t eMAX = 13; // log2(EMAX);
-
-  /*!
    * \brief Look-up table for the mother code with code_size_log = 5.
    */
   static const std::array<uint16_t, 32> mother_code_5;
@@ -131,6 +111,7 @@ private:
   uint16_t       N;          /*!< \brief Number of coded bits (N). */
   uint8_t        n;          /*!< \brief \f$ log_2(N)\f$.*/
   uint16_t       K;          /*!< \brief Number of message bits (data and CRC). */
+  uint16_t       E;          /*!< \brief Number of encoded bits at the rate matching input. */
   uint16_t       nPC;        /*!< \brief Number of parity check bits. */
   uint16_t       nWmPC;      /*!< \brief Number of parity bits of minimum bandwidth type. */
   uint16_t       F_set_size; /*!< \brief Number of frozen bits. */
@@ -145,12 +126,16 @@ public:
   polar_code_impl();
   ~polar_code_impl() = default;
 
+  uint16_t             get_n() const override;
   uint16_t             get_N() const override;
   uint16_t             get_K() const override;
+  uint16_t             get_E() const override;
   uint16_t             get_nPC() const override;
   span<const uint16_t> get_K_set() const override;
   span<const uint16_t> get_PC_set() const override;
   span<const uint16_t> get_F_set() const override;
+  span<const uint16_t> get_mother_code() const override;
+  span<const uint16_t> get_blk_interleaver() const override;
 
   void set(const uint16_t K, const uint16_t E, const uint8_t nMax) override;
 };

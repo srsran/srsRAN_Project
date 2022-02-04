@@ -22,6 +22,9 @@ ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wnon-virtual-dtor HAVE_NON_VIRTUAL_DTOR)
 # Make sure all overridden methods are marked as override
 ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wsuggest-override HAVE_SUGGEST_OVERRIDE)
 
+# Avoid shadow variables which can be caused due to C code ported into C++
+#ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wshadow HAVE_SHADOW)
+
 include(CTest)
 
 include_directories(include)

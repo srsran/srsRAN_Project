@@ -45,8 +45,8 @@ public:
     }
     dealloc();
 
-    T*      ptr     = (T*)detail::mem_alloc(sizeof(T) * new_size);
-    span<T> o       = span<T>(ptr, new_size);
+    T*      ptr_    = (T*)detail::mem_alloc(sizeof(T) * new_size);
+    span<T> o       = span<T>(ptr_, new_size);
     *(span<T>*)this = o;
   }
 
