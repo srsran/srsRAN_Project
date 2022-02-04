@@ -15,8 +15,6 @@
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  assert_cf_max_error    = 1e-6;
-static const float  assert_float_max_error = 1e-6;
 
 using namespace srsgnb;
 
@@ -36,7 +34,7 @@ void test_unpack(unsigned N)
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
   assert(unpacked.size() == N);
-  assert(bit_buf.size() == 0);
+  assert(bit_buf.empty());
 
   // Assert each bit
   for (unsigned i = 0; i != N; i++) {
@@ -67,7 +65,7 @@ void test_unpack_vector(unsigned N)
   for (unsigned i = 0; i != nbits; i++) {
     unsigned byte_idx = i / 8;
     unsigned bit_idx  = i % 8;
-    uint8_t  gold     = (packed[byte_idx] >> (7U - bit_idx)) & 1U;
+    uint8_t  gold     = ((unsigned)packed[byte_idx] >> (7U - bit_idx)) & 1U;
     assert(gold == unpacked[i]);
   }
 }
@@ -88,7 +86,7 @@ void test_pack(unsigned N)
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
   assert(unpacked.size() == N);
-  assert(bit_buf.size() == 0);
+  assert(bit_buf.empty());
 
   // Assert each bit
   for (unsigned i = 0; i != N; i++) {

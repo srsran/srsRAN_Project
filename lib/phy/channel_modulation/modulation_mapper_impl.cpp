@@ -208,3 +208,8 @@ void modulation_mapper_impl::modulate(const srsgnb::bit_buffer&  input,
     j++;
   }
 }
+
+std::unique_ptr<modulation_mapper> srsgnb::create_modulation_mapper()
+{
+  return std::make_unique<modulation_mapper_impl>();
+}
