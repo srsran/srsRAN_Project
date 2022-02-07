@@ -11,6 +11,7 @@
  */
 
 #include "pseudo_random_generator_impl.h"
+#include <cassert>
 #include <cstring>
 
 using namespace srsgnb;
@@ -154,6 +155,8 @@ void pseudo_random_generator_impl::generate(float value, span<float> out)
 }
 void pseudo_random_generator_impl::apply_xor(const byte_buffer& in, byte_buffer& out)
 {
+  assert(in.size() == out.size());
+
   unsigned i      = 0;
   unsigned length = in.size() * 8;
 
@@ -264,6 +267,8 @@ void pseudo_random_generator_impl::apply_xor(const byte_buffer& in, byte_buffer&
 
 void pseudo_random_generator_impl::apply_xor(span<uint8_t> in, span<uint8_t> out)
 {
+  assert(in.size() == out.size());
+
   unsigned i      = 0;
   unsigned length = in.size();
 
@@ -320,6 +325,8 @@ void pseudo_random_generator_impl::apply_xor(span<uint8_t> in, span<uint8_t> out
 }
 void pseudo_random_generator_impl::apply_xor(span<int8_t> in, span<int8_t> out)
 {
+  assert(in.size() == out.size());
+
   unsigned i      = 0;
   unsigned length = in.size();
 
