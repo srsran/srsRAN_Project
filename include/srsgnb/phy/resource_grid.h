@@ -1,7 +1,8 @@
 #ifndef SRSGNB_PHY_RESOURCE_GRID_H
 #define SRSGNB_PHY_RESOURCE_GRID_H
 
-#include <complex>
+#include "srsgnb/adt/complex.h"
+#include <memory>
 
 namespace srsgnb {
 
@@ -12,10 +13,15 @@ namespace srsgnb {
 class resource_grid
 {
 public:
-  void                put(unsigned k, unsigned l, std::complex<float> value) {}
-  std::complex<float> get(unsigned k, unsigned l) const { return {}; }
+  virtual ~resource_grid() = default;
 
-  //: TODO: provide a set of handy iterator classes to traverse the grid following the most common patterns.
+  /**
+   * @brief Put a resource element in the grid
+   * @param l Symbol of the slot
+   * @param k Subcarrier index
+   * @param value Complex value to write
+   */
+  virtual void put(unsigned l, unsigned k, cf_t value) = 0;
 };
 
 } // namespace srsgnb
