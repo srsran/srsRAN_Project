@@ -40,13 +40,15 @@ private:
   uint64_t           crc;
 
   // Methods
-  void                    put_byte(unsigned char byte);
+  void                      reset();
+  void                      put_byte(unsigned char byte);
   crc_calculator_checksum_t get_checksum() const;
 
 public:
   explicit crc_calculator_impl(crc_generator_poly poly_);
 
   crc_calculator_checksum_t calculate(const byte_buffer& input) override;
+  crc_calculator_checksum_t calculate(const bit_buffer& input) override;
 };
 
 } // namespace srsgnb

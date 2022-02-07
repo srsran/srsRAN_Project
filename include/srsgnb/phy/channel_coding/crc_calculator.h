@@ -1,6 +1,7 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_CRC_CALCULATOR_H
 #define SRSGNB_PHY_CHANNEL_CODING_CRC_CALCULATOR_H
 
+#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include <memory>
 
@@ -26,6 +27,7 @@ public:
   virtual ~crc_calculator() = default;
 
   virtual crc_calculator_checksum_t calculate(const byte_buffer& data) = 0;
+  virtual crc_calculator_checksum_t calculate(const bit_buffer& data)  = 0;
 };
 
 std::unique_ptr<crc_calculator> create_crc_calculator(crc_generator_poly poly);
