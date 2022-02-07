@@ -96,10 +96,7 @@ static void ch_interleaver_rm_rx_c(const int8_t* f, int8_t* e, const uint32_t E)
   }
 }
 
-void polar_rate_dematcher_impl::rate_dematch(span<const int8_t> input,
-                                             span<int8_t>       output,
-                                             const polar_code&  code,
-                                             unsigned int       ibil)
+void polar_rate_dematcher_impl::rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code)
 {
   unsigned N = code.get_N();
   unsigned E = code.get_E();
@@ -107,7 +104,7 @@ void polar_rate_dematcher_impl::rate_dematch(span<const int8_t> input,
 
   const uint16_t* blk_interleaver = code.get_blk_interleaver().data();
 
-  if (ibil == 0) {
+  if (code.get_ibil() == polar_code_ibil::not_present) {
     srsvec::copy(span<int8_t>(e, input.size()), input);
   } else {
     ch_interleaver_rm_rx_c(input.data(), e, E);

@@ -1059,7 +1059,7 @@ int main(int argc, char** argv)
 
     // Run interleaver forward
     std::vector<uint8_t> indexes_out(K);
-    interleaver->interleave(indexes_in, indexes_out, true);
+    interleaver->interleave(indexes_in, indexes_out, polar_interleaver_direction::tx);
 
     // Check indexes
     for (unsigned i = 0; i != K; i++) {
@@ -1067,7 +1067,7 @@ int main(int argc, char** argv)
     }
 
     // Run interleaver backwards
-    interleaver->interleave(indexes_out, indexes_in, false);
+    interleaver->interleave(indexes_out, indexes_in, polar_interleaver_direction::rx);
 
     // Check indexes
     for (uint16_t i = 0; i < (uint16_t)K; i++) {

@@ -2,6 +2,7 @@
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_H
 
 #include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/phy/channel_coding/polar_code.h"
 #include <memory>
 
 namespace srsgnb {
@@ -19,10 +20,9 @@ public:
    * \param[in] n            \f$log_2\f$ of the codeword length.
    * \param[in] E            Rate-matched codeword length.
    * \param[in] K            Message size (including CRC).
-   * \param[in] ibil         Indicator of bit interleaver (set to 0 to disable).
    * \return An integer: 0 if the function executes correctly, -1 otherwise.
    */
-  virtual void rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code, unsigned ibil) = 0;
+  virtual void rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_rate_matcher> create_polar_rate_matcher();

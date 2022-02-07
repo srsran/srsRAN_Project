@@ -76,10 +76,7 @@ static void ch_interleaver_rm_tx(const uint8_t* e, uint8_t* f, const uint32_t E)
   }
 }
 
-void polar_rate_matcher_impl::rate_match(const bit_buffer& input,
-                                         bit_buffer&       output,
-                                         const polar_code& code,
-                                         unsigned int      ibil)
+void polar_rate_matcher_impl::rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code)
 {
   const span<const uint16_t> blk_interleaver = code.get_blk_interleaver();
   unsigned                   N               = code.get_N();
@@ -94,7 +91,7 @@ void polar_rate_matcher_impl::rate_match(const bit_buffer& input,
   // Select
   span<uint8_t> e = bit_selection_rm_tx(y, N, E, K); // moves the pointer if puncturing e = y + (N-E), otherwise e = y;
 
-  if (ibil == 0) {
+  if (code.get_ibil() == polar_code_ibil::not_present) {
     srsvec::copy(output, e);
   } else {
     ch_interleaver_rm_tx(e.data(), output.data(), E);

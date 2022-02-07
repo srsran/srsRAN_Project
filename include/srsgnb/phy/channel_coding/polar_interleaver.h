@@ -18,6 +18,8 @@
 
 namespace srsgnb {
 
+enum class polar_interleaver_direction { tx, rx };
+
 class polar_interleaver
 {
 public:
@@ -28,12 +30,11 @@ public:
    *
    * @attention The input and output data cannot be the same.
    *
-   * @param in bit Input data
-   * @param out bit Output data
-   * @param K Number of elements
-   * @param dir Set to true for encoder and false for decoder
+   * @param[in] in bit Input data
+   * @param[out] out bit Output data
+   * @param[in] dir Set to TX or RX for encoder or decoder
    */
-  virtual void interleave(bit_buffer in, bit_buffer out, bool dir) = 0;
+  virtual void interleave(const bit_buffer in, bit_buffer out, polar_interleaver_direction direction) = 0;
 };
 
 std::unique_ptr<polar_interleaver> create_polar_interleaver();

@@ -20,11 +20,9 @@ public:
    * \param[in] E          Rate-matched codeword length.
    * \param[in] n          \f$log_2\f$ of the codeword length.
    * \param[in] K          Message size (including CRC).
-   * \param[in] ibil       Indicator of bit interliaver (set to 0 to disable).
    * \return An integer: 0 if the function executes correctly, -1 otherwise.
    */
-  virtual void
-  rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code, unsigned int ibil) = 0;
+  virtual void rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_rate_dematcher> create_polar_rate_dematcher();

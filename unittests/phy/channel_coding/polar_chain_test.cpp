@@ -63,12 +63,12 @@ using namespace srsgnb;
  */
 
 // default values
-static uint16_t K            = 56;  /*!< \brief Number of message bits (data and CRC). */
-static uint16_t E            = 864; /*!< \brief Number of bits of the codeword after rate matching. */
-static uint8_t  nMax         = 9;   /*!< \brief Maximum \f$log_2(N)\f$, where \f$N\f$ is the codeword size.*/
-static uint8_t  bil          = 0;   /*!< \brief If bil = 0 channel interleaver disabled. */
-static double   snr_db       = 3;   /*!< \brief SNR in dB (101 for no noise, 100 for scan). */
-static int      print_output = 0;   /*!< \brief print output form (0 for detailed, 1 for one line, 2 for vector). */
+static uint16_t        K      = 56;  /*!< \brief Number of message bits (data and CRC). */
+static uint16_t        E      = 864; /*!< \brief Number of bits of the codeword after rate matching. */
+static uint8_t         nMax   = 9;   /*!< \brief Maximum \f$log_2(N)\f$, where \f$N\f$ is the codeword size.*/
+static polar_code_ibil bil    = polar_code_ibil::not_present; /*!< \brief If bil = 0 channel interleaver disabled. */
+static double          snr_db = 3;                            /*!< \brief SNR in dB (101 for no noise, 100 for scan). */
+static int print_output       = 0; /*!< \brief print output form (0 for detailed, 1 for one line, 2 for vector). */
 
 static std::mt19937 rgen(0);
 
@@ -81,7 +81,7 @@ void usage(char* prog)
   printf("\t-n nMax [Default %d]\n", nMax);
   printf("\t-k Message size [Default %d]\n", K);
   printf("\t-e Rate matching size [Default %d]\n", E);
-  printf("\t-i Bit interleaver indicator [Default %d]\n", bil);
+  printf("\t-i Bit interleaver indicator [Default %d]\n", (int)bil);
   printf("\t-s SNR [dB, Default %.2f dB] -- Use 100 for scan, and 101 for noiseless\n", snr_db);
   printf("\t-o Print output results [Default %d] -- Use 0 for detailed, Use 1 for 1 line, Use 2 for vector form\n",
          print_output);
@@ -106,7 +106,7 @@ void parse_args(int argc, char** argv)
         nMax = (uint8_t)strtol(optarg, nullptr, 10);
         break;
       case 'i':
-        bil = (int)strtol(optarg, nullptr, 10);
+        bil = strtol(optarg, nullptr, 10) ? polar_code_ibil::present : polar_code_ibil::not_present;
         break;
       case 's':
         snr_db = strtof(optarg, nullptr);
@@ -159,7 +159,7 @@ int main(int argc, char** argv)
   }
 
   // Set code
-  code->set(K, E, nMax);
+  code->set(K, E, nMax, bil);
 
   // Allocate TX data
   srsvec::aligned_vec<uint8_t> allocated_tx(code->get_N());
@@ -171,7 +171,7 @@ int main(int argc, char** argv)
 
   // Rate matching
   srsvec::aligned_vec<uint8_t> rate_matched_tx(E);
-  rate_matcher->rate_match(encoded_tx, rate_matched_tx, *code, bil);
+  rate_matcher->rate_match(encoded_tx, rate_matched_tx, *code);
 
   // Modulate
   srsvec::aligned_vec<int8_t> rate_matched_rx(E);
@@ -181,7 +181,7 @@ int main(int argc, char** argv)
 
   // Undo rate matching
   srsvec::aligned_vec<int8_t> encoded_rx(code->get_N());
-  rate_dematcher->rate_dematch(rate_matched_rx, encoded_rx, *code, bil);
+  rate_dematcher->rate_dematch(rate_matched_rx, encoded_rx, *code);
 
   // Decode Rx data
   srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());

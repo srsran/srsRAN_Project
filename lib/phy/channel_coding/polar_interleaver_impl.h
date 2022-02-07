@@ -24,7 +24,7 @@ private:
 
 public:
   ~polar_interleaver_impl() override = default;
-  void interleave(bit_buffer in, bit_buffer out, bool dir) override;
+  void interleave(const bit_buffer in, bit_buffer out, polar_interleaver_direction direction) override;
 };
 } // namespace srsgnb
 #endif // SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_

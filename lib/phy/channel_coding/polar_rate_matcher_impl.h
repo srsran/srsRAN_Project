@@ -26,7 +26,7 @@ public:
   polar_rate_matcher_impl()           = default;
   ~polar_rate_matcher_impl() override = default;
 
-  void rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code, unsigned int ibil) override;
+  void rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code) override;
 };
 } // namespace srsgnb
 

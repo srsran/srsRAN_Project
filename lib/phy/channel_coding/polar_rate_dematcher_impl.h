@@ -27,7 +27,7 @@ public:
   polar_rate_dematcher_impl()           = default;
   ~polar_rate_dematcher_impl() override = default;
 
-  void rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code, unsigned int ibil) override;
+  void rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code) override;
 };
 } // namespace srsgnb
 

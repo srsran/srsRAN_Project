@@ -407,7 +407,7 @@ bool cmpfunc(const uint16_t ai, const uint16_t bi)
   return (ai < bi);
 }
 
-void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const uint8_t nMax)
+void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const uint8_t nMax, polar_code_ibil ibil_)
 {
   // check polar code parameters
   set_code_params(K_, E_, nMax);
@@ -415,6 +415,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const ui
   span<const uint16_t> blk_interleaver = get_blk_interleaver(n);
   span<const uint16_t> mother_code     = get_mother_code(n);
 
+  ibil       = ibil_;
   F_set_size = N - K - nPC;
 
   // Frozen bits due to Puncturing and Shortening.
@@ -532,6 +533,10 @@ span<const uint16_t> polar_code_impl::get_mother_code() const
 span<const uint16_t> polar_code_impl::get_blk_interleaver() const
 {
   return get_blk_interleaver(n);
+}
+polar_code_ibil polar_code_impl::get_ibil() const
+{
+  return ibil;
 }
 
 std::unique_ptr<polar_code> srsgnb::create_polar_code()
