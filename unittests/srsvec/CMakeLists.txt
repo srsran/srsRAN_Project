@@ -14,3 +14,8 @@ add_test(srsvec_bit_test srsvec_bit_test)
 add_executable(srsvec_binary_test srsvec_binary_test.cpp)
 target_link_libraries(srsvec_binary_test srsvec)
 add_test(srsvec_binary_test srsvec_binary_test)
+
+
+add_executable(srsvec_sc_prod_test srsvec_sc_prod_test.cpp)
+target_link_libraries(srsvec_sc_prod_test srsvec)
+add_test(srsvec_sc_prod_test srsvec_sc_prod_test)
