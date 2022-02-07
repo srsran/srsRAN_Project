@@ -1,0 +1,4 @@
+
+add_executable(pss_processor_test pss_processor_test.cpp)
+target_link_libraries(pss_processor_test pss_processor)
+add_test(pss_processor_test pss_processor_test)
