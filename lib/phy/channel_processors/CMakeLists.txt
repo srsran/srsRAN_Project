@@ -6,8 +6,10 @@
 # the distribution.
 #
 
-add_subdirectory(channel_coding)
-add_subdirectory(channel_modulation)
-add_subdirectory(channel_processors)
-add_subdirectory(sequence_generators)
-add_subdirectory(signal_processors)
+set(SOURCES
+        pbch_encoder_impl.cpp
+        )
+
+include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/channel_processors)
+
+add_library(pbch_encoder STATIC ${SOURCES})
