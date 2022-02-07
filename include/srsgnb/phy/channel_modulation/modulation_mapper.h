@@ -20,7 +20,7 @@ enum class modulation_scheme {
 class modulation_mapper
 {
 public:
-  ~modulation_mapper() = default;
+  virtual ~modulation_mapper() = default;
 
   virtual void modulate(const bit_buffer& input, span<cf_t> symbols, modulation_scheme scheme) = 0;
 };

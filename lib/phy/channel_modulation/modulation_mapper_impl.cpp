@@ -34,6 +34,8 @@ modulation_mapper_impl::bpsk_table_s::bpsk_table_s()
   //    |  0
   //---------> I
   // 1  |
+  //
+  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.2]
   table.resize(2);
   table[0] = {BPSK_LEVEL, BPSK_LEVEL};
   table[1] = {-BPSK_LEVEL, -BPSK_LEVEL};
@@ -42,11 +44,13 @@ modulation_mapper_impl::bpsk_table_s::bpsk_table_s()
 
 modulation_mapper_impl::qpsk_table_s::qpsk_table_s()
 {
-  // LTE-QPSK constellation:
+  // QPSK constellation:
   //     Q
   // 10  |  00
   //-----------> I
   // 11  |  01
+  //
+  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.3]
   table.resize(4);
   table[0] = {QPSK_LEVEL, +QPSK_LEVEL};
   table[1] = {QPSK_LEVEL, -QPSK_LEVEL};
@@ -57,13 +61,15 @@ modulation_mapper_impl::qpsk_table_s::qpsk_table_s()
 
 modulation_mapper_impl::qam16_table_s::qam16_table_s()
 {
-  // LTE-16QAM constellation:
+  // 16QAM constellation:
   //                Q
   //  1011  1001  |   0001  0011
   //  1010  1000  |   0000  0010
   //---------------------------------> I
   //  1110    1100  |  0100  0110
   //  1111    1101  |  0101  0111
+  //
+  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.4]
   table.resize(16);
   table[0]  = {QAM16_LEVEL_1, +QAM16_LEVEL_1};
   table[1]  = {QAM16_LEVEL_1, +QAM16_LEVEL_2};
@@ -86,8 +92,8 @@ modulation_mapper_impl::qam16_table_s::qam16_table_s()
 
 modulation_mapper_impl::qam64_table_s::qam64_table_s()
 {
-  // LTE-64QAM constellation:
-  // see [3GPP TS 36.211 version 10.5.0 Release 10, Section 7.1.4]
+  // 64QAM constellation:
+  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.5]
   table.resize(64);
   table[0]  = {QAM64_LEVEL_2, +QAM64_LEVEL_2};
   table[1]  = {QAM64_LEVEL_2, +QAM64_LEVEL_1};
@@ -158,8 +164,8 @@ modulation_mapper_impl::qam64_table_s::qam64_table_s()
 
 modulation_mapper_impl::qam256_table_s::qam256_table_s()
 {
-  // LTE-256QAM constellation:
-  // see [3GPP TS 36.211 version 10.5.0 Release 10, Section 7.1.5]
+  // 256QAM constellation:
+  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.6]
   table.resize(256);
   for (uint32_t i = 0; i < 256; i++) {
     float offset = -1;

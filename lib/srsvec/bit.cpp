@@ -44,12 +44,12 @@ void srsgnb::srsvec::bit_unpack(byte_buffer& packed, bit_buffer& unpacked)
   }
 }
 
-uint32_t srsgnb::srsvec::bit_pack(bit_buffer& bits, unsigned nof_bits)
+unsigned srsgnb::srsvec::bit_pack(bit_buffer& bits, unsigned nof_bits)
 {
-  uint32_t value = 0;
+  unsigned value = 0;
 
   for (unsigned i = 0; i < nof_bits; i++) {
-    value |= (uint32_t)bits[i] << (nof_bits - i - 1U);
+    value |= (unsigned)bits[i] << (nof_bits - i - 1U);
   }
 
   // Advance pointer

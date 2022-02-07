@@ -23,7 +23,7 @@ namespace srsvec {
 void bit_unpack(unsigned value, bit_buffer& bits, unsigned nof_bits);
 void bit_unpack(byte_buffer& packed, bit_buffer& unpacked);
 
-uint32_t bit_pack(bit_buffer& bits, unsigned nof_bits);
+unsigned bit_pack(bit_buffer& bits, unsigned nof_bits);
 void     bit_pack(bit_buffer& unpacked, byte_buffer& packed);
 
 } // namespace srsvec
