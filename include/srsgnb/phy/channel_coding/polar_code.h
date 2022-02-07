@@ -51,7 +51,7 @@ public:
    * \param[in] nMax Maximum \f$log_2(N)\f$, where \f$N\f$ is the codeword size, nMax = 9 for downlink and nMax = 10,
    * for uplink. \return An integer: 0 if the function executes correctly, -1 otherwise.
    */
-  virtual void set(const uint16_t K, const uint16_t E, const uint8_t nMax) = 0;
+  virtual void set(uint16_t K, uint16_t E, uint8_t nMax) = 0;
 };
 
 std::unique_ptr<polar_code> create_polar_code();

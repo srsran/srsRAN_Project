@@ -134,11 +134,8 @@ private:
   void simplified_node(bit_buffer data_decoded);
 
 public:
-  polar_decoder_impl(std::unique_ptr<polar_encoder>& enc_, uint8_t nMax);
-  void decode(span<const int8_t>   input_llr,
-              bit_buffer           data_decoded,
-              const uint8_t        code_size_log,
-              span<const uint16_t> frozen_set) override;
+  polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
+  void decode(span<const int8_t> input_llr, bit_buffer data_decoded, const polar_code& code) override;
 };
 
 } // namespace srsgnb

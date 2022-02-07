@@ -137,7 +137,7 @@ public:
   span<const uint16_t> get_mother_code() const override;
   span<const uint16_t> get_blk_interleaver() const override;
 
-  void set(const uint16_t K, const uint16_t E, const uint8_t nMax) override;
+  void set(uint16_t K, uint16_t E, uint8_t nMax) override;
 };
 
 } // namespace srsgnb

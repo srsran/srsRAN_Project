@@ -307,7 +307,7 @@ uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,
   return o;
 }
 
-void srsgnb::polar_code_impl::set_code_params(const uint16_t K_, const uint16_t E_, const uint8_t nMax)
+void srsgnb::polar_code_impl::set_code_params(uint16_t K_, uint16_t E_, uint8_t nMax)
 {
   // Set internal K
   K = K_;

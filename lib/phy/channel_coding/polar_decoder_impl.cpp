@@ -142,7 +142,7 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
   }
 }
 
-polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder>& enc_, uint8_t nMax) :
+polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax) :
   tmp_node_type(nMax), enc(std::move(enc_))
 {
   param.code_stage_size.resize(nMax + 1);
@@ -351,12 +351,11 @@ void polar_decoder_impl::simplified_node(bit_buffer message)
   state.stage++; // to parent node.
 }
 
-void polar_decoder_impl::decode(span<const int8_t>   input_llr,
-                                bit_buffer           data_decoded,
-                                const uint8_t        code_size_log,
-                                span<const uint16_t> frozen_set)
+void polar_decoder_impl::decode(span<const int8_t> input_llr, bit_buffer data_decoded, const polar_code& code)
 {
-  init(input_llr, data_decoded, code_size_log, frozen_set.data(), frozen_set.size());
+  span<const uint16_t> frozen_set = code.get_F_set();
+
+  init(input_llr, data_decoded, code.get_n(), frozen_set.data(), frozen_set.size());
 
   simplified_node(data_decoded);
 }
@@ -364,5 +363,5 @@ void polar_decoder_impl::decode(span<const int8_t>   input_llr,
 std::unique_ptr<polar_decoder> srsgnb::create_polar_decoder_ssc(std::unique_ptr<polar_encoder> enc,
                                                                 unsigned                       code_size_log)
 {
-  return std::make_unique<polar_decoder_impl>(enc, code_size_log);
+  return std::make_unique<polar_decoder_impl>(std::move(enc), code_size_log);
 }
