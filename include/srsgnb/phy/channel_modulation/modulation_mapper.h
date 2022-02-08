@@ -1,7 +1,6 @@
 #ifndef SRSGNB_PHY_CHANNEL_MODULATION_MODULATION_MAPPER_H
 #define SRSGNB_PHY_CHANNEL_MODULATION_MODULATION_MAPPER_H
 
-#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include <complex>
@@ -22,7 +21,7 @@ class modulation_mapper
 public:
   virtual ~modulation_mapper() = default;
 
-  virtual void modulate(const bit_buffer& input, span<cf_t> symbols, modulation_scheme scheme) = 0;
+  virtual void modulate(span<const uint8_t> input, span<cf_t> symbols, modulation_scheme scheme) = 0;
 };
 
 std::unique_ptr<modulation_mapper> create_modulation_mapper();

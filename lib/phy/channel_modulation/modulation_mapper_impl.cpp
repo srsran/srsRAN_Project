@@ -193,19 +193,17 @@ const std::map<modulation_scheme, modulation_mapper_impl::modulator_table_s> mod
         {modulation_scheme::QAM256, modulation_mapper_impl::qam256_table_s()},
 };
 
-void modulation_mapper_impl::modulate(const srsgnb::bit_buffer&  input,
-                                      srsgnb::span<srsgnb::cf_t> symbols,
-                                      srsgnb::modulation_scheme  scheme)
+void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
+                                      srsgnb::span<srsgnb::cf_t>  symbols,
+                                      srsgnb::modulation_scheme   scheme)
 {
   const modulator_table_s& modulator = modulation_tables.at(scheme);
   const cf_t*              table     = modulator.table.data();
   unsigned                 Qm        = modulator.Qm;
 
-  span<uint8_t> b_ptr = input;
-
-  for (unsigned i = 0, j = 0; i < input.size(); i += Qm) {
+  for (unsigned i = 0, j = 0, len = input.size(); i < len; i += Qm) {
     // Pack input bits
-    unsigned idx = srsvec::bit_pack(b_ptr, Qm);
+    unsigned idx = srsvec::bit_pack(input, Qm);
 
     // Assign symbol from table
     symbols[j] = table[idx];

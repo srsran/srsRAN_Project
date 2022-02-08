@@ -12,6 +12,8 @@
  */
 
 #include "pbch_encoder_impl.h"
+#include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
 
@@ -110,9 +112,38 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
   }
 }
 
-void pbch_encoder_impl::crc_attach(const std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k)
+void pbch_encoder_impl::crc_attach(std::array<uint8_t, A>& a_prime, std::array<uint8_t, B>& b)
 {
-  unsigned checksum = crc24c->calculate_byte()
+  // Convert arrays to span
+  span<uint8_t> a_prime_span = {a_prime};
+  span<uint8_t> b_span       = {b};
+
+  // Copy data if pointers do not match
+  if (a_prime.data() != b.data()) {
+    srsvec::copy(b_span.subspan(0, A), a_prime_span);
+  }
+
+  // Calculate checksum
+  unsigned checksum = crc24c->calculate_bit(a_prime_span);
+
+  // unpack and attach checksum
+  span<uint8_t> p = b_span.last(CRC_LEN);
+  srsvec::bit_unpack(checksum, p, CRC_LEN);
+}
+
+void pbch_encoder_impl::channel_coding(std::array<uint8_t, K> c, std::array<uint8_t, N> d)
+{
+  // 5.3.1.1 Interleaving
+  std::array<uint8_t, K> c_prime;
+  interleaver->interleave(c, c_prime, polar_interleaver_direction::tx);
+
+  // Channel allocation
+  std::array<uint8_t, POLAR_N> allocated;
+  alloc->allocate(c_prime, allocated, *code);
+
+  // Polar encoding
+  std::array<uint8_t, POLAR_N> encoded;
+  encoder->encode(allocated, code->get_n(), encoded);
 }
 
 void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, std::array<uint8_t, 864>& encoded)
@@ -125,5 +156,7 @@ void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg,
   std::array<uint8_t, A> a_prime = {};
   scramble(pbch_msg, a, a_prime);
 
-
+  // CRC Attach
+  std::array<uint8_t, K> k = {};
+  crc_attach(a_prime, k);
 }

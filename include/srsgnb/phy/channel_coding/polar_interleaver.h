@@ -13,7 +13,8 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_H_
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_H_
 
-#include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/adt/span.h"
+#include <cstdint>
 #include <memory>
 
 namespace srsgnb {
@@ -34,7 +35,7 @@ public:
    * @param[out] out bit Output data
    * @param[in] dir Set to TX or RX for encoder or decoder
    */
-  virtual void interleave(const bit_buffer in, bit_buffer out, polar_interleaver_direction direction) = 0;
+  virtual void interleave(span<const uint8_t> in, span<uint8_t> out, polar_interleaver_direction direction) = 0;
 };
 
 std::unique_ptr<polar_interleaver> create_polar_interleaver();

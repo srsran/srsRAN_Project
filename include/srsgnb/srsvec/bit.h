@@ -13,18 +13,18 @@
 #ifndef SRSGNB_SRSVEC_BIT_H_
 #define SRSGNB_SRSVEC_BIT_H_
 
-#include "srsgnb/adt/bit_buffer.h"
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/span.h"
+#include <cstdint>
 
 namespace srsgnb {
 
 namespace srsvec {
 
-void bit_unpack(unsigned value, bit_buffer& bits, unsigned nof_bits);
-void bit_unpack(byte_buffer& packed, bit_buffer& unpacked);
+void bit_unpack(unsigned value, span<uint8_t>& bits, unsigned nof_bits);
+void bit_unpack(span<const uint8_t> packed, span<uint8_t> unpacked);
 
-unsigned bit_pack(bit_buffer& bits, unsigned nof_bits);
-void     bit_pack(bit_buffer& unpacked, byte_buffer& packed);
+unsigned bit_pack(span<const uint8_t>& bits, unsigned nof_bits);
+void     bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed);
 
 } // namespace srsvec
 } // namespace srsgnb

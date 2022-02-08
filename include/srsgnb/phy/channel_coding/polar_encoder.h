@@ -1,7 +1,8 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_ENCODER_H
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_ENCODER_H
 
-#include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/adt/span.h"
+#include <cstdint>
 #include <memory>
 
 namespace srsgnb {
@@ -19,7 +20,7 @@ public:
    *     the srsran_polar_encoder_t structure.
    * \param[out] output The encoder output vector.
    */
-  virtual void encode(const bit_buffer& input, unsigned code_size_log, bit_buffer& output) = 0;
+  virtual void encode(span<const uint8_t> input, unsigned code_size_log, span<uint8_t> output) = 0;
 };
 
 std::unique_ptr<polar_encoder> create_polar_encoder_pipelined(unsigned code_size_log);

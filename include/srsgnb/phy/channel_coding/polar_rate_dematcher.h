@@ -1,7 +1,8 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_DEMATCHER_H
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_DEMATCHER_H
 
-#include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/adt/span.h"
+#include <cstdint>
 #include <memory>
 
 namespace srsgnb {

@@ -50,7 +50,7 @@ public:
   explicit crc_calculator_impl(crc_generator_poly poly_);
 
   crc_calculator_checksum_t calculate_byte(const byte_buffer& input) override;
-  crc_calculator_checksum_t calculate_bit(const bit_buffer& input) override;
+  crc_calculator_checksum_t calculate_bit(span<uint8_t> input) override;
 };
 
 } // namespace srsgnb

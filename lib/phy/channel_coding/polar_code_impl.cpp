@@ -430,8 +430,8 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const ui
       } else {
         T = 9 * N / 16 - (E >> 2U);
       }
-      srsvec::copy(F_set.subspan(0, tmp_F_set_size),
-                   blk_interleaver.subspan(0, tmp_F_set_size)); // The first (less reliable) after interleaving
+      srsvec::copy(F_set.first(tmp_F_set_size),
+                   blk_interleaver.first(tmp_F_set_size)); // The first (less reliable) after interleaving
 
     } else { // Shortening
       srsvec::copy(F_set.subspan(0, tmp_F_set_size),

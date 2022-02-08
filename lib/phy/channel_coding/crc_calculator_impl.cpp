@@ -100,7 +100,7 @@ void crc_calculator_impl::reversecrcbit(unsigned nbits)
   crc = (crc & table.crcmask);
 }
 
-crc_calculator_checksum_t crc_calculator_impl::calculate_bit(const srsgnb::bit_buffer& input)
+crc_calculator_checksum_t crc_calculator_impl::calculate_bit(const srsgnb::span<uint8_t> input)
 {
   reset();
 

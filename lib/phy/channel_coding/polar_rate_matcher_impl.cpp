@@ -76,7 +76,7 @@ static void ch_interleaver_rm_tx(const uint8_t* e, uint8_t* f, const uint32_t E)
   }
 }
 
-void polar_rate_matcher_impl::rate_match(const bit_buffer& input, bit_buffer& output, const polar_code& code)
+void polar_rate_matcher_impl::rate_match(span<const uint8_t> input, span<uint8_t> output, const polar_code& code)
 {
   const span<const uint16_t> blk_interleaver = code.get_blk_interleaver();
   unsigned                   N               = code.get_N();

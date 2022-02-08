@@ -13,7 +13,11 @@
 #define SRSGNB_CHANNEL_PROCESSORS_PBCH_ENCODER_IMPL_H_
 
 #include "srsgnb/phy/channel_coding/crc_calculator.h"
+#include "srsgnb/phy/channel_coding/polar_allocator.h"
+#include "srsgnb/phy/channel_coding/polar_code.h"
+#include "srsgnb/phy/channel_coding/polar_encoder.h"
 #include "srsgnb/phy/channel_coding/polar_interleaver.h"
+#include "srsgnb/phy/channel_coding/polar_rate_matcher.h"
 #include "srsgnb/phy/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/sequence_generators/pseudo_random_generator.h"
 
@@ -22,9 +26,13 @@ namespace srsgnb {
 class pbch_encoder_impl : public pbch_encoder
 {
 private:
-  std::unique_ptr<polar_interleaver>       interleaver;
   std::unique_ptr<crc_calculator>          crc24c;
   std::unique_ptr<pseudo_random_generator> scrambler;
+  std::unique_ptr<polar_interleaver>       interleaver;
+  std::unique_ptr<polar_allocator>         alloc;
+  std::unique_ptr<polar_code>              code;
+  std::unique_ptr<polar_encoder>           encoder;
+  std::unique_ptr<polar_rate_matcher>      rm;
 
   /**
    * @brief Implements TS 38.312 section 7.1.1 PBCH payload generation
@@ -44,11 +52,18 @@ private:
                 std::array<uint8_t, A>&                 a_prime);
 
   /**
-   * @brief Implements TS 38.312 section 7.1.2 Scrambling
+   * @brief Implements TS 38.312 section 7.1.3 Transport block CRC attachment
    * @param a_prime Payload after scrambling
    * @param k Data with CRC attached
    */
-  void crc_attach(const std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k);
+  void crc_attach(std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k);
+
+  /**
+   * @brief Implements TS 38.312 section 7.1.4 Scrambling
+   * @param a_prime Payload after scrambling
+   * @param k Data with CRC attached
+   */
+  void channel_coding(std::array<uint8_t, K> c, std::array<uint8_t, N> d);
 
 public:
   struct args_t {

@@ -1,7 +1,6 @@
 #ifndef SRSGNB_PHY_PBCH_ENCODER_H
 #define SRSGNB_PHY_PBCH_ENCODER_H
 
-#include "srsgnb/adt/bit_buffer.h"
 #include <array>
 
 namespace srsgnb {
@@ -12,8 +11,12 @@ public:
   static const unsigned PAYLOAD_SIZE = 24;
   static const unsigned A            = (PAYLOAD_SIZE + 8);
   static const unsigned CRC_LEN      = 24;
-  static const unsigned K            = (A + CRC_LEN);
-  static const unsigned E            = 864;
+  static const unsigned B            = (A + CRC_LEN);
+  static const unsigned K            = B;
+  static const unsigned N            = 864;
+  static const unsigned E            = N;
+  static const unsigned POLAR_N_MAX  = 9;
+  static const unsigned POLAR_N      = (1U << POLAR_N_MAX);
 
   /**
    * @brief Describes the NR PBCH message transmission

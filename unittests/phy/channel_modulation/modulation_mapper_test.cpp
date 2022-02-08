@@ -21,7 +21,7 @@ using namespace srsgnb;
 
 static const float assert_max_err = 1e-6;
 
-static void modulate_generic(const bit_buffer& bits, span<cf_t> symbols, modulation_scheme scheme)
+static void modulate_generic(const span<uint8_t>& bits, span<cf_t> symbols, modulation_scheme scheme)
 {
   unsigned Qm    = 0;
   float    scale = 0;

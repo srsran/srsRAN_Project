@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_CODE_H
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_CODE_H
 
-#include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/adt/span.h"
 #include <cstdint>
 #include <memory>
 

@@ -29,7 +29,7 @@ void test_unpack(unsigned N)
   srsvec::aligned_vec<uint8_t> unpacked(N);
 
   // Unpack
-  bit_buffer bit_buf = unpacked;
+  span<uint8_t> bit_buf = unpacked;
   srsvec::bit_unpack(value, bit_buf, N);
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
@@ -50,7 +50,7 @@ void test_unpack_vector(unsigned N)
   std::uniform_int_distribution<unsigned> dist(0, UINT8_MAX);
 
   // Create random value to unpack
-  byte_buffer packed(nbytes);
+  srsvec::aligned_vec<uint8_t> packed(nbytes);
   for (uint8_t& value : packed) {
     value = dist(rgen);
   }
@@ -62,7 +62,7 @@ void test_unpack_vector(unsigned N)
   srsvec::bit_unpack(packed, unpacked);
 
   // Assert each bit
-  for (unsigned i = 0; i != nbits; i++) {
+  for (unsigned i = 0; i != nbits; ++i) {
     unsigned byte_idx = i / 8;
     unsigned bit_idx  = i % 8;
     uint8_t  gold     = ((unsigned)packed[byte_idx] >> (7U - bit_idx)) & 1U;
@@ -81,15 +81,15 @@ void test_pack(unsigned N)
   }
 
   // Pack
-  bit_buffer bit_buf = unpacked;
-  unsigned   value   = srsvec::bit_pack(bit_buf, N);
+  span<const uint8_t> bit_buf = unpacked;
+  unsigned            value   = srsvec::bit_pack(bit_buf, N);
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
   assert(unpacked.size() == N);
   assert(bit_buf.empty());
 
   // Assert each bit
-  for (unsigned i = 0; i != N; i++) {
+  for (unsigned i = 0; i != N; ++i) {
     uint8_t gold = (value >> (N - 1 - i)) & 1U;
     assert(gold == unpacked[i]);
   }
@@ -108,7 +108,7 @@ void test_pack_vector(unsigned N)
   }
 
   // Create destination
-  byte_buffer packed(nbytes);
+  srsvec::aligned_vec<uint8_t> packed(nbytes);
 
   // Unpack
   srsvec::bit_pack(unpacked, packed);

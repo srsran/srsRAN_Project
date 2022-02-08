@@ -22,7 +22,7 @@ class polar_allocator_impl : public polar_allocator
 public:
   polar_allocator_impl()  = default;
   ~polar_allocator_impl() = default;
-  void allocate(bit_buffer& message, bit_buffer& input_encoder, const polar_code& code) override;
+  void allocate(span<const uint8_t> message, span<uint8_t> input_encoder, const polar_code& code) override;
 };
 
 } // namespace srsgnb

@@ -15,7 +15,9 @@
 
 using namespace srsgnb;
 
-void polar_deallocator_impl::deallocate(bit_buffer& output_decoder, bit_buffer& message, const polar_code& code)
+void polar_deallocator_impl::deallocate(span<const uint8_t> output_decoder,
+                                        span<uint8_t>       message,
+                                        const polar_code&   code)
 {
   uint16_t             K      = code.get_K();
   uint16_t             nPC    = code.get_nPC();

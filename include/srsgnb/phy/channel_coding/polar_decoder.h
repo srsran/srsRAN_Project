@@ -1,7 +1,6 @@
 #ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_DECODER_H
 #define SRSGNB_PHY_CHANNEL_CODING_POLAR_DECODER_H
 
-#include "srsgnb/adt/bit_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/channel_coding/polar_code.h"
 #include "srsgnb/phy/channel_coding/polar_encoder.h"
@@ -22,7 +21,7 @@ public:
    * \param[in] code Polar code
    * \return An integer: 0 if the function executes correctly, -1 otherwise.
    */
-  virtual void decode(span<const int8_t> input_llr, bit_buffer data_decoded, const polar_code& code) = 0;
+  virtual void decode(span<const int8_t> input_llr, span<uint8_t> data_decoded, const polar_code& code) = 0;
 };
 
 /*!

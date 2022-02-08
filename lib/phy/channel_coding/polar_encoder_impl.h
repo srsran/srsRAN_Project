@@ -32,7 +32,7 @@ private:
 public:
   polar_encoder_impl(unsigned code_size_log);
   ~polar_encoder_impl() = default;
-  void encode(const bit_buffer& input, unsigned code_size_log, bit_buffer& output) override;
+  void encode(span<const uint8_t> input, unsigned code_size_log, span<uint8_t> output) override;
 };
 
 } // namespace srsgnb

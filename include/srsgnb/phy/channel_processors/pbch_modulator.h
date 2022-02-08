@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_PBCH_MODULATOR_H
 #define SRSGNB_PHY_PBCH_MODULATOR_H
 
-#include "srsgnb/adt/bit_buffer.h"
+#include "srsgnb/adt/span.h"
 #include <array>
 
 namespace srsgnb {
@@ -9,6 +9,8 @@ namespace srsgnb {
 class pbch_modulator
 {
 public:
+  virtual ~pbch_modulator() = default;
+
   /**
    * @brief Modulates a PBCH message
    * @param[in] bits Input bits

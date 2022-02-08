@@ -46,7 +46,7 @@ crc_calculator_checksum_t crc_generic_calculator_byte(const srsgnb::byte_buffer&
   return static_cast<crc_calculator_checksum_t>(remainder & (highbit - 1));
 }
 
-crc_calculator_checksum_t crc_generic_calculator_bit(const srsgnb::bit_buffer& data, unsigned poly, unsigned order)
+crc_calculator_checksum_t crc_generic_calculator_bit(const srsgnb::span<uint8_t>& data, unsigned poly, unsigned order)
 {
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;

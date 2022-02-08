@@ -68,7 +68,7 @@ private:
   static const std::map<modulation_scheme, modulator_table_s> modulation_tables;
 
 public:
-  void modulate(const bit_buffer& input, span<cf_t> symbols, modulation_scheme scheme) override;
+  void modulate(span<const uint8_t> input, span<cf_t> symbols, modulation_scheme scheme) override;
 };
 
 } // namespace srsgnb

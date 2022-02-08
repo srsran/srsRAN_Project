@@ -94,7 +94,7 @@ private:
   std::unique_ptr<polar_encoder> enc;           /*!< \brief Pointer to a srsran_polar_encoder_t. */
 
   void init(span<const int8_t> input_llr,
-            bit_buffer         data_decoded,
+            span<uint8_t>         data_decoded,
             const uint8_t      code_size_log,
             const uint16_t*    frozen_set,
             const uint16_t     frozen_set_size);
@@ -112,7 +112,7 @@ private:
    * ::RATE_1 nodes also update message bits vector.
    *
    */
-  void rate_1_node(bit_buffer data_decoded);
+  void rate_1_node(span<uint8_t> data_decoded);
 
   /*!
    * ::RATE_R nodes at stage \f$ s \f$ return the associated \f$2^s\f$ decoded bit by calling
@@ -123,7 +123,7 @@ private:
    * updates \a estbits memory space for stage \f$(s + 1)\f$.
    *
    */
-  void rate_r_node(bit_buffer data_decoded);
+  void rate_r_node(span<uint8_t> data_decoded);
 
   /*!
    * Switches between the different types of node (::RATE_1, ::RATE_0, ::RATE_R) for the SSC algorithm.
@@ -131,11 +131,11 @@ private:
    * return the associated \f$2^s\f$ estimated bits.
    *
    */
-  void simplified_node(bit_buffer data_decoded);
+  void simplified_node(span<uint8_t> data_decoded);
 
 public:
   polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
-  void decode(span<const int8_t> input_llr, bit_buffer data_decoded, const polar_code& code) override;
+  void decode(span<const int8_t> input_llr, span<uint8_t> data_decoded, const polar_code& code) override;
 };
 
 } // namespace srsgnb

@@ -12,11 +12,12 @@
 
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
+#include <cassert>
 
 using namespace srsgnb;
 using namespace srsvec;
 
-void srsgnb::srsvec::bit_unpack(unsigned value, bit_buffer& bits, unsigned nof_bits)
+void srsgnb::srsvec::bit_unpack(unsigned value, span<uint8_t>& bits, unsigned nof_bits)
 {
   assert(bits.size() >= nof_bits);
 
@@ -27,12 +28,12 @@ void srsgnb::srsvec::bit_unpack(unsigned value, bit_buffer& bits, unsigned nof_b
   bits = bits.subspan(nof_bits, bits.size() - nof_bits);
 }
 
-void srsgnb::srsvec::bit_unpack(byte_buffer& packed, bit_buffer& unpacked)
+void srsgnb::srsvec::bit_unpack(span<const uint8_t> packed, span<uint8_t> unpacked)
 {
-  unsigned   nbits  = unpacked.size();
-  unsigned   nbytes = packed.size();
-  unsigned   i;
-  bit_buffer unpacked_tmp = unpacked;
+  unsigned      nbits  = unpacked.size();
+  unsigned      nbytes = packed.size();
+  unsigned      i;
+  span<uint8_t> unpacked_tmp = unpacked;
 
   assert(divide_ceil(nbits, 8) == nbytes);
 
@@ -44,7 +45,7 @@ void srsgnb::srsvec::bit_unpack(byte_buffer& packed, bit_buffer& unpacked)
   }
 }
 
-unsigned srsgnb::srsvec::bit_pack(bit_buffer& bits, unsigned nof_bits)
+unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
   unsigned value = 0;
 
@@ -53,18 +54,18 @@ unsigned srsgnb::srsvec::bit_pack(bit_buffer& bits, unsigned nof_bits)
   }
 
   // Advance pointer
-  bits = bits.subspan(nof_bits, bits.size() - nof_bits);
+  bits = bits.last(bits.size() - nof_bits);
 
   return value;
 }
 
-void srsgnb::srsvec::bit_pack(bit_buffer& unpacked, byte_buffer& packed)
+void srsgnb::srsvec::bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed)
 {
   unsigned nbits  = unpacked.size();
   unsigned nbytes = packed.size();
   unsigned i;
 
-  bit_buffer unpack_tmp = unpacked;
+  span<const uint8_t> unpack_tmp = unpacked;
 
   assert(divide_ceil(nbits, 8) == nbytes);
 

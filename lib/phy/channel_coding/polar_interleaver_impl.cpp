@@ -24,7 +24,9 @@ const std::array<uint8_t, polar_interleaver_impl::K_MAX_IL> polar_interleaver_im
     136, 142, 12,  17,  23,  37,  48,  75,  80,  86,  137, 143, 13,  18,  38,  144, 39,  145, 40,  146, 41,
     147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163};
 
-void polar_interleaver_impl::interleave(const bit_buffer in, bit_buffer out, polar_interleaver_direction direction)
+void polar_interleaver_impl::interleave(span<const uint8_t>         in,
+                                        span<uint8_t>               out,
+                                        polar_interleaver_direction direction)
 {
   assert(in.size() == out.size());
   unsigned K = in.size();

@@ -22,7 +22,7 @@ class polar_deallocator_impl : public polar_deallocator
 public:
   polar_deallocator_impl()  = default;
   ~polar_deallocator_impl() = default;
-  void deallocate(bit_buffer& output_encoder, bit_buffer& message, const polar_code& code) override;
+  void deallocate(span<const uint8_t> output_encoder, span<uint8_t> message, const polar_code& code) override;
 };
 
 } // namespace srsgnb
