@@ -26,6 +26,7 @@ private:
   struct crc_table_s : public std::array<uint64_t, 256> {
     unsigned order;
     uint64_t crcmask;
+    uint64_t polynom;
 
     crc_table_s(unsigned poly, unsigned order_);
   };
@@ -43,12 +44,13 @@ private:
   void                      reset();
   void                      put_byte(unsigned char byte);
   crc_calculator_checksum_t get_checksum() const;
+  void                      reversecrcbit(unsigned nbits);
 
 public:
   explicit crc_calculator_impl(crc_generator_poly poly_);
 
-  crc_calculator_checksum_t calculate(const byte_buffer& input) override;
-  crc_calculator_checksum_t calculate(const bit_buffer& input) override;
+  crc_calculator_checksum_t calculate_byte(const byte_buffer& input) override;
+  crc_calculator_checksum_t calculate_bit(const bit_buffer& input) override;
 };
 
 } // namespace srsgnb

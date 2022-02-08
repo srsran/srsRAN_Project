@@ -23,8 +23,8 @@ const std::map<crc_generator_poly, crc_calculator_impl::crc_table_s> crc_calcula
     {crc_generator_poly::CRC11, crc_calculator_impl::crc_table_s(0xE21, 11)},
     {crc_generator_poly::CRC6, crc_calculator_impl::crc_table_s(0x61, 6)}};
 
-crc_calculator_impl::crc_table_s::crc_table_s(unsigned polynom, unsigned order_) :
-  order(order_), crcmask(((((uint64_t)1UL << (order - 1UL)) - 1UL) << 1UL) | 1UL)
+crc_calculator_impl::crc_table_s::crc_table_s(unsigned polynom_, unsigned order_) :
+  order(order_), crcmask(((((uint64_t)1UL << (order - 1UL)) - 1UL) << 1UL) | 1UL), polynom(polynom_)
 {
   unsigned pad        = (order < 8) ? (8 - order) : 0;
   unsigned ord        = order + pad - 8;
@@ -75,7 +75,7 @@ crc_calculator_checksum_t crc_calculator_impl::get_checksum() const
   return static_cast<crc_calculator_checksum_t>(crc & crcmask);
 }
 
-crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate(const srsgnb::byte_buffer& input)
+crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate_byte(const srsgnb::byte_buffer& input)
 {
   reset();
 
@@ -87,35 +87,44 @@ crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate(const srsgnb::b
   return get_checksum();
 }
 
-crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate(const srsgnb::bit_buffer& input)
+void crc_calculator_impl::reversecrcbit(unsigned nbits)
+{
+  uint64_t m, rmask = 0x1;
+
+  for (m = 0; m < nbits; m++) {
+    if ((rmask & crc) == 0x01)
+      crc = (crc ^ table.polynom) >> 1;
+    else
+      crc = crc >> 1;
+  }
+  crc = (crc & table.crcmask);
+}
+
+crc_calculator_checksum_t crc_calculator_impl::calculate_bit(const srsgnb::bit_buffer& input)
 {
   reset();
 
-  int           i, k, a = 0;
-  span<uint8_t> pter = input;
-
-  srsran_crc_set_init(h, 0);
+  int a = 0;
 
   // Pack bits into bytes
   unsigned nbytes = input.size() / 8;
-  unsigned res8   = (input.size() - (nbytes / 8));
+  unsigned res8   = input.size() % 8;
   if (res8 > 0) {
     a = 1;
   }
 
   // Calculate CRC
-  for (i = 0; i < nbytes + a; i++) {
-    pter = (uint8_t*)(data + 8 * i);
-    uint8_t byte;
+  for (unsigned i = 0; i < nbytes + a; i++) {
+    uint8_t byte = 0x00;
     if (i == nbytes) {
-      byte = 0x00;
-      for (k = 0; k < res8; k++) {
-        byte |= ((uint8_t) * (pter + k)) << (7 - k);
+      for (unsigned k = 0; k < res8; k++) {
+        byte |= (uint8_t)((input[i * 8 + k]) << (7U - k));
       }
     } else {
+      span<uint8_t> pter = input.subspan(8U * i, 8);
 #ifdef HAVE_SSE
       // Get 8 Bit
-      __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter), _mm_set1_pi8(0));
+      __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter.data()), _mm_set1_pi8(0));
 
       // Reverse
       mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
@@ -128,11 +137,12 @@ crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate(const srsgnb::b
     }
     put_byte(byte);
   }
-  crc = (uint32_t)srsran_crc_checksum_get(h);
+
+  crc = (uint32_t)get_checksum();
 
   // Reverse CRC res8 positions
   if (a == 1) {
-    crc = reversecrcbit(crc, 8 - res8, h);
+    reversecrcbit(8 - res8);
   }
 
   return get_checksum();

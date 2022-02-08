@@ -112,7 +112,7 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
 
 void pbch_encoder_impl::crc_attach(const std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k)
 {
-  unsigned checksum = crc24c->calculate()
+  unsigned checksum = crc24c->calculate_byte()
 }
 
 void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, std::array<uint8_t, 864>& encoded)

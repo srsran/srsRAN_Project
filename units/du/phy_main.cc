@@ -40,7 +40,7 @@ public:
 class crc_calculator_impl : public crc_calculator
 {
 public:
-  crc_calculator_checksum_t calculate(const byte_buffer& data) override
+  crc_calculator_checksum_t calculate_byte(const byte_buffer& data) override
   {
     printf("[CRC] Calculating CRC for input of %u bytes\n", (unsigned)data.size());
     return data[0] ^ 0xAAU;
@@ -165,7 +165,7 @@ public:
     printf("[PDSCH_ENCODER] Received TB of size %u bytes\n", (unsigned)input.size());
 
     // As this is a stub implementation i'm skipping CRC polynom or LDPC BG selection.
-    unsigned crc         = crc_calc.calculate(input);
+    unsigned crc         = crc_calc.calculate_byte(input);
     auto     tb_with_crc = input;
     tb_with_crc.push_back(crc);
 
