@@ -62,21 +62,21 @@ public:
    * @param in Input data
    * @param out Output data
    */
-  virtual void apply_xor(const byte_buffer& in, byte_buffer& out) = 0;
+  virtual void apply_xor_byte(span<const uint8_t> in, span<uint8_t> out) = 0;
 
   /**
    * @brief Apply XOR sequence to a bit buffer
    * @param in Input data
    * @param out Output data
    */
-  virtual void apply_xor(span<uint8_t> in, span<uint8_t> out) = 0;
+  virtual void apply_xor_bit(span<const uint8_t> in, span<uint8_t> out) = 0;
 
   /**
    * @brief Apply XOR sequence to a signed 8-bit buffer
    * @param in Input data
    * @param out Output data
    */
-  virtual void apply_xor(span<int8_t> in, span<int8_t> out) = 0;
+  virtual void apply_xor(span<const int8_t> in, span<int8_t> out) = 0;
 
   /**
    * @brief Generate a pseudo random sequence based on the internal state

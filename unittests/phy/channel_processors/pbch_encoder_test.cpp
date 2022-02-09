@@ -10,4 +10,20 @@
  *
  */
 
-int main() {}
+#include "srsgnb/phy/channel_processors/pbch_encoder.h"
+
+using namespace srsgnb;
+
+int main()
+{
+  std::unique_ptr<pbch_encoder> encoder = create_pbch_encoder();
+
+  // Create PBCH message
+  pbch_encoder::pbch_msg_t pbch_msg = {};
+
+  // Encode message
+  std::array<uint8_t, pbch_encoder::E> encoded_data;
+  encoder->encode(pbch_msg, encoded_data);
+
+  return 0;
+}

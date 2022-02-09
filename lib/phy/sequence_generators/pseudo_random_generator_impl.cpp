@@ -153,7 +153,7 @@ void pseudo_random_generator_impl::generate(float value, span<float> out)
     x2 = step_x2(x2);
   }
 }
-void pseudo_random_generator_impl::apply_xor(const byte_buffer& in, byte_buffer& out)
+void pseudo_random_generator_impl::apply_xor_byte(span<const uint8_t> in, span<uint8_t> out)
 {
   assert(in.size() == out.size());
 
@@ -265,7 +265,7 @@ void pseudo_random_generator_impl::apply_xor(const byte_buffer& in, byte_buffer&
 #endif // SEQUENCE_PAR_BITS % 8 == 0
 }
 
-void pseudo_random_generator_impl::apply_xor(span<uint8_t> in, span<uint8_t> out)
+void pseudo_random_generator_impl::apply_xor_bit(span<const uint8_t> in, span<uint8_t> out)
 {
   assert(in.size() == out.size());
 
@@ -323,7 +323,7 @@ void pseudo_random_generator_impl::apply_xor(span<uint8_t> in, span<uint8_t> out
     x2 = step_x2(x2);
   }
 }
-void pseudo_random_generator_impl::apply_xor(span<int8_t> in, span<int8_t> out)
+void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t> out)
 {
   assert(in.size() == out.size());
 

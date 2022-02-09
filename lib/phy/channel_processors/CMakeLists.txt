@@ -13,3 +13,4 @@ set(SOURCES
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/channel_processors)
 
 add_library(pbch_encoder STATIC ${SOURCES})
+target_link_libraries(pbch_encoder polar_encoder polar_code pseudo_random_generator crc_calculator srsvec)

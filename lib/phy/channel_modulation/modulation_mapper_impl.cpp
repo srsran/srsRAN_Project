@@ -201,16 +201,17 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
   const cf_t*              table     = modulator.table.data();
   unsigned                 Qm        = modulator.Qm;
 
-  for (unsigned i = 0, j = 0, len = input.size(); i < len; i += Qm) {
+  assert(input.size() * Qm == symbols.size());
+
+  for (cf_t& symbol : symbols) {
     // Pack input bits
     unsigned idx = srsvec::bit_pack(input, Qm);
 
     // Assign symbol from table
-    symbols[j] = table[idx];
-
-    // Increment symbol
-    j++;
+    symbol = table[idx];
   }
+
+  assert(input.size() == 0);
 }
 
 std::unique_ptr<modulation_mapper> srsgnb::create_modulation_mapper()

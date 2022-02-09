@@ -17,7 +17,17 @@
 
 using namespace srsgnb;
 
-pbch_encoder_impl::pbch_encoder_impl(args_t& args) : crc24c(std::move(args.crc24c)) {}
+pbch_encoder_impl::pbch_encoder_impl() :
+  crc24c(create_crc_calculator(crc_generator_poly::CRC24C)),
+  scrambler(create_pseudo_random()),
+  interleaver(create_polar_interleaver()),
+  alloc(create_polar_allocator()),
+  code(create_polar_code()),
+  encoder(create_polar_encoder_pipelined(POLAR_N_MAX)),
+  rm(create_polar_rate_matcher())
+{
+  code->set(K, E, POLAR_N_MAX, polar_code_ibil::not_present);
+}
 
 /*
  *  Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G ( j )
@@ -91,7 +101,7 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
 
   // Generate actual sequence
   std::array<uint8_t, A> c = {};
-  scrambler->apply_xor(c, c);
+  scrambler->apply_xor_bit(c, c);
 
   while (i < A) {
     uint8_t s_i = c[j];
@@ -131,7 +141,7 @@ void pbch_encoder_impl::crc_attach(std::array<uint8_t, A>& a_prime, std::array<u
   srsvec::bit_unpack(checksum, p, CRC_LEN);
 }
 
-void pbch_encoder_impl::channel_coding(std::array<uint8_t, K> c, std::array<uint8_t, N> d)
+void pbch_encoder_impl::channel_coding(std::array<uint8_t, K>& c, std::array<uint8_t, POLAR_N>& d)
 {
   // 5.3.1.1 Interleaving
   std::array<uint8_t, K> c_prime;
@@ -142,11 +152,15 @@ void pbch_encoder_impl::channel_coding(std::array<uint8_t, K> c, std::array<uint
   alloc->allocate(c_prime, allocated, *code);
 
   // Polar encoding
-  std::array<uint8_t, POLAR_N> encoded;
-  encoder->encode(allocated, code->get_n(), encoded);
+  encoder->encode(allocated, code->get_n(), d);
 }
 
-void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, std::array<uint8_t, 864>& encoded)
+void pbch_encoder_impl::rate_matching(std::array<uint8_t, POLAR_N>& d, std::array<uint8_t, E>& f)
+{
+  rm->rate_match(d, f, *code);
+}
+
+void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, std::array<uint8_t, E>& f)
 {
   // PBCH payload generation
   std::array<uint8_t, A> a = {};
@@ -159,4 +173,16 @@ void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg,
   // CRC Attach
   std::array<uint8_t, K> k = {};
   crc_attach(a_prime, k);
+
+  // Channel coding
+  std::array<uint8_t, POLAR_N> d = {};
+  channel_coding(k, d);
+
+  // Rate matching
+  rate_matching(d, f);
+}
+
+std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()
+{
+  return std::make_unique<pbch_encoder_impl>();
 }

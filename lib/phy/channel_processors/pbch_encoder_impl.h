@@ -59,22 +59,25 @@ private:
   void crc_attach(std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k);
 
   /**
-   * @brief Implements TS 38.312 section 7.1.4 Scrambling
+   * @brief Implements TS 38.312 section 7.1.4 Channel coding
+   * @param c Payload after scrambling
+   * @param d Data with CRC attached
+   */
+  void channel_coding(std::array<uint8_t, K>& c, std::array<uint8_t, POLAR_N>& d);
+
+  /**
+   * @brief Implements TS 38.312 section 7.1.5 Rate matching
    * @param a_prime Payload after scrambling
    * @param k Data with CRC attached
    */
-  void channel_coding(std::array<uint8_t, K> c, std::array<uint8_t, N> d);
+  void rate_matching(std::array<uint8_t, POLAR_N>& d, std::array<uint8_t, E>& f);
 
 public:
-  struct args_t {
-    std::unique_ptr<crc_calculator> crc24c;
-  };
-
-  explicit pbch_encoder_impl(args_t& args);
+  explicit pbch_encoder_impl();
 
   ~pbch_encoder_impl() = default;
 
-  void encode(const pbch_msg_t& pbch_msg, std::array<uint8_t, 864>& encoded) override;
+  void encode(const pbch_msg_t& pbch_msg, std::array<uint8_t, E>& encoded) override;
 };
 
 } // namespace srsgnb

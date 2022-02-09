@@ -75,7 +75,7 @@ crc_calculator_checksum_t crc_calculator_impl::get_checksum() const
   return static_cast<crc_calculator_checksum_t>(crc & crcmask);
 }
 
-crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate_byte(const srsgnb::byte_buffer& input)
+crc_calculator_checksum_t srsgnb::crc_calculator_impl::calculate_byte(span<const uint8_t> input)
 {
   reset();
 
@@ -100,7 +100,7 @@ void crc_calculator_impl::reversecrcbit(unsigned nbits)
   crc = (crc & table.crcmask);
 }
 
-crc_calculator_checksum_t crc_calculator_impl::calculate_bit(const srsgnb::span<uint8_t> input)
+crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const uint8_t> input)
 {
   reset();
 
@@ -121,7 +121,7 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(const srsgnb::span<
         byte |= (uint8_t)((input[i * 8 + k]) << (7U - k));
       }
     } else {
-      span<uint8_t> pter = input.subspan(8U * i, 8);
+      span<const uint8_t> pter = input.subspan(8U * i, 8);
 #ifdef HAVE_SSE
       // Get 8 Bit
       __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter.data()), _mm_set1_pi8(0));
