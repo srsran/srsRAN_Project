@@ -30,14 +30,14 @@ public:
    */
   struct pbch_msg_t {
     unsigned N_id;    ///< Physical cell identifier
-    unsigned ssb_idx; ///< SSB candidate index, up to 4 LSB significant
+    unsigned ssb_idx; ///< SSB candidate index
     unsigned Lmax;    ///< Number of SSB opportunities, described in TS 38.213 4.1 ...
     bool     hrf;     ///< Half Radio Frame bit
 
     // BCH payload
-    std::array<uint8_t, A> payload;   ///< Actual PBCH payload provided by higher layers
-    unsigned               sfn_4lsb;  ///< SFN 4 LSB
-    unsigned               k_ssb_msb; ///< Subcarrier offset MSB described in TS 38.211 7.4.3.1
+    std::array<uint8_t, A> payload; ///< Actual PBCH payload provided by higher layers
+    unsigned               sfn;     ///< SFN
+    unsigned               k_ssb;   ///< Subcarrier offset described in TS 38.211 7.4.3.1
   };
 
   virtual ~pbch_encoder() = default;

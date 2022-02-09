@@ -10,6 +10,7 @@
  *
  */
 
+#include "pbch_encode_test_data.h"
 #include "srsgnb/phy/channel_processors/pbch_encoder.h"
 
 using namespace srsgnb;
@@ -18,12 +19,15 @@ int main()
 {
   std::unique_ptr<pbch_encoder> encoder = create_pbch_encoder();
 
-  // Create PBCH message
-  pbch_encoder::pbch_msg_t pbch_msg = {};
+  for (const test_case_t& test_case : pbch_encode_test_data) {
+    // Encode message
+    std::array<uint8_t, pbch_encoder::E> encoded_data = {};
+    encoder->encode(test_case.pbch_msg, encoded_data);
 
-  // Encode message
-  std::array<uint8_t, pbch_encoder::E> encoded_data;
-  encoder->encode(pbch_msg, encoded_data);
-
+    // Assert encoded data
+    for (unsigned i = 0; i != pbch_encoder::E; ++i) {
+      assert(encoded_data[i] == test_case.endoded[i]);
+    }
+  }
   return 0;
 }
