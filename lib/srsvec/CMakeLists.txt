@@ -10,6 +10,7 @@ set(SOURCES
         add.cpp
         aligned_vec.cpp
         bit.cpp
+        prod.cpp
         sc_prod.cpp
         )
 
