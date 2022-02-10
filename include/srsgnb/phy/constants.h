@@ -14,7 +14,7 @@ static const unsigned NOF_NID_1 = 336;
  * @brief Number of NR N_id_2 Physical Cell Identifier (PCI) as described in TS 38.211 section 7.4.2.1 Physical-layer
  * cell identities
  */
-static const unsigned NOF_NID_2 = 336;
+static const unsigned NOF_NID_2 = 3;
 
 /**
  * @brief Number of NR N_id Physical Cell Identifier (PCI) as described in TS 38.211 section 7.4.2.1 Physical-layer
