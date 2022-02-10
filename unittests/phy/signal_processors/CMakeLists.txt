@@ -1,4 +1,8 @@
 
 add_executable(pss_processor_test pss_processor_test.cpp)
-target_link_libraries(pss_processor_test pss_processor srsvec)
+target_link_libraries(pss_processor_test signal_processors srsvec)
 add_test(pss_processor_test pss_processor_test)
+
+add_executable(sss_processor_test sss_processor_test.cpp)
+target_link_libraries(sss_processor_test signal_processors srsvec)
+add_test(sss_processor_test sss_processor_test)

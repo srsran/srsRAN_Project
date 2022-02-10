@@ -8,8 +8,9 @@
 
 set(SOURCES
         pss_processor_impl.cpp
+        sss_processor_impl.cpp
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/signal_processors)
 
-add_library(pss_processor STATIC ${SOURCES})
+add_library(signal_processors STATIC ${SOURCES})
