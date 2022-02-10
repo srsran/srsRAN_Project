@@ -25,8 +25,6 @@ private:
   static const unsigned SSB_L        = 2;   ///< Symbol index in the SSB where the SSS is mapped
   static const unsigned SEQUENCE_LEN = 127; ///< SSS Sequence length in the SSB
 
-  static inline unsigned M(unsigned N_id_2) { return ((43U * (N_id_2)) % SEQUENCE_LEN); }
-
   struct pregen_d0_s : public std::array<float, SEQUENCE_LEN> {
     pregen_d0_s();
   };

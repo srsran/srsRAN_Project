@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        dmrs_pbch_processor_impl.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
         )
