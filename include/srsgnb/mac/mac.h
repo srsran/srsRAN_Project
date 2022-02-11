@@ -3,7 +3,10 @@
 #define SRSGNB_MAC_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/common/nr_id_types.h"
+#include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 

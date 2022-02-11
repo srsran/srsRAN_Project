@@ -5,6 +5,9 @@
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/optional_array.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <array>
 

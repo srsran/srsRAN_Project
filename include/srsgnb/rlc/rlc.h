@@ -3,7 +3,8 @@
 #define SRSGNB_RLC_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/common/nr_id_types.h"
+#include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
 
