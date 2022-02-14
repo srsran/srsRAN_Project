@@ -21,18 +21,17 @@ du::du()
   dl_execs.push_back(make_task_executor(*workers[2]));
 
   // Create layers
-  rlc = create_rlc(rlc_cfg_notifier);
   std::vector<task_executor*> execs;
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_cfg_notifier, mac_ul_sdu_notifier, *ul_exec, execs, *ctrl_exec);
-  du_manager = create_du_manager(*mac, *rlc, f1ap_cfg_notifier, *ctrl_exec);
+  mac        = create_mac(mac_cfg_notifier, mac_ul_ccch_notifier, *ul_exec, execs, *ctrl_exec);
+  du_manager = create_du_manager(*mac, f1ap_cfg_notifier, rlc_sdu_notifier, *ctrl_exec);
   f1ap       = create_f1ap_du(f1ap_pdu_adapter, *du_manager);
 
   // Connect DU blocks
   mac_cfg_notifier.connect(*du_manager);
-  mac_ul_sdu_notifier.connect(*f1ap);
+  mac_ul_ccch_notifier.connect(*f1ap);
   rlc_cfg_notifier.connect(*du_manager);
   f1ap_cfg_notifier.connect(*f1ap);
 }

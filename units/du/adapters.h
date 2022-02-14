@@ -33,10 +33,6 @@ class rlc_cfg_adapter : public rlc_config_notifier
 public:
   void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
 
-  void on_ue_create_complete(const rlc_ue_create_response_message& resp) override
-  {
-    du_manager->handle_rlc_ue_create_response(resp);
-  }
   void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) override
   {
     du_manager->handle_rlc_ue_reconfiguration_response(resp);
@@ -73,12 +69,12 @@ private:
   du_manager_interface* du_manager = nullptr;
 };
 
-class mac_northbound_adapter : public mac_northbound_notifier
+class mac_ul_ccch_adapter : public mac_ul_ccch_notifier
 {
 public:
   void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void push_sdu(rnti_t rnti, lcid_t lcid, byte_buffer pdu) override
+  void on_ul_ccch_sdu(rnti_t rnti, const byte_buffer& pdu) override
   {
     ul_ccch_indication_message ul_ccch_msg;
     ul_ccch_msg.crnti      = rnti;
@@ -86,7 +82,28 @@ public:
     f1ap->ul_ccch_message_indication(std::move(ul_ccch_msg));
   }
 
-  void read_pdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer& pdu) override {}
+private:
+  f1ap_du_ul_interface* f1ap = nullptr;
+};
+
+class rlc_ul_sdu_adapter : public rlc_ul_sdu_notifier
+{
+public:
+  void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
+
+  void on_ul_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) override
+  {
+    if (is_srb(lcid)) {
+      ul_rrc_transfer_message msg;
+      msg.cell_index = 0; // TODO
+      msg.ue_index   = ue_index;
+      msg.lcid       = lcid;
+      msg.rrc_msg    = pdu;
+      f1ap->ul_rrc_message_transfer(msg);
+    } else {
+      // TODO
+    }
+  }
 
 private:
   f1ap_du_ul_interface* f1ap = nullptr;
@@ -102,7 +119,10 @@ class du_f1ap_cfg_adapter : public du_manager_config_notifier
 public:
   void connect(f1ap_du_config_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void on_du_ue_create_response(const du_ue_create_response_message& resp) override { f1ap->ue_creation_response(resp); }
+  void on_du_ue_create_response(const du_ue_create_response_message& resp) override
+  {
+    f1ap->ue_creation_response(resp);
+  }
 
 private:
   f1ap_du_config_interface* f1ap = nullptr;

@@ -73,12 +73,12 @@ public:
     return true;
   }
 
-  LogicalChannel* get_rnti_dcch(rnti_t rnti, lcid_t lcid)
+  LogicalChannel* get_rnti_lc_ch(rnti_t rnti, lcid_t lcid)
   {
     if (contains_rnti(rnti)) {
       return nullptr;
     }
-    ul_mac_entity* ent = &ue_db[rnti_to_ue_index[rnti]];
+    mac_entity* ent = &ue_db[rnti_to_ue_index[rnti]];
     if (contains_lcid(ent->ue_index, lcid)) {
       return nullptr;
     }
@@ -86,13 +86,13 @@ public:
   }
 
 private:
-  struct ul_mac_entity {
+  struct mac_entity {
     du_ue_index_t                            ue_index = INVALID_UE_INDEX;
     rnti_t                                   rnti     = INVALID_RNTI;
     optional_array<LogicalChannel, MAX_LCID> logical_channels;
   };
 
-  optional_array<ul_mac_entity, MAX_NOF_UES>       ue_db;
+  optional_array<mac_entity, MAX_NOF_UES>          ue_db;
   circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
 };
 

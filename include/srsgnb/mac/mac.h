@@ -7,8 +7,34 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
+#include <memory>
 
 namespace srsgnb {
+
+class mac_ul_ccch_notifier
+{
+public:
+  virtual ~mac_ul_ccch_notifier()                                  = default;
+  virtual void on_ul_ccch_sdu(rnti_t rnti, const byte_buffer& pdu) = 0;
+};
+
+class mac_ul_dcch_notifier
+{
+public:
+  const du_ue_index_t du_index;
+  const lcid_t        lcid;
+
+  explicit mac_ul_dcch_notifier(du_ue_index_t du_index_, lcid_t lcid_) : du_index(du_index_), lcid(lcid_) {}
+  virtual ~mac_ul_dcch_notifier()                     = default;
+  virtual void on_ul_dcch_sdu(const byte_buffer& pdu) = 0;
+};
+
+class mac_dl_sdu_builder
+{
+public:
+  virtual ~mac_dl_sdu_builder()                = default;
+  virtual void on_dl_mac_sdu(byte_buffer& pdu) = 0;
+};
 
 struct ul_ccch_indication_message {
   du_cell_index_t cell_index;
@@ -17,9 +43,10 @@ struct ul_ccch_indication_message {
 };
 
 struct mac_ue_create_request_message {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
+  du_cell_index_t                    cell_index;
+  du_ue_index_t                      ue_index;
+  rnti_t                             crnti;
+  std::vector<mac_ul_dcch_notifier*> ul_bearers;
 };
 
 struct mac_ue_create_request_response_message {
@@ -52,14 +79,6 @@ public:
   virtual void ue_create_request(const mac_ue_create_request_message& cfg)           = 0;
   virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) = 0;
   virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)           = 0;
-};
-
-class mac_northbound_notifier
-{
-public:
-  virtual ~mac_northbound_notifier()                                           = default;
-  virtual void push_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu)  = 0;
-  virtual void read_pdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer& pdu) = 0;
 };
 
 class mac_southbound_interface

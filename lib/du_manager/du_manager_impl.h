@@ -16,16 +16,15 @@ namespace srsgnb {
 class du_manager_impl final : public du_manager_interface
 {
 public:
-  du_manager_impl(rlc_config_interface&       rlc_,
-                  mac_config_interface&       mac_,
+  du_manager_impl(mac_config_interface&       mac_,
                   du_manager_config_notifier& f1ap_notifier,
+                  rlc_ul_sdu_notifier&        rlc_ul_notifier,
                   task_executor&              du_mng_exec);
 
   // F1AP interface
   void ue_create(const du_ue_create_message& msg) override;
 
   // RLC interface
-  void handle_rlc_ue_create_response(const rlc_ue_create_response_message& resp) override;
   void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override {}
   void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp) override {}
 
@@ -38,7 +37,7 @@ public:
 
 private:
   // DU manager context that will be visible to running procedures
-  du_manager_context    ctxt;
+  du_manager_context ctxt;
 
   task_executor& du_mng_exec;
 

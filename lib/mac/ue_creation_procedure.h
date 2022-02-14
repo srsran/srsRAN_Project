@@ -19,8 +19,12 @@ public:
 
     // 1. Create UE associated UL channels
     ctxt.cfg.ul_exec.execute([this]() {
-      bool inserted = ctxt.ul_entities.insert(req.ue_index, req.crnti);
+      bool inserted = ctxt.demux.insert(req.ue_index, req.crnti);
       srsran_assert(inserted, "Overwriting existing UE");
+      mac_ul_ue* ue = ctxt.demux.get_ue(req.ue_index);
+      for (mac_ul_dcch_notifier* ul_bearer : req.ul_bearers) {
+        ue->ul_bearers.insert(ul_bearer->lcid, ul_bearer);
+      }
 
       // Return result back to CTRL execution context
       ctxt.cfg.ctrl_exec.execute([this]() { ue_ul_create_complete(); });
@@ -58,9 +62,9 @@ public:
   }
 
 private:
-  mac_context&                        ctxt;
-  const mac_ue_create_request_message req;
-  srslog::basic_logger&               logger;
+  mac_context&                  ctxt;
+  mac_ue_create_request_message req;
+  srslog::basic_logger&         logger;
 };
 
 } // namespace srsgnb

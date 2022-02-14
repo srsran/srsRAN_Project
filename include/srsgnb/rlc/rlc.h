@@ -9,29 +9,8 @@
 namespace srsgnb {
 
 /********************************
- * ORAN WP8 9.2.5.1 - UE Create
+ * 9.2.5.3 - UE Reconfiguration
  *******************************/
-
-struct rlc_ue_create_message {
-  struct lc_ch_to_setup {
-    lcid_t lcid;
-    enum class rlc_mode { AM, UM } mode;
-    // ...
-  };
-
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-};
-
-struct rlc_ue_create_response_message {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  bool            result;
-};
-
-/*****************************************
- * ORAN WP8 9.2.5.3 - UE Reconfiguration
- ****************************************/
 
 struct rlc_ue_reconfiguration_message {
   struct lc_ch_to_setup {
@@ -64,6 +43,17 @@ struct rlc_ue_delete_response_message {
   bool            result;
 };
 
+/****************************************
+ * ORAN WP8 9.2.5.8 - UL RRC Message Transfer
+ ***************************************/
+
+struct ul_rrc_transfer_message {
+  du_cell_index_t cell_index;
+  du_ue_index_t   ue_index;
+  lcid_t          lcid;
+  byte_buffer     rrc_msg;
+};
+
 /**************************************************
  * ORAN WP8 9.2.5.11 - UE Reestablishment Request
  *************************************************/
@@ -80,37 +70,27 @@ struct rlc_ue_reestablishment_response_message {
   bool            result;
 };
 
-class rlc_config_interface
+class rlc_ul_bearer
 {
 public:
-  virtual ~rlc_config_interface()                                                    = default;
-  virtual void ue_create(const rlc_ue_create_message& cfg)                           = 0;
-  virtual void start_ue_reconfiguration(const rlc_ue_reconfiguration_message& cfg)   = 0;
-  virtual void start_ue_delete(const rlc_ue_delete_message& cfg)                     = 0;
-  virtual void ue_reestablishment_request(const rlc_ue_reestablishment_message& cfg) = 0;
-};
-
-class rlc_interface : public rlc_config_interface
-{
-public:
-  virtual ~rlc_interface() = default;
+  virtual ~rlc_ul_bearer()                      = default;
+  virtual void push_pdu(const byte_buffer& pdu) = 0;
 };
 
 class rlc_config_notifier
 {
 public:
   virtual ~rlc_config_notifier()                                                                   = default;
-  virtual void on_ue_create_complete(const rlc_ue_create_response_message& resp)                   = 0;
   virtual void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) = 0;
   virtual void on_ue_delete_complete(const rlc_ue_delete_response_message& resp)                   = 0;
   virtual void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) = 0;
 };
 
-class ul_ccch_pdu_notifier
+class rlc_ul_sdu_notifier
 {
 public:
-  virtual ~ul_ccch_pdu_notifier() = default;
-  virtual void handle_pdu(const byte_buffer& pdu);
+  virtual ~rlc_ul_sdu_notifier()                                               = default;
+  virtual void on_ul_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) = 0;
 };
 
 } // namespace srsgnb

@@ -19,7 +19,6 @@ class du_manager_interface_rlc
 {
 public:
   virtual ~du_manager_interface_rlc()                                                                      = default;
-  virtual void handle_rlc_ue_create_response(const rlc_ue_create_response_message& resp)                   = 0;
   virtual void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) = 0;
   virtual void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp)                   = 0;
 };

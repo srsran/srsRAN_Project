@@ -65,8 +65,8 @@ protected:
     size_t    idx    = std::numeric_limits<size_t>::max();
   };
 
-  size_t nof_elems = 0;
   Vec    vec;
+  size_t nof_elems = 0;
 
 public:
   using value_type     = T;

@@ -2,6 +2,7 @@
 #ifndef SRSGNB_MAC_CTXT_H
 #define SRSGNB_MAC_CTXT_H
 
+#include "demux.h"
 #include "mac_logical_channel.h"
 #include "sched.h"
 #include "srsgnb/adt/span.h"
@@ -32,7 +33,7 @@ struct mac_common_config_t {
 struct mac_context {
   mac_common_config_t cfg;
   mac_dl_dcch_manager dl_entities;
-  mac_ul_dcch_manager ul_entities;
+  mac_ul_demux        demux;
   sched_interface&    sched_itf;
 
   mac_context(mac_config_notifier& notifier,

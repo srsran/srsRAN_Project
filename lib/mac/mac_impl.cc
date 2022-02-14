@@ -80,16 +80,16 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mac_impl::mac_impl(mac_config_notifier&     cfg_notifier_,
-                   mac_northbound_notifier& ul_sdu_notifier_,
-                   task_executor&           ul_exec_,
-                   span<task_executor*>     dl_execs_,
-                   task_executor&           ctrl_exec_) :
+mac_impl::mac_impl(mac_config_notifier&  cfg_notifier_,
+                   mac_ul_ccch_notifier& ul_ccch_notifier_,
+                   task_executor&        ul_exec_,
+                   span<task_executor*>  dl_execs_,
+                   task_executor&        ctrl_exec_) :
   logger(srslog::fetch_basic_logger("MAC")),
   sched_notifier(std::make_unique<sched_response_adapter>(*this)),
   sched_obj(*sched_notifier),
   ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, sched_obj),
-  northbound_notifier(ul_sdu_notifier_)
+  ul_ccch_notifier(ul_ccch_notifier_)
 {}
 
 void mac_impl::push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer pdu)
@@ -98,16 +98,16 @@ void mac_impl::push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer 
 
   if (lcid == 0) {
     logger.info("UL\t0x%x\tcc=%d\tCCCH", rnti, cell_index);
-    northbound_notifier.push_sdu(rnti, 0, pdu);
+    ul_ccch_notifier.on_ul_ccch_sdu(rnti, pdu);
   } else {
-    ul_dcch* dcch = ctxt.ul_entities.get_rnti_dcch(rnti, lcid);
+    mac_ul_dcch_notifier* dcch = ctxt.demux.get_rlc_bearer(rnti, lcid);
     if (dcch == nullptr) {
       logger.warning("Received UL PDU for inexistent bearer {0x%x, %d}", rnti, lcid);
       return;
     }
 
     // send PDU to RLC entity
-    // TODO
+    dcch->on_ul_dcch_sdu(pdu);
   }
 }
 
@@ -144,7 +144,8 @@ void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
   mac_ue* u = ue_db.find_by_rnti(0x4601);
   if (u != nullptr) {
     byte_buffer pdu;
-    northbound_notifier.read_pdu(u->du_ue_index, 0, pdu);
+
+    // TODO: Call MAC SDU builder
   }
 }
 

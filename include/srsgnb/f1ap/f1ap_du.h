@@ -9,6 +9,7 @@
 namespace srsgnb {
 
 struct ul_ccch_indication_message;
+struct ul_rrc_transfer_message;
 struct du_ue_create_response_message;
 
 class f1ap_du_dl_interface
@@ -35,16 +36,16 @@ struct ul_rrc_message_delivery_status {
 class f1ap_du_ul_interface
 {
 public:
-  virtual ~f1ap_du_ul_interface() = default;
-  virtual void ul_ccch_message_indication(ul_ccch_indication_message&& msg)                 = 0;
-  virtual void ul_rrc_message_transfer(ul_rrc_message msg)                                  = 0;
+  virtual ~f1ap_du_ul_interface()                                                           = default;
+  virtual void ul_ccch_message_indication(const ul_ccch_indication_message& msg)            = 0;
+  virtual void ul_rrc_message_transfer(const ul_rrc_transfer_message& msg)                  = 0;
   virtual void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) = 0;
 };
 
 class f1ap_du_config_interface
 {
 public:
-  virtual ~f1ap_du_config_interface() = default;
+  virtual ~f1ap_du_config_interface()                                          = default;
   virtual void ue_creation_response(const du_ue_create_response_message& resp) = 0;
 };
 

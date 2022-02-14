@@ -15,10 +15,10 @@ class f1ap_du_impl final : public f1ap_du_interface
 public:
   f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener, du_manager_interface_f1ap& du_manager);
 
-  void ul_ccch_message_indication(ul_ccch_indication_message&& msg) override;
+  void ul_ccch_message_indication(const ul_ccch_indication_message& msg) override;
   void ue_creation_response(const du_ue_create_response_message& resp) override;
 
-  void ul_rrc_message_transfer(ul_rrc_message msg) override {}
+  void ul_rrc_message_transfer(const ul_rrc_transfer_message& msg) override;
   void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
 
   void push_sdu(const byte_buffer& sdu) override {}

@@ -30,14 +30,14 @@ public:
 private:
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1ap_du_interface>    f1ap;
-  std::unique_ptr<rlc_interface>        rlc;
   std::unique_ptr<mac_interface>        mac;
 
-  rlc_cfg_adapter        rlc_cfg_notifier;
-  mac_cfg_adapter        mac_cfg_notifier;
-  mac_northbound_adapter mac_ul_sdu_notifier;
-  du_f1ap_cfg_adapter    f1ap_cfg_notifier;
-  f1ap_du_rlc_connector  f1ap_pdu_adapter;
+  rlc_cfg_adapter       rlc_cfg_notifier;
+  mac_cfg_adapter       mac_cfg_notifier;
+  mac_ul_ccch_adapter   mac_ul_ccch_notifier;
+  du_f1ap_cfg_adapter   f1ap_cfg_notifier;
+  rlc_ul_sdu_adapter    rlc_sdu_notifier;
+  f1ap_du_rlc_connector f1ap_pdu_adapter;
 
   std::vector<std::unique_ptr<task_worker> >   workers;
   std::unique_ptr<task_executor>               ul_exec, ctrl_exec;

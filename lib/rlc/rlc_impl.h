@@ -7,19 +7,19 @@
 
 namespace srsgnb {
 
-class rlc_impl : public rlc_interface
+class rlc_ul_um_bearer : public rlc_ul_bearer
 {
 public:
-  explicit rlc_impl(rlc_config_notifier& config_notifier_);
+  explicit rlc_ul_um_bearer(du_ue_index_t du_index_, lcid_t lcid_, rlc_ul_sdu_notifier& notifier_) :
+    du_index(du_index_), lcid(lcid_), notifier(notifier_)
+  {}
 
-  void ue_create(const rlc_ue_create_message& cfg) override;
-  void start_ue_reconfiguration(const rlc_ue_reconfiguration_message& cfg) override;
-  void start_ue_delete(const rlc_ue_delete_message& cfg) override {}
-  void ue_reestablishment_request(const rlc_ue_reestablishment_message& cfg) override {}
+  void push_pdu(const byte_buffer& pdu) override { notifier.on_ul_sdu(du_index, lcid, pdu); }
 
 private:
-  rlc_config_notifier& config_notifier;
-  srslog::basic_logger& logger;
+  const du_ue_index_t  du_index;
+  const lcid_t         lcid;
+  rlc_ul_sdu_notifier& notifier;
 };
 
 } // namespace srsgnb
