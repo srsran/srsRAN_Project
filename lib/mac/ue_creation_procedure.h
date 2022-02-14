@@ -18,15 +18,23 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
     // 1. Create UE associated UL channels
-    bool inserted = ctxt.ul_entities.insert(req.ue_index, req.crnti);
-    srsran_assert(inserted, "Overwriting existing UE");
+    ctxt.cfg.ul_exec.execute([this]() {
+      bool inserted = ctxt.ul_entities.insert(req.ue_index, req.crnti);
+      srsran_assert(inserted, "Overwriting existing UE");
 
+      // Return result back to CTRL execution context
+      ctxt.cfg.ctrl_exec.execute([this]() { ue_ul_create_complete(); });
+    });
+  }
+
+  void ue_ul_create_complete()
+  {
     // 2. Dispatch UE DL channels and sched UE creation to DL executors
     ctxt.cfg.dl_execs[req.cell_index]->execute([this]() {
       // Create UE associated DL channels
       ctxt.dl_entities.insert(req.ue_index, req.crnti);
 
-      // Create UE in scheduler
+      // 3. Create UE in scheduler
       log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
       ctxt.sched_itf.config_ue(req.crnti);
     });
@@ -36,9 +44,9 @@ public:
   {
     log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
 
-    // 3. After UE insertion in scheduler, send response to DU manager
-    ctxt.cfg.ul_exec.execute([this]() {
-      // Send response back to DU manager
+    // 4. After UE insertion in scheduler, send response to DU manager
+    ctxt.cfg.ctrl_exec.execute([this]() {
+      // 5. Send response back to DU manager
       mac_ue_create_request_response_message resp{};
       resp.ue_index   = req.ue_index;
       resp.cell_index = req.cell_index;

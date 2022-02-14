@@ -83,11 +83,12 @@ public:
 mac_impl::mac_impl(mac_config_notifier&     cfg_notifier_,
                    mac_northbound_notifier& ul_sdu_notifier_,
                    task_executor&           ul_exec_,
-                   span<task_executor*>     dl_execs_) :
+                   span<task_executor*>     dl_execs_,
+                   task_executor&           ctrl_exec_) :
   logger(srslog::fetch_basic_logger("MAC")),
   sched_notifier(std::make_unique<sched_response_adapter>(*this)),
   sched_obj(*sched_notifier),
-  ctxt(cfg_notifier_, ul_exec_, dl_execs_, sched_obj),
+  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, sched_obj),
   northbound_notifier(ul_sdu_notifier_)
 {}
 

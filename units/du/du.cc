@@ -26,7 +26,7 @@ du::du()
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_cfg_notifier, mac_ul_sdu_notifier, *ul_exec, execs);
+  mac        = create_mac(mac_cfg_notifier, mac_ul_sdu_notifier, *ul_exec, execs, *ctrl_exec);
   du_manager = create_du_manager(*mac, *rlc, f1ap_cfg_notifier, *ctrl_exec);
   f1ap       = create_f1ap_du(f1ap_pdu_adapter, *du_manager);
 
