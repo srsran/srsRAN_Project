@@ -135,7 +135,7 @@ private:
   int               period_us      = 0;
   std::atomic<bool> run_enable     = {false};
 
-  void run_thread()
+  void run_thread() final
   {
     if (make_periodic()) {
       return;

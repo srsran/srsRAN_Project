@@ -18,6 +18,7 @@ struct mac_ue_delete_response_message;
 class du_manager_interface_rlc
 {
 public:
+  virtual ~du_manager_interface_rlc()                                                                      = default;
   virtual void handle_rlc_ue_create_response(const rlc_ue_create_response_message& resp)                   = 0;
   virtual void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) = 0;
   virtual void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp)                   = 0;
@@ -26,6 +27,7 @@ public:
 class du_manager_interface_mac
 {
 public:
+  virtual ~du_manager_interface_mac()                                                            = default;
   virtual void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp) = 0;
   virtual void handle_mac_ue_reconfiguration_response()                                          = 0;
   virtual void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp)         = 0;
@@ -47,19 +49,22 @@ struct du_ue_create_response_message {
 class du_manager_config_notifier
 {
 public:
+  virtual ~du_manager_config_notifier()                                            = default;
   virtual void on_du_ue_create_response(const du_ue_create_response_message& resp) = 0;
 };
 
 class du_manager_interface_f1ap
 {
 public:
+  virtual ~du_manager_interface_f1ap()                    = default;
   virtual void ue_create(const du_ue_create_message& msg) = 0;
 };
 
 class du_manager_interface_query
 {
 public:
-  virtual std::string get_ues() = 0;
+  virtual ~du_manager_interface_query() = default;
+  virtual std::string get_ues()         = 0;
 };
 
 class du_manager_interface : public du_manager_interface_rlc,

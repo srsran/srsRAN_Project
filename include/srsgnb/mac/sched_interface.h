@@ -17,6 +17,7 @@ public:
 class sched_interface
 {
 public:
+  virtual ~sched_interface()                  = default;
   virtual void config_ue(rnti_t rnti)         = 0;
   virtual void delete_ue_request(rnti_t rnti) = 0;
 };
