@@ -70,14 +70,14 @@ private:
    * @param a_prime Payload after scrambling
    * @param k Data with CRC attached
    */
-  void rate_matching(std::array<uint8_t, POLAR_N>& d, std::array<uint8_t, E>& f);
+  void rate_matching(std::array<uint8_t, POLAR_N>& d, span<uint8_t> f);
 
 public:
   explicit pbch_encoder_impl();
 
   ~pbch_encoder_impl() = default;
 
-  void encode(const pbch_msg_t& pbch_msg, std::array<uint8_t, E>& encoded) override;
+  void encode(const pbch_msg_t& pbch_msg, span<uint8_t> encoded) override;
 };
 
 } // namespace srsgnb

@@ -1,12 +1,7 @@
 #ifndef SRSGNB_PHY_PBCH_ENCODER_H
 #define SRSGNB_PHY_PBCH_ENCODER_H
 
-#include "srsgnb/phy/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/channel_coding/polar_allocator.h"
-#include "srsgnb/phy/channel_coding/polar_encoder.h"
-#include "srsgnb/phy/channel_coding/polar_interleaver.h"
-#include "srsgnb/phy/channel_coding/polar_rate_matcher.h"
-#include "srsgnb/phy/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/adt/span.h"
 #include <array>
 #include <memory>
 
@@ -44,10 +39,10 @@ public:
 
   /**
    * @brief Encodes a PBCH message
-   * @param pbch_msg PBCH message to encode
+   * @param pbch_msg PBCH message to encode, it shall be of length E
    * @param ouput Encoded bits
    */
-  virtual void encode(const pbch_msg_t& pbch_msg, std::array<uint8_t, E>& encoded) = 0;
+  virtual void encode(const pbch_msg_t& pbch_msg, span<uint8_t> encoded) = 0;
 };
 
 std::unique_ptr<pbch_encoder> create_pbch_encoder();

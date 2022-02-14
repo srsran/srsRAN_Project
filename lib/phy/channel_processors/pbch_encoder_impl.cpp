@@ -155,13 +155,15 @@ void pbch_encoder_impl::channel_coding(std::array<uint8_t, K>& c, std::array<uin
   encoder->encode(allocated, code->get_n(), d);
 }
 
-void pbch_encoder_impl::rate_matching(std::array<uint8_t, POLAR_N>& d, std::array<uint8_t, E>& f)
+void pbch_encoder_impl::rate_matching(std::array<uint8_t, POLAR_N>& d, span<uint8_t> f)
 {
   rm->rate_match(d, f, *code);
 }
 
-void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, std::array<uint8_t, E>& f)
+void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, span<uint8_t> f)
 {
+  assert(f.size() == E);
+
   // PBCH payload generation
   std::array<uint8_t, A> a = {};
   payload_generate(pbch_msg, a);
