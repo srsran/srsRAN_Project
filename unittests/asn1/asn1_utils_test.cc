@@ -11,7 +11,7 @@
  */
 
 #include "srsgnb/asn1/asn1_utils.h"
-#include "srsran/common/test_common.h"
+#include "srsgnb/support/test_utils.h"
 #include <cmath>
 #include <numeric>
 #include <random>
@@ -22,7 +22,7 @@ using namespace asn1;
 std::random_device rd;
 std::mt19937       g(rd());
 
-srsran::log_sink_spy* test_spy = nullptr;
+srsgnb::log_sink_spy* test_spy = nullptr;
 
 int test_arrays()
 {
@@ -369,7 +369,7 @@ int test_bitstring()
   //  printf("%s==%s\n", dyn_bstr1.to_string().c_str(), dyn_bstr2.to_string().c_str());
 
   // disable temporarily the prints to check failures
-  //  srsran::nullsink_log null_log("NULL");
+  //  srsgnb::nullsink_log null_log("NULL");
   //  bit_ref bref3(&buffer[0], sizeof(buffer));
   //  TESTASSERT(dyn_bstr1.pack(bref3, false, 5, 10)==SRSASN_ERROR_ENCODE_FAIL);
 
@@ -648,7 +648,7 @@ void test_varlength_field_pack()
 {
   uint8_t buffer[128];
   bit_ref bref(&buffer[0], sizeof(buffer));
-  TESTASSERT_EQ(SRSRAN_SUCCESS, bref.pack(0, 1));
+  TESTASSERT_EQ(0, bref.pack(0, 1));
   TESTASSERT_EQ(1, bref.distance());
   {
     varlength_field_pack_guard guard(bref);
@@ -663,13 +663,13 @@ int main()
 {
   // Setup the log spy to intercept error and warning log entries.
   if (!srslog::install_custom_sink(
-          srsran::log_sink_spy::name(),
-          std::unique_ptr<srsran::log_sink_spy>(new srsran::log_sink_spy(srslog::get_default_log_formatter())))) {
-    return SRSRAN_ERROR;
+          srsgnb::log_sink_spy::name(),
+          std::unique_ptr<srsgnb::log_sink_spy>(new srsgnb::log_sink_spy(srslog::get_default_log_formatter())))) {
+    return -1;
   }
-  test_spy = static_cast<srsran::log_sink_spy*>(srslog::find_sink(srsran::log_sink_spy::name()));
+  test_spy = static_cast<srsgnb::log_sink_spy*>(srslog::find_sink(srsgnb::log_sink_spy::name()));
   if (!test_spy) {
-    return SRSRAN_ERROR;
+    return -1;
   }
 
   auto& asn1_logger = srslog::fetch_basic_logger("ASN1", *test_spy, false);

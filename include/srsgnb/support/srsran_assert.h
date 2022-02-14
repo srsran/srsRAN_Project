@@ -14,7 +14,7 @@
 #define SRSRAN_ASSERT_H
 
 #ifdef __cplusplus
-#include "srsran/srslog/srslog.h"
+#include "srsgnb/srslog/srslog.h"
 #include <cstdio>
 #include <stdarg.h>
 
