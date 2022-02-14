@@ -21,6 +21,7 @@ struct mac_ue {
   rnti_t          rnti;
 };
 
+/// Class to manage MAC UE control/metric context
 class mac_ue_map
 {
 public:
@@ -30,16 +31,16 @@ public:
   bool erase(du_ue_index_t ue_index);
 
   mac_ue* find(du_ue_index_t ue_index);
-  mac_ue* find_rnti(rnti_t rnti);
+  mac_ue* find_by_rnti(rnti_t rnti);
 
 private:
   struct element {
-    std::atomic<bool> present;
-    mac_ue            ue;
+    bool   present;
+    mac_ue ue;
   };
 
-  std::array<element, MAX_NOF_UES>                    ue_db;
-  std::array<std::atomic<du_ue_index_t>, MAX_NOF_UES> rnti_to_ue_index_map;
+  std::array<element, MAX_NOF_UES>       ue_db;
+  std::array<du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index_map;
 };
 
 class mac_impl : public mac_interface

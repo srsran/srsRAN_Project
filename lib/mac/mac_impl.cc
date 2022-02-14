@@ -9,10 +9,10 @@ mac_ue_map::mac_ue_map()
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), INVALID_RNTI);
 }
 
-mac_ue* mac_ue_map::find_rnti(rnti_t rnti)
+mac_ue* mac_ue_map::find_by_rnti(rnti_t rnti)
 {
   srsran_assert(rnti != INVALID_RNTI, "Invalid rnti=0x%x", rnti);
-  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti].load(std::memory_order_relaxed);
+  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti];
   if (ue_index == MAX_NOF_UES) {
     return nullptr;
   }
@@ -23,14 +23,18 @@ mac_ue* mac_ue_map::find(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
   element* e = &ue_db[ue_index];
-  return e->present.load(std::memory_order_relaxed) ? &e->ue : nullptr;
+  return e->present ? &e->ue : nullptr;
 }
 
 bool mac_ue_map::insert(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
+  if (rnti_to_ue_index_map[crnti] < MAX_NOF_UES) {
+    // rnti already exists
+    return false;
+  }
 
-  bool prev_val = ue_db[ue_index].present.exchange(true);
+  bool prev_val = std::exchange(ue_db[ue_index].present, true);
   if (prev_val) {
     // UE already existed with same ue_index
     return false;
@@ -41,14 +45,7 @@ bool mac_ue_map::insert(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t ce
   ue_db[ue_index].ue.du_ue_index = ue_index;
   ue_db[ue_index].ue.pcell_idx   = cell_index;
 
-  // Make it visible to other threads
-  rnti_t empty_ue_idx = MAX_NOF_UES;
-  if (not std::atomic_compare_exchange_strong(&rnti_to_ue_index_map[crnti], &empty_ue_idx, crnti)) {
-    // a UE with same RNTI already existed
-    ue_db[ue_index].ue      = {};
-    ue_db[ue_index].present = false;
-    return false;
-  }
+  rnti_to_ue_index_map[crnti] = ue_index;
   return true;
 }
 
@@ -56,7 +53,7 @@ bool mac_ue_map::erase(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
 
-  bool prev_val = ue_db[ue_index].present.exchange(false);
+  bool prev_val = std::exchange(ue_db[ue_index].present, false);
   if (not prev_val) {
     // no UE existed with provided ue_index
     return false;
@@ -143,7 +140,7 @@ void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
   }
 
   // for each cc, generate MAC DL SDUs
-  mac_ue* u = ue_db.find_rnti(0x4601);
+  mac_ue* u = ue_db.find_by_rnti(0x4601);
   if (u != nullptr) {
     byte_buffer pdu;
     northbound_notifier.read_pdu(u->du_ue_index, 0, pdu);
