@@ -6,3 +6,7 @@ add_test(static_vector_test static_vector_test)
 add_executable(optional_test optional_test.cc)
 target_link_libraries(optional_test srslog)
 add_test(optional_test optional_test)
+
+add_executable(unique_function_test unique_function_test.cc)
+target_link_libraries(unique_function_test srslog)
+add_test(unique_function_test unique_function_test)
