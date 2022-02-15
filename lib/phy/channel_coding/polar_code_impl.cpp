@@ -237,9 +237,9 @@ const std::array<uint16_t, 1024> srsgnb::polar_code_impl::blk_interleaver_10 = {
     988,  989,  990,  991,  992,  993,  994,  995,  996,  997,  998,  999,  1000, 1001, 1002, 1003, 1004, 1005, 1006,
     1007, 1008, 1009, 1010, 1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018, 1019, 1020, 1021, 1022, 1023};
 
-span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n)
+span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n_)
 {
-  switch (n) {
+  switch (n_) {
     case 5:
       return mother_code_5;
     case 6:
@@ -257,9 +257,9 @@ span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n)
   }
 }
 
-span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n)
+span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
 {
-  switch (n) {
+  switch (n_) {
     case 5:
       return blk_interleaver_5;
     case 6:
