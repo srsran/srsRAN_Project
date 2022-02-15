@@ -1,0 +1,4 @@
+
+add_executable(bounded_vector_test bounded_vector_test.cc)
+target_link_libraries(bounded_vector_test srslog)
+add_test(bounded_vector_test bounded_vector_test)
