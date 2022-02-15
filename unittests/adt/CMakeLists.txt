@@ -2,3 +2,7 @@
 add_executable(static_vector_test static_vector_test.cc)
 target_link_libraries(static_vector_test srslog)
 add_test(static_vector_test static_vector_test)
+
+add_executable(optional_test optional_test.cc)
+target_link_libraries(optional_test srslog)
+add_test(optional_test optional_test)

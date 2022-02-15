@@ -23,7 +23,7 @@
 /**
  * Command to terminate srsRAN application with an error message, ensuring first that the log is flushed
  */
-[[gnu::noinline, noreturn]] inline bool srsran_terminate(const char* fmt, ...)
+[[gnu::noinline, noreturn]] inline bool srsran_terminate(const char* fmt, ...) noexcept
 {
   va_list args;
   va_start(args, fmt);
