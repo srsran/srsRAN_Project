@@ -189,11 +189,11 @@ public:
     }
   }
 
-  bool operator==(const static_vector& other) const
+  bool operator==(const static_vector& other) const noexcept
   {
-    return other.size() == size() and std::equal(begin(), end(), other.begin());
+    return std::equal(begin(), end(), other.begin(), other.end());
   }
-  bool operator!=(const static_vector& other) const { return not(*this == other); }
+  bool operator!=(const static_vector& other) const noexcept { return not(*this == other); }
 
   void swap(static_vector& other) noexcept
   {
