@@ -16,9 +16,9 @@
   (void)((EXPECTED != ACTUAL) ||                                                                                       \
          (srsran_assertion_failure("%s", fmt::format("Value should not be equal to '{}'", ACTUAL).c_str()), 0))
 
-#define TESTASSERT(cond) srsran_assert((cond), "Fail at \"%s\"", (#cond))
+#define TESTASSERT(cond) srsran_always_assert((cond), "Fail at \"%s\"", (#cond))
 
-#define TESTASSERT_SUCCESS(cond) srsran_assert((cond == SRSGNB_SUCCESS), "Operation \"%s\" was not successful", (#cond))
+#define TESTASSERT_SUCCESS(cond) srsran_always_assert((cond == SRSGNB_SUCCESS), "Operation \"%s\" was not successful", (#cond))
 
 #else // __cplusplus
 

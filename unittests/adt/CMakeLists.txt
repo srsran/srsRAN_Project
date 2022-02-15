@@ -10,3 +10,11 @@ add_test(optional_test optional_test)
 add_executable(unique_function_test unique_function_test.cc)
 target_link_libraries(unique_function_test srslog)
 add_test(unique_function_test unique_function_test)
+
+add_executable(circular_map_test circular_map_test.cc)
+target_link_libraries(circular_map_test srslog)
+add_test(circular_map_test circular_map_test)
+
+add_executable(expected_test expected_test.cc)
+target_link_libraries(expected_test srslog)
+add_test(expected_test expected_test)
