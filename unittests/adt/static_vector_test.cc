@@ -167,6 +167,22 @@ void assert_dtor_consistency()
   TESTASSERT(C::nof_dtor == C::nof_copy_ctor + C::nof_value_ctor + C::nof_move_ctor);
 }
 
+void test_swap()
+{
+  static_vector<int, 5> vec1, vec2;
+  vec1 = {1, 2, 3, 4, 5};
+  vec1.swap(vec2);
+  TESTASSERT(vec1.empty());
+  TESTASSERT_EQ(5, vec2.size());
+
+  vec1.push_back(6);
+  vec1.swap(vec2);
+  TESTASSERT_EQ(5, vec1.size());
+  TESTASSERT_EQ(1, vec2.size());
+  TESTASSERT_EQ(6, vec2[0]);
+  TESTASSERT_EQ(5, vec1[4]);
+}
+
 } // namespace srsgnb
 
 int main()
@@ -175,6 +191,7 @@ int main()
   srsgnb::test_obj_add_rem();
   srsgnb::test_move_only_type();
   srsgnb::assert_dtor_consistency();
+  srsgnb::test_swap();
   printf("Success\n");
   return 0;
 }

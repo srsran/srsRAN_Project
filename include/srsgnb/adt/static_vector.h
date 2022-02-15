@@ -10,18 +10,24 @@
 
 namespace srsgnb {
 
+/// Random access, variable-sized container with embedded storage.
+/// Contrarily to std::vector<T>, its size is limited at compile-time, and it does not rely on allocators.
+/// Contrarily to std::array, the elements are constructed and destructed dynamically when the container size() changes.
+/// @tparam T type of the elements
+/// @tparam MAX_N Maximum number of elements of the static_vector
 template <typename T, std::size_t MAX_N>
 class static_vector
 {
 public:
-  using iterator       = T*;
-  using const_iterator = const T*;
-  using size_type      = std::size_t;
-  using value_type     = T;
+  using iterator        = T*;
+  using const_iterator  = const T*;
+  using size_type       = std::size_t;
+  using value_type      = T;
+  using difference_type = std::make_signed_t<size_type>;
 
-  static_vector() = default;
-  explicit static_vector(size_type N) { append(N); }
-  static_vector(size_type N, const T& val) { append(N, val); }
+  constexpr static_vector() noexcept = default;
+  explicit static_vector(size_type count) { append(count); }
+  static_vector(size_type count, const T& initial_value) { append(count, initial_value); }
   static_vector(const static_vector& other) { append(other.begin(), other.end()); }
   static_vector(static_vector&& other) noexcept
   {
@@ -101,16 +107,16 @@ public:
   const T* data() const { return reinterpret_cast<const T*>(buffer.data()); }
 
   // Iterators
-  iterator       begin() { return data(); }
-  iterator       end() { return begin() + size_; }
-  const_iterator begin() const { return data(); }
-  const_iterator end() const { return begin() + size_; }
+  iterator       begin() noexcept { return data(); }
+  iterator       end() noexcept { return begin() + size_; }
+  const_iterator begin() const noexcept { return data(); }
+  const_iterator end() const noexcept { return begin() + size_; }
 
-  // Capacity
-  bool        empty() const { return size_ == 0; }
-  std::size_t size() const { return size_; }
-  std::size_t capacity() const { return MAX_N; }
-  bool        full() const { return size_ == MAX_N; }
+  // Size/Capacity
+  bool             empty() const noexcept { return size_ == 0; }
+  std::size_t      size() const noexcept { return size_; }
+  bool             full() const noexcept { return size_ == MAX_N; }
+  static constexpr std::size_t capacity() noexcept { return MAX_N; }
 
   // modifiers
   void clear()
@@ -190,6 +196,26 @@ public:
   }
   bool operator!=(const static_vector& other) const { return not(*this == other); }
 
+  void swap(static_vector& other) noexcept
+  {
+    using std::swap;
+
+    auto&        small_vec  = size() < other.size() ? *this : other;
+    auto&        big_vec    = size() < other.size() ? other : *this;
+    const size_t small_size = small_vec.size();
+    const size_t big_size   = big_vec.size();
+
+    for (size_t i = 0; i < small_size; ++i) {
+      swap(small_vec[i], big_vec[i]);
+    }
+    for (size_t i = small_size; i < big_size; ++i) {
+      small_vec.buffer[i].emplace(std::move(big_vec[i]));
+      big_vec.buffer[i].destroy();
+    }
+    small_vec.size_ = big_size;
+    big_vec.size_   = small_size;
+  }
+
 private:
   void destroy(iterator it_start, iterator it_end)
   {
@@ -224,6 +250,7 @@ private:
   std::size_t                                size_ = 0;
   std::array<detail::type_storage<T>, MAX_N> buffer;
 };
+
 } // namespace srsgnb
 
 #endif // SRSRAN_BOUNDED_VECTOR_H
