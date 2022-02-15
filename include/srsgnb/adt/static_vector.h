@@ -29,7 +29,7 @@ public:
   explicit static_vector(size_type count) { append(count); }
   static_vector(size_type count, const T& initial_value) { append(count, initial_value); }
   static_vector(const static_vector& other) { append(other.begin(), other.end()); }
-  static_vector(static_vector&& other) noexcept
+  static_vector(static_vector&& other) noexcept(std::is_nothrow_move_constructible<value_type>::value)
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
     std::uninitialized_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), end());
@@ -47,7 +47,7 @@ public:
     assign(other.begin(), other.end());
     return *this;
   }
-  static_vector& operator=(static_vector&& other) noexcept
+  static_vector& operator=(static_vector&& other) noexcept(std::is_nothrow_move_assignable<value_type>::value)
   {
     if (this == &other) {
       return *this;
@@ -81,12 +81,12 @@ public:
   void assign(std::initializer_list<T> ilist) { assign(ilist.begin(), ilist.end()); }
 
   // Element access
-  T& operator[](std::size_t i)
+  T& operator[](std::size_t i) noexcept
   {
     srsran_assert(i < size_, "Array index is out of bounds.");
     return buffer[i].get();
   }
-  const T& operator[](std::size_t i) const
+  const T& operator[](std::size_t i) const noexcept
   {
     srsran_assert(i < size_, "Array index is out of bounds.");
     return buffer[i].get();
@@ -103,8 +103,8 @@ public:
   }
   T&       front() { return (*this)[0]; }
   const T& front() const { return (*this)[0]; }
-  T*       data() { return reinterpret_cast<T*>(buffer.data()); }
-  const T* data() const { return reinterpret_cast<const T*>(buffer.data()); }
+  T*       data() noexcept { return reinterpret_cast<T*>(buffer.data()); }
+  const T* data() const noexcept { return reinterpret_cast<const T*>(buffer.data()); }
 
   // Iterators
   iterator       begin() noexcept { return data(); }
@@ -119,7 +119,7 @@ public:
   static constexpr std::size_t capacity() noexcept { return MAX_N; }
 
   // modifiers
-  void clear()
+  void clear() noexcept
   {
     destroy(begin(), end());
     size_ = 0;
@@ -217,7 +217,7 @@ public:
   }
 
 private:
-  void destroy(iterator it_start, iterator it_end)
+  void destroy(iterator it_start, iterator it_end) noexcept
   {
     for (auto it = it_start; it != it_end; ++it) {
       it->~T();
