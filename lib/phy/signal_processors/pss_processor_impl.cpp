@@ -57,7 +57,7 @@ void srsgnb::pss_processor_impl::generation(std::array<float, SEQUENCE_LEN>& seq
 }
 
 void srsgnb::pss_processor_impl::mapping(const std::array<float, SEQUENCE_LEN>& sequence,
-                                         resource_grid_writer&                         grid,
+                                         resource_grid_writer&                  grid,
                                          const args_t&                          args) const
 {
   // Calculate symbol and first subcarrier for PSS
