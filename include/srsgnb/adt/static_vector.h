@@ -1,12 +1,11 @@
 
-#ifndef SRSRAN_BOUNDED_VECTOR_H
-#define SRSRAN_BOUNDED_VECTOR_H
+#ifndef SRSGNB_STATIC_VECTOR_H
+#define SRSGNB_STATIC_VECTOR_H
 
 #include "detail/type_storage.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <iterator>
 #include <memory>
-#include <type_traits>
 
 namespace srsgnb {
 
@@ -253,4 +252,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSRAN_BOUNDED_VECTOR_H
+#endif // SRSGNB_STATIC_VECTOR_H
