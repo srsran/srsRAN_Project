@@ -1,5 +1,5 @@
 
-#include "srsgnb/adt/bounded_vector.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 namespace srsgnb {
@@ -44,37 +44,37 @@ struct moveonly {
 void test_ctor()
 {
   // TEST: default ctor
-  bounded_vector<int, 10> a;
+  static_vector<int, 10> a;
   TESTASSERT(a.size() == 0);
   TESTASSERT(a.capacity() == 10);
   TESTASSERT(a.empty());
 
   // TEST: copy ctor
   a.push_back(1);
-  bounded_vector<int, 10> a2(a);
+  static_vector<int, 10> a2(a);
   TESTASSERT(a2.size() == a.size());
   TESTASSERT(std::equal(a.begin(), a.end(), a2.begin()));
 
   // TEST: size ctor
-  bounded_vector<int, 5> a3(2);
+  static_vector<int, 5> a3(2);
   TESTASSERT(a3.size() == 2);
 
   // TEST: size+value ctor
-  bounded_vector<int, 15> a4(10, 5);
+  static_vector<int, 15> a4(10, 5);
   TESTASSERT(a4.size() == 10);
   for (auto& v : a4) {
     TESTASSERT(v == 5);
   }
 
   // TEST: initializer_list ctor
-  bounded_vector<int, 20> a5({0, 2, 4, 6, 8, 10, 12});
+  static_vector<int, 20> a5({0, 2, 4, 6, 8, 10, 12});
   TESTASSERT(a5.size() == 7);
   for (size_t i = 0; i < a5.size(); ++i) {
     TESTASSERT(a5[i] == (int)i * 2);
   }
 
   // TEST: move ctor
-  bounded_vector<int, 20> a6(std::move(a5));
+  static_vector<int, 20> a6(std::move(a5));
   TESTASSERT(a6.size() == 7);
   TESTASSERT(a5.size() == 0);
 }
@@ -82,7 +82,7 @@ void test_ctor()
 void test_obj_add_rem()
 {
   // TEST: push_back / emplace_back
-  bounded_vector<C, 10> a;
+  static_vector<C, 10> a;
   TESTASSERT(a.size() == 0);
   TESTASSERT(a.empty());
   a.push_back(1);
@@ -98,7 +98,7 @@ void test_obj_add_rem()
   TESTASSERT(a[2] == 3 and a.back() == 3);
 
   // TEST: copy ctor correct insertion
-  bounded_vector<C, 10> a2(a);
+  static_vector<C, 10> a2(a);
   TESTASSERT(a2.size() == a.size());
   TESTASSERT(std::equal(a.begin(), a.end(), a2.begin()));
 
@@ -122,7 +122,7 @@ void test_obj_add_rem()
 
   // TEST: erase
   a.erase(a.begin() + 1);
-  srsgnb::bounded_vector<C, 10> test = {1, 3, 3};
+  srsgnb::static_vector<C, 10> test = {1, 3, 3};
   TESTASSERT(a == test);
 
   // TEST: clear
@@ -145,10 +145,10 @@ void test_obj_add_rem()
 
 void test_move_only_type()
 {
-  bounded_vector<moveonly, 10> a(5);
+  static_vector<moveonly, 10> a(5);
   TESTASSERT(a.size() == 5);
 
-  bounded_vector<moveonly, 10> a2(std::move(a));
+  static_vector<moveonly, 10> a2(std::move(a));
   TESTASSERT(a2.size() == 5 and a.empty());
 
   a2[0] = moveonly();

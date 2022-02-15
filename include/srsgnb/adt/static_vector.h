@@ -11,7 +11,7 @@
 namespace srsgnb {
 
 template <typename T, std::size_t MAX_N>
-class bounded_vector
+class static_vector
 {
 public:
   using iterator       = T*;
@@ -19,21 +19,21 @@ public:
   using size_type      = std::size_t;
   using value_type     = T;
 
-  bounded_vector() = default;
-  explicit bounded_vector(size_type N) { append(N); }
-  bounded_vector(size_type N, const T& val) { append(N, val); }
-  bounded_vector(const bounded_vector& other) { append(other.begin(), other.end()); }
-  bounded_vector(bounded_vector&& other) noexcept
+  static_vector() = default;
+  explicit static_vector(size_type N) { append(N); }
+  static_vector(size_type N, const T& val) { append(N, val); }
+  static_vector(const static_vector& other) { append(other.begin(), other.end()); }
+  static_vector(static_vector&& other) noexcept
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
     std::uninitialized_copy(std::make_move_iterator(other.begin()), std::make_move_iterator(other.end()), end());
     size_ = other.size();
     other.clear();
   }
-  bounded_vector(std::initializer_list<T> init) { append(init.begin(), init.end()); }
-  bounded_vector(const_iterator it_begin, const_iterator it_end) { append(it_begin, it_end); }
-  ~bounded_vector() { destroy(begin(), end()); }
-  bounded_vector& operator=(const bounded_vector& other)
+  static_vector(std::initializer_list<T> init) { append(init.begin(), init.end()); }
+  static_vector(const_iterator it_begin, const_iterator it_end) { append(it_begin, it_end); }
+  ~static_vector() { destroy(begin(), end()); }
+  static_vector& operator=(const static_vector& other)
   {
     if (this == &other) {
       return *this;
@@ -41,7 +41,7 @@ public:
     assign(other.begin(), other.end());
     return *this;
   }
-  bounded_vector& operator=(bounded_vector&& other) noexcept
+  static_vector& operator=(static_vector&& other) noexcept
   {
     if (this == &other) {
       return *this;
@@ -184,11 +184,11 @@ public:
     }
   }
 
-  bool operator==(const bounded_vector& other) const
+  bool operator==(const static_vector& other) const
   {
     return other.size() == size() and std::equal(begin(), end(), other.begin());
   }
-  bool operator!=(const bounded_vector& other) const { return not(*this == other); }
+  bool operator!=(const static_vector& other) const { return not(*this == other); }
 
 private:
   void destroy(iterator it_start, iterator it_end)
