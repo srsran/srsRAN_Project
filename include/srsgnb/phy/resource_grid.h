@@ -8,12 +8,10 @@ namespace srsgnb {
 
 /// According to TS 38.211: There is one resource grid for a given antenna port, subcarrier spacing configuration, and
 /// transmission direction (downlink or uplink).
-/// For this reason, I think we could keep separate resource grid instances and combine them at the end of the phy
-/// processing?
-class resource_grid
+class resource_grid_writer
 {
 public:
-  virtual ~resource_grid() = default;
+  virtual ~resource_grid_writer() = default;
 
   /**
    * @brief Put a resource element in the grid
@@ -22,6 +20,20 @@ public:
    * @param value Complex value to write
    */
   virtual void put(unsigned l, unsigned k, cf_t value) = 0;
+};
+
+class resource_grid_reader
+{
+public:
+  virtual ~resource_grid_reader() = default;
+
+  /**
+   * @brief Get a resource element in the grid
+   * @param l Symbol of the slot
+   * @param k Subcarrier index
+   * @return The complex value read from the grid
+   */
+  virtual cf_t get(unsigned l, unsigned k) const = 0;
 };
 
 } // namespace srsgnb

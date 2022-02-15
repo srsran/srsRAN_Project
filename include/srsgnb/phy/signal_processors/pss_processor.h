@@ -18,7 +18,7 @@ public:
 
   virtual ~pss_processor() = default;
 
-  virtual void map(resource_grid& grid, const args_t& args) = 0;
+  virtual void map(resource_grid_writer& grid, const args_t& args) = 0;
 };
 
 std::unique_ptr<pss_processor> create_pss_processor();

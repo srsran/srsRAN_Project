@@ -12,7 +12,7 @@ class phy_output_gateway
 public:
   virtual bool send(const std::vector<std::complex<float> >& samples) = 0;
   // OR
-  virtual bool send(const resource_grid& grid) = 0;
+  virtual bool send(const resource_grid_writer& grid) = 0;
 };
 
 } // namespace srsgnb

@@ -6,7 +6,7 @@
 
 namespace srsgnb {
 
-class resource_grid_spy : public resource_grid
+class resource_grid_spy : public resource_grid_writer
 {
 public:
   struct entry_t {

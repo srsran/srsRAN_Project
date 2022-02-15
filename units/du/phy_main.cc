@@ -27,7 +27,7 @@ public:
     return true;
   }
 
-  bool send(const resource_grid& grid) override
+  bool send(const resource_grid_writer& grid) override
   {
     printf("[PHY-OUT-GW] Sending resource grid to the outside world\n");
     return true;
