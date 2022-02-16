@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_F1AP_LOWER_INTERFACES_H
-#define SRSGNB_F1AP_LOWER_INTERFACES_H
+#ifndef SRSGNB_DU_MANAGER_H
+#define SRSGNB_DU_MANAGER_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/du_types.h"
@@ -31,9 +31,6 @@ public:
   virtual void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp) = 0;
   virtual void handle_mac_ue_reconfiguration_response()                                          = 0;
   virtual void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp)         = 0;
-  //  virtual void mac_rach_resource_response()      = 0;
-  //  virtual void ue_reset_response()               = 0;
-  //  virtual void sync_status_indication()          = 0;
 };
 
 struct du_ue_create_message {
@@ -78,4 +75,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_F1AP_LOWER_INTERFACES_H
+#endif // SRSGNB_DU_MANAGER_H

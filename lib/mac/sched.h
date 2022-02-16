@@ -2,7 +2,6 @@
 #ifndef SRSGNB_SCHED_H
 #define SRSGNB_SCHED_H
 
-#include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/sched_interface.h"
 
 namespace srsgnb {

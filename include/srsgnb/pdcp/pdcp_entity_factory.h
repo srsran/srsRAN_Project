@@ -9,7 +9,7 @@
 
 namespace srsgnb {
 
-/// Creates an instance of a PDCP entity interface.
+/// Creates an instance of a PDCP entity.
 std::unique_ptr<pdcp_entity> create_pdcp_entity();
 
 } // namespace srsgnb

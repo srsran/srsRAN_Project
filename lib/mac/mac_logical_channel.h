@@ -32,7 +32,7 @@ public:
 };
 
 template <typename LogicalChannel>
-class mac_dcch_manager
+class mac_dcch_channel_repository
 {
   const static du_ue_index_t INVALID_UE_INDEX = std::numeric_limits<du_ue_index_t>::max();
 
@@ -87,17 +87,17 @@ public:
 
 private:
   struct ul_mac_entity {
-    du_ue_index_t                      ue_index = INVALID_UE_INDEX;
-    rnti_t                             rnti     = INVALID_RNTI;
-    optional_array<LogicalChannel, 10> logical_channels;
+    du_ue_index_t                            ue_index = INVALID_UE_INDEX;
+    rnti_t                                   rnti     = INVALID_RNTI;
+    optional_array<LogicalChannel, MAX_LCID> logical_channels;
   };
 
   optional_array<ul_mac_entity, MAX_NOF_UES>       ue_db;
   circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
 };
 
-using mac_dl_dcch_manager = mac_dcch_manager<dl_dcch>;
-using mac_ul_dcch_manager = mac_dcch_manager<ul_dcch>;
+using mac_dl_dcch_manager = mac_dcch_channel_repository<dl_dcch>;
+using mac_ul_dcch_manager = mac_dcch_channel_repository<ul_dcch>;
 
 } // namespace srsgnb
 
