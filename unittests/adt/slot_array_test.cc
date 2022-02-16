@@ -10,19 +10,19 @@
  *
  */
 
-#include "srsgnb/adt/optional_array.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
-static_assert(std::is_same<optional_array<int, 5>::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<optional_array<int, 5>::iterator::value_type, int>::value, "Invalid container value_type");
-static_assert(std::is_same<optional_array<int, 5>::const_iterator::value_type, const int>::value,
+static_assert(std::is_same<slot_array<int, 5>::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slot_array<int, 5>::iterator::value_type, int>::value, "Invalid container value_type");
+static_assert(std::is_same<slot_array<int, 5>::const_iterator::value_type, const int>::value,
               "Invalid container value_type");
 
 void test_optional_array()
 {
-  optional_array<int, 5> table1;
+  slot_array<int, 5> table1;
   TESTASSERT(table1.size() == 0 and table1.empty());
   TESTASSERT(table1.begin() == table1.end());
 
@@ -51,7 +51,7 @@ void test_optional_array()
 
 void test_optional_vector()
 {
-  optional_vector<int> table1;
+  slot_vector<int> table1;
   TESTASSERT(table1.size() == 0 and table1.empty());
 
   TESTASSERT(not table1.contains(0));
@@ -76,12 +76,12 @@ void test_optional_vector()
   TESTASSERT(table1.size() == 1);
 }
 
-void test_split_optional_span()
+void test_split_slot_span()
 {
-  constexpr size_t         L                     = 7;
-  int                      some_list[L]          = {};
-  bool                     some_list_presence[L] = {};
-  split_optional_span<int> view(some_list, some_list_presence, L);
+  constexpr size_t     L                     = 7;
+  int                  some_list[L]          = {};
+  bool                 some_list_presence[L] = {};
+  split_slot_span<int> view(some_list, some_list_presence, L);
 
   TESTASSERT(view.size() == 0 and view.empty());
   TESTASSERT(view.begin() == view.end());
@@ -112,16 +112,14 @@ void test_split_optional_span()
   TESTASSERT(view.empty());
 }
 
-} // namespace srsgnb
-
 int main()
 {
   auto& test_log = srslog::fetch_basic_logger("TEST");
   test_log.set_level(srslog::basic_levels::info);
 
-  srsgnb::test_optional_array();
-  srsgnb::test_optional_vector();
-  srsgnb::test_split_optional_span();
+  test_optional_array();
+  test_optional_vector();
+  test_split_slot_span();
 
   printf("Success\n");
   return 0;

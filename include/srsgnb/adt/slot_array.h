@@ -1,23 +1,27 @@
 
-#ifndef SRSGNB_OPTIONAL_ARRAY_H
-#define SRSGNB_OPTIONAL_ARRAY_H
+#ifndef SRSGNB_SLOT_ARRAY_H
+#define SRSGNB_SLOT_ARRAY_H
 
 #include "optional.h"
 #include "span.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <array>
 
+/// \file Definitions of slot_array<T, N>, slot_vector<T>, slot_span<T>, split_slot_span<T> used to manage
+///       containers with optional elements. All the defined classes provide methods to access, remove, add elements
+///       by index with O(1) complexity, iterators that skip absent elements, and track number of present elements.
+
 namespace srsgnb {
 
 namespace detail {
 
-/// Base class used for the implementation of the common functionality in optional_array<>, optional_vector<> and
-/// optional_span<>.
+/// Base class used for the implementation of the common functionality in slot_array<>, slot_vector<> and
+/// slot_span<>.
 /// \tparam Vec type of container used
 template <typename Vec>
-class base_optional_span
+class base_slot_array_view
 {
-  using base_t = base_optional_span<Vec>;
+  using base_t = base_slot_array_view<Vec>;
   using T      = typename Vec::value_type::value_type;
 
 protected:
@@ -84,9 +88,9 @@ public:
   using iterator       = iterator_impl<T>;
   using const_iterator = iterator_impl<const T>;
 
-  constexpr base_optional_span() noexcept = default;
-  base_optional_span(Vec&& v, size_t nof_elems_) : vec(std::move(v)), nof_elems(nof_elems_) {}
-  base_optional_span(const Vec& v, size_t nof_elems_) : vec(v), nof_elems(nof_elems_) {}
+  constexpr base_slot_array_view() noexcept = default;
+  base_slot_array_view(Vec&& v, size_t nof_elems_) : vec(std::move(v)), nof_elems(nof_elems_) {}
+  base_slot_array_view(const Vec& v, size_t nof_elems_) : vec(v), nof_elems(nof_elems_) {}
 
   bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 
@@ -116,25 +120,25 @@ public:
   }
 };
 
-/// Base class used for the implementation of the common functionality in optional_array<>, optional_vector<>.
+/// Base class used for the implementation of the common functionality in slot_array<>, slot_vector<>.
 template <typename Vec>
-class base_optional_vector : public base_optional_span<Vec>
+class base_slot_array : public base_slot_array_view<Vec>
 {
-  using base_t = base_optional_span<Vec>;
+  using base_t = base_slot_array_view<Vec>;
 
 public:
-  using value_type     = typename base_optional_span<Vec>::value_type;
-  using iterator       = typename base_optional_span<Vec>::iterator;
-  using const_iterator = typename base_optional_span<Vec>::const_iterator;
+  using value_type     = typename base_slot_array_view<Vec>::value_type;
+  using iterator       = typename base_slot_array_view<Vec>::iterator;
+  using const_iterator = typename base_slot_array_view<Vec>::const_iterator;
 
-  constexpr base_optional_vector()                  = default;
-  base_optional_vector(const base_optional_vector&) = default;
-  base_optional_vector(base_optional_vector&& other) noexcept : base_t(std::move(other.vec), other.size())
+  constexpr base_slot_array()             = default;
+  base_slot_array(const base_slot_array&) = default;
+  base_slot_array(base_slot_array&& other) noexcept : base_t(std::move(other.vec), other.size())
   {
     other.nof_elems = 0;
   }
-  base_optional_vector& operator=(const base_optional_vector&) = default;
-  base_optional_vector& operator                               =(base_optional_vector&& other) noexcept
+  base_slot_array& operator=(const base_slot_array&) = default;
+  base_slot_array& operator                          =(base_slot_array&& other) noexcept
   {
     this->vec       = std::move(other.vec);
     this->nof_elems = other.nof_elems;
@@ -199,9 +203,9 @@ public:
 /// @tparam T type of objects
 /// @tparam N static size of max nof items
 template <typename T, size_t N>
-class optional_array : private detail::base_optional_vector<std::array<optional<T>, N> >
+class slot_array : private detail::base_slot_array<std::array<optional<T>, N> >
 {
-  using base_t = detail::base_optional_vector<std::array<optional<T>, N> >;
+  using base_t = detail::base_slot_array<std::array<optional<T>, N> >;
 
 public:
   using value_type     = typename base_t::value_type;
@@ -223,13 +227,13 @@ public:
   using base_t::size;
 };
 
-/// Contrarily to optional_array, this class may allocate and cause pointer/reference/iterator invalidation.
+/// Contrarily to slot_array, this class may allocate and cause pointer/reference/iterator invalidation.
 /// However, the indexes will remain valid.
 /// @tparam T
 template <typename T>
-class optional_vector : private detail::base_optional_vector<std::vector<optional<T> > >
+class slot_vector : private detail::base_slot_array<std::vector<optional<T> > >
 {
-  using base_t = detail::base_optional_vector<std::vector<optional<T> > >;
+  using base_t = detail::base_slot_array<std::vector<optional<T> > >;
 
 public:
   using value_type     = typename base_t::value_type;
@@ -273,21 +277,21 @@ public:
 /// interface.
 /// \tparam T type of elements
 template <typename T>
-class optional_span : public detail::base_optional_span<srsgnb::span<optional<T> > >
+class slot_span : public detail::base_slot_array_view<srsgnb::span<optional<T> > >
 {
-  using base_t = detail::base_optional_span<srsgnb::span<optional<T> > >;
+  using base_t = detail::base_slot_array_view<srsgnb::span<optional<T> > >;
 
 public:
   template <size_t N>
-  optional_span(const optional_array<T, N>& ar) : base_t::vec(ar)
+  slot_span(const slot_array<T, N>& ar) : base_t::vec(ar)
   {}
-  optional_span(const optional_vector<T>& ar) : base_t::vec(ar) {}
+  slot_span(const slot_vector<T>& ar) : base_t::vec(ar) {}
 };
 
 namespace detail {
 
 template <typename T>
-class base_split_optional_span
+class base_split_slot_span
 {
 protected:
   using presence_type = typename std::conditional<std::is_const<T>::value, const bool, bool>::type;
@@ -301,7 +305,7 @@ protected:
   {
     using It     = iterator_impl<Obj>;
     using Parent = typename std::
-        conditional<std::is_const<Obj>::value, const base_split_optional_span<T>, base_split_optional_span<T> >::type;
+        conditional<std::is_const<Obj>::value, const base_split_slot_span<T>, base_split_slot_span<T> >::type;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -349,13 +353,13 @@ public:
   using iterator       = iterator_impl<T>;
   using const_iterator = iterator_impl<const T>;
 
-  constexpr base_split_optional_span() = default;
+  constexpr base_split_slot_span() = default;
   template <std::size_t N>
-  constexpr base_split_optional_span(value_type (&arr)[N], presence_type (&present)[N]) noexcept : ptr(arr),
-                                                                                                   present_ptr(present),
-                                                                                                   len(N)
+  constexpr base_split_slot_span(value_type (&arr)[N], presence_type (&present)[N]) noexcept : ptr(arr),
+                                                                                               present_ptr(present),
+                                                                                               len(N)
   {}
-  constexpr base_split_optional_span(value_type* arr, presence_type* present, size_t N) :
+  constexpr base_split_slot_span(value_type* arr, presence_type* present, size_t N) :
     ptr(arr), present_ptr(present), len(N)
   {}
 
@@ -404,9 +408,9 @@ public:
 } // namespace detail
 
 template <typename T>
-class split_optional_span : public detail::base_split_optional_span<T>
+class split_slot_span : public detail::base_split_slot_span<T>
 {
-  using base_t = detail::base_split_optional_span<T>;
+  using base_t = detail::base_split_slot_span<T>;
 
 public:
   using value_type     = T;
@@ -437,9 +441,9 @@ public:
 };
 
 template <typename U>
-class split_optional_span<const U> : public detail::base_split_optional_span<const U>
+class split_slot_span<const U> : public detail::base_split_slot_span<const U>
 {
-  using base_t        = detail::base_split_optional_span<const U>;
+  using base_t        = detail::base_split_slot_span<const U>;
   using presence_type = typename base_t::presence_type;
 
 public:
@@ -450,21 +454,18 @@ public:
 };
 
 template <typename T>
-split_optional_span<T>
-make_optional_span(T*                                                                          array,
-                   typename std::conditional<std::is_const<T>::value, const bool, bool>::type* present,
-                   size_t                                                                      N)
+split_slot_span<T>
+make_slot_span(T* array, typename std::conditional<std::is_const<T>::value, const bool, bool>::type* present, size_t N)
 {
-  return split_optional_span<T>(array, present, N);
+  return split_slot_span<T>(array, present, N);
 }
 template <typename T, size_t N>
-split_optional_span<T>
-make_optional_span(T (&array)[N],
-                   typename std::conditional<std::is_const<T>::value, const bool, bool>::type (&present)[N])
+split_slot_span<T>
+make_slot_span(T (&array)[N], typename std::conditional<std::is_const<T>::value, const bool, bool>::type (&present)[N])
 {
-  return split_optional_span<T>(array, present);
+  return split_slot_span<T>(array, present);
 }
 
 } // namespace srsgnb
 
-#endif // SRSGNB_OPTIONAL_ARRAY_H
+#endif // SRSGNB_SLOT_ARRAY_H
