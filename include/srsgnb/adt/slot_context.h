@@ -15,13 +15,11 @@
 
 namespace srsgnb {
 
-/**
- * @brief Describes the slot context
- */
+/// Describes a slot context
 struct slot_context_t {
-  unsigned numerology; ///< Current numerology
-  unsigned frame;      ///< Frame index
-  unsigned slot;       ///< Slot index
+  unsigned numerology; /// Current numerology for FR1: (0,1,2) and FR2: (2,3)
+  unsigned frame;      /// Frame index (0...1023)
+  unsigned slot;       /// Slot index (0...80), range depends on numerology
 };
 
 } // namespace srsgnb
