@@ -148,6 +148,66 @@ private:
   std::string test_name;
 };
 
+/// Test object to verify correct move ctor/assignment logic
+struct moveonly_test_object {
+  moveonly_test_object() : val_ptr(std::make_unique<int>(object_count_impl())) { object_count_impl()++; }
+  explicit moveonly_test_object(int v) : val_ptr(std::make_unique<int>(v)) { object_count_impl()++; }
+  ~moveonly_test_object() { object_count_impl()--; }
+  moveonly_test_object(moveonly_test_object&& other) noexcept : val_ptr(std::move(other.val_ptr))
+  {
+    object_count_impl()++;
+  }
+  moveonly_test_object& operator=(moveonly_test_object&&) noexcept = default;
+
+  bool has_value() const { return val_ptr != nullptr; }
+  int  value() const
+  {
+    srsran_assert(has_value(), "Invalid access");
+    return *val_ptr;
+  }
+  bool operator==(const moveonly_test_object& other) const
+  {
+    return has_value() == other.has_value() and (!has_value() || value() == other.value());
+  }
+  bool operator!=(const moveonly_test_object& other) const { return !(*this == other); }
+
+  static size_t object_count() { return object_count_impl(); }
+
+private:
+  static size_t& object_count_impl()
+  {
+    static size_t count = 0;
+    return count;
+  }
+
+  std::unique_ptr<int> val_ptr;
+};
+
+/// Test object to verify correct copy ctor/assignment logic
+struct copyonly_test_object {
+  copyonly_test_object() : val(object_count_impl()) { object_count_impl()++; }
+  explicit copyonly_test_object(int v) : val(v) { object_count_impl()++; }
+  ~copyonly_test_object() { object_count_impl()--; }
+  copyonly_test_object(const copyonly_test_object& other) : val(other.val) { object_count_impl()++; }
+  copyonly_test_object(copyonly_test_object&& other) = delete;
+  copyonly_test_object& operator=(const copyonly_test_object&) = default;
+  copyonly_test_object& operator=(copyonly_test_object&&) = delete;
+
+  int  value() const { return val; }
+  bool operator==(const copyonly_test_object& other) const { return val == other.val; }
+  bool operator!=(const copyonly_test_object& other) const { return val != other.val; }
+
+  static size_t object_count() { return object_count_impl(); }
+
+private:
+  static size_t& object_count_impl()
+  {
+    static size_t count = 0;
+    return count;
+  }
+  int val;
+};
+
 } // namespace srsgnb
 
 #define CONDERROR(cond, fmt, ...) srsran_assert(not(cond), fmt, ##__VA_ARGS__)

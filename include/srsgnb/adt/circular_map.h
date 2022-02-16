@@ -126,7 +126,7 @@ public:
   {
     for (size_t idx = 0; idx < other.capacity(); ++idx) {
       if (present[idx]) {
-        buffer[idx].template emplace(other.get_obj_(idx));
+        buffer[idx].emplace(other.get_obj_(idx));
       }
     }
   }
@@ -134,7 +134,7 @@ public:
   {
     for (size_t idx = 0; idx < other.capacity(); ++idx) {
       if (present[idx]) {
-        buffer[idx].template emplace(std::move(other.get_obj_(idx)));
+        buffer[idx].emplace(std::move(other.get_obj_(idx)));
       }
     }
     other.clear();
@@ -178,7 +178,7 @@ public:
     if (present[idx]) {
       return false;
     }
-    buffer[idx].template emplace(key);
+    buffer[idx].emplace(key);
     present[idx] = true;
     count++;
     return true;
@@ -190,7 +190,7 @@ public:
     if (present[idx]) {
       return false;
     }
-    buffer[idx].template emplace(key, obj);
+    buffer[idx].emplace(key, obj);
     present[idx] = true;
     count++;
     return true;
@@ -201,7 +201,7 @@ public:
     if (present[idx]) {
       return srsgnb::expected<iterator, T>(std::move(obj));
     }
-    buffer[idx].template emplace(key, std::move(obj));
+    buffer[idx].emplace(key, std::move(obj));
     present[idx] = true;
     count++;
     return iterator(this, idx);

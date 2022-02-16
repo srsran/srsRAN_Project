@@ -22,3 +22,7 @@ add_test(expected_test expected_test)
 add_executable(slot_array_test slot_array_test.cc)
 target_link_libraries(slot_array_test srslog)
 add_test(slot_array_test slot_array_test)
+
+add_executable(circular_buffer_test circular_buffer_test.cc)
+target_link_libraries(circular_buffer_test srslog)
+add_test(circular_buffer_test circular_buffer_test)
