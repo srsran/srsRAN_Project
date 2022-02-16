@@ -89,6 +89,7 @@ public:
   template <typename... Args>
   void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args&&...>::value)
   {
+    static_assert(std::is_constructible<T, Args&&...>::value, "Ctor T(Args...) does not exist.");
     if (has_value()) {
       storage.destroy();
     }

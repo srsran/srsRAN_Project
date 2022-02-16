@@ -18,3 +18,7 @@ add_test(circular_map_test circular_map_test)
 add_executable(expected_test expected_test.cc)
 target_link_libraries(expected_test srslog)
 add_test(expected_test expected_test)
+
+add_executable(optional_array_test optional_array_test.cc)
+target_link_libraries(optional_array_test srslog)
+add_test(optional_array_test optional_array_test)
