@@ -13,7 +13,7 @@
 #ifndef SRSRAN_POOL_UTILS_H
 #define SRSRAN_POOL_UTILS_H
 
-#include "../move_callback.h"
+#include "../unique_function.h"
 #include <memory>
 
 namespace srsgnb {

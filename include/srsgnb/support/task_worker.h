@@ -3,7 +3,7 @@
 #define SRSRAN_THREAD_POOL_H
 
 #include "srsgnb/adt/circular_buffer.h"
-#include "srsgnb/adt/move_callback.h"
+#include "srsgnb/adt/unique_function.h"
 #include "srsgnb/srslog/srslog.h"
 #include "task_executor.h"
 #include "threads.h"
@@ -22,7 +22,7 @@ namespace srsgnb {
 /// Class used to create a single worker with an input task queue with a single reader
 class task_worker : public thread
 {
-  using task_t = move_task_t;
+  using task_t = unique_task;
 
 public:
   task_worker(std::string thread_name_,
@@ -58,7 +58,7 @@ class task_worker_executor : public task_executor
 public:
   task_worker_executor() = default;
   explicit task_worker_executor(task_worker& worker_) : worker(&worker_) {}
-  void execute(move_task_t task) override { worker->push_task(std::move(task)); }
+  void execute(unique_task task) override { worker->push_task(std::move(task)); }
 
 private:
   task_worker* worker = nullptr;
