@@ -1,8 +1,7 @@
 #ifndef SRSGNB_SUPPORT_RESOURCE_GRID_H
 #define SRSGNB_SUPPORT_RESOURCE_GRID_H
 
-#include "../../../../../../../usr/include/c++/9/memory"
-#include "../adt/complex.h"
+#include "srsgnb/adt/complex.h"
 
 namespace srsgnb {
 

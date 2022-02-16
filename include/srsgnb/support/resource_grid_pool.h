@@ -6,14 +6,6 @@
 
 namespace srsgnb {
 
-/// Describes the transmission and reception context
-struct resource_grid_context {
-  slot_context_t slot;
-  unsigned       sector;
-  unsigned       antenna;
-  enum { DOWNLINK, UPLINK } direction;
-};
-
 /// Describes a resource grid pool interface
 class resource_grid_pool
 {
