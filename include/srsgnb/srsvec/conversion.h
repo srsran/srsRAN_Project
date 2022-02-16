@@ -19,52 +19,46 @@
 namespace srsgnb {
 namespace srsvec {
 
-/**
- * @brief Converts from complex float to int16 applying the given scaling
- * @param x
- * @param scale
- * @param z
- */
+/// Converts from complex float to int16 applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling prior conversion
+/// \param [out] z resultant data
 void convert(span<const cf_t> x, float scale, span<int16_t> z);
 
-/**
- * @brief Converts from complex float to int16 applying the given scaling and swapping the real and imaginary
- * @param x
- * @param scale
- * @param z
- */
+/// Converts and swaps real and imaginary from complex float to int16 applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling prior conversion
+/// \param [out] z resultant data
 void convert_swap(span<const cf_t> x, float scale, span<int16_t> z);
 
-/**
- * @brief Converts from int16 to complex float applying the given scaling
- * @param x
- * @param scale
- * @param z
- */
+/// Converts from int16 to complex float applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling after conversion
+/// \param [out] z resultant data
 void convert(span<const int16_t> x, float scale, span<cf_t> z);
 
-/**
- * @brief Converts from int16 to complex float applying the given scaling and swapping the real and imaginary
- * @param x
- * @param scale
- * @param z
- */
+/// Converts and swaps real and imaginary from int16 to complex float applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling after conversion
+/// \param [out] z resultant data
 void convert_swap(span<const int16_t> x, float scale, span<cf_t> z);
 
-/**
- * @brief Converts from float to int16 applying the given scaling
- * @param x
- * @param scale
- * @param z
- */
+/// Converts from float to int16 applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling prior conversion
+/// \param [out] z resultant data
 void convert(span<const float> x, float scale, span<int16_t> z);
 
-/**
- * @brief Converts from int16 to float applying the given scaling
- * @param x
- * @param scale
- * @param z
- */
+/// Converts from int16 to float applying the given scaling
+///
+/// \param [in] x is the input data
+/// \param [in] scale input data scaling after conversion
+/// \param [out] z resultant data
 void convert(span<const int16_t> x, float scale, span<float> z);
 
 } // namespace srsvec
