@@ -24,10 +24,12 @@ struct default_error_t {};
 template <typename T, typename E>
 class expected;
 
+namespace detail {
 template <typename T>
 struct is_expected : std::false_type {};
 template <typename V, typename E>
 struct is_expected<expected<V, E> > : std::true_type {};
+} // namespace detail
 
 /// Class that can either hold a value type T, in case of success, or an error type E, in case of failure.
 /// \tparam T type of success value
@@ -43,10 +45,10 @@ public:
   expected(const T& t) noexcept : has_val(true), val(t) {}
   expected(E&& e) noexcept : has_val(false), unexpected(std::move(e)) {}
   expected(const E& e) noexcept : has_val(false), unexpected(e) {}
-  template <
-      typename U,
-      typename std::enable_if<std::is_convertible<U, T>::value and not is_expected<typename std::decay<U>::type>::value,
-                              int>::type = 0>
+  template <typename U,
+            typename std::enable_if<std::is_convertible<U, T>::value and
+                                        not detail::is_expected<typename std::decay<U>::type>::value,
+                                    int>::type = 0>
   explicit expected(U&& u) noexcept : has_val(true), val(std::forward<U>(u))
   {}
   expected(const expected& other)
