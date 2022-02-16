@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_RESOURCE_MAPPING_RESOURCE_ELEMENT_MAPPING
 #define SRSGNB_PHY_RESOURCE_MAPPING_RESOURCE_ELEMENT_MAPPING
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/support/resource_grid.h"
 #include <complex>
 #include <vector>
 

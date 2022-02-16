@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_CHANNEL_PROCESSORS_PDSCH_RESOURCE_MAPPER
 #define SRSGNB_PHY_CHANNEL_PROCESSORS_PDSCH_RESOURCE_MAPPER
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/support/resource_grid.h"
 #include <complex>
 #include <vector>
 

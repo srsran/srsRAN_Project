@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_SIGNAL_PROCESSORS_PSS_PROCESSOR_H
 #define SRSGNB_PHY_SIGNAL_PROCESSORS_PSS_PROCESSOR_H
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/support/resource_grid.h"
 #include <memory>
 
 namespace srsgnb {
