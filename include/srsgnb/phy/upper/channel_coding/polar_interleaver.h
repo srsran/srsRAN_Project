@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_H_
-#define SRSGNB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_H_
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_INTERLEAVER_H_
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_INTERLEAVER_H_
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
@@ -42,4 +42,4 @@ std::unique_ptr<polar_interleaver> create_polar_interleaver();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_H_
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_INTERLEAVER_H_

@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H
-#define SRSGNB_PHY_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H
+#ifndef SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H
+#define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/complex.h"
@@ -90,4 +90,4 @@ std::unique_ptr<pseudo_random_generator> create_pseudo_random();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H
+#endif // SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_H

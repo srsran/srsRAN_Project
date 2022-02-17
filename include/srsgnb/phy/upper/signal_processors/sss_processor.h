@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
-#define SRSGNB_PHY_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
+#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
+#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
 
 #include "srsgnb/phy/resource_grid.h"
 #include <memory>
@@ -25,4 +25,4 @@ std::unique_ptr<sss_processor> create_sss_processor();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
+#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H

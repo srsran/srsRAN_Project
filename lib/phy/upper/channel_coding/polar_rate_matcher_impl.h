@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
-#define SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
 
 #include "srsgnb/phy/upper/channel_coding/polar_code.h"
 #include "srsgnb/phy/upper/channel_coding/polar_rate_matcher.h"
@@ -30,4 +30,4 @@ public:
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_

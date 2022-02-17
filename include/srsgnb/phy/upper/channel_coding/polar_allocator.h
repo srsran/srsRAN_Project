@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_ALLOCATOR_H
-#define SRSGNB_PHY_CHANNEL_CODING_POLAR_ALLOCATOR_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_ALLOCATOR_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_ALLOCATOR_H
 
 #include "srsgnb/phy/upper/channel_coding/polar_code.h"
 
@@ -17,4 +17,4 @@ std::unique_ptr<polar_allocator> create_polar_allocator();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_POLAR_ALLOCATOR_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_ALLOCATOR_H

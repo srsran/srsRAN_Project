@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_DECODER_H
-#define SRSGNB_PHY_CHANNEL_CODING_POLAR_DECODER_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_DECODER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_DECODER_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/polar_code.h"
@@ -34,4 +34,4 @@ std::unique_ptr<polar_decoder> create_polar_decoder_ssc(std::unique_ptr<polar_en
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_POLAR_DECODER_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_DECODER_H

@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_PDSCH_ENCODER_H
-#define SRSGNB_PHY_PDSCH_ENCODER_H
+#ifndef  SRSGNB_PHY_UPPER_PDSCH_ENCODER_H
+#define  SRSGNB_PHY_UPPER_PDSCH_ENCODER_H
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -15,4 +15,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_PDSCH_ENCODER_H
+#endif //  SRSGNB_PHY_UPPER_PDSCH_ENCODER_H

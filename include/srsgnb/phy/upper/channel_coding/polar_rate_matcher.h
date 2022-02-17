@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_H
-#define SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/polar_code.h"
@@ -30,4 +30,4 @@ std::unique_ptr<polar_rate_matcher> create_polar_rate_matcher();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_POLAR_RATE_MATCHER_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_H

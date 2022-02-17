@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_DL_PROCESSOR_H
-#define SRSGNB_PHY_DL_PROCESSOR_H
+#ifndef SRSGNB_PHY_UPPER_DL_PROCESSOR_H
+#define SRSGNB_PHY_UPPER_DL_PROCESSOR_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include <complex>
@@ -22,4 +22,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_DL_PROCESSOR_H
+#endif // SRSGNB_PHY_UPPER_DL_PROCESSOR_H

@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_CHANNEL_CODING_CRC_CALCULATOR_H
-#define SRSGNB_PHY_CHANNEL_CODING_CRC_CALCULATOR_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_CRC_CALCULATOR_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_CRC_CALCULATOR_H
 
 #include "srsgnb/adt/span.h"
 #include <memory>
@@ -44,4 +44,4 @@ std::unique_ptr<crc_calculator> create_crc_calculator(crc_generator_poly poly);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_CHANNEL_CODING_CRC_CALCULATOR_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_CRC_CALCULATOR_H

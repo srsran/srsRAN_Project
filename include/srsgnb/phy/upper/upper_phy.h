@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_PHY_H
-#define SRSGNB_PHY_PHY_H
+#ifndef  SRSGNB_PHY_UPPER_PHY_H
+#define  SRSGNB_PHY_UPPER_PHY_H
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/resource_grid_context.h"
@@ -83,4 +83,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_PHY_H
+#endif //  SRSGNB_PHY_UPPER_PHY_H

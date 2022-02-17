@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_PDSCH_MODULATOR_H
-#define SRSGNB_PHY_PDSCH_MODULATOR_H
+#ifndef  SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
+#define  SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include <complex>
@@ -14,4 +14,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_PDSCH_MODULATOR_H
+#endif //  SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
