@@ -10,9 +10,9 @@
  *
  */
 
-#include "srsran/srslog/event_trace.h"
+#include "srsgnb/srslog/event_trace.h"
 #include "sinks/buffered_file_sink.h"
-#include "srsran/srslog/srslog.h"
+#include "srsgnb/srslog/srslog.h"
 #include <ctime>
 
 #undef trace_duration_begin
@@ -95,7 +95,7 @@ void trace_duration_begin(const std::string& category, const std::string& name)
 
   char fmt_time[24];
   format_time(fmt_time, sizeof(fmt_time));
-  (*tracer)("[%s] [TID:%0u] Entering \"%s\": %s", fmt_time, (unsigned)::pthread_self(), category, name);
+  (*tracer)("[{}] [TID:{}] Entering \"{}\": {}", fmt_time, (unsigned)::pthread_self(), category, name);
 }
 
 void trace_duration_end(const std::string& category, const std::string& name)
@@ -106,7 +106,7 @@ void trace_duration_end(const std::string& category, const std::string& name)
 
   char fmt_time[24];
   format_time(fmt_time, sizeof(fmt_time));
-  (*tracer)("[%s] [TID:%0u] Leaving \"%s\": %s", fmt_time, (unsigned)::pthread_self(), category, name);
+  (*tracer)("[{}] [TID:{}] Leaving \"{}\": {}", fmt_time, (unsigned)::pthread_self(), category, name);
 }
 
 } // namespace srslog
@@ -125,5 +125,5 @@ srslog::detail::scoped_complete_event::~scoped_complete_event()
     return;
   }
 
-  (*tracer)("%s %s, %u", category, name, (unsigned)diff.count());
+  (*tracer)("{} {}, {}", category, name, (unsigned)diff.count());
 }

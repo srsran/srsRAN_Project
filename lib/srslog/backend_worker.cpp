@@ -11,7 +11,7 @@
  */
 
 #include "backend_worker.h"
-#include "srsran/srslog/sink.h"
+#include "srsgnb/srslog/sink.h"
 
 using namespace srslog;
 

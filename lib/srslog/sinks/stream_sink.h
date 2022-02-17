@@ -13,7 +13,7 @@
 #ifndef SRSLOG_STREAM_SINK_H
 #define SRSLOG_STREAM_SINK_H
 
-#include "srsran/srslog/sink.h"
+#include "srsgnb/srslog/sink.h"
 
 namespace srslog {
 

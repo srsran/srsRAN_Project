@@ -13,7 +13,7 @@
 #ifndef SRSLOG_OBJECT_REPOSITORY_H
 #define SRSLOG_OBJECT_REPOSITORY_H
 
-#include "srsran/srslog/detail/support/thread_utils.h"
+#include "srsgnb/srslog/detail/support/thread_utils.h"
 #include <unordered_map>
 #include <vector>
 

@@ -13,8 +13,8 @@
 #ifndef SRSLOG_DETAIL_LOG_BACKEND_H
 #define SRSLOG_DETAIL_LOG_BACKEND_H
 
-#include "srsran/srslog/bundled/fmt/printf.h"
-#include "srsran/srslog/shared_types.h"
+#include "srsgnb/srslog/bundled/fmt/core.h"
+#include "srsgnb/srslog/shared_types.h"
 
 namespace srslog {
 
@@ -35,7 +35,7 @@ public:
   virtual void start(backend_priority priority = backend_priority::normal) = 0;
 
   /// Allocates a dyn_arg_store and returns a pointer to it on success, otherwise returns nullptr.
-  virtual fmt::dynamic_format_arg_store<fmt::printf_context>* alloc_arg_store() = 0;
+  virtual fmt::dynamic_format_arg_store<fmt::format_context>* alloc_arg_store() = 0;
 
   /// Pushes a log entry into the backend. Returns true on success, otherwise
   /// false.

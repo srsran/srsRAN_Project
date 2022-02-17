@@ -13,8 +13,8 @@
 #ifndef SRSLOG_DETAIL_LOG_ENTRY_H
 #define SRSLOG_DETAIL_LOG_ENTRY_H
 
-#include "srsran/srslog/detail/log_entry_metadata.h"
-#include "srsran/srslog/detail/support/thread_utils.h"
+#include "srsgnb/srslog/detail/log_entry_metadata.h"
+#include "srsgnb/srslog/detail/support/thread_utils.h"
 
 namespace srslog {
 

@@ -13,7 +13,7 @@
 #ifndef SRSLOG_CONTEXT_H
 #define SRSLOG_CONTEXT_H
 
-#include "srsran/srslog/detail/support/tmp_utils.h"
+#include "srsgnb/srslog/detail/support/tmp_utils.h"
 #include <cassert>
 #include <string>
 

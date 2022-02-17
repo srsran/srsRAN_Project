@@ -13,9 +13,9 @@
 #ifndef SRSLOG_FILE_UTILS_H
 #define SRSLOG_FILE_UTILS_H
 
-#include "srsran/srslog/bundled/fmt/format.h"
-#include "srsran/srslog/detail/support/error_string.h"
-#include "srsran/srslog/detail/support/memory_buffer.h"
+#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/srslog/detail/support/error_string.h"
+#include "srsgnb/srslog/detail/support/memory_buffer.h"
 
 namespace srslog {
 

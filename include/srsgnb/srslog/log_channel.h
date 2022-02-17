@@ -13,9 +13,9 @@
 #ifndef SRSLOG_LOG_CHANNEL_H
 #define SRSLOG_LOG_CHANNEL_H
 
-#include "srsran/srslog/detail/log_backend.h"
-#include "srsran/srslog/detail/log_entry.h"
-#include "srsran/srslog/sink.h"
+#include "srsgnb/srslog/detail/log_backend.h"
+#include "srsgnb/srslog/detail/log_entry.h"
+#include "srsgnb/srslog/sink.h"
 #include <atomic>
 
 namespace srslog {

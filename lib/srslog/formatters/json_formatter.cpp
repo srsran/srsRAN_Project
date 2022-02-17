@@ -11,7 +11,7 @@
  */
 
 #include "json_formatter.h"
-#include "srsran/srslog/detail/log_entry_metadata.h"
+#include "srsgnb/srslog/detail/log_entry_metadata.h"
 
 using namespace srslog;
 
@@ -27,9 +27,9 @@ void json_formatter::format(detail::log_entry_metadata&& metadata, fmt::memory_b
                  "  \"log_entry\": \"");
   if (metadata.fmtstring) {
     if (metadata.store) {
-      fmt::basic_format_args<fmt::basic_printf_context_t<char> > args(*metadata.store);
+      fmt::basic_format_args<fmt::buffer_context<char> > args(*metadata.store);
       try {
-        fmt::vprintf(buffer, fmt::to_string_view(metadata.fmtstring), args);
+        fmt::vformat_to(buffer, fmt::to_string_view(metadata.fmtstring), args);
       } catch (...) {
         fmt::print(stderr, "srsLog error - Invalid format string: \"{}\"\n", metadata.fmtstring);
         fmt::format_to(buffer, " -> srsLog error - Invalid format string: \"{}\"", metadata.fmtstring);
@@ -65,9 +65,9 @@ void json_formatter::format_context_begin(const detail::log_entry_metadata& md,
   if (md.fmtstring) {
     if (md.store) {
       fmt::format_to(buffer, "  \"log_entry\": \"");
-      fmt::basic_format_args<fmt::basic_printf_context_t<char> > args(*md.store);
+      fmt::basic_format_args<fmt::buffer_context<char> > args(*md.store);
       try {
-        fmt::vprintf(buffer, fmt::to_string_view(md.fmtstring), args);
+        fmt::vformat_to(buffer, fmt::to_string_view(md.fmtstring), args);
       } catch (...) {
         fmt::print(stderr, "srsLog error - Invalid format string: \"{}\"\n", md.fmtstring);
         fmt::format_to(buffer, " -> srsLog error - Invalid format string: \"{}\"", md.fmtstring);

@@ -13,8 +13,8 @@
 #ifndef SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
 #define SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
 
-#include "srsran/srslog/bundled/fmt/printf.h"
-#include "srsran/srslog/detail/support/backend_capacity.h"
+#include "srsgnb/srslog/bundled/fmt/core.h"
+#include "srsgnb/srslog/detail/support/backend_capacity.h"
 
 namespace srslog {
 
@@ -40,7 +40,7 @@ public:
   }
 
   /// Returns a pointer to a free dyn arg store object, otherwise returns nullptr.
-  fmt::dynamic_format_arg_store<fmt::printf_context>* alloc()
+  fmt::dynamic_format_arg_store<fmt::format_context>* alloc()
   {
     scoped_lock lock(m);
     if (free_list.empty()) {
@@ -54,7 +54,7 @@ public:
   }
 
   /// Deallocate the given dyn arg store object returning it to the pool.
-  void dealloc(fmt::dynamic_format_arg_store<fmt::printf_context>* p)
+  void dealloc(fmt::dynamic_format_arg_store<fmt::format_context>* p)
   {
     if (!p) {
       return;
@@ -66,8 +66,8 @@ public:
   }
 
 private:
-  std::vector<fmt::dynamic_format_arg_store<fmt::printf_context> > pool;
-  std::vector<fmt::dynamic_format_arg_store<fmt::printf_context>*> free_list;
+  std::vector<fmt::dynamic_format_arg_store<fmt::format_context> > pool;
+  std::vector<fmt::dynamic_format_arg_store<fmt::format_context>*> free_list;
   mutable mutex                                                    m;
 };
 

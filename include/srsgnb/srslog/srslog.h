@@ -13,9 +13,9 @@
 #ifndef SRSLOG_SRSLOG_H
 #define SRSLOG_SRSLOG_H
 
-#include "srsran/srslog/detail/support/any.h"
-#include "srsran/srslog/logger.h"
-#include "srsran/srslog/shared_types.h"
+#include "srsgnb/srslog/detail/support/any.h"
+#include "srsgnb/srslog/logger.h"
+#include "srsgnb/srslog/shared_types.h"
 
 namespace srslog {
 

@@ -13,9 +13,9 @@
 #ifndef SRSLOG_SINK_H
 #define SRSLOG_SINK_H
 
-#include "srsran/srslog/detail/support/error_string.h"
-#include "srsran/srslog/detail/support/memory_buffer.h"
-#include "srsran/srslog/formatter.h"
+#include "srsgnb/srslog/detail/support/error_string.h"
+#include "srsgnb/srslog/detail/support/memory_buffer.h"
+#include "srsgnb/srslog/formatter.h"
 #include <cassert>
 
 namespace srslog {

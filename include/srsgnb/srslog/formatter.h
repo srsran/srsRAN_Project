@@ -13,8 +13,8 @@
 #ifndef SRSLOG_FORMATTER_H
 #define SRSLOG_FORMATTER_H
 
-#include "srsran/srslog/bundled/fmt/format.h"
-#include "srsran/srslog/context.h"
+#include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/srslog/context.h"
 
 namespace srslog {
 

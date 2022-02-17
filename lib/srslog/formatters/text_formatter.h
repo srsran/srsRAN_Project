@@ -13,7 +13,7 @@
 #ifndef SRSLOG_TEXT_FORMATTER_H
 #define SRSLOG_TEXT_FORMATTER_H
 
-#include "srsran/srslog/formatter.h"
+#include "srsgnb/srslog/formatter.h"
 
 namespace srslog {
 

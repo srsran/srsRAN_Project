@@ -13,7 +13,7 @@
 #ifndef SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
 #define SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
 
-#include "srsran/srslog/bundled/fmt/printf.h"
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include <chrono>
 
 namespace srslog {
@@ -34,7 +34,7 @@ struct log_entry_metadata {
   std::chrono::high_resolution_clock::time_point      tp;
   log_context                                         context;
   const char*                                         fmtstring;
-  fmt::dynamic_format_arg_store<fmt::printf_context>* store;
+  fmt::dynamic_format_arg_store<fmt::format_context>* store;
   std::string                                         log_name;
   char                                                log_tag;
   std::vector<uint8_t>                                hex_dump;

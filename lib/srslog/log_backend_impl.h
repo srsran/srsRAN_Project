@@ -14,7 +14,7 @@
 #define SRSLOG_LOG_BACKEND_IMPL_H
 
 #include "backend_worker.h"
-#include "srsran/srslog/detail/log_backend.h"
+#include "srsgnb/srslog/detail/log_backend.h"
 
 namespace srslog {
 
@@ -41,7 +41,7 @@ public:
     return true;
   }
 
-  fmt::dynamic_format_arg_store<fmt::printf_context>* alloc_arg_store() override { return arg_pool.alloc(); }
+  fmt::dynamic_format_arg_store<fmt::format_context>* alloc_arg_store() override { return arg_pool.alloc(); }
 
   bool is_running() const override { return worker.is_running(); }
 

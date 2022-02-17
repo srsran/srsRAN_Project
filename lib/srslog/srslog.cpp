@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsran/srslog/srslog.h"
+#include "srsgnb/srslog/srslog.h"
 #include "formatters/json_formatter.h"
 #include "sinks/file_sink.h"
 #include "sinks/syslog_sink.h"

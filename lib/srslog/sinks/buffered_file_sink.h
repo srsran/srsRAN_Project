@@ -14,7 +14,7 @@
 #define SRSLOG_BUFFERED_FILE_SINK_H
 
 #include "file_utils.h"
-#include "srsran/srslog/sink.h"
+#include "srsgnb/srslog/sink.h"
 
 namespace srslog {
 

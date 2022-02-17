@@ -13,9 +13,9 @@
 #ifndef SRSLOG_DETAIL_SUPPORT_WORK_QUEUE_H
 #define SRSLOG_DETAIL_SUPPORT_WORK_QUEUE_H
 
-#include "srsran/adt/circular_buffer.h"
-#include "srsran/srslog/detail/support/backend_capacity.h"
-#include "srsran/srslog/detail/support/thread_utils.h"
+#include "srsgnb/adt/circular_buffer.h"
+#include "srsgnb/srslog/detail/support/backend_capacity.h"
+#include "srsgnb/srslog/detail/support/thread_utils.h"
 
 namespace srslog {
 
@@ -27,7 +27,7 @@ namespace detail {
 template <typename T, size_t capacity = SRSLOG_QUEUE_CAPACITY>
 class work_queue
 {
-  srsran::dyn_circular_buffer<T> queue;
+  srsgnb::dyn_circular_buffer<T> queue;
   mutable mutex                  m;
   static constexpr size_t        threshold = capacity * 0.98;
 
