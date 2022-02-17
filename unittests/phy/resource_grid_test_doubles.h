@@ -18,8 +18,26 @@ public:
   resource_grid_spy()           = default;
   ~resource_grid_spy() override = default;
 
-  void put(unsigned int k, unsigned int l, cf_t value) override { entries.push_back({k, l, value}); }
+  void put(unsigned l, unsigned k, cf_t value) override { entries.push_back({l, k, value}); }
+  void put(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override
+  {
+    unsigned count = 0;
+    for (unsigned k = 0; k != mask.size(); ++k) {
+      if (mask[k]) {
+        put(l, k, symbol_buffer[count]);
+        count++;
+      }
+    }
 
+    // consume buffer
+    symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
+  }
+  void put(unsigned int l, unsigned int k_init, span<const cf_t> symbols) override
+  {
+    for (unsigned i = 0; i != symbols.size(); ++i) {
+      put(l, k_init + i, symbols[i]);
+    }
+  }
   const std::vector<entry_t>& get_entries() const { return entries; }
   unsigned                    get_nof_entries() const { return entries.size(); }
 

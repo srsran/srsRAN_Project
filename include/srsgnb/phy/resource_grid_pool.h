@@ -4,6 +4,7 @@
 #include "resource_grid.h"
 #include "resource_grid_context.h"
 #include <memory>
+#include <vector>
 
 namespace srsgnb {
 
@@ -21,19 +22,18 @@ public:
 
 /// Describes a resource grid pool configuration
 struct resource_grid_pool_config {
-  unsigned nof_symbols = 14;      /// Number of symbols per resource grid
-  unsigned nof_subc    = 52 * 12; /// Number of subcarriers per resource grid
-
   unsigned nof_sectors  = 1;  /// Number of sectors
   unsigned nof_antennas = 1;  /// Number of antennas per sectors
   unsigned nof_slots    = 40; /// Number of slots to buffer
+
+  std::vector<std::unique_ptr<resource_grid> > grids; /// Resource grids, ownership is moved to the pool
 };
 
 /// Creates a default resource grid pool
 ///
 /// \param config Provides the configuration of the resource grid pool
 /// \return A unique pointer with the default resource grid pool
-std::unique_ptr<resource_grid_pool> create_resource_grid_pool(const resource_grid_pool_config& config);
+std::unique_ptr<resource_grid_pool> create_resource_grid_pool(resource_grid_pool_config& config);
 
 } // namespace srsgnb
 
