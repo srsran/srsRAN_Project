@@ -18,12 +18,16 @@ namespace srsgnb {
 /// Describes a slot context
 struct slot_context_t {
   unsigned numerology; /// Current numerology for FR1: (0,1,2) and FR2: (2,3)
-  unsigned frame;      /// Frame index (0...1023)
-  unsigned subframe;   /// Frame index (0...9)
+  unsigned frame;      /// System frame number (0...1023)
+  unsigned subframe;   /// Subframe index (0...9)
   unsigned slot;       /// Slot index (0...79), range depends on numerology
-};
 
-slot_context_t operator+(const slot_context_t& x, unsigned n);
+  /// Get the subframe number in the whole radio frame
+  unsigned get_system_subframe() const { return frame * 10 + subframe; }
+
+  /// Get the slot number in the whole radio frame
+  unsigned get_system_slot() const { return slot + (get_system_subframe() << numerology); }
+};
 
 } // namespace srsgnb
 
