@@ -9,7 +9,6 @@ namespace srsgnb {
 class ldpc_encoder
 {
 public:
-  virtual byte_buffer encode(const byte_buffer& input, ldpc_base_graph base_graph) = 0;
 };
 
 } // namespace srsgnb
