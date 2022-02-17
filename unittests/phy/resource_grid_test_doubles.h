@@ -1,7 +1,7 @@
 #ifndef SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H_
 #define SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H_
 
-#include "srsgnb/support/resource_grid.h"
+#include "srsgnb/phy/resource_grid.h"
 #include <vector>
 
 namespace srsgnb {
