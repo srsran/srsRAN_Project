@@ -38,10 +38,7 @@ public:
 
 /// Describes a resource grid class with writer and reader interfaces
 class resource_grid : public resource_grid_writer, public resource_grid_reader
-{
-  /// Default destructor
-  virtual ~resource_grid() = default;
-};
+{};
 
 } // namespace srsgnb
 
