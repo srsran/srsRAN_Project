@@ -3,7 +3,7 @@
 #define SRSGNB_DEMUX_H
 
 #include "srsgnb/adt/circular_map.h"
-#include "srsgnb/adt/optional_array.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -15,9 +15,9 @@ namespace srsgnb {
 class mac_ul_ue
 {
 public:
-  du_ue_index_t                          ue_index = MAX_NOF_UES;
-  rnti_t                                 rnti     = INVALID_RNTI;
-  optional_vector<mac_ul_dcch_notifier*> ul_bearers;
+  du_ue_index_t                      ue_index = MAX_NOF_UES;
+  rnti_t                             rnti     = INVALID_RNTI;
+  slot_vector<mac_ul_dcch_notifier*> ul_bearers;
 };
 
 class mac_ul_demux
@@ -79,7 +79,7 @@ public:
   }
 
 private:
-  optional_array<mac_ul_ue, MAX_NOF_UES>           ue_db;
+  slot_array<mac_ul_ue, MAX_NOF_UES>               ue_db;
   circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
 };
 

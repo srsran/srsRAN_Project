@@ -89,8 +89,8 @@ public:
   using const_iterator = iterator_impl<const T>;
 
   constexpr base_slot_array_view() noexcept = default;
-  base_slot_array_view(Vec&& v, size_t nof_elems_) : vec(std::move(v)), nof_elems(nof_elems_) {}
-  base_slot_array_view(const Vec& v, size_t nof_elems_) : vec(v), nof_elems(nof_elems_) {}
+  base_slot_array_view(Vec&& v, size_t nof_elems_) : nof_elems(nof_elems_), vec(std::move(v)) {}
+  base_slot_array_view(const Vec& v, size_t nof_elems_) : nof_elems(nof_elems_), vec(v) {}
 
   bool contains(size_t idx) const noexcept { return idx < vec.size() and vec[idx].has_value(); }
 

@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_LOGICAL_CHANNEL_H
 
 #include "srsgnb/adt/circular_map.h"
-#include "srsgnb/adt/optional_array.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -87,12 +87,12 @@ public:
 
 private:
   struct mac_entity {
-    du_ue_index_t                            ue_index = INVALID_UE_INDEX;
-    rnti_t                                   rnti     = INVALID_RNTI;
-    optional_array<LogicalChannel, MAX_LCID> logical_channels;
+    du_ue_index_t                        ue_index = INVALID_UE_INDEX;
+    rnti_t                               rnti     = INVALID_RNTI;
+    slot_array<LogicalChannel, MAX_LCID> logical_channels;
   };
 
-  optional_array<mac_entity, MAX_NOF_UES>          ue_db;
+  slot_array<mac_entity, MAX_NOF_UES>              ue_db;
   circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
 };
 
