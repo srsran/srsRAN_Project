@@ -84,7 +84,7 @@ void srsgnb::sss_processor_impl::generation(std::array<float, SEQUENCE_LEN>& seq
 }
 
 void srsgnb::sss_processor_impl::mapping(const std::array<float, SEQUENCE_LEN>& sequence,
-                                         resource_grid&                         grid,
+                                         resource_grid_writer&                  grid,
                                          const args_t&                          args) const
 {
   // Calculate symbol and first subcarrier for SSS
@@ -98,7 +98,7 @@ void srsgnb::sss_processor_impl::mapping(const std::array<float, SEQUENCE_LEN>& 
   }
 }
 
-void srsgnb::sss_processor_impl::map(resource_grid& grid, const args_t& args)
+void srsgnb::sss_processor_impl::map(resource_grid_writer& grid, const args_t& args)
 {
   // Generate sequence
   std::array<float, SEQUENCE_LEN> sequence;

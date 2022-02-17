@@ -12,7 +12,7 @@
 
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/signal_processors/pss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include <cassert>
 #include <random>
 

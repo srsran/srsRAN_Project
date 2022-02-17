@@ -44,11 +44,11 @@ private:
   /**
    * @bried Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
    */
-  void mapping(const std::array<float, SEQUENCE_LEN>& sequence, resource_grid& grid, const args_t& args) const;
+  void mapping(const std::array<float, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const args_t& args) const;
 
 public:
   ~sss_processor_impl() override = default;
-  void map(resource_grid& grid, const args_t& args) override;
+  void map(resource_grid_writer& grid, const args_t& args) override;
 };
 
 } // namespace srsgnb
