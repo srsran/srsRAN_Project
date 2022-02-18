@@ -15,8 +15,8 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/signal_processors/dmrs_pbch_processor.h"
+#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 
 namespace srsgnb {
 class dmrs_pbch_processor_impl : public dmrs_pbch_processor
@@ -34,11 +34,11 @@ private:
   /**
    * @bried Implements TS 38.211 section 7.4.1.4.2 Mapping to physical resources
    */
-  void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid& grid, const args_t& args) const;
+  void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid_writer& grid, const args_t& args) const;
 
 public:
   ~dmrs_pbch_processor_impl() override = default;
-  void map(resource_grid& grid, const args_t& args) override;
+  void map(resource_grid_writer& grid, const args_t& args) override;
 };
 
 } // namespace srsgnb

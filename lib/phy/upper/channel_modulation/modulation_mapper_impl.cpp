@@ -201,7 +201,7 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
   const cf_t*              table     = modulator.table.data();
   unsigned                 Qm        = modulator.Qm;
 
-  assert(input.size() * Qm == symbols.size());
+  assert(input.size() == Qm * symbols.size());
 
   for (cf_t& symbol : symbols) {
     // Pack input bits

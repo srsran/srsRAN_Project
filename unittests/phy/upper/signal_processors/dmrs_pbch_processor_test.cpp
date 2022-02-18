@@ -12,7 +12,7 @@
 
 #include "../../resource_grid_test_doubles.h"
 #include "dmrs_pbch_map_test_data.h"
-#include "srsgnb/phy/signal_processors/dmrs_pbch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include <cassert>
 #include <random>
 
@@ -25,7 +25,7 @@ int main()
   // Create DMRS-PBCH processor
   std::unique_ptr<dmrs_pbch_processor> dmrs_pbch = create_dmrs_pbch_processor();
 
-  for (const test_case_t& test_case : pbch_encode_test_data) {
+  for (const test_case_t& test_case : pbch_encoder_test_data) {
     // Create resource grid
     resource_grid_spy grid;
 

@@ -15,7 +15,7 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/signal_processors/pss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 
 namespace srsgnb {
 class pss_processor_impl : public pss_processor

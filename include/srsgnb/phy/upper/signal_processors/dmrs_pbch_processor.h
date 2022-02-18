@@ -23,7 +23,7 @@ public:
 
   virtual ~dmrs_pbch_processor() = default;
 
-  virtual void map(resource_grid& grid, const args_t& args) = 0;
+  virtual void map(resource_grid_writer& grid, const args_t& args) = 0;
 };
 
 std::unique_ptr<dmrs_pbch_processor> create_dmrs_pbch_processor();

@@ -1,4 +1,3 @@
-#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 /**
  *
  * \section COPYRIGHT

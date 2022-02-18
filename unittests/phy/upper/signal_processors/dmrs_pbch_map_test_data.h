@@ -2,7 +2,7 @@
 #define SRSGNB_UNITTEST_PHY_SIGNAL_PROCESSORS_DMRS_PBCH_PROCESSOR_TEST_DATA_H_
 
 #include "../../resource_grid_test_doubles.h"
-#include "srsgnb/phy/signal_processors/dmrs_pbch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 #include <vector>
 
 // Random generator seed 1234
@@ -14,7 +14,7 @@ struct test_case_t {
   std::vector<resource_grid_spy::entry_t> signal;
 };
 
-static const std::vector<test_case_t> pbch_encode_test_data = {
+static const std::vector<test_case_t> pbch_encoder_test_data = {
     {{193, 0, 4, 0, 0, 0, 1.000000},
      {{1, 1, {-0.707107, 0.707107}},    {1, 5, {0.707107, -0.707107}},    {1, 9, {0.707107, -0.707107}},
       {1, 13, {-0.707107, -0.707107}},  {1, 17, {-0.707107, -0.707107}},  {1, 21, {-0.707107, -0.707107}},
