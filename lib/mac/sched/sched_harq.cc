@@ -195,7 +195,7 @@ void harq_entity::new_slot(slot_point slot_rx_)
   slot_rx = slot_rx_;
   for (harq_proc& dl_h : dl_harqs) {
     if (dl_h.clear_if_maxretx(slot_rx)) {
-      logger.info("SCHED: discarding rnti=0x%x, DL TB pid=%d. Cause: Maximum number of retx exceeded (%d)",
+      logger.info("SCHED: discarding rnti=0x{:x}, DL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   dl_h.pid,
                   dl_h.max_nof_retx());
@@ -203,7 +203,7 @@ void harq_entity::new_slot(slot_point slot_rx_)
   }
   for (harq_proc& ul_h : ul_harqs) {
     if (ul_h.clear_if_maxretx(slot_rx)) {
-      logger.info("SCHED: discarding rnti=0x%x, UL TB pid=%d. Cause: Maximum number of retx exceeded (%d)",
+      logger.info("SCHED: discarding rnti=0x{:x}, UL TB pid={}. Cause: Maximum number of retx exceeded ({})",
                   rnti,
                   ul_h.pid,
                   ul_h.max_nof_retx());
