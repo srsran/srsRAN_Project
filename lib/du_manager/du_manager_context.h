@@ -11,8 +11,8 @@
 namespace srsgnb {
 
 struct du_ue_bearer_context {
-  std::unique_ptr<rlc_ul_bearer>        ul_bearer;
-  std::unique_ptr<mac_ul_dcch_notifier> mac_ul_notifier;
+  std::unique_ptr<rlc_ul_bearer>       ul_bearer;
+  std::unique_ptr<mac_ul_sdu_notifier> mac_ul_notifier;
 };
 
 struct du_ue_context {

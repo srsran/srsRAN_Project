@@ -69,15 +69,15 @@ private:
   du_manager_interface* du_manager = nullptr;
 };
 
-class mac_ul_ccch_adapter : public mac_ul_ccch_notifier
+class mac_ul_ccch_adapter : public mac_ul_sdu_notifier
 {
 public:
   void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void on_ul_ccch_sdu(rnti_t rnti, const byte_buffer& pdu) override
+  void on_ul_sdu(mac_ul_sdu sdu) override
   {
     ul_ccch_indication_message ul_ccch_msg;
-    ul_ccch_msg.crnti      = rnti;
+    ul_ccch_msg.crnti      = sdu.rnti;
     ul_ccch_msg.cell_index = 0;
     f1ap->ul_ccch_message_indication(std::move(ul_ccch_msg));
   }

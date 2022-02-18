@@ -25,7 +25,7 @@ public:
 
     ctxt.cfg.ul_exec.execute([this]() {
       // 3. Remove UE associated UL channels
-      ctxt.demux.erase(req.ue_index);
+      ctxt.ul_worker.remove_ue(req.ue_index);
 
       // 4. Send back response to DU manager
       mac_ue_delete_response_message resp{};

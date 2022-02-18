@@ -11,22 +11,24 @@
 
 namespace srsgnb {
 
-class mac_ul_ccch_notifier
-{
-public:
-  virtual ~mac_ul_ccch_notifier()                                  = default;
-  virtual void on_ul_ccch_sdu(rnti_t rnti, const byte_buffer& pdu) = 0;
+struct mac_ul_sdu {
+  rnti_t      rnti;
+  lcid_t      lcid;
+  byte_buffer pdu;
 };
 
-class mac_ul_dcch_notifier
+struct mac_rx_data_indication {
+  rnti_t          rnti;
+  lcid_t          lcid;
+  du_cell_index_t cell_index;
+  byte_buffer     pdu;
+};
+
+class mac_ul_sdu_notifier
 {
 public:
-  const du_ue_index_t du_index;
-  const lcid_t        lcid;
-
-  explicit mac_ul_dcch_notifier(du_ue_index_t du_index_, lcid_t lcid_) : du_index(du_index_), lcid(lcid_) {}
-  virtual ~mac_ul_dcch_notifier()                     = default;
-  virtual void on_ul_dcch_sdu(const byte_buffer& pdu) = 0;
+  virtual ~mac_ul_sdu_notifier()         = default;
+  virtual void on_ul_sdu(mac_ul_sdu sdu) = 0;
 };
 
 class mac_dl_sdu_builder
@@ -42,11 +44,16 @@ struct ul_ccch_indication_message {
   byte_buffer     ul_ccch_msg;
 };
 
+struct logical_channel_addmod {
+  lcid_t               lcid;
+  mac_ul_sdu_notifier* ul_bearer;
+};
+
 struct mac_ue_create_request_message {
-  du_cell_index_t                    cell_index;
-  du_ue_index_t                      ue_index;
-  rnti_t                             crnti;
-  std::vector<mac_ul_dcch_notifier*> ul_bearers;
+  du_cell_index_t                     cell_index;
+  du_ue_index_t                       ue_index;
+  rnti_t                              crnti;
+  std::vector<logical_channel_addmod> ul_bearers;
 };
 
 struct mac_ue_create_request_response_message {
@@ -84,9 +91,9 @@ public:
 class mac_southbound_interface
 {
 public:
-  virtual ~mac_southbound_interface()                                                = default;
-  virtual void push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer pdu) = 0;
-  virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index)         = 0;
+  virtual ~mac_southbound_interface()                                        = default;
+  virtual void push_ul_pdu(mac_rx_data_indication pdu)                       = 0;
+  virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
 class mac_interface : public mac_config_interface, public mac_southbound_interface

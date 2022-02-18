@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DU_H
-#define SRSGNB_DU_H
+#ifndef SRSGNB_DU_HIGH_H
+#define SRSGNB_DU_HIGH_H
 
 #include "adapters.h"
 #include "srsgnb/du_manager/du_manager.h"
@@ -14,16 +14,16 @@
 
 namespace srsgnb {
 
-class du
+class du_high
 {
 public:
-  du();
-  ~du();
+  du_high();
+  ~du_high();
 
   void start();
   void stop();
 
-  void push_pusch(rnti_t rnti, lcid_t lcid, byte_buffer pdu);
+  void push_pusch(mac_rx_data_indication pdu);
 
   std::string query(const std::string& s);
 
@@ -46,4 +46,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_H
+#endif // SRSGNB_DU_HIGH_H

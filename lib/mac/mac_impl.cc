@@ -80,35 +80,21 @@ public:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-mac_impl::mac_impl(mac_config_notifier&  cfg_notifier_,
-                   mac_ul_ccch_notifier& ul_ccch_notifier_,
-                   task_executor&        ul_exec_,
-                   span<task_executor*>  dl_execs_,
-                   task_executor&        ctrl_exec_) :
+mac_impl::mac_impl(mac_config_notifier& cfg_notifier_,
+                   mac_ul_sdu_notifier& ul_ccch_notifier_,
+                   task_executor&       ul_exec_,
+                   span<task_executor*> dl_execs_,
+                   task_executor&       ctrl_exec_) :
   logger(srslog::fetch_basic_logger("MAC")),
   sched_notifier(std::make_unique<sched_response_adapter>(*this)),
   sched_obj(*sched_notifier),
-  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, sched_obj),
-  ul_ccch_notifier(ul_ccch_notifier_)
+  ul_worker(ul_ccch_notifier_),
+  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, sched_obj, ul_worker)
 {}
 
-void mac_impl::push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer pdu)
+void mac_impl::push_ul_pdu(mac_rx_data_indication pdu)
 {
-  lcid_t lcid = 0;
-
-  if (lcid == 0) {
-    logger.info("UL\t{:#x}\tcc={}\tCCCH", rnti, cell_index);
-    ul_ccch_notifier.on_ul_ccch_sdu(rnti, pdu);
-  } else {
-    mac_ul_dcch_notifier* dcch = ctxt.demux.get_rlc_bearer(rnti, lcid);
-    if (dcch == nullptr) {
-      logger.warning("Received UL PDU for inexistent bearer <{:#x}, {}>", rnti, lcid);
-      return;
-    }
-
-    // send PDU to RLC entity
-    dcch->on_ul_dcch_sdu(pdu);
-  }
+  ul_worker.push_pdu(pdu.rnti, pdu.lcid, pdu.cell_index, pdu.pdu);
 }
 
 void mac_impl::ue_create_request(const mac_ue_create_request_message& cfg)

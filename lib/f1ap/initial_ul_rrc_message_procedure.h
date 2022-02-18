@@ -2,6 +2,7 @@
 #ifndef SRSGNB_F1AP_UE_CREATE_PROCEDURE_H
 #define SRSGNB_F1AP_UE_CREATE_PROCEDURE_H
 
+#include "../ran/gnb_format.h"
 #include "f1ap_du_context.h"
 #include "srsgnb/mac/mac.h"
 #include <memory>
@@ -21,8 +22,11 @@ public:
     ue_ctxt.crnti               = ccch_msg.crnti;
 
     ue_index = ue_ctxt.gnb_du_f1ap_ue_id;
-    srslog::fetch_basic_logger("F1AP").info(
-        "UL\t{:#x}\tCCCH indication. Creating UE ID={}", ccch_msg.crnti, ue_ctxt.gnb_du_f1ap_ue_id);
+    log_ul_pdu(srslog::fetch_basic_logger("F1AP"),
+               ccch_msg.crnti,
+               ccch_msg.cell_index,
+               "CCCH Indication. Creating UE ID={}",
+               ue_index);
 
     // 2. Initiate UE creation in DU manager
     du_ue_create_message msg{};
@@ -41,15 +45,19 @@ public:
   }
 
 private:
+  static const char* name() { return "Initial UL RRC Message"; };
+
   void send_initial_ul_rrc_message_transfer()
   {
     // fill ASN.1 message
 
-    srslog::fetch_basic_logger("F1AP").info("UL\tUE ID={}. Initial UL RRC message to CU", ue_index);
+    log_proc_event(logger, ue_index, name(), "Message sent to the CU");
 
     // send message via socket
     //    gateway.push_pdu(std::move(ccch_msg));
   }
+
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
 
   du_ue_index_t              ue_index;
   ul_ccch_indication_message ccch_msg;

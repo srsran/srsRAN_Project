@@ -1,15 +1,16 @@
 
-#include "units/du/du.h"
+#include "units/du/du_high.h"
 
 using namespace srsgnb;
 
 void test_du_ue_create()
 {
-  du du_obj;
+  du_high du_obj;
 
   du_obj.start();
 
-  du_obj.push_pusch(0x4601, 0, byte_buffer{});
+  mac_rx_data_indication rx_ind{0x4601, 0, 0, byte_buffer{}};
+  du_obj.push_pusch(rx_ind);
 
   for (std::string s = du_obj.query("ues"); std::stoi(s) == 0; s = du_obj.query("ues")) {
     usleep(100);

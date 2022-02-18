@@ -9,20 +9,26 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/srsran_assert.h"
+#include <tuple>
 
 namespace srsgnb {
 
 class mac_ul_ue
 {
 public:
-  du_ue_index_t                      ue_index = MAX_NOF_UES;
-  rnti_t                             rnti     = INVALID_RNTI;
-  slot_vector<mac_ul_dcch_notifier*> ul_bearers;
+  du_ue_index_t                     ue_index = MAX_NOF_UES;
+  rnti_t                            rnti     = INVALID_RNTI;
+  slot_vector<mac_ul_sdu_notifier*> ul_bearers;
 };
 
 class mac_ul_demux
 {
 public:
+  mac_ul_demux(mac_ul_sdu_notifier& ccch_notifier_) : ccch_notifier(ccch_notifier_) {}
+
+  /// Check if UE exists
+  /// \param ue_index DU UE Index
+  /// \return True if UE exists. False, otherwise
   bool contains_ue(du_ue_index_t ue_index) const
   {
     srsran_assert(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
@@ -66,19 +72,23 @@ public:
     return &ue_db[ue_index];
   }
 
-  mac_ul_dcch_notifier* get_rlc_bearer(rnti_t rnti, lcid_t lcid)
+  std::tuple<du_ue_index_t, mac_ul_sdu_notifier*> find_ul_bearer(rnti_t rnti, lcid_t lcid)
   {
+    if (lcid == 0) {
+      return std::make_tuple(MAX_NOF_UES, &ccch_notifier);
+    }
     if (contains_rnti(rnti)) {
-      return nullptr;
+      return std::make_tuple(0, nullptr);
     }
     mac_ul_ue* ent = &ue_db[rnti_to_ue_index[rnti]];
     if (contains_lcid(ent->ue_index, lcid)) {
-      return nullptr;
+      return std::make_tuple(0, nullptr);
     }
-    return ent->ul_bearers[lcid];
+    return std::make_tuple(ent->ue_index, ent->ul_bearers[lcid]);
   }
 
 private:
+  mac_ul_sdu_notifier&                             ccch_notifier; /// upper layer handler of UL CCCH messages
   slot_array<mac_ul_ue, MAX_NOF_UES>               ue_db;
   circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
 };

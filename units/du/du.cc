@@ -1,5 +1,5 @@
 
-#include "du.h"
+#include "du_high.h"
 #include "adapters.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1ap/f1ap_du_factory.h"
@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-du::du()
+du_high::du_high()
 {
   const size_t task_worker_queue_size = 10000;
 
@@ -36,19 +36,19 @@ du::du()
   f1ap_cfg_notifier.connect(*f1ap);
 }
 
-du::~du()
+du_high::~du_high()
 {
   stop();
 }
 
-void du::start()
+void du_high::start()
 {
   for (auto& w : workers) {
     w->start();
   }
 }
 
-void du::stop()
+void du_high::stop()
 {
   for (auto& w : workers) {
     w->stop();
@@ -56,12 +56,12 @@ void du::stop()
   workers.clear();
 }
 
-void du::push_pusch(rnti_t rnti, lcid_t lcid, byte_buffer pdu)
+void du_high::push_pusch(mac_rx_data_indication pdu)
 {
-  ul_exec->execute([this, rnti, lcid, pdu]() { mac->push_ul_pdu(rnti, lcid, std::move(pdu)); });
+  ul_exec->execute([this, pdu]() { mac->push_ul_pdu(std::move(pdu)); });
 }
 
-std::string du::query(const std::string& s)
+std::string du_high::query(const std::string& s)
 {
   if (s == "ues") {
     return du_manager->get_ues();

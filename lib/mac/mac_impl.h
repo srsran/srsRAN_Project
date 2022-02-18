@@ -45,17 +45,17 @@ private:
 class mac_impl : public mac_interface
 {
 public:
-  explicit mac_impl(mac_config_notifier&  listener,
-                    mac_ul_ccch_notifier& ul_ccch_notifier,
-                    task_executor&        ul_exec,
-                    span<task_executor*>  dl_execs,
-                    task_executor&        ctrl_exec);
+  explicit mac_impl(mac_config_notifier& listener,
+                    mac_ul_sdu_notifier& ul_ccch_notifier,
+                    task_executor&       ul_exec,
+                    span<task_executor*> dl_execs,
+                    task_executor&       ctrl_exec);
 
   void ue_create_request(const mac_ue_create_request_message& cfg) override;
   void ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) override {}
   void ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
-  void push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer pdu) override;
+  void push_ul_pdu(mac_rx_data_indication pdu) override;
 
   void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
 
@@ -68,8 +68,8 @@ private:
 
   std::unique_ptr<sched_cfg_notifier> sched_notifier;
   sched                               sched_obj;
+  mac_ul_worker                       ul_worker;
   mac_context                         ctxt;
-  mac_ul_ccch_notifier&               ul_ccch_notifier;
 
   std::unique_ptr<mac_ue_create_request_procedure> ue_create_proc;
   std::unique_ptr<mac_ue_delete_procedure>         ue_delete_proc;

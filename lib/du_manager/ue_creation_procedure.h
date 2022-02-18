@@ -10,13 +10,11 @@
 
 namespace srsgnb {
 
-class mac_ul_dcch_adapter : public mac_ul_dcch_notifier
+class mac_ul_dcch_adapter : public mac_ul_sdu_notifier
 {
 public:
-  mac_ul_dcch_adapter(du_ue_index_t ue_index_, lcid_t lcid_, rlc_ul_bearer& bearer_) :
-    mac_ul_dcch_notifier(ue_index_, lcid_), bearer(bearer_)
-  {}
-  void on_ul_dcch_sdu(const byte_buffer& pdu) override { bearer.push_pdu(pdu); }
+  mac_ul_dcch_adapter(rlc_ul_bearer& bearer_) : bearer(bearer_) {}
+  void on_ul_sdu(mac_ul_sdu sdu) override { bearer.push_pdu(sdu.pdu); }
 
   rlc_ul_bearer& bearer;
 };
@@ -38,9 +36,8 @@ public:
     created_ue.ue_index    = ue_create_cmd.ue_index;
     created_ue.crnti       = ue_create_cmd.crnti;
     created_ue.bearers.emplace(1);
-    created_ue.bearers[1].ul_bearer = create_rlc_ul_bearer(created_ue.ue_index, 1, *du_ctxt.rlc_ul_notifier);
-    created_ue.bearers[1].mac_ul_notifier =
-        std::make_unique<mac_ul_dcch_adapter>(created_ue.ue_index, 1, *created_ue.bearers[1].ul_bearer);
+    created_ue.bearers[1].ul_bearer       = create_rlc_ul_bearer(created_ue.ue_index, 1, *du_ctxt.rlc_ul_notifier);
+    created_ue.bearers[1].mac_ul_notifier = std::make_unique<mac_ul_dcch_adapter>(*created_ue.bearers[1].ul_bearer);
 
     // 2. Initiate MAC UE creation
     mac_ue_create_request_message mac_ue_create_msg{};
@@ -48,7 +45,10 @@ public:
     mac_ue_create_msg.ue_index   = created_ue.ue_index;
     mac_ue_create_msg.crnti      = ue_create_cmd.crnti;
     for (du_ue_bearer_context& bearer : created_ue.bearers) {
-      mac_ue_create_msg.ul_bearers.push_back(bearer.mac_ul_notifier.get());
+      logical_channel_addmod lc;
+      lc.lcid      = 1;
+      lc.ul_bearer = bearer.mac_ul_notifier.get();
+      mac_ue_create_msg.ul_bearers.push_back(lc);
     }
     du_ctxt.mac->ue_create_request(mac_ue_create_msg);
   }
