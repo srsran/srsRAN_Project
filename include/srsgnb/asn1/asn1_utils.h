@@ -83,7 +83,7 @@ template <typename Enumerated>
 void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
 {
   if (srsran_unlikely(current_type.value != access_type)) {
-    log_error("Invalid field access for choice type \"%s\" (\"%s\"!=\"%s\")",
+    log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
               choice_type,
               Enumerated(access_type).to_string(),
               current_type.to_string());
@@ -299,7 +299,7 @@ public:
   void push_back(const T& elem)
   {
     if (current_size >= MAX_N) {
-      log_error("Maximum size %d achieved for bounded_array.", MAX_N);
+      log_error("Maximum size {} achieved for bounded_array.", MAX_N);
       return;
     }
     data_[current_size++] = elem;
@@ -663,7 +663,7 @@ public:
   fixed_octstring<N, aligned>& from_string(const std::string& hexstr)
   {
     if (hexstr.size() != 2 * N) {
-      log_error("The provided hex string size is not valid (%zd!=2*%zd).", hexstr.size(), (size_t)N);
+      log_error("The provided hex string size is not valid ({}!=2*{}).", hexstr.size(), (size_t)N);
     } else {
       string_to_octstring(&octets_[0], hexstr);
     }
@@ -734,7 +734,7 @@ public:
   bounded_octstring<LB, UB, aligned>& from_string(const std::string& hexstr)
   {
     if (hexstr.size() > 2 * UB) {
-      log_error("The provided hex string size is not valid (%zd>2*%zd).", hexstr.size(), (size_t)UB);
+      log_error("The provided hex string size is not valid ({}>2*{}).", hexstr.size(), (size_t)UB);
     } else {
       resize(hexstr.size() / 2);
       string_to_octstring(&octets_[0], hexstr);
@@ -896,7 +896,7 @@ public:
   {
     if (s.size() < lb or s.size() > ub) {
       log_error(
-          "The provided string size=%zd is not withing the bounds [%d, %d]", s.size(), uint32_t(lb), uint32_t(ub));
+          "The provided string size={} is not withing the bounds [{}, {}]", s.size(), uint32_t(lb), uint32_t(ub));
     } else {
       resize(s.size());
       for (uint32_t i = 0; i < s.size(); ++i) {
@@ -912,7 +912,7 @@ public:
   {
     auto nof_bits_ = std::max((uint32_t)ceilf(log2(std::max(val, (uint64_t)1u))), LB);
     if (nof_bits_ > UB) {
-      log_error("The provided bitstring value %ld does not fit the bounds [%d, %d]", val, uint32_t(lb), uint32_t(ub));
+      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
       return *this;
     }
     resize(nof_bits_);
@@ -923,7 +923,7 @@ public:
   this_type& from_number(uint64_t val, uint32_t nof_bits)
   {
     if (nof_bits > UB) {
-      log_error("The provided bitstring value %ld does not fit the bounds [%d, %d]", val, uint32_t(lb), uint32_t(ub));
+      log_error("The provided bitstring value {} does not fit the bounds [{}, {}]", val, uint32_t(lb), uint32_t(ub));
       return *this;
     }
     resize(nof_bits);
@@ -1425,17 +1425,17 @@ int test_pack_unpack_consistency(const Msg& msg)
 
   // unpack and last pack done for the same number of bits
   if (bref3.distance() != bref2.distance()) {
-    log_error("[%s][%d] .", __FILE__, __LINE__);
+    log_error("[{}][{}] .", __FILE__, __LINE__);
     return -1;
   }
 
   // ensure packed messages are the same
   if (bref3.distance() != bref.distance()) {
-    log_error("[%s][%d] .", __FILE__, __LINE__);
+    log_error("[{}][{}] .", __FILE__, __LINE__);
     return -1;
   }
   if (memcmp(buf, buf2, bref.distance_bytes()) != 0) {
-    log_error("[%s][%d] .", __FILE__, __LINE__);
+    log_error("[{}][{}] .", __FILE__, __LINE__);
     return -1;
   }
   return SRSASN_SUCCESS;

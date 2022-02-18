@@ -28,7 +28,7 @@ public:
     du_ctxt(du_ctxt_), ue_create_cmd(ue_create_msg), logger(srslog::fetch_basic_logger("DU-MNG"))
   {
     if (du_ctxt.ue_db.contains(ue_create_msg.ue_index)) {
-      logger.error("Creating already existing ueId=%d", ue_create_msg.ue_index);
+      logger.error("Creating already existing ueId={}", ue_create_msg.ue_index);
       return;
     }
     log_proc_started(logger, ue_create_msg.ue_index, ue_create_msg.crnti, "UE Create");

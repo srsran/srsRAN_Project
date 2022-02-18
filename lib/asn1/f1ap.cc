@@ -199,14 +199,14 @@ crit_e associated_scell_item_ies_o::get_crit(const uint32_t& id)
   if (id == 200) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 associated_scell_item_ies_o::value_c associated_scell_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 200) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -215,7 +215,7 @@ presence_e associated_scell_item_ies_o::get_presence(const uint32_t& id)
   if (id == 200) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -449,7 +449,7 @@ crit_e broadcast_to_be_cancelled_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 149) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 broadcast_to_be_cancelled_list_item_ies_o::value_c
@@ -457,7 +457,7 @@ broadcast_to_be_cancelled_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 149) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -466,7 +466,7 @@ presence_e broadcast_to_be_cancelled_list_item_ies_o::get_presence(const uint32_
   if (id == 149) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -654,14 +654,14 @@ crit_e endpoint_ip_address_and_port_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 230) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 endpoint_ip_address_and_port_ext_ies_o::ext_c endpoint_ip_address_and_port_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 230) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -670,7 +670,7 @@ presence_e endpoint_ip_address_and_port_ext_ies_o::get_presence(const uint32_t& 
   if (id == 230) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -926,7 +926,7 @@ crit_e cuto_durrc_info_ext_ies_o::get_crit(const uint32_t& id)
     case 234:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -950,7 +950,7 @@ cuto_durrc_info_ext_ies_o::ext_c cuto_durrc_info_ext_ies_o::get_ext(const uint32
       ret.set(ext_c::types::cg_cfg);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -968,7 +968,7 @@ presence_e cuto_durrc_info_ext_ies_o::get_presence(const uint32_t& id)
     case 234:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -1296,7 +1296,7 @@ SRSASN_CODE cuto_durrc_info_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -1450,14 +1450,14 @@ crit_e candidate_sp_cell_item_ies_o::get_crit(const uint32_t& id)
   if (id == 91) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 candidate_sp_cell_item_ies_o::value_c candidate_sp_cell_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 91) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -1466,7 +1466,7 @@ presence_e candidate_sp_cell_item_ies_o::get_presence(const uint32_t& id)
   if (id == 91) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -1856,7 +1856,7 @@ crit_e cells_broadcast_cancelled_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 151) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_broadcast_cancelled_list_item_ies_o::value_c
@@ -1864,7 +1864,7 @@ cells_broadcast_cancelled_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 151) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -1873,7 +1873,7 @@ presence_e cells_broadcast_cancelled_list_item_ies_o::get_presence(const uint32_
   if (id == 151) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -1958,7 +1958,7 @@ crit_e cells_broadcast_completed_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 147) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_broadcast_completed_list_item_ies_o::value_c
@@ -1966,7 +1966,7 @@ cells_broadcast_completed_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 147) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -1975,7 +1975,7 @@ presence_e cells_broadcast_completed_list_item_ies_o::get_presence(const uint32_
   if (id == 147) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2064,7 +2064,7 @@ crit_e cells_failed_to_be_activ_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 2) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_failed_to_be_activ_list_item_ies_o::value_c
@@ -2072,7 +2072,7 @@ cells_failed_to_be_activ_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 2) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2081,7 +2081,7 @@ presence_e cells_failed_to_be_activ_list_item_ies_o::get_presence(const uint32_t
   if (id == 2) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2230,14 +2230,14 @@ crit_e cells_status_item_ies_o::get_crit(const uint32_t& id)
   if (id == 88) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_status_item_ies_o::value_c cells_status_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 88) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2246,7 +2246,7 @@ presence_e cells_status_item_ies_o::get_presence(const uint32_t& id)
   if (id == 88) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2331,14 +2331,14 @@ crit_e cells_to_be_broadcast_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 145) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_to_be_broadcast_list_item_ies_o::value_c cells_to_be_broadcast_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 145) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2347,7 +2347,7 @@ presence_e cells_to_be_broadcast_list_item_ies_o::get_presence(const uint32_t& i
   if (id == 145) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2402,14 +2402,14 @@ crit_e sibtypetobeupd_list_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 240) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 sibtypetobeupd_list_item_ext_ies_o::ext_c sibtypetobeupd_list_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 240) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2418,7 +2418,7 @@ presence_e sibtypetobeupd_list_item_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 240) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2463,14 +2463,14 @@ crit_e gnb_cu_sys_info_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 239) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_sys_info_ext_ies_o::ext_c gnb_cu_sys_info_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 239) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2479,7 +2479,7 @@ presence_e gnb_cu_sys_info_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 239) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -2617,7 +2617,7 @@ crit_e cells_to_be_activ_list_item_ext_ies_o::get_crit(const uint32_t& id)
     case 197:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -2635,7 +2635,7 @@ cells_to_be_activ_list_item_ext_ies_o::ext_c cells_to_be_activ_list_item_ext_ies
       ret.set(ext_c::types::extended_available_plmn_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -2649,7 +2649,7 @@ presence_e cells_to_be_activ_list_item_ext_ies_o::get_presence(const uint32_t& i
     case 197:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -2898,7 +2898,7 @@ SRSASN_CODE cells_to_be_activ_list_item_ext_ies_container::unpack(cbit_ref& bref
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -2986,14 +2986,14 @@ crit_e cells_to_be_activ_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 4) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_to_be_activ_list_item_ies_o::value_c cells_to_be_activ_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 4) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -3002,7 +3002,7 @@ presence_e cells_to_be_activ_list_item_ies_o::get_presence(const uint32_t& id)
   if (id == 4) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -3095,14 +3095,14 @@ crit_e cells_to_be_barred_item_ies_o::get_crit(const uint32_t& id)
   if (id == 130) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_to_be_barred_item_ies_o::value_c cells_to_be_barred_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 130) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -3111,7 +3111,7 @@ presence_e cells_to_be_barred_item_ies_o::get_presence(const uint32_t& id)
   if (id == 130) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -3196,14 +3196,14 @@ crit_e cells_to_be_deactiv_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 6) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 cells_to_be_deactiv_list_item_ies_o::value_c cells_to_be_deactiv_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 6) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -3212,7 +3212,7 @@ presence_e cells_to_be_deactiv_list_item_ies_o::get_presence(const uint32_t& id)
   if (id == 6) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -3612,7 +3612,7 @@ crit_e dlrrc_msg_transfer_ies_o::get_crit(const uint32_t& id)
     case 217:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -3657,7 +3657,7 @@ dlrrc_msg_transfer_ies_o::value_c dlrrc_msg_transfer_ies_o::get_value(const uint
       ret.set(value_c::types::new_g_nb_cu_ue_f1_ap_id);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -3689,7 +3689,7 @@ presence_e dlrrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
     case 217:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -4295,7 +4295,7 @@ SRSASN_CODE dlrrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -4633,14 +4633,14 @@ crit_e drb_activity_item_ies_o::get_crit(const uint32_t& id)
   if (id == 99) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drb_activity_item_ies_o::value_c drb_activity_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 99) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -4649,7 +4649,7 @@ presence_e drb_activity_item_ies_o::get_presence(const uint32_t& id)
   if (id == 99) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -5173,7 +5173,7 @@ crit_e qo_sflow_level_qos_params_ext_ies_o::get_crit(const uint32_t& id)
     case 181:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -5188,7 +5188,7 @@ qo_sflow_level_qos_params_ext_ies_o::ext_c qo_sflow_level_qos_params_ext_ies_o::
       ret.set(ext_c::types::ulpdu_session_aggregate_maximum_bit_rate);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -5200,7 +5200,7 @@ presence_e qo_sflow_level_qos_params_ext_ies_o::get_presence(const uint32_t& id)
     case 181:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -5346,14 +5346,14 @@ crit_e flows_mapped_to_drb_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 183) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 flows_mapped_to_drb_item_ext_ies_o::ext_c flows_mapped_to_drb_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 183) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -5362,7 +5362,7 @@ presence_e flows_mapped_to_drb_item_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 183) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -5439,7 +5439,7 @@ SRSASN_CODE qo_sflow_level_qos_params_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -5736,14 +5736,14 @@ crit_e drb_notify_item_ies_o::get_crit(const uint32_t& id)
   if (id == 136) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drb_notify_item_ies_o::value_c drb_notify_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 136) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -5752,7 +5752,7 @@ presence_e drb_notify_item_ies_o::get_presence(const uint32_t& id)
   if (id == 136) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -5848,14 +5848,14 @@ crit_e drbs_failed_to_be_modified_item_ies_o::get_crit(const uint32_t& id)
   if (id == 12) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_failed_to_be_modified_item_ies_o::value_c drbs_failed_to_be_modified_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 12) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -5864,7 +5864,7 @@ presence_e drbs_failed_to_be_modified_item_ies_o::get_presence(const uint32_t& i
   if (id == 12) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -5960,14 +5960,14 @@ crit_e drbs_failed_to_be_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 14) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_failed_to_be_setup_item_ies_o::value_c drbs_failed_to_be_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 14) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -5976,7 +5976,7 @@ presence_e drbs_failed_to_be_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 14) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6072,14 +6072,14 @@ crit_e drbs_failed_to_be_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 16) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_failed_to_be_setup_mod_item_ies_o::value_c drbs_failed_to_be_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 16) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6088,7 +6088,7 @@ presence_e drbs_failed_to_be_setup_mod_item_ies_o::get_presence(const uint32_t& 
   if (id == 16) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6179,14 +6179,14 @@ crit_e drbs_modified_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 160) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_modified_item_ext_ies_o::ext_c drbs_modified_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 160) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6195,7 +6195,7 @@ presence_e drbs_modified_item_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 160) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6295,14 +6295,14 @@ crit_e drbs_modified_item_ies_o::get_crit(const uint32_t& id)
   if (id == 20) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_modified_item_ies_o::value_c drbs_modified_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 20) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6311,7 +6311,7 @@ presence_e drbs_modified_item_ies_o::get_presence(const uint32_t& id)
   if (id == 20) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6439,14 +6439,14 @@ crit_e drbs_modified_conf_item_ies_o::get_crit(const uint32_t& id)
   if (id == 18) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_modified_conf_item_ies_o::value_c drbs_modified_conf_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 18) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6455,7 +6455,7 @@ presence_e drbs_modified_conf_item_ies_o::get_presence(const uint32_t& id)
   if (id == 18) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6503,7 +6503,7 @@ crit_e drbs_required_to_be_modified_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 160) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_required_to_be_modified_item_ext_ies_o::ext_c
@@ -6511,7 +6511,7 @@ drbs_required_to_be_modified_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 160) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6520,7 +6520,7 @@ presence_e drbs_required_to_be_modified_item_ext_ies_o::get_presence(const uint3
   if (id == 160) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6609,14 +6609,14 @@ crit_e drbs_required_to_be_modified_item_ies_o::get_crit(const uint32_t& id)
   if (id == 22) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_required_to_be_modified_item_ies_o::value_c drbs_required_to_be_modified_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 22) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6625,7 +6625,7 @@ presence_e drbs_required_to_be_modified_item_ies_o::get_presence(const uint32_t&
   if (id == 22) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6709,14 +6709,14 @@ crit_e drbs_required_to_be_released_item_ies_o::get_crit(const uint32_t& id)
   if (id == 24) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_required_to_be_released_item_ies_o::value_c drbs_required_to_be_released_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 24) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6725,7 +6725,7 @@ presence_e drbs_required_to_be_released_item_ies_o::get_presence(const uint32_t&
   if (id == 24) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6827,14 +6827,14 @@ crit_e drbs_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 26) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_setup_item_ies_o::value_c drbs_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 26) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6843,7 +6843,7 @@ presence_e drbs_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 26) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -6945,14 +6945,14 @@ crit_e drbs_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 28) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_setup_mod_item_ies_o::value_c drbs_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 28) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -6961,7 +6961,7 @@ presence_e drbs_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 28) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -7142,14 +7142,14 @@ crit_e qo_sinfo_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 164) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 qo_sinfo_ext_ies_o::value_c qo_sinfo_ext_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 164) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -7158,7 +7158,7 @@ presence_e qo_sinfo_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 164) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -7238,7 +7238,7 @@ crit_e drbs_to_be_modified_item_ext_ies_o::get_crit(const uint32_t& id)
     case 177:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -7268,7 +7268,7 @@ drbs_to_be_modified_item_ext_ies_o::ext_c drbs_to_be_modified_item_ext_ies_o::ge
       ret.set(ext_c::types::dc_based_dupl_activation);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -7290,7 +7290,7 @@ presence_e drbs_to_be_modified_item_ext_ies_o::get_presence(const uint32_t& id)
     case 177:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -7832,7 +7832,7 @@ SRSASN_CODE drbs_to_be_modified_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -7955,14 +7955,14 @@ crit_e drbs_to_be_modified_item_ies_o::get_crit(const uint32_t& id)
   if (id == 30) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_to_be_modified_item_ies_o::value_c drbs_to_be_modified_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 30) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -7971,7 +7971,7 @@ presence_e drbs_to_be_modified_item_ies_o::get_presence(const uint32_t& id)
   if (id == 30) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -8055,14 +8055,14 @@ crit_e drbs_to_be_released_item_ies_o::get_crit(const uint32_t& id)
   if (id == 32) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_to_be_released_item_ies_o::value_c drbs_to_be_released_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 32) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -8071,7 +8071,7 @@ presence_e drbs_to_be_released_item_ies_o::get_presence(const uint32_t& id)
   if (id == 32) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -8132,7 +8132,7 @@ crit_e drbs_to_be_setup_item_ext_ies_o::get_crit(const uint32_t& id)
     case 192:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -8153,7 +8153,7 @@ drbs_to_be_setup_item_ext_ies_o::ext_c drbs_to_be_setup_item_ext_ies_o::get_ext(
       ret.set(ext_c::types::ulpdcpsn_len);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -8169,7 +8169,7 @@ presence_e drbs_to_be_setup_item_ext_ies_o::get_presence(const uint32_t& id)
     case 192:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -8417,7 +8417,7 @@ SRSASN_CODE drbs_to_be_setup_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -8536,14 +8536,14 @@ crit_e drbs_to_be_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 34) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_to_be_setup_item_ies_o::value_c drbs_to_be_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 34) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -8552,7 +8552,7 @@ presence_e drbs_to_be_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 34) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -8613,7 +8613,7 @@ crit_e drbs_to_be_setup_mod_item_ext_ies_o::get_crit(const uint32_t& id)
     case 192:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -8634,7 +8634,7 @@ drbs_to_be_setup_mod_item_ext_ies_o::ext_c drbs_to_be_setup_mod_item_ext_ies_o::
       ret.set(ext_c::types::ulpdcpsn_len);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -8650,7 +8650,7 @@ presence_e drbs_to_be_setup_mod_item_ext_ies_o::get_presence(const uint32_t& id)
     case 192:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -8899,7 +8899,7 @@ SRSASN_CODE drbs_to_be_setup_mod_item_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -9016,14 +9016,14 @@ crit_e drbs_to_be_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 36) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 drbs_to_be_setup_mod_item_ies_o::value_c drbs_to_be_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 36) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -9032,7 +9032,7 @@ presence_e drbs_to_be_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 36) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -9197,7 +9197,7 @@ crit_e duto_currc_info_ext_ies_o::get_crit(const uint32_t& id)
     case 238:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -9242,7 +9242,7 @@ duto_currc_info_ext_ies_o::ext_c duto_currc_info_ext_ies_o::get_ext(const uint32
       ret.set(ext_c::types::meas_gap_sharing_cfg);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -9274,7 +9274,7 @@ presence_e duto_currc_info_ext_ies_o::get_presence(const uint32_t& id)
     case 238:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -9922,7 +9922,7 @@ SRSASN_CODE duto_currc_info_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -10098,14 +10098,14 @@ crit_e ded_si_delivery_needed_ue_item_ies_o::get_crit(const uint32_t& id)
   if (id == 190) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 ded_si_delivery_needed_ue_item_ies_o::value_c ded_si_delivery_needed_ue_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 190) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -10114,7 +10114,7 @@ presence_e ded_si_delivery_needed_ue_item_ies_o::get_presence(const uint32_t& id
   if (id == 190) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -10885,7 +10885,7 @@ crit_e error_ind_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -10909,7 +10909,7 @@ error_ind_ies_o::value_c error_ind_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -10927,7 +10927,7 @@ presence_e error_ind_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -11244,7 +11244,7 @@ SRSASN_CODE error_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -11622,14 +11622,14 @@ crit_e served_plmns_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 131) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 served_plmns_item_ext_ies_o::ext_c served_plmns_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 131) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -11638,7 +11638,7 @@ presence_e served_plmns_item_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 131) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -12203,7 +12203,7 @@ crit_e served_cell_info_ext_ies_o::get_crit(const uint32_t& id)
     case 232:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -12227,7 +12227,7 @@ served_cell_info_ext_ies_o::ext_c served_cell_info_ext_ies_o::get_ext(const uint
       ret.set(ext_c::types::cell_type);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -12245,7 +12245,7 @@ presence_e served_cell_info_ext_ies_o::get_presence(const uint32_t& id)
     case 232:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -12565,14 +12565,14 @@ crit_e gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 229) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::ext_c gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 229) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -12581,7 +12581,7 @@ presence_e gnb_cu_tnl_assoc_to_rem_item_ext_ies_o::get_presence(const uint32_t& 
   if (id == 229) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -12673,14 +12673,14 @@ crit_e scell_to_be_setup_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 182) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_to_be_setup_item_ext_ies_o::ext_c scell_to_be_setup_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 182) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -12689,7 +12689,7 @@ presence_e scell_to_be_setup_item_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 182) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -12739,14 +12739,14 @@ crit_e scell_to_be_setup_mod_item_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 182) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_to_be_setup_mod_item_ext_ies_o::ext_c scell_to_be_setup_mod_item_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 182) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -12755,7 +12755,7 @@ presence_e scell_to_be_setup_mod_item_ext_ies_o::get_presence(const uint32_t& id
   if (id == 182) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -12877,7 +12877,7 @@ SRSASN_CODE served_cell_info_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -13648,7 +13648,7 @@ crit_e res_coordination_eutra_cell_info_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 233) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 res_coordination_eutra_cell_info_ext_ies_o::ext_c
@@ -13656,7 +13656,7 @@ res_coordination_eutra_cell_info_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 233) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -13665,7 +13665,7 @@ presence_e res_coordination_eutra_cell_info_ext_ies_o::get_presence(const uint32
   if (id == 233) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14506,14 +14506,14 @@ crit_e ue_associated_lc_f1_conn_item_res_o::get_crit(const uint32_t& id)
   if (id == 80) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 ue_associated_lc_f1_conn_item_res_o::value_c ue_associated_lc_f1_conn_item_res_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 80) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14522,7 +14522,7 @@ presence_e ue_associated_lc_f1_conn_item_res_o::get_presence(const uint32_t& id)
   if (id == 80) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14573,7 +14573,7 @@ crit_e gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 135) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::value_c
@@ -14581,7 +14581,7 @@ gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 135) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14590,7 +14590,7 @@ presence_e gnb_cu_tnl_assoc_failed_to_setup_item_ies_o::get_presence(const uint3
   if (id == 135) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14636,14 +14636,14 @@ crit_e gnb_cu_tnl_assoc_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 133) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_setup_item_ies_o::value_c gnb_cu_tnl_assoc_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 133) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14652,7 +14652,7 @@ presence_e gnb_cu_tnl_assoc_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 133) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14698,14 +14698,14 @@ crit_e gnb_cu_tnl_assoc_to_add_item_ies_o::get_crit(const uint32_t& id)
   if (id == 120) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_to_add_item_ies_o::value_c gnb_cu_tnl_assoc_to_add_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 120) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14714,7 +14714,7 @@ presence_e gnb_cu_tnl_assoc_to_add_item_ies_o::get_presence(const uint32_t& id)
   if (id == 120) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14760,14 +14760,14 @@ crit_e gnb_cu_tnl_assoc_to_rem_item_ies_o::get_crit(const uint32_t& id)
   if (id == 122) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_to_rem_item_ies_o::value_c gnb_cu_tnl_assoc_to_rem_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 122) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14776,7 +14776,7 @@ presence_e gnb_cu_tnl_assoc_to_rem_item_ies_o::get_presence(const uint32_t& id)
   if (id == 122) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14822,14 +14822,14 @@ crit_e gnb_cu_tnl_assoc_to_upd_item_ies_o::get_crit(const uint32_t& id)
   if (id == 124) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_cu_tnl_assoc_to_upd_item_ies_o::value_c gnb_cu_tnl_assoc_to_upd_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 124) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14838,7 +14838,7 @@ presence_e gnb_cu_tnl_assoc_to_upd_item_ies_o::get_presence(const uint32_t& id)
   if (id == 124) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14884,14 +14884,14 @@ crit_e gnb_du_served_cells_item_ies_o::get_crit(const uint32_t& id)
   if (id == 43) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_du_served_cells_item_ies_o::value_c gnb_du_served_cells_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 43) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14900,7 +14900,7 @@ presence_e gnb_du_served_cells_item_ies_o::get_presence(const uint32_t& id)
   if (id == 43) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -14946,14 +14946,14 @@ crit_e gnb_du_tnl_assoc_to_rem_item_ies_o::get_crit(const uint32_t& id)
   if (id == 227) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 gnb_du_tnl_assoc_to_rem_item_ies_o::value_c gnb_du_tnl_assoc_to_rem_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 227) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -14962,7 +14962,7 @@ presence_e gnb_du_tnl_assoc_to_rem_item_ies_o::get_presence(const uint32_t& id)
   if (id == 227) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15008,14 +15008,14 @@ crit_e nr_cgi_list_for_restart_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 153) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 nr_cgi_list_for_restart_list_item_ies_o::value_c nr_cgi_list_for_restart_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 153) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15024,7 +15024,7 @@ presence_e nr_cgi_list_for_restart_list_item_ies_o::get_presence(const uint32_t&
   if (id == 153) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15070,14 +15070,14 @@ crit_e pws_failed_nr_cgi_list_item_ies_o::get_crit(const uint32_t& id)
   if (id == 155) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 pws_failed_nr_cgi_list_item_ies_o::value_c pws_failed_nr_cgi_list_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 155) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15086,7 +15086,7 @@ presence_e pws_failed_nr_cgi_list_item_ies_o::get_presence(const uint32_t& id)
   if (id == 155) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15141,7 +15141,7 @@ crit_e pws_sys_info_ext_ies_o::get_crit(const uint32_t& id)
     case 231:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -15156,7 +15156,7 @@ pws_sys_info_ext_ies_o::ext_c pws_sys_info_ext_ies_o::get_ext(const uint32_t& id
       ret.set(ext_c::types::add_sib_msg_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15168,7 +15168,7 @@ presence_e pws_sys_info_ext_ies_o::get_presence(const uint32_t& id)
     case 231:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -15335,14 +15335,14 @@ crit_e paging_cell_item_ies_o::get_crit(const uint32_t& id)
   if (id == 112) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 paging_cell_item_ies_o::value_c paging_cell_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 112) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15351,7 +15351,7 @@ presence_e paging_cell_item_ies_o::get_presence(const uint32_t& id)
   if (id == 112) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15397,14 +15397,14 @@ crit_e potential_sp_cell_item_ies_o::get_crit(const uint32_t& id)
   if (id == 93) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 potential_sp_cell_item_ies_o::value_c potential_sp_cell_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 93) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15413,7 +15413,7 @@ presence_e potential_sp_cell_item_ies_o::get_presence(const uint32_t& id)
   if (id == 93) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15459,14 +15459,14 @@ crit_e protected_eutra_res_item_ies_o::get_crit(const uint32_t& id)
   if (id == 168) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 protected_eutra_res_item_ies_o::value_c protected_eutra_res_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 168) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15475,7 +15475,7 @@ presence_e protected_eutra_res_item_ies_o::get_presence(const uint32_t& id)
   if (id == 168) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15555,14 +15555,14 @@ crit_e rrc_version_ext_ies_o::get_crit(const uint32_t& id)
   if (id == 199) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 rrc_version_ext_ies_o::ext_c rrc_version_ext_ies_o::get_ext(const uint32_t& id)
 {
   ext_c ret{};
   if (id != 199) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15571,7 +15571,7 @@ presence_e rrc_version_ext_ies_o::get_presence(const uint32_t& id)
   if (id == 199) {
     return presence_e::optional;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15664,14 +15664,14 @@ crit_e scell_failedto_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 84) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_failedto_setup_item_ies_o::value_c scell_failedto_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 84) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15680,7 +15680,7 @@ presence_e scell_failedto_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 84) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15726,14 +15726,14 @@ crit_e scell_failedto_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 86) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_failedto_setup_mod_item_ies_o::value_c scell_failedto_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 86) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15742,7 +15742,7 @@ presence_e scell_failedto_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 86) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15788,14 +15788,14 @@ crit_e scell_to_be_remd_item_ies_o::get_crit(const uint32_t& id)
   if (id == 51) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_to_be_remd_item_ies_o::value_c scell_to_be_remd_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 51) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15804,7 +15804,7 @@ presence_e scell_to_be_remd_item_ies_o::get_presence(const uint32_t& id)
   if (id == 51) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15850,14 +15850,14 @@ crit_e scell_to_be_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 53) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_to_be_setup_item_ies_o::value_c scell_to_be_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 53) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15866,7 +15866,7 @@ presence_e scell_to_be_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 53) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -15912,14 +15912,14 @@ crit_e scell_to_be_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 55) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 scell_to_be_setup_mod_item_ies_o::value_c scell_to_be_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 55) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -15928,7 +15928,7 @@ presence_e scell_to_be_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 55) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16008,14 +16008,14 @@ crit_e srbs_failed_to_be_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 65) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_failed_to_be_setup_item_ies_o::value_c srbs_failed_to_be_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 65) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16024,7 +16024,7 @@ presence_e srbs_failed_to_be_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 65) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16070,14 +16070,14 @@ crit_e srbs_failed_to_be_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 67) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_failed_to_be_setup_mod_item_ies_o::value_c srbs_failed_to_be_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 67) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16086,7 +16086,7 @@ presence_e srbs_failed_to_be_setup_mod_item_ies_o::get_presence(const uint32_t& 
   if (id == 67) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16132,14 +16132,14 @@ crit_e srbs_modified_item_ies_o::get_crit(const uint32_t& id)
   if (id == 207) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_modified_item_ies_o::value_c srbs_modified_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 207) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16148,7 +16148,7 @@ presence_e srbs_modified_item_ies_o::get_presence(const uint32_t& id)
   if (id == 207) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16194,14 +16194,14 @@ crit_e srbs_required_to_be_released_item_ies_o::get_crit(const uint32_t& id)
   if (id == 69) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_required_to_be_released_item_ies_o::value_c srbs_required_to_be_released_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 69) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16210,7 +16210,7 @@ presence_e srbs_required_to_be_released_item_ies_o::get_presence(const uint32_t&
   if (id == 69) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16256,14 +16256,14 @@ crit_e srbs_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 203) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_setup_item_ies_o::value_c srbs_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 203) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16272,7 +16272,7 @@ presence_e srbs_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 203) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16318,14 +16318,14 @@ crit_e srbs_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 205) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_setup_mod_item_ies_o::value_c srbs_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 205) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16334,7 +16334,7 @@ presence_e srbs_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 205) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16380,14 +16380,14 @@ crit_e srbs_to_be_released_item_ies_o::get_crit(const uint32_t& id)
   if (id == 71) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_to_be_released_item_ies_o::value_c srbs_to_be_released_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 71) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16396,7 +16396,7 @@ presence_e srbs_to_be_released_item_ies_o::get_presence(const uint32_t& id)
   if (id == 71) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16442,14 +16442,14 @@ crit_e srbs_to_be_setup_item_ies_o::get_crit(const uint32_t& id)
   if (id == 73) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_to_be_setup_item_ies_o::value_c srbs_to_be_setup_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 73) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16458,7 +16458,7 @@ presence_e srbs_to_be_setup_item_ies_o::get_presence(const uint32_t& id)
   if (id == 73) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16504,14 +16504,14 @@ crit_e srbs_to_be_setup_mod_item_ies_o::get_crit(const uint32_t& id)
   if (id == 75) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 srbs_to_be_setup_mod_item_ies_o::value_c srbs_to_be_setup_mod_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 75) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16520,7 +16520,7 @@ presence_e srbs_to_be_setup_mod_item_ies_o::get_presence(const uint32_t& id)
   if (id == 75) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16566,14 +16566,14 @@ crit_e served_cells_to_add_item_ies_o::get_crit(const uint32_t& id)
   if (id == 57) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 served_cells_to_add_item_ies_o::value_c served_cells_to_add_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 57) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16582,7 +16582,7 @@ presence_e served_cells_to_add_item_ies_o::get_presence(const uint32_t& id)
   if (id == 57) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16628,14 +16628,14 @@ crit_e served_cells_to_delete_item_ies_o::get_crit(const uint32_t& id)
   if (id == 59) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 served_cells_to_delete_item_ies_o::value_c served_cells_to_delete_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 59) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16644,7 +16644,7 @@ presence_e served_cells_to_delete_item_ies_o::get_presence(const uint32_t& id)
   if (id == 59) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16690,14 +16690,14 @@ crit_e served_cells_to_modify_item_ies_o::get_crit(const uint32_t& id)
   if (id == 61) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 served_cells_to_modify_item_ies_o::value_c served_cells_to_modify_item_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 61) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16706,7 +16706,7 @@ presence_e served_cells_to_modify_item_ies_o::get_presence(const uint32_t& id)
   if (id == 61) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16752,14 +16752,14 @@ crit_e ue_associated_lc_f1_conn_item_res_ack_o::get_crit(const uint32_t& id)
   if (id == 80) {
     return crit_e::ignore;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 ue_associated_lc_f1_conn_item_res_ack_o::value_c ue_associated_lc_f1_conn_item_res_ack_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 80) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -16768,7 +16768,7 @@ presence_e ue_associated_lc_f1_conn_item_res_ack_o::get_presence(const uint32_t&
   if (id == 80) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -16934,7 +16934,7 @@ SRSASN_CODE pws_sys_info_ext_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -17823,7 +17823,7 @@ crit_e f1_removal_fail_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -17841,7 +17841,7 @@ f1_removal_fail_ies_o::value_c f1_removal_fail_ies_o::get_value(const uint32_t& 
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -17855,7 +17855,7 @@ presence_e f1_removal_fail_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18051,14 +18051,14 @@ crit_e f1_removal_request_ies_o::get_crit(const uint32_t& id)
   if (id == 78) {
     return crit_e::reject;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 f1_removal_request_ies_o::value_c f1_removal_request_ies_o::get_value(const uint32_t& id)
 {
   value_c ret{};
   if (id != 78) {
-    asn1::log_error("The id=%d is not recognized", id);
+    asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -18067,7 +18067,7 @@ presence_e f1_removal_request_ies_o::get_presence(const uint32_t& id)
   if (id == 78) {
     return presence_e::mandatory;
   }
-  asn1::log_error("The id=%d is not recognized", id);
+  asn1::log_error("The id={} is not recognized", id);
   return {};
 }
 
@@ -18126,7 +18126,7 @@ crit_e f1_removal_resp_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18141,7 +18141,7 @@ f1_removal_resp_ies_o::value_c f1_removal_resp_ies_o::get_value(const uint32_t& 
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -18153,7 +18153,7 @@ presence_e f1_removal_resp_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18330,7 +18330,7 @@ crit_e f1_setup_fail_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18351,7 +18351,7 @@ f1_setup_fail_ies_o::value_c f1_setup_fail_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -18367,7 +18367,7 @@ presence_e f1_setup_fail_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18605,7 +18605,7 @@ crit_e f1_setup_request_ies_o::get_crit(const uint32_t& id)
     case 171:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18629,7 +18629,7 @@ f1_setup_request_ies_o::value_c f1_setup_request_ies_o::get_value(const uint32_t
       ret.set(value_c::types::gnb_du_rrc_version);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -18647,7 +18647,7 @@ presence_e f1_setup_request_ies_o::get_presence(const uint32_t& id)
     case 171:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18914,7 +18914,7 @@ crit_e f1_setup_resp_ies_o::get_crit(const uint32_t& id)
     case 170:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -18935,7 +18935,7 @@ f1_setup_resp_ies_o::value_c f1_setup_resp_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::gnb_cu_rrc_version);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -18951,7 +18951,7 @@ presence_e f1_setup_resp_ies_o::get_presence(const uint32_t& id)
     case 170:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19199,7 +19199,7 @@ crit_e gnbcu_cfg_upd_ack_ies_o::get_crit(const uint32_t& id)
     case 189:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19226,7 +19226,7 @@ gnbcu_cfg_upd_ack_ies_o::value_c gnbcu_cfg_upd_ack_ies_o::get_value(const uint32
       ret.set(value_c::types::ded_si_delivery_needed_ue_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -19246,7 +19246,7 @@ presence_e gnbcu_cfg_upd_ack_ies_o::get_presence(const uint32_t& id)
     case 189:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19570,7 +19570,7 @@ crit_e gnbcu_cfg_upd_fail_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19591,7 +19591,7 @@ gnbcu_cfg_upd_fail_ies_o::value_c gnbcu_cfg_upd_fail_ies_o::get_value(const uint
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -19607,7 +19607,7 @@ presence_e gnbcu_cfg_upd_fail_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19852,7 +19852,7 @@ crit_e gnbcu_cfg_upd_ies_o::get_crit(const uint32_t& id)
     case 105:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -19885,7 +19885,7 @@ gnbcu_cfg_upd_ies_o::value_c gnbcu_cfg_upd_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::protected_eutra_res_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -19909,7 +19909,7 @@ presence_e gnbcu_cfg_upd_ies_o::get_presence(const uint32_t& id)
     case 105:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20306,7 +20306,7 @@ crit_e gnbdu_cfg_upd_ack_ies_o::get_crit(const uint32_t& id)
     case 5:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20327,7 +20327,7 @@ gnbdu_cfg_upd_ack_ies_o::value_c gnbdu_cfg_upd_ack_ies_o::get_value(const uint32
       ret.set(value_c::types::cells_to_be_deactiv_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -20343,7 +20343,7 @@ presence_e gnbdu_cfg_upd_ack_ies_o::get_presence(const uint32_t& id)
     case 5:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20592,7 +20592,7 @@ crit_e gnbdu_cfg_upd_fail_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20613,7 +20613,7 @@ gnbdu_cfg_upd_fail_ies_o::value_c gnbdu_cfg_upd_fail_ies_o::get_value(const uint
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -20629,7 +20629,7 @@ presence_e gnbdu_cfg_upd_fail_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20874,7 +20874,7 @@ crit_e gnbdu_cfg_upd_ies_o::get_crit(const uint32_t& id)
     case 228:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -20907,7 +20907,7 @@ gnbdu_cfg_upd_ies_o::value_c gnbdu_cfg_upd_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::gnb_du_tnl_assoc_to_rem_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -20931,7 +20931,7 @@ presence_e gnbdu_cfg_upd_ies_o::get_presence(const uint32_t& id)
     case 228:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21315,7 +21315,7 @@ crit_e gnbdu_res_coordination_request_ies_o::get_crit(const uint32_t& id)
     case 213:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21336,7 +21336,7 @@ gnbdu_res_coordination_request_ies_o::value_c gnbdu_res_coordination_request_ies
       ret.set(value_c::types::ignore_res_coordination_container);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -21352,7 +21352,7 @@ presence_e gnbdu_res_coordination_request_ies_o::get_presence(const uint32_t& id
     case 213:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21582,7 +21582,7 @@ crit_e gnbdu_res_coordination_resp_ies_o::get_crit(const uint32_t& id)
     case 102:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21597,7 +21597,7 @@ gnbdu_res_coordination_resp_ies_o::value_c gnbdu_res_coordination_resp_ies_o::ge
       ret.set(value_c::types::eutra_nr_cell_res_coordination_req_ack_container);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -21609,7 +21609,7 @@ presence_e gnbdu_res_coordination_resp_ies_o::get_presence(const uint32_t& id)
     case 102:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21784,7 +21784,7 @@ crit_e gnbdu_status_ind_ies_o::get_crit(const uint32_t& id)
     case 172:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21799,7 +21799,7 @@ gnbdu_status_ind_ies_o::value_c gnbdu_status_ind_ies_o::get_value(const uint32_t
       ret.set(value_c::types::gnbdu_overload_info);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -21811,7 +21811,7 @@ presence_e gnbdu_status_ind_ies_o::get_presence(const uint32_t& id)
     case 172:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -21978,7 +21978,7 @@ crit_e init_ulrrc_msg_transfer_ies_o::get_crit(const uint32_t& id)
     case 241:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22014,7 +22014,7 @@ init_ulrrc_msg_transfer_ies_o::value_c init_ulrrc_msg_transfer_ies_o::get_value(
       ret.set(value_c::types::rrc_container_rrc_setup_complete);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -22040,7 +22040,7 @@ presence_e init_ulrrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
     case 241:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22422,7 +22422,7 @@ crit_e network_access_rate_reduction_ies_o::get_crit(const uint32_t& id)
     case 225:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22437,7 +22437,7 @@ network_access_rate_reduction_ies_o::value_c network_access_rate_reduction_ies_o
       ret.set(value_c::types::uac_assist_info);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -22449,7 +22449,7 @@ presence_e network_access_rate_reduction_ies_o::get_presence(const uint32_t& id)
     case 225:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22625,7 +22625,7 @@ crit_e notify_ies_o::get_crit(const uint32_t& id)
     case 137:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22643,7 +22643,7 @@ notify_ies_o::value_c notify_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::drb_notify_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -22657,7 +22657,7 @@ presence_e notify_ies_o::get_presence(const uint32_t& id)
     case 137:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22861,7 +22861,7 @@ crit_e pws_cancel_request_ies_o::get_crit(const uint32_t& id)
     case 220:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -22885,7 +22885,7 @@ pws_cancel_request_ies_o::value_c pws_cancel_request_ies_o::get_value(const uint
       ret.set(value_c::types::notif_info);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -22903,7 +22903,7 @@ presence_e pws_cancel_request_ies_o::get_presence(const uint32_t& id)
     case 220:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23167,7 +23167,7 @@ crit_e pws_cancel_resp_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23185,7 +23185,7 @@ pws_cancel_resp_ies_o::value_c pws_cancel_resp_ies_o::get_value(const uint32_t& 
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -23199,7 +23199,7 @@ presence_e pws_cancel_resp_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23407,7 +23407,7 @@ crit_e pws_fail_ind_ies_o::get_crit(const uint32_t& id)
     case 154:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23422,7 +23422,7 @@ pws_fail_ind_ies_o::value_c pws_fail_ind_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::pws_failed_nr_cgi_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -23434,7 +23434,7 @@ presence_e pws_fail_ind_ies_o::get_presence(const uint32_t& id)
     case 154:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23610,7 +23610,7 @@ crit_e pws_restart_ind_ies_o::get_crit(const uint32_t& id)
     case 152:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23625,7 +23625,7 @@ pws_restart_ind_ies_o::value_c pws_restart_ind_ies_o::get_value(const uint32_t& 
       ret.set(value_c::types::nr_cgi_list_for_restart_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -23637,7 +23637,7 @@ presence_e pws_restart_ind_ies_o::get_presence(const uint32_t& id)
     case 152:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23821,7 +23821,7 @@ crit_e paging_ies_o::get_crit(const uint32_t& id)
     case 216:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -23848,7 +23848,7 @@ paging_ies_o::value_c paging_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::paging_origin);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -23868,7 +23868,7 @@ presence_e paging_ies_o::get_presence(const uint32_t& id)
     case 216:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24185,7 +24185,7 @@ crit_e rrc_delivery_report_ies_o::get_crit(const uint32_t& id)
     case 64:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24206,7 +24206,7 @@ rrc_delivery_report_ies_o::value_c rrc_delivery_report_ies_o::get_value(const ui
       ret.set(value_c::types::srbid);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -24222,7 +24222,7 @@ presence_e rrc_delivery_report_ies_o::get_presence(const uint32_t& id)
     case 64:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24448,7 +24448,7 @@ crit_e reset_ack_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24466,7 +24466,7 @@ reset_ack_ies_o::value_c reset_ack_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -24480,7 +24480,7 @@ presence_e reset_ack_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24691,7 +24691,7 @@ crit_e reset_ies_o::get_crit(const uint32_t& id)
     case 48:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24709,7 +24709,7 @@ reset_ies_o::value_c reset_ies_o::get_value(const uint32_t& id)
       ret.set(value_c::types::reset_type);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -24723,7 +24723,7 @@ presence_e reset_ies_o::get_presence(const uint32_t& id)
     case 48:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24932,7 +24932,7 @@ crit_e sys_info_delivery_cmd_ies_o::get_crit(const uint32_t& id)
     case 156:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -24953,7 +24953,7 @@ sys_info_delivery_cmd_ies_o::value_c sys_info_delivery_cmd_ies_o::get_value(cons
       ret.set(value_c::types::confirmed_ueid);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -24969,7 +24969,7 @@ presence_e sys_info_delivery_cmd_ies_o::get_presence(const uint32_t& id)
     case 156:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25212,7 +25212,7 @@ crit_e ue_context_mod_confirm_ies_o::get_crit(const uint32_t& id)
     case 195:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25245,7 +25245,7 @@ ue_context_mod_confirm_ies_o::value_c ue_context_mod_confirm_ies_o::get_value(co
       ret.set(value_c::types::res_coordination_transfer_info);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -25269,7 +25269,7 @@ presence_e ue_context_mod_confirm_ies_o::get_presence(const uint32_t& id)
     case 195:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25632,7 +25632,7 @@ crit_e ue_context_mod_fail_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25653,7 +25653,7 @@ ue_context_mod_fail_ies_o::value_c ue_context_mod_fail_ies_o::get_value(const ui
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -25669,7 +25669,7 @@ presence_e ue_context_mod_fail_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25902,7 +25902,7 @@ crit_e ue_context_mod_refuse_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -25923,7 +25923,7 @@ ue_context_mod_refuse_ies_o::value_c ue_context_mod_refuse_ies_o::get_value(cons
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -25939,7 +25939,7 @@ presence_e ue_context_mod_refuse_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -26228,7 +26228,7 @@ crit_e ue_context_mod_request_ies_o::get_crit(const uint32_t& id)
     case 94:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -26330,7 +26330,7 @@ ue_context_mod_request_ies_o::value_c ue_context_mod_request_ies_o::get_value(co
       ret.set(value_c::types::full_cfg);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -26400,7 +26400,7 @@ presence_e ue_context_mod_request_ies_o::get_presence(const uint32_t& id)
     case 94:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -27487,7 +27487,7 @@ crit_e ue_context_mod_required_ies_o::get_crit(const uint32_t& id)
     case 0:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -27520,7 +27520,7 @@ ue_context_mod_required_ies_o::value_c ue_context_mod_required_ies_o::get_value(
       ret.set(value_c::types::cause);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -27544,7 +27544,7 @@ presence_e ue_context_mod_required_ies_o::get_presence(const uint32_t& id)
     case 0:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -27948,7 +27948,7 @@ crit_e ue_context_mod_resp_ies_o::get_crit(const uint32_t& id)
     case 94:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -28008,7 +28008,7 @@ ue_context_mod_resp_ies_o::value_c ue_context_mod_resp_ies_o::get_value(const ui
       ret.set(value_c::types::full_cfg);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -28050,7 +28050,7 @@ presence_e ue_context_mod_resp_ies_o::get_presence(const uint32_t& id)
     case 94:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -28733,7 +28733,7 @@ crit_e ue_context_release_cmd_ies_o::get_crit(const uint32_t& id)
     case 184:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -28766,7 +28766,7 @@ ue_context_release_cmd_ies_o::value_c ue_context_release_cmd_ies_o::get_value(co
       ret.set(value_c::types::rrc_delivery_status_request);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -28790,7 +28790,7 @@ presence_e ue_context_release_cmd_ies_o::get_presence(const uint32_t& id)
     case 184:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29134,7 +29134,7 @@ crit_e ue_context_release_complete_ies_o::get_crit(const uint32_t& id)
     case 7:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29152,7 +29152,7 @@ ue_context_release_complete_ies_o::value_c ue_context_release_complete_ies_o::ge
       ret.set(value_c::types::crit_diagnostics);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -29166,7 +29166,7 @@ presence_e ue_context_release_complete_ies_o::get_presence(const uint32_t& id)
     case 7:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29364,7 +29364,7 @@ crit_e ue_context_release_request_ies_o::get_crit(const uint32_t& id)
     case 0:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29382,7 +29382,7 @@ ue_context_release_request_ies_o::value_c ue_context_release_request_ies_o::get_
       ret.set(value_c::types::cause);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -29396,7 +29396,7 @@ presence_e ue_context_release_request_ies_o::get_presence(const uint32_t& id)
     case 0:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29598,7 +29598,7 @@ crit_e ue_context_setup_fail_ies_o::get_crit(const uint32_t& id)
     case 92:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29622,7 +29622,7 @@ ue_context_setup_fail_ies_o::value_c ue_context_setup_fail_ies_o::get_value(cons
       ret.set(value_c::types::potential_sp_cell_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -29640,7 +29640,7 @@ presence_e ue_context_setup_fail_ies_o::get_presence(const uint32_t& id)
     case 92:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -29948,7 +29948,7 @@ crit_e ue_context_setup_request_ies_o::get_crit(const uint32_t& id)
     case 226:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -30026,7 +30026,7 @@ ue_context_setup_request_ies_o::value_c ue_context_setup_request_ies_o::get_valu
       ret.set(value_c::types::ranueid);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -30080,7 +30080,7 @@ presence_e ue_context_setup_request_ies_o::get_presence(const uint32_t& id)
     case 226:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -30932,7 +30932,7 @@ crit_e ue_context_setup_resp_ies_o::get_crit(const uint32_t& id)
     case 202:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -30980,7 +30980,7 @@ ue_context_setup_resp_ies_o::value_c ue_context_setup_resp_ies_o::get_value(cons
       ret.set(value_c::types::srbs_setup_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -31014,7 +31014,7 @@ presence_e ue_context_setup_resp_ies_o::get_presence(const uint32_t& id)
     case 202:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -31543,7 +31543,7 @@ crit_e ue_inactivity_notif_ies_o::get_crit(const uint32_t& id)
     case 100:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -31561,7 +31561,7 @@ ue_inactivity_notif_ies_o::value_c ue_inactivity_notif_ies_o::get_value(const ui
       ret.set(value_c::types::drb_activity_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -31575,7 +31575,7 @@ presence_e ue_inactivity_notif_ies_o::get_presence(const uint32_t& id)
     case 100:
       return presence_e::mandatory;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -31782,7 +31782,7 @@ crit_e ulrrc_msg_transfer_ies_o::get_crit(const uint32_t& id)
     case 219:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -31809,7 +31809,7 @@ ulrrc_msg_transfer_ies_o::value_c ulrrc_msg_transfer_ies_o::get_value(const uint
       ret.set(value_c::types::new_g_nb_du_ue_f1_ap_id);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -31829,7 +31829,7 @@ presence_e ulrrc_msg_transfer_ies_o::get_presence(const uint32_t& id)
     case 219:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -32120,7 +32120,7 @@ crit_e write_replace_warning_request_ies_o::get_crit(const uint32_t& id)
     case 144:
       return crit_e::reject;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -32144,7 +32144,7 @@ write_replace_warning_request_ies_o::value_c write_replace_warning_request_ies_o
       ret.set(value_c::types::cells_to_be_broadcast_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -32162,7 +32162,7 @@ presence_e write_replace_warning_request_ies_o::get_presence(const uint32_t& id)
     case 144:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -32428,7 +32428,7 @@ crit_e write_replace_warning_resp_ies_o::get_crit(const uint32_t& id)
     case 189:
       return crit_e::ignore;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -32449,7 +32449,7 @@ write_replace_warning_resp_ies_o::value_c write_replace_warning_resp_ies_o::get_
       ret.set(value_c::types::ded_si_delivery_needed_ue_list);
       break;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return ret;
 }
@@ -32465,7 +32465,7 @@ presence_e write_replace_warning_resp_ies_o::get_presence(const uint32_t& id)
     case 189:
       return presence_e::optional;
     default:
-      asn1::log_error("The id=%d is not recognized", id);
+      asn1::log_error("The id={} is not recognized", id);
   }
   return {};
 }
@@ -32745,7 +32745,7 @@ SRSASN_CODE f1_removal_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -32816,7 +32816,7 @@ SRSASN_CODE f1_removal_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -32909,7 +32909,7 @@ SRSASN_CODE f1_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33018,7 +33018,7 @@ SRSASN_CODE f1_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33119,7 +33119,7 @@ SRSASN_CODE f1_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33273,7 +33273,7 @@ SRSASN_CODE gnbcu_cfg_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33419,7 +33419,7 @@ SRSASN_CODE gnbcu_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33528,7 +33528,7 @@ SRSASN_CODE gnbcu_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33682,7 +33682,7 @@ SRSASN_CODE gnbdu_cfg_upd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33802,7 +33802,7 @@ SRSASN_CODE gnbdu_cfg_upd_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33903,7 +33903,7 @@ SRSASN_CODE gnbdu_cfg_upd_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -33999,7 +33999,7 @@ SRSASN_CODE gnbdu_res_coordination_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34069,7 +34069,7 @@ SRSASN_CODE gnbdu_res_coordination_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34133,7 +34133,7 @@ SRSASN_CODE gnbdu_status_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34280,7 +34280,7 @@ SRSASN_CODE init_ulrrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34366,7 +34366,7 @@ SRSASN_CODE network_access_rate_reduction_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34439,7 +34439,7 @@ SRSASN_CODE notify_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34545,7 +34545,7 @@ SRSASN_CODE pws_cancel_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34638,7 +34638,7 @@ SRSASN_CODE pws_cancel_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34711,7 +34711,7 @@ SRSASN_CODE pws_fail_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34777,7 +34777,7 @@ SRSASN_CODE pws_restart_ind_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -34891,7 +34891,7 @@ SRSASN_CODE paging_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35080,7 +35080,7 @@ SRSASN_CODE rrc_delivery_report_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35157,7 +35157,7 @@ SRSASN_CODE reset_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35240,7 +35240,7 @@ SRSASN_CODE reset_ack_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35331,7 +35331,7 @@ SRSASN_CODE sys_info_delivery_cmd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35478,7 +35478,7 @@ SRSASN_CODE ue_context_mod_confirm_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35590,7 +35590,7 @@ SRSASN_CODE ue_context_mod_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -35684,7 +35684,7 @@ SRSASN_CODE ue_context_mod_refuse_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -36132,7 +36132,7 @@ SRSASN_CODE ue_context_mod_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -36388,7 +36388,7 @@ SRSASN_CODE ue_context_mod_required_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -36670,7 +36670,7 @@ SRSASN_CODE ue_context_mod_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -36870,7 +36870,7 @@ SRSASN_CODE ue_context_release_cmd_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -36968,7 +36968,7 @@ SRSASN_CODE ue_context_release_complete_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -37045,7 +37045,7 @@ SRSASN_CODE ue_context_release_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -37151,7 +37151,7 @@ SRSASN_CODE ue_context_setup_fail_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -37495,7 +37495,7 @@ SRSASN_CODE ue_context_setup_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -37780,7 +37780,7 @@ SRSASN_CODE ue_context_setup_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -37895,7 +37895,7 @@ SRSASN_CODE ue_inactivity_notif_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -38008,7 +38008,7 @@ SRSASN_CODE ulrrc_msg_transfer_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -38118,7 +38118,7 @@ SRSASN_CODE write_replace_warning_request_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -38220,7 +38220,7 @@ SRSASN_CODE write_replace_warning_resp_ies_container::unpack(cbit_ref& bref)
         break;
       }
       default:
-        asn1::log_error("Unpacked object ID=%d is not recognized\n", id);
+        asn1::log_error("Unpacked object ID={} is not recognized\n", id);
         return SRSASN_ERROR_DECODE_FAIL;
     }
   }
@@ -38355,7 +38355,7 @@ f1_ap_elem_procs_o::init_msg_c f1_ap_elem_procs_o::get_init_msg(const uint16_t& 
       ret.set(init_msg_c::types::network_access_rate_reduction);
       break;
     default:
-      asn1::log_error("The proc_code=%d is not recognized", proc_code);
+      asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
   return ret;
 }
@@ -38400,7 +38400,7 @@ f1_ap_elem_procs_o::successful_outcome_c f1_ap_elem_procs_o::get_successful_outc
       ret.set(successful_outcome_c::types::f1_removal_resp);
       break;
     default:
-      asn1::log_error("The proc_code=%d is not recognized", proc_code);
+      asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
   return ret;
 }
@@ -38430,7 +38430,7 @@ f1_ap_elem_procs_o::unsuccessful_outcome_c f1_ap_elem_procs_o::get_unsuccessful_
       ret.set(unsuccessful_outcome_c::types::f1_removal_fail);
       break;
     default:
-      asn1::log_error("The proc_code=%d is not recognized", proc_code);
+      asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
   return ret;
 }
@@ -38492,7 +38492,7 @@ crit_e f1_ap_elem_procs_o::get_crit(const uint16_t& proc_code)
     case 27:
       return crit_e::ignore;
     default:
-      asn1::log_error("The proc_code=%d is not recognized", proc_code);
+      asn1::log_error("The proc_code={} is not recognized", proc_code);
   }
   return {};
 }

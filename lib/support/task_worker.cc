@@ -70,7 +70,7 @@ void task_worker::push_task(task_t&& task)
 {
   auto ret = pending_tasks.try_push(std::move(task));
   if (ret.is_error()) {
-    logger.error("Cannot push anymore tasks into the worker queue. maximum size is %u",
+    logger.error("Cannot push anymore tasks into the worker queue. maximum size is {}",
                  uint32_t(pending_tasks.max_size()));
     return;
   }
@@ -91,7 +91,7 @@ void task_worker::run_thread()
     }
     task();
   }
-  logger.info("Task worker %s finished.", thread::get_name().c_str());
+  logger.info("Task worker {} finished.", thread::get_name().c_str());
 }
 
 } // namespace srsgnb

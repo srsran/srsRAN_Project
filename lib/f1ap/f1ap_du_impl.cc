@@ -23,7 +23,7 @@ void f1ap_du_impl::ue_creation_response(const du_ue_create_response_message& res
 
 void f1ap_du_impl::ul_rrc_message_transfer(const ul_rrc_transfer_message& msg)
 {
-  logger.info("UL   ueId=%d lcid=%d: \"RRC Message Transfer\"", msg.ue_index, msg.lcid);
+  logger.info("UL   ueId={} lcid={}: \"RRC Message Transfer\"", msg.ue_index, msg.lcid);
 }
 
 } // namespace srsgnb

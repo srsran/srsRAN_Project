@@ -97,12 +97,12 @@ void mac_impl::push_ul_pdu(rnti_t rnti, du_cell_index_t cell_index, byte_buffer 
   lcid_t lcid = 0;
 
   if (lcid == 0) {
-    logger.info("UL\t0x%x\tcc=%d\tCCCH", rnti, cell_index);
+    logger.info("UL\t{:#x}\tcc={}\tCCCH", rnti, cell_index);
     ul_ccch_notifier.on_ul_ccch_sdu(rnti, pdu);
   } else {
     mac_ul_dcch_notifier* dcch = ctxt.demux.get_rlc_bearer(rnti, lcid);
     if (dcch == nullptr) {
-      logger.warning("Received UL PDU for inexistent bearer {0x%x, %d}", rnti, lcid);
+      logger.warning("Received UL PDU for inexistent bearer <{:#x}, {}>", rnti, lcid);
       return;
     }
 

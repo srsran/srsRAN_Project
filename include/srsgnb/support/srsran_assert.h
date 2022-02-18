@@ -74,7 +74,7 @@
 #define srsran_expect(condition, fmt, ...)                                                                             \
   do {                                                                                                                 \
     if (srsran_unlikely(not(condition))) {                                                                             \
-      srslog::fetch_basic_logger("ALL").warning("%s:%d: " fmt, __FILE__, __LINE__, ##__VA_ARGS__);                     \
+      srslog::fetch_basic_logger("ALL").warning("{}:{}: " fmt, __FILE__, __LINE__, ##__VA_ARGS__);                     \
     }                                                                                                                  \
   } while (0)
 

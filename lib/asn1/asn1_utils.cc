@@ -21,13 +21,13 @@ namespace asn1 {
 void warn_assert(bool cond, const char* filename, int lineno)
 {
   if (cond) {
-    log_warning("Assertion in [%s][%d] failed.", filename, lineno);
+    log_warning("Assertion in [{}][{}] failed.", filename, lineno);
   }
 }
 
 void invalid_enum_number(int value, const char* name)
 {
-  log_error("The provided enum value=%d of type %s cannot be translated into a number", value, name);
+  log_error("The provided enum value={} of type {} cannot be translated into a number", value, name);
 }
 
 void assert_choice_type(uint32_t val, uint32_t choice_id)
@@ -45,13 +45,13 @@ void log_error_code(SRSASN_CODE code, const char* filename, int line)
 {
   switch (code) {
     case SRSASN_ERROR_ENCODE_FAIL:
-      log_error("[%s][%d] Encoding failure.", filename, line);
+      log_error("[{}][{}] Encoding failure.", filename, line);
       break;
     case SRSASN_ERROR_DECODE_FAIL:
-      log_error("[%s][%d] Decoding failure.", filename, line);
+      log_error("[{}][{}] Decoding failure.", filename, line);
       break;
     default:
-      log_warning("[%s][%d] SRSASN_CODE=%d not recognized.", filename, line, (int)code);
+      log_warning("[{}][{}] SRSASN_CODE={} not recognized.", filename, line, (int)code);
   }
 }
 
@@ -59,9 +59,9 @@ const char* convert_enum_idx(const char* array[], uint32_t nof_types, uint32_t e
 {
   if (enum_val >= nof_types) {
     if (enum_val == nof_types) {
-      log_error("The enum of type %s was not initialized.", enum_type);
+      log_error("The enum of type {} was not initialized.", enum_type);
     } else {
-      log_error("The enum value=%d of type %s is not valid.", enum_val, enum_type);
+      log_error("The enum value={} of type {} is not valid.", enum_val, enum_type);
     }
     return "";
   }
@@ -73,9 +73,9 @@ ItemType map_enum_number(ItemType* array, uint32_t nof_types, uint32_t enum_val,
 {
   if (enum_val >= nof_types) {
     if (enum_val == nof_types) {
-      log_error("The enum of type %s is not initialized.", enum_type);
+      log_error("The enum of type {} is not initialized.", enum_type);
     } else {
-      log_error("The enum value=%d of type %s cannot be converted to a number.", enum_val, enum_type);
+      log_error("The enum value={} of type {} cannot be converted to a number.", enum_val, enum_type);
     }
     return 0;
   }
@@ -170,7 +170,7 @@ template <typename T, typename Ptr>
 SRSASN_CODE unpack_bits(T& val, Ptr& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits)
 {
   if (n_bits > sizeof(T) * 8) {
-    log_error("This method only supports unpacking up to %d bits", (int)sizeof(T) * 8);
+    log_error("This method only supports unpacking up to {} bits", (int)sizeof(T) * 8);
     return SRSASN_ERROR_DECODE_FAIL;
   }
   val = 0;
@@ -388,7 +388,7 @@ SRSASN_CODE pack_enum(bit_ref& bref, uint32_t e, uint32_t nof_types, uint32_t no
 {
   if (e >= nof_types) {
     log_error(
-        "The provided enum is not within the range of possible values (%u>=%u)", (unsigned)e, (unsigned)nof_types);
+        "The provided enum is not within the range of possible values ({}>={})", (unsigned)e, (unsigned)nof_types);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   SRSASN_CODE ret;
@@ -423,7 +423,7 @@ ValOrError unpack_enum(uint32_t nof_types, uint32_t nof_exts, bool has_ext, cbit
     ret.code          = bref.unpack(ret.val, nof_bits);
   }
   if (ret.val >= nof_types) {
-    log_error("The provided enum is not within the range of possible values (%u>=%u)",
+    log_error("The provided enum is not within the range of possible values ({}>={})",
               (unsigned)ret.val,
               (unsigned)nof_types);
     ret.code = SRSASN_ERROR_DECODE_FAIL;
@@ -449,7 +449,7 @@ template <class IntType>
 SRSASN_CODE pack_constrained_whole_number(bit_ref& bref, IntType n, IntType lb, IntType ub, bool aligned)
 {
   if (ub < lb or n < lb or n > ub) {
-    log_error("The condition lb <= n <= ub (%ld <= %ld <= %ld) was not met", (long)lb, (long)n, (long)ub);
+    log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   uint64_t ra = (uint64_t)(ub - lb) + 1; // NOTE: Can overflow if IntType is kept
@@ -515,7 +515,7 @@ template <class IntType>
 SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType lb, IntType ub, bool aligned)
 {
   if (ub < lb) {
-    log_error("The condition lb <= ub (%ld <= %ld) was not met", (long)lb, (long)ub);
+    log_error("The condition lb <= ub ({} <= {}) was not met", (long)lb, (long)ub);
     return SRSASN_ERROR_DECODE_FAIL;
   }
   uint64_t ra = (uint64_t)(ub - lb) + 1; // NOTE: Can overflow if IntType is kept.
@@ -529,7 +529,7 @@ SRSASN_CODE unpack_constrained_whole_number(IntType& n, cbit_ref& bref, IntType 
     HANDLE_CODE(bref.unpack(n, n_bits));
     n += lb;
     if (n > ub) {
-      log_error("The condition lb <= n <= ub (%ld <= %ld <= %ld) was not met", (long)lb, (long)n, (long)ub);
+      log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
       return SRSASN_ERROR_DECODE_FAIL;
     }
   } else {
@@ -805,7 +805,7 @@ SRSASN_CODE pack_integer(bit_ref& bref, IntType n, IntType lb, IntType ub, bool 
   if (has_ext) {
     HANDLE_CODE(bref.pack(not within_bounds, 1));
   } else if (not within_bounds) {
-    log_error("The condition lb <= n <= ub (%ld <= %ld <= %ld) was not met", (long)lb, (long)n, (long)ub);
+    log_error("The condition lb <= n <= ub ({} <= {} <= {}) was not met", (long)lb, (long)n, (long)ub);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   bool lower_bounded = lb != std::numeric_limits<IntType>::min() or std::is_unsigned<IntType>::value;
@@ -953,7 +953,7 @@ template struct integer_packer<uint64_t>;
 uint64_t octstring_to_number(const uint8_t* ptr, uint32_t nbytes)
 {
   if (nbytes > 8) {
-    log_error("octstring of size=%d does not fit in an uint64_t", nbytes);
+    log_error("octstring of size={} does not fit in an uint64_t", nbytes);
     return 0;
   }
   uint64_t val = 0;
@@ -966,7 +966,7 @@ uint64_t octstring_to_number(const uint8_t* ptr, uint32_t nbytes)
 void number_to_octstring(uint8_t* ptr, uint64_t number, uint32_t nbytes)
 {
   if (nbytes > 8) {
-    log_error("octstring of size=%d does not fit in an uint64_t", nbytes);
+    log_error("octstring of size={} does not fit in an uint64_t", nbytes);
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
@@ -995,7 +995,7 @@ std::string octstring_to_string(const uint8_t* ptr, uint32_t N)
 void string_to_octstring(uint8_t* ptr, const std::string& str)
 {
   if (str.size() % 2 != 0) {
-    log_warning("The provided hex string size=%zd is not a multiple of 2.", str.size());
+    log_warning("The provided hex string size={} is not a multiple of 2.", str.size());
   }
   char cstr[] = "\0\0\0";
   for (uint32_t i = 0; i < str.size(); i += 2) {
@@ -1069,7 +1069,7 @@ SRSASN_CODE pack_length_prefix(bit_ref& bref,
   }
   bool within_bounds = len >= lb and len <= ub;
   if (not within_bounds and not has_ext) {
-    log_error("bitstring length=%d is not within bounds [%d, %d]", len, lb, ub);
+    log_error("bitstring length={} is not within bounds [{}, {}]", len, lb, ub);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
 
@@ -1100,7 +1100,7 @@ SRSASN_CODE pack_length_prefix(bit_ref& bref,
 SRSASN_CODE pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uint32_t lb, uint32_t ub, bool is_aligned)
 {
   if (nbits == 0) {
-    log_error("Invalid bitstring size=%d", nbits);
+    log_error("Invalid bitstring size={}", nbits);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   if (is_aligned and (lb != ub or ub > 16)) {
@@ -1186,7 +1186,7 @@ SRSASN_CODE unpack_bitfield(uint8_t* buf, cbit_ref& bref, uint32_t n, uint32_t l
 void from_number(uint8_t* ptr, uint64_t number, uint32_t nbits)
 {
   if (nbits > 64u) {
-    log_error("bitstring of size=%d does not fit in an uint64_t", nbits);
+    log_error("bitstring of size={} does not fit in an uint64_t", nbits);
     return;
   }
   uint32_t nof_bytes = ceil_frac(nbits, 8u);
@@ -1211,7 +1211,7 @@ std::string to_string(const uint8_t* ptr, uint32_t nbits)
 uint64_t to_number(const uint8_t* ptr, uint32_t nbits)
 {
   if (nbits > 64u) {
-    log_error("bitstring of size=%d does not fit in an uint64_t", nbits);
+    log_error("bitstring of size={} does not fit in an uint64_t", nbits);
     return 0;
   }
   uint64_t val       = 0;
@@ -1229,11 +1229,11 @@ uint64_t to_number(const uint8_t* ptr, uint32_t nbits)
 *********************/
 void log_invalid_access_choice_id(uint32_t val, uint32_t choice_id)
 {
-  log_error("The access choide id is invalid (%zd!=%zd)", (size_t)val, (size_t)choice_id);
+  log_error("The access choide id is invalid ({}!={})", (size_t)val, (size_t)choice_id);
 }
 void log_invalid_choice_id(uint32_t val, const char* choice_type)
 {
-  log_error("Invalid choice id=%zd for choice type %s", (size_t)val, choice_type);
+  log_error("Invalid choice id={} for choice type {}", (size_t)val, choice_type);
 }
 
 /*********************
@@ -1270,7 +1270,7 @@ pack(bit_ref& bref, const std::string& s, size_t lb, size_t ub, size_t alb, size
   if (not within_limits) {
     // TODO: print error
     // NOTE: This should be valid for exts
-    log_error("The PrintableString size=%zd is not within the limits [%zd, %zd]", s.size(), alb, aub);
+    log_error("The PrintableString size={} is not within the limits [{}, {}]", s.size(), alb, aub);
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   size_t b              = asn_string_utils::get_nof_bits_per_char(lb, ub, aligned);
@@ -1433,7 +1433,7 @@ varlength_field_pack_guard::~varlength_field_pack_guard()
   // check how many bytes were written in total
   uint32_t nof_bytes = bref_tracker->distance() / (uint32_t)8;
   if (nof_bytes > buffer_ptr->size()) {
-    log_error("The packed variable sized field is too long for the reserved buffer (%zd > %zd)",
+    log_error("The packed variable sized field is too long for the reserved buffer ({} > {})",
               (size_t)nof_bytes,
               buffer_ptr->size());
   }

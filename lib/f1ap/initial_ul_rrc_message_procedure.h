@@ -22,7 +22,7 @@ public:
 
     ue_index = ue_ctxt.gnb_du_f1ap_ue_id;
     srslog::fetch_basic_logger("F1AP").info(
-        "UL\t0x%x\tCCCH indication. Creating UE ID=%d", ccch_msg.crnti, ue_ctxt.gnb_du_f1ap_ue_id);
+        "UL\t{:#x}\tCCCH indication. Creating UE ID={}", ccch_msg.crnti, ue_ctxt.gnb_du_f1ap_ue_id);
 
     // 2. Initiate UE creation in DU manager
     du_ue_create_message msg{};
@@ -45,7 +45,7 @@ private:
   {
     // fill ASN.1 message
 
-    srslog::fetch_basic_logger("F1AP").info("UL\tUE ID=%d. Initial UL RRC message to CU", ue_index);
+    srslog::fetch_basic_logger("F1AP").info("UL\tUE ID={}. Initial UL RRC message to CU", ue_index);
 
     // send message via socket
     //    gateway.push_pdu(std::move(ccch_msg));
