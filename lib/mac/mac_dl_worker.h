@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_DL_WORKER_H
 
 #include "../ran/gnb_format.h"
-#include "mac_logical_channel.h"
+#include "mac_dl_mux.h"
 #include "sched.h"
 #include "srsgnb/mac/mac.h"
 
@@ -16,33 +16,31 @@ public:
 
   void add_ue(const mac_ue_create_request_message& request)
   {
-    // 1. Insert UE
+    // 1. Insert UE and DL bearers
+    mux.add_ue(request.ue_index, request.crnti, request.bearers);
     // TODO
 
-    // 2. Add UE DL Bearers
-    dl_entities.insert(request.ue_index, request.crnti);
-
-    // 3. Create UE in scheduler
+    // 2. Create UE in scheduler
     log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
     sched_obj.config_ue(request.crnti);
   }
 
-  void remove_ue(rnti_t rnti)
+  void remove_ue(du_ue_index_t ue_index)
   {
     // 1. Remove UE from scheduler
-    sched_obj.delete_ue_request(rnti);
+    sched_obj.delete_ue_request(mux.get_rnti(ue_index));
   }
 
-  void on_sched_ue_remove_complete(rnti_t rnti)
+  void on_sched_ue_remove_complete(du_ue_index_t ue_index)
   {
     // 2. Remove UE associated DL channels
-    dl_entities.erase(rnti);
+    mux.remove_ue(ue_index);
   }
 
 private:
   srslog::basic_logger& logger{srslog::fetch_basic_logger("MAC")};
 
-  mac_dl_dcch_manager dl_entities;
+  mac_dl_mux          mux;
   sched               sched_obj;
 };
 

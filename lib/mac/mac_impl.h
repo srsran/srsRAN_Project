@@ -3,7 +3,6 @@
 #define SRSGNB_MAC_IMPL_H
 
 #include "mac_ctxt.h"
-#include "mac_logical_channel.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"

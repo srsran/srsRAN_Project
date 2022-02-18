@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_UL_H
 
 #include "../ran/gnb_format.h"
-#include "demux.h"
+#include "mac_ul_demux.h"
 #include "srsgnb/mac/mac.h"
 
 namespace srsgnb {
@@ -24,7 +24,7 @@ public:
     }
 
     // 2. Add UE Bearers
-    if (not addmod_bearers(request.ue_index, request.ul_bearers)) {
+    if (not addmod_bearers(request.ue_index, request.bearers)) {
       log_proc_failure(
           logger, request.ue_index, request.crnti, "UE Create Request", "Failed to insert UL bearers in DEMUX");
       return false;

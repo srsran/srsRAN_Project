@@ -14,14 +14,14 @@ public:
 
     ctxt.cfg.dl_execs[req.cell_index]->execute([this]() {
       // 1. Remove UE from MAC DL worker
-      ctxt.dl_worker.remove_ue(req.crnti);
+      ctxt.dl_worker.remove_ue(req.ue_index);
     });
   }
 
   void sched_ue_delete_response()
   {
     // 2. Remove UE associated DL channels
-    ctxt.dl_worker.on_sched_ue_remove_complete(req.crnti);
+    ctxt.dl_worker.on_sched_ue_remove_complete(req.ue_index);
 
     ctxt.cfg.ul_exec.execute([this]() {
       // 3. Remove UE associated UL channels

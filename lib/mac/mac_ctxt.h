@@ -3,7 +3,6 @@
 #define SRSGNB_MAC_CTXT_H
 
 #include "mac_dl_worker.h"
-#include "mac_logical_channel.h"
 #include "mac_ul_worker.h"
 #include "sched.h"
 #include "srsgnb/adt/span.h"

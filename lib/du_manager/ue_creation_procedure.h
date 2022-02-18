@@ -48,7 +48,7 @@ public:
       logical_channel_addmod lc;
       lc.lcid      = 1;
       lc.ul_bearer = bearer.mac_ul_notifier.get();
-      mac_ue_create_msg.ul_bearers.push_back(lc);
+      mac_ue_create_msg.bearers.push_back(lc);
     }
     du_ctxt.mac->ue_create_request(mac_ue_create_msg);
   }

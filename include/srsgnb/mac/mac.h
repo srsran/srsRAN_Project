@@ -47,13 +47,14 @@ struct ul_ccch_indication_message {
 struct logical_channel_addmod {
   lcid_t               lcid;
   mac_ul_sdu_notifier* ul_bearer;
+  mac_dl_sdu_builder*  dl_bearer;
 };
 
 struct mac_ue_create_request_message {
   du_cell_index_t                     cell_index;
   du_ue_index_t                       ue_index;
   rnti_t                              crnti;
-  std::vector<logical_channel_addmod> ul_bearers;
+  std::vector<logical_channel_addmod> bearers;
 };
 
 struct mac_ue_create_request_response_message {

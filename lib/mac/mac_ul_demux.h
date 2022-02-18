@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DEMUX_H
-#define SRSGNB_DEMUX_H
+#ifndef SRSGNB_MAC_UL_DEMUX_H
+#define SRSGNB_MAC_UL_DEMUX_H
 
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/slot_array.h"
@@ -95,4 +95,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DEMUX_H
+#endif // SRSGNB_MAC_UL_DEMUX_H
