@@ -67,7 +67,7 @@ private:
   srslog::basic_logger& logger;
 
   std::unique_ptr<sched_cfg_notifier> sched_notifier;
-  sched                               sched_obj;
+  mac_dl_worker                       dl_worker;
   mac_ul_worker                       ul_worker;
   mac_context                         ctxt;
 

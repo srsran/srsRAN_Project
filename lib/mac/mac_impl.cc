@@ -87,9 +87,9 @@ mac_impl::mac_impl(mac_config_notifier& cfg_notifier_,
                    task_executor&       ctrl_exec_) :
   logger(srslog::fetch_basic_logger("MAC")),
   sched_notifier(std::make_unique<sched_response_adapter>(*this)),
-  sched_obj(*sched_notifier),
+  dl_worker(*sched_notifier),
   ul_worker(ul_ccch_notifier_),
-  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, sched_obj, ul_worker)
+  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, dl_worker, ul_worker)
 {}
 
 void mac_impl::push_ul_pdu(mac_rx_data_indication pdu)

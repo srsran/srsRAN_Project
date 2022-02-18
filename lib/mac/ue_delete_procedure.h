@@ -13,15 +13,15 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "UE Delete Request");
 
     ctxt.cfg.dl_execs[req.cell_index]->execute([this]() {
-      // 1. Remove sched UE
-      ctxt.sched_itf.delete_ue_request(req.crnti);
+      // 1. Remove UE from MAC DL worker
+      ctxt.dl_worker.remove_ue(req.crnti);
     });
   }
 
   void sched_ue_delete_response()
   {
     // 2. Remove UE associated DL channels
-    ctxt.dl_entities.erase(req.ue_index);
+    ctxt.dl_worker.on_sched_ue_remove_complete(req.crnti);
 
     ctxt.cfg.ul_exec.execute([this]() {
       // 3. Remove UE associated UL channels

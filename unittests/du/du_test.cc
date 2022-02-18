@@ -9,6 +9,7 @@ void test_du_ue_create()
 
   du_obj.start();
 
+  // Add UE
   mac_rx_data_indication rx_ind{0x4601, 0, 0, byte_buffer{}};
   du_obj.push_pusch(rx_ind);
 

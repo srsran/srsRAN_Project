@@ -29,14 +29,7 @@ public:
   void ue_ul_create_complete()
   {
     // 2. Dispatch UE DL channels and sched UE creation to DL executors
-    ctxt.cfg.dl_execs[req.cell_index]->execute([this]() {
-      // Create UE associated DL channels
-      ctxt.dl_entities.insert(req.ue_index, req.crnti);
-
-      // 3. Create UE in scheduler
-      log_proc_started(logger, req.ue_index, req.crnti, "Sched UE Config");
-      ctxt.sched_itf.config_ue(req.crnti);
-    });
+    ctxt.cfg.dl_execs[req.cell_index]->execute([this]() { ctxt.dl_worker.add_ue(req); });
   }
 
   void sched_ue_config_response()

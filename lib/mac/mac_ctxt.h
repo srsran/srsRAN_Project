@@ -2,6 +2,7 @@
 #ifndef SRSGNB_MAC_CTXT_H
 #define SRSGNB_MAC_CTXT_H
 
+#include "mac_dl_worker.h"
 #include "mac_logical_channel.h"
 #include "mac_ul_worker.h"
 #include "sched.h"
@@ -32,17 +33,16 @@ struct mac_common_config_t {
 
 struct mac_context {
   mac_common_config_t cfg;
-  mac_dl_dcch_manager dl_entities;
+  mac_dl_worker&      dl_worker;
   mac_ul_worker&      ul_worker;
-  sched_interface&    sched_itf;
 
   mac_context(mac_config_notifier& notifier,
               task_executor&       ul_exec_,
               span<task_executor*> dl_execs_,
               task_executor&       ctrl_exec_,
-              sched_interface&     sched_,
+              mac_dl_worker&       dl_worker_,
               mac_ul_worker&       ul_worker_) :
-    cfg(notifier, ul_exec_, dl_execs_, ctrl_exec_), ul_worker(ul_worker_), sched_itf(sched_)
+    cfg(notifier, ul_exec_, dl_execs_, ctrl_exec_), dl_worker(dl_worker_), ul_worker(ul_worker_)
   {}
 };
 

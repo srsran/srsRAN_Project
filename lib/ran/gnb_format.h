@@ -2,6 +2,7 @@
 #ifndef SRSGNB_GNB_FORMAT_H
 #define SRSGNB_GNB_FORMAT_H
 
+#include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/srslog.h"
 
