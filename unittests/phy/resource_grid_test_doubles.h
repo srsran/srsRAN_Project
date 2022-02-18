@@ -32,7 +32,7 @@ public:
     // consume buffer
     symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
   }
-  void put(unsigned int l, unsigned int k_init, span<const cf_t> symbols) override
+  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
     for (unsigned i = 0; i != symbols.size(); ++i) {
       put(l, k_init + i, symbols[i]);

@@ -10,7 +10,7 @@ using namespace srsgnb;
 
 static std::mt19937 rgen(0);
 
-void test_put_zero(unsigned nof_symbols, unsigned nof_subc)
+void test_all_zero(unsigned nof_symbols, unsigned nof_subc)
 {
   // Create grid
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
@@ -28,7 +28,7 @@ void test_put_zero(unsigned nof_symbols, unsigned nof_subc)
   }
 }
 
-void test_put_one(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
+void test_single(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
@@ -71,7 +71,7 @@ void test_put_one(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements
   }
 }
 
-void test_put_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
+void test_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
@@ -83,23 +83,32 @@ void test_put_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_element
 
   // Put elements in grid
   unsigned                  symbol_idx = symbol_dist(rgen);
-  srsvec::aligned_vec<cf_t> symbols(nof_elements);
+  srsvec::aligned_vec<cf_t> symbols_gold(nof_elements);
   srsvec::aligned_vec<bool> mask(nof_subc);
 
+  // Reset mask
   srsvec::zero(mask);
 
+  // Fill mask and generate symbols
   for (unsigned i = 0; i != nof_elements; ++i) {
+    unsigned subc = 0;
+
+    // Select a subcarrier that has not been set yet
+    do {
+      subc = subc_dist(rgen);
+    } while (mask[subc]);
+
     // Create random allocation
-    mask[subc_dist(rgen)] = true;
-    symbols[i]            = {value_dist(rgen), value_dist(rgen)};
+    mask[subc]      = true;
+    symbols_gold[i] = {value_dist(rgen), value_dist(rgen)};
   }
 
-  // Put element
-  span<const cf_t> symbol_buffer = symbols;
-  grid->put(symbol_idx, mask, symbol_buffer);
+  // Put elements
+  span<const cf_t> symbol_buffer_put = symbols_gold;
+  grid->put(symbol_idx, mask, symbol_buffer_put);
 
-  // Make sure all elements are mapped
-  assert(symbol_buffer.empty());
+  // Make sure all symbols are used
+  assert(symbol_buffer_put.empty());
 
   // Assert grid
   unsigned count = 0;
@@ -109,7 +118,7 @@ void test_put_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_element
       cf_t value = grid->get(symbol, subc);
 
       if (symbol == symbol_idx && mask[subc]) {
-        gold = symbols[count];
+        gold = symbols_gold[count];
         count++;
       }
 
@@ -117,16 +126,90 @@ void test_put_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_element
       assert(gold.imag() == value.imag());
     }
   }
+
+  // Get elements
+  srsvec::aligned_vec<cf_t> symbols(nof_elements);
+  span<cf_t>                symbol_buffer_get = symbols;
+  grid->get(symbol_idx, mask, symbol_buffer_get);
+
+  // Make sure all symbols are used
+  assert(symbol_buffer_get.empty());
+
+  // Assert symbols
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    cf_t gold  = symbols_gold[i];
+    cf_t value = symbols[i];
+
+    assert(gold.real() == value.real());
+    assert(gold.imag() == value.imag());
+  }
+}
+
+void test_consecutive(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
+{
+  // Create grid and zero
+  std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
+  grid->all_zero();
+
+  std::uniform_int_distribution<unsigned> symbol_dist(0, nof_symbols - 1);
+  std::uniform_int_distribution<unsigned> subc_dist(0, nof_subc - 1 - nof_elements);
+  std::uniform_real_distribution<float>   value_dist(-1.0, +1.0);
+
+  // Put elements in grid
+  unsigned                  symbol_idx = symbol_dist(rgen);
+  srsvec::aligned_vec<cf_t> symbols_gold(nof_elements);
+
+  // Select initial subcarrier
+  unsigned k_init = subc_dist(rgen);
+
+  // Create random data
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    symbols_gold[i] = {value_dist(rgen), value_dist(rgen)};
+  }
+
+  // Put element
+  grid->put(symbol_idx, k_init, symbols_gold);
+
+  // Assert grid
+  unsigned count = 0;
+  for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+    for (unsigned subc = 0; subc != nof_subc; ++subc) {
+      cf_t gold  = {0.0, 0.0};
+      cf_t value = grid->get(symbol, subc);
+
+      if (symbol == symbol_idx && (subc >= k_init && subc < k_init + nof_elements)) {
+        gold = symbols_gold[count];
+        count++;
+      }
+
+      assert(gold.real() == value.real());
+      assert(gold.imag() == value.imag());
+    }
+  }
+
+  // Get elements
+  srsvec::aligned_vec<cf_t> symbols(nof_elements);
+  grid->get(symbol_idx, k_init, symbols);
+
+  // Assert symbols
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    cf_t gold  = symbols_gold[i];
+    cf_t value = symbols[i];
+
+    assert(gold.real() == value.real());
+    assert(gold.imag() == value.imag());
+  }
 }
 
 int main()
 {
   for (unsigned nof_symbols : {14}) {
     for (unsigned nof_subc : {52 * 12, 270 * 12}) {
-      test_put_zero(nof_symbols, nof_subc);
+      test_all_zero(nof_symbols, nof_subc);
       for (unsigned nof_elements : {1, 2, 4, 8, 16}) {
-        test_put_one(nof_symbols, nof_subc, nof_elements);
-        test_put_mask(nof_symbols, nof_subc, nof_elements);
+        test_single(nof_symbols, nof_subc, nof_elements);
+        test_mask(nof_symbols, nof_subc, nof_elements);
+        test_consecutive(nof_symbols, nof_subc, nof_elements);
       }
     }
   }

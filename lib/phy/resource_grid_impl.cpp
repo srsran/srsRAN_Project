@@ -60,3 +60,31 @@ std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_symbols
 {
   return std::make_unique<resource_grid_impl>(nof_symbols, nof_subc);
 }
+
+void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer)
+{
+  assert(mask.size() <= nof_subc);
+
+  // Select destination symbol in buffer
+  span<cf_t> symb = buffer.subspan(l * nof_subc, nof_subc);
+
+  // Iterate mask
+  unsigned count = 0;
+  for (unsigned k = 0; k != mask.size(); ++k) {
+    if (mask[k]) {
+      symbol_buffer[count] = symb[k];
+      count++;
+    }
+  }
+
+  // Update symbol buffer
+  symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
+}
+
+void resource_grid_impl::get(unsigned l, unsigned k_init, span<cf_t> symbols)
+{
+  assert(k_init + symbols.size() < nof_subc);
+
+  // Copy
+  srsvec::copy(symbols, buffer.subspan(l * nof_subc + k_init, symbols.size()));
+}

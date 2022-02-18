@@ -15,15 +15,15 @@ private:
 
 public:
   resource_grid_impl(unsigned nof_symb, unsigned nof_subc);
-  void put(unsigned int l, unsigned int k, cf_t value) override;
-  void put(unsigned int l, span<const bool> mask, span<const cf_t>& symbol_buffer) override;
-  void put(unsigned int l, unsigned int k_init, span<const cf_t> symbols) override;
+  void put(unsigned l, unsigned k, cf_t value) override;
+  void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override;
+  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override;
 
-private:
+  cf_t get(unsigned l, unsigned k) const override;
+  void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override;
+  void get(unsigned l, unsigned k_init, span<cf_t> symbols) override;
+
   void all_zero() override;
-
-public:
-  cf_t get(unsigned int l, unsigned int k) const override;
 };
 
 } // namespace srsgnb

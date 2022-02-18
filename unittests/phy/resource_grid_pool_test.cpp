@@ -8,10 +8,10 @@ using namespace srsgnb;
 class resource_grid_dummy : public resource_grid
 {
 public:
-  void put(unsigned l, unsigned int k, cf_t value) override {}
-  void put(unsigned int l, span<const bool> mask, span<cf_t>& symbol_buffer) override {}
-  void put(unsigned int l, unsigned int k_init, span<const cf_t> symbols) override {}
-  cf_t get(unsigned l, unsigned int k) const override { return srsgnb::cf_t(); }
+  void put(unsigned l, unsigned k, cf_t value) override {}
+  void put(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override {}
+  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
+  cf_t get(unsigned l, unsigned k) const override { return srsgnb::cf_t(); }
 };
 
 void test(unsigned nof_slots, unsigned nof_sectors, unsigned nof_antennas)

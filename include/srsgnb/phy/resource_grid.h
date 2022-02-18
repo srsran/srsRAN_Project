@@ -49,6 +49,19 @@ public:
   /// \param [in] k is the subcarrier index in the symbol
   /// \return the resource element given by the symbol and subcarrier indexes
   virtual cf_t get(unsigned l, unsigned k) const = 0;
+
+  /// Get a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
+  /// which not.
+  /// \param [in] l is the symbol index
+  /// \param [in] mask provides the mask to be used
+  /// \param [in,out] symbol_buffer provides the symbol buffer
+  virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) = 0;
+
+  /// Get a consecutive number of resource elements for the symbol l starting at k_init
+  /// \param l is the symbol index
+  /// \param k_init is the initial subcarrier index
+  /// \param symbols provides the symbols to map in the resource grid
+  virtual void get(unsigned l, unsigned k_init, span<cf_t> symbols) = 0;
 };
 
 /// Describes a resource grid class with writer and reader interfaces
