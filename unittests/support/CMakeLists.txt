@@ -1,0 +1,3 @@
+
+add_executable(async_task_test async_task_test.cc)
+add_test(async_task_test async_task_test)
