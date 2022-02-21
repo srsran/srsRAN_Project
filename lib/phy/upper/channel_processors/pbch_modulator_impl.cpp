@@ -15,7 +15,7 @@
 
 using namespace srsgnb;
 
-void pbch_modulator_impl::scramble(span<const uint8_t>& b, std::array<uint8_t, M_bit>& b_hat, const args_t& args)
+void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const args_t& args)
 {
   // Initialise sequence
   scrambler->init(args.phys_cell_id);
@@ -27,12 +27,12 @@ void pbch_modulator_impl::scramble(span<const uint8_t>& b, std::array<uint8_t, M
   scrambler->apply_xor_bit(b, b_hat);
 }
 
-void pbch_modulator_impl::modulate(const std::array<uint8_t, M_bit>& b_hat, span<cf_t> d_pbch)
+void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)
 {
   modulator->modulate(b_hat, d_pbch, modulation_scheme::QPSK);
 }
 
-void pbch_modulator_impl::map(const std::array<cf_t, M_symb>& d_pbch, resource_grid_writer& grid, const args_t& args)
+void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const args_t& args)
 {
   unsigned count = 0;
   unsigned l0    = args.ssb_first_symbol;
