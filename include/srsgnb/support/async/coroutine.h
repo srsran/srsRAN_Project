@@ -3,7 +3,7 @@
 #define SRSGNB_COROUTINE_H
 
 #include "awaiter_memory_storage.h"
-#include "function_signature.h"
+#include "srsgnb/support/async/detail/function_signature.h"
 #include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
@@ -192,7 +192,7 @@ struct coro_handle<void> {
 
   bool operator==(const coro_handle<>& h) const { return frame_ptr == h.frame_ptr; }
 
-private:
+protected:
   detail::base_coro_frame<void>* frame_ptr = nullptr;
 };
 
@@ -336,6 +336,68 @@ auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
   auto* frame = new detail::coro_frame<FunT>(std::forward<Args>(args)...);
   return frame->promise().get_return_object();
 }
+
+/// Creates coroutine frame and launches task if eager
+template <typename FunT>
+auto launch_async_lambda(FunT&& f) -> typename detail::future_of<FunT>
+{
+  auto* frame = new detail::coro_frame<FunT>(std::forward<FunT>(f));
+  return frame->promise().get_return_object();
+}
+
+/// Helper to pass coroutine frame context to operator() of coroutines
+template <typename FutureType>
+using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
+
+/// Helper macro to set suspension point
+#define _CORO_MARK_SUSPENSION_POINT()                                                                                  \
+  coro_context__.state_index = __LINE__;                                                                               \
+  case __LINE__:
+
+/// Helper macro to set suspension point with awaitable
+#define _CORO_SUSPEND(awaitable_var)                                                                                   \
+  coro_context__.state_index = __LINE__;                                                                               \
+  if (not coro_context__.on_await_suspend(awaitable_var)) {                                                            \
+    return;                                                                                                            \
+  }                                                                                                                    \
+  case __LINE__:
+
+/// Helper macro to delete coroutine function body and suspend on final suspension point
+#define _CORO_STOP()                                                                                                   \
+  coro_context__.on_return();                                                                                          \
+  if (coro_context__.on_await_suspend(coro_context__.promise().final_suspend())) {                                     \
+    goto final_cleanup;                                                                                                \
+  }                                                                                                                    \
+  return
+
+#define CORO_AWAIT(awaitable_var)                                                                                      \
+  _CORO_SUSPEND(awaitable_var)                                                                                         \
+  coro_context__.template on_await_resume<decltype((awaitable_var))>()
+
+#define CORO_AWAIT_VALUE(result, awaitable_var)                                                                        \
+  _CORO_SUSPEND(awaitable_var)                                                                                         \
+  result = coro_context__.template on_await_resume<decltype((awaitable_var))>()
+
+#define CORO_BEGIN(x)                                                                                                  \
+  auto& coro_context__ = x;                                                                                            \
+  switch (coro_context__.state_index) {                                                                                \
+    default:                                                                                                           \
+      printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                           \
+      return;                                                                                                          \
+    case detail::tag_init:                                                                                             \
+      do {                                                                                                             \
+      } while (0)
+#define CORO_RETURN(...)                                                                                               \
+  CORO_EARLY_RETURN(__VA_ARGS__);                                                                                      \
+  }                                                                                                                    \
+  final_cleanup:                                                                                                       \
+  coro_context__.template on_await_resume<decltype(coro_context__.promise().final_suspend())>();                       \
+  coro_context__.state_index = detail::tag_destroyed;                                                                  \
+  coro_context__.destroy();                                                                                            \
+  return
+#define CORO_EARLY_RETURN(...)                                                                                         \
+  coro_context__.promise().return_value(__VA_ARGS__);                                                                  \
+  _CORO_STOP();
 
 } // namespace srsgnb
 

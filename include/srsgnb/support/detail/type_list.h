@@ -6,45 +6,46 @@
 
 namespace srsgnb {
 
+namespace detail {
+
+template <std::size_t I, std::size_t N, typename... Types>
+struct get_type_from_index_helper;
+
+template <std::size_t I, std::size_t N, typename T, typename... Types>
+struct get_type_from_index_helper<I, N, T, Types...> {
+  using type = typename get_type_from_index_helper<I + 1, N, Types...>::type;
+};
+
+template <std::size_t I, typename T, typename... Types>
+struct get_type_from_index_helper<I, I, T, Types...> {
+  using type = T;
+};
+
 /// List of types
 template <typename... Args>
 struct type_list {};
-
-/// Invalid index to type_list
-constexpr std::size_t invalid_type_index = -1;
 
 /// Metafunction to extract type from variadic template arguments based on provided Index
 template <std::size_t Index, class... Types>
 class get_type_from_index
 {
   static_assert(Index < sizeof...(Types), "index out of bounds");
-
-  template <std::size_t I, std::size_t N, class... Rest>
-  struct extract_impl;
-
-  template <std::size_t I, std::size_t N, class T, class... Rest>
-  struct extract_impl<I, N, T, Rest...> {
-    using type = typename extract_impl<I + 1, N, Rest...>::type;
-  };
-
-  template <std::size_t N, class T, class... Rest>
-  struct extract_impl<N, N, T, Rest...> {
-    using type = T;
-  };
-
 public:
-  using type = typename extract_impl<0, Index, Types...>::type;
+  using type = typename get_type_from_index_helper<0, Index, Types...>::type;
 };
 
 /// Specialization when argument is a type_list
 template <std::size_t Index, class... Types>
 class get_type_from_index<Index, type_list<Types...> >
 {
-  using type = get_type_from_index<Index, Types...>;
+public:
+  using type = typename get_type_from_index<Index, Types...>::type;
 };
 
-template<std::size_t Index, typename... Types>
+template <std::size_t Index, typename... Types>
 using get_type_from_index_t = typename get_type_from_index<Index, Types...>::type;
+
+} // namespace detail
 
 } // namespace srsgnb
 

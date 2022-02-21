@@ -16,31 +16,31 @@ struct function_signature;
 template <typename Ret, typename... Args>
 struct function_signature<Ret(Args...)> {
   using return_type = Ret;
-  using args        = type_list<Args...>;
+  using arg_types   = type_list<Args...>;
 };
 
 /// Specialization for mutable class methods
 template <typename Ret, typename Obj, typename... Args>
 struct function_signature<Ret (Obj::*)(Args...)> {
   using return_type = Ret;
-  using args        = type_list<Args...>;
+  using arg_types   = type_list<Args...>;
 };
 
 /// Specialization for const class methods
 template <typename Ret, typename Obj, typename... Args>
 struct function_signature<Ret (Obj::*)(Args...) const> {
   using return_type = Ret;
-  using args        = type_list<Args...>;
+  using arg_types   = type_list<Args...>;
 };
 
 template <typename Sig>
-using function_args_t = typename function_signature<Sig>::args;
+using function_args_t = typename function_signature<Sig>::arg_types;
 
 template <typename Sig>
 using function_return_t = typename function_signature<Sig>::return_type;
 
 template <typename T>
-auto callable_arguments() -> typename function_signature<decltype(&std::decay_t<T>::operator())>::type;
+auto callable_arguments() -> typename function_signature<decltype(&std::decay_t<T>::operator())>::arg_types;
 
 } // namespace detail
 

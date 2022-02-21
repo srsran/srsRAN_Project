@@ -2,6 +2,7 @@
 #ifndef SRSGNB_AWAITER_MEMORY_STORAGE_H
 #define SRSGNB_AWAITER_MEMORY_STORAGE_H
 
+#include "srsgnb/support/srsran_assert.h"
 #include <cstddef>
 #include <memory>
 #include <vector>
@@ -13,7 +14,7 @@ namespace detail {
 /// Memory chunk to store object. It uses small object optimization
 template <std::size_t SmallBufferSize, std::size_t SmallBufferAlignment = alignof(std::max_align_t)>
 struct small_memory_buffer_t {
-  ~small_memory_buffer_t() { assert(empty()); }
+  ~small_memory_buffer_t() { srsran_sanity_check(empty(), "Removing small memory buffer without deleting object"); }
 
   template <typename Object>
   Object* get()
@@ -25,7 +26,7 @@ struct small_memory_buffer_t {
   void emplace(Args&&... args)
   {
     static_assert(alignof(Object) <= SmallBufferAlignment, "Trying to store object with invalid alignment");
-    assert(empty());
+    srsran_sanity_check(empty(), "Overwrites are not supported");
     if (sizeof(Object) <= sizeof(inline_storage)) {
       mem_ptr = &inline_storage;
     } else {
