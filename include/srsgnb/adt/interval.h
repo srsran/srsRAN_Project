@@ -64,6 +64,8 @@ public:
   /// Move interval by an offset
   void displace_by(int offset)
   {
+    srsran_assert(std::is_signed<T>::value or static_cast<int64_t>(start_) > -offset,
+                  "Cannot have negative starting_points in case interval<T> underlying type is unsigned");
     start_ += offset;
     stop_ += offset;
   }

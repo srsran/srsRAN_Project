@@ -15,7 +15,7 @@
 using namespace srsgnb;
 
 /// TS 38.214, Table 6.1.2.2.1-1 - Nominal RBG size P
-uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2)
+uint32_t srsgnb::get_P(uint32_t bwp_nof_prb, bool config_1_or_2)
 {
   srsran_assert(bwp_nof_prb > 0 and bwp_nof_prb <= 275, "Invalid BWP size");
   if (bwp_nof_prb <= 36) {
@@ -31,7 +31,7 @@ uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2)
 }
 
 /// TS 38.214 - total number of RBGs for a uplink bandwidth part of size "bwp_nof_prb" PRBs
-uint32_t get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2)
+uint32_t srsgnb::get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2)
 {
   uint32_t P = get_P(bwp_nof_prb, config1_or_2);
   return ceil_div(bwp_nof_prb + (bwp_start % P), P);

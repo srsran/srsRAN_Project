@@ -1,4 +1,4 @@
 
-add_executable(sched_nr_prb_test sched_prb_test.cc)
-target_link_libraries(sched_nr_prb_test srsgnb_sched srslog)
-add_test(sched_nr_prb_test sched_nr_prb_test)
+add_executable(sched_prb_test sched_prb_test.cc)
+target_link_libraries(sched_prb_test srsgnb_sched srslog)
+add_test(sched_prb_test sched_prb_test)
