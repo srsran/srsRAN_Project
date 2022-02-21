@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_ASYNC_H
-#define SRSGNB_ASYNC_H
+#ifndef SRSGNB_COROUTINE_H
+#define SRSGNB_COROUTINE_H
 
 #include "awaiter_memory_storage.h"
 #include "function_signature.h"
@@ -339,4 +339,4 @@ auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASYNC_H
+#endif // SRSGNB_COROUTINE_H
