@@ -23,7 +23,7 @@ public:
   void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const override;
   void get(unsigned l, unsigned k_init, span<cf_t> symbols) const override;
 
-  void all_zero() override;
+  void set_all_zero() override;
 };
 
 } // namespace srsgnb

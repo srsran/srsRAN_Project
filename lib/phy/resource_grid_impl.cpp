@@ -49,7 +49,7 @@ void resource_grid_impl::put(unsigned l, unsigned k_init, span<const cf_t> symbo
   // Copy
   srsvec::copy(buffer.subspan(l * nof_subc + k_init, symbols.size()), symbols);
 }
-void resource_grid_impl::all_zero()
+void resource_grid_impl::set_all_zero()
 {
   srsvec::zero(buffer);
 }

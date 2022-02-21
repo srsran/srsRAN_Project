@@ -86,7 +86,7 @@ class resource_grid : public resource_grid_writer, public resource_grid_reader
 {
 public:
   /// Set all resource elements in the grid to zero
-  virtual void all_zero() = 0;
+  virtual void set_all_zero() = 0;
 };
 
 std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_symbols, unsigned nof_subc);

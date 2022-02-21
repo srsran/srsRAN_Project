@@ -16,7 +16,7 @@ void test_all_zero(unsigned nof_symbols, unsigned nof_subc)
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
 
   // Set all grid to zero
-  grid->all_zero();
+  grid->set_all_zero();
 
   // Verify all RE are zero
   for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
@@ -36,7 +36,7 @@ void test_coordinates(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elem
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
-  grid->all_zero();
+  grid->set_all_zero();
 
   // Random distributions
   std::uniform_int_distribution<uint8_t>  symbol_dist(0, nof_symbols - 1);
@@ -108,7 +108,7 @@ void test_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
-  grid->all_zero();
+  grid->set_all_zero();
 
   std::uniform_int_distribution<unsigned> symbol_dist(0, nof_symbols - 1);
   std::uniform_int_distribution<unsigned> subc_dist(0, nof_subc - 1);
@@ -186,7 +186,7 @@ void test_consecutive(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elem
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
-  grid->all_zero();
+  grid->set_all_zero();
 
   std::uniform_int_distribution<unsigned> symbol_dist(0, nof_symbols - 1);
   std::uniform_int_distribution<unsigned> subc_dist(0, nof_subc - 1 - nof_elements);
