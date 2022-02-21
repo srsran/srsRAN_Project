@@ -6,28 +6,44 @@
 #include "mac_ctxt.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
 
-class mac_ue_create_request_procedure
+class mac_ue_create_request_procedure final : public async_procedure<void>
 {
 public:
-  explicit mac_ue_create_request_procedure(mac_context& mac_ctxt, const mac_ue_create_request_message& req_) :
-    ctxt(mac_ctxt), req(req_), logger(ctxt.cfg.logger)
+  explicit mac_ue_create_request_procedure(mac_context&                         mac_ctxt,
+                                           manual_event_flag&                   ul_ue_create_ev_,
+                                           manual_event_flag&                   sched_ue_create_ev_,
+                                           const mac_ue_create_request_message& req_) :
+    ctxt(mac_ctxt),
+    req(req_),
+    logger(ctxt.cfg.logger),
+    ul_ue_create_ev(ul_ue_create_ev_),
+    sched_ue_create_ev(sched_ue_create_ev_)
+  {}
+
+  void start() override
   {
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
+
+    async_await(ul_ue_create_ev, &mac_ue_create_request_procedure::ue_ul_create_complete);
 
     // 1. Create UE associated UL channels
     ctxt.cfg.ul_exec.execute([this]() {
       ctxt.ul_worker.add_ue(req);
 
       // Return result back to CTRL execution context
-      ctxt.cfg.ctrl_exec.execute([this]() { ue_ul_create_complete(); });
+      ctxt.cfg.ctrl_exec.execute([this]() { ul_ue_create_ev.set(); });
     });
   }
 
+private:
   void ue_ul_create_complete()
   {
+    async_await(sched_ue_create_ev, &mac_ue_create_request_procedure::sched_ue_config_response);
+
     // 2. Dispatch UE DL channels and sched UE creation to DL executors
     ctxt.cfg.dl_execs[req.cell_index]->execute([this]() { ctxt.dl_worker.add_ue(req); });
   }
@@ -46,13 +62,16 @@ public:
       ctxt.cfg.cfg_notifier.on_ue_create_request_complete(resp);
 
       log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
+
+      async_return();
     });
   }
 
-private:
   mac_context&                  ctxt;
   mac_ue_create_request_message req;
   srslog::basic_logger&         logger;
+  manual_event_flag&            ul_ue_create_ev;
+  manual_event_flag&            sched_ue_create_ev;
 };
 
 } // namespace srsgnb

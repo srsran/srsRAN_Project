@@ -2,44 +2,18 @@
 #ifndef SRSGNB_MAC_IMPL_H
 #define SRSGNB_MAC_IMPL_H
 
+#include "mac_ctrl.h"
 #include "mac_ctxt.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
+#include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/task_executor.h"
 #include "ue_creation_procedure.h"
 #include "ue_delete_procedure.h"
 #include <mutex>
 
 namespace srsgnb {
-
-struct mac_ue {
-  du_cell_index_t pcell_idx;
-  du_ue_index_t   du_ue_index;
-  rnti_t          rnti;
-};
-
-/// Class to manage MAC UE control/metric context
-class mac_ue_map
-{
-public:
-  mac_ue_map();
-
-  bool insert(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index);
-  bool erase(du_ue_index_t ue_index);
-
-  mac_ue* find(du_ue_index_t ue_index);
-  mac_ue* find_by_rnti(rnti_t rnti);
-
-private:
-  struct element {
-    bool   present;
-    mac_ue ue;
-  };
-
-  std::array<element, MAX_NOF_UES>       ue_db;
-  std::array<du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index_map;
-};
 
 class mac_impl : public mac_interface
 {
@@ -70,8 +44,7 @@ private:
   mac_ul_worker                       ul_worker;
   mac_context                         ctxt;
 
-  std::unique_ptr<mac_ue_create_request_procedure> ue_create_proc;
-  std::unique_ptr<mac_ue_delete_procedure>         ue_delete_proc;
+  std::unique_ptr<mac_ue_delete_procedure> ue_delete_proc;
 
   mac_ue_map ue_db;
 

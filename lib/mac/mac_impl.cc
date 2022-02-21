@@ -4,69 +4,6 @@
 
 namespace srsgnb {
 
-mac_ue_map::mac_ue_map()
-{
-  std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), INVALID_RNTI);
-}
-
-mac_ue* mac_ue_map::find_by_rnti(rnti_t rnti)
-{
-  srsran_assert(rnti != INVALID_RNTI, "Invalid rnti=0x%x", rnti);
-  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti];
-  if (ue_index == MAX_NOF_UES) {
-    return nullptr;
-  }
-  return find(ue_index);
-}
-
-mac_ue* mac_ue_map::find(du_ue_index_t ue_index)
-{
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
-  element* e = &ue_db[ue_index];
-  return e->present ? &e->ue : nullptr;
-}
-
-bool mac_ue_map::insert(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
-{
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
-  if (rnti_to_ue_index_map[crnti] < MAX_NOF_UES) {
-    // rnti already exists
-    return false;
-  }
-
-  bool prev_val = std::exchange(ue_db[ue_index].present, true);
-  if (prev_val) {
-    // UE already existed with same ue_index
-    return false;
-  }
-
-  // Create UE object
-  ue_db[ue_index].ue.rnti        = crnti;
-  ue_db[ue_index].ue.du_ue_index = ue_index;
-  ue_db[ue_index].ue.pcell_idx   = cell_index;
-
-  rnti_to_ue_index_map[crnti] = ue_index;
-  return true;
-}
-
-bool mac_ue_map::erase(du_ue_index_t ue_index)
-{
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
-
-  bool prev_val = std::exchange(ue_db[ue_index].present, false);
-  if (not prev_val) {
-    // no UE existed with provided ue_index
-    return false;
-  }
-  srsran_sanity_check(ue_db[ue_index].ue.rnti != INVALID_RNTI, "ue_index=%d has invalid RNTI", ue_index);
-  rnti_to_ue_index_map[ue_db[ue_index].ue.rnti] = MAX_NOF_UES;
-  ue_db[ue_index].ue                            = {};
-
-  return true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 class sched_response_adapter final : public sched_cfg_notifier
 {
 public:
@@ -99,7 +36,18 @@ void mac_impl::push_ul_pdu(mac_rx_data_indication pdu)
 
 void mac_impl::ue_create_request(const mac_ue_create_request_message& cfg)
 {
-  ue_create_proc = std::make_unique<mac_ue_create_request_procedure>(ctxt, cfg);
+  ue_db.insert(cfg.ue_index, cfg.crnti, cfg.cell_index);
+  mac_ue_ctrl* u = ue_db.find(cfg.ue_index);
+  if (u == nullptr) {
+    mac_ue_create_request_response_message msg{};
+    msg.ue_index   = cfg.ue_index;
+    msg.cell_index = cfg.cell_index;
+    msg.result     = false;
+    ctxt.cfg.cfg_notifier.on_ue_create_request_complete(msg);
+    return;
+  }
+  u->ue_create_proc = launch_async<mac_ue_create_request_procedure>(
+      ctxt, u->ul_ue_create_response_ev, u->sched_ue_create_response_ev, cfg);
 }
 
 void mac_impl::ue_delete_request(const mac_ue_delete_request_message& cfg)
@@ -109,8 +57,12 @@ void mac_impl::ue_delete_request(const mac_ue_delete_request_message& cfg)
 
 void mac_impl::sched_ue_config_response(rnti_t rnti)
 {
-  // TODO: fetch UE based on RNTI
-  ue_create_proc->sched_ue_config_response();
+  mac_ue_ctrl* u = ue_db.find_by_rnti(rnti);
+  if (u == nullptr) {
+    logger.error("Could not find UE for which scheduler response was directed");
+    return;
+  }
+  u->sched_ue_create_response_ev.set();
 }
 
 void mac_impl::sched_ue_delete_response(rnti_t rnti)
@@ -127,7 +79,7 @@ void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
   }
 
   // for each cc, generate MAC DL SDUs
-  mac_ue* u = ue_db.find_by_rnti(0x4601);
+  mac_ue_ctrl* u = ue_db.find_by_rnti(0x4601);
   if (u != nullptr) {
     byte_buffer pdu;
 
