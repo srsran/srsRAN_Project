@@ -41,33 +41,39 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
   // Calculate DMRS index shift
   uint32_t v = args.phys_cell_id % 4;
 
+  // Create resource grid coordinates
+  std::array<resource_grid_coordinate, M_symb> coordinates;
+
   // Put sequence in symbol 1 (0, 1, ..., 239) not reserved for PBCH DM-RS
   for (uint32_t k = 0; k < SSB_BW_RE; ++k) {
     if (k % 4 != v) {
-      grid.put(l0 + 1, k0 + k, d_pbch[count++]);
+      coordinates[count++] = {l0 + 1, k0 + k};
     }
   }
 
   // Put sequence in symbol 2, lower section (0 + v , 4 + v , 8 + v ,..., 44 + v) not reserved for PBCH DM-RS
   for (uint32_t k = 0; k < 48; ++k) {
     if (k % 4 != v) {
-      grid.put(l0 + 2, k0 + k, d_pbch[count++]);
+      coordinates[count++] = {l0 + 2, k0 + k};
     }
   }
 
   // Put sequence in symbol 2, upper section (192 + v , 196 + v ,..., 236 + v) not reserved for PBCH DM-RS
   for (uint32_t k = 192; k < SSB_BW_RE; ++k) {
     if (k % 4 != v) {
-      grid.put(l0 + 2, k0 + k, d_pbch[count++]);
+      coordinates[count++] = {l0 + 2, k0 + k};
     }
   }
 
   // Put sequence in symbol 3 (0, 1, ..., 239) not reserved for PBCH DM-RS
   for (uint32_t k = 0; k < SSB_BW_RE; ++k) {
     if (k % 4 != v) {
-      grid.put(l0 + 3, k0 + k, d_pbch[count++]);
+      coordinates[count++] = {l0 + 3, k0 + k};
     }
   }
+
+  // Write data in grid
+  grid.put(coordinates, d_pbch);
 }
 
 void pbch_modulator_impl::put(span<const uint8_t> bits, resource_grid_writer& grid, const pbch_modulator::args_t& args)
