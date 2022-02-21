@@ -68,6 +68,7 @@
 // fprintf(fd, '} // srsgnb\n');
 // fprintf(fd, '\n');
 // fprintf(fd,'#endif // SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H_\n');
+// fclose(fd);
 //
 
 #include "../../resource_grid_test_doubles.h"

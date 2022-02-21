@@ -50,7 +50,7 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
   uint32_t r_idx = 0;
 
   // Put sequence in symbol 1 (0 + v , 4 + v , 8 + v ,..., 236 + v)
-  for (uint32_t k = v; k < 240; k += 4) {
+  for (uint32_t k = v; k < SSB_BW_RE; k += 4) {
     grid.put(l0 + 1, k0 + k, r[r_idx++]);
   }
 
@@ -60,12 +60,12 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
   }
 
   // Put sequence in symbol 2, upper section (192 + v , 196 + v ,..., 236 + v)
-  for (uint32_t k = 192 + v; k < 240; k += 4) {
+  for (uint32_t k = 192 + v; k < SSB_BW_RE; k += 4) {
     grid.put(l0 + 2, k0 + k, r[r_idx++]);
   }
 
   // Put sequence in symbol 3 (0 + v , 4 + v , 8 + v ,..., 236 + v)
-  for (uint32_t k = v; k < 240; k += 4) {
+  for (uint32_t k = v; k < SSB_BW_RE; k += 4) {
     grid.put(l0 + 3, k0 + k, r[r_idx++]);
   }
 }

@@ -19,7 +19,7 @@ static std::mt19937 rgen(0);
 
 using namespace srsgnb;
 
-static const float assert_max_err = 1e-6;
+static constexpr float assert_max_err = 1e-6;
 
 static void modulate_generic(const span<uint8_t>& bits, span<cf_t> symbols, modulation_scheme scheme)
 {

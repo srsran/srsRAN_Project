@@ -12,18 +12,23 @@ class pbch_modulator
 {
 public:
   /// Defines the number of bits to modulate
-  static const unsigned M_bit = 864;
+  static constexpr unsigned M_bit = 864;
 
   /// Defines the number of symbols after modulation
-  static const unsigned M_symb = M_bit / 2;
+  static constexpr unsigned M_symb = M_bit / 2;
 
   /// Describes the PBCH modulator arguments
   struct args_t {
-    unsigned phys_cell_id;         /// Physical cell identifier
-    unsigned ssb_idx;              /// SS/PBCH block index
-    unsigned ssb_first_subcarrier; /// First subcarrier in the resource grid
-    unsigned ssb_first_symbol;     /// First symbol in slot resource grid
-    float    amplitude;            /// PSS linear signal amplitude
+    /// Physical cell identifier
+    unsigned phys_cell_id;
+    /// SS/PBCH block index
+    unsigned ssb_idx;
+    /// First subcarrier in the resource grid
+    unsigned ssb_first_subcarrier;
+    /// First symbol in slot resource grid
+    unsigned ssb_first_symbol;
+    /// PSS linear signal amplitude
+    float amplitude;
   };
 
   /// Default destructor
@@ -31,8 +36,8 @@ public:
 
   /// Modulates a PBCH message according to TS 38.211 section 7.3.3 Physical broadcast channel
   ///
-  /// @param[in] bits Input bits of M_bit size
-  /// @param[out] grid is the destination resource grid
+  /// \param[in] bits Input bits of M_bit size
+  /// \param[out] grid is the destination resource grid
   virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const args_t& args) = 0;
 };
 

@@ -15,7 +15,7 @@
 
 using namespace srsgnb;
 
-static const float assert_max_error = 1e-6;
+static constexpr float assert_max_error = 1e-6;
 
 int main()
 {

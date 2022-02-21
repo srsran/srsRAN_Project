@@ -25,24 +25,24 @@ private:
   std::unique_ptr<pseudo_random_generator> scrambler;
 
   /// Implements TS 38.211 section 7.3.3.1 Scrambling
-  /// \param b [in] Inputs bits to scramble
-  /// \param b_hat [out] Output bits after scrambling
-  /// \param args [in] PBCH modulator arguments
+  /// \param [in] b Inputs bits to scramble
+  /// \param [out] b_hat Output bits after scrambling
+  /// \param [in] args PBCH modulator arguments
   void scramble(span<const uint8_t>& b, std::array<uint8_t, M_bit>& b_hat, const args_t& args);
 
   /// Implements TS 38.211 section 7.3.3.2 Modulation
-  /// \param b_hat [in] Inputs bits to scramble
-  /// \param d_pbch [out] Output symbols
+  /// \param [in] b_hat Inputs bits to scramble
+  /// \param [out] d_pbch Output symbols
   void modulate(const std::array<uint8_t, M_bit>& b_hat, span<cf_t> d_pbch);
 
   /// Implements TS 38.211 section 7.3.3.3 Mapping to physical resources
-  /// \param d_pbch [in] provides the symbols to map
-  /// \param grid [in, out] is the destination resource grid
-  /// \param args [in] PBCH modulator arguments
+  /// \param [in] d_pbch provides the symbols to map
+  /// \param [in, out] grid is the destination resource grid
+  /// \param [in] args PBCH modulator arguments
   void map(const std::array<cf_t, M_symb>& d_pbch, resource_grid_writer& grid, const args_t& args);
 
 public:
-  explicit pbch_modulator_impl();
+  explicit pbch_modulator_impl() : modulator(create_modulation_mapper()), scrambler(create_pseudo_random()) {}
 
   ~pbch_modulator_impl() = default;
 
