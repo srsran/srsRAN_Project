@@ -20,54 +20,87 @@ void test_all_zero(unsigned nof_symbols, unsigned nof_subc)
 
   // Verify all RE are zero
   for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+    // Get resource grid data for the given symbol
+    std::vector<cf_t> rg_data(nof_subc);
+    grid->get(symbol, 0, rg_data);
+
     for (unsigned subc = 0; subc != nof_subc; ++subc) {
-      cf_t re = grid->get(symbol, subc);
+      cf_t re = rg_data[subc];
       assert(iszero(re.real()));
       assert(iszero(re.imag()));
     }
   }
 }
 
-void test_single(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
+void test_coordinates(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
 {
   // Create grid and zero
   std::unique_ptr<resource_grid> grid = create_resource_grid(nof_symbols, nof_subc);
   grid->all_zero();
 
-  std::map<std::pair<unsigned, unsigned>, cf_t> data;
-
-  std::uniform_int_distribution<unsigned> symbol_dist(0, nof_symbols - 1);
-  std::uniform_int_distribution<unsigned> subc_dist(0, nof_subc - 1);
+  // Random distributions
+  std::uniform_int_distribution<uint8_t>  symbol_dist(0, nof_symbols - 1);
+  std::uniform_int_distribution<uint16_t> subc_dist(0, nof_subc - 1);
   std::uniform_real_distribution<float>   value_dist(-1.0, +1.0);
 
-  // Put elements in grid
+  std::vector<resource_grid_coordinate> coordinates(nof_elements);
+  std::vector<cf_t>                     symbols_gold(nof_elements);
+
+  // Generate random elements
   for (unsigned i = 0; i != nof_elements; ++i) {
-    // Create random allocation and value
-    unsigned symbol = symbol_dist(rgen);
-    unsigned subc   = subc_dist(rgen);
-    cf_t     value  = {value_dist(rgen), value_dist(rgen)};
+    // Generate coordinate, making sure there are no double entries
+    bool doubled = false;
+    do {
+      coordinates[i] = {symbol_dist(rgen), subc_dist(rgen)};
 
-    // Insert in map
-    data.insert({{symbol, subc}, value});
+      // Check if the coordinate exists
+      for (unsigned j = 0; j != i && !doubled; ++j) {
+        doubled = (coordinates[i] == coordinates[j]);
+      }
+    } while (doubled);
 
-    // Put element
-    grid->put(symbol, subc, value);
+    // Create random value
+    symbols_gold[i] = {value_dist(rgen), value_dist(rgen)};
   }
+
+  // Put elements in resource grid
+  grid->put(coordinates, symbols_gold);
 
   // Assert grid
   for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+    // Get resource grid data for the given symbol
+    std::vector<cf_t> rg_data(nof_subc);
+    grid->get(symbol, 0, rg_data);
+
     for (unsigned subc = 0; subc != nof_subc; ++subc) {
       cf_t gold  = {0.0, 0.0};
-      cf_t value = grid->get(symbol, subc);
+      cf_t value = rg_data[subc];
 
-      std::pair<unsigned, unsigned> key = {symbol, subc};
-      if (data.count(key)) {
-        gold = data.at(key);
+      // Try to find the RE in coordinates
+      resource_grid_coordinate coordinate = {symbol, subc};
+      for (unsigned i = 0; i != nof_elements; ++i) {
+        if (coordinates[i] == coordinate) {
+          gold = symbols_gold[i];
+          break;
+        }
       }
 
       assert(gold.real() == value.real());
       assert(gold.imag() == value.imag());
     }
+  }
+
+  // Get elements from grid
+  std::vector<cf_t> symbols(nof_elements);
+  grid->get(coordinates, symbols);
+
+  // Assert symbols
+  for (unsigned i = 0; i != nof_elements; ++i) {
+    cf_t gold  = symbols_gold[i];
+    cf_t value = symbols[i];
+
+    assert(gold.real() == value.real());
+    assert(gold.imag() == value.imag());
   }
 }
 
@@ -113,9 +146,13 @@ void test_mask(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elements)
   // Assert grid
   unsigned count = 0;
   for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+    // Get resource grid data for the given symbol
+    std::vector<cf_t> rg_data(nof_subc);
+    grid->get(symbol, 0, rg_data);
+
     for (unsigned subc = 0; subc != nof_subc; ++subc) {
       cf_t gold  = {0.0, 0.0};
-      cf_t value = grid->get(symbol, subc);
+      cf_t value = rg_data[subc];
 
       if (symbol == symbol_idx && mask[subc]) {
         gold = symbols_gold[count];
@@ -173,9 +210,13 @@ void test_consecutive(unsigned nof_symbols, unsigned nof_subc, unsigned nof_elem
   // Assert grid
   unsigned count = 0;
   for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
+    // Get resource grid data for the given symbol
+    std::vector<cf_t> rg_data(nof_subc);
+    grid->get(symbol, 0, rg_data);
+
     for (unsigned subc = 0; subc != nof_subc; ++subc) {
       cf_t gold  = {0.0, 0.0};
-      cf_t value = grid->get(symbol, subc);
+      cf_t value = rg_data[subc];
 
       if (symbol == symbol_idx && (subc >= k_init && subc < k_init + nof_elements)) {
         gold = symbols_gold[count];
@@ -207,7 +248,7 @@ int main()
     for (unsigned nof_subc : {52 * 12, 270 * 12}) {
       test_all_zero(nof_symbols, nof_subc);
       for (unsigned nof_elements : {1, 2, 4, 8, 16}) {
-        test_single(nof_symbols, nof_subc, nof_elements);
+        test_coordinates(nof_symbols, nof_subc, nof_elements);
         test_mask(nof_symbols, nof_subc, nof_elements);
         test_consecutive(nof_symbols, nof_subc, nof_elements);
       }

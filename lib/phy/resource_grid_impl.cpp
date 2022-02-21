@@ -11,18 +11,16 @@ resource_grid_impl::resource_grid_impl(unsigned nof_symb_, unsigned nof_subc_) :
   // Do nothing
 }
 
-void resource_grid_impl::put(unsigned l, unsigned k, cf_t value)
+void resource_grid_impl::put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
 {
-  assert(l < nof_symb);
-  assert(k < nof_subc);
-  buffer[l * nof_subc + k] = value;
-}
+  assert(coordinates.size() == symbols.size());
 
-cf_t resource_grid_impl::get(unsigned l, unsigned k) const
-{
-  assert(l < nof_symb);
-  assert(k < nof_subc);
-  return buffer[l * nof_subc + k];
+  unsigned count = 0;
+  for (const resource_grid_coordinate& coordinate : coordinates) {
+    assert(coordinate.symbol < nof_symb);
+    assert(coordinate.subcarrier < nof_subc);
+    buffer[coordinate.symbol * nof_subc + coordinate.subcarrier] = symbols[count++];
+  }
 }
 
 void resource_grid_impl::put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer)
@@ -56,12 +54,19 @@ void resource_grid_impl::all_zero()
   srsvec::zero(buffer);
 }
 
-std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_symbols, unsigned nof_subc)
+void resource_grid_impl::get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const
 {
-  return std::make_unique<resource_grid_impl>(nof_symbols, nof_subc);
+  assert(coordinates.size() == symbols.size());
+
+  cf_t* symbol_ptr = symbols.begin();
+  for (const resource_grid_coordinate& coordinate : coordinates) {
+    assert(coordinate.symbol < nof_symb);
+    assert(coordinate.subcarrier < nof_subc);
+    *(symbol_ptr++) = buffer[coordinate.symbol * nof_subc + coordinate.subcarrier];
+  }
 }
 
-void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer)
+void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const
 {
   assert(mask.size() <= nof_subc);
 
@@ -81,10 +86,15 @@ void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symb
   symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
 }
 
-void resource_grid_impl::get(unsigned l, unsigned k_init, span<cf_t> symbols)
+void resource_grid_impl::get(unsigned l, unsigned k_init, span<cf_t> symbols) const
 {
-  assert(k_init + symbols.size() < nof_subc);
+  assert(k_init + symbols.size() <= nof_subc);
 
   // Copy
   srsvec::copy(symbols, buffer.subspan(l * nof_subc + k_init, symbols.size()));
+}
+
+std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_symbols, unsigned nof_subc)
+{
+  return std::make_unique<resource_grid_impl>(nof_symbols, nof_subc);
 }

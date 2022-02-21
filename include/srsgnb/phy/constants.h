@@ -3,7 +3,10 @@
 
 namespace srsgnb {
 
-/// Defines the number of Resource Elements per Resource Block
+/// Defines the maximum number of Resource Blocks (RB) that a resource grid can carry
+static constexpr unsigned MAX_RB = 275;
+
+/// Defines the number of Resource Elements (RE) per Resource Block (RB) in frequency domain
 static constexpr unsigned NRE = 12;
 
 /// Defines the SSB bandwidth in Resource Blocks (RBs)
@@ -11,6 +14,7 @@ static constexpr unsigned SSB_BW_RB = 20;
 
 /// Defines the SSB bandwidth in Resource Elements
 static constexpr unsigned SSB_BW_RE = NRE * SSB_BW_RB;
+
 
 namespace phys_cell_id {
 /**

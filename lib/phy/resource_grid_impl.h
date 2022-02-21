@@ -15,13 +15,13 @@ private:
 
 public:
   resource_grid_impl(unsigned nof_symb, unsigned nof_subc);
-  void put(unsigned l, unsigned k, cf_t value) override;
+  void put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override;
   void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override;
   void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override;
 
-  cf_t get(unsigned l, unsigned k) const override;
-  void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override;
-  void get(unsigned l, unsigned k_init, span<cf_t> symbols) override;
+  void get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const override;
+  void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const override;
+  void get(unsigned l, unsigned k_init, span<cf_t> symbols) const override;
 
   void all_zero() override;
 };

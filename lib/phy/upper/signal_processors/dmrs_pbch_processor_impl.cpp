@@ -40,34 +40,40 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
                                                resource_grid_writer&           grid,
                                                const args_t&                   args) const
 {
-  unsigned l0 = args.ssb_first_symbol;
-  unsigned k0 = args.ssb_first_subcarrier;
-
   // Calculate index shift
   uint32_t v = args.phys_cell_id % 4;
 
   // r sequence read index
   uint32_t r_idx = 0;
 
+  // Create resource grid coordinates
+  std::array<resource_grid_coordinate, NOF_RE> coordinates;
+
+  const uint8_t  l0 = args.ssb_first_symbol;
+  const uint16_t k0 = args.ssb_first_subcarrier;
+
   // Put sequence in symbol 1 (0 + v , 4 + v , 8 + v ,..., 236 + v)
-  for (uint32_t k = v; k < SSB_BW_RE; k += 4) {
-    grid.put(l0 + 1, k0 + k, r[r_idx++]);
+  for (uint16_t k = v; k < SSB_BW_RE; k += 4) {
+    coordinates[r_idx++] = resource_grid_coordinate(l0 + 1, k0 + k);
   }
 
   // Put sequence in symbol 2, lower section (0 + v , 4 + v , 8 + v ,..., 44 + v)
-  for (uint32_t k = v; k < 48; k += 4) {
-    grid.put(l0 + 2, k0 + k, r[r_idx++]);
+  for (uint16_t k = v; k < 48; k += 4) {
+    coordinates[r_idx++] = resource_grid_coordinate(l0 + 2, k0 + k);
   }
 
-  // Put sequence in symbol 2, upper section (192 + v , 196 + v ,..., 236 + v)
+  // Put sequence in symbol 2, upper section
   for (uint32_t k = 192 + v; k < SSB_BW_RE; k += 4) {
-    grid.put(l0 + 2, k0 + k, r[r_idx++]);
+    coordinates[r_idx++] = resource_grid_coordinate(l0 + 2, k0 + k);
   }
 
-  // Put sequence in symbol 3 (0 + v , 4 + v , 8 + v ,..., 236 + v)
+  // Put sequence in symbol 3
   for (uint32_t k = v; k < SSB_BW_RE; k += 4) {
-    grid.put(l0 + 3, k0 + k, r[r_idx++]);
+    coordinates[r_idx++] = resource_grid_coordinate(l0 + 3, k0 + k);
   }
+
+  // Put data in grid using the generated coordinates
+  grid.put(coordinates, r);
 }
 
 void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const args_t& args)

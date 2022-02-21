@@ -3,12 +3,31 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/constants.h"
 #include <memory>
 
 namespace srsgnb {
 
 /// According to TS 38.211: There is one resource grid for a given antenna port, subcarrier spacing configuration, and
 /// transmission direction (downlink or uplink).
+
+struct resource_grid_coordinate {
+  uint8_t  symbol     = 0;
+  uint16_t subcarrier = 0;
+
+  resource_grid_coordinate() = default;
+
+  resource_grid_coordinate(unsigned symbol_, unsigned subcarrier_)
+  {
+    symbol     = static_cast<uint8_t>(symbol_);
+    subcarrier = static_cast<uint16_t>(subcarrier_);
+  }
+
+  bool operator==(const resource_grid_coordinate& other) const
+  {
+    return (other.symbol == symbol) && (subcarrier == other.subcarrier);
+  }
+};
 
 /// Describer a resource grid writer interface
 class resource_grid_writer
@@ -17,11 +36,10 @@ public:
   /// Default destructor
   virtual ~resource_grid_writer() = default;
 
-  /// Put a resource element in the grid
-  /// \param [in] l is the symbol in the slot
-  /// \param [in] k is the subcarrier index in the symbol
-  /// \param [in] value is the resource element to write in the symbol l and subcarrier k
-  virtual void put(unsigned l, unsigned k, cf_t value) = 0;
+  /// Put a number of elements in the grid according to a list of coordinates
+  /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
+  /// \param [in] symbols provides the list with the symbols to map to the coordinates
+  virtual void put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) = 0;
 
   /// Put a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
   /// which not.
@@ -44,24 +62,23 @@ public:
   /// Default destructor
   virtual ~resource_grid_reader() = default;
 
-  /// Get a resource element from the resource grid
-  /// \param [in] l is the symbol in the slot
-  /// \param [in] k is the subcarrier index in the symbol
-  /// \return the resource element given by the symbol and subcarrier indexes
-  virtual cf_t get(unsigned l, unsigned k) const = 0;
+  /// Get a number of elements in the grid according to a list of coordinates
+  /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
+  /// \param [out] symbols provides the list with the symbols to map to the coordinates
+  virtual void get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const = 0;
 
   /// Get a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
   /// which not.
   /// \param [in] l is the symbol index
   /// \param [in] mask provides the mask to be used
   /// \param [in,out] symbol_buffer provides the symbol buffer
-  virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) = 0;
+  virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const = 0;
 
   /// Get a consecutive number of resource elements for the symbol l starting at k_init
   /// \param l is the symbol index
   /// \param k_init is the initial subcarrier index
   /// \param symbols provides the symbols to map in the resource grid
-  virtual void get(unsigned l, unsigned k_init, span<cf_t> symbols) = 0;
+  virtual void get(unsigned l, unsigned k_init, span<cf_t> symbols) const = 0;
 };
 
 /// Describes a resource grid class with writer and reader interfaces

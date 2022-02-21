@@ -65,14 +65,14 @@ sss_processor_impl::pregen_d1_s::pregen_d1_s()
 const sss_processor_impl::pregen_d0_s sss_processor_impl::d0 = sss_processor_impl::pregen_d0_s();
 const sss_processor_impl::pregen_d1_s sss_processor_impl::d1 = sss_processor_impl::pregen_d1_s();
 
-void srsgnb::sss_processor_impl::generation(std::array<float, SEQUENCE_LEN>& sequence, const args_t& args) const
+void srsgnb::sss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const args_t& args) const
 {
   // Calculate generation parameters
   unsigned m0 = 15 * (phys_cell_id::NID_1(args.phys_cell_id) / 112) + 5 * phys_cell_id::NID_2(args.phys_cell_id);
   unsigned m1 = phys_cell_id::NID_1(args.phys_cell_id) % 112;
 
   // Convert sequence to span
-  span<float> seq_span = {sequence};
+  span<cf_t> seq_span = {sequence};
 
   // Apply d0 sequence with scaling
   srsvec::sc_prod({d0.begin() + m0, d0.size() - m0}, args.amplitude, seq_span.first(SEQUENCE_LEN - m0));
@@ -83,25 +83,22 @@ void srsgnb::sss_processor_impl::generation(std::array<float, SEQUENCE_LEN>& seq
   srsvec::prod({d1.begin(), m1}, seq_span.last(m1), seq_span.last(m1));
 }
 
-void srsgnb::sss_processor_impl::mapping(const std::array<float, SEQUENCE_LEN>& sequence,
-                                         resource_grid_writer&                  grid,
-                                         const args_t&                          args) const
+void srsgnb::sss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
+                                         resource_grid_writer&                 grid,
+                                         const args_t&                         args) const
 {
   // Calculate symbol and first subcarrier for SSS
   unsigned l = args.ssb_first_symbol + SSB_L;
   unsigned k = args.ssb_first_subcarrier + SSB_K_BEGIN;
 
   // Write in grid
-  for (unsigned i = 0; i != SEQUENCE_LEN; ++i) {
-    grid.put(l, k, sequence[i]);
-    ++k;
-  }
+  grid.put(l, k, sequence);
 }
 
 void srsgnb::sss_processor_impl::map(resource_grid_writer& grid, const args_t& args)
 {
   // Generate sequence
-  std::array<float, SEQUENCE_LEN> sequence;
+  std::array<cf_t, SEQUENCE_LEN> sequence;
   generation(sequence, args);
 
   // Mapping to physical resources

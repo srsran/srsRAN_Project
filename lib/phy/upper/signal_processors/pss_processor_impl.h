@@ -27,7 +27,7 @@ private:
 
   static inline unsigned M(unsigned N_id_2) { return ((43U * (N_id_2)) % SEQUENCE_LEN); }
 
-  struct pregen_signal_s : public std::array<float, SEQUENCE_LEN> {
+  struct pregen_signal_s : public std::array<cf_t, SEQUENCE_LEN> {
     pregen_signal_s();
   };
 
@@ -36,12 +36,12 @@ private:
   /**
    * @bried Implements TS 38.211 section 7.4.2.2.1 Sequence generation
    */
-  void generation(std::array<float, SEQUENCE_LEN>& sequence, const args_t& args) const;
+  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const args_t& args) const;
 
   /**
    * @bried Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
    */
-  void mapping(const std::array<float, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const args_t& args) const;
+  void mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const args_t& args) const;
 
 public:
   ~pss_processor_impl() override = default;

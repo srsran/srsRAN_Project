@@ -25,11 +25,11 @@ private:
   static const unsigned SSB_L        = 2;   ///< Symbol index in the SSB where the SSS is mapped
   static const unsigned SEQUENCE_LEN = 127; ///< SSS Sequence length in the SSB
 
-  struct pregen_d0_s : public std::array<float, SEQUENCE_LEN> {
+  struct pregen_d0_s : public std::array<cf_t, SEQUENCE_LEN> {
     pregen_d0_s();
   };
 
-  struct pregen_d1_s : public std::array<float, SEQUENCE_LEN> {
+  struct pregen_d1_s : public std::array<cf_t, SEQUENCE_LEN> {
     pregen_d1_s();
   };
 
@@ -39,12 +39,12 @@ private:
   /**
    * @bried Implements TS 38.211 section 7.4.2.2.1 Sequence generation
    */
-  void generation(std::array<float, SEQUENCE_LEN>& sequence, const args_t& args) const;
+  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const args_t& args) const;
 
   /**
    * @bried Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
    */
-  void mapping(const std::array<float, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const args_t& args) const;
+  void mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const args_t& args) const;
 
 public:
   ~sss_processor_impl() override = default;
