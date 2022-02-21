@@ -25,6 +25,7 @@ void resource_grid_impl::put(span<const resource_grid_coordinate> coordinates, s
 
 void resource_grid_impl::put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer)
 {
+  assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
 
   // Select destination symbol in buffer
@@ -44,6 +45,7 @@ void resource_grid_impl::put(unsigned l, span<const bool> mask, span<const cf_t>
 }
 void resource_grid_impl::put(unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
+  assert(l < nof_symb);
   assert(k_init + symbols.size() < nof_subc);
 
   // Copy
@@ -68,6 +70,7 @@ void resource_grid_impl::get(span<const resource_grid_coordinate> coordinates, s
 
 void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const
 {
+  assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
 
   // Select destination symbol in buffer
@@ -88,6 +91,7 @@ void resource_grid_impl::get(unsigned l, span<const bool> mask, span<cf_t>& symb
 
 void resource_grid_impl::get(unsigned l, unsigned k_init, span<cf_t> symbols) const
 {
+  assert(l < nof_symb);
   assert(k_init + symbols.size() <= nof_subc);
 
   // Copy

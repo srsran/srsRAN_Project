@@ -39,6 +39,7 @@ public:
   /// Put a number of elements in the grid according to a list of coordinates
   /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
   /// \param [in] symbols provides the list with the symbols to map to the coordinates
+  /// \note the number of elements in coordinates and symbols shall be the same
   virtual void put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) = 0;
 
   /// Put a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
@@ -46,12 +47,16 @@ public:
   /// \param [in] l is the symbol index
   /// \param [in] mask provides the mask to be used
   /// \param [in,out] symbol_buffer provides the symbol buffer
+  /// \note The number of elements of mask shall be equal or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of symbol shall be equal or greater than the number of true elements in mask.
   virtual void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) = 0;
 
   /// Put a consecutive number of resource elements for the symbol l starting at k_init
-  /// \param l is the symbol index
-  /// \param k_init is the initial subcarrier index
-  /// \param symbols provides the symbols to map in the resource grid
+  /// \param [in] l is the symbol index
+  /// \param [in] k_init is the initial subcarrier index
+  /// \param [out] symbols provides the symbols to map in the resource grid
+  /// \note The sum of k_init and the number of elements in symbols shall not exceed the resource grid number of
+  /// subcarriers
   virtual void put(unsigned l, unsigned k_init, span<const cf_t> symbols) = 0;
 };
 
@@ -65,6 +70,7 @@ public:
   /// Get a number of elements in the grid according to a list of coordinates
   /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
   /// \param [out] symbols provides the list with the symbols to map to the coordinates
+  /// \note the number of elements in coordinates and symbols shall be the same
   virtual void get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const = 0;
 
   /// Get a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
@@ -72,12 +78,16 @@ public:
   /// \param [in] l is the symbol index
   /// \param [in] mask provides the mask to be used
   /// \param [in,out] symbol_buffer provides the symbol buffer
+  /// \note The number of elements of mask shall be equal or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of symbol shall be equal or greater than the number of true elements in mask.
   virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const = 0;
 
   /// Get a consecutive number of resource elements for the symbol l starting at k_init
-  /// \param l is the symbol index
-  /// \param k_init is the initial subcarrier index
-  /// \param symbols provides the symbols to map in the resource grid
+  /// \param [in] l is the symbol index
+  /// \param [in] k_init is the initial subcarrier index
+  /// \param [out] symbols provides the symbols to map in the resource grid
+  /// \note The sum of k_init and the number of elements in symbols shall not exceed the resource grid number of
+  /// subcarriers
   virtual void get(unsigned l, unsigned k_init, span<cf_t> symbols) const = 0;
 };
 
