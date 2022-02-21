@@ -19,8 +19,10 @@ public:
   }
 };
 
+/// Tests for chaining of multiple async tasks
 namespace task_chaining_test {
 
+/// Coroutine implementation that just awaits another tasks and forwards its result
 class passthrough_coroutine
 {
   async_task<int>& t;
@@ -35,6 +37,7 @@ public:
   }
 };
 
+/// Async procedure implementation that just awaits another tasks and forwards its result
 class passthrough_async_procedure final : public async_procedure<int>
 {
 public:
@@ -48,6 +51,7 @@ private:
   async_task<int>& t;
 };
 
+/// Unit Test that verifies the correct forwarding of events across awaiters
 template <typename TaskFactory>
 void run_impl(TaskFactory&& launch_passthrough_task)
 {
@@ -69,7 +73,7 @@ void run()
 
   // Run test with lambda coroutine object
   auto lambda_coro_factory = [](async_task<int>& prev) {
-    return launch_async_lambda([&prev](coro_context<async_task<int> >& ctx) {
+    return launch_async([&prev](coro_context<async_task<int> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int v, prev);
       CORO_RETURN(v);

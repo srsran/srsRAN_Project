@@ -339,7 +339,7 @@ auto launch_async(Args&&... args) -> typename detail::future_of<FunT>
 
 /// Creates coroutine frame and launches task if eager
 template <typename FunT>
-auto launch_async_lambda(FunT&& f) -> typename detail::future_of<FunT>
+auto launch_async(FunT&& f) -> typename detail::future_of<FunT>
 {
   auto* frame = new detail::coro_frame<FunT>(std::forward<FunT>(f));
   return frame->promise().get_return_object();

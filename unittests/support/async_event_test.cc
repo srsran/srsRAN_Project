@@ -20,7 +20,7 @@ void test_manual_event_flag()
   TESTASSERT(not event.is_set());
 
   // launch task that awaits on event flag
-  async_task<void> t = launch_async_lambda([&event](coro_context<async_task<void> >& ctx) {
+  async_task<void> t = launch_async([&event](coro_context<async_task<void> >& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(event);
     CORO_RETURN();
@@ -44,7 +44,7 @@ void test_manual_event()
   TESTASSERT(not event.is_set());
 
   // launch task that awaits on event
-  async_task<int> t = launch_async_lambda([&event](coro_context<async_task<int> >& ctx) {
+  async_task<int> t = launch_async([&event](coro_context<async_task<int> >& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(int received_value, event);
     CORO_RETURN(received_value);
