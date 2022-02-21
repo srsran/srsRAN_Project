@@ -49,7 +49,7 @@ public:
     ue_db.emplace(ue_index);
     ue_db[ue_index].ue_index = ue_index;
     ue_db[ue_index].rnti     = crnti;
-    rnti_to_ue_index[crnti]  = ue_index;
+    rnti_to_ue_index.insert(crnti, ue_index);
     return true;
   }
 

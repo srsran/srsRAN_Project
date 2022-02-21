@@ -6,6 +6,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 ########################################################################
+# Options
+########################################################################
+
+option(ASSERTS_ENABLED "Enable srsRAN asserts" ON)
+option(STOP_ON_WARNING "Interrupt application on warning" OFF)
+
+if (ASSERTS_ENABLED)
+    add_definitions(-DASSERTS_ENABLED)
+endif()
+
+########################################################################
 # Compiler specific setup
 ########################################################################
 macro(ADD_CXX_COMPILER_FLAG_IF_AVAILABLE flag have)

@@ -44,7 +44,7 @@ public:
       ue_db[ue_index].dl_bearers.insert(l.lcid, l.dl_bearer);
     }
 
-    rnti_to_ue_index[crnti] = ue_index;
+    rnti_to_ue_index.insert(crnti, ue_index);
     return true;
   }
 
