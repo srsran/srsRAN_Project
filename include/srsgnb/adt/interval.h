@@ -21,14 +21,11 @@
 
 namespace srsgnb {
 
-/// Representation of an interval between two numeric-types in the math representation [start, stop)
+/// Representation of an interval between two numeric-types with the math representation [start, stop)
 template <typename T>
 class interval
 {
-  // TODO: older compilers may not have defined this C++11 trait.
-#if (defined(__clang__) && (__clang_major__ >= 5)) || (defined(__GNUG__) && (__GNUC__ >= 5))
   static_assert(std::is_trivially_copyable<T>::value, "Expected to be trivially copyable");
-#endif
 
 public:
   interval() : start_(T{}), stop_(T{}) {}
@@ -39,6 +36,7 @@ public:
 
   bool empty() const { return stop_ == start_; }
 
+  /// Interval length
   auto length() const -> decltype(std::declval<T>() - std::declval<T>()) { return stop_ - start_; }
 
   void set(T start_point, T stop_point)
@@ -48,6 +46,7 @@ public:
     stop_  = stop_point;
   }
 
+  /// Increase the interval length, maintaining the same starting point
   void resize_by(T len)
   {
     // Detect length overflows
@@ -55,28 +54,34 @@ public:
     stop_ += len;
   }
 
+  /// Set the interval length, maintaining the same starting point
   void resize_to(T len)
   {
     srsran_assert(std::is_unsigned<T>::value or len >= 0, "Interval width must be positive");
     stop_ = start_ + len;
   }
 
+  /// Move interval by an offset
   void displace_by(int offset)
   {
     start_ += offset;
     stop_ += offset;
   }
 
+  /// Move interval start to provided starting point
   void displace_to(T start_point)
   {
     stop_  = start_point + length();
     start_ = start_point;
   }
 
+  /// If this and other intervals overlap
   bool overlaps(interval other) const { return start_ < other.stop_ and other.start_ < stop_; }
 
+  /// If interval contains provided point
   bool contains(T point) const { return start_ <= point and point < stop_; }
 
+  /// Assign to this interval the intersection between this and the provided interval
   interval<T>& intersect(const interval<T>& other)
   {
     if (not overlaps(other)) {
@@ -111,7 +116,7 @@ bool operator<(const interval<T>& lhs, const interval<T>& rhs)
   return lhs.start() < rhs.start() or (lhs.start() == rhs.start() and lhs.stop() < rhs.stop());
 }
 
-//! Union of intervals
+/// Make union of intervals. If intervals do not overlap, the empty interval is returned
 template <typename T>
 interval<T> operator|(const interval<T>& lhs, const interval<T>& rhs)
 {
@@ -127,7 +132,7 @@ interval<T> make_union(const interval<T>& lhs, const interval<T>& rhs)
   return lhs | rhs;
 }
 
-//! Intersection of intervals
+/// Make intersection of intervals
 template <typename T>
 interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
 {
@@ -147,6 +152,7 @@ interval<T> make_intersection(const interval<T>& lhs, const interval<T>& rhs)
 
 namespace fmt {
 
+/// Format intervals with the notation [start, stop)
 template <typename T>
 struct formatter<srsgnb::interval<T> > : public formatter<T> {
   template <typename FormatContext>

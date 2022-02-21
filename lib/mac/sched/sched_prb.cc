@@ -12,7 +12,7 @@
 
 #include "sched_prb.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 /// TS 38.214, Table 6.1.2.2.1-1 - Nominal RBG size P
 uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2)
@@ -99,5 +99,3 @@ void bwp_rb_bitmap::add_rbgs_to_prbs(const rbg_bitmap& grant)
     idx++;
   } while (idx != (int)prbs_.size());
 }
-
-} // namespace srsgnb
