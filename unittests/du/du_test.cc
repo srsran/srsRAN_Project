@@ -1,4 +1,5 @@
 
+#include "srsgnb/support/test_utils.h"
 #include "units/du/du_high.h"
 
 using namespace srsgnb;
@@ -13,9 +14,11 @@ void test_du_ue_create()
   mac_rx_data_indication rx_ind{0x4601, 0, 0, byte_buffer{}};
   du_obj.push_pusch(rx_ind);
 
-  for (std::string s = du_obj.query("ues"); std::stoi(s) == 0; s = du_obj.query("ues")) {
+  uint32_t count = 0;
+  for (std::string s = du_obj.query("ues"); std::stoi(s) == 0 and count < 10000; s = du_obj.query("ues"), count++) {
     usleep(100);
   }
+  TESTASSERT(std::stoi(du_obj.query("ues")) > 0);
 }
 
 int main()

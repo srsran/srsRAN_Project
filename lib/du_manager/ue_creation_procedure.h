@@ -56,15 +56,16 @@ public:
   void mac_ue_create_response(const mac_ue_create_request_response_message& resp)
   {
     // 4. Handle MAC response to UE creation request
-    // TODO
-
-    // 5. Register DU UE object in database
-    du_ctxt.ue_db.insert(created_ue.ue_index, std::move(created_ue));
-    log_proc_completed(logger, ue_create_cmd.ue_index, ue_create_cmd.crnti, "UE Create");
+    if(resp.result) {
+      // 5. Register DU UE object in database
+      du_ctxt.ue_db.insert(created_ue.ue_index, std::move(created_ue));
+      log_proc_completed(logger, ue_create_cmd.ue_index, ue_create_cmd.crnti, "UE Create");
+    }
 
     // 6. Signal F1AP the UE creation outcome
     du_ue_create_response_message f1ap_resp{};
     f1ap_resp.ue_index = resp.ue_index;
+    f1ap_resp.result   = resp.result;
     du_ctxt.f1ap_cfg_notifier->on_du_ue_create_response(f1ap_resp);
   }
 

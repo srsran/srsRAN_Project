@@ -40,6 +40,7 @@ struct du_ue_create_message {
 
 struct du_ue_create_response_message {
   du_ue_index_t ue_index;
+  bool          result;
 };
 
 class du_manager_config_notifier

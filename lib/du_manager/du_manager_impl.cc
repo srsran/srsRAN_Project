@@ -24,12 +24,10 @@ void du_manager_impl::ue_create(const du_ue_create_message& msg)
 
 void du_manager_impl::handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp)
 {
-  du_mng_exec.execute([this, resp]() {
-    ue_create_proc->mac_ue_create_response(resp);
+  ue_create_proc->mac_ue_create_response(resp);
 
-    // Procedure complete
-    ue_create_proc.reset();
-  });
+  // Procedure complete
+  ue_create_proc.reset();
 }
 
 std::string du_manager_impl::get_ues()

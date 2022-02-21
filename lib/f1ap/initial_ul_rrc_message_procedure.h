@@ -12,8 +12,8 @@ namespace srsgnb {
 class initial_ul_rrc_message_procedure
 {
 public:
-  initial_ul_rrc_message_procedure(f1ap_du_context& f1ap_ctx, ul_ccch_indication_message ccch_msg_) :
-    ccch_msg(std::move(ccch_msg_))
+  initial_ul_rrc_message_procedure(f1ap_du_context& f1ap_ctx_, ul_ccch_indication_message ccch_msg_) :
+    f1ap_ctx(f1ap_ctx_), ccch_msg(std::move(ccch_msg_))
   {
     // 1. Create gNB-DU F1AP UE ID context
     f1ap_ctx.ue_ctxt_manager.emplace_back();
@@ -39,6 +39,11 @@ public:
   void du_ue_create_response(const du_ue_create_response_message& resp)
   {
     // Handle result
+    if (not resp.result) {
+      logger.warning("Failed to create ueId={} context in DU", resp.ue_index);
+      f1ap_ctx.ue_ctxt_manager.pop_back();
+      return;
+    }
 
     // Communicate with CU
     send_initial_ul_rrc_message_transfer();
@@ -57,6 +62,7 @@ private:
     //    gateway.push_pdu(std::move(ccch_msg));
   }
 
+  f1ap_du_context&      f1ap_ctx;
   srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
 
   du_ue_index_t              ue_index;
