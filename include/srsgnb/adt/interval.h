@@ -78,7 +78,11 @@ public:
   }
 
   /// If this and other intervals overlap
-  bool overlaps(interval other) const { return start_ < other.stop_ and other.start_ < stop_; }
+  bool overlaps(interval other) const
+  {
+    // Note: if one or both intervals are empty, this will always return false
+    return start_ < other.stop_ and other.start_ < stop_;
+  }
 
   /// If interval contains provided point
   bool contains(T point) const { return start_ <= point and point < stop_; }
@@ -128,12 +132,6 @@ interval<T> operator|(const interval<T>& lhs, const interval<T>& rhs)
   return {std::min(lhs.start(), rhs.start()), std::max(lhs.stop(), rhs.stop())};
 }
 
-template <typename T>
-interval<T> make_union(const interval<T>& lhs, const interval<T>& rhs)
-{
-  return lhs | rhs;
-}
-
 /// Make intersection of intervals
 template <typename T>
 interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
@@ -142,12 +140,6 @@ interval<T> operator&(const interval<T>& lhs, const interval<T>& rhs)
     return interval<T>{};
   }
   return interval<T>{std::max(lhs.start(), rhs.start()), std::min(lhs.stop(), rhs.stop())};
-}
-
-template <typename T>
-interval<T> make_intersection(const interval<T>& lhs, const interval<T>& rhs)
-{
-  return lhs & rhs;
 }
 
 } // namespace srsgnb
