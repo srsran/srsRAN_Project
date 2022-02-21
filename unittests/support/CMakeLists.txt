@@ -2,3 +2,7 @@
 add_executable(async_event_test async_event_test.cc)
 target_link_libraries(async_event_test srslog)
 add_test(async_event_test async_event_test)
+
+add_executable(async_task_test async_task_test.cc)
+target_link_libraries(async_task_test srslog)
+add_test(async_task_test async_task_test)
