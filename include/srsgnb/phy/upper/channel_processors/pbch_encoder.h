@@ -24,10 +24,13 @@ public:
    * @brief Describes the NR PBCH message transmission
    */
   struct pbch_msg_t {
-    unsigned N_id;    ///< Physical cell identifier
-    unsigned ssb_idx; ///< SSB candidate index
-    unsigned Lmax;    ///< Number of SSB opportunities, described in TS 38.213 4.1 ...
-    bool     hrf;     ///< Half Radio Frame bit
+    /// Physical cell identifier
+    unsigned N_id;
+    /// SSB candidate index in a 5ms burst
+    unsigned ssb_idx;
+    /// Maximum number if SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1
+    unsigned Lmax;
+    bool     hrf; ///< Half Radio Frame bit
 
     // BCH payload
     std::array<uint8_t, A> payload; ///< Actual PBCH payload provided by higher layers

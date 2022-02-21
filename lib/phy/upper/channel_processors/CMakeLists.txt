@@ -13,3 +13,6 @@ target_link_libraries(pbch_encoder polar_encoder polar_code pseudo_random_genera
 
 add_library(pbch_modulator STATIC pbch_modulator_impl.cpp)
 target_link_libraries(pbch_modulator modulation_mapper pseudo_random_generator srsvec)
+
+add_library(pbch_processor STATIC pbch_processor_impl.cpp)
+target_link_libraries(pbch_processor pbch_encoder pbch_modulator signal_processors)
