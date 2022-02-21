@@ -20,7 +20,7 @@ using namespace srsvec;
 
 static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsigned len)
 {
-  int i = 0;
+  unsigned i = 0;
 
 #if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
   simd_f_t s = srsran_simd_f_set1(scale);
@@ -58,7 +58,7 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
 
 static inline void convert_if_simd(const int16_t* x, float* z, float scale, unsigned len)
 {
-  int         i    = 0;
+  unsigned    i    = 0;
   const float gain = 1.0f / scale;
 
 #ifdef mHAVE_SSE
