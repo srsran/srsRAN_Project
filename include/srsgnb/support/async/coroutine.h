@@ -11,7 +11,7 @@ namespace srsgnb {
 namespace detail {
 
 /// Special coroutine suspension point indexes
-enum coro_state_tag_t : int32_t { tag_final_suspend = -2, tag_destroyed = -1, tag_init = 0 };
+enum coro_state_tag_t : int32_t { tag_cancelled = -3, tag_final_suspend = -2, tag_destroyed = -1, tag_init = 0 };
 
 /// Metafunction for deriving Awaitable -> Awaiter
 template <typename Awaitable>
@@ -113,6 +113,13 @@ struct base_coro_frame<void> {
     a.await_resume();
     mem_buffer.clear<Awaitable>();
   }
+
+  template <typename Awaitable>
+  void on_await_cancel()
+  {
+    srsran_assert(is_suspended(), "Trying to cancel non-suspended coroutine");
+    mem_buffer.clear<Awaitable>();
+  }
 };
 
 /// Extension of base_coro_frame<void> when Promise type is specified. Besides the coro state, it stores the promise
@@ -143,27 +150,37 @@ struct coro_frame : public base_coro_frame<detail::promise_of<FunT> > {
   void resume() final { (*get_impl())(*this); }
 
   /// Destroy coroutine frame
-  void destroy() final
+  /// This function can only be called when coroutine is suspended
+  void destroy() noexcept final
   {
-    srsran_assert(this->state_index == detail::tag_final_suspend,
-                  "coroutine deleted but it is not at final suspension point\n");
+    srsran_sanity_check(not this->mem_buffer.empty(), "coroutine deleted but it is not at final suspension point\n");
 
-    // resume on final_suspend awaitable that is stored in coroutine frame memory_buffer
-    this->template on_await_resume<decltype(this->promise().final_suspend())>();
+    // resume via cancel path until final suspension point
+    cancel();
+    srsran_sanity_check(this->state_index == coro_state_tag_t::tag_cancelled, "Invalid coroutine state");
 
     // called after final suspension in order to destroy & deallocate coroutine frame
     delete this;
   }
 
   /// Destroy coroutine function object at the moment of return
-  void on_return() final
-  {
-    this->state_index = detail::tag_final_suspend;
-    get_impl()->~FunT();
-  }
+  void on_return() final { get_impl()->~FunT(); }
 
 private:
   FunT* get_impl() { return reinterpret_cast<FunT*>(&task_storage); }
+  void  cancel()
+  {
+    if (this->state_index < 0) {
+      // already cancelled or finished
+      if (this->state_index == coro_state_tag_t::tag_final_suspend) {
+        this->template on_await_cancel<decltype(this->promise().final_suspend())>();
+        this->state_index = coro_state_tag_t::tag_cancelled;
+      }
+      return;
+    }
+    this->state_index = -this->state_index;
+    resume();
+  }
 
   std::aligned_storage_t<sizeof(FunT), alignof(FunT)> task_storage;
 };
@@ -253,7 +270,9 @@ struct base_resumable_procedure {
   void operator()(detail::base_coro_frame<promise_type>& ctx)
   {
     if (frame_ptr == nullptr) {
-      frame_ptr = &ctx;
+      srsran_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
+      ctx.state_index = 10;
+      frame_ptr       = &ctx;
       start();
       return;
     }
@@ -262,27 +281,23 @@ struct base_resumable_procedure {
 
 protected:
   /// Called by resumable task to await Awaitable object to finish
-  template <typename Awaitable, typename Derived>
-  detail::enable_if_void<detail::awaitable_result_t<Awaitable> > async_await(Awaitable&& a, void (Derived::*action)())
+  template <typename Awaitable, typename Derived, typename... Args>
+  void async_await(Awaitable&& a, void (Derived::*action)(Args...))
   {
     auto resume_func = [this, action]() {
-      frame_ptr->template on_await_resume<Awaitable>();
-      (static_cast<Derived*>(this)->*action)();
-    };
-    if (not frame_ptr->on_await_suspend(a)) {
-      resume_method = resume_func;
-    } else {
-      resume_func();
-    }
-  }
-
-  /// Called by resumable task to await Awaitable object to finish and return result
-  template <typename Awaitable, typename Derived, typename Arg>
-  detail::enable_if_nonvoid<detail::awaitable_result_t<Awaitable>, void> async_await(Awaitable&& a,
-                                                                                     void (Derived::*action)(Arg))
-  {
-    auto resume_func = [this, action]() {
-      (static_cast<Derived*>(this)->*action)(frame_ptr->template on_await_resume<Awaitable>());
+      if (this->frame_ptr->state_index > 0) {
+        await_resume_helper<Awaitable>(action);
+      } else {
+        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_cancelled,
+                            "Calling resume on cancelled task");
+        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_final_suspend,
+                            "Calling on task on suspended point");
+        // cancelled
+        frame_ptr->template on_await_cancel<Awaitable>();
+        frame_ptr->state_index = detail::coro_state_tag_t::tag_cancelled;
+        frame_ptr->on_return();
+        // Note: Do not touch any member at this point
+      }
     };
     if (not frame_ptr->on_await_suspend(a)) {
       resume_method = resume_func;
@@ -314,7 +329,8 @@ private:
   void final_await()
   {
     // destroy procedure object including its members (without destroying the rest of the frame)
-    auto* local_ptr = frame_ptr;
+    auto* local_ptr        = frame_ptr;
+    frame_ptr->state_index = detail::coro_state_tag_t::tag_final_suspend;
     frame_ptr->on_return();
     // Note: Do not touch any procedure variable from now on.
 
@@ -323,6 +339,22 @@ private:
       // destroy coroutine frame
       local_ptr->destroy();
     }
+  }
+
+  /// Called when Awaitable returns a non-void value
+  template <typename Awaitable, typename Derived, typename Arg>
+  detail::enable_if_nonvoid<detail::awaitable_result_t<Awaitable>, void>
+  await_resume_helper(void (Derived::*action)(Arg))
+  {
+    (static_cast<Derived*>(this)->*action)(frame_ptr->template on_await_resume<Awaitable>());
+  }
+
+  /// Called when Awaitable returns void
+  template <typename Awaitable, typename Derived>
+  detail::enable_if_void<detail::awaitable_result_t<Awaitable> > await_resume_helper(void (Derived::*action)())
+  {
+    frame_ptr->template on_await_resume<Awaitable>();
+    (static_cast<Derived*>(this)->*action)();
   }
 
   detail::base_coro_frame<promise_type>* frame_ptr = nullptr; ///< pointer to coroutine frame
@@ -355,29 +387,40 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   case __LINE__:
 
 /// Helper macro to set suspension point with awaitable
-#define _CORO_SUSPEND(awaitable_var)                                                                                   \
+/// In case index is negative, the coroutine resumption enters cancel path
+#define _CORO_AWAIT_SUSPEND(awaitable_var)                                                                             \
   coro_context__.state_index = __LINE__;                                                                               \
   if (not coro_context__.on_await_suspend(awaitable_var)) {                                                            \
     return;                                                                                                            \
+    case -__LINE__:                                                                                                    \
+      coro_context__.template on_await_cancel<decltype((awaitable_var))>();                                            \
+      coro_context__.state_index = detail::coro_state_tag_t::tag_cancelled;                                            \
+      coro_context__.on_return();                                                                                      \
+      return;                                                                                                          \
   }                                                                                                                    \
   case __LINE__:
 
 /// Helper macro to delete coroutine function body and suspend on final suspension point
-#define _CORO_STOP()                                                                                                   \
+#define _CORO_ENTER_FINAL_SUSPEND()                                                                                    \
+  coro_context__.state_index = detail::coro_state_tag_t::tag_final_suspend;                                            \
   coro_context__.on_return();                                                                                          \
   if (coro_context__.on_await_suspend(coro_context__.promise().final_suspend())) {                                     \
     goto final_cleanup;                                                                                                \
   }                                                                                                                    \
   return
 
+/// Await operation, in case awaitable doesn't return a value
 #define CORO_AWAIT(awaitable_var)                                                                                      \
-  _CORO_SUSPEND(awaitable_var)                                                                                         \
+  _CORO_AWAIT_SUSPEND(awaitable_var)                                                                                   \
   coro_context__.template on_await_resume<decltype((awaitable_var))>()
 
+/// Await operation, in case the awaitable returns a data value
 #define CORO_AWAIT_VALUE(result, awaitable_var)                                                                        \
-  _CORO_SUSPEND(awaitable_var)                                                                                         \
+  _CORO_AWAIT_SUSPEND(awaitable_var)                                                                                   \
   result = coro_context__.template on_await_resume<decltype((awaitable_var))>()
 
+/// Macro inserted at the beginning of coroutine resume function body.
+/// Based on the frame state index, the coroutine jumps to the previous suspension point.
 #define CORO_BEGIN(x)                                                                                                  \
   auto& coro_context__ = x;                                                                                            \
   switch (coro_context__.state_index) {                                                                                \
@@ -387,6 +430,12 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
     case detail::tag_init:                                                                                             \
       do {                                                                                                             \
       } while (0)
+
+/// Macro placed at the end of coroutine resume function body. Operations:
+/// 1. save return value in coroutine promise
+/// 2. call destructor of coroutine resumable object
+/// 3. await on final suspension point.
+/// 4. if final suspension point awaitable doesn't suspend (e.g. suspend_never), destroy and deallocate coroutine frame
 #define CORO_RETURN(...)                                                                                               \
   CORO_EARLY_RETURN(__VA_ARGS__);                                                                                      \
   }                                                                                                                    \
@@ -397,7 +446,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
   return
 #define CORO_EARLY_RETURN(...)                                                                                         \
   coro_context__.promise().return_value(__VA_ARGS__);                                                                  \
-  _CORO_STOP();
+  _CORO_ENTER_FINAL_SUSPEND();
 
 } // namespace srsgnb
 

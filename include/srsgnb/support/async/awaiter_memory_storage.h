@@ -75,7 +75,7 @@ struct awaiter_memory_storage_t {
     awaiter_type awaiter;
   };
 
-  ~awaiter_memory_storage_t() { assert(empty() && "Emptying non-destroyed object"); }
+  ~awaiter_memory_storage_t() { srsran_assert(empty(), "Emptying non-destroyed object"); }
 
   /// Get stored awaiter object
   template <typename Awaitable>

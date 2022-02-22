@@ -22,7 +22,7 @@ struct promise_data : public Base {
   /// Get Return value
   const R& get() const
   {
-    assert(Base::has_value);
+    srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
     return mem;
   }
 
@@ -69,7 +69,7 @@ struct async_task_promise_base {
   final_awaiter final_suspend() { return {this}; }
 
   /// Append continuation to task
-  bool follow(coro_handle<> promise_)
+  bool set_continuation(coro_handle<> promise_)
   {
     continuation = promise_;
     return true;
@@ -105,6 +105,8 @@ public:
 
   async_task() = default;
   explicit async_task(coro_handle<promise_type> cb) : handle(cb) {}
+  async_task(const async_task&) = delete;
+  async_task& operator=(const async_task&) = delete;
   async_task(async_task&& other) noexcept : handle(std::exchange(other.handle, nullptr)) {}
   async_task& operator=(async_task&& other) noexcept
   {
@@ -113,26 +115,31 @@ public:
     other.handle = nullptr;
     return *this;
   }
-  ~async_task() { handle.destroy(); }
+  ~async_task()
+  {
+    if (not empty()) {
+      handle.destroy();
+    }
+  }
 
   // awaiter interface
   async_task<T>& get_awaiter() { return *this; }
   bool           await_ready() const noexcept { return handle.empty() or handle.promise().ready(); }
   bool           await_suspend(coro_handle<> cb)
   {
-    assert(not empty() && "Awaiting an async_task that is already being awaited");
-    return handle.promise().follow(cb);
+    srsran_sanity_check(not empty(), "Awaiting an empty async_task");
+    return handle.promise().set_continuation(cb);
   }
   template <typename R = result_type>
   detail::enable_if_nonvoid<R> await_resume()
   {
-    assert(not empty());
+    srsran_sanity_check(not empty(), "Resuming an empty async_task");
     return handle.promise().get();
   }
   template <typename R = result_type>
   detail::enable_if_void<R> await_resume()
   {
-    assert(not empty());
+    srsran_sanity_check(not empty(), "Resuming an empty async_task");
   }
 
   /// Checks if async task has an handle

@@ -157,7 +157,9 @@ struct moveonly_test_object {
   {
     object_count_impl()++;
   }
+  moveonly_test_object(const moveonly_test_object& other) = delete;
   moveonly_test_object& operator=(moveonly_test_object&&) noexcept = default;
+  moveonly_test_object& operator=(const moveonly_test_object& other) = delete;
 
   bool has_value() const { return val_ptr != nullptr; }
   int  value() const
@@ -188,9 +190,9 @@ struct copyonly_test_object {
   copyonly_test_object() : val(object_count_impl()) { object_count_impl()++; }
   explicit copyonly_test_object(int v) : val(v) { object_count_impl()++; }
   ~copyonly_test_object() { object_count_impl()--; }
-  copyonly_test_object(const copyonly_test_object& other) : val(other.val) { object_count_impl()++; }
+  copyonly_test_object(const copyonly_test_object& other) noexcept : val(other.val) { object_count_impl()++; }
   copyonly_test_object(copyonly_test_object&& other) = delete;
-  copyonly_test_object& operator=(const copyonly_test_object&) = default;
+  copyonly_test_object& operator=(const copyonly_test_object&) noexcept = default;
   copyonly_test_object& operator=(copyonly_test_object&&) = delete;
 
   int  value() const { return val; }
