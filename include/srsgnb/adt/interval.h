@@ -116,6 +116,8 @@ bool operator!=(const interval<T>& lhs, const interval<T>& rhs)
   return not(lhs == rhs);
 }
 
+/// Compares interval starting points. In case the starting point is the same, the interval with shorter length
+/// is the lowest.
 template <typename T>
 bool operator<(const interval<T>& lhs, const interval<T>& rhs)
 {
