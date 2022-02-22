@@ -77,7 +77,7 @@ public:
     if (lcid == 0) {
       return std::make_tuple(MAX_NOF_UES, &ccch_notifier);
     }
-    if (contains_rnti(rnti)) {
+    if (not contains_rnti(rnti)) {
       return std::make_tuple(0, nullptr);
     }
     mac_ul_ue* ent = &ue_db[rnti_to_ue_index[rnti]];
