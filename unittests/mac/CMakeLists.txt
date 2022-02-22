@@ -1,2 +1,6 @@
 
 add_subdirectory(sched)
+
+add_executable(mac_ue_create_test mac_ue_create_test.cc)
+target_link_libraries(mac_ue_create_test srsgnb_support srslog)
+add_test(mac_ue_create_test mac_ue_create_test)

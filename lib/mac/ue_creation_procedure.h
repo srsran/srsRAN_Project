@@ -7,6 +7,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/manual_event.h"
 
 namespace srsgnb {
 
@@ -14,14 +15,9 @@ class mac_ue_create_request_procedure final : public async_procedure<void>
 {
 public:
   explicit mac_ue_create_request_procedure(mac_context&                         mac_ctxt,
-                                           manual_event_flag&                   ul_ue_create_ev_,
                                            manual_event_flag&                   sched_ue_create_ev_,
                                            const mac_ue_create_request_message& req_) :
-    ctxt(mac_ctxt),
-    req(req_),
-    logger(ctxt.cfg.logger),
-    ul_ue_create_ev(ul_ue_create_ev_),
-    sched_ue_create_ev(sched_ue_create_ev_)
+    ctxt(mac_ctxt), req(req_), logger(ctxt.cfg.logger), sched_ue_create_ev(sched_ue_create_ev_)
   {}
 
   void start() override
@@ -64,11 +60,11 @@ private:
     async_return();
   }
 
-  mac_context&                  ctxt;
-  mac_ue_create_request_message req;
-  srslog::basic_logger&         logger;
-  manual_event_flag&            ul_ue_create_ev;
-  manual_event_flag&            sched_ue_create_ev;
+  mac_context&                        ctxt;
+  const mac_ue_create_request_message req;
+  srslog::basic_logger&               logger;
+  manual_event_flag                   ul_ue_create_ev;
+  manual_event_flag&                  sched_ue_create_ev;
 };
 
 } // namespace srsgnb

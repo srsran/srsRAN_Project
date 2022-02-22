@@ -40,7 +40,6 @@ private:
     mac_ue_context ue_ctx;
 
     /// Events
-    manual_event_flag ul_ue_create_response_ev;
     manual_event_flag sched_response_ev;
 
     async_task<void>                                 ctrl_loop; ///< UE Control loop

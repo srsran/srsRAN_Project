@@ -24,10 +24,8 @@ void mac_ctrl_worker::ue_create_request(const mac_ue_create_request_message& msg
   // UE object added to ue_db successfully
 
   // Enqueue UE create request procedure
-  u->pending_events.push([this, u, msg]() {
-    return launch_async<mac_ue_create_request_procedure>(
-        mac_ctx, u->ul_ue_create_response_ev, u->sched_response_ev, msg);
-  });
+  u->pending_events.push(
+      [this, u, msg]() { return launch_async<mac_ue_create_request_procedure>(mac_ctx, u->sched_response_ev, msg); });
   u->notify_event.set();
 }
 

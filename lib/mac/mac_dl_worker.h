@@ -14,6 +14,8 @@ class mac_dl_worker
 public:
   explicit mac_dl_worker(sched_cfg_notifier& notifier) : sched_obj(notifier) {}
 
+  bool contains_ue(du_ue_index_t ue_index) const { return mux.contains_ue(ue_index); }
+
   void add_ue(const mac_ue_create_request_message& request)
   {
     // 1. Insert UE and DL bearers
@@ -40,8 +42,8 @@ public:
 private:
   srslog::basic_logger& logger{srslog::fetch_basic_logger("MAC")};
 
-  mac_dl_mux          mux;
-  sched               sched_obj;
+  mac_dl_mux mux;
+  sched      sched_obj;
 };
 
 } // namespace srsgnb

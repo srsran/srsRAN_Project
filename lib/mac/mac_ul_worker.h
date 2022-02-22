@@ -15,6 +15,8 @@ public:
     logger(srslog::fetch_basic_logger("MAC")), demux(ul_ccch_notifier_)
   {}
 
+  bool contains_ue(du_ue_index_t ue_index) const { return demux.contains_ue(ue_index); }
+
   bool add_ue(const mac_ue_create_request_message& request)
   {
     // 1. Insert UE
