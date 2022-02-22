@@ -39,10 +39,7 @@ public:
   manual_event_common()                                  = default;
   manual_event_common(const manual_event_common& event_) = delete;
   manual_event_common& operator=(const manual_event_common& event_) = delete;
-  ~manual_event_common()
-  {
-    srsran_expect(state == this or state == nullptr, "There shouldn't be awaiting coroutines when event is destroyed");
-  }
+  ~manual_event_common() {}
 
   /// Resets event state
   void reset()

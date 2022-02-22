@@ -594,7 +594,6 @@ class dyn_blocking_queue : public detail::base_blocking_queue<dyn_circular_buffe
   using base_t = detail::base_blocking_queue<dyn_circular_buffer<T>, PushingCallback, PoppingCallback>;
 
 public:
-  dyn_blocking_queue() = default;
   explicit dyn_blocking_queue(size_t size, PushingCallback push_callback = {}, PoppingCallback pop_callback = {}) :
     base_t(push_callback, pop_callback, size)
   {}
