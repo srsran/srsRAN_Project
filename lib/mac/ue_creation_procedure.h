@@ -53,18 +53,15 @@ private:
     log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
 
     // 4. After UE insertion in scheduler, send response to DU manager
-    ctxt.cfg.ctrl_exec.execute([this]() {
-      // 5. Send response back to DU manager
-      mac_ue_create_request_response_message resp{};
-      resp.ue_index   = req.ue_index;
-      resp.cell_index = req.cell_index;
-      resp.result     = true;
-      ctxt.cfg.cfg_notifier.on_ue_create_request_complete(resp);
+    mac_ue_create_request_response_message resp{};
+    resp.ue_index   = req.ue_index;
+    resp.cell_index = req.cell_index;
+    resp.result     = true;
+    ctxt.cfg.cfg_notifier.on_ue_create_request_complete(resp);
 
-      log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
+    log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
 
-      async_return();
-    });
+    async_return();
   }
 
   mac_context&                  ctxt;

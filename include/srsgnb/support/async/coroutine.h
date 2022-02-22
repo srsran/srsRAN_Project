@@ -60,7 +60,7 @@ struct base_coro_frame<void> {
   virtual void on_return() = 0;
 
   /// Used to save the state of the coroutine at suspension points
-  int32_t state_index = detail::tag_init;
+  int32_t state_index = (int32_t)detail::tag_init;
 
   /// in-place memory buffer to store awaiter
   static const std::size_t                                     default_mem_buffer_storage = 64;

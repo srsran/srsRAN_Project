@@ -43,10 +43,7 @@ private:
   mac_dl_worker                       dl_worker;
   mac_ul_worker                       ul_worker;
   mac_context                         ctxt;
-
-  std::unique_ptr<mac_ue_delete_procedure> ue_delete_proc;
-
-  mac_ue_map ue_db;
+  mac_ctrl_worker                     ctrl_worker;
 
   std::mutex dl_mutex;
 };

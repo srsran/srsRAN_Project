@@ -26,7 +26,8 @@ mac_impl::mac_impl(mac_config_notifier& cfg_notifier_,
   sched_notifier(std::make_unique<sched_response_adapter>(*this)),
   dl_worker(*sched_notifier),
   ul_worker(ul_ccch_notifier_),
-  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, dl_worker, ul_worker)
+  ctxt(cfg_notifier_, ul_exec_, dl_execs_, ctrl_exec_, dl_worker, ul_worker),
+  ctrl_worker(ctxt)
 {}
 
 void mac_impl::push_ul_pdu(mac_rx_data_indication pdu)
@@ -34,41 +35,24 @@ void mac_impl::push_ul_pdu(mac_rx_data_indication pdu)
   ul_worker.push_pdu(pdu.rnti, pdu.lcid, pdu.cell_index, pdu.pdu);
 }
 
-void mac_impl::ue_create_request(const mac_ue_create_request_message& cfg)
+void mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
 {
-  ue_db.insert(cfg.ue_index, cfg.crnti, cfg.cell_index);
-  mac_ue_ctrl* u = ue_db.find(cfg.ue_index);
-  if (u == nullptr) {
-    mac_ue_create_request_response_message msg{};
-    msg.ue_index   = cfg.ue_index;
-    msg.cell_index = cfg.cell_index;
-    msg.result     = false;
-    ctxt.cfg.cfg_notifier.on_ue_create_request_complete(msg);
-    return;
-  }
-  u->ue_create_proc = launch_async<mac_ue_create_request_procedure>(
-      ctxt, u->ul_ue_create_response_ev, u->sched_ue_create_response_ev, cfg);
+  ctrl_worker.ue_create_request(msg);
 }
 
-void mac_impl::ue_delete_request(const mac_ue_delete_request_message& cfg)
+void mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
-  ue_delete_proc = std::make_unique<mac_ue_delete_procedure>(ctxt, cfg);
+  ctrl_worker.ue_delete_request(msg);
 }
 
 void mac_impl::sched_ue_config_response(rnti_t rnti)
 {
-  mac_ue_ctrl* u = ue_db.find_by_rnti(rnti);
-  if (u == nullptr) {
-    logger.error("Could not find UE for which scheduler response was directed");
-    return;
-  }
-  u->sched_ue_create_response_ev.set();
+  ctrl_worker.sched_ue_create_response(rnti);
 }
 
 void mac_impl::sched_ue_delete_response(rnti_t rnti)
 {
-  // TODO: fetch UE based on RNTI
-  ue_delete_proc->sched_ue_delete_response();
+  ctrl_worker.sched_ue_delete_response(rnti);
 }
 
 void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
@@ -79,7 +63,7 @@ void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
   }
 
   // for each cc, generate MAC DL SDUs
-  mac_ue_ctrl* u = ue_db.find_by_rnti(0x4601);
+  mac_ue_context* u = ctrl_worker.find_by_rnti(0x4601);
   if (u != nullptr) {
     byte_buffer pdu;
 

@@ -72,11 +72,12 @@ struct mac_ue_reconfiguration_request {
 struct mac_ue_delete_request_message {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
-  rnti_t          crnti;
+  bool            result;
 };
 
 struct mac_ue_delete_response_message {
-  rnti_t crnti;
+  du_ue_index_t ue_index;
+  bool          result;
 };
 
 /// Interface used to manage the creation/reconfiguration/deletion of UEs in MAC
