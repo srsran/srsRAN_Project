@@ -13,6 +13,8 @@
 #ifndef SRSGNB_SUPPORT_MATH_UTILS_H_
 #define SRSGNB_SUPPORT_MATH_UTILS_H_
 
+#include <cmath>
+
 namespace srsgnb {
 
 inline unsigned divide_ceil(unsigned num, unsigned den)
@@ -20,6 +22,27 @@ inline unsigned divide_ceil(unsigned num, unsigned den)
   assert(den != 0);
   return (num + (den - 1)) / den;
 }
+
+inline float convert_dB_to_amplitude(float value)
+{
+  return std::pow(10.0F, value / 20.0F);
+}
+
+inline float convert_dB_to_power(float value)
+{
+  return std::pow(10.0F, value / 10.0F);
+}
+
+inline float convert_amplitude_to_dB(float value)
+{
+  return 20.0F * std::log10(value);
+}
+
+inline float convert_power_to_dB(float value)
+{
+  return 10.0F * std::log10(value);
+}
+
 } // namespace srsgnb
 
 #endif // SRSGNB_SUPPORT_MATH_UTILS_H_
