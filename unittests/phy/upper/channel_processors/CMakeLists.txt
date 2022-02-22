@@ -6,3 +6,7 @@ add_test(pbch_encoder_test pbch_encoder_test)
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)
 target_link_libraries(pbch_modulator_test pbch_modulator)
 add_test(pbch_modulator_test pbch_modulator_test)
+
+add_executable(pbch_processor_test pbch_processor_test.cpp)
+target_link_libraries(pbch_processor_test pbch_processor)
+add_test(pbch_processor_test pbch_processor_test)

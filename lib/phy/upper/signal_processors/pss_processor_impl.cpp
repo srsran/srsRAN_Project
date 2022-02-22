@@ -40,7 +40,7 @@ pss_processor_impl::pregen_signal_s::pregen_signal_s()
 
 const pss_processor_impl::pregen_signal_s pss_processor_impl::signal = pss_processor_impl::pregen_signal_s();
 
-void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const args_t& args) const
+void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& args) const
 {
   // Calculate generation parameters
   unsigned m = M(phys_cell_id::NID_2(args.phys_cell_id));
@@ -58,7 +58,7 @@ void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequ
 
 void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
                                          resource_grid_writer&                 grid,
-                                         const args_t&                         args) const
+                                         const config_t&                       args) const
 {
   // Calculate symbol and first subcarrier for PSS
   unsigned l = args.ssb_first_symbol + SSB_L;
@@ -68,7 +68,7 @@ void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& s
   grid.put(l, k, sequence);
 }
 
-void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const args_t& args)
+void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const config_t& args)
 {
   // Generate sequence
   std::array<cf_t, SEQUENCE_LEN> sequence;

@@ -52,5 +52,7 @@ public:
   void proccess(const pdu_t& pdu, resource_grid_writer& grid) override;
 };
 
+std::unique_ptr<pbch_processor> create_pbch_processor(pbch_processor_config& config);
+
 } // namespace srsgnb
 #endif // SRSGNB_CHANNEL_PROCESSORS_PBCH_PROCESSOR_IMPL_H_

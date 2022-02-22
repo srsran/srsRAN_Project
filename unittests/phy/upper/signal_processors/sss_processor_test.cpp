@@ -58,7 +58,7 @@ void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float
   }
 }
 
-static void test_case(sss_processor& sss, const sss_processor::args_t& sss_args)
+static void test_case(sss_processor& sss, const sss_processor::config_t& sss_args)
 {
   // Create resource grid
   resource_grid_spy grid;
@@ -98,11 +98,11 @@ int main()
 
   for (unsigned rep = 0; rep != repetitions; ++rep) {
     // SSS arguments
-    sss_processor::args_t sss_args = {};
-    sss_args.phys_cell_id          = dist_cell_id(rgen);
-    sss_args.ssb_first_subcarrier  = dist_ssb_first_subcarrier(rgen);
-    sss_args.ssb_first_symbol      = dist_ssb_first_symbol(rgen);
-    sss_args.amplitude             = 1.0F;
+    sss_processor::config_t sss_args = {};
+    sss_args.phys_cell_id            = dist_cell_id(rgen);
+    sss_args.ssb_first_subcarrier    = dist_ssb_first_subcarrier(rgen);
+    sss_args.ssb_first_symbol        = dist_ssb_first_symbol(rgen);
+    sss_args.amplitude               = 1.0F;
 
     test_case(*sss, sss_args);
   }

@@ -3,6 +3,9 @@
 
 namespace srsgnb {
 
+/// Defines the numer of symbols per slot with normal cyclic prefix
+static constexpr unsigned NSYMB_PER_SLOT_NORM = 14;
+
 /// Defines the maximum number of Resource Blocks (RB) that a resource grid can carry
 static constexpr unsigned MAX_RB = 275;
 
@@ -14,7 +17,6 @@ static constexpr unsigned SSB_BW_RB = 20;
 
 /// Defines the SSB bandwidth in Resource Elements
 static constexpr unsigned SSB_BW_RE = NRE * SSB_BW_RB;
-
 
 namespace phys_cell_id {
 /**

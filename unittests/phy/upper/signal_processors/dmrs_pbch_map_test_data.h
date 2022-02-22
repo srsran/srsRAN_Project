@@ -10,7 +10,7 @@
 namespace srsgnb {
 
 struct test_case_t {
-  dmrs_pbch_processor::args_t             args;
+  dmrs_pbch_processor::config_t           args;
   std::vector<resource_grid_spy::entry_t> signal;
 };
 

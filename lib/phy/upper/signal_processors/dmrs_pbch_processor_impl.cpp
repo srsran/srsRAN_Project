@@ -15,7 +15,7 @@
 
 using namespace srsgnb;
 
-unsigned dmrs_pbch_processor_impl::c_init(const args_t& args)
+unsigned dmrs_pbch_processor_impl::c_init(const config_t& args)
 {
   // Default values for L_max == 4
   uint64_t i_ssb = (args.ssb_idx & 0b11U) + 4UL * args.n_hf; // Least 2 significant bits
@@ -27,7 +27,7 @@ unsigned dmrs_pbch_processor_impl::c_init(const args_t& args)
   return ((i_ssb + 1UL) * ((args.phys_cell_id / 4UL) + 1UL) << 11UL) + ((i_ssb + 1UL) << 6UL) + (args.phys_cell_id % 4);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const args_t& args) const
+void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const config_t& args) const
 {
   // Calculate initial state
   prg->init(c_init(args));
@@ -38,7 +38,7 @@ void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequ
 
 void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
                                                resource_grid_writer&           grid,
-                                               const args_t&                   args) const
+                                               const config_t&                 args) const
 {
   // Calculate index shift
   uint32_t v = args.phys_cell_id % 4;
@@ -76,7 +76,7 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
   grid.put(coordinates, r);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const args_t& args)
+void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& args)
 {
   // Generate sequence
   std::array<cf_t, NOF_RE> sequence;

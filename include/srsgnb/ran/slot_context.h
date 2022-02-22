@@ -15,6 +15,12 @@
 
 namespace srsgnb {
 
+/// Defines the number of subframes in a frame
+static constexpr unsigned NSUBFRAMES_PER_FRAME = 10;
+
+/// Defines the number of subframes in half frame
+static constexpr unsigned NSUBFRAMES_PER_HALF_FRAME = NSUBFRAMES_PER_FRAME / 2;
+
 /// Describes a slot context
 struct slot_context_t {
   unsigned numerology; /// Current numerology for FR1: (0,1,2) and FR2: (2,3)
@@ -27,6 +33,15 @@ struct slot_context_t {
 
   /// Get the slot number in the whole radio frame
   unsigned get_system_slot() const { return slot + (get_system_subframe() << numerology); }
+
+  /// Get the half radio frame flag
+  bool get_half_radio_frame() const { return subframe >= (NSUBFRAMES_PER_FRAME / 2); }
+
+  /// Get the slot index in the current radio frame
+  unsigned get_frame_slot() const { return (subframe << numerology) + slot; }
+
+  /// Get the slot index in half frame
+  unsigned get_half_frame_slot() const { return ((subframe % NSUBFRAMES_PER_HALF_FRAME) << numerology) + slot; }
 };
 
 } // namespace srsgnb

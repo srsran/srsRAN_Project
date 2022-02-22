@@ -15,7 +15,7 @@
 
 using namespace srsgnb;
 
-void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const args_t& args)
+void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& args)
 {
   // Initialise sequence
   scrambler->init(args.phys_cell_id);
@@ -32,7 +32,7 @@ void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)
   modulator->modulate(b_hat, d_pbch, modulation_scheme::QPSK);
 }
 
-void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const args_t& args)
+void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& args)
 {
   unsigned count = 0;
   unsigned l0    = args.ssb_first_symbol;
@@ -76,7 +76,9 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
   grid.put(coordinates, d_pbch);
 }
 
-void pbch_modulator_impl::put(span<const uint8_t> bits, resource_grid_writer& grid, const pbch_modulator::args_t& args)
+void pbch_modulator_impl::put(span<const uint8_t>             bits,
+                              resource_grid_writer&           grid,
+                              const pbch_modulator::config_t& args)
 {
   assert(bits.size() == M_bit);
 

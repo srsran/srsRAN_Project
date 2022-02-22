@@ -18,7 +18,7 @@ public:
   static constexpr unsigned M_symb = M_bit / 2;
 
   /// Describes the PBCH modulator arguments
-  struct args_t {
+  struct config_t {
     /// Physical cell identifier
     unsigned phys_cell_id;
     /// SS/PBCH block index
@@ -38,7 +38,7 @@ public:
   ///
   /// \param[in] bits Input bits of M_bit size
   /// \param[out] grid is the destination resource grid
-  virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const args_t& args) = 0;
+  virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& args) = 0;
 };
 
 std::unique_ptr<pbch_modulator> create_pbch_modulator();

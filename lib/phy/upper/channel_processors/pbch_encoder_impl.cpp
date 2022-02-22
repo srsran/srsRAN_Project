@@ -65,7 +65,7 @@ void pbch_encoder_impl::payload_generate(const srsgnb::pbch_encoder::pbch_msg_t&
   a[G[10]] = (msg.hrf ? 1 : 0);
 
   // Put SSB related in a_hat[A_hat + 5] to a_hat[A_hat + 7]
-  if (msg.Lmax == 64) {
+  if (msg.L_max == 64) {
     a[G[11]] = (uint8_t)((msg.ssb_idx >> 5U) & 1U); // 6th bit of SSB index
     a[G[12]] = (uint8_t)((msg.ssb_idx >> 4U) & 1U); // 5th bit of SSB index
     a[G[13]] = (uint8_t)((msg.ssb_idx >> 3U) & 1U); // 4th bit of SSB index
@@ -88,7 +88,7 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
 
   // Select value M
   uint32_t M = A - 3;
-  if (msg.Lmax == 64) {
+  if (msg.L_max == 64) {
     M = A - 6;
   }
 
@@ -106,7 +106,7 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
     uint8_t s_i = c[j];
 
     // Check if i belongs to a SS/PBCH block index which is only multiplexed when L_max is 64
-    bool is_ssb_idx = (i == G[11] || i == G[12] || i == G[13]) && msg.Lmax == 64;
+    bool is_ssb_idx = (i == G[11] || i == G[12] || i == G[13]) && msg.L_max == 64;
 
     // a i corresponds to any one of the bits belonging to the SS/PBCH block index, the half frame index, and 2 nd and
     // 3 rd least significant bits of the system frame number
