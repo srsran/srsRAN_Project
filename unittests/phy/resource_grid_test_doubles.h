@@ -19,7 +19,7 @@ public:
   ~resource_grid_spy() override = default;
 
   void put(unsigned l, unsigned k, cf_t value) override { entries.push_back({l, k, value}); }
-  void put(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override
+  void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override
   {
     unsigned count = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
@@ -43,6 +43,18 @@ public:
 
 private:
   std::vector<entry_t> entries;
+};
+
+class resource_grid_dummy : public resource_grid
+{
+public:
+  void put(unsigned l, unsigned k, cf_t value) override {}
+  void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override {}
+  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
+  cf_t get(unsigned l, unsigned k) const override { return srsgnb::cf_t(); }
+  void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override {}
+  void get(unsigned l, unsigned k_init, span<cf_t> symbols) override {}
+  void all_zero() override {}
 };
 
 } // namespace srsgnb

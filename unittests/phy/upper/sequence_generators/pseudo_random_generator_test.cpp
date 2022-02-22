@@ -10,11 +10,11 @@
  *
  */
 
-#include "srsgnb/phy/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/srsvec/aligned_vec.h"
 #include <cassert>
 #include <random>
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/srsvec/aligned_vec.h"
 
 static std::mt19937 rgen(0);
 
@@ -108,7 +108,7 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
 
   // Apply sequence
   byte_buffer data_xor(N / 8);
-  generator->apply_xor(data, data_xor);
+  generator->apply_xor_byte(data, data_xor);
 
   // Assert
   for (unsigned i = 0; i != N / 8; ++i) {
@@ -140,7 +140,7 @@ void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
 
   // Apply sequence
   srsvec::aligned_vec<uint8_t> data_xor(N);
-  generator->apply_xor(data, data_xor);
+  generator->apply_xor_bit(data, data_xor);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {

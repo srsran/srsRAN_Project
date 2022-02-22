@@ -1,18 +1,10 @@
 
+#include "resource_grid_test_doubles.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include <cassert>
 #include <vector>
 
 using namespace srsgnb;
-
-class resource_grid_dummy : public resource_grid
-{
-public:
-  void put(unsigned l, unsigned k, cf_t value) override {}
-  void put(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override {}
-  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-  cf_t get(unsigned l, unsigned k) const override { return srsgnb::cf_t(); }
-};
 
 void test(unsigned nof_slots, unsigned nof_sectors, unsigned nof_antennas)
 {

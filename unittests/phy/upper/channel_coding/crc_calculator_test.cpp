@@ -18,7 +18,7 @@ static std::mt19937 rgen(0);
 
 using namespace srsgnb;
 
-crc_calculator_checksum_t crc_generic_calculator_byte(const srsgnb::byte_buffer& data, unsigned poly, unsigned order)
+crc_calculator_checksum_t crc_generic_calculator_byte(span<const uint8_t> data, unsigned poly, unsigned order)
 {
   uint64_t highbit   = 1U << order;
   uint64_t remainder = 0;
@@ -75,7 +75,7 @@ void test_crc_byte(std::size_t nbytes, crc_generator_poly poly, unsigned polynom
   std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
 
   // Create data buffer
-  srsgnb::byte_buffer data(nbytes);
+  std::vector<uint8_t> data(nbytes);
 
   // Fill buffer with random data
   for (unsigned char& v : data) {

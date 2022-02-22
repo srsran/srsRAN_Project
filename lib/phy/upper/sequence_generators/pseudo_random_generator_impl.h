@@ -159,7 +159,7 @@ private:
 public:
   pseudo_random_generator_impl()  = default;
   ~pseudo_random_generator_impl() = default;
-  void    init(unsigned int c_init) override;
+  void    init(unsigned c_init) override;
   void    init(const state_s& c_init) override;
   state_s get_state() const override;
   void    advance(unsigned count) override;

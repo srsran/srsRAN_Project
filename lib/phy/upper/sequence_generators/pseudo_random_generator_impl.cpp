@@ -30,7 +30,7 @@ pseudo_random_generator_impl::x1_init_s::x1_init_s() : x1(1)
   }
 }
 
-unsigned int pseudo_random_generator_impl::x1_init_s::get() const
+unsigned pseudo_random_generator_impl::x1_init_s::get() const
 {
   return x1;
 }
@@ -60,7 +60,7 @@ unsigned pseudo_random_generator_impl::x2_init_s::get(unsigned c_init) const
   return ret;
 }
 
-void pseudo_random_generator_impl::init(unsigned int c_init)
+void pseudo_random_generator_impl::init(unsigned c_init)
 {
   x1 = x1_init.get();
   x2 = x2_init.get(c_init);
