@@ -123,6 +123,8 @@ private:
   std::vector<uint8_t> softbuffer;
 };
 
+/// This object handles the DL and UL HARQ processes for each UE's Component Carrier; therefore, for each UE, we
+/// instantiate as many harq_entity object as CCs
 class harq_entity
 {
 public:
@@ -171,6 +173,7 @@ private:
   uint16_t              rnti;
   srslog::basic_logger& logger;
 
+  // This is the slot index at which the scheduler is currently working
   slot_point                slot_rx;
   std::vector<dl_harq_proc> dl_harqs;
   std::vector<ul_harq_proc> ul_harqs;
