@@ -151,6 +151,8 @@ void test_ue_create_procedure_multi_thread()
     }
   }
   TESTASSERT(finished);
+
+//  ul_worker.stop();
 }
 
 int main()

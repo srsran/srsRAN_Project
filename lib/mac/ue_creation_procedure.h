@@ -8,10 +8,11 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/manual_event.h"
+#include "srsgnb/support/async/schedule_on.h"
 
 namespace srsgnb {
 
-class mac_ue_create_request_procedure final : public async_procedure<void>
+class mac_ue_create_request_procedure
 {
 public:
   explicit mac_ue_create_request_procedure(mac_context&                         mac_ctxt,
@@ -20,35 +21,31 @@ public:
     ctxt(mac_ctxt), req(req_), logger(ctxt.cfg.logger), sched_ue_create_ev(sched_ue_create_ev_)
   {}
 
-  void start() override
+  void operator()(coro_context<async_task<void> >& ctx)
   {
+    CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
-    async_await(ul_ue_create_ev, &mac_ue_create_request_procedure::ue_ul_create_complete);
+    // 1. Change to UL execution context
+    CORO_AWAIT(schedule_on(ctxt.cfg.ul_exec));
 
-    // 1. Create UE associated UL channels
-    ctxt.cfg.ul_exec.execute([this]() {
-      ctxt.ul_worker.add_ue(req);
+    // 2. Create UE UL context and channels
+    ctxt.ul_worker.add_ue(req);
 
-      // Return result back to CTRL execution context
-      ctxt.cfg.ctrl_exec.execute([this]() { ul_ue_create_ev.set(); });
-    });
-  }
+    // 3. Change to DL execution context
+    CORO_AWAIT(schedule_on(*ctxt.cfg.dl_execs[req.cell_index]));
 
-private:
-  void ue_ul_create_complete()
-  {
-    async_await(sched_ue_create_ev, &mac_ue_create_request_procedure::sched_ue_config_response);
+    // 4. Create UE DL context and channels
+    ctxt.dl_worker.add_ue(req);
 
-    // 2. Dispatch UE DL channels and sched UE creation to DL executors
-    ctxt.cfg.dl_execs[req.cell_index]->execute([this]() { ctxt.dl_worker.add_ue(req); });
-  }
+    // 5. Change to CTRL execution context
+    CORO_AWAIT(schedule_on(ctxt.cfg.ctrl_exec));
 
-  void sched_ue_config_response()
-  {
+    // 6. Await scheduler config notification
+    CORO_AWAIT(sched_ue_create_ev);
     log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE Config");
 
-    // 4. After UE insertion in scheduler, send response to DU manager
+    // 7. After UE insertion in scheduler, send response to DU manager
     mac_ue_create_request_response_message resp{};
     resp.ue_index   = req.ue_index;
     resp.cell_index = req.cell_index;
@@ -57,9 +54,10 @@ private:
 
     log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
 
-    async_return();
+    CORO_RETURN();
   }
 
+private:
   mac_context&                        ctxt;
   const mac_ue_create_request_message req;
   srslog::basic_logger&               logger;
