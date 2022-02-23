@@ -11,8 +11,9 @@ class pbch_modulator_spy : public pbch_modulator
 {
 private:
   struct entry_t {
-    config_t             config;
-    std::vector<uint8_t> bits;
+    config_t              config;
+    std::vector<uint8_t>  bits;
+    resource_grid_writer* grid_ptr;
   };
   std::vector<entry_t> entries;
 
@@ -22,6 +23,7 @@ public:
     entry_t e = {};
     e.config  = config;
     e.bits.resize(bits.size());
+    e.grid_ptr = &grid;
     std::copy(bits.begin(), bits.end(), e.bits.begin());
     entries.emplace_back(e);
   }

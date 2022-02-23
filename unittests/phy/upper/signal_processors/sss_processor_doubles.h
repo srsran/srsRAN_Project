@@ -9,11 +9,23 @@ namespace srsgnb {
 class sss_processor_spy : public sss_processor
 {
 private:
-  std::vector<config_t> entries;
+  struct entry_t {
+    config_t              config;
+    resource_grid_writer* grid;
+  };
+  std::vector<entry_t> entries;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& args) override { entries.emplace_back(args); }
-  const std::vector<config_t>& get_entries() const { return entries; }
+  void map(resource_grid_writer& grid, const config_t& args) override
+  {
+    entry_t entry = {};
+    entry.config  = args;
+    entry.grid    = &grid;
+    entries.emplace_back(entry);
+  }
+  void                        reset() { entries.clear(); }
+  unsigned                    get_nof_entries() const { return entries.size(); }
+  const std::vector<entry_t>& get_entries() const { return entries; }
 };
 
 } // namespace srsgnb
