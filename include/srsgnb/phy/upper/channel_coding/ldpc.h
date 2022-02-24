@@ -11,19 +11,23 @@
 
 namespace srsgnb {
 
+/// LDPC constants and helper functions.
 namespace ldpc {
 /// Base graph types.
 enum class base_graph_t { BG1, BG2 };
 
 /// Available lifting sizes.
-enum lifting_size_t { LS2 = 2, LS3 = 3, LS4 = 4 };
+enum lifting_size_t { LS2 = 2, LS3 = 3, LS4 = 4, LS5 = 5, LS6 = 6, LS7 = 7 };
 /// Total number of lifting sizes.
-constexpr unsigned nof_lifting_sizes = 3;
+constexpr unsigned nof_lifting_sizes = 6;
 /// All lifting sizes are assigned an index from 0 to 7 (see TS38.212 Table 5.3.2-1).
 constexpr unsigned nof_lifting_indices = 8;
 
 /// Array of lifting sizes, for iterations.
-static constexpr std::array<lifting_size_t, nof_lifting_sizes> all_lifting_sizes = {LS2, LS3, LS4};
+static constexpr std::array<lifting_size_t, nof_lifting_sizes> all_lifting_sizes = {LS2, LS3, LS4, LS5, LS6, LS7};
+
+/// Filler bit identifier
+static constexpr uint8_t filler_bit = 254;
 } // namespace ldpc
 
 } // namespace srsgnb

@@ -15,395 +15,403 @@
 
 using namespace srsgnb::ldpc;
 
+/// Describes a lifting size.
+struct ls_description_t {
+  /// Lifting index.
+  uint8_t index;
+  /// Position in the list of possible lifting sizes.
+  uint8_t position;
+};
+
 /// \brief Lifting size look-up table.
 ///
 /// Possible lifting sizes are assigned a lifting-size index (from 0 to 7), the
 /// others are marked as VOID_LIFTSIZE.
-static constexpr std::array<uint8_t, 385> LSindex{VOID_LIFTSIZE, // 0
-                                                  VOID_LIFTSIZE, // 1
-                                                  0,             // 2
-                                                  1,             // 3
-                                                  0,             // 4
-                                                  2,             // 5
-                                                  1,             // 6
-                                                  3,             // 7
-                                                  0,             // 8
-                                                  4,             // 9
-                                                  2,             // 10
-                                                  5,             // 11
-                                                  1,             // 12
-                                                  6,             // 13
-                                                  3,             // 14
-                                                  7,             // 15
-                                                  0,             // 16
-                                                  VOID_LIFTSIZE, // 17
-                                                  4,             // 18
-                                                  VOID_LIFTSIZE, // 19
-                                                  2,             // 20
-                                                  VOID_LIFTSIZE, // 21
-                                                  5,             // 22
-                                                  VOID_LIFTSIZE, // 23
-                                                  1,             // 24
-                                                  VOID_LIFTSIZE, // 25
-                                                  6,             // 26
-                                                  VOID_LIFTSIZE, // 27
-                                                  3,             // 28
-                                                  VOID_LIFTSIZE, // 29
-                                                  7,             // 30
-                                                  VOID_LIFTSIZE, // 31
-                                                  0,             // 32
-                                                  VOID_LIFTSIZE, // 33
-                                                  VOID_LIFTSIZE, // 34
-                                                  VOID_LIFTSIZE, // 35
-                                                  4,             // 36
-                                                  VOID_LIFTSIZE, // 37
-                                                  VOID_LIFTSIZE, // 38
-                                                  VOID_LIFTSIZE, // 39
-                                                  2,             // 40
-                                                  VOID_LIFTSIZE, // 41
-                                                  VOID_LIFTSIZE, // 42
-                                                  VOID_LIFTSIZE, // 43
-                                                  5,             // 44
-                                                  VOID_LIFTSIZE, // 45
-                                                  VOID_LIFTSIZE, // 46
-                                                  VOID_LIFTSIZE, // 47
-                                                  1,             // 48
-                                                  VOID_LIFTSIZE, // 49
-                                                  VOID_LIFTSIZE, // 50
-                                                  VOID_LIFTSIZE, // 51
-                                                  6,             // 52
-                                                  VOID_LIFTSIZE, // 53
-                                                  VOID_LIFTSIZE, // 54
-                                                  VOID_LIFTSIZE, // 55
-                                                  3,             // 56
-                                                  VOID_LIFTSIZE, // 57
-                                                  VOID_LIFTSIZE, // 58
-                                                  VOID_LIFTSIZE, // 59
-                                                  7,             // 60
-                                                  VOID_LIFTSIZE, // 61
-                                                  VOID_LIFTSIZE, // 62
-                                                  VOID_LIFTSIZE, // 63
-                                                  0,             // 64
-                                                  VOID_LIFTSIZE, // 65
-                                                  VOID_LIFTSIZE, // 66
-                                                  VOID_LIFTSIZE, // 67
-                                                  VOID_LIFTSIZE, // 68
-                                                  VOID_LIFTSIZE, // 69
-                                                  VOID_LIFTSIZE, // 70
-                                                  VOID_LIFTSIZE, // 71
-                                                  4,             // 72
-                                                  VOID_LIFTSIZE, // 73
-                                                  VOID_LIFTSIZE, // 74
-                                                  VOID_LIFTSIZE, // 75
-                                                  VOID_LIFTSIZE, // 76
-                                                  VOID_LIFTSIZE, // 77
-                                                  VOID_LIFTSIZE, // 78
-                                                  VOID_LIFTSIZE, // 79
-                                                  2,             // 80
-                                                  VOID_LIFTSIZE, // 81
-                                                  VOID_LIFTSIZE, // 82
-                                                  VOID_LIFTSIZE, // 83
-                                                  VOID_LIFTSIZE, // 84
-                                                  VOID_LIFTSIZE, // 85
-                                                  VOID_LIFTSIZE, // 86
-                                                  VOID_LIFTSIZE, // 87
-                                                  5,             // 88
-                                                  VOID_LIFTSIZE, // 89
-                                                  VOID_LIFTSIZE, // 90
-                                                  VOID_LIFTSIZE, // 91
-                                                  VOID_LIFTSIZE, // 92
-                                                  VOID_LIFTSIZE, // 93
-                                                  VOID_LIFTSIZE, // 94
-                                                  VOID_LIFTSIZE, // 95
-                                                  1,             // 96
-                                                  VOID_LIFTSIZE, // 97
-                                                  VOID_LIFTSIZE, // 98
-                                                  VOID_LIFTSIZE, // 99
-                                                  VOID_LIFTSIZE, // 100
-                                                  VOID_LIFTSIZE, // 101
-                                                  VOID_LIFTSIZE, // 102
-                                                  VOID_LIFTSIZE, // 103
-                                                  6,             // 104
-                                                  VOID_LIFTSIZE, // 105
-                                                  VOID_LIFTSIZE, // 106
-                                                  VOID_LIFTSIZE, // 107
-                                                  VOID_LIFTSIZE, // 108
-                                                  VOID_LIFTSIZE, // 109
-                                                  VOID_LIFTSIZE, // 110
-                                                  VOID_LIFTSIZE, // 111
-                                                  3,             // 112
-                                                  VOID_LIFTSIZE, // 113
-                                                  VOID_LIFTSIZE, // 114
-                                                  VOID_LIFTSIZE, // 115
-                                                  VOID_LIFTSIZE, // 116
-                                                  VOID_LIFTSIZE, // 117
-                                                  VOID_LIFTSIZE, // 118
-                                                  VOID_LIFTSIZE, // 119
-                                                  7,             // 120
-                                                  VOID_LIFTSIZE, // 121
-                                                  VOID_LIFTSIZE, // 122
-                                                  VOID_LIFTSIZE, // 123
-                                                  VOID_LIFTSIZE, // 124
-                                                  VOID_LIFTSIZE, // 125
-                                                  VOID_LIFTSIZE, // 126
-                                                  VOID_LIFTSIZE, // 127
-                                                  0,             // 128
-                                                  VOID_LIFTSIZE, // 129
-                                                  VOID_LIFTSIZE, // 130
-                                                  VOID_LIFTSIZE, // 131
-                                                  VOID_LIFTSIZE, // 132
-                                                  VOID_LIFTSIZE, // 133
-                                                  VOID_LIFTSIZE, // 134
-                                                  VOID_LIFTSIZE, // 135
-                                                  VOID_LIFTSIZE, // 136
-                                                  VOID_LIFTSIZE, // 137
-                                                  VOID_LIFTSIZE, // 138
-                                                  VOID_LIFTSIZE, // 139
-                                                  VOID_LIFTSIZE, // 140
-                                                  VOID_LIFTSIZE, // 141
-                                                  VOID_LIFTSIZE, // 142
-                                                  VOID_LIFTSIZE, // 143
-                                                  4,             // 144
-                                                  VOID_LIFTSIZE, // 145
-                                                  VOID_LIFTSIZE, // 146
-                                                  VOID_LIFTSIZE, // 147
-                                                  VOID_LIFTSIZE, // 148
-                                                  VOID_LIFTSIZE, // 149
-                                                  VOID_LIFTSIZE, // 150
-                                                  VOID_LIFTSIZE, // 151
-                                                  VOID_LIFTSIZE, // 152
-                                                  VOID_LIFTSIZE, // 153
-                                                  VOID_LIFTSIZE, // 154
-                                                  VOID_LIFTSIZE, // 155
-                                                  VOID_LIFTSIZE, // 156
-                                                  VOID_LIFTSIZE, // 157
-                                                  VOID_LIFTSIZE, // 158
-                                                  VOID_LIFTSIZE, // 159
-                                                  2,             // 160
-                                                  VOID_LIFTSIZE, // 161
-                                                  VOID_LIFTSIZE, // 162
-                                                  VOID_LIFTSIZE, // 163
-                                                  VOID_LIFTSIZE, // 164
-                                                  VOID_LIFTSIZE, // 165
-                                                  VOID_LIFTSIZE, // 166
-                                                  VOID_LIFTSIZE, // 167
-                                                  VOID_LIFTSIZE, // 168
-                                                  VOID_LIFTSIZE, // 169
-                                                  VOID_LIFTSIZE, // 170
-                                                  VOID_LIFTSIZE, // 171
-                                                  VOID_LIFTSIZE, // 172
-                                                  VOID_LIFTSIZE, // 173
-                                                  VOID_LIFTSIZE, // 174
-                                                  VOID_LIFTSIZE, // 175
-                                                  5,             // 176
-                                                  VOID_LIFTSIZE, // 177
-                                                  VOID_LIFTSIZE, // 178
-                                                  VOID_LIFTSIZE, // 179
-                                                  VOID_LIFTSIZE, // 180
-                                                  VOID_LIFTSIZE, // 181
-                                                  VOID_LIFTSIZE, // 182
-                                                  VOID_LIFTSIZE, // 183
-                                                  VOID_LIFTSIZE, // 184
-                                                  VOID_LIFTSIZE, // 185
-                                                  VOID_LIFTSIZE, // 186
-                                                  VOID_LIFTSIZE, // 187
-                                                  VOID_LIFTSIZE, // 188
-                                                  VOID_LIFTSIZE, // 189
-                                                  VOID_LIFTSIZE, // 190
-                                                  VOID_LIFTSIZE, // 191
-                                                  1,             // 192
-                                                  VOID_LIFTSIZE, // 193
-                                                  VOID_LIFTSIZE, // 194
-                                                  VOID_LIFTSIZE, // 195
-                                                  VOID_LIFTSIZE, // 196
-                                                  VOID_LIFTSIZE, // 197
-                                                  VOID_LIFTSIZE, // 198
-                                                  VOID_LIFTSIZE, // 199
-                                                  VOID_LIFTSIZE, // 200
-                                                  VOID_LIFTSIZE, // 201
-                                                  VOID_LIFTSIZE, // 202
-                                                  VOID_LIFTSIZE, // 203
-                                                  VOID_LIFTSIZE, // 204
-                                                  VOID_LIFTSIZE, // 205
-                                                  VOID_LIFTSIZE, // 206
-                                                  VOID_LIFTSIZE, // 207
-                                                  6,             // 208
-                                                  VOID_LIFTSIZE, // 209
-                                                  VOID_LIFTSIZE, // 210
-                                                  VOID_LIFTSIZE, // 211
-                                                  VOID_LIFTSIZE, // 212
-                                                  VOID_LIFTSIZE, // 213
-                                                  VOID_LIFTSIZE, // 214
-                                                  VOID_LIFTSIZE, // 215
-                                                  VOID_LIFTSIZE, // 216
-                                                  VOID_LIFTSIZE, // 217
-                                                  VOID_LIFTSIZE, // 218
-                                                  VOID_LIFTSIZE, // 219
-                                                  VOID_LIFTSIZE, // 220
-                                                  VOID_LIFTSIZE, // 221
-                                                  VOID_LIFTSIZE, // 222
-                                                  VOID_LIFTSIZE, // 223
-                                                  3,             // 224
-                                                  VOID_LIFTSIZE, // 225
-                                                  VOID_LIFTSIZE, // 226
-                                                  VOID_LIFTSIZE, // 227
-                                                  VOID_LIFTSIZE, // 228
-                                                  VOID_LIFTSIZE, // 229
-                                                  VOID_LIFTSIZE, // 230
-                                                  VOID_LIFTSIZE, // 231
-                                                  VOID_LIFTSIZE, // 232
-                                                  VOID_LIFTSIZE, // 233
-                                                  VOID_LIFTSIZE, // 234
-                                                  VOID_LIFTSIZE, // 235
-                                                  VOID_LIFTSIZE, // 236
-                                                  VOID_LIFTSIZE, // 237
-                                                  VOID_LIFTSIZE, // 238
-                                                  VOID_LIFTSIZE, // 239
-                                                  7,             // 240
-                                                  VOID_LIFTSIZE, // 241
-                                                  VOID_LIFTSIZE, // 242
-                                                  VOID_LIFTSIZE, // 243
-                                                  VOID_LIFTSIZE, // 244
-                                                  VOID_LIFTSIZE, // 245
-                                                  VOID_LIFTSIZE, // 246
-                                                  VOID_LIFTSIZE, // 247
-                                                  VOID_LIFTSIZE, // 248
-                                                  VOID_LIFTSIZE, // 249
-                                                  VOID_LIFTSIZE, // 250
-                                                  VOID_LIFTSIZE, // 251
-                                                  VOID_LIFTSIZE, // 252
-                                                  VOID_LIFTSIZE, // 253
-                                                  VOID_LIFTSIZE, // 254
-                                                  VOID_LIFTSIZE, // 255
-                                                  0,             // 256
-                                                  VOID_LIFTSIZE, // 257
-                                                  VOID_LIFTSIZE, // 258
-                                                  VOID_LIFTSIZE, // 259
-                                                  VOID_LIFTSIZE, // 260
-                                                  VOID_LIFTSIZE, // 261
-                                                  VOID_LIFTSIZE, // 262
-                                                  VOID_LIFTSIZE, // 263
-                                                  VOID_LIFTSIZE, // 264
-                                                  VOID_LIFTSIZE, // 265
-                                                  VOID_LIFTSIZE, // 266
-                                                  VOID_LIFTSIZE, // 267
-                                                  VOID_LIFTSIZE, // 268
-                                                  VOID_LIFTSIZE, // 269
-                                                  VOID_LIFTSIZE, // 270
-                                                  VOID_LIFTSIZE, // 271
-                                                  VOID_LIFTSIZE, // 272
-                                                  VOID_LIFTSIZE, // 273
-                                                  VOID_LIFTSIZE, // 274
-                                                  VOID_LIFTSIZE, // 275
-                                                  VOID_LIFTSIZE, // 276
-                                                  VOID_LIFTSIZE, // 277
-                                                  VOID_LIFTSIZE, // 278
-                                                  VOID_LIFTSIZE, // 279
-                                                  VOID_LIFTSIZE, // 280
-                                                  VOID_LIFTSIZE, // 281
-                                                  VOID_LIFTSIZE, // 282
-                                                  VOID_LIFTSIZE, // 283
-                                                  VOID_LIFTSIZE, // 284
-                                                  VOID_LIFTSIZE, // 285
-                                                  VOID_LIFTSIZE, // 286
-                                                  VOID_LIFTSIZE, // 287
-                                                  4,             // 288
-                                                  VOID_LIFTSIZE, // 289
-                                                  VOID_LIFTSIZE, // 290
-                                                  VOID_LIFTSIZE, // 291
-                                                  VOID_LIFTSIZE, // 292
-                                                  VOID_LIFTSIZE, // 293
-                                                  VOID_LIFTSIZE, // 294
-                                                  VOID_LIFTSIZE, // 295
-                                                  VOID_LIFTSIZE, // 296
-                                                  VOID_LIFTSIZE, // 297
-                                                  VOID_LIFTSIZE, // 298
-                                                  VOID_LIFTSIZE, // 299
-                                                  VOID_LIFTSIZE, // 300
-                                                  VOID_LIFTSIZE, // 301
-                                                  VOID_LIFTSIZE, // 302
-                                                  VOID_LIFTSIZE, // 303
-                                                  VOID_LIFTSIZE, // 304
-                                                  VOID_LIFTSIZE, // 305
-                                                  VOID_LIFTSIZE, // 306
-                                                  VOID_LIFTSIZE, // 307
-                                                  VOID_LIFTSIZE, // 308
-                                                  VOID_LIFTSIZE, // 309
-                                                  VOID_LIFTSIZE, // 310
-                                                  VOID_LIFTSIZE, // 311
-                                                  VOID_LIFTSIZE, // 312
-                                                  VOID_LIFTSIZE, // 313
-                                                  VOID_LIFTSIZE, // 314
-                                                  VOID_LIFTSIZE, // 315
-                                                  VOID_LIFTSIZE, // 316
-                                                  VOID_LIFTSIZE, // 317
-                                                  VOID_LIFTSIZE, // 318
-                                                  VOID_LIFTSIZE, // 319
-                                                  2,             // 320
-                                                  VOID_LIFTSIZE, // 321
-                                                  VOID_LIFTSIZE, // 322
-                                                  VOID_LIFTSIZE, // 323
-                                                  VOID_LIFTSIZE, // 324
-                                                  VOID_LIFTSIZE, // 325
-                                                  VOID_LIFTSIZE, // 326
-                                                  VOID_LIFTSIZE, // 327
-                                                  VOID_LIFTSIZE, // 328
-                                                  VOID_LIFTSIZE, // 329
-                                                  VOID_LIFTSIZE, // 330
-                                                  VOID_LIFTSIZE, // 331
-                                                  VOID_LIFTSIZE, // 332
-                                                  VOID_LIFTSIZE, // 333
-                                                  VOID_LIFTSIZE, // 334
-                                                  VOID_LIFTSIZE, // 335
-                                                  VOID_LIFTSIZE, // 336
-                                                  VOID_LIFTSIZE, // 337
-                                                  VOID_LIFTSIZE, // 338
-                                                  VOID_LIFTSIZE, // 339
-                                                  VOID_LIFTSIZE, // 340
-                                                  VOID_LIFTSIZE, // 341
-                                                  VOID_LIFTSIZE, // 342
-                                                  VOID_LIFTSIZE, // 343
-                                                  VOID_LIFTSIZE, // 344
-                                                  VOID_LIFTSIZE, // 345
-                                                  VOID_LIFTSIZE, // 346
-                                                  VOID_LIFTSIZE, // 347
-                                                  VOID_LIFTSIZE, // 348
-                                                  VOID_LIFTSIZE, // 349
-                                                  VOID_LIFTSIZE, // 350
-                                                  VOID_LIFTSIZE, // 351
-                                                  5,             // 352
-                                                  VOID_LIFTSIZE, // 353
-                                                  VOID_LIFTSIZE, // 354
-                                                  VOID_LIFTSIZE, // 355
-                                                  VOID_LIFTSIZE, // 356
-                                                  VOID_LIFTSIZE, // 357
-                                                  VOID_LIFTSIZE, // 358
-                                                  VOID_LIFTSIZE, // 359
-                                                  VOID_LIFTSIZE, // 360
-                                                  VOID_LIFTSIZE, // 361
-                                                  VOID_LIFTSIZE, // 362
-                                                  VOID_LIFTSIZE, // 363
-                                                  VOID_LIFTSIZE, // 364
-                                                  VOID_LIFTSIZE, // 365
-                                                  VOID_LIFTSIZE, // 366
-                                                  VOID_LIFTSIZE, // 367
-                                                  VOID_LIFTSIZE, // 368
-                                                  VOID_LIFTSIZE, // 369
-                                                  VOID_LIFTSIZE, // 370
-                                                  VOID_LIFTSIZE, // 371
-                                                  VOID_LIFTSIZE, // 372
-                                                  VOID_LIFTSIZE, // 373
-                                                  VOID_LIFTSIZE, // 374
-                                                  VOID_LIFTSIZE, // 375
-                                                  VOID_LIFTSIZE, // 376
-                                                  VOID_LIFTSIZE, // 377
-                                                  VOID_LIFTSIZE, // 378
-                                                  VOID_LIFTSIZE, // 379
-                                                  VOID_LIFTSIZE, // 380
-                                                  VOID_LIFTSIZE, // 381
-                                                  VOID_LIFTSIZE, // 382
-                                                  VOID_LIFTSIZE, // 383
-                                                  1};            // 384
+static constexpr std::array<ls_description_t, 385> LSindex{{{VOID_LIFTSIZE, VOID_LIFTSIZE}, // 0
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 1
+                                                            {0, 0},                         // 2
+                                                            {1, 1},                         // 3
+                                                            {0, 2},                         // 4
+                                                            {2, 3},                         // 5
+                                                            {1, 4},                         // 6
+                                                            {3, 5},                         // 7
+                                                            {0, 6},                         // 8
+                                                            {4, 7},                         // 9
+                                                            {2, 8},                         // 10
+                                                            {5, 9},                         // 11
+                                                            {1, 10},                        // 12
+                                                            {6, 11},                        // 13
+                                                            {3, 12},                        // 14
+                                                            {7, 13},                        // 15
+                                                            {0, 14},                        // 16
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 17
+                                                            {4, 15},                        // 18
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 19
+                                                            {2, 16},                        // 20
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 21
+                                                            {5, 17},                        // 22
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 23
+                                                            {1, 18},                        // 24
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 25
+                                                            {6, 19},                        // 26
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 27
+                                                            {3, 20},                        // 28
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 29
+                                                            {7, 21},                        // 30
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 31
+                                                            {0, 22},                        // 32
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 33
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 34
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 35
+                                                            {4, 23},                        // 36
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 37
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 38
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 39
+                                                            {2, 24},                        // 40
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 41
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 42
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 43
+                                                            {5, 25},                        // 44
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 45
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 46
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 47
+                                                            {1, 26},                        // 48
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 49
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 50
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 51
+                                                            {6, 27},                        // 52
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 53
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 54
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 55
+                                                            {3, 28},                        // 56
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 57
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 58
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 59
+                                                            {7, 29},                        // 60
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 61
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 62
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 63
+                                                            {0, 30},                        // 64
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 65
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 66
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 67
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 68
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 69
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 70
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 71
+                                                            {4, 31},                        // 72
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 73
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 74
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 75
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 76
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 77
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 78
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 79
+                                                            {2, 32},                        // 80
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 81
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 82
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 83
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 84
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 85
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 86
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 87
+                                                            {5, 33},                        // 88
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 89
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 90
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 91
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 92
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 93
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 94
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 95
+                                                            {1, 34},                        // 96
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 97
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 98
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 99
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 100
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 101
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 102
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 103
+                                                            {6, 35},                        // 104
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 105
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 106
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 107
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 108
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 109
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 110
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 111
+                                                            {3, 36},                        // 112
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 113
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 114
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 115
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 116
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 117
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 118
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 119
+                                                            {7, 37},                        // 120
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 121
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 122
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 123
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 124
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 125
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 126
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 127
+                                                            {0, 38},                        // 128
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 129
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 130
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 131
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 132
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 133
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 134
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 135
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 136
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 137
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 138
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 139
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 140
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 141
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 142
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 143
+                                                            {4, 39},                        // 144
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 145
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 146
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 147
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 148
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 149
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 150
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 151
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 152
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 153
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 154
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 155
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 156
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 157
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 158
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 159
+                                                            {2, 40},                        // 160
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 161
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 162
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 163
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 164
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 165
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 166
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 167
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 168
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 169
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 170
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 171
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 172
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 173
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 174
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 175
+                                                            {5, 41},                        // 176
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 177
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 178
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 179
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 180
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 181
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 182
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 183
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 184
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 185
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 186
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 187
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 188
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 189
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 190
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 191
+                                                            {1, 42},                        // 192
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 193
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 194
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 195
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 196
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 197
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 198
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 199
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 200
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 201
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 202
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 203
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 204
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 205
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 206
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 207
+                                                            {6, 43},                        // 208
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 209
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 210
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 211
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 212
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 213
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 214
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 215
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 216
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 217
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 218
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 219
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 220
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 221
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 222
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 223
+                                                            {3, 44},                        // 224
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 225
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 226
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 227
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 228
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 229
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 230
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 231
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 232
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 233
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 234
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 235
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 236
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 237
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 238
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 239
+                                                            {7, 45},                        // 240
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 241
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 242
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 243
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 244
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 245
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 246
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 247
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 248
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 249
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 250
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 251
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 252
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 253
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 254
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 255
+                                                            {0, 46},                        // 256
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 257
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 258
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 259
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 260
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 261
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 262
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 263
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 264
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 265
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 266
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 267
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 268
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 269
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 270
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 271
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 272
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 273
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 274
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 275
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 276
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 277
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 278
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 279
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 280
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 281
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 282
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 283
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 284
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 285
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 286
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 287
+                                                            {4, 47},                        // 288
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 289
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 290
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 291
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 292
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 293
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 294
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 295
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 296
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 297
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 298
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 299
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 300
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 301
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 302
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 303
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 304
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 305
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 306
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 307
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 308
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 309
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 310
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 311
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 312
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 313
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 314
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 315
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 316
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 317
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 318
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 319
+                                                            {2, 48},                        // 320
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 321
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 322
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 323
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 324
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 325
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 326
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 327
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 328
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 329
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 330
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 331
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 332
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 333
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 334
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 335
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 336
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 337
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 338
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 339
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 340
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 341
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 342
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 343
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 344
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 345
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 346
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 347
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 348
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 349
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 350
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 351
+                                                            {5, 49},                        // 352
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 353
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 354
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 355
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 356
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 357
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 358
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 359
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 360
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 361
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 362
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 363
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 364
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 365
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 366
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 367
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 368
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 369
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 370
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 371
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 372
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 373
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 374
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 375
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 376
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 377
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 378
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 379
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 380
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 381
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 382
+                                                            {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 383
+                                                            {1, 50}}};                      // 384
 
 /// \brief Look-up table for Base Graph BG1.
 ///
@@ -2733,7 +2741,7 @@ static const BG_edge_matrix_t BG1_edge_matrix{
 
 BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls)
 {
-  int ls_index = LSindex[ls];
+  int ls_index = LSindex[ls].index;
   assert(ls_index != VOID_LIFTSIZE);
   BG_matrix_t graph_matrix = BG1_matrices[ls_index];
 
@@ -2757,5 +2765,10 @@ BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls)
 
 uint8_t get_lifting_index(lifting_size_t ls)
 {
-  return LSindex[ls];
+  return LSindex[ls].index;
+}
+
+uint8_t get_lifting_size_position(lifting_size_t ls)
+{
+  return LSindex[ls].position;
 }

@@ -14,3 +14,6 @@ add_test(polar_chain_test_uci3 polar_chain_test -n10 -k18 -e38 -i1 -s101 -o1)
 add_executable(polar_interleaver_test polar_interleaver_test.cpp)
 target_link_libraries(polar_interleaver_test polar_code srsvec)
 add_test(polar_interleaver_test polar_interleaver_test)
+
+add_executable(ldpc_test ldpc_test.cpp)
+target_link_libraries(ldpc_test ldpc)
