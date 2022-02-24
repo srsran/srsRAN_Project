@@ -55,13 +55,13 @@ private:
 class resource_grid_dummy : public resource_grid
 {
 public:
-  void put(unsigned l, unsigned k, cf_t value) override {}
-  void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override {}
-  void put(unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-  cf_t get(unsigned l, unsigned k) const override { return srsgnb::cf_t(); }
-  void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) override {}
-  void get(unsigned l, unsigned k_init, span<cf_t> symbols) override {}
-  void all_zero() override {}
+  void put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
+  void put(unsigned int l, span<const bool> mask, span<const cf_t>& symbol_buffer) override {}
+  void put(unsigned int l, unsigned int k_init, span<const cf_t> symbols) override {}
+  void get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const override {}
+  void get(unsigned int l, span<const bool> mask, span<cf_t>& symbol_buffer) const override {}
+  void get(unsigned int l, unsigned int k_init, span<cf_t> symbols) const override {}
+  void set_all_zero() override {}
 };
 
 } // namespace srsgnb
