@@ -7,42 +7,42 @@ namespace srsgnb {
 class mac_ue_delete_procedure final : public async_procedure<void>
 {
 public:
-  explicit mac_ue_delete_procedure(mac_context& ctxt_, mac_ue_context& ue_ctx_, manual_event_flag& sched_ue_deleted_) :
-    ctxt(ctxt_), ue_ctx(ue_ctx_), logger(srslog::fetch_basic_logger("MAC")), sched_ue_deleted(sched_ue_deleted_)
+  explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
+                                   mac_common_config_t&                 cfg_,
+                                   mac_ul&                              mac_ul_,
+                                   mac_dl&                              mac_dl_) :
+    req(msg), cfg(cfg_), ul_mac(mac_ul_), dl_mac(mac_dl_), logger(srslog::fetch_basic_logger("MAC"))
   {}
 
+private:
   void start() override
   {
-    log_proc_started(logger, ue_ctx.du_ue_index, ue_ctx.rnti, "UE Delete Request");
+    log_proc_started(logger, req.ue_index, req.rnti, "UE Delete Request");
 
-    async_await(sched_ue_deleted, &mac_ue_delete_procedure::sched_ue_delete_response);
-    ctxt.cfg.dl_execs[ue_ctx.pcell_idx]->execute([this]() {
-      // 1. Remove UE from MAC DL worker
-      ctxt.dl_worker.remove_ue(ue_ctx.du_ue_index);
-    });
+    // 1. Remove UE from MAC DL worker
+    async_await(dl_mac.remove_ue(req), &mac_ue_delete_procedure::ue_dl_removed);
   }
 
-  void sched_ue_delete_response()
+  void ue_dl_removed()
   {
-    // 2. Remove UE associated DL channels
-    ctxt.dl_worker.on_sched_ue_remove_complete(ue_ctx.du_ue_index);
+    // 2. Remove UE associated UL channels
+    async_await(ul_mac.remove_ue(req.ue_index), &mac_ue_delete_procedure::ue_ul_removed);
+  }
 
-    ctxt.cfg.ul_exec.execute([this]() {
-      // 3. Remove UE associated UL channels
-      ctxt.ul_worker.remove_ue(ue_ctx.du_ue_index);
-
-      // 4. Send back response to DU manager
-      mac_ue_delete_response_message resp{};
-      resp.ue_index = ue_ctx.du_ue_index;
-      ctxt.cfg.cfg_notifier.on_ue_delete_complete(resp);
-    });
+  void ue_ul_removed()
+  {
+    // 3. Send back response to DU manager
+    mac_ue_delete_response_message resp{};
+    resp.ue_index = req.ue_index;
+    cfg.cfg_notifier.on_ue_delete_complete(resp);
   }
 
 private:
-  mac_context&          ctxt;
-  mac_ue_context&          ue_ctx;
-  srslog::basic_logger& logger;
-  manual_event_flag&    sched_ue_deleted;
+  mac_ue_delete_request_message req;
+  mac_common_config_t&          cfg;
+  mac_ul&                       ul_mac;
+  mac_dl&                       dl_mac;
+  srslog::basic_logger&         logger;
 };
 
 } // namespace srsgnb

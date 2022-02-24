@@ -4,6 +4,7 @@
 
 #include "mac_ctrl.h"
 #include "mac_ctxt.h"
+#include "mac_ul.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
@@ -25,7 +26,7 @@ public:
                     task_executor&       ctrl_exec);
 
   void ue_create_request(const mac_ue_create_request_message& cfg) override;
-  void ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) override {}
+  void ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override {}
   void ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
   void push_ul_pdu(mac_rx_data_indication pdu) override;
@@ -37,13 +38,12 @@ public:
   void sched_ue_config_response(rnti_t rnti);
 
 private:
+  mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
-  std::unique_ptr<sched_cfg_notifier> sched_notifier;
-  mac_dl_worker                       dl_worker;
-  mac_ul_worker                       ul_worker;
-  mac_context                         ctxt;
-  mac_ctrl_worker                     ctrl_worker;
+  mac_dl   dl_unit;
+  mac_ul   ul_unit;
+  mac_ctrl ctrl_unit;
 
   std::mutex dl_mutex;
 };

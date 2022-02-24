@@ -5,12 +5,13 @@
 
 using namespace srsgnb;
 
-mac_ctrl_worker::mac_ctrl_worker(mac_context& ctx_) : mac_ctx(ctx_), logger(mac_ctx.cfg.logger)
+mac_ctrl::mac_ctrl(mac_common_config_t& cfg_, mac_ul& ul_unit_, mac_dl& dl_unit_) :
+  cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_)
 {
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
 }
 
-void mac_ctrl_worker::ue_create_request(const mac_ue_create_request_message& msg)
+void mac_ctrl::ue_create_request(const mac_ue_create_request_message& msg)
 {
   ue_element* u = add_ue(msg.ue_index, msg.crnti, msg.cell_index);
   if (u == nullptr) {
@@ -18,20 +19,20 @@ void mac_ctrl_worker::ue_create_request(const mac_ue_create_request_message& msg
     resp.ue_index   = msg.ue_index;
     resp.cell_index = msg.cell_index;
     resp.result     = false;
-    mac_ctx.cfg.cfg_notifier.on_ue_create_request_complete(resp);
+    cfg.cfg_notifier.on_ue_create_request_complete(resp);
     return;
   }
   // UE object added to ue_db successfully
 
   // Enqueue UE create request procedure
   u->pending_events.push(
-      [this, u, msg]() { return launch_async<mac_ue_create_request_procedure>(mac_ctx, u->sched_response_ev, msg); });
+      [this, msg]() { return launch_async<mac_ue_create_request_procedure>(msg, cfg, ul_unit, dl_unit); });
   u->notify_event.set();
 }
 
-void mac_ctrl_worker::sched_ue_create_response(rnti_t rnti)
+void mac_ctrl::sched_ue_create_response(rnti_t rnti)
 {
-  mac_ctx.cfg.ctrl_exec.execute([this, rnti]() {
+  cfg.ctrl_exec.execute([this, rnti]() {
     du_ue_index_t ue_index = rnti_to_ue_index_map[rnti % MAX_NOF_UES];
     if (rnti == INVALID_RNTI or not ue_db.contains(ue_index)) {
       logger.warning("Failed to find rnti=0x{:x}", rnti);
@@ -44,30 +45,29 @@ void mac_ctrl_worker::sched_ue_create_response(rnti_t rnti)
   });
 }
 
-void mac_ctrl_worker::ue_delete_request(const mac_ue_delete_request_message& msg)
+void mac_ctrl::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   if (not ue_db.contains(msg.ue_index)) {
     logger.warning("Failed to find ueId={}", msg.ue_index);
     mac_ue_delete_response_message resp{};
     resp.ue_index = msg.ue_index;
     resp.result   = false;
-    mac_ctx.cfg.cfg_notifier.on_ue_delete_complete(resp);
+    cfg.cfg_notifier.on_ue_delete_complete(resp);
     return;
   }
   ue_element& u = ue_db[msg.ue_index];
 
   // Enqueue UE delete procedure
   // TODO: right now I dont have lazy_tasks, so I have to wrap the coroutine in a lambda.
-  u.pending_events.push(
-      [this, &u]() { return launch_async<mac_ue_delete_procedure>(mac_ctx, u.ue_ctx, u.sched_response_ev); });
+  u.pending_events.push([this, msg]() { return launch_async<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit); });
 }
 
-void mac_ctrl_worker::sched_ue_delete_response(rnti_t rnti)
+void mac_ctrl::sched_ue_delete_response(rnti_t rnti)
 {
   sched_ue_create_response(rnti);
 }
 
-void mac_ctrl_worker::launch_ue_ctrl_loop(ue_element& u)
+void mac_ctrl::launch_ue_ctrl_loop(ue_element& u)
 {
   u.ctrl_loop = launch_async([&u, current_task = async_task<void>{}](coro_context<async_task<void> >& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -92,7 +92,7 @@ void mac_ctrl_worker::launch_ue_ctrl_loop(ue_element& u)
   });
 }
 
-mac_ctrl_worker::ue_element* mac_ctrl_worker::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
+mac_ctrl::ue_element* mac_ctrl::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
   srsran_assert(crnti != INVALID_RNTI, "Invalid RNTI");
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
@@ -122,7 +122,7 @@ mac_ctrl_worker::ue_element* mac_ctrl_worker::add_ue(du_ue_index_t ue_index, rnt
   return &u;
 }
 
-bool mac_ctrl_worker::remove_ue(du_ue_index_t ue_index)
+bool mac_ctrl::remove_ue(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
 
@@ -136,13 +136,13 @@ bool mac_ctrl_worker::remove_ue(du_ue_index_t ue_index)
   return true;
 }
 
-mac_ue_context* mac_ctrl_worker::find_ue(du_ue_index_t ue_index)
+mac_ue_context* mac_ctrl::find_ue(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index].ue_ctx : nullptr;
 }
 
-mac_ue_context* mac_ctrl_worker::find_by_rnti(rnti_t rnti)
+mac_ue_context* mac_ctrl::find_by_rnti(rnti_t rnti)
 {
   srsran_assert(rnti != INVALID_RNTI, "Invalid rnti=0x%x", rnti);
   du_ue_index_t ue_index = rnti_to_ue_index_map[rnti % MAX_NOF_UES];

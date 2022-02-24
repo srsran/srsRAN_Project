@@ -6,27 +6,6 @@
 
 using namespace srsgnb;
 
-class sched_cfg_test_adapter : public sched_cfg_notifier
-{
-public:
-  bool ue_config_complete_called = false;
-  bool ue_delete_complete_called = false;
-
-  task_executor&          ctrl_exec;
-  unique_function<void()> callback = []() {};
-
-  sched_cfg_test_adapter(task_executor& ctrl_exec_) : ctrl_exec(ctrl_exec_) {}
-
-  void on_ue_config_complete(rnti_t) override
-  {
-    ctrl_exec.execute([this]() {
-      ue_config_complete_called = true;
-      callback();
-    });
-  }
-  void on_ue_delete_response(rnti_t rnti) override { ue_delete_complete_called = true; }
-};
-
 class mac_ul_sdu_test_adapter : public mac_ul_sdu_notifier
 {
 public:
@@ -36,7 +15,16 @@ public:
 class mac_config_test_adapter : public mac_config_notifier
 {
 public:
-  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override {}
+  std::mutex                                       mutex;
+  std::condition_variable                          cvar;
+  optional<mac_ue_create_request_response_message> last_ue_created{};
+
+  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    last_ue_created = resp;
+    cvar.notify_one();
+  }
   void on_ue_reconfiguration_complete() override {}
   void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override {}
 };
@@ -48,21 +36,14 @@ public:
 };
 
 struct mac_test_bench {
-  sched_cfg_test_adapter      sched_cfg_notif;
-  mac_dl_worker               dl_worker;
-  mac_ul_sdu_test_adapter     ul_notif;
-  mac_ul_worker               ul_worker;
-  mac_config_test_adapter     mac_notif;
-  std::vector<task_executor*> dl_execs;
-  mac_context                 mac_ctx;
-  manual_event_flag           sched_response_ev;
+  mac_config_test_adapter mac_notif;
+  mac_common_config_t     mac_cfg;
+  mac_dl                  dl_mac;
+  mac_ul_sdu_test_adapter ul_notif;
+  mac_ul                  ul_mac;
 
-  mac_test_bench(task_executor& ctrl_exec, std::initializer_list<task_executor*> dl_execs_, task_executor& ul_exec) :
-    sched_cfg_notif(ctrl_exec),
-    dl_worker(sched_cfg_notif),
-    ul_worker(ul_notif),
-    dl_execs(dl_execs_.begin(), dl_execs_.end()),
-    mac_ctx(mac_notif, ul_exec, dl_execs, ctrl_exec, dl_worker, ul_worker)
+  mac_test_bench(task_executor& ctrl_exec, span<task_executor*> dl_execs_, task_executor& ul_exec) :
+    mac_cfg(mac_notif, ul_exec, dl_execs_, ctrl_exec), dl_mac(mac_cfg), ul_mac(mac_cfg, ul_notif)
   {}
 };
 
@@ -74,37 +55,32 @@ void test_ue_create_procedure_single_thread()
   sequential_executor exec;
 
   // Create a MAC context object
-  mac_test_bench bench{exec, {&exec}, exec};
+  std::vector<task_executor*> dl_execs = {&exec};
+  mac_test_bench              bench{exec, dl_execs, exec};
 
   // Launch procedure
   mac_ue_create_request_message msg{};
-  msg.ue_index   = 0;
+  msg.ue_index   = 1;
   msg.crnti      = 0x4601;
   msg.cell_index = 0;
   msg.bearers.emplace_back();
   msg.bearers[0].lcid      = 0;
   msg.bearers[0].dl_bearer = nullptr; // procedure should not use bearers
   msg.bearers[0].ul_bearer = nullptr; // procedure should not use bearers
-  async_task<void> proc    = launch_async<mac_ue_create_request_procedure>(bench.mac_ctx, bench.sched_response_ev, msg);
-  TESTASSERT(not proc.ready() and not proc.empty());
+  async_task<void> proc = launch_async<mac_ue_create_request_procedure>(msg, bench.mac_cfg, bench.ul_mac, bench.dl_mac);
 
   // Given that there is only one single execution context, the creation of the UE in the MAC DL and UL should be
   // completed at this point, and the scheduler config notifier should have been triggered.
-  TESTASSERT(bench.ul_worker.contains_ue(msg.ue_index));
-  TESTASSERT(bench.dl_worker.contains_ue(msg.ue_index));
-  TESTASSERT(bench.sched_cfg_notif.ue_config_complete_called);
-  TESTASSERT(not bench.sched_cfg_notif.ue_delete_complete_called);
-
-  // Manually trigger the scheduler config response completes the procedure
-  bench.sched_response_ev.set();
   TESTASSERT(proc.ready());
+  TESTASSERT_EQ(1, bench.mac_notif.last_ue_created->ue_index);
+  TESTASSERT(bench.mac_notif.last_ue_created->result);
 }
 
 void test_ue_create_procedure_multi_thread()
 {
   test_delimit_logger test_delim{"Multi-threaded UE creation procedure"};
 
-  // Run tasks in same thread
+  // Run tasks in different threads
   task_worker                    ctrl_worker{"CTRLWorker", 16};
   task_worker                    ul_worker{"ULWorker", 16};
   task_worker                    dl_worker{"DLWorker", 16};
@@ -113,18 +89,15 @@ void test_ue_create_procedure_multi_thread()
   std::unique_ptr<task_executor> dl_exec   = make_task_executor(dl_worker);
 
   // Create a MAC context object
-  mac_test_bench bench{*ctrl_exec, {dl_exec.get()}, *ul_exec};
-  bench.sched_cfg_notif.callback = [&bench]() {
-    // Automatically trigger scheduler config response event when MAC DL finishes creating the UE
-    bench.sched_response_ev.set();
-  };
+  std::vector<task_executor*> dl_execs = {dl_exec.get()};
+  mac_test_bench              bench{*ctrl_exec, dl_execs, *ul_exec};
 
   // launch procedure
   async_task<void> proc;
   ctrl_exec->execute([&bench, &proc]() {
     // Launch procedure from CTRL execution context
     mac_ue_create_request_message msg{};
-    msg.ue_index   = 0;
+    msg.ue_index   = 3;
     msg.crnti      = 0x4601;
     msg.cell_index = 0;
     msg.bearers.emplace_back();
@@ -132,27 +105,19 @@ void test_ue_create_procedure_multi_thread()
     msg.bearers[0].dl_bearer = nullptr; // procedure should not use bearers
     msg.bearers[0].ul_bearer = nullptr; // procedure should not use bearers
 
-    proc = launch_async<mac_ue_create_request_procedure>(bench.mac_ctx, bench.sched_response_ev, msg);
-    TESTASSERT(not proc.ready() and not proc.empty());
+    proc = launch_async<mac_ue_create_request_procedure>(msg, bench.mac_cfg, bench.ul_mac, bench.dl_mac);
   });
 
-  // keep polling for procedure readiness (from inside the CTRL thread)
-  std::atomic<int> finished{false}, task_complete{false};
-  for (int count = 0; not finished and count < 10000; ++count) {
-    task_complete = false;
-    ctrl_exec->execute([&proc, &finished, &task_complete]() {
-      if (proc.ready()) {
-        finished = true;
-      }
-      task_complete = true;
-    });
-    while (not task_complete) {
-      usleep(100);
+  {
+    std::unique_lock<std::mutex> lock(bench.mac_notif.mutex);
+    while (not bench.mac_notif.last_ue_created.has_value()) {
+      bench.mac_notif.cvar.wait_for(lock, std::chrono::milliseconds{100});
     }
   }
-  TESTASSERT(finished);
-
-//  ul_worker.stop();
+  TESTASSERT(bench.mac_notif.last_ue_created.has_value());
+  TESTASSERT_EQ(3, bench.mac_notif.last_ue_created->ue_index);
+  TESTASSERT(bench.mac_notif.last_ue_created->result);
+  ctrl_worker.stop();
 }
 
 int main()

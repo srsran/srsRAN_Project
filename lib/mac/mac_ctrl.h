@@ -3,7 +3,10 @@
 #define SRSGNB_MAC_UE_CTRL_H
 
 #include "mac_ctxt.h"
+#include "mac_dl.h"
+#include "mac_ul.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/async/async_task.h"
@@ -18,10 +21,10 @@ struct mac_ue_context {
   du_cell_index_t pcell_idx   = -1;
 };
 
-class mac_ctrl_worker
+class mac_ctrl
 {
 public:
-  mac_ctrl_worker(mac_context& ctx_);
+  mac_ctrl(mac_common_config_t& cfg, mac_ul& ul_unit_, mac_dl& dl_unit_);
 
   /// UE create methods
   void ue_create_request(const mac_ue_create_request_message& msg);
@@ -54,8 +57,10 @@ private:
   static void launch_ue_ctrl_loop(ue_element& u);
 
   // args
-  mac_context&          mac_ctx;
+  mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
+  mac_ul&               ul_unit;
+  mac_dl&               dl_unit;
 
   // UE database
   slot_array<ue_element, MAX_NOF_UES>    ue_db;
