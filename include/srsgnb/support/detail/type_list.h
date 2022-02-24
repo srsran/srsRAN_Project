@@ -25,11 +25,19 @@ struct get_type_from_index_helper<I, I, T, Types...> {
 template <typename... Args>
 struct type_list {};
 
+/// Get size of type_list
+template <typename... Args>
+constexpr std::size_t type_list_size(type_list<Args...> t)
+{
+  return sizeof...(Args);
+}
+
 /// Metafunction to extract type from variadic template arguments based on provided Index
 template <std::size_t Index, class... Types>
 class get_type_from_index
 {
   static_assert(Index < sizeof...(Types), "index out of bounds");
+
 public:
   using type = typename get_type_from_index_helper<0, Index, Types...>::type;
 };

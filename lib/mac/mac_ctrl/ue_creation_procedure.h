@@ -31,10 +31,18 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
     // 1. Create UE UL context and channels
-    CORO_AWAIT(ul_unit.add_ue(req));
+    CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
+    if (not add_ue_result) {
+      send_mac_ue_create_response(false);
+      CORO_EARLY_RETURN();
+    }
 
     // 2. Create UE DL context and channels
-    CORO_AWAIT(dl_unit.add_ue(req));
+    CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
+    if (not add_ue_result) {
+      send_mac_ue_create_response(false);
+      CORO_EARLY_RETURN();
+    }
 
     // 3. After UE insertion in scheduler, send response to DU manager
     mac_ue_create_request_response_message resp{};
@@ -48,11 +56,28 @@ public:
   }
 
 private:
+  void send_mac_ue_create_response(bool result)
+  {
+    if (result) {
+      log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
+    } else {
+      log_proc_failure(logger, req.ue_index, req.crnti, "UE Create Request");
+    }
+
+    mac_ue_create_request_response_message resp{};
+    resp.ue_index   = req.ue_index;
+    resp.cell_index = req.cell_index;
+    resp.result     = result;
+    cfg.cfg_notifier.on_ue_create_request_complete(resp);
+  }
+
   const mac_ue_create_request_message req;
   mac_common_config_t&                cfg;
   srslog::basic_logger&               logger;
   mac_ul_configurer&                  ul_unit;
   mac_dl_configurer&                  dl_unit;
+
+  bool add_ue_result = false;
 };
 
 } // namespace srsgnb

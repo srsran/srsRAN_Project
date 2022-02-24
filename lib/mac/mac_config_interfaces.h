@@ -11,14 +11,15 @@ class mac_ul_configurer
 {
 public:
   virtual ~mac_ul_configurer()                                                 = default;
-  virtual async_task<void> add_ue(const mac_ue_create_request_message& msg)    = 0;
+  virtual async_task<bool> add_ue(const mac_ue_create_request_message& msg)    = 0;
   virtual async_task<void> remove_ue(const mac_ue_delete_request_message& msg) = 0;
 };
 
-class mac_dl_configurer {
+class mac_dl_configurer
+{
 public:
   virtual ~mac_dl_configurer()                                                 = default;
-  virtual async_task<void> add_ue(const mac_ue_create_request_message& msg)    = 0;
+  virtual async_task<bool> add_ue(const mac_ue_create_request_message& msg)    = 0;
   virtual async_task<void> remove_ue(const mac_ue_delete_request_message& msg) = 0;
 };
 

@@ -1,4 +1,7 @@
 
+add_executable(function_signature_test function_signature_test.cc)
+add_test(function_signature_test function_signature_test)
+
 add_executable(async_event_test async_event_test.cc)
 target_link_libraries(async_event_test srslog)
 add_test(async_event_test async_event_test)

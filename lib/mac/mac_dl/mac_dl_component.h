@@ -21,9 +21,9 @@ public:
     cfg(cfg_), logger(cfg.logger), sched_cfg_notif(*this), sched_obj(sched_cfg_notif)
   {}
 
-  async_task<void> add_ue(const mac_ue_create_request_message& request) override
+  async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
-    return launch_async([this, request](coro_context<async_task<void> >& ctx) {
+    return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
 
       // 1. Change to respective DL executor
@@ -44,7 +44,7 @@ public:
       // 5. Change back to CTRL executor before returning
       CORO_AWAIT(schedule_on(cfg.ctrl_exec));
 
-      CORO_RETURN();
+      CORO_RETURN(true);
     });
   }
 

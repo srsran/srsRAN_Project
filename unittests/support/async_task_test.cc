@@ -18,6 +18,9 @@ public:
     CORO_RETURN(v);
   }
 };
+static_assert(std::is_same<async_task<int>,
+                           decltype(launch_async<wait_event_coroutine>(std::declval<manual_event<int>&>()))>::value,
+              "Invalid async_task<> type deduction");
 
 /// Async procedure implementation that just awaits another tasks and forwards its result
 class passthrough_async_procedure final : public async_procedure<int>

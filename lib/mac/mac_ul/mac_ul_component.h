@@ -85,10 +85,11 @@ public:
     workers.push_back(std::make_unique<mac_pusch_processor>(cfg, ul_ccch_notifier_));
   }
 
-  async_task<void> add_ue(const mac_ue_create_request_message& request) override
+  async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
     // TODO: define dispatch policy to UL workers
-    return dispatch_and_resume_on(cfg.ul_exec, cfg.ctrl_exec, [this, request]() { workers[0]->add_ue(request); });
+    return dispatch_and_resume_on(
+        cfg.ul_exec, cfg.ctrl_exec, [this, request]() { return workers[0]->add_ue(request); });
   }
 
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override

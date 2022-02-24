@@ -53,16 +53,16 @@ void log_proc_failure(srslog::basic_logger& logger,
                       du_ue_index_t         ue_index,
                       rnti_t                rnti,
                       const char*           proc_name,
-                      const char*           cause_fmt,
+                      const char*           cause_fmt = "",
                       Args&&... args)
 {
   fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.error(FMT_CTRL_PREFIX " " FMT_UE_INDEX " " FMT_RNTI "\"{}\" failed. Cause: {}",
-               ue_index,
-               rnti,
-               proc_name,
-               to_c_str(fmtbuf));
+  if (strcmp(cause_fmt, "") != 0) {
+    fmt::format_to(fmtbuf, "Cause: ");
+    fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
+  }
+  logger.error(
+      FMT_CTRL_PREFIX " " FMT_UE_INDEX " " FMT_RNTI ": \"{}\" failed. {}", ue_index, rnti, proc_name, to_c_str(fmtbuf));
 }
 
 template <typename... Args>
