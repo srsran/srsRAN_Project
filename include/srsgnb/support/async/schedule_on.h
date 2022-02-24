@@ -38,7 +38,7 @@ auto schedule_on(TaskExecutor& exec) -> detail::task_executor_awaiter<TaskExecut
 
 template <typename DispatchTaskExecutor, typename CurrentTaskExecutor, typename Callable>
 async_task<void>
-dispatch_and_return_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
+dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
   return launch_async(
       [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void> >& ctx) {

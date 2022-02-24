@@ -1,17 +1,17 @@
 
-#include "mac_ctrl.h"
+#include "mac_ctrl_component.h"
 #include "ue_creation_procedure.h"
 #include "ue_delete_procedure.h"
 
 using namespace srsgnb;
 
-mac_ctrl::mac_ctrl(mac_common_config_t& cfg_, mac_ul& ul_unit_, mac_dl& dl_unit_) :
+mac_ctrl_component::mac_ctrl_component(mac_common_config_t& cfg_, mac_ul_component& ul_unit_, mac_dl_component& dl_unit_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_)
 {
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
 }
 
-void mac_ctrl::ue_create_request(const mac_ue_create_request_message& msg)
+void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& msg)
 {
   ue_element* u = add_ue(msg.ue_index, msg.crnti, msg.cell_index);
   if (u == nullptr) {
@@ -30,7 +30,7 @@ void mac_ctrl::ue_create_request(const mac_ue_create_request_message& msg)
   u->notify_event.set();
 }
 
-void mac_ctrl::sched_ue_create_response(rnti_t rnti)
+void mac_ctrl_component::sched_ue_create_response(rnti_t rnti)
 {
   cfg.ctrl_exec.execute([this, rnti]() {
     du_ue_index_t ue_index = rnti_to_ue_index_map[rnti % MAX_NOF_UES];
@@ -45,7 +45,7 @@ void mac_ctrl::sched_ue_create_response(rnti_t rnti)
   });
 }
 
-void mac_ctrl::ue_delete_request(const mac_ue_delete_request_message& msg)
+void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   if (not ue_db.contains(msg.ue_index)) {
     logger.warning("Failed to find ueId={}", msg.ue_index);
@@ -62,12 +62,12 @@ void mac_ctrl::ue_delete_request(const mac_ue_delete_request_message& msg)
   u.pending_events.push([this, msg]() { return launch_async<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit); });
 }
 
-void mac_ctrl::sched_ue_delete_response(rnti_t rnti)
+void mac_ctrl_component::sched_ue_delete_response(rnti_t rnti)
 {
   sched_ue_create_response(rnti);
 }
 
-void mac_ctrl::launch_ue_ctrl_loop(ue_element& u)
+void mac_ctrl_component::launch_ue_ctrl_loop(ue_element& u)
 {
   u.ctrl_loop = launch_async([&u, current_task = async_task<void>{}](coro_context<async_task<void> >& ctx) mutable {
     CORO_BEGIN(ctx);
@@ -92,7 +92,8 @@ void mac_ctrl::launch_ue_ctrl_loop(ue_element& u)
   });
 }
 
-mac_ctrl::ue_element* mac_ctrl::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
+mac_ctrl_component::ue_element*
+mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
   srsran_assert(crnti != INVALID_RNTI, "Invalid RNTI");
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
@@ -122,7 +123,7 @@ mac_ctrl::ue_element* mac_ctrl::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_
   return &u;
 }
 
-bool mac_ctrl::remove_ue(du_ue_index_t ue_index)
+bool mac_ctrl_component::remove_ue(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
 
@@ -136,13 +137,13 @@ bool mac_ctrl::remove_ue(du_ue_index_t ue_index)
   return true;
 }
 
-mac_ue_context* mac_ctrl::find_ue(du_ue_index_t ue_index)
+mac_ue_context* mac_ctrl_component::find_ue(du_ue_index_t ue_index)
 {
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index].ue_ctx : nullptr;
 }
 
-mac_ue_context* mac_ctrl::find_by_rnti(rnti_t rnti)
+mac_ue_context* mac_ctrl_component::find_by_rnti(rnti_t rnti)
 {
   srsran_assert(rnti != INVALID_RNTI, "Invalid rnti=0x%x", rnti);
   du_ue_index_t ue_index = rnti_to_ue_index_map[rnti % MAX_NOF_UES];

@@ -2,16 +2,16 @@
 #ifndef SRSGNB_MAC_IMPL_H
 #define SRSGNB_MAC_IMPL_H
 
-#include "mac_ctrl.h"
-#include "mac_ctxt.h"
-#include "mac_ul.h"
+#include "mac_config.h"
+#include "mac_ctrl/mac_ctrl_component.h"
+#include "mac_ctrl/ue_creation_procedure.h"
+#include "mac_ctrl/ue_delete_procedure.h"
+#include "mac_ul/mac_ul_component.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/task_executor.h"
-#include "ue_creation_procedure.h"
-#include "ue_delete_procedure.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -29,7 +29,7 @@ public:
   void ue_reconfiguration_request(const mac_ue_reconfiguration_request& msg) override {}
   void ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
-  void push_ul_pdu(mac_rx_data_indication pdu) override;
+  void push_rx_data_indication(mac_rx_data_indication msg) override;
 
   void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
 
@@ -41,9 +41,9 @@ private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
-  mac_dl   dl_unit;
-  mac_ul   ul_unit;
-  mac_ctrl ctrl_unit;
+  mac_dl_component   dl_unit;
+  mac_ul_component   ul_unit;
+  mac_ctrl_component ctrl_unit;
 
   std::mutex dl_mutex;
 };

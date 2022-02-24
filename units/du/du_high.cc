@@ -58,7 +58,7 @@ void du_high::stop()
 
 void du_high::push_pusch(mac_rx_data_indication pdu)
 {
-  ul_exec->execute([this, pdu]() { mac->push_ul_pdu(std::move(pdu)); });
+  ul_exec->execute([this, pdu]() { mac->push_rx_data_indication(std::move(pdu)); });
 }
 
 std::string du_high::query(const std::string& s)

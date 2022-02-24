@@ -2,6 +2,9 @@
 #ifndef SRSGNB_UE_DELETE_PROCEDURE_H
 #define SRSGNB_UE_DELETE_PROCEDURE_H
 
+#include "../mac_config.h"
+#include "../mac_config_interfaces.h"
+
 namespace srsgnb {
 
 class mac_ue_delete_procedure final : public async_procedure<void>
@@ -9,9 +12,9 @@ class mac_ue_delete_procedure final : public async_procedure<void>
 public:
   explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
                                    mac_common_config_t&                 cfg_,
-                                   mac_ul&                              mac_ul_,
-                                   mac_dl&                              mac_dl_) :
-    req(msg), cfg(cfg_), ul_mac(mac_ul_), dl_mac(mac_dl_), logger(srslog::fetch_basic_logger("MAC"))
+                                   mac_ul_configurer&                   mac_ul_,
+                                   mac_dl_component&                    mac_dl_) :
+    req(msg), cfg(cfg_), logger(cfg.logger), ul_component(mac_ul_), dl_mac(mac_dl_)
   {}
 
 private:
@@ -26,7 +29,7 @@ private:
   void ue_dl_removed()
   {
     // 2. Remove UE associated UL channels
-    async_await(ul_mac.remove_ue(req.ue_index), &mac_ue_delete_procedure::ue_ul_removed);
+    async_await(ul_component.remove_ue(req), &mac_ue_delete_procedure::ue_ul_removed);
   }
 
   void ue_ul_removed()
@@ -37,12 +40,11 @@ private:
     cfg.cfg_notifier.on_ue_delete_complete(resp);
   }
 
-private:
   mac_ue_delete_request_message req;
   mac_common_config_t&          cfg;
-  mac_ul&                       ul_mac;
-  mac_dl&                       dl_mac;
   srslog::basic_logger&         logger;
+  mac_ul_configurer&            ul_component;
+  mac_dl_component&             dl_mac;
 };
 
 } // namespace srsgnb

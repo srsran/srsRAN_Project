@@ -95,7 +95,7 @@ class mac_southbound_interface
 {
 public:
   virtual ~mac_southbound_interface()                                        = default;
-  virtual void push_ul_pdu(mac_rx_data_indication pdu)                       = 0;
+  virtual void push_rx_data_indication(mac_rx_data_indication pdu)                       = 0;
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 

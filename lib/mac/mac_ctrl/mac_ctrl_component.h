@@ -2,9 +2,9 @@
 #ifndef SRSGNB_MAC_UE_CTRL_H
 #define SRSGNB_MAC_UE_CTRL_H
 
-#include "mac_ctxt.h"
-#include "mac_dl.h"
-#include "mac_ul.h"
+#include "../mac_config.h"
+#include "../mac_dl/mac_dl_component.h"
+#include "../mac_ul/mac_ul_component.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/du_types.h"
@@ -21,10 +21,10 @@ struct mac_ue_context {
   du_cell_index_t pcell_idx   = -1;
 };
 
-class mac_ctrl
+class mac_ctrl_component
 {
 public:
-  mac_ctrl(mac_common_config_t& cfg, mac_ul& ul_unit_, mac_dl& dl_unit_);
+  mac_ctrl_component(mac_common_config_t& cfg, mac_ul_component& ul_unit_, mac_dl_component& dl_unit_);
 
   /// UE create methods
   void ue_create_request(const mac_ue_create_request_message& msg);
@@ -59,8 +59,8 @@ private:
   // args
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
-  mac_ul&               ul_unit;
-  mac_dl&               dl_unit;
+  mac_ul_component&               ul_unit;
+  mac_dl_component&               dl_unit;
 
   // UE database
   slot_array<ue_element, MAX_NOF_UES>    ue_db;

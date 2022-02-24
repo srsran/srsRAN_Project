@@ -1,19 +1,20 @@
 
-#ifndef SRSGNB_MAC_UL_H
-#define SRSGNB_MAC_UL_H
+#ifndef SRSGNB_MAC_UL_COMPONENT_H
+#define SRSGNB_MAC_UL_COMPONENT_H
 
-#include "../ran/gnb_format.h"
-#include "mac_ctxt.h"
+#include "../../ran/gnb_format.h"
+#include "../mac_config.h"
+#include "../mac_config_interfaces.h"
 #include "mac_ul_demux.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/schedule_on.h"
 
 namespace srsgnb {
 
-class mac_ul_worker
+class mac_pusch_processor
 {
 public:
-  explicit mac_ul_worker(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_) :
+  explicit mac_pusch_processor(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_) :
     cfg(cfg_), logger(cfg.logger), demux(ul_ccch_notifier_)
   {}
 
@@ -38,7 +39,7 @@ public:
 
   void remove_ue(du_ue_index_t ue_index) { demux.erase(ue_index); }
 
-  void push_pdu(mac_rx_data_indication msg)
+  void push_rx_data_indication(mac_rx_data_indication msg)
   {
     // Decode TB
     // TODO
@@ -76,38 +77,37 @@ private:
   mac_ul_demux demux;
 };
 
-class mac_ul
+class mac_ul_component final : public mac_ul_configurer
 {
 public:
-  mac_ul(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_) : cfg(cfg_)
+  mac_ul_component(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_) : cfg(cfg_)
   {
-    workers.push_back(std::make_unique<mac_ul_worker>(cfg, ul_ccch_notifier_));
+    workers.push_back(std::make_unique<mac_pusch_processor>(cfg, ul_ccch_notifier_));
   }
 
-  async_task<void> add_ue(const mac_ue_create_request_message& request)
+  async_task<void> add_ue(const mac_ue_create_request_message& request) override
   {
     // TODO: define dispatch policy to UL workers
-    return dispatch_and_return_on(cfg.ul_exec, cfg.ctrl_exec, [this, request]() { workers[0]->add_ue(request); });
+    return dispatch_and_resume_on(cfg.ul_exec, cfg.ctrl_exec, [this, request]() { workers[0]->add_ue(request); });
   }
 
-  async_task<void> remove_ue(du_ue_index_t ue_index)
+  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return dispatch_and_return_on(cfg.ul_exec, cfg.ctrl_exec, [this, ue_index]() { workers[0]->remove_ue(ue_index); });
+    return dispatch_and_resume_on(
+        cfg.ul_exec, cfg.ctrl_exec, [this, ue_index = msg.ue_index]() { workers[0]->remove_ue(ue_index); });
   }
 
-  void push_ul_pdu(mac_rx_data_indication pdu)
+  void push_rx_data_indication(mac_rx_data_indication msg)
   {
     // Dispatch to right worker
-    cfg.ul_exec.execute([this, pdu]() { workers[0]->push_pdu(std::move(pdu)); });
+    cfg.ul_exec.execute([this, msg = std::move(msg)]() { workers[0]->push_rx_data_indication(std::move(msg)); });
   }
 
-  mac_ul_worker& get_worker() { return *workers[0]; }
-
 private:
-  mac_common_config_t&                         cfg;
-  std::vector<std::unique_ptr<mac_ul_worker> > workers;
+  mac_common_config_t&                               cfg;
+  std::vector<std::unique_ptr<mac_pusch_processor> > workers;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_UL_H
+#endif // SRSGNB_MAC_UL_COMPONENT_H

@@ -29,9 +29,9 @@ mac_impl::mac_impl(mac_config_notifier& cfg_notifier_,
   ctrl_unit(cfg, ul_unit, dl_unit)
 {}
 
-void mac_impl::push_ul_pdu(mac_rx_data_indication msg)
+void mac_impl::push_rx_data_indication(mac_rx_data_indication msg)
 {
-  ul_unit.push_ul_pdu(msg);
+  ul_unit.push_rx_data_indication(msg);
 }
 
 void mac_impl::ue_create_request(const mac_ue_create_request_message& msg)

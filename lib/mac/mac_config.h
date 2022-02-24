@@ -1,8 +1,8 @@
 
-#ifndef SRSGNB_MAC_CTXT_H
-#define SRSGNB_MAC_CTXT_H
+#ifndef SRSGNB_MAC_CONFIG_H
+#define SRSGNB_MAC_CONFIG_H
 
-#include "sched.h"
+#include "sched/sched.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/task_executor.h"
@@ -31,4 +31,4 @@ struct mac_common_config_t {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_CTXT_H
+#endif // SRSGNB_MAC_CONFIG_H
