@@ -303,7 +303,7 @@ protected:
     // Note: we have to store the resume point before, in case the coroutine changes execution context and calls resume
     // before on_await_suspend is complete
     resume_method = resume_func;
-    if (not frame_ptr->on_await_suspend(a)) {
+    if (frame_ptr->on_await_suspend(a)) {
       resume_func();
     }
   }

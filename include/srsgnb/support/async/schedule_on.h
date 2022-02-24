@@ -36,6 +36,20 @@ auto schedule_on(TaskExecutor& exec) -> detail::task_executor_awaiter<TaskExecut
   return {exec};
 }
 
+template <typename DispatchTaskExecutor, typename CurrentTaskExecutor, typename Callable>
+async_task<void>
+dispatch_and_return_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
+{
+  return launch_async(
+      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void> >& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_AWAIT(schedule_on(dispatch_exec));
+        task();
+        CORO_AWAIT(schedule_on(return_exec));
+        CORO_RETURN();
+      });
+}
+
 } // namespace srsgnb
 
 #endif // SRSGNB_TASK_SCHEDULER_H

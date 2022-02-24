@@ -1,6 +1,6 @@
 
-#include "du_high.h"
 #include "adapters.h"
+#include "du_high.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1ap/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
