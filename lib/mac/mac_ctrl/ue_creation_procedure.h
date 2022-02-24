@@ -39,19 +39,9 @@ public:
 
     // 2. Create UE DL context and channels
     CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
-    if (not add_ue_result) {
-      send_mac_ue_create_response(false);
-      CORO_EARLY_RETURN();
-    }
 
     // 3. After UE insertion in scheduler, send response to DU manager
-    mac_ue_create_request_response_message resp{};
-    resp.ue_index   = req.ue_index;
-    resp.cell_index = req.cell_index;
-    resp.result     = true;
-    cfg.cfg_notifier.on_ue_create_request_complete(resp);
-
-    log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
+    send_mac_ue_create_response(add_ue_result);
     CORO_RETURN();
   }
 
