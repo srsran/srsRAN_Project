@@ -193,6 +193,7 @@ harq_entity::harq_entity(uint16_t rnti_, uint32_t nprb, uint32_t nof_harq_procs,
 void harq_entity::new_slot(slot_point slot_rx_)
 {
   slot_rx = slot_rx_;
+  /// Look for DL HARQ processes that have reached maxReTX with no ACK
   for (harq_proc& dl_h : dl_harqs) {
     if (dl_h.clear_if_maxretx(slot_rx)) {
       logger.info("SCHED: discarding rnti=0x{:x}, DL TB pid={}. Cause: Maximum number of retx exceeded ({})",
@@ -201,6 +202,7 @@ void harq_entity::new_slot(slot_point slot_rx_)
                   dl_h.max_nof_retx());
     }
   }
+  /// Look for DL HARQ processes that have reached maxReTX with no ACK
   for (harq_proc& ul_h : ul_harqs) {
     if (ul_h.clear_if_maxretx(slot_rx)) {
       logger.info("SCHED: discarding rnti=0x{:x}, UL TB pid={}. Cause: Maximum number of retx exceeded ({})",

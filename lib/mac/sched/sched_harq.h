@@ -21,6 +21,7 @@
 
 namespace srsgnb {
 
+/// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
 class harq_proc
 {
 public:
@@ -31,6 +32,8 @@ public:
     return std::all_of(tb.begin(), tb.end(), [](const tb_t& t) { return not t.active; });
   }
   bool empty(uint32_t tb_idx) const { return not tb[tb_idx].active; }
+  /// Returns true if, at the time of processing (slot_rx), the TB (whether it was with transmission or retransmission)
+  /// has not been positively ACKED yet
   bool has_pending_retx(slot_point slot_rx) const
   {
     return not empty() and not tb[0].ack_state and slot_ack <= slot_rx;
@@ -46,6 +49,7 @@ public:
 
   int ack_info(uint32_t tb_idx, bool ack);
 
+  // Clear the HARQ process if maxReTX have been received with no ACK
   bool clear_if_maxretx(slot_point slot_rx);
   void reset();
   bool new_retx(slot_point slot_tx, slot_point slot_ack);
@@ -70,7 +74,11 @@ protected:
   };
 
   uint32_t                     max_retx = 1;
+  /// For DL, slot_tx is the time at which HARQ PID pck will be transmitted by the GNB
+  /// For UL, slot_tx is the time at which HARQ PID pck will be transmitted by the UE
   slot_point                   slot_tx;
+  /// For DL, slot_ack is the time at which GNB is expected to receive the ACK
+  /// For DL, slot_ack is the time at which GNB is expected to receive the UL pck (the ACK will be the CRC)
   slot_point                   slot_ack;
   prb_grant                    prbs_;
   std::array<tb_t, MAX_NOF_TB> tb;
@@ -129,6 +137,7 @@ class harq_entity
 {
 public:
   explicit harq_entity(uint16_t rnti, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger);
+  /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void new_slot(slot_point slot_rx_);
 
   int dl_ack_info(uint32_t pid, uint32_t tb_idx, bool ack) { return dl_harqs[pid].ack_info(tb_idx, ack); }
@@ -173,7 +182,7 @@ private:
   uint16_t              rnti;
   srslog::basic_logger& logger;
 
-  // This is the slot index at which the scheduler is currently working
+  // slot_rx is the slot index at which the scheduler is currently working
   slot_point                slot_rx;
   std::vector<dl_harq_proc> dl_harqs;
   std::vector<ul_harq_proc> ul_harqs;
