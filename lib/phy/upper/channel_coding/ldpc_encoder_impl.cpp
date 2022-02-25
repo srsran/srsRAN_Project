@@ -70,16 +70,27 @@ void ldpc_encoder_impl::encode(span<const uint8_t> input, span<uint8_t> output, 
 
 void ldpc_encoder_basic::select_strategy()
 {
-  if (current_graph->get_base_graph() == ldpc::base_graph_t::BG1) {
-    if (current_graph->get_lifting_index() == 6) {
+  base_graph_t current_bg       = current_graph->get_base_graph();
+  uint8_t      current_ls_index = current_graph->get_lifting_index();
+
+  if (current_bg == base_graph_t::BG1) {
+    if (current_ls_index == 6) {
       high_rate = &ldpc_encoder_basic::high_rate_bg1_i6;
       return;
     }
-    // if lifting index not 6
+    // if lifting index is not 6
     high_rate = &ldpc_encoder_basic::high_rate_bg1_other;
     return;
   }
-  std::cout << "Not implemented yet\n";
+  if (current_bg == base_graph_t::BG2) {
+    if ((current_ls_index == 3) || (current_ls_index == 7)) {
+      high_rate = &ldpc_encoder_basic::high_rate_bg2_i3_7;
+      return;
+    }
+    // if lifting index is neither 3 nor 7
+    high_rate = &ldpc_encoder_basic::high_rate_bg2_other;
+    return;
+  }
   assert(false);
 }
 
@@ -186,6 +197,59 @@ void ldpc_encoder_basic::high_rate_bg1_other()
     codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + ((k + 1) % ls)];
     // third chunk of parity bits
     codeblock[skip2 + k] = aux[2][k] ^ codeblock[skip3 + k];
+  }
+}
+
+void ldpc_encoder_basic::high_rate_bg2_i3_7()
+{
+  uint16_t                                                     ls  = lifting_size;
+  std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
+
+  unsigned skip0 = bg_K * ls;
+  unsigned skip1 = (bg_K + 1) * ls;
+  unsigned skip2 = (bg_K + 2) * ls;
+  unsigned skip3 = (bg_K + 3) * ls;
+  for (uint16_t k = 0; k != ls; ++k) {
+    // first chunk of parity bits
+    codeblock[skip0 + k] = aux[0][k] ^ aux[1][k];
+    codeblock[skip0 + k] ^= aux[2][k];
+    codeblock[skip0 + k] ^= aux[3][k];
+  }
+  for (uint16_t k = 0; k != ls; ++k) {
+    // second chunk of parity bits
+    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + ((k + 1) % ls)];
+    // third chunk of parity bits
+    codeblock[skip2 + k] = aux[1][k] ^ codeblock[skip1 + k];
+    // fourth chunk of parity bits
+    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + ((k + 1) % ls)];
+  }
+}
+
+void ldpc_encoder_basic::high_rate_bg2_other()
+{
+  uint16_t                                                     ls  = lifting_size;
+  std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
+
+  unsigned skip0 = bg_K * ls;
+  unsigned skip1 = (bg_K + 1) * ls;
+  unsigned skip2 = (bg_K + 2) * ls;
+  unsigned skip3 = (bg_K + 3) * ls;
+
+  for (uint16_t k = 0; k != ls; ++k) {
+    int i = (k - 1) % ls;
+    i     = (i >= 0) ? i : i + ls;
+
+    // first chunk of parity bits
+    codeblock[skip0 + k] = aux[0][i] ^ aux[1][i];
+    codeblock[skip0 + k] ^= aux[2][i];
+    codeblock[skip0 + k] ^= aux[3][i];
+
+    // second chunk of parity bits
+    codeblock[skip1 + k] = aux[0][k] ^ codeblock[skip0 + k];
+    // third chunk of parity bits
+    codeblock[skip2 + k] = aux[1][k] ^ codeblock[skip1 + k];
+    // fourth chunk of parity bits
+    codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + k];
   }
 }
 

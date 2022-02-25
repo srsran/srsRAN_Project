@@ -91,8 +91,12 @@ class ldpc_encoder_basic : public ldpc_encoder_impl
 
   /// Carries out the high-rate region encoding for BG1 and lifting size index 6.
   void high_rate_bg1_i6();
-  /// Carries out the high-rate region encoding for BG1 and lifting size index in the set {0, 1, 2, 3, 4, 5, 7}.
+  /// Carries out the high-rate region encoding for BG1 and lifting size index in {0, 1, 2, 3, 4, 5, 7}.
   void high_rate_bg1_other();
+  /// Carries out the high-rate region encoding for BG2 and lifting size index in {3, 7}.
+  void high_rate_bg2_i3_7();
+  /// Carries out the high-rate region encoding for BG2 and lifting size index in {0, 1, 2, 4, 5, 6}.
+  void high_rate_bg2_other();
 
   /// Local copy of the message to encode.
   span<const uint8_t> message{};
