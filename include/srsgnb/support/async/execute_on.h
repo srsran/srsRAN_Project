@@ -42,21 +42,6 @@ std::enable_if_t<std::is_same<detail::function_return_t<Task>, bool>::value> cal
   return true;
 }
 
-template <typename Task, bool HasResult = not std::is_same<detail::function_return_t<Task>, void>::value>
-struct call_and_result_storage_helper {
-  Task                            t;
-  detail::function_return_t<Task> result;
-  call_and_result_storage_helper(Task t_) : t(std::move(t_)) {}
-  void operator()() { result = t(); }
-};
-
-template <typename Task>
-struct call_and_result_storage_helper<Task, false> {
-  Task t;
-  call_and_result_storage_helper(Task t_) : t(std::move(t_)) {}
-  void operator()() { t(); }
-};
-
 template <typename DispatchTaskExecutor,
           typename ResumeTaskExecutor,
           typename Callable,

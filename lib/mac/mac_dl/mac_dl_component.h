@@ -4,12 +4,13 @@
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
+#include "../mac_config_interfaces.h"
 #include "../sched/sched.h"
 #include "mac_dl_mux.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/async/execute_on.h"
+#include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/task_executor.h"
 
 namespace srsgnb {

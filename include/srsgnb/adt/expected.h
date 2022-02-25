@@ -122,15 +122,20 @@ public:
   explicit operator bool() const noexcept { return has_value(); }
   bool     has_value() const noexcept { return has_val; }
   bool     is_error() const noexcept { return not has_value(); }
-  const T& value() const noexcept
+  const T& value() const& noexcept
   {
     srsran_assert(has_value(), "Bad expected<T> value access");
     return val;
   }
-  T& value() noexcept
+  T& value() & noexcept
   {
     srsran_assert(has_value(), "Bad expected<T> value access");
     return val;
+  }
+  T value() && noexcept
+  {
+    srsran_assert(has_value(), "Bad expected<T> value access");
+    return std::move(val);
   }
   const E& error() const noexcept
   {

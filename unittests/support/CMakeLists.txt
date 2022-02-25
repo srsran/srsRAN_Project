@@ -13,3 +13,7 @@ add_test(async_task_test async_task_test)
 add_executable(async_exec_test async_exec_test.cc)
 target_link_libraries(async_exec_test srslog srsgnb_support)
 add_test(async_exec_test async_exec_test)
+
+add_executable(async_queue_test async_queue_test.cc)
+target_link_libraries(async_queue_test srslog srsgnb_support)
+add_test(async_queue_test async_queue_test)
