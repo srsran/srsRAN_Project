@@ -21,9 +21,12 @@ namespace srsgnb {
 class sss_processor_impl : public sss_processor
 {
 private:
-  static const unsigned SSB_K_BEGIN  = 56;  ///< First subcarrier in the SS/PBCH block
-  static const unsigned SSB_L        = 2;   ///< Symbol index in the SSB where the SSS is mapped
-  static const unsigned SEQUENCE_LEN = 127; ///< SSS Sequence length in the SSB
+  /// First subcarrier in the SS/PBCH block
+  static const unsigned SSB_K_BEGIN = 56;
+  /// Symbol index in the SSB where the SSS is mapped
+  static const unsigned SSB_L = 2;
+  /// SSS Sequence length in the SSB
+  static const unsigned SEQUENCE_LEN = 127;
 
   struct pregen_d0_s : public std::array<cf_t, SEQUENCE_LEN> {
     pregen_d0_s();
@@ -36,18 +39,19 @@ private:
   static const pregen_d0_s d0;
   static const pregen_d1_s d1;
 
-  /**
-   * @bried Implements TS 38.211 section 7.4.2.2.1 Sequence generation
-   */
-  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& args) const;
+  /// \brief Implements TS 38.211 section 7.4.2.3.1 Sequence generation
+  /// \param [out] sequence provides the destination of the sequence
+  /// \args [in] config provides the necessary parameters to generate the sequence
+  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const;
 
-  /**
-   * @bried Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
-   */
-  void mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const config_t& args) const;
+  /// \brief Implements TS 38.211 section 7.4.2.3.2 Mapping to physical resources
+  /// \param [in] sequence provides the source of the sequence
+  /// \param [out] grid provides the destination of the sequence mapping
+  /// \args [in] config provides the necessary parameters to generate the sequence
+  void
+  mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const config_t& config) const;
 
 public:
-  ~sss_processor_impl() override = default;
   void map(resource_grid_writer& grid, const config_t& args) override;
 };
 

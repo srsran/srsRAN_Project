@@ -6,9 +6,11 @@
 
 namespace srsgnb {
 
+/// Describes a SSS processor interface
 class sss_processor
 {
 public:
+  /// Describes the required parameters to generate the signal
   struct config_t {
     /// Physical cell identifier
     unsigned phys_cell_id;
@@ -16,15 +18,20 @@ public:
     unsigned ssb_first_subcarrier;
     /// First symbol in slot resource grid
     unsigned ssb_first_symbol;
-    /// PSS linear signal amplitude
+    /// SSS linear signal amplitude
     float amplitude;
   };
 
+  /// Default destructor
   virtual ~sss_processor() = default;
 
-  virtual void map(resource_grid_writer& grid, const config_t& args) = 0;
+  /// \brief Generates and maps a SSS sequence
+  /// \param [out] grid provides the destination resource grid
+  /// \param [in] config provides the required configuration to generate and map the signal
+  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
+/// Creates a generic SSS processor instance
 std::unique_ptr<sss_processor> create_sss_processor();
 
 } // namespace srsgnb

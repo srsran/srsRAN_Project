@@ -6,11 +6,11 @@
 
 namespace srsgnb {
 
+/// Describes a DMRS for PBCH processor interface
 class dmrs_pbch_processor
 {
 public:
-  static const unsigned NOF_RE = 144; ///< DMRS PBCH Sequence length in the SSB
-
+  /// Describes the required parameters to generate the signal
   struct config_t {
     /// Physical cell identifier
     unsigned phys_cell_id;
@@ -28,11 +28,16 @@ public:
     float amplitude;
   };
 
+  /// Default destructor
   virtual ~dmrs_pbch_processor() = default;
 
+  /// \brief Generates and maps DMRS for PBCH
+  /// \param [out] grid provides the destination resource grid
+  /// \param [in] config provides the required configuration to generate and map the signal
   virtual void map(resource_grid_writer& grid, const config_t& args) = 0;
 };
 
+/// Creates a generic DMRS for PBCH instance
 std::unique_ptr<dmrs_pbch_processor> create_dmrs_pbch_processor();
 
 } // namespace srsgnb

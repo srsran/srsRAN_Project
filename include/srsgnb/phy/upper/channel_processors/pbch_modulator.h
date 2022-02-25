@@ -8,6 +8,7 @@
 
 namespace srsgnb {
 
+/// Describes a PBCH modulator interface
 class pbch_modulator
 {
 public:
@@ -34,13 +35,13 @@ public:
   /// Default destructor
   virtual ~pbch_modulator() = default;
 
-  /// Modulates a PBCH message according to TS 38.211 section 7.3.3 Physical broadcast channel
-  ///
+  /// \brief Modulates a PBCH message according to TS 38.211 section 7.3.3 Physical broadcast channel
   /// \param[in] bits Input bits of M_bit size
   /// \param[out] grid is the destination resource grid
   virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& args) = 0;
 };
 
+/// Creates a generic PBCH modulator instance
 std::unique_ptr<pbch_modulator> create_pbch_modulator();
 
 } // namespace srsgnb

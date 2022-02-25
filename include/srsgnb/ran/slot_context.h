@@ -23,10 +23,14 @@ static constexpr unsigned NSUBFRAMES_PER_HALF_FRAME = NSUBFRAMES_PER_FRAME / 2;
 
 /// Describes a slot context
 struct slot_context_t {
-  unsigned numerology; /// Current numerology for FR1: (0,1,2) and FR2: (2,3)
-  unsigned frame;      /// System frame number (0...1023)
-  unsigned subframe;   /// Subframe index (0...9)
-  unsigned slot;       /// Slot index (0...79), range depends on numerology
+  /// Current numerology for FR1: (0,1,2) and FR2: (2,3)
+  unsigned numerology;
+  /// System frame number (0...1023)
+  unsigned frame;
+  /// Subframe index (0...9)
+  unsigned subframe;
+  /// Slot index (0...79), range depends on numerology
+  unsigned slot;
 
   /// Get the subframe number in the whole radio frame
   unsigned get_system_subframe() const { return frame * 10 + subframe; }

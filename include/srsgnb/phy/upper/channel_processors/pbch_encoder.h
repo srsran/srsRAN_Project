@@ -7,6 +7,7 @@
 
 namespace srsgnb {
 
+/// Describes the PBCH encoder interface
 class pbch_encoder
 {
 public:
@@ -20,9 +21,7 @@ public:
   static const unsigned POLAR_N_MAX  = 9;
   static const unsigned POLAR_N      = (1U << POLAR_N_MAX);
 
-  /**
-   * @brief Describes the NR PBCH message transmission
-   */
+  /// Describes the NR PBCH message transmission
   struct pbch_msg_t {
     /// Physical cell identifier
     unsigned N_id;
@@ -32,23 +31,24 @@ public:
     unsigned L_max;
     /// Indicates if the SS/PBCH block transmission is in an odd half frame true if subframe index is >=5
     bool hrf;
-
-    // BCH payload
-    std::array<uint8_t, A> payload; ///< Actual PBCH payload provided by higher layers
-    unsigned               sfn;     ///< SFN
-    unsigned               k_ssb;   ///< Subcarrier offset described in TS 38.211 7.4.3.1
+    /// Actual PBCH payload provided by higher layers
+    std::array<uint8_t, A> payload;
+    /// SFN
+    unsigned sfn;
+    /// Subcarrier offset described in TS 38.211 7.4.3.1
+    unsigned k_ssb;
   };
 
+  /// Default destructor
   virtual ~pbch_encoder() = default;
 
-  /**
-   * @brief Encodes a PBCH message
-   * @param pbch_msg PBCH message to encode, it shall be of length E
-   * @param ouput Encoded bits
-   */
+  /// \brief Encodes a PBCH message
+  /// \param [in] pbch_msg
+  /// \param [out] encoded
   virtual void encode(const pbch_msg_t& pbch_msg, span<uint8_t> encoded) = 0;
 };
 
+/// Creates a generic PBCH encoder instance
 std::unique_ptr<pbch_encoder> create_pbch_encoder();
 
 } // namespace srsgnb

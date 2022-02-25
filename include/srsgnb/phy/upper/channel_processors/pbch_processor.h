@@ -39,7 +39,7 @@ public:
   /// Default destructor
   virtual ~pbch_processor() = default;
 
-  /// Processes the SS/PBCH Block PDU writing in grid the generated signal
+  /// \brief Processes the SS/PBCH Block PDU writing in grid the generated signal
   /// \param [in] pdu provides the necessary data to
   /// \param [out] grid
   virtual void proccess(const pdu_t& pdu, resource_grid_writer& grid) = 0;

@@ -22,22 +22,28 @@ namespace srsgnb {
 class dmrs_pbch_processor_impl : public dmrs_pbch_processor
 {
 private:
+  /// DMRS PBCH Sequence length in the SSB
+  static const unsigned NOF_RE = 144;
+
   std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
 
+  /// \brief Computes the initial pseudo-random state
+  /// \param [in] args provides the required parameters to calculate the value
+  /// \return the initial pseudo-random state
   static unsigned c_init(const config_t& args);
 
-  /**
-   * @bried Implements TS 38.211 section 7.4.1.4.1 Sequence generation
-   */
-  void generation(std::array<cf_t, NOF_RE>& sequence, const config_t& args) const;
+  /// \brief Implements TS 38.211 section 7.4.1.4.1 Sequence generation
+  /// \param [out] sequence provides the destination of the sequence generation
+  /// \param [in] config provides the required fields to generate the signal
+  void generation(std::array<cf_t, NOF_RE>& sequence, const config_t& config) const;
 
-  /**
-   * @bried Implements TS 38.211 section 7.4.1.4.2 Mapping to physical resources
-   */
-  void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid_writer& grid, const config_t& args) const;
+  /// \brief Implements TS 38.211 section 7.4.1.4.2 Mapping to physical resources
+  /// \param [in] sequence provides the source of the sequence
+  /// \param [out] grid provides the grid destination to map the signal
+  /// \param [in] config provides the required fields to map the signal
+  void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid_writer& grid, const config_t& config) const;
 
 public:
-  ~dmrs_pbch_processor_impl() override = default;
   void map(resource_grid_writer& grid, const config_t& args) override;
 };
 

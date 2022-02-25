@@ -8,21 +8,26 @@
 
 namespace srsgnb {
 
-/// According to TS 38.211: There is one resource grid for a given antenna port, subcarrier spacing configuration, and
-/// transmission direction (downlink or uplink).
-
+/// Describes a resource grid coordinate as symbol index and carrier
 struct resource_grid_coordinate {
-  uint8_t  symbol     = 0;
+  /// Symbol index (0...13)
+  uint8_t symbol = 0;
+  /// Subcarrier index (0...3299)
   uint16_t subcarrier = 0;
 
+  /// Default destructor
   resource_grid_coordinate() = default;
 
+  /// \brief Constructor from \c unsigned values
+  /// \param [in] symbol_ provides the \c symbol value
+  /// \param [in] subcarrier_ provides the \c subcarrier value
   resource_grid_coordinate(unsigned symbol_, unsigned subcarrier_)
   {
     symbol     = static_cast<uint8_t>(symbol_);
     subcarrier = static_cast<uint16_t>(subcarrier_);
   }
 
+  /// Override equal comparison operator
   bool operator==(const resource_grid_coordinate& other) const
   {
     return (other.symbol == symbol) && (subcarrier == other.subcarrier);
@@ -36,26 +41,27 @@ public:
   /// Default destructor
   virtual ~resource_grid_writer() = default;
 
-  /// Put a number of elements in the grid according to a list of coordinates
+  /// \brief Put a number of elements in the grid according to a list of coordinates
   /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
   /// \param [in] symbols provides the list with the symbols to map to the coordinates
-  /// \note the number of elements in coordinates and symbols shall be the same
+  /// \note the number of elements in \c coordinates and \c symbols shall be the same
   virtual void put(span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) = 0;
 
-  /// Put a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
-  /// which not.
+  /// \brief Put a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped
+  /// and which not.
   /// \param [in] l is the symbol index
   /// \param [in] mask provides the mask to be used
   /// \param [in,out] symbol_buffer provides the symbol buffer
-  /// \note The number of elements of mask shall be equal or greater than the resource grid number of subcarriers.
-  /// \note The number of elements of symbol shall be equal or greater than the number of true elements in mask.
+  /// \note The number of elements of \c mask shall be equal or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c symbol_buffer shall be equal or greater than the number of true elements in
+  /// \c mask.
   virtual void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) = 0;
 
-  /// Put a consecutive number of resource elements for the symbol l starting at k_init
+  /// \brief Put a consecutive number of resource elements for the symbol l starting at k_init
   /// \param [in] l is the symbol index
   /// \param [in] k_init is the initial subcarrier index
   /// \param [out] symbols provides the symbols to map in the resource grid
-  /// \note The sum of k_init and the number of elements in symbols shall not exceed the resource grid number of
+  /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers
   virtual void put(unsigned l, unsigned k_init, span<const cf_t> symbols) = 0;
 };
@@ -67,26 +73,27 @@ public:
   /// Default destructor
   virtual ~resource_grid_reader() = default;
 
-  /// Get a number of elements in the grid according to a list of coordinates
+  /// \brief Get a number of elements in the grid according to a list of coordinates
   /// \param [in] coordinates provides the list of grid symbol-subcarrier coordinates
   /// \param [out] symbols provides the list with the symbols to map to the coordinates
-  /// \note the number of elements in coordinates and symbols shall be the same
+  /// \note the number of elements in \c coordinates and \c symbols shall be the same
   virtual void get(span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const = 0;
 
-  /// Get a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped and
-  /// which not.
+  /// \brief Get a number of resource elements in the resource grid using a mask to indicate what subcarriers are mapped
+  /// and which not.
   /// \param [in] l is the symbol index
   /// \param [in] mask provides the mask to be used
   /// \param [in,out] symbol_buffer provides the symbol buffer
-  /// \note The number of elements of mask shall be equal or greater than the resource grid number of subcarriers.
-  /// \note The number of elements of symbol shall be equal or greater than the number of true elements in mask.
+  /// \note The number of elements of \c mask shall be equal or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c symbol_buffer shall be equal or greater than the number of true elements in \c
+  /// mask.
   virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const = 0;
 
-  /// Get a consecutive number of resource elements for the symbol l starting at k_init
+  /// \brief Get a consecutive number of resource elements for the symbol l starting at k_init
   /// \param [in] l is the symbol index
   /// \param [in] k_init is the initial subcarrier index
   /// \param [out] symbols provides the symbols to map in the resource grid
-  /// \note The sum of k_init and the number of elements in symbols shall not exceed the resource grid number of
+  /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers
   virtual void get(unsigned l, unsigned k_init, span<cf_t> symbols) const = 0;
 };
@@ -99,6 +106,9 @@ public:
   virtual void set_all_zero() = 0;
 };
 
+/// \brief Creates a generic resource grid instance
+/// \param [in] nof_symbols provides the number of symbols
+/// \param [in] nof_subc provides the number of subcarriers
 std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_symbols, unsigned nof_subc);
 
 } // namespace srsgnb
