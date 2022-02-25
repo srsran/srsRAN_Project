@@ -13,9 +13,9 @@ static std::array<ldpc_graph_impl, total_nof_graphs> create_graph_array()
   std::array<ldpc_graph_impl, total_nof_graphs> tmp{};
 
   for (auto ls : ldpc::all_lifting_sizes) {
-    uint8_t pos = get_lifting_size_position(ls);
-    tmp[pos]    = ldpc_graph_impl(base_graph_t::BG1, ls);
-    // tmp[pos + nof_lifting_sizes] = ldpc_graph_impl(base_graph_t::BG2, ls);
+    uint8_t pos                  = get_lifting_size_position(ls);
+    tmp[pos]                     = ldpc_graph_impl(base_graph_t::BG1, ls);
+    tmp[pos + nof_lifting_sizes] = ldpc_graph_impl(base_graph_t::BG2, ls);
   }
   return tmp;
 }
@@ -24,8 +24,9 @@ const std::array<ldpc_graph_impl, total_nof_graphs> ldpc_encoder_impl::graph_arr
 
 void ldpc_encoder_impl::init(config_t cfg)
 {
-  uint8_t pos   = get_lifting_size_position(cfg.lifting_size);
-  current_graph = &graph_array[pos];
+  uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);
+  unsigned skip = static_cast<unsigned>(cfg.base_graph) * nof_lifting_sizes;
+  current_graph = &graph_array[skip + pos];
   bg_N_full     = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short    = current_graph->get_nof_BG_var_nodes_short();
   bg_M          = current_graph->get_nof_BG_check_nodes();
