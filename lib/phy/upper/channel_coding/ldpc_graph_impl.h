@@ -46,8 +46,8 @@ using BG_matrix_t = std::array<std::array<uint16_t, max_BG_N_full>, max_BG_M>;
 static constexpr unsigned max_BG_check_edges = 20;
 /// \brief Sparse representation of base graphs.
 ///
-/// For check node \c m, BG_edge_matrix_t[m] provides a list of the variable nodes connected to it.
-using BG_edge_matrix_t = std::array<std::array<uint16_t, max_BG_check_edges>, max_BG_M>;
+/// For check node \c m, BG_adjacency_matrix_t[m] provides a list of the variable nodes connected to it.
+using BG_adjacency_matrix_t = std::array<std::array<uint16_t, max_BG_check_edges>, max_BG_M>;
 
 /// Number of base graphs.
 static constexpr unsigned nof_base_graphs = 2;
@@ -116,7 +116,8 @@ private:
 
   /// Parity check matrix of the graph (BG representation).
   ldpc::BG_matrix_t parity_check_matrix;
-  // int nof_check_nodes, nof_var_nodes_full, nof_var_nodes_short;
+  /// Adjacency matrix of the base graph (sparse representation).
+  const ldpc::BG_adjacency_matrix_t* adjacency_matrix;
 };
 
 } // namespace srsgnb

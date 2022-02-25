@@ -91,10 +91,13 @@ void ldpc_encoder_basic::preprocess_systematic_bits()
     span<const uint8_t> message_chunk = message.subspan(static_cast<size_t>(k * lifting_size), lifting_size);
     for (uint16_t m = 0; m != bg_M; ++m) {
       uint16_t node_shift = current_graph->get_lifted_node(m, k);
+      if (node_shift == NO_EDGE) {
+        continue;
+      }
 
       for (uint16_t l = 0; l != lifting_size; ++l) {
         uint16_t shifted_index = (node_shift + l) % lifting_size;
-        auxiliary[m][l] ^= (node_shift != NO_EDGE) ? (1U & message_chunk[shifted_index]) : 0;
+        auxiliary[m][l] ^= 1U & message_chunk[shifted_index];
       }
     }
   }
@@ -114,11 +117,12 @@ void ldpc_encoder_basic::encode_ext_region()
       codeblock[skip + i] = auxiliary[m][i];
       for (unsigned k = 0; k != 4; ++k) {
         uint16_t node_shift = current_graph->get_lifted_node(m, bg_K + k);
-        if (node_shift != NO_EDGE) {
-          unsigned current_index = (bg_K + k) * lifting_size + ((i + node_shift) % lifting_size);
-          uint8_t  current_bit   = codeblock[current_index];
-          codeblock[skip + i] ^= current_bit;
+        if (node_shift == NO_EDGE) {
+          continue;
         }
+        unsigned current_index = (bg_K + k) * lifting_size + ((i + node_shift) % lifting_size);
+        uint8_t  current_bit   = codeblock[current_index];
+        codeblock[skip + i] ^= current_bit;
       }
     }
   }

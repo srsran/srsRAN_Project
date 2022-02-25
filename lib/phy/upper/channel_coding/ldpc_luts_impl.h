@@ -21,4 +21,6 @@ uint8_t get_lifting_index(srsgnb::ldpc::lifting_size_t);
 /// Get the position of the lifting size in the list of all lifting sizes.
 uint8_t get_lifting_size_position(srsgnb::ldpc::lifting_size_t);
 
+/// Get the adjacency matrix of base graph \c bg (sparse representation).
+const srsgnb::ldpc::BG_adjacency_matrix_t* get_adjacency_matrix(srsgnb::ldpc::base_graph_t bg);
 #endif // SRSGNB_CHANNEL_CODING_LDPC_IMPL_LUTS

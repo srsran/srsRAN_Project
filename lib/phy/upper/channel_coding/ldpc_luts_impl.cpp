@@ -7,6 +7,7 @@
 //    static const BG_edge_matrix_t BG1_edge_matrix{...} -- 89 lines
 //    BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls) {...}
 //    uint8_t get_lifting_index(lifting_size_t ls) {...}
+//    const BG_edge_matrix_t* get_edge_matrix(base_graph_t bg)
 #include "ldpc_luts_impl.h"
 #include "ldpc_graph_impl.h"
 #include <array>
@@ -2649,7 +2650,7 @@ static constexpr std::array<BG_matrix_t, nof_lifting_indices> BG1_matrices{
 ///
 /// For each check node, the corresponding row contains the indices of the
 /// variable nodes connected to it.
-static const BG_edge_matrix_t BG1_edge_matrix{
+static const BG_adjacency_matrix_t BG1_adjacency_matrix{
     {{0, 1, 2, 3, 5, 6, 9, 10, 11, 12, 13, 15, 16, 18, 19, 20, 21, 22, 23, NO_EDGE},
      {0, 2, 3, 4, 5, 7, 8, 9, 11, 12, 14, 15, 16, 17, 19, 21, 22, 23, 24, NO_EDGE},
      {0, 1, 2, 4, 5, 6, 7, 8, 9, 10, 13, 14, 15, 17, 18, 19, 20, 24, 25, NO_EDGE},
@@ -2771,4 +2772,12 @@ uint8_t get_lifting_index(lifting_size_t ls)
 uint8_t get_lifting_size_position(lifting_size_t ls)
 {
   return LSindex[ls].position;
+}
+
+const BG_adjacency_matrix_t* get_adjacency_matrix(base_graph_t bg)
+{
+  if (bg == base_graph_t::BG1) {
+    return &BG1_adjacency_matrix;
+  }
+  assert(false);
 }
