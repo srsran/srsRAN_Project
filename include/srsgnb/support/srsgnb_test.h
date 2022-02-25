@@ -12,13 +12,23 @@
               "%s", fmt::format("Actual value '{}' differs from expected '{}'", ACTUAL, EXPECTED).c_str()),            \
           0))
 
+#define TESTASSERT_EQ_MSG(EXPECTED, ACTUAL, MSG)                                                                       \
+  (void)((EXPECTED == ACTUAL) ||                                                                                       \
+         (srsran_assertion_failure(                                                                                    \
+              "%s", fmt::format("Actual value '{}' differs from expected '{}' - '{}'", ACTUAL, EXPECTED, MSG).c_str()),     \
+          0))
+
 #define TESTASSERT_NEQ(EXPECTED, ACTUAL)                                                                               \
   (void)((EXPECTED != ACTUAL) ||                                                                                       \
          (srsran_assertion_failure("%s", fmt::format("Value should not be equal to '{}'", ACTUAL).c_str()), 0))
 
 #define TESTASSERT(cond) srsran_always_assert((cond), "Fail at \"%s\"", (#cond))
 
-#define TESTASSERT_SUCCESS(cond) srsran_always_assert((cond == SRSGNB_SUCCESS), "Operation \"%s\" was not successful", (#cond))
+#define TESTASSERT_MSG(cond, MSG)                                                                                      \
+  (void)((cond) || (srsran_assertion_failure("%s", fmt::format("Fail at '{}' - '{}'", (#cond), MSG).c_str()), 0))
+
+#define TESTASSERT_SUCCESS(cond)                                                                                       \
+  srsran_always_assert((cond == SRSGNB_SUCCESS), "Operation \"%s\" was not successful", (#cond))
 
 #else // __cplusplus
 
