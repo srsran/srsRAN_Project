@@ -12,7 +12,6 @@ ldpc_graph_impl::ldpc_graph_impl(ldpc::base_graph_t _bg, ldpc::lifting_size_t _l
   adjacency_matrix(get_adjacency_matrix(_bg))
 {
   assert(_bg == ldpc::base_graph_t::BG1); // BG2 not implemented yet
-  assert(_ls < 8);                        // other ls not implemented yet
 
   lifting_index = ::get_lifting_index(_ls);
 
