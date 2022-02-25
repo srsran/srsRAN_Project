@@ -11,7 +11,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/async/schedule_on.h"
+#include "srsgnb/support/async/execute_on.h"
 
 namespace srsgnb {
 

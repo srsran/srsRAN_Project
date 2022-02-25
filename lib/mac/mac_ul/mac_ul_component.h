@@ -7,7 +7,7 @@
 #include "../mac_config_interfaces.h"
 #include "mac_ul_demux.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/support/async/schedule_on.h"
+#include "srsgnb/support/async/execute_on.h"
 
 namespace srsgnb {
 

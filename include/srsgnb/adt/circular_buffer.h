@@ -381,8 +381,10 @@ protected:
     }
     push_func(t);
     circ_buffer.push(t);
-    lock.unlock();
+    // Note: I have read diverging opinions about notifying before or after the unlock. In this case,
+    // it seems that TSAN complains if notify comes after.
     cvar_empty.notify_one();
+    lock.unlock();
     return true;
   }
   srsgnb::error_type<T> push_(T&& t, bool block_mode)
@@ -406,8 +408,8 @@ protected:
     }
     push_func(t);
     circ_buffer.push(std::move(t));
-    lock.unlock();
     cvar_empty.notify_one();
+    lock.unlock();
     return {};
   }
 

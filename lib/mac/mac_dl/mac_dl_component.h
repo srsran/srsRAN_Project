@@ -9,7 +9,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/async/schedule_on.h"
+#include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/task_executor.h"
 
 namespace srsgnb {
@@ -27,7 +27,7 @@ public:
       CORO_BEGIN(ctx);
 
       // 1. Change to respective DL executor
-      CORO_AWAIT(schedule_on(*cfg.dl_execs[request.cell_index]));
+      CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
       // 2. Insert UE and DL bearers
       mux.add_ue(request.ue_index, request.crnti, request.bearers);
@@ -42,7 +42,7 @@ public:
       log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE Config");
 
       // 5. Change back to CTRL executor before returning
-      CORO_AWAIT(schedule_on(cfg.ctrl_exec));
+      CORO_AWAIT(execute_on(cfg.ctrl_exec));
 
       CORO_RETURN(true);
     });
@@ -54,7 +54,7 @@ public:
       CORO_BEGIN(ctx);
 
       // 1. Change to respective DL executor
-      CORO_AWAIT(schedule_on(*cfg.dl_execs[request.cell_index]));
+      CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
       // 2. Remove UE from scheduler
       sched_obj.delete_ue_request(request.rnti);
@@ -66,7 +66,7 @@ public:
       mux.remove_ue(request.ue_index);
 
       // 5. Change back to CTRL executor before returning
-      CORO_AWAIT(schedule_on(cfg.ctrl_exec));
+      CORO_AWAIT(execute_on(cfg.ctrl_exec));
 
       CORO_RETURN();
     });
