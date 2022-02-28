@@ -16,6 +16,7 @@
 #include "sched_dci.h"
 #include "sched_prb.h"
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <array>
 
@@ -132,7 +133,7 @@ private:
 class harq_entity
 {
 public:
-  explicit harq_entity(uint16_t rnti, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger);
+  explicit harq_entity(rnti_t rnti, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger);
   /// Update slot, and checks if there are HARQ processes that have reached maxReTx with no ACK
   void new_slot(slot_point slot_rx_);
 
@@ -175,7 +176,7 @@ private:
     return (it == ul_harqs.end()) ? nullptr : &(*it);
   }
 
-  uint16_t              rnti;
+  rnti_t                rnti;
   srslog::basic_logger& logger;
 
   // slot_rx is the slot index at which the scheduler is currently working

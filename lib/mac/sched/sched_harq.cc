@@ -191,7 +191,7 @@ bool ul_harq_proc::new_retx(slot_point slot_tx, const prb_grant& grant, dci_ul_t
   return false;
 }
 
-harq_entity::harq_entity(uint16_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger_) :
+harq_entity::harq_entity(rnti_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, srslog::basic_logger& logger_) :
   rnti(rnti_), logger(logger_)
 {
   // Create HARQs
