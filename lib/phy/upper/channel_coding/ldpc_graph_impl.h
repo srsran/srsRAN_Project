@@ -127,5 +127,10 @@ private:
   const ldpc::BG_adjacency_matrix_t* adjacency_matrix;
 };
 
+namespace ldpc {
+std::array<ldpc_graph_impl, total_nof_graphs>              create_graph_array();
+static const std::array<ldpc_graph_impl, total_nof_graphs> graph_array = create_graph_array();
+} // namespace ldpc
+
 } // namespace srsgnb
 #endif // SRSGNB_CHANNEL_CODING_LDPC_IMPL

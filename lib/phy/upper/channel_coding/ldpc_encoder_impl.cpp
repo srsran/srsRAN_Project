@@ -8,20 +8,6 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-static std::array<ldpc_graph_impl, total_nof_graphs> create_graph_array()
-{
-  std::array<ldpc_graph_impl, total_nof_graphs> tmp{};
-
-  for (auto ls : ldpc::all_lifting_sizes) {
-    uint8_t pos                  = get_lifting_size_position(ls);
-    tmp[pos]                     = ldpc_graph_impl(base_graph_t::BG1, ls);
-    tmp[pos + nof_lifting_sizes] = ldpc_graph_impl(base_graph_t::BG2, ls);
-  }
-  return tmp;
-}
-
-const std::array<ldpc_graph_impl, total_nof_graphs> ldpc_encoder_impl::graph_array = create_graph_array();
-
 void ldpc_encoder_impl::init(const config_t& cfg)
 {
   uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);

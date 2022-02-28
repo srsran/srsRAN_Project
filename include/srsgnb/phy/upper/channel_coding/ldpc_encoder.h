@@ -1,3 +1,6 @@
+/// \file
+/// \brief LDPC encoder interface.
+
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER
 

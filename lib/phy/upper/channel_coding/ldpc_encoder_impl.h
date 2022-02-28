@@ -14,9 +14,6 @@ namespace srsgnb {
 /// Template LDPC encoder.
 class ldpc_encoder_impl : public ldpc_encoder
 {
-  /// All possible LDPC graphs.
-  static const std::array<ldpc_graph_impl, srsgnb::ldpc::total_nof_graphs> graph_array;
-
 public:
   /// \name Constructors, destructor, copy and move operators
   /// Either default or deleted.
