@@ -29,15 +29,12 @@ public:
 
   bool empty() const
   {
-    return std::all_of(tb.begin(), tb.end(), [](const tb_t& t) { return not t.active; });
+    return std::all_of(tb.begin(), tb.end(), [](const tb_t& t) { return t.state == tb_t::state_t::empty; });
   }
-  bool empty(uint32_t tb_idx) const { return not tb[tb_idx].active; }
-  /// Returns true if, at the time of processing (slot_rx), the TB (whether it was with transmission or retransmission)
+  bool empty(uint32_t tb_idx) const { return tb[tb_idx].state == tb_t::state_t::empty; }
+  /// Returns true if, at the time of processing, the TB (whether it was with transmission or retransmission)
   /// has not been positively ACKED yet
-  bool has_pending_retx(slot_point slot_rx) const
-  {
-    return not empty() and not tb[0].ack_state and slot_ack <= slot_rx;
-  }
+  bool             has_pending_retx(slot_point slot_rx) const { return tb[0].state == tb_t::state_t::pending_retx; }
   uint32_t         nof_retx() const { return tb[0].n_rtx; }
   uint32_t         max_nof_retx() const { return max_retx; }
   uint32_t         tbs() const { return tb[0].tbs; }
@@ -49,8 +46,7 @@ public:
 
   int ack_info(uint32_t tb_idx, bool ack);
 
-  // Clear the HARQ process if maxReTX have been received with no ACK
-  bool clear_if_maxretx(slot_point slot_rx);
+  void new_slot(slot_point slot_rx);
   void reset();
   bool new_retx(slot_point slot_tx, slot_point slot_ack);
 
@@ -65,18 +61,18 @@ protected:
   bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant);
 
   struct tb_t {
-    bool     active    = false;
-    bool     ack_state = false;
-    bool     ndi       = false;
-    uint32_t n_rtx     = 0;
-    uint32_t mcs       = 0;
-    uint32_t tbs       = 0;
+    enum class state_t { empty, pending_retx, waiting_ack } state = state_t::empty;
+    bool     ack_state                                            = false;
+    bool     ndi                                                  = false;
+    uint32_t n_rtx                                                = 0;
+    uint32_t mcs                                                  = 0;
+    uint32_t tbs                                                  = 0;
   };
 
-  uint32_t                     max_retx = 1;
+  uint32_t max_retx = 1;
   /// For DL, slot_tx is the time at which HARQ PID pck will be transmitted by the GNB
   /// For UL, slot_tx is the time at which HARQ PID pck will be transmitted by the UE
-  slot_point                   slot_tx;
+  slot_point slot_tx;
   /// For DL, slot_ack is the time at which GNB is expected to receive the ACK
   /// For DL, slot_ack is the time at which GNB is expected to receive the UL pck (the ACK will be the CRC)
   slot_point                   slot_ack;

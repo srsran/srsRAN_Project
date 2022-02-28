@@ -6,6 +6,40 @@
 
 using namespace srsgnb;
 
+/// Helper struct to test HARQs and update loggers slot context
+struct test_bench {
+  static srslog::basic_logger& test_logger;
+  static srslog::basic_logger& mac_logger;
+
+  test_bench(harq_entity& h, unsigned tx_gnb_delay_ = 0, unsigned tx_ack_delay_ = 1) :
+    h_entity(h), tx_gnb_delay(tx_gnb_delay_), tx_ack_delay(tx_ack_delay_)
+  {
+    test_logger.set_context(0);
+    mac_logger.set_context(0);
+  }
+
+  void new_slot()
+  {
+    ++t;
+    test_logger.set_context(t);
+    mac_logger.set_context(t);
+    h_entity.new_slot(t);
+  }
+
+  slot_point slot_rx() { return t; }
+  slot_point slot_tx() { return t + tx_gnb_delay; }
+  slot_point dl_slot_ack() { return t + tx_gnb_delay + tx_ack_delay; }
+
+private:
+  harq_entity&   h_entity;
+  const unsigned tx_gnb_delay;
+  const unsigned tx_ack_delay;
+  // Let it do the job of finding the MAX UINT 32
+  slot_point t = -1;
+};
+srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
+srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
+
 struct harq_proc_params {
   uint32_t arq_slot_delay;
   uint32_t max_n_rtx;
@@ -90,6 +124,8 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
     // Create new transmission and set MCS + TBS
     dl_proc->new_tx(slot, slot + dl_param.arq_slot_delay, grant_dl, dl_param.mcs, dl_param.max_n_rtx, dci_dl);
     dl_proc->set_tbs(dl_param.tbs);
+    test_bench::test_logger.info(
+        "New DL HARQ tx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
 
     // For a new TX, verify the NDI gets toggled
     TESTASSERT_EQ_MSG(dci_dl.ndi, not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
@@ -104,6 +140,8 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
     // Create new re-transmission and set TBS
     dl_proc->new_retx(slot, slot + dl_param.arq_slot_delay, grant_dl, dci_dl);
     dl_proc->set_tbs(dl_param.tbs);
+    test_bench::test_logger.info(
+        "New DL HARQ retx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
 
     // For a new RE-TX, verify the NDI is the same as for the original TX
     TESTASSERT_EQ_MSG(dci_dl.ndi, dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
@@ -200,17 +238,14 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
 
   // Create HARQ entity
   harq_entity h_entity = harq_entity(0x04601, nof_prbs, nof_h_procs, harq_logger);
+  test_bench  bench(h_entity, 0, arq_slot_delay);
 
   // ----------------  SLOT 0  ------------------
-  // Update slot
-  // Let it do the job of finding the MAX UINT 32
-  uint32_t t = -1;
-
   // Verify that there are empty DL HARQs
   TESTASSERT(h_entity.find_empty_dl_harq() != nullptr);
 
   // Increment slot
-  h_entity.new_slot(++t);
+  bench.new_slot();
 
   // Define DL HARQ PID 0
   const harq_proc_params dl_h_par_0{.arq_slot_delay = arq_slot_delay, .max_n_rtx = max_n_rtx, .mcs = 17, .tbs = 3152};
@@ -220,15 +255,17 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   dl_harq_proc* dl_proc = h_entity.find_empty_dl_harq();
 
   // Verify that allocating a RETX without allocating a TX first leads to the function returning false
-  TESTASSERT_EQ(dl_proc->new_retx(t, t + arq_slot_delay, grant_dl, dci_dl), false);
+  TESTASSERT_EQ(dl_proc->new_retx(bench.slot_tx(), bench.dl_slot_ack(), grant_dl, dci_dl), false);
 
   // Verify that allocating a new TX leads to the function returning true
-  TESTASSERT_EQ(dl_proc->new_tx(t, t + arq_slot_delay, grant_dl, dl_h_par_0.mcs, dl_h_par_0.max_n_rtx, dci_dl), true);
+  TESTASSERT_EQ(
+      dl_proc->new_tx(bench.slot_tx(), bench.dl_slot_ack(), grant_dl, dl_h_par_0.mcs, dl_h_par_0.max_n_rtx, dci_dl),
+      true);
 
   // Report ACK and advance slots number
-  h_entity_report_ack(common_param, dl_h_par_0, dl_h_par_0, t, dl_h_var_0, dl_h_var_0, h_entity);
-  h_entity.new_slot(++t);
-  h_entity.new_slot(++t);
+  h_entity_report_ack(common_param, dl_h_par_0, dl_h_par_0, bench.slot_tx(), dl_h_var_0, dl_h_var_0, h_entity);
+  bench.new_slot();
+  bench.new_slot();
 
   // Verify that there should be a pending TX
   TESTASSERT(h_entity.find_pending_dl_retx() == dl_proc);
@@ -240,10 +277,14 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   dl_proc = h_entity.find_empty_dl_harq();
 
   // Increase ACK report delay and schedule a transmission (expect SUCCESS)
-  TESTASSERT_EQ(dl_proc->new_tx(t, t + 4, grant_dl, dl_h_par_1.mcs, dl_h_par_1.max_n_rtx, dci_dl), true);
-  h_entity.new_slot(++t);
+  TESTASSERT_EQ(
+      dl_proc->new_tx(bench.slot_tx(), bench.dl_slot_ack(), grant_dl, dl_h_par_1.mcs, dl_h_par_1.max_n_rtx, dci_dl),
+      true);
+  bench.new_slot();
   // Schedule a transmission for the same PID before the ACK is received (expect FAIL)
-  TESTASSERT_EQ(dl_proc->new_tx(t, t + 4, grant_dl, dl_h_par_1.mcs, dl_h_par_1.max_n_rtx, dci_dl), false);
+  TESTASSERT_EQ(
+      dl_proc->new_tx(bench.slot_tx(), bench.dl_slot_ack(), grant_dl, dl_h_par_1.mcs, dl_h_par_1.max_n_rtx, dci_dl),
+      false);
 #if 0
   h_entity.new_slot(++t);
   TESTASSERT_EQ(dl_proc->new_retx(t, t + 4, grant_dl, dci_dl), false);
@@ -354,11 +395,9 @@ void test_harq(srslog::basic_logger& harq_logger)
 
   // Create HARQ entity
   harq_entity h_entity = harq_entity(0x04601, nof_prbs, nof_h_procs, harq_logger);
+  test_bench  bench{h_entity, 0, arq_slot_delay};
 
   // ----------------  SLOT 0  ------------------
-  // Update slot
-  // Let it do the job of finding the MAX UINT 32
-  uint32_t t = -1;
 
   // Define DL HARQ PID 0
   const harq_proc_params dl_h_par_0{.arq_slot_delay = arq_slot_delay, .max_n_rtx = max_n_rtx, .mcs = 17, .tbs = 3152};
@@ -368,12 +407,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   harq_proc_vars         ul_h_var_0{};
 
   // Update ACK
-  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, t, dl_h_var_0, ul_h_var_0, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, bench.slot_rx(), dl_h_var_0, ul_h_var_0, h_entity);
   // Increment slot and, if necessary, clear HARQ processes
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_0, t, dl_h_var_0, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_0, t, ul_h_var_0, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_0, bench.slot_rx(), dl_h_var_0, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_0, bench.slot_rx(), ul_h_var_0, h_entity);
 
   // ----------------  SLOT 1  ------------------
   // Update slot
@@ -385,10 +424,10 @@ void test_harq(srslog::basic_logger& harq_logger)
   const harq_proc_params ul_h_par_1{.arq_slot_delay = ul_tx_delay, .max_n_rtx = max_n_rtx, .mcs = 12, .tbs = 3152};
   harq_proc_vars         ul_h_var_1{};
 
-  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, t, dl_h_var_1, ul_h_var_1, h_entity);
-  h_entity.new_slot(++t);
-  test_dl_harq_entity_slot(common_param, dl_h_par_1, t, dl_h_var_1, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_1, t, ul_h_var_1, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, bench.slot_rx(), dl_h_var_1, ul_h_var_1, h_entity);
+  bench.new_slot();
+  test_dl_harq_entity_slot(common_param, dl_h_par_1, bench.slot_rx(), dl_h_var_1, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_1, bench.slot_rx(), ul_h_var_1, h_entity);
 
   // ----------------  SLOT 2  ------------------
   // Update slot
@@ -400,10 +439,10 @@ void test_harq(srslog::basic_logger& harq_logger)
   const harq_proc_params ul_h_par_2{.arq_slot_delay = ul_tx_delay, .max_n_rtx = max_n_rtx, .mcs = 8, .tbs = 1616};
   harq_proc_vars         ul_h_var_2{};
 
-  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, t, dl_h_var_2, ul_h_var_2, h_entity);
-  h_entity.new_slot(++t);
-  test_dl_harq_entity_slot(common_param, dl_h_par_2, t, dl_h_var_2, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_2, t, ul_h_var_2, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, bench.slot_rx(), dl_h_var_2, ul_h_var_2, h_entity);
+  bench.new_slot();
+  test_dl_harq_entity_slot(common_param, dl_h_par_2, bench.slot_rx(), dl_h_var_2, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_2, bench.slot_rx(), ul_h_var_2, h_entity);
 
   // ----------------  SLOT 3  ------------------
   // Update slot
@@ -415,10 +454,10 @@ void test_harq(srslog::basic_logger& harq_logger)
   const harq_proc_params ul_h_par_3{.arq_slot_delay = ul_tx_delay, .max_n_rtx = max_n_rtx, .mcs = 23, .tbs = 4578};
   harq_proc_vars         ul_h_var_3{};
 
-  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, t, dl_h_var_3, ul_h_var_3, h_entity);
-  h_entity.new_slot(++t);
-  test_dl_harq_entity_slot(common_param, dl_h_par_3, t, dl_h_var_3, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_3, t, ul_h_var_3, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, bench.slot_rx(), dl_h_var_3, ul_h_var_3, h_entity);
+  bench.new_slot();
+  test_dl_harq_entity_slot(common_param, dl_h_par_3, bench.slot_rx(), dl_h_var_3, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_3, bench.slot_rx(), ul_h_var_3, h_entity);
 
   // ----------------  SLOT 4  ------------------
   // From this slot onwards, the ACK will be actually processed
@@ -427,12 +466,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_0.ack = true;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, t, dl_h_var_0, ul_h_var_0, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, bench.slot_rx(), dl_h_var_0, ul_h_var_0, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_0, t, dl_h_var_0, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_0, t, ul_h_var_0, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_0, bench.slot_rx(), dl_h_var_0, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_0, bench.slot_rx(), ul_h_var_0, h_entity);
 
   // ----------------  SLOT 5  ------------------
 
@@ -441,12 +480,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_1.ack = false;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, t, dl_h_var_1, ul_h_var_1, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, bench.slot_rx(), dl_h_var_1, ul_h_var_1, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_1, t, dl_h_var_1, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_1, t, ul_h_var_1, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_1, bench.slot_rx(), dl_h_var_1, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_1, bench.slot_rx(), ul_h_var_1, h_entity);
 
   // ----------------  SLOT 6  ------------------
 
@@ -455,12 +494,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_2.ack = true;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, t, dl_h_var_2, ul_h_var_2, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, bench.slot_rx(), dl_h_var_2, ul_h_var_2, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_2, t, dl_h_var_2, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_2, t, ul_h_var_2, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_2, bench.slot_rx(), dl_h_var_2, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_2, bench.slot_rx(), ul_h_var_2, h_entity);
 
   // ----------------  SLOT 7  ------------------
 
@@ -469,12 +508,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_3.ack = false;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, t, dl_h_var_3, ul_h_var_3, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, bench.slot_rx(), dl_h_var_3, ul_h_var_3, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_3, t, dl_h_var_3, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_3, t, ul_h_var_3, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_3, bench.slot_rx(), dl_h_var_3, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_3, bench.slot_rx(), ul_h_var_3, h_entity);
 
   // ----------------  SLOT 8  ------------------
 
@@ -483,12 +522,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_0.ack = true;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, t, dl_h_var_0, ul_h_var_0, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_0, ul_h_par_0, bench.slot_rx(), dl_h_var_0, ul_h_var_0, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_0, t, dl_h_var_0, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_0, t, ul_h_var_0, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_0, bench.slot_rx(), dl_h_var_0, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_0, bench.slot_rx(), ul_h_var_0, h_entity);
 
   // ----------------  SLOT 9  ------------------
   // Make PID 1 fail, this will trigger the packets to be discarded
@@ -496,12 +535,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_1.ack = false;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, t, dl_h_var_1, ul_h_var_1, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_1, ul_h_par_1, bench.slot_rx(), dl_h_var_1, ul_h_var_1, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_1, t, dl_h_var_1, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_1, t, ul_h_var_1, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_1, bench.slot_rx(), dl_h_var_1, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_1, bench.slot_rx(), ul_h_var_1, h_entity);
 
   // ----------------  SLOT 10  ------------------
 
@@ -510,12 +549,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_2.ack = true;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, t, dl_h_var_2, ul_h_var_2, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_2, ul_h_par_2, bench.slot_rx(), dl_h_var_2, ul_h_var_2, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_2, t, dl_h_var_2, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_2, t, ul_h_var_2, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_2, bench.slot_rx(), dl_h_var_2, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_2, bench.slot_rx(), ul_h_var_2, h_entity);
 
   // ----------------  SLOT 11  ------------------
 
@@ -524,12 +563,12 @@ void test_harq(srslog::basic_logger& harq_logger)
   ul_h_var_3.ack = true;
 
   // Report ACK
-  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, t, dl_h_var_3, ul_h_var_3, h_entity);
+  h_entity_report_ack(common_param, dl_h_par_3, ul_h_par_3, bench.slot_rx(), dl_h_var_3, ul_h_var_3, h_entity);
   // Update Scheduler slot and clear HARQ processes, if needed
-  h_entity.new_slot(++t);
+  bench.new_slot();
   // Test DL and UL HARQ separately
-  test_dl_harq_entity_slot(common_param, dl_h_par_3, t, dl_h_var_3, h_entity);
-  test_ul_harq_entity_slot(common_param, ul_h_par_3, t, ul_h_var_3, h_entity);
+  test_dl_harq_entity_slot(common_param, dl_h_par_3, bench.slot_rx(), dl_h_var_3, h_entity);
+  test_ul_harq_entity_slot(common_param, ul_h_par_3, bench.slot_rx(), ul_h_var_3, h_entity);
 }
 
 int main()
@@ -538,6 +577,8 @@ int main()
   srslog::init();
   auto& harq_logger = srslog::fetch_basic_logger("MAC-NR");
   harq_logger.set_level(srslog::basic_levels::info);
+  auto& test_logger = srslog::fetch_basic_logger("TEST");
+  test_logger.set_level(srslog::basic_levels::info);
 
   // Test DL functions (with invalid behaviour or operations not permitted)
   test_dl_invalid_paths(harq_logger);
