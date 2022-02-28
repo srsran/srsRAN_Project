@@ -144,7 +144,7 @@ template <typename DispatchTaskExecutor,
 std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType> >
 dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
-  ReturnType ret;
+  ReturnType ret{};
   return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), ret](
                           coro_context<async_task<ReturnType> >& ctx) mutable {
     CORO_BEGIN(ctx);

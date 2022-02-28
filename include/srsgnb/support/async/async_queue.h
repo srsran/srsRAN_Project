@@ -52,12 +52,10 @@ public:
       }
       return true;
     }
-    expected<T> await_resume()
+    T await_resume()
     {
-      if (parent->queue.empty()) {
-        return {default_error_t{}};
-      }
-      expected<T> ret = std::move(parent->queue.top());
+      srsran_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
+      T ret = std::move(parent->queue.top());
       parent->queue.pop();
       return ret;
     }
