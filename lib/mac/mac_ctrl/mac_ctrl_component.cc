@@ -27,9 +27,7 @@ void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& 
   // UE object added to ue_db successfully
 
   // Enqueue UE create request procedure
-  u->pending_events.push(
-      [this, msg]() { return launch_async<mac_ue_create_request_procedure>(msg, cfg, ul_unit, dl_unit); });
-  u->notify_event.set();
+  u->ctrl_loop.schedule<mac_ue_create_request_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
 void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
@@ -45,33 +43,7 @@ void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& 
   ue_element& u = ue_db[msg.ue_index];
 
   // Enqueue UE delete procedure
-  // TODO: right now I dont have lazy_tasks, so I have to wrap the coroutine in a lambda.
-  u.pending_events.push([this, msg]() { return launch_async<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit); });
-}
-
-void mac_ctrl_component::launch_ue_ctrl_loop(ue_element& u)
-{
-  u.ctrl_loop = launch_async([&u, current_task = async_task<void>{}](coro_context<async_task<void> >& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    // infinite task
-    while (true) {
-      // Wait for new procedure to be enqueued
-      if (u.pending_events.empty()) {
-        u.notify_event.reset();
-      }
-      CORO_AWAIT(u.notify_event);
-
-      // launch enqueued task and pop it
-      current_task = u.pending_events.front()();
-      u.pending_events.pop();
-
-      // Await for popped task to complete
-      CORO_AWAIT(current_task);
-    }
-
-    CORO_RETURN();
-  });
+  u.ctrl_loop.schedule<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
 mac_ctrl_component::ue_element*
@@ -96,9 +68,6 @@ mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t
   u.ue_ctx.du_ue_index = ue_index;
   u.ue_ctx.rnti        = crnti;
   u.ue_ctx.pcell_idx   = cell_index;
-
-  // Launch UE main control loop
-  launch_ue_ctrl_loop(u);
 
   // Update RNTI -> UE index map
   rnti_to_ue_index_map[crnti % MAX_NOF_UES] = ue_index;

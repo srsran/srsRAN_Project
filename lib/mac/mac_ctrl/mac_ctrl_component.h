@@ -10,7 +10,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/manual_event.h"
+#include "srsgnb/support/async/async_task_loop.h"
 #include <queue>
 
 namespace srsgnb {
@@ -38,18 +38,12 @@ public:
 
 private:
   struct ue_element {
-    mac_ue_context ue_ctx;
-
-    async_task<void>                                 ctrl_loop; ///< UE Control loop
-    std::queue<unique_function<async_task<void>()> > pending_events;
-    manual_event_flag                                notify_event; // TODO: Make notification automatic
+    mac_ue_context       ue_ctx;
+    async_task_sequencer ctrl_loop{16}; ///< UE Control loop
   };
 
   ue_element* add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index);
   bool        remove_ue(du_ue_index_t ue_index);
-
-  /// Launches task that handles incoming UE events
-  static void launch_ue_ctrl_loop(ue_element& u);
 
   // args
   mac_common_config_t&  cfg;
