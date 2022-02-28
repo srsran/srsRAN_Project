@@ -4494,7 +4494,7 @@ static const BG_adjacency_matrix_t BG2_adjacency_matrix{
      {2, 10, 13, 50, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE},
      {1, 5, 11, 51, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE}}};
 
-BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls)
+BG_matrix_t srsgnb::ldpc::get_graph(base_graph_t bg, lifting_size_t ls)
 {
   int ls_index = LSindex[ls].index;
   assert(ls_index != VOID_LIFTSIZE);
@@ -4519,17 +4519,17 @@ BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls)
   return graph_matrix;
 }
 
-uint8_t get_lifting_index(lifting_size_t ls)
+uint8_t srsgnb::ldpc::get_lifting_index(lifting_size_t ls)
 {
   return LSindex[ls].index;
 }
 
-uint8_t get_lifting_size_position(lifting_size_t ls)
+uint8_t srsgnb::ldpc::get_lifting_size_position(lifting_size_t ls)
 {
   return LSindex[ls].position;
 }
 
-const BG_adjacency_matrix_t* get_adjacency_matrix(base_graph_t bg)
+const BG_adjacency_matrix_t* srsgnb::ldpc::get_adjacency_matrix(base_graph_t bg)
 {
   if (bg == base_graph_t::BG1) {
     return &BG1_adjacency_matrix;

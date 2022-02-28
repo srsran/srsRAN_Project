@@ -10,20 +10,6 @@ namespace srsgnb {
 class ldpc_encoder
 {
 public:
-  /// Default constructor.
-  ldpc_encoder() = default;
-
-  /// \name Copy and move constructors.
-  /// Deleted.
-  ///@{
-  ldpc_encoder(ldpc_encoder&)  = delete;
-  ldpc_encoder(ldpc_encoder&&) = delete;
-
-  // no copy and move operators
-  ldpc_encoder& operator=(ldpc_encoder&) = delete;
-  ldpc_encoder& operator=(ldpc_encoder&&) = delete;
-  ///@}
-
   /// Default destructor.
   virtual ~ldpc_encoder() = default;
 

@@ -81,22 +81,29 @@ public:
 
   /// Returns the base graph generating the current graph.
   ldpc::base_graph_t get_base_graph() const { return base_graph; }
+
   /// Returns the lifting size generating the current graph.
   ldpc::lifting_size_t get_lifting_size() const { return lifting_size; }
+
   /// Returns the lifting index corresponding to the current lifting size (a number between 0 and 7).
   uint8_t get_lifting_index() const { return lifting_index; }
+
   /// \brief Returns the compact representation of the lifted node at position \f$(m,n)\f$.
   ///
   /// If the base graph has an edge between check node \c m and variable node \c n, the returned value is
   /// the shift applied to the lifted node. Conversely, if there is no edge, then the returned value is
   /// srsgnb::ldpc::NO_EDGE.
   uint16_t get_lifted_node(unsigned m, unsigned n) const { return parity_check_matrix[m][n]; }
+
   /// Returns the number of check nodes of the underlying base graph.
   unsigned get_nof_BG_check_nodes() const { return nof_BG_check_nodes; }
+
   /// Returns the number of variable nodes of the underlying base graph.
   unsigned get_nof_BG_var_nodes_full() const { return nof_BG_var_nodes_full; }
+
   /// Returns the number of variable nodes of the underlying base graph after shortening.
   unsigned get_nof_BG_var_nodes_short() const { return nof_BG_var_nodes_short; }
+
   /// Returns the number of variable nodes of the underlying base graph associated to information bits.
   unsigned get_nof_BG_info_nodes() const { return nof_BG_var_nodes_full - nof_BG_check_nodes; }
 

@@ -22,7 +22,7 @@ static std::array<ldpc_graph_impl, total_nof_graphs> create_graph_array()
 
 const std::array<ldpc_graph_impl, total_nof_graphs> ldpc_encoder_impl::graph_array = create_graph_array();
 
-void ldpc_encoder_impl::init(config_t cfg)
+void ldpc_encoder_impl::init(const config_t& cfg)
 {
   uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);
   unsigned skip = static_cast<unsigned>(cfg.base_graph) * nof_lifting_sizes;

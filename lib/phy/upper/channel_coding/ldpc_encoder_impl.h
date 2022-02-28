@@ -38,7 +38,7 @@ public:
 
 private:
   /// Initializes the encoder registers and inner variables.
-  void init(config_t cfg);
+  void init(const config_t& cfg);
   /// Selects the appropriate encoding strategy.
   virtual void select_strategy() {}
   /// Loads the input bits into the inner register.
