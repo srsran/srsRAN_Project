@@ -211,7 +211,7 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
 }
 
 /// Parameter used to choose between different outcomes for HARQ process test
-enum test_mode { acked, max_retx_reached };
+enum test_mode { acked, max_retx_reached, invalid_retx_params };
 
 /// Test DL HARQ process in different states: empty, allocated and waiting for ACK, allocated with pending reTx
 void test_dl_harq_proc(test_mode tmode)
@@ -266,6 +266,13 @@ void test_dl_harq_proc(test_mode tmode)
   TESTASSERT_EQ(0, dl_proc.nof_retx());
 
   // Test: HARQ with reTx
+  if (tmode == invalid_retx_params) {
+    // reTxs should always keep the same TBS, and, therefore, the same number of PRBs
+    prb_grant grant2 = prbgrant;
+    grant2.prbs().resize_by(2);
+    TESTASSERT(not dl_proc.new_retx(sl_tx, sl_tx + harq_delay, grant2, dci));
+    return;
+  }
   TESTASSERT(dl_proc.new_retx(sl_tx, sl_tx + harq_delay, prbgrant, dci));
   TESTASSERT(not dl_proc.has_pending_retx());
   TESTASSERT(not dl_proc.empty());
@@ -665,6 +672,7 @@ int main()
   // Test individual DL HARQ procedure interface
   test_dl_harq_proc(test_mode::acked);
   test_dl_harq_proc(test_mode::max_retx_reached);
+  test_dl_harq_proc(test_mode::invalid_retx_params);
   // Test DL functions (with invalid behaviour or operations not permitted)
   test_dl_invalid_paths(harq_logger);
   // Test UL functions (with invalid behaviour or operations not permitted)
