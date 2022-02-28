@@ -4,19 +4,6 @@
 
 namespace srsgnb {
 
-class sched_response_adapter final : public sched_cfg_notifier
-{
-public:
-  sched_response_adapter(mac_impl& mac_) : mac_ref(mac_) {}
-
-  void on_ue_config_complete(rnti_t rnti) override { mac_ref.sched_ue_config_response(rnti); }
-  void on_ue_delete_response(rnti_t rnti) override { mac_ref.sched_ue_delete_response(rnti); }
-
-  mac_impl& mac_ref;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 mac_impl::mac_impl(mac_config_notifier& cfg_notifier_,
                    mac_ul_sdu_notifier& ul_ccch_notifier_,
                    task_executor&       ul_exec_,
@@ -42,16 +29,6 @@ void mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
 void mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   ctrl_unit.ue_delete_request(msg);
-}
-
-void mac_impl::sched_ue_config_response(rnti_t rnti)
-{
-  ctrl_unit.sched_ue_create_response(rnti);
-}
-
-void mac_impl::sched_ue_delete_response(rnti_t rnti)
-{
-  ctrl_unit.sched_ue_delete_response(rnti);
 }
 
 void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)

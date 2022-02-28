@@ -33,10 +33,6 @@ public:
 
   void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
 
-  // Sched->MAC interface
-  void sched_ue_delete_response(rnti_t rnti);
-  void sched_ue_config_response(rnti_t rnti);
-
 private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;

@@ -5,7 +5,9 @@
 
 using namespace srsgnb;
 
-mac_ctrl_component::mac_ctrl_component(mac_common_config_t& cfg_, mac_ul_component& ul_unit_, mac_dl_component& dl_unit_) :
+mac_ctrl_component::mac_ctrl_component(mac_common_config_t& cfg_,
+                                       mac_ul_component&    ul_unit_,
+                                       mac_dl_component&    dl_unit_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_)
 {
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
@@ -30,21 +32,6 @@ void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& 
   u->notify_event.set();
 }
 
-void mac_ctrl_component::sched_ue_create_response(rnti_t rnti)
-{
-  cfg.ctrl_exec.execute([this, rnti]() {
-    du_ue_index_t ue_index = rnti_to_ue_index_map[rnti % MAX_NOF_UES];
-    if (rnti == INVALID_RNTI or not ue_db.contains(ue_index)) {
-      logger.warning("Failed to find rnti=0x{:x}", rnti);
-      return;
-    }
-    ue_element& u = ue_db[ue_index];
-
-    // Trigger awaiting procedure
-    u.sched_response_ev.set();
-  });
-}
-
 void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   if (not ue_db.contains(msg.ue_index)) {
@@ -60,11 +47,6 @@ void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& 
   // Enqueue UE delete procedure
   // TODO: right now I dont have lazy_tasks, so I have to wrap the coroutine in a lambda.
   u.pending_events.push([this, msg]() { return launch_async<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit); });
-}
-
-void mac_ctrl_component::sched_ue_delete_response(rnti_t rnti)
-{
-  sched_ue_create_response(rnti);
 }
 
 void mac_ctrl_component::launch_ue_ctrl_loop(ue_element& u)

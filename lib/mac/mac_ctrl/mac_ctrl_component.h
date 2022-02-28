@@ -28,11 +28,9 @@ public:
 
   /// UE create methods
   void ue_create_request(const mac_ue_create_request_message& msg);
-  void sched_ue_create_response(rnti_t rnti);
 
   /// UE deletion methods
   void ue_delete_request(const mac_ue_delete_request_message& msg);
-  void sched_ue_delete_response(rnti_t rnti);
 
   /// Fetch UE context
   mac_ue_context* find_ue(du_ue_index_t ue_index);
@@ -41,9 +39,6 @@ public:
 private:
   struct ue_element {
     mac_ue_context ue_ctx;
-
-    /// Events
-    manual_event_flag sched_response_ev;
 
     async_task<void>                                 ctrl_loop; ///< UE Control loop
     std::queue<unique_function<async_task<void>()> > pending_events;
@@ -59,8 +54,8 @@ private:
   // args
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
-  mac_ul_component&               ul_unit;
-  mac_dl_component&               dl_unit;
+  mac_ul_component&     ul_unit;
+  mac_dl_component&     dl_unit;
 
   // UE database
   slot_array<ue_element, MAX_NOF_UES>    ue_db;
