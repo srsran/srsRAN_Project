@@ -15,5 +15,10 @@ add_executable(polar_interleaver_test polar_interleaver_test.cpp)
 target_link_libraries(polar_interleaver_test polar_code srsvec)
 add_test(polar_interleaver_test polar_interleaver_test)
 
-add_executable(ldpc_test ldpc_test.cpp)
-target_link_libraries(ldpc_test ldpc)
+add_executable(ldpc_enc_dec_test ldpc_enc_dec_test.cpp)
+target_link_libraries(ldpc_enc_dec_test ldpc)
+add_custom_command(TARGET ldpc_enc_dec_test
+    POST_BUILD
+    COMMAND cp ${CMAKE_CURRENT_SOURCE_DIR}/examplesBG?.dat ./
+    )
+add_test(ldpc_enc_dec_test ldpc_enc_dec_test)
