@@ -116,6 +116,7 @@ bool harq_proc::new_retx(slot_point slot_tx_, slot_point slot_ack_)
   }
   slot_tx         = slot_tx_;
   slot_ack        = slot_ack_;
+  tb[0].state     = tb_t::state_t::waiting_ack;
   tb[0].ack_state = false;
   tb[0].n_rtx++;
   return true;

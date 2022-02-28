@@ -210,6 +210,88 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
   TESTASSERT_EQ_MSG(ul_proc->get_softbuffer().size(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
 }
 
+/// Parameter used to choose between different outcomes for HARQ process test
+enum test_mode { acked, max_retx_reached };
+
+/// Test DL HARQ process in different states: empty, allocated and waiting for ACK, allocated with pending reTx
+void test_dl_harq_proc(test_mode tmode)
+{
+  constexpr unsigned harq_delay   = 4;
+  constexpr unsigned tx_gnb_delay = 2;
+  constexpr unsigned max_retx     = 1;
+  constexpr unsigned pid          = 1;
+  constexpr unsigned mcs          = 8;
+  constexpr unsigned tbs          = 1224;
+
+  dl_harq_proc dl_proc{pid, 52};
+  dci_dl_t     dci{};
+  prb_grant    prbgrant{prb_interval{0, 60}};
+  slot_point   sl_tx = tx_gnb_delay;
+  auto         sl_rx = [&sl_tx]() { return sl_tx - tx_gnb_delay; };
+
+  // Test: Empty HARQ
+  TESTASSERT(dl_proc.empty());
+  TESTASSERT_EQ(pid, dl_proc.pid);
+  TESTASSERT(not dl_proc.has_pending_retx());
+  TESTASSERT(dl_proc.nof_retx() == 0);
+  TESTASSERT_EQ(false, dl_proc.new_retx(sl_tx, sl_tx + harq_delay, prbgrant, dci));
+  TESTASSERT(dl_proc.ack_info(0, true) < 0);
+
+  // Test: HARQ with newTx
+  TESTASSERT(dl_proc.new_tx(sl_tx, sl_tx + harq_delay, prbgrant, mcs, max_retx, dci));
+  TESTASSERT(dl_proc.set_tbs(tbs));
+  TESTASSERT(not dl_proc.empty());
+  TESTASSERT(not dl_proc.has_pending_retx());
+  TESTASSERT_EQ(mcs, dl_proc.mcs());
+  TESTASSERT_EQ(tbs, dl_proc.tbs());
+  TESTASSERT_EQ(0, dl_proc.nof_retx());
+  TESTASSERT_EQ(max_retx, dl_proc.max_nof_retx());
+  TESTASSERT_EQ(sl_tx + harq_delay, dl_proc.harq_slot_ack());
+  TESTASSERT(prbgrant.prbs() == dl_proc.prbs().prbs());
+
+  // Test: HARQ waiting for ACK
+  for (unsigned count = 0; count < tx_gnb_delay + harq_delay; ++count) {
+    sl_tx++;
+    // No Pending ReTx until ACK arrives.
+    TESTASSERT(not dl_proc.has_pending_retx());
+    // If no Pending ReTx, allocation of retxs or newtxs should fail
+    TESTASSERT(not dl_proc.new_retx(sl_tx, sl_tx + harq_delay, prbgrant, dci));
+    TESTASSERT(not dl_proc.new_tx(sl_tx, sl_tx + harq_delay, prbgrant, mcs, max_retx, dci));
+    dl_proc.new_slot(sl_rx());
+  }
+
+  // Test: HARQ has pending reTx
+  TESTASSERT(dl_proc.has_pending_retx());
+  TESTASSERT(not dl_proc.new_tx(sl_tx, sl_tx + harq_delay, prbgrant, mcs, max_retx, dci));
+  TESTASSERT_EQ(0, dl_proc.nof_retx());
+
+  // Test: HARQ with reTx
+  TESTASSERT(dl_proc.new_retx(sl_tx, sl_tx + harq_delay, prbgrant, dci));
+  TESTASSERT(not dl_proc.has_pending_retx());
+  TESTASSERT(not dl_proc.empty());
+  TESTASSERT(not dl_proc.new_tx(sl_tx, sl_tx + harq_delay, prbgrant, mcs, max_retx, dci));
+  TESTASSERT_EQ(1, dl_proc.nof_retx());
+  TESTASSERT_EQ(sl_tx + harq_delay, dl_proc.harq_slot_ack());
+
+  for (unsigned count = 0; count < tx_gnb_delay + harq_delay - 1; ++count) {
+    sl_tx++;
+    dl_proc.new_slot(sl_rx());
+  }
+
+  if (tmode == max_retx_reached) {
+    // Test: max reTx reached
+    // The HARQ should be automatically cleared
+    sl_tx++;
+    dl_proc.new_slot(sl_rx());
+    TESTASSERT(dl_proc.empty());
+    return;
+  }
+  // Test: HARQ ACKed
+  // The HARQ should be cleared
+  TESTASSERT(dl_proc.ack_info(0, true));
+  TESTASSERT(dl_proc.empty());
+}
+
 void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
 {
   // This test aims at testing DL functionalities of class ul_harq_proc and class h_entity
@@ -580,6 +662,9 @@ int main()
   auto& test_logger = srslog::fetch_basic_logger("TEST");
   test_logger.set_level(srslog::basic_levels::info);
 
+  // Test individual DL HARQ procedure interface
+  test_dl_harq_proc(test_mode::acked);
+  test_dl_harq_proc(test_mode::max_retx_reached);
   // Test DL functions (with invalid behaviour or operations not permitted)
   test_dl_invalid_paths(harq_logger);
   // Test UL functions (with invalid behaviour or operations not permitted)

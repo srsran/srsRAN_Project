@@ -34,7 +34,7 @@ public:
   bool empty(uint32_t tb_idx) const { return tb[tb_idx].state == tb_t::state_t::empty; }
   /// Returns true if, at the time of processing, the TB (whether it was with transmission or retransmission)
   /// has not been positively ACKED yet
-  bool             has_pending_retx(slot_point slot_rx) const { return tb[0].state == tb_t::state_t::pending_retx; }
+  bool             has_pending_retx() const { return tb[0].state == tb_t::state_t::pending_retx; }
   uint32_t         nof_retx() const { return tb[0].n_rtx; }
   uint32_t         max_nof_retx() const { return max_retx; }
   uint32_t         tbs() const { return tb[0].tbs; }
@@ -146,11 +146,11 @@ public:
 
   dl_harq_proc* find_pending_dl_retx()
   {
-    return find_dl([this](const dl_harq_proc& h) { return h.has_pending_retx(slot_rx); });
+    return find_dl([](const dl_harq_proc& h) { return h.has_pending_retx(); });
   }
   ul_harq_proc* find_pending_ul_retx()
   {
-    return find_ul([this](const ul_harq_proc& h) { return h.has_pending_retx(slot_rx); });
+    return find_ul([](const ul_harq_proc& h) { return h.has_pending_retx(); });
   }
   dl_harq_proc* find_empty_dl_harq()
   {
