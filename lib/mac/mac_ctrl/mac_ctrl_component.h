@@ -32,6 +32,9 @@ public:
   /// UE deletion methods
   void ue_delete_request(const mac_ue_delete_request_message& msg);
 
+  /// UE reconfiguration methods
+  void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
+
   /// Fetch UE context
   mac_ue_context* find_ue(du_ue_index_t ue_index);
   mac_ue_context* find_by_rnti(rnti_t rnti);

@@ -63,10 +63,17 @@ struct mac_ue_create_request_response_message {
   bool            result;
 };
 
-struct mac_ue_reconfiguration_request {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
+struct mac_ue_reconfiguration_request_message {
+  du_cell_index_t                     cell_index;
+  du_ue_index_t                       ue_index;
+  rnti_t                              crnti;
+  std::vector<logical_channel_addmod> bearers_to_addmod;
+  std::vector<lcid_t>                 bearers_to_rem;
+};
+
+struct mac_ue_reconfiguration_response_message {
+  du_ue_index_t ue_index;
+  bool          result;
 };
 
 struct mac_ue_delete_request_message {
@@ -84,17 +91,17 @@ struct mac_ue_delete_response_message {
 class mac_config_interface
 {
 public:
-  virtual ~mac_config_interface()                                                    = default;
-  virtual void ue_create_request(const mac_ue_create_request_message& cfg)           = 0;
-  virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request& cfg) = 0;
-  virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)           = 0;
+  virtual ~mac_config_interface()                                                            = default;
+  virtual void ue_create_request(const mac_ue_create_request_message& cfg)                   = 0;
+  virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)                   = 0;
 };
 
 class mac_southbound_interface
 {
 public:
   virtual ~mac_southbound_interface()                                        = default;
-  virtual void push_rx_data_indication(mac_rx_data_indication pdu)                       = 0;
+  virtual void push_rx_data_indication(mac_rx_data_indication pdu)           = 0;
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
@@ -107,10 +114,10 @@ public:
 class mac_config_notifier
 {
 public:
-  virtual ~mac_config_notifier()                                                                 = default;
-  virtual void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) = 0;
-  virtual void on_ue_reconfiguration_complete()                                                  = 0;
-  virtual void on_ue_delete_complete(const mac_ue_delete_response_message& resp)                 = 0;
+  virtual ~mac_config_notifier()                                                                   = default;
+  virtual void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp)   = 0;
+  virtual void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) = 0;
+  virtual void on_ue_delete_complete(const mac_ue_delete_response_message& resp)                   = 0;
 };
 
 } // namespace srsgnb

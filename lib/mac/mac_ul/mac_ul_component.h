@@ -37,6 +37,30 @@ public:
     return true;
   }
 
+  bool reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
+  {
+    // 1. Remove UE bearers
+    if (not remove_bearers(request.ue_index, request.bearers_to_rem)) {
+      log_proc_failure(logger,
+                       request.ue_index,
+                       request.crnti,
+                       "UE Reconfiguration Request",
+                       "Failed to update UL bearers in DEMUX");
+      return false;
+    }
+
+    // 2. Add/Mod UE Bearers
+    if (not addmod_bearers(request.ue_index, request.bearers_to_addmod)) {
+      log_proc_failure(logger,
+                       request.ue_index,
+                       request.crnti,
+                       "UE Reconfiguration Request",
+                       "Failed to update UL bearers in DEMUX");
+      return false;
+    }
+    return true;
+  }
+
   void remove_ue(du_ue_index_t ue_index) { demux.erase(ue_index); }
 
   void push_rx_data_indication(mac_rx_data_indication msg)
@@ -65,8 +89,23 @@ private:
   bool addmod_bearers(du_ue_index_t ue_index, const std::vector<logical_channel_addmod>& ul_logical_channels)
   {
     mac_ul_ue* ue = demux.get_ue(ue_index);
+    if (ue == nullptr) {
+      return false;
+    }
     for (const logical_channel_addmod& channel : ul_logical_channels) {
       ue->ul_bearers.insert(channel.lcid, channel.ul_bearer);
+    }
+    return true;
+  }
+
+  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+  {
+    mac_ul_ue* ue = demux.get_ue(ue_index);
+    if (ue == nullptr) {
+      return false;
+    }
+    for (lcid_t lcid : lcids) {
+      ue->ul_bearers.erase(lcid);
     }
     return true;
   }
@@ -90,6 +129,12 @@ public:
     // TODO: define dispatch policy to UL workers
     return dispatch_and_resume_on(
         cfg.ul_exec, cfg.ctrl_exec, [this, request]() { return workers[0]->add_ue(request); });
+  }
+
+  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override
+  {
+    return dispatch_and_resume_on(
+        cfg.ul_exec, cfg.ctrl_exec, [this, request]() { return workers[0]->reconfigure_ue(request); });
   }
 
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override

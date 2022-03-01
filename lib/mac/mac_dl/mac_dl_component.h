@@ -73,6 +73,36 @@ public:
     });
   }
 
+  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override
+  {
+    return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
+      CORO_BEGIN(ctx);
+
+      // 1. Change to respective DL executor
+      CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
+
+      // 2. Remove UE DL bearers
+      mux.remove_bearers(request.ue_index, request.bearers_to_rem);
+
+      // 3. AddMod UE DL bearers
+      mux.addmod_bearers(request.ue_index, request.bearers_to_addmod);
+
+      // 4. Configure UE in Scheduler
+      log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
+      sched_obj.config_ue(request.crnti);
+
+      // 4. Await scheduler to respond via notifier
+      CORO_AWAIT(sched_cfg_notif_map[request.crnti % sched_cfg_notif_map.size()]);
+
+      log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE Config");
+
+      // 5. Change back to CTRL executor before returning
+      CORO_AWAIT(execute_on(cfg.ctrl_exec));
+
+      CORO_RETURN(true);
+    });
+  }
+
 private:
   class sched_response_adapter final : public sched_cfg_notifier
   {

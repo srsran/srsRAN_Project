@@ -30,7 +30,7 @@ public:
 
   // MAC interface
   void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp) override;
-  void handle_mac_ue_reconfiguration_response() override {}
+  void handle_mac_ue_reconfiguration_response(const mac_ue_reconfiguration_response_message& resp) override {}
   void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp) override {}
 
   std::string get_ues() override;

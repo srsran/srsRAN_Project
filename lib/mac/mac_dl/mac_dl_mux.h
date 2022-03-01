@@ -59,12 +59,30 @@ public:
     return true;
   }
 
-  slot_vector<mac_dl_sdu_builder*>* get_bearers(du_ue_index_t ue_index)
+  bool addmod_bearers(du_ue_index_t ue_index, span<const logical_channel_addmod> dl_logical_channels)
   {
+    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
     if (not contains_ue(ue_index)) {
-      return nullptr;
+      return false;
     }
-    return &ue_db[ue_index].dl_bearers;
+    auto& u = ue_db[ue_index];
+    for (const logical_channel_addmod& lc : dl_logical_channels) {
+      u.dl_bearers.insert(lc.lcid, lc.dl_bearer);
+    }
+    return true;
+  }
+
+  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+  {
+    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
+    if (not contains_ue(ue_index)) {
+      return false;
+    }
+    auto& u = ue_db[ue_index];
+    for (lcid_t lcid : lcids) {
+      u.dl_bearers.erase(lcid);
+    }
+    return true;
   }
 
 private:

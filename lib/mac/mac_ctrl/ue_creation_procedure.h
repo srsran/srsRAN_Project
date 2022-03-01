@@ -5,13 +5,9 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "../mac_dl/mac_dl_component.h"
-#include "../mac_ul/mac_ul_component.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/execute_on.h"
-#include "srsgnb/support/async/manual_event.h"
 
 namespace srsgnb {
 

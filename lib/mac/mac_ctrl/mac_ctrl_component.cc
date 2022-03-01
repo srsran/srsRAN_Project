@@ -2,6 +2,7 @@
 #include "mac_ctrl_component.h"
 #include "ue_creation_procedure.h"
 #include "ue_delete_procedure.h"
+#include "ue_reconfiguration_procedure.h"
 
 using namespace srsgnb;
 
@@ -45,6 +46,22 @@ void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& 
 
   // Enqueue UE delete procedure
   u.ctrl_loop.schedule<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit);
+}
+
+void mac_ctrl_component::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
+{
+  if (not ue_db.contains(msg.ue_index)) {
+    log_proc_failure(logger, msg.ue_index, msg.crnti, mac_ue_reconfiguration_procedure::name(), "Inexistent ueId.");
+    mac_ue_reconfiguration_response_message resp{};
+    resp.ue_index = msg.ue_index;
+    resp.result   = false;
+    cfg.cfg_notifier.on_ue_reconfiguration_complete(resp);
+    return;
+  }
+  ue_element& u = ue_db[msg.ue_index];
+
+  // Enqueue UE reconfiguration procedure
+  u.ctrl_loop.schedule<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
 mac_ctrl_component::ue_element*

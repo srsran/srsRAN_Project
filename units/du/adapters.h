@@ -59,7 +59,10 @@ public:
   {
     du_manager->handle_mac_ue_create_response(resp);
   }
-  void on_ue_reconfiguration_complete() override {}
+  void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) override
+  {
+    du_manager->handle_mac_ue_reconfiguration_response(resp);
+  }
   void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override
   {
     du_manager->handle_mac_ue_delete_response(resp);
