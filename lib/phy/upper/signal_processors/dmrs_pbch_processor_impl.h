@@ -28,9 +28,9 @@ private:
   std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
 
   /// \brief Computes the initial pseudo-random state
-  /// \param [in] args provides the required parameters to calculate the value
+  /// \param [in] config provides the required parameters to calculate the value
   /// \return the initial pseudo-random state
-  static unsigned c_init(const config_t& args);
+  static unsigned c_init(const config_t& config);
 
   /// \brief Implements TS 38.211 section 7.4.1.4.1 Sequence generation
   /// \param [out] sequence provides the destination of the sequence generation
@@ -44,7 +44,7 @@ private:
   void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid_writer& grid, const config_t& config) const;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& args) override;
+  void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

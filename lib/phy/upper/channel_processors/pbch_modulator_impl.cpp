@@ -15,13 +15,13 @@
 
 using namespace srsgnb;
 
-void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& args)
+void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& config)
 {
   // Initialise sequence
-  scrambler->init(args.phys_cell_id);
+  scrambler->init(config.phys_cell_id);
 
   // Advance sequence
-  scrambler->advance((args.ssb_idx & 0x7) * M_bit);
+  scrambler->advance((config.ssb_idx & 0x7) * M_bit);
 
   // Apply XOR
   scrambler->apply_xor_bit(b, b_hat);
@@ -32,14 +32,14 @@ void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)
   modulator->modulate(b_hat, d_pbch, modulation_scheme::QPSK);
 }
 
-void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& args)
+void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config)
 {
   unsigned count = 0;
-  unsigned l0    = args.ssb_first_symbol;
-  unsigned k0    = args.ssb_first_subcarrier;
+  unsigned l0    = config.ssb_first_symbol;
+  unsigned k0    = config.ssb_first_subcarrier;
 
   // Calculate DMRS index shift
-  uint32_t v = args.phys_cell_id % 4;
+  uint32_t v = config.phys_cell_id % 4;
 
   // Create resource grid coordinates
   std::array<resource_grid_coordinate, M_symb> coordinates;

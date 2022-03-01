@@ -57,7 +57,7 @@ public:
   /// \c mask.
   virtual void put(unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) = 0;
 
-  /// \brief Put a consecutive number of resource elements for the symbol l starting at k_init
+  /// \brief Put a consecutive number of resource elements for the symbol \c l starting at \c k_init
   /// \param [in] l is the symbol index
   /// \param [in] k_init is the initial subcarrier index
   /// \param [out] symbols provides the symbols to map in the resource grid
@@ -89,7 +89,7 @@ public:
   /// mask.
   virtual void get(unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const = 0;
 
-  /// \brief Get a consecutive number of resource elements for the symbol l starting at k_init
+  /// \brief Get a consecutive number of resource elements for the symbol \c l starting at \c k_init
   /// \param [in] l is the symbol index
   /// \param [in] k_init is the initial subcarrier index
   /// \param [out] symbols provides the symbols to map in the resource grid

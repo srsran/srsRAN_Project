@@ -65,18 +65,18 @@ sss_processor_impl::pregen_d1_s::pregen_d1_s()
 const sss_processor_impl::pregen_d0_s sss_processor_impl::d0 = sss_processor_impl::pregen_d0_s();
 const sss_processor_impl::pregen_d1_s sss_processor_impl::d1 = sss_processor_impl::pregen_d1_s();
 
-void srsgnb::sss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& args) const
+void srsgnb::sss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const
 {
   // Calculate generation parameters
-  unsigned m0 = 15 * (phys_cell_id::NID_1(args.phys_cell_id) / 112) + 5 * phys_cell_id::NID_2(args.phys_cell_id);
-  unsigned m1 = phys_cell_id::NID_1(args.phys_cell_id) % 112;
+  unsigned m0 = 15 * (phys_cell_id::NID_1(config.phys_cell_id) / 112) + 5 * phys_cell_id::NID_2(config.phys_cell_id);
+  unsigned m1 = phys_cell_id::NID_1(config.phys_cell_id) % 112;
 
   // Convert sequence to span
   span<cf_t> seq_span = {sequence};
 
   // Apply d0 sequence with scaling
-  srsvec::sc_prod({d0.begin() + m0, d0.size() - m0}, args.amplitude, seq_span.first(SEQUENCE_LEN - m0));
-  srsvec::sc_prod({d0.begin(), m0}, args.amplitude, seq_span.last(m0));
+  srsvec::sc_prod({d0.begin() + m0, d0.size() - m0}, config.amplitude, seq_span.first(SEQUENCE_LEN - m0));
+  srsvec::sc_prod({d0.begin(), m0}, config.amplitude, seq_span.last(m0));
 
   // Apply d1 sequence
   srsvec::prod({d1.begin() + m1, d1.size() - m1}, seq_span.first(SEQUENCE_LEN - m1), seq_span.first(SEQUENCE_LEN - m1));
@@ -95,14 +95,14 @@ void srsgnb::sss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& s
   grid.put(l, k, sequence);
 }
 
-void srsgnb::sss_processor_impl::map(resource_grid_writer& grid, const config_t& args)
+void srsgnb::sss_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Generate sequence
   std::array<cf_t, SEQUENCE_LEN> sequence;
-  generation(sequence, args);
+  generation(sequence, config);
 
   // Mapping to physical resources
-  mapping(sequence, grid, args);
+  mapping(sequence, grid, config);
 }
 
 std::unique_ptr<sss_processor> srsgnb::create_sss_processor()

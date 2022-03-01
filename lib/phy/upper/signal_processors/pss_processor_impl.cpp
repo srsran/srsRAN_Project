@@ -40,20 +40,20 @@ pss_processor_impl::pregen_signal_s::pregen_signal_s()
 
 const pss_processor_impl::pregen_signal_s pss_processor_impl::signal = pss_processor_impl::pregen_signal_s();
 
-void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& args) const
+void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const
 {
   // Calculate generation parameters
-  unsigned m = M(phys_cell_id::NID_2(args.phys_cell_id));
+  unsigned m = M(phys_cell_id::NID_2(config.phys_cell_id));
 
   // Temporal sequence
   span<cf_t>       tmp    = sequence;
   span<const cf_t> pregen = signal;
 
   // Copy sequence from offset to the end
-  srsvec::sc_prod(pregen.subspan(m, SEQUENCE_LEN - m), args.amplitude, tmp.subspan(0, SEQUENCE_LEN - m));
+  srsvec::sc_prod(pregen.subspan(m, SEQUENCE_LEN - m), config.amplitude, tmp.subspan(0, SEQUENCE_LEN - m));
 
   // Copy sequence from 0 to offset
-  srsvec::sc_prod(pregen.subspan(0, m), args.amplitude, tmp.subspan(SEQUENCE_LEN - m, m));
+  srsvec::sc_prod(pregen.subspan(0, m), config.amplitude, tmp.subspan(SEQUENCE_LEN - m, m));
 }
 
 void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,
@@ -68,14 +68,14 @@ void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& s
   grid.put(l, k, sequence);
 }
 
-void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const config_t& args)
+void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Generate sequence
   std::array<cf_t, SEQUENCE_LEN> sequence;
-  generation(sequence, args);
+  generation(sequence, config);
 
   // Mapping to physical resources
-  mapping(sequence, grid, args);
+  mapping(sequence, grid, config);
 }
 
 std::unique_ptr<pss_processor> srsgnb::create_pss_processor()

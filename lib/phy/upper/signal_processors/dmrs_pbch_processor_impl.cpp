@@ -15,22 +15,23 @@
 
 using namespace srsgnb;
 
-unsigned dmrs_pbch_processor_impl::c_init(const config_t& args)
+unsigned dmrs_pbch_processor_impl::c_init(const config_t& config)
 {
   // Default values for L_max == 4
-  uint64_t i_ssb = (args.ssb_idx & 0b11U) + 4UL * args.n_hf; // Least 2 significant bits
+  uint64_t i_ssb = (config.ssb_idx & 0b11U) + 4UL * config.n_hf; // Least 2 significant bits
 
-  if (args.L_max == 8 || args.L_max == 64) {
-    i_ssb = args.ssb_idx & 0b111U; // Least 3 significant bits
+  if (config.L_max == 8 || config.L_max == 64) {
+    i_ssb = config.ssb_idx & 0b111U; // Least 3 significant bits
   }
 
-  return ((i_ssb + 1UL) * ((args.phys_cell_id / 4UL) + 1UL) << 11UL) + ((i_ssb + 1UL) << 6UL) + (args.phys_cell_id % 4);
+  return ((i_ssb + 1UL) * ((config.phys_cell_id / 4UL) + 1UL) << 11UL) + ((i_ssb + 1UL) << 6UL) +
+         (config.phys_cell_id % 4);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const config_t& args) const
+void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const config_t& config) const
 {
   // Calculate initial state
-  prg->init(c_init(args));
+  prg->init(c_init(config));
 
   // Generate sequence
   prg->generate(M_SQRT1_2, {(float*)sequence.data(), 2 * NOF_RE});
@@ -76,14 +77,14 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
   grid.put(coordinates, r);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& args)
+void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Generate sequence
   std::array<cf_t, NOF_RE> sequence;
-  generation(sequence, args);
+  generation(sequence, config);
 
   // Mapping to physical resources
-  mapping(sequence, grid, args);
+  mapping(sequence, grid, config);
 }
 
 std::unique_ptr<dmrs_pbch_processor> srsgnb::create_dmrs_pbch_processor()

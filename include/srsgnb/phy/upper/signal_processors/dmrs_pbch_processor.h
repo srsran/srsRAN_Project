@@ -34,7 +34,7 @@ public:
   /// \brief Generates and maps DMRS for PBCH
   /// \param [out] grid provides the destination resource grid
   /// \param [in] config provides the required configuration to generate and map the signal
-  virtual void map(resource_grid_writer& grid, const config_t& args) = 0;
+  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
 /// Creates a generic DMRS for PBCH instance

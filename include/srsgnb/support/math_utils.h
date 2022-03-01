@@ -23,23 +23,23 @@ inline unsigned divide_ceil(unsigned num, unsigned den)
   return (num + (den - 1)) / den;
 }
 
-/// \brief Converts a value in decibels to linear amplitude
+/// \brief Converts a value in decibels to linear amplitude ratio
 /// \param [in] value is in decibels
-/// \return the resultant amplitude
+/// \return the resultant amplitude ratio
 inline float convert_dB_to_amplitude(float value)
 {
   return std::pow(10.0F, value / 20.0F);
 }
 
-/// \brief Converts a value in decibels to linear power
+/// \brief Converts a value in decibels to linear power ratio
 /// \param [in] value is in decibels
-/// \return the resultant power
+/// \return the resultant power ratio
 inline float convert_dB_to_power(float value)
 {
   return std::pow(10.0F, value / 10.0F);
 }
 
-/// \brief Converts a linear amplitude to decibels
+/// \brief Converts a linear amplitude ratio to decibels
 /// \param [in] value is the linear amplitude
 /// \return the resultant decibels
 inline float convert_amplitude_to_dB(float value)
@@ -47,7 +47,7 @@ inline float convert_amplitude_to_dB(float value)
   return 20.0F * std::log10(value);
 }
 
-/// \brief Converts a linear power to decibels
+/// \brief Converts a linear power ratio to decibels
 /// \param [in] value is the linear power
 /// \return the resultant decibels
 inline float convert_power_to_dB(float value)

@@ -38,17 +38,18 @@ private:
 
   /// \brief Implements TS 38.211 section 7.4.2.2.1 Sequence generation
   /// \param [out] sequence provides the destination of the sequence
-  /// \args [in] config provides the necessary parameters to generate the sequence
-  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& args) const;
+  /// \param [in] config provides the necessary parameters to generate the sequence
+  void generation(std::array<cf_t, SEQUENCE_LEN>& sequence, const config_t& config) const;
 
   /// \brief Implements TS 38.211 section 7.4.2.2.2 Mapping to physical resources
   /// \param [in] sequence provides the source of the sequence
   /// \param [out] grid provides the destination of the sequence mapping
-  /// \args [in] config provides the necessary parameters to generate the sequence
-  void mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const config_t& args) const;
+  /// \param [in] config provides the necessary parameters to generate the sequence
+  void
+  mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence, resource_grid_writer& grid, const config_t& config) const;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& args) override;
+  void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

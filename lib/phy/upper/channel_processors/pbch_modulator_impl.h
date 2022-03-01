@@ -27,8 +27,8 @@ private:
   /// Implements TS 38.211 section 7.3.3.1 Scrambling
   /// \param [in] b Inputs bits to scramble
   /// \param [out] b_hat Output bits after scrambling
-  /// \param [in] args PBCH modulator arguments
-  void scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& args);
+  /// \param [in] config PBCH modulator arguments
+  void scramble(span<const uint8_t> b, span<uint8_t> b_hat, const config_t& config);
 
   /// Implements TS 38.211 section 7.3.3.2 Modulation
   /// \param [in] b_hat Inputs bits to scramble
@@ -38,15 +38,15 @@ private:
   /// Implements TS 38.211 section 7.3.3.3 Mapping to physical resources
   /// \param [in] d_pbch provides the symbols to map
   /// \param [in, out] grid is the destination resource grid
-  /// \param [in] args PBCH modulator arguments
-  void map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& args);
+  /// \param [in] config PBCH modulator arguments
+  void map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config);
 
 public:
   explicit pbch_modulator_impl() : modulator(create_modulation_mapper()), scrambler(create_pseudo_random()) {}
 
   ~pbch_modulator_impl() = default;
 
-  void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& args) override;
+  void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

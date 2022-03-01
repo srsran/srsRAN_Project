@@ -16,10 +16,10 @@ private:
   std::vector<entry_t> entries;
 
 public:
-  void map(resource_grid_writer& grid, const config_t& args) override
+  void map(resource_grid_writer& grid, const config_t& config) override
   {
     entry_t entry = {};
-    entry.config  = args;
+    entry.config  = config;
     entry.grid    = &grid;
     entries.emplace_back(entry);
   }
