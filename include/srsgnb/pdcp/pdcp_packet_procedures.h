@@ -6,7 +6,7 @@
 namespace srsgnb {
 
 /// Collection of packet related procedures of the PDCP interface.
-/// This class looks similar to PDCP_input_gateway, however clients are not the same. The first is intended for clients
+/// This class looks similar to pdcp_pdu_handler, however clients are not the same. The first is intended for clients
 /// of outer modules that need to pass packets into PDCP, while this interface is intended to process concrete UL data
 /// packets, which may be a subcategory of all packets.
 class pdcp_packet_procedures

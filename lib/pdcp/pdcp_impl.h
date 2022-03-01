@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-class pdcp_procedure_dispatcher : public pdcp_input_gateway
+class pdcp_procedure_dispatcher : public pdcp_pdu_handler
 {
   /// In reality, as the interfaces grow, this would become a reference or ptr and ownership would be managed from a
   /// different class. For simplicity, we keep it this way for now.

@@ -15,29 +15,29 @@ namespace cu_up {
 /// touch a single line of code of the RLC or PDCP layers. They are agnostic to the deployment scenario.
 
 /// Adapter interface from PDCP to SDAP.
-class sdap_packet_handler : public srsgnb::pdcp_packet_notifier
+class sdap_packet_handler : public srsgnb::pdcp_sdu_notifier
 {
   srsgnb::sdap_input_gateway& sdap;
 
 public:
   explicit sdap_packet_handler(srsgnb::sdap_input_gateway& sdap) : sdap(sdap) {}
 
-  void on_new_packet(srsgnb::byte_buffer& data) override
+  void on_new_sdu(srsgnb::byte_buffer& sdu) override
   {
     std::printf("[PDCP-SDAP-ADAPTER] Received a packet from PDCP layer, forwarding data packet of size = %u bytes to "
                 "upper layer (SDAP)\n",
-                (unsigned)data.size());
-    sdap.handle(data);
+                (unsigned)sdu.size());
+    sdap.handle(sdu);
   }
 };
 
 /// Adapter interface from F1u to PDCP.
 class pdcp_packet_handler : public srsgnb::f1u_packet_notifier
 {
-  srsgnb::pdcp_input_gateway& pdcp;
+  srsgnb::pdcp_pdu_handler& pdcp;
 
 public:
-  explicit pdcp_packet_handler(srsgnb::pdcp_input_gateway& pdcp) : pdcp(pdcp) {}
+  explicit pdcp_packet_handler(srsgnb::pdcp_pdu_handler& pdcp) : pdcp(pdcp) {}
 
   void on_new_packet(srsgnb::byte_buffer& data) override
   {
