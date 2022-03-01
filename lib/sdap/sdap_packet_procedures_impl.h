@@ -24,10 +24,10 @@ class sdap_ul_packet_procedure : public sdap_packet_procedures
   /// Both dependencies are interfaces and they are at the same or in a higher abstraction layer, conforming to the
   /// clean architecture paradigm.
   std::unique_ptr<sdap_entity> entity;
-  sdap_packet_notifier&        listener;
+  sdap_sdu_notifier&           listener;
 
 public:
-  sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity, sdap_packet_notifier& listener) :
+  sdap_ul_packet_procedure(std::unique_ptr<sdap_entity> entity, sdap_sdu_notifier& listener) :
     entity(std::move(entity)), listener(listener)
   {}
 
@@ -38,7 +38,7 @@ public:
     printf("[SDAP-UL-PKT-PROCEDURE] Step 1: remove SDAP header\n");
     entity->decapsulate(data);
     printf("[SDAP-UL-PKT-PROCEDURE] UL packet procedure finished, delivering packet to upper layer\n");
-    listener.on_new_packet(data);
+    listener.on_new_sdu(data);
   }
 };
 

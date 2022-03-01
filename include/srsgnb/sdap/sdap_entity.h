@@ -5,6 +5,9 @@
 
 namespace srsgnb {
 
+//: TODO: The sdap_entity interface is a temporary name that if it gets used by the final implementation we'll ned to
+//: find a better name to avoid confusion with a SDAP entity. Entity here is used to represent a business domain entity.
+
 /// SDAP entity receiving side. Retrieves an SDAP SDU from a lower layer data PDU.
 class sdap_entity
 {

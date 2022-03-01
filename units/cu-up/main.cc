@@ -28,10 +28,10 @@ public:
   }
 };
 
-class fake_sdap_to_ngu_relay : public srsgnb::sdap_packet_notifier
+class fake_sdap_to_ngu_relay : public srsgnb::sdap_sdu_notifier
 {
 public:
-  void on_new_packet(srsgnb::byte_buffer& data) override
+  void on_new_sdu(srsgnb::byte_buffer& data) override
   {
     std::printf("[SDAP-NGU-RELAY] Receiving a fake packet of size = %u\n", (unsigned)data.size());
     std::printf("  Forwarding packet to NG-U to be delivered to UPF\n");

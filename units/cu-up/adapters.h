@@ -17,10 +17,10 @@ namespace cu_up {
 /// Adapter interface from PDCP to SDAP.
 class sdap_packet_handler : public srsgnb::pdcp_sdu_notifier
 {
-  srsgnb::sdap_input_gateway& sdap;
+  srsgnb::sdap_pdu_handler& sdap;
 
 public:
-  explicit sdap_packet_handler(srsgnb::sdap_input_gateway& sdap) : sdap(sdap) {}
+  explicit sdap_packet_handler(srsgnb::sdap_pdu_handler& sdap) : sdap(sdap) {}
 
   void on_new_sdu(srsgnb::byte_buffer& sdu) override
   {

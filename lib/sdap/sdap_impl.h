@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-class sdap_procedure_dispatcher : public sdap_input_gateway
+class sdap_procedure_dispatcher : public sdap_pdu_handler
 {
   /// In reality, as the interfaces grow, this would become a reference or ptr and ownership would be managed from a
   /// different class. For simplicity, we keep it this way for now.
