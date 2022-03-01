@@ -72,7 +72,7 @@ protected:
 };
 
 /// Basic LDPC encoder implementation without any optimization.
-class ldpc_encoder_basic : public ldpc_encoder_impl
+class ldpc_encoder_generic : public ldpc_encoder_impl
 {
   void select_strategy() override;
   void load_input(span<const uint8_t> in) override { message = in; }
@@ -82,7 +82,7 @@ class ldpc_encoder_basic : public ldpc_encoder_impl
   void write_codeblock(span<uint8_t> out) override;
 
   /// Pointer type shortcut.
-  using high_rate_strategy = void (ldpc_encoder_basic::*)();
+  using high_rate_strategy = void (ldpc_encoder_generic::*)();
   /// Pointer to a high-rate strategy member.
   high_rate_strategy high_rate;
 

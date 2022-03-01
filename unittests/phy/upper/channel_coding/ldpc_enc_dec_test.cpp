@@ -30,8 +30,8 @@ int main()
   for (const auto bg :
        std::array<srsgnb::ldpc::base_graph_t, 2>{srsgnb::ldpc::base_graph_t::BG1, srsgnb::ldpc::base_graph_t::BG2}) {
     for (const auto ls : srsgnb::ldpc::all_lifting_sizes) {
-      srsgnb::ldpc_encoder::config_t        cfg{bg, ls};
-      std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("basic");
+      srsgnb::ldpc_encoder::config_t        cfg_enc{bg, ls};
+      std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("generic");
 
       std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 
@@ -53,21 +53,22 @@ int main()
       get_examples(static_cast<unsigned>(bg), ls, msg, cblock);
 
       // encode each message and compare with given codeblock
-      unsigned i_cblock{0};
-      unsigned length_step = (max_cb_length - min_cb_length) / 10;
+      const auto* cblock_i    = cblock.cbegin();
+      unsigned    length_step = (max_cb_length - min_cb_length) / 10;
       for (const auto& msg_i : msg) {
+        assert(cblock_i != cblock.cend());
         // check several shortened codeblocks
         for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
-          std::vector<uint8_t> decod(length);
-          my_encoder->encode(msg_i, decod, cfg);
-          assert(std::equal(decod.begin(), decod.end(), cblock[i_cblock].begin()));
+          std::vector<uint8_t> encod(length);
+          my_encoder->encode(msg_i, encod, cfg_enc);
+          assert(std::equal(encod.begin(), encod.end(), cblock_i->begin()));
         }
         // check full-length codeblock
-        std::vector<uint8_t> decod(max_cb_length);
-        my_encoder->encode(msg_i, decod, cfg);
-        assert(std::equal(decod.begin(), decod.end(), cblock[i_cblock].begin()));
+        std::vector<uint8_t> encod(max_cb_length);
+        my_encoder->encode(msg_i, encod, cfg_enc);
+        assert(std::equal(encod.begin(), encod.end(), cblock_i->begin()));
 
-        ++i_cblock;
+        ++cblock_i;
       }
     }
   }

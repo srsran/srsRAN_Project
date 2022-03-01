@@ -54,33 +54,33 @@ void ldpc_encoder_impl::encode(span<const uint8_t> input, span<uint8_t> output, 
   write_codeblock(output);
 }
 
-void ldpc_encoder_basic::select_strategy()
+void ldpc_encoder_generic::select_strategy()
 {
   base_graph_t current_bg       = current_graph->get_base_graph();
   uint8_t      current_ls_index = current_graph->get_lifting_index();
 
   if (current_bg == base_graph_t::BG1) {
     if (current_ls_index == 6) {
-      high_rate = &ldpc_encoder_basic::high_rate_bg1_i6;
+      high_rate = &ldpc_encoder_generic::high_rate_bg1_i6;
       return;
     }
     // if lifting index is not 6
-    high_rate = &ldpc_encoder_basic::high_rate_bg1_other;
+    high_rate = &ldpc_encoder_generic::high_rate_bg1_other;
     return;
   }
   if (current_bg == base_graph_t::BG2) {
     if ((current_ls_index == 3) || (current_ls_index == 7)) {
-      high_rate = &ldpc_encoder_basic::high_rate_bg2_i3_7;
+      high_rate = &ldpc_encoder_generic::high_rate_bg2_i3_7;
       return;
     }
     // if lifting index is neither 3 nor 7
-    high_rate = &ldpc_encoder_basic::high_rate_bg2_other;
+    high_rate = &ldpc_encoder_generic::high_rate_bg2_other;
     return;
   }
   assert(false);
 }
 
-void ldpc_encoder_basic::preprocess_systematic_bits()
+void ldpc_encoder_generic::preprocess_systematic_bits()
 {
   for (auto& row : auxiliary) {
     std::fill(row.begin(), row.end(), 0);
@@ -105,7 +105,7 @@ void ldpc_encoder_basic::preprocess_systematic_bits()
   srsvec::copy(span<uint8_t>{codeblock.begin(), message.size()}, message);
 }
 
-void ldpc_encoder_basic::encode_ext_region()
+void ldpc_encoder_generic::encode_ext_region()
 {
   // We only compute the variable nodes needed to fill the codeword.
   // Also, recall the high-rate region has length (bg_K + 4) * lifting_size.
@@ -127,7 +127,7 @@ void ldpc_encoder_basic::encode_ext_region()
   }
 }
 
-void ldpc_encoder_basic::write_codeblock(span<uint8_t> out)
+void ldpc_encoder_generic::write_codeblock(span<uint8_t> out)
 {
   // The encoder shortens the codeblock by discarding the first 2 * LS bits.
   uint8_t* first = &codeblock[2UL * lifting_size];
@@ -135,7 +135,7 @@ void ldpc_encoder_basic::write_codeblock(span<uint8_t> out)
   srsvec::copy(out, span<uint8_t>{first, out.size()});
 }
 
-void ldpc_encoder_basic::high_rate_bg1_i6()
+void ldpc_encoder_generic::high_rate_bg1_i6()
 {
   uint16_t                                                     ls  = lifting_size;
   std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
@@ -161,7 +161,7 @@ void ldpc_encoder_basic::high_rate_bg1_i6()
   }
 }
 
-void ldpc_encoder_basic::high_rate_bg1_other()
+void ldpc_encoder_generic::high_rate_bg1_other()
 {
   uint16_t                                                     ls  = lifting_size;
   std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
@@ -186,7 +186,7 @@ void ldpc_encoder_basic::high_rate_bg1_other()
   }
 }
 
-void ldpc_encoder_basic::high_rate_bg2_i3_7()
+void ldpc_encoder_generic::high_rate_bg2_i3_7()
 {
   uint16_t                                                     ls  = lifting_size;
   std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
@@ -211,7 +211,7 @@ void ldpc_encoder_basic::high_rate_bg2_i3_7()
   }
 }
 
-void ldpc_encoder_basic::high_rate_bg2_other()
+void ldpc_encoder_generic::high_rate_bg2_other()
 {
   uint16_t                                                     ls  = lifting_size;
   std::array<std::array<uint8_t, max_lifting_size>, max_BG_M>& aux = auxiliary;
@@ -241,8 +241,8 @@ void ldpc_encoder_basic::high_rate_bg2_other()
 
 std::unique_ptr<ldpc_encoder> srsgnb::create_ldpc_encoder(const std::string& enc_type)
 {
-  if (enc_type == "basic") {
-    return std::make_unique<ldpc_encoder_basic>();
+  if (enc_type == "generic") {
+    return std::make_unique<ldpc_encoder_generic>();
   }
   if (enc_type == "avx2") {
     return std::make_unique<ldpc_encoder_avx2>();
