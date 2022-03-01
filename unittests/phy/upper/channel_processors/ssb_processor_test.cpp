@@ -5,7 +5,7 @@
 #include "../signal_processors/sss_processor_doubles.h"
 #include "pbch_encoder_doubles.h"
 #include "pbch_modulator_doubles.h"
-#include "srsgnb/phy/upper/channel_processors/pbch_processor.h"
+#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/math_utils.h"
 #include <cassert>
@@ -14,7 +14,7 @@
 using namespace srsgnb;
 
 namespace srsgnb {
-struct pbch_processor_config {
+struct ssb_processor_config {
   std::unique_ptr<pbch_encoder>        encoder;
   std::unique_ptr<pbch_modulator>      modulator;
   std::unique_ptr<dmrs_pbch_processor> dmrs;
@@ -22,7 +22,7 @@ struct pbch_processor_config {
   std::unique_ptr<sss_processor>       sss;
 };
 
-std::unique_ptr<pbch_processor> create_pbch_processor(pbch_processor_config& config);
+std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
 } // namespace srsgnb
 
 static std::mt19937 rgen(0);
@@ -41,14 +41,14 @@ int main()
   pss_processor_spy*       pss       = new pss_processor_spy;
   sss_processor_spy*       sss       = new sss_processor_spy;
 
-  pbch_processor_config config = {};
-  config.encoder               = std::unique_ptr<pbch_encoder>(encoder);
-  config.modulator             = std::unique_ptr<pbch_modulator>(modulator);
-  config.dmrs                  = std::unique_ptr<dmrs_pbch_processor>(dmrs);
-  config.pss                   = std::unique_ptr<pss_processor>(pss);
-  config.sss                   = std::unique_ptr<sss_processor>(sss);
+  ssb_processor_config config = {};
+  config.encoder              = std::unique_ptr<pbch_encoder>(encoder);
+  config.modulator            = std::unique_ptr<pbch_modulator>(modulator);
+  config.dmrs                 = std::unique_ptr<dmrs_pbch_processor>(dmrs);
+  config.pss                  = std::unique_ptr<pss_processor>(pss);
+  config.sss                  = std::unique_ptr<sss_processor>(sss);
 
-  std::unique_ptr<pbch_processor> pbch = create_pbch_processor(config);
+  std::unique_ptr<ssb_processor> pbch = create_ssb_processor(config);
 
   // Iterate all possible SSB pattern cases
   for (const ssb_pattern_case& pattern_case :
@@ -99,7 +99,7 @@ int main()
           // Iterate half frames
           for (unsigned subframe : {0 + subframe_in_burst, 5 + subframe_in_burst}) {
             // Generate PBCH PDU
-            pbch_processor::pdu_t pdu = {};
+            ssb_processor::pdu_t pdu  = {};
             pdu.slot.numerology       = numerology;
             pdu.slot.frame            = sfn_dist(rgen);
             pdu.slot.subframe         = subframe;

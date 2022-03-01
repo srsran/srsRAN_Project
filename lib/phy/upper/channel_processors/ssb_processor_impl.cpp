@@ -10,12 +10,12 @@
  *
  */
 
-#include "pbch_processor_impl.h"
+#include "ssb_processor_impl.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
 
-void pbch_processor_impl::proccess(const srsgnb::pbch_processor::pdu_t& pdu, srsgnb::resource_grid_writer& grid)
+void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgnb::resource_grid_writer& grid)
 {
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
@@ -84,7 +84,7 @@ void pbch_processor_impl::proccess(const srsgnb::pbch_processor::pdu_t& pdu, srs
   sss->map(grid, sss_config);
 }
 
-std::unique_ptr<pbch_processor> srsgnb::create_pbch_processor(pbch_processor_config& config)
+std::unique_ptr<ssb_processor> srsgnb::create_ssb_processor(ssb_processor_config& config)
 {
-  return std::make_unique<pbch_processor_impl>(config);
+  return std::make_unique<ssb_processor_impl>(config);
 }

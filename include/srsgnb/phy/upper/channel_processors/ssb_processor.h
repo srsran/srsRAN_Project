@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_PROCESSOR_H_
-#define SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_PROCESSOR_H_
+#ifndef SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H_
+#define SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H_
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_context.h"
@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-class pbch_processor
+class ssb_processor
 {
 public:
   /// Defines the BCH payload size
@@ -37,7 +37,7 @@ public:
   };
 
   /// Default destructor
-  virtual ~pbch_processor() = default;
+  virtual ~ssb_processor() = default;
 
   /// \brief Processes the SS/PBCH Block PDU writing in grid the generated signal
   /// \param [in] pdu provides the necessary data to
@@ -47,4 +47,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_PROCESSOR_H_
+#endif // SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H_
