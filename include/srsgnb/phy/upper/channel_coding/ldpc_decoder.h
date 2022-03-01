@@ -1,0 +1,44 @@
+/// \file
+/// \brief LDPC decoder interface.
+
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER
+
+#include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc.h"
+
+namespace srsgnb {
+
+/// LDPC decoder interface.
+class ldpc_decoder
+{
+public:
+  /// Default destructor.
+  virtual ~ldpc_decoder() = default;
+
+  /// Decoder configuration.
+  struct config_t {
+    /// Code base graph.
+    srsgnb::ldpc::base_graph_t base_graph{ldpc::base_graph_t::BG1};
+    /// Code lifting size.
+    srsgnb::ldpc::lifting_size_t lifting_size{ldpc::lifting_size_t::LS2};
+    /// Maximum number of iterations.
+    unsigned max_iterations{6};
+    /// CRC calculator
+    crc_calculator* crc = nullptr;
+  };
+
+  /// \brief Decodes a message.
+  ///
+  /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
+  /// \param[out] output  Reconstructed information bits.
+  /// \param[in]  cfg     Decoder configuration.
+  virtual unsigned decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg) = 0;
+};
+
+std::unique_ptr<ldpc_decoder> create_ldpc_decoder(const std::string& dec_type);
+
+} // namespace srsgnb
+
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER
