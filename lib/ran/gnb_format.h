@@ -61,7 +61,7 @@ void log_proc_failure(srslog::basic_logger& logger,
     fmt::format_to(fmtbuf, "Cause: ");
     fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
   }
-  logger.error(
+  logger.warning(
       FMT_CTRL_PREFIX " " FMT_UE_INDEX " " FMT_RNTI ": \"{}\" failed. {}", ue_index, rnti, proc_name, to_c_str(fmtbuf));
 }
 

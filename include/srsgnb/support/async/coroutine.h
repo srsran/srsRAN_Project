@@ -153,7 +153,7 @@ struct coro_frame : public base_coro_frame<detail::promise_of<FunT> > {
   /// This function can only be called when coroutine is suspended
   void destroy() noexcept final
   {
-    srsran_sanity_check(not this->mem_buffer.empty(), "coroutine deleted but it is not at final suspension point\n");
+    srsran_sanity_check(not this->mem_buffer.empty(), "coroutine that is not suspended should not be destroyed");
 
     // resume via cancel path until final suspension point
     cancel();
@@ -303,7 +303,7 @@ protected:
     // Note: we have to store the resume point before, in case the coroutine changes execution context and calls resume
     // before on_await_suspend is complete
     resume_method = resume_func;
-    if (frame_ptr->on_await_suspend(a)) {
+    if (frame_ptr->on_await_suspend(std::forward<Awaitable>(a))) {
       resume_func();
     }
   }

@@ -23,6 +23,13 @@ public:
   virtual async_task<void> remove_ue(const mac_ue_delete_request_message& msg) = 0;
 };
 
+class mac_ctrl_configurer
+{
+public:
+  virtual ~mac_ctrl_configurer()                 = default;
+  virtual void remove_ue(du_ue_index_t ue_index) = 0;
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_MAC_CONFIG_INTERFACES_H

@@ -24,6 +24,27 @@ public:
     return queue.try_push([&]() { return launch_async<AsyncTask>(args...); });
   }
 
+  template <typename AsyncFunc>
+  bool schedule(AsyncFunc&& async_func)
+  {
+    return queue.try_push([async_func = std::forward<AsyncFunc>(async_func)]() mutable {
+      return launch_async(std::forward<AsyncFunc>(async_func));
+    });
+  }
+
+  async_task<void> request_stop()
+  {
+    // Enqueue task in case main loop is waiting for new procedure
+    running = false;
+    queue.try_push([this]() {
+      return launch_async([this](coro_context<async_task<void> >& ctx) {
+        CORO_BEGIN(ctx);
+        CORO_RETURN();
+      });
+    });
+    return std::move(loop_task);
+  }
+
 private:
   void run()
   {
@@ -31,7 +52,7 @@ private:
       CORO_BEGIN(ctx);
 
       // infinite task
-      while (true) {
+      while (running) {
         // Wait for new procedure to be enqueued
         CORO_AWAIT_VALUE(next_task, queue);
 
@@ -43,6 +64,7 @@ private:
     });
   }
 
+  bool                                              running = true;
   async_queue<unique_function<async_task<void>()> > queue;
   async_task<void>                                  loop_task;
   unique_function<async_task<void>()>               next_task;

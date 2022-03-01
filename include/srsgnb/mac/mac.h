@@ -73,7 +73,6 @@ struct mac_ue_delete_request_message {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          rnti;
-  bool            result;
 };
 
 struct mac_ue_delete_response_message {

@@ -6,8 +6,8 @@
 using namespace srsgnb;
 
 mac_ctrl_component::mac_ctrl_component(mac_common_config_t& cfg_,
-                                       mac_ul_component&    ul_unit_,
-                                       mac_dl_component&    dl_unit_) :
+                                       mac_ul_configurer&   ul_unit_,
+                                       mac_dl_configurer&   dl_unit_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_)
 {
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
@@ -27,7 +27,7 @@ void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& 
   // UE object added to ue_db successfully
 
   // Enqueue UE create request procedure
-  u->ctrl_loop.schedule<mac_ue_create_request_procedure>(msg, cfg, ul_unit, dl_unit);
+  u->ctrl_loop.schedule<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
 void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
@@ -43,7 +43,7 @@ void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& 
   ue_element& u = ue_db[msg.ue_index];
 
   // Enqueue UE delete procedure
-  u.ctrl_loop.schedule<mac_ue_delete_procedure>(msg, cfg, ul_unit, dl_unit);
+  u.ctrl_loop.schedule<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
 mac_ctrl_component::ue_element*
@@ -74,18 +74,30 @@ mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t
   return &u;
 }
 
-bool mac_ctrl_component::remove_ue(du_ue_index_t ue_index)
+void mac_ctrl_component::remove_ue(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
+  // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
+  // before safely removing the UE. This achieved via an async task in the MAC main control loop
 
+  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
   if (not ue_db.contains(ue_index)) {
-    // no UE existed with provided ue_index
-    return false;
+    logger.warning("Failed to find ueId={}", ue_index);
+    return;
   }
-  srsran_sanity_check(ue_db[ue_index].ue_ctx.rnti != INVALID_RNTI, "ue_index=%d has invalid RNTI", ue_index);
-  ue_db.erase(ue_index);
+  logger.debug("Scheduling ueId={} deletion", ue_index);
 
-  return true;
+  // Schedule task removal
+  main_ctrl_loop.schedule([this, ue_index](coro_context<async_task<void> >& ctx) {
+    CORO_BEGIN(ctx);
+    srsran_sanity_check(ue_db.contains(ue_index), "ueId={} was unexpectedly removed", ue_index);
+
+    CORO_AWAIT(ue_db[ue_index].ctrl_loop.request_stop());
+
+    logger.info("Removing ueId={}", ue_index);
+    ue_db.erase(ue_index);
+
+    CORO_RETURN();
+  });
 }
 
 mac_ue_context* mac_ctrl_component::find_ue(du_ue_index_t ue_index)

@@ -1,79 +1,10 @@
 
 #include "../../lib/mac/mac_ctrl/ue_creation_procedure.h"
+#include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
-
-class mac_config_test_adapter : public mac_config_notifier
-{
-public:
-  optional<mac_ue_create_request_response_message> last_ue_created;
-
-  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
-  {
-    last_ue_created = resp;
-  }
-  void on_ue_reconfiguration_complete() override {}
-  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override {}
-};
-
-class inline_executor : public task_executor
-{
-public:
-  void execute(unique_task task) final { task(); }
-};
-
-class mac_ul_dummy_configurer final : public mac_ul_configurer
-{
-public:
-  bool                                    expected_result = true;
-  manual_event_flag                       ue_created_ev;
-  optional<mac_ue_create_request_message> last_ue_create_request;
-
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_create_request = msg;
-      CORO_AWAIT(ue_created_ev);
-      CORO_RETURN(expected_result);
-    });
-  }
-
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
-  {
-    return launch_async([](coro_context<async_task<void> >& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-};
-
-class mac_dl_dummy_configurer final : public mac_dl_configurer
-{
-public:
-  bool                                    expected_result = true;
-  manual_event_flag                       ue_created_ev;
-  optional<mac_ue_create_request_message> last_ue_create_request;
-
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
-  {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
-      CORO_BEGIN(ctx);
-      last_ue_create_request = msg;
-      CORO_AWAIT(ue_created_ev);
-      CORO_RETURN(expected_result);
-    });
-  }
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
-  {
-    return launch_async([](coro_context<async_task<void> >& ctx) {
-      CORO_BEGIN(ctx);
-      CORO_RETURN();
-    });
-  }
-};
 
 /// This type is used as an test argument to specify which ue creation procedure scenario we want to test
 enum class test_mode { success_manual_response, success_auto_response, failure_ul_ue_create, failure_dl_ue_create };
@@ -93,7 +24,7 @@ std::string to_string(test_mode m)
   }
 }
 
-void test_ue_create_procedure_single_thread(test_mode tmode)
+void test_mac_ue_creation_procedure(test_mode tmode)
 {
   test_delimit_logger test_delim{"Single threaded UE creation procedure in mode: {}", to_string(tmode)};
 
@@ -102,10 +33,11 @@ void test_ue_create_procedure_single_thread(test_mode tmode)
   std::array<task_executor*, 1> exec_lst = {&exec};
 
   // Create a MAC config object
-  mac_config_test_adapter mac_config_notifier;
-  mac_common_config_t     mac_cfg{mac_config_notifier, exec, exec_lst, exec};
-  mac_ul_dummy_configurer mac_ul;
-  mac_dl_dummy_configurer mac_dl;
+  mac_config_notification_recorder mac_config_notifier;
+  mac_common_config_t              mac_cfg{mac_config_notifier, exec, exec_lst, exec};
+  mac_ctrl_dummy_configurer        mac_ctrl;
+  mac_ul_dummy_configurer          mac_ul;
+  mac_dl_dummy_configurer          mac_dl;
 
   // Launch procedure
   mac_ue_create_request_message msg{};
@@ -128,7 +60,7 @@ void test_ue_create_procedure_single_thread(test_mode tmode)
   }
 
   // ACTION: Procedure is launched
-  async_task<void> proc = launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ul, mac_dl);
+  async_task<void> proc = launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
 
   // STATUS: The MAC UL received the UE creation request message
   TESTASSERT(mac_ul.last_ue_create_request.has_value());
@@ -179,8 +111,8 @@ int main()
 
   srslog::init();
 
-  test_ue_create_procedure_single_thread(test_mode::success_manual_response);
-  test_ue_create_procedure_single_thread(test_mode::success_auto_response);
-  test_ue_create_procedure_single_thread(test_mode::failure_ul_ue_create);
-  test_ue_create_procedure_single_thread(test_mode::failure_dl_ue_create);
+  test_mac_ue_creation_procedure(test_mode::success_manual_response);
+  test_mac_ue_creation_procedure(test_mode::success_auto_response);
+  test_mac_ue_creation_procedure(test_mode::failure_ul_ue_create);
+  test_mac_ue_creation_procedure(test_mode::failure_dl_ue_create);
 }
