@@ -46,6 +46,8 @@ public:
     CORO_RETURN();
   }
 
+  static const char* name() { return "UE Create Request"; }
+
 private:
   void send_mac_ue_create_response(bool result)
   {

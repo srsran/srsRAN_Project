@@ -17,6 +17,7 @@ void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& 
 {
   ue_element* u = add_ue(msg.ue_index, msg.crnti, msg.cell_index);
   if (u == nullptr) {
+    log_proc_failure(logger, msg.ue_index, msg.crnti, mac_ue_create_request_procedure::name(), "Invalid parameters.");
     mac_ue_create_request_response_message resp{};
     resp.ue_index   = msg.ue_index;
     resp.cell_index = msg.cell_index;
@@ -33,7 +34,7 @@ void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& 
 void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   if (not ue_db.contains(msg.ue_index)) {
-    logger.warning("Failed to find ueId={}", msg.ue_index);
+    log_proc_failure(logger, msg.ue_index, msg.rnti, mac_ue_delete_procedure::name(), "Inexistent ueId.");
     mac_ue_delete_response_message resp{};
     resp.ue_index = msg.ue_index;
     resp.result   = false;

@@ -20,13 +20,14 @@ class mac_config_notification_recorder : public mac_config_notifier
 {
 public:
   optional<mac_ue_create_request_response_message> last_ue_created;
+  optional<mac_ue_delete_response_message>         last_ue_deleted;
 
   void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
   {
     last_ue_created = resp;
   }
   void on_ue_reconfiguration_complete() override {}
-  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override {}
+  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override { last_ue_deleted = resp; }
 };
 
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer

@@ -18,10 +18,12 @@ public:
     req(msg), cfg(cfg_), logger(cfg.logger), ctrl_mac(mac_ctrl_), ul_mac(mac_ul_), dl_mac(mac_dl_)
   {}
 
+  static const char* name() { return "UE Delete Request"; }
+
 private:
   void start() override
   {
-    log_proc_started(logger, req.ue_index, req.rnti, "UE Delete Request");
+    log_proc_started(logger, req.ue_index, req.rnti, name());
 
     // 1. Remove UE from MAC DL worker
     async_await(dl_mac.remove_ue(req), &mac_ue_delete_procedure::ue_dl_removed);
@@ -40,6 +42,7 @@ private:
     // 3. Send back response to DU manager
     mac_ue_delete_response_message resp{};
     resp.ue_index = req.ue_index;
+    resp.result   = true;
     cfg.cfg_notifier.on_ue_delete_complete(resp);
 
     // 4. Enqueue UE deletion
