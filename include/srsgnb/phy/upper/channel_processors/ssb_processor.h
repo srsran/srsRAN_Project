@@ -2,12 +2,14 @@
 #ifndef SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H_
 #define SRSGNB_SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H_
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_context.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
 namespace srsgnb {
 
+/// Describes the SSB processor interface
 class ssb_processor
 {
 public:
@@ -34,15 +36,17 @@ public:
     ssb_pattern_case pattern_case;
     /// PBCH payload, generated from the BCH-MIB packing
     std::array<uint8_t, BCH_PAYLOAD_SIZE> bch_payload;
+    /// Ports indexes to map the SS/PBCH transmission
+    static_vector<uint8_t, MAX_PORTS> ports;
   };
 
   /// Default destructor
   virtual ~ssb_processor() = default;
 
   /// \brief Processes the SS/PBCH Block PDU writing in grid the generated signal
-  /// \param [in] pdu provides the necessary data to
-  /// \param [out] grid
-  virtual void proccess(const pdu_t& pdu, resource_grid_writer& grid) = 0;
+  /// \param [in] pdu provides the necessary data to generate the SSB message
+  /// \param [out] grid provides the destination resource grid
+  virtual void process(const pdu_t& pdu, resource_grid_writer& grid) = 0;
 };
 
 } // namespace srsgnb

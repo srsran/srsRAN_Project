@@ -32,6 +32,7 @@ int main()
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
   std::uniform_int_distribution<unsigned> pci_dist(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> bit_dist(0, 1);
+  std::uniform_int_distribution<unsigned> port_dist(0, 63);
 
   resource_grid_dummy grid;
 
@@ -111,6 +112,7 @@ int main()
             pdu.ssb_subcarrier_offset = ssb_offset_pointA;
             pdu.ssb_offset_pointA     = 0;
             pdu.pattern_case          = pattern_case;
+            pdu.ports.emplace_back(port_dist(rgen));
             for (uint8_t& bit : pdu.bch_payload) {
               bit = bit_dist(rgen);
             }
@@ -123,7 +125,7 @@ int main()
             sss->reset();
 
             // Process PDU
-            pbch->proccess(pdu, grid);
+            pbch->process(pdu, grid);
 
             // Assert modules number of entries
             assert(encoder->get_nof_entries() == 1);
@@ -150,6 +152,7 @@ int main()
             assert(modulator_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
             assert(modulator_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
             assert(modulator_entry.config.amplitude == 1.0F);
+            assert(srsvec::equal(modulator_entry.config.ports, pdu.ports));
             assert(srsvec::equal(modulator_entry.bits, encoder_entry.encoded));
             assert(modulator_entry.grid_ptr == &grid);
 
@@ -162,6 +165,7 @@ int main()
             assert(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
             assert(dmrs_entry.config.n_hf == pdu.slot.get_half_radio_frame());
             assert(dmrs_entry.config.amplitude == 1.0F);
+            assert(srsvec::equal(dmrs_entry.config.ports, pdu.ports));
 
             // Assert PSS
             const auto& pss_entry = pss->get_entries()[0];
@@ -169,6 +173,7 @@ int main()
             assert(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
             assert(pss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
             assert(pss_entry.config.amplitude == convert_dB_to_amplitude(beta_pss));
+            assert(srsvec::equal(pss_entry.config.ports, pdu.ports));
 
             // Assert SSS
             const auto& sss_entry = sss->get_entries()[0];
@@ -176,6 +181,7 @@ int main()
             assert(sss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
             assert(sss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
             assert(sss_entry.config.amplitude == 1.0F);
+            assert(srsvec::equal(sss_entry.config.ports, pdu.ports));
           }
         }
       }

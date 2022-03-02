@@ -14,7 +14,6 @@ class resource_grid_pool_impl : public resource_grid_pool
 private:
   unsigned nof_slots;
   unsigned nof_sectors;
-  unsigned nof_antennas;
 
   std::vector<std::unique_ptr<resource_grid> > grids;
 

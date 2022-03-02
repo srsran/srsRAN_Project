@@ -4,9 +4,9 @@ target_link_libraries(pbch_encoder_test pbch_encoder)
 add_test(pbch_encoder_test pbch_encoder_test)
 
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)
-target_link_libraries(pbch_modulator_test pbch_modulator)
+target_link_libraries(pbch_modulator_test pbch_modulator srslog)
 add_test(pbch_modulator_test pbch_modulator_test)
 
 add_executable(ssb_processor_test ssb_processor_test.cpp)
-target_link_libraries(ssb_processor_test ssb_processor)
+target_link_libraries(ssb_processor_test ssb_processor srslog)
 add_test(ssb_processor_test ssb_processor_test)

@@ -18,6 +18,9 @@ static constexpr unsigned SSB_BW_RB = 20;
 /// Defines the SSB bandwidth in Resource Elements
 static constexpr unsigned SSB_BW_RE = NRE * SSB_BW_RB;
 
+/// Defines the maximum number of ports for any channel transmission
+static constexpr unsigned MAX_PORTS = 16;
+
 namespace phys_cell_id {
 /**
  * @brief Number of NR N_id_1 Physical Cell Identifier (PCI) as described in TS 38.211 section 7.4.2.1 Physical-layer

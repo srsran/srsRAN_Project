@@ -60,13 +60,14 @@ static void test_case(pss_processor& pss, const pss_processor::config_t& pss_arg
   generate_sequence_gold(sequence_gold, pss_args.phys_cell_id, pss_args.amplitude);
 
   // Assert number of elements
-  assert(grid.get_nof_entries() == 127);
+  assert(grid.get_nof_put_entries() == 127);
 
   // Assert grid
   unsigned k_gold           = pss_args.ssb_first_subcarrier + 56;
   auto     sequence_gold_it = sequence_gold.begin();
-  for (const resource_grid_spy::entry_t& e : grid.get_entries()) {
+  for (const resource_grid_spy::entry_t& e : grid.get_put_entries()) {
     float err = std::abs(*sequence_gold_it - e.value);
+    assert(e.port == pss_args.ports[0]);
     assert(e.l == pss_args.ssb_first_symbol);
     assert(e.k == k_gold);
     assert(err < assert_max_error);
@@ -84,6 +85,7 @@ int main()
   std::uniform_int_distribution<unsigned> dist_cell_id(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> dist_ssb_first_subcarrier(0, 270 * 12);
   std::uniform_int_distribution<unsigned> dist_ssb_first_symbol(0, 13);
+  std::uniform_int_distribution<uint8_t>  dist_port(0, MAX_PORTS - 1);
 
   for (unsigned rep = 0; rep != repetitions; ++rep) {
     // PSS arguments
@@ -92,6 +94,7 @@ int main()
     pss_args.ssb_first_subcarrier    = dist_ssb_first_subcarrier(rgen);
     pss_args.ssb_first_symbol        = dist_ssb_first_symbol(rgen);
     pss_args.amplitude               = 1.0F;
+    pss_args.ports                   = {dist_port(rgen)};
 
     test_case(*pss, pss_args);
   }

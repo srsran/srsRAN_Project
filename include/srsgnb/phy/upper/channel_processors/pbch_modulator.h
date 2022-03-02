@@ -3,6 +3,7 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include <memory>
 
@@ -30,6 +31,8 @@ public:
     unsigned ssb_first_symbol;
     /// PSS linear signal amplitude
     float amplitude;
+    /// Ports indexes to map the channel
+    static_vector<uint8_t, MAX_PORTS> ports;
   };
 
   /// Default destructor

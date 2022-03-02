@@ -72,8 +72,11 @@ void pbch_modulator_impl::map(span<const cf_t> d_pbch, resource_grid_writer& gri
     }
   }
 
-  // Write data in grid
-  grid.put(coordinates, d_pbch);
+  // For each port
+  for (unsigned port : config.ports) {
+    // write data in grid
+    grid.put(port, coordinates, d_pbch);
+  }
 }
 
 void pbch_modulator_impl::put(span<const uint8_t>             bits,

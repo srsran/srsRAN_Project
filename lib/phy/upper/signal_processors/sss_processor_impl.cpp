@@ -92,7 +92,11 @@ void srsgnb::sss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& s
   unsigned k = args.ssb_first_subcarrier + SSB_K_BEGIN;
 
   // Write in grid
-  grid.put(l, k, sequence);
+  // For each port...
+  for (unsigned port : args.ports) {
+    // ... put data in grid using the generated coordinates
+    grid.put(port, l, k, sequence);
+  }
 }
 
 void srsgnb::sss_processor_impl::map(resource_grid_writer& grid, const config_t& config)

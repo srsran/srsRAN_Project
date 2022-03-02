@@ -1,12 +1,12 @@
 
 add_executable(dmrs_pbch_processor_test dmrs_pbch_processor_test.cpp)
-target_link_libraries(dmrs_pbch_processor_test signal_processors srsvec pseudo_random_generator)
+target_link_libraries(dmrs_pbch_processor_test signal_processors srsvec pseudo_random_generator srslog)
 add_test(dmrs_pbch_processor_test dmrs_pbch_processor_test)
 
 add_executable(pss_processor_test pss_processor_test.cpp)
-target_link_libraries(pss_processor_test signal_processors srsvec)
+target_link_libraries(pss_processor_test signal_processors srsvec srslog)
 add_test(pss_processor_test pss_processor_test)
 
 add_executable(sss_processor_test sss_processor_test.cpp)
-target_link_libraries(sss_processor_test signal_processors srsvec)
+target_link_libraries(sss_processor_test signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)

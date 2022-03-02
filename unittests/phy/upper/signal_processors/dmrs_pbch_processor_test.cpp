@@ -25,7 +25,7 @@ int main()
   // Create DMRS-PBCH processor
   std::unique_ptr<dmrs_pbch_processor> dmrs_pbch = create_dmrs_pbch_processor();
 
-  for (const test_case_t& test_case : pbch_encoder_test_data) {
+  for (const test_case_t& test_case : dmrs_pbch_processor_test_data) {
     // Create resource grid
     resource_grid_spy grid;
 
@@ -33,15 +33,16 @@ int main()
     dmrs_pbch->map(grid, test_case.args);
 
     // Assert number of generated RE
-    assert(test_case.signal.size() == grid.get_nof_entries());
+    assert(test_case.symbols.size() == grid.get_nof_put_entries());
 
     // Assert grid coordinates and value
-    const std::vector<resource_grid_spy::entry_t> grid_entries = grid.get_entries();
+    const std::vector<resource_grid_spy::entry_t> grid_entries = grid.get_put_entries();
     for (unsigned i = 0; i != grid_entries.size(); ++i) {
-      assert(grid_entries[i].l == test_case.signal[i].l);
-      assert(grid_entries[i].k == test_case.signal[i].k);
+      assert(grid_entries[i].port == test_case.symbols[i].port);
+      assert(grid_entries[i].l == test_case.symbols[i].l);
+      assert(grid_entries[i].k == test_case.symbols[i].k);
 
-      float err = std::abs(grid_entries[i].value - test_case.signal[i].value);
+      float err = std::abs(grid_entries[i].value - test_case.symbols[i].value);
       assert(err < assert_max_error);
     }
   }

@@ -32,20 +32,36 @@ struct slot_context_t {
   /// Slot index (0...79), range depends on numerology
   unsigned slot;
 
-  /// Get the subframe number in the whole radio frame
-  unsigned get_system_subframe() const { return frame * 10 + subframe; }
+  /// \brief Get the subframe number in the system frame with a 10240 millisecond period
+  /// \return The system subframe index
+  unsigned get_system_subframe() const { return frame * NSUBFRAMES_PER_FRAME + subframe; }
 
-  /// Get the slot number in the whole radio frame
+  /// \brief Get the slot number in the system frame with a 10240 millisecond period
+  /// \return The system slot index
   unsigned get_system_slot() const { return slot + (get_system_subframe() << numerology); }
 
-  /// Get the half radio frame flag
+  /// \brief Get the half radio frame flag
+  /// \return true if the slot context belongs to the second half of the entire radio frame, otherwise false
   bool get_half_radio_frame() const { return subframe >= (NSUBFRAMES_PER_FRAME / 2); }
 
-  /// Get the slot index in the current radio frame
+  /// \brief Get the slot index in the radio frame
+  /// \return the slot index within a full frame (0...799), range depends on numerology. For 15 kHz SCS the range is
+  /// (0...10).
   unsigned get_frame_slot() const { return (subframe << numerology) + slot; }
 
-  /// Get the slot index in half frame
+  /// \brief Get the slot index in half frame
+  /// \return the slot index within a half frame (0...399), range depends on numerology. For 15 kHz SCS the range is
+  /// (0...4).
   unsigned get_half_frame_slot() const { return ((subframe % NSUBFRAMES_PER_HALF_FRAME) << numerology) + slot; }
+
+  /// \brief Overrides the equal operator for two slot contexts
+  /// \param [in] other provides the reference to other slot context
+  /// \return true if the slots numerology, frame, subframe and slot are equal, otherwise false
+  bool operator==(const slot_context_t& other) const
+  {
+    return (numerology == other.numerology) && (frame == other.frame) && (subframe == other.subframe) &&
+           (slot == other.slot);
+  }
 };
 
 } // namespace srsgnb

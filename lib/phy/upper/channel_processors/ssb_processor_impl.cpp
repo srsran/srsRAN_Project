@@ -15,7 +15,7 @@
 
 using namespace srsgnb;
 
-void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgnb::resource_grid_writer& grid)
+void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
 {
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
@@ -46,6 +46,7 @@ void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgn
   modulator_config.ssb_first_subcarrier     = k_start;
   modulator_config.ssb_first_symbol         = l_start;
   modulator_config.amplitude                = 1.0F;
+  modulator_config.ports                    = pdu.ports;
 
   // Modulate PBCH
   modulator->put(encoded_bits, grid, modulator_config);
@@ -59,6 +60,7 @@ void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgn
   dmrs_config.ssb_first_symbol              = l_start;
   dmrs_config.n_hf                          = pdu.slot.get_half_radio_frame();
   dmrs_config.amplitude                     = 1.0F;
+  dmrs_config.ports                         = pdu.ports;
 
   // Put DMRS for PBCH
   dmrs->map(grid, dmrs_config);
@@ -69,6 +71,7 @@ void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgn
   pss_config.ssb_first_symbol        = l_start;
   pss_config.ssb_first_subcarrier    = k_start;
   pss_config.amplitude               = convert_dB_to_amplitude(pdu.beta_pss);
+  pss_config.ports                   = pdu.ports;
 
   // Put PSS
   pss->map(grid, pss_config);
@@ -79,6 +82,7 @@ void ssb_processor_impl::proccess(const srsgnb::ssb_processor::pdu_t& pdu, srsgn
   sss_config.ssb_first_symbol        = l_start;
   sss_config.ssb_first_subcarrier    = k_start;
   sss_config.amplitude               = 1.0F;
+  sss_config.ports                   = pdu.ports;
 
   // Put SSS
   sss->map(grid, sss_config);

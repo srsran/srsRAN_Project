@@ -1,8 +1,8 @@
 #ifndef SRSGNB_SUPPORT_RESOURCE_GRID_CONTEXT_H
 #define SRSGNB_SUPPORT_RESOURCE_GRID_CONTEXT_H
 
-#include "srsgnb/ran/slot_context.h"
 #include "resource_grid.h"
+#include "srsgnb/ran/slot_context.h"
 
 namespace srsgnb {
 
@@ -10,7 +10,6 @@ namespace srsgnb {
 struct resource_grid_context {
   slot_context_t slot;
   unsigned       sector;
-  unsigned       antenna;
 };
 
 } // namespace srsgnb

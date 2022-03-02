@@ -1,6 +1,7 @@
 #ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
 #define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include <memory>
 
@@ -20,6 +21,8 @@ public:
     unsigned ssb_first_symbol;
     /// SSS linear signal amplitude
     float amplitude;
+    /// Ports indexes to map the signal
+    static_vector<uint8_t, MAX_PORTS> ports;
   };
 
   /// Default destructor

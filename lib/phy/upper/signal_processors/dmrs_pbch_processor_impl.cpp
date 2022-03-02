@@ -73,8 +73,11 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
     coordinates[r_idx++] = resource_grid_coordinate(l0 + 3, k0 + k);
   }
 
-  // Put data in grid using the generated coordinates
-  grid.put(coordinates, r);
+  // For each port...
+  for (unsigned port : args.ports) {
+    // ... put data in grid using the generated coordinates
+    grid.put(port, coordinates, r);
+  }
 }
 
 void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
