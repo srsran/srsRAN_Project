@@ -55,10 +55,6 @@ class mac_cfg_adapter : public mac_config_notifier
 public:
   void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
 
-  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
-  {
-    du_manager->handle_mac_ue_create_response(resp);
-  }
   void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) override
   {
     du_manager->handle_mac_ue_reconfiguration_response(resp);

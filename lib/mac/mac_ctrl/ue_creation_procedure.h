@@ -22,30 +22,34 @@ public:
     req(req_), cfg(cfg_), logger(cfg.logger), ctrl_unit(mac_ctrl_), ul_unit(mac_ul_), dl_unit(mac_dl_)
   {}
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<async_task<mac_ue_create_response_message> >& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
-    // 1. Create UE UL context and channels
-    CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
-    if (not add_ue_result) {
-      send_mac_ue_create_response(false);
-      CORO_EARLY_RETURN();
+    // 1. Create UE in MAC CTRL
+    ctrl_ue_created = ctrl_unit.add_ue(req.ue_index, req.crnti, req.cell_index);
+    if (not ctrl_ue_created) {
+      CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
     }
 
-    // 2. Create UE DL context and channels
+    // 2. Create UE UL context and channels
+    CORO_AWAIT_VALUE(add_ue_result, ul_unit.add_ue(req));
+    if (not add_ue_result) {
+      CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
+    }
+
+    // 3. Create UE DL context and channels
     CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
 
-    // 3. After UE insertion in scheduler, send response to DU manager
-    send_mac_ue_create_response(add_ue_result);
-    CORO_RETURN();
+    // 4. After UE insertion in scheduler, send response to DU manager
+    CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
   }
 
   static const char* name() { return "UE Create Request"; }
 
 private:
-  void send_mac_ue_create_response(bool result)
+  mac_ue_create_response_message handle_mac_ue_create_result(bool result)
   {
     if (result) {
       log_proc_completed(logger, req.ue_index, req.crnti, "UE Create Request");
@@ -53,17 +57,17 @@ private:
       log_proc_failure(logger, req.ue_index, req.crnti, "UE Create Request");
     }
 
-    // Respond back to DU manager with result
-    mac_ue_create_request_response_message resp{};
-    resp.ue_index   = req.ue_index;
-    resp.cell_index = req.cell_index;
-    resp.result     = result;
-    cfg.cfg_notifier.on_ue_create_request_complete(resp);
-
-    if (not result) {
+    if (not result and ctrl_ue_created) {
       // Remove created UE object
       ctrl_unit.remove_ue(req.ue_index);
     }
+
+    // Respond back to DU manager with result
+    mac_ue_create_response_message resp{};
+    resp.ue_index   = req.ue_index;
+    resp.cell_index = req.cell_index;
+    resp.result     = result;
+    return resp;
   }
 
   const mac_ue_create_request_message req;
@@ -73,7 +77,8 @@ private:
   mac_ul_configurer&                  ul_unit;
   mac_dl_configurer&                  dl_unit;
 
-  bool add_ue_result = false;
+  bool ctrl_ue_created = false;
+  bool add_ue_result   = false;
 };
 
 } // namespace srsgnb

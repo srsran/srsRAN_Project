@@ -27,7 +27,7 @@ public:
   mac_ctrl_component(mac_common_config_t& cfg, mac_ul_configurer& ul_unit_, mac_dl_configurer& dl_unit_);
 
   /// UE create methods
-  void ue_create_request(const mac_ue_create_request_message& msg);
+  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
 
   /// UE deletion methods
   void ue_delete_request(const mac_ue_delete_request_message& msg);
@@ -45,7 +45,7 @@ private:
     async_task_sequencer ctrl_loop{16}; ///< UE Control loop
   };
 
-  ue_element* add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index);
+  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override;
 
   /// Interface of CTRL procedures to CTRL class
   void remove_ue(du_ue_index_t ue_index) override;

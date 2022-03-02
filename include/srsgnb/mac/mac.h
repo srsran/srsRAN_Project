@@ -7,6 +7,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/support/async/async_task.h"
 #include <memory>
 
 namespace srsgnb {
@@ -57,7 +58,7 @@ struct mac_ue_create_request_message {
   std::vector<logical_channel_addmod> bearers;
 };
 
-struct mac_ue_create_request_response_message {
+struct mac_ue_create_response_message {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   bool            result;
@@ -91,10 +92,10 @@ struct mac_ue_delete_response_message {
 class mac_config_interface
 {
 public:
-  virtual ~mac_config_interface()                                                            = default;
-  virtual void ue_create_request(const mac_ue_create_request_message& cfg)                   = 0;
-  virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
-  virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)                   = 0;
+  virtual ~mac_config_interface() = default;
+  virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
+  virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                     = 0;
+  virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)                                       = 0;
 };
 
 class mac_southbound_interface
@@ -115,7 +116,6 @@ class mac_config_notifier
 {
 public:
   virtual ~mac_config_notifier()                                                                   = default;
-  virtual void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp)   = 0;
   virtual void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) = 0;
   virtual void on_ue_delete_complete(const mac_ue_delete_response_message& resp)                   = 0;
 };

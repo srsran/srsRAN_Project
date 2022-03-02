@@ -4,6 +4,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include <string>
 
@@ -28,7 +29,6 @@ class du_manager_interface_mac
 {
 public:
   virtual ~du_manager_interface_mac()                                                                      = default;
-  virtual void handle_mac_ue_create_response(const mac_ue_create_request_response_message& resp)           = 0;
   virtual void handle_mac_ue_reconfiguration_response(const mac_ue_reconfiguration_response_message& resp) = 0;
   virtual void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp)                   = 0;
 };
@@ -37,6 +37,11 @@ struct du_ue_create_message {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   rnti_t          crnti;
+  struct logical_channel_to_addmod {
+    lcid_t lcid;
+    // other params
+  };
+  std::vector<logical_channel_to_addmod> logical_channels_to_add;
 };
 
 struct du_ue_create_response_message {

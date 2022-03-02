@@ -21,9 +21,9 @@ void mac_impl::push_rx_data_indication(mac_rx_data_indication msg)
   ul_unit.push_rx_data_indication(msg);
 }
 
-void mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
+async_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
 {
-  ctrl_unit.ue_create_request(msg);
+  return ctrl_unit.ue_create_request(msg);
 }
 
 void mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)

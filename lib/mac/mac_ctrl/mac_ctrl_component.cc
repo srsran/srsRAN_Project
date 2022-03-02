@@ -14,22 +14,11 @@ mac_ctrl_component::mac_ctrl_component(mac_common_config_t& cfg_,
   std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
 }
 
-void mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& msg)
+async_task<mac_ue_create_response_message>
+mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& msg)
 {
-  ue_element* u = add_ue(msg.ue_index, msg.crnti, msg.cell_index);
-  if (u == nullptr) {
-    log_proc_failure(logger, msg.ue_index, msg.crnti, mac_ue_create_request_procedure::name(), "Invalid parameters.");
-    mac_ue_create_request_response_message resp{};
-    resp.ue_index   = msg.ue_index;
-    resp.cell_index = msg.cell_index;
-    resp.result     = false;
-    cfg.cfg_notifier.on_ue_create_request_complete(resp);
-    return;
-  }
-  // UE object added to ue_db successfully
-
-  // Enqueue UE create request procedure
-  u->ctrl_loop.schedule<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit);
+  // Launch UE create request procedure
+  return launch_async<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
 void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
@@ -64,20 +53,19 @@ void mac_ctrl_component::ue_reconfiguration_request(const mac_ue_reconfiguration
   u.ctrl_loop.schedule<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
-mac_ctrl_component::ue_element*
-mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
+bool mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
   srsran_assert(crnti != INVALID_RNTI, "Invalid RNTI");
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
 
   if (rnti_to_ue_index_map[crnti % MAX_NOF_UES] < MAX_NOF_UES) {
     // rnti already exists
-    return nullptr;
+    return false;
   }
 
   if (ue_db.contains(ue_index)) {
     // UE already existed with same ue_index
-    return nullptr;
+    return false;
   }
 
   // Create UE object
@@ -89,7 +77,7 @@ mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t
 
   // Update RNTI -> UE index map
   rnti_to_ue_index_map[crnti % MAX_NOF_UES] = ue_index;
-  return &u;
+  return true;
 }
 
 void mac_ctrl_component::remove_ue(du_ue_index_t ue_index)

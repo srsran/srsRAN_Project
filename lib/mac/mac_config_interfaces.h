@@ -28,8 +28,9 @@ public:
 class mac_ctrl_configurer
 {
 public:
-  virtual ~mac_ctrl_configurer()                 = default;
-  virtual void remove_ue(du_ue_index_t ue_index) = 0;
+  virtual ~mac_ctrl_configurer()                                                        = default;
+  virtual bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) = 0;
+  virtual void remove_ue(du_ue_index_t ue_index)                                        = 0;
 };
 
 } // namespace srsgnb
