@@ -24,10 +24,10 @@ class pdcp_ul_packet_procedure : public pdcp_packet_procedures
   /// Both dependencies are interfaces and they are at the same or in a higher abstraction layer, conforming to the
   /// clean architecture paradigm.
   std::unique_ptr<pdcp_entity> entity;
-  pdcp_sdu_notifier&        listener;
+  pdcp_sdu_rx_notifier&        listener;
 
 public:
-  pdcp_ul_packet_procedure(std::unique_ptr<pdcp_entity> entity, pdcp_sdu_notifier& listener) :
+  pdcp_ul_packet_procedure(std::unique_ptr<pdcp_entity> entity, pdcp_sdu_rx_notifier& listener) :
     entity(std::move(entity)), listener(listener)
   {}
 

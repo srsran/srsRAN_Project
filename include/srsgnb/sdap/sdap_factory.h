@@ -11,7 +11,7 @@ namespace srsgnb {
 
 /// Creates an instance of a SDAP interface.
 //: TODO: for now we only create the receiving side
-std::unique_ptr<sdap_pdu_handler> create_sdap(sdap_sdu_notifier& listener);
+std::unique_ptr<sdap_pdu_handler> create_sdap(sdap_sdu_rx_notifier& listener);
 
 } // namespace srsgnb
 

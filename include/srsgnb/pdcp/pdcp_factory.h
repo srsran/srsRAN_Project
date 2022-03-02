@@ -11,7 +11,7 @@ namespace srsgnb {
 
 /// Creates an instance of the a PDCP entity.
 //: TODO: for now we only create the receiving side
-std::unique_ptr<pdcp_pdu_handler> create_pdcp(pdcp_sdu_notifier& listener);
+std::unique_ptr<pdcp_pdu_handler> create_pdcp(pdcp_sdu_rx_notifier& listener);
 
 } // namespace srsgnb
 

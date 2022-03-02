@@ -15,19 +15,19 @@ namespace cu_up {
 /// touch a single line of code of the RLC or PDCP layers. They are agnostic to the deployment scenario.
 
 /// Adapter interface from PDCP to SDAP.
-class sdap_packet_handler : public srsgnb::pdcp_sdu_notifier
+class sdap_packet_handler : public srsgnb::pdcp_sdu_rx_notifier
 {
   srsgnb::sdap_pdu_handler& sdap;
 
 public:
   explicit sdap_packet_handler(srsgnb::sdap_pdu_handler& sdap) : sdap(sdap) {}
 
-  void on_new_sdu(srsgnb::byte_buffer& sdu) override
+  void on_new_sdu(srsgnb::byte_buffer sdu) override
   {
     std::printf("[PDCP-SDAP-ADAPTER] Received a packet from PDCP layer, forwarding data packet of size = %u bytes to "
                 "upper layer (SDAP)\n",
                 (unsigned)sdu.size());
-    sdap.handle(sdu);
+    sdap.handle_pdu(sdu);
   }
 };
 
@@ -44,7 +44,7 @@ public:
     std::printf("[F1u-PDCP-ADAPTER] Received a packet from F1u layer, forwarding data packet of size = %u bytes to "
                 "upper layer (PDCP)\n",
                 (unsigned)data.size());
-    pdcp.handle(data);
+    pdcp.handle_pdu(data);
   }
 };
 

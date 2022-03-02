@@ -20,7 +20,7 @@ public:
     procedure(std::move(procedure))
   {}
 
-  void handle(byte_buffer& data) override
+  void handle_pdu(byte_buffer data) override
   {
     std::printf("[PDCP-PROCEDURE-DISPATCHER] Received a new data packet of size = %u bytes. Dispatching an UL packet "
                 "data procedure to handle it\n",
