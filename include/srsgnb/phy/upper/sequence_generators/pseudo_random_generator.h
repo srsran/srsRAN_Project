@@ -79,11 +79,19 @@ public:
   virtual void apply_xor(span<const int8_t> in, span<int8_t> out) = 0;
 
   /**
-   * @brief Generate a pseudo random sequence based on the internal state
-   * @param value
-   * @param buffer
+   * @brief Generate a floating point pseudo random sequence based on the internal state and the amplitude in \c value.
+   * @param [in] value provides the sequence amplitude.
+   * @param [out] buffer provides the sequence destination.
    */
   virtual void generate(float value, span<float> buffer) = 0;
+
+  /**
+   * @brief Generate a complex floating point pseudo random sequence based on the internal state and the amplitude in \c
+   * value.
+   * @param [in] value provides the sequence amplitude.
+   * @param [out] buffer provides the sequence destination.
+   */
+  virtual void generate(float value, span<cf_t> buffer) { generate(value, {(float*)buffer.data(), 2 * buffer.size()}); }
 };
 
 std::unique_ptr<pseudo_random_generator> create_pseudo_random();
