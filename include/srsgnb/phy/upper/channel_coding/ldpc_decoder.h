@@ -25,6 +25,8 @@ public:
     srsgnb::ldpc::lifting_size_t lifting_size{ldpc::lifting_size_t::LS2};
     /// Maximum number of iterations.
     unsigned max_iterations{6};
+    /// Scaling factor of the normalized min-sum decoding algorithm.
+    float scaling_factor{0.8};
     /// CRC calculator
     crc_calculator* crc = nullptr;
   };
