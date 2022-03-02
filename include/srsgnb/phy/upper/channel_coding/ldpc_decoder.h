@@ -31,10 +31,10 @@ public:
     crc_calculator* crc = nullptr;
   };
 
-  /// \brief Decodes a message.
+  /// \brief Decodes a codeblock.
   ///
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
-  /// \param[out] output  Reconstructed information bits.
+  /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  cfg     Decoder configuration.
   virtual unsigned decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg) = 0;
 };

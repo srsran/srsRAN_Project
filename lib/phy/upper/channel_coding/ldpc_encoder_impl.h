@@ -17,6 +17,7 @@ class ldpc_encoder_impl : public ldpc_encoder
 public:
   /// \name Constructors, destructor, copy and move operators
   /// Either default or deleted.
+
   ///@{
   ldpc_encoder_impl() = default;
   // no copy and move constructors
@@ -34,7 +35,7 @@ public:
   void encode(span<const uint8_t> input, span<uint8_t> output, const config_t& cfg) override;
 
 private:
-  /// Initializes the encoder registers and inner variables.
+  /// Initializes the encoder inner variables.
   void init(const config_t& cfg);
   /// Selects the appropriate encoding strategy.
   virtual void select_strategy() {}
@@ -45,7 +46,7 @@ private:
   /// Computes the shortest possible codeword (systematic part plus high-rate region, that is the first
   /// 4 x lifting size redundancy bits).
   virtual void encode_high_rate() = 0;
-  /// Computes the rest of the redundancy bits.
+  /// Computes the rest of the redundancy bits (extension region).
   virtual void encode_ext_region() = 0;
   /// Moves relevant encoded bits from the internal register to the output vector.
   virtual void write_codeblock(span<uint8_t> out) = 0;
@@ -56,13 +57,13 @@ protected:
   const ldpc_graph_impl* current_graph{};
   /// Lifting size as a natural number (as opposed to an element from srsgnb::ldpc::lifting_size_t).
   uint16_t lifting_size{};
-  /// Total number of variable nodes in the current graph.
+  /// Total number of base graph variable nodes in the current graph.
   uint16_t bg_N_full{};
-  /// Number of variable nodes after shortening.
+  /// Number of base graph variable nodes after shortening.
   uint16_t bg_N_short{};
-  /// Number of check nodes.
+  /// Number of base graph check nodes.
   uint16_t bg_M{};
-  /// Number of variable nodes corresponding to information bits.
+  /// Number of base graph variable nodes corresponding to information bits.
   uint16_t bg_K{};
   /// \brief Number of encoded bits needed to fill the output vector.
   ///
@@ -71,7 +72,7 @@ protected:
   uint16_t codeblock_length{};
 };
 
-/// Basic LDPC encoder implementation without any optimization.
+/// Generic LDPC encoder implementation without any optimization.
 class ldpc_encoder_generic : public ldpc_encoder_impl
 {
   void select_strategy() override;

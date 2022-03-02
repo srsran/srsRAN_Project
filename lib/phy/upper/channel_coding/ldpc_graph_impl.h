@@ -45,14 +45,11 @@ using BG_matrix_t = std::array<std::array<uint16_t, max_BG_N_full>, max_BG_M>;
 /// Maximum degree (number of incident edges) of a check node, in the base graphs.
 static constexpr unsigned max_BG_check_edges = 20;
 
-/// \name Sparse representation of base graphs.
-///@{
-
-/// List of variable nodes connected to a check node.
+/// \brief Represents a list of variable nodes connected to a check node.
 using BG_adjacency_row_t = std::array<uint16_t, max_BG_check_edges>;
-/// For check node \c m, BG_adjacency_matrix_t[m] provides a list of the variable nodes connected to it.
+
+/// \brief For check node \c m, BG_adjacency_matrix_t[m] provides a list of the variable nodes connected to it.
 using BG_adjacency_matrix_t = std::array<BG_adjacency_row_t, max_BG_M>;
-///@}
 
 /// Number of base graphs.
 static constexpr unsigned nof_base_graphs = 2;
@@ -65,6 +62,7 @@ class ldpc_graph_impl
 {
 public:
   /// \name Constructors and destructors
+
   ///@{
   ldpc_graph_impl(ldpc::base_graph_t _bg, ldpc::lifting_size_t _ls);
   ldpc_graph_impl() : ldpc_graph_impl(ldpc::base_graph_t::BG1, ldpc::lifting_size_t::LS2) {}
@@ -73,12 +71,15 @@ public:
 
   /// \name Copy constructor and operator
   /// Deleted
+
   ///@{
   ldpc_graph_impl(ldpc_graph_impl&) = delete;
   ldpc_graph_impl& operator=(ldpc_graph_impl&) = delete;
   ///@}
+
   /// \name Move constructor and operator
   /// Default
+
   ///@{
   ldpc_graph_impl(ldpc_graph_impl&&) = default;
   ldpc_graph_impl& operator=(ldpc_graph_impl&&) = default;
@@ -112,6 +113,7 @@ public:
   /// Returns the number of variable nodes of the underlying base graph associated to information bits.
   unsigned get_nof_BG_info_nodes() const { return nof_BG_var_nodes_full - nof_BG_check_nodes; }
 
+  /// Returns a reference to the selected row of ldpc_graph_impl::adjacency_matrix.
   const ldpc::BG_adjacency_row_t& get_adjacency_row(unsigned m) const { return (*adjacency_matrix)[m]; }
 
 private:

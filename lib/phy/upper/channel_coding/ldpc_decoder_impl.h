@@ -18,6 +18,10 @@ static constexpr unsigned max_BG_K = 22;
 class ldpc_decoder_impl : public ldpc_decoder
 {
 public:
+  /// \name Constructors, destructor, copy and move operators
+  /// Either default or deleted.
+
+  ///@{
   ldpc_decoder_impl() = default;
 
   // no copy and move constructors
@@ -29,17 +33,35 @@ public:
   ldpc_decoder_impl& operator=(ldpc_decoder_impl&&) = delete;
 
   ~ldpc_decoder_impl() override = default;
+  ///@}
 
+  // See interface for the documentation.
   unsigned decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg) override;
 
 private:
-  void         init(const config_t& cfg);
-  virtual void select_strategy()                                   = 0;
-  virtual void load_soft_bits(span<const int8_t> llrs)             = 0;
-  virtual void update_variable_to_check_messages(unsigned i_layer) = 0;
-  virtual void update_check_to_variable_messages(unsigned i_layer) = 0;
-  virtual void update_soft_bits(unsigned i_layer)                  = 0;
-  virtual void get_hard_bits(span<uint8_t> out)                    = 0;
+  /// Initializes the decoder inner variables.
+  void init(const config_t& cfg);
+
+  /// Selects the appropriate decoding strategy and initializes concrete implementation registers and variables.
+  virtual void select_strategy() = 0;
+
+  /// Loads the input log-likelihood ratios into the soft-bit, variable-node register.
+  virtual void load_soft_bits(span<const int8_t> llrs) = 0;
+
+  /// \brief Updates the messages going from variable nodes to check nodes.
+  /// \param[in] check_node The check node (in the base graph) the messages are directed to.
+  virtual void update_variable_to_check_messages(unsigned check_node) = 0;
+
+  /// \brief Updates the messages going from check nodes to variable nodes.
+  /// \param[in] check_node The check node (in the base graph) the messages are coming from.
+  virtual void update_check_to_variable_messages(unsigned check_node) = 0;
+
+  /// \brief Updates the soft bits corresponding to the variable nodes connected to the same base graph check node.
+  /// \param[in] check_node The check node (in the base graph) the variables nodes are connected to.
+  virtual void update_soft_bits(unsigned check_node) = 0;
+
+  /// Converts soft bits into hard bits and returns the decoded message.
+  virtual void get_hard_bits(span<uint8_t> out) = 0;
 
 protected:
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
@@ -73,14 +95,24 @@ protected:
   crc_calculator* crc = nullptr;
 };
 
+/// Generic LDPC decoder implementation without any optimization.
 class ldpc_decoder_generic : public ldpc_decoder_impl
 {
-  void        select_strategy() override { nof_hrr_nodes = bg_N_high_rate * lifting_size; }
-  void        load_soft_bits(span<const int8_t> llrs) override;
-  void        update_variable_to_check_messages(unsigned i_layer) override;
-  void        update_check_to_variable_messages(unsigned i_layer) override;
-  void        update_soft_bits(unsigned i_layer) override;
-  void        get_hard_bits(span<uint8_t> out) override;
+  // see above for the documentation
+  void select_strategy() override { nof_hrr_nodes = bg_N_high_rate * lifting_size; }
+  void load_soft_bits(span<const int8_t> llrs) override;
+  void update_variable_to_check_messages(unsigned check_node) override;
+  void update_check_to_variable_messages(unsigned check_node) override;
+  void update_soft_bits(unsigned check_node) override;
+  void get_hard_bits(span<uint8_t> out) override;
+
+  /// \brief Helper function for update_variable_to_check_messages().
+  ///
+  /// Computes the exact value of the variable-to-check messages for a specific subset of contiguous variable nodes.
+  /// \param[in]  soft Soft bits at the given nodes.
+  /// \param[in]  c2v  Check-to-variable messages at the given nodes.
+  /// \param[out] v2c  Resulting variable-to-check messages.
+  /// \note The three spans refer to the same set of nodes and, in turn, have the same dimension.
   static void compute_var_to_check_msgs(span<const int8_t> soft, span<const int8_t> c2v, span<int8_t> v2c);
 
   /// Number of nodes in the (lifted) high-rate region.
@@ -105,8 +137,8 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   /// \name Helper registers
   /// The following registers refer to a base graph check node (that is, a block of
   /// lifting_size nodes in the lifted graph).
-  ///@{
 
+  ///@{
   /// \brief Register to store the minimum variable-to-check message.
   std::array<int8_t, ldpc::max_lifting_size> min_var_to_check{};
   /// \brief Register to store the second minimum variable-to-check message for each base graph check node.
@@ -118,6 +150,7 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   ///@}
 };
 
+/// LDPC decoder implementation based on AVX2 intrinsics.
 class ldpc_decoder_avx2 : public ldpc_decoder_impl
 {
   void        select_strategy() override { not_implemented(__func__); }
