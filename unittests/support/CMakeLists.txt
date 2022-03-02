@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "support")
+
 add_executable(function_signature_test function_signature_test.cc)
 add_test(function_signature_test function_signature_test)
 

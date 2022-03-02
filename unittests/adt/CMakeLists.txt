@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "adt")
+
 add_executable(static_vector_test static_vector_test.cc)
 target_link_libraries(static_vector_test srslog)
 add_test(static_vector_test static_vector_test)

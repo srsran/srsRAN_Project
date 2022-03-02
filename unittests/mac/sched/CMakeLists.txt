@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "sched")
+
 add_executable(sched_prb_test sched_prb_test.cc)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)
 add_test(sched_prb_test sched_prb_test)
