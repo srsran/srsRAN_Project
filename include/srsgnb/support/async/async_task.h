@@ -154,15 +154,14 @@ public:
   bool ready() const { return empty() or handle.promise().ready(); }
 
   /// Called to get result of task once it is complete
-  template <bool enable = not std::is_same<result_type, void>::value>
-  // TODO: return const reference of the result
-  typename std::enable_if<enable, std::decay_t<result_type> >::type get() &
+  template <typename R = std::decay_t<result_type>, std::enable_if_t<not std::is_same<R, void>::value, bool> = true>
+  const R& get() &
   {
     srsran_assert(not empty() and ready(), "Called async_task::get() for task that is not ready");
     return handle.promise().get();
   }
-  template <bool enable = not std::is_same<result_type, void>::value>
-  typename std::enable_if<enable, std::decay_t<result_type> >::type get() &&
+  template <typename R = std::decay_t<result_type>, std::enable_if_t<not std::is_same<R, void>::value, bool> = true>
+  R get() &&
   {
     srsran_assert(not empty() and ready(), "Called async_task::get() for task that is not ready");
     return std::move(handle.promise()).get();
