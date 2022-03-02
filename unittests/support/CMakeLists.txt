@@ -1,6 +1,10 @@
 
 set_directory_properties(PROPERTIES LABELS "support")
 
+add_executable(timer_test timer_test.cc)
+target_link_libraries(timer_test srslog pthread)
+add_test(timer_test timer_test)
+
 add_executable(function_signature_test function_signature_test.cc)
 add_test(function_signature_test function_signature_test)
 
