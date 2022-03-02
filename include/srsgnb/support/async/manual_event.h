@@ -20,7 +20,7 @@ public:
     bool await_ready() const { return event->is_set(); }
     bool await_suspend(coro_handle<> c)
     {
-      suspended_handle = std::move(c);
+      suspended_handle = c;
       if (event->is_set()) {
         // state is set. no need to suspend
         return false;

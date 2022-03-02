@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_TASK_SCHEDULER_H
-#define SRSGNB_TASK_SCHEDULER_H
+#ifndef SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
+#define SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
 
 #include "async_task.h"
 #include "detail/function_signature.h"
@@ -78,7 +78,7 @@ private:
 template <typename DispatchTaskExecutor, typename ResumeTaskExecutor, typename Callable>
 struct task_executor_offloader<DispatchTaskExecutor, ResumeTaskExecutor, Callable, void> {
   task_executor_offloader(DispatchTaskExecutor& dispatch_exec_, ResumeTaskExecutor& resume_exec_, Callable callable_) :
-    dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::move(callable_))
+    dispatch_exec(dispatch_exec_), resume_exec(resume_exec_), task(std::forward<Callable>(callable_))
   {}
 
   bool await_ready() noexcept { return false; }
@@ -117,7 +117,7 @@ template <typename DispatchTaskExecutor, typename CurrentTaskExecutor, typename 
 auto offload_to_executor(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& resume_exec, Callable&& callable)
     -> detail::task_executor_offloader<DispatchTaskExecutor, CurrentTaskExecutor, Callable>
 {
-  return {dispatch_exec, resume_exec, callable};
+  return {dispatch_exec, resume_exec, std::forward<Callable>(callable)};
 }
 
 template <typename DispatchTaskExecutor,
@@ -157,4 +157,4 @@ dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor&
 
 } // namespace srsgnb
 
-#endif // SRSGNB_TASK_SCHEDULER_H
+#endif // SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H

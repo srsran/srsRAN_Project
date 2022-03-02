@@ -115,6 +115,7 @@ struct awaiter_memory_storage_t {
   /// Checks whether awaiter is stored in memory buffer
   bool empty() const { return storage.empty(); }
 
+private:
   small_memory_buffer_t<InlineBuffer, alignof(std::max_align_t)> storage;
 };
 
