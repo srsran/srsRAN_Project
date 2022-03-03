@@ -19,7 +19,7 @@ public:
     req(req_), cfg(cfg_), logger(cfg.logger), ul_unit(mac_ul_), dl_unit(mac_dl_)
   {}
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<async_task<mac_ue_reconfiguration_response_message> >& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
@@ -28,22 +28,20 @@ public:
     // Note: We may need to delete bearers first from DL to avoid concurrent scheduling in erased bearers.
     CORO_AWAIT_VALUE(add_ue_result, ul_unit.reconfigure_ue(req));
     if (not add_ue_result) {
-      send_mac_ue_reconfiguration_response(false);
-      CORO_EARLY_RETURN();
+      CORO_EARLY_RETURN(handle_result(false));
     }
 
     // 2. Reconfigure UE DL context and channels
     CORO_AWAIT_VALUE(add_ue_result, dl_unit.reconfigure_ue(req));
 
     // 3. After UE insertion in scheduler, send response to DU manager
-    send_mac_ue_reconfiguration_response(add_ue_result);
-    CORO_RETURN();
+    CORO_RETURN(handle_result(add_ue_result));
   }
 
   static const char* name() { return "UE Reconfiguration Request"; }
 
 private:
-  void send_mac_ue_reconfiguration_response(bool result)
+  mac_ue_reconfiguration_response_message handle_result(bool result)
   {
     if (result) {
       log_proc_completed(logger, req.ue_index, req.crnti, name());
@@ -55,7 +53,7 @@ private:
     mac_ue_reconfiguration_response_message resp{};
     resp.ue_index = req.ue_index;
     resp.result   = result;
-    cfg.cfg_notifier.on_ue_reconfiguration_complete(resp);
+    return resp;
   }
 
   mac_ue_reconfiguration_request_message req;

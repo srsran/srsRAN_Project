@@ -21,36 +21,17 @@ mac_ctrl_component::ue_create_request(const mac_ue_create_request_message& msg)
   return launch_async<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
-void mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
+async_task<mac_ue_delete_response_message>
+mac_ctrl_component::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
-  if (not ue_db.contains(msg.ue_index)) {
-    log_proc_failure(logger, msg.ue_index, msg.rnti, mac_ue_delete_procedure::name(), "Inexistent ueId.");
-    mac_ue_delete_response_message resp{};
-    resp.ue_index = msg.ue_index;
-    resp.result   = false;
-    cfg.cfg_notifier.on_ue_delete_complete(resp);
-    return;
-  }
-  ue_element& u = ue_db[msg.ue_index];
-
   // Enqueue UE delete procedure
-  u.ctrl_loop.schedule<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit);
+  return launch_async<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
-void mac_ctrl_component::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
+async_task<mac_ue_reconfiguration_response_message>
+mac_ctrl_component::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
 {
-  if (not ue_db.contains(msg.ue_index)) {
-    log_proc_failure(logger, msg.ue_index, msg.crnti, mac_ue_reconfiguration_procedure::name(), "Inexistent ueId.");
-    mac_ue_reconfiguration_response_message resp{};
-    resp.ue_index = msg.ue_index;
-    resp.result   = false;
-    cfg.cfg_notifier.on_ue_reconfiguration_complete(resp);
-    return;
-  }
-  ue_element& u = ue_db[msg.ue_index];
-
-  // Enqueue UE reconfiguration procedure
-  u.ctrl_loop.schedule<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);
+  return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
 bool mac_ctrl_component::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)

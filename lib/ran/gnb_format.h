@@ -43,9 +43,30 @@ void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti
   logger.info(FMT_CTRL_PREFIX " " FMT_UE_INDEX " " FMT_RNTI ": \"{}\" started.", ue_index, rnti, proc_name);
 }
 
+template <typename... Args>
+void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, const char* proc_name)
+{
+  logger.info(FMT_CTRL_PREFIX " " FMT_UE_INDEX ": \"{}\" started.", ue_index, proc_name);
+}
+
 inline void log_proc_completed(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti_t rnti, const char* proc_name)
 {
   logger.info(FMT_CTRL_PREFIX " " FMT_UE_INDEX " " FMT_RNTI ": \"{}\" completed.", ue_index, rnti, proc_name);
+}
+
+template <typename... Args>
+void log_proc_failure(srslog::basic_logger& logger,
+                      du_ue_index_t         ue_index,
+                      const char*           proc_name,
+                      const char*           cause_fmt = "",
+                      Args&&... args)
+{
+  fmt::memory_buffer fmtbuf;
+  if (strcmp(cause_fmt, "") != 0) {
+    fmt::format_to(fmtbuf, "Cause: ");
+    fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
+  }
+  logger.warning(FMT_CTRL_PREFIX " " FMT_UE_INDEX ": \"{}\" failed. {}", ue_index, proc_name, to_c_str(fmtbuf));
 }
 
 template <typename... Args>

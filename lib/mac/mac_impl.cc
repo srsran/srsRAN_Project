@@ -26,9 +26,15 @@ async_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac
   return ctrl_unit.ue_create_request(msg);
 }
 
-void mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
+async_task<mac_ue_reconfiguration_response_message>
+mac_impl::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
 {
-  ctrl_unit.ue_delete_request(msg);
+  return ctrl_unit.ue_reconfiguration_request(msg);
+}
+
+async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
+{
+  return ctrl_unit.ue_delete_request(msg);
 }
 
 void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)

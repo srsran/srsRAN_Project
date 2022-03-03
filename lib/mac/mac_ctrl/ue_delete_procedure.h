@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-class mac_ue_delete_procedure final : public async_procedure<void>
+class mac_ue_delete_procedure final : public async_procedure<mac_ue_delete_response_message>
 {
 public:
   explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
@@ -39,17 +39,16 @@ private:
   {
     log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
 
-    // 3. Send back response to DU manager
+    // 3. Enqueue UE deletion
+    ctrl_mac.remove_ue(req.ue_index);
+
+    // 4. Prepare response to DU manager
     mac_ue_delete_response_message resp{};
     resp.ue_index = req.ue_index;
     resp.result   = true;
-    cfg.cfg_notifier.on_ue_delete_complete(resp);
 
-    // 4. Enqueue UE deletion
-    ctrl_mac.remove_ue(req.ue_index);
-
-    // 5. Signal end of procedure
-    async_return();
+    // 5. Signal end of procedure and pass response
+    async_return(resp);
   }
 
   mac_ue_delete_request_message req;

@@ -30,10 +30,11 @@ public:
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
 
   /// UE deletion methods
-  void ue_delete_request(const mac_ue_delete_request_message& msg);
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
 
   /// UE reconfiguration methods
-  void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
+  async_task<mac_ue_reconfiguration_response_message>
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
 
   /// Fetch UE context
   mac_ue_context* find_ue(du_ue_index_t ue_index);

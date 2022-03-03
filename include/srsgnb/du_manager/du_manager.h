@@ -44,6 +44,10 @@ struct du_ue_create_message {
   std::vector<logical_channel_to_addmod> logical_channels_to_add;
 };
 
+struct du_ue_delete_message {
+  du_ue_index_t ue_index;
+};
+
 struct du_ue_create_response_message {
   du_ue_index_t ue_index;
   bool          result;

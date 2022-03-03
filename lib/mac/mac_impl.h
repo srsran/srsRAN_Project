@@ -26,8 +26,9 @@ public:
                     task_executor&       ctrl_exec);
 
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
-  void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override {}
-  void ue_delete_request(const mac_ue_delete_request_message& cfg) override;
+  async_task<mac_ue_reconfiguration_response_message>
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
   void push_rx_data_indication(mac_rx_data_indication msg) override;
 

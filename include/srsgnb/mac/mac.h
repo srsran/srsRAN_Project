@@ -94,8 +94,9 @@ class mac_config_interface
 public:
   virtual ~mac_config_interface() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
-  virtual void ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                     = 0;
-  virtual void ue_delete_request(const mac_ue_delete_request_message& cfg)                                       = 0;
+  virtual async_task<mac_ue_reconfiguration_response_message>
+                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
 };
 
 class mac_southbound_interface

@@ -1,0 +1,5 @@
+
+add_executable(ue_manager_test ue_manager_test.cc)
+target_link_libraries(ue_manager_test srsgnb_du srsgnb_support srslog)
+target_include_directories(ue_manager_test PRIVATE ${CMAKE_SOURCE_DIR})
+add_test(ue_manager_test ue_manager_test)

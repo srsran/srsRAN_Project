@@ -16,7 +16,16 @@ void du_manager_impl::ue_create(const du_ue_create_message& msg)
 
 std::string du_manager_impl::get_ues()
 {
-  return ue_mng.get_ues();
+  fmt::memory_buffer fmtbuf;
+  //  fmt::format_to(fmtbuf, "[");
+  //  const char* sep = ", ";
+  //  for (auto& u : ue_db) {
+  //    fmt::format_to(fmtbuf, "{}{{id={}, rnti=0x{:x}, cc={}}}", sep, u.ctxt.ue_index, u.ctxt.rnti,
+  //    u.ctxt.pcell_index); sep = "";
+  //  }
+  //  fmt::format_to(fmtbuf, "]");
+  fmt::format_to(fmtbuf, "{}", ue_mng.get_ues().size());
+  return fmt::to_string(fmtbuf);
 }
 
 } // namespace srsgnb
