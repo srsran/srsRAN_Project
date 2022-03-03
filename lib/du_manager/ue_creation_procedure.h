@@ -5,6 +5,7 @@
 #include "../ran/gnb_format.h"
 #include "du_manager_config.h"
 #include "du_manager_context.h"
+#include "du_manager_interfaces.h"
 #include "du_ue_context.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
@@ -27,9 +28,8 @@ class ue_creation_procedure
 public:
   ue_creation_procedure(const du_ue_create_message& ue_create_msg,
                         const du_manager_config_t&  cfg_,
-                        du_ue_context&              ue_ctxt_,
                         ue_manager_ctrl_configurer& ue_mng_) :
-    msg(ue_create_msg), cfg(cfg_), logger(cfg.logger), ue_ctxt(ue_ctxt_), ue_mng(ue_mng_)
+    msg(ue_create_msg), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
   {}
 
   void operator()(coro_context<async_task<void> >& ctx)
@@ -38,7 +38,17 @@ public:
 
     log_proc_started(logger, msg.ue_index, msg.crnti, "UE Create");
 
-    // 1. Create RLC Bearers
+    // 1. Verify there is space in DU Manager
+    if (ue_mng.find_ue(msg.ue_index) != nullptr) {
+      log_proc_failure(logger, msg.ue_index, msg.crnti, "UE with same index already exists");
+      send_f1ap_response(false);
+      CORO_EARLY_RETURN();
+    }
+
+    // 2. Create DU UE object, including RLC bearers
+    ue_ctxt.ue_index    = msg.ue_index;
+    ue_ctxt.rnti        = msg.crnti;
+    ue_ctxt.pcell_index = msg.cell_index;
     for (auto& lc : msg.logical_channels_to_add) {
       ue_ctxt.bearers.emplace(lc.lcid);
       auto& bearer = ue_ctxt.bearers[lc.lcid];
@@ -50,25 +60,20 @@ public:
       // TODO
     }
 
-    // 2. Initiate MAC UE creation and await result
-    CORO_AWAIT_VALUE(mac_ue_create_response_message resp, make_mac_request());
+    // 3. Initiate MAC UE creation and await result
+    CORO_AWAIT_VALUE(mac_ue_create_response_message mac_resp, make_mac_request());
 
-    if (resp.result) {
+    // 4. Register UE in UE manager
+    if (mac_resp.result) {
+      du_ue_context* u = ue_mng.add_ue(std::move(ue_ctxt));
+      srsran_sanity_check(u != nullptr, "There shouldn't be any concurrent UE insertions/removals");
       log_proc_completed(logger, msg.ue_index, msg.crnti, "UE Create");
     } else {
       log_proc_failure(logger, msg.ue_index, msg.crnti, "UE Create");
     }
 
-    // 3. Signal F1AP the UE creation outcome
-    du_ue_create_response_message f1ap_resp{};
-    f1ap_resp.ue_index = resp.ue_index;
-    f1ap_resp.result   = resp.result;
-    cfg.f1ap_cfg_notifier->on_du_ue_create_response(f1ap_resp);
-
-    // 4. If UE creation failed, remove UE object from DU UE manager
-    if (not f1ap_resp.result) {
-      ue_mng.remove_ue(msg.ue_index);
-    }
+    // 5. Signal F1AP the UE creation outcome
+    send_f1ap_response(mac_resp.result);
 
     CORO_RETURN();
   }
@@ -92,11 +97,20 @@ private:
     return cfg.mac->ue_create_request(mac_ue_create_msg);
   }
 
+  void send_f1ap_response(bool result)
+  {
+    du_ue_create_response_message f1ap_resp{};
+    f1ap_resp.ue_index = msg.ue_index;
+    f1ap_resp.result   = result;
+    cfg.f1ap_cfg_notifier->on_du_ue_create_response(f1ap_resp);
+  }
+
   du_ue_create_message        msg;
   const du_manager_config_t&  cfg;
   srslog::basic_logger&       logger;
-  du_ue_context&              ue_ctxt;
   ue_manager_ctrl_configurer& ue_mng;
+
+  du_ue_context ue_ctxt; /// UE object to construct
 };
 
 } // namespace srsgnb

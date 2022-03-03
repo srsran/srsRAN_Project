@@ -17,13 +17,6 @@ struct du_manager_config_t {
   task_executor*              du_mng_exec;
 };
 
-class ue_manager_ctrl_configurer
-{
-public:
-  virtual ~ue_manager_ctrl_configurer()          = default;
-  virtual void remove_ue(du_ue_index_t ue_index) = 0;
-};
-
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_MANAGER_CONFIG_H

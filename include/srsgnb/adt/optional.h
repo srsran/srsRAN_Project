@@ -37,7 +37,7 @@ public:
     has_val_(other.has_value())
   {
     if (other.has_value()) {
-      storage.copy_ctor(other.storage);
+      storage.template emplace(other.storage.get());
     }
   }
   optional(optional<T>&& other) noexcept(std::is_nothrow_move_constructible<T>::value) : has_val_(other.has_value())

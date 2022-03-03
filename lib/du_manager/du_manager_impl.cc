@@ -10,7 +10,7 @@ void du_manager_impl::ue_create(const du_ue_create_message& msg)
   // Switch DU Manager exec context
   cfg.du_mng_exec->execute([this, msg]() {
     // Start UE create procedure
-    ue_mng.create_ue(msg);
+    ue_mng.handle_ue_create_request(msg);
   });
 }
 
