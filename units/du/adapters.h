@@ -47,27 +47,6 @@ private:
   du_manager_interface* du_manager = nullptr;
 };
 
-/**
- * Adapter of MAC configuration notifications to DU manager method calls
- */
-class mac_cfg_adapter : public mac_config_notifier
-{
-public:
-  void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
-
-  void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) override
-  {
-    du_manager->handle_mac_ue_reconfiguration_response(resp);
-  }
-  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override
-  {
-    du_manager->handle_mac_ue_delete_response(resp);
-  }
-
-private:
-  du_manager_interface* du_manager = nullptr;
-};
-
 class mac_ul_ccch_adapter : public mac_ul_sdu_notifier
 {
 public:

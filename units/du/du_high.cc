@@ -1,6 +1,6 @@
 
-#include "adapters.h"
 #include "du_high.h"
+#include "adapters.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1ap/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
@@ -24,12 +24,11 @@ du_high::du_high()
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_cfg_notifier, mac_ul_ccch_notifier, *ul_exec, execs, *ctrl_exec);
+  mac        = create_mac(mac_ul_ccch_notifier, *ul_exec, execs, *ctrl_exec);
   du_manager = create_du_manager(*mac, f1ap_cfg_notifier, rlc_sdu_notifier, *ctrl_exec);
   f1ap       = create_f1ap_du(f1ap_pdu_adapter, *du_manager);
 
   // Connect DU blocks
-  mac_cfg_notifier.connect(*du_manager);
   mac_ul_ccch_notifier.connect(*f1ap);
   rlc_cfg_notifier.connect(*du_manager);
   f1ap_cfg_notifier.connect(*f1ap);

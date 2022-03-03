@@ -11,7 +11,7 @@
 namespace srsgnb {
 
 struct du_manager_context {
-  mac_config_interface*                  mac;
+  mac_configurer*                  mac;
   du_manager_config_notifier*            f1ap_cfg_notifier;
   rlc_ul_sdu_notifier*                   rlc_ul_notifier;
 };

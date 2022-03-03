@@ -13,9 +13,6 @@
 
 namespace srsgnb {
 
-template <typename T>
-class slot_span;
-
 namespace detail {
 
 /// Base class used for the implementation of the common functionality in slot_array<>, slot_vector<> and

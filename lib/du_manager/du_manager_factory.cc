@@ -4,7 +4,7 @@
 
 namespace srsgnb {
 
-std::unique_ptr<du_manager_interface> create_du_manager(mac_config_interface&       mac,
+std::unique_ptr<du_manager_interface> create_du_manager(mac_configurer&       mac,
                                                         du_manager_config_notifier& f1ap_notifier,
                                                         rlc_ul_sdu_notifier&        rlc_ul_notifier,
                                                         task_executor&              du_mng_exec)

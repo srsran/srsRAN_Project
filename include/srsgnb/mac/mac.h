@@ -89,10 +89,10 @@ struct mac_ue_delete_response_message {
 };
 
 /// Interface used to manage the creation/reconfiguration/deletion of UEs in MAC
-class mac_config_interface
+class mac_configurer
 {
 public:
-  virtual ~mac_config_interface() = default;
+  virtual ~mac_configurer() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
   virtual async_task<mac_ue_reconfiguration_response_message>
                                                      ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
@@ -107,19 +107,8 @@ public:
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
-class mac_interface : public mac_config_interface, public mac_southbound_interface
-{
-public:
-  virtual ~mac_interface() = default;
-};
-
-class mac_config_notifier
-{
-public:
-  virtual ~mac_config_notifier()                                                                   = default;
-  virtual void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) = 0;
-  virtual void on_ue_delete_complete(const mac_ue_delete_response_message& resp)                   = 0;
-};
+class mac_interface : public mac_southbound_interface, public mac_configurer
+{};
 
 } // namespace srsgnb
 

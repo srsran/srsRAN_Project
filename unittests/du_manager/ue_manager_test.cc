@@ -13,7 +13,7 @@ public:
   void on_du_ue_create_response(const du_ue_create_response_message& resp) override { last_ue_create_resp = resp; }
 };
 
-class mac_test_dummy : public mac_config_interface
+class mac_test_dummy : public mac_configurer
 {
 public:
   optional<mac_ue_create_request_message>                           last_ue_create_msg{};

@@ -33,7 +33,6 @@ private:
   std::unique_ptr<mac_interface>        mac;
 
   rlc_cfg_adapter       rlc_cfg_notifier;
-  mac_cfg_adapter       mac_cfg_notifier;
   mac_ul_ccch_adapter   mac_ul_ccch_notifier;
   du_f1ap_cfg_adapter   f1ap_cfg_notifier;
   rlc_ul_sdu_adapter    rlc_sdu_notifier;
