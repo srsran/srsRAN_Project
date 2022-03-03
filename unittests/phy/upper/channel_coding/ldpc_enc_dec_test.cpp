@@ -28,13 +28,14 @@ void get_examples(unsigned                                        bg,
 
 int main()
 {
+  std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("generic");
+  std::unique_ptr<srsgnb::ldpc_decoder> my_decoder = srsgnb::create_ldpc_decoder("generic");
+
   for (const auto bg :
        std::array<srsgnb::ldpc::base_graph_t, 2>{srsgnb::ldpc::base_graph_t::BG1, srsgnb::ldpc::base_graph_t::BG2}) {
     for (const auto ls : srsgnb::ldpc::all_lifting_sizes) {
       srsgnb::ldpc_encoder::config_t        cfg_enc{bg, ls};
       srsgnb::ldpc_decoder::config_t        cfg_dec{bg, ls};
-      std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("generic");
-      std::unique_ptr<srsgnb::ldpc_decoder> my_decoder = srsgnb::create_ldpc_decoder("generic");
 
       std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 
