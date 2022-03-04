@@ -1,8 +1,4 @@
-//
-// Created by carlo on 3/3/22.
-//
-
-#include "../../../lib/mac/sched/sched_signalling.h"
+#include "../../../lib/mac/sched/sched_ssb.h"
 #include "srsgnb/support/test_utils.h"
 
 /// This will be removed once we can get this value from the slot object
@@ -56,7 +52,7 @@ void test_ssb_time_allocation(uint16_t periodicity)
   ssb_list_t ssb_list;
   // in_burst_bitmap is not used by the function for the time being
   uint64_t in_burst_bitmap   = 0;
-  uint16_t offset_to_point_A = 14;
+  uint32_t offset_to_point_A = 14;
   uint16_t k_ssb             = 0;
 
   // Run test for a given number of slots
@@ -75,17 +71,16 @@ void test_ssb_time_allocation(uint16_t periodicity)
     if (bench.slot_tx() % (uint32_t)(periodicity * NOF_SLOTS_PER_SUBFRAME) == 0) {
       TESTASSERT_EQ_MSG(ssb_list.size(), 1, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       auto& ssb_item = ssb_list.back();
-      TESTASSERT_EQ_MSG(ssb_item.support_ssb_idx, L_max_4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       TESTASSERT_EQ_MSG(ssb_item.tx_mode, srsgnb::ssb_transmission, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       TESTASSERT_EQ_MSG(
-          ssb_item.ssb_info.time_alloc.start_sym_num, 2, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
+          ssb_item.ssb_info.ofdm_symbols.start(), 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       TESTASSERT_EQ_MSG(
-          ssb_item.ssb_info.time_alloc.nof_symbols, 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
-      TESTASSERT_EQ_MSG(ssb_item.ssb_info.freq_alloc.start_prb,
+          ssb_item.ssb_info.ofdm_symbols.stop(), 4 + 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
+      TESTASSERT_EQ_MSG(ssb_item.ssb_info.prb_alloc.start(),
                         offset_to_point_A,
                         TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
-      TESTASSERT_EQ_MSG(ssb_item.ssb_info.freq_alloc.nof_prbs,
-                        20 + floor(k_ssb % MAX_K_SSB),
+      TESTASSERT_EQ_MSG(ssb_item.ssb_info.prb_alloc.stop(),
+                        offset_to_point_A + 20,
                         TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
     } else {
       TESTASSERT_EQ_MSG(ssb_list.size(), 0, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));

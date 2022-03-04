@@ -2,8 +2,8 @@
 // Created by carlo on 28/2/22.
 //
 
-#ifndef SRSGNB_SCHED_SIGNALLING_H
-#define SRSGNB_SCHED_SIGNALLING_H
+#ifndef SRSGNB_SCHED_SSB_H
+#define SRSGNB_SCHED_SSB_H
 
 #include "sched_prb.h"
 #include "srsgnb/adt/static_vector.h"
@@ -15,29 +15,16 @@ namespace srsgnb {
 
 enum ssb_tx_mode_opt { no_transmission, ssb_transmission, ssb_repetition, ssb_tx_mode_invalid };
 
-enum ssb_L_max_opt { L_max_4, L_max_8, L_max_64, L_max_invalid };
-
-struct time_domain_allocation_t {
-  /// There can be at most 14 symbols per slot
-  uint8_t start_sym_num;
-  uint8_t nof_symbols;
-};
-
-struct freq_domain_allocation_t {
-  /// There can be at most 14 symbols per slot
-  uint16_t start_prb;
-  uint8_t  nof_prbs;
-};
-
 struct ssb_info_t {
   uint8_t                  ssb_idx;
-  time_domain_allocation_t time_alloc;
-  freq_domain_allocation_t freq_alloc;
+  // The interval below replaces an additional struct with StartSymbolNumber and NumberOfSymbols
+  ofdm_symb_interval       ofdm_symbols;
+  // The interval below replace an additional struct with StartPRB and NumberOfPRBs
+  prb_interval             prb_alloc;
 };
 
 struct ssb_t {
   ssb_tx_mode_opt tx_mode;
-  ssb_L_max_opt   support_ssb_idx;
   ssb_info_t      ssb_info;
 };
 
@@ -56,16 +43,15 @@ using ssb_list_t = srsgnb::static_vector<ssb_t, MAX_NOF_SSB>;
 /// @param[out]  ssb_list           List of SSB messages to be sent to MAC.
 ///
 /// @remark This function a is basic scheduling function that uses the following simplified assumption:
-/// 1) Subcarrier spacing for both SSB and subCarrierSpacingCommon: 15kHz
-/// 2) Frequency below 3GHz
-/// 3) Position in Burst is 1000, i.e., Only the first SSB of the 4 opportunities gets scheduled
+/// 1) Subcarrier spacing for both SSB and subCarrierSpacingCommon: 30kHz
+/// 3) Position in Burst is 1000 or 10000000, i.e., only the first SSB of the 4/8 opportunities gets scheduled
 void sched_ssb(const slot_point& sl_point,
                uint16_t          ssb_periodicity,
                uint8_t           k_ssb,
-               uint16_t          offset_to_point_A,
+               uint32_t          offset_to_point_A,
                uint64_t          in_burst_bitmap,
                ssb_list_t&       ssb_list);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_SIGNALLING_H
+#endif // SRSGNB_SCHED_SSB_H

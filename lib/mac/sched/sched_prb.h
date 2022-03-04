@@ -33,6 +33,10 @@ struct prb_interval : public interval<uint32_t> {
   using interval::interval;
 };
 
+struct ofdm_symb_interval : public interval<uint8_t> {
+  using interval::interval;
+};
+
 struct prb_grant {
   prb_grant() = default;
   prb_grant(const prb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}

@@ -1,8 +1,4 @@
-//
-// Created by carlo on 28/2/22.
-//
-
-#include "sched_signalling.h"
+#include "sched_ssb.h"
 
 #define NOF_SLOTS_PER_SUBFRAME 1
 #define NOF_SSB_OFDM_SYMBOLS 4
@@ -13,7 +9,7 @@ namespace srsgnb {
 void sched_ssb(const slot_point& sl_point,
                uint16_t          ssb_periodicity,
                uint8_t           k_ssb,
-               uint16_t          offset_to_point_A,
+               uint32_t          offset_to_point_A,
                uint64_t          in_burst_bitmap,
                ssb_list_t&       ssb_list)
 {
@@ -33,15 +29,17 @@ void sched_ssb(const slot_point& sl_point,
   uint32_t sl_point_mod = sl_point % (ssb_periodicity * NOF_SLOTS_PER_SUBFRAME);
   // code below is simplified, it assumes 15kHz subcarrier spacing and sub 3GHz carrier
   if (sl_point_mod == 0) {
-    ssb_t ssb_msg                             = {};
-    ssb_msg.tx_mode                           = ssb_transmission;
-    ssb_msg.support_ssb_idx                   = L_max_4;
-    ssb_msg.ssb_info.ssb_idx                  = 0; // This corresponds to "Position in Burst" = 1000
-    ssb_msg.ssb_info.time_alloc.start_sym_num = 2; // This value is hard-coded, but needs to be changed
-    // The value below is common for all SSB, regardless of the different parameters or cases
-    ssb_msg.ssb_info.time_alloc.nof_symbols   = NOF_SSB_OFDM_SYMBOLS;
-    ssb_msg.ssb_info.freq_alloc.start_prb     = offset_to_point_A;
-    ssb_msg.ssb_info.freq_alloc.nof_prbs      = NOF_SSB_PRBS + floor(k_ssb % MAX_K_SSB);
+    ssb_t ssb_msg            = {};
+    ssb_msg.tx_mode          = ssb_transmission;
+    ssb_msg.ssb_info.ssb_idx = 0; // This corresponds to "Position in Burst" = 1000
+    // This value is hard-coded, but needs to be changed
+    ssb_msg.ssb_info.ofdm_symbols.set(4, 4 + NOF_SSB_OFDM_SYMBOLS);
+    // The value below is common for all SSB, regardless of the different parameters or cases.
+    // NOTE: It assumes the reference grid is that of the SSB
+    ssb_msg.ssb_info.prb_alloc.set(offset_to_point_A, offset_to_point_A + NOF_SSB_PRBS);
+    // NOTE: until we understand whether the time and frequency allocation refer to the common grid or SSB grid, we
+    // leave this extra line (commented) below, which will be used if the reference is the common grid;
+    // ssb_msg.ssb_info.prb_alloc.set(offset_to_point_A, NOF_SSB_PRBS + floor(k_ssb % MAX_K_SSB));
     ssb_list.push_back(ssb_msg);
   }
 }
