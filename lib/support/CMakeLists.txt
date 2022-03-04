@@ -6,7 +6,11 @@
 # the distribution.
 #
 
-set(SOURCES signal_handler.cc task_worker.cc threads.cc)
+set(SOURCES
+        #signal_handler.cc
+        #task_worker.cc
+        #threads.cc
+        timers.cc)
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support srslog)

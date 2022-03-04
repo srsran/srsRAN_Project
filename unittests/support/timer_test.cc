@@ -7,72 +7,72 @@
 
 using namespace srsgnb;
 
-void timers_test1()
+static void timers_test1()
 {
   test_delimit_logger logger{"Test unique_timer interface"};
 
-  timer_handler timers;
-  uint32_t      dur = 5;
+  timer_handler           timers;
+  timer_tick_difference_t dur = 5;
 
   {
-    // TEST: default ctor places unique_timer in correct state
-    unique_timer t = timers.get_unique_timer();
-    TESTASSERT(not t.is_running() and not t.is_expired());
+    // TEST: Default ctor places unique_timer in correct state.
+    unique_timer t = timers.create_unique_timer();
+    TESTASSERT(!t.is_running() && !t.has_expired());
     TESTASSERT(t.id() == 0);
-    unique_timer t2 = timers.get_unique_timer();
-    TESTASSERT(not t2.is_running() and not t2.is_expired());
+    unique_timer t2 = timers.create_unique_timer();
+    TESTASSERT(!t2.is_running() && !t2.has_expired());
     TESTASSERT(t2.id() == 1);
     TESTASSERT(timers.nof_timers() == 2);
 
-    // TEST: Run multiple times with the same duration
+    // TEST: Run multiple times with the same duration.
     bool callback_called = false;
-    t.set(dur, [&callback_called](int tid) { callback_called = true; });
-    for (uint32_t runs = 0; runs < 3; ++runs) {
+    t.set(dur, [&callback_called](timer_id_t tid) { callback_called = true; });
+    for (unsigned runs = 0; runs != 3; ++runs) {
       callback_called = false;
-      TESTASSERT(not t.is_running());
+      TESTASSERT(!t.is_running());
       t.run();
-      TESTASSERT(t.is_running() and not t.is_expired());
-      for (uint32_t i = 0; i < dur - 1; ++i) {
-        timers.step_all();
-        TESTASSERT(t.is_running() and not t.is_expired());
+      TESTASSERT(t.is_running() && !t.has_expired());
+      for (timer_tick_difference_t i = 0; i != (dur - 1); ++i) {
+        timers.tick_all();
+        TESTASSERT(t.is_running() && !t.has_expired());
       }
-      timers.step_all();
-      TESTASSERT(not t.is_running() and t.is_expired());
+      timers.tick_all();
+      TESTASSERT(!t.is_running() && t.has_expired());
       TESTASSERT(callback_called);
     }
 
-    // TEST: interrupt a timer. check if callback was called
+    // TEST: Interrupt a timer. check if callback was called.
     callback_called = false;
     t.run();
-    timers.step_all();
+    timers.tick_all();
     TESTASSERT(t.is_running());
     t.stop();
-    TESTASSERT(not t.is_running());
-    for (uint32_t i = 0; i < dur; ++i) {
-      timers.step_all();
-      TESTASSERT(not t.is_running());
+    TESTASSERT(!t.is_running());
+    for (timer_tick_difference_t i = 0; i != dur; ++i) {
+      timers.tick_all();
+      TESTASSERT(!t.is_running());
     }
-    TESTASSERT(not callback_called);
+    TESTASSERT(!callback_called);
 
-    // TEST: call timer::run() when it is already running. Check if duration gets extended.
+    // TEST: Call timer::run() when it is already running. Check if duration gets extended.
     callback_called = false;
     t.run();
-    timers.step_all();
+    timers.tick_all();
     TESTASSERT(t.is_running());
     t.run(); // re-run
-    for (uint32_t i = 0; i < dur - 1; ++i) {
-      timers.step_all();
+    for (timer_tick_difference_t i = 0; i != (dur - 1); ++i) {
+      timers.tick_all();
       TESTASSERT(t.is_running());
     }
-    timers.step_all();
-    TESTASSERT(not t.is_running());
+    timers.tick_all();
+    TESTASSERT(!t.is_running());
     TESTASSERT(callback_called);
 
-    // TEST: ordering of timers is respected
-    unique_timer t3 = timers.get_unique_timer();
+    // TEST: Ordering of timers is respected.
+    unique_timer t3 = timers.create_unique_timer();
     TESTASSERT(t3.id() == 2);
     int  first_id = -1, last_id = -1;
-    auto callback = [&first_id, &last_id](int id) {
+    auto callback = [&first_id, &last_id](timer_id_t id) {
       if (first_id < 0) {
         printf("First timer id=%d\n", id);
         first_id = id;
@@ -85,98 +85,100 @@ void timers_test1()
     t.run();
     t2.run();
     t3.run();
-    for (uint32_t i = 0; i < 5; ++i) {
-      timers.step_all();
+    for (unsigned i = 0; i != 5; ++i) {
+      timers.tick_all();
       TESTASSERT(i >= 3 or t.is_running());
       TESTASSERT(i >= 1 or t2.is_running());
       TESTASSERT(t3.is_running());
     }
-    timers.step_all();
-    TESTASSERT(t.is_expired() and t2.is_expired() and t3.is_expired());
+    timers.tick_all();
+    TESTASSERT(t.has_expired() && t2.has_expired() && t3.has_expired());
     TESTASSERT(first_id == 1);
     TESTASSERT(last_id == 2);
   }
-  // TEST: timer dtor is called and removes "timer" from "timers"
+  // TEST: Timer dtor is called and removes "timer" from "timers".
   TESTASSERT(timers.nof_timers() == 0);
 }
 
 /// Description:
-/// - calling stop() early, forbids the timer from getting expired
-/// - calling stop() after timer has expired should be a noop
-void timers_test2()
+/// - calling stop() early, forbids the timer from getting expired.
+/// - calling stop() after timer has expired should be a noop.
+static void timers_test2()
 {
-  test_delimit_logger logger{"Test unique_timer stop() method"};
-  timer_handler       timers;
-  uint32_t            duration = 2;
+  test_delimit_logger     logger{"Test unique_timer stop() method"};
+  timer_handler           timers;
+  timer_tick_difference_t duration = 2;
 
-  auto utimer  = timers.get_unique_timer();
-  auto utimer2 = timers.get_unique_timer();
+  auto utimer  = timers.create_unique_timer();
+  auto utimer2 = timers.create_unique_timer();
   utimer.set(duration);
   utimer2.set(duration);
 
-  // TEST 1: call utimer.stop() early and check if timer expires
+  // TEST 1: Call utimer.stop() early and check if timer expires.
   utimer.run();
   utimer2.run();
-  TESTASSERT(utimer.is_running() and not utimer.is_expired());
+  TESTASSERT(utimer.is_running() && !utimer.has_expired());
   utimer.stop();
-  TESTASSERT(not utimer.is_running() and not utimer.is_expired());
+  TESTASSERT(!utimer.is_running() && !utimer.has_expired());
 
-  for (uint32_t i = 0; i < 5; ++i) {
-    timers.step_all();
+  for (unsigned i = 0; i != 5; ++i) {
+    timers.tick_all();
   }
-  TESTASSERT(not utimer.is_expired());
-  TESTASSERT(utimer2.is_expired());
+  TESTASSERT(!utimer.has_expired());
+  TESTASSERT(utimer2.has_expired());
 
-  // TEST 2: call utimer.stop() after it expires and assert it is still expired
+  // TEST 2: Call utimer.stop() after it expires and assert it is still expired.
   utimer2.stop();
-  TESTASSERT(utimer2.is_expired());
+  TESTASSERT(utimer2.has_expired());
 }
 
 /// Description:
-/// - setting a new duration while the timer is already running should not stop timer, and should extend timeout
-void timers_test3()
+/// - Setting a new duration while the timer is already running should not stop timer, && should extend timeout.
+static void timers_test3()
 {
-  test_delimit_logger logger{"Test running unique_timer duration extension"};
-  timer_handler       timers;
-  uint32_t            duration = 5;
+  test_delimit_logger     logger{"Test running unique_timer duration extension"};
+  timer_handler           timers;
+  timer_tick_difference_t duration = 5;
 
-  auto utimer = timers.get_unique_timer();
+  auto utimer = timers.create_unique_timer();
   utimer.set(duration);
   utimer.run();
 
-  for (uint32_t i = 0; i < 2 * duration + 1; ++i) {
-    timers.step_all();
+  for (unsigned i = 0; i != (2 * duration + 1); ++i) {
+    timers.tick_all();
     if ((i % 2) == 0) {
-      // extends lifetime
+      // Extends lifetime.
       utimer.set(duration);
     }
     TESTASSERT(utimer.is_running());
   }
-  for (uint32_t i = 0; i < duration - 1; ++i) {
-    timers.step_all();
+  for (unsigned i = 0; i != (duration - 1); ++i) {
+    timers.tick_all();
     TESTASSERT(utimer.is_running());
   }
-  timers.step_all();
-  TESTASSERT(not utimer.is_running() and utimer.is_expired());
+  timers.tick_all();
+  TESTASSERT(!utimer.is_running() && utimer.has_expired());
 }
 
+namespace {
 struct timers_test4_ctxt {
-  std::vector<unique_timer> timers;
-  bool                      finished{false};
-  std::mutex                mutex;
-  std::condition_variable   cvar1, cvar2;
-  const uint32_t            duration = 1000;
+  std::vector<unique_timer>     timers;
+  bool                          finished{false};
+  std::mutex                    mutex;
+  std::condition_variable       cvar1, cvar2;
+  const timer_tick_difference_t duration = 1000;
 };
+} // namespace
 
 static void timers2_test4_thread(timers_test4_ctxt* ctx)
 {
   std::random_device                    rd;
   std::mt19937                          mt19937(rd());
   std::uniform_real_distribution<float> real_dist(0.0f, 1.0f);
-  for (uint32_t d = 0; d < ctx->duration; d++) {
-    // make random events
-    for (uint32_t i = 1; i < ctx->timers.size(); i++) {
-      // ensure the getters always return reasonable values
+  for (timer_tick_difference_t d = 0; d != ctx->duration; ++d) {
+    // Make random events.
+    for (size_t i = 1; i != ctx->timers.size(); ++i) {
+      // Ensure the getters always return reasonable values.
       TESTASSERT(ctx->timers[i].time_elapsed() <= ctx->duration);
 
       if (0.1f > real_dist(mt19937)) {
@@ -195,36 +197,36 @@ static void timers2_test4_thread(timers_test4_ctxt* ctx)
     std::unique_lock<std::mutex> lock(ctx->mutex);
     ctx->finished = true;
     ctx->cvar1.notify_one();
-    ctx->cvar2.wait(lock, [&]() { return not ctx->finished; });
+    ctx->cvar2.wait(lock, [&]() { return !ctx->finished; });
   }
 }
 
-void timers_test4()
+static void timers_test4()
 {
   test_delimit_logger logger{"Test unique_test multithreading safety"};
 
   timer_handler                         timers;
   timers_test4_ctxt                     ctx;
-  uint32_t                              nof_timers = 32;
+  unsigned                              nof_timers = 32;
   std::mt19937                          mt19937(4);
   std::uniform_real_distribution<float> real_dist(0.0f, 1.0f);
 
-  // Generate all timers and start them
-  for (uint32_t i = 0; i < nof_timers; i++) {
-    ctx.timers.push_back(timers.get_unique_timer());
+  // Generate all timers and start them.
+  for (unsigned i = 0; i != nof_timers; ++i) {
+    ctx.timers.push_back(timers.create_unique_timer());
     ctx.timers[i].set(ctx.duration);
     ctx.timers[i].run();
   }
 
   /* ========== multithreaded region begin =========== */
 
-  // Create side thread
+  // Create side thread.
   std::thread thread(timers2_test4_thread, &ctx);
 
-  for (uint32_t d = 0; d < ctx.duration; d++) {
-    // make random events
-    for (uint32_t i = 1; i < nof_timers; i++) {
-      // ensure the getters always return reasonable values
+  for (timer_tick_difference_t d = 0; d != ctx.duration; ++d) {
+    // Make random events.
+    for (unsigned i = 1; i != nof_timers; ++i) {
+      // Ensure the getters always return reasonable values.
       TESTASSERT(ctx.timers[i].time_elapsed() <= ctx.duration);
 
       if (0.1f > real_dist(mt19937)) {
@@ -239,53 +241,51 @@ void timers_test4()
       }
     }
 
-    // first timer does not get updated, so it shall keep running
+    // First timer does not get updated, so it shall keep running.
     TESTASSERT(ctx.timers[0].is_running());
 
-    // Increment time
-    timers.step_all();
+    // Increment time.
+    timers.tick_all();
 
-    // wait second thread to finish events
+    // Wait second thread to finish events.
     std::unique_lock<std::mutex> lock(ctx.mutex);
     ctx.cvar1.wait(lock, [&ctx]() { return ctx.finished; });
 
-    // assert no timer got wrong values
-    for (uint32_t i = 0; i < nof_timers; i++) {
+    // Assert no timer got wrong values.
+    for (unsigned i = 0; i != nof_timers; ++i) {
       if (ctx.timers[i].is_running()) {
         TESTASSERT(ctx.timers[i].time_elapsed() <= ctx.timers[i].duration());
         TESTASSERT(ctx.timers[i].duration() <= ctx.duration);
       }
     }
 
-    // Start new TTI
+    // Start new TTI.
     ctx.finished = false;
     ctx.cvar2.notify_one();
   }
 
-  // Finish asynchronous thread
+  // Finish asynchronous thread.
   thread.join();
 
   /* ========== multithreaded region end =========== */
 
-  // First timer should have expired
-  TESTASSERT(ctx.timers[0].is_expired());
-  TESTASSERT(not ctx.timers[0].is_running());
+  // First timer should have expired.
+  TESTASSERT(ctx.timers[0].has_expired());
+  TESTASSERT(!ctx.timers[0].is_running());
 
-  // Run for the maximum period
-  for (uint32_t d = 0; d < ctx.duration; d++) {
-    timers.step_all();
+  // Run for the maximum period.
+  for (timer_tick_difference_t d = 0; d != ctx.duration; ++d) {
+    timers.tick_all();
   }
 
-  // No timer should be running
-  for (uint32_t i = 0; i < nof_timers; i++) {
-    TESTASSERT(not ctx.timers[i].is_running());
+  // No timer should be running.
+  for (unsigned i = 0; i != nof_timers; ++i) {
+    TESTASSERT(!ctx.timers[i].is_running());
   }
 }
 
-/**
- * Description: Delaying a callback using the timer_handler
- */
-void timers_test5()
+/// Description: Delaying a callback using the timer_handler.
+static void timers_test5()
 {
   timer_handler timers;
   TESTASSERT(timers.nof_timers() == 0);
@@ -294,16 +294,16 @@ void timers_test5()
   std::vector<int> vals;
 
   // TTI 0: Add a unique_timer of duration=5
-  unique_timer t = timers.get_unique_timer();
+  unique_timer t = timers.create_unique_timer();
   TESTASSERT(timers.nof_timers() == 1);
-  t.set(5, [&vals](uint32_t tid) { vals.push_back(1); });
+  t.set(5, [&vals](timer_id_t tid) { vals.push_back(1); });
   t.run();
   TESTASSERT(timers.nof_running_timers() == 1);
-  timers.step_all();
+  timers.tick_all();
 
-  // TTI 1: Add two delayed callbacks, with duration=2 and 6
+  // TTI 1: Add two delayed callbacks, with duration=2 and 6.
   {
-    // ensure captures by value are ok
+    // Ensure captures by value are ok.
     std::string string = "test string";
     timers.defer_callback(2, [&vals, string]() {
       vals.push_back(2);
@@ -313,36 +313,34 @@ void timers_test5()
   timers.defer_callback(6, [&vals]() { vals.push_back(3); });
   TESTASSERT(timers.nof_timers() == 3);
   TESTASSERT(timers.nof_running_timers() == 3);
-  timers.step_all();
-  timers.step_all();
+  timers.tick_all();
+  timers.tick_all();
 
-  // TTI 3: First callback should have been triggered by now
+  // TTI 3: First callback should have been triggered by now.
   TESTASSERT(timers.nof_running_timers() == 2);
   TESTASSERT(timers.nof_timers() == 2);
   TESTASSERT(vals.size() == 1);
   TESTASSERT(vals[0] == 2);
-  timers.step_all();
-  timers.step_all();
+  timers.tick_all();
+  timers.tick_all();
 
-  // TTI 5: Unique timer should have been triggered by now
+  // TTI 5: Unique timer should have been triggered by now.
   TESTASSERT(timers.nof_running_timers() == 1);
   TESTASSERT(timers.nof_timers() == 2);
   TESTASSERT(vals.size() == 2);
   TESTASSERT(vals[1] == 1);
-  timers.step_all();
-  timers.step_all();
+  timers.tick_all();
+  timers.tick_all();
 
-  // TTI 7: Second callback should have been triggered by now
+  // TTI 7: Second callback should have been triggered by now.
   TESTASSERT(timers.nof_running_timers() == 0);
   TESTASSERT(timers.nof_timers() == 1);
   TESTASSERT(vals.size() == 3);
   TESTASSERT(vals[2] == 3);
 }
 
-/**
- * Description: Check if erasure of a running timer is safe
- */
-void timers_test6()
+/// Description: Check if erasure of a running timer is safe.
+static void timers_test6()
 {
   timer_handler timers;
 
@@ -350,84 +348,82 @@ void timers_test6()
 
   // Event: Add a timer that gets erased 1 tti after, and before expiring.
   {
-    unique_timer t = timers.get_unique_timer();
-    t.set(2, [&vals](uint32_t tid) { vals.push_back(1); });
+    unique_timer t = timers.create_unique_timer();
+    t.set(2, [&vals](timer_id_t tid) { vals.push_back(1); });
     t.run();
-    TESTASSERT(timers.nof_running_timers() == 1 and t.duration() == 2 and t.is_running());
-    timers.step_all();
+    TESTASSERT(timers.nof_running_timers() == 1 && t.duration() == 2 && t.is_running());
+    timers.tick_all();
   }
   TESTASSERT(timers.nof_running_timers() == 0);
   TESTASSERT(timers.nof_timers() == 0);
 
-  // TEST: The timer callback should not have been called
-  timers.step_all();
+  // TEST: The timer callback should not have been called.
+  timers.tick_all();
   TESTASSERT(vals.empty());
 
-  // Event: Add a timer that gets erased right after, and add another timer with same timeout
+  // Event: Add a timer that gets erased right after, and add another timer with same timeout.
   {
-    unique_timer t = timers.get_unique_timer();
-    t.set(2, [&vals](uint32_t tid) { vals.push_back(2); });
+    unique_timer t = timers.create_unique_timer();
+    t.set(2, [&vals](timer_id_t tid) { vals.push_back(2); });
     t.run();
-    TESTASSERT(timers.nof_running_timers() == 1 and t.is_running());
-    timers.step_all();
+    TESTASSERT(timers.nof_running_timers() == 1 && t.is_running());
+    timers.tick_all();
     TESTASSERT(t.time_elapsed() == 1);
   }
-  unique_timer t = timers.get_unique_timer();
-  t.set(1, [&vals](uint32_t tid) { vals.push_back(3); });
+  unique_timer t = timers.create_unique_timer();
+  t.set(1, [&vals](timer_id_t tid) { vals.push_back(3); });
   t.run();
   TESTASSERT(timers.nof_running_timers() == 1);
 
-  // TEST: The second timer's callback should be the one being called, and should be called only once
-  timers.step_all();
-  TESTASSERT(vals.size() == 1 and vals[0] == 3);
+  // TEST: The second timer's callback should be the one being called, and should be called only once.
+  timers.tick_all();
+  TESTASSERT(vals.size() == 1 && vals[0] == 3);
 }
 
-/**
- * Tests specific to timer_handler wheel-based implementation:
- * - check if timer update is safe when its new updated wheel position matches the previous wheel position
- * - multime timers can exist in the same wheel position
- */
-void timers_test7()
+/// Tests specific to timer_handler wheel-based implementation:
+/// - check if timer update is safe when its new updated wheel position matches the previous wheel position.
+/// - multiple timers can exist in the same wheel position.
+static void timers_test7()
 {
   timer_handler timers;
   size_t        wheel_size = timer_handler::get_wheel_size();
 
-  unique_timer t = timers.get_unique_timer();
+  unique_timer t = timers.create_unique_timer();
   t.set(2);
   t.run();
 
-  timers.step_all();
-  TESTASSERT(not t.is_expired() and t.is_running());
+  timers.tick_all();
+  TESTASSERT(!t.has_expired() && t.is_running());
 
-  // should fall in same wheel position as previous timer run
+  // Should fall in same wheel position as previous timer run.
   t.set(1 + wheel_size);
-  for (size_t i = 0; i < wheel_size; ++i) {
-    timers.step_all();
-    TESTASSERT(not t.is_expired() and t.is_running());
+  for (size_t i = 0; i != wheel_size; ++i) {
+    timers.tick_all();
+    TESTASSERT(!t.has_expired() && t.is_running());
   }
-  timers.step_all();
-  TESTASSERT(t.is_expired() and not t.is_running());
+  timers.tick_all();
+  TESTASSERT(t.has_expired() && !t.is_running());
 
-  // the three timers will all fall in the same wheel position. However, only t and t3 should trigger
-  unique_timer t2 = timers.get_unique_timer();
-  unique_timer t3 = timers.get_unique_timer();
+  // The three timers will all fall in the same wheel position. However, only t and t3 should trigger.
+  unique_timer t2 = timers.create_unique_timer();
+  unique_timer t3 = timers.create_unique_timer();
   t.set(5);
   t2.set(5 + wheel_size);
   t3.set(5);
   t.run();
   t2.run();
   t3.run();
-  TESTASSERT(timers.nof_running_timers() == 3 and timers.nof_timers() == 3);
-  for (size_t i = 0; i < 5; ++i) {
-    TESTASSERT(not t.is_expired() and t.is_running());
-    TESTASSERT(not t2.is_expired() and t2.is_running());
-    TESTASSERT(not t3.is_expired() and t3.is_running());
-    timers.step_all();
+  TESTASSERT(timers.nof_running_timers() == 3 && timers.nof_timers() == 3);
+  for (size_t i = 0; i != 5; ++i) {
+    TESTASSERT(!t.has_expired() && t.is_running());
+    TESTASSERT(!t2.has_expired() && t2.is_running());
+    TESTASSERT(!t3.has_expired() && t3.is_running());
+    timers.tick_all();
   }
-  TESTASSERT(t.is_expired() and not t.is_running());
-  TESTASSERT(not t2.is_expired() and t2.is_running());
-  TESTASSERT(t3.is_expired() and not t3.is_running());
-  TESTASSERT(timers.nof_running_timers() == 1 and timers.nof_timers() == 3);
+  TESTASSERT(t.has_expired() && !t.is_running());
+  TESTASSERT(!t2.has_expired() && t2.is_running());
+  TESTASSERT(t3.has_expired() && !t3.is_running());
+  TESTASSERT(timers.nof_running_timers() == 1 && timers.nof_timers() == 3);
 }
 
 int main()
