@@ -8,3 +8,7 @@ add_test(sched_prb_test sched_prb_test)
 add_executable(sched_harq_test sched_harq_test.cc)
 target_link_libraries(sched_harq_test srsgnb_sched srslog)
 add_test(sched_harq_test sched_prb_test)
+
+add_executable(sched_no_ue_test sched_no_ue_test.cc)
+target_link_libraries(sched_no_ue_test srsgnb_sched srslog)
+add_test(sched_no_ue_test sched_no_ue_test)

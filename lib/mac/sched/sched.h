@@ -2,6 +2,8 @@
 #ifndef SRSGNB_SCHED_H
 #define SRSGNB_SCHED_H
 
+#include "cell_sched.h"
+#include "resource_grid.h"
 #include "srsgnb/mac/sched_interface.h"
 
 namespace srsgnb {
@@ -9,13 +11,30 @@ namespace srsgnb {
 class sched final : public sched_interface
 {
 public:
-  explicit sched(sched_cfg_notifier& notifier) : mac_notifier(notifier) {}
+  explicit sched(sched_cfg_notifier& notifier) : mac_notifier(notifier), cells(1) {}
 
+  /// Add/Configure UE
   void config_ue(rnti_t rnti) override { mac_notifier.on_ue_config_complete(rnti); }
-  void delete_ue_request(rnti_t rnti) override  { mac_notifier.on_ue_delete_response(rnti); }
+
+  /// Delete UE
+  void delete_ue_request(rnti_t rnti) override { mac_notifier.on_ue_delete_response(rnti); }
+
+  /// Obtain DL scheduling result
+  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cc) override
+  {
+    return cells[cc].get_dl_sched(sl_tx);
+  }
+
+  /// Obtain UL scheduling result
+  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cc) override
+  {
+    return cells[cc].get_ul_sched(sl_tx);
+  }
 
 private:
   sched_cfg_notifier& mac_notifier;
+
+  std::vector<cell_sched> cells;
 };
 
 } // namespace srsgnb
