@@ -27,7 +27,7 @@ public:
     unsigned ssb_idx;
     /// First subcarrier in the resource grid
     unsigned ssb_first_subcarrier;
-    /// First symbol in slot resource grid
+    /// Denotes the first symbol of the SS/PBCH block within the slot.
     unsigned ssb_first_symbol;
     /// PSS linear signal amplitude
     float amplitude;

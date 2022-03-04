@@ -6,6 +6,7 @@
 
 namespace srsgnb {
 
+/// Describes a generic resource grid implementation
 class resource_grid_impl : public resource_grid
 {
 private:
@@ -14,6 +15,7 @@ private:
   unsigned nof_subc;
 
   /// \brief Stores the resource grid buffers
+  ///
   /// Each \c srsvec::aligned_vec<cf_t> represents a flattened resource grid for each port of \c nof_ports. The resource
   /// elements are organised in increasing subcarrier index and then symbol where the resource element of symbol \c l
   /// and subcarrier \c k access is \c port_buffers[port][nof_subc * l + k].

@@ -6,10 +6,12 @@
 
 namespace srsgnb {
 
-/// Describes the transmission and reception context
+/// Describes the transmission and reception context.
 struct resource_grid_context {
+  /// Provides the slot context within the system frame.
   slot_context_t slot;
-  unsigned       sector;
+  /// Provides the sector identifier.
+  unsigned sector;
 };
 
 } // namespace srsgnb

@@ -17,11 +17,11 @@ public:
     unsigned phys_cell_id;
     /// First subcarrier in the resource grid
     unsigned ssb_first_subcarrier;
-    /// First symbol in slot resource grid
+    /// Denotes the first symbol of the SS/PBCH block within the slot.
     unsigned ssb_first_symbol;
     /// PSS linear signal amplitude
     float amplitude;
-    /// Ports indexes to map the signal
+    /// Port indexes to map the signal.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 

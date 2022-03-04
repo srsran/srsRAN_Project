@@ -21,13 +21,13 @@ public:
     unsigned L_max;
     /// First subcarrier in the resource grid
     unsigned ssb_first_subcarrier;
-    /// First symbol in slot resource grid
+    /// Denotes the first symbol of the SS/PBCH block within the slot.
     unsigned ssb_first_symbol;
     /// Half frame flag
     bool n_hf;
     /// Linear signal amplitude
     float amplitude;
-    /// Ports indexes to map the signal
+    /// Port indexes to map the signal.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 
