@@ -21,7 +21,8 @@ void test_no_ues()
   // Action 1: Run slot 0
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, 0);
   TESTASSERT(res != nullptr);
-  TESTASSERT(res->empty());
+  TESTASSERT_EQ(0, res->cell_id);
+  TESTASSERT(res->ue_grants.empty());
 }
 
 int main()
