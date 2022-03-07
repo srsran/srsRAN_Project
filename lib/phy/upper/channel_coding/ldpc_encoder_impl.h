@@ -32,7 +32,7 @@ public:
   ///@}
 
   // See interface for the documentation.
-  void encode(span<const uint8_t> input, span<uint8_t> output, const config_t& cfg) override;
+  void encode(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.

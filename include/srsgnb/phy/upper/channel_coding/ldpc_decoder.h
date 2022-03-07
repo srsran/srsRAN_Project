@@ -33,10 +33,10 @@ public:
 
   /// \brief Decodes a codeblock.
   ///
-  /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[out] output  Reconstructed message of information bits.
+  /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  cfg     Decoder configuration.
-  virtual unsigned decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg) = 0;
+  virtual unsigned decode(span<uint8_t> output, span<const int8_t> input, const config_t& cfg) = 0;
 };
 
 std::unique_ptr<ldpc_decoder> create_ldpc_decoder(const std::string& dec_type);

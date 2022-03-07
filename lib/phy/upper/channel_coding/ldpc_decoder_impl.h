@@ -36,7 +36,7 @@ public:
   ///@}
 
   // See interface for the documentation.
-  unsigned decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg) override;
+  unsigned decode(span<uint8_t> output, span<const int8_t> input, const config_t& cfg) override;
 
 private:
   /// Initializes the decoder inner variables.

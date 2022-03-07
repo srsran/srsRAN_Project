@@ -23,7 +23,7 @@ void ldpc_encoder_impl::init(const config_t& cfg)
   select_strategy();
 }
 
-void ldpc_encoder_impl::encode(span<const uint8_t> input, span<uint8_t> output, const config_t& cfg)
+void ldpc_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
 {
   init(cfg);
 

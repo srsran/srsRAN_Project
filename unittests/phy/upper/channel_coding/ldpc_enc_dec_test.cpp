@@ -34,8 +34,8 @@ int main()
   for (const auto bg :
        std::array<srsgnb::ldpc::base_graph_t, 2>{srsgnb::ldpc::base_graph_t::BG1, srsgnb::ldpc::base_graph_t::BG2}) {
     for (const auto ls : srsgnb::ldpc::all_lifting_sizes) {
-      srsgnb::ldpc_encoder::config_t        cfg_enc{bg, ls};
-      srsgnb::ldpc_decoder::config_t        cfg_dec{bg, ls};
+      srsgnb::ldpc_encoder::config_t cfg_enc{bg, ls};
+      srsgnb::ldpc_decoder::config_t cfg_dec{bg, ls};
 
       std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 
@@ -64,7 +64,7 @@ int main()
         // check several shortened codeblocks
         for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
           std::vector<uint8_t> encoded(length);
-          my_encoder->encode(msg_i, encoded, cfg_enc);
+          my_encoder->encode(encoded, msg_i, cfg_enc);
           assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()));
 
           std::vector<uint8_t> decoded(msg_length);
@@ -72,20 +72,20 @@ int main()
           std::transform(cblock_i->begin(), cblock_i->begin() + length, llrs.begin(), [](uint8_t b) {
             return ((b == srsgnb::ldpc::filler_bit) ? 10 : 10 - 20 * b);
           });
-          my_decoder->decode(llrs, decoded, cfg_dec);
+          my_decoder->decode(decoded, llrs, cfg_dec);
           assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), [](uint8_t a, uint8_t b) {
             return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
           }));
         }
         // check full-length codeblock
         std::vector<uint8_t> encoded(max_cb_length);
-        my_encoder->encode(msg_i, encoded, cfg_enc);
+        my_encoder->encode(encoded, msg_i, cfg_enc);
         assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()));
 
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(max_cb_length);
         std::transform(cblock_i->begin(), cblock_i->end(), llrs.begin(), [](uint8_t b) { return 10 - 20 * b; });
-        my_decoder->decode(llrs, decoded, cfg_dec);
+        my_decoder->decode(decoded, llrs, cfg_dec);
         assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), [](uint8_t a, uint8_t b) {
           return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
         }));

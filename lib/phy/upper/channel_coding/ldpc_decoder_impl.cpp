@@ -34,7 +34,7 @@ void ldpc_decoder_impl::init(const config_t& cfg)
   select_strategy();
 }
 
-unsigned ldpc_decoder_impl::decode(span<const int8_t> input, span<uint8_t> output, const config_t& cfg)
+unsigned ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, const config_t& cfg)
 {
   init(cfg);
 

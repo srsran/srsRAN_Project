@@ -26,11 +26,11 @@ public:
 
   /// \brief Encodes a message.
   ///
-  /// \param[in]  input   Message: original information bits (can contain filler_bit).
   /// \param[out] output  Resulting codeblock.
+  /// \param[in]  input   Message: original information bits (can contain filler_bit).
   /// \param[in]  cfg     Encoder configuration.
   /// \note The length of the output codeblock is deduced from the size of parameter \c output.
-  virtual void encode(span<const uint8_t> input, span<uint8_t> output, const config_t& cfg) = 0;
+  virtual void encode(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) = 0;
 };
 
 std::unique_ptr<ldpc_encoder> create_ldpc_encoder(const std::string& enc_type);
