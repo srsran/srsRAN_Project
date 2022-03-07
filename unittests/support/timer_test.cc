@@ -11,7 +11,7 @@ static void timers_test1()
 {
   test_delimit_logger logger{"Test unique_timer interface"};
 
-  timer_handler           timers;
+  timer_manager           timers;
   timer_tick_difference_t dur = 5;
 
   {
@@ -106,7 +106,7 @@ static void timers_test1()
 static void timers_test2()
 {
   test_delimit_logger     logger{"Test unique_timer stop() method"};
-  timer_handler           timers;
+  timer_manager           timers;
   timer_tick_difference_t duration = 2;
 
   auto utimer  = timers.create_unique_timer();
@@ -137,7 +137,7 @@ static void timers_test2()
 static void timers_test3()
 {
   test_delimit_logger     logger{"Test running unique_timer duration extension"};
-  timer_handler           timers;
+  timer_manager           timers;
   timer_tick_difference_t duration = 5;
 
   auto utimer = timers.create_unique_timer();
@@ -205,7 +205,7 @@ static void timers_test4()
 {
   test_delimit_logger logger{"Test unique_test multithreading safety"};
 
-  timer_handler                         timers;
+  timer_manager                         timers;
   timers_test4_ctxt                     ctx;
   unsigned                              nof_timers = 32;
   std::mt19937                          mt19937(4);
@@ -287,7 +287,7 @@ static void timers_test4()
 /// Description: Delaying a callback using the timer_handler.
 static void timers_test5()
 {
-  timer_handler timers;
+  timer_manager timers;
   TESTASSERT(timers.nof_timers() == 0);
   TESTASSERT(timers.nof_running_timers() == 0);
 
@@ -342,7 +342,7 @@ static void timers_test5()
 /// Description: Check if erasure of a running timer is safe.
 static void timers_test6()
 {
-  timer_handler timers;
+  timer_manager timers;
 
   std::vector<int> vals;
 
@@ -385,8 +385,8 @@ static void timers_test6()
 /// - multiple timers can exist in the same wheel position.
 static void timers_test7()
 {
-  timer_handler timers;
-  size_t        wheel_size = timer_handler::get_wheel_size();
+  timer_manager timers;
+  size_t        wheel_size = timer_manager::get_wheel_size();
 
   unique_timer t = timers.create_unique_timer();
   t.set(2);
