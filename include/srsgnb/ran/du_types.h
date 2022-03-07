@@ -8,6 +8,7 @@ namespace srsgnb {
 
 using du_cell_index_t = uint16_t;
 using du_ue_index_t   = uint16_t;
+using du_bwp_id_t     = uint16_t;
 
 constexpr du_ue_index_t MAX_NOF_UES = 64;
 

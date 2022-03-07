@@ -4,6 +4,7 @@
 
 #include "cell_sched.h"
 #include "resource_grid.h"
+#include "sched_strategy/bwp_data_sched.h"
 #include "srsgnb/mac/sched_interface.h"
 
 namespace srsgnb {
@@ -20,16 +21,10 @@ public:
   void delete_ue_request(rnti_t rnti) override { mac_notifier.on_ue_delete_response(rnti); }
 
   /// Obtain DL scheduling result
-  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cc) override
-  {
-    return cells[cc].get_dl_sched(sl_tx);
-  }
+  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   /// Obtain UL scheduling result
-  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cc) override
-  {
-    return cells[cc].get_ul_sched(sl_tx);
-  }
+  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
 
 private:
   sched_cfg_notifier& mac_notifier;

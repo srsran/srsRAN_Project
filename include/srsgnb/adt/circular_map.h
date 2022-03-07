@@ -109,7 +109,7 @@ public:
       return *this;
     }
 
-    const obj_t* operator*() const { return &ptr->buffer[idx].get(); }
+    const obj_t& operator*() const { return ptr->buffer[idx].get(); }
     const obj_t* operator->() const { return &ptr->buffer[idx].get(); }
 
     bool operator==(const const_iterator& other) const { return ptr == other.ptr and idx == other.idx; }

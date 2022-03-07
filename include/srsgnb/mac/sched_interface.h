@@ -16,6 +16,12 @@ const size_t MAX_GRANTS = 16;
 /// Maximum Logical channels per TB. Implemention-specific.
 const size_t MAX_LC_GRANTS = 4;
 
+struct add_ue_configuration_request {
+  du_cell_index_t cell_index;
+  rnti_t          crnti;
+  // TODO: fill remaining fields
+};
+
 struct pdcch_config {};
 
 struct pdsch_config {};
