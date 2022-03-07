@@ -216,7 +216,7 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
     }
 
     // Generate sequence for the given symbol
-    static_vector<cf_t, MAX_DMRS_PER_SYMBOl> sequence(dmrs_re_count);
+    static_vector<cf_t, MAX_DMRS_PER_SYMBOL> sequence(dmrs_re_count);
     sequence_generation(sequence, symbol, config);
 
     // Mapping to physical resources for the given symbol

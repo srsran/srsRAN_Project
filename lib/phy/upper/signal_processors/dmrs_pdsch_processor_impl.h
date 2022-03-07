@@ -21,18 +21,18 @@
 
 namespace srsgnb {
 
-/// Defines a DMRS for PDSCH generic implementation
+/// Defines a DMRS for PDSCH generic implementation.
 class dmrs_pdsch_processor_impl : public dmrs_pdsch_processor
 {
 private:
-  /// Defines the maximum number of DMRS per RB
+  /// Defines the maximum number of DMRS per RB.
   static constexpr unsigned MAX_DRMS_PER_RB =
       std::max(dmrs_nof_dmrs_per_rb(dmrs_type::TYPE1), dmrs_nof_dmrs_per_rb(dmrs_type::TYPE2));
 
-  /// Define the maximum number of DMRS per symbol
-  static constexpr unsigned MAX_DMRS_PER_SYMBOl = MAX_RB * MAX_DRMS_PER_RB;
+  /// Define the maximum number of DMRS per symbol.
+  static constexpr unsigned MAX_DMRS_PER_SYMBOL = MAX_RB * MAX_DRMS_PER_RB;
 
-  /// Defines generation parameters
+  /// Defines generation parameters.
   struct params_t {
     unsigned             delta;
     std::array<float, 2> w_f;
@@ -45,7 +45,7 @@ private:
   /// Provides TS 38.211 Table 7.4.1.1.2-2: Parameters for PDSCH DM-RS configuration type 2.
   static const std::array<params_t, 12> params_type2;
 
-  /// Pseudo-random sequence generator instance
+  /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
 
   /// \brief Helper function to determine the DMRS for PDSCH amplitude.
@@ -94,7 +94,7 @@ private:
                const config_t&       config);
 
   /// Temporal resource element storage, just in case weights or precoding is applied for each port.
-  static_vector<static_vector<cf_t, MAX_DMRS_PER_SYMBOl>, MAX_PORTS> temp_re;
+  static_vector<static_vector<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> temp_re;
 
 public:
   void map(resource_grid_writer& grid, const config_t& config) override;
