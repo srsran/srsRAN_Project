@@ -29,6 +29,7 @@ private:
   static constexpr unsigned MAX_DRMS_PER_RB =
       std::max(dmrs_nof_dmrs_per_rb(dmrs_type::TYPE1), dmrs_nof_dmrs_per_rb(dmrs_type::TYPE2));
 
+  /// Define the maximum number of DMRS per symbol
   static constexpr unsigned MAX_DMRS_PER_SYMBOl = MAX_RB * MAX_DRMS_PER_RB;
 
   /// Defines generation parameters
@@ -52,7 +53,7 @@ private:
   /// This method determines the DMRS for PDSCH amplitude from the number of DMRS CDM groups without data. It is
   /// implemented according to TS 38.214 V15.10.0 tables 4.1-1 and 6.2.2-1 for PDSCH and PUSCH respectively.
   ///
-  /// \param [in] nof_dmrs_cdm_groups_without_data Provides the number of DMRS CDM groups without data.
+  /// \param[in] nof_dmrs_cdm_groups_without_data Provides the number of DMRS CDM groups without data.
   /// \return The amplitude of the DMRS for PDSCH.
   static inline unsigned get_amplitude(unsigned nof_dmrs_cdm_groups_without_data)
   {
@@ -70,21 +71,21 @@ private:
   /// This method generates the sequence described in TS 38.211 section 7.4.1.1.1, considering the only values required
   /// in TS 38.211 section 7.4.1.1.2.
   ///
-  /// \param [out] config provides sequence destination.
-  /// \param [in] config provides the required parameters to calculate the sequences.
-  /// \param [in] symbol is the symbol index.
-  void sequence_generation(span<cf_t> sequence, const config_t& config, unsigned symbol) const;
+  /// \param[out] sequence Provides the sequence destination.
+  /// \param[in] symbol Denotes the symbol index.
+  /// \param[in] config Provides the required parameters to calculate the sequences.
+  void sequence_generation(span<cf_t> sequence, unsigned symbol, const config_t& config) const;
 
   /// \brief Implements TS 38.211 section 7.4.1.1.2 Mapping to physical resources.
   ///
   /// This method implements the signal mapping as described in TS 38.211 section 7.4.1.1.2. In addition, it applies
   /// precoding if configured.
   ///
-  /// \param [out] grid provides the grid destination to map the signal.
-  /// \param [in] sequence provides the generated sequence for the given symbol.
-  /// \param [in] base_mask provides a base subcarrier allocation mask for the given symbol.
-  /// \param [in] symbol provides the symbol index within the slot.
-  /// \param [in] config provides the required fields to map the signal.
+  /// \param[out] grid Provides the grid destination to map the signal.
+  /// \param[in] sequence Provides the generated sequence for the given symbol.
+  /// \param[in] base_mask Provides a base subcarrier allocation mask for the given symbol.
+  /// \param[in] symbol Denotes the symbol index.
+  /// \param[in] config Provides the required fields to map the signal.
   /// \note The method expects \c base_mask to have \c NRE entries padding as \c false at the beginning.
   void mapping(resource_grid_writer& grid,
                span<const cf_t>      sequence,

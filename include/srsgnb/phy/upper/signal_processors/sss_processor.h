@@ -29,8 +29,8 @@ public:
   virtual ~sss_processor() = default;
 
   /// \brief Generates and maps a SSS sequence
-  /// \param [out] grid provides the destination resource grid
-  /// \param [in] config provides the required configuration to generate and map the signal
+  /// \param [out] grid Provides the destination resource grid
+  /// \param [in] config Provides the required configuration to generate and map the signal
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 

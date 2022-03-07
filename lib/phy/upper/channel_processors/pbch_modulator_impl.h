@@ -36,7 +36,7 @@ private:
   void modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch);
 
   /// Implements TS 38.211 section 7.3.3.3 Mapping to physical resources
-  /// \param [in] d_pbch provides the symbols to map
+  /// \param [in] d_pbch Provides the symbols to map
   /// \param [in, out] grid is the destination resource grid
   /// \param [in] config PBCH modulator arguments
   void map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config);

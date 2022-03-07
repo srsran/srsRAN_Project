@@ -196,7 +196,7 @@ void test_generate_float(unsigned c_init, unsigned N, unsigned offset)
   generator->advance(offset);
 
   // Apply sequence
-  generator->generate(M_SQRT1_2, sequence);
+  generator->generate(sequence, M_SQRT1_2);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {

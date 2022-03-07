@@ -17,7 +17,7 @@ public:
   struct config_t {
     /// Slot context for sequence initialization.
     slot_context_t slot;
-    /// Reference point for PDSCH DMRS "k" in RBs.
+    /// Reference point for PDSCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
     /// DL DMRS config type (dmrsConfigType).
     dmrs_type type;
@@ -25,7 +25,7 @@ public:
     unsigned scrambling_id;
     /// DMRS sequence initialization (nSCID).
     bool n_scid;
-    /// Number of DMRS CDM groups without data
+    /// Number of DMRS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
     /// Precoding matrix indicator, set to 0 for no precoding.
     unsigned pmi;
@@ -41,8 +41,8 @@ public:
   virtual ~dmrs_pdsch_processor() = default;
 
   /// \brief Generates and maps DMRS for PDSCH.
-  /// \param [out] grid provides the destination resource grid.
-  /// \param [in] config provides the required configuration to generate and map the signal.
+  /// \param [out] grid Provides the destination resource grid.
+  /// \param [in] config Provides the required configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 

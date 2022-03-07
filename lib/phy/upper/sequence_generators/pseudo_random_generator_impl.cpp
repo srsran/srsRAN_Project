@@ -101,7 +101,7 @@ void pseudo_random_generator_impl::advance(unsigned count)
     memcpy(&(DST), &temp_u32, 4);                                                                                      \
   } while (false)
 
-void pseudo_random_generator_impl::generate(float value, span<float> out)
+void pseudo_random_generator_impl::generate(span<float> out, float value)
 {
   uint32_t i      = 0;
   unsigned length = out.size();

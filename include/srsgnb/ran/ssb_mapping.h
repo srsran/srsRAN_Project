@@ -19,8 +19,8 @@ static inline bool ssb_get_hrf(const slot_context_t& slot)
 }
 
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst
-/// \param [in] pattern_case provides the pattern
-/// \param [in] ssb_idx provides the SS/PBCH block opportunity index
+/// \param [in] pattern_case Provides the pattern
+/// \param [in] ssb_idx Provides the SS/PBCH block opportunity index
 /// \return the first OFDM symbol index in a half-frame
 static inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
 {

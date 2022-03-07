@@ -16,7 +16,7 @@ public:
   virtual ~resource_grid_pool() = default;
 
   /// Get a resource grid for the given context
-  /// \param [in] context provides the given context
+  /// \param [in] context Provides the given context
   virtual resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) = 0;
 };
 

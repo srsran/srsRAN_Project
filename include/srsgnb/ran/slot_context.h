@@ -55,7 +55,7 @@ struct slot_context_t {
   unsigned get_half_frame_slot() const { return ((subframe % NSUBFRAMES_PER_HALF_FRAME) << numerology) + slot; }
 
   /// \brief Overrides the equal operator for two slot contexts
-  /// \param [in] other provides the reference to other slot context
+  /// \param [in] other Provides the reference to other slot context
   /// \return true if the slots numerology, frame, subframe and slot are equal, otherwise false
   bool operator==(const slot_context_t& other) const
   {

@@ -44,8 +44,8 @@ public:
   virtual ~ssb_processor() = default;
 
   /// \brief Processes the SS/PBCH Block PDU and writes the resultant signal in the given grid.
-  /// \param [in] pdu provides the necessary data to generate the SSB message.
-  /// \param [out] grid provides the destination resource grid.
+  /// \param [in] pdu Provides the necessary data to generate the SSB message.
+  /// \param [out] grid Provides the destination resource grid.
   virtual void process(const pdu_t& pdu, resource_grid_writer& grid) = 0;
 };
 

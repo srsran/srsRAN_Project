@@ -43,8 +43,8 @@ const std::array<dmrs_pdsch_processor_impl::params_t, DMRS_MAX_PORTS_TYPE2> dmrs
 }};
 
 void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
-                                                            const config_t& config,
-                                                            unsigned int    symbol) const
+                                                            unsigned int    symbol,
+                                                            const config_t& config) const
 {
   // Get signal amplitude
   float amplitude = M_SQRT1_2 * get_amplitude(config.nof_cdm_groups_without_data);
@@ -73,18 +73,18 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
       // If it is the first PRB...
       if (prb_count == 0) {
         // ... discard unused pilots and reset counter unless the PDSCH transmission carries SIB
-        prb_skip = std::max(0, (int)prb_skip - (int)reference_point_k_rb);
+        prb_skip = std::max(0, static_cast<int>(prb_skip) - static_cast<int>(reference_point_k_rb));
         prg->advance(prb_skip * nof_pilots_x_prb * 2);
         prb_skip             = 0;
         reference_point_k_rb = 0;
       }
-      prb_count++;
+      ++prb_count;
 
       continue;
     }
 
     // Increase number of PRB to skip
-    prb_skip++;
+    ++prb_skip;
 
     // End of consecutive PRB, skip copying if no PRB was counted
     if (prb_count == 0) {
@@ -92,7 +92,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
     }
 
     // Generate contiguous pilots
-    prg->generate(amplitude, sequence.first(prb_count * nof_pilots_x_prb));
+    prg->generate(sequence.first(prb_count * nof_pilots_x_prb), amplitude);
 
     // Advance sequence buffer
     sequence = sequence.last(sequence.size() - prb_count * nof_pilots_x_prb);
@@ -103,7 +103,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
 
   if (prb_count > 0) {
     // Generate contiguous pilots
-    prg->generate(amplitude, sequence.first(prb_count * nof_pilots_x_prb));
+    prg->generate(sequence.first(prb_count * nof_pilots_x_prb), amplitude);
 
     // Advance sequence buffer
     sequence = sequence.last(sequence.size() - prb_count * nof_pilots_x_prb);
@@ -217,7 +217,7 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
 
     // Generate sequence for the given symbol
     static_vector<cf_t, MAX_DMRS_PER_SYMBOl> sequence(dmrs_re_count);
-    sequence_generation(sequence, config, symbol);
+    sequence_generation(sequence, symbol, config);
 
     // Mapping to physical resources for the given symbol
     mapping(grid, sequence, base_mask, symbol, config);
