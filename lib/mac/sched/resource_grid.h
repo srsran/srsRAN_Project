@@ -38,8 +38,8 @@ struct slot_resource_context {
 /// Saves all the scheduled data relative to a cell
 struct cell_resource_grid {
   /// Access slot resources
-  slot_resource_context&       operator[](slot_point sl) { return slots[sl]; }
-  const slot_resource_context& operator[](slot_point sl) const { return slots[sl]; }
+  slot_resource_context&       operator[](slot_point sl) { return slots[sl.to_uint()]; }
+  const slot_resource_context& operator[](slot_point sl) const { return slots[sl.to_uint()]; }
 
 private:
   circular_array<slot_resource_context, TTIMOD_SZ> slots;

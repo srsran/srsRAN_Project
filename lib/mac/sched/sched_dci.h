@@ -2,6 +2,7 @@
 #ifndef SRSGNB_SCHED_DCI_H
 #define SRSGNB_SCHED_DCI_H
 
+#include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
 namespace srsgnb {
@@ -22,10 +23,10 @@ struct dci_dl_t {
 };
 
 struct dci_ul_t {
-  bool          ndi;
-  uint32_t      pid;
-  uint32_t      mcs;
-  uint32_t      rv;
+  bool     ndi;
+  uint32_t pid;
+  uint32_t mcs;
+  uint32_t rv;
 };
 
 } // namespace srsgnb

@@ -4,7 +4,6 @@
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1ap/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
-#include "srsgnb/rlc/rlc_factory.h"
 
 namespace srsgnb {
 

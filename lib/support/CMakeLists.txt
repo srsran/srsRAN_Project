@@ -7,9 +7,9 @@
 #
 
 set(SOURCES
-        #signal_handler.cc
-        #task_worker.cc
-        #threads.cc
+        signal_handler.cc
+        task_worker.cc
+        threads.cc
         timers.cc)
 
 add_library(srsgnb_support STATIC ${SOURCES})

@@ -7,7 +7,6 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
 
