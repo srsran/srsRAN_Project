@@ -9,7 +9,6 @@ namespace srsgnb {
 class ldpc_codeblock_segmentation
 {
 public:
-  virtual std::vector<byte_buffer> segment(const byte_buffer& input, ldpc_base_graph bg) = 0;
 };
 
 } // namespace srsgnb

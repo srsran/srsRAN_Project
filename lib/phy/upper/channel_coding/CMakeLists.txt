@@ -12,3 +12,5 @@ add_library(crc_calculator STATIC crc_calculator_impl.cpp)
 add_library(polar_code STATIC polar_code_impl.cpp polar_interleaver_impl.cpp)
 add_library(polar_encoder STATIC polar_encoder_impl.cpp polar_allocator_impl.cpp polar_rate_matcher_impl.cpp)
 add_library(polar_decoder STATIC polar_decoder_impl.cpp polar_deallocator_impl.cpp polar_rate_dematcher_impl.cpp)
+
+add_library(ldpc STATIC ldpc_graph_impl.cpp ldpc_luts_impl.cpp ldpc_encoder_impl.cpp ldpc_decoder_impl.cpp)
