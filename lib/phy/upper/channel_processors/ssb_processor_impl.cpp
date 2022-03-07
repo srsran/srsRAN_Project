@@ -23,7 +23,10 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   unsigned k_start          = ssb_get_k_first(pdu.slot.numerology, pdu.ssb_offset_pointA, pdu.ssb_subcarrier_offset);
 
   // Make sure the slot matches with the SS/PBCH transmission slot
-  assert((l_start_in_burst / NSYMB_PER_SLOT_NORM) == pdu.slot.get_half_frame_slot());
+  srsran_assert((l_start_in_burst / NSYMB_PER_SLOT_NORM) == pdu.slot.get_half_frame_slot(),
+                "Invalid slot index (%d) for SSB index %d",
+                pdu.slot.get_half_frame_slot(),
+                l_start_in_burst);
 
   // Generate PBCH message
   pbch_encoder::pbch_msg_t pbch_msg = {};

@@ -12,7 +12,7 @@
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include <cassert>
+#include "srsgnb/support/srsran_assert.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -48,9 +48,9 @@ static void modulate_generic(const span<uint8_t>& bits, span<cf_t> symbols, modu
       break;
   }
 
-  assert(Qm != 0);
-  assert(std::isnormal(Qm));
-  assert(bits.size() / Qm == symbols.size());
+  srsran_assert(Qm != 0, "Failed");
+  srsran_assert(std::isnormal(Qm), "Failed");
+  srsran_assert(bits.size() / Qm == symbols.size(), "Failed");
 
   // For each symbol
   for (unsigned symb_idx = 0; symb_idx != symbols.size(); ++symb_idx) {
@@ -126,7 +126,7 @@ void test_modulator(std::size_t nsymbols, modulation_scheme scheme)
     //           err);
 
     // Assert maximum error
-    assert(err < assert_max_err);
+    srsran_assert(err < assert_max_err, "Failed");
   }
 }
 

@@ -12,6 +12,7 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/prod.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -40,7 +41,7 @@ void test_prod_ccc(std::size_t N)
   for (size_t i = 0; i != N; ++i) {
     cf_t  gold_z = x[i] * y[i];
     float err    = std::abs(gold_z - z[i]);
-    assert(err < assert_max_error);
+    srsran_assert(err < assert_max_error, "Failed");
   }
 }
 
@@ -65,7 +66,7 @@ void test_prod_fff(std::size_t N)
   for (size_t i = 0; i != N; ++i) {
     cf_t  gold_z = x[i] * y[i];
     float err    = std::abs(gold_z - z[i]);
-    assert(err < assert_max_error);
+    srsran_assert(err < assert_max_error, "Failed");
   }
 }
 

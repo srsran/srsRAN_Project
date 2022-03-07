@@ -2,7 +2,7 @@
 #include "ldpc_luts_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_encoder.h"
 #include "srsgnb/srsvec/copy.h"
-#include <cassert>
+#include "srsgnb/support/srsran_assert.h"
 #include <iostream>
 
 using namespace srsgnb;
@@ -29,8 +29,14 @@ void ldpc_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, 
 
   uint16_t message_length    = bg_K * lifting_size;
   uint16_t max_output_length = bg_N_short * lifting_size;
-  assert(input.size() == message_length);
-  assert(output.size() <= max_output_length);
+  srsran_assert(input.size() == message_length,
+                "Input size (%d) and message length (%d) must be equal",
+                input.size(),
+                message_length);
+  srsran_assert(output.size() <= max_output_length,
+                "Output size (%d) must be equal to or greater than %d",
+                output.size(),
+                max_output_length);
 
   // The minimum codeblock length is message_length + four times the lifting size
   // (that is, the length of the high-rate region).
@@ -248,4 +254,5 @@ std::unique_ptr<ldpc_encoder> srsgnb::create_ldpc_encoder(const std::string& enc
     return std::make_unique<ldpc_encoder_avx2>();
   }
   assert(false);
+  return {};
 }

@@ -12,6 +12,7 @@
 
 #include "polar_code_impl.h"
 #include "srsgnb/srsvec/copy.h"
+#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 
@@ -253,8 +254,10 @@ span<const uint16_t> srsgnb::polar_code_impl::get_mother_code(uint8_t n_)
     case 10:
       return mother_code_10;
     default:
-      assert(false);
+      srsran_assertion_failure("Invalid n=%d", n_);
   }
+  // Unreachable
+  return {};
 }
 
 span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
@@ -273,8 +276,10 @@ span<const uint16_t> srsgnb::polar_code_impl::get_blk_interleaver(uint8_t n_)
     case 10:
       return blk_interleaver_10;
     default:
-      assert(false);
+      srsran_assertion_failure("Invalid n=%d", n_);
   }
+  // Unreachable
+  return {};
 }
 
 uint16_t srsgnb::polar_code_impl::setdiff_stable(const uint16_t* x,

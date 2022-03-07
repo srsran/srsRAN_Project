@@ -9,6 +9,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_encoder.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -59,7 +60,7 @@ int main()
       srsgnb::ldpc_encoder::config_t cfg_enc{bg, ls};
       srsgnb::ldpc_decoder::config_t cfg_dec{bg, ls};
 
-      std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
+      //      std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 
       // compute lifted messages and codeblock lengths
       unsigned min_cb_length = min_cb_length_bg * ls;
@@ -75,32 +76,32 @@ int main()
 
       // encode each message and compare with given codeblock
       const auto*   cblock_i    = cblock.cbegin();
-      constexpr int nof_steps   = 10;
+      constexpr int nof_steps   = 3;
       unsigned      length_step = (max_cb_length - min_cb_length) / nof_steps;
       for (const auto& msg_i : msg) {
-        assert(cblock_i != cblock.cend());
+        srsran_assert(cblock_i != cblock.cend(), "Failed");
         // check several shortened codeblocks
         for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
           std::vector<uint8_t> encoded(length);
           my_encoder->encode(encoded, msg_i, cfg_enc);
-          assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()));
+          srsran_assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()), "Failed");
 
           std::vector<uint8_t> decoded(msg_length);
           std::vector<int8_t>  llrs(length);
           std::transform(cblock_i->begin(), cblock_i->begin() + length, llrs.begin(), compute_llrs);
           my_decoder->decode(decoded, llrs, cfg_dec);
-          assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal));
+          srsran_assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Failed");
         }
         // check full-length codeblock
         std::vector<uint8_t> encoded(max_cb_length);
         my_encoder->encode(encoded, msg_i, cfg_enc);
-        assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()));
+        srsran_assert(std::equal(encoded.begin(), encoded.end(), cblock_i->begin()), "Failed");
 
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(max_cb_length);
         std::transform(cblock_i->begin(), cblock_i->end(), llrs.begin(), compute_llrs);
         my_decoder->decode(decoded, llrs, cfg_dec);
-        assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal));
+        srsran_assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Failed");
 
         ++cblock_i;
       }
@@ -121,11 +122,11 @@ void read_bits(std::ifstream& example_file, std::vector<uint8_t>& out)
         bit = srsgnb::ldpc::filler_bit;
         break;
       default:
-        assert(false);
+        srsran_assert(false, "Failed");
     }
   }
   // we should be at the end of the string
-  assert(example_file.get() == '\n');
+  srsran_assert(example_file.get() == '\n', "Failed");
 }
 
 void get_examples(unsigned                                        bg,
@@ -137,7 +138,7 @@ void get_examples(unsigned                                        bg,
   filename += "BG" + std::to_string(bg + 1) + ".dat";
   std::ifstream example_file(filename);
   if (!example_file.is_open()) {
-    assert(false);
+    srsran_assert(false, "Failed");
   }
   std::string msg_string = "ls" + std::to_string(ls) + "msgs";
 
@@ -157,7 +158,7 @@ void get_examples(unsigned                                        bg,
   // The following line should mark the start of the corresponding codeblocks.
   std::string cwd_string = "ls" + std::to_string(ls) + "cblks";
   std::getline(example_file, id_string);
-  assert(id_string == cwd_string);
+  srsran_assert(id_string == cwd_string, "Failed");
 
   // Read the codeblocks.
   for (auto& cblock_i : cblocks) {

@@ -9,7 +9,7 @@
 include_directories(../../../../include/srsgnb/phy/upper/channel_processors)
 
 add_library(pbch_encoder STATIC pbch_encoder_impl.cpp)
-target_link_libraries(pbch_encoder polar_encoder polar_code pseudo_random_generator crc_calculator srsvec)
+target_link_libraries(pbch_encoder polar pseudo_random_generator crc_calculator srsvec)
 
 add_library(pbch_modulator STATIC pbch_modulator_impl.cpp)
 target_link_libraries(pbch_modulator modulation_mapper pseudo_random_generator srsvec)

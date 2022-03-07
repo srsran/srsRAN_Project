@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/polar_rate_matcher.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <getopt.h>
 #include <random>
 
@@ -192,5 +193,5 @@ int main(int argc, char** argv)
   deallocator->deallocate(allocated_rx, data_rx, *code);
 
   // Assert decoded message
-  assert(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()));
+  srsran_assert(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()), "Failed");
 }

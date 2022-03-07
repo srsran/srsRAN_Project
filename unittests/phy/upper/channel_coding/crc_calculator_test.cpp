@@ -11,7 +11,7 @@
  */
 
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include <cassert>
+#include "srsgnb/support/srsran_assert.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -88,7 +88,7 @@ void test_crc_byte(std::size_t nbytes, crc_generator_poly poly, unsigned polynom
   // Calculate ideal CRC24A
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator_byte(data, polynom, order);
 
-  assert(checksum == checksum_gold);
+  srsran_assert(checksum == checksum_gold, "Byte CRC checksum failed");
 }
 
 void test_crc_bit(std::size_t nbits, crc_generator_poly poly, unsigned polynom, unsigned order)
@@ -109,7 +109,7 @@ void test_crc_bit(std::size_t nbits, crc_generator_poly poly, unsigned polynom, 
   // Calculate ideal CRC24A
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator_bit(data, polynom, order);
 
-  assert(checksum == checksum_gold);
+  srsran_assert(checksum == checksum_gold, "Bit CRC checksum failed");
 }
 
 int main()

@@ -12,6 +12,7 @@
 
 #include "pbch_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 
@@ -26,7 +27,7 @@ int main()
 
     // Assert encoded data
     for (unsigned i = 0; i != pbch_encoder::E; ++i) {
-      assert(encoded_data[i] == test_case.encoded[i]);
+      srsran_assert(encoded_data[i] == test_case.encoded[i], "Failed");
     }
   }
   return 0;

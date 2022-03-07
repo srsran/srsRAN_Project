@@ -1,9 +1,9 @@
 add_subdirectory(upper)
 
 add_executable(resource_grid_pool_test resource_grid_pool_test.cpp)
-target_link_libraries(resource_grid_pool_test srsvec resource_grid_pool)
+target_link_libraries(resource_grid_pool_test srsvec resource_grid_pool srslog)
 add_test(resource_grid_pool_test resource_grid_pool_test)
 
 add_executable(resource_grid_test resource_grid_test.cpp)
-target_link_libraries(resource_grid_test srsvec resource_grid_pool)
+target_link_libraries(resource_grid_test srsvec resource_grid_pool srslog)
 add_test(resource_grid_test resource_grid_test)

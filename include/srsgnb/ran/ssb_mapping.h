@@ -72,7 +72,8 @@ static inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned s
   }
 
   // Impossible!
-  assert(false);
+  srsran_assert(false, "Invalid SSB pattern case");
+  return {};
 }
 
 /// Calculates the position of the SS/PBCH block first subcarrier relative to the bottom of the grid (pointA)

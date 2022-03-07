@@ -1,4 +1,4 @@
 
 add_executable(modulation_mapper_test modulation_mapper_test.cpp)
-target_link_libraries(modulation_mapper_test modulation_mapper srsvec)
+target_link_libraries(modulation_mapper_test modulation_mapper srsvec srslog)
 add_test(modulation_mapper_test modulation_mapper_test)

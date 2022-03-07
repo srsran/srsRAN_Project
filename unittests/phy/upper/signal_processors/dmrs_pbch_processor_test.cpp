@@ -33,17 +33,17 @@ int main()
     dmrs_pbch->map(grid, test_case.args);
 
     // Assert number of generated RE
-    assert(test_case.symbols.size() == grid.get_nof_put_entries());
+    srsran_assert(test_case.symbols.size() == grid.get_nof_put_entries(), "Mismatched number of entries");
 
     // Assert grid coordinates and value
     const std::vector<resource_grid_spy::entry_t> grid_entries = grid.get_put_entries();
     for (unsigned i = 0; i != grid_entries.size(); ++i) {
-      assert(grid_entries[i].port == test_case.symbols[i].port);
-      assert(grid_entries[i].l == test_case.symbols[i].l);
-      assert(grid_entries[i].k == test_case.symbols[i].k);
+      srsran_assert(grid_entries[i].port == test_case.symbols[i].port, "Mismatched port");
+      srsran_assert(grid_entries[i].l == test_case.symbols[i].l, "Mismatched symbol");
+      srsran_assert(grid_entries[i].k == test_case.symbols[i].k, "Mismatched subcarrier");
 
       float err = std::abs(grid_entries[i].value - test_case.symbols[i].value);
-      assert(err < assert_max_error);
+      srsran_assert(err < assert_max_error, "Mismatched value");
     }
   }
 

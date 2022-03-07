@@ -12,6 +12,7 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/conversion.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -38,8 +39,8 @@ void test_convert_ci(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int16_t gold_re = static_cast<int16_t>(x[i].real() * scale);
     int16_t gold_im = static_cast<int16_t>(x[i].imag() * scale);
-    assert(gold_re == z[2 * i + 0]);
-    assert(gold_im == z[2 * i + 1]);
+    srsran_assert(gold_re == z[2 * i + 0], "Failed");
+    srsran_assert(gold_im == z[2 * i + 1], "Failed");
   }
 }
 
@@ -61,8 +62,8 @@ void test_convert_ci_swap(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int16_t gold_re = static_cast<int16_t>(x[i].imag() * scale);
     int16_t gold_im = static_cast<int16_t>(x[i].real() * scale);
-    assert(gold_re == z[2 * i + 0]);
-    assert(gold_im == z[2 * i + 1]);
+    srsran_assert(gold_re == z[2 * i + 0], "Failed");
+    srsran_assert(gold_im == z[2 * i + 1], "Failed");
   }
 }
 
@@ -84,7 +85,7 @@ void test_convert_ic(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     cf_t  gold = {static_cast<float>(x[2 * i]) / scale, static_cast<float>(x[2 * i + 1]) / scale};
     float err  = std::abs(gold - z[i]);
-    assert(err < assert_cf_max_error);
+    srsran_assert(err < assert_cf_max_error, "Failed");
   }
 }
 
@@ -106,7 +107,7 @@ void test_convert_ic_swap(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     cf_t  gold = {static_cast<float>(x[2 * i + 1]) / scale, static_cast<float>(x[2 * i]) / scale};
     float err  = std::abs(gold - z[i]);
-    assert(err < assert_cf_max_error);
+    srsran_assert(err < assert_cf_max_error, "Failed");
   }
 }
 
@@ -127,7 +128,7 @@ void test_convert_fi(std::size_t N)
 
   for (size_t i = 0; i != N; i++) {
     int16_t gold = static_cast<int16_t>(x[i] * scale);
-    assert(gold == z[i]);
+    srsran_assert(gold < z[i], "Failed");
   }
 }
 
@@ -149,7 +150,7 @@ void test_convert_if(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     float gold = static_cast<float>(x[i]) / scale;
     float err  = std::abs(gold - z[i]);
-    assert(err < assert_float_max_error);
+    srsran_assert(err < assert_float_max_error, "Failed");
   }
 }
 

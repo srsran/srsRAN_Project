@@ -12,7 +12,7 @@
 
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
-#include <cassert>
+#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 using namespace srsvec;
@@ -35,7 +35,7 @@ void srsgnb::srsvec::bit_unpack(span<const uint8_t> packed, span<uint8_t> unpack
   unsigned      i;
   span<uint8_t> unpacked_tmp = unpacked;
 
-  assert(divide_ceil(nbits, 8) == nbytes);
+  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
   for (i = 0; i < nbytes; i++) {
     bit_unpack(packed[i], unpacked_tmp, 8);
@@ -67,7 +67,7 @@ void srsgnb::srsvec::bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed
 
   span<const uint8_t> unpack_tmp = unpacked;
 
-  assert(divide_ceil(nbits, 8) == nbytes);
+  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
 #ifdef HAVE_SSE
   for (i = 0; i < nbytes; i++) {

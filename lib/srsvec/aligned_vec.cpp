@@ -12,12 +12,13 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "simd.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <cstdlib>
 
 void* srsgnb::srsvec::detail::mem_alloc(std::size_t size)
 {
-  void* ptr;
-  posix_memalign(&ptr, SRSRAN_SIMD_BIT_ALIGN, size);
+  void* ptr = nullptr;
+  srsran_assert(posix_memalign(&ptr, SRSRAN_SIMD_BIT_ALIGN, size) == 0, "Failed posix_memalign");
   return ptr;
 }
 

@@ -12,8 +12,8 @@
 //    const BG_edge_matrix_t* get_edge_matrix(base_graph_t bg)
 #include "ldpc_luts_impl.h"
 #include "ldpc_graph_impl.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <array>
-#include <cassert>
 #include <cstdint>
 
 using namespace srsgnb::ldpc;
@@ -4537,5 +4537,6 @@ const BG_adjacency_matrix_t* srsgnb::ldpc::get_adjacency_matrix(base_graph_t bg)
   if (bg == base_graph_t::BG2) {
     return &BG2_adjacency_matrix;
   }
-  assert(false);
+  srsran_assert(false, "Invalid base graph");
+  return {};
 }

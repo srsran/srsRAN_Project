@@ -8,7 +8,6 @@
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/math_utils.h"
-#include <cassert>
 #include <random>
 
 using namespace srsgnb;
@@ -128,60 +127,60 @@ int main()
             pbch->process(pdu, grid);
 
             // Assert modules number of entries
-            assert(encoder->get_nof_entries() == 1);
-            assert(modulator->get_nof_entries() == 1);
-            assert(dmrs->get_nof_entries() == 1);
-            assert(pss->get_nof_entries() == 1);
-            assert(sss->get_nof_entries() == 1);
+            srsran_assert(encoder->get_nof_entries() == 1, "Failed");
+            srsran_assert(modulator->get_nof_entries() == 1, "Failed");
+            srsran_assert(dmrs->get_nof_entries() == 1, "Failed");
+            srsran_assert(pss->get_nof_entries() == 1, "Failed");
+            srsran_assert(sss->get_nof_entries() == 1, "Failed");
 
             // Assert encoder
             const auto& encoder_entry = encoder->get_entries()[0];
-            assert(encoder_entry.msg.N_id == pdu.phys_cell_id);
-            assert(encoder_entry.msg.ssb_idx == pdu.ssb_idx);
-            assert(encoder_entry.msg.L_max == L_max);
-            assert(encoder_entry.msg.hrf == pdu.slot.get_half_radio_frame());
-            assert(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload));
-            assert(encoder_entry.msg.sfn == pdu.slot.frame);
-            assert(encoder_entry.msg.k_ssb == pdu.ssb_subcarrier_offset);
-            assert(encoder_entry.encoded.size() == pbch_encoder::E);
+            srsran_assert(encoder_entry.msg.N_id == pdu.phys_cell_id, "Failed");
+            srsran_assert(encoder_entry.msg.ssb_idx == pdu.ssb_idx, "Failed");
+            srsran_assert(encoder_entry.msg.L_max == L_max, "Failed");
+            srsran_assert(encoder_entry.msg.hrf == pdu.slot.get_half_radio_frame(), "Failed");
+            srsran_assert(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload), "Failed");
+            srsran_assert(encoder_entry.msg.sfn == pdu.slot.frame, "Failed");
+            srsran_assert(encoder_entry.msg.k_ssb == pdu.ssb_subcarrier_offset, "Failed");
+            srsran_assert(encoder_entry.encoded.size() == pbch_encoder::E, "Failed");
 
             // Assert modulator
             const auto& modulator_entry = modulator->get_entries()[0];
-            assert(modulator_entry.config.phys_cell_id == pdu.phys_cell_id);
-            assert(modulator_entry.config.ssb_idx == pdu.ssb_idx);
-            assert(modulator_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
-            assert(modulator_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-            assert(modulator_entry.config.amplitude == 1.0F);
-            assert(srsvec::equal(modulator_entry.config.ports, pdu.ports));
-            assert(srsvec::equal(modulator_entry.bits, encoder_entry.encoded));
-            assert(modulator_entry.grid_ptr == &grid);
+            srsran_assert(modulator_entry.config.phys_cell_id == pdu.phys_cell_id, "Failed");
+            srsran_assert(modulator_entry.config.ssb_idx == pdu.ssb_idx, "Failed");
+            srsran_assert(modulator_entry.config.ssb_first_subcarrier == ssb_first_subcarrier, "Failed");
+            srsran_assert(modulator_entry.config.ssb_first_symbol == ssb_first_symbol_slot, "Failed");
+            srsran_assert(modulator_entry.config.amplitude == 1.0F, "Failed");
+            srsran_assert(srsvec::equal(modulator_entry.config.ports, pdu.ports), "Failed");
+            srsran_assert(srsvec::equal(modulator_entry.bits, encoder_entry.encoded), "Failed");
+            srsran_assert(modulator_entry.grid_ptr == &grid, "Failed");
 
             // Assert DMRS for PBCH
             const auto& dmrs_entry = dmrs->get_entries()[0];
-            assert(dmrs_entry.config.phys_cell_id == pdu.phys_cell_id);
-            assert(dmrs_entry.config.ssb_idx == pdu.ssb_idx);
-            assert(dmrs_entry.config.L_max == pdu.L_max);
-            assert(dmrs_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
-            assert(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-            assert(dmrs_entry.config.n_hf == pdu.slot.get_half_radio_frame());
-            assert(dmrs_entry.config.amplitude == 1.0F);
-            assert(srsvec::equal(dmrs_entry.config.ports, pdu.ports));
+            srsran_assert(dmrs_entry.config.phys_cell_id == pdu.phys_cell_id, "Failed");
+            srsran_assert(dmrs_entry.config.ssb_idx == pdu.ssb_idx, "Failed");
+            srsran_assert(dmrs_entry.config.L_max == pdu.L_max, "Failed");
+            srsran_assert(dmrs_entry.config.ssb_first_subcarrier == ssb_first_subcarrier, "Failed");
+            srsran_assert(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot, "Failed");
+            srsran_assert(dmrs_entry.config.n_hf == pdu.slot.get_half_radio_frame(), "Failed");
+            srsran_assert(dmrs_entry.config.amplitude == 1.0F, "Failed");
+            srsran_assert(srsvec::equal(dmrs_entry.config.ports, pdu.ports), "Failed");
 
             // Assert PSS
             const auto& pss_entry = pss->get_entries()[0];
-            assert(pss_entry.config.phys_cell_id == pdu.phys_cell_id);
-            assert(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
-            assert(pss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-            assert(pss_entry.config.amplitude == convert_dB_to_amplitude(beta_pss));
-            assert(srsvec::equal(pss_entry.config.ports, pdu.ports));
+            srsran_assert(pss_entry.config.phys_cell_id == pdu.phys_cell_id, "Failed");
+            srsran_assert(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier, "Failed");
+            srsran_assert(pss_entry.config.ssb_first_symbol == ssb_first_symbol_slot, "Failed");
+            srsran_assert(pss_entry.config.amplitude == convert_dB_to_amplitude(beta_pss), "Failed");
+            srsran_assert(srsvec::equal(pss_entry.config.ports, pdu.ports), "Failed");
 
             // Assert SSS
             const auto& sss_entry = sss->get_entries()[0];
-            assert(sss_entry.config.phys_cell_id == pdu.phys_cell_id);
-            assert(sss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
-            assert(sss_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-            assert(sss_entry.config.amplitude == 1.0F);
-            assert(srsvec::equal(sss_entry.config.ports, pdu.ports));
+            srsran_assert(sss_entry.config.phys_cell_id == pdu.phys_cell_id, "Failed");
+            srsran_assert(sss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier, "Failed");
+            srsran_assert(sss_entry.config.ssb_first_symbol == ssb_first_symbol_slot, "Failed");
+            srsran_assert(sss_entry.config.amplitude == 1.0F, "Failed");
+            srsran_assert(srsvec::equal(sss_entry.config.ports, pdu.ports), "Failed");
           }
         }
       }

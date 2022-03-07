@@ -13,7 +13,6 @@
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
-#include <cassert>
 #include <random>
 
 using namespace srsgnb;
@@ -60,17 +59,17 @@ static void test_case(pss_processor& pss, const pss_processor::config_t& pss_arg
   generate_sequence_gold(sequence_gold, pss_args.phys_cell_id, pss_args.amplitude);
 
   // Assert number of elements
-  assert(grid.get_nof_put_entries() == 127);
+  srsran_assert(grid.get_nof_put_entries() == 127, "Mismatched number of entries");
 
   // Assert grid
   unsigned k_gold           = pss_args.ssb_first_subcarrier + 56;
   auto     sequence_gold_it = sequence_gold.begin();
   for (const resource_grid_spy::entry_t& e : grid.get_put_entries()) {
     float err = std::abs(*sequence_gold_it - e.value);
-    assert(e.port == pss_args.ports[0]);
-    assert(e.l == pss_args.ssb_first_symbol);
-    assert(e.k == k_gold);
-    assert(err < assert_max_error);
+    srsran_assert(e.port == pss_args.ports[0], "Mismatched port");
+    srsran_assert(e.l == pss_args.ssb_first_symbol, "Mismatched symbol");
+    srsran_assert(e.k == k_gold, "Mismatched subcarrier");
+    srsran_assert(err < assert_max_error, "Mismatched value");
     k_gold++;
     sequence_gold_it++;
   }

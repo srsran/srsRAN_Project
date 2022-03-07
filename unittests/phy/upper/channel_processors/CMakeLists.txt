@@ -1,6 +1,6 @@
 
 add_executable(pbch_encoder_test pbch_encoder_test.cpp)
-target_link_libraries(pbch_encoder_test pbch_encoder)
+target_link_libraries(pbch_encoder_test pbch_encoder srslog)
 add_test(pbch_encoder_test pbch_encoder_test)
 
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)

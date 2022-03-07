@@ -1,5 +1,6 @@
 #include "ldpc_decoder_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <cmath>
 
 using namespace srsgnb;
@@ -45,7 +46,10 @@ unsigned ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> inpu
 
   // The minimum input length is message_length + two times the lifting size.
   uint16_t min_input_length = message_length + 2 * lifting_size;
-  assert(input.size() >= min_input_length);
+  srsran_assert(input.size() >= min_input_length,
+                "The input length (%d) does not reach miminum (%d)",
+                input.size(),
+                max_input_length);
 
   load_soft_bits(input);
 
@@ -245,5 +249,6 @@ std::unique_ptr<ldpc_decoder> srsgnb::create_ldpc_decoder(const std::string& dec
   if (dec_type == "avx2") {
     return std::make_unique<ldpc_decoder_avx2>();
   }
-  assert(false);
+  srsran_assert(false, "Invalid decoder type '%s'. Valid types are: generic and avx2", dec_type.c_str());
+  return {};
 }

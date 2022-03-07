@@ -1,7 +1,7 @@
 
 #include "resource_grid_test_doubles.h"
 #include "srsgnb/phy/resource_grid_pool.h"
-#include <cassert>
+#include "srsgnb/support/srsran_assert.h"
 #include <vector>
 
 using namespace srsgnb;
@@ -41,7 +41,7 @@ void test(unsigned nof_slots, unsigned nof_sectors)
       const resource_grid& grid = pool->get_resource_grid(context);
 
       // Verify grid referemnce match
-      assert(&grid == grids[slot][sector]);
+      srsran_assert(&grid == grids[slot][sector], "Unmatched grid references %p vs %p", &grid, &grids[slot][sector]);
     }
   }
 }

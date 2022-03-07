@@ -27,16 +27,16 @@ int main()
     modulator->put(test_case.data, grid, test_case.args);
 
     // Make sure the
-    assert(test_case.symbols.size() == grid.get_nof_put_entries());
+    srsran_assert(test_case.symbols.size() == grid.get_nof_put_entries(), "Mismatched number of entries");
 
     // Assert encoded data
     std::vector<resource_grid_spy::entry_t> symbols = grid.get_put_entries();
     for (unsigned i = 0; i != pbch_modulator::M_symb; ++i) {
       float err = std::abs(test_case.symbols[i].value - symbols[i].value);
-      assert(test_case.symbols[i].port == symbols[i].port);
-      assert(test_case.symbols[i].l == symbols[i].l);
-      assert(test_case.symbols[i].k == symbols[i].k);
-      assert(err < assert_max_error);
+      srsran_assert(test_case.symbols[i].port == symbols[i].port, "Mismatched port");
+      srsran_assert(test_case.symbols[i].l == symbols[i].l, "Mismatched symbol");
+      srsran_assert(test_case.symbols[i].k == symbols[i].k, "Mismatched subcarrier");
+      srsran_assert(err < assert_max_error, "Mismatched value");
     }
   }
   return 0;
