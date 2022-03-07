@@ -424,6 +424,47 @@ struct ul_pusch_dfts_ofdm {
   uint8_t  ul_ptrs_time_density_transform_precoding;
 };
 
+/// PUSCH PDU maintenance information added in FAPIv3.
+struct ul_pusch_maintenance_v3 {
+  uint8_t  pusch_trans_type;
+  uint16_t delta_bwp0_start_from_active_bwp;
+  uint16_t initial_ul_bwp_size;
+  uint8_t  group_or_sequence_hopping;
+  uint16_t pusch_second_hop_prb;
+  uint8_t  ldpc_base_graph;
+  uint32_t tb_size_lbrm_bytes;
+};
+
+/// PUSCH PDU parameters added in FAPIv4.
+struct ul_pusch_params_v4 {
+  /// Maximum number of spatial streams.
+  static constexpr unsigned MAX_NUM_SPATIAL_STREAMS = 64;
+
+  uint8_t                                      cb_crc_status_request;
+  uint32_t                                     srs_tx_ports;
+  uint8_t                                      ul_tpmi_index;
+  uint8_t                                      num_ul_spatial_streams_ports;
+  std::array<uint8_t, MAX_NUM_SPATIAL_STREAMS> ul_spatial_stream_ports;
+};
+
+/// UCI information for determining UCI Part1 to Part2 correspondence.
+struct uci_part1_to_part2_correspondence_v3 {
+  /// Maximum number of part2 info.
+  static constexpr unsigned MAX_NUM_PART2_INFO = 100;
+
+  struct part2_info {
+    uint16_t                priority;
+    uint8_t                 num_part1_params;
+    std::array<uint16_t, 4> param_offsets;
+    std::array<uint8_t, 4>  param_sizes;
+    uint16_t                part2_size_map_index;
+    uint8_t                 part2_size_map_scope;
+  };
+
+  uint16_t                                   num_parts2s;
+  std::array<part2_info, MAX_NUM_PART2_INFO> part2;
+};
+
 /// Uplink PUSCH PDU information.
 struct ul_pusch_pdu {
   uint16_t                pdu_bitmap;
@@ -456,7 +497,7 @@ struct ul_pusch_pdu {
   uint8_t                 vrb_to_prb_mapping;
   uint8_t                 intra_slot_frequency_hopping;
   uint16_t                tx_direct_current_location;
-  uint8_t                 uplink_frequency_shift_7p5khz;
+  uint8_t                 uplink_frequency_shift_7p5kHz;
   uint8_t                 start_symbol_index;
   uint8_t                 nr_of_symbols;
   ul_pusch_data           pusch_data;
@@ -464,9 +505,15 @@ struct ul_pusch_pdu {
   ul_pusch_ptrs           pusch_ptrs;
   ul_pusch_dfts_ofdm      pusch_ofdm;
   //: TODO: beamforming struct
-  //: TODO: pusch maintenance v3
-  //: TODO: pusch params v4
-  //: TODO: pusch uci v3
+  ul_pusch_maintenance_v3              pusch_maintenance_v3;
+  ul_pusch_params_v4                   pusch_params_v4;
+  uci_part1_to_part2_correspondence_v3 uci_correspondence;
+};
+
+/// PUCCH PDU maintenance information added in FAPIv3.
+struct ul_pucch_maintenance_v3 {
+  uint8_t max_code_rate;
+  uint8_t ul_bwp_id;
 };
 
 /// Encodes PUCCH pdu.
@@ -501,8 +548,94 @@ struct ul_pucch_pdu {
   uint16_t           bit_len_harq;
   uint16_t           csi_part1_bit_length;
   //: TODO: beamforming struct
-  // :TODO: maintenance v3
-  // :TODO: UCI part1 and part2 v3
+  ul_pucch_maintenance_v3              pucch_maintenance_v3;
+  uci_part1_to_part2_correspondence_v3 uci_correspondence;
+};
+
+/// MsgA-PUSCH PDU.
+struct ul_msg_a_pusch_pdu {
+  uint16_t                pdu_bitmap;
+  uint8_t                 prach_to_pru_map_type;
+  uint32_t                prach_to_pru_map_indicator;
+  uint16_t                msg_a_prach_sfn;
+  uint16_t                msg_a_prach_slot;
+  uint32_t                handle;
+  uint16_t                bwp_size;
+  uint16_t                bwp_start;
+  uint8_t                 subcarrier_spacing;
+  cyclic_prefix_type      cyclic_prefix;
+  uint8_t                 msg_a_mcs;
+  uint8_t                 transform_precoding;
+  uint8_t                 n_id_msg_a_pusch;
+  std::array<uint16_t, 2> pusch_dmrs_scrambling_ids;
+  uint16_t                ul_dmrs_symb_pos;
+  uint8_t                 dmrs_mapping_type;
+  uint16_t                start_rb_pusch_ocas;
+  uint8_t                 num_rb_pusch_ocas;
+  uint8_t                 guard_band;
+  uint8_t                 intra_slot_frequency_hopping;
+  uint8_t                 intra_slot_frequency_hopping_bits;
+  uint16_t                tx_direct_current_location;
+  uint8_t                 uplink_frequency_shift_7p5kHz;
+  uint8_t                 start_symb_id_pusch_ocas;
+  uint8_t                 duration_pusch_ocas;
+  uint8_t                 guard_period;
+  uint32_t                tb_size;
+};
+
+/// SRS parameters in FAPIv4.
+struct ul_srs_params_v4 {
+  /// Maximum number of UL spatial stream ports.
+  static constexpr unsigned MAX_NUM_UL_SPATIAL_STREAM_PORTS = 64;
+
+  struct symbol_info {
+    uint16_t srs_bandwidth_start;
+    uint8_t  sequence_group;
+    uint8_t  sequence_number;
+  };
+
+  uint16_t                                             srs_bandwidth_size;
+  std::array<symbol_info, 4>                           sym_info;
+  uint32_t                                             usage;
+  std::array<uint8_t, 32>                              report_type;
+  uint8_t                                              singular_value_representation;
+  uint8_t                                              iq_representation;
+  uint16_t                                             prg_size;
+  uint8_t                                              num_total_ue_antennas;
+  uint32_t                                             ue_antennas_in_this_srs_resource_set;
+  uint32_t                                             sampled_ue_antennas;
+  uint8_t                                              report_scope;
+  uint8_t                                              num_ul_spatial_streams_ports;
+  std::array<uint8_t, MAX_NUM_UL_SPATIAL_STREAM_PORTS> ul_spatial_stream_ports;
+};
+
+/// SRS PDU.
+struct ul_srs_pdu {
+  uint16_t           rnti;
+  uint32_t           handle;
+  uint16_t           bwp_size;
+  uint16_t           bwp_start;
+  uint8_t            subcarrier_spacing;
+  cyclic_prefix_type cyclic_prefix;
+  uint8_t            num_ant_ports;
+  uint8_t            num_symbols;
+  uint8_t            num_repetitions;
+  uint8_t            time_start_position;
+  uint8_t            config_index;
+  uint16_t           sequence_id;
+  uint8_t            bandwidth_index;
+  uint8_t            comb_size;
+  uint8_t            comb_offset;
+  uint8_t            cyclic_shift;
+  uint8_t            frequency_position;
+  uint16_t           frequency_shift;
+  uint8_t            frequency_hopping;
+  uint8_t            group_or_sequence_hopping;
+  uint8_t            resource_type;
+  uint16_t           t_srs;
+  uint16_t           t_offset;
+  // :TODO: beamforming.
+  ul_srs_params_v4 srs_params_v4;
 };
 
 /// Common uplink PDU information.
@@ -510,9 +643,11 @@ struct ul_tti_request_pdu {
   ul_pdu_type pdu_type;
   uint16_t    pdu_size;
   union {
-    ul_prach_pdu prach_pdu;
-    ul_pusch_pdu pusch_pdu;
-    ul_pucch_pdu pucch_pdu;
+    ul_prach_pdu       prach_pdu;
+    ul_pusch_pdu       pusch_pdu;
+    ul_pucch_pdu       pucch_pdu;
+    ul_msg_a_pusch_pdu msg_a_pusch_pdu;
+    ul_srs_pdu         srs_pdu;
   };
 };
 
@@ -555,13 +690,25 @@ struct ul_dci_request_message : public base_message {
   std::array<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
 
+/// Encodes the generic information of a TLV.
+/// \note Value parameter type is 32 bits or a multiple of number of bits indicated by pdschMacPduBitsAlignment
+/// capability.
+struct tlv_info {
+  uint16_t tag;
+  uint32_t length;
+  uint32_t value;
+};
+
 /// Transmission data request PDU information.
 struct tx_data_req_pdu {
-  uint32_t pdu_length;
-  uint16_t pdu_index;
-  uint8_t  cw_index;
-  uint32_t num_tlvs;
-  //: TODO: TLV array
+  /// Maximum number of TLVs.
+  static constexpr unsigned MAX_NUM_TLVS = 1024;
+
+  uint32_t                           pdu_length;
+  uint16_t                           pdu_index;
+  uint8_t                            cw_index;
+  uint32_t                           num_tlvs;
+  std::array<tlv_info, MAX_NUM_TLVS> tlvs;
 };
 
 /// Transmission request message.
@@ -835,14 +982,6 @@ struct srs_channel_svd_representation {
   std::array<srs_svd_prg, NUM_MAX_PRG> svd_prg;
 };
 
-/// SRS report TLV.
-/// \note Value parameter type can be bigger than 32bits.
-struct srs_report_tlv {
-  uint16_t tag;
-  uint32_t length;
-  uint32_t value;
-};
-
 /// Encodes the usage of the srs.
 enum class srs_usage_mode : uint8_t { beam_management, codebook, non_codebook, antenna_switching, reserved };
 
@@ -854,7 +993,7 @@ struct srs_indication_pdu {
   int16_t        timing_advance_offset_ns;
   srs_usage_mode srs_usage;
   uint8_t        report_type;
-  srs_report_tlv report;
+  tlv_info       report;
 };
 
 /// SRS indication message.
@@ -1928,7 +2067,8 @@ enum class tlv_tags : uint16_t {
   pdsch_cbg_scheme = 0x103a,
 
   /// Delay management configuration tags.
-  /// Configuration allows to use timing_window and timing_info_period tags. The values for these tags are the same that
+  /// Configuration allows to use timing_window and timing_info_period tags. The values for these tags are the same
+  /// that
   /// in the parameter tags.
   timing_info_mode = 0x011f
 };
