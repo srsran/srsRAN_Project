@@ -11,7 +11,9 @@
 
 namespace srsgnb {
 
-const size_t MAX_GRANTS    = 16;
+/// Maximum grants per slot. Implemention-specific.
+const size_t MAX_GRANTS = 16;
+/// Maximum Logical channels per TB. Implemention-specific.
 const size_t MAX_LC_GRANTS = 4;
 
 struct pdcch_config {};
