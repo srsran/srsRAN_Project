@@ -26,6 +26,18 @@ void get_examples(unsigned                                        bg,
                   std::array<std::vector<uint8_t>, NOF_MESSAGES>& msgs,
                   std::array<std::vector<uint8_t>, NOF_MESSAGES>& cblocks);
 
+/// Fixed log-likelihood ratio amplitude.
+constexpr int8_t llrs_ampl = 10;
+/// Transforms hard bits into log-likelihood ratios (with fixed amplitude).
+const auto compute_llrs = [](uint8_t b) {
+  return ((b == srsgnb::ldpc::filler_bit) ? llrs_ampl : llrs_ampl * (1 - 2 * b));
+};
+
+/// Checks whether two messages are equal: filler bits are counted as logical zeros.
+const auto is_msg_equal = [](uint8_t a, uint8_t b) {
+  return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
+};
+
 int main()
 {
   std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("generic");
@@ -33,21 +45,26 @@ int main()
 
   for (const auto bg :
        std::array<srsgnb::ldpc::base_graph_t, 2>{srsgnb::ldpc::base_graph_t::BG1, srsgnb::ldpc::base_graph_t::BG2}) {
+    // set base-graph message and codeblock lengths
+    unsigned min_cb_length_bg = 24;
+    unsigned max_cb_length_bg = 66;
+    unsigned msg_length_bg    = 22;
+    if (bg == srsgnb::ldpc::base_graph_t::BG2) {
+      min_cb_length_bg = 12;
+      max_cb_length_bg = 50;
+      msg_length_bg    = 10;
+    }
+
     for (const auto ls : srsgnb::ldpc::all_lifting_sizes) {
       srsgnb::ldpc_encoder::config_t cfg_enc{bg, ls};
       srsgnb::ldpc_decoder::config_t cfg_dec{bg, ls};
 
       std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 
-      // compute message and codeblock lengths
-      unsigned min_cb_length = 24 * ls;
-      unsigned max_cb_length = 66 * ls;
-      unsigned msg_length    = 22 * ls;
-      if (bg == srsgnb::ldpc::base_graph_t::BG2) {
-        min_cb_length = 12 * ls;
-        max_cb_length = 50 * ls;
-        msg_length    = 10 * ls;
-      }
+      // compute lifted messages and codeblock lengths
+      unsigned min_cb_length = min_cb_length_bg * ls;
+      unsigned max_cb_length = max_cb_length_bg * ls;
+      unsigned msg_length    = msg_length_bg * ls;
 
       // get example messages and corresponding codeblocks
       std::array<std::vector<uint8_t>, NOF_MESSAGES> msg{};
@@ -57,8 +74,9 @@ int main()
       get_examples(static_cast<unsigned>(bg), ls, msg, cblock);
 
       // encode each message and compare with given codeblock
-      const auto* cblock_i    = cblock.cbegin();
-      unsigned    length_step = (max_cb_length - min_cb_length) / 10;
+      const auto*   cblock_i    = cblock.cbegin();
+      constexpr int nof_steps   = 10;
+      unsigned      length_step = (max_cb_length - min_cb_length) / nof_steps;
       for (const auto& msg_i : msg) {
         assert(cblock_i != cblock.cend());
         // check several shortened codeblocks
@@ -69,13 +87,9 @@ int main()
 
           std::vector<uint8_t> decoded(msg_length);
           std::vector<int8_t>  llrs(length);
-          std::transform(cblock_i->begin(), cblock_i->begin() + length, llrs.begin(), [](uint8_t b) {
-            return ((b == srsgnb::ldpc::filler_bit) ? 10 : 10 - 20 * b);
-          });
+          std::transform(cblock_i->begin(), cblock_i->begin() + length, llrs.begin(), compute_llrs);
           my_decoder->decode(decoded, llrs, cfg_dec);
-          assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), [](uint8_t a, uint8_t b) {
-            return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
-          }));
+          assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal));
         }
         // check full-length codeblock
         std::vector<uint8_t> encoded(max_cb_length);
@@ -84,18 +98,14 @@ int main()
 
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(max_cb_length);
-        std::transform(cblock_i->begin(), cblock_i->end(), llrs.begin(), [](uint8_t b) { return 10 - 20 * b; });
+        std::transform(cblock_i->begin(), cblock_i->end(), llrs.begin(), compute_llrs);
         my_decoder->decode(decoded, llrs, cfg_dec);
-        assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), [](uint8_t a, uint8_t b) {
-          return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
-        }));
+        assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal));
 
         ++cblock_i;
       }
     }
   }
-
-  std::cout << "it works!" << std::endl;
 }
 
 void read_bits(std::ifstream& example_file, std::vector<uint8_t>& out)
@@ -145,7 +155,7 @@ void get_examples(unsigned                                        bg,
     read_bits(example_file, msg_i);
   }
   // The following line should mark the start of the corresponding codeblocks.
-  std::string cwd_string = "ls" + std::to_string(ls) + "cwds";
+  std::string cwd_string = "ls" + std::to_string(ls) + "cblks";
   std::getline(example_file, id_string);
   assert(id_string == cwd_string);
 
