@@ -21,13 +21,9 @@ public:
   void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) override;
 
 private:
-  static void not_implemented(const std::string& fn)
-  {
-    std::cout << "LDPC RM -> " << fn << " - not implemented yet.\n";
-  }
   void init(const config_t& cfg);
   void select_bits(span<const uint8_t> in, span<uint8_t> out) const;
-  void interleave_bits(span<const uint8_t> in, span<uint8_t> out) const { not_implemented(__func__); }
+  void interleave_bits(span<const uint8_t> in, span<uint8_t> out) const;
 
   // Data members
 

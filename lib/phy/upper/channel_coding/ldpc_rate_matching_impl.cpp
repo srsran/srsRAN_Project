@@ -1,14 +1,13 @@
 #include "ldpc_rate_matching_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
 void ldpc_rate_matching_impl::init(const config_t& cfg)
 {
-  std::cout << "RM init\n";
-
-  assert((cfg.rv >= 0) && (cfg.rv <= 3));
+  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
 
   modulation_order = static_cast<uint8_t>(cfg.mod);
@@ -16,13 +15,11 @@ void ldpc_rate_matching_impl::init(const config_t& cfg)
 
 void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
 {
-  std::cout << "RM rate_match\n";
-
   init(cfg);
 
   unsigned block_length = input.size();
 
-  assert(block_length >= cfg.Nref);
+  srsran_assert(block_length >= cfg.Nref, "N_ref should be smaller than the input length.");
   if (cfg.Nref > 0) {
     buffer_length = cfg.Nref;
   } else {
@@ -30,7 +27,8 @@ void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_
   }
 
   // The output size must be a multiple of the modulation order.
-  assert(output.size() % modulation_order == 0);
+  srsran_assert(output.size() % modulation_order == 0,
+                "The output length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2
   std::array<double, 4> shift_factor{};
@@ -44,8 +42,7 @@ void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_
     shift_factor = {0, 13, 25, 43};
     lifting_size = block_length / BG2_N_short;
   } else {
-    std::cout << "LDPC rate matching: invalid input length.\n";
-    assert(false);
+    srsran_assert(false, "LDPC rate matching: invalid input length.");
   }
   assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE);
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
@@ -64,7 +61,6 @@ void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_
 
 void ldpc_rate_matching_impl::select_bits(span<const uint8_t> in, span<uint8_t> out) const
 {
-  std::cout << "RM " << __func__ << "\n";
   unsigned in_index = shift_k0 % buffer_length;
   for (auto& this_out : out) {
     while (in[in_index] == filler_bit) {
@@ -72,6 +68,19 @@ void ldpc_rate_matching_impl::select_bits(span<const uint8_t> in, span<uint8_t> 
     }
     this_out = in[in_index];
     in_index = (in_index + 1) % buffer_length;
+  }
+}
+
+void ldpc_rate_matching_impl::interleave_bits(span<const uint8_t> in, span<uint8_t> out) const
+{
+  unsigned E = in.size();
+  unsigned out_index{0};
+
+  for (auto& this_out : out) {
+    unsigned help_index = out_index % modulation_order;
+    unsigned in_index   = (out_index + help_index * (E - 1)) / modulation_order;
+    this_out            = in[in_index];
+    ++out_index;
   }
 }
 
