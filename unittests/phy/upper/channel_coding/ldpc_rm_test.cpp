@@ -9,6 +9,13 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
+/// \brief Runs a single rate-matcher test for the specified configuration.
+///
+/// \param[in] rv       Redundancy version, valid options {0, 1, 2, 3}.
+/// \param[in] mod      Modulation scheme.
+/// \param[in] lbrm     Activates the limited buffer rate matching mode when set to true.
+/// \param[in] matched  Vector with expected outputs.
+/// \return Zero if the test is successful (all generated bit sequences correspond to the expected ones), one otherwise.
 int run_rv_mod_lbrm_test(unsigned                                           rv,
                          modulation_scheme                                  mod,
                          bool                                               lbrm,

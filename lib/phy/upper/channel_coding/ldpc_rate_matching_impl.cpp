@@ -51,15 +51,15 @@ void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_
   buffer = input.subspan(0, buffer_length);
 
   if (modulation_order == 1) {
-    select_bits(buffer, output);
+    select_bits(output, buffer);
   } else {
     span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).subspan(0, output.size());
-    select_bits(buffer, aux);
-    interleave_bits(aux, output);
+    select_bits(aux, buffer);
+    interleave_bits(output, aux);
   }
 }
 
-void ldpc_rate_matching_impl::select_bits(span<const uint8_t> in, span<uint8_t> out) const
+void ldpc_rate_matching_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
   unsigned in_index = shift_k0 % buffer_length;
   for (auto& this_out : out) {
@@ -71,7 +71,7 @@ void ldpc_rate_matching_impl::select_bits(span<const uint8_t> in, span<uint8_t> 
   }
 }
 
-void ldpc_rate_matching_impl::interleave_bits(span<const uint8_t> in, span<uint8_t> out) const
+void ldpc_rate_matching_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
   unsigned E = in.size();
   unsigned out_index{0};

@@ -14,6 +14,7 @@ namespace ldpc {
 constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size;
 } // namespace ldpc
 
+/// LDPC rate matching implementation.
 class ldpc_rate_matching_impl : public ldpc_rate_matching
 {
 public:
@@ -21,9 +22,20 @@ public:
   void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) override;
 
 private:
+  /// Initializes the rate matcher internal state.
   void init(const config_t& cfg);
-  void select_bits(span<const uint8_t> in, span<uint8_t> out) const;
-  void interleave_bits(span<const uint8_t> in, span<uint8_t> out) const;
+
+  /// \brief Carries out bit selection, as per TS38.212 Section 5.4.2.1.
+  ///
+  /// \param[out] out Sequence of selected bits.
+  /// \param[in]  in  Input codeblock.
+  void select_bits(span<uint8_t> out, span<const uint8_t> in) const;
+
+  /// \brief Carries out bit interleaving, as per TS38.212 Section 5.4.2.2.
+  ///
+  /// \param[out] out Sequence of interleaved bits.
+  /// \param[in]  in  Sequence of selected bits (see ldpc_rate_matching_impl::select_bits).
+  void interleave_bits(span<uint8_t> out, span<const uint8_t> in) const;
 
   // Data members
 
