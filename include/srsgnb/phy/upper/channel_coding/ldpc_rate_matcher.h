@@ -7,11 +7,11 @@
 namespace srsgnb {
 
 /// LDPC rate matching (i.e., bit selection and bit interleaving) interface.
-class ldpc_rate_matching
+class ldpc_rate_matcher
 {
 public:
   /// Default virtual destructor.
-  virtual ~ldpc_rate_matching() = default;
+  virtual ~ldpc_rate_matcher() = default;
 
   /// Rate matching configuration parameters.
   struct config_t {
@@ -34,7 +34,7 @@ public:
   virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) = 0;
 };
 
-/// LDPC rate recovering interface. It reverts the operations of ldpc_rate_matching.
+/// LDPC rate recovering interface. It reverts the operations of ldpc_rate_matcher.
 class ldpc_rate_recovering
 {
 public:
@@ -62,7 +62,7 @@ public:
   virtual void rate_recover(span<int8_t> output, span<const int8_t> input, const config_t& cfg) = 0;
 };
 
-std::unique_ptr<ldpc_rate_matching>   create_ldpc_rate_matching();
+std::unique_ptr<ldpc_rate_matcher>    create_ldpc_rate_matcher();
 std::unique_ptr<ldpc_rate_recovering> create_ldpc_rate_recovering();
 
 } // namespace srsgnb

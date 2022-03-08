@@ -5,7 +5,7 @@
 #define SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_rate_matching.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
 #include <iostream>
 
 namespace srsgnb {
@@ -15,7 +15,7 @@ constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size
 } // namespace ldpc
 
 /// LDPC rate matching implementation.
-class ldpc_rate_matching_impl : public ldpc_rate_matching
+class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:
   // See interface for the documentation.
@@ -34,7 +34,7 @@ private:
   /// \brief Carries out bit interleaving, as per TS38.212 Section 5.4.2.2.
   ///
   /// \param[out] out Sequence of interleaved bits.
-  /// \param[in]  in  Sequence of selected bits (see ldpc_rate_matching_impl::select_bits).
+  /// \param[in]  in  Sequence of selected bits (see ldpc_rate_matcher_impl::select_bits).
   void interleave_bits(span<uint8_t> out, span<const uint8_t> in) const;
 
   // Data members

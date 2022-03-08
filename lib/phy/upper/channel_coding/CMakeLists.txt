@@ -16,4 +16,4 @@ add_library(ldpc STATIC ldpc_graph_impl.cpp
                         ldpc_luts_impl.cpp
                         ldpc_encoder_impl.cpp
                         ldpc_decoder_impl.cpp
-                        ldpc_rate_matching_impl.cpp)
+                        ldpc_rate_matcher_impl.cpp)

@@ -1,11 +1,11 @@
-#include "ldpc_rate_matching_impl.h"
+#include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-void ldpc_rate_matching_impl::init(const config_t& cfg)
+void ldpc_rate_matcher_impl::init(const config_t& cfg)
 {
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
@@ -13,7 +13,7 @@ void ldpc_rate_matching_impl::init(const config_t& cfg)
   modulation_order = static_cast<uint8_t>(cfg.mod);
 }
 
-void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
+void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
 {
   init(cfg);
 
@@ -59,7 +59,7 @@ void ldpc_rate_matching_impl::rate_match(span<uint8_t> output, span<const uint8_
   }
 }
 
-void ldpc_rate_matching_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
+void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
   unsigned in_index = shift_k0 % buffer_length;
   for (auto& this_out : out) {
@@ -71,7 +71,7 @@ void ldpc_rate_matching_impl::select_bits(span<uint8_t> out, span<const uint8_t>
   }
 }
 
-void ldpc_rate_matching_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
+void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
   unsigned E = in.size();
   unsigned out_index{0};
@@ -84,7 +84,7 @@ void ldpc_rate_matching_impl::interleave_bits(span<uint8_t> out, span<const uint
   }
 }
 
-std::unique_ptr<srsgnb::ldpc_rate_matching> srsgnb::create_ldpc_rate_matching()
+std::unique_ptr<srsgnb::ldpc_rate_matcher> srsgnb::create_ldpc_rate_matcher()
 {
-  return std::make_unique<ldpc_rate_matching_impl>();
+  return std::make_unique<ldpc_rate_matcher_impl>();
 }

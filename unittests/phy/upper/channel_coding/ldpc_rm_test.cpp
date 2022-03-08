@@ -3,7 +3,7 @@
 
 #include "ldpc_rm_test_sets.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_rate_matching.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
@@ -21,7 +21,7 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
                          bool                                               lbrm,
                          const std::array<std::vector<uint8_t>, nof_rates>& matched);
 
-static std::unique_ptr<ldpc_rate_matching> rm = create_ldpc_rate_matching();
+static std::unique_ptr<ldpc_rate_matcher> rm = create_ldpc_rate_matcher();
 
 int main()
 {
@@ -124,9 +124,9 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
   for (int i = 0; i != nof_rates; ++i) {
     unsigned mod_order = static_cast<unsigned>(mod);
     unsigned rm_length = static_cast<unsigned>(floor(message_length / rate_list[i] / mod_order)) * mod_order;
-    std::vector<uint8_t>         matched(rm_length);
-    unsigned                     n_ref = lbrm ? test_Nref : 0;
-    ldpc_rate_matching::config_t rm_cfg{rv, mod, n_ref};
+    std::vector<uint8_t>        matched(rm_length);
+    unsigned                    n_ref = lbrm ? test_Nref : 0;
+    ldpc_rate_matcher::config_t rm_cfg{rv, mod, n_ref};
     rm->rate_match(matched, codeblock, rm_cfg);
 
     assert(matched_bm[i].size() == rm_length);
