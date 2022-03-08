@@ -128,7 +128,7 @@ void test_convert_fi(std::size_t N)
 
   for (size_t i = 0; i != N; i++) {
     int16_t gold = static_cast<int16_t>(x[i] * scale);
-    srsran_assert(gold < z[i], "Failed");
+    srsran_assert(gold == z[i], "Failed");
   }
 }
 
