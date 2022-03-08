@@ -13,8 +13,8 @@
 #ifndef SRSGNB_INTERVAL_H
 #define SRSGNB_INTERVAL_H
 
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsran_assert.h"
-#include "srsran/srslog/bundled/fmt/format.h"
 #include <cassert>
 #include <string>
 #include <type_traits>

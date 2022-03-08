@@ -7,7 +7,6 @@
 #
 
 set(SOURCES
-        signal_handler.cc
         task_worker.cc
         threads.cc
         timers.cc)

@@ -3,7 +3,7 @@
 #define SRSGNB_RLC_IMPL_H
 
 #include "srsgnb/rlc/rlc.h"
-#include "srsran/srslog/srslog.h"
+#include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 

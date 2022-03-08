@@ -202,6 +202,8 @@ void test_queue_block_api()
         break;
       }
       assert(val == count);
+      // Use val variable.
+      (void)(val);
       count++;
     }
   });

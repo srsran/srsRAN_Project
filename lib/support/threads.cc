@@ -10,14 +10,13 @@
  *
  */
 
+#include "srsgnb/support/threads.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-
-#include "srsran/common/threads.h"
 
 bool threads_new_rt(pthread_t* thread, void* (*start_routine)(void*), void* arg)
 {
