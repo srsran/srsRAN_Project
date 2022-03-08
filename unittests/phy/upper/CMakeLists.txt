@@ -3,3 +3,6 @@ add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
+
+add_executable(re_pattern_test re_pattern_test.cpp)
+target_link_libraries(re_pattern_test upper_phy srslog)
