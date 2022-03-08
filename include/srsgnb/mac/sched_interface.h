@@ -77,9 +77,10 @@ using ul_sched_result = static_vector<ul_sched_info, MAX_GRANTS>;
 class sched_configurer
 {
 public:
-  virtual ~sched_configurer()                 = default;
-  virtual void config_ue(rnti_t rnti)         = 0;
-  virtual void delete_ue_request(rnti_t rnti) = 0;
+  virtual ~sched_configurer()                                                                   = default;
+  virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg) = 0;
+  virtual void config_ue(rnti_t rnti)                                                           = 0;
+  virtual void delete_ue_request(rnti_t rnti)                                                   = 0;
 };
 
 class sched_interface : public sched_configurer

@@ -12,7 +12,9 @@ namespace srsgnb {
 class sched final : public sched_interface
 {
 public:
-  explicit sched(sched_cfg_notifier& notifier) : mac_notifier(notifier), cells(1) {}
+  explicit sched(sched_cfg_notifier& notifier);
+
+  bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
 
   /// Add/Configure UE
   void config_ue(rnti_t rnti) override { mac_notifier.on_ue_config_complete(rnti); }
@@ -29,11 +31,13 @@ public:
 private:
   sched_cfg_notifier& mac_notifier;
 
+  srslog::basic_logger& logger;
+
   // Data UE scheduler
   std::unique_ptr<data_scheduler> data_sched;
 
   // Cell-specific resources and schedulers
-  std::vector<cell_sched> cells;
+  std::vector<std::unique_ptr<cell_sched>> cells;
 };
 
 } // namespace srsgnb

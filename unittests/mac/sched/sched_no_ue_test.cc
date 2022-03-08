@@ -1,5 +1,6 @@
 
 #include "../../../lib/mac/sched/sched.h"
+#include "config_generators.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -15,6 +16,8 @@ void test_no_ues()
 {
   sched_cfg_dummy_notifier cfg_notif;
   sched                    sch{cfg_notif};
+
+  sch.handle_cell_configuration_request(make_cell_cfg_req());
 
   slot_point sl_tx{0, 0};
 

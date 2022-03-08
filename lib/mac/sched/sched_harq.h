@@ -16,6 +16,7 @@
 #include "sched_dci.h"
 #include "sched_prb.h"
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/mac/sched_interface.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <array>
