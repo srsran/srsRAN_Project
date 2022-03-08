@@ -2,6 +2,7 @@
 #ifndef SRSGNB_CELL_SCHED_H
 #define SRSGNB_CELL_SCHED_H
 
+#include "cell/cell_configuration.h"
 #include "resource_grid.h"
 #include "sched_strategy/data_scheduler.h"
 

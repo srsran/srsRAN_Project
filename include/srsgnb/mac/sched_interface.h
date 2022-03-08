@@ -11,10 +11,27 @@
 
 namespace srsgnb {
 
-/// Maximum grants per slot. Implemention-specific.
+/// Maximum grants per slot. Implementation-specific.
 const size_t MAX_GRANTS = 16;
-/// Maximum Logical channels per TB. Implemention-specific.
+/// Maximum Logical channels per TB. Implementation-specific.
 const size_t MAX_LC_GRANTS = 4;
+const size_t MAX_NOF_TB    = 2;
+
+enum class duplex_mode_t { TDD, FDD };
+
+struct cell_configuration_request_message {
+  du_cell_index_t cell_index;
+  uint8_t         nof_beams;     // (0..64)
+  uint8_t         nof_layers;    // (0..8)
+  uint8_t         nof_ant_ports; // (0..64)
+  pci_t           pci;
+  duplex_mode_t   duplex_mode;
+  unsigned        dl_cell_bandwidth;
+  unsigned        ul_cell_bandwidth;
+  // TODO: downlinkConfigCommon
+  // TODO: tdd-UL-DL-ConfigurationCommon
+  // TODO: ...
+};
 
 struct add_ue_configuration_request {
   du_cell_index_t cell_index;

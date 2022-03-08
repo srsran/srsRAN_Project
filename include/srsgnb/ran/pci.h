@@ -6,9 +6,9 @@
 
 namespace srsgnb {
 
-/// Physical cell ID. [3GPP TS 38.211 [2], sec 7.4.2.1], N_{ID}^cell. Value: 0->1007
-using pci_t             = uint16_t;
-const pci_t INVALID_PCI = 1008;
+/// 3GPP TS 38.331, PhysCellId ::= INTEGER (0..1007)
+using pci_t         = uint16_t;
+const pci_t MAX_PCI = 1007;
 
 } // namespace srsgnb
 

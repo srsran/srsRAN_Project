@@ -20,6 +20,7 @@
 namespace srsgnb {
 
 struct default_error_t {};
+struct default_success_t {};
 
 template <typename T, typename E>
 class expected;
@@ -205,7 +206,7 @@ private:
 };
 
 template <typename E>
-using error_type = expected<std::true_type, E>;
+using error_type = expected<default_success_t, E>;
 
 } // namespace srsgnb
 
