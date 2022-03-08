@@ -4,13 +4,36 @@
 namespace srsgnb {
 namespace fapi {
 
+struct config_request;
+struct param_request;
+struct start_request;
+struct stop_request;
+
+/// This interface represents the gateway for sending FAPI configuration messages to the underlying PHY.
 class config_message_gateway
 {
 public:
-  virtual void param_request()  = 0;
-  virtual void config_request() = 0;
-  virtual void start_request()  = 0;
-  virtual void stop_request()   = 0;
+  virtual ~config_message_gateway() = default;
+
+  /// \brief Sends a param request message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void param_request(const param_request& msg) = 0;
+
+  /// \brief Sends a configuration request message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void config_request(const config_request& msg) = 0;
+
+  /// \brief Sends a start request message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void start_request(const start_request& msg) = 0;
+
+  /// \brief Sends a stop request message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void stop_request(const stop_request& msg) = 0;
 };
 
 } // namespace fapi

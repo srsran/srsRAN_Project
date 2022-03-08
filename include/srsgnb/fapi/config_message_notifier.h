@@ -4,12 +4,30 @@
 namespace srsgnb {
 namespace fapi {
 
+struct config_response;
+struct param_response;
+struct stop_indication;
+
+/// This interface notifies the reception of FAPI configuration messages from the underlying PHY.
 class config_message_notifier
 {
 public:
-  virtual void on_param_response()  = 0;
-  virtual void on_config_response() = 0;
-  virtual void on_stop_indication() = 0;
+  virtual ~config_message_notifier() = default;
+
+  /// \brief Callback to notify the reception of a parameter response message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void on_param_response(const param_response& msg) = 0;
+
+  /// \brief Callback to notify the reception of a configuration response message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void on_config_response(const config_response& msg) = 0;
+
+  /// \brief Callback to notify the reception of a stop response message.
+  ///
+  /// \param[in]  msg   Message contents.
+  virtual void on_stop_indication(const stop_indication& msg) = 0;
 };
 
 } // namespace fapi
