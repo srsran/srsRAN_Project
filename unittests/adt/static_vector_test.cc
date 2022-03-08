@@ -5,10 +5,10 @@
 namespace srsgnb {
 
 struct C {
-  static int nof_copy_ctor;
-  static int nof_value_ctor;
-  static int nof_move_ctor;
-  static int nof_dtor;
+  static unsigned nof_copy_ctor;
+  static unsigned nof_value_ctor;
+  static unsigned nof_move_ctor;
+  static unsigned nof_dtor;
 
   C(int val_ = 0) : val(val_) { nof_value_ctor++; }
   C(const C& v) : val(v.val) { nof_copy_ctor++; }
@@ -30,10 +30,10 @@ struct C {
 
   int val = 0;
 };
-int C::nof_copy_ctor  = 0;
-int C::nof_value_ctor = 0;
-int C::nof_move_ctor  = 0;
-int C::nof_dtor       = 0;
+unsigned C::nof_copy_ctor  = 0;
+unsigned C::nof_value_ctor = 0;
+unsigned C::nof_move_ctor  = 0;
+unsigned C::nof_dtor       = 0;
 
 struct moveonly {
   moveonly()                    = default;
@@ -115,7 +115,7 @@ void test_obj_add_rem()
   TESTASSERT(a == a2);
 
   // TEST: pop_back
-  int last_nof_dtor = C::nof_dtor;
+  unsigned last_nof_dtor = C::nof_dtor;
   a.pop_back();
   TESTASSERT(a.size() == 4 and last_nof_dtor == C::nof_dtor - 1);
   TESTASSERT(a != a2);
