@@ -1,4 +1,3 @@
-
 add_executable(asn1_utils_test asn1_utils_test.cc)
 target_link_libraries(asn1_utils_test asn1_utils)
 add_test(asn1_utils_test asn1_utils_test)
