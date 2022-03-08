@@ -1,7 +1,3 @@
-//
-// Created by carlo on 28/2/22.
-//
-
 #ifndef SRSGNB_SCHED_SSB_H
 #define SRSGNB_SCHED_SSB_H
 

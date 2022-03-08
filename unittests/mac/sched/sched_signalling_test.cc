@@ -43,11 +43,6 @@ void test_ssb_time_allocation(uint16_t periodicity)
 
   bench.new_slot();
 
-  // Set default periodicity if parameter is 0
-  if (periodicity == 0) {
-    periodicity = 5;
-  }
-
   // Define parameters and variable for the test
   ssb_list_t ssb_list;
   // in_burst_bitmap is not used by the function for the time being
@@ -91,10 +86,7 @@ void test_ssb_time_allocation(uint16_t periodicity)
 /// This tests the SSB scheduling for different periodicities
 void test_sched_ssb()
 {
-  uint16_t periodicity = 0;
-  test_ssb_time_allocation(periodicity);
-
-  periodicity = 5;
+  uint16_t periodicity = 5;
   test_ssb_time_allocation(periodicity);
 
   periodicity = 10;
