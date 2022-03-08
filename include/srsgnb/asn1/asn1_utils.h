@@ -895,8 +895,7 @@ public:
   this_type&  from_string(const std::string& s)
   {
     if (s.size() < lb or s.size() > ub) {
-      log_error(
-          "The provided string size={} is not withing the bounds [{}, {}]", s.size(), uint32_t(lb), uint32_t(ub));
+      log_error("The provided string size={} is not withing the bounds [{}, {}]", s.size(), uint32_t(lb), uint32_t(ub));
     } else {
       resize(s.size());
       for (uint32_t i = 0; i < s.size(); ++i) {
@@ -1089,9 +1088,9 @@ struct SeqOfPacker {
   {
     return unpack_dyn_seq_of(tounpack, bref, lb, ub, packer);
   }
-  InnerPacker packer;
   uint32_t    lb;
   uint32_t    ub;
+  InnerPacker packer;
 };
 
 template <class ItemType, uint32_t lb, uint32_t ub, bool aligned = false>
@@ -1767,7 +1766,6 @@ struct empty_obj_set_item_c {
 };
 
 struct base_empty_obj_set {
-
   // members lookup methods
   static uint32_t   idx_to_id(uint32_t idx);
   static bool       is_id_valid(const uint32_t& id);
