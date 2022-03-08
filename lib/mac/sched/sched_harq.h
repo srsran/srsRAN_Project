@@ -16,7 +16,8 @@
 #include "sched_dci.h"
 #include "sched_prb.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/mac/sched_interface.h"
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <array>
@@ -77,9 +78,9 @@ protected:
   slot_point slot_tx;
   /// For DL, slot_ack is the time at which GNB is expected to receive the ACK
   /// For DL, slot_ack is the time at which GNB is expected to receive the UL pck (the ACK will be the CRC)
-  slot_point                   slot_ack;
-  prb_grant                    prbs_;
-  std::array<tb_t, MAX_NOF_TB> tb;
+  slot_point                          slot_ack;
+  prb_grant                           prbs_;
+  static_vector<tb_t, MAX_NOF_LAYERS> tb{1};
 };
 
 class dl_harq_proc : public harq_proc

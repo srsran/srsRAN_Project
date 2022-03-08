@@ -19,7 +19,7 @@ public:
 class ue
 {
 public:
-  ue(const add_ue_configuration_request& req) {}
+  ue(const add_ue_configuration_request_message& req) {}
 
   void slot_indication(slot_point sl_tx) {}
 

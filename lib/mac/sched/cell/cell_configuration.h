@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_CELL_CONFIGURATION_H
 
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/mac/sched_interface.h"
+#include "srsgnb/mac/sched_configurer.h"
 
 namespace srsgnb {
 
@@ -15,11 +15,19 @@ public:
   cell_configuration(const cell_configuration&) = delete;
   cell_configuration(cell_configuration&&)      = delete;
 
-  const du_cell_index_t cell_index;
-  const pci_t           pci;
-  const duplex_mode_t   duplex_mode;
-  const unsigned        nof_dl_prbs;
-  const unsigned        nof_ul_prbs;
+  const bool                                           is_tdd;
+  const du_cell_index_t                                cell_index;
+  const pci_t                                          pci;
+  const unsigned                                       nof_dl_prbs;
+  const unsigned                                       nof_ul_prbs;
+  const asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
+  const asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
+  const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
+
+  const asn1::rrc_nr::subcarrier_spacing_opts scs() const
+  {
+    return dl_cfg_common.init_dl_bwp.generic_params.subcarrier_spacing;
+  }
 };
 
 /// Verify correctness of cell configuration request message

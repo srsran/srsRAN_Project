@@ -37,13 +37,13 @@ public:
     has_val_(other.has_value())
   {
     if (other.has_value()) {
-      storage.template emplace(other.storage.get());
+      storage.emplace(other.storage.get());
     }
   }
   optional(optional<T>&& other) noexcept(std::is_nothrow_move_constructible<T>::value) : has_val_(other.has_value())
   {
     if (other.has_value()) {
-      storage.template emplace(std::move(other.storage.get()));
+      storage.emplace(std::move(other.storage.get()));
     }
   }
   optional& operator=(const optional<T>& other) noexcept(std::is_nothrow_copy_assignable<T>::value)

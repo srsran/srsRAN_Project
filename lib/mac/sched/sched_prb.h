@@ -13,7 +13,7 @@
 #ifndef SRSRAN_SCHED_NR_RB_H
 #define SRSRAN_SCHED_NR_RB_H
 
-#include "sched_consts.h"
+#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
 
