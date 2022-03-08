@@ -26,7 +26,7 @@ void sched_ssb(const slot_point& sl_point,
 
   // Perform mod operation of slot index by ssb_periodicity;
   // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval
-  uint32_t sl_point_mod = sl_point % (ssb_periodicity * NOF_SLOTS_PER_SUBFRAME);
+  uint32_t sl_point_mod = sl_point.to_uint() % (ssb_periodicity * NOF_SLOTS_PER_SUBFRAME);
   // code below is simplified, it assumes 15kHz subcarrier spacing and sub 3GHz carrier
   if (sl_point_mod == 0) {
     ssb_t ssb_msg            = {};

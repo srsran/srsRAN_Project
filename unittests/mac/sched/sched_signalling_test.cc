@@ -22,15 +22,14 @@ struct test_bench {
   void new_slot()
   {
     ++t;
-    test_logger.set_context(t);
-    mac_logger.set_context(t);
+    test_logger.set_context(t.to_uint());
+    mac_logger.set_context(t.to_uint());
   }
 
   slot_point slot_tx() { return t; }
 
 private:
-  // Let it do the job of finding the MAX UINT 32
-  slot_point t = -1;
+  slot_point t;
 };
 srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
 srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
@@ -51,7 +50,7 @@ void test_ssb_time_allocation(uint16_t periodicity)
   uint16_t k_ssb             = 0;
 
   // Run test for a given number of slots
-  for (; bench.slot_tx() < NUM_OF_TEST_SLOTS; bench.new_slot()) {
+  for (size_t slot_count = 0; slot_count < NUM_OF_TEST_SLOTS; slot_count++, bench.new_slot()) {
     // Clear the SSB list of it is not empty
     if (ssb_list.size() > 0) {
       ssb_list.clear();
@@ -63,17 +62,15 @@ void test_ssb_time_allocation(uint16_t periodicity)
     // Test that SSB is scheduled only according to periodicity
     // For now, all the parameters are hard-coded.
     // TODO: When the function gets extended, improve the test by moving the parameters as function inputs
-    if (bench.slot_tx() % (uint32_t)(periodicity * NOF_SLOTS_PER_SUBFRAME) == 0) {
+    if (bench.slot_tx().to_uint() % (uint32_t)(periodicity * NOF_SLOTS_PER_SUBFRAME) == 0) {
       TESTASSERT_EQ_MSG(ssb_list.size(), 1, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       auto& ssb_item = ssb_list.back();
       TESTASSERT_EQ_MSG(ssb_item.tx_mode, srsgnb::ssb_transmission, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
-      TESTASSERT_EQ_MSG(
-          ssb_item.ssb_info.ofdm_symbols.start(), 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
+      TESTASSERT_EQ_MSG(ssb_item.ssb_info.ofdm_symbols.start(), 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       TESTASSERT_EQ_MSG(
           ssb_item.ssb_info.ofdm_symbols.stop(), 4 + 4, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
-      TESTASSERT_EQ_MSG(ssb_item.ssb_info.prb_alloc.start(),
-                        offset_to_point_A,
-                        TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
+      TESTASSERT_EQ_MSG(
+          ssb_item.ssb_info.prb_alloc.start(), offset_to_point_A, TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));
       TESTASSERT_EQ_MSG(ssb_item.ssb_info.prb_alloc.stop(),
                         offset_to_point_A + 20,
                         TEST_HARQ_ASSERT_MSG(bench.slot_tx(), periodicity));

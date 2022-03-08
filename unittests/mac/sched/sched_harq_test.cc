@@ -16,13 +16,14 @@ struct test_bench {
   {
     test_logger.set_context(0);
     mac_logger.set_context(0);
+    t = slot_point{0, 0} - 1; // first slot is 0
   }
 
   void new_slot()
   {
     ++t;
-    test_logger.set_context(t);
-    mac_logger.set_context(t);
+    test_logger.set_context(t.to_uint());
+    mac_logger.set_context(t.to_uint());
     h_entity.new_slot(t);
   }
 
@@ -34,8 +35,7 @@ private:
   harq_entity&   h_entity;
   const unsigned tx_gnb_delay;
   const unsigned tx_ack_delay;
-  // Let it do the job of finding the MAX UINT 32
-  slot_point t = -1;
+  slot_point     t;
 };
 srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
 srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
@@ -65,7 +65,7 @@ struct harq_entity_params {
 static void h_entity_report_ack(const struct harq_entity_params& common,
                                 const struct harq_proc_params&   dl_param,
                                 const struct harq_proc_params&   ul_param,
-                                uint32_t                         slot,
+                                slot_point                       slot,
                                 struct harq_proc_vars&           dl_var,
                                 struct harq_proc_vars&           ul_var,
                                 harq_entity&                     h_entity)
@@ -73,7 +73,7 @@ static void h_entity_report_ack(const struct harq_entity_params& common,
   // Receive feedback for HARQ
   // We add 1 ot the slot, as  this function is called before the slot gets updated
   // No need to get feedback for the first common.nof_h_procs slots
-  if ((slot + 1) < common.nof_h_procs) {
+  if ((slot + 1).to_uint() < common.nof_h_procs) {
     return;
   }
 
@@ -100,7 +100,7 @@ static void h_entity_report_ack(const struct harq_entity_params& common,
 
 static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
                                      const struct harq_proc_params&   dl_param,
-                                     uint32_t                         slot,
+                                     slot_point                       slot,
                                      struct harq_proc_vars&           dl_var,
                                      harq_entity&                     h_entity)
 
@@ -158,7 +158,7 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
 
 static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
                                      const struct harq_proc_params&   ul_param,
-                                     uint32_t                         slot,
+                                     slot_point                       slot,
                                      struct harq_proc_vars&           ul_var,
                                      harq_entity&                     h_entity)
 {
@@ -226,7 +226,7 @@ void test_dl_harq_proc(test_mode tmode)
   dl_harq_proc dl_proc{pid, 52};
   dci_dl_t     dci{};
   prb_grant    prbgrant{prb_interval{0, 60}};
-  slot_point   sl_tx = tx_gnb_delay;
+  slot_point   sl_tx{0, tx_gnb_delay};
   auto         sl_rx = [&sl_tx]() { return sl_tx - tx_gnb_delay; };
 
   // Test: Empty HARQ
@@ -412,13 +412,13 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   // ----------------  SLOT 0  ------------------
   // Update slot
   // Let it do the job of finding the MAX UINT 32
-  uint32_t t = -1;
+  slot_point t{0, 0};
 
   // Verify that there are empty UL HARQs
   TESTASSERT(h_entity.find_empty_ul_harq() != nullptr);
 
   // Increment slot
-  h_entity.new_slot(++t);
+  h_entity.new_slot(t);
 
   // Define UL HARQ PID 0
   const harq_proc_params ul_h_par_0{.arq_slot_delay = ul_tx_delay, .max_n_rtx = max_n_rtx, .mcs = 12, .tbs = 3152};

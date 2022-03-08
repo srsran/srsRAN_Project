@@ -4,6 +4,7 @@
 
 #include "../../lib/mac/mac_config_interfaces.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/task_executor.h"
 
 namespace srsgnb {

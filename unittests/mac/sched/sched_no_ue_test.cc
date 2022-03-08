@@ -16,7 +16,7 @@ void test_no_ues()
   sched_cfg_dummy_notifier cfg_notif;
   sched                    sch{cfg_notif};
 
-  slot_point sl_tx{0};
+  slot_point sl_tx{0, 0};
 
   // Action 1: Run slot 0
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, 0);
