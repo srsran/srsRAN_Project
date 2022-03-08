@@ -3,3 +3,5 @@ add_subdirectory(channel_modulation)
 add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
+
+add_library(upper_phy re_pattern.cpp)
