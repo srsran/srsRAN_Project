@@ -201,9 +201,7 @@ void test_queue_block_api()
       if (queue.is_stopped()) {
         break;
       }
-      assert(val == count);
-      // Use val variable.
-      (void)(val);
+      TESTASSERT_EQ(val, count);
       count++;
     }
   });
