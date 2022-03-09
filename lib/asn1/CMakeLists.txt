@@ -1,3 +1,5 @@
+add_subdirectory(test)
+
 # ASN1 utils
 add_library(asn1_utils STATIC asn1_utils.cc)
 target_link_libraries(asn1_utils srslog)
