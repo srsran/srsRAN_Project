@@ -30,7 +30,7 @@ public:
   void enable();
   void open(const char* filename_);
   void close();
-  void write_pdu(srsgnb::const_span<uint8_t> pdu);
+  void write_pdu(const_span<uint8_t> pdu);
 };
 
 } // namespace srsran

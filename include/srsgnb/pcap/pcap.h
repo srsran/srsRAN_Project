@@ -22,7 +22,7 @@
 
 #define UDP_DLT 149 // UDP needs to be selected as protocol
 
-// This structure gets written to the start of the file
+/// This structure gets written to the start of the file
 struct pcap_hdr_t {
   unsigned int   magic_number;  /// magic number
   unsigned short version_major; /// major version number
@@ -33,7 +33,7 @@ struct pcap_hdr_t {
   unsigned int   network;       /// data link type
 };
 
-// This structure precedes each packet
+/// This structure precedes each packet
 struct pcaprec_hdr_t {
   unsigned int ts_sec;   /// timestamp seconds
   unsigned int ts_usec;  /// timestamp microseconds
