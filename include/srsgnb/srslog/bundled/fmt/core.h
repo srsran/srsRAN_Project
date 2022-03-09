@@ -713,7 +713,7 @@ class container_buffer : public buffer<typename Container::value_type> {
   Container& container_;
 
  protected:
-  void grow(size_t capacity) FMT_OVERRIDE {
+  void grow(size_t capacity) override {
     container_.resize(capacity);
     this->set(&container_[0], capacity);
   }

@@ -624,7 +624,7 @@ class basic_memory_buffer : public detail::buffer<T> {
   }
 
  protected:
-  void grow(size_t size) FMT_OVERRIDE;
+  void grow(size_t size) override;
 
  public:
   using value_type = T;

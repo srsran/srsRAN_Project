@@ -16,8 +16,6 @@
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  assert_cf_max_error    = 1e-6;
-static const float  assert_float_max_error = 1e-6;
 
 using namespace srsgnb;
 

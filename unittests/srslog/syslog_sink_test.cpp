@@ -20,9 +20,6 @@
 
 using namespace srslog;
 
-/// Syslog sink name.
-static constexpr char sink_name[] = "srslog_syslog_sink";
-
 static bool find_string_infile(std::string filename, std::string pattern)
 {
   std::ifstream file(filename);

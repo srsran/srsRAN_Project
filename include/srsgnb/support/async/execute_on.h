@@ -17,7 +17,7 @@ struct task_executor_awaiter {
 
   bool await_suspend(coro_handle<> suspending_awaitable)
   {
-    exec.execute([this, suspending_awaitable]() mutable { suspending_awaitable.resume(); });
+    exec.execute([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
     return false;
   }
 

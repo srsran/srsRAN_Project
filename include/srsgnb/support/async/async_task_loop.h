@@ -1,4 +1,3 @@
-
 #ifndef SRSGNB_ASYNC_TASK_LOOP_H
 #define SRSGNB_ASYNC_TASK_LOOP_H
 
@@ -7,7 +6,6 @@
 #include "srsgnb/adt/unique_function.h"
 
 namespace srsgnb {
-
 /// Asynchronous task that sequentially runs other enqueued asynchronous tasks
 class async_task_sequencer
 {
@@ -36,8 +34,8 @@ public:
   {
     // Enqueue task in case main loop is waiting for new procedure
     running = false;
-    queue.try_push([this]() {
-      return launch_async([this](coro_context<async_task<void> >& ctx) {
+    queue.try_push([]() {
+      return launch_async([](coro_context<async_task<void> >& ctx) {
         CORO_BEGIN(ctx);
         CORO_RETURN();
       });

@@ -13,7 +13,10 @@ mac_impl::mac_impl(mac_ul_sdu_notifier& ul_ccch_notifier_,
   dl_unit(cfg),
   ul_unit(cfg, ul_ccch_notifier_),
   ctrl_unit(cfg, ul_unit, dl_unit)
-{}
+{
+  // :TODO: remove when the log is used.
+  (void)(logger);
+}
 
 void mac_impl::push_rx_data_indication(mac_rx_data_indication msg)
 {
