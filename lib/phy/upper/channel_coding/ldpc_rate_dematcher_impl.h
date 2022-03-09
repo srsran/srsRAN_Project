@@ -4,7 +4,6 @@
 #ifndef SRSGNB_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL
 #define SRSGNB_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL
 
-#include "iostream"
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_dematcher.h"
 
@@ -24,11 +23,10 @@ private:
   void init(const config_t& cfg);
 
   /// Allots LLRs from the rate-matched input sequence to the full-sized output codeblock (i.e., reverts bit selection).
-  /// \todo Change bits to llrs!
-  void allot_bits(span<int8_t> out, span<const int8_t> in) const;
+  void allot_llrs(span<int8_t> out, span<const int8_t> in) const;
 
   /// Reverts the bit interleaving procedure.
-  void deinterleave_bits(span<int8_t> out, span<const int8_t> in) const;
+  void deinterleave_llrs(span<int8_t> out, span<const int8_t> in) const;
 
   // Data members.
   /// Auxiliary buffer.

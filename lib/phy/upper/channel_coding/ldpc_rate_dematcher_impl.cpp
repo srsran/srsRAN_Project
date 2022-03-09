@@ -64,15 +64,28 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>       output,
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
 
   if (modulation_order == 1) {
-    allot_bits(output, input);
+    allot_llrs(output, input);
   } else {
     span<int8_t> aux = span<int8_t>(auxiliary_buffer).subspan(0, input.size());
-    deinterleave_bits(aux, input);
-    allot_bits(output, aux);
+    deinterleave_llrs(aux, input);
+    allot_llrs(output, aux);
   }
 };
 
-void ldpc_rate_dematcher_impl::allot_bits(span<int8_t> out, span<const int8_t> in) const
+static int8_t combine_llrs(int8_t llrs1, int8_t llrs2)
+{
+  // LLRs are quantized over 7 bits and take values from -63 to 63, with INT8_MAX corresponding to infinity.
+  constexpr int max_range = 63;
+
+  int tmp = llrs1 + llrs2;
+
+  if (abs(tmp) > max_range) {
+    tmp = (tmp > 0) ? max_range : -max_range;
+  }
+  return static_cast<int8_t>(tmp);
+};
+
+void ldpc_rate_dematcher_impl::allot_llrs(span<int8_t> out, span<const int8_t> in) const
 {
   // Ensure output is empty.
   std::fill(out.begin(), out.end(), 0);
@@ -84,8 +97,7 @@ void ldpc_rate_dematcher_impl::allot_bits(span<int8_t> out, span<const int8_t> i
 
     if ((tmp_idx < nof_info_bits) || (tmp_idx >= nof_systematic_bits)) {
       // Not a filler bit, copy value.
-      assert(out[tmp_idx] == 0);
-      out[tmp_idx] = in[k];
+      out[tmp_idx] = combine_llrs(out[tmp_idx], in[k]);
       ++k;
     } else {
       // This is a filler bit, fix it to zero by setting the corresponding
@@ -95,16 +107,14 @@ void ldpc_rate_dematcher_impl::allot_bits(span<int8_t> out, span<const int8_t> i
   }
 }
 
-void ldpc_rate_dematcher_impl::deinterleave_bits(span<int8_t> out, span<const int8_t> in) const
+void ldpc_rate_dematcher_impl::deinterleave_llrs(span<int8_t> out, span<const int8_t> in) const
 {
   unsigned E = in.size();
-  unsigned in_index{0};
 
-  for (const auto& this_in : in) {
+  for (unsigned in_index = 0; in_index != E; ++in_index) {
     unsigned help_index = in_index % modulation_order;
     unsigned out_index  = (in_index + help_index * (E - 1)) / modulation_order;
-    out[out_index]      = this_in;
-    ++in_index;
+    out[out_index]      = in[in_index];
   }
 }
 

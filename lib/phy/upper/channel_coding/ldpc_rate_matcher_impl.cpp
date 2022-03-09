@@ -44,7 +44,8 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t
   } else {
     srsran_assert(false, "LDPC rate matching: invalid input length.");
   }
-  assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE);
+  srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
+                "LDPC rate matching: invalid input length.");
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
 
@@ -73,14 +74,12 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
 
 void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
-  unsigned E = in.size();
-  unsigned out_index{0};
+  unsigned E = out.size();
 
-  for (auto& this_out : out) {
+  for (unsigned out_index = 0; out_index != E; ++out_index) {
     unsigned help_index = out_index % modulation_order;
     unsigned in_index   = (out_index + help_index * (E - 1)) / modulation_order;
-    this_out            = in[in_index];
-    ++out_index;
+    out[out_index]      = in[in_index];
   }
 }
 

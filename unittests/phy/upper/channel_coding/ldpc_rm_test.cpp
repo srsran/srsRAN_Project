@@ -6,7 +6,6 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <iostream>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
