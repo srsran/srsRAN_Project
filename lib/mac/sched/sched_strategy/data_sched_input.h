@@ -19,17 +19,16 @@ private:
 /// Container of eligible UEs for scheduling
 using ue_candidate_map_t = circular_map<rnti_t, ue_candidate, MAX_NOF_UES>;
 
-/// Input parameters relative to a {slot, BWP}, which the scheduling strategy uses to allocate UEs
+/// Input parameters relative to a {slot, cell} which the scheduling strategy uses to allocate UEs
 class data_sched_input
 {
 public:
-  data_sched_input(slot_point sl_tx_, du_cell_index_t cell_index_, du_bwp_id_t bwp_id_) :
-    sl_tx(sl_tx_), cell_index(cell_index_), bwp_id(bwp_id_)
+  data_sched_input(slot_point sl_tx_, du_cell_index_t cell_index_) :
+    sl_tx(sl_tx_), cell_index(cell_index_)
   {}
 
   const slot_point      sl_tx;
   const du_cell_index_t cell_index;
-  const du_bwp_id_t     bwp_id;
 
   ue_candidate_map_t eligible_ues;
 };

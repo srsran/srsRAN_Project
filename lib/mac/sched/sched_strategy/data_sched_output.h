@@ -11,7 +11,7 @@ namespace srsgnb {
 class dl_data_sched_output
 {
 public:
-  dl_data_sched_output(slot_point sl_tx_, du_bwp_id_t bwp_id_) : sl_tx(sl_tx_), bwp_id(bwp_id_) {}
+  dl_data_sched_output(slot_point sl_tx_, du_cell_index_t cell_index_) : pdcch_slot(sl_tx_), cell_index(cell_index_) {}
 
   bool alloc_pdsch(ue_candidate ue)
   {
@@ -19,16 +19,15 @@ public:
     return true;
   }
 
-private:
-  const slot_point  sl_tx;
-  const du_bwp_id_t bwp_id;
+  const slot_point      pdcch_slot;
+  const du_cell_index_t cell_index;
 };
 
 /// Object where data scheduler strategy stores UL grants
 class ul_data_sched_output
 {
 public:
-  ul_data_sched_output(slot_point sl_tx_, du_bwp_id_t bwp_id_) : sl_tx(sl_tx_), bwp_id(bwp_id_) {}
+  ul_data_sched_output(slot_point sl_tx_, du_cell_index_t cell_index_) : pdcch_slot(sl_tx_), cell_index(cell_index_) {}
 
   bool alloc_pusch(ue_candidate ue)
   {
@@ -36,9 +35,8 @@ public:
     return true;
   }
 
-private:
-  const slot_point  sl_tx;
-  const du_bwp_id_t bwp_id;
+  const slot_point      pdcch_slot;
+  const du_cell_index_t cell_index;
 };
 
 } // namespace srsgnb

@@ -7,12 +7,23 @@
 
 namespace srsgnb {
 
-/// Interface to allocate UE DL and UL grants in a specific BWP
+/// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot
+/// The data_scheduler object will be common to all cells and slots.
 class data_scheduler
 {
 public:
-  virtual ~data_scheduler()                                                  = default;
+  virtual ~data_scheduler() = default;
+
+  /// Schedule UE DL grants for a given {slot, cell}.
+  /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
+  ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
+  /// \param out scheduler output for the given {slot, cell}.
   virtual void dl_sched(const data_sched_input& in, dl_data_sched_output& out) = 0;
+
+  /// Schedule UE UL grants for a given {slot, cell}.
+  /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
+  ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
+  /// \param out scheduler output for the given {slot, cell}.
   virtual void ul_sched(const data_sched_input& in, ul_data_sched_output& out) = 0;
 };
 
