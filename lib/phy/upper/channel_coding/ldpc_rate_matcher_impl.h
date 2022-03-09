@@ -1,5 +1,5 @@
 /// \file
-/// \brief LDPC rate matcher definition.
+/// \brief LDPC rate matcher declaration.
 
 #ifndef SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
 #define SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
@@ -9,7 +9,7 @@
 
 namespace srsgnb {
 
-/// LDPC rate matching implementation.
+/// LDPC rate matching implementation, as per TS38.212 Section 5.4.2.
 class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:

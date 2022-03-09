@@ -13,6 +13,8 @@ using namespace srsgnb::ldpc;
 
 /// \brief Runs a single rate-matcher test for the specified configuration.
 ///
+/// The test first takes a codeword, matches it to 5 different rates and compares the result with the provided
+/// benchmark. In a second step, the correctness of the rate dematching procedure is verified in a similar manner.
 /// \param[in] rv       Redundancy version, valid options {0, 1, 2, 3}.
 /// \param[in] mod      Modulation scheme.
 /// \param[in] lbrm     Activates the limited buffer rate matching mode when set to true.

@@ -1,5 +1,5 @@
 /// \file
-/// LDPC decoder definition.
+/// \brief LDPC decoder declaration.
 
 #ifndef SRSGNB_CHANNEL_CODING_LDPC_DECODER_IMPL
 #define SRSGNB_CHANNEL_CODING_LDPC_DECODER_IMPL

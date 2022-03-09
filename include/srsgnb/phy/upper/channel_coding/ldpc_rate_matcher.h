@@ -1,5 +1,5 @@
 /// \file
-/// \brief LDPC rate matching and rate recovering
+/// \brief LDPC rate matching.
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHING
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHING
 

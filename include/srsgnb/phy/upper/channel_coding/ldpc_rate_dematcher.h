@@ -27,6 +27,8 @@ public:
 
   /// \brief Recovers a full codeblock from its rate-matched version.
   ///
+  /// Log-likelihood ratios corresponding to filler bits are set to \c INT8_MAX. Log-likelihood ratios that cannot
+  /// be determined from the input are set to zero.
   /// \param[out] output          Original, full codeblock (log-likelihood ratios).
   /// \param[in]  input           Rate-matched codeblock (log-likelihood ratios).
   /// \param[in]  nof_filler_bits Number of filler bits in the full codeblock.

@@ -10,6 +10,9 @@
 
 namespace srsgnb {
 
+/// \brief LDPC rate dematching implementation.
+///
+/// It reverts the rate matching procedure described in TS38.212 Section 5.4.2.
 class ldpc_rate_dematcher_impl : public ldpc_rate_dematcher
 {
 public:
@@ -17,11 +20,14 @@ public:
   rate_dematch(span<int8_t> output, span<const int8_t> input, unsigned _nof_filler_bits, const config_t& cfg) override;
 
 private:
-  /// Initializes the rate matcher internal state.
+  /// Initializes the rate dematcher internal state.
   void init(const config_t& cfg);
 
+  /// Allots LLRs from the rate-matched input sequence to the full-sized output codeblock (i.e., reverts bit selection).
+  /// \todo Change bits to llrs!
   void allot_bits(span<int8_t> out, span<const int8_t> in) const;
 
+  /// Reverts the bit interleaving procedure.
   void deinterleave_bits(span<int8_t> out, span<const int8_t> in) const;
 
   // Data members.
