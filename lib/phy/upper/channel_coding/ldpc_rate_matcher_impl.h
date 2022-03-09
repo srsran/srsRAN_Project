@@ -6,13 +6,8 @@
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
-#include <iostream>
 
 namespace srsgnb {
-namespace ldpc {
-/// Maximum codeblock length (recall that 2 * LS variable nodes are punctured from the full codeword).
-constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size;
-} // namespace ldpc
 
 /// LDPC rate matching implementation.
 class ldpc_rate_matcher_impl : public ldpc_rate_matcher

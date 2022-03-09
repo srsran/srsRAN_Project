@@ -7,6 +7,9 @@
 /// \var static constexpr unsigned srsgnb::ldpc::block_length
 /// \brief Length of the original codeblock (corresponds to BG1, LS = 14).
 ///
+/// \var static constexpr unsigned srsgnb::ldpc::nof_filler_bits
+/// \brief Number of filler bits in the codeblock.
+///
 /// \var static constexpr unsigned srsgnb::ldpc::nof_rates
 /// \brief Number of tested target rates.
 ///
@@ -160,9 +163,10 @@
 namespace srsgnb {
 namespace ldpc {
 
-static constexpr unsigned message_length = 308;
-static constexpr unsigned block_length   = 924;
-static constexpr unsigned nof_rates      = 5;
+static constexpr unsigned message_length  = 308;
+static constexpr unsigned nof_filler_bits = 40;
+static constexpr unsigned block_length    = 924;
+static constexpr unsigned nof_rates       = 5;
 
 static constexpr std::array<double, nof_rates> rate_list{0.2, 0.4, 0.6, 0.8, 1.0};
 

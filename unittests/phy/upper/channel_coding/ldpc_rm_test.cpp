@@ -3,8 +3,10 @@
 
 #include "ldpc_rm_test_sets.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
 #include "srsgnb/support/srsran_assert.h"
+#include <iostream>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
@@ -21,7 +23,8 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
                          bool                                               lbrm,
                          const std::array<std::vector<uint8_t>, nof_rates>& matched);
 
-static std::unique_ptr<ldpc_rate_matcher> rm = create_ldpc_rate_matcher();
+static const std::unique_ptr<ldpc_rate_matcher>   matcher   = create_ldpc_rate_matcher();
+static const std::unique_ptr<ldpc_rate_dematcher> dematcher = create_ldpc_rate_dematcher();
 
 int main()
 {
@@ -127,11 +130,39 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
     std::vector<uint8_t>        matched(rm_length);
     unsigned                    n_ref = lbrm ? test_Nref : 0;
     ldpc_rate_matcher::config_t rm_cfg{rv, mod, n_ref};
-    rm->rate_match(matched, codeblock, rm_cfg);
+    matcher->rate_match(matched, codeblock, rm_cfg);
 
+    // Compare the rate matched codeblocks with the benchmark ones.
     assert(matched_bm[i].size() == rm_length);
     if (!std::equal(matched.cbegin(), matched.cend(), matched_bm[i].cbegin())) {
       return 1;
+    }
+
+    // Transform rate-matched bits into log-likelihood ratios.
+    std::vector<int8_t> llrs(rm_length);
+    auto                bit_to_llrs = [](const uint8_t& b) { return 1 - 2 * b; };
+    std::transform(matched_bm[i].cbegin(), matched_bm[i].cend(), llrs.begin(), bit_to_llrs);
+
+    std::vector<int8_t>           dematched(codeblock.size());
+    ldpc_rate_dematcher::config_t cfg{rv, mod, n_ref};
+    dematcher->rate_dematch(dematched, llrs, nof_filler_bits, cfg);
+
+    // To check the dematcher output, we need to apply the rate matcher to it and compare with the output
+    // obtained in the first part of the test. First, transform LLRs into hard bits.
+    std::vector<uint8_t> hard(block_length);
+    auto                 llrs_to_bit = [](const int8_t& b) {
+      if (b == INT8_MAX) {
+        return filler_bit;
+      }
+      return static_cast<uint8_t>((b >= 0) ? 0 : 1);
+    };
+    std::transform(dematched.cbegin(), dematched.cend(), hard.begin(), llrs_to_bit);
+
+    // Now, apply the rate matcher and compare results.
+    std::vector<uint8_t> matched2(rm_length);
+    matcher->rate_match(matched2, hard, rm_cfg);
+    if (!std::equal(matched.cbegin(), matched.cend(), matched2.cbegin())) {
+      return 2;
     }
   }
   return 0;

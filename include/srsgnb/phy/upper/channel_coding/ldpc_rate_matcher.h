@@ -34,36 +34,7 @@ public:
   virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) = 0;
 };
 
-/// LDPC rate recovering interface. It reverts the operations of ldpc_rate_matcher.
-class ldpc_rate_recovering
-{
-public:
-  /// Default virtual destructor.
-  virtual ~ldpc_rate_recovering() = default;
-
-  /// Rate matching configuration parameters.
-  struct config_t {
-    /// Redundancy version, values in {0, 1, 2, 3}.
-    unsigned rv{0};
-    /// Modulation scheme.
-    modulation_scheme mod{modulation_scheme::BPSK};
-    /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    ///
-    /// Set to zero for unlimited buffer length.
-    unsigned Nref{0};
-  };
-
-  /// \brief Recovers a full codeblock from its rate-matched version.
-  ///
-  /// \param[out] output  Original, full codeblock (log-likelihood ratios).
-  /// \param[in]  input   Rate-matched codeblock (log-likelihood ratios).
-  /// \param[in]  cfg     Configuration parameters.
-  /// \remark The sizes of \c input and \c output determine the behavior of the rate recovering algorithm.
-  virtual void rate_recover(span<int8_t> output, span<const int8_t> input, const config_t& cfg) = 0;
-};
-
-std::unique_ptr<ldpc_rate_matcher>    create_ldpc_rate_matcher();
-std::unique_ptr<ldpc_rate_recovering> create_ldpc_rate_recovering();
+std::unique_ptr<ldpc_rate_matcher> create_ldpc_rate_matcher();
 
 } // namespace srsgnb
 

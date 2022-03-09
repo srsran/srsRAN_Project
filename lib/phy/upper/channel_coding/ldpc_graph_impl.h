@@ -32,6 +32,8 @@ static constexpr unsigned max_BG_N_full = std::max(BG1_N_full, BG2_N_full);
 static constexpr unsigned max_BG_M = std::max(BG1_M, BG2_M);
 /// Maximum lifting size.
 static constexpr unsigned max_lifting_size = 384;
+/// Maximum codeblock length (recall that 2 * LS variable nodes are punctured from the full codeword).
+static constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size;
 
 /// \brief Representation of a graph, inspired by TS38.212 Tables 5.3.2-2 and 5.3.2-3.
 ///
