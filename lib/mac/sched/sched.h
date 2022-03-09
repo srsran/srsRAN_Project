@@ -4,7 +4,7 @@
 
 #include "cell_sched.h"
 #include "resource_grid.h"
-#include "sched_strategy/bwp_data_sched.h"
+#include "sched_strategy/data_scheduler.h"
 #include "srsgnb/mac/sched_interface.h"
 
 namespace srsgnb {
@@ -29,6 +29,10 @@ public:
 private:
   sched_cfg_notifier& mac_notifier;
 
+  // Data UE scheduler
+  std::unique_ptr<data_scheduler> data_sched;
+
+  // Cell-specific resources and schedulers
   std::vector<cell_sched> cells;
 };
 
