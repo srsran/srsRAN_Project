@@ -1,4 +1,4 @@
-#ifndef SRSGNB_FAPI_MESSAGES_H
+﻿#ifndef SRSGNB_FAPI_MESSAGES_H
 #define SRSGNB_FAPI_MESSAGES_H
 
 #include <array>
@@ -45,17 +45,11 @@ struct base_message {
   uint32_t        length;
 };
 
-///
-//////////////// MESSAGES
-///
-
 /// Slot indication message.
 struct slot_indication_message : public base_message {
   uint16_t sfn;
   uint16_t slot;
 };
-
-//// DL_TTI.REQ helper structs.
 
 /// Maximum number of supported DCIs per slot.
 // :TODO: fapi speaks about max dci per slots, but maybe this is better named max dcis per PDU?
@@ -130,6 +124,8 @@ struct dl_pdcch_pdu {
   dl_pdcch_pdu_parameters_v4               parameters_v4;
 };
 
+/// \note For this release num_coreset_rm_patterns = 0.
+/// \note For this release num_prb_sym_rm_patts_by_value = 0.
 struct dl_pdsch_maintenance_parameters_v3 {
   uint8_t                 pdsch_trans_type;
   uint16_t                coreset_start_point;
@@ -142,13 +138,11 @@ struct dl_pdsch_maintenance_parameters_v3 {
   uint8_t                 prb_sym_rm_patt_bmp_size_byref;
   //: TODO: determine max size of this array
   std::array<uint8_t, 16> prb_sym_rm_patt_bmp_byref;
-  // NOTE: For this release num_prb_sym_rm_patts_by_value = 0.
-  uint8_t num_prb_sym_rm_patts_by_value;
-  // NOTE: For this release num_coreset_rm_patterns = 0.
-  uint8_t  num_coreset_rm_patterns;
-  uint16_t pdcch_pdu_index;
-  uint16_t dci_index;
-  uint8_t  lte_crs_rm_pattern_bmp_size;
+  uint8_t                 num_prb_sym_rm_patts_by_value;
+  uint8_t                 num_coreset_rm_patterns;
+  uint16_t                pdcch_pdu_index;
+  uint16_t                dci_index;
+  uint8_t                 lte_crs_rm_pattern_bmp_size;
   //: TODO: determine max size of this array
   std::array<uint8_t, 16> lte_crs_rm_pattern;
   uint8_t                 num_csi_rs_for_rm;
@@ -335,8 +329,6 @@ struct dl_tti_request_message : public base_message {
   //: TODO: top level rate match patterns
 };
 
-/// DL_TTI.RESP helper structs.
-
 /// Downlink TTI response pdu information.
 struct dl_tti_response_pdu {
   uint16_t pdu_index;
@@ -355,8 +347,6 @@ struct dl_tti_response_message : public base_message {
   uint16_t                                      num_pdus;
   std::array<dl_tti_response_pdu, MAX_NUM_PDUS> pdus;
 };
-
-/// UL_TTI.REQ helper structs.
 
 /// Uplink PDU type ID.
 enum class ul_pdu_type : uint16_t { PRACH, PUSCH, PUCCH, SRS, msg_a_PUSCH };
@@ -479,6 +469,7 @@ struct ul_pusch_pdu {
   //: TODO: pusch uci v3
 };
 
+/// Encodes PUCCH pdu.
 struct ul_pucch_pdu {
   uint16_t           rnti;
   uint32_t           handle;
@@ -542,8 +533,6 @@ struct ul_tti_request_message : public base_message {
   //: TODO: groups array
 };
 
-/// UL_DCI.REQ helper structs.
-
 /// Uplink DCI PDU information.
 struct ul_dci_pdu {
   uint16_t     pdu_type;
@@ -566,8 +555,6 @@ struct ul_dci_request_message : public base_message {
   std::array<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
 
-/// TX_DATA.REQ helper structs.
-
 /// Transmission data request PDU information.
 struct tx_data_req_pdu {
   uint32_t pdu_length;
@@ -588,8 +575,6 @@ struct tx_data_request_message : public base_message {
   uint16_t                                              num_pdus;
   std::array<tx_data_req_pdu, MAX_NUM_DL_PDUS_PER_SLOT> pdus;
 };
-
-/// RX_DATA.IND helper structs.
 
 /// Reception data indication PDU information.
 struct rx_data_indication_pdu {
@@ -614,8 +599,6 @@ struct rx_data_indication_message : public base_message {
   uint16_t                                                        number_of_pdus;
   std::array<rx_data_indication_pdu, MAX_NUM_ULSCH_PDUS_PER_SLOT> pdus;
 };
-
-/// CRC.IND helper structs.
 
 /// Reception data indication PDU information.
 struct crc_ind_pdu {
@@ -646,8 +629,6 @@ struct crc_indication_message : public base_message {
   uint16_t                                       num_crcs;
   std::array<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
 };
-
-/// UCI.IND helper structs.
 
 /// UCI CSI part1 information.
 struct uci_csi_part1 {
@@ -783,8 +764,6 @@ struct uci_indication_message : public base_message {
   std::array<uci_indication_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
 
-/// SRS.IND helper structs.
-
 /// Encodes the PRGs.
 struct srs_prg {
   uint8_t rb_snr;
@@ -811,6 +790,7 @@ struct srs_beamforming_report {
   std::array<srs_reported_symbols, MAX_NUM_REP_SYMBOLS> rep_symbols;
 };
 
+/// Encodes the normalized IQ representation.
 enum class normalized_iq_representation : uint8_t { normal, extended };
 
 /// Encodes the normalized channel IQ matrix report.
@@ -826,7 +806,7 @@ struct srs_normalized_channel_iq_matrix {
   std::array<uint8_t, MAX_MATRIX_H_SIZE> channel_matrix_h;
 };
 
-/// Encodes the svd array for each prg.
+/// Encodes the SVD array for each PRG.
 struct srs_svd_prg {
   static constexpr unsigned MAX_SIZE_LEFT_EIGENVECTOR  = 256;
   static constexpr unsigned MAX_SIZE_SINGULAR_MATRIX   = 32;
@@ -837,6 +817,7 @@ struct srs_svd_prg {
   std::array<uint8_t, MAX_SIZE_RIGHT_EIGENVECTOR> right_eigenvectors;
 };
 
+/// Encodes the normalized singular representation.
 enum class normalized_singular_representation : uint8_t { normal, extended };
 
 /// Encodes the channel svd representation.
@@ -855,10 +836,10 @@ struct srs_channel_svd_representation {
 };
 
 /// SRS report TLV.
+/// \note Value parameter type can be bigger than 32bits.
 struct srs_report_tlv {
   uint16_t tag;
   uint32_t length;
-  /// NOTE: Value type can be bigger than 32bits.
   uint32_t value;
 };
 
@@ -887,8 +868,6 @@ struct srs_indication_message : public base_message {
   uint8_t                                          num_pdu;
   std::array<srs_indication_pdu, MAX_NUM_SRS_PDUS> pdus;
 };
-
-/// RACH.IND helper structs.
 
 /// RACH indication pdu preamble.
 struct rach_indication_pdu_preamble {
@@ -925,12 +904,6 @@ struct rach_indication_message : public base_message {
   uint8_t                                            num_pdu;
   std::array<rach_indication_pdu, MAX_NUM_RACH_PDUS> pdus;
 };
-
-//////////////////////////////
-/// CONFIGURATION MESSAGES ///
-//////////////////////////////
-
-/// Request TLVs.
 
 /// Encodes the error codes.
 enum class error_code_id : uint8_t {
@@ -1029,11 +1002,12 @@ struct pucch_param {
 
 /// Encodes the modulation order di.
 enum class modulation_order_dl : uint8_t { QPSK, QAM_16, QAM_64, QAM_256 };
+
 /// Encodes the ssb rate match support.
 enum class ssb_rate_match_type : uint8_t { not_supported, SSB_configuration, SSB_pdu_index, both };
 
 /// Encodes the PDSCH parameters.
-/// NOTE: not adding numOfRateMAtchPatternLTECrsPerSlot, numOfRateMatchPatternLTEInPhy,
+/// \note not adding numOfRateMAtchPatternLTECrsPerSlot, numOfRateMatchPatternLTEInPhy,
 /// lteCrsRateMatchMbsfnDerivation, supportedLTECrsRateMatchMethod as they refer to LTE.
 struct pdsch_param {
   uint8_t                 pdsch_mapping_type;
@@ -1285,14 +1259,10 @@ struct capability_param {
   std::array<capability_validity, MAX_NUM_SUPPORTED_TAGS> capabilities;
 };
 
-/// PARAM.request
-
 /// Param request message.
 struct param_request : public base_message {
   uint8_t protocol_version;
 };
-
-/// PARAM.response
 
 /// Encodes the TLV data structures used for the request.
 struct tlv_request_data {
@@ -1328,8 +1298,6 @@ struct param_response : public base_message {
   uint8_t          num_tlv;
   tlv_request_data tlvs;
 };
-
-/// Config TLVs.
 
 /// Encodes the PHY configuration.
 struct phy_config {
@@ -1447,6 +1415,7 @@ struct msg_a_prach_to_pru_dmrs_config {
   std::array<std::array<msg_a_prach_to_pru_dmrs_map, MAX_NUM_PRACH_TD_INDICES>, MAX_NUM_PRACH_FD_INDICES> map;
 };
 
+/// Encodes PRACH slot configuration.
 struct prach_slot_config {
   /// Maximum number of PRACH slot indices modulus.
   static constexpr unsigned MAX_NUM_PRACH_SLOT = 64;
@@ -1490,9 +1459,9 @@ struct multi_msg_a_pusch_config {
 enum class ssb_case_types : uint8_t { case_a, case_b, case_c, case_d, case_e };
 
 /// Encodes the SSB resource configuration.
+/// \note mask_size value is 2 or 64. When mask_size == 2 mask field of this struct is valid, otherwise (mask_size ==
+/// 64) beam_id field is valid;
 struct ssb_config {
-  /// NOTE: mask_size value is 2 or 64. When mask_size == 2 mask field of this struct is valid, otherwise (mask_size ==
-  /// 64) beam_id field is valid;
   uint16_t                ssb_config_index;
   uint16_t                ssb_offset_point_a;
   uint8_t                 beta_pss_profile_nr;
@@ -1518,6 +1487,7 @@ struct multi_ssb_config {
   std::array<ssb_config, MAX_NUM_SSBS> ssbs;
 };
 
+/// Encodes the TDD slot symbol type.
 enum class tdd_slot_symbol_type : uint8_t { dl_symbol, ul_symbol, flexible_symbol };
 
 /// Encodes the TDD configuration in the PHY.
@@ -1538,10 +1508,11 @@ struct measurement_config {
 };
 
 /// Encodes a map which indicates how a set of UCI part1 parameters map to a length of corresponding UCI part2.
+/// \note Maximum value for MAX_SIZE_MAP is 2^MAX_NUM_PART1_PARAMS = 4096.
 struct uci_parts_map {
   /// Maximum number of part1 parameters.
   static constexpr unsigned MAX_NUM_PART1_PARAMS = 12;
-  /// Maximum size for the map. NOTE: Maximum value is 2^MAX_NUM_PART1_PARAMS = 4096.
+  /// Maximum size for the map.
   static constexpr unsigned MAX_SIZE_MAP = 1024;
 
   uint8_t                                   num_part1_params;
@@ -1619,8 +1590,6 @@ struct delay_management_config {
   uint8_t  timing_info_period;
 };
 
-/// Config.request
-
 /// Encodes the TLV data structure for the configure.
 struct tlv_config_data {
   /// Maximum number of allowed TLVs supported.
@@ -1655,8 +1624,6 @@ struct config_request : public base_message {
   tlv_config_data tlvs;
 };
 
-/// Config.response
-
 /// Config response message.
 struct config_response : public base_message {
   /// Maximum number of invalid TLVs supported.
@@ -1674,27 +1641,17 @@ struct config_response : public base_message {
   tlv_config_data                    tlvs;
 };
 
-/// Start.request
-
 /// Start request message.
 struct start_request : public base_message {};
-
-/// Start.response
 
 /// Start response message.
 struct start_response : public base_message {};
 
-/// Stop.request
-
 /// Stop request message.
 struct stop_request : public base_message {};
 
-/// Stop.indication
-
 /// Stop indication message.
 struct stop_indication : public base_message {};
-
-/// PHY notifications
 
 /// Encodes the error indication message.
 struct error_indication_message : public base_message {
@@ -1706,11 +1663,9 @@ struct error_indication_message : public base_message {
   uint16_t      expected_slot;
 };
 
+/// \note not adding numOfRateMAtchPatternLTECrsPerSlot, numOfRateMatchPatternLTEInPhy,
+/// lteCrsRateMatchMbsfnDerivation, supportedLTECrsRateMatchMethod as they refer to LTE.
 enum class tlv_tags : uint16_t {
-  //////////////////////
-  /// Parameter tags ///
-  //////////////////////
-
   /// General parameter tags.
   protocol_version = 0x0037,
 
@@ -1753,8 +1708,6 @@ enum class tlv_tags : uint16_t {
   pucch_aggregation                = 0x0040,
 
   /// PDSCH parameter tags.
-  /// NOTE: not adding numOfRateMAtchPatternLTECrsPerSlot, numOfRateMatchPatternLTEInPhy,
-  /// lteCrsRateMatchMbsfnDerivation, supportedLTECrsRateMatchMethod as they refer to LTE.
   pdsch_mapping_type                           = 0x0013,
   pdsch_allocation_types                       = 0x0014,
   pdsch_vrb_to_prb_mapping                     = 0x0015,
@@ -1914,10 +1867,6 @@ enum class tlv_tags : uint16_t {
   max_number_ul_spatial_streams              = 0x0153,
   ul_tpmi_capability                         = 0x0154,
 
-  //////////////////////////
-  /// Configuration tags ///
-  //////////////////////////
-
   /// PHY configuration tags.These TLVs are only supported for PHY ID 0.
   profile_id                    = 0x102a,
   indication_instances_per_slot = 0x102b,
@@ -1985,7 +1934,6 @@ enum class tlv_tags : uint16_t {
 };
 
 } // namespace fapi
-
 } // namespace srsgnb
 
 #endif // SRSGNB_FAPI_MESSAGES_H
