@@ -139,12 +139,12 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<const int8_t> soft, sp
   assert((soft.size() == nof_messages) && (c2v.size() == nof_messages));
 
   for (unsigned i = 0; i != nof_messages; ++i) {
-    if (abs(soft[i]) >= LOCAL_INF) {
+    if (std::abs(soft[i]) >= LOCAL_INF) {
       v2c[i] = (soft[i] > 0) ? LOCAL_INF : -LOCAL_INF;
       continue;
     }
     int tmp = static_cast<int>(soft[i]) - c2v[i];
-    if (abs(tmp) > LOCAL_MAX_RANGE) {
+    if (std::abs(tmp) > LOCAL_MAX_RANGE) {
       tmp = (tmp > 0) ? LOCAL_MAX_RANGE : -LOCAL_MAX_RANGE;
     }
     v2c[i] = static_cast<int8_t>(tmp);
@@ -170,7 +170,7 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node
     // var_to_check messages.
     for (unsigned j = 0; j != lifting_size; ++j) {
       unsigned v2c_index                 = v2c_base_index + j;
-      int8_t   this_var_to_check         = static_cast<int8_t>(abs(var_to_check[v2c_index]));
+      int8_t   this_var_to_check         = static_cast<int8_t>(std::abs(var_to_check[v2c_index]));
       unsigned tmp_index                 = (j + lifting_size - shift) % lifting_size;
       bool     is_min                    = (this_var_to_check < min_var_to_check[tmp_index]);
       int8_t   new_second_min            = is_min ? min_var_to_check[tmp_index] : this_var_to_check;
@@ -226,7 +226,7 @@ void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
 
       // Soft bits absolutely larger than LOCAL_MAX_RANGE are set to infinity (LOCAL_INF). As a result, they become
       // fixed bits, that is they won't change their value from now on.
-      if (abs(tmp) > LOCAL_MAX_RANGE) {
+      if (std::abs(tmp) > LOCAL_MAX_RANGE) {
         tmp = (tmp > 0) ? LOCAL_INF : -LOCAL_INF;
       }
 

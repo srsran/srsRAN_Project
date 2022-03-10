@@ -79,7 +79,7 @@ static int8_t combine_llrs(int8_t llrs1, int8_t llrs2)
 
   int tmp = llrs1 + llrs2;
 
-  if (abs(tmp) > max_range) {
+  if (std::abs(tmp) > max_range) {
     tmp = (tmp > 0) ? max_range : -max_range;
   }
   return static_cast<int8_t>(tmp);
