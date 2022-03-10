@@ -26,14 +26,15 @@ bool sched::handle_cell_configuration_request(const cell_configuration_request_m
   return true;
 }
 
-const dl_sched_result* sched::get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index)
+const dl_sched_result* sched::get_dl_sched(slot_point sl, du_cell_index_t cell_index)
 {
+  cells[cell_index]->slot_indication(sl);
   // TODO
-  return &cells[cell_index]->res_grid[sl_tx].dl_grants;
+  return cells[cell_index]->get_dl_sched(sl);
 }
 
-const ul_sched_result* sched::get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index)
+const ul_sched_result* sched::get_ul_sched(slot_point sl, du_cell_index_t cell_index)
 {
   // TODO
-  return &cells[cell_index]->res_grid[sl_tx + 6].ul_grants;
+  return cells[cell_index]->get_ul_sched(sl);
 }

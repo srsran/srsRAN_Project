@@ -3,7 +3,6 @@
 #define SRSGNB_SCHED_H
 
 #include "cell_sched.h"
-#include "resource_grid.h"
 #include "sched_strategy/data_scheduler.h"
 #include "srsgnb/mac/sched_interface.h"
 

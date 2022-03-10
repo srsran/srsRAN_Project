@@ -40,16 +40,22 @@ struct dl_msg_alloc {
 };
 
 struct dl_sched_result {
-  pci_t      cell_id;
+  pci_t      pci;
   slot_point slot_value;
 
   /// Allocation of dedicated UE messages
   static_vector<dl_msg_alloc, MAX_GRANTS> ue_grants;
 };
 
-struct ul_sched_info {};
+struct ul_sched_info {
+  rnti_t crnti;
+};
 
-using ul_sched_result = static_vector<ul_sched_info, MAX_GRANTS>;
+struct ul_sched_result {
+  pci_t pci;
+  /// Allocation of PUSCHs
+  static_vector<ul_sched_info, MAX_GRANTS> puschs;
+};
 
 } // namespace srsgnb
 
