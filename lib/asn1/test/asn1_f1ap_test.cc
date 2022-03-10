@@ -100,9 +100,9 @@ int main()
 
   ue_context_setup_request_test();
 
-  srslog::flush();
-
   pcap_writer.close();
+
+  srslog::flush();
 
   return 0;
 }

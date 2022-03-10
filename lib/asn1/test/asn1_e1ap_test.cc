@@ -76,10 +76,10 @@ int main()
   srslog::init();
 
   gnb_cu_up_e1_setup_test();
- 
-  srslog::flush(); 
 
   pcap_writer.close();
+
+  srslog::flush(); 
   
   return 0;
 }
