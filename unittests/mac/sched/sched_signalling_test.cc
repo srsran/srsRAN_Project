@@ -2,7 +2,6 @@
 #include "srsgnb/support/test_utils.h"
 
 /// This will be removed once we can get this value from the slot object
-#define NOF_SLOTS_PER_SUBFRAME 1
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \
   fmt::format("Failed at slot: '{}', periodicity '{}', case '{}'", SLOT, PERIODICITY, ssb_case_to_str(CASE)).c_str()
 
@@ -12,33 +11,48 @@ using namespace srsgnb;
 const char* ssb_case_to_str(ssb_alloc_case ssb_case)
 {
   switch (ssb_case) {
-    case srsgnb::ssb_case_A:
+    case srsgnb::ssb_alloc_case::A:
       return "SSB case A";
-    case srsgnb::ssb_case_B:
+    case srsgnb::ssb_alloc_case::B:
       return "SSB case B";
-    case srsgnb::ssb_case_C_paired:
+    case srsgnb::ssb_alloc_case::C_paired:
       return "SSB case C - paired spectrum";
-    case srsgnb::ssb_case_C_unpaired:
+    case srsgnb::ssb_alloc_case::C_unpaired:
       return "SSB case C - unpaired spectrum";
     default:
       return "SSB case invalid";
   }
 }
 
+
 /// Helper struct to test HARQs and update loggers slot context
 struct test_bench {
   static srslog::basic_logger& test_logger;
   static srslog::basic_logger& mac_logger;
 
-  test_bench()
+  test_bench(ssb_alloc_case ssb_case)
   {
+    uint8_t numerology = 0;
+    switch (ssb_case){
+      case ssb_alloc_case::A:
+        numerology = 0;
+        break;
+      case ssb_alloc_case::B:
+      case ssb_alloc_case::C_paired:
+      case ssb_alloc_case::C_unpaired:
+        numerology = 1;
+        break;
+      default:
+        srsran_assert(ssb_case < ssb_alloc_case::invalid,"Invalid SSB case. Only case A, B, and C are supported");
+    }
     test_logger.set_context(0);
     mac_logger.set_context(0);
+    t = slot_point(numerology, 0);
   }
 
   void new_slot()
   {
-    ++t;
+    t++;
     test_logger.set_context(t.to_uint());
     mac_logger.set_context(t.to_uint());
   }
@@ -65,10 +79,10 @@ void test_ssb_case_A_C(const slot_point& slot_tx,
   /// For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   /// in_burst_bitmap)
   if (freq_arfcn <= freq_cutoff) {
-    TESTASSERT_MSG((in_burst_bitmap & 0b00001111) == 0, TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+    TESTASSERT_MSG((in_burst_bitmap & 0b00001111) == 0, TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_periodicity, ssb_case));
   }
 
-  uint32_t sl_point_mod = slot_tx % (ssb_periodicity * NOF_SLOTS_PER_SUBFRAME);
+  uint32_t sl_point_mod = slot_tx.to_uint() % (ssb_periodicity * slot_tx.nof_slots_per_subframe());
 
   /// Get the size of the SSB list from the in_burst_bitmap
   size_t ssb_list_size = 0;
@@ -81,38 +95,38 @@ void test_ssb_case_A_C(const slot_point& slot_tx,
   } else if (sl_point_mod == 3) {
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1) + (in_burst_bitmap & 0b00000001);
   }
-  // Check the SSB list size
-  TESTASSERT_EQ_MSG(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+  /// Check the SSB list size
+  TESTASSERT_EQ_MSG(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
   if (sl_point_mod == 0 or sl_point_mod == 1 or sl_point_mod == 2 or sl_point_mod == 3) {
     std::array<uint8_t, 2> ofdm_symbols = {2, 8};
     uint8_t                ssb_idx_mask = 0b10000000 >> (sl_point_mod * 2);
     auto                   it           = ssb_list.begin();
 
-    // Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
+    /// Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
     for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check whether it's the first transmission of the burst
+        /// Check whether it's the first transmission of the burst
         uint8_t         ssb_idx               = n + sl_point_mod * 2;
         bool            is_first_transmission = (in_burst_bitmap & (0b11111111 >> ssb_idx)) == in_burst_bitmap;
         ssb_tx_mode_opt tx_mode = is_first_transmission ? srsgnb::ssb_transmission : srsgnb::ssb_repetition;
-        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
-        // Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_ODFM_SYMB_PER_SLOT,
+        /// Check OFDM symbols and frequency allocation
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot(),
                           ssb_item.ssb_info.ofdm_symbols.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_ODFM_SYMB_PER_SLOT + 4,
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot() + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,
                           ssb_item.ssb_info.prb_alloc.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A + 20,
                           ssb_item.ssb_info.prb_alloc.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }
 
@@ -133,10 +147,10 @@ void test_ssb_case_B(const slot_point& slot_tx,
   /// For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   /// in_burst_bitmap)
   if (freq_arfcn <= 600000) {
-    TESTASSERT_MSG((in_burst_bitmap & 0b00001111) == 0, TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+    TESTASSERT_MSG((in_burst_bitmap & 0b00001111) == 0, TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_periodicity, ssb_case));
   }
 
-  uint32_t sl_point_mod = slot_tx % (ssb_periodicity * NOF_SLOTS_PER_SUBFRAME);
+  uint32_t sl_point_mod = slot_tx.to_uint() % (ssb_periodicity * slot_tx.nof_slots_per_subframe());
 
   /// Get the size of the SSB list from the in_burst_bitmap
   size_t ssb_list_size = 0;
@@ -149,39 +163,39 @@ void test_ssb_case_B(const slot_point& slot_tx,
   } else if (sl_point_mod == 3) {
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1) + (in_burst_bitmap & 0b00000001);
   }
-  // Check the SSB list size
-  TESTASSERT_EQ_MSG(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+  /// Check the SSB list size
+  TESTASSERT_EQ_MSG(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
   if (sl_point_mod == 0 or sl_point_mod == 2) {
-    // For frequency less than the CUTOFF freq, list cannot have more than 4 elements
+    /// For frequency less than the CUTOFF freq, list cannot have more than 4 elements
     std::array<uint8_t, 2> ofdm_symbols = {4, 8};
     uint8_t                ssb_idx_mask = 0b10000000 >> (sl_point_mod * 2);
     auto                   it           = ssb_list.begin();
 
-    // Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
+    /// Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
     for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check whether it's the first transmission of the burst
+        /// Check whether it's the first transmission of the burst
         uint8_t ssb_idx = n + sl_point_mod * 2;
         bool            is_first_transmission = (in_burst_bitmap & (0b11111111 >> ssb_idx)) == in_burst_bitmap;
         ssb_tx_mode_opt tx_mode = is_first_transmission ? srsgnb::ssb_transmission : srsgnb::ssb_repetition;
-        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
-        // Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_ODFM_SYMB_PER_SLOT,
+        /// Check OFDM symbols and frequency allocation
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot(),
                           ssb_item.ssb_info.ofdm_symbols.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_ODFM_SYMB_PER_SLOT + 4,
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot() + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,
                           ssb_item.ssb_info.prb_alloc.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A + 20,
                           ssb_item.ssb_info.prb_alloc.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }
 
@@ -190,35 +204,35 @@ void test_ssb_case_B(const slot_point& slot_tx,
   }
 
   if (sl_point_mod == 1 or sl_point_mod == 3) {
-    // For frequency less than the CUTOFF freq, list cannot have more than 4 elements
+    /// For frequency less than the CUTOFF freq, list cannot have more than 4 elements
     std::array<uint8_t, 2> ofdm_symbols = {16, 20};
     uint8_t                ssb_idx_mask = 0b00100000 >> ((sl_point_mod - 1) * 2);
     auto                   it           = ssb_list.begin();
 
-    // Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
+    /// Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list
     for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check whether it's the first transmission of the burst
+        /// Check whether it's the first transmission of the burst
         uint8_t ssb_idx = n + sl_point_mod * 2;
         bool            is_first_transmission = (in_burst_bitmap & (0b11111111 >> ssb_idx)) == in_burst_bitmap;
         ssb_tx_mode_opt tx_mode = is_first_transmission ? srsgnb::ssb_transmission : srsgnb::ssb_repetition;
-        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_periodicity, ssb_case));
 
-        // Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_ODFM_SYMB_PER_SLOT,
+        /// Check OFDM symbols and frequency allocation
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * slot_tx.nof_ofdm_sym_per_slot(),
                           ssb_item.ssb_info.ofdm_symbols.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_ODFM_SYMB_PER_SLOT + 4,
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * slot_tx.nof_ofdm_sym_per_slot() + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,
                           ssb_item.ssb_info.prb_alloc.start(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A + 20,
                           ssb_item.ssb_info.prb_alloc.stop(),
-                          TEST_HARQ_ASSERT_MSG(slot_tx, ssb_periodicity, ssb_case));
+                          TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }
 
@@ -235,28 +249,28 @@ void test_ssb_time_allocation(uint16_t       ssb_periodicity,
   const size_t   NUM_OF_TEST_SLOTS = 1000;
   const uint32_t offset_to_point_A = 14;
 
-  test_bench bench{};
+  test_bench bench{ssb_case};
 
   bench.new_slot();
 
-  // Define parameters and variable for the test
+  /// Define parameters and variable for the test
   ssb_list_t ssb_list;
-  // in_burst_bitmap is not used by the function for the time being
+  /// in_burst_bitmap is not used by the function for the time being
 
-  // Run test for a given number of slots
+  /// Run test for a given number of slots
   for (size_t slot_count = 0; slot_count < NUM_OF_TEST_SLOTS; slot_count++, bench.new_slot()) {
-    // Clear the SSB list of it is not empty
+    /// Clear the SSB list of it is not empty
     if (ssb_list.size() > 0) {
       ssb_list.clear();
     }
 
-    // Schedule the SSB
+    /// Schedule the SSB
     sched_ssb(bench.slot_tx(), ssb_periodicity, offset_to_point_A, freq_arfcn, in_burst_bitmap, ssb_case, ssb_list);
 
-    // Select SSB case with reference to TS 38.213, Section 4.1
+    /// Select SSB case with reference to TS 38.213, Section 4.1
     switch (ssb_case) {
-      case ssb_case_A:
-      case ssb_case_C_paired: {
+      case ssb_alloc_case::A:
+      case ssb_alloc_case::C_paired: {
         test_ssb_case_A_C(bench.slot_tx(),
                           ssb_periodicity,
                           offset_to_point_A,
@@ -266,11 +280,11 @@ void test_ssb_time_allocation(uint16_t       ssb_periodicity,
                           ssb_case,
                           ssb_list);
       } break;
-      case ssb_case_B: {
+      case ssb_alloc_case::B: {
         test_ssb_case_B(
             bench.slot_tx(), ssb_periodicity, offset_to_point_A, freq_arfcn, in_burst_bitmap, ssb_case, ssb_list);
       } break;
-      case ssb_case_C_unpaired: {
+      case ssb_alloc_case::C_unpaired: {
         test_ssb_case_A_C(bench.slot_tx(),
                           ssb_periodicity,
                           offset_to_point_A,
@@ -281,8 +295,7 @@ void test_ssb_time_allocation(uint16_t       ssb_periodicity,
                           ssb_list);
       } break;
       default:
-        srsran_assert(ssb_case < ssb_case_invalid, "Only SSB case A, B and C are currently supported");
-        break;
+        srsran_assert(ssb_case < ssb_alloc_case::invalid, "Only SSB case A, B and C are currently supported");
     }
   }
 }
@@ -296,7 +309,7 @@ void test_sched_ssb()
   /// TEST Case A, frequency < 3GHz
   uint32_t       freq_arfcn      = 500000;
   uint8_t        in_burst_bitmap = 0b01100000;
-  ssb_alloc_case ssb_case        = srsgnb::ssb_case_A;
+  ssb_alloc_case ssb_case        = srsgnb::ssb_alloc_case::A;
 
   /// TEST Different perdiodicity with Case A
   uint16_t periodicity = 5;
@@ -356,7 +369,7 @@ void test_sched_ssb()
   ///                   TEST CASE B
   /// ##########################################################
   /// TEST Case B, frequency < 3GHz
-  ssb_case        = srsgnb::ssb_case_B;
+  ssb_case        = srsgnb::ssb_alloc_case::B;
   freq_arfcn      = 500000;
   in_burst_bitmap = 0b01100000;
 
@@ -418,7 +431,7 @@ void test_sched_ssb()
   ///                   TEST CASE C
   /// ##########################################################
   /// TEST CASE C - unpaired spectrum, freq. < 1.88GHz
-  ssb_case        = srsgnb::ssb_case_C_unpaired;
+  ssb_case        = srsgnb::ssb_alloc_case::C_unpaired;
   in_burst_bitmap = 0b01100000;
   freq_arfcn      = 300000;
   periodicity     = 5;
@@ -474,10 +487,10 @@ void test_sched_ssb()
 
 int main()
 {
-  // Initialize logger
+  /// Initialize logger
   srslog::init();
 
-  // Test SSB scheduling
+  /// Test SSB scheduling
   test_sched_ssb();
 
   return 0;

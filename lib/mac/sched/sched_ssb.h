@@ -5,22 +5,24 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 
-#define NOF_ODFM_SYMB_PER_SLOT 14
-
 namespace srsgnb {
 
+/// Enum based on O-RAN .WG8.AAD.0-v0, Section 9.2.3.3.8
 enum ssb_tx_mode_opt { no_transmission, ssb_transmission, ssb_repetition, ssb_tx_mode_invalid };
 
-enum ssb_alloc_case { ssb_case_A, ssb_case_B, ssb_case_C_paired, ssb_case_C_unpaired, ssb_case_invalid };
+/// Enum based on SSB cases, TS 38.213, Section 4.1 - Only Case A, B, C are supported
+enum class ssb_alloc_case : uint8_t { A = 0, B, C_paired, C_unpaired, invalid};
 
+/// Enum based on O-RAN .WG8.AAD.0-v0, Section 9.2.3.3.8
 struct ssb_info_t {
   uint8_t ssb_idx;
-  // The interval below replaces an additional struct with StartSymbolNumber and NumberOfSymbols
+  /// The interval below replaces an additional struct with StartSymbolNumber and NumberOfSymbols
   ofdm_symb_interval ofdm_symbols;
-  // The interval below replace an additional struct with StartPRB and NumberOfPRBs
+  /// The interval below replace an additional struct with StartPRB and NumberOfPRBs
   prb_interval prb_alloc;
 };
 
+/// Enum based on O-RAN .WG8.AAD.0-v0, Section 9.2.3.3.8
 struct ssb_t {
   ssb_tx_mode_opt tx_mode;
   ssb_info_t      ssb_info;
@@ -49,6 +51,6 @@ void sched_ssb(const slot_point& sl_point,
                ssb_alloc_case    ssb_case,
                ssb_list_t&       ssb_list);
 
-} // namespace srsgnb
+} /// namespace srsgnb
 
-#endif // SRSGNB_SCHED_SSB_H
+#endif /// SRSGNB_SCHED_SSB_H

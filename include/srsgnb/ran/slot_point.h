@@ -17,6 +17,7 @@ class slot_point
   static constexpr uint32_t NOF_NUMEROLOGIES        = 5;
   static constexpr uint16_t NOF_SFNS                = 1024;
   static constexpr uint8_t  NOF_SUBFRAMES_PER_FRAME = 10;
+  static constexpr uint8_t  NOF_ODFM_SYMB_PER_SLOT  = 14;
 
   /// Number of slots per hyperframe.
   uint32_t nof_slots_per_hf() const { return nof_slots_per_frame() * NOF_SFNS; }
@@ -44,6 +45,9 @@ public:
 
   /// Number of slots present in a subframe.
   uint8_t nof_slots_per_subframe() const { return 1U << numerology_val; }
+
+  /// Number of OFDM symbols per slot.
+  uint8_t nof_ofdm_sym_per_slot() const { return NOF_ODFM_SYMB_PER_SLOT; }
 
   /// Number of slots present in a frame.
   uint8_t nof_slots_per_frame() const { return nof_slots_per_subframe() * NOF_SUBFRAMES_PER_FRAME; }
