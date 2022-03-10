@@ -37,6 +37,7 @@ struct cell_resource_grid {
 /// Circular pool of resource grids
 struct cell_resource_grid_pool {
   static const size_t RESOURCE_GRID_SIZE = 40;
+  static const int    OLD_SLOT_DELAY     = 10;
 
   const cell_configuration& cfg;
 
@@ -47,18 +48,26 @@ struct cell_resource_grid_pool {
   du_cell_index_t cell_index() const { return cfg.cell_index; }
   slot_point      slot_tx() const { return last_sl_ind; }
 
-  cell_resource_grid& operator[](unsigned sl_delay)
+  cell_resource_grid& operator[](slot_point sl_tx)
   {
-    srsran_sanity_check(sl_delay < RESOURCE_GRID_SIZE / 2, "The cell resource pool is too small for provided delay");
-    return slots_[(last_sl_ind + sl_delay).to_uint() % RESOURCE_GRID_SIZE];
+    assert_valid_sl(sl_tx);
+    return slots_[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
   }
-  const cell_resource_grid& operator[](unsigned sl_delay) const
+  const cell_resource_grid& operator[](slot_point sl_tx) const
   {
-    srsran_sanity_check(sl_delay < RESOURCE_GRID_SIZE / 2, "The cell resource pool is too small for provided delay");
-    return slots_[(last_sl_ind + sl_delay).to_uint() % RESOURCE_GRID_SIZE];
+    assert_valid_sl(sl_tx);
+    return slots_[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
   }
 
 private:
+  /// Ensure we are not overflowing the circular pool
+  void assert_valid_sl(slot_point sl) const
+  {
+    srsran_sanity_check(((sl - last_sl_ind) < (int)RESOURCE_GRID_SIZE / 2) and (sl - last_sl_ind) > -OLD_SLOT_DELAY,
+                        "The cell resource pool is too small for accessing a slot with delay: {}",
+                        sl - last_sl_ind);
+  }
+
   slot_point                      last_sl_ind;
   std::vector<cell_resource_grid> slots_;
 };
@@ -66,12 +75,9 @@ private:
 class slot_resource_allocator
 {
 public:
-  slot_resource_allocator(cell_resource_grid& res_grid_, slot_point sl_pt_, du_bwp_id_t bwp_id_) :
-    slot(sl_pt_), bwp_id(bwp_id_), sl_res(res_grid_)
-  {}
+  slot_resource_allocator(cell_resource_grid& res_grid_, slot_point sl_pt_) : slot(sl_pt_), sl_res(res_grid_) {}
 
-  const slot_point  slot;
-  const du_bwp_id_t bwp_id;
+  const slot_point slot;
 
   bool is_dl_active() const { return true; }
   bool is_ul_active() const { return true; }
@@ -96,20 +102,19 @@ private:
 class cell_resource_allocator
 {
 public:
-  cell_resource_allocator(cell_resource_grid_pool& res_grid_pool_, du_bwp_id_t bwp_id_, unsigned slot_offset = 0) :
-    sl_offset(slot_offset), bwp_id(bwp_id_), res_grid_pool(res_grid_pool_)
+  cell_resource_allocator(cell_resource_grid_pool& res_grid_pool_, unsigned slot_offset = 0) :
+    sl_offset(slot_offset), res_grid_pool(res_grid_pool_)
   {}
 
   /// Access resource allocator for a given {slot, cell}
   slot_resource_allocator operator[](unsigned sl_delay)
   {
-    return slot_resource_allocator{
-        res_grid_pool[sl_offset + sl_delay], res_grid_pool.slot_tx() + sl_offset + sl_delay, bwp_id};
+    return slot_resource_allocator{res_grid_pool[res_grid_pool.slot_tx() + sl_offset + sl_delay],
+                                   res_grid_pool.slot_tx() + sl_offset + sl_delay};
   }
 
 private:
   const unsigned           sl_offset;
-  const du_bwp_id_t        bwp_id;
   cell_resource_grid_pool& res_grid_pool;
 };
 
