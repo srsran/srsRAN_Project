@@ -6,7 +6,7 @@
 
 namespace srsgnb {
 
-/// Maximum number of layers
+/// Maximum number of layers (implementation-defined)
 const size_t MAX_NOF_LAYERS = 2;
 
 const size_t MAX_NOF_PRBS = 275;
