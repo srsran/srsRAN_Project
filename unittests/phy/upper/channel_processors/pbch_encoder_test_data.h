@@ -8,8 +8,8 @@
 namespace srsgnb {
 
 struct test_case_t {
-  pbch_encoder::pbch_msg_t             pbch_msg;
-  std::array<uint8_t, pbch_encoder::E> encoded;
+  pbch_encoder::pbch_msg_t pbch_msg;
+  std::vector<uint8_t>     encoded;
 };
 
 static const std::vector<test_case_t> pbch_encoder_test_data = {
