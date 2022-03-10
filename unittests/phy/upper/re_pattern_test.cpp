@@ -25,8 +25,8 @@ void test_merge_1()
   for (uint32_t k = 0; k != NRE; ++k) {
     pattern_1.re_mask[k] = (k % 2 == 0);
   }
-  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; l++) {
-    pattern_1.symbol_mask[l] = (l % 2 == 0);
+  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; ++l) {
+    pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
   srsran_assert(list.get_nof_entries() == 1, "Failed");
@@ -35,14 +35,14 @@ void test_merge_1()
   // - Even subcarrier indexes, and
   // - odd symbol indexes.
   re_pattern pattern_2 = pattern_1;
-  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; l++) {
-    pattern_2.symbol_mask[l] = (l % 2 == 1); // Only odd symbols
+  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; ++l) {
+    pattern_2.symbols[l] = (l % 2 == 1); // Only odd symbols
   }
   list.merge(pattern_2);
   srsran_assert(list.get_nof_entries() == 1, "Failed");
 
-  // For each symbol, the pattern shall be repeated for each symbol
-  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; l++) {
+  // The pattern should be repeated for each symbol.
+  for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; ++l) {
     // Create mask with all entries to false
     std::array<bool, MAX_RB* NRE> mask = {};
 
@@ -50,10 +50,10 @@ void test_merge_1()
     list.include_mask(mask, l);
 
     // For each subcarrier it checks the mask.
-    for (uint32_t k = 0; k < MAX_RB * NRE; k++) {
+    for (uint32_t k = 0; k < MAX_RB * NRE; ++k) {
       bool gold = false;
 
-      // if it is in the RB range, then check the subcarrier index
+      // if it is in the RB range, then check the subcarrier index.
       if (k >= rb_begin * NRE && k < rb_end * NRE && (k / NRE - rb_begin) % rb_stride == 0) {
         // Even subcarrier
         gold = (k % 2 == 0);
@@ -65,7 +65,7 @@ void test_merge_1()
     list.exclude_mask(mask, l);
 
     // All the subcarriers shall be false.
-    for (uint32_t k = 0; k < MAX_RB * NRE; k++) {
+    for (uint32_t k = 0; k < MAX_RB * NRE; ++k) {
       srsran_assert(!mask[k], "Failed");
     }
   }
@@ -94,7 +94,7 @@ void test_merge_2()
     pattern_1.re_mask[k] = (k % 2 == 0);
   }
   for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; l++) {
-    pattern_1.symbol_mask[l] = (l % 2 == 0);
+    pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
   srsran_assert(list.get_nof_entries() == 1, "Failed");
@@ -109,7 +109,7 @@ void test_merge_2()
   list.merge(pattern_2);
   srsran_assert(list.get_nof_entries() == 1, "Failed");
 
-  // For each symbol, the pattern shall be repeated for each symbol
+  // The pattern should be repeated for each symbol.
   for (uint32_t l = 0; l < NSYMB_PER_SLOT_NORM; l++) {
     // Create mask with all entries to false
     std::array<bool, MAX_RB* NRE> mask = {};
@@ -121,7 +121,7 @@ void test_merge_2()
     for (uint32_t k = 0; k < MAX_RB * NRE; k++) {
       bool gold = false;
 
-      // if it is in the RB range, then check the subcarrier index
+      // if it is in the RB range, then check the subcarrier index.
       if (k >= rb_begin * NRE && k < rb_end * NRE && (k / NRE - rb_begin) % rb_stride == 0) {
         // Even subcarrier
         gold = (l % 2 == 0);

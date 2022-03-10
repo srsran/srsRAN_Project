@@ -10,7 +10,7 @@ using namespace srsgnb;
     srsran_assert(rb_stride > 0, "RB stride (%d) is out-of-range", rb_stride);                                         \
   } while (false)
 
-void re_pattern::include_mask(span<bool> mask, unsigned symbol) const
+void re_pattern::get_inclusion_mask(span<bool> mask, unsigned symbol) const
 {
   // Verify attributes and inputs.
   re_pattern_assert();
@@ -18,7 +18,7 @@ void re_pattern::include_mask(span<bool> mask, unsigned symbol) const
       mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not set to true.
-  if (!symbol_mask[symbol]) {
+  if (!symbols[symbol]) {
     return;
   }
 
@@ -34,7 +34,7 @@ void re_pattern::include_mask(span<bool> mask, unsigned symbol) const
   }
 }
 
-void re_pattern::exclude_mask(span<bool> mask, unsigned symbol) const
+void re_pattern::get_exclusion_mask(span<bool> mask, unsigned symbol) const
 {
   // Verify attributes and inputs.
   re_pattern_assert();
@@ -42,7 +42,7 @@ void re_pattern::exclude_mask(span<bool> mask, unsigned symbol) const
       mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
 
   // Skip if the symbol is not used
-  if (!symbol_mask[symbol]) {
+  if (!symbols[symbol]) {
     return;
   }
 
@@ -63,15 +63,15 @@ void re_pattern_list::merge(const re_pattern& pattern)
   // Iterate all given patterns.
   for (re_pattern& p : list) {
     // Skip if RB allocation parameters do NOT match.
-    if (!p.rb_equal_to(pattern)) {
+    if (p.rb_begin != pattern.rb_begin || p.rb_end != pattern.rb_end || p.rb_stride != pattern.rb_stride) {
       continue;
     }
 
     // Check if symbol mask matches.
-    bool lmatch = p.symbol_mask_equal_to(pattern);
+    bool lmatch = std::equal(pattern.symbols.begin(), pattern.symbols.end(), p.symbols.begin(), p.symbols.end());
 
     // Check if RE mask matches.
-    bool kmatch = p.re_mask_equal_to(pattern);
+    bool kmatch = std::equal(pattern.re_mask.begin(), pattern.re_mask.end(), p.re_mask.begin(), p.re_mask.end());
 
     // If OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no merging
     // is required
@@ -90,7 +90,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
     // If subcarriers mask matches, combine OFDM symbols mask.
     if (kmatch) {
       for (unsigned l = 0; l < NSYMB_PER_SLOT_NORM; ++l) {
-        p.symbol_mask[l] |= pattern.symbol_mask[l];
+        p.symbols[l] |= pattern.symbols[l];
       }
       return;
     }
@@ -107,7 +107,7 @@ void re_pattern_list::include_mask(span<bool> mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
-    p.include_mask(mask, symbol);
+    p.get_inclusion_mask(mask, symbol);
   }
 }
 
@@ -115,6 +115,6 @@ void re_pattern_list::exclude_mask(span<bool> mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
-    p.exclude_mask(mask, symbol);
+    p.get_exclusion_mask(mask, symbol);
   }
 }
