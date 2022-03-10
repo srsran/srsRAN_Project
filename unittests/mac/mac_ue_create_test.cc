@@ -33,11 +33,10 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   std::array<task_executor*, 1> exec_lst = {&exec};
 
   // Create a MAC config object
-  mac_config_notification_recorder mac_config_notifier;
-  mac_common_config_t              mac_cfg{mac_config_notifier, exec, exec_lst, exec};
-  mac_ctrl_dummy_configurer        mac_ctrl;
-  mac_ul_dummy_configurer          mac_ul;
-  mac_dl_dummy_configurer          mac_dl;
+  mac_common_config_t       mac_cfg{exec, exec_lst, exec};
+  mac_ctrl_dummy_configurer mac_ctrl;
+  mac_ul_dummy_configurer   mac_ul;
+  mac_dl_dummy_configurer   mac_dl;
 
   // Launch procedure
   mac_ue_create_request_message msg{};
@@ -60,7 +59,8 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   }
 
   // ACTION: Procedure is launched
-  async_task<void> proc = launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
+  async_task<mac_ue_create_response_message> proc =
+      launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
 
   // STATUS: The MAC UL received the UE creation request message
   TESTASSERT(mac_ul.last_ue_create_request.has_value());
@@ -70,7 +70,6 @@ void test_mac_ue_creation_procedure(test_mode tmode)
     // STATUS: The procedure is awaiting for the MAC UL UE creation to complete
     TESTASSERT(not proc.ready());
     TESTASSERT(not mac_dl.last_ue_create_request.has_value());
-    TESTASSERT(not mac_config_notifier.last_ue_created.has_value());
 
     // ACTION: Signal MAC UL UE creation completion.
     mac_ul.ue_created_ev.set();
@@ -78,11 +77,10 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 
   if (not mac_ul.expected_result) {
     // STATUS: The MAC UL UE creation failed. The UE create procedure finishes right away and notifies configurer
-    TESTASSERT(proc.ready());
     TESTASSERT(not mac_dl.last_ue_create_request.has_value());
-    TESTASSERT(mac_config_notifier.last_ue_created.has_value());
-    TESTASSERT_EQ(1, mac_config_notifier.last_ue_created->ue_index);
-    TESTASSERT(not mac_config_notifier.last_ue_created->result);
+    TESTASSERT(proc.ready());
+    TESTASSERT_EQ(1, proc.get().ue_index);
+    TESTASSERT(not proc.get().result);
     return;
   }
 
@@ -92,7 +90,6 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   if (not mac_dl.ue_created_ev.is_set()) {
     // STATUS: The procedure is awaiting for the MAC DL UE creation to complete
     TESTASSERT(not proc.ready());
-    TESTASSERT(not mac_config_notifier.last_ue_created.has_value());
 
     // ACTION: Signal MAC UL UE creation completion.
     mac_dl.ue_created_ev.set();
@@ -100,9 +97,8 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 
   // STATUS: Procedure ends and UE creation request complete message is sent back to configurer
   TESTASSERT(proc.ready());
-  TESTASSERT(mac_config_notifier.last_ue_created.has_value());
-  TESTASSERT_EQ(1, mac_config_notifier.last_ue_created->ue_index);
-  TESTASSERT(mac_config_notifier.last_ue_created->result == mac_dl.expected_result);
+  TESTASSERT_EQ(mac_dl.expected_result, proc.get().result);
+  TESTASSERT_EQ(1, proc.get().ue_index);
 }
 
 int main()

@@ -16,28 +16,10 @@ public:
   void execute(unique_task task) final { task(); }
 };
 
-/// Records MAC completed configurations (instead of notifying DU manager)
-class mac_config_notification_recorder : public mac_config_notifier
-{
-public:
-  optional<mac_ue_create_request_response_message>  last_ue_created;
-  optional<mac_ue_delete_response_message>          last_ue_deleted;
-  optional<mac_ue_reconfiguration_response_message> last_ue_reconfigured;
-
-  void on_ue_create_request_complete(const mac_ue_create_request_response_message& resp) override
-  {
-    last_ue_created = resp;
-  }
-  void on_ue_reconfiguration_complete(const mac_ue_reconfiguration_response_message& resp) override
-  {
-    last_ue_reconfigured = resp;
-  }
-  void on_ue_delete_complete(const mac_ue_delete_response_message& resp) override { last_ue_deleted = resp; }
-};
-
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer
 {
 public:
+  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override { return true; }
   void remove_ue(du_ue_index_t ue_index) override {}
 };
 
