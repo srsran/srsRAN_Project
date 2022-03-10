@@ -2,7 +2,7 @@
 #ifndef SRSGNB_SCHED_H
 #define SRSGNB_SCHED_H
 
-#include "cell_sched.h"
+#include "cell/cell_sched.h"
 #include "sched_strategy/data_scheduler.h"
 #include "srsgnb/mac/sched_interface.h"
 
