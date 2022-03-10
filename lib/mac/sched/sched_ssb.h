@@ -11,7 +11,7 @@ namespace srsgnb {
 enum ssb_tx_mode_opt { no_transmission, ssb_transmission, ssb_repetition, ssb_tx_mode_invalid };
 
 /// Enum based on SSB cases, TS 38.213, Section 4.1 - Only Case A, B, C are supported
-enum class ssb_alloc_case : uint8_t { A = 0, B, C_paired, C_unpaired, invalid};
+enum class ssb_alloc_case : unsigned { A = 0, B, C_paired, C_unpaired, invalid};
 
 /// Enum based on O-RAN .WG8.AAD.0-v0, Section 9.2.3.3.8
 struct ssb_info_t {

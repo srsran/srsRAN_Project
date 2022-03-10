@@ -1,5 +1,6 @@
 #include "../../../lib/mac/sched/sched_ssb.h"
 #include "srsgnb/support/test_utils.h"
+#include "srsgnb/ran/frame_types.h"
 
 /// This will be removed once we can get this value from the slot object
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \
@@ -115,10 +116,10 @@ void test_ssb_case_A_C(const slot_point& slot_tx,
         TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
         /// Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot(),
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                           ssb_item.ssb_info.ofdm_symbols.start(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot() + 4,
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,
@@ -184,10 +185,10 @@ void test_ssb_case_B(const slot_point& slot_tx,
         TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
         /// Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot(),
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                           ssb_item.ssb_info.ofdm_symbols.start(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * slot_tx.nof_ofdm_sym_per_slot() + 4,
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,
@@ -221,10 +222,10 @@ void test_ssb_case_B(const slot_point& slot_tx,
         TESTASSERT_EQ_MSG(tx_mode, ssb_item.tx_mode, TEST_HARQ_ASSERT_MSG(slot_tx.to_uint(), ssb_periodicity, ssb_case));
 
         /// Check OFDM symbols and frequency allocation
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * slot_tx.nof_ofdm_sym_per_slot(),
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                           ssb_item.ssb_info.ofdm_symbols.start(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
-        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * slot_tx.nof_ofdm_sym_per_slot() + 4,
+        TESTASSERT_EQ_MSG(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                           ssb_item.ssb_info.ofdm_symbols.stop(),
                           TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ_MSG(offset_to_point_A,

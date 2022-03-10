@@ -1,4 +1,5 @@
 #include "sched_ssb.h"
+#include "srsgnb/ran/frame_types.h"
 
 #define NOF_SSB_OFDM_SYMBOLS 4
 #define NOF_SSB_PRBS 20
@@ -69,7 +70,7 @@ static void ssb_alloc_case_A_C(uint32_t          freq_arfcn,
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(offset_to_point_A,
-                            ofdm_symbols[n] + slot_idx * sl_point_mod.nof_ofdm_sym_per_slot(),
+                            ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
                             in_burst_bitmap,
                             ssb_list);
@@ -110,7 +111,7 @@ static void ssb_alloc_case_B(uint32_t          freq_arfcn,
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(offset_to_point_A,
-                            ofdm_symbols[n] + slot_idx * sl_point_mod.nof_ofdm_sym_per_slot(),
+                            ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
                             in_burst_bitmap,
                             ssb_list);
@@ -130,7 +131,7 @@ static void ssb_alloc_case_B(uint32_t          freq_arfcn,
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(offset_to_point_A,
-                            ofdm_symbols[n] + (slot_idx - 1) * sl_point_mod.nof_ofdm_sym_per_slot(),
+                            ofdm_symbols[n] + (slot_idx - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
                             in_burst_bitmap,
                             ssb_list);
@@ -160,7 +161,7 @@ void sched_ssb(const slot_point& sl_point,
   }
 
   /// Only FR1 are supported in this implementation
-  srsran_assert(freq_arfcn < FR1_MAX_FREQUENCY_ARFCN, "Frenquencies in the range FR2 not supported");
+  srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN), "Frenquencies in the range FR2 not supported");
 
   /// Perform mod operation of slot index by ssb_periodicity;
   /// "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval

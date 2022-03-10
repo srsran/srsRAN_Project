@@ -3,7 +3,6 @@
 #define SRSGNB_SCHED_CONSTS_H
 
 #include <cstddef>
-#include <cstdint>
 
 namespace srsgnb {
 
@@ -18,7 +17,7 @@ const size_t MAX_NOF_RBGS = 18;
 const size_t MAX_NOF_SSB  = 4;
 const size_t DEFAULT_SSB_PERIODICITY = 5;
 /// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000
-const uint32_t FR1_MAX_FREQUENCY_ARFCN = 875000;
+const unsigned FR1_MAX_FREQUENCY_ARFCN = 875000;
 
 } // namespace srsgnb
 
