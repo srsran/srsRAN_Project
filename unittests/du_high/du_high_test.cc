@@ -1,6 +1,6 @@
 
 #include "srsgnb/support/test_utils.h"
-#include "units/du/du_high.h"
+#include "../../lib/du_high/du_high.h"
 
 using namespace srsgnb;
 

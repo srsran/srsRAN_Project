@@ -10,7 +10,6 @@
 #include "srsgnb/support/task_executor.h"
 #include "srsgnb/support/task_worker.h"
 #include <memory>
-#include <unordered_map>
 
 namespace srsgnb {
 
