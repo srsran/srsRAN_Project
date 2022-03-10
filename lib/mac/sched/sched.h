@@ -21,6 +21,9 @@ public:
   /// Delete UE
   void delete_ue_request(rnti_t rnti) override { mac_notifier.on_ue_delete_response(rnti); }
 
+  /// Called when RACH is detected
+  void handle_rach_indication(const rach_indication_message& msg) override;
+
   /// Obtain DL scheduling result
   const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
 

@@ -7,6 +7,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
@@ -29,12 +30,26 @@ struct cell_configuration_request_message {
 /// Add UE Configuration Request
 struct add_ue_configuration_request_message {};
 
+/// RACH indication Message
+struct rach_indication_message {
+  du_ue_index_t cell_index;
+  rnti_t        crnti;
+  unsigned      timing_info;
+  slot_point    slot_rx;
+  /// Index of the first OFDM Symbol where RACH was detected
+  unsigned symbol_index;
+  unsigned frequency_index;
+  unsigned preamble_id;
+  unsigned timing_advance;
+};
+
 /// Interface to Add/Remove UEs and Cells
 class sched_configurer
 {
 public:
   virtual ~sched_configurer()                                                                   = default;
   virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg) = 0;
+  virtual void handle_rach_indication(const rach_indication_message& msg)                       = 0;
   virtual void config_ue(rnti_t rnti)                                                           = 0;
   virtual void delete_ue_request(rnti_t rnti)                                                   = 0;
 };

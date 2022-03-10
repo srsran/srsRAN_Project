@@ -26,6 +26,11 @@ bool sched::handle_cell_configuration_request(const cell_configuration_request_m
   return true;
 }
 
+void sched::handle_rach_indication(const rach_indication_message& msg)
+{
+  // TODO
+}
+
 const dl_sched_result* sched::get_dl_sched(slot_point sl, du_cell_index_t cell_index)
 {
   cells[cell_index]->slot_indication(sl);

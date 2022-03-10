@@ -13,14 +13,11 @@
 #ifndef SRSRAN_SCHED_NR_RB_H
 #define SRSRAN_SCHED_NR_RB_H
 
-#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
+#include "srsgnb/mac/prb_grant.h"
 
 namespace srsgnb {
-
-using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
-using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 
 /// TS 38.214, Table 6.1.2.2.1-1 - Nominal RBG size P
 uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2);
@@ -28,115 +25,8 @@ uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2);
 /// TS 38.214 - total number of RBGs for a uplink bandwidth part of size "bwp_nof_prb" PRBs
 uint32_t get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2);
 
-/// Struct to express a {min,...,max} range of PRBs
-struct prb_interval : public interval<uint32_t> {
-  using interval::interval;
-};
-
 struct ofdm_symb_interval : public interval<uint8_t> {
   using interval::interval;
-};
-
-struct prb_grant {
-  prb_grant() = default;
-  prb_grant(const prb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
-  prb_grant(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
-  prb_grant(const prb_grant& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc)
-  {}
-  prb_grant& operator=(const prb_grant& other) noexcept
-  {
-    if (this == &other) {
-      return *this;
-    }
-    if (other.alloc_type_0) {
-      *this = other.rbgs();
-    } else {
-      *this = other.prbs();
-    }
-    return *this;
-  }
-  prb_grant& operator=(const prb_interval& prbs)
-  {
-    if (alloc_type_0) {
-      alloc_type_0 = false;
-      alloc.rbgs.~rbg_bitmap();
-      new (&alloc.interv) prb_interval(prbs);
-    } else {
-      alloc.interv = prbs;
-    }
-    return *this;
-  }
-  prb_grant& operator=(const rbg_bitmap& rbgs)
-  {
-    if (alloc_type_0) {
-      alloc.rbgs = rbgs;
-    } else {
-      alloc_type_0 = true;
-      alloc.interv.~prb_interval();
-      new (&alloc.rbgs) rbg_bitmap(rbgs);
-    }
-    return *this;
-  }
-  ~prb_grant()
-  {
-    if (is_alloc_type0()) {
-      alloc.rbgs.~rbg_bitmap();
-    } else {
-      alloc.interv.~prb_interval();
-    }
-  }
-
-  bool              is_alloc_type0() const { return alloc_type_0; }
-  bool              is_alloc_type1() const { return not is_alloc_type0(); }
-  const rbg_bitmap& rbgs() const
-  {
-    srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
-    return alloc.rbgs;
-  }
-  const prb_interval& prbs() const
-  {
-    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
-    return alloc.interv;
-  }
-  rbg_bitmap& rbgs()
-  {
-    srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
-    return alloc.rbgs;
-  }
-  prb_interval& prbs()
-  {
-    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
-    return alloc.interv;
-  }
-
-  prb_grant& operator&=(const prb_interval interv)
-  {
-    if (is_alloc_type0()) {
-      alloc.rbgs &= rbg_bitmap{alloc.rbgs.size()}.fill(interv.start(), interv.stop());
-    } else {
-      alloc.interv.intersect(interv);
-    }
-    return *this;
-  }
-
-private:
-  bool alloc_type_0 = false;
-  union alloc_t {
-    rbg_bitmap   rbgs;
-    prb_interval interv;
-
-    alloc_t() : interv(0, 0) {}
-    explicit alloc_t(const prb_interval& prbs) : interv(prbs) {}
-    explicit alloc_t(const rbg_bitmap& rbgs_) : rbgs(rbgs_) {}
-    alloc_t(bool type0, const alloc_t& other)
-    {
-      if (type0) {
-        new (&rbgs) rbg_bitmap(other.rbgs);
-      } else {
-        new (&interv) prb_interval(other.interv);
-      }
-    }
-  } alloc;
 };
 
 struct bwp_rb_bitmap {

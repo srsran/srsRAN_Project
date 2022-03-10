@@ -116,6 +116,13 @@ public:
     return sl_res.ul_grants.puschs.back();
   }
 
+  rar_alloc_info& alloc_rar(const prb_grant& prbs)
+  {
+    sl_res.dl_prbs |= prbs;
+    sl_res.dl_grants.rars.emplace_back();
+    return sl_res.dl_grants.rars.back();
+  }
+
 private:
   cell_resource_grid& sl_res;
 };
