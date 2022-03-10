@@ -10,7 +10,11 @@ namespace srsgnb {
 class ue_candidate
 {
 public:
-  ue_candidate(ue_carrier& u_) : ue(&u_) {}
+  ue_candidate(ue_carrier& u_) : ue(&u_)
+  {
+    // :TODO: remove this when ue var is used.
+    (void)(ue);
+  }
 
 private:
   ue_carrier* ue;
@@ -23,9 +27,7 @@ using ue_candidate_map_t = circular_map<rnti_t, ue_candidate, MAX_NOF_UES>;
 class data_sched_input
 {
 public:
-  data_sched_input(slot_point sl_tx_, du_cell_index_t cell_index_) :
-    sl_tx(sl_tx_), cell_index(cell_index_)
-  {}
+  data_sched_input(slot_point sl_tx_, du_cell_index_t cell_index_) : sl_tx(sl_tx_), cell_index(cell_index_) {}
 
   const slot_point      sl_tx;
   const du_cell_index_t cell_index;
