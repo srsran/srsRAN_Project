@@ -1,7 +1,6 @@
 #ifndef ADAPTERS_H
 #define ADAPTERS_H
 
-#include "srsgnb/f1_interface/f1u.h"
 #include "srsgnb/pdcp/pdcp.h"
 #include "srsgnb/sdap/sdap.h"
 #include <cstdio>
@@ -28,23 +27,6 @@ public:
                 "upper layer (SDAP)\n",
                 (unsigned)sdu.size());
     sdap.handle_pdu(sdu);
-  }
-};
-
-/// Adapter interface from F1u to PDCP.
-class pdcp_packet_handler : public srsgnb::f1u_packet_notifier
-{
-  srsgnb::pdcp_pdu_handler& pdcp;
-
-public:
-  explicit pdcp_packet_handler(srsgnb::pdcp_pdu_handler& pdcp) : pdcp(pdcp) {}
-
-  void on_new_packet(srsgnb::byte_buffer& data) override
-  {
-    std::printf("[F1u-PDCP-ADAPTER] Received a packet from F1u layer, forwarding data packet of size = %u bytes to "
-                "upper layer (PDCP)\n",
-                (unsigned)data.size());
-    pdcp.handle_pdu(data);
   }
 };
 

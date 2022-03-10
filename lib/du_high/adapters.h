@@ -3,7 +3,7 @@
 #define SRSGNB_ADAPTERS_H
 
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/f1ap_du.h"
+#include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/srslog/srslog.h"

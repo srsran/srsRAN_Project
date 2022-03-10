@@ -1,4 +1,4 @@
-#include "srsgnb/f1ap/f1ap_du_factory.h"
+#include "srsgnb/f1_interface/f1ap_du_factory.h"
 #include "f1ap_du_impl.h"
 #include "f1ap_packet_procedures_impl.h"
 #include "srsgnb/du_manager/du_manager.h"

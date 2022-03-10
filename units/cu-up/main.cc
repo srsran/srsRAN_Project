@@ -1,5 +1,4 @@
 #include "adapters.h"
-#include "srsgnb/f1_interface/f1u_factory.h"
 #include "srsgnb/pdcp/pdcp_factory.h"
 #include "srsgnb/sdap/sdap_factory.h"
 
@@ -11,10 +10,10 @@ namespace {
 /// No concrete class dependencies.
 class fake_receiver
 {
-  srsgnb::f1u_input_gateway& notifier;
+  srsgnb::pdcp_pdu_handler& notifier;
 
 public:
-  explicit fake_receiver(srsgnb::f1u_input_gateway& notifier) : notifier(notifier) {}
+  explicit fake_receiver(srsgnb::pdcp_pdu_handler& notifier) : notifier(notifier) {}
 
   void receive()
   {
@@ -23,8 +22,8 @@ public:
 
     std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)v.size());
 
-    // Send the packet to the F1 interface.
-    notifier.handle(v);
+    // Send the packet to the PDCP interface.
+    notifier.handle_pdu(v);
   }
 };
 
@@ -49,10 +48,8 @@ int main()
   auto                   sdap = srsgnb::create_sdap(ngap_tx);
   sdap_packet_handler    pdcp_sdap_adapter(*sdap);
   auto                   pdcp = srsgnb::create_pdcp(pdcp_sdap_adapter);
-  pdcp_packet_handler    f1u_pdcp_adapter(*pdcp);
-  auto                   f1u = srsgnb::create_f1u_interface(f1u_pdcp_adapter);
 
-  fake_receiver rx(*f1u);
+  fake_receiver rx(*pdcp);
   rx.receive();
 
   return 0;

@@ -3,7 +3,7 @@
 #define SRSGNB_F1AP_CONTEXT_H
 
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/f1ap_du.h"
+#include "srsgnb/f1_interface/f1ap_du.h"
 
 namespace srsgnb {
 

@@ -4,7 +4,7 @@
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1ap/f1ap_du.h"
+#include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 
