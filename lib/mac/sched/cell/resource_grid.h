@@ -34,7 +34,8 @@ struct cell_resource_grid {
   void reset();
 };
 
-/// Circular pool of resource grids
+/// Circular Ring of cell resource grid objects. This class always manages the automatic resetting of cell resource
+/// grid objects, once they become too old to be used by the PHY.
 struct cell_resource_grid_pool {
   static const size_t RESOURCE_GRID_SIZE = 40;
   static const int    OLD_SLOT_DELAY     = 10;
@@ -72,6 +73,10 @@ private:
   std::vector<cell_resource_grid> slots_;
 };
 
+/// Helper class that provides a generic interface to register scheduler grants in a specific {slot, cell}
+/// The exposed methods are unsafe in the sense that they don't verify for grant collisions or invalid parameters. Such
+/// checks will be performed by other allocator classes that wrap this one, and will have more specific use-cases
+/// (e.g. UE vs SIB vs RAR allocators).
 class slot_resource_allocator
 {
 public:
@@ -88,6 +93,7 @@ public:
   dl_sched_result& dl_res() { return sl_res.dl_grants; }
   ul_sched_result& ul_res() { return sl_res.ul_grants; }
 
+  /// Create a PUSCH grant and update the slot total UL PRB bitmap
   ul_sched_info& alloc_pusch(const prb_grant& prbs)
   {
     sl_res.ul_prbs |= prbs;
@@ -99,6 +105,7 @@ private:
   cell_resource_grid& sl_res;
 };
 
+/// Provides an interface to access slot_resource_allocator objects for different slots of the same cell.
 class cell_resource_allocator
 {
 public:

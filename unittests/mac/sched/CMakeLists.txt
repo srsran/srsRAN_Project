@@ -22,3 +22,7 @@ add_test(sched_signalling_test sched_signalling_test)
 add_executable(cell_configuration_test cell_configuration_test.cc)
 target_link_libraries(cell_configuration_test srsgnb_sched srslog)
 add_test(cell_configuration_test cell_configuration_test)
+
+add_executable(resource_allocator_test resource_allocator_test.cc)
+target_link_libraries(resource_allocator_test srsgnb_sched srslog)
+add_test(resource_allocator_test resource_allocator_test)
