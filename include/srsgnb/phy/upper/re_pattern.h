@@ -85,7 +85,7 @@ public:
   /// \param[in] pattern Provides the reference to a resource element pattern.
   void merge(const re_pattern& pattern);
 
-  /// \brief Includes in a resource grid symbol mask the described resource element pattern list.
+  /// \brief Include the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to true the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
@@ -93,9 +93,9 @@ public:
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be included.
   /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
-  void include_mask(span<bool> mask, unsigned symbol) const;
+  void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
 
-  /// \brief Excludes in a resource grid symbol mask the described resource element pattern list
+  /// \brief Exclude the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to false the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
@@ -103,7 +103,7 @@ public:
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be excluded.
   /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
-  void exclude_mask(span<bool> mask, unsigned symbol) const;
+  void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
 };
 
 } // namespace srsgnb

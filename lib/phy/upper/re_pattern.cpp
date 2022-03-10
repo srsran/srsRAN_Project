@@ -2,7 +2,7 @@
 
 using namespace srsgnb;
 
-// Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes
+// Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes.
 #define re_pattern_assert()                                                                                            \
   do {                                                                                                                 \
     srsran_assert(rb_begin < MAX_RB, "RB begin (%d) is out-of-range", rb_begin);                                       \
@@ -41,7 +41,7 @@ void re_pattern::get_exclusion_mask(span<bool> mask, unsigned symbol) const
   srsran_assert(
       mask.size() >= rb_end, "Provided mask size (%d) is too small. The minimum is %d.", (unsigned)mask.size(), rb_end);
 
-  // Skip if the symbol is not used
+  // Skip if the symbol is not used.
   if (!symbols[symbol]) {
     return;
   }
@@ -74,14 +74,14 @@ void re_pattern_list::merge(const re_pattern& pattern)
     bool kmatch = std::equal(pattern.re_mask.begin(), pattern.re_mask.end(), p.re_mask.begin(), p.re_mask.end());
 
     // If OFDM symbols and subcarriers mask match, it means that the patterns are completely overlapped and no merging
-    // is required
+    // is required.
     if (kmatch && lmatch) {
       return;
     }
 
     // If OFDM symbols mask matches, combine subcarrier mask.
     if (lmatch) {
-      for (unsigned k = 0; k < NRE; ++k) {
+      for (unsigned k = 0; k != NRE; ++k) {
         p.re_mask[k] |= pattern.re_mask[k];
       }
       return;
@@ -89,7 +89,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
 
     // If subcarriers mask matches, combine OFDM symbols mask.
     if (kmatch) {
-      for (unsigned l = 0; l < NSYMB_PER_SLOT_NORM; ++l) {
+      for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
         p.symbols[l] |= pattern.symbols[l];
       }
       return;
@@ -103,7 +103,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
   list.emplace_back(pattern);
 }
 
-void re_pattern_list::include_mask(span<bool> mask, unsigned symbol) const
+void re_pattern_list::get_inclusion_mask(span<bool> mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
@@ -111,7 +111,7 @@ void re_pattern_list::include_mask(span<bool> mask, unsigned symbol) const
   }
 }
 
-void re_pattern_list::exclude_mask(span<bool> mask, unsigned symbol) const
+void re_pattern_list::get_exclusion_mask(span<bool> mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
