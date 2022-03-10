@@ -30,18 +30,19 @@ void test(unsigned nof_slots, unsigned nof_sectors)
   std::unique_ptr<resource_grid_pool> pool = create_resource_grid_pool(cfg);
 
   // Iterate all parameters and assert grid reference
-  for (unsigned slot = 0; slot != nof_slots; ++slot) {
+  for (unsigned slot_count = 0; slot_count != nof_slots; ++slot_count) {
     for (unsigned sector = 0; sector != nof_sectors; ++sector) {
       // Create context
       resource_grid_context context = {};
-      context.slot.slot             = slot;
+      context.slot                  = {0, slot_count};
       context.sector                = sector;
 
       // Get grid
       const resource_grid& grid = pool->get_resource_grid(context);
 
       // Verify grid referemnce match
-      srsran_assert(&grid == grids[slot][sector], "Unmatched grid references %p vs %p", &grid, &grids[slot][sector]);
+      srsran_assert(
+          &grid == grids[slot_count][sector], "Unmatched grid references %p vs %p", &grid, &grids[slot_count][sector]);
     }
   }
 }

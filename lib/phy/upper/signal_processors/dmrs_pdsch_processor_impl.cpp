@@ -54,7 +54,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
   unsigned nof_pilots_x_prb     = dmrs_nof_dmrs_per_rb(config.type);
   unsigned reference_point_k_rb = config.reference_point_k_rb;
 
-  unsigned nslot    = config.slot.get_frame_slot();
+  unsigned nslot    = config.slot.slot_idx();
   unsigned nidnscid = config.scrambling_id;
   unsigned nscid    = config.n_scid ? 1 : 0;
 

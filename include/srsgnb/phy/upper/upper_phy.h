@@ -4,7 +4,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/resource_grid_context.h"
-#include "srsgnb/ran/slot_context.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
@@ -24,9 +24,9 @@ public:
 
 /// Describes context of the new received symbol
 struct upper_phy_rx_symbol_context_t {
-  slot_context_t slot;
-  unsigned       sector;
-  unsigned       symbol;
+  slot_point slot;
+  unsigned   sector;
+  unsigned   symbol;
 };
 
 /// Upper physical layer's handler to process receive symbol
@@ -56,7 +56,7 @@ public:
 
 /// Describes the context of the current timing boundary
 struct upper_phy_timing_context_t {
-  slot_context_t slot;
+  slot_point slot;
 };
 
 /// Upper physical layer's handle to align timing boundaries

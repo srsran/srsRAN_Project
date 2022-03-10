@@ -4,7 +4,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/dmrs_mapping.h"
-#include "srsgnb/ran/slot_context.h"
+#include "srsgnb/ran/slot_point.h"
 #include <memory>
 
 namespace srsgnb {
@@ -16,7 +16,7 @@ public:
   /// Describes the required parameters to generate the signal as described in 3GPP TS 38.211 section 7.4.1.1.
   struct config_t {
     /// Slot context for sequence initialization.
-    slot_context_t slot;
+    slot_point slot;
     /// Reference point for PDSCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
     /// DL DMRS config type (dmrsConfigType).

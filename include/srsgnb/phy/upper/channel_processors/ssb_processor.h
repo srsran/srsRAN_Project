@@ -4,7 +4,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/ran/slot_context.h"
+#include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
 namespace srsgnb {
@@ -19,7 +19,7 @@ public:
   /// Describes the SS/PBCH Block PDU.
   struct pdu_t {
     /// Current slot context.
-    slot_context_t slot;
+    slot_point slot;
     /// Physical Cell identifier.
     unsigned phys_cell_id;
     /// PSS power level allocation in dB, relative to SSS.

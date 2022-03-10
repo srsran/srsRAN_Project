@@ -7,6 +7,9 @@
 
 namespace srsgnb {
 
+/// Number of subframers per frame. This constant doesn't depend on the numerology used
+const uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
+
 /// Represents the numerology, SFN and slot index of the current slot.
 /// It provides several functionalities compared to a simple integer type, namely:
 /// - automatic wrap-around of SFN and slot_index on increment/decrement
@@ -22,11 +25,8 @@ class slot_point
   /// Number of possible SFNs.
   static constexpr uint16_t NOF_SFNS = 1024;
 
-  /// Number of subframers per frame.
-  static constexpr uint8_t NOF_SUBFRAMES_PER_FRAME = 10;
-
-  /// Number of slots per hyperframe.
-  uint32_t nof_slots_per_hf() const { return nof_slots_per_frame() * NOF_SFNS; }
+  /// Number of slots per system frame.
+  uint32_t nof_slots_per_system_frame() const { return nof_slots_per_frame() * NOF_SFNS; }
 
 public:
   /// Default constructor. Sets slot_point in invalid state.
@@ -36,18 +36,18 @@ public:
   slot_point(uint32_t numerology, uint32_t count) : numerology_val(numerology), count_val(count)
   {
     srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
-    srsran_assert(count < nof_slots_per_hf(), "Invalid slot count={} passed", count);
+    srsran_assert(count < nof_slots_per_system_frame(), "Invalid slot count={} passed", count);
   }
 
   /// Takes a numerology, SFN and slot index.
-  slot_point(uint32_t numerology, uint16_t sfn_val, uint8_t slot_idx) :
-    numerology_val(numerology), count_val(slot_idx + sfn_val * nof_slots_per_frame())
+  slot_point(uint32_t numerology, uint32_t sfn_val, uint32_t slot_idx_) :
+    numerology_val(numerology), count_val(slot_idx_ + sfn_val * nof_slots_per_frame())
   {
     srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
     srsran_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
-    srsran_assert(slot_idx < nof_slots_per_frame(),
+    srsran_assert(slot_idx_ < nof_slots_per_frame(),
                   "Slot index={} exceeds maximum number of slots={}",
-                  slot_idx,
+                  slot_idx_,
                   nof_slots_per_frame());
   }
 
@@ -73,12 +73,18 @@ public:
   /// Numerology index (0..4).
   uint8_t numerology_idx() const { return numerology_val; }
 
-  /// Conversion of slot_point to integer.
+  /// Conversion of slot_point to system slot.
+  uint32_t system_slot() const { return count_val; }
   uint32_t to_uint() const { return count_val; }
+
+  /// Cast of slot point to system slot.
   explicit operator uint32_t() const { return count_val; }
 
   /// Sets slot_point to invalid state.
   void clear() { numerology_val = NOF_NUMEROLOGIES; }
+
+  /// Checks if slot is in second half of the radio frame.
+  bool is_odd_half_radio_frame() const { return subframe_idx() >= (NOF_SUBFRAMES_PER_FRAME / 2); }
 
   /// Equality comparison of two slot_point objects. Two slot points are equal if their numerology, SFN and slot index
   /// have the same value.
@@ -98,9 +104,9 @@ public:
     srsran_assert(numerology_idx() == other.numerology_idx(), "Comparing slots of different numerologies");
     int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
     if (v > 0) {
-      return (v < (int)nof_slots_per_hf() / 2);
+      return (v < (int)nof_slots_per_system_frame() / 2);
     }
-    return (v < -(int)nof_slots_per_hf() / 2);
+    return (v < -(int)nof_slots_per_system_frame() / 2);
   }
 
   /// Other lower/higher comparisons that build on top of operator== and operator<.
@@ -113,11 +119,11 @@ public:
   int32_t operator-(const slot_point& other) const
   {
     int a = static_cast<int>(count_val) - static_cast<int>(other.count_val);
-    if (a >= (int)nof_slots_per_hf() / 2) {
-      return a - nof_slots_per_hf();
+    if (a >= (int)nof_slots_per_system_frame() / 2) {
+      return a - nof_slots_per_system_frame();
     }
-    if (a < -(int)nof_slots_per_hf() / 2) {
-      return a + nof_slots_per_hf();
+    if (a < -(int)nof_slots_per_system_frame() / 2) {
+      return a + nof_slots_per_system_frame();
     }
     return a;
   }
@@ -126,7 +132,7 @@ public:
   slot_point& operator++()
   {
     count_val++;
-    if (count_val == nof_slots_per_hf()) {
+    if (count_val == nof_slots_per_system_frame()) {
       count_val = 0;
     }
     return *this;
@@ -141,16 +147,16 @@ public:
   /// Sum of slot_point by an integer jump value.
   slot_point& operator+=(uint32_t jump)
   {
-    count_val = (count_val + jump) % nof_slots_per_hf();
+    count_val = (count_val + jump) % nof_slots_per_system_frame();
     return *this;
   }
 
   /// Subtraction of slot point by an integer jump value.
   slot_point& operator-=(uint32_t jump)
   {
-    int a = (static_cast<int>(count_val) - static_cast<int>(jump)) % static_cast<int>(nof_slots_per_hf());
+    int a = (static_cast<int>(count_val) - static_cast<int>(jump)) % static_cast<int>(nof_slots_per_system_frame());
     if (a < 0) {
-      a += nof_slots_per_hf();
+      a += nof_slots_per_system_frame();
     }
     count_val = a;
     return *this;

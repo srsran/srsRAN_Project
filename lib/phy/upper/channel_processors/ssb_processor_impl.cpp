@@ -20,12 +20,12 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
   unsigned l_start          = (l_start_in_burst % NSYMB_PER_SLOT_NORM);
-  unsigned k_start          = ssb_get_k_first(pdu.slot.numerology, pdu.ssb_offset_pointA, pdu.ssb_subcarrier_offset);
+  unsigned k_start = ssb_get_k_first(pdu.slot.numerology_idx(), pdu.ssb_offset_pointA, pdu.ssb_subcarrier_offset);
 
   // Make sure the slot matches with the SS/PBCH transmission slot
-  srsran_assert((l_start_in_burst / NSYMB_PER_SLOT_NORM) == pdu.slot.get_half_frame_slot(),
+  srsran_assert((l_start_in_burst / NSYMB_PER_SLOT_NORM) == pdu.slot.is_odd_half_radio_frame(),
                 "Invalid slot index (%d) for SSB index %d",
-                pdu.slot.get_half_frame_slot(),
+                pdu.slot.is_odd_half_radio_frame(),
                 l_start_in_burst);
 
   // Generate PBCH message
@@ -33,9 +33,9 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   pbch_msg.N_id                     = pdu.phys_cell_id;
   pbch_msg.ssb_idx                  = pdu.ssb_idx;
   pbch_msg.L_max                    = pdu.L_max;
-  pbch_msg.hrf                      = pdu.slot.get_half_radio_frame();
+  pbch_msg.hrf                      = pdu.slot.is_odd_half_radio_frame();
   pbch_msg.payload                  = pdu.bch_payload;
-  pbch_msg.sfn                      = pdu.slot.frame;
+  pbch_msg.sfn                      = pdu.slot.sfn();
   pbch_msg.k_ssb                    = pdu.ssb_subcarrier_offset;
 
   // Encode PBCH
@@ -61,7 +61,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   dmrs_config.L_max                         = pdu.L_max;
   dmrs_config.ssb_first_subcarrier          = k_start;
   dmrs_config.ssb_first_symbol              = l_start;
-  dmrs_config.n_hf                          = pdu.slot.get_half_radio_frame();
+  dmrs_config.n_hf                          = pdu.slot.is_odd_half_radio_frame();
   dmrs_config.amplitude                     = 1.0F;
   dmrs_config.ports                         = pdu.ports;
 

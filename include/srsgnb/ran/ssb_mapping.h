@@ -3,7 +3,7 @@
 #define SRSGNB_HELPERS_H_
 
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/ran/slot_context.h"
+#include "srsgnb/ran/slot_point.h"
 #include <array>
 #include <cassert>
 
@@ -13,9 +13,9 @@ namespace srsgnb {
 enum class ssb_pattern_case { A, B, C, D, E };
 
 /// Calculates the half radio frame
-static inline bool ssb_get_hrf(const slot_context_t& slot)
+inline bool ssb_get_hrf(slot_point slot)
 {
-  return slot.subframe < NSUBFRAMES_PER_FRAME / 2;
+  return slot.subframe_idx() < NOF_SUBFRAMES_PER_FRAME / 2;
 }
 
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst

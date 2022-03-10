@@ -100,10 +100,7 @@ int main()
           for (unsigned subframe : {0 + subframe_in_burst, 5 + subframe_in_burst}) {
             // Generate PBCH PDU
             ssb_processor::pdu_t pdu  = {};
-            pdu.slot.numerology       = numerology;
-            pdu.slot.frame            = sfn_dist(rgen);
-            pdu.slot.subframe         = subframe;
-            pdu.slot.slot             = slot_in_subframe;
+            pdu.slot                  = {numerology, sfn_dist(rgen), subframe * nslots_in_subframe + slot_in_subframe};
             pdu.phys_cell_id          = pci_dist(rgen);
             pdu.beta_pss              = beta_pss;
             pdu.ssb_idx               = ssb_idx;
@@ -138,9 +135,9 @@ int main()
             srsran_assert(encoder_entry.msg.N_id == pdu.phys_cell_id, "Failed");
             srsran_assert(encoder_entry.msg.ssb_idx == pdu.ssb_idx, "Failed");
             srsran_assert(encoder_entry.msg.L_max == L_max, "Failed");
-            srsran_assert(encoder_entry.msg.hrf == pdu.slot.get_half_radio_frame(), "Failed");
+            srsran_assert(encoder_entry.msg.hrf == pdu.slot.is_odd_half_radio_frame(), "Failed");
             srsran_assert(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload), "Failed");
-            srsran_assert(encoder_entry.msg.sfn == pdu.slot.frame, "Failed");
+            srsran_assert(encoder_entry.msg.sfn == pdu.slot.sfn(), "Failed");
             srsran_assert(encoder_entry.msg.k_ssb == pdu.ssb_subcarrier_offset, "Failed");
             srsran_assert(encoder_entry.encoded.size() == pbch_encoder::E, "Failed");
 
@@ -162,7 +159,7 @@ int main()
             srsran_assert(dmrs_entry.config.L_max == pdu.L_max, "Failed");
             srsran_assert(dmrs_entry.config.ssb_first_subcarrier == ssb_first_subcarrier, "Failed");
             srsran_assert(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot, "Failed");
-            srsran_assert(dmrs_entry.config.n_hf == pdu.slot.get_half_radio_frame(), "Failed");
+            srsran_assert(dmrs_entry.config.n_hf == pdu.slot.is_odd_half_radio_frame(), "Failed");
             srsran_assert(dmrs_entry.config.amplitude == 1.0F, "Failed");
             srsran_assert(srsvec::equal(dmrs_entry.config.ports, pdu.ports), "Failed");
 

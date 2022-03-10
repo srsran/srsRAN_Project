@@ -19,7 +19,7 @@ resource_grid& resource_grid_pool_impl::get_resource_grid(const resource_grid_co
   assert(context.sector < nof_sectors);
 
   // Select slot from the absolute system slot
-  unsigned slot = context.slot.get_system_slot() % nof_slots;
+  unsigned slot = context.slot.system_slot() % nof_slots;
 
   // Select resource grid and return the reference
   return *grids[slot * nof_sectors + context.sector];
