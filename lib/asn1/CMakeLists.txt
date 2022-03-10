@@ -1,4 +1,3 @@
-
 # ASN1 utils
 add_library(asn1_utils STATIC asn1_utils.cc)
 target_link_libraries(asn1_utils srslog)
@@ -21,5 +20,3 @@ add_library(e1ap_asn1 STATIC e1ap.cc)
 target_compile_options(e1ap_asn1 PRIVATE "-Os")
 target_link_libraries(e1ap_asn1 asn1_utils)
 INSTALL(TARGETS e1ap_asn1 DESTINATION ${LIBRARY_DIR})
-
-
