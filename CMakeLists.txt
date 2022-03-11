@@ -85,4 +85,5 @@ include_directories(include)
 add_subdirectory(lib)
 add_subdirectory(units)
 add_subdirectory(unittests)
+add_subdirectory(docs)
 
