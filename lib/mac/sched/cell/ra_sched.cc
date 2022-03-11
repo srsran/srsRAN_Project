@@ -77,7 +77,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 
 void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 {
-  const unsigned          msg3_delay    = 6; // TODO: Make it configurable
+  static const unsigned   msg3_delay    = 6; // TODO: Make it configurable
   slot_resource_allocator rar_slot_res  = res_alloc[0];
   slot_resource_allocator msg3_slot_res = res_alloc[msg3_delay];
 
@@ -141,7 +141,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
                                 slot_resource_allocator& rar_alloc,
                                 slot_resource_allocator& msg3_alloc)
 {
-  //  static const unsigned rar_aggr_level   = 2;
+  // TODO: Make smarter algorithm for RAR size derivation
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
 
   // 1. Check space in DL sched result for RAR

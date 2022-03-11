@@ -5,7 +5,6 @@
 using namespace srsgnb;
 
 cell_configuration::cell_configuration(const cell_configuration_request_message& msg) :
-  is_tdd(msg.tdd_ul_dl_cfg_common.has_value()),
   cell_index(msg.cell_index),
   pci(msg.pci),
   nof_dl_prbs(52),

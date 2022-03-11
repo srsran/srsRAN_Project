@@ -7,7 +7,9 @@
 
 namespace srsgnb {
 
-/// Holds the configuration of a cell and provides some getter helpers
+/// Holds the configuration of a cell.
+/// Additionally, this class pre-caches the computation of some const values related to the cell configuration
+/// and provide parameter getter helpers.
 class cell_configuration
 {
 public:
@@ -15,7 +17,6 @@ public:
   cell_configuration(const cell_configuration&) = delete;
   cell_configuration(cell_configuration&&)      = delete;
 
-  const bool                                           is_tdd;
   const du_cell_index_t                                cell_index;
   const pci_t                                          pci;
   const unsigned                                       nof_dl_prbs;
@@ -25,12 +26,12 @@ public:
   const asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
 
-  const asn1::rrc_nr::subcarrier_spacing_e scs() const
-  {
-    return dl_cfg_common.init_dl_bwp.generic_params.subcarrier_spacing;
-  }
+  bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
-  /// Checks if DL is active for current slot
+  /// DL Subcarrier Spacing
+  asn1::rrc_nr::subcarrier_spacing_e scs() const { return dl_cfg_common.init_dl_bwp.generic_params.subcarrier_spacing; }
+
+  /// Checks if DL/UL is active for current slot
   bool is_dl_enabled(slot_point sl) const
   {
     return dl_enabled_slot_lst.empty() or
@@ -43,8 +44,8 @@ public:
   }
 
 private:
-  std::vector<uint8_t> dl_enabled_slot_lst; // Note: Avoid vector<bool>
-  std::vector<uint8_t> ul_enabled_slot_lst; // Note: Avoid vector<bool>
+  std::vector<uint8_t> dl_enabled_slot_lst; // Note: I use uint8_t to avoid vector<bool> special case
+  std::vector<uint8_t> ul_enabled_slot_lst; // Note: I use uint8_t to avoid vector<bool> special case
 };
 
 /// Verify correctness of cell configuration request message
