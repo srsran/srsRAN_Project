@@ -9,7 +9,6 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/task_executor.h"
-#include "procedures/ue_creation_procedure.h"
 #include <memory>
 
 namespace srsgnb {
@@ -38,9 +37,6 @@ private:
 
   // Components
   du_ue_manager ue_mng;
-
-  // Procedures
-  std::unique_ptr<ue_creation_procedure> ue_create_proc;
 };
 
 } // namespace srsgnb
