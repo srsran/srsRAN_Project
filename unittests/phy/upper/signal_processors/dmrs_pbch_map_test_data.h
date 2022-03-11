@@ -3,8 +3,8 @@
 
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/adt/complex.h"
+#include "srsgnb/adt/to_array.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
-#include <array>
 
 namespace srsgnb {
 
@@ -13,7 +13,7 @@ struct test_case_t {
   std::vector<resource_grid_spy::entry_t> symbols;
 };
 
-static const std::vector<test_case_t> dmrs_pbch_processor_test_data = {
+static const auto dmrs_pbch_processor_test_data = to_array<test_case_t>({
     {{193, 0, 4, 0, 0, 0, 1.0, {0}},
      {{0, 1, 1, {-0.707107, +0.707107}},   {0, 1, 5, {+0.707107, -0.707107}},   {0, 1, 9, {+0.707107, -0.707107}},
       {0, 1, 13, {-0.707107, -0.707107}},  {0, 1, 17, {-0.707107, -0.707107}},  {0, 1, 21, {-0.707107, -0.707107}},
@@ -1190,7 +1190,7 @@ static const std::vector<test_case_t> dmrs_pbch_processor_test_data = {
       {0, 3, 207, {+0.707107, +0.707107}}, {0, 3, 211, {-0.707107, +0.707107}}, {0, 3, 215, {+0.707107, +0.707107}},
       {0, 3, 219, {+0.707107, +0.707107}}, {0, 3, 223, {-0.707107, -0.707107}}, {0, 3, 227, {-0.707107, +0.707107}},
       {0, 3, 231, {+0.707107, +0.707107}}, {0, 3, 235, {+0.707107, +0.707107}}, {0, 3, 239, {+0.707107, -0.707107}}}},
-};
+});
 
 } // namespace srsgnb
 
