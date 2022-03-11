@@ -4,16 +4,19 @@
 
 using namespace srsgnb;
 
-ra_sched::ra_sched(const cell_configuration& cfg_) : cfg(cfg_)
+ra_sched::ra_sched(const cell_configuration& cfg_) :
+  cfg(cfg_),
+  ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup().rach_cfg_generic.ra_resp_win.to_number())
 {
   srsran_assert(cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().ra_search_space_present,
                 "Creating RA scheduler for cell with no RA search space");
+  srsran_assert(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present,
+                "Creating RA scheduler for cell with no rach-ConfigCommon");
 }
 
 bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 {
-  const static unsigned prach_duration   = 1; // TODO: Take from config
-  const static unsigned rar_window_slots = 10; // TODO: Take from config
+  const static unsigned prach_duration = 1; // TODO: Take from config
 
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id
   // s_id = index of the first OFDM symbol (0 <= s_id < 14)
@@ -59,7 +62,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
     for (unsigned sl_idx = 0; sl_idx < cfg.nof_slots_per_frame; ++sl_idx) {
       slot_point sl_start = rar_req.prach_slot_rx + prach_duration + sl_idx;
       if (cfg.is_dl_enabled(sl_start)) {
-        rar_req.rar_window = {sl_start, sl_start + rar_window_slots};
+        rar_req.rar_window = {sl_start, sl_start + ra_win_nof_slots};
         break;
       }
     }

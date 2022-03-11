@@ -6,6 +6,22 @@
 
 namespace srsgnb {
 
+asn1::rrc_nr::rach_cfg_common_s make_rach_cfg_common()
+{
+  asn1::rrc_nr::rach_cfg_common_s rach;
+  rach.rach_cfg_generic.ra_resp_win.value = asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10;
+  // TODO
+  return rach;
+}
+
+asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
+{
+  asn1::rrc_nr::ul_cfg_common_sib_s ul_cfg;
+  ul_cfg.init_ul_bwp.rach_cfg_common_present     = true;
+  ul_cfg.init_ul_bwp.rach_cfg_common.set_setup() = make_rach_cfg_common();
+  return ul_cfg;
+}
+
 cell_configuration_request_message make_cell_cfg_req()
 {
   cell_configuration_request_message msg{};
@@ -25,6 +41,8 @@ cell_configuration_request_message make_cell_cfg_req()
   // RA search space
   pdcch_cfg_common.ra_search_space_present = true;
   pdcch_cfg_common.ra_search_space         = 1;
+
+  msg.ul_cfg_common = make_ul_cfg_common();
 
   return msg;
 }

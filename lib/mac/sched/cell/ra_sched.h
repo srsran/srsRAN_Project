@@ -48,9 +48,14 @@ private:
                       slot_resource_allocator& msg3_alloc,
                       unsigned                 nof_msg3_grants);
 
+  // args
   const cell_configuration& cfg;
-  srslog::basic_logger&     logger = srslog::fetch_basic_logger("MAC");
 
+  // derived from args
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+  const unsigned        ra_win_nof_slots;
+
+  // variables
   std::deque<pending_rar_t>                   pending_rars;
   circular_array<pending_msg3_t, MAX_NOF_UES> pending_msg3s;
 };
