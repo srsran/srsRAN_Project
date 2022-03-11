@@ -12,12 +12,6 @@ namespace srsgnb {
 /// Describes the different SS/PBCH block patterns defined in 38.213 section 4.1 Cell search
 enum class ssb_pattern_case { A, B, C, D, E };
 
-/// Calculates the half radio frame
-inline bool ssb_get_hrf(slot_point slot)
-{
-  return slot.subframe_idx() < NOF_SUBFRAMES_PER_FRAME / 2;
-}
-
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst
 /// \param [in] pattern_case Provides the pattern
 /// \param [in] ssb_idx Provides the SS/PBCH block opportunity index
