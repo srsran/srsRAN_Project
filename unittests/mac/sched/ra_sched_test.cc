@@ -7,6 +7,9 @@
 
 using namespace srsgnb;
 
+/// Tests whether the fields in a RAR grant are consistent. Current tests:
+/// - no repeated C-RNTIs as MSG3 grants.
+/// - No collision in UL PRBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_alloc_info> rars)
 {
   prb_bitmap                                total_ul_prbs{cfg.nof_ul_prbs};
@@ -15,6 +18,7 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_alloc_in
   for (const rar_alloc_info& rar : rars) {
     TESTASSERT(not rar.msg3s.empty());
     for (const msg3_freq_alloc& msg3 : rar.msg3s) {
+      TESTASSERT(msg3.prbs.length() > 0);
       TESTASSERT(not total_ul_prbs.any(msg3.prbs.start(), msg3.prbs.stop()));
       TESTASSERT(not crntis.contains(msg3.tc_rnti));
 
@@ -24,18 +28,31 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_alloc_in
   }
 }
 
-void test_msg3_grant(const cell_configuration& cfg, const rach_indication_message& rach_ind, const rar_alloc_info& rar)
+/// Tests whether a RACH indication is served in RAR grant and verify RAR and Msg3 parameter consistency with RACH
+/// indication. Current tests:
+/// - RAR RAPID matches RA-RNTI
+/// \param cfg cell configuration
+/// \param rach_ind scheduled RACH indication
+/// \param rar RAR grant
+/// \return true if a Msg3 grant was found with the same TC-RNTI as that of RACH indication.
+bool test_rach_ind_in_rar(const cell_configuration&      cfg,
+                          const rach_indication_message& rach_ind,
+                          const rar_alloc_info&          rar)
 {
-  uint16_t ra_rnti = 1 + rach_ind.symbol_index + 14 * rach_ind.slot_rx.slot_idx() + 14 * 80 * rach_ind.frequency_index;
+  uint16_t ra_rnti =
+      1 + rach_ind.symbol_index + 14 * rach_ind.slot_rx.slot_index() + 14 * 80 * rach_ind.frequency_index;
   TESTASSERT_EQ(ra_rnti, rar.rapid);
-  TESTASSERT(rar.ta >= rach_ind.timing_advance);
+  TESTASSERT(rar.ta >= rach_ind.timing_advance); // check
 
   for (const msg3_freq_alloc& msg3 : rar.msg3s) {
-    TESTASSERT_EQ(rach_ind.crnti, msg3.tc_rnti);
-    TESTASSERT(msg3.prbs.length() > 0);
+    if (rach_ind.crnti == msg3.tc_rnti) {
+      return true;
+    }
   }
+  return false;
 }
 
+/// Helper class to initialize and store relevant objects for the test and provide helper methods
 struct test_bench {
   const du_bwp_id_t     bwp_id     = 0;
   srslog::basic_logger& mac_logger = srslog::fetch_basic_logger("MAC");
@@ -51,6 +68,7 @@ struct test_bench {
   }
 };
 
+/// Verify the correct scheduling of a RAR and Msg3 in an FDD frame, when a single RACH is received.
 void test_ra_sched_fdd_single_rach()
 {
   unsigned tx_delay = 4;
@@ -92,8 +110,8 @@ void test_ra_sched_fdd_single_rach()
       rar_alloc_info& rar = pdcch_sl_res.dl_res().rars[0];
 
       // Msg3
+      test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.msg3s.size());
-      test_msg3_grant(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(rar.msg3s[0].prbs.length(), msg3_sl_res.used_ul_prbs().count());
 
     } else {

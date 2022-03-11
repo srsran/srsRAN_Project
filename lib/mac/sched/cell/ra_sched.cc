@@ -23,7 +23,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
   // t_id = index of first slot of the PRACH (0 <= t_id < 80)
   // f_id = index of the PRACH in the freq domain (0 <= f_id < 8) (for FDD, f_id=0)
   // ul_carrier_id = 0 for NUL and 1 for SUL carrier
-  uint16_t ra_rnti = 1 + msg.symbol_index + 14 * msg.slot_rx.slot_idx() + 14 * 80 * msg.frequency_index;
+  uint16_t ra_rnti = 1 + msg.symbol_index + 14 * msg.slot_rx.slot_index() + 14 * 80 * msg.frequency_index;
 
   logger.info("SCHED: New PRACH slot={}, preamble={}, ra-rnti=0x{:x}, temp_crnti=0x{:x}, ta_cmd={}",
               msg.slot_rx,
