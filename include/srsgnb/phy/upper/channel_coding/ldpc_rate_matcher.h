@@ -3,7 +3,9 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_H
 
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsgnb/adt/span.h"
+#include "srsgnb/phy/modulation_scheme.h"
+
 namespace srsgnb {
 
 /// LDPC rate matching (i.e., bit selection and bit interleaving) interface.

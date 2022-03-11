@@ -3,18 +3,11 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/modulation_scheme.h"
 #include <complex>
 #include <memory>
 
 namespace srsgnb {
-
-enum class modulation_scheme {
-  BPSK   = 1, /*!< \brief BPSK. */
-  QPSK   = 2, /*!< \brief QPSK. */
-  QAM16  = 4, /*!< \brief QAM16. */
-  QAM64  = 6, /*!< \brief QAM64. */
-  QAM256 = 8  /*!< \brief QAM256. */
-};
 
 class modulation_mapper
 {

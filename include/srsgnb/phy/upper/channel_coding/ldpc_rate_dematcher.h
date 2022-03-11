@@ -3,7 +3,9 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
 
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsgnb/adt/span.h"
+#include "srsgnb/phy/modulation_scheme.h"
+
 namespace srsgnb {
 
 /// LDPC rate dematcher interface. It reverts the operations of ldpc_rate_matcher.
