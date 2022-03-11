@@ -3,7 +3,7 @@
 #define SRSGNB_F1AP_DU_IMPL_H
 
 #include "f1ap_packet_handler.h"
-#include "initial_ul_rrc_message_procedure.h"
+#include "procedures/initial_ul_rrc_message_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include <memory>
