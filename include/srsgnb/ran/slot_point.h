@@ -8,7 +8,7 @@
 namespace srsgnb {
 
 /// Number of subframers per frame. This constant doesn't depend on the numerology used
-const uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
+constexpr uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
 
 /// Represents the numerology, SFN and slot index of the current slot.
 /// It provides several functionalities compared to a simple integer type, namely:
