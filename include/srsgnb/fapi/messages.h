@@ -269,25 +269,32 @@ struct dl_ssb_bch_payload {
   };
 };
 
+/// Encodes the first symbol mapping for candidate SSB locations [3GPP TS 38.213 [4], sec 4.1].
+enum class ssb_case_type : uint8_t { case_a, case_b, case_c, case_d, case_e };
+
 /// SSB/PBCH maintenance parameters added in FAPIv3.
 struct dl_ssb_maintenance_v3 {
-  uint8_t ssb_pdu_index;
-  uint8_t case_type;
-  uint8_t subcarrier_spacing;
-  uint8_t lmax;
-  int16_t ss_pbch_block_power_scaling;
-  int16_t beta_pss_profile_sss;
+  uint8_t       ssb_pdu_index;
+  ssb_case_type case_type;
+  uint8_t       subcarrier_spacing;
+  uint8_t       lmax;
+  int16_t       ss_pbch_block_power_scaling;
+  int16_t       beta_pss_profile_sss;
 };
+
+enum class beta_pss_profile_type : uint8_t { dB_0 = 0, dB_3 = 1, beta_pss_profile_sss = 255 };
+
+enum class bch_payload_type : uint8_t { mac_full, phy_timing, phy_full };
 
 /// Downlink SSB PDU information.
 struct dl_ssb_pdu {
-  uint16_t           phys_cell_id;
-  uint8_t            beta_pss_profile_nr;
-  uint8_t            ssb_block_index;
-  uint8_t            ssb_subcarrier_offset;
-  uint16_t           ssb_offset_pointA;
-  uint8_t            bch_payload_flag;
-  dl_ssb_bch_payload bch_payload;
+  uint16_t              phys_cell_id;
+  beta_pss_profile_type beta_pss_profile_nr;
+  uint8_t               ssb_block_index;
+  uint8_t               ssb_subcarrier_offset;
+  uint16_t              ssb_offset_pointA;
+  bch_payload_type      bch_payload_flag;
+  dl_ssb_bch_payload    bch_payload;
   //: TODO: beamforming
   dl_ssb_maintenance_v3 ssb_maintenance_v3;
   //: TODO: params v4 - MU-MIMO
@@ -1593,9 +1600,6 @@ struct multi_msg_a_pusch_config {
   uint16_t                                        num_configurations;
   std::array<msg_a_pusch_config, MAX_NUM_CONFIGS> configs;
 };
-
-/// Encodes the first symbol mapping for candidate SSB locations [3GPP TS 38.213 [4], sec 4.1].
-enum class ssb_case_types : uint8_t { case_a, case_b, case_c, case_d, case_e };
 
 /// Encodes the SSB resource configuration.
 /// \note mask_size value is 2 or 64. When mask_size == 2 mask field of this struct is valid, otherwise (mask_size ==
