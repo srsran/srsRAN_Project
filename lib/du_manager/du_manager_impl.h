@@ -9,7 +9,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/task_executor.h"
-#include "ue_creation_procedure.h"
+#include "procedures/ue_creation_procedure.h"
 #include <memory>
 
 namespace srsgnb {

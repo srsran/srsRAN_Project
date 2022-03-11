@@ -1,7 +1,7 @@
 
 #include "du_ue_manager.h"
-#include "ue_creation_procedure.h"
-#include "ue_deletion_procedure.h"
+#include "procedures/ue_creation_procedure.h"
+#include "procedures/ue_deletion_procedure.h"
 
 using namespace srsgnb;
 

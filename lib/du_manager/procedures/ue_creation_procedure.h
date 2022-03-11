@@ -2,7 +2,7 @@
 #ifndef SRSGNB_UE_CREATION_PROCEDURE_H
 #define SRSGNB_UE_CREATION_PROCEDURE_H
 
-#include "../ran/gnb_format.h"
+#include "../../ran/gnb_format.h"
 #include "du_manager_config.h"
 #include "du_manager_context.h"
 #include "du_manager_interfaces.h"
