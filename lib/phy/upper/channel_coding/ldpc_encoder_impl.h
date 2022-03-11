@@ -1,7 +1,7 @@
 /// \file
 /// \brief LDPC encoder declaration.
-#ifndef SRSGNB_CHANNEL_CODING_LDPC_ENCODER_IMPL
-#define SRSGNB_CHANNEL_CODING_LDPC_ENCODER_IMPL
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_IMPL_H
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/adt/span.h"
@@ -119,4 +119,4 @@ class ldpc_encoder_avx2 : public ldpc_encoder_impl
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_CHANNEL_CODING_LDPC_ENCODER_IMPL
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_IMPL_H

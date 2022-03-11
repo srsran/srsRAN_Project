@@ -1,8 +1,8 @@
 /// \file
 /// \brief LDPC decoder declaration.
 
-#ifndef SRSGNB_CHANNEL_CODING_LDPC_DECODER_IMPL
-#define SRSGNB_CHANNEL_CODING_LDPC_DECODER_IMPL
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER_IMPL_H
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_decoder.h"
@@ -165,4 +165,5 @@ class ldpc_decoder_avx2 : public ldpc_decoder_impl
   }
 };
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_CODING_LDPC_DECODER_IMPL
+
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_DECODER_IMPL_H

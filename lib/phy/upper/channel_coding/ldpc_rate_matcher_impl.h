@@ -1,8 +1,8 @@
 /// \file
 /// \brief LDPC rate matcher declaration.
 
-#ifndef SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
-#define SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL_H
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
@@ -50,4 +50,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_IMPL_H

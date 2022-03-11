@@ -1,7 +1,7 @@
 ///\file
 ///\brief ldpc_graph: class describing LDPC Tanner graphs.
-#ifndef SRSGNB_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL
-#define SRSGNB_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
 
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
 #include <array>
@@ -151,4 +151,5 @@ static const std::array<ldpc_graph_impl, total_nof_graphs> graph_array = create_
 } // namespace ldpc
 
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_CODING_LDPC_IMPL
+
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H

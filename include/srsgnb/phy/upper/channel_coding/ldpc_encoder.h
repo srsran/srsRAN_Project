@@ -1,8 +1,8 @@
 /// \file
 /// \brief LDPC encoder interface.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
@@ -37,4 +37,4 @@ std::unique_ptr<ldpc_encoder> create_ldpc_encoder(const std::string& enc_type);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_H

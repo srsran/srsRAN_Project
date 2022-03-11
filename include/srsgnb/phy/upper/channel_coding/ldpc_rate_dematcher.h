@@ -1,7 +1,7 @@
 /// \file
 /// \brief LDPC rate dematching.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHING
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHING
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 namespace srsgnb {
@@ -42,4 +42,4 @@ std::unique_ptr<ldpc_rate_dematcher> create_ldpc_rate_dematcher();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHING
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H

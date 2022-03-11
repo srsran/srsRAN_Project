@@ -1,7 +1,7 @@
 /// \file
 /// \brief Lookup tables for srsgnb::ldpc_impl -- access function declarations.
-#ifndef SRSGNB_CHANNEL_CODING_LDPC_IMPL_LUTS
-#define SRSGNB_CHANNEL_CODING_LDPC_IMPL_LUTS
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LUTS_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LUTS_IMPL_H
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
@@ -27,4 +27,5 @@ uint8_t get_lifting_size_position(lifting_size_t ls);
 const BG_adjacency_matrix_t* get_adjacency_matrix(base_graph_t bg);
 } // namespace ldpc
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_CODING_LDPC_IMPL_LUTS
+
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LUTS_IMPL_H

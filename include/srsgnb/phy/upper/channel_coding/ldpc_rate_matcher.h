@@ -1,7 +1,7 @@
 /// \file
 /// \brief LDPC rate matching.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHING
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHING
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_H
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 namespace srsgnb {
@@ -38,4 +38,4 @@ std::unique_ptr<ldpc_rate_matcher> create_ldpc_rate_matcher();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHING
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_MATCHER_H
