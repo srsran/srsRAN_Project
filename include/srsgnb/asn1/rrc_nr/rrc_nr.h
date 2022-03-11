@@ -19,7 +19,7 @@
 #ifndef SRSASN1_RRC_NR_H
 #define SRSASN1_RRC_NR_H
 
-#include "asn1_utils.h"
+#include "srsgnb/asn1/asn1_utils.h"
 #include <cstdio>
 #include <stdarg.h>
 

@@ -4,13 +4,16 @@
 
 using namespace srsgnb;
 
-/// See TS 38.321, 5.1.3 - RAP transmission
+ra_sched::ra_sched(const cell_configuration& cfg_) : cfg(cfg_)
+{
+  srsran_assert(cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().ra_search_space_present,
+                "Creating RA scheduler for cell with no RA search space");
+}
+
 bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 {
-  const static unsigned prach_duration      = 1;
-  const static unsigned nof_slots_per_frame = 10;   // TODO: Take from config
-  const static unsigned is_dl_enabled       = true; // TODO: Take from config
-  const static unsigned rar_window_slots    = 10;   // TODO: Take from config
+  const static unsigned prach_duration   = 1; // TODO: Take from config
+  const static unsigned rar_window_slots = 10; // TODO: Take from config
 
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id
   // s_id = index of the first OFDM symbol (0 <= s_id < 14)
@@ -52,9 +55,10 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
     auto& rar_req         = pending_rars.back();
     rar_req.ra_rnti       = ra_rnti;
     rar_req.prach_slot_rx = msg.slot_rx;
-    for (unsigned sl_idx = 0; sl_idx < nof_slots_per_frame; ++sl_idx) {
-      slot_point sl_start = rar_req.prach_slot_rx + prach_duration;
-      if (is_dl_enabled) {
+    // First slot after PRACH with active DL slot represents the start of the RAR window.
+    for (unsigned sl_idx = 0; sl_idx < cfg.nof_slots_per_frame; ++sl_idx) {
+      slot_point sl_start = rar_req.prach_slot_rx + prach_duration + sl_idx;
+      if (cfg.is_dl_enabled(sl_start)) {
         rar_req.rar_window = {sl_start, sl_start + rar_window_slots};
         break;
       }

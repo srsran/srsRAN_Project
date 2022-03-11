@@ -28,5 +28,5 @@ target_link_libraries(resource_allocator_test srsgnb_sched srslog)
 add_test(resource_allocator_test resource_allocator_test)
 
 add_executable(ra_sched_test ra_sched_test.cc)
-target_link_libraries(ra_sched_test srsgnb_sched srslog)
+target_link_libraries(ra_sched_test srsgnb_sched srslog rrc_nr_asn1)
 add_test(ra_sched_test ra_sched_test)

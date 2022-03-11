@@ -3,4 +3,4 @@ set(SOURCES sched_prb.cc sched_harq.cc sched.cc sched_ssb.cc cell/cell_configura
             cell/ra_sched.cc)
 
 add_library(srsgnb_sched STATIC ${SOURCES})
-target_link_libraries(srsgnb_sched rrc_nr_asn1)
+target_link_libraries(srsgnb_sched rrc_nr_asn1_helpers)

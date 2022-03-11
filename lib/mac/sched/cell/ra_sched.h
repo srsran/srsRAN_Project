@@ -14,7 +14,10 @@ class ra_sched
   static constexpr size_t MAX_RAR_LIST = 16;
 
 public:
+  ra_sched(const cell_configuration& cfg_);
+
   /// Enqueue RACH indication
+  /// See TS 38.321, 5.1.3 - RAP transmission
   bool handle_rach_indication(const rach_indication_message& msg);
 
   /// Allocate pending RARs + Msg3s
@@ -45,7 +48,8 @@ private:
                       slot_resource_allocator& msg3_alloc,
                       unsigned                 nof_msg3_grants);
 
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+  const cell_configuration& cfg;
+  srslog::basic_logger&     logger = srslog::fetch_basic_logger("MAC");
 
   std::deque<pending_rar_t>                   pending_rars;
   circular_array<pending_msg3_t, MAX_NOF_UES> pending_msg3s;

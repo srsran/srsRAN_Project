@@ -56,7 +56,9 @@ void test_ra_sched_fdd_single_rach()
   unsigned tx_delay = 4;
 
   test_bench bench;
-  ra_sched   ra_sch{};
+
+  cell_configuration cell_cfg{make_cell_cfg_req()};
+  ra_sched           ra_sch{cell_cfg};
 
   slot_point              prach_sl_rx{0, 5};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, 0x4601);

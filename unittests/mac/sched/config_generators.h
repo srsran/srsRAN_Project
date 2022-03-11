@@ -18,10 +18,16 @@ cell_configuration_request_message make_cell_cfg_req()
 
   msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
   msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
+  msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup();
+
+  auto& pdcch_cfg_common = msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup();
+
+  // RA search space
+  pdcch_cfg_common.ra_search_space_present = true;
+  pdcch_cfg_common.ra_search_space         = 1;
 
   return msg;
 }
-
 
 rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti)
 {

@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/asn1/rrc_nr.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include <sstream>
 
 using namespace asn1;
