@@ -65,40 +65,44 @@ public:
                   nof_slots_per_subframe());
   }
 
+  /// Sets slot_point to invalid state.
+  void clear() { numerology_val = NOF_NUMEROLOGIES; }
+
   /// Determines whether slot_point was correctly initialized.
   bool valid() const { return numerology_val < NOF_NUMEROLOGIES; }
 
-  /// Number of slots present in a subframe.
-  uint8_t nof_slots_per_subframe() const { return 1U << static_cast<uint32_t>(numerology_val); }
-
-  /// Number of slots present in a frame.
-  uint8_t nof_slots_per_frame() const { return nof_slots_per_subframe() * NOF_SUBFRAMES_PER_FRAME; }
-
-  /// Frame number. Value: (0..1023).
-  uint16_t sfn() const { return static_cast<uint32_t>(count_val) / nof_slots_per_frame(); }
-
-  /// Subframe index in a frame. Value: (0..9).
-  uint16_t subframe_idx() const { return slot_idx() / nof_slots_per_subframe(); }
-
-  /// Slot index. Value: SCS=15kHz: (0..9), SCS=30kHz: (0..19), SCS=60kHz: (0..39), SCS=120kHz: (0..79), SCS=240kHz:
-  /// (0..159)
-  uint8_t slot_idx() const { return static_cast<uint32_t>(count_val) % nof_slots_per_frame(); }
-
   /// Numerology index (0..4).
-  uint8_t numerology_idx() const { return numerology_val; }
+  uint32_t numerology() const { return numerology_val; }
+
+  /// Slot index in radio frame.
+  /// Value: SCS=15kHz: (0..9), SCS=30kHz: (0..19), SCS=60kHz: (0..39), SCS=120kHz: (0..79), SCS=240kHz: (0..159)
+  uint32_t slot_index() const { return static_cast<uint32_t>(count_val) % nof_slots_per_frame(); }
+
+  /// Radio Frame Number. Value: (0..1023).
+  uint32_t sfn() const { return static_cast<uint32_t>(count_val) / nof_slots_per_frame(); }
+
+  /// Number of slots present in a subframe. Depends on numerology.
+  uint32_t nof_slots_per_subframe() const { return 1U << static_cast<uint32_t>(numerology_val); }
+
+  /// Number of slots present in a frame. Depends on numerology.
+  uint32_t nof_slots_per_frame() const { return nof_slots_per_subframe() * NOF_SUBFRAMES_PER_FRAME; }
+
+  /// Subframe index in a radio frame. Value: (0..9).
+  uint32_t subframe_index() const { return slot_index() / nof_slots_per_subframe(); }
 
   /// Conversion of slot_point to system slot.
   uint32_t system_slot() const { return count_val; }
   uint32_t to_uint() const { return count_val; }
-
-  /// Cast of slot point to system slot.
   explicit operator uint32_t() const { return count_val; }
 
-  /// Sets slot_point to invalid state.
-  void clear() { numerology_val = NOF_NUMEROLOGIES; }
+  /// Get Half Radio Frame size in number of slots
+  uint32_t nof_hrf_slots() const { return nof_slots_per_frame() / 2; }
 
   /// Checks if slot is in second half of the radio frame.
-  bool is_odd_half_radio_frame() const { return subframe_idx() >= (NOF_SUBFRAMES_PER_FRAME / 2); }
+  bool is_odd_hrf() const { return subframe_index() >= (NOF_SUBFRAMES_PER_FRAME / 2); }
+
+  /// Get MOD(slot index, Nof slots in Half Frame)
+  uint32_t hrf_slot_index() const { return static_cast<uint32_t>(count_val) % nof_hrf_slots(); }
 
   /// Equality comparison of two slot_point objects. Two slot points are equal if their numerology, SFN and slot index
   /// have the same value.
@@ -115,7 +119,7 @@ public:
   /// is equal to half of the total number of slots in a hyperframe.
   bool operator<(const slot_point& other) const
   {
-    srsran_assert(numerology_idx() == other.numerology_idx(), "Comparing slots of different numerologies");
+    srsran_assert(numerology() == other.numerology(), "Comparing slots of different numerologies");
     int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
     if (v > 0) {
       return (v < (int)nof_slots_per_system_frame() / 2);

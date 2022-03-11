@@ -165,7 +165,7 @@ void sched_ssb(const slot_point& sl_point,
 
   /// Perform mod operation of slot index by ssb_periodicity;
   /// "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval
-  slot_point sl_point_mod(sl_point.numerology_idx(), sl_point.to_uint() % (ssb_periodicity * sl_point.nof_slots_per_subframe()));
+  slot_point sl_point_mod(sl_point.numerology(), sl_point.to_uint() % (ssb_periodicity * sl_point.nof_slots_per_subframe()));
 
   /// Select SSB case with reference to TS 38.213, Section 4.1
   switch (ssb_case) {

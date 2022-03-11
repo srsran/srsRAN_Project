@@ -135,7 +135,7 @@ void dl_harq_proc::fill_dci(dci_dl_t& dci)
   if (dci.ctx.format == dci_format::f1_0) {
     dci.harq_feedback = (slot_ack - slot_tx) - 1;
   } else {
-    dci.harq_feedback = slot_tx.slot_idx();
+    dci.harq_feedback = slot_tx.slot_index();
   }
 }
 

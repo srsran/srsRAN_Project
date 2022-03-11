@@ -10,7 +10,7 @@ void test_slot_type()
   slot_point slot1;
   TESTASSERT(not slot1.valid());
   slot_point slot2{0, 1, 5};
-  TESTASSERT(slot2.valid() and slot2.numerology_idx() == 0 and slot2.slot_idx() == 5 and slot2.slot_idx() == 5 and
+  TESTASSERT(slot2.valid() and slot2.numerology() == 0 and slot2.slot_index() == 5 and slot2.slot_index() == 5 and
              slot2.sfn() == 1);
   slot_point slot3{slot2};
   TESTASSERT(slot3 == slot2);
@@ -40,7 +40,7 @@ void test_slot_type()
   TESTASSERT(slot1 - 100 == slot2 - 100);
   TESTASSERT(((slot1 - 100000) + 100000) == slot1);
   TESTASSERT((slot1 - 10240) == slot1);
-  TESTASSERT((slot1 - 100).slot_idx() == 5 and (slot1 - 100).sfn() == 1015);
+  TESTASSERT((slot1 - 100).slot_index() == 5 and (slot1 - 100).sfn() == 1015);
   TESTASSERT(((slot1 - 100) + 100) == slot1);
   TESTASSERT(((slot1 - 1) + 1) == slot1);
 
