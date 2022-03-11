@@ -34,21 +34,33 @@ struct cell_resource_grid {
   void reset();
 };
 
-/// Circular Ring of cell resource grid objects. This class always manages the automatic resetting of cell resource
+/// Circular Ring of cell resource grid objects. This class manages the automatic resetting of cell resource
 /// grid objects, once they become too old to be used by the PHY.
 struct cell_resource_grid_pool {
+  /// Number of cell resource grid objects stored in the pool
   static const size_t RESOURCE_GRID_SIZE = 40;
-  static const int    OLD_SLOT_DELAY     = 10;
 
+  /// Lowest difference between a slot and the last slot indication that avoids overflowing the ring pool.
+  static const int MINIMUM_SLOT_DIFF = -10;
+
+  /// Highest difference between a slot and the last slot indication that avoids overflowing the ring pool.
+  static const int MAXIMUM_SLOT_DIFF = RESOURCE_GRID_SIZE / 2;
+
+  /// Cell configuration
   const cell_configuration& cfg;
 
   explicit cell_resource_grid_pool(const cell_configuration& cfg_);
 
+  /// Indicate the processing of a new slot in the scheduler.
   void slot_indication(slot_point sl_tx);
 
+  /// Cell index of the resource grid.
   du_cell_index_t cell_index() const { return cfg.cell_index; }
-  slot_point      slot_tx() const { return last_sl_ind; }
 
+  /// Last slot indicated to the scheduler.
+  slot_point slot_tx() const { return last_slot_ind; }
+
+  /// Access cell resource grid respective to given slot
   cell_resource_grid& operator[](slot_point sl_tx)
   {
     assert_valid_sl(sl_tx);
@@ -64,12 +76,15 @@ private:
   /// Ensure we are not overflowing the circular pool
   void assert_valid_sl(slot_point sl) const
   {
-    srsran_sanity_check(((sl - last_sl_ind) < (int)RESOURCE_GRID_SIZE / 2) and (sl - last_sl_ind) > -OLD_SLOT_DELAY,
+    srsran_sanity_check(((sl - last_slot_ind) < MAXIMUM_SLOT_DIFF) and (sl - last_slot_ind) >= MINIMUM_SLOT_DIFF,
                         "The cell resource pool is too small for accessing a slot with delay: {}",
-                        sl - last_sl_ind);
+                        sl - last_slot_ind);
   }
 
-  slot_point                      last_sl_ind;
+  /// The latest slot value indicated by the PHY to the MAC/scheduler.
+  slot_point last_slot_ind;
+
+  /// Circular pool of cell resource grids, where each entry represents a separate slot.
   std::vector<cell_resource_grid> slots_;
 };
 
@@ -113,15 +128,21 @@ public:
     sl_offset(slot_offset), res_grid_pool(res_grid_pool_)
   {}
 
-  /// Access resource allocator for a given {slot, cell}
-  slot_resource_allocator operator[](unsigned sl_delay)
+  /// Access resource allocator for a given {slot, cell}. Slot correspons to the latest slot indication provided
+  /// to the resource grid + a slot delay provided as argument. Given that slot_delay is unsigned, this class
+  /// can only access the present and future slots.
+  slot_resource_allocator operator[](unsigned slot_delay)
   {
-    return slot_resource_allocator{res_grid_pool[res_grid_pool.slot_tx() + sl_offset + sl_delay],
-                                   res_grid_pool.slot_tx() + sl_offset + sl_delay};
+    return slot_resource_allocator{res_grid_pool[res_grid_pool.slot_tx() + sl_offset + slot_delay],
+                                   res_grid_pool.slot_tx() + sl_offset + slot_delay};
   }
 
 private:
-  const unsigned           sl_offset;
+  /// Slot offset allows having multiple allocators pointing to the same grid, but pointing at a different default slot
+  /// Note: This feature may become useful if we plan to allocate a batch of slots in one single scheduler call.
+  const unsigned sl_offset;
+
+  /// Reference to resource grid pool
   cell_resource_grid_pool& res_grid_pool;
 };
 

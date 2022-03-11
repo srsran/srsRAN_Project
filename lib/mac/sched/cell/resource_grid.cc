@@ -30,11 +30,10 @@ cell_resource_grid_pool::cell_resource_grid_pool(const cell_configuration& cfg_)
 
 void cell_resource_grid_pool::slot_indication(slot_point sl_tx)
 {
-  const unsigned old_slot_delay = 10;
-  srsran_sanity_check(not last_sl_ind.valid() or last_sl_ind + 1 == sl_tx, "Slot indication was skipped");
+  srsran_sanity_check(not last_slot_ind.valid() or last_slot_ind + 1 == sl_tx, "Slot indication was skipped");
 
-  last_sl_ind = sl_tx;
+  last_slot_ind = sl_tx;
 
   // Clear old slots
-  slots_[(last_sl_ind - old_slot_delay).to_uint() % RESOURCE_GRID_SIZE].reset();
+  slots_[(last_slot_ind + MINIMUM_SLOT_DIFF).to_uint() % RESOURCE_GRID_SIZE].reset();
 }

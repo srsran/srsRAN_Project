@@ -168,17 +168,17 @@ public:
     count_val = (count_val + jump) % nof_slots_per_system_frame();
     return *this;
   }
-
-  /// Subtraction of slot point by an integer jump value.
-  slot_point& operator-=(uint32_t jump)
+  slot_point& operator+=(int jump)
   {
-    int a = (static_cast<int>(count_val) - static_cast<int>(jump)) % static_cast<int>(nof_slots_per_system_frame());
-    if (a < 0) {
-      a += nof_slots_per_system_frame();
-    }
-    count_val = a;
+    const int nof_slots = static_cast<int>(nof_slots_per_system_frame());
+    int       tmp       = (static_cast<int>(count_val) + jump) % nof_slots;
+    count_val           = tmp + (tmp < 0 ? nof_slots : 0);
     return *this;
   }
+
+  /// Subtraction of slot point by an integer jump value.
+  slot_point& operator-=(uint32_t jump) { return this->operator+=(-static_cast<int>(jump)); }
+  slot_point& operator-=(int jump) { return this->operator+=(-jump); }
 
   /// Determines whether this slot_point fits within provided slot point range.
   bool is_in_interval(slot_point begin, slot_point end) const { return (*this >= begin and *this < end); }
@@ -196,12 +196,27 @@ inline slot_point operator+(slot_point slot, uint32_t jump)
   slot += jump;
   return slot;
 }
+inline slot_point operator+(slot_point slot, int jump)
+{
+  slot += jump;
+  return slot;
+}
 inline slot_point operator+(uint32_t jump, slot_point slot)
 {
   slot += jump;
   return slot;
 }
+inline slot_point operator+(int jump, slot_point slot)
+{
+  slot += jump;
+  return slot;
+}
 inline slot_point operator-(slot_point slot, uint32_t jump)
+{
+  slot -= jump;
+  return slot;
+}
+inline slot_point operator-(slot_point slot, int jump)
 {
   slot -= jump;
   return slot;
