@@ -12,12 +12,11 @@ void ldpc_rate_dematcher_impl::init(const config_t& cfg)
   rv = cfg.rv;
 
   modulation_order = static_cast<uint8_t>(cfg.mod);
+
+  is_new_data = cfg.new_data;
 }
 
-void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>       output,
-                                            span<const int8_t> input,
-                                            unsigned           _nof_filler_bits,
-                                            const config_t&    cfg)
+void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8_t> input, const config_t& cfg)
 {
   init(cfg);
 
@@ -33,7 +32,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>       output,
   // The input size must be a multiple of the modulation order.
   srsran_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
-  // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2
+  // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
   std::array<double, 4> shift_factor{};
   uint16_t              lifting_size{};
   unsigned              BG_N_short{0};
@@ -57,8 +56,8 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>       output,
 
   // Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.
   nof_systematic_bits = (BG_K - 2) * lifting_size;
-  srsran_assert(_nof_filler_bits < nof_systematic_bits, "LDPC rate dematching: invalid number of filler bits.");
-  nof_filler_bits = _nof_filler_bits;
+  srsran_assert(cfg.nof_filler_bits < nof_systematic_bits, "LDPC rate dematching: invalid number of filler bits.");
+  nof_filler_bits = cfg.nof_filler_bits;
 
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
@@ -87,8 +86,10 @@ static int8_t combine_llrs(int8_t llrs1, int8_t llrs2)
 
 void ldpc_rate_dematcher_impl::allot_llrs(span<int8_t> out, span<const int8_t> in) const
 {
-  // Ensure output is empty.
-  std::fill(out.begin(), out.end(), 0);
+  // When we are not combining the current codeblock with previous ones, ensure we start from clean LLRs.
+  if (is_new_data) {
+    std::fill(out.begin(), out.end(), 0);
+  }
 
   unsigned matched_length = in.size();
   unsigned nof_info_bits  = nof_systematic_bits - nof_filler_bits;
@@ -100,7 +101,10 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<int8_t> out, span<const int8_t> i
       out[tmp_idx] = combine_llrs(out[tmp_idx], in[k]);
       ++k;
     } else {
-      // This is a filler bit, fix it to zero by setting the corresponding
+      // This is a filler bit: the corresponding LLR should be either 0 or INT8_MAX.
+      assert((is_new_data && (out[tmp_idx] == 0)) || (!is_new_data && (out[tmp_idx] == INT8_MAX)));
+
+      // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding
       // LLR to +inf (i.e., INT8_MAX in our fixed-point representation).
       out[tmp_idx] = INT8_MAX;
     }

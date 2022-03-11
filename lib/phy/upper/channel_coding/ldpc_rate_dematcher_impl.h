@@ -15,8 +15,7 @@ namespace srsgnb {
 class ldpc_rate_dematcher_impl : public ldpc_rate_dematcher
 {
 public:
-  void
-  rate_dematch(span<int8_t> output, span<const int8_t> input, unsigned _nof_filler_bits, const config_t& cfg) override;
+  void rate_dematch(span<int8_t> output, span<const int8_t> input, const config_t& cfg) override;
 
 private:
   /// Initializes the rate dematcher internal state.
@@ -43,6 +42,8 @@ private:
   unsigned nof_systematic_bits{0};
   /// Number of filler bits.
   unsigned nof_filler_bits{0};
+  /// New data flag: true if the processed codeblock is not a repeated one.
+  bool is_new_data{true};
 };
 
 } // namespace srsgnb

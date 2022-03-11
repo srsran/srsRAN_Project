@@ -24,7 +24,9 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
                          bool                                               lbrm,
                          const std::array<std::vector<uint8_t>, nof_rates>& matched);
 
-static const std::unique_ptr<ldpc_rate_matcher>   matcher   = create_ldpc_rate_matcher();
+/// The LDPC rate matcher object used throughout the test.
+static const std::unique_ptr<ldpc_rate_matcher> matcher = create_ldpc_rate_matcher();
+/// The LDPC rate dematcher object used throughout the test.
 static const std::unique_ptr<ldpc_rate_dematcher> dematcher = create_ldpc_rate_dematcher();
 
 int main()
@@ -145,8 +147,8 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
     std::transform(matched_bm[i].cbegin(), matched_bm[i].cend(), llrs.begin(), bit_to_llrs);
 
     std::vector<int8_t>           dematched(codeblock.size());
-    ldpc_rate_dematcher::config_t cfg{rv, mod, n_ref};
-    dematcher->rate_dematch(dematched, llrs, nof_filler_bits, cfg);
+    ldpc_rate_dematcher::config_t cfg{rv, nof_filler_bits, true, mod, n_ref};
+    dematcher->rate_dematch(dematched, llrs, cfg);
 
     // To check the dematcher output, we need to apply the rate matcher to it and compare with the output
     // obtained in the first part of the test. First, transform LLRs into hard bits.
