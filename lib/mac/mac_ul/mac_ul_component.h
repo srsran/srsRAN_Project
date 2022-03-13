@@ -11,6 +11,12 @@
 
 namespace srsgnb {
 
+struct rx_pdu_indication {
+  slot_point      slot_rx;
+  du_cell_index_t cell_index;
+  mac_rx_pdu      pdu;
+};
+
 class mac_pusch_processor
 {
 public:
@@ -63,26 +69,33 @@ public:
 
   void remove_ue(du_ue_index_t ue_index) { demux.erase(ue_index); }
 
-  void push_rx_data_indication(mac_rx_data_indication msg)
+  void push_rx_pdu(rx_pdu_indication msg)
   {
     // Decode TB
     // TODO
+    lcid_t lcid = 0;
 
     // Push PDU to upper layers
     du_ue_index_t        ue_idx;
     mac_ul_sdu_notifier* bearer;
-    std::tie(ue_idx, bearer) = demux.find_ul_bearer(msg.rnti, msg.lcid);
+    std::tie(ue_idx, bearer) = demux.find_ul_bearer(msg.pdu.rnti, lcid);
     if (bearer == nullptr) {
-      logger.warning("Received UL PDU for inexistent bearer {{" FMT_RNTI ", {}}}", msg.rnti, msg.lcid);
+      logger.warning("Received UL PDU for inexistent bearer {{" FMT_RNTI ", {}}}", msg.pdu.rnti, lcid);
       return;
     }
-    if (msg.lcid == 0) {
-      log_ul_pdu(logger, msg.rnti, msg.cell_index, "CCCH", "Pushing {} bytes", msg.pdu.size());
+    if (lcid == 0) {
+      log_ul_pdu(logger, msg.pdu.rnti, msg.cell_index, "CCCH", "Pushing {} bytes", msg.pdu.pdu.size());
     } else {
-      log_ul_pdu(
-          logger, ue_idx, msg.rnti, msg.cell_index, "DCCH", "Pushing {} bytes to LCID={}", msg.pdu.size(), msg.lcid);
+      log_ul_pdu(logger,
+                 ue_idx,
+                 msg.pdu.rnti,
+                 msg.cell_index,
+                 "DCCH",
+                 "Pushing {} bytes to LCID={}",
+                 msg.pdu.pdu.size(),
+                 lcid);
     }
-    bearer->on_ul_sdu(mac_ul_sdu{msg.rnti, msg.lcid, msg.pdu});
+    bearer->on_ul_sdu(mac_ul_sdu{msg.pdu.rnti, lcid, std::move(msg.pdu.pdu)});
   }
 
 private:
@@ -145,8 +158,11 @@ public:
 
   void push_rx_data_indication(mac_rx_data_indication msg)
   {
-    // Dispatch to right worker
-    cfg.ul_exec.execute([this, msg = std::move(msg)]() { workers[0]->push_rx_data_indication(std::move(msg)); });
+    for (mac_rx_pdu& pdu : msg.pdus) {
+      // Dispatch to right worker based on RNTI
+      rx_pdu_indication rx_ind{msg.sl_rx, msg.cell_index, std::move(pdu)};
+      cfg.ul_exec.execute([this, rx_ind = std::move(rx_ind)]() { workers[0]->push_rx_pdu(std::move(rx_ind)); });
+    }
   }
 
 private:

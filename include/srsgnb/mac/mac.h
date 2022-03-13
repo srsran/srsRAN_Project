@@ -3,6 +3,7 @@
 #define SRSGNB_MAC_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -12,17 +13,32 @@
 
 namespace srsgnb {
 
+constexpr size_t MAX_PDU_LIST = 16;
+
+using harq_pid              = uint8_t;
+using cqi_report            = uint8_t;
+using timing_advance_report = uint16_t;
+using rssi_report           = uint16_t;
+
 struct mac_ul_sdu {
   rnti_t      rnti;
   lcid_t      lcid;
   byte_buffer pdu;
 };
 
+struct mac_rx_pdu {
+  rnti_t                rnti;
+  harq_pid              pid;
+  cqi_report            ul_cqi;
+  timing_advance_report ta;
+  rssi_report           rssi;
+  byte_buffer           pdu;
+};
+
 struct mac_rx_data_indication {
-  rnti_t          rnti;
-  lcid_t          lcid;
-  du_cell_index_t cell_index;
-  byte_buffer     pdu;
+  slot_point                              sl_rx;
+  du_cell_index_t                         cell_index;
+  static_vector<mac_rx_pdu, MAX_PDU_LIST> pdus;
 };
 
 class mac_ul_sdu_notifier
@@ -95,7 +111,7 @@ public:
   virtual ~mac_configurer() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
   virtual async_task<mac_ue_reconfiguration_response_message>
-                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                                  = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
 };
 

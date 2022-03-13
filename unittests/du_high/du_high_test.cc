@@ -1,6 +1,6 @@
 
-#include "srsgnb/support/test_utils.h"
 #include "../../lib/du_high/du_high.h"
+#include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 
@@ -11,7 +11,7 @@ void test_du_ue_create()
   du_obj.start();
 
   // Add UE
-  mac_rx_data_indication rx_ind{0x4601, 0, 0, byte_buffer{}};
+  mac_rx_data_indication rx_ind{slot_point{0, 0}, 0, {{0x4601, 0, 15, 0, 20, byte_buffer{}}}};
   du_obj.push_pusch(rx_ind);
 
   uint32_t count = 0;
