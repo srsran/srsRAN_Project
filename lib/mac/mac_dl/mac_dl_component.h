@@ -103,6 +103,8 @@ public:
     });
   }
 
+  sched_interface& get_sched() { return sched_obj; }
+
 private:
   class sched_response_adapter final : public sched_cfg_notifier
   {

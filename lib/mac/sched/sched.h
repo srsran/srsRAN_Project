@@ -27,6 +27,12 @@ public:
   /// Obtain UL scheduling result
   const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
 
+  /// UE Scheduling Request
+  void ul_sr_info(rnti_t rnti) override {}
+
+  /// UE UL Buffer Status Report
+  void ul_bsr(const ul_bsr_indication_message& bsr) override {}
+
 private:
   sched_cfg_notifier& mac_notifier;
 
@@ -36,7 +42,7 @@ private:
   std::unique_ptr<data_scheduler> data_sched;
 
   // Cell-specific resources and schedulers
-  std::vector<std::unique_ptr<cell_sched>> cells;
+  std::vector<std::unique_ptr<cell_sched> > cells;
 };
 
 } // namespace srsgnb

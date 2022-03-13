@@ -4,10 +4,11 @@
 
 #include "sched_configurer.h"
 #include "sched_result.h"
+#include "sched_ue_feedback.h"
 
 namespace srsgnb {
 
-class sched_interface : public sched_configurer
+class sched_interface : public sched_configurer, public sched_ue_feedback
 {
 public:
   virtual ~sched_interface()                                                                = default;

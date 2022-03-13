@@ -11,7 +11,7 @@ mac_impl::mac_impl(mac_ul_sdu_notifier& ul_ccch_notifier_,
   cfg(ul_exec_, dl_execs_, ctrl_exec_),
   logger(cfg.logger),
   dl_unit(cfg),
-  ul_unit(cfg, ul_ccch_notifier_),
+  ul_unit(cfg, ul_ccch_notifier_, dl_unit.get_sched()),
   ctrl_unit(cfg, ul_unit, dl_unit)
 {
   // :TODO: remove when the log is used.
@@ -20,7 +20,7 @@ mac_impl::mac_impl(mac_ul_sdu_notifier& ul_ccch_notifier_,
 
 void mac_impl::push_rx_data_indication(mac_rx_data_indication msg)
 {
-  ul_unit.push_rx_data_indication(msg);
+  ul_unit.handle_rx_data_indication(msg);
 }
 
 async_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac_ue_create_request_message& msg)

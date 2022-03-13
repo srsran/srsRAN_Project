@@ -21,6 +21,7 @@ public:
   slot_vector<mac_ul_sdu_notifier*> ul_bearers;
 };
 
+/// Class implements the data structure where MAC UL UEs and respective UL bearers are stored.
 class mac_ul_demux
 {
 public:

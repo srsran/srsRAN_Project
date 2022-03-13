@@ -11,7 +11,10 @@ void test_du_ue_create()
   du_obj.start();
 
   // Add UE
-  mac_rx_data_indication rx_ind{slot_point{0, 0}, 0, {{0x4601, 0, 15, 0, 20, byte_buffer{}}}};
+  mac_rx_data_indication rx_ind{
+      slot_point{0, 0},
+      0,
+      {{0x4601, 0, 15, 0, 20, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
   du_obj.push_pusch(rx_ind);
 
   uint32_t count = 0;

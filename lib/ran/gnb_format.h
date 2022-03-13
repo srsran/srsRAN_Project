@@ -100,15 +100,28 @@ void log_proc_event(srslog::basic_logger& logger,
 
 template <typename... Args>
 void log_ul_pdu(srslog::basic_logger& logger,
+                du_ue_index_t         ue_index,
                 rnti_t                rnti,
-                uint32_t              cc,
+                du_cell_index_t       cell_index,
                 const char*           ch,
                 const char*           cause_fmt,
                 Args&&... args)
 {
+  if (not logger.info.enabled()) {
+    return;
+  }
   fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, FMT_UL_PREFIX " ");
+  if (ue_index != MAX_NOF_UES) {
+    fmt::format_to(fmtbuf, FMT_UE_INDEX " ", ue_index);
+  }
+  fmt::format_to(fmtbuf, FMT_RNTI " ", rnti);
+  if (cell_index != MAX_NOF_CELLS) {
+    fmt::format_to(fmtbuf, FMT_CC " ", cell_index);
+  }
+  fmt::format_to(fmtbuf, FMT_CH ": ", ch);
   fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
-  logger.info(FMT_UL_PREFIX " " FMT_RNTI " " FMT_CC " " FMT_CH ": {}", rnti, cc, ch, to_c_str(fmtbuf));
+  logger.info("{}", to_c_str(fmtbuf));
 }
 
 template <typename... Args>
