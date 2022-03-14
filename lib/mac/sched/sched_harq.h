@@ -86,7 +86,7 @@ protected:
 class dl_harq_proc : public harq_proc
 {
 public:
-  dl_harq_proc(uint32_t id_, uint32_t nprb);
+  dl_harq_proc(uint32_t id_);
 
   std::vector<uint8_t>& get_softbuffer() { return softbuffer; }
   byte_buffer*          get_tx_pdu() { return &pdu; }
@@ -110,7 +110,7 @@ private:
 class ul_harq_proc : public harq_proc
 {
 public:
-  ul_harq_proc(uint32_t id_, uint32_t nprb) : harq_proc(id_) {}
+  ul_harq_proc(uint32_t id_) : harq_proc(id_) {}
 
   bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx, dci_ul_t& dci);
 

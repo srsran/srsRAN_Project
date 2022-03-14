@@ -18,6 +18,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 {
   const static unsigned prach_duration = 1; // TODO: Take from config
 
+  // See 38.321, 5.1.3 - Random Access Preamble transmission
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id
   // s_id = index of the first OFDM symbol (0 <= s_id < 14)
   // t_id = index of first slot of the PRACH (0 <= t_id < 80)
@@ -43,7 +44,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
   for (pending_rar_t& r : pending_rars) {
     if (r.prach_slot_rx == msg.slot_rx and ra_rnti == r.ra_rnti) {
       if (r.tc_rntis.full()) {
-        logger.warning("PRACH ignored, as the the maximum number of RAR grants per tti has been reached");
+        logger.warning("PRACH ignored, as the the maximum number of RAR grants per slot has been reached.");
         return false;
       }
       r.tc_rntis.push_back(msg.crnti);
@@ -89,9 +90,9 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
   for (auto it = pending_rars.begin(); it != pending_rars.end();) {
     pending_rar_t& rar_req = *it;
 
-    // In case of RAR outside RAR window:
+    // In case of RAR being outside RAR window:
     // - if window has passed, discard RAR
-    // - if window hasn't started, stop loop, as RARs are ordered by TTI
+    // - if window hasn't started, stop loop, as RARs are ordered by slot
     if (not rar_req.rar_window.contains(rar_slot_res.slot)) {
       if (rar_slot_res.slot >= rar_req.rar_window.stop()) {
         fmt::memory_buffer str_buffer;

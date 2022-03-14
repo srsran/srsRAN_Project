@@ -31,6 +31,7 @@ struct cell_configuration_request_message {
 struct add_ue_configuration_request_message {};
 
 /// RACH indication Message
+/// \remark See ORAN WG8 9.2.3.2.12
 struct rach_indication_message {
   du_ue_index_t cell_index;
   rnti_t        crnti;

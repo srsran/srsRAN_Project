@@ -31,13 +31,15 @@ private:
     static_vector<rnti_t, MAX_RAR_LIST> tc_rntis;
   };
   struct pending_msg3_t {
-    rach_indication_message ind_msg;
-    ul_harq_proc            msg3_harq{0, 52};
+    rach_indication_message ind_msg{};
+    ul_harq_proc            msg3_harq{0};
   };
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str);
   void log_rar(const rar_alloc_info& rar);
 
+  /// Allocate pending RAR and associated Msg3 grants
+  /// \return The number of allocated Msg3 grants
   unsigned
   allocate_rar(const pending_rar_t& rar, slot_resource_allocator& rar_alloc, slot_resource_allocator& msg3_alloc);
 

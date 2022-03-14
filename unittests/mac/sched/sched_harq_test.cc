@@ -223,7 +223,7 @@ void test_dl_harq_proc(test_mode tmode)
   constexpr unsigned mcs          = 8;
   constexpr unsigned tbs          = 1224;
 
-  dl_harq_proc dl_proc{pid, 52};
+  dl_harq_proc dl_proc{pid};
   dci_dl_t     dci{};
   prb_grant    prbgrant{prb_interval{0, 60}};
   slot_point   sl_tx{0, tx_gnb_delay};
@@ -322,7 +322,7 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   struct dci_dl_t dci_dl;
 
   // Create DL_HARQ object
-  dl_harq_proc dl_test = dl_harq_proc(pid, nof_prbs);
+  dl_harq_proc dl_test = dl_harq_proc(pid);
   TESTASSERT_EQ(dl_test.pid, pid);
 
   // Create HARQ entity
@@ -403,7 +403,7 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   struct dci_ul_t dci_ul;
 
   // Create UL_HARQ object
-  ul_harq_proc ul_test = ul_harq_proc(pid, nof_prbs);
+  ul_harq_proc ul_test = ul_harq_proc(pid);
   TESTASSERT_EQ(ul_test.pid, pid);
 
   // Create HARQ entity

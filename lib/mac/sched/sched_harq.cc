@@ -122,7 +122,7 @@ bool harq_proc::new_retx(slot_point slot_tx_, slot_point slot_ack_)
   return true;
 }
 
-dl_harq_proc::dl_harq_proc(uint32_t id_, uint32_t nprb) : harq_proc(id_) {}
+dl_harq_proc::dl_harq_proc(uint32_t id_) : harq_proc(id_) {}
 
 void dl_harq_proc::fill_dci(dci_dl_t& dci)
 {
@@ -198,8 +198,8 @@ harq_entity::harq_entity(rnti_t rnti_, uint32_t nprb, uint32_t nof_harq_procs, s
   dl_harqs.reserve(nof_harq_procs);
   ul_harqs.reserve(nof_harq_procs);
   for (uint32_t pid = 0; pid < nof_harq_procs; ++pid) {
-    dl_harqs.emplace_back(pid, nprb);
-    ul_harqs.emplace_back(pid, nprb);
+    dl_harqs.emplace_back(pid);
+    ul_harqs.emplace_back(pid);
   }
 }
 

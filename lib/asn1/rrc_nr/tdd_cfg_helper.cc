@@ -58,7 +58,7 @@ bool srsgnb::tdd_cfg_helper::slot_is_dl(const tdd_ul_dl_cfg_common_s& cfg, slot_
     slot_idx_period -= pattern1_period_slots; // Remove pattern 1 offset
   }
 
-  // Check DL boundaries
+  // Check DL boundaries. Both fully DL slots and partially DL slots return true.
   return (slot_idx_period < pattern->nrof_dl_slots ||
           (slot_idx_period == pattern->nrof_dl_slots && pattern->nrof_dl_symbols != 0));
 }
