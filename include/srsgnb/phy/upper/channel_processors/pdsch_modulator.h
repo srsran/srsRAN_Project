@@ -9,6 +9,7 @@
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/ran/dmrs_mapping.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -25,7 +26,7 @@ public:
   static constexpr unsigned MAX_NOF_CODEWORDS = 2;
 
   /// Defines the maximum number of RE per codeword in a PDSCH transmission.
-  static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * NSYMB_PER_SLOT_NORM * MAX_PORTS / 2;
+  static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS / 2;
 
   /// Describes the necessary parameters to modulate a PDSCH transmission.
   struct config_t {
@@ -46,7 +47,7 @@ public:
     /// Time domain allocation number of symbols (1...14).
     unsigned nof_symbols;
     /// DMRS symbol positions as a mask.
-    std::array<bool, NSYMB_PER_SLOT_NORM> dmrs_symb_pos;
+    std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symb_pos;
     /// Indicates the DMRS configuration type.
     dmrs_type dmrs_config_type;
     /// Number of DMRS CDM groups without data.

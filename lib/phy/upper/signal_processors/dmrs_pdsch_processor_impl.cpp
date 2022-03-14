@@ -11,6 +11,7 @@
  */
 
 #include "dmrs_pdsch_processor_impl.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
@@ -60,7 +61,8 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
 
   // Calculate initial sequence state
   unsigned c_init =
-      ((((NSYMB_PER_SLOT_NORM * nslot + symbol + 1UL) * (2UL * nidnscid + 1UL)) << 17UL) + (2UL * nidnscid + nscid)) &
+      ((((get_nsymb_per_slot(cyclic_prefix::NORMAL) * nslot + symbol + 1UL) * (2UL * nidnscid + 1UL)) << 17UL) +
+       (2UL * nidnscid + nscid)) &
       INT32_MAX;
 
   // Initialise sequence
@@ -209,7 +211,7 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
   temp_re.resize(config.ports.size());
 
   // For each symbol in the slot....
-  for (unsigned symbol = 0; symbol < NSYMB_PER_SLOT_NORM; ++symbol) {
+  for (unsigned symbol = 0; symbol < MAX_NSYMB_PER_SLOT; ++symbol) {
     // Skip symbol if it is not used to transmit
     if (!config.symbols_mask[symbol]) {
       continue;

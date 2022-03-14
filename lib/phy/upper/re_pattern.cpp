@@ -1,4 +1,5 @@
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 using namespace srsgnb;
 
@@ -89,7 +90,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
 
     // If subcarriers mask matches, combine OFDM symbols mask.
     if (kmatch) {
-      for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+      for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
         p.symbols[l] |= pattern.symbols[l];
       }
       return;

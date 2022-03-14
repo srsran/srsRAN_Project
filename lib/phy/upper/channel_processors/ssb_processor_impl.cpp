@@ -12,6 +12,7 @@
 
 #include "ssb_processor_impl.h"
 #include "srsgnb/support/math_utils.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 using namespace srsgnb;
 
@@ -19,11 +20,11 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
 {
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
-  unsigned l_start          = (l_start_in_burst % NSYMB_PER_SLOT_NORM);
+  unsigned l_start          = (l_start_in_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL));
   unsigned k_start          = ssb_get_k_first(pdu.slot.numerology(), pdu.ssb_offset_pointA, pdu.ssb_subcarrier_offset);
 
   // Make sure the slot matches with the SS/PBCH transmission slot
-  srsran_assert((l_start_in_burst / NSYMB_PER_SLOT_NORM) == pdu.slot.hrf_slot_index(),
+  srsran_assert((l_start_in_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL)) == pdu.slot.hrf_slot_index(),
                 "Invalid slot index ({}) for SSB index {}",
                 pdu.slot.hrf_slot_index(),
                 l_start_in_burst);

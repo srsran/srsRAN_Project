@@ -8,6 +8,7 @@
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/math_utils.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 #include <random>
 
 using namespace srsgnb;
@@ -88,13 +89,13 @@ int main()
           // Deduce derivative variables
           unsigned ssb_first_symbol_burst = ssb_get_l_first(pattern_case, ssb_idx);
           unsigned nslots_in_subframe     = 1 << numerology;
-          unsigned slot_in_burst          = ssb_first_symbol_burst / NSYMB_PER_SLOT_NORM;
+          unsigned slot_in_burst          = ssb_first_symbol_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL);
           unsigned subframe_in_burst      = slot_in_burst / nslots_in_subframe;
           unsigned slot_in_subframe       = slot_in_burst % nslots_in_subframe;
 
           // Deduce derivative assertion values
           unsigned ssb_first_subcarrier  = ssb_get_k_first(numerology, ssb_offset_pointA, ssb_subcarrier_offset);
-          unsigned ssb_first_symbol_slot = ssb_first_symbol_burst % NSYMB_PER_SLOT_NORM;
+          unsigned ssb_first_symbol_slot = ssb_first_symbol_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
           // Iterate half frames
           for (unsigned subframe : {0 + subframe_in_burst, 5 + subframe_in_burst}) {

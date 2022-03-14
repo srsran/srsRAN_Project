@@ -5,6 +5,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -19,7 +20,7 @@ struct re_pattern {
   /// Resource element mask per resource block. True entries indicate the resource elements affected by the pattern.
   std::array<bool, NRE> re_mask{};
   /// Symbol mask. True entries indicate the symbols affected by the pattern.
-  std::array<bool, NSYMB_PER_SLOT_NORM> symbols{};
+  std::array<bool, MAX_NSYMB_PER_SLOT> symbols{};
 
   /// Default constructor. It allows instantiating the structure without using other constructors.
   re_pattern() = default;

@@ -5,6 +5,7 @@
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 #include <memory>
 
 namespace srsgnb {
@@ -30,7 +31,7 @@ public:
     /// Precoding matrix indicator, set to 0 for no precoding.
     unsigned pmi;
     /// DMRS symbol position indexes.
-    std::array<bool, NSYMB_PER_SLOT_NORM> symbols_mask;
+    std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.
     static_vector<bool, MAX_RB> rb_mask;
     /// List of ports, every entry is an index.

@@ -1,5 +1,6 @@
 
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 using namespace srsgnb;
 
@@ -25,7 +26,7 @@ void test_merge_1()
   for (unsigned k = 0; k != NRE; ++k) {
     pattern_1.re_mask[k] = (k % 2 == 0);
   }
-  for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+  for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
@@ -35,14 +36,14 @@ void test_merge_1()
   // - Even subcarrier indexes, and
   // - odd symbol indexes.
   re_pattern pattern_2 = pattern_1;
-  for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+  for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_2.symbols[l] = (l % 2 == 1); // Only odd symbols
   }
   list.merge(pattern_2);
   srsran_assert(list.get_nof_entries() == 1, "Failed");
 
   // The pattern should be repeated for each symbol.
-  for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+  for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     // Create mask with all entries to false
     std::array<bool, MAX_RB* NRE> mask = {};
 
@@ -93,7 +94,7 @@ void test_merge_2()
   for (unsigned k = 0; k != NRE; ++k) {
     pattern_1.re_mask[k] = (k % 2 == 0);
   }
-  for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+  for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
@@ -110,7 +111,7 @@ void test_merge_2()
   srsran_assert(list.get_nof_entries() == 1, "Failed");
 
   // The pattern should be repeated for each symbol.
-  for (unsigned l = 0; l != NSYMB_PER_SLOT_NORM; ++l) {
+  for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
     // Create mask with all entries to false
     std::array<bool, MAX_RB* NRE> mask = {};
 

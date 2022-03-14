@@ -4,6 +4,7 @@
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -78,7 +79,7 @@ private:
 
   /// Temporal modulated data
   static_vector<static_vector<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>          temp_d;
-  static_vector<static_vector<cf_t, MAX_RB * NRE * NSYMB_PER_SLOT_NORM>, MAX_PORTS> temp_x;
+  static_vector<static_vector<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
 public:
   /// \brief Generic PDSCH modulator instance contructor.

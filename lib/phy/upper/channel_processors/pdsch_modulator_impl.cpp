@@ -107,14 +107,14 @@ void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer
                                                             const config_t&                      config)
 {
   // Stores the resource grid allocation mask, common for all ports.
-  std::array<std::array<bool, NRE * MAX_RB>, NSYMB_PER_SLOT_NORM> allocation_mask;
+  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask;
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsran_assert(end_symbol_index <= NSYMB_PER_SLOT_NORM,
+  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
@@ -178,14 +178,14 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
   config.freq_allocation.get_allocation_indices(prb_indices, config.bwp_start_rb, config.bwp_size_rb);
 
   // Stores the resource grid allocation mask, common for all ports.
-  std::array<std::array<bool, NRE * MAX_RB>, NSYMB_PER_SLOT_NORM> allocation_mask;
+  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask;
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsran_assert(end_symbol_index <= NSYMB_PER_SLOT_NORM,
+  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
