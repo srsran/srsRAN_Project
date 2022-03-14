@@ -1,7 +1,7 @@
 ///\file
 ///\brief ldpc_graph: class describing LDPC Tanner graphs.
-#ifndef SRSGNB_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL
-#define SRSGNB_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
 
 #include "srsgnb/phy/upper/channel_coding/ldpc.h"
 #include <array>
@@ -32,6 +32,8 @@ static constexpr unsigned max_BG_N_full = std::max(BG1_N_full, BG2_N_full);
 static constexpr unsigned max_BG_M = std::max(BG1_M, BG2_M);
 /// Maximum lifting size.
 static constexpr unsigned max_lifting_size = 384;
+/// Maximum codeblock length (recall that 2 * LS variable nodes are punctured from the full codeword).
+static constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size;
 
 /// \brief Representation of a graph, inspired by TS38.212 Tables 5.3.2-2 and 5.3.2-3.
 ///
@@ -149,4 +151,5 @@ static const std::array<ldpc_graph_impl, total_nof_graphs> graph_array = create_
 } // namespace ldpc
 
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_CODING_LDPC_IMPL
+
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H

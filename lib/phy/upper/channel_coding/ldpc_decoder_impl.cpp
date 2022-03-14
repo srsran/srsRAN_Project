@@ -112,11 +112,11 @@ void ldpc_decoder_generic::load_soft_bits(span<const int8_t> llrs)
   std::copy(llrs.begin(), llrs.end(), soft_bits.begin() + nof_shortened_bits);
 }
 
-void ldpc_decoder_generic::update_variable_to_check_messages(unsigned i_layer)
+void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node)
 {
   // First, update the messages corresponding to the high-rate region. All layers contribute.
   span<const int8_t> this_soft_bits(soft_bits);
-  span<const int8_t> this_check_to_var(check_to_var[i_layer]);
+  span<const int8_t> this_check_to_var(check_to_var[check_node]);
   span<int8_t>       this_var_to_check(var_to_check);
 
   compute_var_to_check_msgs(this_soft_bits.subspan(0, nof_hrr_nodes),
@@ -125,8 +125,8 @@ void ldpc_decoder_generic::update_variable_to_check_messages(unsigned i_layer)
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.
-  if (i_layer >= 4) {
-    unsigned skip_soft_bits = nof_hrr_nodes + (i_layer - 4) * lifting_size;
+  if (check_node >= 4) {
+    unsigned skip_soft_bits = nof_hrr_nodes + (check_node - 4) * lifting_size;
     compute_var_to_check_msgs(this_soft_bits.subspan(skip_soft_bits, lifting_size),
                               this_check_to_var.subspan(nof_hrr_nodes, lifting_size),
                               this_var_to_check.subspan(nof_hrr_nodes, lifting_size));
@@ -139,30 +139,30 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<const int8_t> soft, sp
   assert((soft.size() == nof_messages) && (c2v.size() == nof_messages));
 
   for (unsigned i = 0; i != nof_messages; ++i) {
-    if (abs(soft[i]) >= LOCAL_INF) {
+    if (std::abs(soft[i]) >= LOCAL_INF) {
       v2c[i] = (soft[i] > 0) ? LOCAL_INF : -LOCAL_INF;
       continue;
     }
     int tmp = static_cast<int>(soft[i]) - c2v[i];
-    if (abs(tmp) > LOCAL_MAX_RANGE) {
+    if (std::abs(tmp) > LOCAL_MAX_RANGE) {
       tmp = (tmp > 0) ? LOCAL_MAX_RANGE : -LOCAL_MAX_RANGE;
     }
     v2c[i] = static_cast<int8_t>(tmp);
   }
 }
 
-void ldpc_decoder_generic::update_check_to_variable_messages(unsigned i_layer)
+void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node)
 {
   // Prepare helper registers
   std::fill(sign_prod_var_to_check.begin(), sign_prod_var_to_check.end(), 1);
   std::fill(min_var_to_check.begin(), min_var_to_check.end(), LOCAL_INF);
   std::fill(second_min_var_to_check.begin(), second_min_var_to_check.end(), LOCAL_INF);
 
-  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(i_layer);
+  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
   const auto*               this_var_index      = current_var_indices.cbegin();
   const auto*               last_var_index      = current_var_indices.cend();
   for (; (this_var_index != last_var_index) && (*this_var_index != NO_EDGE); ++this_var_index) {
-    unsigned shift          = current_graph->get_lifted_node(i_layer, *this_var_index);
+    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index);
     unsigned v2c_base_index = *this_var_index * lifting_size;
     v2c_base_index          = (v2c_base_index <= nof_hrr_nodes) ? v2c_base_index : nof_hrr_nodes;
 
@@ -170,7 +170,7 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned i_layer)
     // var_to_check messages.
     for (unsigned j = 0; j != lifting_size; ++j) {
       unsigned v2c_index                 = v2c_base_index + j;
-      int8_t   this_var_to_check         = static_cast<int8_t>(abs(var_to_check[v2c_index]));
+      int8_t   this_var_to_check         = static_cast<int8_t>(std::abs(var_to_check[v2c_index]));
       unsigned tmp_index                 = (j + lifting_size - shift) % lifting_size;
       bool     is_min                    = (this_var_to_check < min_var_to_check[tmp_index]);
       int8_t   new_second_min            = is_min ? min_var_to_check[tmp_index] : this_var_to_check;
@@ -184,12 +184,12 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned i_layer)
   }
 
   // Recall: check_to_var is an array of arrays of int8_t.
-  auto& this_check_to_var = check_to_var[i_layer];
+  auto& this_check_to_var = check_to_var[check_node];
 
   for (this_var_index = current_var_indices.cbegin();
        (this_var_index != last_var_index) && (*this_var_index != NO_EDGE);
        ++this_var_index) {
-    unsigned shift          = current_graph->get_lifted_node(i_layer, *this_var_index);
+    unsigned shift          = current_graph->get_lifted_node(check_node, *this_var_index);
     unsigned c2v_base_index = *this_var_index * lifting_size;
     c2v_base_index          = (c2v_base_index <= nof_hrr_nodes) ? c2v_base_index : nof_hrr_nodes;
     for (unsigned j = 0; j != lifting_size; ++j) {
@@ -209,12 +209,12 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned i_layer)
   }
 }
 
-void ldpc_decoder_generic::update_soft_bits(unsigned i_layer)
+void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
 {
   // Recall: check_to_var is an array of arrays of int8_t.
-  auto& this_check_to_var = check_to_var[i_layer];
+  auto& this_check_to_var = check_to_var[check_node];
 
-  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(i_layer);
+  const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
   const auto*               this_var_index      = current_var_indices.cbegin();
   const auto*               last_var_index      = current_var_indices.cend();
   for (; (this_var_index != last_var_index) && (*this_var_index != NO_EDGE); ++this_var_index) {
@@ -226,7 +226,7 @@ void ldpc_decoder_generic::update_soft_bits(unsigned i_layer)
 
       // Soft bits absolutely larger than LOCAL_MAX_RANGE are set to infinity (LOCAL_INF). As a result, they become
       // fixed bits, that is they won't change their value from now on.
-      if (abs(tmp) > LOCAL_MAX_RANGE) {
+      if (std::abs(tmp) > LOCAL_MAX_RANGE) {
         tmp = (tmp > 0) ? LOCAL_INF : -LOCAL_INF;
       }
 
