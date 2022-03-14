@@ -3,21 +3,6 @@
 
 using namespace srsgnb;
 
-mac_sch_subpdu::lcid_sch_t mac_sch_subpdu::get_type()
-{
-  if (lcid >= 32) {
-    return (lcid_sch_t)lcid;
-  }
-
-  return CCCH;
-}
-
-bool mac_sch_subpdu::is_sdu() const
-{
-  // UL-CCCH handling in done as CE
-  return (lcid <= 32 && !is_ul_ccch());
-}
-
 bool mac_sch_subpdu::has_length_field()
 {
   // CCCH (both versions) don't have a length field in the UL
@@ -30,12 +15,12 @@ bool mac_sch_subpdu::has_length_field()
 }
 
 // returns false for all reserved values in Table 6.2.1-1 and 6.2.1-2
-bool mac_sch_subpdu::is_valid_lcid()
+bool mac_sch_subpdu::is_valid_lcid() const
 {
   return (lcid <= 63 && ((parent->is_ulsch() && (lcid <= 32 || lcid >= 52)) || (lcid <= 32 || lcid >= 47)));
 }
 
-bool mac_sch_subpdu::is_var_len_ce(lcid_t lcid_)
+bool mac_sch_subpdu::is_var_len_ce(lcid_t lcid_) const
 {
   if (parent->is_ulsch()) {
     // UL fixed-size CE
@@ -85,7 +70,7 @@ int32_t mac_sch_subpdu::read_subheader(const uint8_t* ptr)
   return header_length;
 }
 
-void mac_sch_subpdu::set_sdu(const uint32_t lcid_, const uint8_t* payload_, const uint32_t len_)
+void mac_sch_subpdu::set_sdu(uint32_t lcid_, const uint8_t* payload_, const uint32_t len_)
 {
   lcid = lcid_;
   sdu.set_storage_to(const_cast<uint8_t*>(payload_));
@@ -105,7 +90,7 @@ void mac_sch_subpdu::set_sdu(const uint32_t lcid_, const uint8_t* payload_, cons
   }
 }
 
-void mac_sch_subpdu::set_padding(const uint32_t len_)
+void mac_sch_subpdu::set_padding(uint32_t len_)
 {
   lcid = PADDING;
   // 1 Byte R/LCID MAC subheader
@@ -114,7 +99,7 @@ void mac_sch_subpdu::set_padding(const uint32_t len_)
 }
 
 // Turn a subPDU into a C-RNTI CE, error checking takes place in the caller
-void mac_sch_subpdu::set_c_rnti(const uint16_t crnti_)
+void mac_sch_subpdu::set_c_rnti(uint16_t crnti_)
 {
   lcid           = CRNTI;
   header_length  = 1;
@@ -126,7 +111,7 @@ void mac_sch_subpdu::set_c_rnti(const uint16_t crnti_)
 }
 
 // Turn a subPDU into a single entry PHR CE, error checking takes place in the caller
-void mac_sch_subpdu::set_se_phr(const uint8_t phr_, const uint8_t pcmax_)
+void mac_sch_subpdu::set_se_phr(uint8_t phr_, uint8_t pcmax_)
 {
   lcid          = SE_PHR;
   header_length = 1;
@@ -147,10 +132,10 @@ void mac_sch_subpdu::set_sbsr(const lcg_bsr_t bsr_)
 }
 
 // Turn a subPDU into a long BSR with variable size
-void mac_sch_subpdu::set_lbsr(const std::array<mac_sch_subpdu::lcg_bsr_t, max_num_lcg_lbsr> bsr_) {}
+void mac_sch_subpdu::set_lbsr(span<const mac_sch_subpdu::lcg_bsr_t> bsr_) {}
 
 // Turn subPDU into a Con
-void mac_sch_subpdu::set_ue_con_res_id_ce(const mac_sch_subpdu::ue_con_res_id_t id)
+void mac_sch_subpdu::set_ue_con_res_id_ce(mac_sch_subpdu::ue_con_res_id_t id)
 {
   lcid          = CON_RES_ID;
   header_length = 1;
@@ -536,35 +521,35 @@ uint32_t mac_sch_pdu::add_sdu(lcid_t lcid_, const uint8_t* payload_, uint32_t le
   return add_sudpdu(sch_pdu);
 }
 
-uint32_t mac_sch_pdu::add_crnti_ce(const uint16_t crnti)
+uint32_t mac_sch_pdu::add_crnti_ce(uint16_t crnti)
 {
   mac_sch_subpdu ce(this);
   ce.set_c_rnti(crnti);
   return add_sudpdu(ce);
 }
 
-uint32_t mac_sch_pdu::add_se_phr_ce(const uint8_t phr, const uint8_t pcmax)
+uint32_t mac_sch_pdu::add_se_phr_ce(uint8_t phr, uint8_t pcmax)
 {
   mac_sch_subpdu ce(this);
   ce.set_se_phr(phr, pcmax);
   return add_sudpdu(ce);
 }
 
-uint32_t mac_sch_pdu::add_sbsr_ce(const mac_sch_subpdu::lcg_bsr_t bsr_)
+uint32_t mac_sch_pdu::add_sbsr_ce(mac_sch_subpdu::lcg_bsr_t bsr_)
 {
   mac_sch_subpdu ce(this);
   ce.set_sbsr(bsr_);
   return add_sudpdu(ce);
 }
 
-uint32_t mac_sch_pdu::add_lbsr_ce(const std::array<mac_sch_subpdu::lcg_bsr_t, mac_sch_subpdu::max_num_lcg_lbsr> bsr_)
+uint32_t mac_sch_pdu::add_lbsr_ce(span<const mac_sch_subpdu::lcg_bsr_t> bsr_)
 {
   mac_sch_subpdu ce(this);
   ce.set_lbsr(bsr_);
   return add_sudpdu(ce);
 }
 
-uint32_t mac_sch_pdu::add_ue_con_res_id_ce(const mac_sch_subpdu::ue_con_res_id_t id)
+uint32_t mac_sch_pdu::add_ue_con_res_id_ce(mac_sch_subpdu::ue_con_res_id_t id)
 {
   mac_sch_subpdu ce(this);
   ce.set_ue_con_res_id_ce(id);

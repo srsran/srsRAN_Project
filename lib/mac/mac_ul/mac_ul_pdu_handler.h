@@ -86,7 +86,7 @@ private:
       case lcid_sch_t::SHORT_BSR:
       case lcid_sch_t::SHORT_TRUNC_BSR: {
         mac_sch_subpdu::lcg_bsr_t sbsr              = subpdu.get_sbsr();
-        uint32_t                  buffer_size_bytes = buff_size_field_to_bytes(sbsr.buffer_size, bsr_format::SHORT_BSR);
+        uint32_t                  buffer_size_bytes = buff_size_field_to_bytes(sbsr.buffer_size, bsr_format::SHORT);
 
         ul_bsr_indication_message ul_bsr_ind{};
         ul_bsr_ind.cell_index = cell_index;
@@ -112,7 +112,7 @@ private:
         ul_bsr_ind.type = subpdu.get_lcid() == lcid_sch_t::SHORT_BSR ? bsr_type::SHORT_BSR : bsr_type::SHORT_TRUNC_BSR;
         for (auto& lb : lbsr.list) {
           ul_bsr_ind.reported_lcgs.push_back(
-              ul_lcg_report{lb.lcg_id, buff_size_field_to_bytes(lb.buffer_size, bsr_format::LONG_BSR)});
+              ul_lcg_report{lb.lcg_id, buff_size_field_to_bytes(lb.buffer_size, bsr_format::LONG)});
         }
         sched.ul_bsr(ul_bsr_ind);
       } break;
@@ -130,32 +130,28 @@ private:
    * @param format          The BSR format that determines the buffer size field length
    * @return uint32_t       The actual buffer size level in Bytes
    */
-  static uint32_t buff_size_field_to_bytes(uint32_t buff_size_index, const bsr_format& format)
+  static uint32_t buff_size_field_to_bytes(size_t buff_size_index, const bsr_format& format)
   {
+    static const uint32_t max_offset = 1; // make the reported value bigger than the 2nd biggest
+
     // early exit
     if (buff_size_index == 0) {
       return 0;
     }
 
-    const uint32_t max_offset = 1; // make the reported value bigger than the 2nd biggest
-
     switch (format) {
-      case bsr_format::SHORT_BSR:
-      case bsr_format::SHORT_TRUNC_BSR:
-        if (buff_size_index >= buffer_size_levels_5bit_max_idx) {
-          return buffer_size_levels_5bit[buffer_size_levels_5bit_max_idx] + max_offset;
-        } else {
-          return buffer_size_levels_5bit[buff_size_index];
-        }
-        break;
-      case bsr_format::LONG_BSR:
-      case bsr_format::LONG_TRUNC_BSR:
-        if (buff_size_index > buffer_size_levels_8bit_max_idx) {
-          return buffer_size_levels_8bit[buffer_size_levels_8bit_max_idx] + max_offset;
-        } else {
-          return buffer_size_levels_8bit[buff_size_index];
-        }
-        break;
+      case bsr_format::SHORT:
+      case bsr_format::SHORT_TRUNC: {
+        const size_t   idx    = std::min(buff_size_index, buffer_size_levels_5bit.size() - 1);
+        const uint32_t offset = buff_size_index >= buffer_size_levels_5bit.size() - 1 ? max_offset : 0;
+        return buffer_size_levels_5bit[idx] + offset;
+      } break;
+      case bsr_format::LONG:
+      case bsr_format::LONG_TRUNC: {
+        const size_t   idx    = std::min(buff_size_index, buffer_size_levels_8bit.size() - 1);
+        const uint32_t offset = buff_size_index >= buffer_size_levels_8bit.size() - 1 ? max_offset : 0;
+        return buffer_size_levels_8bit[idx] + offset;
+      } break;
       default:
         break;
     }
