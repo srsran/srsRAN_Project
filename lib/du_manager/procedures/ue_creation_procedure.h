@@ -17,10 +17,10 @@ namespace srsgnb {
 class mac_ul_dcch_adapter : public mac_ul_sdu_notifier
 {
 public:
-  mac_ul_dcch_adapter(rlc_ul_bearer& bearer_) : bearer(bearer_) {}
-  void on_ul_sdu(mac_ul_sdu sdu) override { bearer.push_pdu(sdu.pdu); }
+  mac_ul_dcch_adapter(rlc_pdu_handler& bearer_) : bearer(bearer_) {}
+  void on_ul_sdu(mac_ul_sdu sdu) override { bearer.handle_pdu(sdu.pdu); }
 
-  rlc_ul_bearer& bearer;
+  rlc_pdu_handler& bearer;
 };
 
 class ue_creation_procedure

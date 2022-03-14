@@ -70,11 +70,24 @@ struct rlc_ue_reestablishment_response_message {
   bool            result;
 };
 
-class rlc_ul_bearer
+/// This interface represents the entry point of the receiving side of a RLC entity.
+class rlc_pdu_handler
 {
 public:
-  virtual ~rlc_ul_bearer()                      = default;
-  virtual void push_pdu(const byte_buffer& pdu) = 0;
+  virtual ~rlc_pdu_handler() = default;
+
+  /// Handle the incoming PDU.
+  virtual void handle_pdu(byte_buffer pdu) = 0;
+};
+
+/// This interface notifies to upper layers the reception of new SDUs in the receiving side of a RLC entity.
+class rlc_sdu_rx_notifier
+{
+public:
+  virtual ~rlc_sdu_rx_notifier() = default;
+
+  /// This callback is invoked on each generated SDU.
+  virtual void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) = 0;
 };
 
 class rlc_config_notifier
@@ -84,13 +97,6 @@ public:
   virtual void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) = 0;
   virtual void on_ue_delete_complete(const rlc_ue_delete_response_message& resp)                   = 0;
   virtual void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) = 0;
-};
-
-class rlc_ul_sdu_notifier
-{
-public:
-  virtual ~rlc_ul_sdu_notifier()                                               = default;
-  virtual void on_ul_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) = 0;
 };
 
 } // namespace srsgnb

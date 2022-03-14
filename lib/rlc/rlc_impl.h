@@ -7,19 +7,19 @@
 
 namespace srsgnb {
 
-class rlc_ul_um_bearer : public rlc_ul_bearer
+class rlc_ul_um_bearer : public rlc_pdu_handler
 {
 public:
-  explicit rlc_ul_um_bearer(du_ue_index_t du_index_, lcid_t lcid_, rlc_ul_sdu_notifier& notifier_) :
-    du_index(du_index_), lcid(lcid_), notifier(notifier_)
+  rlc_ul_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_sdu_rx_notifier& notifier) :
+    du_index(du_index), lcid(lcid), notifier(notifier)
   {}
 
-  void push_pdu(const byte_buffer& pdu) override { notifier.on_ul_sdu(du_index, lcid, pdu); }
+  void handle_pdu(byte_buffer pdu) override { notifier.on_new_sdu(du_index, lcid, pdu); }
 
 private:
   const du_ue_index_t  du_index;
   const lcid_t         lcid;
-  rlc_ul_sdu_notifier& notifier;
+  rlc_sdu_rx_notifier& notifier;
 };
 
 } // namespace srsgnb
