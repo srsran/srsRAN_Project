@@ -10,13 +10,13 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/polar_allocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar_deallocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar_encoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar_rate_dematcher.h"
-#include "srsgnb/phy/upper/channel_coding/polar_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_deallocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <getopt.h>

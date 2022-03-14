@@ -2,8 +2,8 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_DECODER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include <cstdint>
 #include <memory>
 

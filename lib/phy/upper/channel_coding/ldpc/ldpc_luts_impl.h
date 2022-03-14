@@ -4,7 +4,7 @@
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LUTS_IMPL_H
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
 namespace srsgnb {
 namespace ldpc {

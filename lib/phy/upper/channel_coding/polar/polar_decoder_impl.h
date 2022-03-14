@@ -13,8 +13,8 @@
 #ifndef SRSGNB_CHANNEL_CODING_POLAR_DECODER_IMPL_H
 #define SRSGNB_CHANNEL_CODING_POLAR_DECODER_IMPL_H
 
-#include "srsgnb/phy/upper/channel_coding/polar_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
 namespace srsgnb {
@@ -94,7 +94,7 @@ private:
   std::unique_ptr<polar_encoder> enc;           /*!< \brief Pointer to a srsran_polar_encoder_t. */
 
   void init(span<const int8_t> input_llr,
-            span<uint8_t>         data_decoded,
+            span<uint8_t>      data_decoded,
             const uint8_t      code_size_log,
             const uint16_t*    frozen_set,
             const uint16_t     frozen_set_size);

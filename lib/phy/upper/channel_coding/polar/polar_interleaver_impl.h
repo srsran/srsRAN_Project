@@ -13,7 +13,7 @@
 #ifndef SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_
 #define SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_
 
-#include "srsgnb/phy/upper/channel_coding/polar_interleaver.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 
 namespace srsgnb {
 class polar_interleaver_impl : public polar_interleaver

@@ -1,6 +1,6 @@
 #include "ldpc_encoder_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <iostream>

@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/polar_interleaver.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 
 using namespace srsgnb;
 

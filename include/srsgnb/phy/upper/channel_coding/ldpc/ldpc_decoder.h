@@ -6,7 +6,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
 namespace srsgnb {
 

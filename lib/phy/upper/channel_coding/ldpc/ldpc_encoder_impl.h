@@ -5,7 +5,7 @@
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include <array>
 #include <iostream>
 

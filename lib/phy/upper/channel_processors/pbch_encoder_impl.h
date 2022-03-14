@@ -13,11 +13,11 @@
 #define SRSGNB_CHANNEL_PROCESSORS_PBCH_ENCODER_IMPL_H_
 
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/upper/channel_coding/polar_allocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar_encoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar_interleaver.h"
-#include "srsgnb/phy/upper/channel_coding/polar_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 

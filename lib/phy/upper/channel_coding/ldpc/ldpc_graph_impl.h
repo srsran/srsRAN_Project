@@ -3,7 +3,7 @@
 #ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_GRAPH_IMPL_H
 
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <array>
 
 namespace srsgnb {

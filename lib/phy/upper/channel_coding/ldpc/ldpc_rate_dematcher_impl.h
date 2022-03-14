@@ -5,7 +5,7 @@
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL_H
 
 #include "ldpc_graph_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_rate_dematcher.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
 
 namespace srsgnb {
 

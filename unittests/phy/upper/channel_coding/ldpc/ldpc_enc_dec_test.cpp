@@ -6,12 +6,11 @@
 /// Similarly, the codeblocks are fed to the decoder and the resulting messages are compared to the example ones.
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <fstream>
-#include <iostream>
 #include <random>
 #include <string>
 

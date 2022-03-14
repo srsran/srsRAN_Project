@@ -5,7 +5,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_ENCODER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
 namespace srsgnb {
 

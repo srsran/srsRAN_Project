@@ -1,7 +1,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_ALLOCATOR_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_ALLOCATOR_H
 
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 
 namespace srsgnb {
 

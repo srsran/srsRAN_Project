@@ -2,9 +2,9 @@
 /// \brief LDPC rate matching and recovering unit test.
 
 #include "ldpc_rm_test_sets.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_rate_dematcher.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;

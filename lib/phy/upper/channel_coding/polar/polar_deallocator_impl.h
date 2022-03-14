@@ -13,7 +13,7 @@
 #ifndef SRSGNB_CHANNEL_CODING_POLAR_DEALLOCATOR_IMPL_H_
 #define SRSGNB_CHANNEL_CODING_POLAR_DEALLOCATOR_IMPL_H_
 
-#include "srsgnb/phy/upper/channel_coding/polar_deallocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_deallocator.h"
 
 namespace srsgnb {
 

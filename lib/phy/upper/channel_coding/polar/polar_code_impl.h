@@ -13,7 +13,7 @@
 #ifndef SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
 #define SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
 
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
 namespace srsgnb {

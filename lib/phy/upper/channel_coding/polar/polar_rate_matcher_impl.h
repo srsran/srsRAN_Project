@@ -13,8 +13,8 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_RATE_MATCHER_IMPL_H_
 
-#include "srsgnb/phy/upper/channel_coding/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 
 namespace srsgnb {
 class polar_rate_matcher_impl : public polar_rate_matcher

@@ -7,8 +7,11 @@
 #
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding)
-
-add_library(crc_calculator STATIC crc_calculator_impl.cpp)
-
-add_subdirectory(polar)
-add_subdirectory(ldpc)
+add_library(ldpc STATIC
+        ldpc_graph_impl.cpp
+        ldpc_luts_impl.cpp
+        ldpc_encoder_impl.cpp
+        ldpc_decoder_impl.cpp
+        ldpc_rate_matcher_impl.cpp
+        ldpc_rate_dematcher_impl.cpp
+)
