@@ -43,10 +43,10 @@ private:
   /// Indicates the number of RB used for the transmission.
   unsigned rb_count;
 
-  /// \brief Generates a VRB to PRB interleaver.
+  /// \brief Generates VRB-to-PRB interleaved indexes.
   ///
-  /// This method maps Virtual Resource Blocks (VRBs) to Physical Resource Blocks (PRBs) according to the interleaved
-  /// strategy, as defined in TS 38.211 section 7.3.1.5 Mapping to virtual resource blocks.
+  /// This method generates the indexes to map Virtual Resource Blocks (VRBs) to Physical Resource Blocks (PRBs)
+  /// according to the interleaved strategy, as defined in TS 38.211 section 7.3.1.5 Mapping to virtual resource blocks.
   ///
   /// \param[out] prb_indices Provides the destination resource block indices. The size provides the BWP size in
   /// resource blocks.
