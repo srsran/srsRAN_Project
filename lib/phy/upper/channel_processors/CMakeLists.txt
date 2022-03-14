@@ -14,5 +14,8 @@ target_link_libraries(pbch_encoder polar pseudo_random_generator crc_calculator 
 add_library(pbch_modulator STATIC pbch_modulator_impl.cpp)
 target_link_libraries(pbch_modulator modulation_mapper pseudo_random_generator srsvec)
 
+add_library(pdsch_modulator STATIC pdsch_modulator_impl.cpp)
+target_link_libraries(pdsch_modulator modulation_mapper pseudo_random_generator srsvec upper_phy)
+
 add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)

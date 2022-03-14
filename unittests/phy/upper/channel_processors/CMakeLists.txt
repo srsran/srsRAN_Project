@@ -7,6 +7,10 @@ add_executable(pbch_modulator_test pbch_modulator_test.cpp)
 target_link_libraries(pbch_modulator_test pbch_modulator srslog)
 add_test(pbch_modulator_test pbch_modulator_test)
 
+add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)
+target_link_libraries(pdsch_modulator_test upper_phy pdsch_modulator srslog)
+add_test(pdsch_modulator_test pdsch_modulator_test)
+
 add_executable(ssb_processor_test ssb_processor_test.cpp)
 target_link_libraries(ssb_processor_test ssb_processor srslog)
 add_test(ssb_processor_test ssb_processor_test)
