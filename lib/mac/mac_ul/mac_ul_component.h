@@ -5,7 +5,6 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "../mac_sch_pdu.h"
 #include "mac_ul_demux.h"
 #include "mac_ul_pdu_handler.h"
 #include "mac_ul_ue_manager.h"

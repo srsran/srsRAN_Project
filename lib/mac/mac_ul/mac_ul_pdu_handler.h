@@ -4,7 +4,7 @@
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
-#include "../mac_sch_pdu.h"
+#include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
@@ -23,24 +23,24 @@ public:
   bool handle_ul_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu& pdu)
   {
     // Decode PDU
-    pdu_ul.init_rx(true);
-    if (pdu_ul.unpack(pdu.pdu) != 0) {
+    if (pdu_ul.unpack(pdu.pdu) < 0) {
       return false;
     }
 
     // Log Rx PDU
     if (logger.info.enabled()) {
-      fmt::memory_buffer str_buffer;
-      pdu_ul.to_string(str_buffer);
-      log_ul_pdu(logger, MAX_NOF_UES, pdu.rnti, cell_index, "PUSCH", to_c_str(str_buffer));
+      log_ul_pdu(logger, MAX_NOF_UES, pdu.rnti, cell_index, "PUSCH", "Content: {}", pdu_ul);
     }
 
+    // In case a C-RNTI MAC CE is present, rnti may change
+    rnti_t rnti = pdu.rnti;
+
     // Process MAC CRNTI CE first, if it exists
-    uint32_t crnti_ce_pos = pdu_ul.get_num_subpdus();
-    for (unsigned n = pdu_ul.get_num_subpdus(); n > 0; --n) {
-      mac_sch_subpdu& subpdu = pdu_ul.get_subpdu(n - 1);
-      if (subpdu.get_lcid() == mac_sch_subpdu::lcid_sch_t::CRNTI) {
-        if (not process_ce_subpdu(pdu.rnti, cell_index, subpdu)) {
+    uint32_t crnti_ce_pos = pdu_ul.nof_subpdus();
+    for (unsigned n = pdu_ul.nof_subpdus(); n > 0; --n) {
+      const mac_ul_sch_subpdu& subpdu = pdu_ul.subpdu(n - 1);
+      if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
+        if (not process_ce_subpdu(rnti, cell_index, subpdu)) {
           continue;
         }
         crnti_ce_pos = n - 1;
@@ -48,10 +48,10 @@ public:
     }
 
     // Process SDUs and remaining MAC CEs
-    for (unsigned n = 0; n < pdu_ul.get_num_subpdus(); ++n) {
-      mac_sch_subpdu& subpdu = pdu_ul.get_subpdu(n);
-      if (subpdu.is_sdu()) {
-        sdu_notifier.on_ul_sdu(mac_ul_sdu{pdu.rnti, subpdu.get_lcid(), {}}); // TODO
+    for (unsigned n = 0; n < pdu_ul.nof_subpdus(); ++n) {
+      const mac_ul_sch_subpdu& subpdu = pdu_ul.subpdu(n);
+      if (subpdu.lcid().is_sdu()) {
+        sdu_notifier.on_ul_sdu(mac_ul_sdu{pdu.rnti, (lcid_t)subpdu.lcid(), {}}); // TODO
       } else if (n != crnti_ce_pos) {
         if (not process_ce_subpdu(pdu.rnti, cell_index, subpdu)) {
           continue;
@@ -63,35 +63,41 @@ public:
   }
 
 private:
-  bool process_ce_subpdu(rnti_t rnti, du_cell_index_t cell_index, mac_sch_subpdu& subpdu)
+  bool process_ce_subpdu(rnti_t& rnti, du_cell_index_t cell_index, const mac_ul_sch_subpdu& subpdu)
   {
-    using lcid_sch_t = mac_sch_subpdu::lcid_sch_t;
-
     // Handle MAC CEs
-    switch (subpdu.get_lcid()) {
-      case lcid_sch_t::CCCH_SIZE_48:
-      case lcid_sch_t::CCCH_SIZE_64: {
+    switch ((lcid_t)subpdu.lcid()) {
+      case lcid_ul_sch_t::CCCH_SIZE_48:
+      case lcid_ul_sch_t::CCCH_SIZE_64: {
         //        mac_sch_subpdu& ccch_subpdu = const_cast<mac_sch_subpdu&>(subpdu);
         sdu_notifier.on_ul_sdu(mac_ul_sdu{rnti, 0, {}}); // TODO
         // store content for ConRes CE
         //        mac.store_msg3(rnti, make_byte_buffer(ccch_subpdu.get_sdu(), ccch_subpdu.get_sdu_length(),
         //        __FUNCTION__)); // TODO
       } break;
-      case lcid_sch_t::CRNTI: {
-        rnti_t ce_crnti = subpdu.get_c_rnti();
-        //        rnti_t prev_rnti = rnti;
-        rnti = ce_crnti;
-        sched.ul_sr_info(rnti); // provide UL grant regardless of other BSR content for UE to complete RA
-      } break;
-      case lcid_sch_t::SHORT_BSR:
-      case lcid_sch_t::SHORT_TRUNC_BSR: {
-        mac_sch_subpdu::lcg_bsr_t sbsr              = subpdu.get_sbsr();
-        uint32_t                  buffer_size_bytes = buff_size_field_to_bytes(sbsr.buffer_size, bsr_format::SHORT);
+      case lcid_ul_sch_t::CRNTI: {
+        // Decode C-RNTI MAC CE
+        rnti_t ce_crnti = decode_crnti_ce(subpdu.payload());
 
+        // Update RNTI for other subPDUs
+        rnti = ce_crnti;
+
+        // provide UL grant regardless of other BSR content for UE to complete RA
+        sched.ul_sr_info(rnti);
+      } break;
+      case lcid_ul_sch_t::SHORT_BSR:
+      case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
+        // Decode Short BSR
+        bsr_format bsr_fmt =
+            subpdu.lcid() == lcid_ul_sch_t::SHORT_BSR ? bsr_format::SHORT_BSR : bsr_format::SHORT_TRUNC_BSR;
+        lcg_bsr_report sbsr              = decode_sbsr(subpdu.payload());
+        uint32_t       buffer_size_bytes = buff_size_field_to_bytes(sbsr.nof_bytes, bsr_fmt);
+
+        // Send UL BSR indication to Scheduler
         ul_bsr_indication_message ul_bsr_ind{};
         ul_bsr_ind.cell_index = cell_index;
         ul_bsr_ind.rnti       = rnti;
-        ul_bsr_ind.type = subpdu.get_lcid() == lcid_sch_t::SHORT_BSR ? bsr_type::SHORT_BSR : bsr_type::SHORT_TRUNC_BSR;
+        ul_bsr_ind.type       = bsr_fmt;
         if (buffer_size_bytes == 0) {
           // Assume all LCGs are 0 if reported SBSR is 0
           for (uint32_t j = 0; j <= MAX_LOGICAL_CHANNEL_GROUP; j++) {
@@ -102,24 +108,28 @@ private:
         }
         sched.ul_bsr(ul_bsr_ind);
       } break;
-      case lcid_sch_t::LONG_BSR:
-      case lcid_sch_t::LONG_TRUNC_BSR: {
-        mac_sch_subpdu::lbsr_t lbsr = subpdu.get_lbsr();
+      case lcid_ul_sch_t::LONG_BSR:
+      case lcid_ul_sch_t::LONG_TRUNC_BSR: {
+        // Decode Long BSR
+        bsr_format bsr_fmt =
+            subpdu.lcid() == lcid_ul_sch_t::LONG_BSR ? bsr_format::LONG_BSR : bsr_format::LONG_TRUNC_BSR;
+        long_bsr_report lbsr = decode_lbsr(bsr_fmt, subpdu.payload());
 
+        // Send UL BSR indication to Scheduler
         ul_bsr_indication_message ul_bsr_ind{};
         ul_bsr_ind.cell_index = cell_index;
         ul_bsr_ind.rnti       = rnti;
-        ul_bsr_ind.type = subpdu.get_lcid() == lcid_sch_t::SHORT_BSR ? bsr_type::SHORT_BSR : bsr_type::SHORT_TRUNC_BSR;
+        ul_bsr_ind.type       = bsr_fmt;
         for (auto& lb : lbsr.list) {
           ul_bsr_ind.reported_lcgs.push_back(
-              ul_lcg_report{lb.lcg_id, buff_size_field_to_bytes(lb.buffer_size, bsr_format::LONG)});
+              ul_lcg_report{lb.lcg_id, buff_size_field_to_bytes(lb.nof_bytes, bsr_format::LONG_BSR)});
         }
         sched.ul_bsr(ul_bsr_ind);
       } break;
-      case lcid_sch_t::PADDING:
+      case lcid_ul_sch_t::PADDING:
         break;
       default:
-        logger.warning("Unhandled subPDU with LCID={}", subpdu.get_lcid());
+        logger.warning("Unhandled subPDU with LCID={}", subpdu.lcid());
     }
 
     return true;
@@ -140,14 +150,14 @@ private:
     }
 
     switch (format) {
-      case bsr_format::SHORT:
-      case bsr_format::SHORT_TRUNC: {
+      case bsr_format::SHORT_BSR:
+      case bsr_format::SHORT_TRUNC_BSR: {
         const size_t   idx    = std::min(buff_size_index, buffer_size_levels_5bit.size() - 1);
         const uint32_t offset = buff_size_index >= buffer_size_levels_5bit.size() - 1 ? max_offset : 0;
         return buffer_size_levels_5bit[idx] + offset;
       } break;
-      case bsr_format::LONG:
-      case bsr_format::LONG_TRUNC: {
+      case bsr_format::LONG_BSR:
+      case bsr_format::LONG_TRUNC_BSR: {
         const size_t   idx    = std::min(buff_size_index, buffer_size_levels_8bit.size() - 1);
         const uint32_t offset = buff_size_index >= buffer_size_levels_8bit.size() - 1 ? max_offset : 0;
         return buffer_size_levels_8bit[idx] + offset;
@@ -163,7 +173,7 @@ private:
   sched_ue_feedback&    sched;
   mac_ul_sdu_notifier&  sdu_notifier;
 
-  mac_sch_pdu pdu_ul;
+  mac_ul_sch_pdu pdu_ul;
 };
 
 } // namespace srsgnb

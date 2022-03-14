@@ -2,18 +2,22 @@
 #ifndef SRSGNB_SCHED_UE_FEEDBACK_H
 #define SRSGNB_SCHED_UE_FEEDBACK_H
 
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/du_types.h"
+
 namespace srsgnb {
 
-enum class bsr_type { SHORT_BSR, LONG_BSR, SHORT_TRUNC_BSR, LONG_TRUNC_BSR };
+/// TS 38.321 Sec 6.1.3.1
+enum class bsr_format { SHORT_BSR, LONG_BSR, SHORT_TRUNC_BSR, LONG_TRUNC_BSR };
 
 /// Logical Channel Group
-using logical_channel_group = uint32_t;
+using lcg_id_t = uint32_t;
 
-const logical_channel_group MAX_LOGICAL_CHANNEL_GROUP = 4;
+const lcg_id_t MAX_LOGICAL_CHANNEL_GROUP = 8;
 
 struct ul_lcg_report {
-  logical_channel_group lcg_id;
-  uint32_t              nof_bytes;
+  lcg_id_t lcg_id;
+  uint32_t nof_bytes;
 };
 
 using ul_bcg_report_list = static_vector<ul_lcg_report, MAX_LOGICAL_CHANNEL_GROUP>;
@@ -21,7 +25,7 @@ using ul_bcg_report_list = static_vector<ul_lcg_report, MAX_LOGICAL_CHANNEL_GROU
 struct ul_bsr_indication_message {
   du_cell_index_t    cell_index;
   rnti_t             rnti;
-  bsr_type           type;
+  bsr_format         type;
   ul_bcg_report_list reported_lcgs;
 };
 

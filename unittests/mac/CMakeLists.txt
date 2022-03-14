@@ -14,3 +14,7 @@ add_test(mac_ctrl_test mac_ctrl_test)
 add_executable(mac_dl_cfg_test mac_dl_cfg_test.cc)
 target_link_libraries(mac_dl_cfg_test srsgnb_mac srsgnb_support srslog)
 add_test(mac_dl_cfg_test mac_dl_cfg_test)
+
+add_executable(mac_ul_pdu_test mac_ul_pdu_test.cc)
+target_link_libraries(mac_ul_pdu_test srsgnb_mac srsgnb_support srslog)
+add_test(mac_ul_pdu_test mac_ul_pdu_test)
