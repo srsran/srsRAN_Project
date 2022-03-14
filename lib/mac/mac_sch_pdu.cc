@@ -64,23 +64,23 @@ int32_t mac_sch_subpdu::read_subheader(const uint8_t* ptr)
     }
     sdu.set_storage_to((uint8_t*)ptr);
   } else {
-    srslog::fetch_basic_logger("MAC-NR").warning("Invalid LCID (%d) in MAC PDU", lcid);
+    srslog::fetch_basic_logger("MAC-NR").warning("Invalid LCID ({}) in MAC PDU", lcid);
     return -1;
   }
   return header_length;
 }
 
-void mac_sch_subpdu::set_sdu(uint32_t lcid_, const uint8_t* payload_, const uint32_t len_)
+void mac_sch_subpdu::set_sdu(uint32_t lcid_, span<uint8_t> payload_)
 {
   lcid = lcid_;
-  sdu.set_storage_to(const_cast<uint8_t*>(payload_));
+  sdu.set_storage_to(payload_.data());
   header_length = is_ul_ccch() ? 1 : 2;
-  sdu_length    = len_;
+  sdu_length    = payload_.size();
   if (is_ul_ccch()) {
     F_bit      = false;
     sdu_length = sizeof_ce(lcid, parent->is_ulsch());
-    if (len_ != static_cast<uint32_t>(sdu_length)) {
-      logger->warning("Invalid SDU length of UL-SCH SDU (%d != %d)", len_, sdu_length);
+    if (payload_.size() != static_cast<uint32_t>(sdu_length)) {
+      logger->warning("Invalid SDU length of UL-SCH SDU ({} != {})", payload_.size(), sdu_length);
     }
   }
 
@@ -167,7 +167,7 @@ uint32_t mac_sch_subpdu::write_subpdu(const uint8_t* start_)
   } else if (header_length == 1) {
     // do nothing
   } else {
-    logger->error("Error while packing PDU. Unsupported header length (%d)", header_length);
+    logger->error("Error while packing PDU. Unsupported header length ({})", header_length);
   }
 
   // copy SDU payload
@@ -213,31 +213,31 @@ rnti_t mac_sch_subpdu::get_c_rnti() const
   return 0;
 }
 
-uint8_t mac_sch_subpdu::get_phr()
+uint8_t mac_sch_subpdu::get_phr() const
 {
   if (parent->is_ulsch() && lcid == SE_PHR) {
-    uint8_t* ptr = sdu.ptr();
+    const uint8_t* ptr = sdu.ptr();
     return ptr[0] & 0x3f;
   }
   return 0;
 }
 
-uint8_t mac_sch_subpdu::get_pcmax()
+uint8_t mac_sch_subpdu::get_pcmax() const
 {
   if (parent->is_ulsch() && lcid == SE_PHR) {
-    uint8_t* ptr = sdu.ptr();
+    const uint8_t* ptr = sdu.ptr();
     return ptr[1] & 0x3f;
   }
   return 0;
 }
 
-mac_sch_subpdu::ta_t mac_sch_subpdu::get_ta()
+mac_sch_subpdu::ta_t mac_sch_subpdu::get_ta() const
 {
   ta_t ta = {};
   if (lcid == TA_CMD) {
-    uint8_t* ptr  = sdu.ptr();
-    ta.tag_id     = (ptr[0] & 0xc0) >> 6;
-    ta.ta_command = ptr[0] & 0x3f;
+    const uint8_t* ptr = sdu.ptr();
+    ta.tag_id          = (ptr[0] & 0xc0) >> 6;
+    ta.ta_command      = ptr[0] & 0x3f;
   }
   return ta;
 }
@@ -281,7 +281,8 @@ mac_sch_subpdu::lbsr_t mac_sch_subpdu::get_lbsr() const
         } else if (lcid == LONG_TRUNC_BSR) {
           bsr.buffer_size = 63; // just assume it has 526 bytes to transmit
         } else {
-          fprintf(stderr, "Error parsing LongBSR CE: sdu_length=%d but there are %d active bsr\n", sdu_length, bsr_cnt);
+          srslog::fetch_basic_logger("MAC-NR").error(
+              "Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n", sdu_length, bsr_cnt);
         }
         lbsr.list.push_back(bsr);
       }
@@ -291,7 +292,7 @@ mac_sch_subpdu::lbsr_t mac_sch_subpdu::get_lbsr() const
   return lbsr;
 }
 
-mac_sch_subpdu::ue_con_res_id_t mac_sch_subpdu::get_ue_con_res_id_ce()
+mac_sch_subpdu::ue_con_res_id_t mac_sch_subpdu::get_ue_con_res_id_ce() const
 {
   mac_sch_subpdu::ue_con_res_id_t id;
   if (!parent->is_ulsch() && lcid == CON_RES_ID) {
@@ -342,7 +343,7 @@ bool mac_sch_subpdu::is_ul_ccch() const
   return (parent->is_ulsch() && (lcid == CCCH_SIZE_48 || lcid == CCCH_SIZE_64));
 }
 
-void mac_sch_subpdu::to_string(fmt::memory_buffer& buffer)
+void mac_sch_subpdu::to_string(fmt::memory_buffer& buffer) const
 {
   // print subPDU
   if (is_sdu()) {
@@ -418,7 +419,7 @@ void mac_sch_subpdu::to_string(fmt::memory_buffer& buffer)
 void mac_sch_pdu::pack()
 {
   // SDU and CEs are written in-place, only add padding if needed
-  if (remaining_len) {
+  if (remaining_len > 0) {
     mac_sch_subpdu padding_subpdu(this);
     padding_subpdu.set_padding(remaining_len);
     unsigned start = buffer->size(), len = padding_subpdu.get_total_length();
@@ -431,26 +432,27 @@ void mac_sch_pdu::pack()
   }
 }
 
-int mac_sch_pdu::unpack(const uint8_t* payload, const uint32_t& len)
+int mac_sch_pdu::unpack(span<const uint8_t> payload)
 {
-  uint32_t offset = 0;
-  while (offset < len) {
+  size_t offset = 0;
+  while (offset < payload.size()) {
     mac_sch_subpdu sch_pdu(this);
-    if (sch_pdu.read_subheader(payload + offset) < 0) {
-      logger.error("Malformed MAC PDU (len=%d, offset=%d)", len, offset);
+    if (sch_pdu.read_subheader(&payload[offset]) < 0) {
+      logger.error("Malformed MAC PDU (len={}, offset={})", payload.size(), offset);
       return -1;
     }
     offset += sch_pdu.get_total_length();
     if (sch_pdu.get_lcid() == mac_sch_subpdu::PADDING) {
       // set SDU length to rest of PDU
-      sch_pdu.set_padding(len - offset + 1); // One byte for Padding header will be substracted again
+      sch_pdu.set_padding(payload.size() - offset + 1); // One byte for Padding header will be substracted again
       // skip remaining bytes
-      offset = len;
+      offset = payload.size();
     }
     subpdus.push_back(sch_pdu);
   }
-  if (offset != len) {
-    logger.error("Malformed MAC PDU (len=%d, offset=%d)", len, offset);
+
+  if (offset != payload.size()) {
+    logger.error("Malformed MAC PDU (len={}, offset={})", payload.size(), offset);
     return -1;
   }
 
@@ -503,21 +505,21 @@ uint32_t mac_sch_pdu::size_header_sdu(lcid_t lcid, uint32_t nbytes)
   return nbytes < 256 ? 2 : 3;
 }
 
-uint32_t mac_sch_pdu::get_remaing_len()
+uint32_t mac_sch_pdu::get_remaing_len() const
 {
   return remaining_len;
 }
 
-uint32_t mac_sch_pdu::add_sdu(lcid_t lcid_, const uint8_t* payload_, uint32_t len_)
+uint32_t mac_sch_pdu::add_sdu(lcid_t lcid_, span<uint8_t> payload_)
 {
-  int header_size = size_header_sdu(lcid_, len_);
-  if (header_size + len_ > remaining_len) {
-    logger.error("Header and SDU exceed space in PDU (%d + %d > %d)", header_size, len_, remaining_len);
+  int header_size = size_header_sdu(lcid_, payload_.size());
+  if (header_size + payload_.size() > remaining_len) {
+    logger.error("Header and SDU exceed space in PDU ({} + {} > {})", header_size, payload_.size(), remaining_len);
     return -1;
   }
 
   mac_sch_subpdu sch_pdu(this);
-  sch_pdu.set_sdu(lcid_, payload_, len_);
+  sch_pdu.set_sdu(lcid_, payload_);
   return add_sudpdu(sch_pdu);
 }
 
@@ -560,7 +562,7 @@ uint32_t mac_sch_pdu::add_sudpdu(mac_sch_subpdu& subpdu)
 {
   uint32_t subpdu_len = subpdu.get_total_length();
   if (subpdu_len > remaining_len) {
-    logger.warning("Not enough space to add subPDU to PDU (%d > %d)", subpdu_len, remaining_len);
+    logger.warning("Not enough space to add subPDU to PDU ({} > {})", subpdu_len, remaining_len);
     return -1;
   }
 

@@ -24,7 +24,7 @@ public:
   {
     // Decode PDU
     pdu_ul.init_rx(true);
-    if (pdu_ul.unpack(pdu.pdu.data(), pdu.pdu.size()) != 0) {
+    if (pdu_ul.unpack(pdu.pdu) != 0) {
       return false;
     }
 

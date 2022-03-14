@@ -61,8 +61,8 @@ public:
   rnti_t         get_c_rnti() const;
 
   // both return the reported values as per TS 38.321, mapping to dB according to TS 38.133 Sec 10.1.17 not done here
-  uint8_t get_phr();
-  uint8_t get_pcmax();
+  uint8_t get_phr() const;
+  uint8_t get_pcmax() const;
 
   // BSR
   struct lcg_bsr_t {
@@ -82,15 +82,15 @@ public:
     uint8_t tag_id;
     uint8_t ta_command;
   };
-  ta_t get_ta();
+  ta_t get_ta() const;
 
   // UE contention resolution identity CE
   static const uint8_t                           ue_con_res_id_len = 6;
   typedef std::array<uint8_t, ue_con_res_id_len> ue_con_res_id_t;
-  ue_con_res_id_t                                get_ue_con_res_id_ce();
+  ue_con_res_id_t                                get_ue_con_res_id_ce() const;
 
   // setters
-  void set_sdu(uint32_t lcid_, const uint8_t* payload_, const uint32_t len_);
+  void set_sdu(uint32_t lcid_, span<uint8_t> payload_);
   void set_padding(uint32_t len_);
   void set_c_rnti(uint16_t crnti_);
   void set_se_phr(uint8_t phr_, uint8_t pcmax_);
@@ -103,7 +103,7 @@ public:
   // Used by BSR procedure to determine size of BSR types
   static uint32_t sizeof_ce(uint32_t lcid, bool is_ul);
 
-  void to_string(fmt::memory_buffer& buffer);
+  void to_string(fmt::memory_buffer& buffer) const;
 
 private:
   mac_sch_pdu*          parent = nullptr;
@@ -182,7 +182,7 @@ public:
   mac_sch_pdu(bool ulsch_ = false) : ulsch(ulsch_), logger(srslog::fetch_basic_logger("MAC-NR")) {}
 
   void                  pack();
-  int                   unpack(const uint8_t* payload, const uint32_t& len);
+  int                   unpack(span<const uint8_t> payload);
   uint32_t              get_num_subpdus() const { return subpdus.size(); }
   const mac_sch_subpdu& get_subpdu(const uint32_t& index) const;
   mac_sch_subpdu&       get_subpdu(uint32_t index);
@@ -193,14 +193,14 @@ public:
 
   // Add SDU or CEs to PDU
   // All functions will return SRSRAN_SUCCESS on success, and SRSRAN_ERROR otherwise
-  uint32_t add_sdu(lcid_t lcid_, const uint8_t* payload_, uint32_t len_);
+  uint32_t add_sdu(lcid_t lcid_, span<uint8_t> payload_);
   uint32_t add_crnti_ce(uint16_t crnti_);
   uint32_t add_se_phr_ce(uint8_t phr_, uint8_t pcmax_);
   uint32_t add_sbsr_ce(mac_sch_subpdu::lcg_bsr_t bsr_);
   uint32_t add_lbsr_ce(span<const mac_sch_subpdu::lcg_bsr_t> bsr_);
   uint32_t add_ue_con_res_id_ce(mac_sch_subpdu::ue_con_res_id_t id);
 
-  uint32_t get_remaing_len();
+  uint32_t get_remaing_len() const;
 
   void to_string(fmt::memory_buffer& buffer);
 
