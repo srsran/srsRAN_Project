@@ -8,6 +8,7 @@
 
 set(SOURCES
         dmrs_pbch_processor_impl.cpp
+        dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
