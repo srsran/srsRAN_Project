@@ -34,18 +34,22 @@ public:
   /// Checks if DL/UL is active for current slot
   bool is_dl_enabled(slot_point sl) const
   {
+    // Note: dl_enabled_slot_lst is empty in the FDD case.
     return dl_enabled_slot_lst.empty() or
            static_cast<bool>(dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()]);
   }
   bool is_ul_enabled(slot_point sl) const
   {
-    return dl_enabled_slot_lst.empty() or
-           not static_cast<bool>(dl_enabled_slot_lst[sl.to_uint() % dl_enabled_slot_lst.size()]);
+    // Note: ul_enabled_slot_lst is empty in the FDD case.
+    return ul_enabled_slot_lst.empty() or
+           not static_cast<bool>(ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()]);
   }
 
 private:
-  std::vector<uint8_t> dl_enabled_slot_lst; // Note: I use uint8_t to avoid vector<bool> special case
-  std::vector<uint8_t> ul_enabled_slot_lst; // Note: I use uint8_t to avoid vector<bool> special case
+  /// Vector circularly indexed by slot that indicates whether a slot has DL/UL enabled.
+  /// Note: I use uint8_t to avoid vector<bool> special case.
+  std::vector<uint8_t> dl_enabled_slot_lst;
+  std::vector<uint8_t> ul_enabled_slot_lst;
 };
 
 /// Verify correctness of cell configuration request message

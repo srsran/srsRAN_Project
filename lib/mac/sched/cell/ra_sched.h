@@ -11,7 +11,7 @@ namespace srsgnb {
 /// Scheduler for RAR and Msg3
 class ra_sched
 {
-  static constexpr size_t MAX_RAR_LIST = 16;
+  static constexpr size_t MAX_RAR_LIST = 16; // Implementation-defined limit.
 
 public:
   ra_sched(const cell_configuration& cfg_);

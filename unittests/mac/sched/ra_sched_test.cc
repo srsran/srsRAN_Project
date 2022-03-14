@@ -39,6 +39,7 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
                           const rach_indication_message& rach_ind,
                           const rar_alloc_info&          rar)
 {
+  // See 38.321, 5.1.3 - Random Access Preamble transmission
   uint16_t ra_rnti =
       1 + rach_ind.symbol_index + 14 * rach_ind.slot_rx.slot_index() + 14 * 80 * rach_ind.frequency_index;
   TESTASSERT_EQ(ra_rnti, rar.rapid);
@@ -75,14 +76,13 @@ void test_ra_sched_fdd_single_rach()
 
   test_bench bench;
 
-  cell_configuration cell_cfg{make_cell_cfg_req()};
-  ra_sched           ra_sch{cell_cfg};
+  ra_sched ra_sch{bench.cfg};
 
   slot_point              prach_sl_rx{0, 5};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, 0x4601);
 
   slot_point sl_rx{0, tx_delay};
-  for (unsigned sl_count = 0; sl_count < 50; ++sl_count) {
+  for (unsigned sl_count = 0; sl_rx < prach_sl_rx; ++sl_count) {
     slot_point sl_tx{sl_rx + tx_delay};
 
     if (sl_rx == prach_sl_rx) {
