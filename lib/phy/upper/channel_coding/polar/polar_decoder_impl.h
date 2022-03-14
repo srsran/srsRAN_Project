@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_CHANNEL_CODING_POLAR_DECODER_IMPL_H
-#define SRSGNB_CHANNEL_CODING_POLAR_DECODER_IMPL_H
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DECODER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DECODER_IMPL_H
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
@@ -139,4 +139,4 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_CODING_POLAR_DECODER_IMPL_H
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DECODER_IMPL_H

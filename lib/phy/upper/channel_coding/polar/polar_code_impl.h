@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
-#define SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_CODE_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_CODE_IMPL_H
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/srsvec/aligned_vec.h"
@@ -144,4 +144,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CHANNEL_CODING_POLAR_CODE_IMPL_H_
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_CODE_IMPL_H

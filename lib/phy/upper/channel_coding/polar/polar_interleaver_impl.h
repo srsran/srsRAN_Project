@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_
-#define SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_IMPL_H
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 
@@ -27,4 +27,4 @@ public:
   void interleave(const span<const uint8_t> in, span<uint8_t> out, polar_interleaver_direction direction) override;
 };
 } // namespace srsgnb
-#endif // SRSGNB_LIB_PHY_CHANNEL_CODING_POLAR_INTERLEAVER_IMPL_H_
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_IMPL_H

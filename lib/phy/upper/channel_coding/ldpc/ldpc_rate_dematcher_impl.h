@@ -1,8 +1,8 @@
 /// \file
 /// \brief LDPC rate dematcher declaration.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL_H
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_IMPL_H
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
@@ -48,4 +48,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_IMPL_H
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_IMPL_H

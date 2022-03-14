@@ -156,8 +156,8 @@
 ///
 ///@}
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_RM_TEST_SETS_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_RM_TEST_SETS_H
+#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RM_TEST_SETS_H
+#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RM_TEST_SETS_H
 
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include <array>
@@ -4243,4 +4243,4 @@ static const std::array<std::vector<uint8_t>, nof_rates> matched_rv3_256qam_lbrm
 } // namespace ldpc
 } // namespace srsgnb
 
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_RM_TEST_SETS_H
+#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RM_TEST_SETS_H

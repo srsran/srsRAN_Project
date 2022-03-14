@@ -1,7 +1,7 @@
 /// \file
 /// \brief LDPC rate dematching.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
@@ -52,4 +52,4 @@ std::unique_ptr<ldpc_rate_dematcher> create_ldpc_rate_dematcher();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_RATE_DEMATCHER_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_H
