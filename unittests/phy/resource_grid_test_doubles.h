@@ -27,12 +27,12 @@ public:
       put(port, coordinate.symbol, coordinate.subcarrier, *(symbol_ptr++));
     }
   }
-  void put(unsigned port, unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override
+  void put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t>& symbol_buffer) override
   {
     unsigned count = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask[k]) {
-        put(port, l, k, symbol_buffer[count]);
+        put(port, l, k_init + k, symbol_buffer[count]);
         count++;
       }
     }
@@ -47,9 +47,10 @@ public:
     }
   }
   void get(unsigned port, span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const override {}
-  void get(unsigned port, unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const override {}
-  void get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const override {}
-  void set_all_zero() override { set_all_zero_counter++; }
+  void get(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<cf_t>& symbol_buffer) const override
+  {}
+  void                        get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const override {}
+  void                        set_all_zero() override { set_all_zero_counter++; }
   const std::vector<entry_t>& get_put_entries() const { return put_entries; }
   unsigned                    get_nof_put_entries() const { return put_entries.size(); }
   unsigned                    get_nof_set_zero_entries() const { return set_all_zero_counter; }
@@ -69,10 +70,12 @@ class resource_grid_dummy : public resource_grid
 {
 public:
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
-  void put(unsigned port, unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer) override {}
+  void put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t>& symbol_buffer) override
+  {}
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
   void get(unsigned port, span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const override {}
-  void get(unsigned port, unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const override {}
+  void get(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<cf_t>& symbol_buffer) const override
+  {}
   void get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const override {}
   void set_all_zero() override {}
 };

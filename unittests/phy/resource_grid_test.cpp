@@ -146,7 +146,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
 
   // Put elements
   span<const cf_t> symbol_buffer_put = symbols_gold;
-  grid->put(port_gold, symbol_idx, mask, symbol_buffer_put);
+  grid->put(port_gold, symbol_idx, 0, mask, symbol_buffer_put);
 
   // Make sure all symbols are used
   srsran_assert(symbol_buffer_put.empty(), "Failed");
@@ -177,7 +177,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   // Get elements
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
   span<cf_t>                symbol_buffer_get = symbols;
-  grid->get(port_gold, symbol_idx, mask, symbol_buffer_get);
+  grid->get(port_gold, symbol_idx, 0, mask, symbol_buffer_get);
 
   // Make sure all symbols are used
   srsran_assert(symbol_buffer_get.empty(), "Symbol buffer - not empty");

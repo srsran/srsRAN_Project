@@ -169,7 +169,7 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
     // Put port elements in the resource grid
-    grid.put(config.ports[port], symbol, base_mask.subspan(NRE - params.delta, MAX_RB * NRE), re[port]);
+    grid.put(config.ports[port], symbol, 0, base_mask.subspan(NRE - params.delta, MAX_RB * NRE), re[port]);
   }
 }
 

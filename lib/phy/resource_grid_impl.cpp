@@ -30,7 +30,11 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
   }
 }
 
-void resource_grid_impl::put(unsigned port, unsigned l, span<const bool> mask, span<const cf_t>& symbol_buffer)
+void resource_grid_impl::put(unsigned          port,
+                             unsigned          l,
+                             unsigned          k_init,
+                             span<const bool>  mask,
+                             span<const cf_t>& symbol_buffer)
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
@@ -46,7 +50,7 @@ void resource_grid_impl::put(unsigned port, unsigned l, span<const bool> mask, s
   unsigned count = 0;
   for (unsigned k = 0; k != mask.size(); ++k) {
     if (mask[k]) {
-      symb[k] = symbol_buffer[count];
+      symb[k + k_init] = symbol_buffer[count];
       count++;
     }
   }
@@ -90,7 +94,11 @@ void resource_grid_impl::get(unsigned port, span<const resource_grid_coordinate>
   }
 }
 
-void resource_grid_impl::get(unsigned port, unsigned l, span<const bool> mask, span<cf_t>& symbol_buffer) const
+void resource_grid_impl::get(unsigned         port,
+                             unsigned         l,
+                             unsigned         k_init,
+                             span<const bool> mask,
+                             span<cf_t>&      symbol_buffer) const
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
@@ -106,7 +114,7 @@ void resource_grid_impl::get(unsigned port, unsigned l, span<const bool> mask, s
   unsigned count = 0;
   for (unsigned k = 0; k != mask.size(); ++k) {
     if (mask[k]) {
-      symbol_buffer[count] = symb[k];
+      symbol_buffer[count] = symb[k + k_init];
       count++;
     }
   }
