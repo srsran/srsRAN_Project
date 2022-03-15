@@ -14,4 +14,5 @@ add_library(ldpc STATIC
         ldpc_decoder_impl.cpp
         ldpc_rate_matcher_impl.cpp
         ldpc_rate_dematcher_impl.cpp
+        ldpc_segmenter_impl.cpp
 )
