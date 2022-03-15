@@ -16,10 +16,7 @@ class mac_ul_manager final : public mac_ul_configurer
 {
 public:
   mac_ul_manager(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_, sched_interface& sched_) :
-    cfg(cfg_),
-    logger(cfg.logger),
-    ue_manager(cfg, ul_ccch_notifier_),
-    pdu_handler(logger, sched_, ul_ccch_notifier_)
+    cfg(cfg_), logger(cfg.logger), ue_manager(cfg, ul_ccch_notifier_), pdu_handler(logger, sched_, ul_ccch_notifier_)
   {
     for (size_t i = 0; i < MAX_NOF_UES; ++i) {
       rnti_resources[i] = &cfg.ul_exec;
@@ -51,7 +48,7 @@ public:
     for (mac_rx_pdu& pdu : msg.pdus) {
       // 1. Fork each PDU to different executors based on the PDU RNTI.
       rnti_resources[pdu.rnti]->execute(
-          [this, pdu = decoded_pdu_rx{msg.sl_rx, msg.cell_index, std::move(pdu)}]() mutable {
+          [this, pdu = mac_rx_pdu_context{msg.sl_rx, msg.cell_index, std::move(pdu)}]() mutable {
             // 2. Decode Rx PDU and handle respective subPDUs.
             handle_rx_pdu_impl(pdu);
           });
@@ -60,7 +57,7 @@ public:
 
 private:
   /// Decodes MAC UL PDU, dispatches CEs to scheduler and SDUs to upper layers.
-  void handle_rx_pdu_impl(decoded_pdu_rx& pdu_ctx)
+  void handle_rx_pdu_impl(mac_rx_pdu_context& pdu_ctx)
   {
     // 1. Decode MAC UL PDU.
     if (not pdu_handler.decode_rx_pdu(pdu_ctx)) {
@@ -68,6 +65,7 @@ private:
     }
 
     // 2. Check UE exists.
+    // Note: In case of CCCH indication, RNTI may not yet exist. However, the respective SDUs need to be handled.
     mac_ul_ue* ue = ue_manager.find_rnti(pdu_ctx.pdu_rx.rnti);
 
     if (pdu_ctx.ce_crnti == INVALID_RNTI) {
@@ -75,9 +73,9 @@ private:
       pdu_handler.handle_rx_subpdus(ue, pdu_ctx);
 
     } else {
-      // 4. Dispatch continuation to different execution context.
+      // 4. In case C-RNTI CE is present, dispatch continuation to execution context of old C-RNTI.
       rnti_resources[pdu_ctx.ce_crnti]->execute([this, pdu_ctx = std::move(pdu_ctx)]() mutable {
-        // 5. In case C-RNTI CE is present, find UE with provided C-RNTI.
+        // 5. Find UE with provided C-RNTI.
         mac_ul_ue* ue = ue_manager.find_rnti(pdu_ctx.ce_crnti);
         if (ue == nullptr) {
           logger.warning("Couldn't find UE with RNTI=0x{:x}", pdu_ctx.ce_crnti);

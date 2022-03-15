@@ -3,7 +3,7 @@
 #define SRSGNB_BSR_FORMAT_H
 
 ///
-/// @brief  Logical Channel Group and UL Buffer size format definition and levels according to 3GPP TS 38.321
+/// @brief  Logical Channel Group and UL Buffer Size format definition and levels according to 3GPP TS 38.321
 /// version 15.3.0
 ///
 

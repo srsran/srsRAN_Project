@@ -72,13 +72,13 @@ std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subp
       break;
     case lcid_ul_sch_t::SHORT_BSR: {
       lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
-      fmt::print(os, "SBSR: lcg={} bs={}", sbsr.lcg_id, sbsr.nof_bytes);
+      fmt::print(os, "SBSR: lcg={} bs={}", sbsr.lcg_id, sbsr.buffer_size);
     } break;
     case lcid_ul_sch_t::LONG_BSR: {
       long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
       fmt::print(os, "LBSR: bitmap={:#02x}", lbsr.bitmap);
       for (const auto& lcg : lbsr.list) {
-        fmt::print(os, "lcg={} bs={}", lcg.lcg_id, lcg.nof_bytes);
+        fmt::print(os, "lcg={} bs={}", lcg.lcg_id, lcg.buffer_size);
       }
     } break;
     case lcid_ul_sch_t::SE_PHR:
