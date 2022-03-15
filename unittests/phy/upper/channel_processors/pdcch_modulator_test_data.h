@@ -1,5 +1,5 @@
-#ifndef SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H_
-#define SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H_
+#ifndef SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H
+#define SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H
 
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -19,4 +19,4 @@ static const std::vector<test_case_t> pdcch_modulator_test_data = {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H_
+#endif // SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PDCCH_MODULATOR_TEST_DATA_H

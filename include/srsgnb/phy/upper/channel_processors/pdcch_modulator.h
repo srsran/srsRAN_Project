@@ -45,10 +45,10 @@ public:
   /// \brief Modulates a PDCCH codeword according to TS 38.211 section 7.3.2 Physical downlink control channel.
   ///
   /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] codeword Provides the encoded codeword to modulate.
+  /// \param[in] data Provides the encoded and unpacked bits to modulate.
   /// \param[in] config Provides the configuration.
   /// \note The codeword length shall be consistent with the resource mapping.
-  virtual void modulate(resource_grid_writer& grid, span<const uint8_t> codewords, const config_t& config) = 0;
+  virtual void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) = 0;
 };
 
 } // namespace srsgnb

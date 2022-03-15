@@ -26,10 +26,10 @@ int main()
 
     modulator->put(test_case.data, grid, test_case.args);
 
-    // Make sure the
+    // Make sure the number of RE match.
     srsran_assert(test_case.symbols.size() == grid.get_nof_put_entries(), "Mismatched number of entries");
 
-    // Assert encoded data
+    // Assert encoded data.
     std::vector<resource_grid_spy::entry_t> symbols = grid.get_put_entries();
     for (unsigned i = 0; i != pbch_modulator::M_symb; ++i) {
       float err = std::abs(test_case.symbols[i].value - symbols[i].value);

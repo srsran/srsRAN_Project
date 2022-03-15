@@ -82,7 +82,7 @@ private:
   static_vector<static_vector<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
 public:
-  /// \brief Generic PDSCH modulator instance contructor.
+  /// \brief Generic PDSCH modulator instance constructor.
   ///
   /// \param[in] args Provides the internal dependencies instances.
   pdsch_modulator_impl(pdsch_modulator_config_t& args) :

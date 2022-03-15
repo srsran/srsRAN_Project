@@ -60,9 +60,10 @@ private:
   void map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config);
 
 public:
-  void modulate(resource_grid_writer& grid, span<const uint8_t> codewords, const config_t& config) override;
+  // See interface for the documentation.
+  void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) override;
 
-  /// \brief Generic PDSCH modulator instance contructor.
+  /// \brief Generic PDCCH modulator instance constructor.
   ///
   /// \param[in] args Provides the internal dependencies instances.
   pdcch_modulator_impl(pdcch_modulator_config_t& config) :
@@ -72,6 +73,10 @@ public:
   }
 };
 
+/// \brief Creates a generic PDCCH modulator.
+///
+/// \param[in] args Provides the internal dependencies instances.
+/// \return A unique pointer with the modulator.
 std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t& config);
 
 } // namespace srsgnb

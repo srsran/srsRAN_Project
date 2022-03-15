@@ -21,11 +21,11 @@ int main()
   std::unique_ptr<pbch_encoder> encoder = create_pbch_encoder();
 
   for (const test_case_t& test_case : pbch_encoder_test_data) {
-    // Encode message
+    // Encode PBCH message.
     std::array<uint8_t, pbch_encoder::E> encoded_data = {};
     encoder->encode(test_case.pbch_msg, encoded_data);
 
-    // Assert encoded data
+    // Assert encoded data.
     for (unsigned i = 0; i != pbch_encoder::E; ++i) {
       srsran_assert(encoded_data[i] == test_case.encoded[i], "Failed");
     }

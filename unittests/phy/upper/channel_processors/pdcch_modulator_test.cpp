@@ -39,7 +39,7 @@ int main()
                   test_case.symbols.size(),
                   grid.get_nof_put_entries());
 
-    // Assert encoded data
+    // Assert encoded data.
     std::vector<resource_grid_spy::entry_t> symbols = grid.get_put_entries();
     for (unsigned i = 0; i != symbols.size(); ++i) {
       float err = std::abs(test_case.symbols[i].value - symbols[i].value);
