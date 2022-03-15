@@ -31,7 +31,7 @@ int main()
     dmrs_pbch->map(grid, test_case.args);
 
     // Assert resource grid entries.
-    grid.assert_put_entries(test_case.symbols);
+    grid.assert_entries(test_case.symbols);
   }
 
   return 0;

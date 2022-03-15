@@ -61,16 +61,16 @@ static void test_case(pss_processor& pss, const pss_processor::config_t& pss_arg
   std::vector<resource_grid_writer_spy::expected_entry_t> expected_grid_entries;
   for (unsigned i = 0; i != 127; ++i) {
     resource_grid_writer_spy::expected_entry_t entry = {};
-    entry.port                                = pss_args.ports[0];
-    entry.symbol                              = pss_args.ssb_first_symbol + 0;
-    entry.subcarrier                          = pss_args.ssb_first_subcarrier + 56 + i;
-    entry.value                               = sequence_gold[i];
+    entry.port                                       = pss_args.ports[0];
+    entry.symbol                                     = pss_args.ssb_first_symbol + 0;
+    entry.subcarrier                                 = pss_args.ssb_first_subcarrier + 56 + i;
+    entry.value                                      = sequence_gold[i];
 
     expected_grid_entries.emplace_back(entry);
   }
 
   // Assert grid entries.
-  grid.assert_put_entries(expected_grid_entries);
+  grid.assert_entries(expected_grid_entries);
 }
 
 int main()

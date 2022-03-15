@@ -9,8 +9,8 @@
 namespace srsgnb {
 
 struct test_case_t {
-  pbch_modulator::config_t                args;
-  std::vector<uint8_t>                    data;
+  pbch_modulator::config_t                                args;
+  std::vector<uint8_t>                                    data;
   std::vector<resource_grid_writer_spy::expected_entry_t> symbols;
 };
 

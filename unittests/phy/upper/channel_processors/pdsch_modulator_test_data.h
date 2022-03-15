@@ -8,8 +8,8 @@
 namespace srsgnb {
 
 struct test_case_t {
-  pdsch_modulator::config_t               config;
-  std::vector<uint8_t>                    codeword;
+  pdsch_modulator::config_t                               config;
+  std::vector<uint8_t>                                    codeword;
   std::vector<resource_grid_writer_spy::expected_entry_t> symbols;
 };
 

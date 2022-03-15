@@ -83,7 +83,7 @@ public:
   ///
   /// \param[in] golden_entries Provides a list of golden symbols to assert.
   /// \note The test is terminated in case of miss-match.
-  void assert_put_entries(span<const expected_entry_t> expected_entries) const
+  void assert_entries(span<const expected_entry_t> expected_entries) const
   {
     // Make sure the number of elements match.
     srsran_assert(entries.size() == expected_entries.size(),
