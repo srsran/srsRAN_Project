@@ -10,7 +10,7 @@ namespace srsgnb {
 
 struct test_case_t {
   dmrs_pbch_processor::config_t           args;
-  std::vector<resource_grid_spy::entry_t> symbols;
+  std::vector<resource_grid_writer_spy::expected_entry_t> symbols;
 };
 
 static const auto dmrs_pbch_processor_test_data = to_array<test_case_t>({

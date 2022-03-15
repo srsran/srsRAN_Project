@@ -17,8 +17,7 @@
 
 using namespace srsgnb;
 
-static const float  repetitions      = 10;
-static const float  assert_max_error = 1e-6;
+static const float  repetitions = 10;
 static std::mt19937 rgen(0);
 
 void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float scale)
@@ -59,31 +58,30 @@ void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float
 
 static void test_case(sss_processor& sss, const sss_processor::config_t& sss_args)
 {
-  // Create resource grid
-  resource_grid_spy grid;
+  // Create resource grid.
+  resource_grid_writer_spy grid;
 
-  // Map SSS
+  // Map SSS.
   sss.map(grid, sss_args);
 
-  // Generate golden sequence
+  // Generate golden sequence.
   std::array<cf_t, 127> sequence_gold;
   generate_sequence_gold(sequence_gold, sss_args.phys_cell_id, sss_args.amplitude);
 
-  // Assert number of elements
-  srsran_assert(grid.get_nof_put_entries() == 127, "Mismatched number of entries");
+  // Generate expected resource grid entries.
+  std::vector<resource_grid_writer_spy::expected_entry_t> expected_grid_entries;
+  for (unsigned i = 0; i != 127; ++i) {
+    resource_grid_writer_spy::expected_entry_t entry = {};
+    entry.port                                = sss_args.ports[0];
+    entry.symbol                              = sss_args.ssb_first_symbol + 2;
+    entry.subcarrier                          = sss_args.ssb_first_subcarrier + 56 + i;
+    entry.value                               = sequence_gold[i];
 
-  // Assert grid
-  unsigned k_gold           = sss_args.ssb_first_subcarrier + 56;
-  auto     sequence_gold_it = sequence_gold.begin();
-  for (const resource_grid_spy::entry_t& e : grid.get_put_entries()) {
-    float err = std::abs(*sequence_gold_it - e.value);
-    srsran_assert(e.port == sss_args.ports[0], "Mismatched port");
-    srsran_assert(e.l == sss_args.ssb_first_symbol + 2, "Mismatched symbol");
-    srsran_assert(e.k == k_gold, "Mismatched subcarrier");
-    srsran_assert(err < assert_max_error, "Mismatched value");
-    k_gold++;
-    sequence_gold_it++;
+    expected_grid_entries.emplace_back(entry);
   }
+
+  // Assert grid entries.
+  grid.assert_put_entries(expected_grid_entries);
 }
 
 int main()
