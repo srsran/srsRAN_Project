@@ -16,7 +16,10 @@ class mac_ul_manager final : public mac_ul_configurer
 {
 public:
   mac_ul_manager(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_, sched_interface& sched_) :
-    cfg(cfg_), logger(cfg.logger), ue_manager(cfg, ul_ccch_notifier_), pdu_handler(logger, sched_, ul_ccch_notifier_)
+    cfg(cfg_),
+    logger(cfg.logger),
+    ue_manager(cfg, ul_ccch_notifier_),
+    pdu_handler(logger, sched_, ul_ccch_notifier_, ue_manager)
   {
     for (size_t i = 0; i < MAX_NOF_UES; ++i) {
       rnti_resources[i] = &cfg.ul_exec;
@@ -64,26 +67,22 @@ private:
       return;
     }
 
-    // 2. Check UE exists.
-    // Note: In case of CCCH indication, RNTI may not yet exist. However, the respective SDUs need to be handled.
-    mac_ul_ue* ue = ue_manager.find_rnti(pdu_ctx.pdu_rx.rnti);
-
     if (pdu_ctx.ce_crnti == INVALID_RNTI) {
-      // 4. In case C-RNTI CE was not present, handle MAC CEs and MAC UL SDUs.
-      pdu_handler.handle_rx_subpdus(ue, pdu_ctx);
+      // 2. In case C-RNTI CE was not present, handle MAC CEs and MAC UL SDUs.
+      pdu_handler.handle_rx_subpdus(pdu_ctx);
 
     } else {
-      // 4. In case C-RNTI CE is present, dispatch continuation to execution context of old C-RNTI.
+      // 3. In case C-RNTI CE is present, dispatch continuation to execution context of old C-RNTI.
       rnti_resources[pdu_ctx.ce_crnti]->execute([this, pdu_ctx = std::move(pdu_ctx)]() mutable {
-        // 5. Find UE with provided C-RNTI.
+        // 4. Find UE with provided C-RNTI.
         mac_ul_ue* ue = ue_manager.find_rnti(pdu_ctx.ce_crnti);
         if (ue == nullptr) {
           logger.warning("Couldn't find UE with RNTI=0x{:x}", pdu_ctx.ce_crnti);
           return;
         }
 
-        // 6. handle MAC CEs and MAC UL SDUs.
-        pdu_handler.handle_rx_subpdus(ue, pdu_ctx);
+        // 5. handle MAC CEs and MAC UL SDUs.
+        pdu_handler.handle_rx_subpdus(pdu_ctx);
       });
     }
   }

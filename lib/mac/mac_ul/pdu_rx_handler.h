@@ -62,8 +62,11 @@ struct mac_rx_pdu_context {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(srslog::basic_logger& logger_, sched_ue_feedback& sched_, mac_ul_sdu_notifier& ccch_notifier_) :
-    logger(logger_), sched(sched_), ccch_notifier(ccch_notifier_)
+  pdu_rx_handler(srslog::basic_logger& logger_,
+                 sched_ue_feedback&    sched_,
+                 mac_ul_sdu_notifier&  ccch_notifier_,
+                 mac_ul_ue_manager&    ue_manager_) :
+    logger(logger_), sched(sched_), ccch_notifier(ccch_notifier_), ue_manager(ue_manager_)
   {}
 
   /// Decode MAC Rx PDU and log contents.
@@ -83,20 +86,34 @@ public:
       log_ul_pdu(logger, MAX_NOF_UES, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: {}", ctx.decoded_subpdus);
     }
 
-    // 3. Check if MAC CRNTI CE exists.
+    // 3. Check if MAC CRNTI and CCCH CEs exist.
+    bool ccch_detected = false;
     for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
       const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
       if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
         // Decode CRNTI CE and update UE RNTI output parameter.
         ctx.ce_crnti = decode_crnti_ce(subpdu.payload());
-        break;
+      } else if (subpdu.lcid().is_ccch()) {
+        ccch_detected = true;
       }
     }
+
+    // 4. Verify if UE exists only if C-RNTI CE and CCCH were not received.
+    if (not ccch_detected and ctx.ce_crnti == INVALID_RNTI) {
+      mac_ul_ue* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
+      if (ue == nullptr) {
+        logger.warning("Received MAC SDU for inexistent RNTI=0x{:x}", ctx.crnti());
+        return false;
+      }
+    }
+
     return true;
   }
 
-  bool handle_rx_subpdus(mac_ul_ue* ue, const mac_rx_pdu_context& ctx)
+  bool handle_rx_subpdus(const mac_rx_pdu_context& ctx)
   {
+    mac_ul_ue* ue = ue_manager.find_rnti(ctx.crnti());
+
     // Process SDUs and remaining MAC CEs
     for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
       if (subpdu.lcid().is_sdu()) {
@@ -149,7 +166,7 @@ private:
       case lcid_ul_sch_t::CCCH_SIZE_48:
       case lcid_ul_sch_t::CCCH_SIZE_64: {
         // Store Msg3 content for ConRes CE.
-        // TODO
+        ue_manager.store_msg3(ctx.crnti(), byte_buffer{subpdu.payload().begin(), subpdu.payload().end()});
 
         // Notify upper layers with received SDU.
         ccch_notifier.on_ul_sdu(
@@ -213,6 +230,7 @@ private:
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
   mac_ul_sdu_notifier&  ccch_notifier;
+  mac_ul_ue_manager&    ue_manager;
 };
 
 } // namespace srsgnb
