@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
-#define SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
+#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
@@ -73,11 +73,12 @@ public:
   /// \param[in] codewords Provides the encoded codewords to modulate.
   /// \param[in] config Provides the configuration reference.
   /// \note The number of codewords shall be consistent with the number of layers.
-  /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource elements.
+  /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
+  /// elements.
   virtual void
   modulate(resource_grid_writer& grid, span<const span<const uint8_t> > codewords, const config_t& config) = 0;
 };
 
 } // namespace srsgnb
 
-#endif //  SRSGNB_PHY_UPPER_PDSCH_MODULATOR_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
