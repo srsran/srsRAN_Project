@@ -1,14 +1,10 @@
 
-#ifndef SRSGNB_UL_BSR_H
-#define SRSGNB_UL_BSR_H
+#ifndef MAC_UL_BSR_H
+#define MAC_UL_BSR_H
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/adt/to_array.h"
-#include "srsgnb/mac/sched_ue_feedback.h"
-#include <stdint.h>
-
-///
-/// @brief  Buffer size format definition and levels according to 3GPP TS 38.321 version 15.3.0
-///
+#include "srsgnb/mac/bsr_format.h"
 
 namespace srsgnb {
 
@@ -135,4 +131,4 @@ inline long_bsr_report decode_lbsr(bsr_format format, span<const uint8_t> payloa
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UL_BSR_H
+#endif // MAC_UL_BSR_H

@@ -62,7 +62,6 @@ inline rnti_t decode_crnti_ce(span<const uint8_t> payload)
 {
   srsran_sanity_check(payload.size() >= 2, "Invalid Payload length={} for C-RNTI MAC CE", payload.size());
   return le16toh((uint16_t)payload[0] << 8U | payload[1]);
-  return 0;
 }
 
 } // namespace srsgnb

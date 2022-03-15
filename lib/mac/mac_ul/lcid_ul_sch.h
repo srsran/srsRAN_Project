@@ -53,7 +53,7 @@ public:
   }
 
   explicit operator lcid_t() const { return lcid_val; }
-  lcid_t   lcid() const { return lcid_val; }
+  lcid_t   value() const { return lcid_val; }
 
   /// Whether LCID belongs to CCCH
   bool is_ccch() const { return (lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64); }

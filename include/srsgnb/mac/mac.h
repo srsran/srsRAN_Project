@@ -15,6 +15,9 @@ namespace srsgnb {
 
 constexpr size_t MAX_PDU_LIST = 16;
 
+/// FAPI, MaxULPDUsPerSlot
+constexpr size_t MAX_UL_PDUS_PER_SLOT = 16;
+
 using harq_pid              = uint8_t;
 using cqi_report            = uint8_t;
 using timing_advance_report = uint16_t;
@@ -26,19 +29,20 @@ struct mac_ul_sdu {
   byte_buffer pdu;
 };
 
+/// FAPI, 3.4.7 - Rx_Data.indication Message PDU
 struct mac_rx_pdu {
-  rnti_t                rnti;
-  harq_pid              pid;
-  cqi_report            ul_cqi;
-  timing_advance_report ta;
-  rssi_report           rssi;
-  byte_buffer           pdu;
+  rnti_t      rnti;
+  uint8_t     rapid;
+  harq_pid    harq_id;
+  byte_buffer pdu;
 };
+using mac_rx_pdu_list = static_vector<mac_rx_pdu, MAX_UL_PDUS_PER_SLOT>;
 
+/// FAPI, 3.4.7 - Rx_Data.indication Message
 struct mac_rx_data_indication {
-  slot_point                              sl_rx;
-  du_cell_index_t                         cell_index;
-  static_vector<mac_rx_pdu, MAX_PDU_LIST> pdus;
+  slot_point      sl_rx;
+  du_cell_index_t cell_index;
+  mac_rx_pdu_list pdus;
 };
 
 class mac_ul_sdu_notifier
