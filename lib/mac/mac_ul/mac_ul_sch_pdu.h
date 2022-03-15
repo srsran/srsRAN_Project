@@ -4,6 +4,7 @@
 
 #include "lcid_ul_sch.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -33,11 +34,14 @@ std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subp
 
 class mac_ul_sch_pdu
 {
+  static constexpr size_t MAX_PDU_LIST = 16;
 public:
-  using iterator       = std::vector<mac_ul_sch_subpdu>::iterator;
-  using const_iterator = std::vector<mac_ul_sch_subpdu>::const_iterator;
+  using iterator       = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::iterator;
+  using const_iterator = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::const_iterator;
 
   mac_ul_sch_pdu() = default;
+
+  void clear();
 
   int unpack(span<const uint8_t> payload);
 
@@ -51,7 +55,7 @@ public:
   const_iterator end() const { return subpdus.end(); }
 
 private:
-  std::vector<mac_ul_sch_subpdu> subpdus;
+  static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST> subpdus;
 };
 
 /// UL PDU Formatter

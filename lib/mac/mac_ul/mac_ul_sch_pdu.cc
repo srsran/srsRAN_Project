@@ -95,6 +95,11 @@ std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subp
   return os;
 }
 
+void mac_ul_sch_pdu::clear()
+{
+  subpdus.clear();
+}
+
 int mac_ul_sch_pdu::unpack(span<const uint8_t> payload)
 {
   size_t offset = 0;

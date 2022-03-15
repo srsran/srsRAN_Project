@@ -4,7 +4,7 @@
 
 #include "../mac_config.h"
 #include "../mac_dl/mac_dl_component.h"
-#include "../mac_ul/mac_ul_component.h"
+#include "../mac_ul/mac_ul_manager.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/du_types.h"

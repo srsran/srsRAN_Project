@@ -6,7 +6,7 @@
 #include "mac_ctrl/mac_ctrl_component.h"
 #include "mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl/ue_delete_procedure.h"
-#include "mac_ul/mac_ul_component.h"
+#include "mac_ul/mac_ul_manager.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
@@ -38,7 +38,7 @@ private:
   srslog::basic_logger& logger;
 
   mac_dl_component   dl_unit;
-  mac_ul_component   ul_unit;
+  mac_ul_manager     ul_unit;
   mac_ctrl_component ctrl_unit;
 
   std::mutex dl_mutex;
