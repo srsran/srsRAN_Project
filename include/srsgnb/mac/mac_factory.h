@@ -4,15 +4,15 @@
 
 #include "mac.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/support/task_executor.h"
+#include "srsgnb/ran/du_l2_executor_mapper.h"
 #include <memory>
 
 namespace srsgnb {
 
-std::unique_ptr<mac_interface> create_mac(mac_ul_sdu_notifier& ul_ccch_notifier,
-                                          task_executor&       ul_exec,
-                                          span<task_executor*> dl_exec,
-                                          task_executor&       ctrl_exec);
+std::unique_ptr<mac_interface> create_mac(mac_ul_sdu_notifier&   ul_ccch_notifier,
+                                          du_l2_executor_mapper& ul_exec_mapper,
+                                          span<task_executor*>   dl_exec,
+                                          task_executor&         ctrl_exec);
 
 }
 

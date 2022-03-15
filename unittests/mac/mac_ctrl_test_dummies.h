@@ -99,6 +99,17 @@ public:
   }
 };
 
+class dummy_ul_executor_mapper : public du_l2_executor_mapper
+{
+public:
+  dummy_ul_executor_mapper(task_executor& exec_) : exec(exec_) {}
+
+  task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override { return executor(rnti); }
+  task_executor& executor(rnti_t rnti) override { return exec; }
+
+  task_executor& exec;
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_MAC_CTRL_TEST_DUMMIES_H

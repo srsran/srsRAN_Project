@@ -11,7 +11,8 @@ void test_mac_ctrl_ue_procedures()
 
   inline_executor             exec;
   std::vector<task_executor*> dl_execs({&exec});
-  mac_common_config_t         cfg{exec, dl_execs, exec};
+  dummy_ul_executor_mapper    ul_exec_mapper{exec};
+  mac_common_config_t         cfg{ul_exec_mapper, dl_execs, exec};
   mac_ul_dummy_configurer     ul_unit;
   mac_dl_dummy_configurer     dl_unit;
 

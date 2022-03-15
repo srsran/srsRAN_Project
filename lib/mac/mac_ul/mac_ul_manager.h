@@ -19,29 +19,30 @@ public:
     cfg(cfg_),
     logger(cfg.logger),
     ue_manager(cfg, ul_ccch_notifier_),
-    pdu_handler(logger, sched_, ul_ccch_notifier_, ue_manager)
-  {
-    for (size_t i = 0; i < MAX_NOF_UES; ++i) {
-      rnti_resources[i] = &cfg.ul_exec;
-    }
-  }
+    pdu_handler(cfg, sched_, ul_ccch_notifier_, ue_manager)
+  {}
 
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
-    // TODO: define dispatch policy to UL workers
-    return dispatch_and_resume_on(cfg.ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
+    // Update UE executor due to new PCell
+    task_executor& ul_exec = cfg.ul_exec_mapper.rebind_executor(request.crnti, request.cell_index);
+
+    // Dispatch UE creation in new UL executor
+    return dispatch_and_resume_on(ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
   }
 
   async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override
   {
-    return dispatch_and_resume_on(
-        cfg.ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.reconfigure_ue(request); });
+    return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(request.crnti), cfg.ctrl_exec, [this, request]() {
+      return ue_manager.reconfigure_ue(request);
+    });
   }
 
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return dispatch_and_resume_on(
-        cfg.ul_exec, cfg.ctrl_exec, [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
+    return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(msg.rnti),
+                                  cfg.ctrl_exec,
+                                  [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
   }
 
   /// Handles FAPI Rx_Data.Indication.
@@ -50,7 +51,7 @@ public:
   {
     for (mac_rx_pdu& pdu : msg.pdus) {
       // 1. Fork each PDU to different executors based on the PDU RNTI.
-      rnti_resources[pdu.rnti]->execute(
+      cfg.ul_exec_mapper.executor(pdu.rnti).execute(
           [this, pdu = mac_rx_pdu_context{msg.sl_rx, msg.cell_index, std::move(pdu)}]() mutable {
             // 2. Decode Rx PDU and handle respective subPDUs.
             handle_rx_pdu_impl(pdu);
@@ -73,7 +74,7 @@ private:
 
     } else {
       // 3. In case C-RNTI CE is present, dispatch continuation to execution context of old C-RNTI.
-      rnti_resources[pdu_ctx.ce_crnti]->execute([this, pdu_ctx = std::move(pdu_ctx)]() mutable {
+      cfg.ul_exec_mapper.executor(pdu_ctx.ce_crnti).execute([this, pdu_ctx = std::move(pdu_ctx)]() mutable {
         // 4. Find UE with provided C-RNTI.
         mac_ul_ue* ue = ue_manager.find_rnti(pdu_ctx.ce_crnti);
         if (ue == nullptr) {
@@ -94,9 +95,6 @@ private:
 
   /// Object that handles incoming UL MAC PDUs.
   pdu_rx_handler pdu_handler;
-
-  /// List of executors for each RNTI.
-  circular_array<task_executor*, MAX_NOF_UES> rnti_resources{};
 };
 
 } // namespace srsgnb

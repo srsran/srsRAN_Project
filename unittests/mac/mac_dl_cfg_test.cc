@@ -136,13 +136,14 @@ void test_dl_ue_procedure_tsan()
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
-  blocking_worker                  ctrl_worker{128};
-  task_worker                      dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
-  task_worker_executor             dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
-  std::vector<task_executor*>      dl_execs;
+  blocking_worker             ctrl_worker{128};
+  task_worker                 dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
+  task_worker_executor        dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
+  std::vector<task_executor*> dl_execs;
   dl_execs.push_back(&dl_exec1);
   dl_execs.push_back(&dl_exec2);
-  mac_common_config_t cfg{ctrl_worker, dl_execs, ctrl_worker};
+  dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
+  mac_common_config_t      cfg{ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 
@@ -164,12 +165,13 @@ void test_dl_ue_procedure_execution_contexts()
 {
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
 
-  auto&                            logger = srslog::fetch_basic_logger("TEST");
-  manual_worker                    ctrl_worker{128};
-  manual_worker                    dl_worker{128};
-  std::vector<task_executor*>      dl_execs;
+  auto&                       logger = srslog::fetch_basic_logger("TEST");
+  manual_worker               ctrl_worker{128};
+  manual_worker               dl_worker{128};
+  std::vector<task_executor*> dl_execs;
   dl_execs.push_back(&dl_worker);
-  mac_common_config_t cfg{ctrl_worker, dl_execs, ctrl_worker};
+  dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
+  mac_common_config_t      cfg{ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 

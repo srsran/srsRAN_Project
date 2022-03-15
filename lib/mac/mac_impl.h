@@ -11,7 +11,6 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/task_executor.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -19,14 +18,14 @@ namespace srsgnb {
 class mac_impl : public mac_interface
 {
 public:
-  explicit mac_impl(mac_ul_sdu_notifier& ul_ccch_notifier,
-                    task_executor&       ul_exec,
-                    span<task_executor*> dl_execs,
-                    task_executor&       ctrl_exec);
+  explicit mac_impl(mac_ul_sdu_notifier&   ul_ccch_notifier,
+                    du_l2_executor_mapper& ul_exec_mapper,
+                    span<task_executor*>   dl_execs,
+                    task_executor&         ctrl_exec);
 
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
   async_task<mac_ue_reconfiguration_response_message>
-                                             ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
   async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
   void push_rx_data_indication(mac_rx_data_indication msg) override;

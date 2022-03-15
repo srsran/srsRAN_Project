@@ -62,11 +62,11 @@ struct mac_rx_pdu_context {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(srslog::basic_logger& logger_,
-                 sched_ue_feedback&    sched_,
-                 mac_ul_sdu_notifier&  ccch_notifier_,
-                 mac_ul_ue_manager&    ue_manager_) :
-    logger(logger_), sched(sched_), ccch_notifier(ccch_notifier_), ue_manager(ue_manager_)
+  pdu_rx_handler(mac_common_config_t& cfg_,
+                 sched_ue_feedback&   sched_,
+                 mac_ul_sdu_notifier& ccch_notifier_,
+                 mac_ul_ue_manager&   ue_manager_) :
+    cfg(cfg_), logger(cfg.logger), sched(sched_), ccch_notifier(ccch_notifier_), ue_manager(ue_manager_)
   {}
 
   /// Decode MAC Rx PDU and log contents.
@@ -227,6 +227,7 @@ private:
     return true;
   }
 
+  mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
   mac_ul_sdu_notifier&  ccch_notifier;

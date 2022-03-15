@@ -31,9 +31,10 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   // Run tasks in same thread
   inline_executor               exec;
   std::array<task_executor*, 1> exec_lst = {&exec};
+  dummy_ul_executor_mapper      ul_exec_mapper{exec};
 
   // Create a MAC config object
-  mac_common_config_t       mac_cfg{exec, exec_lst, exec};
+  mac_common_config_t       mac_cfg{ul_exec_mapper, exec_lst, exec};
   mac_ctrl_dummy_configurer mac_ctrl;
   mac_ul_dummy_configurer   mac_ul;
   mac_dl_dummy_configurer   mac_dl;
