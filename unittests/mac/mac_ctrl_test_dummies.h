@@ -99,7 +99,7 @@ public:
   }
 };
 
-class dummy_ul_executor_mapper : public du_l2_executor_mapper
+class dummy_ul_executor_mapper : public du_l2_ul_executor_mapper
 {
 public:
   dummy_ul_executor_mapper(task_executor& exec_) : exec(exec_) {}

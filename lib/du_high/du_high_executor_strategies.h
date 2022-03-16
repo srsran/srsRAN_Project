@@ -4,14 +4,15 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/ran/du_l2_executor_mapper.h"
+#include "srsgnb/ran/du_l2_ul_executor_mapper.h"
 
 namespace srsgnb {
 
-class static_rnti_executor_mapper final : public du_l2_executor_mapper
+/// L2 UL executor mapper that maps UEs based on their RNTI.
+class rnti_ul_executor_mapper final : public du_l2_ul_executor_mapper
 {
 public:
-  static_rnti_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
+  rnti_ul_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
 
   virtual task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override
   {
@@ -25,10 +26,11 @@ private:
   std::vector<task_executor*> execs;
 };
 
-class pcell_executor_mapper final : public du_l2_executor_mapper
+/// L2 UL executor mapper that maps UEs based on their PCell.
+class pcell_ul_executor_mapper final : public du_l2_ul_executor_mapper
 {
 public:
-  explicit pcell_executor_mapper(std::vector<std::unique_ptr<task_executor> > execs_) : execs(std::move(execs_))
+  explicit pcell_ul_executor_mapper(std::vector<std::unique_ptr<task_executor> > execs_) : execs(std::move(execs_))
   {
     for (auto& rnti_exec : rnti_to_exec) {
       rnti_exec = execs[0].get();

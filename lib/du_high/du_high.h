@@ -6,7 +6,7 @@
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/ran/du_l2_executor_mapper.h"
+#include "srsgnb/ran/du_l2_ul_executor_mapper.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/task_executor.h"
 #include "srsgnb/support/task_worker.h"
@@ -41,7 +41,7 @@ private:
   std::vector<std::unique_ptr<task_worker> >   workers;
   std::unique_ptr<task_executor>               ctrl_exec;
   std::vector<std::unique_ptr<task_executor> > dl_execs;
-  std::unique_ptr<du_l2_executor_mapper>       ul_exec_mapper;
+  std::unique_ptr<du_l2_ul_executor_mapper>       ul_exec_mapper;
 };
 
 } // namespace srsgnb

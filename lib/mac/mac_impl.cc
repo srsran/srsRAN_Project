@@ -4,10 +4,10 @@
 
 namespace srsgnb {
 
-mac_impl::mac_impl(mac_rx_sdu_notifier& ul_ccch_notifier_,
-                   du_l2_executor_mapper& ul_exec_mapper_,
-                   span<task_executor*> dl_execs_,
-                   task_executor&       ctrl_exec_) :
+mac_impl::mac_impl(mac_rx_sdu_notifier&      ul_ccch_notifier_,
+                   du_l2_ul_executor_mapper& ul_exec_mapper_,
+                   span<task_executor*>      dl_execs_,
+                   task_executor&            ctrl_exec_) :
   cfg(ul_exec_mapper_, dl_execs_, ctrl_exec_),
   logger(cfg.logger),
   dl_unit(cfg),

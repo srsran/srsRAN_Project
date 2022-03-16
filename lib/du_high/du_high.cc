@@ -24,7 +24,7 @@ du_high::du_high()
   std::vector<std::unique_ptr<task_executor> > ul_execs;
   ul_execs.push_back(make_task_executor(*workers[1]));
   ul_execs.push_back(make_task_executor(*workers[2]));
-  ul_exec_mapper = std::make_unique<pcell_executor_mapper>(std::move(ul_execs));
+  ul_exec_mapper = std::make_unique<pcell_ul_executor_mapper>(std::move(ul_execs));
 
   // Create layers
   std::vector<task_executor*> execs;
