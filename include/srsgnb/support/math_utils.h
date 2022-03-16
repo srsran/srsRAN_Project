@@ -17,10 +17,24 @@
 
 namespace srsgnb {
 
-inline unsigned divide_ceil(unsigned num, unsigned den)
+/// \brief Performs an integer division rounding up.
+///
+/// \param[in] num Provides the numerator.
+/// \param[out] den Provides the denominator.
+/// \return The result of the operation.
+inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 {
   assert(den != 0);
   return (num + (den - 1)) / den;
+}
+
+/// \brief Calculates the integer power of 2.
+///
+/// \param[in] power Indicates the power of 2 to calculate.
+/// \return The result of the operation.
+inline constexpr unsigned pow2(unsigned power)
+{
+  return 1U << power;
 }
 
 /// \brief Converts a value in decibels to linear amplitude ratio
