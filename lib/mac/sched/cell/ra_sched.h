@@ -36,7 +36,7 @@ private:
   };
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str);
-  void log_rar(const rar_alloc_info& rar);
+  void log_rar(const rar_information& rar);
 
   /// Allocate pending RAR and associated Msg3 grants
   /// \return The number of allocated Msg3 grants

@@ -41,16 +41,19 @@ struct dl_msg_alloc {
 };
 
 /// Msg3 grant
-struct msg3_freq_alloc {
+struct msg3_information {
+  unsigned     rapid;
+  unsigned     ta;
   prb_interval prbs;
-  rnti_t       tc_rnti;
+  rnti_t       temp_crnti;
 };
 
-struct rar_alloc_info {
-  unsigned                                   rapid;
-  unsigned                                   ta;
-  static_vector<msg3_freq_alloc, MAX_GRANTS> msg3s;
-  pdcch_config                               pdcch;
+/// See ORAN WG8, 9.2.3.3.10 - RAR information
+struct rar_information {
+  du_cell_index_t                             cell_index;
+  rnti_t                                      ra_rnti;
+  static_vector<msg3_information, MAX_GRANTS> grants;
+  pdcch_config                                pdcch;
 };
 
 struct dl_sched_result {
@@ -58,7 +61,7 @@ struct dl_sched_result {
   slot_point slot_value;
 
   /// Allocation of dedicated RARs
-  static_vector<rar_alloc_info, MAX_GRANTS> rars;
+  static_vector<rar_information, MAX_GRANTS> rars;
 
   /// Allocation of dedicated UE messages
   static_vector<dl_msg_alloc, MAX_GRANTS> ue_grants;

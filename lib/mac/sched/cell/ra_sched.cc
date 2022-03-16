@@ -217,15 +217,14 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
   static const unsigned msg3_mcs          = 0;
 
   // Allocate PRBs and space for RAR
-  rar_alloc_info& rar = rar_alloc.alloc_rar(rar_prbs);
+  rar_information& rar = rar_alloc.alloc_rar(rar_prbs);
 
   // Fill RAR DCI
   // TODO
 
-  // Fill RAR grant info
-  rar.rapid = rar_request.ra_rnti;
-  rar.ta    = pending_msg3s[rar_request.tc_rntis[0]].ind_msg.timing_advance;
-  // TODO
+  // Fill RAR information
+  rar.cell_index = cfg.cell_index;
+  rar.ra_rnti    = rar_request.ra_rnti;
 
   unsigned last_msg3_start = msg3_prbs.start();
   for (unsigned i = 0; i < nof_msg3_grants; ++i) {
@@ -234,9 +233,11 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
     srsran_sanity_check(msg3_harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Add Msg3 grant in RAR info
-    rar.msg3s.emplace_back();
-    msg3_freq_alloc& msg3_grant = rar.msg3s.back();
-    msg3_grant.tc_rnti          = msg3_req.ind_msg.crnti;
+    rar.grants.emplace_back();
+    msg3_information& msg3_grant = rar.grants.back();
+    msg3_grant.rapid             = msg3_req.ind_msg.preamble_id;
+    msg3_grant.ta                = msg3_req.ind_msg.timing_advance;
+    msg3_grant.temp_crnti        = msg3_req.ind_msg.crnti;
 
     // Determine Msg3 PRB interval
     msg3_grant.prbs = {last_msg3_start, last_msg3_start + nof_prbs_per_msg3};
@@ -264,14 +265,14 @@ void ra_sched::log_postponed_rar(const pending_rar_t& rar, const char* cause_str
   logger.debug("SCHED: RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
 }
 
-void ra_sched::log_rar(const rar_alloc_info& rar)
+void ra_sched::log_rar(const rar_information& rar)
 {
   if (not logger.info.enabled()) {
     return;
   }
   fmt::memory_buffer fmtbuf;
-  for (const msg3_freq_alloc& msg3 : rar.msg3s) {
-    fmt::format_to(fmtbuf, "{{0x{:x}: prbs={}}}", msg3.tc_rnti, msg3.prbs);
+  for (const msg3_information& msg3 : rar.grants) {
+    fmt::format_to(fmtbuf, "{{0x{:x}: rapid={}, prbs={}, ta={}}}", msg3.temp_crnti, msg3.rapid, msg3.prbs, msg3.ta);
   }
-  logger.info("SCHED: RAR ra-rnti=0x{:x}, ta={}, msg3s=[{}]", rar.rapid, rar.ta, to_c_str(fmtbuf));
+  logger.info("SCHED: RAR ra-rnti=0x{:x}, cell={}, msg3s=[{}]", rar.ra_rnti, rar.cell_index, to_c_str(fmtbuf));
 }
