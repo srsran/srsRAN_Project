@@ -15,6 +15,8 @@
 
 using namespace srsgnb;
 
+static constexpr float assert_max_error = 1e-6;
+
 int main()
 {
   std::unique_ptr<pbch_modulator> modulator = create_pbch_modulator();
@@ -22,11 +24,17 @@ int main()
   for (const test_case_t& test_case : pbch_modulator_test_data) {
     resource_grid_writer_spy grid;
 
-    modulator->put(test_case.data, grid, test_case.args);
+    // Load input data
+    const std::vector<uint8_t> testvector_data = test_case.data.read();
+
+    // Run the entity process
+    modulator->put(testvector_data, grid, test_case.config);
+
+    // Load output golden data
+    const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
     // Assert resource grid entries.
-    grid.assert_entries(test_case.symbols);
+    grid.assert_entries(testvector_symbols);
   }
-
   return 0;
 }
