@@ -117,6 +117,7 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 
     // Try to schedule DCIs + RBGs for RAR Grants
     unsigned nof_allocs = allocate_rar(rar_req, rar_slot_res, msg3_slot_res);
+    srsran_sanity_check(nof_allocs < rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
       // If RAR allocation was successful:
@@ -128,7 +129,8 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
       } else {
         // Remove only allocated Msg3 grants
         std::copy(rar_req.tc_rntis.begin() + nof_allocs, rar_req.tc_rntis.end(), rar_req.tc_rntis.begin());
-        rar_req.tc_rntis.resize(rar_req.tc_rntis.size() - nof_allocs);
+        size_t new_pending_msg3s = rar_req.tc_rntis.size() > nof_allocs ? rar_req.tc_rntis.size() - nof_allocs : 0;
+        rar_req.tc_rntis.resize(new_pending_msg3s);
         break;
       }
     } else {
