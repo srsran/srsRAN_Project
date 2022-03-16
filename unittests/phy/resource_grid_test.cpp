@@ -23,7 +23,7 @@ void test_all_zero(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(port, symbol, 0, rg_data);
+      grid->get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t re = rg_data[subc];
@@ -75,7 +75,7 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(port, symbol, 0, rg_data);
+      grid->get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -98,7 +98,7 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Get elements from grid
   std::vector<cf_t> symbols(nof_elements);
-  grid->get(port_gold, coordinates, symbols);
+  grid->get(symbols, port_gold, coordinates);
 
   // Assert symbols
   for (unsigned i = 0; i != nof_elements; ++i) {
@@ -145,8 +145,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   }
 
   // Put elements
-  span<const cf_t> symbol_buffer_put = symbols_gold;
-  grid->put(port_gold, symbol_idx, 0, mask, symbol_buffer_put);
+  span<const cf_t> symbol_buffer_put = grid->put(port_gold, symbol_idx, 0, mask, symbols_gold);
 
   // Make sure all symbols are used
   srsran_assert(symbol_buffer_put.empty(), "Failed");
@@ -157,7 +156,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(port, symbol, 0, rg_data);
+      grid->get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -176,8 +175,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
 
   // Get elements
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  span<cf_t>                symbol_buffer_get = symbols;
-  grid->get(port_gold, symbol_idx, 0, mask, symbol_buffer_get);
+  span<cf_t>                symbol_buffer_get = grid->get(symbols, port_gold, symbol_idx, 0, mask);
 
   // Make sure all symbols are used
   srsran_assert(symbol_buffer_get.empty(), "Symbol buffer - not empty");
@@ -227,7 +225,7 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
-      grid->get(port, symbol, 0, rg_data);
+      grid->get(rg_data, port, symbol, 0);
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t gold  = {0.0, 0.0};
@@ -246,7 +244,7 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Get elements
   srsvec::aligned_vec<cf_t> symbols(nof_elements);
-  grid->get(port_gold, symbol_idx, k_init, symbols);
+  grid->get(symbols, port_gold, symbol_idx, k_init);
 
   // Assert symbols
   for (unsigned i = 0; i != nof_elements; ++i) {

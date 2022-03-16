@@ -61,7 +61,7 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
                   end_symbol_index = config.start_symbol_index + config.duration;
          symbol_idx != end_symbol_index;
          ++symbol_idx) {
-      grid.put(port_idx, symbol_idx, 0, mask, d_buffer);
+      d_buffer = grid.put(port_idx, symbol_idx, 0, mask, d_buffer);
     }
   }
 }

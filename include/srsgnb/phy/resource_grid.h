@@ -60,12 +60,13 @@ public:
   /// \param[in] l Denotes the symbol index.
   /// \param[in] k_init Indicates the initial subcarrier index.
   /// \param[in] mask Provides the mask to be used.
-  /// \param[in,out] symbol_buffer Provides the symbol buffer.
+  /// \param[in] symbol_buffer Provides the symbol buffer.
+  /// \return It returns a \c span<cf_t> referencing the unused entries of \c symbols.
   /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
   /// \note The number of elements of \c symbol_buffer shall be equal to or greater than the number of true elements in
   /// \c mask.
-  virtual void
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t>& symbol_buffer) = 0;
+  virtual span<const cf_t>
+  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) = 0;
 
   /// \brief Put a consecutive number of resource elements for the given port and symbol \c l starting at \c k_init.
   ///
@@ -87,35 +88,36 @@ public:
 
   /// \brief Get a number of elements from the grid for a given port according to a list of coordinates.
   ///
+  /// \param[out] symbols Provides the destination symbol buffer.
   /// \param[in] port Denotes the port index.
   /// \param[in] coordinates Provides the list of grid symbol-subcarrier coordinates.
-  /// \param[out] symbols Provides the list with the symbols to map to the coordinates.
   /// \note The number of elements in \c coordinates and \c symbols shall be the same.
-  virtual void get(unsigned port, span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const = 0;
+  virtual void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const = 0;
 
   /// \brief Get a number of resource elements in the resource grid at the given port and symbol using a mask to
   /// indicate which subcarriers are mapped and which are not.
   ///
-  /// \param[in,out] symbol_buffer Provides the symbol buffer.
+  /// \param[out] symbols Provides the destination symbol buffer.
   /// \param[in] port Denotes the port index.
   /// \param[in] l Denotes the symbol index.
   /// \param[in] k_init Indicates the initial subcarrier index.
   /// \param[in] mask Provides the mask to be used.
+  /// \return It returns a \c span<cf_t> referencing the unused entries of \c symbols.
   /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
   /// \note The number of elements of \c symbol_buffer shall be equal to or greater than the number of true elements in
   /// \c mask.
-  virtual void
-  get(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<cf_t>& symbol_buffer) const = 0;
+  virtual span<cf_t>
+  get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const = 0;
 
   /// \brief Get a consecutive number of resource elements for a given port and symbol \c l starting at \c k_init.
   ///
+  /// \param[out] symbols Provides the destination symbol buffer.
   /// \param[in] port Denotes the port index.
   /// \param[in] l Denotes the symbol index.
   /// \param[in] k_init Indicates the initial subcarrier index.
-  /// \param[out] symbols Provides the symbols to map in the resource grid.
   /// \note The sum of \c k_init and the number of elements in \c symbols shall not exceed the resource grid number of
   /// subcarriers.
-  virtual void get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const = 0;
+  virtual void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const = 0;
 };
 
 /// Describes a resource grid class with writer and reader interfaces.

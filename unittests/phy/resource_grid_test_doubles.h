@@ -34,18 +34,19 @@ public:
   }
 
   // See interface for documentation.
-  void put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t>& symbol_buffer) override
+  span<const cf_t>
+  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {
     unsigned count = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask[k]) {
-        put(port, l, k_init + k, symbol_buffer[count]);
+        put(port, l, k_init + k, symbols[count]);
         count++;
       }
     }
 
     // Consume buffer.
-    symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
+    return symbols.last(symbols.size() - count);
   }
 
   // See interface for documentation.
@@ -58,7 +59,7 @@ public:
 
   /// \brief Asserts that the mapped resource elements match with a list of expected entries.
   ///
-  /// This method asserts that mapped resource elements using the put () methods match a list of expected entries
+  /// This method asserts that mapped resource elements using the put() methods match a list of expected entries
   /// without considering any writing order.
   ///
   /// \param[in] expected_entries Provides a list of golden symbols to assert.
@@ -71,7 +72,7 @@ public:
                   expected_entries.size(),
                   entries.size());
 
-    // Iterate each expected entry check that there is an entry and the expected value error is below a threshold.
+    // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {
       entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
       srsran_assert(entries.count(key),
@@ -147,20 +148,23 @@ public:
   {
     failure();
   }
-  void put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t>& symbol_buffer) override
+  span<const cf_t>
+  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {
     failure();
+    return {};
   }
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override { failure(); }
-  void get(unsigned port, span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const override
+  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
     failure();
   }
-  void get(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<cf_t>& symbol_buffer) const override
+  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
     failure();
+    return {};
   }
-  void get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const override { failure(); }
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { failure(); }
   void set_all_zero() override { failure(); }
 };
 

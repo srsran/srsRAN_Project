@@ -30,11 +30,11 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
   }
 }
 
-void resource_grid_impl::put(unsigned          port,
-                             unsigned          l,
-                             unsigned          k_init,
-                             span<const bool>  mask,
-                             span<const cf_t>& symbol_buffer)
+span<const cf_t> resource_grid_impl::put(unsigned         port,
+                                         unsigned         l,
+                                         unsigned         k_init,
+                                         span<const bool> mask,
+                                         span<const cf_t> symbol_buffer)
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
@@ -56,7 +56,7 @@ void resource_grid_impl::put(unsigned          port,
   }
 
   // Update symbol buffer
-  symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
+  return symbol_buffer.last(symbol_buffer.size() - count);
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
@@ -78,7 +78,7 @@ void resource_grid_impl::set_all_zero()
   }
 }
 
-void resource_grid_impl::get(unsigned port, span<const resource_grid_coordinate> coordinates, span<cf_t> symbols) const
+void resource_grid_impl::get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const
 {
   assert(coordinates.size() == symbols.size());
 
@@ -94,11 +94,8 @@ void resource_grid_impl::get(unsigned port, span<const resource_grid_coordinate>
   }
 }
 
-void resource_grid_impl::get(unsigned         port,
-                             unsigned         l,
-                             unsigned         k_init,
-                             span<const bool> mask,
-                             span<cf_t>&      symbol_buffer) const
+span<cf_t>
+resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const
 {
   assert(l < nof_symb);
   assert(mask.size() <= nof_subc);
@@ -114,16 +111,16 @@ void resource_grid_impl::get(unsigned         port,
   unsigned count = 0;
   for (unsigned k = 0; k != mask.size(); ++k) {
     if (mask[k]) {
-      symbol_buffer[count] = symb[k + k_init];
+      symbols[count] = symb[k + k_init];
       count++;
     }
   }
 
   // Update symbol buffer
-  symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
+  return symbols.last(symbols.size() - count);
 }
 
-void resource_grid_impl::get(unsigned port, unsigned l, unsigned k_init, span<cf_t> symbols) const
+void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const
 {
   assert(l < nof_symb);
   assert(k_init + symbols.size() <= nof_subc);
