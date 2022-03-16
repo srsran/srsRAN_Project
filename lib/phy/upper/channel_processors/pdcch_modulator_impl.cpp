@@ -30,7 +30,8 @@ void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_ha
 void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pdcch, const config_t& config)
 {
   // Resource element allocation within a resource block for PDCCH.
-  const std::array<bool, NRE> re_mask = {true, false, true, true, true, false, true, true, true, false, true, true};
+  static const std::array<bool, NRE> re_mask = {
+      true, false, true, true, true, false, true, true, true, false, true, true};
 
   // Generate empty allocation mask for the all symbols.
   std::array<bool, MAX_RB * NRE> mask;
