@@ -71,7 +71,7 @@ class du_manager_interface_query
 {
 public:
   virtual ~du_manager_interface_query() = default;
-  virtual std::string get_ues()         = 0;
+  virtual size_t nof_ues()              = 0;
 };
 
 class du_manager_interface : public du_manager_interface_rlc,

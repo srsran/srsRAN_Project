@@ -18,10 +18,10 @@ void test_du_ue_create()
   du_obj.push_pusch(rx_ind);
 
   uint32_t count = 0;
-  for (std::string s = du_obj.query("ues"); std::stoi(s) == 0 and count < 10000; s = du_obj.query("ues"), count++) {
+  for (size_t nof_ues = du_obj.query("ues"); nof_ues == 0 and count < 10000; nof_ues = du_obj.query("ues"), count++) {
     usleep(100);
   }
-  TESTASSERT(std::stoi(du_obj.query("ues")) > 0);
+  TESTASSERT(du_obj.query("ues") > 0);
 }
 
 int main()

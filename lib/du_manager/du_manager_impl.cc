@@ -14,18 +14,24 @@ void du_manager_impl::ue_create(const du_ue_create_message& msg)
   });
 }
 
-std::string du_manager_impl::get_ues()
+size_t du_manager_impl::nof_ues()
 {
-  fmt::memory_buffer fmtbuf;
-  //  fmt::format_to(fmtbuf, "[");
-  //  const char* sep = ", ";
-  //  for (auto& u : ue_db) {
-  //    fmt::format_to(fmtbuf, "{}{{id={}, rnti=0x{:x}, cc={}}}", sep, u.ctxt.ue_index, u.ctxt.rnti,
-  //    u.ctxt.pcell_index); sep = "";
-  //  }
-  //  fmt::format_to(fmtbuf, "]");
-  fmt::format_to(fmtbuf, "{}", ue_mng.get_ues().size());
-  return fmt::to_string(fmtbuf);
+  // TODO: This is temporary code.
+  static std::mutex              mutex;
+  static std::condition_variable cvar;
+  size_t                         result = MAX_NOF_UES;
+  cfg.du_mng_exec->execute([this, &result]() {
+    std::unique_lock<std::mutex> lock(mutex);
+    result = ue_mng.get_ues().size();
+    cvar.notify_one();
+  });
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    while (result == MAX_NOF_UES) {
+      cvar.wait(lock);
+    }
+  }
+  return result;
 }
 
 } // namespace srsgnb

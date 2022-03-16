@@ -67,12 +67,13 @@ void du_high::push_pusch(mac_rx_data_indication pdu)
   mac->push_rx_data_indication(std::move(pdu));
 }
 
-std::string du_high::query(const std::string& s)
+size_t du_high::query(const std::string& s)
 {
+  // TODO: This is temporary.
   if (s == "ues") {
-    return du_manager->get_ues();
+    return du_manager->nof_ues();
   }
-  return "";
+  return 0;
 }
 
 } // namespace srsgnb

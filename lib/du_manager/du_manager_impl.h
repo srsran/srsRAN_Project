@@ -29,7 +29,7 @@ public:
   void handle_mac_ue_reconfiguration_response(const mac_ue_reconfiguration_response_message& resp) override {}
   void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp) override {}
 
-  std::string get_ues() override;
+  size_t nof_ues() override;
 
 private:
   // DU manager configuration that will be visible to all running procedures
