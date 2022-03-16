@@ -28,3 +28,7 @@ add_test(slot_array_test slot_array_test)
 add_executable(circular_buffer_test circular_buffer_test.cc)
 target_link_libraries(circular_buffer_test srslog)
 add_test(circular_buffer_test circular_buffer_test)
+
+add_executable(bounded_bitset_test bounded_bitset_test.cc)
+target_link_libraries(bounded_bitset_test srslog)
+add_test(bounded_bitset_test bounded_bitset_test)
