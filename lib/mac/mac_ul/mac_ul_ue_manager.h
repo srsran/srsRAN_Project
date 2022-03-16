@@ -118,10 +118,6 @@ public:
     return it == ue_db.end() ? nullptr : &it->second;
   }
 
-  void store_msg3(rnti_t rnti, byte_buffer ccch_msg) { msg3_storage[rnti] = std::move(ccch_msg); }
-
-  byte_buffer pop_stored_msg3(rnti_t rnti, byte_buffer ccch_msg) { return std::move(msg3_storage[rnti]); }
-
 private:
   bool addmod_bearers(du_ue_index_t ue_index, const std::vector<logical_channel_addmod>& ul_logical_channels)
   {
@@ -156,7 +152,6 @@ private:
 
   /// UE repository
   circular_map<rnti_t, mac_ul_ue, MAX_NOF_UES> ue_db;
-  circular_array<byte_buffer, MAX_NOF_UES>     msg3_storage;
   std::array<du_ue_index_t, MAX_NOF_UES>       ue_index_to_rnti;
 };
 

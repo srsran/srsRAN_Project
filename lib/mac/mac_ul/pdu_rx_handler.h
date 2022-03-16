@@ -15,30 +15,22 @@
 namespace srsgnb {
 
 /// Stores any contextual or temporary information related to the decoding of a MAC RX PDU.
-struct mac_rx_pdu_context {
-  mac_rx_pdu_context() = default;
-  mac_rx_pdu_context(slot_point slot_rx_, du_cell_index_t cell_idx_, mac_rx_pdu pdu_rx_) :
+struct decoded_mac_rx_pdu {
+  decoded_mac_rx_pdu() = default;
+  decoded_mac_rx_pdu(slot_point slot_rx_, du_cell_index_t cell_idx_, mac_rx_pdu pdu_rx_) :
     slot_rx(slot_rx_), cell_index_rx(cell_idx_), pdu_rx(std::move(pdu_rx_))
   {
     srsran_sanity_check(not pdu_rx.pdu.empty(), "Received empty PDU");
   }
-
-  /// Whether object is in a valid state.
-  bool valid() const { return not pdu_rx.pdu.empty(); }
 
   /// Clear PDU context.
   void clear()
   {
     slot_rx       = {};
     cell_index_rx = MAX_NOF_CELLS;
-    ce_crnti      = INVALID_RNTI;
     pdu_rx.pdu.clear();
     decoded_subpdus.clear();
   }
-
-  /// C-RNTI for which subPDUs are directed at. It may be different from the RNTI in the PDU, depending on whether
-  /// a CRNTI MAC CE is present.
-  rnti_t crnti() const { return ce_crnti == INVALID_RNTI ? pdu_rx.rnti : ce_crnti; }
 
   /// Slot when PDU was received in the PHY.
   slot_point slot_rx;
@@ -46,10 +38,8 @@ struct mac_rx_pdu_context {
   /// Cell where PDU was decoded by the PHY.
   du_cell_index_t cell_index_rx;
 
-  /// C-RNTI in CRNTI MAC CE, if the CE is present.
-  rnti_t ce_crnti = INVALID_RNTI;
-
-  /// Received MAC PDU.
+  /// Received MAC PDU content.
+  /// Note: C-RNTI may be later altered, depending on whether a CRNTI MAC CE is present.
   mac_rx_pdu pdu_rx;
 
   /// View of decoded subPDUs of the MAC PDU.
@@ -72,12 +62,13 @@ public:
   /// Decode MAC Rx PDU and log contents.
   /// \param [in/out] ctx Decoded PDU and other PDU-specific contextual information.
   /// \return true if decoded successfully.
-  bool decode_rx_pdu(mac_rx_pdu_context& ctx)
+  bool handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu& pdu)
   {
+    decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu)};
+
     // 1. Decode MAC UL PDU.
     if (ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu) < 0) {
       logger.warning("Failed to decode PDU");
-      ctx.clear();
       return false;
     }
 
@@ -86,23 +77,29 @@ public:
       log_ul_pdu(logger, MAX_NOF_UES, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: {}", ctx.decoded_subpdus);
     }
 
-    // 3. Check if MAC CRNTI and CCCH CEs exist.
-    bool ccch_detected = false;
+    // 3. Check if MAC CRNTI CE is present.
     for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
       const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
+
       if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
-        // Decode CRNTI CE and update UE RNTI output parameter.
-        ctx.ce_crnti = decode_crnti_ce(subpdu.payload());
-      } else if (subpdu.lcid().is_ccch()) {
-        ccch_detected = true;
+        // 4. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+        return handle_mac_ce(ctx, subpdu);
       }
     }
 
-    // 4. Verify if UE exists only if C-RNTI CE and CCCH were not received.
-    if (not ccch_detected and ctx.ce_crnti == INVALID_RNTI) {
-      mac_ul_ue* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
-      if (ue == nullptr) {
-        logger.warning("Received MAC SDU for inexistent RNTI=0x{:x}", ctx.crnti());
+    // 4. Handle remaining MAC UL subPDUs.
+    return handle_rx_subpdus(ctx);
+  }
+
+private:
+  bool handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
+  {
+    mac_ul_ue* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
+
+    // Process SDUs and MAC CEs that are not C-RNTI MAC CE
+    for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
+      bool ret = subpdu.lcid().is_sdu() ? handle_sdu(ctx, subpdu, ue) : handle_mac_ce(ctx, subpdu);
+      if (not ret) {
         return false;
       }
     }
@@ -110,27 +107,10 @@ public:
     return true;
   }
 
-  bool handle_rx_subpdus(const mac_rx_pdu_context& ctx)
-  {
-    mac_ul_ue* ue = ue_manager.find_rnti(ctx.crnti());
-
-    // Process SDUs and remaining MAC CEs
-    for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
-      if (subpdu.lcid().is_sdu()) {
-        process_sdu(ue, ctx, subpdu);
-      } else {
-        process_ce_subpdu(ue, ctx, subpdu);
-      }
-    }
-
-    return true;
-  }
-
-private:
-  bool process_sdu(mac_ul_ue* ue, const mac_rx_pdu_context& ctx, const mac_ul_sch_subpdu& sdu)
+  bool handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue* ue)
   {
     if (ue == nullptr) {
-      logger.warning("Received MAC SDU for inexistent RNTI=0x{:x}", ctx.crnti());
+      logger.warning("Received MAC SDU for inexistent RNTI=0x{:x}", ctx.pdu_rx.rnti);
       return false;
     }
 
@@ -159,25 +139,15 @@ private:
     return true;
   }
 
-  bool process_ce_subpdu(mac_ul_ue* ue, const mac_rx_pdu_context& ctx, const mac_ul_sch_subpdu& subpdu)
+  bool handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
   {
     // Handle MAC CEs
     switch ((lcid_t)subpdu.lcid()) {
       case lcid_ul_sch_t::CCCH_SIZE_48:
-      case lcid_ul_sch_t::CCCH_SIZE_64: {
-        // Store Msg3 content for ConRes CE.
-        ue_manager.store_msg3(ctx.crnti(), byte_buffer{subpdu.payload().begin(), subpdu.payload().end()});
-
-        // Notify upper layers with received SDU.
-        ccch_notifier.on_ul_sdu(
-            mac_ul_sdu{ctx.crnti(), 0, byte_buffer{subpdu.payload().begin(), subpdu.payload().end()}}); // TODO
-      } break;
-      case lcid_ul_sch_t::CRNTI: {
-        // Note: C-RNTI MAC CE already decoded in decode_rx_pdu function.
-
-        // provide UL grant regardless of other BSR content for UE to complete RA
-        sched.ul_sr_info(ctx.crnti());
-      } break;
+      case lcid_ul_sch_t::CCCH_SIZE_64:
+        return handle_ccch_msg(ctx, subpdu);
+      case lcid_ul_sch_t::CRNTI:
+        return handle_crnti_ce(ctx, subpdu);
       case lcid_ul_sch_t::SHORT_BSR:
       case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
         // Decode Short BSR
@@ -189,7 +159,7 @@ private:
         // Send UL BSR indication to Scheduler
         ul_bsr_indication_message ul_bsr_ind{};
         ul_bsr_ind.cell_index = ctx.cell_index_rx;
-        ul_bsr_ind.rnti       = ctx.crnti();
+        ul_bsr_ind.rnti       = ctx.pdu_rx.rnti;
         ul_bsr_ind.type       = bsr_fmt;
         if (sched_bsr.nof_bytes == 0) {
           // Assume all LCGs are 0 if reported SBSR is 0
@@ -211,7 +181,7 @@ private:
         // Send UL BSR indication to Scheduler
         ul_bsr_indication_message ul_bsr_ind{};
         ul_bsr_ind.cell_index = ctx.cell_index_rx;
-        ul_bsr_ind.rnti       = ctx.crnti();
+        ul_bsr_ind.rnti       = ctx.pdu_rx.rnti;
         ul_bsr_ind.type       = bsr_fmt;
         for (const lcg_bsr_report& lb : lbsr_ce.list) {
           ul_bsr_ind.reported_lcgs.push_back(make_sched_lcg_report(lb, bsr_fmt));
@@ -227,11 +197,49 @@ private:
     return true;
   }
 
+  bool handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
+  {
+    // Store Msg3 content for ConRes CE.
+    // TODO: Avoid copy.
+    msg3_buffer[ctx.pdu_rx.rnti] = ctx;
+
+    // Notify upper layers with received SDU.
+    // TODO: Avoid copy.
+    ccch_notifier.on_ul_sdu(mac_ul_sdu{ctx.pdu_rx.rnti, 0, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+
+    return true;
+  }
+
+  bool handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
+  {
+    // 1. Decode CRNTI CE and update UE RNTI output parameter.
+    ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
+    if (ctx.pdu_rx.rnti == INVALID_RNTI) {
+      logger.error("Invalid Payload length={} for C-RNTI MAC CE", subpdu.sdu_length());
+      return false;
+    }
+
+    // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
+    msg3_buffer[ctx.pdu_rx.rnti] = ctx;
+    cfg.ul_exec_mapper.executor(ctx.pdu_rx.rnti).execute([this, rnti = ctx.pdu_rx.rnti]() {
+      // 3. Handle remaining subPDUs using old C-RNTI.
+      handle_rx_subpdus(msg3_buffer[rnti]);
+
+      // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
+      sched.ul_sr_info(rnti);
+    });
+
+    return true;
+  }
+
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
   mac_ul_sdu_notifier&  ccch_notifier;
   mac_ul_ue_manager&    ue_manager;
+
+  /// Buffer used to store Msg3 for the purposes of Contention Resolution.
+  circular_array<decoded_mac_rx_pdu, MAX_NOF_UES> msg3_buffer;
 };
 
 } // namespace srsgnb

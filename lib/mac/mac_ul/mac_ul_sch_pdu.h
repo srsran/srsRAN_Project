@@ -35,6 +35,7 @@ std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subp
 class mac_ul_sch_pdu
 {
   static constexpr size_t MAX_PDU_LIST = 16;
+
 public:
   using iterator       = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::iterator;
   using const_iterator = static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST>::const_iterator;
@@ -64,7 +65,9 @@ std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_pdu& subpdu)
 /// Decode C-RNTI MAC CE
 inline rnti_t decode_crnti_ce(span<const uint8_t> payload)
 {
-  srsran_sanity_check(payload.size() >= 2, "Invalid Payload length={} for C-RNTI MAC CE", payload.size());
+  if (payload.size() < 2) {
+    return INVALID_RNTI;
+  }
   return le16toh((uint16_t)payload[0] << 8U | payload[1]);
 }
 
