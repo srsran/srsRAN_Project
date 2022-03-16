@@ -134,6 +134,12 @@ Integer find_first_lsb_one(Integer value)
   return detail::zerobit_counter<Integer, sizeof(Integer)>::lsb_count(value);
 }
 
+/// Class template bounded_bitset represents a dynamically-sized bitset with an upper bound capacity of N bits.
+/// The bounded_bitset is represented internally via an array of unsigned integers, with each integer storing a bitmap.
+/// This class also offers many standard logic manipulation methods, like ::any(), operators &=, &, |=, |, etc. and
+/// utility methods to convert the bitset into strings or integers.
+/// \tparam N Upper bound for bitset size in number of bits.
+/// \tparam reversed Bit index order in memory.
 template <size_t N, bool reversed = false>
 class bounded_bitset
 {
@@ -147,8 +153,10 @@ public:
 
   constexpr size_t max_size() const noexcept { return N; }
 
+  /// Current size of the bounded_bitset.
   size_t size() const noexcept { return cur_size; }
 
+  /// Resize of the bounded_bitset. If new_size > max_size(), an assertion is triggered.
   void resize(size_t new_size)
   {
     srsran_assert(new_size <= max_size(), "ERROR: new size=%zd exceeds bitset capacity=%zd", new_size, max_size());
@@ -162,6 +170,9 @@ public:
     }
   }
 
+  /// Set bit with provided index to either true or false. Assertion is triggered if pos >= N.
+  /// \param pos position in bitset.
+  /// \param val value to set the bit.
   void set(size_t pos, bool val)
   {
     assert_within_bounds_(pos, true);
@@ -172,18 +183,23 @@ public:
     }
   }
 
+  /// Set bit with provided index to true. Assertion is triggered if pos >= N.
+  /// \param pos position in bitset.
   void set(size_t pos)
   {
     assert_within_bounds_(pos, true);
     set_(pos);
   }
 
+  /// Set bit with provided index to false. Assertion is triggered if pos >= N.
+  /// \param pos position in bitset.
   void reset(size_t pos)
   {
     assert_within_bounds_(pos, true);
     reset_(pos);
   }
 
+  /// Reset all bits in the bounded_bitset to false. The size of the bitset is maintained.
   void reset() noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
@@ -191,12 +207,17 @@ public:
     }
   }
 
+  /// Check if bit with provided index is set to true.
+  /// \param pos position in bitset.
+  /// \return return true if bit at position pos is set.
   bool test(size_t pos) const
   {
     assert_within_bounds_(pos, true);
     return test_(pos);
   }
 
+  /// Toggle values of bits in bitset.
+  /// \return returns this object.
   bounded_bitset<N, reversed>& flip() noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
@@ -206,6 +227,11 @@ public:
     return *this;
   }
 
+  /// Fill range of bits to either true or false.
+  /// \param startpos starting bit index that will be set.
+  /// \param endpos end bit index (excluding) where the bits stop being set.
+  /// \param value set bit range values to either true or false.
+  /// \return return this.
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
     assert_range_bounds_(startpos, endpos);
@@ -222,6 +248,11 @@ public:
     return *this;
   }
 
+  /// Finds within a range of bit indexes, the lowest bit with value set to the value passed as argument.
+  /// \param startpos starting bit index for the search.
+  /// \param endpos end bit index for the search.
+  /// \param value if true, the function will return the lowest index for which bit value is 1.
+  /// \return returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
   int find_lowest(size_t startpos, size_t endpos, bool value = true) const noexcept
   {
     assert_range_bounds_(startpos, endpos);
@@ -235,6 +266,8 @@ public:
     return find_first_reversed_(startpos, endpos, value);
   }
 
+  /// Checks if all bits in the bitset are set to 1.
+  /// \return returns true if all bits are 1.
   bool all() const noexcept
   {
     const size_t nw = nof_words_();
@@ -250,6 +283,8 @@ public:
     return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
   }
 
+  /// Checks if at least one bit in the bitset is set to 1.
+  /// \return returns true if at least one bit is 1.
   bool any() const noexcept
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
@@ -260,6 +295,8 @@ public:
     return false;
   }
 
+  /// Checks if at least one bit in the bitset is set to 1 within a bit index range.
+  /// \return returns true if at least one bit equal to 1 was found within the range.
   bool any(size_t start, size_t stop) const
   {
     assert_within_bounds_(start, false);
@@ -273,8 +310,12 @@ public:
     return false;
   }
 
+  /// Checks if at no bit in the bitset is set to 1.
+  /// \return returns true if no bit equal to 1 was found.
   bool none() const noexcept { return !any(); }
 
+  /// Count the number of bits set to 1.
+  /// \return returns the number of bits set to 1.
   size_t count() const noexcept
   {
     size_t result = 0;
@@ -290,6 +331,8 @@ public:
     return result;
   }
 
+  /// Compares two bitsets.
+  /// \return returns true if both bitsets are equal in size and values of bits.
   bool operator==(const bounded_bitset<N, reversed>& other) const noexcept
   {
     if (size() != other.size()) {
@@ -305,6 +348,9 @@ public:
 
   bool operator!=(const bounded_bitset<N, reversed>& other) const noexcept { return not(*this == other); }
 
+  /// Bitwise OR operation lhs |= rhs.
+  /// \param other bitset which corresponds to the rhs of the operation.
+  /// \return this object updated after the bitwise OR operation.
   bounded_bitset<N, reversed>& operator|=(const bounded_bitset<N, reversed>& other)
   {
     srsran_assert(other.size() == size(),
@@ -317,6 +363,9 @@ public:
     return *this;
   }
 
+  /// Bitwise AND operation lhs &= rhs.
+  /// \param other bitset which corresponds to the rhs of the operation.
+  /// \return this object updated after the bitwise AND operation.
   bounded_bitset<N, reversed>& operator&=(const bounded_bitset<N, reversed>& other)
   {
     srsran_assert(other.size() == size(),
@@ -329,6 +378,8 @@ public:
     return *this;
   }
 
+  /// Flip values of bits in the bitset.
+  /// \return this object updated after the flip operation.
   bounded_bitset<N, reversed> operator~() const noexcept
   {
     bounded_bitset<N, reversed> ret(*this);
@@ -336,6 +387,10 @@ public:
     return ret;
   }
 
+  /// Formatting helper for bitset.
+  /// \tparam OutputIt output fmt memory buffer type.
+  /// \param mem_buffer fmt memory buffer.
+  /// \return the memory buffer passed as argument.
   template <typename OutputIt>
   OutputIt to_string(OutputIt&& mem_buffer) const
   {
@@ -357,12 +412,18 @@ public:
     return mem_buffer;
   }
 
+  /// Conversion of bounded_bitset to unsigned integer of 64 bits. If bitset size is larger than 64 bits, an assertion
+  /// is triggered.
+  /// \return unsigned integer representation of the bounded_bitset.
   uint64_t to_uint64() const
   {
     srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size=%zd to uint64_t", size());
     return get_word_(0);
   }
 
+  /// Conversion of unsigned integer of 64 bits to bounded_bitset. If passed bitmap doesn't fit in the bitset, an
+  /// assertion is triggered.
+  /// \param v integer bitmap that is going to be stored in the bitset.
   void from_uint64(uint64_t v)
   {
     srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size=%zd to uint64_t", size());
@@ -371,6 +432,10 @@ public:
     buffer[0] = v;
   }
 
+  /// Formatting of bounded_bitset to hex format.
+  /// \tparam OutputIt fmt memory buffer type.
+  /// \param mem_buffer fmt memory buffer.
+  /// \return the input fmt memory buffer.
   template <typename OutputIt>
   OutputIt to_hex(OutputIt&& mem_buffer) const noexcept
   {
@@ -531,6 +596,8 @@ private:
   }
 };
 
+/// Bitwise AND operation result = lhs & rhs.
+/// \return new bounded_bitset that results from the Bitwise AND operation.
 template <size_t N, bool reversed>
 inline bounded_bitset<N, reversed> operator&(const bounded_bitset<N, reversed>& lhs,
                                              const bounded_bitset<N, reversed>& rhs) noexcept
@@ -540,6 +607,8 @@ inline bounded_bitset<N, reversed> operator&(const bounded_bitset<N, reversed>& 
   return res;
 }
 
+/// Bitwise AND operation result = lhs | rhs.
+/// \return new bounded_bitset that results from the Bitwise OR operation.
 template <size_t N, bool reversed>
 inline bounded_bitset<N, reversed> operator|(const bounded_bitset<N, reversed>& lhs,
                                              const bounded_bitset<N, reversed>& rhs) noexcept
@@ -549,6 +618,8 @@ inline bounded_bitset<N, reversed> operator|(const bounded_bitset<N, reversed>& 
   return res;
 }
 
+/// Flip bits from left to right.
+/// \return new bounded_bitset that results from the fliplr operation.
 template <size_t N, bool reversed>
 inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& other) noexcept
 {
@@ -564,6 +635,7 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
 } // namespace srsgnb
 
 namespace fmt {
+
 /// Custom formatter for bounded_bitset<N, reversed>
 template <size_t N, bool reversed>
 struct formatter<srsgnb::bounded_bitset<N, reversed> > {
