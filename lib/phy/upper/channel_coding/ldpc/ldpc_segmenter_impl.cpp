@@ -8,6 +8,7 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
+// Length of the CRC checksum added to the segments.
 static constexpr unsigned crc_length = 24;
 
 ldpc_segmenter_impl::ldpc_segmenter_impl(std::unique_ptr<crc_calculator> c)
@@ -68,7 +69,7 @@ void ldpc_segmenter_impl::compute_segment_length()
 
 unsigned ldpc_segmenter_impl::compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const
 {
-  double tmp = (1.0 * symbols_per_layer) / nof_segments;
+  double tmp = (1.0 * nof_symbols_per_layer) / nof_segments;
   if (i_seg < nof_short_segments) {
     tmp = std::floor(tmp);
   } else {
@@ -85,9 +86,11 @@ static void fill_segment(span<uint8_t>                    segment,
 {
   assert(segment.size() == tr_block.size() + nof_crc_bits + nof_filler);
 
+  // First, copy information bits from the transport block.
   std::copy(tr_block.begin(), tr_block.end(), segment.begin());
 
   unsigned nof_used_bits = tr_block.size();
+  // If needed, compute the CRC and append it to the information bits.
   if (nof_crc_bits > 0) {
     unsigned      tmp_crc  = crc->calculate_bit(tr_block);
     span<uint8_t> tmp_bits = segment.subspan(nof_used_bits, nof_crc_bits);
@@ -95,6 +98,7 @@ static void fill_segment(span<uint8_t>                    segment,
     nof_used_bits += nof_crc_bits;
   }
 
+  // If needed, fill the segment tail with filler bits.
   std::fill_n(segment.begin() + nof_used_bits, nof_filler, filler_bit);
 }
 
@@ -131,22 +135,30 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
   compute_lifting_size();
   compute_segment_length();
 
-  unsigned crc_bits{0};
+  unsigned nof_crc_bits{0};
   if (nof_segments > 1) {
-    crc_bits = crc_length;
+    nof_crc_bits = crc_length;
   }
+  // Compute the maximum number of information bits that can be assigned to a segment.
   double   tmp_info_bits = (1.0 * nof_tb_bits_out) / nof_segments;
-  unsigned max_info_bits = static_cast<unsigned>(std::ceil(tmp_info_bits)) - crc_bits;
+  unsigned max_info_bits = static_cast<unsigned>(std::ceil(tmp_info_bits)) - nof_crc_bits;
 
-  symbols_per_layer  = cfg.nof_ch_symbols / cfg.nof_layers;
-  nof_short_segments = nof_segments - (symbols_per_layer % nof_segments);
+  // Number of channel symbols assigned to a transmission layer.
+  nof_symbols_per_layer = cfg.nof_ch_symbols / cfg.nof_layers;
+  // Number of segments that will have a short rate-matched length. In TS38.212 Section 5.4.2.1, these correspond to
+  // codeblocks whose length E_r is computed by rounding down - floor. For the remaining codewords, the length is
+  // rounded up.
+  nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
   unsigned input_idx{0};
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     std::vector<uint8_t> tmp_segment(segment_length);
-    unsigned             nof_info_bits   = std::min(max_info_bits, nof_tb_bits_in - input_idx);
-    unsigned             nof_filler_bits = segment_length - nof_info_bits - crc_bits;
-    fill_segment(tmp_segment, transport_block.subspan(input_idx, nof_info_bits), crc, crc_bits, nof_filler_bits);
+    // Number of bits to copy to this segment.
+    unsigned nof_info_bits = std::min(max_info_bits, nof_tb_bits_in - input_idx);
+    // Number of filler bits in this segment.
+    unsigned nof_filler_bits = segment_length - nof_info_bits - nof_crc_bits;
+
+    fill_segment(tmp_segment, transport_block.subspan(input_idx, nof_info_bits), crc, nof_crc_bits, nof_filler_bits);
     segments.push_back(tmp_segment);
 
     codeblock_description tmp_description{};
@@ -157,10 +169,12 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
     tmp_description.tb_common.mod          = cfg.mod;
     tmp_description.tb_common.Nref         = cfg.Nref;
 
-    constexpr unsigned inverse_BG1_rate     = 3;
-    constexpr unsigned inverse_BG2_rate     = 5;
-    unsigned           inverse_rate         = (base_graph == base_graph_t::BG1) ? inverse_BG1_rate : inverse_BG2_rate;
-    tmp_description.cb_specific.full_length = segment_length * inverse_rate;
+    // BG1 has rate 1/3 and BG2 has rate 1/5.
+    constexpr unsigned inverse_BG1_rate = 3;
+    constexpr unsigned inverse_BG2_rate = 5;
+    unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? inverse_BG1_rate : inverse_BG2_rate;
+
+    tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
     tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;
     tmp_description.cb_specific.rm_length       = compute_rm_length(i_segment, cfg.mod, cfg.nof_layers);
 

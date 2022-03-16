@@ -11,42 +11,73 @@
 
 namespace srsgnb {
 namespace ldpc {
+/// Maximum length of a block (number of information bits) when using base graph BG1.
 constexpr unsigned max_BG1_block_length = (BG1_N_full - BG1_M) * max_lifting_size;
+/// Maximum length of a block (number of information bits) when using base graph BG2.
 constexpr unsigned max_BG2_block_length = (BG2_N_full - BG2_M) * max_lifting_size;
 } // namespace ldpc
 
+/// Generic implementation of LDPC segmentation.
 class ldpc_segmenter_impl : public ldpc_segmenter
 {
 public:
+  /// \brief Creates an LDPC segmentation object that aggregates a crc_calculator.
+  ///
+  /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
   explicit ldpc_segmenter_impl(std::unique_ptr<crc_calculator> c);
 
+  // See interface for the documentation.
   void segment(segmented_codeblocks&   segments,
                tb_segment_description& segment_descriptions,
                span<const uint8_t>     transport_block,
                const config_t&         cfg) override;
 
 private:
-  void        compute_nof_segments();
-  void        compute_lifting_size();
-  void        compute_segment_length();
-  unsigned    compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const;
-  static void not_implemented(const std::string& str)
-  {
-    std::cout << "LDPC segmenter -> " << str << ": not implemented yet.";
-  }
+  /// Computes the number of segments the transport block is split into, as per TS38.212 Section 5.2.2.
+  void compute_nof_segments();
+
+  /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
+  void compute_lifting_size();
+
+  /// Computes the length of each segment, as per TS38.212 Section 5.2.2.
+  void compute_segment_length();
+
+  /// Computes the length of the rate-matched codeblock corresponding to each segment, as per TS38.212 Section 5.4.2.1.
+  unsigned compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const;
 
   // Data members.
-  /// line 1
-  unsigned                        max_segment_length{0};
-  unsigned                        segment_length{0};
-  unsigned                        nof_tb_bits_in{0};
-  unsigned                        nof_tb_bits_out{0};
-  unsigned                        nof_segments{0};
-  ldpc::base_graph_t              base_graph{ldpc::base_graph_t::BG1};
-  unsigned                        lifting_size{0};
-  unsigned                        nof_available_coded_bits{0};
-  unsigned                        symbols_per_layer{0};
-  unsigned                        nof_short_segments{0};
+  /// Base graph used for encoding/decoding the current transport block.
+  ldpc::base_graph_t base_graph{ldpc::base_graph_t::BG1};
+  /// Lifting size used for encoding/decoding the current transport block.
+  unsigned lifting_size{0};
+  /// \name Parameters relative to TS38.212 Section 5.2.2.
+  ///@{
+
+  /// Maximum length of a segment (corresponds to \f$K_{cb}\f$ in ).
+  unsigned max_segment_length{0};
+  /// Final length of a segment (corresponds to \f$K\f$).
+  unsigned segment_length{0};
+  /// Number of bits in the transport block (corresponds to \f$B\f$).
+  unsigned nof_tb_bits_in{0};
+  /// Augmented number of bits in the transport block, including new CRCs (corresponds to \f$B'\f$).
+  unsigned nof_tb_bits_out{0};
+  /// Number of segments resulting from the transport block (corresponds to \f$C\f$).
+  unsigned nof_segments{0};
+  ///@}
+
+  /// \name Parameters relative to TS38.212 Section 5.4.2.1.
+  ///@{
+
+  /// Number of coded bits available for transmission of the transport block (corresponds to \f$G\f$).
+  unsigned nof_available_coded_bits{0};
+  /// Number of symbols per transmission layer (corresponds to \f$G / (N_L Q_m)\f$).
+  unsigned nof_symbols_per_layer{0};
+  /// \brief Number of segments of short rate-matched length (corresponds to \f$C - \bigr(\bigl(G / (N_L Q_m)\bigr)
+  /// \bmod C\bigr)\f$).
+  unsigned nof_short_segments{0};
+  ///@}
+
+  /// CRC calculator for segment-specific checksums.
   std::unique_ptr<crc_calculator> crc{};
 };
 
