@@ -1,5 +1,7 @@
 #include "ldpc_segmenter_impl.h"
+#include "../crc_calculator_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <cmath>
 
@@ -7,6 +9,14 @@ using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
 static constexpr unsigned crc_length = 24;
+
+ldpc_segmenter_impl::ldpc_segmenter_impl(std::unique_ptr<crc_calculator> c)
+{
+  assert(c != nullptr);
+  srsran_assert(c->get_generator_poly() == crc_generator_poly::CRC24B, "The CRC generator should be of type CRC24B.");
+
+  crc = std::move(c);
+}
 
 void ldpc_segmenter_impl::compute_nof_segments()
 {
@@ -67,8 +77,11 @@ unsigned ldpc_segmenter_impl::compute_rm_length(unsigned i_seg, modulation_schem
   return static_cast<unsigned>(tmp) * nof_layers * static_cast<unsigned>(mod);
 }
 
-static void
-fill_segment(span<uint8_t> segment, span<const uint8_t> tr_block, unsigned nof_crc_bits, unsigned nof_filler)
+static void fill_segment(span<uint8_t>                    segment,
+                         span<const uint8_t>              tr_block,
+                         std::unique_ptr<crc_calculator>& crc,
+                         unsigned                         nof_crc_bits,
+                         unsigned                         nof_filler)
 {
   assert(segment.size() == tr_block.size() + nof_crc_bits + nof_filler);
 
@@ -76,7 +89,9 @@ fill_segment(span<uint8_t> segment, span<const uint8_t> tr_block, unsigned nof_c
 
   unsigned nof_used_bits = tr_block.size();
   if (nof_crc_bits > 0) {
-    std::fill_n(segment.begin() + nof_used_bits, nof_crc_bits, 0);
+    unsigned      tmp_crc  = crc->calculate_bit(tr_block);
+    span<uint8_t> tmp_bits = segment.subspan(nof_used_bits, nof_crc_bits);
+    srsvec::bit_unpack(tmp_crc, tmp_bits, nof_crc_bits);
     nof_used_bits += nof_crc_bits;
   }
 
@@ -131,7 +146,7 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
     std::vector<uint8_t> tmp_segment(segment_length);
     unsigned             nof_info_bits   = std::min(max_info_bits, nof_tb_bits_in - input_idx);
     unsigned             nof_filler_bits = segment_length - nof_info_bits - crc_bits;
-    fill_segment(tmp_segment, transport_block.subspan(input_idx, nof_info_bits), crc_bits, nof_filler_bits);
+    fill_segment(tmp_segment, transport_block.subspan(input_idx, nof_info_bits), crc, crc_bits, nof_filler_bits);
     segments.push_back(tmp_segment);
 
     codeblock_description tmp_description{};
@@ -155,5 +170,5 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
 
 std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
 {
-  return std::make_unique<ldpc_segmenter_impl>();
+  return std::make_unique<ldpc_segmenter_impl>(std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24B));
 }

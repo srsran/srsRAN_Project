@@ -5,6 +5,7 @@
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_IMPL_H
 
 #include "ldpc_graph_impl.h"
+#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter.h"
 #include <iostream>
 
@@ -17,6 +18,8 @@ constexpr unsigned max_BG2_block_length = (BG2_N_full - BG2_M) * max_lifting_siz
 class ldpc_segmenter_impl : public ldpc_segmenter
 {
 public:
+  explicit ldpc_segmenter_impl(std::unique_ptr<crc_calculator> c);
+
   void segment(segmented_codeblocks&   segments,
                tb_segment_description& segment_descriptions,
                span<const uint8_t>     transport_block,
@@ -33,16 +36,18 @@ private:
   }
 
   // Data members.
-  unsigned           max_segment_length{0};
-  unsigned           segment_length{0};
-  unsigned           nof_tb_bits_in{0};
-  unsigned           nof_tb_bits_out{0};
-  unsigned           nof_segments{0};
-  ldpc::base_graph_t base_graph{ldpc::base_graph_t::BG1};
-  unsigned           lifting_size{0};
-  unsigned           nof_available_coded_bits{0};
-  unsigned           symbols_per_layer{0};
-  unsigned           nof_short_segments{0};
+  /// line 1
+  unsigned                        max_segment_length{0};
+  unsigned                        segment_length{0};
+  unsigned                        nof_tb_bits_in{0};
+  unsigned                        nof_tb_bits_out{0};
+  unsigned                        nof_segments{0};
+  ldpc::base_graph_t              base_graph{ldpc::base_graph_t::BG1};
+  unsigned                        lifting_size{0};
+  unsigned                        nof_available_coded_bits{0};
+  unsigned                        symbols_per_layer{0};
+  unsigned                        nof_short_segments{0};
+  std::unique_ptr<crc_calculator> crc{};
 };
 
 } // namespace srsgnb

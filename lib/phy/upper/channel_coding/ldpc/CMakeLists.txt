@@ -16,3 +16,5 @@ add_library(ldpc STATIC
         ldpc_rate_dematcher_impl.cpp
         ldpc_segmenter_impl.cpp
 )
+
+target_link_libraries(ldpc crc_calculator srsvec)
