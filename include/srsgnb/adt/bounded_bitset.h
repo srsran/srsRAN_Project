@@ -18,7 +18,7 @@ constexpr uint32_t ceil_div(uint32_t x, uint32_t y)
 
 /// Returns an unsigned integer with the N most significant bits (MSB) set to zero, and the remaining bits set to 1.
 /// \tparam Integer Type of unsigned integer returned by the function.
-/// \param N Number of MSB bits set to zero.
+/// \param[in] N Number of MSB bits set to zero.
 /// \return Resulting integer bitmap.
 template <typename Integer>
 constexpr Integer mask_msb_zeros(size_t N)
@@ -29,7 +29,7 @@ constexpr Integer mask_msb_zeros(size_t N)
 
 /// Returns an unsigned integer with the N least significant bits (LSB) set to zero, and the remaining bits set to 1.
 /// \tparam Integer Type of unsigned integer returned by the function.
-/// \param N Number of LSB bits set to zero.
+/// \param[in] N Number of LSB bits set to zero.
 /// \return Resulting integer bitmap.
 template <typename Integer>
 constexpr Integer mask_lsb_ones(size_t N)
@@ -39,7 +39,7 @@ constexpr Integer mask_lsb_ones(size_t N)
 
 /// Returns an unsigned integer with the N most significant bits (MSB) set to one, and the remaining bits set to zero.
 /// \tparam Integer Type of unsigned integer returned by the function.
-/// \param N Number of MSB bits set to one.
+/// \param[in] N Number of MSB bits set to one.
 /// \return Resulting integer bitmap.
 template <typename Integer>
 constexpr Integer mask_msb_ones(size_t N)
@@ -49,7 +49,7 @@ constexpr Integer mask_msb_ones(size_t N)
 
 /// Returns an unsigned integer with the N least significant bits (LSB) set to one, and the remaining bits set to zero.
 /// \tparam Integer Type of unsigned integer returned by the function.
-/// \param N Number of LSB bits set to one.
+/// \param[in] N Number of LSB bits set to one.
 /// \return Resulting integer bitmap.
 template <typename Integer>
 Integer mask_lsb_zeros(size_t N)
@@ -128,7 +128,7 @@ struct zerobit_counter<Integer, 8> {
 
 /// Finds the position of the first bit set to one, starting from the MSB.
 /// \tparam Integer Integer type of received bitmap.
-/// \param value Integer bitmap
+/// \param[in] value Integer bitmap
 /// \return MSB position with the bit set to one. The MSB has position zero.
 template <typename Integer>
 Integer find_first_msb_one(Integer value)
@@ -139,7 +139,7 @@ Integer find_first_msb_one(Integer value)
 
 /// Finds the position of the first bit set to one, starting from the LSB.
 /// \tparam Integer Integer type of received bitmap.
-/// \param value Integer bitmap
+/// \param[in] value Integer bitmap
 /// \return LSB position with the bit set to one. The LSB has position zero.
 template <typename Integer>
 Integer find_first_lsb_one(Integer value)
@@ -184,8 +184,8 @@ public:
   }
 
   /// Set bit with provided index to either true or false. Assertion is triggered if pos >= N.
-  /// \param pos Position in bitset.
-  /// \param val Value to set the bit.
+  /// \param[in] pos Position in bitset.
+  /// \param[in] val Value to set the bit.
   void set(size_t pos, bool val)
   {
     assert_within_bounds_(pos, true);
@@ -197,7 +197,7 @@ public:
   }
 
   /// Set bit with provided index to true. Assertion is triggered if pos >= N.
-  /// \param pos Position in bitset.
+  /// \param[in] pos Position in bitset.
   void set(size_t pos)
   {
     assert_within_bounds_(pos, true);
@@ -205,7 +205,7 @@ public:
   }
 
   /// Set bit with provided index to false. Assertion is triggered if pos >= N.
-  /// \param pos Position in bitset.
+  /// \param[in] pos Position in bitset.
   void reset(size_t pos)
   {
     assert_within_bounds_(pos, true);
@@ -221,7 +221,7 @@ public:
   }
 
   /// Check if bit with provided index is set to true.
-  /// \param pos Position in bitset.
+  /// \param[in] pos Position in bitset.
   /// \return Return true if bit at position pos is set.
   bool test(size_t pos) const
   {
@@ -241,9 +241,9 @@ public:
   }
 
   /// Fill range of bits to either true or false.
-  /// \param startpos Starting bit index that will be set.
-  /// \param endpos End bit index (excluding) where the bits stop being set.
-  /// \param value Set bit range values to either true or false.
+  /// \param[in] startpos Starting bit index that will be set.
+  /// \param[in] endpos End bit index (excluding) where the bits stop being set.
+  /// \param[in] value Set bit range values to either true or false.
   /// \return Return this.
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
@@ -262,9 +262,9 @@ public:
   }
 
   /// Finds within a range of bit indexes, the lowest bit with value set to the value passed as argument.
-  /// \param startpos Starting bit index for the search.
-  /// \param endpos End bit index for the search.
-  /// \param value If true, the function will return the lowest index for which bit value is 1.
+  /// \param[in] startpos Starting bit index for the search.
+  /// \param[in] endpos End bit index for the search.
+  /// \param[in] value If true, the function will return the lowest index for which bit value is 1.
   /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
   int find_lowest(size_t startpos, size_t endpos, bool value = true) const noexcept
   {
@@ -362,7 +362,7 @@ public:
   bool operator!=(const bounded_bitset<N, reversed>& other) const noexcept { return not(*this == other); }
 
   /// Bitwise OR operation lhs |= rhs.
-  /// \param other Bitset which corresponds to the rhs of the operation.
+  /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise OR operation.
   bounded_bitset<N, reversed>& operator|=(const bounded_bitset<N, reversed>& other)
   {
@@ -377,7 +377,7 @@ public:
   }
 
   /// Bitwise AND operation lhs &= rhs.
-  /// \param other Bitset which corresponds to the rhs of the operation.
+  /// \param[in] other Bitset which corresponds to the rhs of the operation.
   /// \return This object updated after the bitwise AND operation.
   bounded_bitset<N, reversed>& operator&=(const bounded_bitset<N, reversed>& other)
   {
@@ -402,7 +402,7 @@ public:
 
   /// Formatting helper for bitset.
   /// \tparam OutputIt Output fmt memory buffer type.
-  /// \param mem_buffer Fmt memory buffer.
+  /// \param[in] mem_buffer Fmt memory buffer.
   /// \return The memory buffer passed as argument.
   template <typename OutputIt>
   OutputIt to_string(OutputIt&& mem_buffer) const
