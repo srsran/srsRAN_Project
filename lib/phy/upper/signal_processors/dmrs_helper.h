@@ -9,11 +9,11 @@ namespace srsgnb {
 /// \brief Helper function to generate DMRS sequences.
 ///
 /// This function generates DMRS sequences based on a pseudo-random sequence generation. It generates \c nof_dmrs_per_rb
-/// for every active resource block \c given in \c rb_mask and skips the \c nof_dmrs_per_rb for every inactive resource
+/// for every active resource block given in \c rb_mask and skips the \c nof_dmrs_per_rb for every inactive resource
 /// block.
 ///
 /// \param[out] sequence Provides the destination storage for the generated sequence.
-/// \param[in,out] prg Provides the pseudo-random-generator to use.
+/// \param[in,out] prg Provides the pseudo-random generator to use.
 /// \param[in] amplitude Provides the sequence amplitude.
 /// \param[in] reference_point_k_rb Indicates the RB index for reference.
 /// \param[in] nof_dmrs_per_rb Indicates the number of DMRS to generate per active RB.
