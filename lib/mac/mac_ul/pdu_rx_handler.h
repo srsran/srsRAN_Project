@@ -54,7 +54,7 @@ class pdu_rx_handler
 public:
   pdu_rx_handler(mac_common_config_t& cfg_,
                  sched_ue_feedback&   sched_,
-                 mac_rx_sdu_notifier& ccch_notifier_,
+                 mac_sdu_rx_notifier& ccch_notifier_,
                  mac_ul_ue_manager&   ue_manager_) :
     cfg(cfg_), logger(cfg.logger), sched(sched_), ccch_notifier(ccch_notifier_), ue_manager(ue_manager_)
   {}
@@ -101,7 +101,7 @@ private:
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
-  mac_rx_sdu_notifier&  ccch_notifier;
+  mac_sdu_rx_notifier&  ccch_notifier;
   mac_ul_ue_manager&    ue_manager;
 
   /// Buffer used to store Msg3 for the purposes of Contention Resolution.

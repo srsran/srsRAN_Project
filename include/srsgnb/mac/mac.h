@@ -27,7 +27,7 @@ struct mac_rx_sdu {
   byte_buffer pdu;
 };
 
-/// FAPI, 3.4.7 - Rx_Data.indication Message PDU
+/// MAC Received PDU that comprises the list of PDUs of Rx_Data.indication.
 struct mac_rx_pdu {
   rnti_t      rnti;
   uint8_t     rapid;
@@ -36,19 +36,21 @@ struct mac_rx_pdu {
 };
 using mac_rx_pdu_list = static_vector<mac_rx_pdu, MAX_UL_PDUS_PER_SLOT>;
 
-/// FAPI, 3.4.7 - Rx_Data.indication Message
+/// Rx_Data.indication Message.
 struct mac_rx_data_indication {
   slot_point      sl_rx;
   du_cell_index_t cell_index;
   mac_rx_pdu_list pdus;
 };
 
-/// Interface that MAC uses to notify upper layers when it finishes decoding an MAC UL SDU.
-class mac_rx_sdu_notifier
+/// This interface notifies to upper layers the reception of new SDUs over a logical channel.
+class mac_sdu_rx_notifier
 {
 public:
-  virtual ~mac_rx_sdu_notifier()         = default;
-  virtual void on_rx_sdu(mac_rx_sdu sdu) = 0;
+  virtual ~mac_sdu_rx_notifier() = default;
+
+  /// This callback is invoked on each generated SDU.
+  virtual void on_new_sdu(mac_rx_sdu sdu) = 0;
 };
 
 class mac_tx_sdu_builder
@@ -66,7 +68,7 @@ struct ul_ccch_indication_message {
 
 struct logical_channel_addmod {
   lcid_t               lcid;
-  mac_rx_sdu_notifier* ul_bearer;
+  mac_sdu_rx_notifier* ul_bearer;
   mac_tx_sdu_builder*  dl_bearer;
 };
 
@@ -114,21 +116,21 @@ public:
   virtual ~mac_configurer() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
   virtual async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                                  = 0;
+                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
 };
 
 /// Interface used to push Rx Data indications to L2.
-/// \remark See FAPI 3.4.7 - Rx_Data.indication.
-class mac_rx_sdu_handler
+class mac_sdu_rx_handler
 {
 public:
-  virtual ~mac_rx_sdu_handler()                                    = default;
-  virtual void push_rx_data_indication(mac_rx_data_indication pdu) = 0;
+  virtual ~mac_sdu_rx_handler() = default;
+
+  /// This function is called whenever the MAC receives a Rx_Data.indication
+  virtual void handle_rx_data_indication(mac_rx_data_indication pdu) = 0;
 };
 
 /// Interface used to push slot indications to L2.
-/// \remark See FAPI 3.4.1 - Slot.Indication.
 class mac_slot_indicator
 {
 public:
@@ -136,7 +138,7 @@ public:
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
-class mac_interface : public mac_slot_indicator, public mac_configurer, public mac_rx_sdu_handler
+class mac_interface : public mac_slot_indicator, public mac_configurer, public mac_sdu_rx_handler
 {};
 
 } // namespace srsgnb

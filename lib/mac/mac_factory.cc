@@ -5,7 +5,7 @@
 
 namespace srsgnb {
 
-std::unique_ptr<mac_interface> create_mac(mac_rx_sdu_notifier&   ul_ccch_notifier,
+std::unique_ptr<mac_interface> create_mac(mac_sdu_rx_notifier&   ul_ccch_notifier,
                                           du_l2_ul_executor_mapper& ul_exec_mapper,
                                           span<task_executor*>   dl_exec,
                                           task_executor&         ctrl_exec)

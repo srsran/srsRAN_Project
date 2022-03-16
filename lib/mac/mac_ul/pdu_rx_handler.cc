@@ -75,7 +75,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   }
 
   // Push PDU to upper layers
-  ue->ul_bearers[lcid]->on_rx_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{}}); // TODO: Create SDU
+  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{}}); // TODO: Create SDU
   return true;
 }
 
@@ -144,7 +144,7 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
 
   // Notify upper layers with received SDU.
   // TODO: Avoid copy.
-  ccch_notifier.on_rx_sdu(mac_rx_sdu{ctx.pdu_rx.rnti, 0, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  ccch_notifier.on_new_sdu(mac_rx_sdu{ctx.pdu_rx.rnti, 0, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
 
   return true;
 }

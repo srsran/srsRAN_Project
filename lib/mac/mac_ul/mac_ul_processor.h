@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_UL_MANAGER_H
-#define SRSGNB_MAC_UL_MANAGER_H
+#ifndef SRSGNB_MAC_UL_PROCESSOR_H
+#define SRSGNB_MAC_UL_PROCESSOR_H
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
@@ -12,10 +12,10 @@
 
 namespace srsgnb {
 
-class mac_ul_manager final : public mac_ul_configurer
+class mac_ul_processor final : public mac_ul_configurer
 {
 public:
-  mac_ul_manager(mac_common_config_t& cfg_, mac_rx_sdu_notifier& ul_ccch_notifier_, sched_interface& sched_) :
+  mac_ul_processor(mac_common_config_t& cfg_, mac_sdu_rx_notifier& ul_ccch_notifier_, sched_interface& sched_) :
     cfg(cfg_), ue_manager(cfg, ul_ccch_notifier_), pdu_handler(cfg, sched_, ul_ccch_notifier_, ue_manager)
   {}
 
@@ -67,4 +67,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_UL_MANAGER_H
+#endif // SRSGNB_MAC_UL_PROCESSOR_H

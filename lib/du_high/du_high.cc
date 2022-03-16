@@ -64,7 +64,7 @@ void du_high::stop()
 
 void du_high::push_pusch(mac_rx_data_indication pdu)
 {
-  mac->push_rx_data_indication(std::move(pdu));
+  mac->handle_rx_data_indication(std::move(pdu));
 }
 
 size_t du_high::query(const std::string& s)

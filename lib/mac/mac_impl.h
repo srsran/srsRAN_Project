@@ -6,7 +6,7 @@
 #include "mac_ctrl/mac_ctrl_component.h"
 #include "mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl/ue_delete_procedure.h"
-#include "mac_ul/mac_ul_manager.h"
+#include "mac_ul/mac_ul_processor.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
@@ -18,7 +18,7 @@ namespace srsgnb {
 class mac_impl : public mac_interface
 {
 public:
-  explicit mac_impl(mac_rx_sdu_notifier&   ul_ccch_notifier,
+  explicit mac_impl(mac_sdu_rx_notifier&   ul_ccch_notifier,
                     du_l2_ul_executor_mapper& ul_exec_mapper,
                     span<task_executor*>   dl_execs,
                     task_executor&         ctrl_exec);
@@ -28,7 +28,7 @@ public:
   ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
   async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
 
-  void push_rx_data_indication(mac_rx_data_indication msg) override;
+  void handle_rx_data_indication(mac_rx_data_indication msg) override;
 
   void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
 
@@ -37,7 +37,7 @@ private:
   srslog::basic_logger& logger;
 
   mac_dl_component   dl_unit;
-  mac_ul_manager     ul_unit;
+  mac_ul_processor   ul_unit;
   mac_ctrl_component ctrl_unit;
 
   std::mutex dl_mutex;
