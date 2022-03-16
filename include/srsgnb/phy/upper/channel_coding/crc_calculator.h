@@ -6,7 +6,7 @@
 
 namespace srsgnb {
 
-/// CRC cyclic generator polynomials identificators.
+/// CRC cyclic generator polynomials identifiers.
 enum class crc_generator_poly {
   CRC24A,
   CRC24B,
@@ -36,6 +36,9 @@ public:
   ///\param[in] data Provides the byte buffer.
   ///\return The resulting CRC checksum.
   virtual crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) = 0;
+
+  ///\brief Returns the identifier of the generator polynomial.
+  virtual crc_generator_poly get_generator_poly() const = 0;
 };
 
 std::unique_ptr<crc_calculator> create_crc_calculator(crc_generator_poly poly);

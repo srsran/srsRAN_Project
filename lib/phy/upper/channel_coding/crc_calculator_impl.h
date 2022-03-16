@@ -39,6 +39,8 @@ private:
   const unsigned     order;
   const uint64_t     crcmask;
   uint64_t           crc;
+  /// Identifier of the cyclic generator polynomial.
+  const crc_generator_poly poly;
 
   // Methods
   void                      reset();
@@ -51,6 +53,7 @@ public:
 
   crc_calculator_checksum_t calculate_byte(span<const uint8_t> input) override;
   crc_calculator_checksum_t calculate_bit(span<const uint8_t> input) override;
+  crc_generator_poly        get_generator_poly() const override { return poly; }
 };
 
 } // namespace srsgnb
