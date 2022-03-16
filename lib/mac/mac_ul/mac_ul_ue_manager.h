@@ -17,7 +17,7 @@ namespace srsgnb {
 class mac_ul_ue
 {
 public:
-  explicit mac_ul_ue(du_ue_index_t ue_index_, rnti_t rnti_, mac_ul_sdu_notifier& ccch_notifier_) :
+  explicit mac_ul_ue(du_ue_index_t ue_index_, rnti_t rnti_, mac_rx_sdu_notifier& ccch_notifier_) :
     ue_index(ue_index_), rnti(rnti_)
   {
     ul_bearers.insert(0, &ccch_notifier_);
@@ -25,7 +25,7 @@ public:
 
   const du_ue_index_t               ue_index = MAX_NOF_UES;
   const rnti_t                      rnti     = INVALID_RNTI;
-  slot_vector<mac_ul_sdu_notifier*> ul_bearers;
+  slot_vector<mac_rx_sdu_notifier*> ul_bearers;
   mac_ul_sch_pdu                    pdu_ul;
 };
 
@@ -35,7 +35,7 @@ public:
 class mac_ul_ue_manager
 {
 public:
-  mac_ul_ue_manager(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ccch_notifier_) :
+  mac_ul_ue_manager(mac_common_config_t& cfg_, mac_rx_sdu_notifier& ccch_notifier_) :
     cfg(cfg_), logger(cfg.logger), ccch_notifier(ccch_notifier_)
   {
     std::fill(ue_index_to_rnti.begin(), ue_index_to_rnti.end(), MAX_NOF_UES);
@@ -148,7 +148,7 @@ private:
   /// Arguments of UE manager
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
-  mac_ul_sdu_notifier&  ccch_notifier;
+  mac_rx_sdu_notifier&  ccch_notifier;
 
   /// UE repository
   circular_map<rnti_t, mac_ul_ue, MAX_NOF_UES> ue_db;

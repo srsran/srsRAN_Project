@@ -18,7 +18,7 @@ namespace srsgnb {
 class mac_impl : public mac_interface
 {
 public:
-  explicit mac_impl(mac_ul_sdu_notifier&   ul_ccch_notifier,
+  explicit mac_impl(mac_rx_sdu_notifier&   ul_ccch_notifier,
                     du_l2_executor_mapper& ul_exec_mapper,
                     span<task_executor*>   dl_execs,
                     task_executor&         ctrl_exec);

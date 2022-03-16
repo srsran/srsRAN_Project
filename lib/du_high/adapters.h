@@ -47,12 +47,12 @@ private:
   du_manager_interface* du_manager = nullptr;
 };
 
-class mac_ul_ccch_adapter : public mac_ul_sdu_notifier
+class mac_ul_ccch_adapter : public mac_rx_sdu_notifier
 {
 public:
   void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
 
-  void on_ul_sdu(mac_ul_sdu sdu) override
+  void on_rx_sdu(mac_rx_sdu sdu) override
   {
     ul_ccch_indication_message ul_ccch_msg;
     ul_ccch_msg.crnti      = sdu.rnti;

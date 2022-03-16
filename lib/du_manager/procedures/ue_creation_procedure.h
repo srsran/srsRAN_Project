@@ -14,11 +14,11 @@
 
 namespace srsgnb {
 
-class mac_ul_dcch_adapter : public mac_ul_sdu_notifier
+class mac_ul_dcch_adapter : public mac_rx_sdu_notifier
 {
 public:
   mac_ul_dcch_adapter(rlc_pdu_handler& bearer_) : bearer(bearer_) {}
-  void on_ul_sdu(mac_ul_sdu sdu) override { bearer.handle_pdu(sdu.pdu); }
+  void on_rx_sdu(mac_rx_sdu sdu) override { bearer.handle_pdu(sdu.pdu); }
 
   rlc_pdu_handler& bearer;
 };

@@ -12,7 +12,7 @@ namespace srsgnb {
 struct du_logical_channel_context {
   lcid_t                               lcid;
   std::unique_ptr<rlc_pdu_handler>       ul_bearer;
-  std::unique_ptr<mac_ul_sdu_notifier> mac_ul_notifier;
+  std::unique_ptr<mac_rx_sdu_notifier> mac_ul_notifier;
 };
 
 struct du_ue_context {

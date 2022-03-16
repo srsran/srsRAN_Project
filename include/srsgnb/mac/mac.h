@@ -13,9 +13,7 @@
 
 namespace srsgnb {
 
-constexpr size_t MAX_PDU_LIST = 16;
-
-/// FAPI, MaxULPDUsPerSlot
+/// FAPI, MaxULPDUsPerSlot. Value is implementation-defined.
 constexpr size_t MAX_UL_PDUS_PER_SLOT = 16;
 
 using harq_pid              = uint8_t;
@@ -23,7 +21,7 @@ using cqi_report            = uint8_t;
 using timing_advance_report = uint16_t;
 using rssi_report           = uint16_t;
 
-struct mac_ul_sdu {
+struct mac_rx_sdu {
   rnti_t      rnti;
   lcid_t      lcid;
   byte_buffer pdu;
@@ -45,17 +43,18 @@ struct mac_rx_data_indication {
   mac_rx_pdu_list pdus;
 };
 
-class mac_ul_sdu_notifier
+/// Interface that MAC uses to notify upper layers when it finishes decoding an MAC UL SDU.
+class mac_rx_sdu_notifier
 {
 public:
-  virtual ~mac_ul_sdu_notifier()         = default;
-  virtual void on_ul_sdu(mac_ul_sdu sdu) = 0;
+  virtual ~mac_rx_sdu_notifier()         = default;
+  virtual void on_rx_sdu(mac_rx_sdu sdu) = 0;
 };
 
-class mac_dl_sdu_builder
+class mac_tx_sdu_builder
 {
 public:
-  virtual ~mac_dl_sdu_builder()                = default;
+  virtual ~mac_tx_sdu_builder()                = default;
   virtual void on_dl_mac_sdu(byte_buffer& pdu) = 0;
 };
 
@@ -67,8 +66,8 @@ struct ul_ccch_indication_message {
 
 struct logical_channel_addmod {
   lcid_t               lcid;
-  mac_ul_sdu_notifier* ul_bearer;
-  mac_dl_sdu_builder*  dl_bearer;
+  mac_rx_sdu_notifier* ul_bearer;
+  mac_tx_sdu_builder*  dl_bearer;
 };
 
 struct mac_ue_create_request_message {
@@ -119,15 +118,25 @@ public:
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
 };
 
-class mac_southbound_interface
+/// Interface used to push Rx Data indications to L2.
+/// \remark See FAPI 3.4.7 - Rx_Data.indication.
+class mac_rx_sdu_handler
 {
 public:
-  virtual ~mac_southbound_interface()                                        = default;
-  virtual void push_rx_data_indication(mac_rx_data_indication pdu)           = 0;
+  virtual ~mac_rx_sdu_handler()                                    = default;
+  virtual void push_rx_data_indication(mac_rx_data_indication pdu) = 0;
+};
+
+/// Interface used to push slot indications to L2.
+/// \remark See FAPI 3.4.1 - Slot.Indication.
+class mac_slot_indicator
+{
+public:
+  virtual ~mac_slot_indicator()                                              = default;
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
-class mac_interface : public mac_southbound_interface, public mac_configurer
+class mac_interface : public mac_slot_indicator, public mac_configurer, public mac_rx_sdu_handler
 {};
 
 } // namespace srsgnb

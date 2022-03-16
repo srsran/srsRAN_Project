@@ -15,7 +15,7 @@ namespace srsgnb {
 class mac_ul_manager final : public mac_ul_configurer
 {
 public:
-  mac_ul_manager(mac_common_config_t& cfg_, mac_ul_sdu_notifier& ul_ccch_notifier_, sched_interface& sched_) :
+  mac_ul_manager(mac_common_config_t& cfg_, mac_rx_sdu_notifier& ul_ccch_notifier_, sched_interface& sched_) :
     cfg(cfg_), ue_manager(cfg, ul_ccch_notifier_), pdu_handler(cfg, sched_, ul_ccch_notifier_, ue_manager)
   {}
 

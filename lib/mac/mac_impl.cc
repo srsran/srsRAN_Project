@@ -4,7 +4,7 @@
 
 namespace srsgnb {
 
-mac_impl::mac_impl(mac_ul_sdu_notifier& ul_ccch_notifier_,
+mac_impl::mac_impl(mac_rx_sdu_notifier& ul_ccch_notifier_,
                    du_l2_executor_mapper& ul_exec_mapper_,
                    span<task_executor*> dl_execs_,
                    task_executor&       ctrl_exec_) :
