@@ -20,6 +20,8 @@ if (DOXYGEN_FOUND)
   set(DOXYGEN_PREDEFINED "SRSRAN_API=''")
   set(DOXYGEN_EXTRACT_STATIC "YES")
   set(DOXYGEN_EXTRACT_PRIVATE "YES")
+  set(DOXYGEN_GENERATE_TREEVIEW "YES")
+  set(DOXYGEN_HTML_EXTRA_STYLESHEET "doxygen-awesome.css" "doxygen-awesome-sidebar-only.css")
 
   # directories and files to process
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
