@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
-#define SRSGNB_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -52,7 +52,8 @@ private:
   /// \param[in] scaling Indicates the signal scaling if the value is valid (not 0, NAN nor INF).
   void modulate(span<cf_t> d_pdcch, span<const uint8_t> b_hat, float scaling);
 
-  /// \brief Map to resource elements in the grid. Implements TS 38.211 section 7.3.2.5 Mapping to physical resources.
+  /// \brief Maps the modulated symbols to resource elements in the grid. Implements TS 38.211 section 7.3.2.5 Mapping
+  /// to physical resources.
   ///
   /// \param[out] grid Provides the destination resource grid.
   /// \param[in] d_pdcch Provides the block of complex-valued symbols to map.
@@ -81,4 +82,4 @@ std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H

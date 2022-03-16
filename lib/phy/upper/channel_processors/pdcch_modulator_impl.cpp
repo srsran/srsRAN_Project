@@ -81,10 +81,6 @@ void pdcch_modulator_impl::modulate(srsgnb::resource_grid_writer&            gri
   map(grid, d_pdcch, config);
 }
 
-/// \brief Creates a generic PDCCH modulator.
-///
-/// \param[in] args Provides the internal dependencies instances.
-/// \return A unique pointer with the modulator.
 std::unique_ptr<pdcch_modulator> srsgnb::create_pdcch_modulator(pdcch_modulator_config_t& config)
 {
   return std::make_unique<pdcch_modulator_impl>(config);

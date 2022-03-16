@@ -1,7 +1,8 @@
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_pdcch_MODULATOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_pdcch_MODULATOR_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_H
+#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
@@ -12,11 +13,9 @@
 
 namespace srsgnb {
 
-/// \brief Describes a pdcch modulator interface.
+/// \brief Describes a PDCCH modulator interface.
 ///
-/// The pdcch modulator shall modulate pdcch according to TS 38.211 section 7.3.2 Physical downlink control channel
-/// (PDCCH).
-///
+/// \remark Defined in TS 38.211 section 7.3.2 Physical downlink control channel (PDCCH).
 /// \note The configuration assumes the CCE-to-REG and REG-to-PRB mapping is included in \c rb_mask.
 class pdcch_modulator
 {
@@ -53,4 +52,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_pdcch_MODULATOR_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_H
