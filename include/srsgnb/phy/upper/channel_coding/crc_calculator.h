@@ -6,6 +6,7 @@
 
 namespace srsgnb {
 
+/// CRC cyclic generator polynomials identificators.
 enum class crc_generator_poly {
   CRC24A,
   CRC24B,
@@ -16,27 +17,24 @@ enum class crc_generator_poly {
   // etc...
 };
 
-// Checksum type
+/// Checksum type.
 using crc_calculator_checksum_t = unsigned;
 
-// Calculate CRC here, let the CRC attachment be done in a lower abstraction level function that uses this.
+/// \brief Calculates the CRC.
+/// \note The CRC attachment is done in a lower abstraction level function that uses this.
 class crc_calculator
 {
 public:
   virtual ~crc_calculator() = default;
 
-  /**
-   * @brief Calculate checksum from a byte buffer (8 packed bits in every input byte)
-   * @param data Provides the byte buffer
-   * @return Checksum
-   */
+  ///\brief Calculates the checksum from a byte buffer (8 packed bits in every input byte).
+  ///\param[in] data Provides the byte buffer.
+  ///\return The resulting CRC checksum.
   virtual crc_calculator_checksum_t calculate_byte(span<const uint8_t> data) = 0;
 
-  /**
-   * @brief Calculate checksum from a bit buffer (1 bit in for every input byte)
-   * @param data Provides the byte buffer
-   * @return Checksum
-   */
+  ///\brief Calculates the checksum from a bit buffer (1 bit in for every input byte).
+  ///\param[in] data Provides the byte buffer.
+  ///\return The resulting CRC checksum.
   virtual crc_calculator_checksum_t calculate_bit(span<const uint8_t> data) = 0;
 };
 
