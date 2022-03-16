@@ -11,7 +11,7 @@
  */
 
 #include "dmrs_pdsch_processor_impl.h"
-#include "srsgnb/phy/cyclic_prefix.h"
+#include "dmrs_helper.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
@@ -47,69 +47,24 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
                                                             unsigned int    symbol,
                                                             const config_t& config) const
 {
-  // Get signal amplitude
+  // Get signal amplitude.
   float amplitude = M_SQRT1_2 * get_amplitude(config.nof_cdm_groups_without_data);
 
-  unsigned prb_count            = 0; // Counts consecutive used PRB
-  unsigned prb_skip             = 0; // Number of PRB to skip
-  unsigned nof_pilots_x_prb     = dmrs_nof_dmrs_per_rb(config.type);
-  unsigned reference_point_k_rb = config.reference_point_k_rb;
-
+  // Extract parameters to calculate the PRG initial state.
   unsigned nslot    = config.slot.slot_index();
   unsigned nidnscid = config.scrambling_id;
   unsigned nscid    = config.n_scid ? 1 : 0;
+  unsigned nsymb    = get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
-  // Calculate initial sequence state
-  unsigned c_init =
-      ((((get_nsymb_per_slot(cyclic_prefix::NORMAL) * nslot + symbol + 1UL) * (2UL * nidnscid + 1UL)) << 17UL) +
-       (2UL * nidnscid + nscid)) &
-      INT32_MAX;
+  // Calculate initial sequence state.
+  unsigned c_init = ((nsymb * nslot + symbol + 1) * (2 * nidnscid + 1) * pow2(17) + (2 * nidnscid + nscid)) % pow2(31);
 
-  // Initialise sequence
+  // Initialise sequence.
   prg->init(c_init);
 
-  // Iterate over all PRBs, starting at reference point for k
-  for (unsigned prb_idx = 0; prb_idx < MAX_RB; prb_idx++) {
-    // If the PRB is used for PDSCH transmission count
-    if (config.rb_mask[prb_idx]) {
-      // If it is the first PRB...
-      if (prb_count == 0) {
-        // ... discard unused pilots and reset counter unless the PDSCH transmission carries SIB
-        prb_skip = std::max(0, static_cast<int>(prb_skip) - static_cast<int>(reference_point_k_rb));
-        prg->advance(prb_skip * nof_pilots_x_prb * 2);
-        prb_skip             = 0;
-        reference_point_k_rb = 0;
-      }
-      ++prb_count;
-
-      continue;
-    }
-
-    // Increase number of PRB to skip
-    ++prb_skip;
-
-    // End of consecutive PRB, skip copying if no PRB was counted
-    if (prb_count == 0) {
-      continue;
-    }
-
-    // Generate contiguous pilots
-    prg->generate(sequence.first(prb_count * nof_pilots_x_prb), amplitude);
-
-    // Advance sequence buffer
-    sequence = sequence.last(sequence.size() - prb_count * nof_pilots_x_prb);
-
-    // Reset counter
-    prb_count = 0;
-  }
-
-  if (prb_count > 0) {
-    // Generate contiguous pilots
-    prg->generate(sequence.first(prb_count * nof_pilots_x_prb), amplitude);
-
-    // Advance sequence buffer
-    sequence = sequence.last(sequence.size() - prb_count * nof_pilots_x_prb);
-  }
+  // Generate sequence.
+  dmrs_sequence_generate(
+      sequence, *prg, amplitude, config.reference_point_k_rb, dmrs_nof_dmrs_per_rb(config.type), config.rb_mask);
 }
 
 void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,

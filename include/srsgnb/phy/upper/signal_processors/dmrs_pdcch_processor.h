@@ -38,13 +38,10 @@ public:
 
   /// \brief Generates and maps DMRS for PDCCH according to TS 38.211 section 7.4.1.3.
   ///
-  /// \param [out] grid Provides the destination resource grid. \param [in] config Provides the required
-  /// configuration to generate and map the signal.
+  /// \param[out] grid Provides the destination resource grid.
+  /// \param[in] config Provides the required configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic DMRS for PDCCH instance
-std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
 
 } // namespace srsgnb
 

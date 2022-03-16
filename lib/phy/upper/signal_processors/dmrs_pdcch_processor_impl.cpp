@@ -1,5 +1,7 @@
 
 #include "dmrs_pdcch_processor_impl.h"
+#include "dmrs_helper.h"
+#include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
 
@@ -8,63 +10,19 @@ unsigned dmrs_pdcch_processor_impl::c_init(unsigned symbol, const dmrs_pdcch_pro
   unsigned n_slot = config.slot.slot_index();
   unsigned n_id   = config.n_id;
 
-  return ((((NSYMB_PER_SLOT_NORM * n_slot + symbol + 1) * (2 * n_id + 1)) << 17U) + 2 * n_id) & INT32_MAX;
+  return ((MAX_NOF_DMRS_PER_SYMBOL * n_slot + symbol + 1) * (2 * n_id + 1) * pow2(17) + 2 * n_id) % pow2(31);
 }
 
 void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                            sequence,
                                                     unsigned int                          symbol,
                                                     const dmrs_pdcch_processor::config_t& config) const
 {
-  // Calculate signal amplitude.
-  float amplitude = M_SQRT1_2 * config.amplitude;
-
   // Initialise pseudo-random generator.
   prg->init(c_init(symbol, config));
 
-  // Check the mask for all RB.
-  unsigned prb_count            = 0; // Counts consecutive used PRB
-  unsigned prb_skip             = 0; // Number of PRB to skip
-  unsigned reference_point_k_rb = config.reference_point_k_rb;
-
-  // Iterate over all PRBs, starting at reference point for k.
-  for (unsigned prb_idx = 0; prb_idx < MAX_RB; ++prb_idx) {
-    // If the PRB is used for PDSCH transmission count
-    if (config.rb_mask[prb_idx]) {
-      // If it is the first PRB...
-      if (prb_count == 0) {
-        // ... discard unused pilots and reset counter unless the reference is not in 0.
-        prb_skip = std::max(0, static_cast<int>(prb_skip) - static_cast<int>(reference_point_k_rb));
-        prg->advance(prb_skip * NOF_DMRS_PER_RB * 2);
-        prb_skip             = 0;
-        reference_point_k_rb = 0;
-      }
-      ++prb_count;
-
-      continue;
-    }
-
-    // Increase number of PRB to skip.
-    ++prb_skip;
-
-    // End of consecutive PRB, skip copying if no PRB was counted.
-    if (prb_count == 0) {
-      continue;
-    }
-
-    // Generate contiguous pilots.
-    prg->generate(sequence.first(prb_count * NOF_DMRS_PER_RB), amplitude);
-
-    // Advance sequence buffer.
-    sequence = sequence.last(sequence.size() - prb_count * NOF_DMRS_PER_RB);
-
-    // Reset counter.
-    prb_count = 0;
-  }
-
-  // Generate the last group of contiguous RB.
-  if (prb_count > 0) {
-    prg->generate(sequence.first(prb_count * NOF_DMRS_PER_RB), amplitude);
-  }
+  // Generate sequence.
+  dmrs_sequence_generate(
+      sequence, *prg, M_SQRT1_2 * config.amplitude, config.reference_point_k_rb, NOF_DMRS_PER_RB, config.rb_mask);
 }
 
 void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                 grid,
@@ -74,7 +32,7 @@ void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                 gr
                                         const dmrs_pdcch_processor::config_t& config)
 {
   // Put signal for each port.
-  for (const uint8_t& port_idx : config.ports) {
+  for (unsigned port_idx : config.ports) {
     grid.put(port_idx, symbol, 0, mask, sequence);
   }
 }
@@ -87,7 +45,7 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
 
   // Generate allocation mask, common for all symbol.
   std::array<bool, MAX_RB* NRE> mask = {};
-  for (unsigned prb_idx = 0; prb_idx < MAX_RB; ++prb_idx) {
+  for (unsigned prb_idx = 0; prb_idx != MAX_RB; ++prb_idx) {
     // Skip if the RB is not used.
     if (!config.rb_mask[prb_idx]) {
       continue;

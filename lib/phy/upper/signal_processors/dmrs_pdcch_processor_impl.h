@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H_
-#define SRSGNB_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H_
+#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
@@ -28,8 +28,8 @@ private:
 
   /// \brief Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
-  /// \param[in] config Provides the required parameters to calculate the value
-  /// \return the initial pseudo-random state
+  /// \param[in] config Provides the required parameters.
+  /// \return The initial pseudo-random state.
   static unsigned c_init(unsigned symbol, const config_t& config);
 
   /// \brief Implements TS 38.211 section 7.4.1.3.1 Sequence generation.
@@ -62,8 +62,9 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
+/// Creates a generic DMRS for PDCCH instance.
 std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H_
+#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H
