@@ -20,8 +20,7 @@ enum class crc_generator_poly {
 /// Checksum type.
 using crc_calculator_checksum_t = unsigned;
 
-/// \brief Calculates the CRC.
-/// \note The CRC attachment is done in a lower abstraction level function that uses this.
+/// \brief Calculates the CRC, as per TS38.212 Section 5.1.
 class crc_calculator
 {
 public:
