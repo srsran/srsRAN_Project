@@ -15,8 +15,6 @@
 
 using namespace srsgnb;
 
-static constexpr float assert_max_error = 1e-6;
-
 int main()
 {
   std::unique_ptr<pbch_modulator> modulator = create_pbch_modulator();
