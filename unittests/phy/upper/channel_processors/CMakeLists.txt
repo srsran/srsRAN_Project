@@ -7,6 +7,14 @@ add_executable(pbch_modulator_test pbch_modulator_test.cpp)
 target_link_libraries(pbch_modulator_test pbch_modulator srslog)
 add_test(pbch_modulator_test pbch_modulator_test)
 
+add_custom_command(
+  TARGET pbch_modulator_test
+  POST_BUILD
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+  COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
+  VERBATIM)
+
 add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
 target_link_libraries(pdcch_modulator_test upper_phy pdcch_modulator srslog modulation_mapper pseudo_random_generator)
 add_test(pdcch_modulator_test pdcch_modulator_test)
