@@ -23,13 +23,10 @@ public:
       return {};
     std::vector<T> read_data;
 
-    while (!binary_file.eof()) {
-      T read_value;
-      binary_file.read(reinterpret_cast<char*>(&read_value), sizeof(T));
+    T read_value;
+    while (binary_file.read(reinterpret_cast<char*>(&read_value), sizeof(T))) {
       read_data.push_back(read_value);
     }
-    // remove last repeated entry
-    read_data.pop_back();
 
     return read_data;
   }
