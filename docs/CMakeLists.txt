@@ -14,10 +14,6 @@ if (DOXYGEN_FOUND)
     cmake_path(GET CMAKE_HOME_DIRECTORY PARENT_PATH strip_path)
   endif()
   set(DOXYGEN_STRIP_FROM_PATH ${strip_path})
-  set(DOXYGEN_MACRO_EXPANSION "YES")
-  set(DOXYGEN_EXPAND_ONLY_PREDEF "YES")
-  set(DOXYGEN_EXPAND_AS_DEFINED "SRSRAN_API")
-  set(DOXYGEN_PREDEFINED "SRSRAN_API=''")
   set(DOXYGEN_EXTRACT_STATIC "YES")
   set(DOXYGEN_EXTRACT_PRIVATE "YES")
   set(DOXYGEN_GENERATE_TREEVIEW "YES")
@@ -25,13 +21,17 @@ if (DOXYGEN_FOUND)
     set(DOXYGEN_GENERATE_TREEVIEW "YES")
     set(DOXYGEN_HTML_EXTRA_STYLESHEET "doxygen-awesome.css")
   endif()
+  set(DOXYGEN_UML_LOOK "YES")
+  set(DOXYGEN_CALL_GRAPH "YES")
+  set(DOXYGEN_CALLER_GRAPH "YES")
 
   # directories and files to process
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
-                  ${CMAKE_HOME_DIRECTORY}/include/srsgnb/phy
-                  ${CMAKE_HOME_DIRECTORY}/lib/phy
+                  ${CMAKE_HOME_DIRECTORY}/include/srsgnb/
+                  ${CMAKE_HOME_DIRECTORY}/lib/
                   ${CMAKE_HOME_DIRECTORY}/unittests/phy/upper/channel_coding/ldpc_enc_dec_test.cpp
   )
+  set(DOXYGEN_EXCLUDE ${CMAKE_HOME_DIRECTORY}/include/srsgnb/asn1)
 
   doxygen_add_docs(doxygen
     ${docs_inputs}
