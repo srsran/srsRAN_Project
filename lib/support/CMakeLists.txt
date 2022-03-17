@@ -7,6 +7,7 @@
 #
 
 set(SOURCES
+        math_utils.cpp
         task_worker.cc
         threads.cc
         timers.cc)

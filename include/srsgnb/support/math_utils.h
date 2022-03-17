@@ -13,9 +13,14 @@
 #ifndef SRSGNB_SUPPORT_MATH_UTILS_H_
 #define SRSGNB_SUPPORT_MATH_UTILS_H_
 
+#include "srsgnb/adt/complex.h"
+#include <cassert>
 #include <cmath>
 
 namespace srsgnb {
+
+/// Defines the complex imaginary unit.
+static constexpr cf_t COMPLEX_I(0, 1);
 
 /// \brief Performs an integer division rounding up.
 ///
@@ -68,6 +73,14 @@ inline float convert_power_to_dB(float value)
 {
   return 10.0F * std::log10(value);
 }
+
+/// \brief Finds the smallest prime number greater than \c n.
+/// \remark Only works for prime numbers not larger than 3299.
+unsigned prime_greater_than(unsigned n);
+
+/// \brief Finds the biggest prime number lesser than \c n.
+/// \remark Only works for prime numbers not larger than 3299.
+unsigned prime_lower_than(unsigned n);
 
 } // namespace srsgnb
 
