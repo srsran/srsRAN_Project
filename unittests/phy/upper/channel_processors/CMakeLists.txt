@@ -16,7 +16,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
-target_link_libraries(pdcch_modulator_test upper_phy pdcch_modulator srslog modulation_mapper pseudo_random_generator)
+target_link_libraries(pdcch_modulator_test upper_phy pdcch_modulator srslog modulation_mapper sequence_generators)
 add_test(pdcch_modulator_test pdcch_modulator_test)
 
 add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)

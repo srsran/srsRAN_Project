@@ -7,9 +7,10 @@
 #
 
 set(SOURCES
+        low_papr_sequence_generator_impl.cpp
         pseudo_random_generator_impl.cpp
         )
 
 include_directories(../../../../include/srsgnb/phy/upper/sequence_generators)
 
-add_library(pseudo_random_generator STATIC ${SOURCES})
+add_library(sequence_generators STATIC ${SOURCES})
