@@ -13,7 +13,7 @@ namespace srsgnb {
 ///
 /// Characterization of the codeblocks obtained from a single transport block with all the parameters needed by the
 /// encoder/decoder and by the rate matcher/dematcher blocks.
-struct codeblock_description {
+struct codeblock_description_t {
   /// Common parameters for all codeblocks from the same transport block.
   struct tb_common {
     /// Code base graph.
@@ -25,8 +25,7 @@ struct codeblock_description {
     /// Modulation scheme.
     modulation_scheme mod{modulation_scheme::BPSK};
     /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    ///
-    /// Set to zero for unlimited buffer length.
+    /// \note Set to zero for unlimited buffer length.
     unsigned Nref{0};
   } tb_common;
   /// Parameters that are specific to a single codeblock.
@@ -39,9 +38,6 @@ struct codeblock_description {
     unsigned nof_filler_bits{0};
   } cb_specific;
 };
-
-/// An object of this type contains the description of all codeblocks from the same transport block.
-using tb_segment_description = std::vector<codeblock_description>;
 
 } // namespace srsgnb
 

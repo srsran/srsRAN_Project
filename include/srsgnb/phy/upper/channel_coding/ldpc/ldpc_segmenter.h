@@ -4,6 +4,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_H
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
 
@@ -15,8 +16,25 @@ class ldpc_segmenter
 public:
   virtual ~ldpc_segmenter() = default;
 
-  /// Alias for vector of segmented codeblocks.
-  using segmented_codeblocks = std::vector<std::vector<uint8_t> >;
+  /// \brief Maximum segment length.
+  ///
+  /// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
+  /// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
+  static constexpr unsigned MAX_SEG_LENGTH = 22 * 384;
+
+  /// Maximum number of segments per transport block.
+  static constexpr unsigned MAX_NOF_SEGMENTS = 52;
+
+  /// Alias for the segment data container.
+  using segment_data_t = static_vector<uint8_t, MAX_SEG_LENGTH>;
+
+  /// \brief Alias for the full segment characterization.
+  ///
+  ///   - \c described_segment_t.first()   Contains the segment data, including CRC, in unpacked format (each bit is
+  ///                                      represented by a \c uint8_t entry).
+  ///   - \c described_segment_t.second()  Contains the segment metadata, useful for processing the corresponding
+  ///                                      codeblock (e.g., encoding/decoding, rate-matching).
+  using described_segment_t = std::pair<segment_data_t, codeblock_description_t>;
 
   /// Gathers all segmentation configuration parameters.
   struct config_t {
@@ -29,8 +47,7 @@ public:
     /// Modulation scheme.
     modulation_scheme mod{modulation_scheme::BPSK};
     /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    ///
-    /// Set to zero for unlimited buffer length.
+    /// \note Set to zero for unlimited buffer length.
     unsigned Nref{0};
     /// Number of transmission layers the transport block is mapped onto.
     unsigned nof_layers{0};
@@ -50,10 +67,10 @@ public:
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
   /// \remark The transport block and the resulting segments are represented by unpacked bits (each entry is a single
   ///         bit).
-  virtual void segment(segmented_codeblocks&   segments,
-                       tb_segment_description& segment_descriptions,
-                       span<const uint8_t>     transport_block,
-                       const config_t&         cfg) = 0;
+  /// \todo Fix documentation!
+  virtual void segment(static_vector<described_segment_t, MAX_NOF_SEGMENTS>& described_segments,
+                       span<const uint8_t>                                   transport_block,
+                       const config_t&                                       cfg) = 0;
 };
 
 std::unique_ptr<ldpc_segmenter> create_ldpc_segmenter();

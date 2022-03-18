@@ -7,6 +7,7 @@
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
+using segment_meta_t = ldpc_segmenter::described_segment_t;
 
 // Length of the CRC checksum added to the segments.
 static constexpr unsigned crc_length = 24;
@@ -102,13 +103,11 @@ static void fill_segment(span<uint8_t>                    segment,
   std::fill_n(segment.begin() + nof_used_bits, nof_filler, filler_bit);
 }
 
-static void check_inputs(const ldpc_segmenter::segmented_codeblocks& segments,
-                         const tb_segment_description&               segment_descriptions,
-                         span<const uint8_t>                         transport_block,
-                         const ldpc_segmenter::config_t&             cfg)
+static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX_NOF_SEGMENTS>& segments,
+                         span<const uint8_t>                                                    transport_block,
+                         const ldpc_segmenter::config_t&                                        cfg)
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
-  srsran_assert(segment_descriptions.empty(), "Argument segment_descriptions should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
 
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
@@ -119,12 +118,12 @@ static void check_inputs(const ldpc_segmenter::segmented_codeblocks& segments,
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
-void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
-                                  tb_segment_description& segment_descriptions,
-                                  span<const uint8_t>     transport_block,
-                                  const config_t&         cfg)
+void ldpc_segmenter_impl::segment(
+    static_vector<described_segment_t, ldpc_segmenter::MAX_NOF_SEGMENTS>& described_segments,
+    span<const uint8_t>                                                   transport_block,
+    const config_t&                                                       cfg)
 {
-  check_inputs(segments, segment_descriptions, transport_block, cfg);
+  check_inputs(described_segments, transport_block, cfg);
 
   base_graph               = cfg.base_graph;
   max_segment_length       = (base_graph == base_graph_t::BG1) ? max_BG1_block_length : max_BG2_block_length;
@@ -152,16 +151,16 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
 
   unsigned input_idx{0};
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    std::vector<uint8_t> tmp_segment(segment_length);
+    segment_data_t tmp_data(segment_length);
     // Number of bits to copy to this segment.
     unsigned nof_info_bits = std::min(max_info_bits, nof_tb_bits_in - input_idx);
     // Number of filler bits in this segment.
     unsigned nof_filler_bits = segment_length - nof_info_bits - nof_crc_bits;
 
-    fill_segment(tmp_segment, transport_block.subspan(input_idx, nof_info_bits), crc, nof_crc_bits, nof_filler_bits);
-    segments.push_back(tmp_segment);
+    fill_segment(tmp_data, transport_block.subspan(input_idx, nof_info_bits), crc, nof_crc_bits, nof_filler_bits);
+    input_idx += nof_info_bits;
 
-    codeblock_description tmp_description{};
+    codeblock_description_t tmp_description{};
 
     tmp_description.tb_common.base_graph   = base_graph;
     tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);
@@ -178,7 +177,7 @@ void ldpc_segmenter_impl::segment(segmented_codeblocks&   segments,
     tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;
     tmp_description.cb_specific.rm_length       = compute_rm_length(i_segment, cfg.mod, cfg.nof_layers);
 
-    segment_descriptions.push_back(tmp_description);
+    described_segments.push_back({tmp_data, tmp_description});
   }
 }
 
