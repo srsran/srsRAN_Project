@@ -16,8 +16,6 @@ std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t
 
 using namespace srsgnb;
 
-static constexpr float assert_max_error = 1e-6;
-
 int main()
 {
   // Create PDCCH modulator configuration.
