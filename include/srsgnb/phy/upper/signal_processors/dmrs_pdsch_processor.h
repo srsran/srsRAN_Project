@@ -24,7 +24,7 @@ public:
     dmrs_type type;
     /// PDSCH DMRS-Scrambling-ID (pdschDmrsScramblingId).
     unsigned scrambling_id;
-    /// DMRS sequence initialization (nSCID).
+    /// DMRS sequence initialization (\f$n_{SCID}\f$).
     bool n_scid;
     /// Number of DMRS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
