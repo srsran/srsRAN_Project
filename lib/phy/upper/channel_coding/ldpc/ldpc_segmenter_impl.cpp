@@ -2,22 +2,27 @@
 #include "../crc_calculator_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <cmath>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 using segment_meta_t = ldpc_segmenter::described_segment_t;
 
 // Length of the CRC checksum added to the segments.
-static constexpr unsigned crc_length = 24;
+static constexpr unsigned seg_crc_length = 24;
+// Number of bits in one byte.
+static constexpr unsigned bits_per_byte = 8;
 
-ldpc_segmenter_impl::ldpc_segmenter_impl(std::unique_ptr<crc_calculator> c)
+ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc c)
 {
-  assert(c != nullptr);
-  srsran_assert(c->get_generator_poly() == crc_generator_poly::CRC24B, "The CRC generator should be of type CRC24B.");
+  srsran_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
+  srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
+  srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
 
-  crc = std::move(c);
+  crc_set.crc16  = std::move(c.crc16);
+  crc_set.crc24A = std::move(c.crc24A);
+  crc_set.crc24B = std::move(c.crc24B);
 }
 
 void ldpc_segmenter_impl::compute_nof_segments()
@@ -26,9 +31,8 @@ void ldpc_segmenter_impl::compute_nof_segments()
     nof_segments    = 1;
     nof_tb_bits_out = nof_tb_bits_in;
   } else {
-    double tmp      = (1.0 * nof_tb_bits_in) / (max_segment_length - crc_length);
-    nof_segments    = static_cast<unsigned>(std::ceil(tmp));
-    nof_tb_bits_out = nof_tb_bits_in + nof_segments * crc_length;
+    nof_segments    = divide_ceil(nof_tb_bits_in, max_segment_length - seg_crc_length);
+    nof_tb_bits_out = nof_tb_bits_in + nof_segments * seg_crc_length;
   }
 }
 
@@ -70,13 +74,14 @@ void ldpc_segmenter_impl::compute_segment_length()
 
 unsigned ldpc_segmenter_impl::compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const
 {
-  double tmp = (1.0 * nof_symbols_per_layer) / nof_segments;
+  unsigned tmp = 0;
   if (i_seg < nof_short_segments) {
-    tmp = std::floor(tmp);
+    // For unsigned, division then floor is the same as integer division.
+    tmp = nof_symbols_per_layer / nof_segments;
   } else {
-    tmp = std::ceil(tmp);
+    tmp = divide_ceil(nof_symbols_per_layer, nof_segments);
   }
-  return static_cast<unsigned>(tmp) * nof_layers * static_cast<unsigned>(mod);
+  return tmp * nof_layers * static_cast<unsigned>(mod);
 }
 
 static void fill_segment(span<uint8_t>                    segment,
@@ -109,6 +114,9 @@ static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
+  srsran_assert(transport_block.size() * 8 + 24 <= max_tbs,
+                "Transport block too long. The admissible size, including CRC, is %d bytes.",
+                max_tbs / bits_per_byte);
 
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
@@ -125,9 +133,25 @@ void ldpc_segmenter_impl::segment(
 {
   check_inputs(described_segments, transport_block, cfg);
 
-  base_graph               = cfg.base_graph;
-  max_segment_length       = (base_graph == base_graph_t::BG1) ? max_BG1_block_length : max_BG2_block_length;
-  nof_tb_bits_in           = transport_block.size();
+  base_graph         = cfg.base_graph;
+  max_segment_length = (base_graph == base_graph_t::BG1) ? max_BG1_block_length : max_BG2_block_length;
+  // Each transport_block entry is a byte, and TBS can always be expressed as an integer number of bytes (see, e.g.,
+  // TS38.214 Section 5.1.3.2).
+  unsigned        nof_tb_bits_tmp = transport_block.size() * bits_per_byte;
+  crc_calculator& tb_crc          = *crc_set.crc24A;
+  unsigned        nof_tb_crc_bits = 24;
+  if (nof_tb_bits_tmp <= 3824) {
+    tb_crc          = *crc_set.crc16;
+    nof_tb_crc_bits = 16;
+  }
+  nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
+
+  buffer.resize(nof_tb_bits_in);
+  srsvec::bit_unpack(transport_block, span<uint8_t>(buffer).first(nof_tb_bits_tmp));
+  unsigned      tb_checksum = tb_crc.calculate_byte(transport_block);
+  span<uint8_t> p           = span<uint8_t>(buffer).last(nof_tb_crc_bits);
+  srsvec::bit_unpack(tb_checksum, p, nof_tb_crc_bits);
+
   nof_available_coded_bits = cfg.nof_ch_symbols * static_cast<unsigned>(cfg.mod);
 
   compute_nof_segments();
@@ -136,11 +160,10 @@ void ldpc_segmenter_impl::segment(
 
   unsigned nof_crc_bits{0};
   if (nof_segments > 1) {
-    nof_crc_bits = crc_length;
+    nof_crc_bits = seg_crc_length;
   }
   // Compute the maximum number of information bits that can be assigned to a segment.
-  double   tmp_info_bits = (1.0 * nof_tb_bits_out) / nof_segments;
-  unsigned max_info_bits = static_cast<unsigned>(std::ceil(tmp_info_bits)) - nof_crc_bits;
+  unsigned max_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
 
   // Number of channel symbols assigned to a transmission layer.
   nof_symbols_per_layer = cfg.nof_ch_symbols / cfg.nof_layers;
@@ -157,7 +180,11 @@ void ldpc_segmenter_impl::segment(
     // Number of filler bits in this segment.
     unsigned nof_filler_bits = segment_length - nof_info_bits - nof_crc_bits;
 
-    fill_segment(tmp_data, transport_block.subspan(input_idx, nof_info_bits), crc, nof_crc_bits, nof_filler_bits);
+    fill_segment(tmp_data,
+                 span<uint8_t>(buffer).subspan(input_idx, nof_info_bits),
+                 crc_set.crc24B,
+                 nof_crc_bits,
+                 nof_filler_bits);
     input_idx += nof_info_bits;
 
     codeblock_description_t tmp_description{};
@@ -183,5 +210,8 @@ void ldpc_segmenter_impl::segment(
 
 std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
 {
-  return std::make_unique<ldpc_segmenter_impl>(std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24B));
+  return std::make_unique<ldpc_segmenter_impl>(
+      ldpc_segmenter_impl::sch_crc{std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC16),
+                                   std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24A),
+                                   std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24B)});
 }

@@ -5,7 +5,6 @@
 
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
-#include <vector>
 
 namespace srsgnb {
 

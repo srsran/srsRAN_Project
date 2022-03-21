@@ -55,19 +55,16 @@ public:
     unsigned nof_ch_symbols{0};
   };
 
-  /// \brief Carries out transport block segmentation and computes all codeblock metadata for later use (encoder and
-  /// rate matching).
+  /// \brief Adds the CRC to the a transport block, carries out segmentation and computes all codeblock metadata for
+  /// later use (encoder and rate matching).
   ///
-  /// The transport block is split into a number of segments and, if needed, a CRC is added to each segment. This is
-  /// done according to TS38.212 Section 5.2.2. The function also computes other segment metadata (e.g., coded and
-  /// rate-matched length) according to TS38.212 Section 5.4.2.1.
-  /// \param[out] segments              The segments the transport block is split into.
-  /// \param[out] segment_descriptions  Metadata relative to each segment.
-  /// \param[in]  transport_block       The transport block to split.
+  /// First, the transport block CRC is attached, as per TS38.212 Section 7.2.1. Then, the transport block is split into
+  /// a number of segments and, if needed, a CRC is attached to each segment. This is done according to TS38.212
+  /// Section 5.2.2. The function also computes other segment metadata (e.g., coded and rate-matched length) according
+  /// to TS38.212 Section 5.4.2.1.
+  /// \param[out] described_segments    Segments (unpacked, one bit per entry) and corresponding metadata.
+  /// \param[in]  transport_block       The transport block to segment (packed, one byte per entry).
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
-  /// \remark The transport block and the resulting segments are represented by unpacked bits (each entry is a single
-  ///         bit).
-  /// \todo Fix documentation!
   virtual void segment(static_vector<described_segment_t, MAX_NOF_SEGMENTS>& described_segments,
                        span<const uint8_t>                                   transport_block,
                        const config_t&                                       cfg) = 0;
