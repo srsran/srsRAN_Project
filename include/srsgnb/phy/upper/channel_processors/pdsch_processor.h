@@ -12,20 +12,20 @@ namespace srsgnb {
 class pdsch_processor
 {
 public:
-  /// Defines the maximum number of codewords that can be encoded ina PDSCH transmission.
+  /// Defines the maximum number of codewords that can be encoded in a PDSCH transmission.
   static constexpr unsigned MAX_NOF_TRANSPORT_BLOCKS = 2;
 
   /// \brief Describes a codeword configuration.
   /// \note The transport block size is given by transport block data size.
   struct codeword_description {
-    /// Fractional target coding rate expressed as what part of the redundant message is actually meaningful.
+    /// Target coding rate.
     float target_code_rate;
     /// Indicates the modulation scheme.
     modulation_scheme modulation;
-    /// Modulation code scheme index {0...31}.
+    /// Modulation and code scheme index {0...31}.
     unsigned mcs;
     /// Indicates the MCS table used to determine the amount of redundancy.
-    enum { NOTQAM256 = 0, QAM256, QAM64LOWSE } mcs_table;
+    enum { QAM64 = 0, QAM256, QAM64LOWSE } mcs_table;
     /// Redundancy version index.
     unsigned rv;
   };
@@ -46,7 +46,7 @@ public:
     static_vector<codeword_description, MAX_NOF_TRANSPORT_BLOCKS> codewords;
     /// Higher layer parameter PDCCH-DMRS-ScramblingID if it is given, otherwise the physical cell identifier.
     unsigned n_id;
-    /// Ports indexes to map the SS/PBCH transmission. The number of ports indicates the number of layers.
+    /// Ports indexes the PDSCH transmission is mapped to. The number of ports indicates the number of layers.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Indicates the transmission scheme.
     enum {
@@ -108,11 +108,11 @@ public:
       INTERLEAVED_OTHER = 5
     } transmission_type;
     /// The PRB index {0...274} of lowest-numbered RB in the CORESET in which PDCCH carrying scheduling info for the
-    /// PDSCH PDU is received. Refer to TS 38.211 section \f$N^{CORESET}_{start}\f$. Valid when \c transmission_type is
-    /// set to cases 0, 3 or 4.
+    /// PDSCH PDU is received. Refer to TS 38.211 section 7.3.1.6 \f$N^{CORESET}_{start}\f$. Valid when \c
+    /// transmission_type is set to cases 0, 3 or 4.
     unsigned coreset_start_rb;
     /// The size of initial downlink BWP {0,274} used for the cell, shall be set to size of CORESET 0 if CORESET 0 is
-    /// configured for the cell, and initial downlink BWP otherwise. Refer to TS 38.211 section
+    /// configured for the cell, and initial downlink BWP otherwise. Refer to TS 38.211 section 7.3.1.6
     /// \f$N^{size}_{BWP,init}\f$. Valid when \c transmission_type is set to cases 3 or 4.
     unsigned initial_dl_bwp_size;
     /// LDPC base graph to use for CW generation.
