@@ -44,7 +44,7 @@ static constexpr std::array<unsigned, NOF_PRIME_NUMBERS> prime_numbers = {
     3061, 3067, 3079, 3083, 3089, 3109, 3119, 3121, 3137, 3163, 3167, 3169, 3181, 3187, 3191, 3203, 3209, 3217, 3221,
     3229, 3251, 3253, 3257, 3259, 3271, 3299};
 
-unsigned prime_greater_than(unsigned n)
+unsigned srsgnb::prime_greater_than(unsigned n)
 {
   for (unsigned prime : prime_numbers) {
     if (prime > n) {
@@ -55,7 +55,7 @@ unsigned prime_greater_than(unsigned n)
   srsran_terminate("n=%d exceeds the maximum prime.", n);
 }
 
-unsigned prime_lower_than(unsigned n)
+unsigned srsgnb::prime_lower_than(unsigned n)
 {
   srsran_assert(n < prime_numbers[NOF_PRIME_NUMBERS - 1], "n=%d exceeds the maximum prime.", n);
 
