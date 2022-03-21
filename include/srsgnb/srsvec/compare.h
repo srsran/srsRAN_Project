@@ -23,7 +23,7 @@ bool equal(const T1& s1, const T2& s2)
 {
   srsgnb_srsvec_assert_size(s1, s2);
 
-  return std::equal(s1.begin(), s1.end(), s2.begin());
+  return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end());
 }
 
 } // namespace srsvec

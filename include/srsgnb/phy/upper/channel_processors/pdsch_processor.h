@@ -36,9 +36,9 @@ public:
     slot_point slot;
     /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 7.3.1.1 Scrambling.
     uint16_t rnti;
-    /// Number of contiguous PRBs allocated to the BWP.
+    /// Number of contiguous PRBs allocated to the BWP {1...275}.
     unsigned bwp_size_rb;
-    /// BWP start RB index from reference CRB.
+    /// BWP start RB index from reference CRB {0...274}.
     unsigned bwp_start_rb;
     /// Cyclic prefix type.
     cyclic_prefix cp;
