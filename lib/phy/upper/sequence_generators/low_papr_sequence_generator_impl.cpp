@@ -102,7 +102,7 @@ const std::array<std::array<float, 24>, NOF_ZC_SEQ> low_papr_sequence_generator_
 
 void low_papr_sequence_generator_impl::r_uv_arg_0dot5prb(span<float> tmp_arg, uint32_t u)
 {
-  srsvec::sc_prod(phi_M_sc_12[u], M_PI_4, tmp_arg);
+  srsvec::sc_prod(phi_M_sc_6[u], M_PI_4, tmp_arg);
 }
 
 void low_papr_sequence_generator_impl::r_uv_arg_1prb(span<float> tmp_arg, uint32_t u)
@@ -186,4 +186,9 @@ void low_papr_sequence_generator_impl::generate(span<cf_t> sequence, unsigned u,
 
   // Do complex exponential and adjust amplitude.
   cexp(sequence, alpha, arg);
+}
+
+std::unique_ptr<low_papr_sequence_generator> srsgnb::create_low_papr_sequence_generator()
+{
+  return std::make_unique<low_papr_sequence_generator_impl>();
 }

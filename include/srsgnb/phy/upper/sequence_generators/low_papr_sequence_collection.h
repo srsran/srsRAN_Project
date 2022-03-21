@@ -3,6 +3,8 @@
 #define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_COLLECTION_H_
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
+#include "srsgnb/support/math_utils.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <map>
 
 namespace srsgnb {
@@ -58,7 +60,7 @@ public:
           pregen_signals[{u, v, alpha_idx}] = std::vector<cf_t>(M_zc);
 
           // Generate a sequence for each alpha.
-          generate(pregen_signals[{u, v, alpha_idx}], u, v, alphas[alpha_idx]);
+          generator.generate(pregen_signals[{u, v, alpha_idx}], u, v, alphas[alpha_idx]);
         }
       }
     }

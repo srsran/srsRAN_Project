@@ -1,8 +1,9 @@
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
+#ifndef LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
+#define LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
+#include <memory>
 
 namespace srsgnb {
 
@@ -77,6 +78,9 @@ public:
   void generate(span<cf_t> sequence, unsigned u, unsigned v, float alpha) const override;
 };
 
+/// Creates a generic low PAPR sequence generator.
+std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
+
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
+#endif // LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
