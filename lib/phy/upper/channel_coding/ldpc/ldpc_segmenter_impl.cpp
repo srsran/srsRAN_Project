@@ -38,7 +38,7 @@ void ldpc_segmenter_impl::compute_nof_segments()
 
 void ldpc_segmenter_impl::compute_lifting_size()
 {
-  unsigned ref_length{22};
+  unsigned ref_length = 22;
   if (base_graph == base_graph_t::BG2) {
     if (nof_tb_bits_in > 640) {
       ref_length = 10;
@@ -158,7 +158,7 @@ void ldpc_segmenter_impl::segment(
   compute_lifting_size();
   compute_segment_length();
 
-  unsigned nof_crc_bits{0};
+  unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {
     nof_crc_bits = seg_crc_length;
   }
@@ -172,7 +172,7 @@ void ldpc_segmenter_impl::segment(
   // rounded up.
   nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
-  unsigned input_idx{0};
+  unsigned input_idx = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     segment_data_t tmp_data(segment_length);
     // Number of bits to copy to this segment.
@@ -187,7 +187,7 @@ void ldpc_segmenter_impl::segment(
                  nof_filler_bits);
     input_idx += nof_info_bits;
 
-    codeblock_description_t tmp_description{};
+    codeblock_description_t tmp_description = {};
 
     tmp_description.tb_common.base_graph   = base_graph;
     tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);

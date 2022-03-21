@@ -62,35 +62,35 @@ private:
   static_vector<uint8_t, max_tbs> buffer;
 
   /// Base graph used for encoding/decoding the current transport block.
-  ldpc::base_graph_t base_graph{ldpc::base_graph_t::BG1};
+  ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
   /// Lifting size used for encoding/decoding the current transport block.
-  unsigned lifting_size{0};
+  unsigned lifting_size = 0;
 
   /// \name Attributes relative to TS38.212 Section 5.2.2.
   ///@{
 
   /// Maximum length of a segment (corresponds to \f$K_{cb}\f$ in ).
-  unsigned max_segment_length{0};
+  unsigned max_segment_length = 0;
   /// Final length of a segment (corresponds to \f$K\f$).
-  unsigned segment_length{0};
+  unsigned segment_length = 0;
   /// Number of bits in the transport block (corresponds to \f$B\f$).
-  unsigned nof_tb_bits_in{0};
+  unsigned nof_tb_bits_in = 0;
   /// Augmented number of bits in the transport block, including new CRCs (corresponds to \f$B'\f$).
-  unsigned nof_tb_bits_out{0};
+  unsigned nof_tb_bits_out = 0;
   /// Number of segments resulting from the transport block (corresponds to \f$C\f$).
-  unsigned nof_segments{0};
+  unsigned nof_segments = 0;
   ///@}
 
   /// \name Attributes relative to TS38.212 Section 5.4.2.1.
   ///@{
 
   /// Number of coded bits available for transmission of the transport block (corresponds to \f$G\f$).
-  unsigned nof_available_coded_bits{0};
+  unsigned nof_available_coded_bits = 0;
   /// Number of symbols per transmission layer (corresponds to \f$G / (N_L Q_m)\f$).
-  unsigned nof_symbols_per_layer{0};
+  unsigned nof_symbols_per_layer = 0;
   /// \brief Number of segments of short rate-matched length (corresponds to \f$C - \bigr(\bigl(G / (N_L Q_m)\bigr)
   /// \bmod C\bigr)\f$).
-  unsigned nof_short_segments{0};
+  unsigned nof_short_segments = 0;
   ///@}
 
   /// CRC calculators for transport-block and segment-specific checksums.
