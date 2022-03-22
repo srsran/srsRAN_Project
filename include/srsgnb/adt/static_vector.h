@@ -185,7 +185,12 @@ public:
       destroy(begin() + count, end());
       size_ = count;
     } else if (size_ < count) {
-      append(count - size_, value);
+      size_t to_append = count - size_;
+      if(to_append > MAX_N) {
+        // Note: Gcc 11 fails compilation without this assertion. Potentially a bug.
+        __builtin_unreachable();
+      }
+      append(to_append, value);
     }
   }
 
@@ -233,9 +238,7 @@ private:
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     srsran_assert(N + size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
-    for (size_type i = size_; i < size_ + N; ++i) {
-      buffer[i].emplace(element);
-    }
+    std::uninitialized_fill_n(end(), N, element);
     size_ += N;
   }
   void append(size_type N)
