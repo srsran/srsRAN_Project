@@ -74,18 +74,18 @@ struct test_bench {
 /// Verify the correct scheduling of a RAR and Msg3 in an FDD frame, when a single RACH is received.
 void test_ra_sched_fdd_single_rach()
 {
-  unsigned tx_delay = 4;
+  unsigned gnb_tx_delay = 2;
 
   test_bench bench;
 
   ra_sched ra_sch{bench.cfg};
 
-  slot_point              prach_sl_rx{0, 5};
+  slot_point              prach_sl_rx{0, 7};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, 0x4601);
 
-  slot_point sl_rx{0, tx_delay};
-  for (unsigned sl_count = 0; sl_rx < prach_sl_rx; ++sl_count) {
-    slot_point sl_tx{sl_rx + tx_delay};
+  slot_point sl_rx{0, gnb_tx_delay};
+  for (unsigned sl_count = 0; sl_rx <= prach_sl_rx; ++sl_count) {
+    slot_point sl_tx{sl_rx + gnb_tx_delay};
 
     if (sl_rx == prach_sl_rx) {
       // Enqueue PRACH

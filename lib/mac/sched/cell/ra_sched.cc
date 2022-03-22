@@ -117,7 +117,7 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 
     // Try to schedule DCIs + RBGs for RAR Grants
     unsigned nof_allocs = allocate_rar(rar_req, rar_slot_res, msg3_slot_res);
-    srsran_sanity_check(nof_allocs < rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
+    srsran_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
       // If RAR allocation was successful:
@@ -198,8 +198,8 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   // TODO
 
   // Status: RAR allocation was successful
-  avail_ul_prbs.resize_by(nof_prbs_per_msg3 * max_nof_allocs);
-  avail_dl_prbs.resize_by(nof_prbs_per_rar * max_nof_allocs);
+  avail_ul_prbs.resize_to(nof_prbs_per_msg3 * max_nof_allocs);
+  avail_dl_prbs.resize_to(nof_prbs_per_rar * max_nof_allocs);
 
   // 7. Fill RAR and Msg3 PDSCH, PUSCH and DCI
   fill_rar_grant(rar, avail_dl_prbs, avail_ul_prbs, rar_alloc, msg3_alloc, max_nof_allocs);
