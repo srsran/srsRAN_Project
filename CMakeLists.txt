@@ -42,6 +42,23 @@ ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wsuggest-override HAVE_SUGGEST_OVERRIDE)
 ## Avoid shadow variables which can be caused due to C code ported into C++
 #ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wshadow HAVE_SHADOW)
 
+########################################################################
+# Compiler launcher setup
+########################################################################
+
+# Enable ccache if not already enabled
+find_program(CCACHE_EXECUTABLE ccache)
+mark_as_advanced(CCACHE_EXECUTABLE)
+if (CCACHE_EXECUTABLE)
+    foreach (LANG C CXX)
+        if (NOT DEFINED CMAKE_${LANG}_COMPILER_LAUNCHER AND NOT CMAKE_${LANG}_COMPILER MATCHES ".*/ccache$")
+            message(STATUS "Enabling ccache for ${LANG}")
+            set(CMAKE_${LANG}_COMPILER_LAUNCHER ${CCACHE_EXECUTABLE} CACHE STRING "")
+        endif ()
+    endforeach ()
+endif ()
+
+
 include(CTest)
 
 include_directories(include)
