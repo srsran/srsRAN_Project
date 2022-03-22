@@ -3,11 +3,11 @@
 #define SRSGNB_BOUNDED_BITSET_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <cstdint>
 #include <inttypes.h>
 #include <string>
-#include "srsgnb/support/math_utils.h"
 
 namespace srsgnb {
 
@@ -58,9 +58,11 @@ Integer mask_lsb_zeros(size_t N)
 
 namespace detail {
 
-template <typename Integer, size_t SizeOf>
-struct zerobit_counter {
-  static Integer msb_count(Integer value)
+template <typename Integer>
+struct bitset_builtin_helper {
+  /// \brief Returns the number of leading 0-bits in value, starting at the most significant bit position.
+  /// If value is 0, the result is number of bits of Integer.
+  static Integer zero_msb_count(Integer value)
   {
     if (value == 0) {
       return std::numeric_limits<Integer>::digits;
@@ -76,7 +78,9 @@ struct zerobit_counter {
     }
     return ret;
   }
-  static Integer lsb_count(Integer value)
+  /// \brief Returns the number of trailing 0-bits in value, starting at the least significant bit position.
+  /// If value is 0, the result is number of bits of Integer.
+  static Integer zero_lsb_count(Integer value)
   {
     if (value == 0) {
       return std::numeric_limits<Integer>::digits;
@@ -92,34 +96,61 @@ struct zerobit_counter {
     }
     return ret;
   }
+
+  /// \brief Returns the number of 1-bits in value.
+  static int count_ones(Integer value)
+  {
+    // Note: use an "int" for count triggers popcount optimization if SSE instructions are enabled.
+    int c = 0;
+    for (Integer w = value; w > 0; c++) {
+      w &= w - 1;
+    }
+    return c;
+  }
 };
 
 #ifdef __GNUC__ // clang and gcc
 
-/// Specializations of bitset operations for unsigned
-template <typename Integer>
-struct zerobit_counter<Integer, 4> {
-  static Integer msb_count(Integer value)
+/// Specializations of bitset operations for unsigned.
+template <>
+struct bitset_builtin_helper<unsigned> {
+  static unsigned zero_msb_count(unsigned value)
   {
-    return (value) ? __builtin_clz(value) : std::numeric_limits<Integer>::digits;
+    return (value) ? __builtin_clz(value) : std::numeric_limits<unsigned>::digits;
   }
-  static Integer lsb_count(Integer value)
+  static unsigned zero_lsb_count(unsigned value)
   {
-    return (value) ? __builtin_ctz(value) : std::numeric_limits<Integer>::digits;
+    return (value) ? __builtin_ctz(value) : std::numeric_limits<unsigned>::digits;
   }
+  static int count_ones(unsigned value) { return __builtin_popcount(value); }
 };
 
-/// Specializations for unsigned long long
-template <typename Integer>
-struct zerobit_counter<Integer, 8> {
-  static Integer msb_count(Integer value)
+/// Specializations of bitset operations for unsigned long.
+template <>
+struct bitset_builtin_helper<unsigned long> {
+  static unsigned long zero_msb_count(unsigned long value)
   {
-    return (value) ? __builtin_clzll(value) : std::numeric_limits<Integer>::digits;
+    return (value) ? __builtin_clzl(value) : std::numeric_limits<unsigned long>::digits;
   }
-  static Integer lsb_count(Integer value)
+  static unsigned long zero_lsb_count(unsigned long value)
   {
-    return (value) ? __builtin_ctzll(value) : std::numeric_limits<Integer>::digits;
+    return (value) ? __builtin_ctzl(value) : std::numeric_limits<unsigned long>::digits;
   }
+  static int count_ones(unsigned long value) { return __builtin_popcountl(value); }
+};
+
+/// Specializations of bitset operations for unsigned long long.
+template <>
+struct bitset_builtin_helper<unsigned long long> {
+  static unsigned long long zero_msb_count(unsigned long long value)
+  {
+    return (value) ? __builtin_clzll(value) : std::numeric_limits<unsigned long long>::digits;
+  }
+  static unsigned long long zero_lsb_count(unsigned long long value)
+  {
+    return (value) ? __builtin_ctzll(value) : std::numeric_limits<unsigned long long>::digits;
+  }
+  static int count_ones(unsigned long long value) { return __builtin_popcountll(value); }
 };
 #endif
 
@@ -132,7 +163,7 @@ struct zerobit_counter<Integer, 8> {
 template <typename Integer>
 Integer find_first_msb_one(Integer value)
 {
-  return (value) ? (sizeof(Integer) * 8U - 1 - detail::zerobit_counter<Integer, sizeof(Integer)>::msb_count(value))
+  return (value) ? (sizeof(Integer) * 8U - 1 - detail::bitset_builtin_helper<Integer>::zero_msb_count(value))
                  : std::numeric_limits<Integer>::digits;
 }
 
@@ -143,7 +174,13 @@ Integer find_first_msb_one(Integer value)
 template <typename Integer>
 Integer find_first_lsb_one(Integer value)
 {
-  return detail::zerobit_counter<Integer, sizeof(Integer)>::lsb_count(value);
+  return detail::bitset_builtin_helper<Integer>::zero_lsb_count(value);
+}
+
+template <typename Integer>
+int count_ones(Integer value)
+{
+  return detail::bitset_builtin_helper<Integer>::count_ones(value);
 }
 
 /// \brief Represents a dynamically-sized bitset with an upper bound capacity of N bits.
@@ -331,15 +368,9 @@ public:
   /// \return Returns the number of bits set to 1.
   size_t count() const noexcept
   {
-    size_t result = 0;
+    int result = 0;
     for (size_t i = 0; i < nof_words_(); i++) {
-      //      result += __builtin_popcountl(buffer[i]);
-      // Note: use an "int" for count triggers popcount optimization if SSE instructions are enabled.
-      int c = 0;
-      for (word_t w = buffer[i]; w > 0; c++) {
-        w &= w - 1;
-      }
-      result += c;
+      result += count_ones(buffer[i]);
     }
     return result;
   }

@@ -34,7 +34,7 @@ uint32_t srsgnb::get_P(uint32_t bwp_nof_prb, bool config_1_or_2)
 uint32_t srsgnb::get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2)
 {
   uint32_t P = get_P(bwp_nof_prb, config1_or_2);
-  return ceil_div(bwp_nof_prb + (bwp_start % P), P);
+  return divide_ceil(bwp_nof_prb + (bwp_start % P), P);
 }
 
 uint32_t get_rbg_size(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2, uint32_t rbg_idx)

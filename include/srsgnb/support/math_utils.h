@@ -16,6 +16,7 @@
 #include "srsgnb/adt/complex.h"
 #include <cassert>
 #include <cmath>
+#include "srsran_assert.h"
 
 namespace srsgnb {
 
@@ -29,7 +30,7 @@ static constexpr cf_t COMPLEX_I(0, 1);
 /// \return The result of the operation.
 inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 {
-  assert(den != 0);
+  srsran_sanity_check(den != 0, "Denominator cannot be zero.");
   return (num + (den - 1)) / den;
 }
 
