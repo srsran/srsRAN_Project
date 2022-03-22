@@ -67,7 +67,7 @@ void du_high::push_pusch(mac_rx_data_indication pdu)
   mac->handle_rx_data_indication(std::move(pdu));
 }
 
-size_t du_high::query(const std::string& s)
+size_t du_high::query(const std::string& s) const
 {
   // TODO: This is temporary.
   if (s == "ues") {

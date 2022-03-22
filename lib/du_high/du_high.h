@@ -25,7 +25,7 @@ public:
 
   void push_pusch(mac_rx_data_indication pdu);
 
-  size_t query(const std::string& s);
+  size_t query(const std::string& s) const;
 
 private:
   std::unique_ptr<du_manager_interface> du_manager;
