@@ -31,5 +31,6 @@ int main()
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("F1AP").set_level(srslog::basic_levels::info);
 
-  test_du_ue_create();
+  // TODO: enable again after UE creation has been moved out of F1AP
+  // test_du_ue_create();
 }
