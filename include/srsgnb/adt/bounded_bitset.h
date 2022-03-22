@@ -7,14 +7,9 @@
 #include <cstdint>
 #include <inttypes.h>
 #include <string>
+#include "srsgnb/support/math_utils.h"
 
 namespace srsgnb {
-
-/// Computes (uint32_t)ceil((float)x / (float)y), avoiding floating point conversions.
-constexpr uint32_t ceil_div(uint32_t x, uint32_t y)
-{
-  return (x + y - 1) / y;
-}
 
 /// \brief Returns an unsigned integer with the N most significant bits (MSB) set to zero, and the remaining bits set
 /// to 1.
@@ -462,7 +457,7 @@ public:
     }
     // first word may not print 16 hex digits
     int    i           = nof_words_() - 1;
-    size_t rem_symbols = ceil_div((size() - (size() / bits_per_word) * bits_per_word), 4U);
+    size_t rem_symbols = divide_ceil((size() - (size() / bits_per_word) * bits_per_word), 4U);
     fmt::format_to(mem_buffer, "{:0>{}x}", buffer[i], rem_symbols);
     // remaining words will occupy 16 hex digits
     for (--i; i >= 0; --i) {
