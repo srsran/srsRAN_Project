@@ -90,7 +90,7 @@ private:
   public:
     du_ue_index_t                    ue_index = MAX_NOF_UES;
     rnti_t                           rnti     = INVALID_RNTI;
-    slot_vector<mac_tx_sdu_builder*> dl_bearers;
+    slot_vector<mac_sdu_tx_builder*> dl_bearers;
   };
 
   slot_array<ue_item, MAX_NOF_UES>                 ue_db;

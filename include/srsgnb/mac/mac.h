@@ -60,10 +60,10 @@ public:
 };
 
 /// This interface represents the entry point of a logical channel in the MAC layer.
-class mac_tx_sdu_builder
+class mac_sdu_tx_builder
 {
 public:
-  virtual ~mac_tx_sdu_builder()                = default;
+  virtual ~mac_sdu_tx_builder()                = default;
   virtual void on_new_tx_sdu(byte_buffer& pdu) = 0;
 };
 
@@ -76,7 +76,7 @@ struct ul_ccch_indication_message {
 struct logical_channel_addmod {
   lcid_t               lcid;
   mac_sdu_rx_notifier* ul_bearer;
-  mac_tx_sdu_builder*  dl_bearer;
+  mac_sdu_tx_builder*  dl_bearer;
 };
 
 struct mac_ue_create_request_message {
