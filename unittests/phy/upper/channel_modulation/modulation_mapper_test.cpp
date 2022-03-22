@@ -10,135 +10,44 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
+#include "modulation_mapper_test_data.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <random>
-
-static std::mt19937 rgen(0);
 
 using namespace srsgnb;
 
 static constexpr float assert_max_err = 1e-6;
 
-static void modulate_generic(const span<uint8_t>& bits, span<cf_t> symbols, modulation_scheme scheme)
+static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, const std::vector<cf_t>& expected_symbols)
 {
-  unsigned Qm    = 0;
-  float    scale = 0;
-  switch (scheme) {
-    case modulation_scheme::BPSK:
-      Qm    = 1;
-      scale = 1.0F / std::sqrt(2.0F);
-      break;
-    case modulation_scheme::QPSK:
-      Qm    = 2;
-      scale = 1.0F / std::sqrt(2.0F);
-      break;
-    case modulation_scheme::QAM16:
-      Qm    = 4;
-      scale = 1.0F / std::sqrt(10.0F);
-      break;
-    case modulation_scheme::QAM64:
-      Qm    = 6;
-      scale = 1.0F / std::sqrt(42.0F);
-      break;
-    case modulation_scheme::QAM256:
-      Qm    = 8;
-      scale = 1.0F / std::sqrt(170.0F);
-      break;
-  }
+  srsran_assert(symbols.size() == expected_symbols.size(), "wrong number of modulated symbols");
 
-  srsran_assert(Qm != 0, "Failed");
-  srsran_assert(std::isnormal(Qm), "Failed");
-  srsran_assert(bits.size() / Qm == symbols.size(), "Failed");
-
-  // For each symbol
-  for (unsigned symb_idx = 0; symb_idx != symbols.size(); ++symb_idx) {
-    float offset = -1;
-    float real   = 0;
-    float imag   = 0;
-
-    // BPSK is an exception
-    if (Qm == 1) {
-      // Set symbol value
-      symbols[symb_idx] = (bits[symb_idx] == 0) ? cf_t{scale, scale} : cf_t{-scale, -scale};
-
-      continue;
-    }
-
-    // For each pair of bits in the symbol
-    for (uint32_t j = 0; j < Qm / 2; j++) {
-      // Calculate bit indexes for Real and Imaginary
-      unsigned real_bit_idx = Qm * symb_idx + (Qm - 2 * j - 2);
-      unsigned imag_bit_idx = Qm * symb_idx + (Qm - 2 * j - 1);
-
-      // Apply offset
-      real += offset;
-      imag += offset;
-
-      // Increase offset per symbol
-      offset *= 2;
-
-      // Apply modulation
-      real *= (bits[real_bit_idx] != 0) ? +1 : -1;
-      imag *= (bits[imag_bit_idx] != 0) ? +1 : -1;
-    }
-
-    // Set symbol value
-    symbols[symb_idx] = {real * scale, imag * scale};
-  }
-}
-
-void test_modulator(std::size_t nsymbols, modulation_scheme scheme)
-{
-  unsigned                                     Qm = static_cast<unsigned>(scheme);
-  std::uniform_int_distribution<unsigned char> dist(0, 1);
-
-  // Create data bits
-  srsgnb::srsvec::aligned_vec<uint8_t> data(Qm * nsymbols);
-
-  // Fill data with random bits
-  for (unsigned char& v : data) {
-    v = dist(rgen);
-  }
-
-  // Modulate
-  srsgnb::srsvec::aligned_vec<cf_t>  symbols(nsymbols);
-  std::unique_ptr<modulation_mapper> modulator = create_modulation_mapper();
-  modulator->modulate(data, symbols, scheme);
-
-  // Generate golden sequence
-  srsgnb::srsvec::aligned_vec<cf_t> symbols_gold(nsymbols);
-  modulate_generic(data, symbols_gold, scheme);
-
-  // Assert
-  for (unsigned i = 0; i != nsymbols; ++i) {
-    // Calculate error
-    float err = std::abs(symbols_gold[i] - symbols[i]);
-
-    // Print for debugging purposes
-    //    printf("Qm=%d; gold=%+.6f%+.6f; symbol=%+.6f%+.6f; err=%f\n",
-    //           Qm,
-    //           symbols_gold[i].real(),
-    //           symbols_gold[i].imag(),
-    //           symbols[i].real(),
-    //           symbols[i].imag(),
-    //           err);
-
-    // Assert maximum error
-    srsran_assert(err < assert_max_err, "Failed");
+  for (unsigned i = 0; i < symbols.size(); ++i) {
+    float err = std::abs(symbols[i] - expected_symbols[i]);
+    srsran_assert(err < assert_max_err,
+                  "Mismatched value %+f%+f but expected %+f%+f",
+                  symbols[i].real(),
+                  symbols[i].imag(),
+                  expected_symbols[i].real(),
+                  expected_symbols[i].imag());
   }
 }
 
 int main()
 {
-  std::vector<std::size_t> sizes = {257, 997};
+  std::unique_ptr<modulation_mapper> modulator = create_modulation_mapper();
 
-  for (std::size_t N : sizes) {
-    test_modulator(N, modulation_scheme::BPSK);
-    test_modulator(N, modulation_scheme::QPSK);
-    test_modulator(N, modulation_scheme::QAM16);
-    test_modulator(N, modulation_scheme::QAM64);
-    test_modulator(N, modulation_scheme::QAM256);
+  for (const test_case_t& test_case : modulation_mapper_test_data) {
+    // Load input data
+    const std::vector<uint8_t> testvector_data = test_case.data.read();
+
+    // Modulate
+    srsgnb::srsvec::aligned_vec<cf_t> symbols(test_case.nsymbols);
+    modulator->modulate(testvector_data, symbols, test_case.scheme);
+
+    // Load expected symbols and verify the result
+    const std::vector<cf_t> testvector_symbols = test_case.symbols.read();
+    assert_symbols(symbols, testvector_symbols);
   }
+  return 0;
 }

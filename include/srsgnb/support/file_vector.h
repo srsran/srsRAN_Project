@@ -2,6 +2,7 @@
 #define SRSGNB_SUPPORT_FILE_VECTOR_H
 
 #include <fstream>
+#include <vector>
 
 namespace srsgnb {
 
