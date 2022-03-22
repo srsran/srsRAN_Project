@@ -18,10 +18,10 @@ namespace srsgnb {
 class mac_impl : public mac_interface
 {
 public:
-  explicit mac_impl(mac_sdu_rx_notifier&   ul_ccch_notifier,
+  explicit mac_impl(mac_sdu_rx_notifier&      ul_ccch_notifier,
                     du_l2_ul_executor_mapper& ul_exec_mapper,
-                    span<task_executor*>   dl_execs,
-                    task_executor&         ctrl_exec);
+                    span<task_executor*>      dl_execs,
+                    task_executor&            ctrl_exec);
 
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
   async_task<mac_ue_reconfiguration_response_message>
@@ -31,6 +31,8 @@ public:
   void handle_rx_data_indication(mac_rx_data_indication msg) override;
 
   void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
+
+  void handle_crc(const crc_indication_message& msg) override {}
 
 private:
   mac_common_config_t   cfg;

@@ -43,21 +43,28 @@ struct mac_rx_data_indication {
   mac_rx_pdu_list pdus;
 };
 
+/// CRC.Indication
+struct crc_indication_message {
+  slot_point sl_rx;
+  // TODO: remaining fields.
+};
+
 /// This interface notifies to upper layers the reception of new SDUs over a logical channel.
 class mac_sdu_rx_notifier
 {
 public:
   virtual ~mac_sdu_rx_notifier() = default;
 
-  /// This callback is invoked on each generated SDU.
+  /// This callback is invoked on each received SDU.
   virtual void on_new_sdu(mac_rx_sdu sdu) = 0;
 };
 
+/// This interface represents the entry point of a logical channel in the MAC layer.
 class mac_tx_sdu_builder
 {
 public:
   virtual ~mac_tx_sdu_builder()                = default;
-  virtual void on_dl_mac_sdu(byte_buffer& pdu) = 0;
+  virtual void on_new_tx_sdu(byte_buffer& pdu) = 0;
 };
 
 struct ul_ccch_indication_message {
@@ -116,7 +123,7 @@ public:
   virtual ~mac_configurer() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
   virtual async_task<mac_ue_reconfiguration_response_message>
-                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                                  = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
 };
 
@@ -138,7 +145,19 @@ public:
   virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
 };
 
-class mac_interface : public mac_slot_indicator, public mac_configurer, public mac_sdu_rx_handler
+/// Interface to handle feedback information from the PHY.
+class mac_control_information_handler
+{
+public:
+  virtual ~mac_control_information_handler() = default;
+
+  virtual void handle_crc(const crc_indication_message& msg) = 0;
+};
+
+class mac_interface : public mac_slot_indicator,
+                      public mac_configurer,
+                      public mac_sdu_rx_handler,
+                      public mac_control_information_handler
 {};
 
 } // namespace srsgnb
