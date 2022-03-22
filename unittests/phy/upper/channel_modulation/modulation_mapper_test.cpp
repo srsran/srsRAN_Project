@@ -18,7 +18,7 @@ using namespace srsgnb;
 
 static constexpr float assert_max_err = 1e-6;
 
-static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, const std::vector<cf_t>& expected_symbols)
+static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, span<const cf_t>& expected_symbols)
 {
   srsran_assert(symbols.size() == expected_symbols.size(), "wrong number of modulated symbols");
 
@@ -47,7 +47,8 @@ int main()
 
     // Load expected symbols and verify the result
     const std::vector<cf_t> testvector_symbols = test_case.symbols.read();
-    assert_symbols(symbols, testvector_symbols);
+    span<const cf_t>        expected_symbols{testvector_symbols};
+    assert_symbols(symbols, expected_symbols);
   }
   return 0;
 }
