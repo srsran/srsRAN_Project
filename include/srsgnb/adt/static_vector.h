@@ -233,7 +233,9 @@ private:
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     srsran_assert(N + size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
-    std::uninitialized_fill_n(end(), N, element);
+    for (size_type i = size_; i < size_ + N; ++i) {
+      buffer[i].emplace(element);
+    }
     size_ += N;
   }
   void append(size_type N)

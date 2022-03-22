@@ -116,7 +116,7 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
     }
 
     // Try to schedule DCIs + RBGs for RAR Grants
-    unsigned nof_allocs = allocate_rar(rar_req, rar_slot_res, msg3_slot_res);
+    size_t nof_allocs = allocate_rar(rar_req, rar_slot_res, msg3_slot_res);
     srsran_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
