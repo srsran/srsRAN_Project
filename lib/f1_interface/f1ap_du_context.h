@@ -18,7 +18,7 @@ struct f1ap_du_cell_context {};
 struct f1ap_du_context {
   std::vector<f1ap_du_cell_context> cell_ctxt_manager;
   std::vector<f1ap_du_ue_context>   ue_ctxt_manager;
-  du_manager_interface_f1ap*        du_manager;
+  du_manager_interface_f1ap*        du_manager = nullptr;
 };
 
 } // namespace srsgnb

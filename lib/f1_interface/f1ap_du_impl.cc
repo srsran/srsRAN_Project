@@ -1,14 +1,29 @@
 
 #include "f1ap_du_impl.h"
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener, du_manager_interface_f1ap& du_manager) :
-  logger(srslog::fetch_basic_logger("F1AP"))
+f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener) : logger(srslog::fetch_basic_logger("F1AP")) {}
+
+void f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
 {
-  ctxt.du_manager = &du_manager;
+  logger.info("{}", __FUNCTION__);
+  /// TODO: add impl
+}
+
+void f1ap_du_impl::f1ap_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)
+{
+  logger.info("{}", __FUNCTION__);
+  /// TODO: add impl
+}
+
+void f1ap_du_impl::f1ap_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail)
+{
+  logger.info("{}", __FUNCTION__);
+  /// TODO: add impl
 }
 
 void f1ap_du_impl::ul_ccch_message_indication(const ul_ccch_indication_message& msg)

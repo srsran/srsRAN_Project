@@ -106,6 +106,19 @@ private:
   f1ap_du_config_interface* f1ap = nullptr;
 };
 
+class du_f1ap_setup_adapter : public du_manager_setup_notifier
+{
+public:
+  void connect(f1ap_du_setup_interface& f1ap_) { f1ap = &f1ap_; }
+
+  void on_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) override { f1ap->f1ap_du_setup_response(resp); }
+
+  void on_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail) override { f1ap->f1ap_du_setup_failure(fail); }
+
+private:
+  f1ap_du_setup_interface* f1ap = nullptr;
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_ADAPTERS_H

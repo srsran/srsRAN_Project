@@ -7,9 +7,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<f1ap_du_interface> srsgnb::create_f1ap_du(f1ap_du_pdu_notifier&      pdu_listener,
-                                                          du_manager_interface_f1ap& du_manager)
+std::unique_ptr<f1ap_du_interface> srsgnb::create_f1ap_du(f1ap_du_pdu_notifier& pdu_listener)
 {
-  auto f1ap_du = std::make_unique<f1ap_du_impl>(pdu_listener, du_manager);
+  auto f1ap_du = std::make_unique<f1ap_du_impl>(pdu_listener);
   return f1ap_du;
 }

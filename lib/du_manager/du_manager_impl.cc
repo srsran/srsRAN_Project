@@ -3,7 +3,11 @@
 
 namespace srsgnb {
 
-du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg) {}
+du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg)
+{
+  // start F1 setup procedure
+  cfg.f1ap->f1ap_du_setup_request(cfg.setup_params);
+}
 
 void du_manager_impl::ue_create(const du_ue_create_message& msg)
 {

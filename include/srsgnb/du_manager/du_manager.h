@@ -3,6 +3,7 @@
 #define SRSGNB_DU_MANAGER_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -81,6 +82,15 @@ class du_manager_interface : public du_manager_interface_rlc,
 {
 public:
   virtual ~du_manager_interface() = default;
+};
+
+/// F1AP notifies DU about outcome of F1 Setup attempt
+class du_manager_setup_notifier
+{
+public:
+  virtual ~du_manager_setup_notifier()                                         = default;
+  virtual void on_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)   = 0;
+  virtual void on_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& failure) = 0;
 };
 
 } // namespace srsgnb

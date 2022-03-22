@@ -13,7 +13,11 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1ap_du_interface
 {
 public:
-  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener, du_manager_interface_f1ap& du_manager);
+  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener);
+
+  void f1ap_du_setup_request(const du_setup_params& params) override;
+  void f1ap_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) override;
+  void f1ap_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail) override;
 
   void ul_ccch_message_indication(const ul_ccch_indication_message& msg) override;
   void ue_creation_response(const du_ue_create_response_message& resp) override;

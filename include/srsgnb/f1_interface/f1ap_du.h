@@ -3,6 +3,7 @@
 #define SRSGNB_F1AP_DU_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 
@@ -42,6 +43,24 @@ public:
   virtual void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) = 0;
 };
 
+struct du_setup_params {
+  // mandatory
+  uint64_t gnb_du_id;
+  uint8_t  rrc_version;
+
+  // optional
+  std::string gnb_du_name;
+};
+
+class f1ap_du_setup_interface
+{
+public:
+  virtual ~f1ap_du_setup_interface()                                           = default;
+  virtual void f1ap_du_setup_request(const du_setup_params& params)            = 0;
+  virtual void f1ap_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) = 0;
+  virtual void f1ap_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail)  = 0;
+};
+
 class f1ap_du_config_interface
 {
 public:
@@ -50,7 +69,10 @@ public:
 };
 
 /// Packet entry point for the F1AP interface.
-class f1ap_du_interface : public f1ap_du_dl_interface, public f1ap_du_ul_interface, public f1ap_du_config_interface
+class f1ap_du_interface : public f1ap_du_dl_interface,
+                          public f1ap_du_ul_interface,
+                          public f1ap_du_config_interface,
+                          public f1ap_du_setup_interface
 {
 public:
   virtual ~f1ap_du_interface() = default;
