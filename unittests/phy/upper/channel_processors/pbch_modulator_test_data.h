@@ -1,9 +1,8 @@
-#ifndef SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
-#define SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
+#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
+#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
 
 // This file was generated using the following MATLAB scripts:
-//   + "nr_pbch_symbol_modulator_unittest.m"
-//   + "nr_pbch_modulation_symbols_testvector_generate.m"
+//   + "srsPBCHmodulatorUnittest.m"
 
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/adt/complex.h"
@@ -32,4 +31,4 @@ static const std::vector<test_case_t> pbch_modulator_test_data = {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UNITTEST_PHY_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
+#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_TEST_DATA_H
