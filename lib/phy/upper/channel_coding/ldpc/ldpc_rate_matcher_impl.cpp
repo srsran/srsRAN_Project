@@ -5,7 +5,7 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-void ldpc_rate_matcher_impl::init(const config_t& cfg)
+void ldpc_rate_matcher_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 {
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
@@ -13,7 +13,9 @@ void ldpc_rate_matcher_impl::init(const config_t& cfg)
   modulation_order = static_cast<uint8_t>(cfg.mod);
 }
 
-void ldpc_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
+void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                                 output,
+                                        span<const uint8_t>                           input,
+                                        const codeblock_metadata::tb_common_metadata& cfg)
 {
   init(cfg);
 

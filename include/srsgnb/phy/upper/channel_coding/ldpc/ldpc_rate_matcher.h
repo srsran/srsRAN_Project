@@ -4,7 +4,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_MATCHER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/phy/upper/codeblock_metadata.h"
 
 namespace srsgnb {
 
@@ -15,18 +15,6 @@ public:
   /// Default virtual destructor.
   virtual ~ldpc_rate_matcher() = default;
 
-  /// Rate matching configuration parameters.
-  struct config_t {
-    /// Redundancy version, values in {0, 1, 2, 3}.
-    unsigned rv{0};
-    /// Modulation scheme.
-    modulation_scheme mod{modulation_scheme::BPSK};
-    /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    ///
-    /// Set to zero for unlimited buffer length.
-    unsigned Nref{0};
-  };
-
   /// \brief Carries out the rate matching of a codeblock.
   ///
   /// \param[out] output  Rate matched codeblock. Each \c uint8_t entry corresponds to a single bit.
@@ -34,7 +22,8 @@ public:
   ///                     single bit.
   /// \param[in]  cfg     Configuration parameters. \remark The sizes of \c input and \c output determine
   ///                     the behavior of the rate matching algorithm.
-  virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) = 0;
+  virtual void
+  rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };
 
 std::unique_ptr<ldpc_rate_matcher> create_ldpc_rate_matcher();

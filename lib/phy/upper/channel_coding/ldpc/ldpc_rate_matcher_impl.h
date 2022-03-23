@@ -14,11 +14,13 @@ class ldpc_rate_matcher_impl : public ldpc_rate_matcher
 {
 public:
   // See interface for the documentation.
-  void rate_match(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) override;
+  void rate_match(span<uint8_t>                                 output,
+                  span<const uint8_t>                           input,
+                  const codeblock_metadata::tb_common_metadata& cfg) override;
 
 private:
   /// Initializes the rate matcher internal state.
-  void init(const config_t& cfg);
+  void init(const codeblock_metadata::tb_common_metadata& cfg);
 
   /// \brief Carries out bit selection, as per TS38.212 Section 5.4.2.1.
   ///

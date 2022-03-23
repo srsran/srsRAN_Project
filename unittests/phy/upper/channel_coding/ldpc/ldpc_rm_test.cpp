@@ -2,7 +2,6 @@
 /// \brief LDPC rate matching and recovering unit test.
 
 #include "ldpc_rm_test_sets.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -130,9 +129,9 @@ int run_rv_mod_lbrm_test(unsigned                                           rv,
   for (int i = 0; i != nof_rates; ++i) {
     unsigned mod_order = static_cast<unsigned>(mod);
     unsigned rm_length = static_cast<unsigned>(floor(message_length / rate_list[i] / mod_order)) * mod_order;
-    std::vector<uint8_t>        matched(rm_length);
-    unsigned                    n_ref = lbrm ? test_Nref : 0;
-    ldpc_rate_matcher::config_t rm_cfg{rv, mod, n_ref};
+    std::vector<uint8_t> matched(rm_length);
+    unsigned             n_ref = lbrm ? test_Nref : 0;
+    codeblock_metadata::tb_common_metadata rm_cfg{{}, {}, rv, mod, n_ref};
     matcher->rate_match(matched, codeblock, rm_cfg);
 
     // Compare the rate matched codeblocks with the benchmark ones.
