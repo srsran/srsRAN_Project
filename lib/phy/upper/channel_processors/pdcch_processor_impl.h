@@ -23,10 +23,10 @@ struct pdcch_processor_config_t {
 class pdcch_processor_impl : public pdcch_processor
 {
 private:
-  /// Define the number of RE used for PDCCH in a RB.
+  /// Defines the number of RE used for PDCCH in a RB.
   static constexpr unsigned NOF_RE_PDCCH_PER_RB = NRE - 3;
 
-  /// Define the number of REG per CCE
+  /// Defines the number of REG per CCE.
   static constexpr unsigned NOF_REG_PER_CCE = 6;
 
   /// Define the maximum CORESET duration.
@@ -58,29 +58,27 @@ private:
     return duration * aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
   }
 
-  /// \brief Maps a CORESET REG mask to a physical resource blocks mask.
-  ///
+  /// \brief Maps a CORESET REG mask to a RB mask.
   /// \param[out] rb_mask Destination resource block mask.
   /// \param[in] reg_mask Resource block mask relative to the CORESET.
   /// \param[in] coreset Provides CORESET parameters.
   static void map_reg_to_prb(span<bool> rb_mask, span<const bool> reg_mask, const coreset_description& coreset);
 
-  /// \brief Computes the allocation mask according to TS 38.211 section 7.3.2.2 for non-interleaved mapping.
+  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2 for non-interleaved mapping.
   /// \param[out] mask Allocation mask destination.
   /// \param[in] coreset Provides CORESET parameters.
   /// \param[in] dci Provides DCI parameters.
   static void
   compute_rb_mask_non_interleaved(span<bool> mask, const coreset_description& coreset, const dci_description& dci);
 
-  /// \brief Computes the allocation mask according to TS 38.211 section 7.3.2.2 for interleaved mapping.
+  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2 for interleaved mapping.
   /// \param[out] mask Allocation mask destination.
   /// \param[in] coreset Provides CORESET parameters.
   /// \param[in] dci Provides DCI parameters.
-
   static void
   compute_rb_mask_interleaved(span<bool> mask, const coreset_description& coreset, const dci_description& dci);
 
-  /// \brief Computes the allocation mask according to TS 38.211 section 7.3.2.2.
+  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2.
   /// \param[out] mask Allocation mask destination.
   /// \param[in] coreset Provides CORESET parameters.
   /// \param[in] dci Provides DCI parameters.
