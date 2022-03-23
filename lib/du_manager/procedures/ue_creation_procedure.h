@@ -44,44 +44,51 @@ public:
 class ue_creation_procedure
 {
 public:
-  ue_creation_procedure(du_ue_context*                    ue_ptr,
+  ue_creation_procedure(du_ue_index_t                     ue_index,
                         const ul_ccch_indication_message& ccch_ind_msg,
                         const du_manager_config_t&        cfg_,
                         ue_manager_ctrl_configurer&       ue_mng_) :
-    ue_ctx(ue_ptr), msg(ccch_ind_msg), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
-  {}
+    msg(ccch_ind_msg), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
+  {
+    ue_ctx.ue_index    = ue_index;
+    ue_ctx.rnti        = ccch_ind_msg.crnti;
+    ue_ctx.pcell_index = ccch_ind_msg.cell_index;
+  }
 
   void operator()(coro_context<async_task<void> >& ctx)
   {
     CORO_BEGIN(ctx);
 
-    log_proc_started(logger, ue_ctx != nullptr ? ue_ctx->ue_index : MAX_NOF_UES, msg.crnti, "UE Create");
+    log_proc_started(logger, ue_ctx.ue_index, msg.crnti, "UE Create");
 
-    // 1. Verify if UE context was succesfully created.
-    if (ue_ctx == nullptr) {
-      log_proc_failure(logger, MAX_NOF_UES, msg.crnti, name(), "Failure to allocate DU UE context.");
-      clear_ue();
+    // 1. Verify if UE index was successfully allocated and params are valid.
+    if (ue_ctx.ue_index == MAX_NOF_UES) {
+      log_proc_failure(logger, MAX_NOF_UES, msg.crnti, name(), "Failure to allocate DU UE index.");
+      CORO_EARLY_RETURN();
+    }
+    if (ue_mng.find_rnti(ue_ctx.rnti) != nullptr) {
+      log_proc_failure(logger, MAX_NOF_UES, msg.crnti, name(), "Repeated RNTI.");
       CORO_EARLY_RETURN();
     }
 
     // 2. Initiate creation of F1 UE context and await result.
     CORO_AWAIT_VALUE(f1_resp, make_f1_ue_create_req());
     if (not f1_resp.result) {
-      log_proc_failure(logger, ue_ctx->ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
+      log_proc_failure(logger, ue_ctx.ue_index, msg.crnti, name(), "UE failed to be created in F1AP.");
       clear_ue();
       CORO_EARLY_RETURN();
     }
 
     // 3. Create UE RLC bearers.
-    ue_ctx->bearers.emplace(0);
-    ue_ctx->bearers[0].lcid            = 0;
-    ue_ctx->bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx->ue_index, *cfg.f1ap_ul);
+    ue_ctx.bearers.emplace(0);
+    ue_ctx.bearers[0].lcid            = 0;
+    ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_ul);
     for (const auto& lc : msg.logical_channels_to_add) {
-      ue_ctx->bearers.emplace(lc.lcid);
-      auto& bearer = ue_ctx->bearers[lc.lcid];
+      ue_ctx.bearers.emplace(lc.lcid);
+      auto& bearer = ue_ctx.bearers[lc.lcid];
       bearer.lcid  = 1;
       // Create UL RLC bearer
-      bearer.ul_bearer = create_rlc_ul_bearer(ue_ctx->ue_index, lc.lcid, *cfg.rlc_ul_notifier);
+      bearer.ul_bearer = create_rlc_ul_bearer(ue_ctx.ue_index, lc.lcid, *cfg.rlc_ul_notifier);
       // Create UL RLC bearer adapter that is going to be used by MAC to notify Rx SDUs
       bearer.mac_ul_notifier = std::make_unique<mac_ul_dcch_adapter>(*bearer.ul_bearer);
       // Create DL RLC bearer
@@ -91,15 +98,22 @@ public:
     // 4. Initiate MAC UE creation and await result.
     CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
     if (not mac_resp.result) {
-      log_proc_failure(logger, ue_ctx->ue_index, msg.crnti, "UE failed to be created in MAC.");
+      log_proc_failure(logger, ue_ctx.ue_index, msg.crnti, "UE failed to be created in MAC.");
       clear_ue();
       CORO_EARLY_RETURN();
     }
 
-    // 5. Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
+    // 5. Create UE context in DU manager.
+    if (ue_mng.add_ue(std::move(ue_ctx)) == nullptr) {
+      log_proc_failure(logger, ue_ctx.ue_index, msg.crnti, "UE failed to be created in DU manager.");
+      clear_ue();
+      CORO_EARLY_RETURN();
+    }
+
+    // 6. Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
     cfg.mac->flush_ul_ccch_msg(msg.crnti);
 
-    log_proc_completed(logger, ue_ctx->ue_index, msg.crnti, "UE Create");
+    log_proc_completed(logger, ue_ctx.ue_index, msg.crnti, "UE Create");
     CORO_RETURN();
   }
 
@@ -112,18 +126,15 @@ private:
       // TODO: F1 UE removal.
     }
     // TODO: MAC RNTI needs to be cleared.
-    if (ue_ctx != nullptr) {
-      ue_mng.remove_ue(ue_ctx->ue_index);
-    }
   }
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req()
   {
     mac_ue_create_request_message mac_ue_create_msg{};
-    mac_ue_create_msg.ue_index   = ue_ctx->ue_index;
+    mac_ue_create_msg.ue_index   = ue_ctx.ue_index;
     mac_ue_create_msg.crnti      = msg.crnti;
     mac_ue_create_msg.cell_index = msg.cell_index;
-    for (du_logical_channel_context& bearer : ue_ctx->bearers) {
+    for (du_logical_channel_context& bearer : ue_ctx.bearers) {
       mac_ue_create_msg.bearers.emplace_back();
       auto& lc     = mac_ue_create_msg.bearers.back();
       lc.lcid      = bearer.lcid;
@@ -136,16 +147,16 @@ private:
   async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
   {
     f1ap_du_ue_create_request f1_msg{};
-    f1_msg.ue_index = ue_ctx->ue_index;
+    f1_msg.ue_index = ue_ctx.ue_index;
     return cfg.f1ap->handle_ue_creation_request(f1_msg);
   }
 
-  du_ue_context*              ue_ctx = nullptr;
   ul_ccch_indication_message  msg;
   const du_manager_config_t&  cfg;
   srslog::basic_logger&       logger;
   ue_manager_ctrl_configurer& ue_mng;
 
+  du_ue_context                  ue_ctx{};
   mac_ue_create_response_message mac_resp{};
   f1ap_du_ue_create_response     f1_resp{};
 };

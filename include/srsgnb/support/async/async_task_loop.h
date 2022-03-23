@@ -43,6 +43,10 @@ public:
     return std::move(loop_task);
   }
 
+  size_t nof_pending_tasks() const { return queue.size(); }
+
+  bool empty() const { return queue.size() == 0; }
+
 private:
   void run()
   {

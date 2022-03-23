@@ -34,6 +34,8 @@ public:
     return false;
   }
 
+  size_t size() const { return queue.size(); }
+
   struct awaiter_type {
     awaiter_type(async_queue* parent_) : parent(parent_) {}
 

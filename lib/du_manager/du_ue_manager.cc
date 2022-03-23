@@ -17,21 +17,17 @@ du_ue_manager::du_ue_manager(du_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.
 
 void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& msg)
 {
-  // Allocate UE context and reserve UE index for provided RNTI.
-  du_ue_context* ue_ptr   = nullptr;
-  du_ue_index_t  ue_index = ue_db.find_first_empty();
-  if (ue_index == MAX_NOF_UES) {
-    logger.warning("Couldn't create new DU UE with rnti=0x{:x}", msg.crnti);
-  } else {
-    du_ue_context ue_ctxt{};
-    ue_ctxt.ue_index    = ue_index;
-    ue_ctxt.rnti        = msg.crnti;
-    ue_ctxt.pcell_index = msg.cell_index;
-    ue_ptr              = add_ue(std::move(ue_ctxt));
+  // Search unallocated UE index with no pending events.
+  du_ue_index_t ue_idx_candidate = MAX_NOF_UES;
+  for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
+    if (not ue_db.contains(i) and ue_ctrl_loop[i].empty()) {
+      ue_idx_candidate = i;
+      break;
+    }
   }
 
   // Enqueue UE creation procedure
-  ue_ctrl_loop[ue_index].schedule<ue_creation_procedure>(ue_ptr, msg, cfg, *this);
+  ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, msg, cfg, *this);
 }
 
 void du_ue_manager::handle_ue_delete_request(const du_ue_delete_message& msg)
