@@ -5,14 +5,6 @@
 
 using namespace srsgnb;
 
-class f1ap_cfg_adapter : public du_manager_config_notifier
-{
-public:
-  optional<du_ue_create_response_message> last_ue_create_resp;
-
-  void on_du_ue_create_response(const du_ue_create_response_message& resp) override { last_ue_create_resp = resp; }
-};
-
 class mac_test_dummy : public mac_configurer
 {
 public:
@@ -51,8 +43,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   f1ap_cfg_adapter f1ap_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac               = &mac_dummy;
-  cfg.f1ap_cfg_notifier = &f1ap_dummy;
+  cfg.mac = &mac_dummy;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -126,12 +117,10 @@ void test_inexistent_ue_removal()
 {
   test_delimit_logger delimiter{"Test inexistent UE removal"};
 
-  mac_test_dummy   mac_dummy;
-  f1ap_cfg_adapter f1ap_dummy;
+  mac_test_dummy mac_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac               = &mac_dummy;
-  cfg.f1ap_cfg_notifier = &f1ap_dummy;
+  cfg.mac = &mac_dummy;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());

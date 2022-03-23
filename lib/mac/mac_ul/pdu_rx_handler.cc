@@ -32,6 +32,34 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   return handle_rx_subpdus(ctx);
 }
 
+bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
+{
+  if (msg3_buffer[rnti].decoded_subpdus.nof_subpdus() == 0) {
+    logger.warning("Received signal to push UL CCCH message for inexistent RNTI=0x{:x}", rnti);
+    return false;
+  }
+
+  mac_ul_ue* ue = ue_manager.find_rnti(rnti);
+  if (ue == nullptr) {
+    logger.warning("Received UL CCCH for inexistent RNTI=0x{:x}", rnti);
+    return false;
+  }
+
+  lcid_t lcid = 0;
+  if (not ue->ul_bearers.contains(lcid)) {
+    logger.warning("Received UL PDU for inexistent bearer {{" FMT_RNTI ", {}}}", ue->rnti, lcid);
+    return false;
+  }
+
+  mac_ul_sch_subpdu& sdu = msg3_buffer[rnti].decoded_subpdus.subpdu(0);
+  log_ul_pdu(
+      logger, MAX_NOF_UES, ue->rnti, msg3_buffer[rnti].cell_index_rx, "CCCH", "Pushing {} bytes", sdu.sdu_length());
+
+  // Push CCCH message to upper layers
+  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  return true;
+}
+
 bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 {
   mac_ul_ue* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
@@ -75,7 +103,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   }
 
   // Push PDU to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{}}); // TODO: Create SDU
+  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
   return true;
 }
 
@@ -139,12 +167,13 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   // Store Msg3 content for ConRes CE.
-  // TODO: Avoid copy.
-  msg3_buffer[ctx.pdu_rx.rnti] = ctx;
+  msg3_buffer[ctx.pdu_rx.rnti] = std::move(ctx);
 
-  // Notify upper layers with received SDU.
-  // TODO: Avoid copy.
-  ccch_notifier.on_new_sdu(mac_rx_sdu{ctx.pdu_rx.rnti, 0, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  // Notify DU manager of received CCCH message.
+  ul_ccch_indication_message msg{};
+  msg.crnti      = ctx.pdu_rx.rnti;
+  msg.cell_index = ctx.cell_index_rx;
+  cfg.event_notifier.on_mac_ccch_rx(msg);
 
   return true;
 }
@@ -159,10 +188,11 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   }
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  msg3_buffer[ctx.pdu_rx.rnti] = ctx;
-  cfg.ul_exec_mapper.executor(ctx.pdu_rx.rnti).execute([this, rnti = ctx.pdu_rx.rnti]() {
+  cfg.ul_exec_mapper.executor(ctx.pdu_rx.rnti).execute([this, ctx = std::move(ctx)]() mutable {
+    rnti_t rnti = ctx.pdu_rx.rnti;
+
     // 3. Handle remaining subPDUs using old C-RNTI.
-    handle_rx_subpdus(msg3_buffer[rnti]);
+    handle_rx_subpdus(ctx);
 
     // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
     sched.ul_sr_info(rnti);

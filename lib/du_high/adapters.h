@@ -25,6 +25,16 @@ namespace srsgnb {
 //   du_manager_input_gateway& du_manager;
 // };
 
+class du_manager_mac_event_indicator : public mac_event_indicator
+{
+public:
+  void connect(du_manager_ccch_indicator& du_mng_) { du_mng = &du_mng_; }
+  void on_mac_ccch_rx(const ul_ccch_indication_message& msg) override { du_mng->handle_ul_ccch_indication(msg); }
+
+private:
+  du_manager_ccch_indicator* du_mng;
+};
+
 /**
  * Adapter of RLC configuration notifications to DU manager method calls
  */
@@ -47,23 +57,6 @@ private:
   du_manager_interface* du_manager = nullptr;
 };
 
-class mac_ul_ccch_adapter : public mac_sdu_rx_notifier
-{
-public:
-  void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
-
-  void on_new_sdu(mac_rx_sdu sdu) override
-  {
-    ul_ccch_indication_message ul_ccch_msg;
-    ul_ccch_msg.crnti      = sdu.rnti;
-    ul_ccch_msg.cell_index = 0;
-    f1ap->ul_ccch_message_indication(std::move(ul_ccch_msg));
-  }
-
-private:
-  f1ap_du_ul_interface* f1ap = nullptr;
-};
-
 class rlc_ul_sdu_adapter : public rlc_sdu_rx_notifier
 {
 public:
@@ -72,12 +65,11 @@ public:
   void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) override
   {
     if (is_srb(lcid)) {
-      ul_rrc_transfer_message msg;
-      msg.cell_index = 0; // TODO
-      msg.ue_index   = ue_index;
-      msg.lcid       = lcid;
-      msg.rrc_msg    = pdu;
-      f1ap->ul_rrc_message_transfer(msg);
+      f1_rx_pdu msg{};
+      msg.ue_index = ue_index;
+      msg.lcid     = lcid;
+      msg.pdu      = std::move(pdu);
+      f1ap->handle_pdu(msg);
     } else {
       // TODO
     }
@@ -90,33 +82,6 @@ private:
 class f1ap_du_rlc_connector : public f1ap_du_pdu_notifier
 {
   void push_pdu(const byte_buffer& data) override {}
-};
-
-class du_f1ap_cfg_adapter : public du_manager_config_notifier
-{
-public:
-  void connect(f1ap_du_config_interface& f1ap_) { f1ap = &f1ap_; }
-
-  void on_du_ue_create_response(const du_ue_create_response_message& resp) override
-  {
-    f1ap->ue_creation_response(resp);
-  }
-
-private:
-  f1ap_du_config_interface* f1ap = nullptr;
-};
-
-class du_f1ap_setup_adapter : public du_manager_setup_notifier
-{
-public:
-  void connect(f1ap_du_setup_interface& f1ap_) { f1ap = &f1ap_; }
-
-  void on_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) override { f1ap->f1ap_du_setup_response(resp); }
-
-  void on_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail) override { f1ap->f1ap_du_setup_failure(fail); }
-
-private:
-  f1ap_du_setup_interface* f1ap = nullptr;
 };
 
 } // namespace srsgnb

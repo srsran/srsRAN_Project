@@ -6,12 +6,21 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
 
 struct ul_ccch_indication_message;
 struct ul_rrc_transfer_message;
 struct du_ue_create_response_message;
+
+struct f1ap_du_ue_create_request_message {
+  du_ue_index_t ue_index;
+};
+
+struct f1ap_du_ue_create_response_message {
+  bool result;
+};
 
 class f1ap_du_dl_interface
 {
@@ -20,11 +29,10 @@ public:
   virtual void push_sdu(const byte_buffer& sdu) = 0;
 };
 
-struct ul_rrc_message {
-  du_cell_index_t cell_index;
-  du_ue_index_t   ue_index;
-  lcid_t          lcid;
-  byte_buffer     rrc_msg;
+struct f1_rx_pdu {
+  du_ue_index_t ue_index;
+  lcid_t        lcid;
+  byte_buffer   pdu;
 };
 
 struct ul_rrc_message_delivery_status {
@@ -38,9 +46,8 @@ class f1ap_du_ul_interface
 {
 public:
   virtual ~f1ap_du_ul_interface()                                                           = default;
-  virtual void ul_ccch_message_indication(const ul_ccch_indication_message& msg)            = 0;
-  virtual void ul_rrc_message_transfer(const ul_rrc_transfer_message& msg)                  = 0;
   virtual void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) = 0;
+  virtual void handle_pdu(f1_rx_pdu pdu)                                                    = 0;
 };
 
 struct du_setup_params {
@@ -52,27 +59,23 @@ struct du_setup_params {
   std::string gnb_du_name;
 };
 
-class f1ap_du_setup_interface
-{
-public:
-  virtual ~f1ap_du_setup_interface()                                           = default;
-  virtual void f1ap_du_setup_request(const du_setup_params& params)            = 0;
-  virtual void f1ap_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) = 0;
-  virtual void f1ap_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail)  = 0;
+struct du_setup_result {
+  bool                        result;
+  asn1::f1ap::f1_setup_resp_s resp;
+  asn1::f1ap::f1_setup_fail_s failure;
 };
 
-class f1ap_du_config_interface
+class f1ap_du_configurer
 {
 public:
-  virtual ~f1ap_du_config_interface()                                          = default;
-  virtual void ue_creation_response(const du_ue_create_response_message& resp) = 0;
+  virtual ~f1ap_du_configurer() = default;
+  virtual async_task<f1ap_du_ue_create_response_message>
+                                      handle_ue_creation_request(const f1ap_du_ue_create_request_message& msg) = 0;
+  virtual async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params)                     = 0;
 };
 
 /// Packet entry point for the F1AP interface.
-class f1ap_du_interface : public f1ap_du_dl_interface,
-                          public f1ap_du_ul_interface,
-                          public f1ap_du_config_interface,
-                          public f1ap_du_setup_interface
+class f1ap_du_interface : public f1ap_du_dl_interface, public f1ap_du_ul_interface, public f1ap_du_configurer
 {
 public:
   virtual ~f1ap_du_interface() = default;

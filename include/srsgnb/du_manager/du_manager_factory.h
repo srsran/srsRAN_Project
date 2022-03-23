@@ -11,12 +11,12 @@
 
 namespace srsgnb {
 
-/// Creates an instance of the DU manager.
-std::unique_ptr<du_manager_interface> create_du_manager(mac_configurer&             mac,
-                                                        f1ap_du_interface&          f1ap,
-                                                        du_manager_config_notifier& f1ap_notifier,
-                                                        rlc_sdu_rx_notifier&        rlc_ul_notifier,
-                                                        task_executor&              du_mng_exec);
+/// Creates an instance of a DU manager.
+std::unique_ptr<du_manager_interface> create_du_manager(mac_configurer&       mac,
+                                                        f1ap_du_configurer&   f1ap,
+                                                        f1ap_du_ul_interface& f1ap_ul,
+                                                        rlc_sdu_rx_notifier&  rlc_ul_notifier,
+                                                        task_executor&        du_mng_exec);
 
 } // namespace srsgnb
 

@@ -11,12 +11,17 @@ namespace srsgnb {
 
 struct mac_common_config_t {
   srslog::basic_logger&       logger;
-  du_l2_ul_executor_mapper&      ul_exec_mapper;
+  mac_event_indicator&         event_notifier;
+  du_l2_ul_executor_mapper&   ul_exec_mapper;
   std::vector<task_executor*> dl_execs;
   task_executor&              ctrl_exec;
 
-  mac_common_config_t(du_l2_ul_executor_mapper& ul_exec_, span<task_executor*> dl_execs_, task_executor& ctrl_exec_) :
+  mac_common_config_t(mac_event_indicator&       event_notifier_,
+                      du_l2_ul_executor_mapper& ul_exec_,
+                      span<task_executor*>      dl_execs_,
+                      task_executor&            ctrl_exec_) :
     logger(srslog::fetch_basic_logger("MAC")),
+    event_notifier(event_notifier_),
     ul_exec_mapper(ul_exec_),
     dl_execs(dl_execs_.begin(), dl_execs_.end()),
     ctrl_exec(ctrl_exec_)

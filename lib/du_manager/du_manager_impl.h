@@ -18,16 +18,12 @@ class du_manager_impl final : public du_manager_interface
 public:
   du_manager_impl(const du_manager_config_t& cfg);
 
-  // F1AP interface
-  void ue_create(const du_ue_create_message& msg) override;
-
   // RLC interface
   void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override {}
   void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp) override {}
 
   // MAC interface
-  void handle_mac_ue_reconfiguration_response(const mac_ue_reconfiguration_response_message& resp) override {}
-  void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp) override {}
+  void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
 
   size_t nof_ues() override;
 

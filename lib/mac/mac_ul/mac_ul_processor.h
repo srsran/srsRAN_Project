@@ -8,6 +8,7 @@
 #include "mac_ul_ue_manager.h"
 #include "pdu_rx_handler.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/ran/du_l2_ul_executor_mapper.h"
 #include "srsgnb/support/async/execute_on.h"
 
 namespace srsgnb {
@@ -15,8 +16,8 @@ namespace srsgnb {
 class mac_ul_processor final : public mac_ul_configurer
 {
 public:
-  mac_ul_processor(mac_common_config_t& cfg_, mac_sdu_rx_notifier& ul_ccch_notifier_, sched_interface& sched_) :
-    cfg(cfg_), ue_manager(cfg, ul_ccch_notifier_), pdu_handler(cfg, sched_, ul_ccch_notifier_, ue_manager)
+  mac_ul_processor(mac_common_config_t& cfg_, sched_interface& sched_) :
+    cfg(cfg_), ue_manager(cfg), pdu_handler(cfg, sched_, ue_manager)
   {}
 
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override
@@ -40,6 +41,12 @@ public:
     return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(msg.rnti),
                                   cfg.ctrl_exec,
                                   [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
+  }
+
+  void flush_ul_ccch_msg(rnti_t rnti) {
+    cfg.ul_exec_mapper.executor(rnti).execute([this, rnti](){
+      pdu_handler.push_ul_ccch_msg(rnti);
+    });
   }
 
   /// Handles FAPI Rx_Data.Indication.

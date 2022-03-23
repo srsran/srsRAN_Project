@@ -32,16 +32,15 @@ private:
   std::unique_ptr<f1ap_du_interface>    f1ap;
   std::unique_ptr<mac_interface>        mac;
 
-  rlc_cfg_adapter       rlc_cfg_notifier;
-  mac_ul_ccch_adapter   mac_ul_ccch_notifier;
-  du_f1ap_cfg_adapter   f1ap_cfg_notifier;
-  rlc_ul_sdu_adapter    rlc_sdu_notifier;
-  f1ap_du_rlc_connector f1ap_pdu_adapter;
+  rlc_cfg_adapter                rlc_cfg_notifier;
+  rlc_ul_sdu_adapter             rlc_sdu_notifier;
+  f1ap_du_rlc_connector          f1ap_pdu_adapter;
+  du_manager_mac_event_indicator mac_ev_notifier;
 
   std::vector<std::unique_ptr<task_worker> >   workers;
   std::unique_ptr<task_executor>               ctrl_exec;
   std::vector<std::unique_ptr<task_executor> > dl_execs;
-  std::unique_ptr<du_l2_ul_executor_mapper>       ul_exec_mapper;
+  std::unique_ptr<du_l2_ul_executor_mapper>    ul_exec_mapper;
 };
 
 } // namespace srsgnb

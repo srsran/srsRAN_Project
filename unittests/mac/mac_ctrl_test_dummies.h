@@ -110,6 +110,14 @@ public:
   task_executor& exec;
 };
 
+class dummy_mac_event_indicator : public mac_event_indicator
+{
+public:
+  optional<ul_ccch_indication_message> last_ccch_ind;
+
+  void on_mac_ccch_rx(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_MAC_CTRL_TEST_DUMMIES_H

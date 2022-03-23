@@ -143,7 +143,8 @@ void test_dl_ue_procedure_tsan()
   dl_execs.push_back(&dl_exec1);
   dl_execs.push_back(&dl_exec2);
   dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
-  mac_common_config_t      cfg{ul_exec_mapper, dl_execs, ctrl_worker};
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t      cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 
@@ -171,7 +172,8 @@ void test_dl_ue_procedure_execution_contexts()
   std::vector<task_executor*> dl_execs;
   dl_execs.push_back(&dl_worker);
   dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
-  mac_common_config_t      cfg{ul_exec_mapper, dl_execs, ctrl_worker};
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t      cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 

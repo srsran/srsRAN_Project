@@ -17,6 +17,7 @@ struct rlc_ue_reconfiguration_response_message;
 struct mac_ue_create_request_response_message;
 struct mac_ue_reconfiguration_response_message;
 struct mac_ue_delete_response_message;
+struct ul_ccch_indication_message;
 
 class du_manager_interface_rlc
 {
@@ -24,14 +25,6 @@ public:
   virtual ~du_manager_interface_rlc()                                                                      = default;
   virtual void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) = 0;
   virtual void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp)                   = 0;
-};
-
-class du_manager_interface_mac
-{
-public:
-  virtual ~du_manager_interface_mac()                                                                      = default;
-  virtual void handle_mac_ue_reconfiguration_response(const mac_ue_reconfiguration_response_message& resp) = 0;
-  virtual void handle_mac_ue_delete_response(const mac_ue_delete_response_message& resp)                   = 0;
 };
 
 struct du_ue_create_message {
@@ -54,18 +47,11 @@ struct du_ue_create_response_message {
   bool          result;
 };
 
-class du_manager_config_notifier
+class du_manager_ccch_indicator
 {
 public:
-  virtual ~du_manager_config_notifier()                                            = default;
-  virtual void on_du_ue_create_response(const du_ue_create_response_message& resp) = 0;
-};
-
-class du_manager_interface_f1ap
-{
-public:
-  virtual ~du_manager_interface_f1ap()                    = default;
-  virtual void ue_create(const du_ue_create_message& msg) = 0;
+  virtual ~du_manager_ccch_indicator()                                          = default;
+  virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
 class du_manager_interface_query
@@ -76,21 +62,11 @@ public:
 };
 
 class du_manager_interface : public du_manager_interface_rlc,
-                             public du_manager_interface_mac,
-                             public du_manager_interface_f1ap,
-                             public du_manager_interface_query
+                             public du_manager_interface_query,
+                             public du_manager_ccch_indicator
 {
 public:
   virtual ~du_manager_interface() = default;
-};
-
-/// F1AP notifies DU about outcome of F1 Setup attempt
-class du_manager_setup_notifier
-{
-public:
-  virtual ~du_manager_setup_notifier()                                         = default;
-  virtual void on_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)   = 0;
-  virtual void on_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& failure) = 0;
 };
 
 } // namespace srsgnb

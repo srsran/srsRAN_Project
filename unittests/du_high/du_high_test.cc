@@ -21,6 +21,7 @@ void test_du_ue_create()
   for (size_t nof_ues = du_obj.query("ues"); nof_ues == 0 and count < 10000; nof_ues = du_obj.query("ues"), count++) {
     usleep(100);
   }
+  usleep(1000);
   TESTASSERT(du_obj.query("ues") > 0);
 }
 

@@ -17,11 +17,7 @@ namespace srsgnb {
 class mac_ul_ue
 {
 public:
-  explicit mac_ul_ue(du_ue_index_t ue_index_, rnti_t rnti_, mac_sdu_rx_notifier& ccch_notifier_) :
-    ue_index(ue_index_), rnti(rnti_)
-  {
-    ul_bearers.insert(0, &ccch_notifier_);
-  }
+  explicit mac_ul_ue(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
 
   const du_ue_index_t               ue_index = MAX_NOF_UES;
   const rnti_t                      rnti     = INVALID_RNTI;
@@ -35,8 +31,7 @@ public:
 class mac_ul_ue_manager
 {
 public:
-  mac_ul_ue_manager(mac_common_config_t& cfg_, mac_sdu_rx_notifier& ccch_notifier_) :
-    cfg(cfg_), logger(cfg.logger), ccch_notifier(ccch_notifier_)
+  mac_ul_ue_manager(mac_common_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
   {
     std::fill(ue_index_to_rnti.begin(), ue_index_to_rnti.end(), MAX_NOF_UES);
   }
@@ -59,7 +54,7 @@ public:
     }
 
     // 1. Insert UE
-    ue_db.insert(request.crnti, mac_ul_ue{request.ue_index, request.crnti, ccch_notifier});
+    ue_db.insert(request.crnti, mac_ul_ue{request.ue_index, request.crnti});
     ue_index_to_rnti[request.ue_index] = request.crnti;
 
     // 2. Add UE Bearers
@@ -148,7 +143,6 @@ private:
   /// Arguments of UE manager
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
-  mac_sdu_rx_notifier&  ccch_notifier;
 
   /// UE repository
   circular_map<rnti_t, mac_ul_ue, MAX_NOF_UES> ue_db;

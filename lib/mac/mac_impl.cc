@@ -4,14 +4,14 @@
 
 namespace srsgnb {
 
-mac_impl::mac_impl(mac_sdu_rx_notifier&      ul_ccch_notifier_,
+mac_impl::mac_impl(mac_event_indicator&       event_notifier,
                    du_l2_ul_executor_mapper& ul_exec_mapper_,
                    span<task_executor*>      dl_execs_,
                    task_executor&            ctrl_exec_) :
-  cfg(ul_exec_mapper_, dl_execs_, ctrl_exec_),
+  cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_),
   logger(cfg.logger),
   dl_unit(cfg),
-  ul_unit(cfg, ul_ccch_notifier_, dl_unit.get_sched()),
+  ul_unit(cfg, dl_unit.get_sched()),
   ctrl_unit(cfg, ul_unit, dl_unit)
 {
   // :TODO: remove when the log is used.
@@ -37,6 +37,11 @@ mac_impl::ue_reconfiguration_request(const mac_ue_reconfiguration_request_messag
 async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   return ctrl_unit.ue_delete_request(msg);
+}
+
+void mac_impl::flush_ul_ccch_msg(rnti_t rnti)
+{
+  ul_unit.flush_ul_ccch_msg(rnti);
 }
 
 void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)

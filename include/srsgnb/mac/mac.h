@@ -70,7 +70,11 @@ public:
 struct ul_ccch_indication_message {
   du_cell_index_t cell_index;
   rnti_t          crnti;
-  byte_buffer     ul_ccch_msg;
+  struct logical_channel_to_addmod {
+    lcid_t lcid;
+    // other params
+  };
+  std::vector<logical_channel_to_addmod> logical_channels_to_add;
 };
 
 struct logical_channel_addmod {
@@ -116,6 +120,13 @@ struct mac_ue_delete_response_message {
   bool          result;
 };
 
+class mac_event_indicator
+{
+public:
+  virtual ~mac_event_indicator()                                      = default;
+  virtual void on_mac_ccch_rx(const ul_ccch_indication_message& msg) = 0;
+};
+
 /// Interface used to manage the creation/reconfiguration/deletion of UEs in MAC
 class mac_configurer
 {
@@ -125,6 +136,7 @@ public:
   virtual async_task<mac_ue_reconfiguration_response_message>
   ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                                  = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
+  virtual void                                       flush_ul_ccch_msg(rnti_t rnti)                              = 0;
 };
 
 /// Interface used to push Rx Data indications to L2.

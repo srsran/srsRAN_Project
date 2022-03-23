@@ -32,9 +32,10 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   inline_executor               exec;
   std::array<task_executor*, 1> exec_lst = {&exec};
   dummy_ul_executor_mapper      ul_exec_mapper{exec};
+  dummy_mac_event_indicator     du_mng_notif;
 
   // Create a MAC config object
-  mac_common_config_t       mac_cfg{ul_exec_mapper, exec_lst, exec};
+  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, exec_lst, exec};
   mac_ctrl_dummy_configurer mac_ctrl;
   mac_ul_dummy_configurer   mac_ul;
   mac_dl_dummy_configurer   mac_dl;

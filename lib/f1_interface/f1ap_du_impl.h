@@ -2,8 +2,8 @@
 #ifndef SRSGNB_F1AP_DU_IMPL_H
 #define SRSGNB_F1AP_DU_IMPL_H
 
+#include "f1ap_du_context.h"
 #include "f1ap_packet_handler.h"
-#include "procedures/initial_ul_rrc_message_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include <memory>
@@ -13,27 +13,24 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1ap_du_interface
 {
 public:
-  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener);
+  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_);
 
-  void f1ap_du_setup_request(const du_setup_params& params) override;
-  void f1ap_du_setup_response(const asn1::f1ap::f1_setup_resp_s& resp) override;
-  void f1ap_du_setup_failure(const asn1::f1ap::f1_setup_fail_s& fail) override;
+  async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override;
 
-  void ul_ccch_message_indication(const ul_ccch_indication_message& msg) override;
-  void ue_creation_response(const du_ue_create_response_message& resp) override;
+  async_task<f1ap_du_ue_create_response_message>
+  handle_ue_creation_request(const f1ap_du_ue_create_request_message& msg) override;
 
-  void ul_rrc_message_transfer(const ul_rrc_transfer_message& msg) override;
   void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
 
-  void push_sdu(const byte_buffer& sdu) override {}
+  void push_sdu(const byte_buffer& sdu) override;
+
+  void handle_pdu(f1_rx_pdu pdu) override;
 
 private:
   srslog::basic_logger& logger;
+  f1ap_du_pdu_notifier& pdu_listener;
 
   f1ap_du_context ctxt;
-
-  //  std::unique_ptr<f1ap_du_packet_handler> packet_handler;
-  std::unique_ptr<initial_ul_rrc_message_procedure> init_ul_rrc_msg_proc;
 };
 
 } // namespace srsgnb

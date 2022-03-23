@@ -54,9 +54,8 @@ class pdu_rx_handler
 public:
   pdu_rx_handler(mac_common_config_t& cfg_,
                  sched_ue_feedback&   sched_,
-                 mac_sdu_rx_notifier& ccch_notifier_,
                  mac_ul_ue_manager&   ue_manager_) :
-    cfg(cfg_), logger(cfg.logger), sched(sched_), ccch_notifier(ccch_notifier_), ue_manager(ue_manager_)
+    cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_)
   {}
 
   /// Decode MAC Rx PDU, log contents and handle subPDUs.
@@ -65,6 +64,8 @@ public:
   /// \param pdu MAC UL PDU received.
   /// \return true if all subPDUs were correctly handled.
   bool handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu);
+
+  bool push_ul_ccch_msg(rnti_t rnti);
 
 private:
   /// Handle subPDUs contained in a MAC UL PDU.
@@ -101,7 +102,6 @@ private:
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
-  mac_sdu_rx_notifier&  ccch_notifier;
   mac_ul_ue_manager&    ue_manager;
 
   /// Buffer used to store Msg3 for the purposes of Contention Resolution.

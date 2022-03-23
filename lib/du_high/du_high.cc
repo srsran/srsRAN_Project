@@ -32,14 +32,13 @@ du_high::du_high()
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_ul_ccch_notifier, *ul_exec_mapper, execs, *ctrl_exec);
+  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec);
   f1ap       = create_f1ap_du(f1ap_pdu_adapter);
-  du_manager = create_du_manager(*mac, *f1ap, f1ap_cfg_notifier, rlc_sdu_notifier, *ctrl_exec);
+  du_manager = create_du_manager(*mac, *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
   // Connect DU blocks
-  mac_ul_ccch_notifier.connect(*f1ap);
+  mac_ev_notifier.connect(*du_manager);
   rlc_cfg_notifier.connect(*du_manager);
-  f1ap_cfg_notifier.connect(*f1ap);
 }
 
 du_high::~du_high()
