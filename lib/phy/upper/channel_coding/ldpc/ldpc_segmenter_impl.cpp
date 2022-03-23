@@ -1,5 +1,6 @@
 #include "ldpc_segmenter_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_metadata.h"
+#include "../crc_calculator_impl.h"
+#include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"

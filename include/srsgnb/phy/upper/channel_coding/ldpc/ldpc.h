@@ -3,8 +3,8 @@
 ///
 /// This file defines types, constants and classes to represent an LDPC Tanner graph
 /// according to TS38.212 Section 5.3.2.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
 
 #include <array>
 #include <memory>
@@ -87,4 +87,4 @@ static constexpr uint8_t filler_bit = 254;
 } // namespace ldpc
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H

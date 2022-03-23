@@ -1,7 +1,7 @@
 /// \file
 /// \brief Codeblock metadata.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H
+#ifndef SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
+#define SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
@@ -46,4 +46,4 @@ struct codeblock_metadata {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H
+#endif // SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H

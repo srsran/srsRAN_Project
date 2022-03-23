@@ -6,7 +6,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_metadata.h"
+#include "srsgnb/phy/upper/codeblock_metadata.h"
 
 namespace srsgnb {
 

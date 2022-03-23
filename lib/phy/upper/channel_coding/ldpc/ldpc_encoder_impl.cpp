@@ -1,6 +1,5 @@
 #include "ldpc_encoder_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <iostream>
@@ -8,7 +7,7 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-void ldpc_encoder_impl::init(const config_t& cfg)
+void ldpc_encoder_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 {
   uint8_t  pos  = get_lifting_size_position(cfg.lifting_size);
   unsigned skip = static_cast<unsigned>(cfg.base_graph) * nof_lifting_sizes;
@@ -23,7 +22,9 @@ void ldpc_encoder_impl::init(const config_t& cfg)
   select_strategy();
 }
 
-void ldpc_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg)
+void ldpc_encoder_impl::encode(span<uint8_t>                                 output,
+                               span<const uint8_t>                           input,
+                               const codeblock_metadata::tb_common_metadata& cfg)
 {
   init(cfg);
 

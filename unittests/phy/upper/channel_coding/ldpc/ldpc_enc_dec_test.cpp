@@ -6,7 +6,6 @@
 /// Similarly, the codeblocks are fed to the decoder and the resulting messages are compared to the example ones.
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -56,8 +55,8 @@ int main()
     }
 
     for (const auto ls : srsgnb::ldpc::all_lifting_sizes) {
-      srsgnb::ldpc_encoder::config_t cfg_enc{bg, ls};
-      srsgnb::ldpc_decoder::config_t cfg_dec{bg, ls};
+      srsgnb::codeblock_metadata::tb_common_metadata cfg_enc{bg, ls};
+      srsgnb::ldpc_decoder::config_t                 cfg_dec{bg, ls};
 
       //      std::cout << "Testing BG" << static_cast<unsigned>(bg) + 1 << ", LS: " << ls << std::endl;
 

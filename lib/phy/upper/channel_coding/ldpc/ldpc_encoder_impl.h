@@ -32,11 +32,12 @@ public:
   ///@}
 
   // See interface for the documentation.
-  void encode(span<uint8_t> output, span<const uint8_t> input, const config_t& cfg) override;
+  void
+  encode(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) override;
 
 private:
   /// Initializes the encoder inner variables.
-  void init(const config_t& cfg);
+  void init(const codeblock_metadata::tb_common_metadata& cfg);
   /// Selects the appropriate encoding strategy.
   virtual void select_strategy() {}
   /// Loads the input bits into the inner register.
