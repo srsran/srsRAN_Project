@@ -100,10 +100,11 @@
 
 #ifndef FMT_OVERRIDE
 #  if FMT_HAS_FEATURE(cxx_override) || \
-      (FMT_GCC_VERSION >= 408 && FMT_HAS_GXX_CXX11) || FMT_MSC_VER >= 1900
+      (FMT_GCC_VERSION >= 408 && FMT_HAS_GXX_CXX11) || FMT_MSC_VER >= 1900 || \
+      FMT_CLANG_VERSION > 600
 #    define FMT_OVERRIDE override
 #  else
-#    define FMT_OVERRIDE
+#    define FMT_OVERRIDE 
 #  endif
 #endif
 
@@ -713,7 +714,7 @@ class container_buffer : public buffer<typename Container::value_type> {
   Container& container_;
 
  protected:
-  void grow(size_t capacity) override {
+  void grow(size_t capacity) FMT_OVERRIDE {
     container_.resize(capacity);
     this->set(&container_[0], capacity);
   }
