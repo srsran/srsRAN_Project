@@ -47,10 +47,11 @@ struct du_ue_create_response_message {
   bool          result;
 };
 
-class du_manager_ccch_indicator
+/// Interface used to handle external events (e.g. UL CCCH).
+class du_manager_event_handler
 {
 public:
-  virtual ~du_manager_ccch_indicator()                                          = default;
+  virtual ~du_manager_event_handler()                                           = default;
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
@@ -63,7 +64,7 @@ public:
 
 class du_manager_interface : public du_manager_interface_rlc,
                              public du_manager_interface_query,
-                             public du_manager_ccch_indicator
+                             public du_manager_event_handler
 {
 public:
   virtual ~du_manager_interface() = default;

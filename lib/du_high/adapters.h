@@ -25,14 +25,14 @@ namespace srsgnb {
 //   du_manager_input_gateway& du_manager;
 // };
 
-class du_manager_mac_event_indicator : public mac_event_indicator
+class du_manager_mac_event_indicator : public mac_event_notifier
 {
 public:
-  void connect(du_manager_ccch_indicator& du_mng_) { du_mng = &du_mng_; }
-  void on_mac_ccch_rx(const ul_ccch_indication_message& msg) override { du_mng->handle_ul_ccch_indication(msg); }
+  void connect(du_manager_event_handler& du_mng_) { du_mng = &du_mng_; }
+  void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { du_mng->handle_ul_ccch_indication(msg); }
 
 private:
-  du_manager_ccch_indicator* du_mng;
+  du_manager_event_handler* du_mng;
 };
 
 /**

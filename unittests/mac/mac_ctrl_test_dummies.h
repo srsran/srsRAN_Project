@@ -110,12 +110,12 @@ public:
   task_executor& exec;
 };
 
-class dummy_mac_event_indicator : public mac_event_indicator
+class dummy_mac_event_indicator : public mac_event_notifier
 {
 public:
   optional<ul_ccch_indication_message> last_ccch_ind;
 
-  void on_mac_ccch_rx(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
+  void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
 };
 
 } // namespace srsgnb

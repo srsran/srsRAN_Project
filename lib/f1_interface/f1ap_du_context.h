@@ -2,6 +2,7 @@
 #ifndef SRSGNB_F1AP_CONTEXT_H
 #define SRSGNB_F1AP_CONTEXT_H
 
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 
@@ -16,8 +17,8 @@ struct f1ap_du_ue_context {
 struct f1ap_du_cell_context {};
 
 struct f1ap_du_context {
-  std::vector<f1ap_du_cell_context> cell_ctxt_manager;
-  std::vector<f1ap_du_ue_context>   ue_ctxt_manager;
+  std::vector<f1ap_du_cell_context>           cell_ctxt_manager;
+  slot_array<f1ap_du_ue_context, MAX_NOF_UES> ue_ctxt_manager;
 };
 
 } // namespace srsgnb

@@ -17,8 +17,8 @@ public:
 
   async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override;
 
-  async_task<f1ap_du_ue_create_response_message>
-  handle_ue_creation_request(const f1ap_du_ue_create_request_message& msg) override;
+  async_task<f1ap_du_ue_create_response>
+  handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override;
 
   void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
 

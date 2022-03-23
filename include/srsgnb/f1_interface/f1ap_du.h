@@ -12,13 +12,12 @@ namespace srsgnb {
 
 struct ul_ccch_indication_message;
 struct ul_rrc_transfer_message;
-struct du_ue_create_response_message;
 
-struct f1ap_du_ue_create_request_message {
+struct f1ap_du_ue_create_request {
   du_ue_index_t ue_index;
 };
 
-struct f1ap_du_ue_create_response_message {
+struct f1ap_du_ue_create_response {
   bool result;
 };
 
@@ -69,9 +68,12 @@ class f1ap_du_configurer
 {
 public:
   virtual ~f1ap_du_configurer() = default;
-  virtual async_task<f1ap_du_ue_create_response_message>
-                                      handle_ue_creation_request(const f1ap_du_ue_create_request_message& msg) = 0;
-  virtual async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params)                     = 0;
+
+  /// Initiates DU setup procedure.
+  virtual async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) = 0;
+
+  /// Initiates creation of UE context in F1.
+  virtual async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;
 };
 
 /// Packet entry point for the F1AP interface.

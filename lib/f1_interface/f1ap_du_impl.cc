@@ -22,13 +22,23 @@ async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_p
   });
 }
 
-async_task<f1ap_du_ue_create_response_message>
-f1ap_du_impl::handle_ue_creation_request(const f1ap_du_ue_create_request_message& msg)
+async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_du_ue_create_request& msg)
 {
-  // TODO: F1 procedure
-  return launch_async([](coro_context<async_task<f1ap_du_ue_create_response_message> >& ctx) {
+  // TODO: add UE create procedure
+  // TODO: Change execution context.
+  return launch_async([this, msg, resp = f1ap_du_ue_create_response{}](
+                          coro_context<async_task<f1ap_du_ue_create_response> >& ctx) mutable {
     CORO_BEGIN(ctx);
-    CORO_RETURN(f1ap_du_ue_create_response_message{true});
+    resp.result = false;
+    if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {
+      ctxt.ue_ctxt_manager.emplace(msg.ue_index);
+      ctxt.ue_ctxt_manager[msg.ue_index].crnti             = INVALID_RNTI; // Needed?
+      ctxt.ue_ctxt_manager[msg.ue_index].gnb_du_f1ap_ue_id = msg.ue_index;
+      ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = -1; // TODO
+
+      resp.result = true;
+    }
+    CORO_RETURN(resp);
   });
 }
 

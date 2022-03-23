@@ -10,6 +10,7 @@ class mac_test_dummy : public mac_configurer
 public:
   optional<mac_ue_create_request_message>                           last_ue_create_msg{};
   optional<mac_ue_delete_request_message>                           last_ue_delete_msg{};
+  bool                                                              ul_ccch_push_command = false;
   wait_manual_event_tester<mac_ue_create_response_message>          wait_ue_create;
   wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response_message>          wait_ue_delete;
@@ -29,6 +30,29 @@ public:
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
   }
+  void flush_ul_ccch_msg(rnti_t rnti) override { ul_ccch_push_command = true; }
+};
+
+class f1_test_dummy : public f1ap_du_configurer
+{
+public:
+  optional<du_setup_params>                            last_f1_setup{};
+  optional<f1ap_du_ue_create_request>                  last_ue_create{};
+  wait_manual_event_tester<du_setup_result>            wait_f1_setup;
+  wait_manual_event_tester<f1ap_du_ue_create_response> wait_ue_create;
+
+  async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override
+  {
+    last_f1_setup = params;
+    return wait_f1_setup.launch();
+  }
+
+  /// Initiates creation of UE context in F1.
+  async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override
+  {
+    last_ue_create = msg;
+    return wait_ue_create.launch();
+  }
 };
 
 enum class test_outcome { success, ue_create_failure };
@@ -39,57 +63,68 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   test_delimit_logger delimiter{"Test UE concurrent procedures. Outcome: {}",
                                 outcome == test_outcome::success ? "Success" : "UE create failure"};
 
-  mac_test_dummy   mac_dummy;
-  f1ap_cfg_adapter f1ap_dummy;
+  mac_test_dummy mac_dummy;
+  f1_test_dummy  f1_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac = &mac_dummy;
+  cfg.mac  = &mac_dummy;
+  cfg.f1ap = &f1_dummy;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
+  du_ue_index_t ue_index = MAX_NOF_UES;
 
-  // Action 1: Start UE creation
-  du_ue_create_message ue_create_msg{};
-  ue_create_msg.ue_index   = 1;
-  ue_create_msg.cell_index = 0;
-  ue_create_msg.crnti      = 0x4601;
-  ue_create_msg.logical_channels_to_add.emplace_back();
-  ue_create_msg.logical_channels_to_add[0].lcid = 1;
-  ue_mng.handle_ue_create_request(ue_create_msg);
+  // Action 1: UL CCCH indication arrives.
+  ul_ccch_indication_message ccch_ind{};
+  ccch_ind.cell_index = 0;
+  ccch_ind.crnti      = 0x4601;
+  ccch_ind.logical_channels_to_add.emplace_back();
+  ccch_ind.logical_channels_to_add[0].lcid = 1;
+  ue_mng.handle_ue_create_request(ccch_ind);
+
+  // TEST: F1 UE Creation started, but hasn't finished.
+  TESTASSERT(f1_dummy.last_ue_create.has_value());
+  ue_index = f1_dummy.last_ue_create.value().ue_index;
+  TESTASSERT(f1_dummy.last_ue_create.value().ue_index < MAX_NOF_UES);
+  TESTASSERT(not mac_dummy.last_ue_create_msg.has_value()); // The MAC UE creation hasn't started.
+  TESTASSERT(not mac_dummy.ul_ccch_push_command);
+
+  // Action 2: F1 UE creation finishes.
+  f1_dummy.wait_ue_create.result.result = true;
+  f1_dummy.wait_ue_create.ready_ev.set();
 
   // TEST: MAC UE creation started but hasn't returned yet
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
-  TESTASSERT_EQ(ue_create_msg.ue_index, mac_dummy.last_ue_create_msg->ue_index);
-  TESTASSERT_EQ(ue_create_msg.crnti, mac_dummy.last_ue_create_msg->crnti);
-  TESTASSERT_EQ(ue_create_msg.cell_index, mac_dummy.last_ue_create_msg->cell_index);
-  TESTASSERT_EQ(1, mac_dummy.last_ue_create_msg->bearers.size());
-  TESTASSERT_EQ(1, mac_dummy.last_ue_create_msg->bearers[0].lcid);
+  TESTASSERT_EQ(ccch_ind.crnti, mac_dummy.last_ue_create_msg->crnti);
+  TESTASSERT_EQ(ccch_ind.cell_index, mac_dummy.last_ue_create_msg->cell_index);
+  TESTASSERT_EQ(2, mac_dummy.last_ue_create_msg->bearers.size());
+  TESTASSERT_EQ(0, mac_dummy.last_ue_create_msg->bearers[0].lcid);
+  TESTASSERT_EQ(1, mac_dummy.last_ue_create_msg->bearers[1].lcid);
   TESTASSERT(mac_dummy.last_ue_create_msg->bearers[0].ul_bearer != nullptr);
+  TESTASSERT(mac_dummy.last_ue_create_msg->bearers[1].ul_bearer != nullptr);
   // TODO: Check DL bearer
-  TESTASSERT(ue_mng.get_ues().empty());
+  //  TESTASSERT(ue_mng.get_ues().empty()); // TODO: UE manager should only signal that UE exists after procedure ends.
 
   // Action 2: Start concurrent UE deletion
   du_ue_delete_message ue_delete_msg{};
-  ue_delete_msg.ue_index = 1;
+  ue_delete_msg.ue_index = ue_index;
   ue_mng.handle_ue_delete_request(ue_delete_msg);
 
   // TEST: Given that UE creation task hasn't finished, the UE deletion isn't processed yet
   TESTASSERT(not mac_dummy.last_ue_delete_msg.has_value());
 
   // Action 3: MAC UE creation completed
-  mac_dummy.wait_ue_create.result.ue_index   = ue_create_msg.ue_index;
-  mac_dummy.wait_ue_create.result.cell_index = ue_create_msg.cell_index;
+  mac_dummy.wait_ue_create.result.ue_index   = ue_index;
+  mac_dummy.wait_ue_create.result.cell_index = ccch_ind.cell_index;
   mac_dummy.wait_ue_create.result.result     = outcome != test_outcome::ue_create_failure;
   mac_dummy.wait_ue_create.ready_ev.set();
 
-  // TEST: UE manager finished UE creation procedure
-  TESTASSERT(f1ap_dummy.last_ue_create_resp.has_value());
-  TESTASSERT(f1ap_dummy.last_ue_create_resp->ue_index == ue_create_msg.ue_index);
-  TESTASSERT(f1ap_dummy.last_ue_create_resp->result == (outcome == test_outcome::success));
+  // TEST: UE manager finished UE creation procedure. MAC should push UL CCCH to upper layers.
   if (outcome == test_outcome::success) {
+    TESTASSERT(mac_dummy.ul_ccch_push_command);
     TESTASSERT(not ue_mng.get_ues().empty());
-    TESTASSERT(ue_mng.get_ues().contains(ue_create_msg.ue_index));
-    TESTASSERT(ue_mng.get_ues()[ue_create_msg.ue_index].rnti == 0x4601);
+    TESTASSERT(ue_mng.get_ues().contains(ue_index));
+    TESTASSERT(ue_mng.get_ues()[ue_index].rnti == 0x4601);
   } else {
     TESTASSERT(ue_mng.get_ues().empty());
   }
@@ -100,10 +135,10 @@ void test_ue_concurrent_procedures(test_outcome outcome)
     return;
   }
   TESTASSERT(mac_dummy.last_ue_delete_msg.has_value());
-  TESTASSERT_EQ(1, mac_dummy.last_ue_delete_msg->ue_index);
+  TESTASSERT_EQ(ue_index, mac_dummy.last_ue_delete_msg->ue_index);
 
   // Action 4: MAC UE Deletion complete
-  mac_dummy.wait_ue_delete.result.ue_index = ue_create_msg.ue_index;
+  mac_dummy.wait_ue_delete.result.ue_index = ue_index;
   mac_dummy.wait_ue_delete.result.result   = true;
   mac_dummy.wait_ue_delete.ready_ev.set();
 

@@ -173,7 +173,7 @@ bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   ul_ccch_indication_message msg{};
   msg.crnti      = ctx.pdu_rx.rnti;
   msg.cell_index = ctx.cell_index_rx;
-  cfg.event_notifier.on_mac_ccch_rx(msg);
+  cfg.event_notifier.on_ul_ccch_msg_received(msg);
 
   return true;
 }

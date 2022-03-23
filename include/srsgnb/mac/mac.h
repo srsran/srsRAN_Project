@@ -120,11 +120,12 @@ struct mac_ue_delete_response_message {
   bool          result;
 };
 
-class mac_event_indicator
+/// Methods used by MAC to notify events.
+class mac_event_notifier
 {
 public:
-  virtual ~mac_event_indicator()                                      = default;
-  virtual void on_mac_ccch_rx(const ul_ccch_indication_message& msg) = 0;
+  virtual ~mac_event_notifier()                                               = default;
+  virtual void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) = 0;
 };
 
 /// Interface used to manage the creation/reconfiguration/deletion of UEs in MAC
@@ -134,7 +135,7 @@ public:
   virtual ~mac_configurer() = default;
   virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
   virtual async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg)                                  = 0;
+                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
   virtual void                                       flush_ul_ccch_msg(rnti_t rnti)                              = 0;
 };

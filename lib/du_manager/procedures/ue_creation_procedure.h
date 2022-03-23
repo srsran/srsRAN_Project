@@ -74,10 +74,12 @@ public:
 
     // 3. Create UE RLC bearers.
     ue_ctx->bearers.emplace(0);
+    ue_ctx->bearers[0].lcid            = 0;
     ue_ctx->bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx->ue_index, *cfg.f1ap_ul);
     for (const auto& lc : msg.logical_channels_to_add) {
       ue_ctx->bearers.emplace(lc.lcid);
       auto& bearer = ue_ctx->bearers[lc.lcid];
+      bearer.lcid  = 1;
       // Create UL RLC bearer
       bearer.ul_bearer = create_rlc_ul_bearer(ue_ctx->ue_index, lc.lcid, *cfg.rlc_ul_notifier);
       // Create UL RLC bearer adapter that is going to be used by MAC to notify Rx SDUs
@@ -131,9 +133,9 @@ private:
     return cfg.mac->ue_create_request(mac_ue_create_msg);
   }
 
-  async_task<f1ap_du_ue_create_response_message> make_f1_ue_create_req()
+  async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
   {
-    f1ap_du_ue_create_request_message f1_msg{};
+    f1ap_du_ue_create_request f1_msg{};
     f1_msg.ue_index = ue_ctx->ue_index;
     return cfg.f1ap->handle_ue_creation_request(f1_msg);
   }
@@ -144,8 +146,8 @@ private:
   srslog::basic_logger&       logger;
   ue_manager_ctrl_configurer& ue_mng;
 
-  mac_ue_create_response_message     mac_resp{};
-  f1ap_du_ue_create_response_message f1_resp{};
+  mac_ue_create_response_message mac_resp{};
+  f1ap_du_ue_create_response     f1_resp{};
 };
 
 } // namespace srsgnb
