@@ -1,5 +1,4 @@
 #include "ldpc_segmenter_impl.h"
-#include "../crc_calculator_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
@@ -14,7 +13,7 @@ static constexpr unsigned seg_crc_length = 24;
 // Number of bits in one byte.
 static constexpr unsigned bits_per_byte = 8;
 
-ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc c)
+ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
 {
   srsran_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
   srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
@@ -210,8 +209,9 @@ void ldpc_segmenter_impl::segment(
 
 std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
 {
-  return std::make_unique<ldpc_segmenter_impl>(
-      ldpc_segmenter_impl::sch_crc{std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC16),
-                                   std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24A),
-                                   std::make_unique<crc_calculator_impl>(crc_generator_poly::CRC24B)});
+  ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
+                                       create_crc_calculator(crc_generator_poly::CRC24A),
+                                       create_crc_calculator(crc_generator_poly::CRC24B)};
+  // Transfer CRC calculators' ownership.
+  return std::make_unique<ldpc_segmenter_impl>(crcs);
 }

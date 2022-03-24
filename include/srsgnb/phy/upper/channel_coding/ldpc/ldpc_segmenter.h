@@ -14,6 +14,7 @@ namespace srsgnb {
 class ldpc_segmenter
 {
 public:
+  /// Default destructor.
   virtual ~ldpc_segmenter() = default;
 
   /// \brief Maximum segment length.
