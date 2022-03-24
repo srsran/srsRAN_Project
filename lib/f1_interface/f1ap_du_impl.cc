@@ -47,7 +47,7 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
 
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 {
-  log_ul_pdu(logger, pdu.ue_index, INVALID_RNTI, MAX_NOF_CELLS, "SRB0", "CCCH Message");
+  log_pdu(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
   f1_gw.on_new_sdu(std::move(pdu.pdu));
 }
 

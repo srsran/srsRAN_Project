@@ -15,7 +15,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
 
   // 2. Log MAC UL PDU.
   if (logger.info.enabled()) {
-    log_ul_pdu(logger, MAX_NOF_UES, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: {}", ctx.decoded_subpdus);
+    log_ul_pdu(logger, MAX_NOF_UES, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: [{}]", ctx.decoded_subpdus);
   }
 
   // 3. Check if MAC CRNTI CE is present.
@@ -47,7 +47,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
 
   lcid_t lcid = 0;
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("Received UL PDU for inexistent bearer {{" FMT_RNTI ", {}}}", ue->rnti, lcid);
+    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(lcid));
     return false;
   }
 
@@ -78,13 +78,13 @@ bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue* ue)
 {
   if (ue == nullptr) {
-    logger.warning("Received MAC SDU for inexistent RNTI=0x{:x}", ctx.pdu_rx.rnti);
+    logger.warning("{}: Received MAC SDU for inexistent RNTI.", ue_event_prefix{}.set_rnti(ue->rnti));
     return false;
   }
 
   lcid_t lcid = (lcid_t)sdu.lcid();
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("Received UL PDU for inexistent bearer {{" FMT_RNTI ", {}}}", ue->rnti, lcid);
+    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(lcid));
     return false;
   }
 
