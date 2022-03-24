@@ -29,7 +29,10 @@ class du_manager_mac_event_indicator : public mac_event_notifier
 {
 public:
   void connect(du_manager_ccch_handler& du_mng_) { du_mng = &du_mng_; }
-  void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { du_mng->handle_ul_ccch_indication(msg); }
+  void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override
+  {
+    du_mng->handle_ul_ccch_indication(msg);
+  }
 
 private:
   du_manager_ccch_handler* du_mng;
@@ -38,23 +41,19 @@ private:
 class rlc_ul_sdu_adapter : public rlc_sdu_rx_notifier
 {
 public:
-  void connect(f1ap_du_ul_interface& f1ap_) { f1ap = &f1ap_; }
+  void connect(f1ap_du_ul_interface& f1) { f1_ptr = &f1; }
 
   void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) override
   {
-    if (is_srb(lcid)) {
-      f1_rx_pdu msg{};
-      msg.ue_index = ue_index;
-      msg.lcid     = lcid;
-      msg.pdu      = std::move(pdu);
-      f1ap->handle_pdu(msg);
-    } else {
-      // TODO
-    }
+    f1_rx_pdu msg{};
+    msg.ue_index = ue_index;
+    msg.lcid     = lcid;
+    msg.pdu      = std::move(pdu);
+    f1_ptr->handle_pdu(msg);
   }
 
 private:
-  f1ap_du_ul_interface* f1ap = nullptr;
+  f1ap_du_ul_interface* f1_ptr = nullptr;
 };
 
 class f1ap_du_rlc_connector : public f1ap_du_pdu_notifier
