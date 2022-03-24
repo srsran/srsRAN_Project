@@ -9,8 +9,8 @@ unsigned dmrs_pdcch_processor_impl::c_init(unsigned symbol, const dmrs_pdcch_pro
 {
   unsigned n_slot = config.slot.slot_index();
   unsigned n_id   = config.n_id;
-
-  return ((get_nsymb_per_slot(config.cp) * n_slot + symbol + 1) * (2 * n_id + 1) * pow2(17) + 2 * n_id) % pow2(31);
+  
+  return ((MAX_NOF_DMRS_PER_SYMBOL * n_slot + symbol + 1) * (2 * n_id + 1) * pow2(17) + 2 * n_id) % pow2(31);
 }
 
 void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                            sequence,
@@ -71,7 +71,7 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
   }
 }
 
-std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor()
+std::unique_ptr<dmrs_pdcch_processor> srsgnb::create_dmrs_pdcch_processor()
 {
   return std::make_unique<dmrs_pdcch_processor_impl>();
 }
