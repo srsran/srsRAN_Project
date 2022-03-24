@@ -2,6 +2,7 @@
 #define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
@@ -17,6 +18,8 @@ public:
   struct config_t {
     /// Provides the slot timing and numerology.
     slot_point slot;
+    /// Indicates the cyclic prefix.
+    cyclic_prefix cp;
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
     /// Indicates the RBs used for the PDCCH transmission.
