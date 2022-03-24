@@ -17,7 +17,7 @@ namespace srsgnb {
 class du_high
 {
 public:
-  du_high(f1_du_gateway& gw);
+  du_high(f1c_du_gateway& gw);
   ~du_high();
 
   void start();

@@ -7,7 +7,7 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<f1ap_du_interface> srsgnb::create_f1ap_du(f1ap_du_pdu_notifier& pdu_listener, f1_du_gateway& f1_gw)
+std::unique_ptr<f1ap_du_interface> srsgnb::create_f1ap_du(f1ap_du_pdu_notifier& pdu_listener, f1c_du_gateway& f1_gw)
 {
   auto f1ap_du = std::make_unique<f1ap_du_impl>(pdu_listener, f1_gw);
   return f1ap_du;

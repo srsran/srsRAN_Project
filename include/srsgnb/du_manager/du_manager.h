@@ -18,10 +18,10 @@ struct du_ue_delete_message {
 };
 
 /// Interface used to handle external events (e.g. UL CCCH).
-class du_manager_event_handler
+class du_manager_ccch_handler
 {
 public:
-  virtual ~du_manager_event_handler()                                           = default;
+  virtual ~du_manager_ccch_handler()                                            = default;
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
@@ -32,7 +32,7 @@ public:
   virtual size_t nof_ues()              = 0;
 };
 
-class du_manager_interface : public du_manager_interface_query, public du_manager_event_handler
+class du_manager_interface : public du_manager_interface_query, public du_manager_ccch_handler
 {
 public:
   virtual ~du_manager_interface() = default;

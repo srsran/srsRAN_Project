@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-du_high::du_high(f1_du_gateway& f1_gw)
+du_high::du_high(f1c_du_gateway& f1_gw)
 {
   const size_t task_worker_queue_size = 10000;
 

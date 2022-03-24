@@ -7,16 +7,19 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1_du_gateway& gw_) :
+f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1c_du_gateway& gw_) :
   logger(srslog::fetch_basic_logger("F1AP")), pdu_listener(pdu_listener_), f1_gw(gw_)
-{}
+{
+  // :TODO: remove when the pdu_listener is used.
+  (void)pdu_listener;
+}
 
 async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
 {
   // TODO: add procedure implementation
   return launch_async([this, res = du_setup_result{}](coro_context<async_task<du_setup_result> >& ctx) mutable {
     CORO_BEGIN(ctx);
-    res.result = true;
+    res.result.value()->gnb_cu_rrc_version.value.latest_rrc_version.from_number(0);
     logger.info("{}", __FUNCTION__);
     CORO_RETURN(res);
   });

@@ -13,7 +13,7 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1ap_du_interface
 {
 public:
-  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1_du_gateway& gw);
+  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1c_du_gateway& gw);
 
   async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override;
 
@@ -28,7 +28,7 @@ public:
 private:
   srslog::basic_logger& logger;
   f1ap_du_pdu_notifier& pdu_listener;
-  f1_du_gateway&           f1_gw;
+  f1c_du_gateway&           f1_gw;
 
   f1ap_du_context ctxt;
 };

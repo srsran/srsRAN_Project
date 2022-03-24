@@ -3,6 +3,7 @@
 #define SRSGNB_F1AP_DU_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -56,9 +57,7 @@ struct du_setup_params {
 };
 
 struct du_setup_result {
-  bool                        result;
-  asn1::f1ap::f1_setup_resp_s resp;
-  asn1::f1ap::f1_setup_fail_s failure;
+  expected<asn1::f1ap::f1_setup_resp_s, asn1::f1ap::f1_setup_fail_s> result;
 };
 
 class f1ap_du_configurer
@@ -91,10 +90,10 @@ public:
 };
 
 // TODO: This is temporary, until we have a proper interface
-class f1_du_gateway
+class f1c_du_gateway
 {
 public:
-  virtual ~f1_du_gateway()                 = default;
+  virtual ~f1c_du_gateway()                = default;
   virtual void on_new_sdu(byte_buffer pdu) = 0;
 };
 
