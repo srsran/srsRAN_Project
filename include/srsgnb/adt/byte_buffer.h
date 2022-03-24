@@ -2,6 +2,7 @@
 #define SRSGNB_ADT_BYTE_BUFFER_H
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <array>
 #include <cstdint>
@@ -80,21 +81,44 @@ class byte_buffer
 {
   template <typename T>
   struct iterator_impl {
-    using value_type        = std::conditional_t<std::is_const<T>::value, const uint8_t, uint8_t>;
-    using reference         = value_type&;
-    using pointer           = value_type*;
+    using iterator_type     = iterator_impl<T>;
+    using value_type        = std::remove_const_t<T>;
+    using reference         = T&;
+    using pointer           = T*;
+    using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator_impl(T* start_segment, size_t offset_) : current_segment(start_segment), offset(offset_) {}
+    iterator_impl(buffer_segment* start_segment, size_t offset_) : current_segment(start_segment), offset(offset_) {}
 
-    value_type& operator*() { return *(current_segment->data() + current_segment->headroom() + offset); }
-    value_type* operator->() { return (current_segment->data() + current_segment->headroom() + offset); }
+    reference operator*() { return *(current_segment->data() + current_segment->headroom() + offset); }
+    pointer   operator->() { return (current_segment->data() + current_segment->headroom() + offset); }
 
     iterator_impl& operator++()
     {
       offset++;
       if (offset >= current_segment->length()) {
         offset          = 0;
+        current_segment = current_segment->metadata().next.get();
+      }
+      return *this;
+    }
+    iterator_impl operator++(int)
+    {
+      iterator_impl tmp(*this);
+      ++(*this);
+      return tmp;
+    }
+    iterator_impl operator+(difference_type n)
+    {
+      iterator_impl tmp(*this);
+      tmp += n;
+      return tmp;
+    }
+    iterator_impl& operator+=(difference_type n)
+    {
+      offset += n;
+      while (offset >= current_segment->length()) {
+        offset -= current_segment->length();
         current_segment = current_segment->metadata().next.get();
       }
       return *this;
@@ -106,17 +130,21 @@ class byte_buffer
     }
     bool operator!=(const iterator_impl<T>& other) const { return not(*this == other); }
 
-    T*     current_segment;
-    size_t offset;
+  private:
+    buffer_segment* current_segment;
+    size_t          offset;
   };
 
 public:
-  using iterator       = iterator_impl<buffer_segment>;
-  using const_iterator = iterator_impl<const buffer_segment>;
+  using value_type     = uint8_t;
+  using iterator       = iterator_impl<uint8_t>;
+  using const_iterator = iterator_impl<const uint8_t>;
 
   byte_buffer()                       = default;
+  byte_buffer(const byte_buffer&)     = delete;
   byte_buffer(byte_buffer&&) noexcept = default;
   byte_buffer& operator=(byte_buffer&&) noexcept = default;
+  byte_buffer& operator=(const byte_buffer&) noexcept = delete;
 
   byte_buffer clone()
   {
@@ -183,14 +211,13 @@ public:
   bool operator!=(const byte_buffer& other) const { return not(*this == other); }
 
   iterator       begin() { return iterator{head.get(), 0}; }
-  iterator       end() { return iterator{nullptr, 0}; }
+  const_iterator cbegin() const { return const_iterator{head.get(), 0}; }
   const_iterator begin() const { return const_iterator{head.get(), 0}; }
+  iterator       end() { return iterator{nullptr, 0}; }
   const_iterator end() const { return const_iterator{nullptr, 0}; }
+  const_iterator cend() const { return const_iterator{nullptr, 0}; }
 
 private:
-  byte_buffer(const byte_buffer&) = default;
-  byte_buffer& operator=(const byte_buffer&) = default;
-
   void append_segment()
   {
     // TODO: Use memory pool.
@@ -249,5 +276,25 @@ bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for byte_buffer
+template <>
+struct formatter<srsgnb::byte_buffer> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+} // namespace fmt
 
 #endif // SRSGNB_ADT_BYTE_BUFFER_H
