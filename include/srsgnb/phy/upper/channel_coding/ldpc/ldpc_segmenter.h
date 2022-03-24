@@ -30,10 +30,12 @@ public:
 
   /// \brief Alias for the full segment characterization.
   ///
+  /// This is a self-contained type that associates a segment of the transport block with all the metadata required by
+  /// subsequent processing units (e.g., encoder and rate-matcher).
   ///   - \c described_segment_t.first()   Contains the segment data, including CRC, in unpacked format (each bit is
   ///                                      represented by a \c uint8_t entry).
   ///   - \c described_segment_t.second()  Contains the segment metadata, useful for processing the corresponding
-  ///                                      codeblock (e.g., encoding/decoding, rate-matching).
+  ///                                      codeblock.
   using described_segment_t = std::pair<segment_data_t, codeblock_description_t>;
 
   /// Gathers all segmentation configuration parameters.
