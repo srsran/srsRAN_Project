@@ -165,7 +165,7 @@ public:
         append_segment();
       }
       size_t              to_write = std::min(tail->tailroom(), bytes.size() - count);
-      span<const uint8_t> subspan  = bytes.subspan(0, to_write);
+      span<const uint8_t> subspan  = bytes.subspan(count, to_write);
       tail->append(subspan);
       count += to_write;
     }
@@ -181,7 +181,7 @@ public:
         prepend_segment();
       }
       size_t              to_write = std::min(head->headroom(), bytes.size() - count);
-      span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write, bytes.size());
+      span<const uint8_t> subspan  = bytes.subspan(bytes.size() - to_write - count, to_write);
       head->prepend(subspan);
       count += to_write;
     }

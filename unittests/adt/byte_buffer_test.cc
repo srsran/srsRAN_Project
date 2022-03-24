@@ -22,6 +22,30 @@ void test_byte_buffer_append()
 
   pdu.append(bytes);
   TESTASSERT_EQ(pdu.length(), bytes.size());
+
+  // create a new segment during the append.
+  bytes.resize(buffer_segment::SEGMENT_SIZE);
+  for (size_t i = 0; i < bytes.size(); ++i) {
+    bytes[i] = i;
+  }
+  pdu.append(bytes);
+  TESTASSERT_EQ(pdu.length(), bytes.size() + 6);
+}
+
+void test_byte_buffer_prepend()
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = {1, 2, 3, 4, 5, 6};
+
+  pdu.prepend(bytes);
+  TESTASSERT_EQ(pdu.length(), bytes.size());
+
+  bytes.resize(buffer_segment::SEGMENT_SIZE);
+  for (size_t i = 0; i < bytes.size(); ++i) {
+    bytes[i] = i;
+  }
+  pdu.prepend(bytes);
+  TESTASSERT_EQ(pdu.length(), bytes.size() + 6);
 }
 
 void test_byte_buffer_compare()
@@ -47,6 +71,20 @@ void test_byte_buffer_compare()
   TESTASSERT(pdu != pdu4);
   TESTASSERT(pdu2 != pdu4);
   TESTASSERT(pdu3 != pdu4);
+
+  // create a new segment during the append.
+  bytes2.resize(buffer_segment::SEGMENT_SIZE);
+  for (size_t i = 0; i < bytes2.size(); ++i) {
+    bytes2[i] = i;
+  }
+  pdu.append(bytes2);
+  bytes.insert(bytes.end(), bytes2.begin(), bytes2.end());
+  TESTASSERT(pdu == bytes);
+
+  // create a new segment during the prepend.
+  pdu.prepend(bytes2);
+  bytes.insert(bytes.begin(), bytes2.begin(), bytes2.end());
+  TESTASSERT(pdu == bytes);
 }
 
 void test_byte_buffer_iterator()
@@ -114,6 +152,7 @@ void test_byte_buffer_formatter()
 int main()
 {
   test_byte_buffer_append();
+  test_byte_buffer_prepend();
   test_byte_buffer_iterator();
   test_byte_buffer_compare();
   test_byte_buffer_clone();
