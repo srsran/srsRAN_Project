@@ -17,15 +17,13 @@ namespace srsgnb {
 class du_high
 {
 public:
-  du_high();
+  du_high(f1_gateway& gw);
   ~du_high();
 
   void start();
   void stop();
 
   void push_pusch(mac_rx_data_indication pdu);
-
-  size_t query(const std::string& s) const;
 
 private:
   std::unique_ptr<du_manager_interface> du_manager;

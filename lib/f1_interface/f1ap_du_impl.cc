@@ -7,8 +7,8 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_) :
-  logger(srslog::fetch_basic_logger("F1AP")), pdu_listener(pdu_listener_)
+f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1_gateway& gw_) :
+  logger(srslog::fetch_basic_logger("F1AP")), pdu_listener(pdu_listener_), f1_gw(gw_)
 {}
 
 async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
@@ -45,7 +45,7 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 {
   log_ul_pdu(logger, pdu.ue_index, INVALID_RNTI, MAX_NOF_CELLS, "SRB0", "CCCH Message");
-  pdu_listener.push_pdu(std::move(pdu.pdu));
+  f1_gw.on_new_sdu(std::move(pdu.pdu));
 }
 
 void f1ap_du_impl::push_sdu(const byte_buffer& sdu) {}

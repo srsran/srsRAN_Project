@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-du_high::du_high()
+du_high::du_high(f1_gateway& f1_gw)
 {
   const size_t task_worker_queue_size = 10000;
 
@@ -33,7 +33,7 @@ du_high::du_high()
     execs.push_back(w.get());
   }
   mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec);
-  f1ap       = create_f1ap_du(f1ap_pdu_adapter);
+  f1ap       = create_f1ap_du(f1ap_pdu_adapter, f1_gw);
   du_manager = create_du_manager(*mac, *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
   // Connect DU blocks
@@ -64,15 +64,6 @@ void du_high::stop()
 void du_high::push_pusch(mac_rx_data_indication pdu)
 {
   mac->handle_rx_data_indication(std::move(pdu));
-}
-
-size_t du_high::query(const std::string& s) const
-{
-  // TODO: This is temporary.
-  if (s == "ues") {
-    return du_manager->nof_ues();
-  }
-  return 0;
 }
 
 } // namespace srsgnb

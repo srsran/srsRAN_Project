@@ -4,9 +4,17 @@
 
 using namespace srsgnb;
 
+struct f1_dummy_gateway : public f1_gateway {
+public:
+  byte_buffer last_pdu;
+
+  void on_new_sdu(byte_buffer pdu) override { last_pdu = std::move(pdu); }
+};
+
 void test_du_ue_create()
 {
-  du_high du_obj;
+  f1_dummy_gateway gw;
+  du_high          du_obj(gw);
 
   du_obj.start();
 
@@ -17,12 +25,13 @@ void test_du_ue_create()
       {mac_rx_pdu{0x4601, 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}}}};
   du_obj.push_pusch(rx_ind);
 
-  uint32_t count = 0;
-  for (size_t nof_ues = du_obj.query("ues"); nof_ues == 0 and count < 10000; nof_ues = du_obj.query("ues"), count++) {
-    usleep(100);
+  for (uint32_t count = 0; count < 10000; count++) {
+    if (not gw.last_pdu.empty()) {
+      break;
+    }
+    usleep(1000);
   }
-  usleep(1000);
-  TESTASSERT(du_obj.query("ues") > 0);
+  TESTASSERT(not gw.last_pdu.empty());
 }
 
 int main()
@@ -32,6 +41,5 @@ int main()
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
   srslog::fetch_basic_logger("F1AP").set_level(srslog::basic_levels::info);
 
-  // TODO: enable again after UE creation has been moved out of F1AP
-  // test_du_ue_create();
+  test_du_ue_create();
 }

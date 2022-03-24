@@ -92,6 +92,14 @@ public:
   virtual void push_pdu(const byte_buffer& data) = 0;
 };
 
+// TODO: This is temporary, until we have a proper interface
+class f1_gateway
+{
+public:
+  virtual ~f1_gateway()                    = default;
+  virtual void on_new_sdu(byte_buffer pdu) = 0;
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_F1AP_DU_H
