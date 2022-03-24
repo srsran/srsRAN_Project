@@ -56,3 +56,6 @@ add_custom_command(
 add_executable(ssb_processor_test ssb_processor_test.cpp)
 target_link_libraries(ssb_processor_test ssb_processor srslog)
 add_test(ssb_processor_test ssb_processor_test)
+
+add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
+target_link_libraries(pdsch_encoder_test pdsch_encoder srslog)
