@@ -24,6 +24,14 @@ public:
     cf_t value;
   };
 
+  /// Constructs a resource spy
+  resource_grid_writer_spy(std::string log_level = "none") :
+    logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
+  {
+    srslog::init();
+    logger.set_level(srslog::str_to_basic_level(log_level));
+  }
+
   // See interface for documentation.
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
   {
@@ -105,6 +113,9 @@ private:
   /// Stores the resource grid written entries.
   std::map<entry_key_t, cf_t> entries;
 
+  /// Stores logger.
+  srslog::basic_logger& logger;
+
   /// \brief This method writes a resource element in the allocation given by the port, symbol and subcarrier indexes.
   ///
   /// \param[in] port Indicates the port index.
@@ -123,6 +134,15 @@ private:
                   port,
                   symbol,
                   subcarrier);
+
+    // Debug trace.
+    logger.debug("[put] port={:>2}; symbol={:>2}; subcarrier={:>4}; value={:+}{:+}j; count={};",
+                 port,
+                 symbol,
+                 subcarrier,
+                 value.real(),
+                 value.imag(),
+                 entries.size() + 1);
 
     // Write element.
     entries.emplace(key, value);
