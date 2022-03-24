@@ -35,28 +35,6 @@ private:
   du_manager_event_handler* du_mng;
 };
 
-/**
- * Adapter of RLC configuration notifications to DU manager method calls
- */
-class rlc_cfg_adapter : public rlc_config_notifier
-{
-public:
-  void connect(du_manager_interface& du_manager_) { du_manager = &du_manager_; }
-
-  void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) override
-  {
-    du_manager->handle_rlc_ue_reconfiguration_response(resp);
-  }
-  void on_ue_delete_complete(const rlc_ue_delete_response_message& resp) override
-  {
-    du_manager->handle_rlc_ue_delete_response(resp);
-  }
-  void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) override {}
-
-private:
-  du_manager_interface* du_manager = nullptr;
-};
-
 class rlc_ul_sdu_adapter : public rlc_sdu_rx_notifier
 {
 public:

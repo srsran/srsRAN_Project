@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1_gateway& gw_) :
+f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1_du_gateway& gw_) :
   logger(srslog::fetch_basic_logger("F1AP")), pdu_listener(pdu_listener_), f1_gw(gw_)
 {}
 

@@ -18,10 +18,6 @@ class du_manager_impl final : public du_manager_interface
 public:
   du_manager_impl(const du_manager_config_t& cfg);
 
-  // RLC interface
-  void handle_rlc_ue_reconfiguration_response(const rlc_ue_reconfiguration_response_message& resp) override {}
-  void handle_rlc_ue_delete_response(const rlc_ue_delete_response_message& resp) override {}
-
   // MAC interface
   void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
 

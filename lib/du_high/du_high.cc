@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-du_high::du_high(f1_gateway& f1_gw)
+du_high::du_high(f1_du_gateway& f1_gw)
 {
   const size_t task_worker_queue_size = 10000;
 
@@ -36,9 +36,8 @@ du_high::du_high(f1_gateway& f1_gw)
   f1ap       = create_f1ap_du(f1ap_pdu_adapter, f1_gw);
   du_manager = create_du_manager(*mac, *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
-  // Connect DU blocks
+  // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);
-  rlc_cfg_notifier.connect(*du_manager);
 }
 
 du_high::~du_high()

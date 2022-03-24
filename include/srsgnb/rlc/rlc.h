@@ -90,15 +90,6 @@ public:
   virtual void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) = 0;
 };
 
-class rlc_config_notifier
-{
-public:
-  virtual ~rlc_config_notifier()                                                                   = default;
-  virtual void on_ue_reconfiguration_complete(const rlc_ue_reconfiguration_response_message& resp) = 0;
-  virtual void on_ue_delete_complete(const rlc_ue_delete_response_message& resp)                   = 0;
-  virtual void on_ue_reestablishment_complete(const rlc_ue_reestablishment_response_message& resp) = 0;
-};
-
 } // namespace srsgnb
 
 #endif // SRSGNB_RLC_H

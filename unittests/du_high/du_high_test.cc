@@ -4,7 +4,7 @@
 
 using namespace srsgnb;
 
-struct f1_dummy_gateway : public f1_gateway {
+struct f1_dummy_gateway : public f1_du_gateway {
 public:
   byte_buffer last_pdu;
 
