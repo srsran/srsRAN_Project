@@ -8,6 +8,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/adt/byte_buffer.h"
 
 namespace srsgnb {
 

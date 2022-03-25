@@ -141,6 +141,10 @@ public:
   using const_iterator = iterator_impl<const uint8_t>;
 
   byte_buffer() = default;
+  byte_buffer(std::initializer_list<uint8_t> lst)
+  {
+    byte_buffer(span<const uint8_t>{lst.begin(), lst.size()});
+  }
   byte_buffer(span<const uint8_t> bytes) { append(bytes); }
   template <typename It>
   byte_buffer(It b, It e)
@@ -289,7 +293,7 @@ inline bool operator!=(const byte_buffer& buf, span<const uint8_t> bytes)
 {
   return not(buf == bytes);
 }
-bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
+inline bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
 {
   return not(buf == bytes);
 }
