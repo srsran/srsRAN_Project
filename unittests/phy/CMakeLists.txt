@@ -1,3 +1,4 @@
+add_subdirectory(lower)
 add_subdirectory(upper)
 
 add_executable(resource_grid_pool_test resource_grid_pool_test.cpp)

@@ -1,0 +1,3 @@
+
+add_executable(dft_processor_fftw_test dft_processor_fftw_test.cpp)
+target_link_libraries(dft_processor_fftw_test srsgnb_lower_phy_modulation srslog)

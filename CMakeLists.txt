@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
+
 ########################################################################
 # Options
 ########################################################################
@@ -41,6 +43,23 @@ ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wsuggest-override HAVE_SUGGEST_OVERRIDE)
 
 ## Avoid shadow variables which can be caused due to C code ported into C++
 #ADD_CXX_COMPILER_FLAG_IF_AVAILABLE(-Wshadow HAVE_SHADOW)
+
+########################################################################
+# Find dependencies
+########################################################################
+
+# FFT
+find_package(FFTW3F REQUIRED)
+if (FFTW3F_FOUND)
+    include_directories(${FFTW3F_INCLUDE_DIRS})
+    link_directories(${FFTW3F_LIBRARY_DIRS})
+    if (BUILD_STATIC)
+        set(FFT_LIBRARIES "${FFTW3F_STATIC_LIBRARIES}")
+    else (BUILD_STATIC)
+        set(FFT_LIBRARIES "${FFTW3F_LIBRARIES}")
+    endif (BUILD_STATIC)
+    message(STATUS "FFT_LIBRARIES: " ${FFT_LIBRARIES})
+endif (FFTW3F_FOUND)
 
 ########################################################################
 # Compiler launcher setup
