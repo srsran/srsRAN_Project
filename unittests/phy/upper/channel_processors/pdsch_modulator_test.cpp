@@ -25,17 +25,23 @@ int main()
 
   for (const test_case_t& test_case : pdsch_modulator_test_data) {
     // Create resource grid spy.
-    resource_grid_writer_spy grid;
+    resource_grid_writer_spy grid("a");
+
+    // Read codeword.
+    std::vector<uint8_t> data = test_case.data.read();
 
     // Prepare codewords.
     static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> codewords(1);
-    codewords[0] = test_case.codeword;
+    codewords[0] = data;
 
     // Modulate.
     pdsch->modulate(grid, codewords, test_case.config);
 
+    // Read resource grid data.
+    std::vector<resource_grid_writer_spy::expected_entry_t> rg_entries = test_case.symbols.read();
+
     // Assert resource grid entries.
-    grid.assert_entries(test_case.symbols);
+    grid.assert_entries(rg_entries);
   }
 
   return 0;

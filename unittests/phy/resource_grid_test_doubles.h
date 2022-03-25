@@ -24,7 +24,7 @@ public:
     cf_t value;
   };
 
-  /// Constructs a resource spy
+  /// Constructs a resource spy.
   resource_grid_writer_spy(std::string log_level = "none") :
     logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
   {

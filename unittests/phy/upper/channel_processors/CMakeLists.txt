@@ -11,7 +11,7 @@ add_custom_command(
   TARGET pbch_modulator_test
   POST_BUILD
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
   VERBATIM)
 
@@ -26,6 +26,14 @@ add_test(pdcch_processor_test pdcch_processor_test)
 add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)
 target_link_libraries(pdsch_modulator_test upper_phy pdsch_modulator srslog)
 add_test(pdsch_modulator_test pdsch_modulator_test)
+
+add_custom_command(
+  TARGET pdsch_modulator_test
+  POST_BUILD
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test/data/pdsch_modulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test/data/pdsch_modulator_test_data.tar.gz
+  VERBATIM)
 
 add_executable(ssb_processor_test ssb_processor_test.cpp)
 target_link_libraries(ssb_processor_test ssb_processor srslog)
