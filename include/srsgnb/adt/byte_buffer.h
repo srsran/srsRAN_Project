@@ -10,63 +10,127 @@
 
 namespace srsgnb {
 
+/// \brief Memory segment of fixed size specified by SEGMENT_SIZE.
+/// Each segment buffer is divided into three parts [ HEADROOM | PAYLOAD | TAILROOM ]
+/// A segment also contains a header region that is used to create an intrusive linked list.
+/// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append()
 class byte_buffer_segment
 {
 public:
   constexpr static size_t SEGMENT_SIZE     = 256;
   constexpr static size_t DEFAULT_HEADROOM = 16;
 
+  using value_type     = uint8_t;
+  using iterator       = uint8_t*;
+  using const_iterator = const uint8_t*;
+
+  /// Segment header where metadata gets stored.
   struct metadata_storage {
     std::shared_ptr<byte_buffer_segment> next = nullptr;
   };
 
-  size_t headroom() const { return headroom_; }
-  size_t length() const { return payload_length; }
-  size_t tailroom() const { return SEGMENT_SIZE - length() - headroom(); }
-
-  void append(span<const uint8_t> bytes)
+  byte_buffer_segment() : data_(buffer.data() + DEFAULT_HEADROOM), data_end_(buffer.data() + DEFAULT_HEADROOM) {}
+  byte_buffer_segment(const byte_buffer_segment& other) noexcept : data_(buffer.data() + other.headroom()),
+                                                                   data_end_(buffer.data() + other.tailroom_start())
   {
-    srsran_assert(tailroom() >= bytes.size(), "There is not enough tailroom space.");
-    std::copy(bytes.begin(), bytes.end(), buffer.begin() + tailroom_start());
-    payload_length += bytes.size();
+    std::copy(other.begin(), other.end(), begin());
+  }
+  byte_buffer_segment(byte_buffer_segment&& other) noexcept : data_(buffer.data() + other.headroom()),
+                                                              data_end_(buffer.data() + other.tailroom_start())
+  {
+    std::copy(other.begin(), other.end(), begin());
+  }
+  byte_buffer_segment& operator=(const byte_buffer_segment& other) noexcept
+  {
+    if (this != &other) {
+      data_     = buffer.data() + other.headroom();
+      data_end_ = buffer.data() + other.tailroom_start();
+      std::copy(other.begin(), other.end(), begin());
+    }
+    return *this;
+  }
+  byte_buffer_segment& operator=(byte_buffer_segment&& other) noexcept
+  {
+    data_     = buffer.data() + other.headroom();
+    data_end_ = buffer.data() + other.tailroom_start();
+    std::copy(other.begin(), other.end(), begin());
+    return *this;
   }
 
+  /// Returns how much space in bytes there is at the head of the segment.
+  size_t headroom() const { return data() - buffer.data(); }
+
+  /// Returns size in bytes of segment.
+  size_t length() const { return end() - begin(); }
+
+  /// Returns how much space in bytes there is at the tail of the segment.
+  size_t tailroom() const { return buffer.end() - end(); }
+
+  /// Appends a span of bytes at the tail of the segment.
+  void append(span<const uint8_t> bytes) { append(bytes.begin(), bytes.end()); }
+
+  /// Appends a iterator range of bytes at the tail of the segment.
+  template <typename It>
+  void append(It it_begin, It it_end)
+  {
+    static_assert(std::is_same<std::decay_t<decltype(*it_begin)>, uint8_t>::value, "Invalid value_type");
+    srsran_sanity_check((size_t)std::distance(it_begin, it_end) <= tailroom(),
+                        "There is not enough tailroom for append.");
+    data_end_ = std::copy(it_begin, it_end, end());
+  }
+
+  /// Appends single byte at the tail of the segment.
   void append(uint8_t byte)
   {
     srsran_assert(tailroom() >= 1, "There is not enough tailroom space.");
     buffer[tailroom_start()] = byte;
-    payload_length++;
+    data_end_++;
   }
 
+  /// Prepends segment with provided span of bytes.
   void prepend(span<const uint8_t> bytes)
   {
     srsran_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
-    headroom_ -= bytes.size();
-    payload_length += bytes.size();
+    data_ -= bytes.size();
     std::copy(bytes.begin(), bytes.end(), buffer.begin() + headroom());
   }
 
   void trim_front(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
-    headroom_ += nof_bytes;
-    payload_length -= nof_bytes;
+    data_ += nof_bytes;
   }
 
   void trim_back(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
-    payload_length -= nof_bytes;
+    data_end_ -= nof_bytes;
   }
 
-  uint8_t&       operator[](size_t idx) { return *(data() + idx); }
-  const uint8_t& operator[](size_t idx) const { return *(data() + idx); }
+  uint8_t& operator[](size_t idx)
+  {
+    srsran_sanity_check(idx < length(), "Out-of-bound access");
+    return *(begin() + idx);
+  }
+  const uint8_t& operator[](size_t idx) const
+  {
+    srsran_sanity_check(idx < length(), "Out-of-bound access");
+    return *(begin() + idx);
+  }
+
+  const uint8_t* data() const { return begin(); }
+  uint8_t*       data() { return begin(); }
+
+  iterator       begin() { return data_; }
+  iterator       end() { return data_end_; }
+  const_iterator begin() const { return data_; }
+  const_iterator end() const { return data_end_; }
 
   metadata_storage&       metadata() { return metadata_; }
   const metadata_storage& metadata() const { return metadata_; }
 
-  const uint8_t* data() const { return buffer.data() + headroom(); }
-  uint8_t*       data() { return buffer.data() + headroom(); }
+  byte_buffer_segment*       next() { return metadata().next.get(); }
+  const byte_buffer_segment* next() const { return metadata().next.get(); }
 
   bool operator==(const byte_buffer_segment& other) const
   {
@@ -82,13 +146,13 @@ private:
 
   metadata_storage                  metadata_;
   std::array<uint8_t, SEGMENT_SIZE> buffer;
-  size_t                            headroom_      = DEFAULT_HEADROOM;
-  size_t                            payload_length = 0;
+  uint8_t*                          data_;
+  uint8_t*                          data_end_;
 };
 
 class byte_buffer_view;
 
-/// Type to store a dynamic amount of contiguous bytes.
+/// Memory buffer that store bytes in a linked list of memory chunks.
 class byte_buffer
 {
   template <typename T>
@@ -113,7 +177,7 @@ class byte_buffer
       offset++;
       if (offset >= current_segment->length()) {
         offset          = 0;
-        current_segment = current_segment->metadata().next.get();
+        current_segment = current_segment->next();
       }
       return *this;
     }
@@ -134,7 +198,7 @@ class byte_buffer
       offset += n;
       while (offset > current_segment->length()) {
         offset -= current_segment->length();
-        current_segment = current_segment->metadata().next.get();
+        current_segment = current_segment->next();
       }
       return *this;
     }
@@ -143,7 +207,7 @@ class byte_buffer
     {
       difference_type      diff = 0;
       byte_buffer_segment* seg  = other.current_segment;
-      for (; seg != current_segment; seg = seg->metadata().next.get()) {
+      for (; seg != current_segment; seg = seg->next()) {
         diff += seg->length();
       }
       diff += offset - other.offset;
@@ -196,18 +260,20 @@ public:
     return *this;
   }
 
+  /// Creates a deep copy of this byte_buffer.
   byte_buffer clone()
   {
     byte_buffer buf;
-    for (byte_buffer_segment* seg = head.get(); seg != nullptr; seg = seg->metadata().next.get()) {
+    for (byte_buffer_segment* seg = head.get(); seg != nullptr; seg = seg->next()) {
       buf.append(span<uint8_t>{seg->data(), seg->length()});
     }
     return buf;
   }
 
+  /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
   void append(span<const uint8_t> bytes)
   {
-    if (empty()) {
+    if (empty() and not bytes.empty()) {
       append_segment();
     }
     for (size_t count = 0; count < bytes.size();) {
@@ -222,6 +288,25 @@ public:
     len += bytes.size();
   }
 
+  template <typename It>
+  void append(It it_begin, It it_end)
+  {
+    if (empty() and it_begin != it_end) {
+      append_segment();
+    }
+    size_t to_add = it_end - it_begin;
+    while (it_begin != it_end) {
+      if (tail->tailroom() == 0) {
+        append_segment();
+      }
+      It it_next = it_begin + std::min(tail->tailroom(), it_end - it_begin);
+      tail->append(it_begin, it_next);
+      it_begin = it_next;
+    }
+    len += to_add;
+  }
+
+  /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
   void append(uint8_t byte)
   {
     if (empty() or tail->tailroom() == 0) {
@@ -248,6 +333,7 @@ public:
     len += bytes.size();
   }
 
+  /// Clear byte buffer.
   void clear()
   {
     head = nullptr;
@@ -258,8 +344,10 @@ public:
 
   size_t length() const { return len; }
 
+  /// Compares bytes buffers byte-wise.
   bool operator==(const byte_buffer& other) const
   {
+    // TODO: Probably can be done in batches of segments.
     auto it = begin(), it2 = other.begin();
     for (; it != end() and it2 != other.end(); ++it, ++it2) {
       if (*it != *it2) {
@@ -336,6 +424,7 @@ inline bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
   return not(buf == bytes);
 }
 
+/// Non-owning range used to traverse a slice of a byte buffer.
 class byte_buffer_view
 {
 public:
@@ -356,6 +445,7 @@ public:
 
   const uint8_t& operator*() const { return *it; }
 
+  /// Returns another sub-view with dimensions specified in arguments.
   byte_buffer_view slice(size_t offset, size_t size) const
   {
     srsran_sanity_check(offset + size <= length(), "Invalid slice dimensions.");
@@ -363,6 +453,8 @@ public:
   }
 
   /// Split byte buffer view into two contiguous views, with break point defined by "offset".
+  /// \param offset index at which view is split into two contiguous views.
+  /// \return pair of contiguous views.
   std::pair<byte_buffer_view, byte_buffer_view> split(size_t offset)
   {
     auto it_split = begin() + offset;
