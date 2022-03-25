@@ -26,6 +26,47 @@ std::vector<uint8_t> make_big_vec()
   return vec;
 }
 
+void test_buffer_segment()
+{
+  constexpr static size_t segment_size          = byte_buffer_segment::SEGMENT_SIZE;
+  constexpr static size_t segment_headroom_init = byte_buffer_segment::DEFAULT_HEADROOM;
+  byte_buffer_segment     segment;
+  TESTASSERT(segment.begin() == segment.end());
+  TESTASSERT_EQ(0, segment.length());
+  TESTASSERT_EQ(segment_size, segment.headroom() + segment.tailroom());
+  TESTASSERT_EQ(segment_headroom_init, segment.headroom());
+  TESTASSERT(segment.next() == nullptr);
+
+  // append
+  auto bytes = make_small_vec();
+  segment.append(bytes);
+  TESTASSERT(segment == bytes);
+  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes.begin(), bytes.end()));
+
+  // prepend
+  segment.prepend(bytes);
+  auto bytes2 = bytes;
+  bytes2.insert(bytes2.end(), bytes.begin(), bytes.end());
+  TESTASSERT(segment == bytes2);
+  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin(), bytes2.end()));
+
+  // trim front
+  segment.trim_head(4);
+  TESTASSERT(segment == span<uint8_t>{bytes2}.subspan(4, bytes2.size() - 4));
+  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin() + 4, bytes2.end()));
+
+  // trim back
+  segment.trim_tail(2);
+  TESTASSERT(segment == span<uint8_t>{bytes2}.subspan(4, bytes2.size() - 6));
+  TESTASSERT(std::equal(segment.begin(), segment.end(), bytes2.begin() + 4, bytes2.end() - 2));
+
+  // comparison
+  byte_buffer_segment segment2 = segment;
+  TESTASSERT(segment == segment2);
+  segment2.trim_tail(1);
+  TESTASSERT(segment != segment2);
+}
+
 void test_byte_buffer_append()
 {
   byte_buffer pdu;
@@ -45,17 +86,19 @@ void test_byte_buffer_append()
 void test_byte_buffer_prepend()
 {
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = {1, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> bytes = make_small_vec();
 
   pdu.prepend(bytes);
   TESTASSERT_EQ(pdu.length(), bytes.size());
+  TESTASSERT(pdu == bytes);
 
-  bytes.resize(byte_buffer_segment::SEGMENT_SIZE);
-  for (size_t i = 0; i < bytes.size(); ++i) {
-    bytes[i] = i;
-  }
-  pdu.prepend(bytes);
-  TESTASSERT_EQ(pdu.length(), bytes.size() + 6);
+  auto bytes2 = make_big_vec();
+  pdu.prepend(bytes2);
+  TESTASSERT_EQ(pdu.length(), bytes.size() + bytes2.size());
+
+  auto bytes_concat = bytes2;
+  bytes_concat.insert(bytes_concat.end(), bytes.begin(), bytes.end());
+  TESTASSERT(bytes_concat == pdu);
 }
 
 void test_byte_buffer_compare()
@@ -208,6 +251,7 @@ void test_byte_buffer_view()
 
 int main()
 {
+  test_buffer_segment();
   test_byte_buffer_append();
   test_byte_buffer_prepend();
   test_byte_buffer_iterator();

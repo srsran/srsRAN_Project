@@ -92,16 +92,18 @@ public:
   {
     srsran_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
     data_ -= bytes.size();
-    std::copy(bytes.begin(), bytes.end(), buffer.begin() + headroom());
+    std::copy(bytes.begin(), bytes.end(), begin());
   }
 
-  void trim_front(size_t nof_bytes)
+  /// Removes provided number of bytes from the head of the segment.
+  void trim_head(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
     data_ += nof_bytes;
   }
 
-  void trim_back(size_t nof_bytes)
+  /// Removes provided number of bytes from the tail of the segment.
+  void trim_tail(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
     data_end_ -= nof_bytes;
@@ -132,14 +134,16 @@ public:
   byte_buffer_segment*       next() { return metadata().next.get(); }
   const byte_buffer_segment* next() const { return metadata().next.get(); }
 
-  bool operator==(const byte_buffer_segment& other) const
+  template <typename Container>
+  bool operator==(const Container& other) const
   {
-    return std::equal(buffer.begin() + headroom(),
-                      buffer.begin() + headroom() + length(),
-                      other.buffer.begin() + other.headroom(),
-                      other.buffer.begin() + other.headroom() + other.length());
+    return std::equal(begin(), end(), other.begin(), other.end());
   }
-  bool operator!=(const byte_buffer_segment& other) const { return not(*this == other); }
+  template <typename Container>
+  bool operator!=(const Container& other) const
+  {
+    return not(*this == other);
+  }
 
 private:
   size_t tailroom_start() const { return headroom() + length(); }
