@@ -14,7 +14,7 @@ public:
     du_index(du_index), lcid(lcid), notifier(notifier)
   {}
 
-  void handle_pdu(byte_buffer pdu) override { notifier.on_new_sdu(du_index, lcid, pdu); }
+  void handle_pdu(byte_buffer pdu) override { notifier.on_new_sdu(du_index, lcid, std::move(pdu)); }
 
 private:
   const du_ue_index_t  du_index;

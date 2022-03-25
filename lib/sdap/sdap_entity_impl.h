@@ -11,9 +11,9 @@ class sdap_entity_impl : public sdap_entity
 public:
   bool decapsulate(byte_buffer& data) override
   {
-    std::printf("[SDAP-ENTITY] Removing SDAP header from packet of size = %u\n", (unsigned)data.size());
-    data.erase(data.end() - 3, data.end());
-    std::printf("[SDAP-ENTITY] New size after removing SDAP header is %u bytes\n", (unsigned)data.size());
+    std::printf("[SDAP-ENTITY] Removing SDAP header from packet of size = %u\n", (unsigned)data.length());
+//    data.trim_front(3);
+    std::printf("[SDAP-ENTITY] New size after removing SDAP header is %u bytes\n", (unsigned)data.length());
     return true;
   }
 };

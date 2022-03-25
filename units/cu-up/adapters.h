@@ -25,8 +25,8 @@ public:
   {
     std::printf("[PDCP-SDAP-ADAPTER] Received a packet from PDCP layer, forwarding data packet of size = %u bytes to "
                 "upper layer (SDAP)\n",
-                (unsigned)sdu.size());
-    sdap.handle_pdu(sdu);
+                (unsigned)sdu.length());
+    sdap.handle_pdu(std::move(sdu));
   }
 };
 

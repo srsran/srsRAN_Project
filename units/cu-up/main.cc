@@ -18,12 +18,13 @@ public:
   void receive()
   {
     // Create a fake data packet.
-    srsgnb::byte_buffer v(22);
+    srsgnb::byte_buffer v;
+    v.append(std::array<uint8_t, 22>{0});
 
-    std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)v.size());
+    std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)v.length());
 
     // Send the packet to the PDCP interface.
-    notifier.handle_pdu(v);
+    notifier.handle_pdu(std::move(v));
   }
 };
 
@@ -32,7 +33,7 @@ class fake_sdap_to_ngu_relay : public srsgnb::sdap_sdu_rx_notifier
 public:
   void on_new_sdu(srsgnb::byte_buffer data) override
   {
-    std::printf("[SDAP-NGU-RELAY] Receiving a fake packet of size = %u\n", (unsigned)data.size());
+    std::printf("[SDAP-NGU-RELAY] Receiving a fake packet of size = %u\n", (unsigned)data.length());
     std::printf("  Forwarding packet to NG-U to be delivered to UPF\n");
   }
 };

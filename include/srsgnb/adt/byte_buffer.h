@@ -140,7 +140,13 @@ public:
   using iterator       = iterator_impl<uint8_t>;
   using const_iterator = iterator_impl<const uint8_t>;
 
-  byte_buffer()                       = default;
+  byte_buffer() = default;
+  byte_buffer(span<const uint8_t> bytes) { append(bytes); }
+  template <typename It>
+  byte_buffer(It b, It e)
+  {
+    // TODO
+  }
   byte_buffer(const byte_buffer&)     = delete;
   byte_buffer(byte_buffer&&) noexcept = default;
   byte_buffer& operator=(byte_buffer&&) noexcept = default;
@@ -187,10 +193,23 @@ public:
     }
   }
 
-  bool empty() const { return head == nullptr; }
+  void clear()
+  {
+    head = nullptr;
+    tail = nullptr;
+  }
+
+  bool empty() const
+  {
+    // TODO: optimize
+    return length() == 0;
+  }
 
   size_t length() const
   {
+    if (head == nullptr) {
+      return 0;
+    }
     size_t sz = 0;
     for (buffer_segment* seg = head.get(); seg != nullptr; seg = seg->metadata().next.get()) {
       sz += seg->length();

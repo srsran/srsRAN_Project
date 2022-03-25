@@ -33,11 +33,12 @@ public:
 
   void handle_ul_data_packet(byte_buffer& data) override
   {
-    printf("[PDCP-UL-PKT-PROCEDURE] Received a new data packet of size = %u, performing UL packet procedure\n", (unsigned)data.size());
+    printf("[PDCP-UL-PKT-PROCEDURE] Received a new data packet of size = %u, performing UL packet procedure\n",
+           (unsigned)data.length());
     printf("[PDCP-UL-PKT-PROCEDURE] Step 1: remove PDCP header\n");
     entity->decapsulate(data);
     printf("[PDCP-UL-PKT-PROCEDURE] UL packet procedure finished, delivering packet to upper layer\n");
-    listener.on_new_sdu(data);
+    listener.on_new_sdu(std::move(data));
   }
 };
 

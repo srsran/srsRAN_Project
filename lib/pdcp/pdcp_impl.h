@@ -24,7 +24,7 @@ public:
   {
     std::printf("[PDCP-PROCEDURE-DISPATCHER] Received a new data packet of size = %u bytes. Dispatching an UL packet "
                 "data procedure to handle it\n",
-                (unsigned)data.size());
+                (unsigned)data.length());
 
     procedure->handle_ul_data_packet(data);
   }

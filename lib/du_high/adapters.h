@@ -49,7 +49,7 @@ public:
     msg.ue_index = ue_index;
     msg.lcid     = lcid;
     msg.pdu      = std::move(pdu);
-    f1_ptr->handle_pdu(msg);
+    f1_ptr->handle_pdu(std::move(msg));
   }
 
 private:

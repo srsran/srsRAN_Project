@@ -58,7 +58,7 @@ public:
       cfg.ul_exec_mapper.executor(pdu.rnti).execute(
           [this, slot_rx = msg.sl_rx, cell_idx = msg.cell_index, pdu = std::move(pdu)]() mutable {
             // 2. Decode Rx PDU and handle respective subPDUs.
-            pdu_handler.handle_rx_pdu(slot_rx, cell_idx, pdu);
+            pdu_handler.handle_rx_pdu(slot_rx, cell_idx, std::move(pdu));
           });
     }
   }

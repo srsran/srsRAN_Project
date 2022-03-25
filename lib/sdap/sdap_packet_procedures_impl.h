@@ -34,11 +34,11 @@ public:
   void handle_ul_data_packet(byte_buffer& data) override
   {
     printf("[SDAP-UL-PKT-PROCEDURE] Received a new data packet of size = %u, performing UL packet procedure\n",
-           (unsigned)data.size());
+           (unsigned)data.length());
     printf("[SDAP-UL-PKT-PROCEDURE] Step 1: remove SDAP header\n");
     entity->decapsulate(data);
     printf("[SDAP-UL-PKT-PROCEDURE] UL packet procedure finished, delivering packet to upper layer\n");
-    listener.on_new_sdu(data);
+    listener.on_new_sdu(std::move(data));
   }
 };
 
