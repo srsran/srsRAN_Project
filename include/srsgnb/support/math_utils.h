@@ -14,14 +14,17 @@
 #define SRSGNB_SUPPORT_MATH_UTILS_H_
 
 #include "srsgnb/adt/complex.h"
+#include "srsran_assert.h"
 #include <cassert>
 #include <cmath>
-#include "srsran_assert.h"
 
 namespace srsgnb {
 
 /// Defines the complex imaginary unit.
 static constexpr cf_t COMPLEX_I(0, 1);
+
+/// Defines two times Pi.
+static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 
 /// \brief Performs an integer division rounding up.
 ///
