@@ -5,6 +5,12 @@
 
 using namespace srsgnb;
 
+bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
+{
+  byte_buffer_view view = subpdu;
+  return unpack(view);
+}
+
 bool mac_ul_sch_subpdu::unpack(byte_buffer_view& subpdu)
 {
   sdu_view = {};

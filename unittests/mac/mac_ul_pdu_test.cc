@@ -9,8 +9,8 @@ void test_mac_ul_subpdu()
   test_delimit_logger delim{"subPDU test"};
   mac_ul_sch_subpdu   subpdu;
 
-  byte_buffer msg({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6});
-  TESTASSERT(subpdu.unpack(msg).has_value());
+  byte_buffer      msg({0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06});
+  TESTASSERT(subpdu.unpack(msg));
   fmt::print("subPDU: {}\n", subpdu);
 }
 
