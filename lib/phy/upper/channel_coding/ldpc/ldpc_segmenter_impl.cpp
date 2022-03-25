@@ -1,12 +1,12 @@
 #include "ldpc_segmenter_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_metadata.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
-using segment_meta_t = ldpc_segmenter::described_segment_t;
+using segment_meta_t = ldpc_segmenter::described_segment;
 
 // Length of the CRC checksum added to the segments.
 static constexpr unsigned seg_crc_length = 24;
@@ -19,6 +19,7 @@ ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
   srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
   srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
 
+  // Transfer CRC calculators' ownership.
   crc_set.crc16  = std::move(c.crc16);
   crc_set.crc24A = std::move(c.crc24A);
   crc_set.crc24B = std::move(c.crc24B);
@@ -109,7 +110,7 @@ static void fill_segment(span<uint8_t>                    segment,
 
 static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX_NOF_SEGMENTS>& segments,
                          span<const uint8_t>                                                    transport_block,
-                         const ldpc_segmenter::config_t&                                        cfg)
+                         const ldpc_segmenter::config&                                          cfg)
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
@@ -126,9 +127,9 @@ static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX
 }
 
 void ldpc_segmenter_impl::segment(
-    static_vector<described_segment_t, ldpc_segmenter::MAX_NOF_SEGMENTS>& described_segments,
-    span<const uint8_t>                                                   transport_block,
-    const config_t&                                                       cfg)
+    static_vector<described_segment, ldpc_segmenter::MAX_NOF_SEGMENTS>& described_segments,
+    span<const uint8_t>                                                 transport_block,
+    const config&                                                       cfg)
 {
   check_inputs(described_segments, transport_block, cfg);
 
@@ -173,7 +174,7 @@ void ldpc_segmenter_impl::segment(
 
   unsigned input_idx = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    segment_data_t tmp_data(segment_length);
+    segment_data tmp_data(segment_length);
     // Number of bits to copy to this segment.
     unsigned nof_info_bits = std::min(max_info_bits, nof_tb_bits_in - input_idx);
     // Number of filler bits in this segment.
@@ -186,7 +187,7 @@ void ldpc_segmenter_impl::segment(
                  nof_filler_bits);
     input_idx += nof_info_bits;
 
-    codeblock_description_t tmp_description = {};
+    codeblock_metadata tmp_description = {};
 
     tmp_description.tb_common.base_graph   = base_graph;
     tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);
@@ -212,6 +213,5 @@ std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
   ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                        create_crc_calculator(crc_generator_poly::CRC24A),
                                        create_crc_calculator(crc_generator_poly::CRC24B)};
-  // Transfer CRC calculators' ownership.
   return std::make_unique<ldpc_segmenter_impl>(crcs);
 }

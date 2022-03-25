@@ -6,7 +6,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_description.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_codeblock_metadata.h"
 
 namespace srsgnb {
 
@@ -27,20 +27,20 @@ public:
   static constexpr unsigned MAX_NOF_SEGMENTS = 52;
 
   /// Alias for the segment data container.
-  using segment_data_t = static_vector<uint8_t, MAX_SEG_LENGTH>;
+  using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
 
   /// \brief Alias for the full segment characterization.
   ///
   /// This is a self-contained type that associates a segment of the transport block with all the metadata required by
   /// subsequent processing units (e.g., encoder and rate-matcher).
-  ///   - \c described_segment_t.first()   Contains the segment data, including CRC, in unpacked format (each bit is
+  ///   - \c described_segment.first()   Contains the segment data, including CRC, in unpacked format (each bit is
   ///                                      represented by a \c uint8_t entry).
-  ///   - \c described_segment_t.second()  Contains the segment metadata, useful for processing the corresponding
+  ///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
   ///                                      codeblock.
-  using described_segment_t = std::pair<segment_data_t, codeblock_description_t>;
+  using described_segment = std::pair<segment_data, codeblock_metadata>;
 
   /// Gathers all segmentation configuration parameters.
-  struct config_t {
+  struct config {
     /// Code base graph.
     ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
     /// Code lifting size.
@@ -68,9 +68,9 @@ public:
   /// \param[out] described_segments    Segments (unpacked, one bit per entry) and corresponding metadata.
   /// \param[in]  transport_block       The transport block to segment (packed, one byte per entry).
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
-  virtual void segment(static_vector<described_segment_t, MAX_NOF_SEGMENTS>& described_segments,
-                       span<const uint8_t>                                   transport_block,
-                       const config_t&                                       cfg) = 0;
+  virtual void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+                       span<const uint8_t>                                 transport_block,
+                       const config&                                       cfg) = 0;
 };
 
 std::unique_ptr<ldpc_segmenter> create_ldpc_segmenter();

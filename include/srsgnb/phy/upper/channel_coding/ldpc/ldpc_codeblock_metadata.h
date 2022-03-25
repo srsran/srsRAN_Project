@@ -1,7 +1,7 @@
 /// \file
 /// \brief Codeblock metadata.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_DESCRIPTION_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_DESCRIPTION_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H
 
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
@@ -12,9 +12,9 @@ namespace srsgnb {
 ///
 /// Characterization of the codeblocks obtained from a single transport block with all the parameters needed by the
 /// encoder/decoder and by the rate matcher/dematcher blocks.
-struct codeblock_description_t {
+struct codeblock_metadata {
   /// Common parameters for all codeblocks from the same transport block.
-  struct tb_common {
+  struct tb_common_metadata {
     /// Code base graph.
     ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
     /// Code lifting size.
@@ -26,18 +26,24 @@ struct codeblock_description_t {
     /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
     /// \note Set to zero for unlimited buffer length.
     unsigned Nref = 0;
-  } tb_common;
+  };
+
   /// Parameters that are specific to a single codeblock.
-  struct cb_specific {
+  struct cb_specific_metadata {
     /// Codeblock length before rate matching.
     unsigned full_length = 0;
     /// Codeblock length after rate matching.
     unsigned rm_length = 0;
     /// Number of filler bits in the full codeblock.
     unsigned nof_filler_bits = 0;
-  } cb_specific;
+  };
+
+  /// Contains common transport block parameters.
+  tb_common_metadata tb_common;
+  /// Contains specific code block parameters.
+  cb_specific_metadata cb_specific;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_DESCRIPTION_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_CODEBLOCK_METADATA_H

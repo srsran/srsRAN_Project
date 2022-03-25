@@ -39,9 +39,9 @@ public:
   explicit ldpc_segmenter_impl(sch_crc& c);
 
   // See interface for the documentation.
-  void segment(static_vector<described_segment_t, MAX_NOF_SEGMENTS>& described_segments,
-               span<const uint8_t>                                   transport_block,
-               const config_t&                                       cfg) override;
+  void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+               span<const uint8_t>                                 transport_block,
+               const config&                                       cfg) override;
 
 private:
   /// Computes the number of segments the transport block is split into, as per TS38.212 Section 5.2.2.
