@@ -27,7 +27,11 @@ public:
   constexpr static_vector() noexcept = default;
   explicit static_vector(size_type count) { append(count); }
   static_vector(size_type count, const T& initial_value) { append(count, initial_value); }
-  static_vector(const static_vector& other) { append(other.begin(), other.end()); }
+  static_vector(const static_vector& other)
+  {
+    static_assert(std::is_copy_constructible<T>::value, "T must be copyable");
+    append(other.begin(), other.end());
+  }
   static_vector(static_vector&& other) noexcept(std::is_nothrow_move_constructible<value_type>::value)
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
@@ -188,7 +192,7 @@ public:
       size_ = count;
     } else if (size_ < count) {
       size_t to_append = count - size_;
-      if(to_append > MAX_N) {
+      if (to_append > MAX_N) {
         // Note: Gcc 11 fails compilation without this assertion. Potentially a bug.
         __builtin_unreachable();
       }

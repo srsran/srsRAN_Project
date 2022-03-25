@@ -2,6 +2,7 @@
 #ifndef MAC_UL_BSR_H
 #define MAC_UL_BSR_H
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/adt/to_array.h"
@@ -20,12 +21,12 @@ struct lcg_bsr_report {
 using lcg_bsr_report_list = static_vector<lcg_bsr_report, MAX_LOGICAL_CHANNEL_GROUP>;
 
 /// Decode Short BSR
-inline lcg_bsr_report decode_sbsr(span<const uint8_t> payload)
+inline lcg_bsr_report decode_sbsr(byte_buffer_view payload)
 {
   srsran_sanity_check(not payload.empty(), "Trying to decode SBSR but payload is empty.");
   lcg_bsr_report sbsr = {};
-  sbsr.lcg_id         = (payload[0] & 0xe0U) >> 5U;
-  sbsr.buffer_size    = payload[0] & 0x1fU;
+  sbsr.lcg_id         = (*payload & 0xe0U) >> 5U;
+  sbsr.buffer_size    = *payload & 0x1fU;
   return sbsr;
 }
 
@@ -35,7 +36,7 @@ struct long_bsr_report {
 };
 
 /// Decode Long BSR
-long_bsr_report decode_lbsr(bsr_format format, span<const uint8_t> payload);
+long_bsr_report decode_lbsr(bsr_format format, byte_buffer_view payload);
 
 /// Converts the buffer size field of a BSR (5 or 8-bit Buffer Size field) into Nof Bytes.
 /// \param buff_size_index The buffer size field contained in the MAC PDU.

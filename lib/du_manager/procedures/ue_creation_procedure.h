@@ -36,7 +36,7 @@ class mac_ul_dcch_adapter : public mac_sdu_rx_notifier
 {
 public:
   mac_ul_dcch_adapter(rlc_pdu_handler& bearer_) : bearer(bearer_) {}
-  void on_new_sdu(mac_rx_sdu sdu) override { bearer.handle_pdu(sdu.pdu); }
+  void on_new_sdu(mac_rx_sdu sdu) override { bearer.handle_pdu(std::move(sdu.pdu)); }
 
   rlc_pdu_handler& bearer;
 };

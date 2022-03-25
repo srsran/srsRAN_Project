@@ -8,7 +8,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu)};
 
   // 1. Decode MAC UL PDU.
-  if (ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu) < 0) {
+  if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
     logger.warning("Failed to decode PDU");
     return false;
   }

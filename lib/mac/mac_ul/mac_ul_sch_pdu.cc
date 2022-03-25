@@ -5,50 +5,50 @@
 
 using namespace srsgnb;
 
-int mac_ul_sch_subpdu::unpack(span<const uint8_t> subpdu)
+bool mac_ul_sch_subpdu::unpack(byte_buffer_view& subpdu)
 {
+  sdu_view = {};
   if (subpdu.empty()) {
     srslog::fetch_basic_logger("MAC-NR").warning("Empty MAC subPDU");
-    return -1;
+    return false;
   }
-  const uint8_t* ptr = subpdu.data();
 
   // Skip R, read F bit and LCID
-  F_bit    = (*ptr & 0x40U) > 0;
-  lcid_val = *ptr & 0x3fU;
-  ptr++;
+  F_bit    = (*subpdu & 0x40U) > 0;
+  lcid_val = *subpdu & 0x3fU;
+  ++subpdu;
   header_length = 1;
 
   uint32_t sdu_length = 0;
   if (lcid_val.is_valid_lcid()) {
     if (lcid_val.has_length_field()) {
       // Read first length byte
-      sdu_length = (uint32_t)*ptr;
-      ptr++;
+      sdu_length = (uint32_t)*subpdu;
+      ++subpdu;
       header_length++;
 
       if (F_bit) {
         // add second length byte
-        sdu_length = sdu_length << 8 | ((uint32_t)*ptr & 0xff);
-        ptr++;
+        sdu_length = sdu_length << 8 | ((uint32_t)*subpdu & 0xff);
+        ++subpdu;
         header_length++;
       }
+      std::tie(sdu_view, subpdu) = subpdu.split((size_t)sdu_length);
     } else {
-      sdu_length = lcid_val.sizeof_ce();
       if (lcid_val == lcid_ul_sch_t::PADDING) {
         // set subPDU length to rest of PDU
         // 1 Byte R/LCID MAC subheader
-        header_length = 1;
-        sdu_length    = subpdu.size() - header_length;
+        sdu_view = subpdu;
+        subpdu   = {};
+      } else {
+        sdu_length                 = lcid_val.sizeof_ce();
+        std::tie(sdu_view, subpdu) = subpdu.split((size_t)sdu_length);
       }
     }
-    sdu_view = {ptr, (size_t)sdu_length};
   } else {
-    sdu_view = {};
     srslog::fetch_basic_logger("MAC-NR").warning("Invalid LCID ({}) in MAC PDU", lcid_val);
-    return -1;
   }
-  return payload().size();
+  return true;
 }
 
 std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subpdu)
@@ -100,19 +100,18 @@ void mac_ul_sch_pdu::clear()
   subpdus.clear();
 }
 
-int mac_ul_sch_pdu::unpack(span<const uint8_t> payload)
+bool mac_ul_sch_pdu::unpack(const byte_buffer& payload)
 {
-  size_t offset = 0;
-  while (offset < payload.size()) {
+  byte_buffer_view view = payload;
+  while (not view.empty()) {
     mac_ul_sch_subpdu subpdu{};
-    if (subpdu.unpack(payload.subspan(offset, payload.size() - offset)) < 0) {
-      return -1;
+    if (not subpdu.unpack(view)) {
+      return false;
     }
-    offset += subpdu.total_length();
     subpdus.push_back(subpdu);
   }
 
-  return offset;
+  return true;
 }
 
 std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_pdu& pdu)

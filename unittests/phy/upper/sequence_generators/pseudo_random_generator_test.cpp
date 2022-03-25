@@ -91,7 +91,7 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
 
   // Create data buffer
-  byte_buffer data(N / 8);
+  std::vector<uint8_t> data(N / 8);
 
   // Fill buffer with random data
   for (unsigned char& v : data) {
@@ -108,7 +108,7 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   generator->advance(offset);
 
   // Apply sequence
-  byte_buffer data_xor(N / 8);
+  std::vector<uint8_t> data_xor(N / 8);
   generator->apply_xor_byte(data, data_xor);
 
   // Assert

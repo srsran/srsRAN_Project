@@ -63,34 +63,35 @@ constexpr auto buffer_size_levels_8bit =
                         49179951,   52372284, 55771835, 59392055, 63247269,
                         67352729,   71724679, 76380419, 81338368, /* > */ 81338368});
 
-long_bsr_report srsgnb::decode_lbsr(bsr_format format, span<const uint8_t> payload)
+long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
 {
   long_bsr_report lbsr = {};
 
-  const uint8_t* ptr = payload.data();
-  lbsr.bitmap        = *ptr; // read LCG bitmap
-  ptr++;                     // skip LCG bitmap
+  byte_buffer_view view = payload;
+  lbsr.bitmap           = *view; // read LCG bitmap
+  ++view;                        // skip LCG bitmap
 
   // early stop if LBSR is empty
   if (lbsr.bitmap == 0) {
     return lbsr;
   }
 
-  unsigned bsr_cnt = 0;
   for (uint8_t i = 0; i < lbsr.list.capacity(); i++) {
     // If LCGi bit is enabled, it means the next 8-bit BSR value corresponds to it
     if (lbsr.bitmap & (0x1U << i)) {
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = i;
       // For the Long truncated, some BSR words can be not present, assume BSR > 0 in that case
-      if (1 + bsr_cnt < payload.size()) {
-        bsr.buffer_size = ptr[bsr_cnt];
-        bsr_cnt++;
+      if (view.begin() + 1 != view.end()) {
+        bsr.buffer_size = *view;
+        ++view;
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         bsr.buffer_size = 63; // just assume it has 526 bytes to transmit
       } else {
         srslog::fetch_basic_logger("MAC-NR").error(
-            "Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n", payload.size(), bsr_cnt);
+            "Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
+            payload.length(),
+            lbsr.list.size());
       }
       lbsr.list.push_back(bsr);
     }

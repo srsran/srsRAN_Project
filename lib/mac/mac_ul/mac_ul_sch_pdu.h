@@ -3,31 +3,32 @@
 #define SRSGNB_MAC_UL_SCH_PDU_H
 
 #include "lcid_ul_sch.h"
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/srsran_assert.h"
-#include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/expected.h"
 
 namespace srsgnb {
 
 class mac_ul_sch_subpdu
 {
 public:
-  /// Returns length of PDU (or negative integer if error).
-  int unpack(span<const uint8_t> subpdu);
+  /// Returns buffer view with begin() pointing at the first byte after the decoded subPDU.
+  bool unpack(byte_buffer_view& subpdu);
 
-  lcid_ul_sch_t       lcid() const { return lcid_val; }
-  uint32_t            total_length() const { return header_length + payload().size(); }
-  span<const uint8_t> payload() const { return sdu_view; }
-  uint32_t            sdu_length() const { return sdu_view.size(); }
+  lcid_ul_sch_t    lcid() const { return lcid_val; }
+  uint32_t         total_length() const { return header_length + payload().length(); }
+  byte_buffer_view payload() const { return sdu_view; }
+  uint32_t         sdu_length() const { return sdu_view.length(); }
 
 private:
-  lcid_ul_sch_t       lcid_val;
-  int                 header_length = 0;
-  bool                F_bit         = false;
-  span<const uint8_t> sdu_view;
+  lcid_ul_sch_t    lcid_val;
+  int              header_length = 0;
+  bool             F_bit         = false;
+  byte_buffer_view sdu_view;
 };
 
 /// UL subPDU Formatter
@@ -45,7 +46,7 @@ public:
 
   void clear();
 
-  int unpack(span<const uint8_t> payload);
+  bool unpack(const byte_buffer& payload);
 
   mac_ul_sch_subpdu&       subpdu(size_t i) { return subpdus[i]; }
   const mac_ul_sch_subpdu& subpdu(size_t i) const { return subpdus[i]; }
@@ -64,12 +65,12 @@ private:
 std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_pdu& subpdu);
 
 /// Decode C-RNTI MAC CE
-inline rnti_t decode_crnti_ce(span<const uint8_t> payload)
+inline rnti_t decode_crnti_ce(byte_buffer_view payload)
 {
-  if (payload.size() < 2) {
+  if (payload.length() < 2) {
     return INVALID_RNTI;
   }
-  return le16toh((uint16_t)payload[0] << 8U | payload[1]);
+  return le16toh((uint16_t)*payload << 8U | *(++payload));
 }
 
 } // namespace srsgnb
