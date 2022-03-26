@@ -249,6 +249,31 @@ void test_byte_buffer_view()
   TESTASSERT_EQ(4, view.slice(2, 4).length());
 }
 
+void test_byte_buffer_trim()
+{
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+  pdu.append(bytes);
+
+  TESTASSERT(pdu == bytes);
+  pdu.trim_head(2);
+  TESTASSERT(pdu == span<const uint8_t>{bytes}.subspan(2, bytes.size() - 2));
+
+  std::vector<uint8_t> bytes2 = make_big_vec();
+  pdu.append(bytes2);
+
+  auto bytes_concat = bytes;
+  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
+  TESTASSERT(pdu == span<const uint8_t>{bytes_concat}.subspan(2, bytes_concat.size() - 2));
+
+  pdu.trim_head(bytes.size() - 2);
+  TESTASSERT(pdu == bytes2);
+
+  // should make the first segment empty and remove it.
+  pdu.trim_head(bytes2.size() - 2);
+  TESTASSERT(pdu == span<const uint8_t>{bytes2}.last(2));
+}
+
 int main()
 {
   test_buffer_segment();
@@ -260,4 +285,5 @@ int main()
   test_byte_buffer_move();
   test_byte_buffer_formatter();
   test_byte_buffer_view();
+  test_byte_buffer_trim();
 }

@@ -57,6 +57,8 @@ public:
     return *this;
   }
 
+  static size_t capacity() { return SEGMENT_SIZE; }
+
   /// Returns how much space in bytes there is at the head of the segment.
   size_t headroom() const { return data() - buffer.data(); }
 
@@ -95,14 +97,14 @@ public:
     std::copy(bytes.begin(), bytes.end(), begin());
   }
 
-  /// Removes provided number of bytes from the head of the segment.
+  /// Removes "nof_bytes" from the head of the segment.
   void trim_head(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
     data_ += nof_bytes;
   }
 
-  /// Removes provided number of bytes from the tail of the segment.
+  /// Removes "nof_bytes" from the tail of the segment.
   void trim_tail(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
@@ -344,6 +346,20 @@ public:
     tail = nullptr;
   }
 
+  /// Removes "nof_bytes" from the head of the segment.
+  void trim_head(size_t nof_bytes)
+  {
+    srsran_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
+    for (size_t trimmed = 0; trimmed != nof_bytes;) {
+      size_t to_trim = std::min(nof_bytes - trimmed, head->length());
+      head->trim_head(to_trim);
+      trimmed += to_trim;
+      if (head->length() == 0) {
+        head = std::move(head->metadata().next);
+      }
+    }
+  }
+
   bool empty() const { return length() == 0; }
 
   size_t length() const { return len; }
@@ -368,6 +384,9 @@ public:
   iterator       end() { return iterator{nullptr, 0}; }
   const_iterator end() const { return const_iterator{nullptr, 0}; }
   const_iterator cend() const { return const_iterator{nullptr, 0}; }
+
+  /// Test if byte buffer is contiguous in memory, i.e. it has only one segment.
+  bool is_contiguous() { return head.get() == tail; }
 
 private:
   void append_segment()
