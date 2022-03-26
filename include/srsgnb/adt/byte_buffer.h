@@ -346,7 +346,7 @@ public:
     tail = nullptr;
   }
 
-  /// Removes "nof_bytes" from the head of the segment.
+  /// Removes "nof_bytes" from the head of the byte_buffer.
   void trim_head(size_t nof_bytes)
   {
     srsran_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
@@ -358,6 +358,21 @@ public:
         head = std::move(head->metadata().next);
       }
     }
+    len -= nof_bytes;
+  }
+
+  /// \brief Remove "nof_bytes" bytes at the end of the byte_buffer.
+  /// If the length is greater than the length of the last segment, the function will fail and return -1 without
+  /// modifying the byte_buffer.
+  /// \return 0 if successful, -1 otherwise.
+  int trim_tail(size_t nof_bytes)
+  {
+    if (tail->length() >= nof_bytes) {
+      tail->trim_tail(nof_bytes);
+      len -= nof_bytes;
+      return 0;
+    }
+    return -1;
   }
 
   bool empty() const { return length() == 0; }
@@ -387,6 +402,25 @@ public:
 
   /// Test if byte buffer is contiguous in memory, i.e. it has only one segment.
   bool is_contiguous() { return head.get() == tail; }
+
+  /// Moves that into first segment, if there is space.
+  /// \return 0 if success or -1 on failure.
+  int linearize()
+  {
+    if (is_contiguous()) {
+      return 0;
+    }
+    size_t sz = length();
+    if (sz > byte_buffer_segment::capacity() - head->headroom()) {
+      return -1;
+    }
+    for (byte_buffer_segment* seg = head->next(); seg != nullptr; seg = seg->next()) {
+      head->append(seg->begin(), seg->end());
+    }
+    head->metadata().next.reset();
+    tail = head.get();
+    return 0;
+  }
 
 private:
   void append_segment()

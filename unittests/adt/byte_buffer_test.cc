@@ -19,7 +19,7 @@ std::vector<uint8_t> make_small_vec()
 
 std::vector<uint8_t> make_big_vec()
 {
-  std::vector<uint8_t> vec(byte_buffer_segment::SEGMENT_SIZE);
+  std::vector<uint8_t> vec(byte_buffer_segment::capacity() - byte_buffer_segment::DEFAULT_HEADROOM);
   for (size_t i = 0; i < vec.size(); ++i) {
     vec[i] = i;
   }
@@ -274,6 +274,32 @@ void test_byte_buffer_trim()
   TESTASSERT(pdu == span<const uint8_t>{bytes2}.last(2));
 }
 
+void test_byte_buffer_linearize() {
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+  std::vector<uint8_t> bytes2 = make_big_vec();
+  auto bytes_concat = bytes;
+  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
+
+  pdu.append(bytes);
+  TESTASSERT(pdu.is_contiguous());
+  pdu.append(bytes2);
+  TESTASSERT(not pdu.is_contiguous());
+
+  TESTASSERT(pdu == bytes_concat);
+  TESTASSERT(pdu.linearize() < 0);
+  TESTASSERT(pdu == bytes_concat);
+
+  TESTASSERT(pdu.trim_tail(bytes.size() - 1) == 0);
+  TESTASSERT(not pdu.is_contiguous());
+  TESTASSERT(pdu.linearize() < 0);
+
+  TESTASSERT(pdu.trim_tail(1) == 0);
+  TESTASSERT(not pdu.is_contiguous());
+  TESTASSERT(pdu.linearize() == 0);
+  TESTASSERT(pdu.is_contiguous());
+}
+
 int main()
 {
   test_buffer_segment();
@@ -286,4 +312,5 @@ int main()
   test_byte_buffer_formatter();
   test_byte_buffer_view();
   test_byte_buffer_trim();
+  test_byte_buffer_linearize();
 }
