@@ -47,7 +47,7 @@ cell_configuration_request_message make_cell_cfg_req()
   return msg;
 }
 
-rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti)
+rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
 {
   rach_indication_message msg{};
   msg.cell_index      = 0;
@@ -56,7 +56,7 @@ rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t t
   msg.slot_rx         = prach_slot_rx;
   msg.symbol_index    = 0;
   msg.frequency_index = 0;
-  msg.preamble_id     = 0;
+  msg.preamble_id     = rapid;
   msg.timing_advance  = 0;
   return msg;
 }

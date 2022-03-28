@@ -149,14 +149,14 @@ public:
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     size_++;
-    srsran_assert(size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     new (&back()) T(value);
   }
   void push_back(T&& value)
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
     size_++;
-    srsran_assert(size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     new (&back()) T(std::move(value));
   }
   template <typename... Args>
@@ -164,7 +164,7 @@ public:
   {
     static_assert(std::is_constructible<T, Args&&...>::value, "Passed arguments to emplace_back are invalid");
     size_++;
-    srsran_assert(size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     new (&back()) T(std::forward<Args>(args)...);
   }
   void pop_back()
@@ -176,11 +176,13 @@ public:
   void resize(size_type count)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default constructible");
+    srsran_assert(count <= MAX_N, "Provided static vector size is too high");
     resize(count, T());
   }
   void resize(size_type count, const T& value)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy constructible");
+    srsran_assert(count <= MAX_N, "Provided static vector size is too high");
     if (size_ > count) {
       destroy(begin() + count, end());
       size_ = count;
@@ -230,21 +232,21 @@ private:
   void append(const_iterator it_begin, const_iterator it_end)
   {
     size_type N = std::distance(it_begin, it_end);
-    srsran_assert(N + size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(N + size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     std::uninitialized_copy(it_begin, it_end, end());
     size_ += N;
   }
   void append(size_type N, const T& element)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
-    srsran_assert(N + size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(N + size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     std::uninitialized_fill_n(end(), N, element);
     size_ += N;
   }
   void append(size_type N)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
-    srsran_assert(N + size_ <= MAX_N, "bounded vector maximum size=%zd was exceeded", MAX_N);
+    srsran_assert(N + size_ <= MAX_N, "static vector maximum size=%zd was exceeded", MAX_N);
     for (size_type i = size_; i < size_ + N; ++i) {
       buffer[i].emplace();
     }
