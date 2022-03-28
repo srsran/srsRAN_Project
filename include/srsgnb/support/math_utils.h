@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_MATH_UTILS_H_
-#define SRSGNB_SUPPORT_MATH_UTILS_H_
+#ifndef SRSGNB_SUPPORT_MATH_UTILS_H
+#define SRSGNB_SUPPORT_MATH_UTILS_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsran_assert.h"
@@ -88,4 +88,4 @@ unsigned prime_lower_than(unsigned n);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SUPPORT_MATH_UTILS_H_
+#endif // SRSGNB_SUPPORT_MATH_UTILS_H
