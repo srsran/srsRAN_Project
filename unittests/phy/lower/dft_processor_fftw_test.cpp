@@ -66,7 +66,7 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
 
   // Derive parameters.
   unsigned size = input.size();
-  float    sign = (direction == dft_processor::direction::FORWARD) ? -1 : +1;
+  float    sign = (direction == dft_processor::direction::DIRECT) ? -1 : +1;
   float    N    = static_cast<float>(size);
 
   // Create exponential to avoid abusing std::exp.
@@ -85,7 +85,7 @@ int main()
 
   // Test for the most common DFT sizes
   for (unsigned size : {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096}) {
-    for (dft_processor::direction direction : {dft_processor::direction::FORWARD, dft_processor::direction::BACKWARD}) {
+    for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
       // Create FFTW configuration;
       dft_processor_fftw_config config;
       config.size      = size;
@@ -128,10 +128,8 @@ int main()
 
       // Set the next line to 1 for printing the maximum error for each case.
 #if 0
-      printf("size=%d; dir=%s; max_error=%f;\n",
-             size,
-             direction == dft_processor::direction::FORWARD ? "forward" : "backward",
-             max_error);
+      printf(
+          "size=%d; dir=%s; max_error=%f;\n", size, dft_processor::direction_to_string(direction).c_str(), max_error);
 #endif
 
       // Actual assertion.

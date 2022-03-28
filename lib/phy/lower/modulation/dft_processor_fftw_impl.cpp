@@ -58,7 +58,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   fftwf_complex* fftw_input  = (fftwf_complex*)input.data();
   fftwf_complex* fftw_output = (fftwf_complex*)output.data();
   unsigned int   fftw_flags  = 0;
-  int            fftw_sign   = (dir == direction::FORWARD) ? FFTW_FORWARD : FFTW_BACKWARD;
+  int            fftw_sign   = (dir == direction::DIRECT) ? FFTW_FORWARD : FFTW_BACKWARD;
 
   // Create plan.
   plan = fftwf_plan_dft_1d(fftw_size, fftw_input, fftw_output, fftw_sign, fftw_flags);
@@ -67,7 +67,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   srsran_assert(plan != nullptr,
                 "FFTW Plan creation for size=%d dir=%s failed.",
                 fftw_size,
-                config.direction == direction::FORWARD ? "forward" : "backward");
+                dft_processor::direction_to_string(dir).c_str());
 
   // Count as another successful instance.
   ++fftw_count;
