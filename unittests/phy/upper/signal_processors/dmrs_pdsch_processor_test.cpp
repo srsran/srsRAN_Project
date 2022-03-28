@@ -28,9 +28,12 @@ int main()
 
     // Map DMRS-PDSCH using the test case arguments.
     dmrs_pdsch->map(grid, test_case.config);
+    
+    // Load output golden data.
+    const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
     // Assert resource grid entries.
-    grid.assert_entries(test_case.symbols);
+    grid.assert_entries(testvector_symbols);
   }
 
   return 0;
