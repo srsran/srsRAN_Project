@@ -28,11 +28,17 @@ int main()
     // Create resource grid spy.
     resource_grid_writer_spy grid;
 
+    // Load input codeword from a testvector
+    const std::vector<uint8_t> test_codeword = test_case.data.read();
+
     // Modulate.
-    pdcch->modulate(grid, test_case.data, test_case.config);
+    pdcch->modulate(grid, test_codeword, test_case.config);
+
+    // Load output golden data
+    const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 
     // Assert resource grid entries.
-    grid.assert_entries(test_case.symbols);
+    grid.assert_entries(testvector_symbols);
   }
 
   return 0;
