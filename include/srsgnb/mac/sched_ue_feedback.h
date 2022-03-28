@@ -6,6 +6,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/adt/bounded_bitset.h"
 
 namespace srsgnb {
 

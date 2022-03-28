@@ -195,7 +195,12 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
     handle_rx_subpdus(ctx);
 
     // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
-    sched.ul_sr_info(rnti);
+    sr_indication_message sr{};
+    sr.cell_index = ctx.cell_index_rx;
+    sr.crnti      = rnti;
+    sr.sr_payload.resize(1);
+    sr.sr_payload.set(0);
+    sched.ul_sr_info(sr);
   });
 
   return true;
