@@ -69,15 +69,17 @@ public:
   size_t tailroom() const { return buffer.end() - end(); }
 
   /// Appends a span of bytes at the tail of the segment.
-  void append(span<const uint8_t> bytes) { append(bytes.begin(), bytes.end()); }
+  void append(span<const uint8_t> bytes)
+  {
+    srsran_sanity_check(bytes.size() <= tailroom(), "There is not enough tailroom for append.");
+    append(bytes.begin(), bytes.end());
+  }
 
   /// Appends a iterator range of bytes at the tail of the segment.
   template <typename It>
   void append(It it_begin, It it_end)
   {
     static_assert(std::is_same<std::decay_t<decltype(*it_begin)>, uint8_t>::value, "Invalid value_type");
-    srsran_sanity_check((size_t)std::distance(it_begin, it_end) <= tailroom(),
-                        "There is not enough tailroom for append.");
     data_end_ = std::copy(it_begin, it_end, end());
   }
 
@@ -294,6 +296,7 @@ public:
     len += bytes.size();
   }
 
+  /// Appends bytes in iterator range to the byte buffer. This function may allocate new segments.
   template <typename It>
   void append(It it_begin, It it_end)
   {
@@ -312,7 +315,7 @@ public:
     len += to_add;
   }
 
-  /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
+  /// Appends bytes to the byte buffer. This function may allocate new segments.
   void append(uint8_t byte)
   {
     if (empty() or tail->tailroom() == 0) {
@@ -322,6 +325,7 @@ public:
     len++;
   }
 
+  /// Prepends bytes to byte_buffer. This function may allocate new segments.
   void prepend(span<const uint8_t> bytes)
   {
     if (empty()) {
@@ -375,8 +379,10 @@ public:
     return -1;
   }
 
+  /// Checks whether byte_buffer is empty.
   bool empty() const { return length() == 0; }
 
+  /// Checks byte_buffer length.
   size_t length() const { return len; }
 
   /// Compares bytes buffers byte-wise.
