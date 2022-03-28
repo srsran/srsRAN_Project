@@ -15,13 +15,11 @@ class uhd_session : public radio_session,
                     private radio_data_plane_receiver
 {
 private:
-  radio_notifier& notifier;
-
   /// Indicates that the UHD session is succesfully constructed.
   bool valid = false;
 
 public:
-  uhd_session(const radio_configuration::radio& radio_config, radio_notifier& notifier_) : notifier(notifier_)
+  uhd_session(const radio_configuration::radio& radio_config, radio_notifier& notifier_)
   {
     // TBD.
 
