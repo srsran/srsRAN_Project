@@ -9,6 +9,7 @@ namespace f1ap {
 struct f1_ap_pdu_c;
 
 }
+
 } // namespace asn1
 
 namespace srsgnb {

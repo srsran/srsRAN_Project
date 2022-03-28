@@ -1,0 +1,3 @@
+
+add_library(srsgnb_gateway sctp_network_gateway.cc)
+target_link_libraries(srsgnb_gateway srslog srsgnb_support srsgnb_du_manager srsgnb_mac srsgnb_f1)

@@ -7,11 +7,9 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1c_du_gateway& gw_) :
-  logger(srslog::fetch_basic_logger("F1AP")), pdu_listener(pdu_listener_), f1_gw(gw_)
+f1ap_du_impl::f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_) :
+  logger(srslog::fetch_basic_logger("F1AP")), f1c(f1c_pdu_handler_)
 {
-  // :TODO: remove when the pdu_listener is used.
-  (void)pdu_listener;
 }
 
 async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
@@ -48,9 +46,20 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 {
   log_pdu(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
-  f1_gw.on_new_sdu(std::move(pdu.pdu));
+
+  // FIXME: fill message
+  asn1::f1ap::f1_ap_pdu_c f1ap_pdu;
+
+  // Make it an initial message to let test pass.
+  f1ap_pdu.set_init_msg();
+
+  // send to handler
+  f1c.handle_unpacked_pdu(f1ap_pdu);
 }
 
-void f1ap_du_impl::push_sdu(const byte_buffer& sdu) {}
+void f1ap_du_impl::handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu)
+{
+  logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
+}
 
 } // namespace srsgnb

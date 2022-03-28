@@ -3,17 +3,17 @@
 #define SRSGNB_F1AP_DU_IMPL_H
 
 #include "f1ap_du_context.h"
-#include "f1ap_packet_handler.h"
+#include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include <memory>
 
 namespace srsgnb {
 
-class f1ap_du_impl final : public f1ap_du_interface
+class f1ap_du_impl final : public f1_du_interface
 {
 public:
-  f1ap_du_impl(f1ap_du_pdu_notifier& pdu_listener_, f1c_du_gateway& gw);
+  f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_);
 
   async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override;
 
@@ -21,14 +21,15 @@ public:
 
   void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
 
-  void push_sdu(const byte_buffer& sdu) override;
-
   void handle_pdu(f1_rx_pdu pdu) override;
+
+  void handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override;
+
+  void handle_connection_loss() override {}
 
 private:
   srslog::basic_logger& logger;
-  f1ap_du_pdu_notifier& pdu_listener;
-  f1c_du_gateway&           f1_gw;
+  f1c_pdu_handler&      f1c;
 
   f1ap_du_context ctxt;
 };

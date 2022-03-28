@@ -56,11 +56,6 @@ private:
   f1ap_du_ul_interface* f1_ptr = nullptr;
 };
 
-class f1ap_du_rlc_connector : public f1ap_du_pdu_notifier
-{
-  void push_pdu(const byte_buffer& data) override {}
-};
-
 } // namespace srsgnb
 
 #endif // SRSGNB_ADAPTERS_H

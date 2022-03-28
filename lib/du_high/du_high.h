@@ -17,7 +17,7 @@ namespace srsgnb {
 class du_high
 {
 public:
-  du_high(f1c_du_gateway& gw);
+  du_high(f1c_pdu_handler& f1c_pdu_handler_);
   ~du_high();
 
   void start();
@@ -27,11 +27,11 @@ public:
 
 private:
   std::unique_ptr<du_manager_interface> du_manager;
-  std::unique_ptr<f1ap_du_interface>    f1ap;
+  std::unique_ptr<f1_du_interface>      f1ap;
   std::unique_ptr<mac_interface>        mac;
 
-  rlc_ul_sdu_adapter             rlc_sdu_notifier;
-  f1ap_du_rlc_connector          f1ap_pdu_adapter;
+  rlc_ul_sdu_adapter rlc_sdu_notifier;
+
   du_manager_mac_event_indicator mac_ev_notifier;
 
   std::vector<std::unique_ptr<task_worker> >   workers;
