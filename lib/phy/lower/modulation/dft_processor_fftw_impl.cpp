@@ -17,20 +17,36 @@ std::string dft_processor_fftw_impl::get_default_fftw_wisdom_file()
   // Default FFT wisdom file inside home directory.
   static const char* FFTW_WISDOM_FILE = "%s/.srsran_fftwisdom";
 
-  // Get the user home directory.
-  const char* homedir = nullptr;
-  if ((homedir = getenv("HOME")) == nullptr) {
-    homedir = getpwuid(getuid())->pw_dir;
+  // Get the user home directory from environment.
+  const char* homedir = getenv("HOME");
+
+  // If the environment variable is not set, try to get it from the user database.
+  if (homedir == nullptr) {
+    // Get user entry in users database.
+    const passwd* pwuid = getpwuid(getuid());
+    if (pwuid == nullptr) {
+      printf("Failed to load home directory: %s. Skipping wisdom load/save.\n", strerror(errno));
+      return "";
+    }
+
+    // Get home directory from user database entry.
+    homedir = pwuid->pw_dir;
+    if (homedir == nullptr) {
+      printf("Home dir is not available. Skipping wisdom load/save.\n");
+      return "";
+    }
   }
 
   // Create full path to the wisdom file.
-  char full_path[256] = {};
-  int  n              = snprintf(full_path, sizeof(full_path), FFTW_WISDOM_FILE, homedir);
-  srsran_assert(n < 256, "Default FFTW wisdom path exceeds the maximum length. HOME=%s.", homedir);
-  srsran_assert(n > 0, "Error getting the default FFTW wisdom path.");
+  std::array<char, 256> full_path = {};
+  int                   n         = snprintf(full_path.data(), full_path.size(), FFTW_WISDOM_FILE, homedir);
+  if (n == 0 || n == 256) {
+    printf("Default FFTW wisdom path exceeds the maximum length. HOME=%s. Skipping wisdom load/save.\n", homedir);
+    return "";
+  }
 
   // Create C++ string from the C style string.
-  return std::string(full_path);
+  return std::string(full_path.data());
 }
 
 dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config& config) :
@@ -49,8 +65,10 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
       wisdom_filename = get_default_fftw_wisdom_file();
     }
 
-    // Load FFTW wisdom from file name.
-    fftwf_import_wisdom_from_filename(wisdom_filename.c_str());
+    // Load FFTW wisdom from file name if it is available.
+    if (!wisdom_filename.empty()) {
+      fftwf_import_wisdom_from_filename(wisdom_filename.c_str());
+    }
   }
 
   // Prepare FFTW plan creation arguments.
