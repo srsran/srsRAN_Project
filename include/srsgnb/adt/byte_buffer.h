@@ -146,7 +146,7 @@ public:
   template <typename Container>
   bool operator!=(const Container& other) const
   {
-    return not(*this == other);
+    return !(*this == other);
   }
 
 private:
@@ -226,7 +226,7 @@ class byte_buffer
     {
       return current_segment == other.current_segment and offset == other.offset;
     }
-    bool operator!=(const iterator_impl<T>& other) const { return not(*this == other); }
+    bool operator!=(const iterator_impl<T>& other) const { return !(*this == other); }
 
   private:
     friend class byte_buffer_view;
@@ -397,7 +397,7 @@ public:
     }
     return (it == end()) and (it2 == other.end());
   }
-  bool operator!=(const byte_buffer& other) const { return not(*this == other); }
+  bool operator!=(const byte_buffer& other) const { return !(*this == other); }
 
   iterator       begin() { return iterator{head.get(), 0}; }
   const_iterator cbegin() const { return const_iterator{head.get(), 0}; }
@@ -407,10 +407,10 @@ public:
   const_iterator cend() const { return const_iterator{nullptr, 0}; }
 
   /// Test if byte buffer is contiguous in memory, i.e. it has only one segment.
-  bool is_contiguous() { return head.get() == tail; }
+  bool is_contiguous() const { return head.get() == tail; }
 
-  /// Moves that into first segment, if there is space.
-  /// \return 0 if success or -1 on failure.
+  /// Moves the bytes stored in different segments of the byte_buffer into first segment.
+  /// \return 0 if the data could fit in one segment. -1 otherwise, and the byte_buffer remains unaltered.
   int linearize()
   {
     if (is_contiguous()) {
@@ -480,11 +480,11 @@ inline bool operator==(span<const uint8_t> bytes, const byte_buffer& buf)
 }
 inline bool operator!=(const byte_buffer& buf, span<const uint8_t> bytes)
 {
-  return not(buf == bytes);
+  return !(buf == bytes);
 }
 inline bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
 {
-  return not(buf == bytes);
+  return !(buf == bytes);
 }
 
 /// Non-owning range used to traverse a slice of a byte buffer.
