@@ -4,6 +4,7 @@
 
 #include "../sched_strategy/data_scheduler.h"
 #include "cell_configuration.h"
+#include "ra_sched.h"
 #include "resource_grid.h"
 
 namespace srsgnb {
@@ -11,7 +12,8 @@ namespace srsgnb {
 class cell_sched
 {
 public:
-  cell_sched(const cell_configuration_request_message& msg) : cell_cfg(msg), res_grid_pool(cell_cfg) {}
+  cell_sched(const cell_configuration_request_message& msg) : cell_cfg(msg), res_grid_pool(cell_cfg), ra_sch(cell_cfg)
+  {}
 
   void slot_indication(slot_point sl_tx) { res_grid_pool.slot_indication(sl_tx); }
 
@@ -20,6 +22,8 @@ public:
 
   const cell_configuration cell_cfg;
   cell_resource_grid_pool  res_grid_pool;
+
+  ra_sched ra_sch;
 };
 
 } // namespace srsgnb

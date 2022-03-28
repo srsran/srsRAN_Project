@@ -3,6 +3,7 @@
 #define SRSGNB_SCHED_H
 
 #include "cell/cell_sched.h"
+#include "event_manager.h"
 #include "sched_strategy/data_scheduler.h"
 #include "srsgnb/mac/sched_interface.h"
 
@@ -31,21 +32,27 @@ public:
   const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   /// UE Scheduling Request
-  void ul_sr_info(rnti_t rnti) override {}
+  void ul_sr_info(const sr_indication_message& sr) override { pending_events.handle(sr); }
 
   /// UE UL Buffer Status Report
-  void ul_bsr(const ul_bsr_indication_message& bsr) override {}
+  void ul_bsr(const ul_bsr_indication_message& bsr) override { pending_events.handle(bsr); }
 
 private:
-  sched_cfg_notifier& mac_notifier;
+  void slot_indication(slot_point sl_tx, du_cell_index_t cell_index);
 
+  sched_cfg_notifier&   mac_notifier;
   srslog::basic_logger& logger;
+
+  /// Repository of created UEs
+  ue_map_t ue_db;
 
   // Data UE scheduler
   std::unique_ptr<data_scheduler> data_sched;
 
-  // Cell-specific resources and schedulers
+  /// Cell-specific resources and schedulers
   std::vector<std::unique_ptr<cell_sched> > cells;
+
+  event_manager pending_events;
 };
 
 } // namespace srsgnb

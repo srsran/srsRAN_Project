@@ -9,6 +9,12 @@
 
 namespace srsgnb {
 
+struct sr_indication_message {
+  du_cell_index_t   cell_index;
+  rnti_t            crnti;
+  bounded_bitset<8> sr_payload;
+};
+
 /// UL Buffer Status Report. See ORAN WG8, 9.2.3.2.18 UL Buffer Status Report Indication.
 struct ul_bsr_lcg_report {
   lcg_id_t lcg_id;
@@ -27,9 +33,9 @@ struct ul_bsr_indication_message {
 class sched_ue_feedback
 {
 public:
-  virtual ~sched_ue_feedback()                              = default;
-  virtual void ul_sr_info(rnti_t rnti)                      = 0;
-  virtual void ul_bsr(const ul_bsr_indication_message& bsr) = 0;
+  virtual ~sched_ue_feedback()                                             = default;
+  virtual void ul_sr_info(const sr_indication_message& sr) = 0;
+  virtual void ul_bsr(const ul_bsr_indication_message& bsr)                = 0;
 };
 
 } // namespace srsgnb

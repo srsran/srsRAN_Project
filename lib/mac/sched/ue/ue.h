@@ -31,10 +31,18 @@ public:
 
   bool has_pending_txs() const { return true; }
 
+  bool is_ca_enabled() const { return false; }
+
+  void activate_cells(bounded_bitset<MAX_NOF_CELLS> activ_bitmap) {}
+
+  void handle_sr_indication(const sr_indication_message& msg);
+
 private:
   static const size_t MAX_CELLS = 4;
 
   std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> cells;
+
+  sr_indication_message last_sr;
 };
 
 using ue_map_t = circular_map<rnti_t, std::unique_ptr<ue>, MAX_NOF_UES>;
