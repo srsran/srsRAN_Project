@@ -236,6 +236,9 @@ class byte_buffer
     size_t               offset;
   };
 
+  /// Private copy ctor. User should use copy() method instead.
+  byte_buffer(const byte_buffer&) noexcept = default;
+
 public:
   using value_type     = uint8_t;
   using iterator       = iterator_impl<uint8_t>;
@@ -252,7 +255,6 @@ public:
       append(*b);
     }
   }
-  byte_buffer(const byte_buffer&) = delete;
   byte_buffer(byte_buffer&& other) noexcept : head(std::move(other.head)), tail(other.tail), len(other.len)
   {
     other.tail = nullptr;
@@ -270,7 +272,7 @@ public:
   }
 
   /// Performs a deep copy (byte by bytes) of this byte_buffer.
-  byte_buffer clone()
+  byte_buffer deep_copy() const
   {
     byte_buffer buf;
     for (byte_buffer_segment* seg = head.get(); seg != nullptr; seg = seg->next()) {
@@ -278,6 +280,9 @@ public:
     }
     return buf;
   }
+
+  /// Performs a shallow copy. Head segment reference counter is incremented.
+  byte_buffer copy() const { return {*this}; }
 
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
   void append(span<const uint8_t> bytes)

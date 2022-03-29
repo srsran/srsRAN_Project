@@ -198,24 +198,39 @@ void test_byte_buffer_iterator()
   TESTASSERT_EQ(bytes_concat.size() - 2, (size_t)(pdu.end() - (pdu.begin() + 2)));
 }
 
-void test_byte_buffer_clone()
+void test_byte_buffer_copy()
 {
   byte_buffer pdu;
 
-  std::vector<uint8_t> bytes = {1, 2, 3, 4, 5, 6};
+  std::vector<uint8_t> bytes = make_small_vec(), bytes2 = make_big_vec();
+  auto                 bytes_concat = bytes;
+  bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
   pdu.append(bytes);
 
+  // Deep copy.
   byte_buffer pdu2;
-  pdu2 = pdu.clone();
+  pdu2 = pdu.deep_copy();
   TESTASSERT(not pdu2.empty() and not pdu.empty());
   TESTASSERT_EQ(pdu.length(), pdu2.length());
   TESTASSERT(pdu == pdu2);
   TESTASSERT(pdu2 == bytes);
 
-  pdu2.append(bytes);
+  pdu2.append(bytes2);
+  TESTASSERT(pdu == bytes);
   TESTASSERT(pdu != pdu2);
-  TESTASSERT(pdu2 != bytes);
-  TESTASSERT_EQ(pdu.length() * 2, pdu2.length());
+  TESTASSERT_EQ(bytes_concat.size(), pdu2.length());
+  TESTASSERT(pdu2 == bytes_concat);
+
+  // Shallow copy
+  {
+    byte_buffer pdu3 = pdu.copy();
+    TESTASSERT(pdu3 == pdu);
+    TESTASSERT(pdu3 == bytes);
+    pdu3.append(bytes2);
+    TESTASSERT(pdu3 == pdu);
+    TESTASSERT(pdu == bytes_concat);
+  }
+  TESTASSERT(pdu == bytes_concat);
 }
 
 void test_byte_buffer_move()
@@ -330,7 +345,7 @@ int main()
   test_byte_buffer_prepend();
   test_byte_buffer_iterator();
   test_byte_buffer_compare();
-  test_byte_buffer_clone();
+  test_byte_buffer_copy();
   test_byte_buffer_move();
   test_byte_buffer_formatter();
   test_byte_buffer_view();
