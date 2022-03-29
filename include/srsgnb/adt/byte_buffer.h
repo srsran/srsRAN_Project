@@ -558,6 +558,19 @@ public:
   }
 };
 
+/// Converts a hex string (e.g. 01FA02) to a byte buffer.
+inline byte_buffer make_byte_buffer(std::string hex_str)
+{
+  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+  byte_buffer ret;
+  for (size_t i = 0; i < hex_str.size(); i += 2) {
+    uint8_t val;
+    sscanf(hex_str.data() + i, "%02hhX", &val);
+    ret.append(val);
+  }
+  return ret;
+}
+
 } // namespace srsgnb
 
 namespace fmt {

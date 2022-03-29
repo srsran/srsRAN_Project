@@ -316,6 +316,13 @@ void test_byte_buffer_initializer_list()
   TESTASSERT(are_equal);
 }
 
+void test_byte_buffer_from_hexdump()
+{
+  std::vector<uint8_t> bytes{0x1, 0x2, 0x3, 0x4, 0x5, 0xff};
+  byte_buffer          pdu = make_byte_buffer("0102030405FF");
+  TESTASSERT(pdu == bytes);
+}
+
 int main()
 {
   test_buffer_segment();
@@ -330,4 +337,5 @@ int main()
   test_byte_buffer_trim();
   test_byte_buffer_linearize();
   test_byte_buffer_initializer_list();
+  test_byte_buffer_from_hexdump();
 }
