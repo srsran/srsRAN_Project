@@ -268,7 +268,7 @@ public:
     return *this;
   }
 
-  /// Creates a deep copy of this byte_buffer.
+  /// Performs a deep copy (byte by bytes) of this byte_buffer.
   byte_buffer clone()
   {
     byte_buffer buf;

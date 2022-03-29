@@ -12,7 +12,7 @@ public:
   bool decapsulate(byte_buffer& data) override
   {
     std::printf("[SDAP-ENTITY] Removing SDAP header from packet of size = %u\n", (unsigned)data.length());
-//    data.trim_front(3);
+    data.trim_head(3);
     std::printf("[SDAP-ENTITY] New size after removing SDAP header is %u bytes\n", (unsigned)data.length());
     return true;
   }
