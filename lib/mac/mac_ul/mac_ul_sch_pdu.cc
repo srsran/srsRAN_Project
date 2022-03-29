@@ -11,44 +11,44 @@ bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
   return unpack(reader);
 }
 
-bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu)
+bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
   sdu_view = {};
-  if (subpdu.empty()) {
+  if (subpdu_reader.empty()) {
     srslog::fetch_basic_logger("MAC-NR").warning("Empty MAC subPDU");
     return false;
   }
 
   // Skip R, read F bit and LCID
-  F_bit    = (*subpdu & 0x40U) > 0;
-  lcid_val = *subpdu & 0x3fU;
-  ++subpdu;
+  F_bit    = (*subpdu_reader & 0x40U) > 0;
+  lcid_val = *subpdu_reader & 0x3fU;
+  ++subpdu_reader;
   header_length = 1;
 
   uint32_t sdu_length = 0;
   if (lcid_val.is_valid_lcid()) {
     if (lcid_val.has_length_field()) {
       // Read first length byte
-      sdu_length = (uint32_t)*subpdu;
-      ++subpdu;
+      sdu_length = (uint32_t)*subpdu_reader;
+      ++subpdu_reader;
       header_length++;
 
       if (F_bit) {
         // add second length byte
-        sdu_length = sdu_length << 8U | ((uint32_t)*subpdu & 0xffU);
-        ++subpdu;
+        sdu_length = sdu_length << 8U | ((uint32_t)*subpdu_reader & 0xffU);
+        ++subpdu_reader;
         header_length++;
       }
-      sdu_view = subpdu.advance(sdu_length);
+      sdu_view = subpdu_reader.advance(sdu_length);
     } else {
       if (lcid_val == lcid_ul_sch_t::PADDING) {
         // set subPDU length to rest of PDU
         // 1 Byte R/LCID MAC subheader
-        sdu_view = subpdu.view();
-        subpdu   = {};
+        sdu_view      = subpdu_reader.view();
+        subpdu_reader = {};
       } else {
         sdu_length = lcid_val.sizeof_ce();
-        sdu_view   = subpdu.advance(sdu_length);
+        sdu_view   = subpdu_reader.advance(sdu_length);
       }
     }
   } else {

@@ -17,7 +17,7 @@ class mac_ul_sch_subpdu
 {
 public:
   /// Returns buffer view with begin() pointing at the first byte after the decoded subPDU.
-  bool unpack(byte_buffer_reader& subpdu);
+  bool unpack(byte_buffer_reader& subpdu_reader);
   bool unpack(const byte_buffer& subpdu);
 
   lcid_ul_sch_t    lcid() const { return lcid_val; }
