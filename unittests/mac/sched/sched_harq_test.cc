@@ -79,7 +79,7 @@ static void h_entity_report_ack(const struct harq_entity_params& common,
 
   // DL: Report ACK
   h_entity.dl_ack_info(dl_var.pid, 0, dl_var.ack);
-  TESTASSERT_MSG(&(h_entity.dl_harq(dl_var.pid)) == dl_var.dl_proc, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT(&(h_entity.dl_harq(dl_var.pid)) == dl_var.dl_proc, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
 
   // If positive ACK or if pck is going to be discarded, reset HARQ pointer (the h_entity might assign a new one)
   if (dl_var.ack or
@@ -89,7 +89,7 @@ static void h_entity_report_ack(const struct harq_entity_params& common,
 
   // UL: Report ACK (or read CRC from received pck)
   h_entity.ul_crc_info(ul_var.pid, ul_var.ack);
-  TESTASSERT_MSG(&(h_entity.ul_harq(ul_var.pid)) == ul_var.ul_proc, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT(&(h_entity.ul_harq(ul_var.pid)) == ul_var.ul_proc, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
 
   // If positive ACK (CRC) or if pck is going to be discarded, reset HARQ pointer (the h_entity might assign a new one)
   if (ul_var.ack or
@@ -128,13 +128,13 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
         "New DL HARQ tx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
 
     // For a new TX, verify the NDI gets toggled
-    TESTASSERT_EQ_MSG(dci_dl.ndi, not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-    TESTASSERT_EQ_MSG(dl_proc->ndi(), not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dci_dl.ndi, not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dl_proc->ndi(), not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
   }
   // Case of NEW RE-TX
   else {
     // Verify the saved pointer coincides with the one in the h_entity
-    TESTASSERT_MSG(&(h_entity.dl_harq(dl_var.pid)) == dl_var.dl_proc, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT(&(h_entity.dl_harq(dl_var.pid)) == dl_var.dl_proc, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
     dl_proc = dl_var.dl_proc;
 
     // Create new re-transmission and set TBS
@@ -144,16 +144,16 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
         "New DL HARQ retx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
 
     // For a new RE-TX, verify the NDI is the same as for the original TX
-    TESTASSERT_EQ_MSG(dci_dl.ndi, dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-    TESTASSERT_EQ_MSG(dl_proc->ndi(), dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dci_dl.ndi, dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dl_proc->ndi(), dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
   }
 
   dl_var.latest_ndi = dl_proc->ndi();
   // test whether DCI has been filled correctly and DL HARQ has the correct parameters
-  TESTASSERT_EQ_MSG(dci_dl.mcs, dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-  TESTASSERT_EQ_MSG(dci_dl.pid, dl_var.pid, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-  TESTASSERT_EQ_MSG(dl_proc->mcs(), dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-  TESTASSERT_EQ_MSG(dl_proc->tbs(), dl_param.tbs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dci_dl.mcs, dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dci_dl.pid, dl_var.pid, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dl_proc->mcs(), dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dl_proc->tbs(), dl_param.tbs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
 }
 
 static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
@@ -183,8 +183,8 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
     ul_proc->set_tbs(ul_param.tbs);
 
     // For a new TX, verify the NDI gets toggled
-    TESTASSERT_EQ_MSG(dci_ul.ndi, not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-    TESTASSERT_EQ_MSG(ul_proc->ndi(), not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(dci_ul.ndi, not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(ul_proc->ndi(), not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
   }
   // Case of NEW RE-TX: verify the saved pointer coincides with the one in the h_entity
   else {
@@ -197,17 +197,17 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
     ul_proc->set_tbs(ul_param.tbs);
 
     // For a new RE-TX, verify the NDI is the same as for the original TX
-    TESTASSERT_EQ_MSG(dci_ul.ndi, ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-    TESTASSERT_EQ_MSG(ul_proc->ndi(), ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(dci_ul.ndi, ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(ul_proc->ndi(), ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
   }
 
   ul_var.latest_ndi = ul_proc->ndi();
   // test whether DCI has been filled correctly and DL HARQ has the correct parameters
-  TESTASSERT_EQ_MSG(dci_ul.mcs, ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ_MSG(dci_ul.pid, ul_var.pid, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ_MSG(ul_proc->mcs(), ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ_MSG(ul_proc->tbs(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ_MSG(ul_proc->get_softbuffer().size(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(dci_ul.mcs, ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(dci_ul.pid, ul_var.pid, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(ul_proc->mcs(), ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(ul_proc->tbs(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(ul_proc->get_softbuffer().size(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
 }
 
 /// Parameter used to choose between different outcomes for HARQ process test
