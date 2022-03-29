@@ -23,3 +23,7 @@ add_test(async_exec_test async_exec_test)
 add_executable(async_queue_test async_queue_test.cpp)
 target_link_libraries(async_queue_test srslog srsgnb_support)
 add_test(async_queue_test async_queue_test)
+
+add_executable(dft_processor_fftw_test dft_processor_fftw_test.cpp)
+target_link_libraries(dft_processor_fftw_test srslog srsgnb_support)
+add_test(dft_processor_fftw_test dft_processor_fftw_test)

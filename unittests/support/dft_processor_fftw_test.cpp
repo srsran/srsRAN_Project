@@ -1,5 +1,5 @@
 
-#include "srsgnb/phy/lower/modulation/dft_processor.h"
+#include "srsgnb/support/dft_processor.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <cmath>
@@ -9,14 +9,13 @@
 
 // Necessary prototipes to create the DFT processor instance.
 namespace srsgnb {
-struct dft_processor_fftw_config {
-  unsigned                 size;
-  dft_processor::direction direction;
-  bool                     avoid_wisdom;
-  std::string              wisdom_filename;
+struct dft_processor_factory_fftw_config {
+  bool        avoid_wisdom;
+  std::string wisdom_filename;
 };
 
-std::unique_ptr<dft_processor> create_dft_processor_fftw(const dft_processor_fftw_config& config);
+std::unique_ptr<dft_processor_factory>
+create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config);
 
 } // namespace srsgnb
 
@@ -83,16 +82,19 @@ int main()
 {
   std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
+  dft_processor_factory_fftw_config      factory_config = {};
+  std::unique_ptr<dft_processor_factory> dft_factory    = create_dft_processor_factory_fftw(factory_config);
+
   // Test for the most common DFT sizes
   for (unsigned size : {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096}) {
     for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
       // Create FFTW configuration;
-      dft_processor_fftw_config config;
-      config.size      = size;
-      config.direction = direction;
+      dft_processor::configuration config;
+      config.size = size;
+      config.dir  = direction;
 
       // Create processor
-      std::unique_ptr<dft_processor> dft = create_dft_processor_fftw(config);
+      std::unique_ptr<dft_processor> dft = dft_factory->create(config);
 
       // Get DFT input buffer
       span<cf_t> input = dft->get_input();

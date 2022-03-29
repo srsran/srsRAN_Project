@@ -1,9 +1,10 @@
 
-#ifndef SRSGNB_PHY_LOWER_MODULATION_DFT_PROCESSOR_H
-#define SRSGNB_PHY_LOWER_MODULATION_DFT_PROCESSOR_H
+#ifndef SRSGNB_SUPPORT_DFT_PROCESSOR_H
+#define SRSGNB_SUPPORT_DFT_PROCESSOR_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include <memory>
 
 namespace srsgnb {
 
@@ -24,6 +25,14 @@ public:
     INVERSE
   };
 
+  /// Describes the DFT parameters.
+  struct configuration {
+    /// Indicates the DFT size.
+    unsigned size;
+    /// Indicates if the DFT is direct or inverse.
+    direction dir;
+  };
+
   /// Convert a DFT direction to string.
   static std::string direction_to_string(direction dir) { return dir == direction::DIRECT ? "direct" : "inverse"; }
 
@@ -37,11 +46,23 @@ public:
   virtual unsigned get_size() const = 0;
 
   /// \brief Get a view of the internal input DFT buffer.
-  virtual span<cf_t> get_input() const = 0;
+  virtual span<cf_t> get_input() = 0;
 
   /// \brief Execute the DFT from the internal input data.
   /// \return A view of the internal output DFT buffer.
   virtual span<const cf_t> run() = 0;
+};
+
+/// Describes a Discrete Fourier Transform (DFT) processor factory.
+class dft_processor_factory
+{
+public:
+  /// Default destructor.
+  virtual ~dft_processor_factory() = default;
+
+  /// \brief Creates a DFT processor.
+  /// \param[in] config Provides the DFT processor parameters.
+  virtual std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) = 0;
 };
 
 } // namespace srsgnb

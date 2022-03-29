@@ -7,10 +7,11 @@
 #
 
 set(SOURCES
+        dft_processor_fftw_impl.cpp
         math_utils.cpp
         task_worker.cpp
         threads.cpp
         timers.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
-target_link_libraries(srsgnb_support srslog)
+target_link_libraries(srsgnb_support srslog ${FFTW3F_LIBRARIES} srsvec)

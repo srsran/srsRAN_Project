@@ -1,8 +1,8 @@
 
-#ifndef LIB_PHY_LOWER_MODULATION_DFT_PROCESSOR_FFTW_IMPL_H
-#define LIB_PHY_LOWER_MODULATION_DFT_PROCESSOR_FFTW_IMPL_H
+#ifndef LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
+#define LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
 
-#include "srsgnb/phy/lower/modulation/dft_processor.h"
+#include "srsgnb/support/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <fftw3.h>
 #include <memory>
@@ -11,11 +11,7 @@
 namespace srsgnb {
 
 /// Provides the necessary initialization parameters to dft_processor_fftw_impl.
-struct dft_processor_fftw_config {
-  /// DFT size in number of points.
-  unsigned size;
-  /// DFT direction, see attribute type for more documentation.
-  dft_processor::direction direction;
+struct dft_processor_factory_fftw_config {
   /// Set to true to avoid loading the FFTW wisdom from a file.
   bool avoid_wisdom;
   /// Provide the FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
@@ -47,8 +43,9 @@ private:
 public:
   /// \brief Constructs a DFT processor based on the FFTW library.
   /// \remark The FFTW wisdom is loaded with the first instance.
-  /// \param [in] config Provides the required parameters to create the FFTW plan.
-  dft_processor_fftw_impl(const dft_processor_fftw_config& config);
+  /// \param [in] fftw_config Provides the FFTW specific parameters.
+  /// \param [in] dft_config Provides the generic DFT processor parameters.
+  dft_processor_fftw_impl(const dft_processor_factory_fftw_config& fftw_config, const configuration& dft_config);
 
   /// Frees the input and output buffers, destroys the FFTW plan, saves the wisdom if it is the first instance to be
   /// destroyed and cleans up the FFTW context if it is the last instance to be destroyed.
@@ -67,10 +64,33 @@ public:
   span<const cf_t> run() override;
 };
 
-/// \brief Create a DFT processor based on the FFTW library.
-/// \param [in] config Provides the required parameters to create the FFTW plan.
-/// \return A unque pointer of the created instance.
-std::unique_ptr<dft_processor> create_dft_processor_fftw(const dft_processor_fftw_config& config);
+/// Describes a DFT processor factory class configuration based on the FFTW library.
+class dft_processor_factory_fftw_impl : public dft_processor_factory
+{
+private:
+  /// Stores the FFTW specific configuration.
+  dft_processor_factory_fftw_config config;
+
+public:
+  /// \brief Constructs a DFT processor based on the FFTW library.
+  /// \remark The FFTW wisdom is loaded with the first instance.
+  /// \param [in] factory_config Provides the required parameters to create the FFTW factory.
+  dft_processor_factory_fftw_impl(const dft_processor_factory_fftw_config& factory_config) : config(factory_config)
+  {
+    // Do nothing.
+  }
+
+private:
+  std::unique_ptr<dft_processor> create(const dft_processor::configuration& dft_config) override;
+};
+
+/// \brief Create a DFT processor factory based on the FFTW library.
+/// \param [in] factory_config Provides the required parameters to create the DFT processor factory based on the FFTW
+/// library.
+/// \return The ownership to a created DFT processor factory based on FFTW library.
+std::unique_ptr<dft_processor_factory>
+create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config);
 
 } // namespace srsgnb
-#endif // LIB_PHY_LOWER_MODULATION_DFT_PROCESSOR_FFTW_IMPL_H
+
+#endif // LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H

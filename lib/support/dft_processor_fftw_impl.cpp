@@ -49,16 +49,17 @@ std::string dft_processor_fftw_impl::get_default_fftw_wisdom_file()
   return std::string(full_path.data());
 }
 
-dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config& config) :
-  dir(config.direction), input(config.size), output(config.size)
+dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_factory_fftw_config& fftw_config,
+                                                 const configuration&                     dft_config) :
+  dir(dft_config.dir), input(dft_config.size), output(dft_config.size)
 {
   // Avoid that two or more plan creations are called at same time.
   std::lock_guard<std::mutex> lock(mutex_init);
 
   // Load FFT wisdom if it is not marked to avoid, and it was not loaded by a different instance.
-  if (!config.avoid_wisdom && wisdom_filename.empty()) {
+  if (!fftw_config.avoid_wisdom && wisdom_filename.empty()) {
     // Use file name given in the configuration by default.
-    wisdom_filename = config.wisdom_filename;
+    wisdom_filename = fftw_config.wisdom_filename;
 
     // If no file name is given, get default.
     if (wisdom_filename.empty()) {
@@ -72,7 +73,7 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_config
   }
 
   // Prepare FFTW plan creation arguments.
-  int            fftw_size   = (int)config.size;
+  int            fftw_size   = static_cast<int>(dft_config.size);
   fftwf_complex* fftw_input  = (fftwf_complex*)input.data();
   fftwf_complex* fftw_output = (fftwf_complex*)output.data();
   unsigned int   fftw_flags  = 0;
@@ -126,7 +127,13 @@ span<const cf_t> dft_processor_fftw_impl::run()
   return output;
 }
 
-std::unique_ptr<dft_processor> srsgnb::create_dft_processor_fftw(const dft_processor_fftw_config& config)
+std::unique_ptr<dft_processor> dft_processor_factory_fftw_impl::create(const dft_processor::configuration& dft_config)
 {
-  return std::make_unique<dft_processor_fftw_impl>(config);
+  return std::make_unique<dft_processor_fftw_impl>(config, dft_config);
+}
+
+std::unique_ptr<dft_processor_factory>
+srsgnb::create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config)
+{
+  return std::make_unique<dft_processor_factory_fftw_impl>(factory_config);
 }
