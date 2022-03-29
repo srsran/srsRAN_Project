@@ -7,7 +7,7 @@ add_custom_command(
   TARGET dmrs_pbch_processor_test
   POST_BUILD
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test/data/dmrs_pbch_processor_test_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test/data/dmrs_pbch_processor_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test/data/dmrs_pbch_processor_test_data.tar.gz
   VERBATIM)
 
@@ -19,7 +19,7 @@ add_custom_command(
   TARGET dmrs_pdcch_processor_test
   POST_BUILD
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test/data/dmrs_pdcch_processor_test_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test/data/dmrs_pdcch_processor_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test/data/dmrs_pdcch_processor_test_data.tar.gz
   VERBATIM)
 
@@ -31,7 +31,7 @@ add_custom_command(
   TARGET dmrs_pdsch_processor_test
   POST_BUILD
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xvf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test/data/dmrs_pdsch_processor_test_data.tar.gz
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test/data/dmrs_pdsch_processor_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test/data/dmrs_pdsch_processor_test_data.tar.gz
   VERBATIM)
 
