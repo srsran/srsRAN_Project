@@ -23,7 +23,7 @@ void test_no_ues()
 
   slot_point sl_tx{0, 0};
 
-  // Action 2: Run slot 0
+  // Action 2: Run slot 0.
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, 0);
   TESTASSERT(res != nullptr);
   TESTASSERT_EQ(cell_cfg_msg.pci, res->pci);
@@ -45,7 +45,7 @@ void test_rach_indication()
   // Action 2: Add RACH indication.
   sch.handle_rach_indication(generate_rach_ind_msg(sl_rx, 0x4601));
 
-  // Action 3: Run slot 0
+  // Action 3: Run slot 0.
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, 0);
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.

@@ -1,5 +1,6 @@
 
 #include "event_manager.h"
+#include "cell/cell_sched.h"
 
 using namespace srsgnb;
 
@@ -45,21 +46,17 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void event_manager::handle(const cell_configuration_request_message& msg)
+void event_manager::handle_cell_configuration_request(const cell_configuration_request_message& msg)
 {
   srsran_assert(not cell_exists(msg.cell_index), "Invalid cell index");
   srsran_sanity_check(is_cell_configuration_request_valid(msg), "Invalid cell configuration");
 
-  if (msg.cell_index >= cell_scheds.size()) {
-    cell_scheds.resize(msg.cell_index + 1);
-    cell_events.resize(msg.cell_index + 1);
-  }
-  cell_scheds[msg.cell_index] = std::make_unique<cell_sched>(msg);
-  cell_events[msg.cell_index] = std::make_unique<event_list>();
+  cells.add_cell(msg.cell_index, msg);
+  events_per_cell_list[msg.cell_index] = std::make_unique<event_list>();
   logger.info("SCHED: Cell with index={} was configured.", msg.cell_index);
 }
 
-void event_manager::handle(const sr_indication_message& sr_ind)
+void event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
 {
   srsran_sanity_check(cell_exists(sr_ind.cell_index), "Invalid cell index");
 
@@ -68,7 +65,7 @@ void event_manager::handle(const sr_indication_message& sr_ind)
       sr_ind.crnti, [sr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(rnti={:#x})", sr_ind.crnti); });
 }
 
-void event_manager::handle(const ul_bsr_indication_message& bsr_ind)
+void event_manager::handle_ul_bsr(const ul_bsr_indication_message& bsr_ind)
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
@@ -77,14 +74,14 @@ void event_manager::handle(const ul_bsr_indication_message& bsr_ind)
       bsr_ind.rnti, [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(rnti={:#x})", bsr_ind.rnti); });
 }
 
-void event_manager::handle(const rach_indication_message& rach_ind)
+void event_manager::handle_rach_indication(const rach_indication_message& rach_ind)
 {
   srsran_sanity_check(cell_exists(rach_ind.cell_index), "Invalid cell index");
-  auto& cell = *cell_events[rach_ind.cell_index];
+  auto& cell = *events_per_cell_list[rach_ind.cell_index];
 
   std::lock_guard<std::mutex> lock(cell.mutex);
   cell.next_events.emplace_back(INVALID_RNTI, [this, rach_ind](event_logger& ev_logger) {
-    cell_scheds[rach_ind.cell_index]->ra_sch.handle_rach_indication(rach_ind);
+    cells[rach_ind.cell_index].ra_sch.handle_rach_indication(rach_ind);
     ev_logger.enqueue("rach_ind(tc-rnti={:#x})", rach_ind.crnti);
   });
 }
@@ -127,16 +124,16 @@ void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
   process_common(sl_tx);
 
   // Pop pending cell-specific events.
-  auto& cell = *cell_events[cell_index];
-  cell.current_events.clear();
+  event_list& cell_events = *events_per_cell_list[cell_index];
+  cell_events.current_events.clear();
   {
-    std::lock_guard<std::mutex> lock(cell.mutex);
-    cell.next_events.swap(cell.current_events);
+    std::lock_guard<std::mutex> lock(cell_events.mutex);
+    cell_events.next_events.swap(cell_events.current_events);
   }
 
   // Process cell-specific events.
   event_logger ev_logger{cell_index, logger};
-  for (event_t& ev : cell.current_events) {
+  for (event_t& ev : cell_events.current_events) {
     if (ev.rnti != INVALID_RNTI) {
       if (not ue_db.contains(ev.rnti)) {
         log_invalid_rnti(ev);
@@ -155,7 +152,7 @@ void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
 
 bool event_manager::cell_exists(du_cell_index_t cell_index) const
 {
-  return cell_index < cell_scheds.size() and cell_scheds[cell_index] != nullptr;
+  return cell_index < MAX_NOF_CELLS and events_per_cell_list[cell_index] != nullptr;
 }
 
 bool event_manager::event_requires_sync(const event_t& ev, bool verbose) const
