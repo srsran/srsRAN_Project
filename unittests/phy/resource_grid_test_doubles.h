@@ -4,6 +4,7 @@
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <map>
+#include <random>
 #include <tuple>
 
 namespace srsgnb {
@@ -146,6 +147,72 @@ private:
 
     // Write element.
     entries.emplace(key, value);
+  }
+};
+
+/// Describes a resource grid reader spy.
+class resource_grid_reader_spy : public resource_grid_reader
+{
+public:
+  /// Describes an expected resource grid reader spy entry.
+  struct expected_entry_t {
+    /// Indicates the port index.
+    uint8_t port;
+    /// Indicates the symbol index.
+    uint8_t symbol;
+    /// Indicates the subcarrier index.
+    uint16_t subcarrier;
+    /// Provides the complex resource element value.
+    cf_t value;
+  };
+
+  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
+  {
+    srsran_always_assert(symbols.size() == coordinates.size(), "Number of symbols and coordinates must be the equal.");
+    for (unsigned idx = 0; idx != coordinates.size(); ++idx) {
+      symbols[idx] = get(static_cast<uint8_t>(port), coordinates[idx].symbol, coordinates[idx].subcarrier);
+    }
+  }
+  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  {
+    return span<cf_t>();
+  }
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
+
+  void write(span<const expected_entry_t> entries_)
+  {
+    for (const expected_entry_t& e : entries_) {
+      write(e);
+    }
+  }
+
+  void write(const expected_entry_t& entry)
+  {
+    entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
+
+    entries.emplace(key, entry.value);
+  }
+
+private:
+  /// \brief Defines the resource grid indexing key as the tuple of the port, symbol and subcarrier indexes.
+  using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
+
+  /// Stores the resource grid written entries.
+  std::map<entry_key_t, cf_t> entries;
+
+  cf_t get(uint8_t port, uint8_t symbol, uint16_t subcarrier) const
+  {
+    // Generate key.
+    entry_key_t key{port, symbol, subcarrier};
+
+    // Ensure the resource element exist.
+    srsran_assert(entries.count(key) == 1,
+                  "Resource grid for port=%d, symbol=%d and subcarrier=%d does not exist.",
+                  port,
+                  symbol,
+                  subcarrier);
+
+    return entries.at(key);
   }
 };
 

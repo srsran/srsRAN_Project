@@ -1,0 +1,4 @@
+
+add_executable(ofdm_modulator_test ofdm_modulator_test.cpp)
+target_link_libraries(ofdm_modulator_test srslog srsgnb_lower_phy_modulation)
+add_test(ofdm_modulator_test ofdm_modulator_test)

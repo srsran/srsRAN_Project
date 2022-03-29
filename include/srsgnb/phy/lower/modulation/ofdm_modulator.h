@@ -20,6 +20,8 @@ struct ofdm_modulator_configuration {
   unsigned dft_size;
   /// Indicates the cyclic prefix.
   cyclic_prefix cp;
+  /// Indicates the scaling factor at the DFT output.
+  float scale;
 };
 
 /// \brief Describes an OFDM modulator that modulates at symbol granularity.
@@ -36,17 +38,17 @@ public:
   /// \brief Get a symbol size including cyclic prefix.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
-  virtual unsigned get_symbol_size(unsigned symbol_index) = 0;
+  virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
 
   /// \brief Modulates a single symbol OFDM.
   /// \param[out] output Provides the time domain modulated symbol signal destination.
   /// \param[in] port_index Port index.
   /// \param[in] symbol_index Symbol index within the subframe to modulate.
-  /// \param[in] input Provides the frequency domain signal source.
+  /// \param[in] grid Provides the input as resource grid.
   /// \note The input size must be according to the configured bandwidth.
   /// \note The output size must be equal to the the symbol size.
   virtual void
-  modulate(span<cf_t> ouput, unsigned port_index, unsigned symbol_index, const resource_grid_reader& grid) = 0;
+  modulate(span<cf_t> output, unsigned port_index, unsigned symbol_index, const resource_grid_reader& grid) = 0;
 };
 
 /// \brief Describes an OFDM modulator that modulates at slot granularity.
@@ -63,16 +65,17 @@ public:
   /// \brief Get a slot size.
   /// \param[in] slot_index Indicates the slot index within the subframe.
   /// \return The number of samples for the given slot index.
-  virtual unsigned get_slot_size(unsigned slot_index) = 0;
+  virtual unsigned get_slot_size(unsigned slot_index) const = 0;
 
   /// \brief Modulates a single slot for an OFDM transmission.
   /// \param[out] output Provides the time domain modulated signal destination.
   /// \param[in] port_index Port index to modulate.
   /// \param[in] slot_index Slot index within the subframe to modulate.
-  /// \param[in] input Provides the frequency domain signal source.
+  /// \param[in] grid Provides the input as resource grid.
   /// \note The input size must be according to the configured bandwidth.
   /// \note The output size must be equal to the slot size.
-  virtual void modulate(span<cf_t> ouput, unsigned port_index, unsigned slot_index, span<const cf_t> input) = 0;
+  virtual void
+  modulate(span<cf_t> output, unsigned port_index, unsigned slot_index, const resource_grid_reader& grid) = 0;
 };
 
 /// Describes an OFDM modulator factory.

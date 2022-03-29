@@ -3,22 +3,118 @@
 #define LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
 
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
+#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/srsvec/zero.h"
+#include "srsgnb/support/dft_processor.h"
 
 namespace srsgnb {
+
+/// OFDM factory configuration. Provides the necessary parameters
+struct ofdm_modulator_factory_config {
+  dft_processor_factory& dft_factory;
+};
 
 /// Describes a generic OFDM symbol modulator.
 class ofdm_symbol_modulator_impl : public ofdm_symbol_modulator
 {
+private:
+  static constexpr unsigned MAX_DFT_SIZE = 4096;
+  /// Indicates the DFT size.
+  unsigned dft_size;
+  /// Indicates the resource grid bandwidth in resource elements.
+  unsigned rg_size;
+  /// Indicates the cyclic prefix length.
+  cyclic_prefix cp;
+  /// Indicates the numerology.
+  unsigned numerology;
+  /// Indicates the scaling factor at the DFT output.
+  float scale;
+  /// DFT processor.
+  std::unique_ptr<dft_processor> dft;
+  /// Temporal data buffer.
+  srsvec::aligned_vec<cf_t> temp_buffer;
+
 public:
-  // See interface for documentation.
-  unsigned int get_symbol_size(unsigned int symbol_index) override;
+  /// \brief Constructs an OFDM symbol modulator.
+  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
+  ofdm_symbol_modulator_impl(const ofdm_modulator_factory_config& factory_config,
+                             const ofdm_modulator_configuration&  ofdm_config);
 
   // See interface for documentation.
-  void modulate(span<cf_t>                  ouput,
-                unsigned int                port_index,
-                unsigned int                symbol_index,
-                const resource_grid_reader& grid) override;
+  unsigned get_symbol_size(unsigned symbol_index) const override
+  {
+    return cp.get_length(symbol_index, numerology, dft_size) + dft_size;
+  }
+
+  // See interface for documentation.
+  void
+  modulate(span<cf_t> ouput, unsigned port_index, unsigned symbol_index, const resource_grid_reader& grid) override;
 };
+
+/// Describes a generic OFDM slot modulator.
+class ofdm_slot_modulator_impl : public ofdm_slot_modulator
+{
+private:
+  /// Indicates the cyclic prefix length.
+  cyclic_prefix cp;
+  /// Instance of symbol modulator.
+  ofdm_symbol_modulator_impl symbol_modulator;
+
+public:
+  /// \brief Constructs an OFDM slot modulator.
+  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
+  ofdm_slot_modulator_impl(const ofdm_modulator_factory_config& factory_config,
+                           const ofdm_modulator_configuration&  ofdm_config) :
+    cp(ofdm_config.cp), symbol_modulator(factory_config, ofdm_config)
+  {
+    // Do nothing.
+  }
+
+  // See interface for documentation;
+  unsigned get_slot_size(unsigned slot_index) const override;
+
+  // See interface for documentation;
+  void modulate(span<cf_t> output, unsigned port_index, unsigned slot_index, const resource_grid_reader& grid) override;
+};
+
+/// Describes a generic OFDM modulator factory.
+class ofdm_modulator_factory_impl : public ofdm_modulator_factory
+{
+private:
+  /// Keep a copy of the DFT factory reference.
+  dft_processor_factory& dft_factory;
+
+public:
+  /// Constructs the OFDM modulator factory.
+  ofdm_modulator_factory_impl(const ofdm_modulator_factory_config& config) : dft_factory(config.dft_factory)
+  {
+    // Do nothing.
+  }
+
+  /// \brief Creates an OFDM symbol modulator.
+  /// \param[in] dft_config Provides the OFDM modulator parameters.
+  /// \return The ownership to an OFDM symbol modulator.
+  std::unique_ptr<ofdm_symbol_modulator>
+  create_ofdm_symbol_modulator(const ofdm_modulator_configuration& dft_config) override
+  {
+    ofdm_modulator_factory_config factory_config = {dft_factory};
+    return std::make_unique<ofdm_symbol_modulator_impl>(factory_config, dft_config);
+  }
+
+  /// \brief Creates an OFDM slot modulator.
+  /// \param[in] dft_config Provides the OFDM modulator parameters.
+  /// \return The ownership to an OFDM slot modulator.
+  std::unique_ptr<ofdm_slot_modulator>
+  create_ofdm_slot_modulator(const ofdm_modulator_configuration& dft_config) override
+  {
+    ofdm_modulator_factory_config factory_config = {dft_factory};
+    return std::make_unique<ofdm_slot_modulator_impl>(factory_config, dft_config);
+  }
+};
+
+std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modulator_factory_config& config);
 
 } // namespace srsgnb
 
