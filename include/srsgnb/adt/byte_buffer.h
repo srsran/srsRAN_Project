@@ -500,13 +500,11 @@ public:
   const_iterator begin() const { return it; }
   const_iterator end() const { return it_end; }
 
-  const_iterator operator++() { return ++it; }
-
   bool empty() const { return it == it_end; }
 
   size_t length() const { return it_end - it; }
 
-  const uint8_t& operator*() const { return *it; }
+  const uint8_t& operator[](size_t i) const { return *(it + i); }
 
   /// Returns another sub-view with dimensions specified in arguments.
   byte_buffer_view slice(size_t offset, size_t size) const
@@ -529,9 +527,39 @@ public:
     return std::equal(begin(), end(), other.begin(), other.end());
   }
 
-private:
+protected:
   const_iterator it     = const_iterator{nullptr, 0};
   const_iterator it_end = const_iterator{nullptr, 0};
+};
+
+class byte_buffer_reader : private byte_buffer_view
+{
+public:
+  using byte_buffer_view::begin;
+  using byte_buffer_view::byte_buffer_view;
+  using byte_buffer_view::empty;
+  using byte_buffer_view::end;
+  using byte_buffer_view::length;
+
+  byte_buffer_reader(const byte_buffer_view& other) : byte_buffer_view(other) {}
+
+  /// Obtain a range view to the bytes pointed by the reader.
+  byte_buffer_view view() const { return {it, it_end}; }
+
+  const uint8_t& operator*() const { return *it; }
+
+  const_iterator operator++() { return ++it; }
+
+  /// Advance reader by offset bytes. Returns an iterator to new position.
+  const_iterator operator+=(size_t offset) { return it += offset; }
+
+  /// Advance offset bytes and returns view to skipped bytes.
+  byte_buffer_view advance(size_t offset)
+  {
+    auto prev_it = it;
+    it += offset;
+    return {prev_it, it};
+  }
 };
 
 } // namespace srsgnb

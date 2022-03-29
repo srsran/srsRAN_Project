@@ -4,12 +4,12 @@
 
 #include "lcid_ul_sch.h"
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/expected.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/srsran_assert.h"
-#include "srsgnb/adt/expected.h"
 
 namespace srsgnb {
 
@@ -17,7 +17,7 @@ class mac_ul_sch_subpdu
 {
 public:
   /// Returns buffer view with begin() pointing at the first byte after the decoded subPDU.
-  bool unpack(byte_buffer_view& subpdu);
+  bool unpack(byte_buffer_reader& subpdu);
   bool unpack(const byte_buffer& subpdu);
 
   lcid_ul_sch_t    lcid() const { return lcid_val; }
@@ -71,7 +71,7 @@ inline rnti_t decode_crnti_ce(byte_buffer_view payload)
   if (payload.length() < 2) {
     return INVALID_RNTI;
   }
-  return le16toh((uint16_t)*payload << 8U | *(++payload));
+  return le16toh((uint16_t)payload[0] << 8U | payload[1]);
 }
 
 } // namespace srsgnb

@@ -67,9 +67,9 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
 {
   long_bsr_report lbsr = {};
 
-  byte_buffer_view view = payload;
-  lbsr.bitmap           = *view; // read LCG bitmap
-  ++view;                        // skip LCG bitmap
+  byte_buffer_reader reader = payload;
+  lbsr.bitmap               = *reader; // read LCG bitmap
+  ++reader;                            // skip LCG bitmap
 
   // early stop if LBSR is empty
   if (lbsr.bitmap == 0) {
@@ -82,9 +82,9 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = i;
       // For the Long truncated, some BSR words can be not present, assume BSR > 0 in that case
-      if (view.begin() + 1 != view.end()) {
-        bsr.buffer_size = *view;
-        ++view;
+      if (reader.length() > 1) {
+        bsr.buffer_size = *reader;
+        ++reader;
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         bsr.buffer_size = 63; // just assume it has 526 bytes to transmit
       } else {

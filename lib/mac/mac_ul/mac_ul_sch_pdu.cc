@@ -7,11 +7,11 @@ using namespace srsgnb;
 
 bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
 {
-  byte_buffer_view view = subpdu;
-  return unpack(view);
+  byte_buffer_reader reader = subpdu;
+  return unpack(reader);
 }
 
-bool mac_ul_sch_subpdu::unpack(byte_buffer_view& subpdu)
+bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu)
 {
   sdu_view = {};
   if (subpdu.empty()) {
@@ -35,20 +35,20 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_view& subpdu)
 
       if (F_bit) {
         // add second length byte
-        sdu_length = sdu_length << 8 | ((uint32_t)*subpdu & 0xff);
+        sdu_length = sdu_length << 8U | ((uint32_t)*subpdu & 0xffU);
         ++subpdu;
         header_length++;
       }
-      std::tie(sdu_view, subpdu) = subpdu.split((size_t)sdu_length);
+      sdu_view = subpdu.advance(sdu_length);
     } else {
       if (lcid_val == lcid_ul_sch_t::PADDING) {
         // set subPDU length to rest of PDU
         // 1 Byte R/LCID MAC subheader
-        sdu_view = subpdu;
+        sdu_view = subpdu.view();
         subpdu   = {};
       } else {
-        sdu_length                 = lcid_val.sizeof_ce();
-        std::tie(sdu_view, subpdu) = subpdu.split((size_t)sdu_length);
+        sdu_length = lcid_val.sizeof_ce();
+        sdu_view   = subpdu.advance(sdu_length);
       }
     }
   } else {
@@ -108,10 +108,10 @@ void mac_ul_sch_pdu::clear()
 
 bool mac_ul_sch_pdu::unpack(const byte_buffer& payload)
 {
-  byte_buffer_view view = payload;
-  while (not view.empty()) {
+  byte_buffer_reader reader = payload;
+  while (not reader.empty()) {
     mac_ul_sch_subpdu subpdu{};
-    if (not subpdu.unpack(view)) {
+    if (not subpdu.unpack(reader)) {
       return false;
     }
     subpdus.push_back(subpdu);
