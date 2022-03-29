@@ -3,7 +3,7 @@
 #define SRSGNB_SCHED_CONFIGURER_H
 
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/asn1/rrc_nr/serving_cell.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"

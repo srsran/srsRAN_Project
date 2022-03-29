@@ -94,7 +94,12 @@ void assert_choice_type(typename Enumerated::options access_type, Enumerated& cu
      error handling
 ************************/
 
-enum SRSASN_CODE { SRSASN_SUCCESS, SRSASN_ERROR_ENCODE_FAIL, SRSASN_ERROR_DECODE_FAIL };
+enum SRSASN_CODE {
+  SRSASN_ERROR             = -3,
+  SRSASN_ERROR_ENCODE_FAIL = -2,
+  SRSASN_ERROR_DECODE_FAIL = -1,
+  SRSASN_SUCCESS           = 0
+};
 
 void log_error_code(SRSASN_CODE code, const char* filename, int line);
 

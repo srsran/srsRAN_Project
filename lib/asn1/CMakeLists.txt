@@ -6,7 +6,7 @@ target_link_libraries(asn1_utils srslog)
 INSTALL(TARGETS asn1_utils DESTINATION ${LIBRARY_DIR})
 
 # RRC NR ASN1
-add_library(rrc_nr_asn1 STATIC rrc_nr/rrc_nr.cc)
+add_library(rrc_nr_asn1 STATIC rrc_nr/rrc_nr.cc rrc_nr/common.cc rrc_nr/serving_cell.cc rrc_nr/ue_cap.cc)
 target_compile_options(rrc_nr_asn1 PRIVATE "-Os")
 target_link_libraries(rrc_nr_asn1 asn1_utils)
 INSTALL(TARGETS rrc_nr_asn1 DESTINATION ${LIBRARY_DIR})
