@@ -98,7 +98,8 @@ void re_pattern_list::merge(const re_pattern& pattern)
   }
 
   // If reached here, no pattern was matched. Check if there is free space.
-  srsran_assert(!list.full(), "RE pattern list is full. It seems %d maximum entries are not enough.", MAX_RE_PATTERN);
+  srsran_assert(
+      !list.full(), "RE pattern list is full. It seems {} maximum entries are not enough.", (unsigned)MAX_RE_PATTERN);
 
   // Append pattern.
   list.emplace_back(pattern);

@@ -15,9 +15,6 @@
 
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
-#include <stdarg.h>
-
-namespace srsgnb {
 
 /// Provides a hint to the compiler that a condition is likely false.
 #define srsran_unlikely(expr) __builtin_expect(!!(expr), 0)
@@ -26,11 +23,19 @@ namespace srsgnb {
 #define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
 #define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
 
+namespace srsgnb {
+
 namespace detail {
 
-/// \brief helper to format and print assertion messages. Before printing, it first ensures srslog is flushed.
+/// \brief helper function to format and print assertion messages. Before printing, the srslog is flushed.
+/// \param filename file name where assertion failed.
+/// \param line line in which assertion was placed.
+/// \param funcname function name where assertion failed.
+/// \param condstr assertion condition that failed.
+/// \param fmtstr format string for additional assertion message.
+/// \param args args that are formatted according to fmtstr.
 template <typename... Args>
-[[gnu::noinline]] inline void assert_print_helper(const char* filename,
+[[gnu::noinline]] inline bool assert_print_helper(const char* filename,
                                                   int         line,
                                                   const char* funcname,
                                                   const char* condstr = nullptr,
@@ -52,6 +57,7 @@ template <typename... Args>
 
   srslog::flush();
   fprintf(stderr, "%s", fmtbuf.data());
+  return false;
 }
 
 } // namespace detail
@@ -67,23 +73,27 @@ template <typename... Args>
   std::abort();
 }
 
-#define srsran_assertion_failure(fmt, ...)                                                                             \
-  (void)((detail::assert_print_helper(__FILE__, __LINE__, __PRETTY_FUNCTION__, nullptr, fmt, ##__VA_ARGS__), 0) ||     \
+} // namespace srsgnb
+
+/// Helper macro to log assertion message and terminate program.
+#define srsran_assertion_failure__(condmessage, ...)                                                                   \
+  (void)(srsgnb::detail::assert_print_helper(__FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, ##__VA_ARGS__) ||   \
          (std::abort(), 0))
+
+/// Terminates program with an assertion failure. No condition message is provided.
+#define srsran_assertion_failure(fmtstr, ...) srsran_assertion_failure__(nullptr, fmtstr, ##__VA_ARGS__)
 
 /// \brief Macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log, prints
 /// the backtrace (if it was activated) and closes the application.
 #define srsran_always_assert(condition, ...)                                                                           \
-  (void)((condition) ||                                                                                                \
-         (detail::assert_print_helper(__FILE__, __LINE__, __PRETTY_FUNCTION__, (#condition), ##__VA_ARGS__), 0) ||     \
-         (std::abort(), 0))
+  (void)((condition) || (srsran_assertion_failure__((#condition), ##__VA_ARGS__), 0))
 
 /// Same as "srsran_always_assert" but it is only active when "enable_check" flag is defined
-#define srsran_assert_ifdef(enable_check, condition, fmt, ...)                                                         \
-  (void)((not SRSRAN_IS_DEFINED(enable_check)) || (srsran_always_assert(condition, fmt, ##__VA_ARGS__), 0))
+#define srsran_assert_ifdef(enable_check, condition, fmtstr, ...)                                                      \
+  (void)((not SRSRAN_IS_DEFINED(enable_check)) || (srsran_always_assert(condition, fmtstr, ##__VA_ARGS__), 0))
 
 /// Specialization of "srsran_assert_ifdef" for the ASSERTS_ENABLED flag
-#define srsran_assert(condition, fmt, ...) srsran_assert_ifdef(ASSERTS_ENABLED, condition, fmt, ##__VA_ARGS__)
+#define srsran_assert(condition, fmtstr, ...) srsran_assert_ifdef(ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
 
 /// Specialization of "srsran_assert_ifdef" for the SANITY_CHECKS_ENABLED flag
 #ifndef NDEBUG
@@ -91,7 +101,5 @@ template <typename... Args>
 #endif
 #define srsran_sanity_check(condition, fmt, ...)                                                                       \
   srsran_assert_ifdef(SANITY_CHECKS_ENABLED, condition, fmt, ##__VA_ARGS__)
-
-} // namespace srsgnb
 
 #endif // SRSRAN_ASSERT_H

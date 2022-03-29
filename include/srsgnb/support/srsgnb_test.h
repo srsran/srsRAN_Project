@@ -33,11 +33,11 @@ template <typename T, typename U, typename... Args>
 
 #define TESTASSERT_EQ(EXPECTED, ACTUAL, ...)                                                                           \
   srsran_always_assert((EXPECTED == ACTUAL),                                                                           \
-                       detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, ##__VA_ARGS__).c_str())
+                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, ##__VA_ARGS__).c_str())
 
 #define TESTASSERT_NEQ(EXPECTED, ACTUAL, ...)                                                                          \
   srsran_always_assert((EXPECTED == ACTUAL),                                                                           \
-                       detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, ##__VA_ARGS__).c_str())
+                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, ##__VA_ARGS__).c_str())
 
 #define TESTASSERT(cond, ...) srsran_always_assert(cond, ##__VA_ARGS__)
 

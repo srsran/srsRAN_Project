@@ -109,7 +109,7 @@ class base_circular_buffer
     void assert_idx_within_bounds()
     {
       srsran_assert(idx + (idx >= parent->rpos ? 0 : parent->max_size()) < parent->rpos + parent->count,
-                    "index=%zd is out-of-bounds [%zd, %zd)",
+                    "index={} is out-of-bounds [{}, {})",
                     idx,
                     parent->rpos,
                     parent->count);
@@ -198,12 +198,12 @@ public:
   /// Random Access
   T& operator[](size_t i)
   {
-    srsran_assert(i < count, "Out-of-bounds access to circular buffer (%zd >= %zd)", i, count);
+    srsran_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
     return buffer[(rpos + i) % max_size()].get();
   }
   const T& operator[](size_t i) const
   {
-    srsran_assert(i < count, "Out-of-bounds access to circular buffer (%zd >= %zd)", i, count);
+    srsran_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
     return buffer[(rpos + i) % max_size()].get();
   }
 

@@ -64,22 +64,22 @@ public:
 
     obj_t& operator*()
     {
-      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds (%zd >= %zd)", idx, ptr->capacity());
+      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds ({} >= {})", idx, ptr->capacity());
       return ptr->get_obj_(idx);
     }
     obj_t* operator->()
     {
-      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds (%zd >= %zd)", idx, ptr->capacity());
+      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds ({} >= {})", idx, ptr->capacity());
       return &ptr->get_obj_(idx);
     }
     const obj_t* operator*() const
     {
-      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds (%zd >= %zd)", idx, ptr->capacity());
+      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds ({} >= {})", idx, ptr->capacity());
       return &ptr->get_obj_(idx);
     }
     const obj_t* operator->() const
     {
-      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds (%zd >= %zd)", idx, ptr->capacity());
+      srsran_assert(idx < ptr->capacity(), "Iterator out-of-bounds ({} >= {})", idx, ptr->capacity());
       return &ptr->get_obj_(idx);
     }
 
@@ -234,7 +234,7 @@ public:
 
   iterator erase(iterator it) noexcept
   {
-    srsran_assert(it.idx < N and it.ptr == this, "Iterator out-of-bounds (%zd >= %zd)", it.idx, N);
+    srsran_assert(it.idx < N and it.ptr == this, "Iterator out-of-bounds ({} >= {})", it.idx, N);
     iterator next = it;
     ++next;
     present[it.idx] = false;
@@ -257,12 +257,12 @@ public:
   /// Random Access by key
   T& operator[](K key) noexcept
   {
-    srsran_assert(contains(key), "Accessing non-existent ID=%zd", (size_t)key);
+    srsran_assert(contains(key), "Accessing non-existent ID={}", (size_t)key);
     return get_obj_(key % N).second;
   }
   const T& operator[](K key) const noexcept
   {
-    srsran_assert(contains(key), "Accessing non-existent ID=%zd", (size_t)key);
+    srsran_assert(contains(key), "Accessing non-existent ID={}", (size_t)key);
     return get_obj_(key % N).second;
   }
 

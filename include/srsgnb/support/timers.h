@@ -114,8 +114,10 @@ class timer_manager
     /// Configures the duration of the timer.
     void set(timer_tick_difference_t duration)
     {
-      srsran_assert(
-          duration <= MAX_TIMER_DURATION, "Invalid timer duration=%" PRIu32 ">%" PRIu32, duration, MAX_TIMER_DURATION);
+      srsran_assert(duration <= MAX_TIMER_DURATION,
+                    "Invalid timer duration={}>{}",
+                    duration,
+                    (timer_tick_difference_t)MAX_TIMER_DURATION);
       std::lock_guard<std::mutex> lock(parent.mutex);
       set_impl(duration);
     }
@@ -123,8 +125,10 @@ class timer_manager
     /// Configures the duration of the timer calling the provided callback upon timer expiration.
     void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> cb)
     {
-      srsran_assert(
-          duration <= MAX_TIMER_DURATION, "Invalid timer duration=%" PRIu32 ">%" PRIu32, duration, MAX_TIMER_DURATION);
+      srsran_assert(duration <= MAX_TIMER_DURATION,
+                    "Invalid timer duration={}>{}",
+                    duration,
+                    (timer_tick_difference_t)MAX_TIMER_DURATION);
       std::lock_guard<std::mutex> lock(parent.mutex);
       set_impl(duration);
       callback = std::move(cb);

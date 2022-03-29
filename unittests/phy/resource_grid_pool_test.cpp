@@ -40,9 +40,11 @@ void test(unsigned nof_slots, unsigned nof_sectors)
       // Get grid
       const resource_grid& grid = pool->get_resource_grid(context);
 
-      // Verify grid referemnce match
-      srsran_assert(
-          &grid == grids[slot_count][sector], "Unmatched grid references %p vs %p", &grid, &grids[slot_count][sector]);
+      // Verify grid reference match
+      srsran_assert(&grid == grids[slot_count][sector],
+                    "Unmatched grid references {} vs {}",
+                    (void*)&grid,
+                    (void*)&grids[slot_count][sector]);
     }
   }
 }

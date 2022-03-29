@@ -56,10 +56,7 @@ class empty_table_t final : public oper_table_t<R, Args...>
 {
 public:
   constexpr empty_table_t() = default;
-  R         call(void* src, Args... args) const final
-  {
-    srsran_assertion_failure("bad function call (cause: function ptr is empty)");
-  }
+  R call(void* src, Args... args) const final { srsran_terminate("bad function call (cause: function ptr is empty)"); }
   void move(void* src, void* dest) const final {}
   void dtor(void* src) const final {}
   bool is_in_small_buffer() const final { return true; }
