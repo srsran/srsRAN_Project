@@ -78,9 +78,15 @@ void test_byte_buffer_append()
   TESTASSERT_EQ(pdu.length(), bytes.size());
 
   // create a new segment during the append.
-  bytes = make_big_vec();
-  pdu.append(bytes);
-  TESTASSERT_EQ(pdu.length(), bytes.size() + 6);
+  auto bytes2 = make_big_vec();
+  pdu.append(bytes2);
+  TESTASSERT_EQ(pdu.length(), bytes2.size() + bytes.size());
+
+  // append two byte_buffers
+  byte_buffer pdu2{bytes};
+  TESTASSERT_EQ(pdu2.length(), bytes.size());
+  pdu2.append(pdu);
+  TESTASSERT_EQ(pdu.length() + bytes.size(), pdu2.length());
 }
 
 void test_byte_buffer_prepend()
@@ -220,7 +226,7 @@ void test_byte_buffer_move()
 
   byte_buffer pdu2{std::move(pdu)};
   TESTASSERT(not pdu2.empty() and pdu.empty());
-  TESTASSERT(pdu == bytes);
+  TESTASSERT(pdu2 == bytes);
 }
 
 void test_byte_buffer_formatter()
@@ -274,11 +280,12 @@ void test_byte_buffer_trim()
   TESTASSERT(pdu == span<const uint8_t>{bytes2}.last(2));
 }
 
-void test_byte_buffer_linearize() {
+void test_byte_buffer_linearize()
+{
   byte_buffer          pdu;
-  std::vector<uint8_t> bytes = make_small_vec();
-  std::vector<uint8_t> bytes2 = make_big_vec();
-  auto bytes_concat = bytes;
+  std::vector<uint8_t> bytes        = make_small_vec();
+  std::vector<uint8_t> bytes2       = make_big_vec();
+  auto                 bytes_concat = bytes;
   bytes_concat.insert(bytes_concat.end(), bytes2.begin(), bytes2.end());
 
   pdu.append(bytes);
@@ -300,6 +307,15 @@ void test_byte_buffer_linearize() {
   TESTASSERT(pdu.is_contiguous());
 }
 
+void test_byte_buffer_initializer_list()
+{
+  byte_buffer pdu = {1, 2, 3, 4, 5, 6};
+  TESTASSERT_EQ(6, pdu.length());
+
+  bool are_equal = pdu == std::vector<uint8_t>{1, 2, 3, 4, 5, 6};
+  TESTASSERT(are_equal);
+}
+
 int main()
 {
   test_buffer_segment();
@@ -313,4 +329,5 @@ int main()
   test_byte_buffer_view();
   test_byte_buffer_trim();
   test_byte_buffer_linearize();
+  test_byte_buffer_initializer_list();
 }

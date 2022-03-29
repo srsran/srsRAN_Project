@@ -69,17 +69,17 @@ public:
   size_t tailroom() const { return buffer.end() - end(); }
 
   /// Appends a span of bytes at the tail of the segment.
-  void append(span<const uint8_t> bytes)
-  {
-    srsran_sanity_check(bytes.size() <= tailroom(), "There is not enough tailroom for append.");
-    append(bytes.begin(), bytes.end());
-  }
+  void append(span<const uint8_t> bytes) { append(bytes.begin(), bytes.end()); }
 
   /// Appends a iterator range of bytes at the tail of the segment.
   template <typename It>
   void append(It it_begin, It it_end)
   {
     static_assert(std::is_same<std::decay_t<decltype(*it_begin)>, uint8_t>::value, "Invalid value_type");
+    static_assert(
+        std::is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
+        "Only random access iterators allowed.");
+    srsran_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
     data_end_ = std::copy(it_begin, it_end, end());
   }
 
@@ -141,6 +141,7 @@ public:
   template <typename Container>
   bool operator==(const Container& other) const
   {
+    static_assert(std::is_same<std::decay_t<decltype(*other.begin())>, uint8_t>::value, "Invalid value_type");
     return std::equal(begin(), end(), other.begin(), other.end());
   }
   template <typename Container>
@@ -296,23 +297,24 @@ public:
     len += bytes.size();
   }
 
-  /// Appends bytes in iterator range to the byte buffer. This function may allocate new segments.
-  template <typename It>
-  void append(It it_begin, It it_end)
+  /// Appends bytes from another byte_buffer. This function may allocate new segments.
+  void append(const byte_buffer& other)
   {
-    if (empty() and it_begin != it_end) {
+    if (empty() and not other.empty()) {
       append_segment();
     }
-    size_t to_add = it_end - it_begin;
-    while (it_begin != it_end) {
-      if (tail->tailroom() == 0) {
-        append_segment();
+    for (byte_buffer_segment* seg = other.head.get(); seg != nullptr; seg = seg->next()) {
+      auto other_it = seg->begin();
+      while (other_it != seg->end()) {
+        if (tail->tailroom() == 0) {
+          append_segment();
+        }
+        auto to_append = std::min(seg->end() - other_it, (iterator::difference_type)tail->tailroom());
+        tail->append(other_it, other_it + to_append);
+        other_it += to_append;
       }
-      It it_next = it_begin + std::min(tail->tailroom(), it_end - it_begin);
-      tail->append(it_begin, it_next);
-      it_begin = it_next;
+      len += seg->length();
     }
-    len += to_add;
   }
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
@@ -385,17 +387,11 @@ public:
   /// Checks byte_buffer length.
   size_t length() const { return len; }
 
-  /// Compares bytes buffers byte-wise.
-  bool operator==(const byte_buffer& other) const
+  template <typename Container>
+  bool operator==(const Container& container) const
   {
-    // TODO: Probably can be done in batches of segments.
-    auto it = begin(), it2 = other.begin();
-    for (; it != end() and it2 != other.end(); ++it, ++it2) {
-      if (*it != *it2) {
-        return false;
-      }
-    }
-    return (it == end()) and (it2 == other.end());
+    // TODO: Possible optimization to account batches of segments.
+    return std::equal(begin(), end(), container.begin(), container.end());
   }
   bool operator!=(const byte_buffer& other) const { return !(*this == other); }
 
