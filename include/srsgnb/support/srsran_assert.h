@@ -32,15 +32,12 @@ namespace detail {
 /// \param line line in which assertion was placed.
 /// \param funcname function name where assertion failed.
 /// \param condstr assertion condition that failed.
-/// \param fmtstr format string for additional assertion message.
-/// \param args args that are formatted according to fmtstr.
-template <typename... Args>
-[[gnu::noinline]] inline bool assert_print_helper(const char* filename,
-                                                  int         line,
-                                                  const char* funcname,
-                                                  const char* condstr = nullptr,
-                                                  const char* fmtstr  = nullptr,
-                                                  Args&&... args) noexcept
+/// \param msg additional assertion message.
+[[gnu::noinline]] inline bool assert_print_helper(const char*        filename,
+                                                  int                line,
+                                                  const char*        funcname,
+                                                  const char*        condstr = nullptr,
+                                                  const std::string& msg     = "") noexcept
 {
   fmt::memory_buffer fmtbuf;
   fmt::format_to(fmtbuf, "{}:{}: {}: ", filename, line, funcname);
@@ -49,8 +46,8 @@ template <typename... Args>
   } else {
     fmt::format_to(fmtbuf, "Assertion `{}' failed", condstr);
   }
-  if (fmtstr != nullptr) {
-    fmt::format_to(fmtbuf, " - {}", fmt::format(fmtstr, std::forward<Args>(args)...));
+  if (not msg.empty()) {
+    fmt::format_to(fmtbuf, " - {}", msg);
   }
   fmt::format_to(fmtbuf, ".\n");
   fmtbuf.push_back('\0'); // make it a c-string
@@ -76,8 +73,9 @@ template <typename... Args>
 } // namespace srsgnb
 
 /// Helper macro to log assertion message and terminate program.
-#define srsran_assertion_failure__(condmessage, ...)                                                                   \
-  (void)(srsgnb::detail::assert_print_helper(__FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, ##__VA_ARGS__) ||   \
+#define srsran_assertion_failure__(condmessage, fmtstr, ...)                                                           \
+  (void)(srsgnb::detail::assert_print_helper(                                                                          \
+             __FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, fmt::format(FMT_STRING(fmtstr), ##__VA_ARGS__)) ||  \
          (std::abort(), 0))
 
 /// Terminates program with an assertion failure. No condition message is provided.
@@ -85,8 +83,8 @@ template <typename... Args>
 
 /// \brief Macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log, prints
 /// the backtrace (if it was activated) and closes the application.
-#define srsran_always_assert(condition, ...)                                                                           \
-  (void)((condition) || (srsran_assertion_failure__((#condition), ##__VA_ARGS__), 0))
+#define srsran_always_assert(condition, fmtstr, ...)                                                                   \
+  (void)((condition) || (srsran_assertion_failure__((#condition), fmtstr, ##__VA_ARGS__), 0))
 
 /// Same as "srsran_always_assert" but it is only active when "enable_check" flag is defined
 #define srsran_assert_ifdef(enable_check, condition, fmtstr, ...)                                                      \

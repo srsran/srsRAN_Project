@@ -31,12 +31,12 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
 
   for (const rar_information& rar : rars) {
     TESTASSERT(not rar.grants.empty(),
-               fmt::format("RAR corrsponding to RA-RNTI '{}' has no corresponding allocated MSG3 grants", rar.ra_rnti)
-                   .c_str());
+               "RAR corrsponding to RA-RNTI '{}' has no corresponding allocated MSG3 grants",
+               rar.ra_rnti);
     for (const msg3_information& msg3 : rar.grants) {
-      TESTASSERT(
-          msg3.prbs.length() > 0,
-          fmt::format("RAR corrsponding to RA-RNTI '{}' has no PRBs allocated for MSG3 grants", rar.ra_rnti).c_str());
+      TESTASSERT(msg3.prbs.length() > 0,
+                 "RAR corrsponding to RA-RNTI '{}' has no PRBs allocated for MSG3 grants",
+                 rar.ra_rnti);
       TESTASSERT(not total_ul_prbs.any(msg3.prbs.start(), msg3.prbs.stop()));
       TESTASSERT(not crntis.contains(msg3.temp_crnti));
 
@@ -51,12 +51,9 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
 /// \param msg3_grant MSG3 grant.
 static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind, const msg3_information& msg3_grant)
 {
-  TESTASSERT_EQ(rach_ind.timing_advance,
-                msg3_grant.ta,
-                fmt::format("Time-advance mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id).c_str());
-  TESTASSERT_EQ(rach_ind.crnti,
-                msg3_grant.temp_crnti,
-                fmt::format("C-RNTI mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id).c_str());
+  TESTASSERT_EQ(
+      rach_ind.timing_advance, msg3_grant.ta, "Time-advance mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
+  TESTASSERT_EQ(rach_ind.crnti, msg3_grant.temp_crnti, "C-RNTI mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
   TESTASSERT(msg3_grant.prbs.length() > 0);
 }
 
@@ -151,8 +148,7 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
   } else {
     // If there are more eligible RACH indications than available grants, then we expect the scheduler allocate AT LEAST
     // as many MSG3 grants as RACH indications
-    TESTASSERT(nof_allocated_msg3 >= nof_available_grants,
-               fmt::format("Less than the expected num. of MSG3 have been allocated ").c_str());
+    TESTASSERT(nof_allocated_msg3 >= nof_available_grants, "Less than the expected num. of MSG3 have been allocated ");
   }
 
   return nof_allocated_msg3;
@@ -246,11 +242,12 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     auto wanted_rar_ra_rnti = find_rar(rar_alloc.dl_res().rars, ra_ranti);
 
     // Per-RA-RANTI checks on RAR grant
-    TESTASSERT(wanted_rar_ra_rnti != rar_alloc.dl_res().rars.end(),
-               fmt::format("RAR with corrsponding RA-RNTI '{}' not found", ra_ranti).c_str());
+    TESTASSERT(
+        wanted_rar_ra_rnti != rar_alloc.dl_res().rars.end(), "RAR with corrsponding RA-RNTI '{}' not found", ra_ranti);
     TESTASSERT_EQ(rach_ra_rnti_list.front().cell_index,
                   wanted_rar_ra_rnti->cell_index,
-                  fmt::format("Cell-index mismatch for RAR corrsponding to RA-RNTI '{}'", ra_ranti).c_str());
+                  "Cell-index mismatch for RAR corrsponding to RA-RNTI '{}'",
+                  ra_ranti);
 
     // Define lambda to find MSG3 grant with given RAPID
     auto find_rapid = [](const static_vector<msg3_information, MAX_GRANTS>& msg3_grants, unsigned expected_rapid) {
@@ -269,8 +266,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
       // Retrieve MSG3 for RAPID for the corresponding to RACH indication message
       auto wanted_msg3_grant_rapid = find_rapid(wanted_rar_ra_rnti->grants, rapid);
 
-      TESTASSERT(wanted_msg3_grant_rapid != wanted_rar_ra_rnti->grants.end(),
-                 fmt::format("RAPID '{}' not found", rapid).c_str());
+      TESTASSERT(wanted_msg3_grant_rapid != wanted_rar_ra_rnti->grants.end(), "RAPID '{}' not found", rapid);
 
       test_rach_ind_msg3_grant(rach_ind_rapid, *wanted_msg3_grant_rapid);
     }

@@ -4,7 +4,7 @@
 
 /// This will be removed once we can get this value from the slot object
 #define TEST_HARQ_ASSERT_MSG(SLOT, PERIODICITY, CASE)                                                                  \
-  fmt::format("Failed at slot: '{}', periodicity '{}', case '{}'", SLOT, PERIODICITY, ssb_case_to_str(CASE)).c_str()
+  "Failed at slot: '{}', periodicity '{}', case '{}'", SLOT, PERIODICITY, ssb_case_to_str(CASE)
 
 using namespace srsgnb;
 

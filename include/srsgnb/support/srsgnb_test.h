@@ -9,12 +9,9 @@ namespace srsgnb {
 namespace detail {
 
 /// Helper function to format TESTASSERT_EQ
-template <typename T, typename U, typename... Args>
-[[gnu::noinline]] inline std::string assert_eq_format_helper(const T&    expected_val,
-                                                             const U&    actual_val,
-                                                             bool        eq_cmp,
-                                                             const char* fmtstr = nullptr,
-                                                             Args&&... args) noexcept
+template <typename T, typename U>
+[[gnu::noinline]] inline std::string
+assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::string& msg) noexcept
 {
   fmt::memory_buffer fmtbuf;
   if (eq_cmp) {
@@ -22,9 +19,8 @@ template <typename T, typename U, typename... Args>
   } else {
     fmt::format_to(fmtbuf, "Value '{}' should not be equal to '{}'", actual_val, expected_val);
   }
-  if (fmtstr != nullptr) {
-    fmt::format_to(fmtbuf, ". Cause: ");
-    fmt::format_to(fmtbuf, fmtstr, std::forward<Args>(args)...);
+  if (not msg.empty()) {
+    fmt::format_to(fmtbuf, ". {}", msg);
   }
   return fmt::to_string(fmtbuf);
 }
@@ -33,13 +29,15 @@ template <typename T, typename U, typename... Args>
 
 #define TESTASSERT_EQ(EXPECTED, ACTUAL, ...)                                                                           \
   srsran_always_assert((EXPECTED == ACTUAL),                                                                           \
-                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, ##__VA_ARGS__).c_str())
+                       "{}",                                                                                           \
+                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, fmt::format("" __VA_ARGS__)))
 
 #define TESTASSERT_NEQ(EXPECTED, ACTUAL, ...)                                                                          \
-  srsran_always_assert((EXPECTED == ACTUAL),                                                                           \
-                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, ##__VA_ARGS__).c_str())
+  srsran_always_assert((EXPECTED != ACTUAL),                                                                           \
+                       "{}",                                                                                           \
+                       srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, fmt::format("" __VA_ARGS__)))
 
-#define TESTASSERT(cond, ...) srsran_always_assert(cond, ##__VA_ARGS__)
+#define TESTASSERT(cond, ...) srsran_always_assert(cond, "" __VA_ARGS__)
 
 } // namespace srsgnb
 

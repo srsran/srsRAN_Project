@@ -2,7 +2,7 @@
 #include "../../../lib/mac/sched/sched_harq.h"
 #include "srsgnb/support/test_utils.h"
 
-#define TEST_HARQ_ASSERT_MSG(SLOT, PID) fmt::format("Failed at slot: '{}', HARQ PID: '{}'", SLOT, PID).c_str()
+#define TEST_HARQ_ASSERT_MSG(SLOT, PID) "Failed at slot: '{}', HARQ PID: '{}'", SLOT, PID
 
 using namespace srsgnb;
 
