@@ -1,6 +1,8 @@
 ﻿#ifndef SRSGNB_FAPI_MESSAGES_H
 #define SRSGNB_FAPI_MESSAGES_H
 
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/ssb_mapping.h"
 #include <array>
 #include <cstdint>
 
@@ -269,22 +271,19 @@ struct dl_ssb_bch_payload {
   };
 };
 
-/// Encodes the first symbol mapping for candidate SSB locations [3GPP TS 38.213 [4], sec 4.1].
-enum class ssb_case_type : uint8_t { case_a, case_b, case_c, case_d, case_e };
-
 /// SSB/PBCH maintenance parameters added in FAPIv3.
 struct dl_ssb_maintenance_v3 {
-  uint8_t       ssb_pdu_index;
-  ssb_case_type case_type;
-  uint8_t       subcarrier_spacing;
-  uint8_t       lmax;
-  int16_t       ss_pbch_block_power_scaling;
-  int16_t       beta_pss_profile_sss;
+  uint8_t          ssb_pdu_index;
+  ssb_pattern_case case_type;
+  uint8_t          subcarrier_spacing;
+  uint8_t          lmax;
+  int16_t          ss_pbch_block_power_scaling;
+  int16_t          beta_pss_profile_sss;
 };
 
 enum class beta_pss_profile_type : uint8_t { dB_0 = 0, dB_3 = 1, beta_pss_profile_sss = 255 };
 
-enum class bch_payload_type : uint8_t { mac_full, phy_timing, phy_full };
+enum class bch_payload_type : uint8_t { mac_full, phy_timing_info, phy_full };
 
 /// Downlink SSB PDU information.
 struct dl_ssb_pdu {
@@ -325,13 +324,13 @@ struct dl_tti_request_message : public base_message {
   //: TODO: this value seems to be a capability in the phy see tags 9a,9b. we should keep this in sync
   static constexpr unsigned MAX_PDU_GROUPS = 16;
 
-  uint16_t                                     sfn;
-  uint16_t                                     slot;
-  uint16_t                                     num_pdus;
-  uint8_t                                      num_dl_types;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>       num_pdus_of_each_type;
-  uint16_t                                     num_groups;
-  std::array<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
+  uint16_t                                        sfn;
+  uint16_t                                        slot;
+  uint16_t                                        num_pdus;
+  uint8_t                                         num_dl_types;
+  static_vector<uint16_t, MAX_NUM_DL_TYPES>       num_pdus_of_each_type;
+  uint16_t                                        num_groups;
+  static_vector<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
   //: TODO: groups array
   //: TODO: top level rate match patterns
 };
