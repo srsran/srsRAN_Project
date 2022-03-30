@@ -5,8 +5,8 @@
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/srslog/srslog.h"
+#include "srsgnb/support/threads.h"
 #include "task_executor.h"
-#include "threads.h"
 #include <atomic>
 #include <condition_variable>
 #include <cstdint>
@@ -40,7 +40,9 @@ public:
   void start(int32_t prio_ = -1, uint32_t mask_ = 255);
 
   void     push_task(task_t&& task);
-  uint32_t nof_pending_tasks() const;
+  uint32_t nof_pending_tasks() const { return pending_tasks.size(); }
+
+  std::thread::id get_id() const { return t_id; }
 
 private:
   void run_thread() override;
@@ -50,15 +52,27 @@ private:
   uint32_t              mask = 255;
   srslog::basic_logger& logger;
 
+  std::thread::id t_id;
+
   srsgnb::dyn_blocking_queue<task_t> pending_tasks;
 };
 
+/// Executor for single-thread task worker.
 class task_worker_executor : public task_executor
 {
 public:
   task_worker_executor() = default;
   explicit task_worker_executor(task_worker& worker_) : worker(&worker_) {}
-  void execute(unique_task task) override { worker->push_task(std::move(task)); }
+  void execute(unique_task task) override
+  {
+    if (worker->get_id() == std::this_thread::get_id()) {
+      // Same thread. Run task right away.
+      task();
+    } else {
+      worker->push_task(std::move(task));
+    }
+  }
+  void defer(unique_task task) override { worker->push_task(std::move(task)); }
 
 private:
   task_worker* worker = nullptr;

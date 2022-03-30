@@ -5,16 +5,9 @@
 #include "../../lib/mac/mac_config_interfaces.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/task_executor.h"
+#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
-
-/// Just runs enqueued tasks inline
-class inline_executor : public task_executor
-{
-public:
-  void execute(unique_task task) final { task(); }
-};
 
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer
 {

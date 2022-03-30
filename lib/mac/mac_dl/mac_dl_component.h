@@ -11,7 +11,7 @@
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/task_executor.h"
+#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
 

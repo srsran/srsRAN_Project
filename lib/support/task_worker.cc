@@ -10,7 +10,7 @@
  *
  */
 
-#include "srsgnb/support/task_worker.h"
+#include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/srslog/srslog.h"
 #include <assert.h>
 #include <chrono>
@@ -76,13 +76,9 @@ void task_worker::push_task(task_t&& task)
   }
 }
 
-uint32_t task_worker::nof_pending_tasks() const
-{
-  return pending_tasks.size();
-}
-
 void task_worker::run_thread()
 {
+  t_id = std::this_thread::get_id();
   while (true) {
     bool   success;
     task_t task = pending_tasks.pop_blocking(&success);

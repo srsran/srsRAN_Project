@@ -1,84 +1,18 @@
 
 #include "../../lib/mac/mac_dl/mac_dl_component.h"
 #include "mac_ctrl_test_dummies.h"
-#include "srsgnb/support/task_worker.h"
+#include "srsgnb/support/executors/blocking_worker.h"
+#include "srsgnb/support/executors/manual_worker.h"
+#include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"
 #include "thread"
 
 using namespace srsgnb;
 
-class blocking_worker final : public task_executor
-{
-public:
-  blocking_worker(size_t q_size) : pending_tasks(q_size) {}
-
-  void execute(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
-
-  void request_stop()
-  {
-    execute([this]() {
-      if (not pending_tasks.is_stopped()) {
-        pending_tasks.stop();
-      }
-    });
-  }
-
-  void run()
-  {
-    while (true) {
-      bool        success;
-      unique_task t = pending_tasks.pop_blocking(&success);
-      if (not success) {
-        break;
-      }
-      t();
-    }
-  }
-
-private:
-  dyn_blocking_queue<unique_task> pending_tasks;
-};
-
-class manual_worker final : public task_executor
-{
-public:
-  manual_worker(size_t q_size) : pending_tasks(q_size) {}
-
-  void execute(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
-
-  bool has_pending_tasks() const { return not pending_tasks.empty(); }
-
-  bool is_stopped() const { return pending_tasks.is_stopped(); }
-
-  void stop()
-  {
-    if (not is_stopped()) {
-      pending_tasks.stop();
-    }
-  }
-
-  void request_stop()
-  {
-    execute([this]() { stop(); });
-  }
-
-  void run_next()
-  {
-    bool        success;
-    unique_task t = pending_tasks.pop_blocking(&success);
-    if (not success) {
-      return;
-    }
-    t();
-  }
-
-private:
-  dyn_blocking_queue<unique_task> pending_tasks;
-};
-
 /// Enum used to track the progress of the test task
 enum class test_task_event { ue_created, ue_reconfigured, ue_deleted };
 
+/// Test coroutine that calls UE create, reconfiguration, delete in sequence.
 struct add_reconf_delete_ue_test_task {
   srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
   std::thread::id                        tid;
@@ -128,6 +62,7 @@ struct add_reconf_delete_ue_test_task {
     CORO_AWAIT(mac_dl.remove_ue(delete_msg));
     logger.info("UE deleted");
     event_test(test_task_event::ue_deleted);
+    TESTASSERT(std::this_thread::get_id() == tid);
     CORO_RETURN();
   }
 };
@@ -142,9 +77,9 @@ void test_dl_ue_procedure_tsan()
   std::vector<task_executor*> dl_execs;
   dl_execs.push_back(&dl_exec1);
   dl_execs.push_back(&dl_exec2);
-  dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
+  dummy_ul_executor_mapper  ul_exec_mapper{ctrl_worker};
   dummy_mac_event_indicator du_mng_notifier;
-  mac_common_config_t      cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 
@@ -162,6 +97,7 @@ void test_dl_ue_procedure_tsan()
   TESTASSERT(not t.empty() and t.ready());
 }
 
+/// In this test, we verify the correct executors are called during creation, reconfiguration and deletion of a UE.
 void test_dl_ue_procedure_execution_contexts()
 {
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
@@ -169,15 +105,14 @@ void test_dl_ue_procedure_execution_contexts()
   auto&                       logger = srslog::fetch_basic_logger("TEST");
   manual_worker               ctrl_worker{128};
   manual_worker               dl_worker{128};
-  std::vector<task_executor*> dl_execs;
-  dl_execs.push_back(&dl_worker);
-  dummy_ul_executor_mapper ul_exec_mapper{ctrl_worker};
-  dummy_mac_event_indicator du_mng_notifier;
-  mac_common_config_t      cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
+  std::vector<task_executor*> dl_execs = {&dl_worker};
+  dummy_ul_executor_mapper    ul_exec_mapper{ctrl_worker};
+  dummy_mac_event_indicator   du_mng_notifier;
+  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
   mac_dl_component mac_dl(cfg);
 
-  // TEST: Thread used for resumption does not change
+  // TEST: Thread used for resumption does not change.
   bool is_ctrl_worker = true;
   auto test_event     = [&ctrl_worker, &is_ctrl_worker](test_task_event ev) {
     TESTASSERT(is_ctrl_worker);

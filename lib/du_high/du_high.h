@@ -8,8 +8,8 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_l2_ul_executor_mapper.h"
 #include "srsgnb/rlc/rlc.h"
-#include "srsgnb/support/task_executor.h"
-#include "srsgnb/support/task_worker.h"
+#include "srsgnb/support/executors/task_executor.h"
+#include "srsgnb/support/executors/task_worker.h"
 #include <memory>
 
 namespace srsgnb {

@@ -6,7 +6,7 @@
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
-#include "srsgnb/support/task_executor.h"
+#include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsgnb {

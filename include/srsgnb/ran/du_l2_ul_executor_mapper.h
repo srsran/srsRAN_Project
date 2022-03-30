@@ -4,7 +4,7 @@
 
 #include "du_types.h"
 #include "rnti.h"
-#include "srsgnb/support/task_executor.h"
+#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
 

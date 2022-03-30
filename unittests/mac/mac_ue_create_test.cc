@@ -2,6 +2,7 @@
 #include "../../lib/mac/mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/async/manual_event.h"
+#include "srsgnb/support/executors/manual_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -29,13 +30,13 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   test_delimit_logger test_delim{"Single threaded UE creation procedure in mode: {}", to_string(tmode)};
 
   // Run tasks in same thread
-  inline_executor               exec;
-  std::array<task_executor*, 1> exec_lst = {&exec};
-  dummy_ul_executor_mapper      ul_exec_mapper{exec};
+  manual_worker                 worker{128};
+  std::array<task_executor*, 1> exec_lst = {&worker};
+  dummy_ul_executor_mapper      ul_exec_mapper{worker};
   dummy_mac_event_indicator     du_mng_notif;
 
   // Create a MAC config object
-  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, exec_lst, exec};
+  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, exec_lst, worker};
   mac_ctrl_dummy_configurer mac_ctrl;
   mac_ul_dummy_configurer   mac_ul;
   mac_dl_dummy_configurer   mac_dl;
