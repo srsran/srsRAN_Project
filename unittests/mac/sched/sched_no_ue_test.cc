@@ -52,7 +52,7 @@ void test_rach_indication()
   TESTASSERT(res != nullptr);
   TESTASSERT_EQ(cell_cfg_msg.pci, res->pci);
   TESTASSERT(res->ue_grants.empty());
-  TESTASSERT(not res->rars.empty());
+  TESTASSERT(not res->rar_grants.empty());
 }
 
 int main()

@@ -113,7 +113,7 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
     }
 
     // Early checks for space
-    if (rar_slot_res.dl_res().rars.full() or msg3_slot_res.ul_res().puschs.full()) {
+    if (rar_slot_res.dl_res().rar_grants.full() or msg3_slot_res.ul_res().puschs.full()) {
       log_postponed_rar(rar_req, "No space in sched result.");
       break;
     }
@@ -151,7 +151,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
 
   // 1. Check space in DL sched result for RAR
-  if (rar_alloc.dl_res().rars.full()) {
+  if (rar_alloc.dl_res().rar_grants.full()) {
     // early exit
     log_postponed_rar(rar, "No PDSCH space for RAR");
     return 0;

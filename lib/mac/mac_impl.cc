@@ -44,12 +44,9 @@ void mac_impl::flush_ul_ccch_msg(rnti_t rnti)
   ul_unit.flush_ul_ccch_msg(rnti);
 }
 
-void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cc)
+void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
-  {
-    std::lock_guard<std::mutex> lock(dl_mutex);
-    // synchronize sched
-  }
+  dl_unit.slot_indication(sl_tx, cell_index);
 
   // for each cc, generate MAC DL SDUs
   mac_ue_context* u = ctrl_unit.find_by_rnti(0x4601);

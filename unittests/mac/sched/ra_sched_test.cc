@@ -146,7 +146,7 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
   // Check how many MSG3 grant allocations have been scheduled
   slot_resource_allocator rar_alloc          = resource_grid[0];
   unsigned                nof_allocated_msg3 = 0;
-  for (auto& rar : rar_alloc.dl_res().rars) {
+  for (auto& rar : rar_alloc.dl_res().rar_grants) {
     nof_allocated_msg3 += rar.grants.size();
   }
 
@@ -180,7 +180,7 @@ static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
 {
   slot_resource_allocator rar_alloc = resource_grid[0];
 
-  if (rar_alloc.dl_res().rars.size() > 0) {
+  if (rar_alloc.dl_res().rar_grants.size() > 0) {
     TESTASSERT(rar_alloc.used_dl_prbs().count() > 0);
   }
 }
@@ -260,11 +260,12 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     };
 
     // Retrive RAR for given RA-RNTI from all RAR grants
-    auto wanted_rar_ra_rnti = find_rar(rar_alloc.dl_res().rars, ra_ranti);
+    auto wanted_rar_ra_rnti = find_rar(rar_alloc.dl_res().rar_grants, ra_ranti);
 
     // Per-RA-RANTI checks on RAR grant
-    TESTASSERT(
-        wanted_rar_ra_rnti != rar_alloc.dl_res().rars.end(), "RAR with corrsponding RA-RNTI '{}' not found", ra_ranti);
+    TESTASSERT(wanted_rar_ra_rnti != rar_alloc.dl_res().rar_grants.end(),
+               "RAR with corrsponding RA-RNTI '{}' not found",
+               ra_ranti);
     TESTASSERT_EQ(rach_ra_rnti_list.front().cell_index,
                   wanted_rar_ra_rnti->cell_index,
                   "Cell-index mismatch for RAR corrsponding to RA-RNTI '{}'",
@@ -352,7 +353,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rars);
+    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
     test_rar_general_allocation(bench.res_alloc);
@@ -450,7 +451,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rars);
+    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
     test_rar_general_allocation(bench.res_alloc);
@@ -504,11 +505,11 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 
       TESTASSERT(pdcch_sl_res.used_dl_prbs().count() > 0);
 
-      TESTASSERT_EQ(1, pdcch_sl_res.dl_res().rars.size());
-      test_rar_consistency(bench.cfg, pdcch_sl_res.dl_res().rars);
+      TESTASSERT_EQ(1, pdcch_sl_res.dl_res().rar_grants.size());
+      test_rar_consistency(bench.cfg, pdcch_sl_res.dl_res().rar_grants);
 
       // RAR
-      rar_information& rar = pdcch_sl_res.dl_res().rars[0];
+      rar_information& rar = pdcch_sl_res.dl_res().rar_grants[0];
 
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);

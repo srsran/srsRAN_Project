@@ -29,6 +29,15 @@ public:
 
   rnti_t get_rnti(du_ue_index_t ue_index) const { return contains_ue(ue_index) ? ue_db[ue_index].rnti : INVALID_RNTI; }
 
+  mac_sdu_tx_builder* get_bearer(rnti_t rnti, lcid_t lcid)
+  {
+    if (not contains_rnti(rnti)) {
+      return nullptr;
+    }
+    ue_item& u = ue_db[rnti_to_ue_index[rnti]];
+    return u.dl_bearers.contains(lcid) ? u.dl_bearers[lcid] : nullptr;
+  }
+
   bool add_ue(du_ue_index_t ue_index, rnti_t crnti, span<const logical_channel_addmod> bearers)
   {
     srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);

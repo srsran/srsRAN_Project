@@ -25,7 +25,7 @@ public:
 
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
   async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+                                             ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
   async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
   void                                       flush_ul_ccch_msg(rnti_t rnti) override;
 
@@ -39,7 +39,7 @@ private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
-  mac_dl_component   dl_unit;
+  mac_dl_processor   dl_unit;
   mac_ul_processor   ul_unit;
   mac_ctrl_component ctrl_unit;
 

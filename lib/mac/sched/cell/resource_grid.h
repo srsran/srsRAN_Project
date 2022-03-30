@@ -119,8 +119,8 @@ public:
   rar_information& alloc_rar(const prb_grant& prbs)
   {
     sl_res.dl_prbs |= prbs;
-    sl_res.dl_grants.rars.emplace_back();
-    return sl_res.dl_grants.rars.back();
+    sl_res.dl_grants.rar_grants.emplace_back();
+    return sl_res.dl_grants.rar_grants.back();
   }
 
 private:

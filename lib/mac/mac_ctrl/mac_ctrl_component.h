@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_UE_CTRL_H
 
 #include "../mac_config.h"
-#include "../mac_dl/mac_dl_component.h"
+#include "../mac_dl/mac_dl_processor.h"
 #include "../mac_ul/mac_ul_processor.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"

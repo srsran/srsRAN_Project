@@ -113,6 +113,13 @@ public:
     data_end_ -= nof_bytes;
   }
 
+  /// Resizes payload of segment.
+  void resize(size_t nof_bytes)
+  {
+    srsran_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
+    data_end_ = data_ + nof_bytes;
+  }
+
   uint8_t& operator[](size_t idx)
   {
     srsran_sanity_check(idx < length(), "Out-of-bound access");
@@ -427,6 +434,39 @@ public:
     head->metadata().next.reset();
     tail = head.get();
     return 0;
+  }
+
+  /// Set byte_buffer length. Note: It doesn't initialize newly created bytes.
+  void resize(size_t new_sz)
+  {
+    size_t prev_len = length();
+    if (new_sz == prev_len) {
+      return;
+    }
+    if (new_sz > prev_len) {
+      for (size_t to_add = new_sz - prev_len; to_add > 0;) {
+        if (empty() or tail->tailroom() == 0) {
+          append_segment();
+        }
+        size_t added = std::min(tail->tailroom(), to_add);
+        tail->resize(added);
+        to_add -= added;
+      }
+    } else {
+      size_t count = 0;
+      for (byte_buffer_segment* seg = head.get(); count < new_sz; seg = seg->next()) {
+        size_t new_seg_len = std::min(seg->length(), new_sz - count);
+        if (new_seg_len != seg->length()) {
+          seg->resize(new_seg_len);
+        }
+        count += new_seg_len;
+        if (count == new_sz) {
+          seg->metadata().next = nullptr;
+          tail                 = seg;
+        }
+      }
+    }
+    len = new_sz;
   }
 
 private:

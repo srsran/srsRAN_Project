@@ -1,5 +1,5 @@
 
-#include "../../lib/mac/mac_dl/mac_dl_component.h"
+#include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/executors/blocking_worker.h"
 #include "srsgnb/support/executors/manual_worker.h"
@@ -16,13 +16,13 @@ enum class test_task_event { ue_created, ue_reconfigured, ue_deleted };
 struct add_reconf_delete_ue_test_task {
   srslog::basic_logger&                  logger = srslog::fetch_basic_logger("TEST");
   std::thread::id                        tid;
-  mac_dl_component&                      mac_dl;
+  mac_dl_processor&                      mac_dl;
   unique_function<void(test_task_event)> event_test;
   mac_ue_create_request_message          create_msg{};
   mac_ue_reconfiguration_request_message reconf_msg{};
   mac_ue_delete_request_message          delete_msg{};
 
-  add_reconf_delete_ue_test_task(mac_dl_component& mac_dl_, unique_function<void(test_task_event)> event_callback_) :
+  add_reconf_delete_ue_test_task(mac_dl_processor& mac_dl_, unique_function<void(test_task_event)> event_callback_) :
     mac_dl(mac_dl_), event_test(std::move(event_callback_))
   {
     create_msg.ue_index   = 0;
@@ -81,7 +81,7 @@ void test_dl_ue_procedure_tsan()
   dummy_mac_event_indicator du_mng_notifier;
   mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
-  mac_dl_component mac_dl(cfg);
+  mac_dl_processor mac_dl(cfg);
 
   // TEST: Thread used for resumption does not change
   std::thread::id tid        = std::this_thread::get_id();
@@ -110,7 +110,7 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator   du_mng_notifier;
   mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
-  mac_dl_component mac_dl(cfg);
+  mac_dl_processor mac_dl(cfg);
 
   // TEST: Thread used for resumption does not change.
   bool is_ctrl_worker = true;
