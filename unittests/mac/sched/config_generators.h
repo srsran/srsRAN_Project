@@ -19,6 +19,21 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
   asn1::rrc_nr::ul_cfg_common_sib_s ul_cfg;
   ul_cfg.init_ul_bwp.rach_cfg_common_present     = true;
   ul_cfg.init_ul_bwp.rach_cfg_common.set_setup() = make_rach_cfg_common();
+
+  // Configure PUSCH
+  ul_cfg.init_ul_bwp.pusch_cfg_common_present = true;
+  ul_cfg.init_ul_bwp.pusch_cfg_common.set_setup();
+  auto& pusch_cfg_common                                = ul_cfg.init_ul_bwp.pusch_cfg_common.setup();
+  pusch_cfg_common.pusch_time_domain_alloc_list_present = true;
+  pusch_cfg_common.pusch_time_domain_alloc_list.resize(1);
+  pusch_cfg_common.pusch_time_domain_alloc_list[0].k2_present           = true;
+  pusch_cfg_common.pusch_time_domain_alloc_list[0].k2                   = 2;
+  pusch_cfg_common.pusch_time_domain_alloc_list[0].start_symbol_and_len = 50;
+  pusch_cfg_common.pusch_time_domain_alloc_list[0].map_type =
+      asn1::rrc_nr::pusch_time_domain_res_alloc_s::map_type_opts::type_a;
+
+  ul_cfg.init_ul_bwp.generic_params.subcarrier_spacing = asn1::rrc_nr::subcarrier_spacing_opts::khz30;
+
   return ul_cfg;
 }
 

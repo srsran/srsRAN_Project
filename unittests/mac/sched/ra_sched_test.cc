@@ -1,3 +1,4 @@
+#include "../../../lib/mac/sched/cell/phy_helpers.h"
 #include "../../../lib/mac/sched/cell/ra_sched.h"
 #include "config_generators.h"
 #include "srsgnb/adt/circular_map.h"
@@ -456,6 +457,10 @@ void test_ra_sched_fdd_single_rach()
       TESTASSERT(ra_sch.handle_rach_indication(rach_ind));
     }
 
+    unsigned        msg3_delay;
+    symbol_interval symbols;
+    get_msg3_delay(bench.cfg.ul_cfg_common, sl_tx, msg3_delay, symbols);
+
     // Update slot
     bench.slot_indication(sl_tx);
 
@@ -465,7 +470,7 @@ void test_ra_sched_fdd_single_rach()
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
       slot_resource_allocator pdcch_sl_res = bench.res_alloc[0];
-      slot_resource_allocator msg3_sl_res  = bench.res_alloc[6];
+      slot_resource_allocator msg3_sl_res  = bench.res_alloc[msg3_delay];
 
       TESTASSERT(pdcch_sl_res.used_dl_prbs().count() > 0);
 

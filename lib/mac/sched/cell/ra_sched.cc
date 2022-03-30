@@ -1,6 +1,7 @@
 
 #include "ra_sched.h"
 #include "../../../ran/gnb_format.h"
+#include "phy_helpers.h"
 
 using namespace srsgnb;
 
@@ -78,8 +79,10 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 
 void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 {
-  static const unsigned   msg3_delay    = 6; // TODO: Make it configurable
   slot_resource_allocator rar_slot_res  = res_alloc[0];
+  unsigned                msg3_delay;
+  symbol_interval         msg3_symbols;
+  get_msg3_delay(cfg.ul_cfg_common, rar_slot_res.slot, msg3_delay, msg3_symbols);
   slot_resource_allocator msg3_slot_res = res_alloc[msg3_delay];
 
   if (not rar_slot_res.is_dl_active() or not msg3_slot_res.is_ul_active()) {
