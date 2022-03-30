@@ -1,0 +1,6 @@
+
+set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
+
+add_executable(fapi_adaptor_performance_dl adaptor_performance_dl_main.cpp)
+target_link_libraries(fapi_adaptor_performance_dl ssb_fapi_adaptor srslog)
+add_test(fapi_adaptor_performance_dl fapi_adaptor_performance_dl)

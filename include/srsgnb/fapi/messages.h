@@ -327,7 +327,7 @@ struct dl_tti_request_message : public base_message {
   uint16_t                                        sfn;
   uint16_t                                        slot;
   uint8_t                                         num_dl_types;
-  static_vector<uint16_t, MAX_NUM_DL_TYPES>       num_pdus_of_each_type;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>          num_pdus_of_each_type;
   uint16_t                                        num_groups;
   static_vector<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
   //: TODO: groups array
@@ -1609,7 +1609,7 @@ struct ssb_config {
   int16_t                 beta_pss_profile_sss;
   uint8_t                 ssb_period;
   uint8_t                 ssb_subcarrier_offset;
-  ssb_case_types          case_kind;
+  ssb_pattern_case        case_kind;
   uint8_t                 subcarrier_spacing;
   uint8_t                 sub_carrier_spacing_common;
   uint8_t                 mask_size;
