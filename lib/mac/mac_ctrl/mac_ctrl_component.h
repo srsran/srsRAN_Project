@@ -11,7 +11,6 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_task_loop.h"
-#include <queue>
 
 namespace srsgnb {
 

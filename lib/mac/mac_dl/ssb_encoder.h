@@ -3,7 +3,7 @@
 #define SRSGNB_SSB_ENCODER_H
 
 #include "srsgnb/mac/mac_dl_result.h"
-#include "srsgnb/mac/mac_oam_manager.h"
+#include "srsgnb/mac/mac_resource_manager.h"
 #include "srsgnb/mac/sched_result.h"
 
 namespace srsgnb {

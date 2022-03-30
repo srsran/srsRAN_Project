@@ -7,16 +7,43 @@
 
 using namespace srsgnb;
 
-void mac_dl_processor::add_cell(du_cell_index_t cell_index, const mac_cell_configuration& cell_cfg)
+void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
 {
-  cells.emplace(cell_index);
-  cells[cell_index].cfg = cell_cfg;
+  // Add cell in cell manager.
+  cells.add_cell(cell_cfg);
 
   // TODO: Pass configuration to scheduler.
 }
 
+void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
+{
+  // TODO: remove cell from scheduler.
+
+  // Remove cell from cell manager.
+  cells.remove_cell(cell_index);
+}
+
+async_task<void> mac_dl_processor::start_cell(du_cell_index_t cell_index)
+{
+  return dispatch_and_resume_on(*cfg.dl_execs[cell_index % cfg.dl_execs.size()], cfg.ctrl_exec, [this, cell_index]() {
+    cells.start_cell(cell_index);
+  });
+}
+
+async_task<void> mac_dl_processor::stop_cell(du_cell_index_t cell_index)
+{
+  return dispatch_and_resume_on(*cfg.dl_execs[cell_index % cfg.dl_execs.size()], cfg.ctrl_exec, [this, cell_index]() {
+    cells.stop_cell(cell_index);
+  });
+}
+
 void mac_dl_processor::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
+  if (not cells.is_cell_active(cell_index)) {
+    // TODO: Send empty DL result to PHY.
+    return;
+  }
+
   // Generate DL scheduling result for provided slot and cell.
   const dl_sched_result* dl_res = sched_obj.get_dl_sched(sl_tx, cell_index);
   if (dl_res == nullptr) {
@@ -44,7 +71,7 @@ void mac_dl_processor::assemble_dl_sched_request(slot_point             sl_tx,
                                                  const dl_sched_result& dl_res,
                                                  mac_dl_sched_result&   mac_res)
 {
-  const mac_cell_configuration& cell_cfg = cells[cell_index].cfg;
+  const mac_cell_configuration& cell_cfg = cells.get_config(cell_index);
 
   // Pass scheduler output directly to PHY.
   mac_res.dl_res = &dl_res;
@@ -53,7 +80,7 @@ void mac_dl_processor::assemble_dl_sched_request(slot_point             sl_tx,
   if (dl_res.bc.ssb_info.has_value()) {
     const ssb_information& ssb = dl_res.bc.ssb_info.value();
     mac_res.ssb_pdu.emplace();
-    encode_ssb(cells[cell_index].cfg, ssb, *mac_res.ssb_pdu);
+    encode_ssb(cell_cfg, ssb, *mac_res.ssb_pdu);
   }
 
   // Encode PDCCH DCI payloads.
@@ -76,7 +103,7 @@ void mac_dl_processor::assemble_dl_data_request(slot_point             sl_tx,
                                                 const dl_sched_result& dl_res,
                                                 mac_dl_data_result&    data_res)
 {
-  const mac_cell_configuration& cell_cfg = cells[cell_index].cfg;
+  const mac_cell_configuration& cell_cfg = cells.get_config(cell_index);
 
   data_res.slot = sl_tx;
 

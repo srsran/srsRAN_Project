@@ -4,6 +4,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/mac/mac_resource_manager.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -168,6 +169,7 @@ public:
 };
 
 class mac_interface : public mac_slot_indicator,
+                      public mac_resource_manager,
                       public mac_configurer,
                       public mac_sdu_rx_handler,
                       public mac_control_information_handler

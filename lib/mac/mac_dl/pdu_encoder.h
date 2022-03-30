@@ -2,7 +2,7 @@
 #ifndef SRSGNB_PDU_ENCODER_H
 #define SRSGNB_PDU_ENCODER_H
 
-#include "srsgnb/mac/mac_oam_manager.h"
+#include "srsgnb/mac/mac_resource_manager.h"
 #include "srsgnb/mac/sched_result.h"
 
 namespace srsgnb {

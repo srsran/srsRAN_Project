@@ -18,6 +18,26 @@ mac_impl::mac_impl(mac_event_notifier&       event_notifier,
   (void)(logger);
 }
 
+void mac_impl::add_cell(const mac_cell_configuration& cell_cfg)
+{
+  dl_unit.add_cell(cell_cfg);
+}
+
+void mac_impl::remove_cell(du_cell_index_t cell_index)
+{
+  dl_unit.remove_cell(cell_index);
+}
+
+void mac_impl::start_cell(du_cell_index_t cell_index)
+{
+  dl_unit.start_cell(cell_index);
+}
+
+void mac_impl::stop_cell(du_cell_index_t cell_index)
+{
+  dl_unit.stop_cell(cell_index);
+}
+
 void mac_impl::handle_rx_data_indication(mac_rx_data_indication msg)
 {
   ul_unit.handle_rx_data_indication(msg);

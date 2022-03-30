@@ -6,10 +6,11 @@
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
 #include "../sched/sched.h"
+#include "mac_cell_manager.h"
 #include "mac_dl_mux.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_dl_result.h"
-#include "srsgnb/mac/mac_oam_manager.h"
+#include "srsgnb/mac/mac_resource_manager.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/async/manual_event.h"
@@ -25,7 +26,16 @@ public:
   {}
 
   /// Adds new cell configuration to MAC DL. The configuration is forwarded to the scheduler.
-  void add_cell(du_cell_index_t cell_index, const mac_cell_configuration& cell_cfg);
+  void add_cell(const mac_cell_configuration& cell_cfg);
+
+  /// Removes cell configuration from MAC DL. The cell is also removed from the scheduler.
+  void remove_cell(du_cell_index_t cell_index);
+
+  /// Starts configured cell.
+  async_task<void> start_cell(du_cell_index_t cell_index);
+
+  /// Stops configured cell.
+  async_task<void> stop_cell(du_cell_index_t cell_index);
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
@@ -77,10 +87,7 @@ private:
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  struct cell_t {
-    mac_cell_configuration cfg;
-  };
-  slot_array<cell_t, MAX_NOF_CELLS> cells;
+  mac_cell_manager cells;
 
   // TODO: make the sched notification cleaner
   std::array<manual_event_flag, MAX_NOF_UES> sched_cfg_notif_map;
