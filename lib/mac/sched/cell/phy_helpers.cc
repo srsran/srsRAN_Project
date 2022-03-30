@@ -51,8 +51,7 @@ void srsgnb::get_msg3_delay(const asn1::rrc_nr::ul_cfg_common_sib_s& ul_cfg_comm
   // Perform sanity checks.
   srsran_assert(ul_cfg_common.init_ul_bwp.pusch_cfg_common_present,
                 "BWP-UplinkCommon has no pusch-ConfigCommon configured");
-  srsran_assert(ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list_present and
-                    ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list.size() > 0,
+  srsran_assert(ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list.size() > 0,
                 "PUSCH-ConfigCommon has no PUSCH-TimeDomainResourceAllocationList configured");
   srsran_assert(ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present,
                 "K2 not present in PUSCH-TimeDomainAllocationList[0]");

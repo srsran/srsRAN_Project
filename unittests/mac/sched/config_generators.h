@@ -24,7 +24,6 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
   ul_cfg.init_ul_bwp.pusch_cfg_common_present = true;
   ul_cfg.init_ul_bwp.pusch_cfg_common.set_setup();
   auto& pusch_cfg_common                                = ul_cfg.init_ul_bwp.pusch_cfg_common.setup();
-  pusch_cfg_common.pusch_time_domain_alloc_list_present = true;
   pusch_cfg_common.pusch_time_domain_alloc_list.resize(1);
   pusch_cfg_common.pusch_time_domain_alloc_list[0].k2_present           = true;
   pusch_cfg_common.pusch_time_domain_alloc_list[0].k2                   = 2;
