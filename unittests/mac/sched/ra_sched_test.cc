@@ -14,6 +14,11 @@ const unsigned nof_prbs_per_rar   = 4;
 const unsigned nof_prbs_per_msg3  = 3;
 const unsigned nof_grants_per_rar = 16;
 
+/// Struct used to convey parameters to the test functions
+struct ra_sched_param {
+  uint8_t k2 = 2;
+};
+
 /// Helper function that computes the RA-RNTI from the rach_indication_message.
 static uint16_t get_ra_rnti(const rach_indication_message& msg)
 {
@@ -87,17 +92,32 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  cell_configuration      cfg{make_cell_cfg_req()};
-  cell_resource_grid_pool res_grid{cfg};
-  cell_resource_allocator res_alloc{res_grid};
+  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg), res_alloc{res_grid} {};
+
+  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_req(paramters.k2)), res_grid(cfg), res_alloc(res_grid)
+  {
+    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present,
+                  "BWP-UplinkCommon has no pusch-ConfigCommon configured");
+    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list.size() > 0,
+                  "PUSCH-ConfigCommon has no PUSCH-TimeDomainResourceAllocationList configured");
+    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present,
+                  "K2 not present in PUSCH-TimeDomainAllocationList[0]");
+    k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2;
+  };
+
+  cell_configuration      cfg;
+  cell_resource_grid_pool res_grid;
+  cell_resource_allocator res_alloc;
 
   void slot_indication(slot_point sl_tx)
   {
     mac_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
     res_grid.slot_indication(sl_tx);
     test_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
-    test_logger.info("Starting new slot");
+    test_logger.info("Starting new slot - for k2: '{}'", k2);
   }
+
+  uint8_t k2 = 0;
 };
 
 /// Helper function that executes and tests the success of handle_rach_indication() for a rach_indication_message list.
@@ -285,7 +305,7 @@ static void remove_processed_rach_ind(const unsigned nof_allocations, std::list<
 /// This function verifies the correct scheduling of a RAR and Msg3 in an FDD frame, when multiple RACHs are received.
 /// It processes a list of RACH indication messages for the same RA-RNTI and different RAPIDs.
 /// The scheduler is expected to allocate a RAR and multiple MSG3 grants (as many as RACH indication messages).
-void test_ra_sched_fdd_1_rar_multiple_msg3()
+void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
 {
   test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RAR & MULTIPLE MSG3"};
 
@@ -293,8 +313,9 @@ void test_ra_sched_fdd_1_rar_multiple_msg3()
   const unsigned nof_test_slots = 20;
   const unsigned slot_rx_prach  = 5;
 
-  test_bench bench;
-  ra_sched   ra_sch{bench.cfg};
+  test_bench bench{params};
+
+  ra_sched ra_sch{bench.cfg};
 
   // Create the list of RACH indication messages with as many elements as the nof_grants_per_rar (1 RA-RNTI and
   // different RAPIDs)
@@ -313,6 +334,10 @@ void test_ra_sched_fdd_1_rar_multiple_msg3()
     slot_point slot_rx{0, t};
     // Slot for which Scheduler schedules PHY DL transmission (RAR)
     slot_point slot_tx{0, t + gnb_tx_delay};
+
+    unsigned        msg3_delay;
+    symbol_interval symbols;
+    get_msg3_delay(bench.cfg.ul_cfg_common, slot_tx, msg3_delay, symbols);
 
     // Update slot in the resource allocation grid pool
     bench.slot_indication(slot_tx);
@@ -347,15 +372,16 @@ void test_ra_sched_fdd_1_rar_multiple_msg3()
 /// It processes a list of RACH indication messages for the different RA-RNTI and different RAPIDs.
 /// The scheduler is expected to allocate several RAR (as many as RA-RNTIs) and multiple MSG3 grants (as many as RACH
 /// indication messages).
-void test_ra_sched_fdd_multiple_rar_multiple_msg3()
+void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
 {
   test_delimit_logger delimiter{"RA SCHEDULER - FDD - MULTIPLE RAR & MSG3"};
   // We can increase the test length and create a list with RACH messages received at different time slots
   const unsigned nof_test_slots = 20;
   const unsigned slot_rx_prach  = 5;
 
-  test_bench bench;
-  ra_sched   ra_sch{bench.cfg};
+  test_bench bench{params};
+
+  ra_sched ra_sch{bench.cfg};
 
   // Create the list of RACH indication messages with different RA-RNTIs and different RAPIDs
   std::list<rach_indication_message> rach_ind_list;
@@ -407,6 +433,10 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3()
     // Slot for which Scheduler schedules PHY DL transmission (RAR)
     slot_point slot_tx{0, t + gnb_tx_delay};
 
+    unsigned        msg3_delay;
+    symbol_interval symbols;
+    get_msg3_delay(bench.cfg.ul_cfg_common, slot_tx, msg3_delay, symbols);
+
     // Update slot in the resource allocation grid pool
     bench.slot_indication(slot_tx);
 
@@ -438,10 +468,10 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3()
 }
 
 /// Verify the correct scheduling of a RAR and Msg3 in an FDD frame, when a single RACH is received.
-void test_ra_sched_fdd_single_rach()
+void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 {
   test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RACH"};
-  test_bench          bench;
+  test_bench          bench{params};
 
   ra_sched ra_sch{bench.cfg};
 
@@ -499,9 +529,32 @@ int main()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 
-  test_ra_sched_fdd_single_rach();
+  // Test scheduler for single RACH
+  ra_sched_param parameters{.k2 = 1};
+  test_ra_sched_fdd_single_rach(parameters);
 
-  test_ra_sched_fdd_1_rar_multiple_msg3();
+  // Test scheduler for multiple RACH (single RAR, multiple MSG3) for different k2 parameter (MSG3 delay)
+  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
 
-  test_ra_sched_fdd_multiple_rar_multiple_msg3();
+  parameters.k2 = 2;
+  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
+
+  parameters.k2 = 3;
+  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
+
+  parameters.k2 = 4;
+  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
+
+  // Test scheduler for multiple RACH (multiple RAR, multiple MSG3) for different k2 parameter (MSG3 delay)
+  parameters.k2 = 1;
+  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+
+  parameters.k2 = 2;
+  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+
+  parameters.k2 = 3;
+  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+
+  parameters.k2 = 4;
+  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
 }

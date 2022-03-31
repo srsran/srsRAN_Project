@@ -14,7 +14,7 @@ asn1::rrc_nr::rach_cfg_common_s make_rach_cfg_common()
   return rach;
 }
 
-asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
+asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
 {
   asn1::rrc_nr::ul_cfg_common_sib_s ul_cfg;
   ul_cfg.init_ul_bwp.rach_cfg_common_present     = true;
@@ -26,7 +26,7 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
   auto& pusch_cfg_common                                = ul_cfg.init_ul_bwp.pusch_cfg_common.setup();
   pusch_cfg_common.pusch_time_domain_alloc_list.resize(1);
   pusch_cfg_common.pusch_time_domain_alloc_list[0].k2_present           = true;
-  pusch_cfg_common.pusch_time_domain_alloc_list[0].k2                   = 2;
+  pusch_cfg_common.pusch_time_domain_alloc_list[0].k2                   = k2;
   pusch_cfg_common.pusch_time_domain_alloc_list[0].start_symbol_and_len = 50;
   pusch_cfg_common.pusch_time_domain_alloc_list[0].map_type =
       asn1::rrc_nr::pusch_time_domain_res_alloc_s::map_type_opts::type_a;
@@ -36,7 +36,7 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common()
   return ul_cfg;
 }
 
-cell_configuration_request_message make_cell_cfg_req()
+cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
   cell_configuration_request_message msg{};
   msg.cell_index        = 0;
@@ -56,7 +56,7 @@ cell_configuration_request_message make_cell_cfg_req()
   pdcch_cfg_common.ra_search_space_present = true;
   pdcch_cfg_common.ra_search_space         = 1;
 
-  msg.ul_cfg_common = make_ul_cfg_common();
+  msg.ul_cfg_common = make_ul_cfg_common(k2);
 
   return msg;
 }

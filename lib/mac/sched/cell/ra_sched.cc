@@ -162,7 +162,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
 
   // 2. Check space in UL sched result for Msg3
   max_nof_allocs =
-      std::min(max_nof_allocs, (unsigned)(msg3_alloc.ul_res().puschs.capacity() - rar_alloc.ul_res().puschs.size()));
+      std::min(max_nof_allocs, (unsigned)(msg3_alloc.ul_res().puschs.capacity() - msg3_alloc.ul_res().puschs.size()));
   if (max_nof_allocs == 0) {
     // early exit
     log_postponed_rar(rar, "No space in PUSCH for Msg3");
