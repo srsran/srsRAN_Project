@@ -23,6 +23,122 @@ const char* log_id = "ASN1";
 
 static srsgnb::f1ap_pcap pcap_writer;
 
+void f1_setup_test()
+{
+  auto& logger = srslog::fetch_basic_logger("ASN1", false);
+  logger.set_level(srslog::basic_levels::debug);
+  logger.set_hex_dump_max_size(-1);
+
+  // initiating message F1SetupRequest
+  {
+    asn1::f1ap::f1_ap_pdu_c pdu;
+
+    pdu.set_init_msg();
+    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+
+    auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
+    setup_req->transaction_id.value = 99;
+    setup_req->gnb_du_id.value      = 0x11;
+    setup_req->gnb_du_name_present  = true;
+    setup_req->gnb_du_name.value.from_string("srsDU");
+    setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(1);
+
+    std::vector<uint8_t> tx_buffer;
+    tx_buffer.resize(128);
+
+    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
+
+    tx_buffer.resize(bref.distance_bytes());
+
+    TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
+
+#if JSON_OUTPUT
+    asn1::json_writer json_writer1;
+    pdu.to_json(json_writer1);
+    logger.info(tx_buffer.data(),
+                tx_buffer.size(),
+                "F1AP PDU unpacked ({} B): \n {}",
+                tx_buffer.size(),
+                json_writer1.to_string().c_str());
+#endif
+    pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  }
+
+  // successful outcome F1SetupResponse
+  {
+    asn1::f1ap::f1_ap_pdu_c pdu;
+
+    pdu.set_successful_outcome();
+    pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+
+    auto& setup_res                 = pdu.successful_outcome().value.f1_setup_resp();
+    setup_res->transaction_id.value = 99;
+    setup_res->gnb_cu_name_present  = true;
+    setup_res->gnb_cu_name.value.from_string("srsCU");
+    setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
+
+    std::vector<uint8_t> tx_buffer;
+    tx_buffer.resize(128);
+
+    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
+
+    tx_buffer.resize(bref.distance_bytes());
+
+    TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
+
+#if JSON_OUTPUT
+    asn1::json_writer json_writer1;
+    pdu.to_json(json_writer1);
+    logger.info(tx_buffer.data(),
+                tx_buffer.size(),
+                "F1AP PDU unpacked ({} B): \n {}",
+                tx_buffer.size(),
+                json_writer1.to_string().c_str());
+#endif
+    pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  }
+
+  // unsuccessful outcome F1SetupFailure
+  {
+    asn1::f1ap::f1_ap_pdu_c pdu;
+
+    pdu.set_unsuccessful_outcome();
+    pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+
+    auto& setup_fail                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
+    setup_fail->transaction_id.value = 99;
+    setup_fail->cause.value.set_radio_network();
+    setup_fail->cause.value.radio_network() =
+        asn1::f1ap::cause_radio_network_opts::options::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
+    setup_fail->time_to_wait_present = true;
+    setup_fail->time_to_wait.value   = asn1::f1ap::time_to_wait_opts::v10s;
+    // add critical diagnostics
+
+    std::vector<uint8_t> tx_buffer;
+    tx_buffer.resize(128);
+
+    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
+
+    tx_buffer.resize(bref.distance_bytes());
+
+    TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
+
+#if JSON_OUTPUT
+    asn1::json_writer json_writer1;
+    pdu.to_json(json_writer1);
+    logger.info(tx_buffer.data(),
+                tx_buffer.size(),
+                "F1AP PDU unpacked ({} B): \n {}",
+                tx_buffer.size(),
+                json_writer1.to_string().c_str());
+#endif
+    pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+  }
+}
+
 void ue_context_setup_request_test()
 {
   uint8_t rx_pdu[] = {
@@ -98,6 +214,7 @@ int main()
   // Start the log backend.
   srslog::init();
 
+  f1_setup_test();
   ue_context_setup_request_test();
 
   pcap_writer.close();
