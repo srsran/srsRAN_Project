@@ -2,16 +2,10 @@
 #ifndef SRSGNB_MAC_RESOURCE_MANAGER_H
 #define SRSGNB_MAC_RESOURCE_MANAGER_H
 
+#include "cell_configuration.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
-
-/// Cell Configuration
-struct mac_cell_configuration {
-  du_cell_index_t cell_index;
-  // TODO
-};
 
 /// Start configured cell.
 struct mac_cell_start {
@@ -19,9 +13,9 @@ struct mac_cell_start {
   slot_point      slot;
 };
 
-/// Network Slice Configuration
+/// Network slice configuration
 struct mac_slice_configuration {
-  /// TODO
+  // TODO: Fill remaining fields
 };
 
 /// Class used to setup the MAC cells and slices.
