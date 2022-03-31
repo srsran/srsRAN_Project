@@ -1,12 +1,13 @@
 
 #include "du_manager_impl.h"
+#include "procedures/initial_du_setup_procedure.h"
 
 namespace srsgnb {
 
-du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg)
+du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg), main_ctrl_loop(128)
 {
   // start F1 setup procedure
-  cfg.f1ap->f1ap_du_setup_request(cfg.setup_params);
+  main_ctrl_loop.schedule<initial_du_setup_procedure>(cfg, du_ctx);
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)

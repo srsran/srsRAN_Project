@@ -11,9 +11,7 @@
 namespace srsgnb {
 
 struct du_manager_context {
-  mac_configurer*      mac;
-  f1ap_du_configurer*  f1ap;
-  rlc_sdu_rx_notifier* rlc_ul_notifier;
+  du_setup_result f1_setup_result;
 };
 
 } // namespace srsgnb

@@ -27,8 +27,14 @@ private:
   // DU manager configuration that will be visible to all running procedures
   du_manager_config_t cfg;
 
+  // DU context.
+  du_manager_context du_ctx;
+
   // Components
   du_ue_manager ue_mng;
+
+  // Handler for DU tasks.
+  async_task_sequencer main_ctrl_loop;
 };
 
 } // namespace srsgnb
