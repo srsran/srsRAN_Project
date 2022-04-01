@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_IMPL_H
 
 #include "mac_config.h"
-#include "mac_ctrl/mac_ctrl_component.h"
+#include "mac_ctrl/mac_controller.h"
 #include "mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl/ue_delete_procedure.h"
 #include "mac_ul/mac_ul_processor.h"
@@ -44,9 +44,9 @@ private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
-  mac_dl_processor   dl_unit;
-  mac_ul_processor   ul_unit;
-  mac_ctrl_component ctrl_unit;
+  mac_dl_processor dl_unit;
+  mac_ul_processor ul_unit;
+  mac_controller   ctrl_unit;
 
   std::mutex dl_mutex;
 };

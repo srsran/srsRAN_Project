@@ -9,7 +9,7 @@
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/rnti_map.h"
 
 namespace srsgnb {
 
@@ -145,8 +145,8 @@ private:
   srslog::basic_logger& logger;
 
   /// UE repository
-  circular_map<rnti_t, mac_ul_ue, MAX_NOF_UES> ue_db;
-  std::array<du_ue_index_t, MAX_NOF_UES>       ue_index_to_rnti;
+  rnti_map<mac_ul_ue>                    ue_db;
+  std::array<du_ue_index_t, MAX_NOF_UES> ue_index_to_rnti;
 };
 
 } // namespace srsgnb

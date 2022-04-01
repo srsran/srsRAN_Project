@@ -102,8 +102,8 @@ private:
     slot_vector<mac_sdu_tx_builder*> dl_bearers;
   };
 
-  slot_array<ue_item, MAX_NOF_UES>                 ue_db;
-  circular_map<rnti_t, du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index;
+  slot_array<ue_item, MAX_NOF_UES> ue_db;
+  rnti_map<du_ue_index_t>          rnti_to_ue_index;
 };
 
 } // namespace srsgnb

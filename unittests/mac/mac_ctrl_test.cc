@@ -1,5 +1,5 @@
 
-#include "../../lib/mac/mac_ctrl/mac_ctrl_component.h"
+#include "../../lib/mac/mac_ctrl/mac_controller.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/executors/manual_worker.h"
 #include "srsgnb/support/test_utils.h"
@@ -18,7 +18,7 @@ void test_mac_ctrl_ue_procedures()
   mac_ul_dummy_configurer     ul_unit;
   mac_dl_dummy_configurer     dl_unit;
 
-  mac_ctrl_component mac_ctrl(cfg, ul_unit, dl_unit);
+  mac_controller mac_ctrl(cfg, ul_unit, dl_unit);
 
   // Action 1: Create UE
   mac_ue_create_request_message ue_create_msg{};

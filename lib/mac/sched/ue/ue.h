@@ -5,7 +5,7 @@
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/sched_interface.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/rnti_map.h"
 
 namespace srsgnb {
 
@@ -45,7 +45,7 @@ private:
   sr_indication_message last_sr;
 };
 
-using ue_map_t = circular_map<rnti_t, std::unique_ptr<ue>, MAX_NOF_UES>;
+using ue_map_t = rnti_map<std::unique_ptr<ue> >;
 
 } // namespace srsgnb
 

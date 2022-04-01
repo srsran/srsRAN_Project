@@ -20,10 +20,10 @@ struct mac_ue_context {
   du_cell_index_t pcell_idx   = -1;
 };
 
-class mac_ctrl_component : public mac_ctrl_configurer
+class mac_controller : public mac_ctrl_configurer
 {
 public:
-  mac_ctrl_component(mac_common_config_t& cfg, mac_ul_configurer& ul_unit_, mac_dl_configurer& dl_unit_);
+  mac_controller(mac_common_config_t& cfg, mac_ul_configurer& ul_unit_, mac_dl_configurer& dl_unit_);
 
   /// UE create methods
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
@@ -57,8 +57,8 @@ private:
   mac_dl_configurer&    dl_unit;
 
   // UE database
-  slot_array<ue_element, MAX_NOF_UES>    ue_db;
-  std::array<du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index_map;
+  slot_array<ue_element, MAX_NOF_UES>        ue_db;
+  circular_array<du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index_map;
 
   // CTRL main loop
   async_task_sequencer main_ctrl_loop{64};
