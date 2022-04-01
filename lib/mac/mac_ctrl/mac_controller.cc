@@ -9,7 +9,7 @@ using namespace srsgnb;
 mac_controller::mac_controller(mac_common_config_t& cfg_, mac_ul_configurer& ul_unit_, mac_dl_configurer& dl_unit_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_)
 {
-  std::fill(rnti_to_ue_index_map.begin(), rnti_to_ue_index_map.end(), MAX_NOF_UES);
+  std::fill(ue_index_to_rnti_map.begin(), ue_index_to_rnti_map.end(), INVALID_RNTI);
 }
 
 async_task<mac_ue_create_response_message> mac_controller::ue_create_request(const mac_ue_create_request_message& msg)
@@ -35,25 +35,25 @@ bool mac_controller::add_ue(rnti_t crnti, du_ue_index_t ue_index, du_cell_index_
   srsran_assert(crnti != INVALID_RNTI, "Invalid RNTI");
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
 
-  if (rnti_to_ue_index_map[crnti] < MAX_NOF_UES) {
-    // rnti already exists
+  if (ue_index_to_rnti_map[ue_index] != INVALID_RNTI) {
+    // ue_index already exists.
     return false;
   }
 
-  if (ue_db.contains(ue_index)) {
-    // UE already existed with same ue_index
+  if (ue_db.contains(crnti)) {
+    // UE already existed with same rnti.
     return false;
   }
 
   // Create UE object
-  ue_db.emplace(ue_index);
-  ue_element& u        = ue_db[ue_index];
+  ue_db.emplace(crnti);
+  ue_element& u        = ue_db[crnti];
   u.ue_ctx.du_ue_index = ue_index;
   u.ue_ctx.rnti        = crnti;
   u.ue_ctx.pcell_idx   = cell_index;
 
-  // Update RNTI -> UE index map
-  rnti_to_ue_index_map[crnti] = ue_index;
+  // Update UE index -> CRNTI map
+  ue_index_to_rnti_map[ue_index] = crnti;
   return true;
 }
 
@@ -62,22 +62,22 @@ void mac_controller::remove_ue(rnti_t rnti)
   // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the UE. This achieved via an async task in the MAC main control loop
 
-  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti];
-  if (not ue_db.contains(ue_index)) {
+  if (not ue_db.contains(rnti)) {
     logger.warning("Failed to find rnti={:#x}", rnti);
     return;
   }
-  logger.debug("Scheduling ueId={} deletion", ue_index);
+  logger.debug("Scheduling rnti={:#x} deletion", rnti);
 
   // Schedule task removal
-  main_ctrl_loop.schedule([this, ue_index](coro_context<async_task<void> >& ctx) {
+  main_ctrl_loop.schedule([this, rnti](coro_context<async_task<void> >& ctx) {
     CORO_BEGIN(ctx);
-    srsran_sanity_check(ue_db.contains(ue_index), "ueId={} was unexpectedly removed", ue_index);
+    srsran_sanity_check(ue_db.contains(rnti), "ueId={} was unexpectedly removed", rnti);
 
-    CORO_AWAIT(ue_db[ue_index].ctrl_loop.request_stop());
+    CORO_AWAIT(ue_db[rnti].ctrl_loop.request_stop());
 
-    logger.info("Removing ueId={}", ue_index);
-    ue_db.erase(ue_index);
+    logger.debug("Removing rnti={:#x}", rnti);
+    ue_index_to_rnti_map[ue_db[rnti].ue_ctx.du_ue_index] = INVALID_RNTI;
+    ue_db.erase(rnti);
 
     CORO_RETURN();
   });
@@ -85,16 +85,11 @@ void mac_controller::remove_ue(rnti_t rnti)
 
 mac_ue_context* mac_controller::find_ue(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
-  return ue_db.contains(ue_index) ? &ue_db[ue_index].ue_ctx : nullptr;
+  rnti_t rnti = ue_index_to_rnti_map[ue_index];
+  return rnti == INVALID_RNTI ? nullptr : &ue_db[rnti].ue_ctx;
 }
 
 mac_ue_context* mac_controller::find_by_rnti(rnti_t rnti)
 {
-  srsran_assert(rnti != INVALID_RNTI, "Invalid rnti=0x%x", rnti);
-  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti];
-  if (ue_index == MAX_NOF_UES) {
-    return nullptr;
-  }
-  return find_ue(ue_index);
+  return ue_db.contains(rnti) ? &ue_db[rnti].ue_ctx : nullptr;
 }

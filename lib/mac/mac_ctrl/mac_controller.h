@@ -57,8 +57,8 @@ private:
   mac_dl_configurer&    dl_unit;
 
   // UE database
-  slot_array<ue_element, MAX_NOF_UES>        ue_db;
-  circular_array<du_ue_index_t, MAX_NOF_UES> rnti_to_ue_index_map;
+  rnti_map<ue_element>            ue_db;
+  std::array<rnti_t, MAX_NOF_UES> ue_index_to_rnti_map;
 
   // CTRL main loop
   async_task_sequencer main_ctrl_loop{64};

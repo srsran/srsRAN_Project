@@ -180,7 +180,8 @@ public:
     if (present[idx]) {
       return false;
     }
-    buffer[idx].emplace(key, T{std::forward<Args>(args)...});
+    buffer[idx].emplace(
+        std::piecewise_construct_t{}, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
     present[idx] = true;
     count++;
     return true;

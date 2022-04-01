@@ -40,7 +40,7 @@ private:
     log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
 
     // 3. Enqueue UE deletion
-    ctrl_mac.remove_ue(req.ue_index);
+    ctrl_mac.remove_ue(req.rnti);
 
     // 4. Prepare response to DU manager
     mac_ue_delete_response_message resp{};
