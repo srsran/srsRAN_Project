@@ -3,6 +3,14 @@ add_executable(pbch_encoder_test pbch_encoder_test.cpp)
 target_link_libraries(pbch_encoder_test pbch_encoder srslog)
 add_test(pbch_encoder_test pbch_encoder_test)
 
+add_custom_command(
+  TARGET pbch_encoder_test
+  POST_BUILD
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test/data/pbch_encoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test/data/pbch_encoder_test_data.tar.gz
+  VERBATIM)
+
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)
 target_link_libraries(pbch_modulator_test pbch_modulator srslog)
 add_test(pbch_modulator_test pbch_modulator_test)
@@ -20,12 +28,12 @@ target_link_libraries(pdcch_modulator_test upper_phy pdcch_modulator srslog modu
 add_test(pdcch_modulator_test pdcch_modulator_test)
 
 add_custom_command(
-        TARGET pdcch_modulator_test
-        POST_BUILD
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
-        VERBATIM)
+    TARGET pdcch_modulator_test
+    POST_BUILD
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+    COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
+    VERBATIM)
 
 add_executable(pdcch_processor_test pdcch_processor_test.cpp)
 target_link_libraries(pdcch_processor_test pdcch_processor srslog)

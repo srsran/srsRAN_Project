@@ -24,10 +24,13 @@ int main()
     // Encode PBCH message.
     std::array<uint8_t, pbch_encoder::E> encoded_data = {};
     encoder->encode(test_case.pbch_msg, encoded_data);
+    
+    // Load output golden data
+    const std::vector<uint8_t> testvector_encoded = test_case.encoded.read();
 
     // Assert encoded data.
     for (unsigned i = 0; i != pbch_encoder::E; ++i) {
-      srsran_assert(encoded_data[i] == test_case.encoded[i], "Failed");
+      srsran_assert(encoded_data[i] == testvector_encoded[i], "Failed");
     }
   }
   return 0;
