@@ -26,6 +26,8 @@ struct codeblock_metadata {
     /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
     /// \note Set to zero for unlimited buffer length.
     unsigned Nref = 0;
+    /// Codeword length (after codeblock concatenation).
+    unsigned cw_length = 0;
   };
 
   /// Parameters that are specific to a single codeblock.
@@ -36,6 +38,8 @@ struct codeblock_metadata {
     unsigned rm_length = 0;
     /// Number of filler bits in the full codeblock.
     unsigned nof_filler_bits = 0;
+    /// Codeblock starting index within the codeword.
+    unsigned cw_offset = 0;
   };
 
   /// Contains common transport block parameters.

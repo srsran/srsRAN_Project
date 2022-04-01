@@ -173,7 +173,11 @@ void ldpc_segmenter_impl::segment(
   // rounded up.
   nof_short_segments = nof_segments - (nof_symbols_per_layer % nof_segments);
 
+  // Codeword length (after concatenation of codeblocks).
+  unsigned cw_length = cfg.nof_ch_symbols * static_cast<unsigned>(cfg.mod);
+
   unsigned input_idx = 0;
+  unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     segment_data tmp_data(segment_length);
     // Number of bits to copy to this segment.
@@ -195,6 +199,7 @@ void ldpc_segmenter_impl::segment(
     tmp_description.tb_common.rv           = cfg.rv;
     tmp_description.tb_common.mod          = cfg.mod;
     tmp_description.tb_common.Nref         = cfg.Nref;
+    tmp_description.tb_common.cw_length    = cw_length;
 
     // BG1 has rate 1/3 and BG2 has rate 1/5.
     constexpr unsigned inverse_BG1_rate = 3;
@@ -204,9 +209,14 @@ void ldpc_segmenter_impl::segment(
     tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
     tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;
     tmp_description.cb_specific.rm_length       = compute_rm_length(i_segment, cfg.mod, cfg.nof_layers);
+    tmp_description.cb_specific.cw_offset       = cw_offset;
+
+    cw_offset += tmp_description.cb_specific.rm_length;
 
     described_segments.push_back({tmp_data, tmp_description});
   }
+  // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
+  assert(cw_length == cw_offset);
 }
 
 std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
