@@ -29,30 +29,33 @@ public:
     std::shared_ptr<byte_buffer_segment> next = nullptr;
   };
 
-  byte_buffer_segment() : data_(buffer.data() + DEFAULT_HEADROOM), data_end_(buffer.data() + DEFAULT_HEADROOM) {}
-  byte_buffer_segment(const byte_buffer_segment& other) noexcept : data_(buffer.data() + other.headroom()),
-                                                                   data_end_(buffer.data() + other.tailroom_start())
+  byte_buffer_segment() :
+    payload_data_(buffer.data() + DEFAULT_HEADROOM), payload_data_end_(buffer.data() + DEFAULT_HEADROOM)
+  {}
+  byte_buffer_segment(const byte_buffer_segment& other) noexcept
+    : payload_data_(buffer.data() + other.headroom()),
+      payload_data_end_(buffer.data() + other.tailroom_start())
   {
     std::copy(other.begin(), other.end(), begin());
   }
-  byte_buffer_segment(byte_buffer_segment&& other) noexcept : data_(buffer.data() + other.headroom()),
-                                                              data_end_(buffer.data() + other.tailroom_start())
+  byte_buffer_segment(byte_buffer_segment&& other) noexcept : payload_data_(buffer.data() + other.headroom()),
+                                                              payload_data_end_(buffer.data() + other.tailroom_start())
   {
     std::copy(other.begin(), other.end(), begin());
   }
   byte_buffer_segment& operator=(const byte_buffer_segment& other) noexcept
   {
     if (this != &other) {
-      data_     = buffer.data() + other.headroom();
-      data_end_ = buffer.data() + other.tailroom_start();
+      payload_data_     = buffer.data() + other.headroom();
+      payload_data_end_ = buffer.data() + other.tailroom_start();
       std::copy(other.begin(), other.end(), begin());
     }
     return *this;
   }
   byte_buffer_segment& operator=(byte_buffer_segment&& other) noexcept
   {
-    data_     = buffer.data() + other.headroom();
-    data_end_ = buffer.data() + other.tailroom_start();
+    payload_data_     = buffer.data() + other.headroom();
+    payload_data_end_ = buffer.data() + other.tailroom_start();
     std::copy(other.begin(), other.end(), begin());
     return *this;
   }
@@ -80,7 +83,7 @@ public:
         std::is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
         "Only random access iterators allowed.");
     srsran_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
-    data_end_ = std::copy(it_begin, it_end, end());
+    payload_data_end_ = std::copy(it_begin, it_end, end());
   }
 
   /// Appends single byte at the tail of the segment.
@@ -88,14 +91,14 @@ public:
   {
     srsran_assert(tailroom() >= 1, "There is not enough tailroom space.");
     buffer[tailroom_start()] = byte;
-    data_end_++;
+    payload_data_end_++;
   }
 
   /// Prepends segment with provided span of bytes.
   void prepend(span<const uint8_t> bytes)
   {
     srsran_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
-    data_ -= bytes.size();
+    payload_data_ -= bytes.size();
     std::copy(bytes.begin(), bytes.end(), begin());
   }
 
@@ -103,21 +106,21 @@ public:
   void trim_head(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
-    data_ += nof_bytes;
+    payload_data_ += nof_bytes;
   }
 
   /// Removes "nof_bytes" from the tail of the segment.
   void trim_tail(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
-    data_end_ -= nof_bytes;
+    payload_data_end_ -= nof_bytes;
   }
 
   /// Resizes payload of segment.
   void resize(size_t nof_bytes)
   {
     srsran_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
-    data_end_ = data_ + nof_bytes;
+    payload_data_end_ = payload_data_ + nof_bytes;
   }
 
   uint8_t& operator[](size_t idx)
@@ -134,10 +137,10 @@ public:
   const uint8_t* data() const { return begin(); }
   uint8_t*       data() { return begin(); }
 
-  iterator       begin() { return data_; }
-  iterator       end() { return data_end_; }
-  const_iterator begin() const { return data_; }
-  const_iterator end() const { return data_end_; }
+  iterator       begin() { return payload_data_; }
+  iterator       end() { return payload_data_end_; }
+  const_iterator begin() const { return payload_data_; }
+  const_iterator end() const { return payload_data_end_; }
 
   metadata_storage&       metadata() { return metadata_; }
   const metadata_storage& metadata() const { return metadata_; }
@@ -162,8 +165,8 @@ private:
 
   metadata_storage                  metadata_;
   std::array<uint8_t, SEGMENT_SIZE> buffer;
-  uint8_t*                          data_;
-  uint8_t*                          data_end_;
+  uint8_t*                          payload_data_;
+  uint8_t*                          payload_data_end_;
 };
 
 class byte_buffer_view;
@@ -595,7 +598,7 @@ public:
   const_iterator operator+=(size_t offset) { return it += offset; }
 
   /// Advance offset bytes and returns view to skipped bytes.
-  byte_buffer_view advance(size_t offset)
+  byte_buffer_view split_and_advance(size_t offset)
   {
     auto prev_it = it;
     it += offset;

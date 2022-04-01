@@ -22,14 +22,14 @@ public:
 
   lcid_ul_sch_t    lcid() const { return lcid_val; }
   uint32_t         total_length() const { return header_length + payload().length(); }
-  byte_buffer_view payload() const { return sdu_view; }
-  uint32_t         sdu_length() const { return sdu_view.length(); }
+  byte_buffer_view payload() const { return payload_view; }
+  uint32_t         sdu_length() const { return payload_view.length(); }
 
 private:
   lcid_ul_sch_t    lcid_val;
   int              header_length = 0;
   bool             F_bit         = false;
-  byte_buffer_view sdu_view;
+  byte_buffer_view payload_view;
 };
 
 /// UL subPDU Formatter

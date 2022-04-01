@@ -13,7 +13,7 @@ bool mac_ul_sch_subpdu::unpack(const byte_buffer& subpdu)
 
 bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 {
-  sdu_view = {};
+  payload_view = {};
   if (subpdu_reader.empty()) {
     srslog::fetch_basic_logger("MAC-NR").warning("Empty MAC subPDU");
     return false;
@@ -39,16 +39,16 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
         ++subpdu_reader;
         header_length++;
       }
-      sdu_view = subpdu_reader.advance(sdu_length);
+      payload_view = subpdu_reader.split_and_advance(sdu_length);
     } else {
       if (lcid_val == lcid_ul_sch_t::PADDING) {
         // set subPDU length to rest of PDU
         // 1 Byte R/LCID MAC subheader
-        sdu_view      = subpdu_reader.view();
+        payload_view  = subpdu_reader.view();
         subpdu_reader = {};
       } else {
-        sdu_length = lcid_val.sizeof_ce();
-        sdu_view   = subpdu_reader.advance(sdu_length);
+        sdu_length   = lcid_val.sizeof_ce();
+        payload_view = subpdu_reader.split_and_advance(sdu_length);
       }
     }
   } else {
