@@ -12,6 +12,7 @@
 namespace srsgnb {
 
 /// Cell Configuration Request.
+/// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
 struct cell_configuration_request_message {
   du_cell_index_t cell_index;
   uint8_t         nof_beams;     // (0..64)
@@ -24,7 +25,8 @@ struct cell_configuration_request_message {
   asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
   asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
-  // TODO: ...
+
+  /// SSB parameters.
 };
 
 /// UE Creation Request.

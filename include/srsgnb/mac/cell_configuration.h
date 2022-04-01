@@ -24,11 +24,11 @@ struct carrier_configuration {
   uint16_t nof_ant;
 };
 
-/// Defined in ORAN WG8, Section 9.2.1.1, Table 9-3 SSB Configuration.
+/// SSB Configuration.
+/// \remark See O-RAN WG8, Section 9.2.1.1, Table 9-3.
 struct ssb_configuration {
-  /// SSB block power value: (-60dBm, ..., 50dBm) [Table 3-39, FAPI].
-  /// NOTE: Not idea what this is and no idea how the "parameter <-> power mapping" is done.
-  uint32_t ssb_power;
+  /// SSB block power value: (-60dBm, ..., 50dBm) [Table 3-39, FAPI and ss-PBCH-BlockPower in TS 38.311].
+  int8_t ssb_power;
   /// SSB subcarrier spacing [Table 4.2-1, TS 38.211]
   /// Possible values: FR1 only {15kHz, 30kHz, 60kHz}, FR2 only {60kHz, 120kHz}.
   subcarrier_spacing scs;
@@ -56,7 +56,8 @@ struct tdd_configuration {
   // TODO
 };
 
-/// cell configuration
+/// Cell configuration.
+/// \remark See O-RAN WG8, Section 9.2.1.1
 struct mac_cell_configuration {
   du_cell_index_t cell_index;
   pci_t           pci;
