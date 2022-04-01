@@ -17,47 +17,6 @@ public:
   /// Default destructor.
   virtual ~ldpc_segmenter() = default;
 
-  /// \brief Maximum segment length.
-  ///
-  /// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
-  /// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
-  static constexpr unsigned MAX_SEG_LENGTH = 22 * 384;
-
-  /// Maximum number of segments per transport block.
-  static constexpr unsigned MAX_NOF_SEGMENTS = 52;
-
-  /// Alias for the segment data container.
-  using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
-
-  /// \brief Alias for the full segment characterization.
-  ///
-  /// This is a self-contained type that associates a segment of the transport block with all the metadata required by
-  /// subsequent processing units (e.g., encoder and rate-matcher).
-  ///   - \c described_segment.first()   Contains the segment data, including CRC, in unpacked format (each bit is
-  ///                                      represented by a \c uint8_t entry).
-  ///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
-  ///                                      codeblock.
-  using described_segment = std::pair<segment_data, codeblock_metadata>;
-
-  /// Gathers all segmentation configuration parameters.
-  struct config {
-    /// Code base graph.
-    ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
-    /// Code lifting size.
-    ldpc::lifting_size_t lifting_size = ldpc::LS2;
-    /// Redundancy version, values in {0, 1, 2, 3}.
-    unsigned rv{0};
-    /// Modulation scheme.
-    modulation_scheme mod = modulation_scheme::BPSK;
-    /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    /// \note Set to zero for unlimited buffer length.
-    unsigned Nref = 0;
-    /// Number of transmission layers the transport block is mapped onto.
-    unsigned nof_layers = 0;
-    /// Number of channel symbols (i.e., REs) the transport block is mapped to.
-    unsigned nof_ch_symbols = 0;
-  };
-
   /// \brief Adds the CRC to the a transport block, carries out segmentation and computes all codeblock metadata for
   /// later use (encoder and rate matching).
   ///
@@ -70,7 +29,7 @@ public:
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
   virtual void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
                        span<const uint8_t>                                 transport_block,
-                       const config&                                       cfg) = 0;
+                       const segment_config&                               cfg) = 0;
 };
 
 std::unique_ptr<ldpc_segmenter> create_ldpc_segmenter();

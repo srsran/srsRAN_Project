@@ -7,7 +7,6 @@
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
-using segment_meta_t = ldpc_segmenter::described_segment;
 
 // Length of the CRC checksum added to the segments.
 static constexpr unsigned seg_crc_length = 24;
@@ -109,9 +108,9 @@ static void fill_segment(span<uint8_t>                    segment,
   std::fill_n(segment.begin() + nof_used_bits, nof_filler, filler_bit);
 }
 
-static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX_NOF_SEGMENTS>& segments,
-                         span<const uint8_t>                                                    transport_block,
-                         const ldpc_segmenter::config&                                          cfg)
+static void check_inputs(const static_vector<described_segment, MAX_NOF_SEGMENTS>& segments,
+                         span<const uint8_t>                                       transport_block,
+                         const segment_config&                                     cfg)
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
@@ -127,10 +126,9 @@ static void check_inputs(const static_vector<segment_meta_t, ldpc_segmenter::MAX
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
-void ldpc_segmenter_impl::segment(
-    static_vector<described_segment, ldpc_segmenter::MAX_NOF_SEGMENTS>& described_segments,
-    span<const uint8_t>                                                 transport_block,
-    const config&                                                       cfg)
+void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+                                  span<const uint8_t>                                 transport_block,
+                                  const segment_config&                               cfg)
 {
   check_inputs(described_segments, transport_block, cfg);
 

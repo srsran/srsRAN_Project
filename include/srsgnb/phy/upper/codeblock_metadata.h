@@ -1,8 +1,9 @@
 /// \file
-/// \brief Codeblock metadata.
+/// \brief Codeblock metadata and related types and constants.
 #ifndef SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 #define SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
@@ -46,6 +47,43 @@ struct codeblock_metadata {
   tb_common_metadata tb_common;
   /// Contains specific code block parameters.
   cb_specific_metadata cb_specific;
+};
+
+/// \brief Maximum segment length.
+///
+/// This is given by the maximum lifting size (i.e., 384) times the maximum number of information bits in base graph
+/// BG1 (i.e., 22), as per TS38.212 Section 5.2.2.
+static constexpr unsigned MAX_SEG_LENGTH = 22 * 384;
+
+/// Maximum number of segments per transport block.
+static constexpr unsigned MAX_NOF_SEGMENTS = 52;
+
+/// Alias for the segment data container.
+using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
+
+/// \brief Alias for the full segment characterization.
+///
+///   - \c described_segment.first()   Contains the segment data, including CRC, in unpacked format (each bit is
+///                                      represented by a \c uint8_t entry).
+///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
+///                                      codeblock (e.g., encoding/decoding, rate-matching).
+using described_segment = std::pair<segment_data, codeblock_metadata>;
+
+/// Gathers all segmentation configuration parameters.
+struct segment_config {
+  /// Code base graph.
+  ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
+  /// Redundancy version, values in {0, 1, 2, 3}.
+  unsigned rv = 0;
+  /// Modulation scheme.
+  modulation_scheme mod = modulation_scheme::BPSK;
+  /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
+  /// \note Set to zero for unlimited buffer length.
+  unsigned Nref = 0;
+  /// Number of transmission layers the transport block is mapped onto.
+  unsigned nof_layers = 0;
+  /// Number of channel symbols (i.e., REs) the transport block is mapped to.
+  unsigned nof_ch_symbols = 0;
 };
 
 } // namespace srsgnb
