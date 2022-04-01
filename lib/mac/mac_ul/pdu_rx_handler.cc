@@ -39,7 +39,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
     return false;
   }
 
-  mac_ul_ue* ue = ue_manager.find_rnti(rnti);
+  mac_ul_ue_context* ue = ue_manager.find_rnti(rnti);
   if (ue == nullptr) {
     logger.warning("Received UL CCCH for inexistent RNTI=0x{:x}", rnti);
     return false;
@@ -62,7 +62,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
 
 bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 {
-  mac_ul_ue* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
+  mac_ul_ue_context* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
 
   // Process SDUs and MAC CEs that are not C-RNTI MAC CE
   for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
@@ -75,7 +75,7 @@ bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
   return true;
 }
 
-bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue* ue)
+bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
     logger.warning("{}: Received MAC SDU for inexistent RNTI.", ue_event_prefix{}.set_rnti(ue->rnti));

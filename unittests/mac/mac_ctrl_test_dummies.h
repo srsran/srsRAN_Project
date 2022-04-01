@@ -12,8 +12,8 @@ namespace srsgnb {
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer
 {
 public:
-  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override { return true; }
-  void remove_ue(du_ue_index_t ue_index) override {}
+  bool add_ue(rnti_t rnti, du_ue_index_t ue_index, du_cell_index_t pcell_index) override { return true; }
+  void remove_ue(rnti_t rnti) override {}
 };
 
 /// Dummy class to emulate MAC UL procedures to add/remove/configure UEs

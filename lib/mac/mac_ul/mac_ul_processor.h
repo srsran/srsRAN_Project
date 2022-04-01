@@ -22,10 +22,10 @@ public:
 
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
-    // Update UE executor due to new PCell
+    // Update UE executor to match new PCell.
     task_executor& ul_exec = cfg.ul_exec_mapper.rebind_executor(request.crnti, request.cell_index);
 
-    // Dispatch UE creation in new UL executor
+    // Dispatch UE creation task to new UL executor.
     return dispatch_and_resume_on(ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
   }
 
@@ -38,15 +38,14 @@ public:
 
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(msg.rnti),
-                                  cfg.ctrl_exec,
-                                  [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
+    return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(msg.rnti), cfg.ctrl_exec, [this, rnti = msg.rnti]() {
+      ue_manager.remove_ue(rnti);
+    });
   }
 
-  void flush_ul_ccch_msg(rnti_t rnti) {
-    cfg.ul_exec_mapper.executor(rnti).execute([this, rnti](){
-      pdu_handler.push_ul_ccch_msg(rnti);
-    });
+  void flush_ul_ccch_msg(rnti_t rnti)
+  {
+    cfg.ul_exec_mapper.executor(rnti).execute([this, rnti]() { pdu_handler.push_ul_ccch_msg(rnti); });
   }
 
   /// Handles FAPI Rx_Data.Indication.

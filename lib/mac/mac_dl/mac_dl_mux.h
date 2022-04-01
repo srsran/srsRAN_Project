@@ -13,80 +13,69 @@ namespace srsgnb {
 class mac_dl_mux
 {
 public:
-  /// Check if UE exists
-  /// \param ue_index DU UE Index
-  /// \return True if UE exists. False, otherwise
-  bool contains_ue(du_ue_index_t ue_index) const
-  {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
-    return ue_db.contains(ue_index);
-  }
-  bool contains_lcid(du_ue_index_t ue_index, lcid_t lcid) const
-  {
-    return contains_ue(ue_index) and ue_db[ue_index].dl_bearers.contains(lcid);
-  }
-  bool contains_rnti(rnti_t rnti) const { return rnti_to_ue_index.contains(rnti); }
+  /// Check if UE with provided C-RNTI exists.
+  /// \param rnti C-RNTI of the UE.
+  /// \return True if UE exists. False, otherwise.
+  bool contains(rnti_t rnti) const { return ue_db.contains(rnti); }
 
-  rnti_t get_rnti(du_ue_index_t ue_index) const { return contains_ue(ue_index) ? ue_db[ue_index].rnti : INVALID_RNTI; }
+  /// Checks if bearer with provided C-RNTI and LCID exists.
+  bool contains_lcid(rnti_t rnti, lcid_t lcid) const
+  {
+    return contains(rnti) and ue_db[rnti].dl_bearers.contains(lcid);
+  }
 
   mac_sdu_tx_builder* get_bearer(rnti_t rnti, lcid_t lcid)
   {
-    if (not contains_rnti(rnti)) {
+    if (not contains(rnti)) {
       return nullptr;
     }
-    ue_item& u = ue_db[rnti_to_ue_index[rnti]];
+    ue_item& u = ue_db[rnti];
     return u.dl_bearers.contains(lcid) ? u.dl_bearers[lcid] : nullptr;
   }
 
-  bool add_ue(du_ue_index_t ue_index, rnti_t crnti, span<const logical_channel_addmod> bearers)
+  bool add_ue(rnti_t crnti, du_ue_index_t ue_index, span<const logical_channel_addmod> bearers)
   {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
     srsran_sanity_check(crnti != INVALID_RNTI, "Invalid RNTI");
-    if (contains_ue(ue_index) or contains_rnti(crnti)) {
+    if (contains(crnti)) {
       return false;
     }
-    ue_db.emplace(ue_index);
-    ue_db[ue_index].ue_index = ue_index;
-    ue_db[ue_index].rnti     = crnti;
+    ue_db.emplace(crnti);
+    auto& u    = ue_db[crnti];
+    u.rnti     = crnti;
+    u.ue_index = ue_index;
     for (const logical_channel_addmod& l : bearers) {
-      ue_db[ue_index].dl_bearers.insert(l.lcid, l.dl_bearer);
+      u.dl_bearers.insert(l.lcid, l.dl_bearer);
     }
-
-    rnti_to_ue_index.insert(crnti, ue_index);
     return true;
   }
 
-  bool remove_ue(du_ue_index_t ue_index)
+  bool remove_ue(rnti_t rnti)
   {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
-    if (not contains_ue(ue_index)) {
+    if (not contains(rnti)) {
       return false;
     }
-    rnti_to_ue_index[ue_db[ue_index].rnti] = MAX_NOF_UES;
-    ue_db.erase(ue_index);
+    ue_db.erase(rnti);
     return true;
   }
 
-  bool addmod_bearers(du_ue_index_t ue_index, span<const logical_channel_addmod> dl_logical_channels)
+  bool addmod_bearers(rnti_t rnti, span<const logical_channel_addmod> dl_logical_channels)
   {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
-    if (not contains_ue(ue_index)) {
+    if (not contains(rnti)) {
       return false;
     }
-    auto& u = ue_db[ue_index];
+    auto& u = ue_db[rnti];
     for (const logical_channel_addmod& lc : dl_logical_channels) {
       u.dl_bearers.insert(lc.lcid, lc.dl_bearer);
     }
     return true;
   }
 
-  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+  bool remove_bearers(rnti_t rnti, span<const lcid_t> lcids)
   {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId=%d", ue_index);
-    if (not contains_ue(ue_index)) {
+    if (not contains(rnti)) {
       return false;
     }
-    auto& u = ue_db[ue_index];
+    auto& u = ue_db[rnti];
     for (lcid_t lcid : lcids) {
       u.dl_bearers.erase(lcid);
     }
@@ -94,16 +83,13 @@ public:
   }
 
 private:
-  class ue_item
-  {
-  public:
-    du_ue_index_t                    ue_index = MAX_NOF_UES;
+  struct ue_item {
     rnti_t                           rnti     = INVALID_RNTI;
+    du_ue_index_t                    ue_index = MAX_NOF_UES;
     slot_vector<mac_sdu_tx_builder*> dl_bearers;
   };
 
-  slot_array<ue_item, MAX_NOF_UES> ue_db;
-  rnti_map<du_ue_index_t>          rnti_to_ue_index;
+  rnti_map<ue_item> ue_db;
 };
 
 } // namespace srsgnb

@@ -169,16 +169,18 @@ public:
     return present[idx] and get_obj_(idx).first == key;
   }
 
-  /// Default constructs object with given key if no collision is detected.
+  /// Constructs object with given key if no collision is detected.
   /// \param key key of created object
   /// \return true if no collision was detected and object was inserted. False, otherwise.
-  bool emplace(K key)
+  template <typename... Args>
+  bool emplace(K key, Args&&... args)
   {
+    static_assert(std::is_constructible<T, Args...>::value, "Invalid argument types");
     size_t idx = key % N;
     if (present[idx]) {
       return false;
     }
-    buffer[idx].emplace(key);
+    buffer[idx].emplace(key, T{std::forward<Args>(args)...});
     present[idx] = true;
     count++;
     return true;

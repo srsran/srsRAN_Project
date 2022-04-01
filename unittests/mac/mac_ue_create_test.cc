@@ -67,7 +67,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 
   // STATUS: The MAC UL received the UE creation request message
   TESTASSERT(mac_ul.last_ue_create_request.has_value());
-  TESTASSERT(mac_ul.last_ue_create_request->ue_index == msg.ue_index);
+  TESTASSERT_EQ(mac_ul.last_ue_create_request->ue_index, msg.ue_index);
 
   if (not mac_ul.ue_created_ev.is_set()) {
     // STATUS: The procedure is awaiting for the MAC UL UE creation to complete

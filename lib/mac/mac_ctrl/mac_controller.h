@@ -45,10 +45,10 @@ private:
     async_task_sequencer ctrl_loop{16}; ///< UE Control loop
   };
 
-  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override;
+  bool add_ue(rnti_t rnti, du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
 
   /// Interface of CTRL procedures to CTRL class
-  void remove_ue(du_ue_index_t ue_index) override;
+  void remove_ue(rnti_t rnti) override;
 
   // args
   mac_common_config_t&  cfg;

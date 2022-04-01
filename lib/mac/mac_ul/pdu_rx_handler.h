@@ -52,9 +52,7 @@ struct decoded_mac_rx_pdu {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(mac_common_config_t& cfg_,
-                 sched_ue_feedback&   sched_,
-                 mac_ul_ue_manager&   ue_manager_) :
+  pdu_rx_handler(mac_common_config_t& cfg_, sched_ue_feedback& sched_, mac_ul_ue_manager& ue_manager_) :
     cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_)
   {}
 
@@ -78,7 +76,7 @@ private:
   /// \param subpdu subPDU of PDU where CRNTI CE was detected.
   /// \param ue MAC UL UE object for which the sdu is directed.
   /// \return true if correctly handled.
-  bool handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue* ue);
+  bool handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue);
 
   /// Handle UL MAC CE.
   /// \param pdu MAC UL PDU being processed.

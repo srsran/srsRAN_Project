@@ -30,7 +30,7 @@ mac_controller::ue_reconfiguration_request(const mac_ue_reconfiguration_request_
   return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);
 }
 
-bool mac_controller::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
+bool mac_controller::add_ue(rnti_t crnti, du_ue_index_t ue_index, du_cell_index_t cell_index)
 {
   srsran_assert(crnti != INVALID_RNTI, "Invalid RNTI");
   srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index=%d", ue_index);
@@ -57,14 +57,14 @@ bool mac_controller::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_
   return true;
 }
 
-void mac_controller::remove_ue(du_ue_index_t ue_index)
+void mac_controller::remove_ue(rnti_t rnti)
 {
   // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the UE. This achieved via an async task in the MAC main control loop
 
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
+  du_ue_index_t ue_index = rnti_to_ue_index_map[rnti];
   if (not ue_db.contains(ue_index)) {
-    logger.warning("Failed to find ueId={}", ue_index);
+    logger.warning("Failed to find rnti={:#x}", rnti);
     return;
   }
   logger.debug("Scheduling ueId={} deletion", ue_index);

@@ -147,7 +147,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
     // 2. Insert UE and DL bearers
-    mux.add_ue(request.ue_index, request.crnti, request.bearers);
+    mux.add_ue(request.crnti, request.ue_index, request.bearers);
 
     // 3. Create UE in scheduler
     log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
@@ -180,7 +180,7 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
     CORO_AWAIT(sched_cfg_notif_map[request.rnti % sched_cfg_notif_map.size()]);
 
     // 4. Remove UE associated DL channels
-    mux.remove_ue(request.ue_index);
+    mux.remove_ue(request.rnti);
 
     // 5. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
@@ -198,10 +198,10 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
     // 2. Remove UE DL bearers
-    mux.remove_bearers(request.ue_index, request.bearers_to_rem);
+    mux.remove_bearers(request.crnti, request.bearers_to_rem);
 
     // 3. AddMod UE DL bearers
-    mux.addmod_bearers(request.ue_index, request.bearers_to_addmod);
+    mux.addmod_bearers(request.crnti, request.bearers_to_addmod);
 
     // 4. Configure UE in Scheduler
     log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");

@@ -13,16 +13,17 @@
 
 namespace srsgnb {
 
-/// Stores MAC UL UE context
-class mac_ul_ue
+/// Stores MAC UL UE context. In particular, the UL PDU notifiers for each logical channel.
+class mac_ul_ue_context
 {
 public:
-  explicit mac_ul_ue(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
+  explicit mac_ul_ue_context(rnti_t rnti_, du_ue_index_t ue_index_) : rnti(rnti_), ue_index(ue_index_) {}
 
-  const du_ue_index_t               ue_index = MAX_NOF_UES;
-  const rnti_t                      rnti     = INVALID_RNTI;
+  const rnti_t        rnti     = INVALID_RNTI;
+  const du_ue_index_t ue_index = MAX_NOF_UES;
+
+  /// List of UL PDU notification endpoints associated to UE's logical channels.
   slot_vector<mac_sdu_rx_notifier*> ul_bearers;
-  mac_ul_sch_pdu                    pdu_ul;
 };
 
 /// Class that manages the creation/reconfiguration/deletion of UEs from the MAC UL
@@ -31,34 +32,21 @@ public:
 class mac_ul_ue_manager
 {
 public:
-  mac_ul_ue_manager(mac_common_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
-  {
-    std::fill(ue_index_to_rnti.begin(), ue_index_to_rnti.end(), MAX_NOF_UES);
-  }
-
-  /// Checks whether UE Index exists.
-  bool contains_ue(du_ue_index_t ue_index) const { return ue_index_to_rnti[ue_index] < MAX_NOF_UES; }
+  mac_ul_ue_manager(mac_common_config_t& cfg_) : cfg(cfg_), logger(cfg.logger) {}
 
   /// Checks whether RNTI exists.
-  bool contains_rnti(rnti_t rnti) const { return ue_db.contains(rnti); }
+  bool contains_ue(rnti_t rnti) const { return ue_db.contains(rnti); }
 
   /// Adds UE in MAC UL UE repository
   bool add_ue(const mac_ue_create_request_message& request)
   {
-    srsran_sanity_check(request.ue_index < MAX_NOF_UES, "Invalid ueId={}", request.ue_index);
-
-    // Verify if there is space.
-    if (contains_ue(request.ue_index) or not ue_db.has_space(request.crnti)) {
-      log_proc_failure(logger, request.ue_index, request.crnti, "UE Create Request", "Failed to create UE");
-      return false;
-    }
+    srsran_assert(ue_db.has_space(request.crnti), "No space for RNTI={:#x}", request.crnti);
 
     // 1. Insert UE
-    ue_db.insert(request.crnti, mac_ul_ue{request.ue_index, request.crnti});
-    ue_index_to_rnti[request.ue_index] = request.crnti;
+    ue_db.insert(request.crnti, mac_ul_ue_context{request.crnti, request.ue_index});
 
     // 2. Add UE Bearers
-    if (not addmod_bearers(request.ue_index, request.bearers)) {
+    if (not addmod_bearers(request.crnti, request.bearers)) {
       log_proc_failure(logger, request.ue_index, request.crnti, "UE Create Request", "Failed to add/mod UE bearers");
       return false;
     }
@@ -69,7 +57,7 @@ public:
   bool reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
   {
     // 1. Remove UE bearers
-    if (not remove_bearers(request.ue_index, request.bearers_to_rem)) {
+    if (not remove_bearers(request.crnti, request.bearers_to_rem)) {
       log_proc_failure(logger,
                        request.ue_index,
                        request.crnti,
@@ -79,7 +67,7 @@ public:
     }
 
     // 2. Add/Mod UE Bearers
-    if (not addmod_bearers(request.ue_index, request.bearers_to_addmod)) {
+    if (not addmod_bearers(request.crnti, request.bearers_to_addmod)) {
       log_proc_failure(logger,
                        request.ue_index,
                        request.crnti,
@@ -90,33 +78,23 @@ public:
     return true;
   }
 
-  void remove_ue(du_ue_index_t ue_index)
+  void remove_ue(rnti_t rnti)
   {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
-    rnti_t rnti = ue_index_to_rnti[ue_index];
     if (not ue_db.erase(rnti)) {
-      return;
+      log_proc_failure(logger, rnti, "UE Remove Request", "Invalid RNTI");
     }
-    ue_index_to_rnti[ue_index] = MAX_NOF_UES;
   }
 
-  mac_ul_ue* find_ue(du_ue_index_t ue_index)
-  {
-    srsran_sanity_check(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
-    rnti_t rnti = ue_index_to_rnti[ue_index];
-    return find_rnti(rnti);
-  }
-
-  mac_ul_ue* find_rnti(rnti_t rnti)
+  mac_ul_ue_context* find_rnti(rnti_t rnti)
   {
     auto it = ue_db.find(rnti);
     return it == ue_db.end() ? nullptr : &it->second;
   }
 
 private:
-  bool addmod_bearers(du_ue_index_t ue_index, const std::vector<logical_channel_addmod>& ul_logical_channels)
+  bool addmod_bearers(rnti_t rnti, const std::vector<logical_channel_addmod>& ul_logical_channels)
   {
-    mac_ul_ue* ue = find_ue(ue_index);
+    mac_ul_ue_context* ue = find_rnti(rnti);
     if (ue == nullptr) {
       return false;
     }
@@ -128,9 +106,9 @@ private:
     return true;
   }
 
-  bool remove_bearers(du_ue_index_t ue_index, span<const lcid_t> lcids)
+  bool remove_bearers(rnti_t rnti, span<const lcid_t> lcids)
   {
-    mac_ul_ue* ue = find_ue(ue_index);
+    mac_ul_ue_context* ue = find_rnti(rnti);
     if (ue == nullptr) {
       return false;
     }
@@ -140,13 +118,12 @@ private:
     return true;
   }
 
-  /// Arguments of UE manager
+  /// Arguments of UE manager.
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  /// UE repository
-  rnti_map<mac_ul_ue>                    ue_db;
-  std::array<du_ue_index_t, MAX_NOF_UES> ue_index_to_rnti;
+  /// MAC UL UE repository.
+  rnti_map<mac_ul_ue_context> ue_db;
 };
 
 } // namespace srsgnb
