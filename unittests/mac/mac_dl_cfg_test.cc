@@ -81,7 +81,9 @@ void test_dl_ue_procedure_tsan()
   dummy_mac_event_indicator du_mng_notifier;
   mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
-  mac_dl_processor mac_dl(cfg);
+  sched_config_adapter sched_cfg_adapter;
+  sched                sched_obj{sched_cfg_adapter.get_notifier()};
+  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj);
 
   // TEST: Thread used for resumption does not change
   std::thread::id tid        = std::this_thread::get_id();
@@ -110,7 +112,9 @@ void test_dl_ue_procedure_execution_contexts()
   dummy_mac_event_indicator   du_mng_notifier;
   mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
 
-  mac_dl_processor mac_dl(cfg);
+  sched_config_adapter sched_cfg_adapter;
+  sched                sched_obj{sched_cfg_adapter.get_notifier()};
+  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj);
 
   // TEST: Thread used for resumption does not change.
   bool is_ctrl_worker = true;

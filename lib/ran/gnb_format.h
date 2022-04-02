@@ -7,8 +7,6 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/srslog.h"
 
-#define FMT_RNTI "{:#x}"
-
 namespace srsgnb {
 
 template <size_t N>
@@ -128,7 +126,7 @@ void log_proc_event(srslog::basic_logger& logger,
 }
 
 template <typename... Args>
-void log_pdu(srslog::basic_logger& logger, const ue_event_prefix& ue_prefix, const char* cause_fmt, Args&&... args)
+void log_ue_event(srslog::basic_logger& logger, const ue_event_prefix& ue_prefix, const char* cause_fmt, Args&&... args)
 {
   if (not logger.info.enabled()) {
     return;
@@ -136,6 +134,22 @@ void log_pdu(srslog::basic_logger& logger, const ue_event_prefix& ue_prefix, con
   fmt::memory_buffer fmtbuf;
   fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
   logger.info("{}: {}", ue_prefix, to_c_str(fmtbuf));
+}
+
+template <typename... Args>
+void log_ue_proc_event(srslog::log_channel&   log_ch,
+                       const ue_event_prefix& ue_prefix,
+                       const char*            proc_name,
+                       const char*            cause_fmt,
+                       Args&&... args)
+{
+  if (not log_ch.enabled()) {
+    return;
+  }
+  fmt::memory_buffer fmtbuf;
+  fmt::format_to(fmtbuf, "\"{}\" ", proc_name);
+  fmt::format_to(fmtbuf, cause_fmt, std::forward<Args>(args)...);
+  log_ch("{}: {}", ue_prefix, to_c_str(fmtbuf));
 }
 
 template <typename... Args>
@@ -147,13 +161,13 @@ void log_ul_pdu(srslog::basic_logger& logger,
                 const char*           cause_fmt,
                 Args&&... args)
 {
-  log_pdu(logger, ue_event_prefix{"UL", ue_index, rnti, cell_index, ch}, cause_fmt, std::forward<Args>(args)...);
+  log_ue_event(logger, ue_event_prefix{"UL", ue_index, rnti, cell_index, ch}, cause_fmt, std::forward<Args>(args)...);
 }
 
 template <typename... Args>
 void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, const char* cause_fmt, Args&&... args)
 {
-  log_pdu(logger, ue_event_prefix{"UL", MAX_NOF_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
+  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
 }
 
 } // namespace srsgnb

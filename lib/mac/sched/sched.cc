@@ -13,6 +13,13 @@ bool sched::handle_cell_configuration_request(const cell_configuration_request_m
   return true;
 }
 
+void sched::config_ue(rnti_t rnti)
+{
+  log_ue_proc_event(logger.info, ue_event_prefix{}.set_rnti(rnti), "Sched UE Configuration", "started.");
+  mac_notifier.on_ue_config_complete(rnti);
+  log_ue_proc_event(logger.info, ue_event_prefix{}.set_rnti(rnti), "Sched UE Configuration", "completed.");
+}
+
 void sched::handle_rach_indication(const rach_indication_message& msg)
 {
   pending_events.handle_rach_indication(msg);

@@ -45,8 +45,8 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
 
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 {
-  log_pdu(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
-
+  log_ue_event(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
+  
   // FIXME: fill message
   asn1::f1ap::f1_ap_pdu_c f1ap_pdu;
 

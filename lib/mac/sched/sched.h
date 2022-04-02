@@ -17,7 +17,7 @@ public:
   bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
 
   /// Add/Configure UE.
-  void config_ue(rnti_t rnti) override { mac_notifier.on_ue_config_complete(rnti); }
+  void config_ue(rnti_t rnti) override;
 
   /// Delete UE.
   void delete_ue_request(rnti_t rnti) override { mac_notifier.on_ue_delete_response(rnti); }

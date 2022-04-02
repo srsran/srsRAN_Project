@@ -4,14 +4,10 @@
 
 #include "mac_config.h"
 #include "mac_ctrl/mac_controller.h"
-#include "mac_ctrl/ue_creation_procedure.h"
-#include "mac_ctrl/ue_delete_procedure.h"
+#include "mac_dl/sched_config_adapter.h"
 #include "mac_ul/mac_ul_processor.h"
-#include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/async/manual_event.h"
-#include <mutex>
 
 namespace srsgnb {
 
@@ -44,11 +40,15 @@ private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
+  /// Handle used to await scheduler configurations.
+  sched_config_adapter sched_cfg_notif;
+
+  /// MAC Scheduler.
+  std::unique_ptr<sched_interface> sched_obj;
+
   mac_dl_processor dl_unit;
   mac_ul_processor ul_unit;
   mac_controller   ctrl_unit;
-
-  std::mutex dl_mutex;
 };
 
 } // namespace srsgnb

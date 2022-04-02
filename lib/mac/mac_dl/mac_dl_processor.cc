@@ -7,6 +7,12 @@
 
 using namespace srsgnb;
 
+mac_dl_processor::mac_dl_processor(mac_common_config_t&  cfg_,
+                                   sched_config_adapter& sched_cfg_notif_,
+                                   sched_interface&      sched_) :
+  cfg(cfg_), logger(cfg.logger), sched_cfg_notif(sched_cfg_notif_), sched_obj(sched_)
+{}
+
 void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
 {
   // Add cell in cell manager.
@@ -150,13 +156,10 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     mux.add_ue(request.crnti, request.ue_index, request.bearers);
 
     // 3. Create UE in scheduler
-    log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
     sched_obj.config_ue(request.crnti);
 
     // 4. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif_map[request.crnti % sched_cfg_notif_map.size()]);
-
-    log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE Config");
+    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.crnti));
 
     // 5. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
@@ -177,9 +180,10 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
     sched_obj.delete_ue_request(request.rnti);
 
     // 3. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif_map[request.rnti % sched_cfg_notif_map.size()]);
+    CORO_AWAIT(sched_cfg_notif.ue_deletion_completed(request.rnti));
 
     // 4. Remove UE associated DL channels
+    CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
     mux.remove_ue(request.rnti);
 
     // 5. Change back to CTRL executor before returning
@@ -208,7 +212,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     sched_obj.config_ue(request.crnti);
 
     // 4. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif_map[request.crnti % sched_cfg_notif_map.size()]);
+    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.crnti));
 
     log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE Config");
 

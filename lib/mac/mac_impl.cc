@@ -1,6 +1,6 @@
 
 #include "mac_impl.h"
-#include <mutex>
+#include "sched/sched.h"
 
 namespace srsgnb {
 
@@ -10,8 +10,9 @@ mac_impl::mac_impl(mac_event_notifier&       event_notifier,
                    task_executor&            ctrl_exec_) :
   cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_),
   logger(cfg.logger),
-  dl_unit(cfg),
-  ul_unit(cfg, dl_unit.get_sched()),
+  sched_obj(std::make_unique<sched>(sched_cfg_notif.get_notifier())),
+  dl_unit(cfg, sched_cfg_notif, *sched_obj),
+  ul_unit(cfg, *sched_obj),
   ctrl_unit(cfg, ul_unit, dl_unit)
 {
   // :TODO: remove when the log is used.
@@ -67,14 +68,6 @@ void mac_impl::flush_ul_ccch_msg(rnti_t rnti)
 void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   dl_unit.slot_indication(sl_tx, cell_index);
-
-  // for each cc, generate MAC DL SDUs
-  mac_ue_context* u = ctrl_unit.find_by_rnti(0x4601);
-  if (u != nullptr) {
-    byte_buffer pdu;
-
-    // TODO: Call MAC SDU builder
-  }
 }
 
 } // namespace srsgnb
