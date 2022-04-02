@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-class mac_ue_delete_procedure final : public async_procedure<mac_ue_delete_response_message>
+class mac_ue_delete_procedure
 {
 public:
   explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
@@ -18,39 +18,30 @@ public:
     req(msg), cfg(cfg_), logger(cfg.logger), ctrl_mac(mac_ctrl_), ul_mac(mac_ul_), dl_mac(mac_dl_)
   {}
 
-  static const char* name() { return "UE Delete Request"; }
-
-private:
-  void start() override
+  void operator()(coro_context<async_task<mac_ue_delete_response_message> >& ctx)
   {
+    CORO_BEGIN(ctx);
+
     log_proc_started(logger, req.ue_index, req.rnti, name());
 
     // 1. Remove UE from MAC DL worker
-    async_await(dl_mac.remove_ue(req), &mac_ue_delete_procedure::ue_dl_removed);
-  }
+    CORO_AWAIT(dl_mac.remove_ue(req));
 
-  void ue_dl_removed()
-  {
     // 2. Remove UE associated UL channels
-    async_await(ul_mac.remove_ue(req), &mac_ue_delete_procedure::ue_ul_removed);
-  }
-
-  void ue_ul_removed()
-  {
-    log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
+    CORO_AWAIT(ul_mac.remove_ue(req));
 
     // 3. Enqueue UE deletion
     ctrl_mac.remove_ue(req.rnti);
 
-    // 4. Prepare response to DU manager
-    mac_ue_delete_response_message resp{};
-    resp.ue_index = req.ue_index;
-    resp.result   = true;
+    log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
 
-    // 5. Signal end of procedure and pass response
-    async_return(resp);
+    // 4. Signal end of procedure and pass response
+    CORO_RETURN(mac_ue_delete_response_message{true});
   }
 
+  static const char* name() { return "UE Delete Request"; }
+
+private:
   mac_ue_delete_request_message req;
   mac_common_config_t&          cfg;
   srslog::basic_logger&         logger;

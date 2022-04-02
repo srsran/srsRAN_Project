@@ -40,11 +40,6 @@ public:
   mac_ue_context* find_by_rnti(rnti_t rnti);
 
 private:
-  struct ue_element {
-    mac_ue_context       ue_ctx;
-    async_task_sequencer ctrl_loop{16}; ///< UE Control loop
-  };
-
   bool add_ue(rnti_t rnti, du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
 
   /// Interface of CTRL procedures to CTRL class
@@ -57,11 +52,8 @@ private:
   mac_dl_configurer&    dl_unit;
 
   // UE database
-  rnti_map<ue_element>            ue_db;
+  rnti_map<mac_ue_context>        ue_db;
   std::array<rnti_t, MAX_NOF_UES> ue_index_to_rnti_map;
-
-  // CTRL main loop
-  async_task_sequencer main_ctrl_loop{64};
 };
 
 } // namespace srsgnb

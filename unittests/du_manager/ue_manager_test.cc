@@ -142,8 +142,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   TESTASSERT_EQ(ue_index, mac_dummy.last_ue_delete_msg->ue_index);
 
   // Action 5: MAC UE Deletion complete
-  mac_dummy.wait_ue_delete.result.ue_index = ue_index;
-  mac_dummy.wait_ue_delete.result.result   = true;
+  mac_dummy.wait_ue_delete.result.result = true;
   mac_dummy.wait_ue_delete.ready_ev.set();
 
   // TEST: DU UE Deletion is complete

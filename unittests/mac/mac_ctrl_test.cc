@@ -70,7 +70,6 @@ void test_mac_ctrl_ue_procedures()
   TESTASSERT(ul_unit.last_ue_delete_request.has_value());
   TESTASSERT_EQ(ue_delete_msg.ue_index, ul_unit.last_ue_create_request->ue_index);
   TESTASSERT(t2.ready());
-  TESTASSERT_EQ(ue_delete_msg.ue_index, t2.get().ue_index);
   TESTASSERT(mac_ctrl.find_ue(ue_create_msg.ue_index) == nullptr);
   TESTASSERT(mac_ctrl.find_by_rnti(ue_create_msg.crnti) == nullptr);
 }

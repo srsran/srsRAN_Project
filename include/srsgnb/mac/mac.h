@@ -117,8 +117,7 @@ struct mac_ue_delete_request_message {
 };
 
 struct mac_ue_delete_response_message {
-  du_ue_index_t ue_index;
-  bool          result;
+  bool result;
 };
 
 /// Methods used by MAC to notify events.

@@ -47,10 +47,10 @@ bool mac_controller::add_ue(rnti_t crnti, du_ue_index_t ue_index, du_cell_index_
 
   // Create UE object
   ue_db.emplace(crnti);
-  ue_element& u        = ue_db[crnti];
-  u.ue_ctx.du_ue_index = ue_index;
-  u.ue_ctx.rnti        = crnti;
-  u.ue_ctx.pcell_idx   = cell_index;
+  mac_ue_context& u = ue_db[crnti];
+  u.rnti            = crnti;
+  u.du_ue_index     = ue_index;
+  u.pcell_idx       = cell_index;
 
   // Update UE index -> CRNTI map
   ue_index_to_rnti_map[ue_index] = crnti;
@@ -59,37 +59,22 @@ bool mac_controller::add_ue(rnti_t crnti, du_ue_index_t ue_index, du_cell_index_
 
 void mac_controller::remove_ue(rnti_t rnti)
 {
-  // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
-  // before safely removing the UE. This achieved via an async task in the MAC main control loop
-
   if (not ue_db.contains(rnti)) {
     logger.warning("Failed to find rnti={:#x}", rnti);
     return;
   }
-  logger.debug("Scheduling rnti={:#x} deletion", rnti);
-
-  // Schedule task removal
-  main_ctrl_loop.schedule([this, rnti](coro_context<async_task<void> >& ctx) {
-    CORO_BEGIN(ctx);
-    srsran_sanity_check(ue_db.contains(rnti), "ueId={} was unexpectedly removed", rnti);
-
-    CORO_AWAIT(ue_db[rnti].ctrl_loop.request_stop());
-
-    logger.debug("Removing rnti={:#x}", rnti);
-    ue_index_to_rnti_map[ue_db[rnti].ue_ctx.du_ue_index] = INVALID_RNTI;
-    ue_db.erase(rnti);
-
-    CORO_RETURN();
-  });
+  logger.debug("Removing rnti={:#x}", rnti);
+  ue_index_to_rnti_map[ue_db[rnti].du_ue_index] = INVALID_RNTI;
+  ue_db.erase(rnti);
 }
 
 mac_ue_context* mac_controller::find_ue(du_ue_index_t ue_index)
 {
   rnti_t rnti = ue_index_to_rnti_map[ue_index];
-  return rnti == INVALID_RNTI ? nullptr : &ue_db[rnti].ue_ctx;
+  return rnti == INVALID_RNTI ? nullptr : &ue_db[rnti];
 }
 
 mac_ue_context* mac_controller::find_by_rnti(rnti_t rnti)
 {
-  return ue_db.contains(rnti) ? &ue_db[rnti].ue_ctx : nullptr;
+  return ue_db.contains(rnti) ? &ue_db[rnti] : nullptr;
 }
