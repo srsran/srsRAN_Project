@@ -29,16 +29,6 @@ void mac_impl::remove_cell(du_cell_index_t cell_index)
   dl_unit.remove_cell(cell_index);
 }
 
-void mac_impl::start_cell(du_cell_index_t cell_index)
-{
-  dl_unit.start_cell(cell_index);
-}
-
-void mac_impl::stop_cell(du_cell_index_t cell_index)
-{
-  dl_unit.stop_cell(cell_index);
-}
-
 void mac_impl::handle_rx_data_indication(mac_rx_data_indication msg)
 {
   ul_unit.handle_rx_data_indication(msg);
@@ -63,11 +53,6 @@ async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac
 void mac_impl::flush_ul_ccch_msg(rnti_t rnti)
 {
   ul_unit.flush_ul_ccch_msg(rnti);
-}
-
-void mac_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
-{
-  dl_unit.slot_indication(sl_tx, cell_index);
 }
 
 } // namespace srsgnb

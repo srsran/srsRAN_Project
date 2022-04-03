@@ -150,12 +150,21 @@ public:
   virtual void handle_rx_data_indication(mac_rx_data_indication pdu) = 0;
 };
 
-/// Interface used to push slot indications to L2.
-class mac_slot_indicator
+/// Interface used to handle slot indications specific to a cell.
+class mac_cell_slot_handler
 {
 public:
-  virtual ~mac_slot_indicator()                                              = default;
-  virtual void slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
+  virtual ~mac_cell_slot_handler()                      = default;
+  virtual void handle_slot_indication(slot_point sl_tx) = 0;
+};
+
+/// Interface used to handle a MAC cell activation/deactivation.
+class mac_cell_manager
+{
+public:
+  virtual ~mac_cell_manager()      = default;
+  virtual async_task<void> start() = 0;
+  virtual async_task<void> stop()  = 0;
 };
 
 /// Interface to handle feedback information from the PHY.
@@ -167,12 +176,18 @@ public:
   virtual void handle_crc(const crc_indication_message& msg) = 0;
 };
 
-class mac_interface : public mac_slot_indicator,
-                      public mac_resource_manager,
+class mac_interface : public mac_resource_manager,
                       public mac_configurer,
                       public mac_sdu_rx_handler,
                       public mac_control_information_handler
-{};
+{
+public:
+  /// Returns handler of slot indications for a cell with provided cell_index.
+  virtual mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) = 0;
+
+  /// Returns cell management handle for the provided cell index.
+  virtual mac_cell_manager& get_cell_manager(du_cell_index_t cell_index) = 0;
+};
 
 } // namespace srsgnb
 

@@ -25,8 +25,6 @@ public:
   virtual ~mac_resource_manager()                               = default;
   virtual void add_cell(const mac_cell_configuration& cell_cfg) = 0;
   virtual void remove_cell(du_cell_index_t cell_index)          = 0;
-  virtual void start_cell(du_cell_index_t cell_index)           = 0;
-  virtual void stop_cell(du_cell_index_t cell_index)            = 0;
 };
 
 } // namespace srsgnb

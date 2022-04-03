@@ -1,32 +1,40 @@
 
-#ifndef SRSGNB_MAC_DL_MUX_H
-#define SRSGNB_MAC_DL_MUX_H
+#ifndef SRSGNB_MAC_DL_UE_MANAGER_H
+#define SRSGNB_MAC_DL_UE_MANAGER_H
 
+#include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/rnti_map.h"
+#include <mutex>
 
 namespace srsgnb {
 
-class mac_dl_mux
+class mac_dl_ue_manager
 {
 public:
   /// Check if UE with provided C-RNTI exists.
   /// \param rnti C-RNTI of the UE.
   /// \return True if UE exists. False, otherwise.
-  bool contains(rnti_t rnti) const { return ue_db.contains(rnti); }
+  bool contains(rnti_t rnti) const
+  {
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    return ue_db.contains(rnti);
+  }
 
   /// Checks if bearer with provided C-RNTI and LCID exists.
   bool contains_lcid(rnti_t rnti, lcid_t lcid) const
   {
-    return contains(rnti) and ue_db[rnti].dl_bearers.contains(lcid);
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    return ue_db.contains(rnti) and ue_db[rnti].dl_bearers.contains(lcid);
   }
 
   mac_sdu_tx_builder* get_bearer(rnti_t rnti, lcid_t lcid)
   {
-    if (not contains(rnti)) {
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    if (not ue_db.contains(rnti)) {
       return nullptr;
     }
     ue_item& u = ue_db[rnti];
@@ -35,8 +43,8 @@ public:
 
   bool add_ue(rnti_t crnti, du_ue_index_t ue_index, span<const logical_channel_addmod> bearers)
   {
-    srsran_sanity_check(crnti != INVALID_RNTI, "Invalid RNTI");
-    if (contains(crnti)) {
+    std::lock_guard<std::mutex> lock(rnti_mutex[crnti]);
+    if (ue_db.contains(crnti)) {
       return false;
     }
     ue_db.emplace(crnti);
@@ -51,7 +59,8 @@ public:
 
   bool remove_ue(rnti_t rnti)
   {
-    if (not contains(rnti)) {
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    if (not ue_db.contains(rnti)) {
       return false;
     }
     ue_db.erase(rnti);
@@ -60,7 +69,8 @@ public:
 
   bool addmod_bearers(rnti_t rnti, span<const logical_channel_addmod> dl_logical_channels)
   {
-    if (not contains(rnti)) {
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    if (not ue_db.contains(rnti)) {
       return false;
     }
     auto& u = ue_db[rnti];
@@ -72,7 +82,8 @@ public:
 
   bool remove_bearers(rnti_t rnti, span<const lcid_t> lcids)
   {
-    if (not contains(rnti)) {
+    std::lock_guard<std::mutex> lock(rnti_mutex[rnti]);
+    if (not ue_db.contains(rnti)) {
       return false;
     }
     auto& u = ue_db[rnti];
@@ -90,8 +101,10 @@ private:
   };
 
   rnti_map<ue_item> ue_db;
+
+  mutable circular_array<std::mutex, MAX_NOF_UES> rnti_mutex;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_DL_MUX_H
+#endif // SRSGNB_MAC_DL_UE_MANAGER_H

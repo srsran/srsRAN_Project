@@ -21,8 +21,6 @@ public:
 
   void add_cell(const mac_cell_configuration& cell_cfg) override;
   void remove_cell(du_cell_index_t cell_index) override;
-  void start_cell(du_cell_index_t cell_index) override;
-  void stop_cell(du_cell_index_t cell_index) override;
 
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
   async_task<mac_ue_reconfiguration_response_message>
@@ -32,9 +30,17 @@ public:
 
   void handle_rx_data_indication(mac_rx_data_indication msg) override;
 
-  void slot_indication(slot_point sl_tx, du_cell_index_t cc) override;
-
   void handle_crc(const crc_indication_message& msg) override {}
+
+  mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override
+  {
+    return dl_unit.get_slot_handler(cell_index);
+  }
+
+  mac_cell_manager& get_cell_manager(du_cell_index_t cell_index) override
+  {
+    return dl_unit.get_cell_manager(cell_index);
+  }
 
 private:
   mac_common_config_t   cfg;
