@@ -36,11 +36,12 @@ public:
     ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
     // :TODO: Need to fill the number of DLDCIs across all PDCCH PDU in the message.
 
-    dl_tti_request_pdu& pdu = msg.pdus[msg.num_pdus];
+    // Add a new pdu.
+    msg.pdus.emplace_back();
+    dl_tti_request_pdu& pdu = msg.pdus.back();
     pdu.pdu_type            = dl_pdu_type::PDCCH;
 
     dl_pdcch_pdu_builder builder(pdu.pdcch_pdu);
-    ++msg.num_pdus;
 
     return builder;
   }
@@ -50,11 +51,12 @@ public:
   {
     ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDSCH)];
 
-    dl_tti_request_pdu& pdu = msg.pdus[msg.num_pdus];
+    // Add a new pdu.
+    msg.pdus.emplace_back();
+    dl_tti_request_pdu& pdu = msg.pdus.back();
     pdu.pdu_type            = dl_pdu_type::PDSCH;
 
     dl_pdsch_pdu_builder builder(pdu.pdsch_pdu);
-    ++msg.num_pdus;
 
     return builder;
   }
@@ -64,11 +66,12 @@ public:
   {
     ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::CSI_RS)];
 
-    dl_tti_request_pdu& pdu = msg.pdus[msg.num_pdus];
+    // Add a new pdu.
+    msg.pdus.emplace_back();
+    dl_tti_request_pdu& pdu = msg.pdus.back();
     pdu.pdu_type            = dl_pdu_type::CSI_RS;
 
     dl_csi_rs_pdu_builder builder(pdu.csi_rs_pdu);
-    ++msg.num_pdus;
 
     return builder;
   }
@@ -80,7 +83,9 @@ public:
                                  uint8_t               ssb_subcarrier_offset,
                                  uint16_t              ssb_offset_pointA)
   {
-    dl_tti_request_pdu& pdu = msg.pdus[msg.num_pdus];
+    // Add a new pdu.
+    msg.pdus.emplace_back();
+    dl_tti_request_pdu& pdu = msg.pdus.back();
 
     // Fill the ssb pdu index value. The index value will be the index of the pdu in the array of SSB pdus.
     dl_ssb_maintenance_v3& info        = pdu.ssb_pdu.ssb_maintenance_v3;
@@ -93,7 +98,6 @@ public:
     pdu.pdu_type = dl_pdu_type::SSB;
 
     dl_ssb_pdu_builder builder(pdu.ssb_pdu);
-    ++msg.num_pdus;
 
     // Fills the pdu's basic parameters.
     builder.set_basic_parameters(
@@ -159,7 +163,7 @@ public:
   {
     pdu.bch_payload_flag = bch_payload_type::phy_timing_info;
     // Use the 24 LSB.
-    pdu.bch_payload.bch_payload |= (bch_payload & 0xFFFFFF);
+    pdu.bch_payload.bch_payload = (bch_payload & 0xFFFFFF);
 
     return *this;
   }

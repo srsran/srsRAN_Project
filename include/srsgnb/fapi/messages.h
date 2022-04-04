@@ -326,7 +326,6 @@ struct dl_tti_request_message : public base_message {
 
   uint16_t                                        sfn;
   uint16_t                                        slot;
-  uint16_t                                        num_pdus;
   uint8_t                                         num_dl_types;
   static_vector<uint16_t, MAX_NUM_DL_TYPES>       num_pdus_of_each_type;
   uint16_t                                        num_groups;
