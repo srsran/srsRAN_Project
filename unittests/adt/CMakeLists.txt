@@ -1,38 +1,38 @@
 
 set_directory_properties(PROPERTIES LABELS "adt")
 
-add_executable(static_vector_test static_vector_test.cc)
+add_executable(static_vector_test static_vector_test.cpp)
 target_link_libraries(static_vector_test srslog)
 add_test(static_vector_test static_vector_test)
 
-add_executable(optional_test optional_test.cc)
+add_executable(optional_test optional_test.cpp)
 target_link_libraries(optional_test srslog)
 add_test(optional_test optional_test)
 
-add_executable(unique_function_test unique_function_test.cc)
+add_executable(unique_function_test unique_function_test.cpp)
 target_link_libraries(unique_function_test srslog)
 add_test(unique_function_test unique_function_test)
 
-add_executable(circular_map_test circular_map_test.cc)
+add_executable(circular_map_test circular_map_test.cpp)
 target_link_libraries(circular_map_test srslog)
 add_test(circular_map_test circular_map_test)
 
-add_executable(expected_test expected_test.cc)
+add_executable(expected_test expected_test.cpp)
 target_link_libraries(expected_test srslog)
 add_test(expected_test expected_test)
 
-add_executable(slot_array_test slot_array_test.cc)
+add_executable(slot_array_test slot_array_test.cpp)
 target_link_libraries(slot_array_test srslog)
 add_test(slot_array_test slot_array_test)
 
-add_executable(circular_buffer_test circular_buffer_test.cc)
+add_executable(circular_buffer_test circular_buffer_test.cpp)
 target_link_libraries(circular_buffer_test srslog)
 add_test(circular_buffer_test circular_buffer_test)
 
-add_executable(bounded_bitset_test bounded_bitset_test.cc)
+add_executable(bounded_bitset_test bounded_bitset_test.cpp)
 target_link_libraries(bounded_bitset_test srslog)
 add_test(bounded_bitset_test bounded_bitset_test)
 
-add_executable(byte_buffer_test byte_buffer_test.cc)
+add_executable(byte_buffer_test byte_buffer_test.cpp)
 target_link_libraries(byte_buffer_test srslog)
 add_test(byte_buffer_test byte_buffer_test)

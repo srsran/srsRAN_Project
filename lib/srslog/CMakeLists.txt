@@ -17,8 +17,8 @@ include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srslog/formatters)
 
 set(SOURCES
     ${SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/format.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/os.cc)
+        ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/format.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/bundled/fmt/os.cc)
 
 set(SOURCES
     ${SOURCES}

@@ -1,25 +1,25 @@
 
 set_directory_properties(PROPERTIES LABELS "support")
 
-add_executable(timer_test timer_test.cc)
+add_executable(timer_test timer_test.cpp)
 target_link_libraries(timer_test srslog srsgnb_support pthread)
 add_test(timer_test timer_test)
 
-add_executable(function_signature_test function_signature_test.cc)
+add_executable(function_signature_test function_signature_test.cpp)
 add_test(function_signature_test function_signature_test)
 
-add_executable(async_event_test async_event_test.cc)
+add_executable(async_event_test async_event_test.cpp)
 target_link_libraries(async_event_test srslog)
 add_test(async_event_test async_event_test)
 
-add_executable(async_task_test async_task_test.cc)
+add_executable(async_task_test async_task_test.cpp)
 target_link_libraries(async_task_test srslog)
 add_test(async_task_test async_task_test)
 
-add_executable(async_exec_test async_exec_test.cc)
+add_executable(async_exec_test async_exec_test.cpp)
 target_link_libraries(async_exec_test srslog srsgnb_support)
 add_test(async_exec_test async_exec_test)
 
-add_executable(async_queue_test async_queue_test.cc)
+add_executable(async_queue_test async_queue_test.cpp)
 target_link_libraries(async_queue_test srslog srsgnb_support)
 add_test(async_queue_test async_queue_test)

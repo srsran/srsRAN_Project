@@ -8,9 +8,9 @@
 
 set(SOURCES
         math_utils.cpp
-        task_worker.cc
-        threads.cc
-        timers.cc)
+        task_worker.cpp
+        threads.cpp
+        timers.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support srslog)

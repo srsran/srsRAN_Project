@@ -3,30 +3,30 @@ set_directory_properties(PROPERTIES LABELS "sched")
 
 include_directories(../../../)
 
-add_executable(sched_prb_test sched_prb_test.cc)
+add_executable(sched_prb_test sched_prb_test.cpp)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)
 add_test(sched_prb_test sched_prb_test)
 
-add_executable(sched_harq_test sched_harq_test.cc)
+add_executable(sched_harq_test sched_harq_test.cpp)
 target_link_libraries(sched_harq_test srsgnb_sched srslog)
 add_test(sched_harq_test sched_prb_test)
 
-add_executable(sched_no_ue_test sched_no_ue_test.cc)
+add_executable(sched_no_ue_test sched_no_ue_test.cpp)
 target_link_libraries(sched_no_ue_test srsgnb_sched srslog)
 add_test(sched_no_ue_test sched_no_ue_test)
 
-add_executable(sched_signalling_test sched_signalling_test.cc)
+add_executable(sched_signalling_test sched_signalling_test.cpp)
 target_link_libraries(sched_signalling_test srsgnb_sched srslog)
 add_test(sched_signalling_test sched_signalling_test)
 
-add_executable(cell_configuration_test cell_configuration_test.cc)
+add_executable(cell_configuration_test cell_configuration_test.cpp)
 target_link_libraries(cell_configuration_test srsgnb_sched srslog)
 add_test(cell_configuration_test cell_configuration_test)
 
-add_executable(resource_allocator_test resource_allocator_test.cc)
+add_executable(resource_allocator_test resource_allocator_test.cpp)
 target_link_libraries(resource_allocator_test srsgnb_sched srslog)
 add_test(resource_allocator_test resource_allocator_test)
 
-add_executable(ra_sched_test ra_sched_test.cc)
+add_executable(ra_sched_test ra_sched_test.cpp)
 target_link_libraries(ra_sched_test srsgnb_sched srslog rrc_nr_asn1)
 add_test(ra_sched_test ra_sched_test)

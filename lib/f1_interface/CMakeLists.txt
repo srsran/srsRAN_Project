@@ -1,9 +1,9 @@
 
 set(SOURCES
-    f1ap_du_factory.cc
-    f1ap_du_impl.cc
-    f1ap_asn1_packer.cc
-    handlers/f1c_du_packet_handler.cc
+    f1ap_du_factory.cpp
+    f1ap_du_impl.cpp
+    f1ap_asn1_packer.cpp
+    handlers/f1c_du_packet_handler.cpp
     )
 
 add_library(srsgnb_f1 STATIC ${SOURCES})
