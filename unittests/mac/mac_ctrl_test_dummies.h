@@ -111,6 +111,23 @@ public:
   void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
 };
 
+class dummy_mac_cell_result_notifier : public mac_cell_result_notifier
+{
+public:
+  virtual ~dummy_mac_cell_result_notifier() = default;
+  virtual void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
+  virtual void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
+  virtual void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
+};
+
+class dummy_mac_result_notifier : public mac_result_notifier
+{
+  dummy_mac_cell_result_notifier cell;
+
+public:
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_MAC_CTRL_TEST_DUMMIES_H

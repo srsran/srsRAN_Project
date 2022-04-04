@@ -6,6 +6,7 @@
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/ran/du_l2_ul_executor_mapper.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -17,7 +18,7 @@ namespace srsgnb {
 class du_high
 {
 public:
-  du_high(f1c_pdu_handler& f1c_pdu_handler_);
+  du_high(f1c_pdu_handler& f1c_pdu_handler_, mac_result_notifier& phy_adapter_);
   ~du_high();
 
   void start();

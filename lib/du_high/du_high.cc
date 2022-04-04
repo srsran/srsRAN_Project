@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-du_high::du_high(f1c_pdu_handler& f1c_pdu_handler)
+du_high::du_high(f1c_pdu_handler& f1c_pdu_handler, mac_result_notifier& phy_adapter)
 {
   const size_t task_worker_queue_size = 10000;
 
@@ -32,7 +32,7 @@ du_high::du_high(f1c_pdu_handler& f1c_pdu_handler)
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec);
+  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, phy_adapter);
   f1ap       = create_f1ap_du(f1c_pdu_handler);
   du_manager = create_du_manager(*mac, *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 

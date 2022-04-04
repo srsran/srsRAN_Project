@@ -9,7 +9,7 @@
 #include "mac_dl_ue_manager.h"
 #include "sched_config_adapter.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_dl_result.h"
+#include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/mac/mac_resource_manager.h"
 #include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/execute_on.h"

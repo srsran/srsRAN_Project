@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_DL_RESULT_H
-#define SRSGNB_MAC_DL_RESULT_H
+#ifndef SRSGNB_MAC_CELL_RESULT_H
+#define SRSGNB_MAC_CELL_RESULT_H
 
 #include "sched_result.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -37,6 +37,32 @@ struct mac_dl_data_result {
   static_vector<byte_buffer, MAX_DL_PDUS_PER_SLOT> pdus;
 };
 
+struct mac_ul_sched_result {
+  const ul_sched_result* ul_res;
+};
+
+class mac_cell_result_notifier
+{
+public:
+  virtual ~mac_cell_result_notifier() = default;
+
+  /// Notifies scheduled SSB/PDCCH/PDSCH grants.
+  virtual void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) = 0;
+
+  /// Notifies scheduled PDSCH PDUs.
+  virtual void on_new_downlink_data(const mac_dl_data_result& dl_data) = 0;
+
+  /// Notifies slot scheduled PUCCH/PUSCH grants.
+  virtual void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) = 0;
+};
+
+class mac_result_notifier
+{
+public:
+  virtual ~mac_result_notifier()                                         = default;
+  virtual mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) = 0;
+};
+
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_DL_RESULT_H
+#endif // SRSGNB_MAC_CELL_RESULT_H

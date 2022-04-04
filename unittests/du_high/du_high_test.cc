@@ -6,6 +6,18 @@
 
 using namespace srsgnb;
 
+struct phy_cell_dummy : public mac_cell_result_notifier {
+  void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}
+  void on_new_downlink_data(const mac_dl_data_result& dl_data) override {}
+  void on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) override {}
+};
+
+struct phy_dummy : public mac_result_notifier {
+public:
+  mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
+  phy_cell_dummy            cell;
+};
+
 /// Test F1 setup over "local" connection to DU.
 void test_f1_setup_local()
 {
@@ -35,7 +47,8 @@ void test_f1_setup_local()
 
   dummy_f1c_to_du_relay relay;
   dummy_f1c_pdu_handler pdu_handler(relay);
-  du_high               du_obj(pdu_handler);
+  phy_dummy             phy;
+  du_high               du_obj(pdu_handler, phy);
 
   du_obj.start();
 }
@@ -58,7 +71,8 @@ void test_f1_setup_network()
   };
 
   dummy_f1c_pdu_handler pdu_handler;
-  du_high               du_obj(pdu_handler);
+  phy_dummy             phy;
+  du_high               du_obj(pdu_handler, phy);
 
   du_obj.start();
 }
@@ -73,7 +87,8 @@ void test_du_ue_create()
   };
 
   dummy_f1c_pdu_handler pdu_handler;
-  du_high               du_obj(pdu_handler);
+  phy_dummy             phy;
+  du_high               du_obj(pdu_handler, phy);
 
   du_obj.start();
 

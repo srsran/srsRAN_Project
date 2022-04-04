@@ -79,7 +79,8 @@ void test_dl_ue_procedure_tsan()
   dl_execs.push_back(&dl_exec2);
   dummy_ul_executor_mapper  ul_exec_mapper{ctrl_worker};
   dummy_mac_event_indicator du_mng_notifier;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
+  dummy_mac_result_notifier phy_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
 
   sched_config_adapter sched_cfg_adapter;
   sched                sched_obj{sched_cfg_adapter.get_notifier()};
@@ -110,7 +111,8 @@ void test_dl_ue_procedure_execution_contexts()
   std::vector<task_executor*> dl_execs = {&dl_worker};
   dummy_ul_executor_mapper    ul_exec_mapper{ctrl_worker};
   dummy_mac_event_indicator   du_mng_notifier;
-  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker};
+  dummy_mac_result_notifier   phy_notifier;
+  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
 
   sched_config_adapter sched_cfg_adapter;
   sched                sched_obj{sched_cfg_adapter.get_notifier()};

@@ -2,7 +2,7 @@
 #include "mac_dl_cell_processor.h"
 #include "dci_encoder.h"
 #include "pdu_encoder.h"
-#include "srsgnb/mac/mac_dl_result.h"
+#include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "ssb_encoder.h"
 
@@ -16,6 +16,7 @@ mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
   logger(cfg.logger),
   cell_cfg(cell_cfg_),
   cell_exec(*cfg.dl_execs[cell_cfg.cell_index]),
+  phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {}
@@ -52,21 +53,26 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
   mac_dl_sched_result mac_dl_res;
-  assemble_dl_sched_request(sl_tx, cell_cfg.cell_index, *dl_res, mac_dl_res);
+  assemble_dl_sched_request(cell_cfg.cell_index, *dl_res, mac_dl_res);
 
   // Send DL sched result to PHY.
-  // TODO: MAC DL requires FAPI handle to send the result.
+  phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
   // Start assembling Slot Data Result.
   mac_dl_data_result data_res;
-  assemble_dl_data_request(sl_tx, cell_cfg.cell_index, *dl_res, data_res);
+  assemble_dl_data_request(cell_cfg.cell_index, *dl_res, data_res);
 
   // Send DL Data to PHY.
-  // TODO: MAC DL requires FAPI handle to send the DL Data.
+  phy_cell.on_new_downlink_data(data_res);
+
+  // Send UL sched result to PHY.
+  const ul_sched_result* ul_res = sched_obj.get_ul_sched(sl_tx, cell_cfg.cell_index);
+  mac_ul_sched_result    mac_ul_res;
+  mac_ul_res.ul_res = ul_res;
+  phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 }
 
-void mac_dl_cell_processor::assemble_dl_sched_request(slot_point             sl_tx,
-                                                      du_cell_index_t        cell_index,
+void mac_dl_cell_processor::assemble_dl_sched_request(du_cell_index_t        cell_index,
                                                       const dl_sched_result& dl_res,
                                                       mac_dl_sched_result&   mac_res)
 {
@@ -95,12 +101,11 @@ void mac_dl_cell_processor::assemble_dl_sched_request(slot_point             sl_
   }
 }
 
-void mac_dl_cell_processor::assemble_dl_data_request(slot_point             sl_tx,
-                                                     du_cell_index_t        cell_index,
+void mac_dl_cell_processor::assemble_dl_data_request(du_cell_index_t        cell_index,
                                                      const dl_sched_result& dl_res,
                                                      mac_dl_data_result&    data_res)
 {
-  data_res.slot = sl_tx;
+  data_res.slot = dl_res.slot_value;
 
   // Assemble scheduled SIBs' payload.
   for (const sib_information& sib : dl_res.bc.sibs) {

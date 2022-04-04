@@ -1,6 +1,6 @@
 
 #include "mac_dl_processor.h"
-#include "srsgnb/mac/mac_dl_result.h"
+#include "srsgnb/mac/mac_cell_result.h"
 
 using namespace srsgnb;
 

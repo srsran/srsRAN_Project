@@ -17,7 +17,8 @@ public:
   explicit mac_impl(mac_event_notifier&       event_notifier,
                     du_l2_ul_executor_mapper& ul_exec_mapper,
                     span<task_executor*>      dl_execs,
-                    task_executor&            ctrl_exec);
+                    task_executor&            ctrl_exec,
+                    mac_result_notifier&      phy_notifier_);
 
   void add_cell(const mac_cell_configuration& cell_cfg) override;
   void remove_cell(du_cell_index_t cell_index) override;
