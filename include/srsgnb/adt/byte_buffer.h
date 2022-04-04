@@ -62,6 +62,9 @@ public:
 
   static size_t capacity() { return SEGMENT_SIZE; }
 
+  /// Checks whether segment has no payload.
+  bool empty() const { return begin() == end(); }
+
   /// Returns how much space in bytes there is at the head of the segment.
   size_t headroom() const { return data() - buffer.data(); }
 
@@ -137,6 +140,17 @@ public:
   const uint8_t* data() const { return begin(); }
   uint8_t*       data() { return begin(); }
 
+  uint8_t& back()
+  {
+    srsran_sanity_check(not empty(), "back() called for empty segment.");
+    return *(payload_data_end_ - 1);
+  }
+  const uint8_t& back() const
+  {
+    srsran_sanity_check(not empty(), "back() called for empty segment.");
+    return *(payload_data_end_ - 1);
+  }
+
   iterator       begin() { return payload_data_; }
   iterator       end() { return payload_data_end_; }
   const_iterator begin() const { return payload_data_; }
@@ -168,8 +182,6 @@ private:
   uint8_t*                          payload_data_;
   uint8_t*                          payload_data_end_;
 };
-
-class byte_buffer_view;
 
 /// Memory buffer that store bytes in a linked list of memory chunks.
 class byte_buffer
@@ -332,6 +344,8 @@ public:
     }
   }
 
+  void append(std::initializer_list<uint8_t> bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
+
   /// Appends bytes to the byte buffer. This function may allocate new segments.
   void append(uint8_t byte)
   {
@@ -401,6 +415,9 @@ public:
 
   /// Checks byte_buffer length.
   size_t length() const { return len; }
+
+  uint8_t&       back() { return tail->back(); }
+  const uint8_t& back() const { return tail->back(); }
 
   template <typename Container>
   bool operator==(const Container& container) const
@@ -531,16 +548,19 @@ inline bool operator!=(span<const uint8_t> bytes, const byte_buffer& buf)
   return !(buf == bytes);
 }
 
-/// Non-owning range used to traverse a slice of a byte buffer.
 class byte_buffer_view
 {
 public:
+  using value_type     = uint8_t;
+  using iterator       = byte_buffer::const_iterator;
   using const_iterator = byte_buffer::const_iterator;
 
   byte_buffer_view() = default;
-  byte_buffer_view(const_iterator it_begin_, const_iterator it_end_) : it(it_begin_), it_end(it_end_) {}
+  byte_buffer_view(iterator it_begin_, iterator it_end_) : it(it_begin_), it_end(it_end_) {}
   byte_buffer_view(const byte_buffer& buffer) : it(buffer.begin()), it_end(buffer.end()) {}
 
+  iterator       begin() { return it; }
+  iterator       end() { return it_end; }
   const_iterator begin() const { return it; }
   const_iterator end() const { return it_end; }
 
@@ -566,16 +586,18 @@ public:
     return {{begin(), it_split}, {it_split, end()}};
   }
 
+  /// Compare two byte_buffer views.
   bool operator==(const byte_buffer_view& other) const
   {
     return std::equal(begin(), end(), other.begin(), other.end());
   }
 
 protected:
-  const_iterator it     = const_iterator{nullptr, 0};
-  const_iterator it_end = const_iterator{nullptr, 0};
+  iterator it{nullptr, 0};
+  iterator it_end{nullptr, 0};
 };
 
+/// Used to read a range of bytes stored in a byte_buffer.
 class byte_buffer_reader : private byte_buffer_view
 {
 public:
@@ -604,6 +626,49 @@ public:
     it += offset;
     return {prev_it, it};
   }
+};
+
+/// Used to write into a range of bytes stored in a byte_buffer.
+class byte_buffer_writer
+{
+public:
+  byte_buffer_writer(byte_buffer& other) : buffer(&other) {}
+
+  /// Obtain a range view to the bytes pointed by the reader.
+  byte_buffer_view view() const { return *buffer; }
+
+  /// Appends bytes.
+  template <typename Bytes>
+  void append(const Bytes& bytes)
+  {
+    buffer->append(bytes);
+  }
+
+  /// Appends initializer list of bytes.
+  void append(const std::initializer_list<uint8_t>& bytes)
+  {
+    buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
+  }
+
+  void append_zeros(size_t nof_zeros)
+  {
+    // TODO: optimize.
+    for (size_t i = 0; i < nof_zeros; ++i) {
+      buffer->append(0);
+    }
+  }
+
+  /// Checks last appended byte.
+  uint8_t& back() { return buffer->back(); }
+
+  /// Number of bytes in the byte_buffer.
+  size_t length() const { return buffer->length(); }
+
+  /// Checks whether any byte has been written.
+  bool empty() const { return buffer->empty(); }
+
+private:
+  byte_buffer* buffer;
 };
 
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.

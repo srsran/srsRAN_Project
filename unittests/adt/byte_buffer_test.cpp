@@ -338,6 +338,31 @@ void test_byte_buffer_from_hexdump()
   TESTASSERT(pdu == bytes);
 }
 
+void test_byte_buffer_writer()
+{
+  byte_buffer        pdu;
+  byte_buffer_writer writer{pdu};
+
+  TESTASSERT(pdu.empty());
+  TESTASSERT(writer.empty());
+
+  writer.append(5);
+  TESTASSERT(not pdu.empty());
+  TESTASSERT(not writer.empty());
+  TESTASSERT_EQ(1, pdu.length());
+  TESTASSERT_EQ(1, writer.length());
+
+  writer.append({0, 1, 2, 3, 4});
+  TESTASSERT_EQ(6, pdu.length());
+  TESTASSERT_EQ(6, writer.length());
+  bool is_eq = pdu == std::vector<uint8_t>{5, 0, 1, 2, 3, 4};
+  TESTASSERT(is_eq);
+
+  TESTASSERT_EQ(4, writer.back());
+  writer.back() += 6;
+  TESTASSERT_EQ(10, writer.back());
+}
+
 int main()
 {
   test_buffer_segment();
@@ -353,4 +378,5 @@ int main()
   test_byte_buffer_linearize();
   test_byte_buffer_initializer_list();
   test_byte_buffer_from_hexdump();
+  test_byte_buffer_writer();
 }
