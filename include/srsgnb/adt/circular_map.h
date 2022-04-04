@@ -181,7 +181,7 @@ public:
       return false;
     }
     buffer[idx].emplace(
-        std::piecewise_construct_t{}, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
+        std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...));
     present[idx] = true;
     count++;
     return true;

@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_H
-#define SRSGNB_MAC_H
+#ifndef SRSGNB_MAC_MAC_H
+#define SRSGNB_MAC_MAC_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
@@ -191,4 +191,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_H
+#endif // SRSGNB_MAC_MAC_H

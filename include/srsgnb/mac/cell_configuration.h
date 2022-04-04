@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_CELL_CONFIGURATION_H
-#define SRSGNB_CELL_CONFIGURATION_H
+#ifndef SRSGNB_MAC_CELL_CONFIGURATION_H
+#define SRSGNB_MAC_CELL_CONFIGURATION_H
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/du_types.h"
@@ -50,4 +50,4 @@ struct mac_cell_configuration {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CELL_CONFIGURATION_H
+#endif // SRSGNB_MAC_CELL_CONFIGURATION_H

@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_RESOURCE_MANAGER_H
-#define SRSGNB_MAC_RESOURCE_MANAGER_H
+#ifndef SRSGNB_MAC_MAC_RESOURCE_MANAGER_H
+#define SRSGNB_MAC_MAC_RESOURCE_MANAGER_H
 
 #include "cell_configuration.h"
 #include "srsgnb/ran/du_types.h"
@@ -29,4 +29,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_RESOURCE_MANAGER_H
+#endif // SRSGNB_MAC_MAC_RESOURCE_MANAGER_H

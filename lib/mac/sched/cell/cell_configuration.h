@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_CELL_CONFIGURATION_H
-#define SRSGNB_MAC_CELL_CONFIGURATION_H
+#ifndef LIB_MAC_SCHED_CELL_CONFIGURATION_H
+#define LIB_MAC_SCHED_CELL_CONFIGURATION_H
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/mac/sched_configurer.h"
@@ -57,4 +57,4 @@ error_type<std::string> is_cell_configuration_request_valid(const cell_configura
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_CELL_CONFIGURATION_H
+#endif // LIB_MAC_SCHED_CELL_CONFIGURATION_H
