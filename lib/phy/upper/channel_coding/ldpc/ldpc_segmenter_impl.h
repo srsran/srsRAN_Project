@@ -83,8 +83,6 @@ private:
   /// \name Attributes relative to TS38.212 Section 5.4.2.1.
   ///@{
 
-  /// Number of coded bits available for transmission of the transport block (corresponds to \f$G\f$).
-  unsigned nof_available_coded_bits = 0;
   /// Number of symbols per transmission layer (corresponds to \f$G / (N_L Q_m)\f$).
   unsigned nof_symbols_per_layer = 0;
   /// \brief Number of segments of short rate-matched length (corresponds to \f$C - \bigr(\bigl(G / (N_L Q_m)\bigr)

@@ -55,7 +55,7 @@ void ldpc_segmenter_impl::compute_lifting_size()
 
   lifting_size = 0;
   for (auto ls : all_lifting_sizes) {
-    if (ls * total_ref_length > nof_tb_bits_out) {
+    if (ls * total_ref_length >= nof_tb_bits_out) {
       lifting_size = ls;
       break;
     }
@@ -136,13 +136,11 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   max_segment_length = (base_graph == base_graph_t::BG1) ? max_BG1_block_length : max_BG2_block_length;
   // Each transport_block entry is a byte, and TBS can always be expressed as an integer number of bytes (see, e.g.,
   // TS38.214 Section 5.1.3.2).
-  unsigned        nof_tb_bits_tmp = transport_block.size() * bits_per_byte;
-  crc_calculator& tb_crc          = *crc_set.crc24A;
-  unsigned        nof_tb_crc_bits = 24;
-  if (nof_tb_bits_tmp <= 3824) {
-    tb_crc          = *crc_set.crc16;
-    nof_tb_crc_bits = 16;
-  }
+  unsigned nof_tb_bits_tmp = transport_block.size() * bits_per_byte;
+
+  crc_calculator& tb_crc          = (nof_tb_bits_tmp <= 3824) ? *crc_set.crc16 : *crc_set.crc24A;
+  unsigned        nof_tb_crc_bits = (nof_tb_bits_tmp <= 3824) ? 16 : 24;
+
   nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
 
   buffer.resize(nof_tb_bits_in);
@@ -150,8 +148,6 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   unsigned      tb_checksum = tb_crc.calculate_byte(transport_block);
   span<uint8_t> p           = span<uint8_t>(buffer).last(nof_tb_crc_bits);
   srsvec::bit_unpack(tb_checksum, p, nof_tb_crc_bits);
-
-  nof_available_coded_bits = cfg.nof_ch_symbols * static_cast<unsigned>(cfg.mod);
 
   compute_nof_segments();
   compute_lifting_size();
@@ -163,6 +159,12 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   }
   // Compute the maximum number of information bits that can be assigned to a segment.
   unsigned max_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
+
+  // Zero-padding if necessary.
+  unsigned zero_pad = (max_info_bits + nof_crc_bits) * nof_segments - nof_tb_bits_out;
+  if (zero_pad > 0) {
+    buffer.resize(nof_tb_bits_in + zero_pad, 0);
+  }
 
   // Number of channel symbols assigned to a transmission layer.
   nof_symbols_per_layer = cfg.nof_ch_symbols / cfg.nof_layers;
@@ -178,17 +180,15 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     segment_data tmp_data(segment_length);
-    // Number of bits to copy to this segment.
-    unsigned nof_info_bits = std::min(max_info_bits, nof_tb_bits_in - input_idx);
     // Number of filler bits in this segment.
-    unsigned nof_filler_bits = segment_length - nof_info_bits - nof_crc_bits;
+    unsigned nof_filler_bits = segment_length - max_info_bits - nof_crc_bits;
 
     fill_segment(tmp_data,
-                 span<uint8_t>(buffer).subspan(input_idx, nof_info_bits),
+                 span<uint8_t>(buffer).subspan(input_idx, max_info_bits),
                  crc_set.crc24B,
                  nof_crc_bits,
                  nof_filler_bits);
-    input_idx += nof_info_bits;
+    input_idx += max_info_bits;
 
     codeblock_metadata tmp_description = {};
 
