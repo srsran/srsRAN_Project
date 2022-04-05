@@ -29,8 +29,8 @@ public:
     std::shared_ptr<byte_buffer_segment> next = nullptr;
   };
 
-  byte_buffer_segment() :
-    payload_data_(buffer.data() + DEFAULT_HEADROOM), payload_data_end_(buffer.data() + DEFAULT_HEADROOM)
+  byte_buffer_segment(size_t headroom = DEFAULT_HEADROOM) :
+    payload_data_(buffer.data() + headroom), payload_data_end_(buffer.data() + headroom)
   {}
   byte_buffer_segment(const byte_buffer_segment& other) noexcept
     : payload_data_(buffer.data() + other.headroom()),
@@ -497,13 +497,14 @@ private:
   {
     // TODO: Use memory pool.
     // TODO: Verify if allocation was successful. What to do if not?
-    auto buf = std::make_shared<byte_buffer_segment>();
     if (empty()) {
-      head = buf;
-      tail = buf.get();
+      // headroom given.
+      head = std::make_shared<byte_buffer_segment>((size_t)byte_buffer_segment::DEFAULT_HEADROOM);
+      tail = head.get();
     } else {
-      tail->metadata().next = buf;
-      tail                  = buf.get();
+      // No headroom needed for later segments.
+      tail->metadata().next = std::make_shared<byte_buffer_segment>(0);
+      tail                  = tail->next();
     }
   }
 
