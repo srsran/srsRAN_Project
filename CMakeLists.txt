@@ -73,6 +73,12 @@ else(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
   endif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 
+if (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+  if (HAVE_SSE)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Ofast -funroll-loops")
+  endif (HAVE_SSE)
+endif (NOT ${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+
 if (ENABLE_ASAN)
     # Note: When using ASAN, we need to ensure the use of RPATH instead of RUNPATH via "-Wl,--disable-new-dtags"
     # While RPATH is default, some systems (e.g. Ubuntu 18.04 and 20.04) use RUNPATH by default, which is non-transitive.
