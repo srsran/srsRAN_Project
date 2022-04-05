@@ -13,6 +13,7 @@
 #ifndef SRSASN_COMMON_UTILS_H
 #define SRSASN_COMMON_UTILS_H
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <array>
@@ -116,67 +117,57 @@ const char* convert_enum_idx(const char* array[], uint32_t nof_types, uint32_t e
 template <class ItemType>
 ItemType map_enum_number(ItemType* array, uint32_t nof_types, uint32_t enum_val, const char* enum_type);
 
-/************************
-        bit_ref
-************************/
-
 struct ValOrError {
   uint32_t    val;
   SRSASN_CODE code;
   ValOrError() : val(0), code(SRSASN_SUCCESS) {}
   ValOrError(uint32_t val_, SRSASN_CODE code_) : val(val_), code(code_) {}
 };
-template <typename T, typename Ptr>
-SRSASN_CODE unpack_bits(T& val, Ptr& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
 
-template <typename Ptr = uint8_t*>
-class bit_ref_impl
-{
-public:
-  bit_ref_impl() = default;
-  bit_ref_impl(Ptr start_ptr_, uint32_t max_size_) :
-    ptr(start_ptr_), start_ptr(start_ptr_), max_ptr(max_size_ + start_ptr_)
-  {}
-
-  int distance(const bit_ref_impl<Ptr>& other) const;
-  int distance(const uint8_t* ref_ptr) const;
-  int distance() const;
-  int distance_bytes(uint8_t* ref_ptr) const;
-  int distance_bytes() const;
-  int distance_bytes_end() const;
-
-  template <class T>
-  SRSASN_CODE unpack(T& val, uint32_t n_bits)
-  {
-    return unpack_bits(val, ptr, offset, max_ptr, n_bits);
-  }
-  SRSASN_CODE unpack_bytes(uint8_t* buf, uint32_t n_bytes);
-  SRSASN_CODE align_bytes();
-  SRSASN_CODE advance_bits(uint32_t n_bits);
-  void        set(Ptr start_ptr_, uint32_t max_size_);
-
-protected:
-  Ptr            ptr       = nullptr;
-  uint8_t        offset    = 0;
-  const uint8_t* start_ptr = nullptr;
-  const uint8_t* max_ptr   = nullptr;
-};
-
-// read only bit_ref
-using cbit_ref = bit_ref_impl<const uint8_t*>;
+/************************
+        bit_ref
+************************/
 
 // write+read bit_ref version
-class bit_ref : public bit_ref_impl<uint8_t*>
-{
-  using base_t = bit_ref_impl<uint8_t*>;
+struct bit_ref {
+  bit_ref(srsgnb::byte_buffer_writer byte_writer) : writer(byte_writer) {}
 
-public:
-  bit_ref() = default;
-  bit_ref(uint8_t* start_ptr_, uint32_t max_size_) : bit_ref_impl(start_ptr_, max_size_) {}
+  srsgnb::byte_buffer_view data() const { return writer.view(); }
+
+  int distance_bytes() const;
+  int distance() const;
 
   SRSASN_CODE pack(uint64_t val, uint32_t n_bits);
-  SRSASN_CODE pack_bytes(const uint8_t* buf, uint32_t n_bytes);
+  SRSASN_CODE pack_bytes(srsgnb::span<const uint8_t> bytes);
+  SRSASN_CODE pack_bytes(srsgnb::byte_buffer_view bytes);
   SRSASN_CODE align_bytes_zero();
+
+private:
+  srsgnb::byte_buffer_writer writer;
+  uint8_t                    offset = 0;
+};
+
+// read-only bit_ref
+struct cbit_ref {
+  cbit_ref(srsgnb::byte_buffer_view buffer_) : buffer(buffer_), it(buffer.begin()) {}
+  cbit_ref(const bit_ref& bref) : buffer(bref.data()), it(bref.data().begin()) {}
+
+  srsgnb::byte_buffer_view data() const { return buffer; }
+
+  int         distance_bytes() const;
+  int         distance() const;
+  int         distance(const cbit_ref& other) const;
+  SRSASN_CODE advance_bits(uint32_t n_bits);
+
+  template <class T>
+  SRSASN_CODE unpack(T& val, uint32_t n_bits);
+  SRSASN_CODE unpack_bytes(srsgnb::span<uint8_t> bytes);
+  SRSASN_CODE align_bytes();
+
+private:
+  srsgnb::byte_buffer_view            buffer;
+  srsgnb::byte_buffer::const_iterator it;
+  uint8_t                             offset = 0;
 };
 
 /*********************
@@ -657,6 +648,9 @@ template <uint32_t N, bool aligned = false>
 class fixed_octstring
 {
 public:
+  using iterator       = typename std::array<uint8_t, N>::iterator;
+  using const_iterator = typename std::array<uint8_t, N>::const_iterator;
+
   const uint8_t& operator[](uint32_t idx) const { return octets_[idx]; }
   uint8_t&       operator[](uint32_t idx) { return octets_[idx]; }
   bool           operator==(const fixed_octstring<N>& other) const { return octets_ == other.octets_; }
@@ -683,6 +677,9 @@ public:
 
   SRSASN_CODE pack(bit_ref& bref) const;
   SRSASN_CODE unpack(cbit_ref& bref);
+
+  iterator begin() { return octets_.begin(); }
+  iterator end() { return octets_.end(); }
 
 private:
   std::array<uint8_t, N> octets_;
@@ -791,6 +788,8 @@ class unbounded_octstring
 {
 public:
   static const bool aligned = Al;
+  using iterator            = dyn_array<uint8_t>::iterator;
+  using const_iterator      = dyn_array<uint8_t>::const_iterator;
 
   unbounded_octstring() = default;
   explicit unbounded_octstring(uint32_t new_size) : octets_(new_size) {}
@@ -813,6 +812,11 @@ public:
     number_to_octstring(&octets_[0], val, size());
     return *this;
   }
+
+  iterator       begin() { return octets_.begin(); }
+  iterator       end() { return octets_.end(); }
+  const_iterator begin() const { return octets_.begin(); }
+  const_iterator end() const { return octets_.end(); }
 
 private:
   dyn_array<uint8_t> octets_;
@@ -1320,13 +1324,10 @@ public:
   ~varlength_field_pack_guard();
 
 private:
-  using byte_array_t   = std::array<uint8_t, 4096>;
-  using byte_array_ptr = std::unique_ptr<byte_array_t>;
-
-  bit_ref        brefstart;
-  bit_ref*       bref_tracker;
-  byte_array_ptr buffer_ptr;
-  bool           align;
+  bit_ref             brefstart;
+  bit_ref*            bref_tracker;
+  srsgnb::byte_buffer varlen_buffer;
+  bool                align;
 };
 
 class varlength_field_unpack_guard
@@ -1336,9 +1337,9 @@ public:
   ~varlength_field_unpack_guard();
 
 private:
+  uint32_t  len = 0;
   cbit_ref  bref0;
   cbit_ref* bref_tracker = nullptr;
-  uint32_t  len          = 0;
 };
 
 /*******************
@@ -1407,17 +1408,16 @@ inline void to_json(json_writer& j, int64_t number)
 template <class Msg>
 int test_pack_unpack_consistency(const Msg& msg)
 {
-  uint8_t buf[2048], buf2[2048];
-  bzero(buf, sizeof(buf));
-  bzero(buf2, sizeof(buf2));
-  Msg            msg2;
-  asn1::bit_ref  bref(&buf[0], sizeof(buf)), bref3(&buf2[0], sizeof(buf2));
-  asn1::cbit_ref bref2(&buf[0], sizeof(buf));
+  srsgnb::byte_buffer buf, buf2;
+  Msg                 msg2;
+  asn1::bit_ref       bref(buf), bref3(buf2);
 
   if (msg.pack(bref) != asn1::SRSASN_SUCCESS) {
     log_error_code(SRSASN_ERROR_ENCODE_FAIL, __FILE__, __LINE__);
     return -1;
   }
+
+  asn1::cbit_ref bref2(bref);
   if (msg2.unpack(bref2) != asn1::SRSASN_SUCCESS) {
     log_error_code(SRSASN_ERROR_DECODE_FAIL, __FILE__, __LINE__);
     return -1;
@@ -1438,7 +1438,7 @@ int test_pack_unpack_consistency(const Msg& msg)
     log_error("[{}][{}] .", __FILE__, __LINE__);
     return -1;
   }
-  if (memcmp(buf, buf2, bref.distance_bytes()) != 0) {
+  if (buf != buf2) {
     log_error("[{}][{}] .", __FILE__, __LINE__);
     return -1;
   }

@@ -43,26 +43,20 @@ void f1_setup_test()
     setup_req->gnb_du_name.value.from_string("srsDU");
     setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(1);
 
-    std::vector<uint8_t> tx_buffer;
-    tx_buffer.resize(128);
-
-    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    srsgnb::byte_buffer tx_buffer;
+    asn1::bit_ref       bref(tx_buffer);
     TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
-
-    tx_buffer.resize(bref.distance_bytes());
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
-    asn1::json_writer json_writer1;
+    std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
+    asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
-    logger.info(tx_buffer.data(),
-                tx_buffer.size(),
-                "F1AP PDU unpacked ({} B): \n {}",
-                tx_buffer.size(),
-                json_writer1.to_string().c_str());
+    logger.info(
+        bytes.data(), bytes.size(), "F1AP PDU unpacked ({} B): \n {}", bytes.size(), json_writer1.to_string().c_str());
 #endif
-    pcap_writer.write_pdu(srsgnb::span<uint8_t>(tx_buffer.data(), tx_buffer.size()));
+    pcap_writer.write_pdu(bytes);
   }
 
   // successful outcome F1SetupResponse
@@ -78,18 +72,15 @@ void f1_setup_test()
     setup_res->gnb_cu_name.value.from_string("srsCU");
     setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
 
-    std::vector<uint8_t> tx_buffer;
-    tx_buffer.resize(128);
-
-    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    srsgnb::byte_buffer tx_pdu;
+    asn1::bit_ref       bref(tx_pdu);
     TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
-
-    tx_buffer.resize(bref.distance_bytes());
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
-    asn1::json_writer json_writer1;
+    std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
+    asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
     logger.info(tx_buffer.data(),
                 tx_buffer.size(),
@@ -116,18 +107,15 @@ void f1_setup_test()
     setup_fail->time_to_wait.value   = asn1::f1ap::time_to_wait_opts::v10s;
     // add critical diagnostics
 
-    std::vector<uint8_t> tx_buffer;
-    tx_buffer.resize(128);
-
-    asn1::bit_ref bref(tx_buffer.data(), tx_buffer.size());
+    srsgnb::byte_buffer tx_pdu;
+    asn1::bit_ref       bref(tx_pdu);
     TESTASSERT_EQ(SRSASN_SUCCESS, pdu.pack(bref));
-
-    tx_buffer.resize(bref.distance_bytes());
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
 #if JSON_OUTPUT
-    asn1::json_writer json_writer1;
+    std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
+    asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
     logger.info(tx_buffer.data(),
                 tx_buffer.size(),
@@ -141,7 +129,7 @@ void f1_setup_test()
 
 void ue_context_setup_request_test()
 {
-  uint8_t rx_pdu[] = {
+  uint8_t rx_msg[] = {
       0x00, 0x05, 0x00, 0x82, 0x73, 0x00, 0x00, 0x06, 0x00, 0x28, 0x00, 0x02, 0x00, 0x34, 0x00, 0x3f, 0x00, 0x09, 0x00,
       0x00, 0xf1, 0x10, 0x07, 0x53, 0x04, 0x04, 0x70, 0x00, 0x6b, 0x00, 0x01, 0x04, 0x00, 0x09, 0x00, 0x82, 0x20, 0x60,
       0x81, 0x1c, 0x18, 0x80, 0x80, 0xff, 0x23, 0x01, 0x05, 0x7a, 0x35, 0x60, 0xa6, 0x13, 0x00, 0x00, 0x60, 0x40, 0x1c,
@@ -176,14 +164,15 @@ void ue_context_setup_request_test()
       0x22, 0x51, 0x40, 0x08, 0x09, 0x00, 0xfe, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x20, 0x66, 0x00, 0x17, 0x02, 0x00, 0x00, 0x00, 0xa1, 0x40, 0x01, 0x40, 0x00, 0x9e, 0x40,
       0x04, 0x20, 0x20, 0x3a, 0x00};
+  srsgnb::byte_buffer rx_pdu{rx_msg};
 
-  pcap_writer.write_pdu(srsgnb::span<uint8_t>(rx_pdu, sizeof(rx_pdu)));
+  pcap_writer.write_pdu(rx_msg);
 
   auto& logger = srslog::fetch_basic_logger("ASN1", false);
   logger.set_level(srslog::basic_levels::debug);
   logger.set_hex_dump_max_size(-1);
 
-  asn1::cbit_ref          bref{rx_pdu, sizeof(rx_pdu)};
+  asn1::cbit_ref          bref{rx_pdu};
   asn1::f1ap::f1_ap_pdu_c pdu;
 
   TESTASSERT(pdu.unpack(bref) == SRSASN_SUCCESS);
@@ -199,7 +188,7 @@ void ue_context_setup_request_test()
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
   pdu.to_json(json_writer1);
-  logger.info(rx_pdu, unpacked_len, "F1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
+  logger.info(rx_msg, unpacked_len, "F1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
 }
 

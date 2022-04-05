@@ -1,4 +1,3 @@
-add_subdirectory(test)
 
 # ASN1 utils
 add_library(asn1_utils STATIC asn1_utils.cpp)

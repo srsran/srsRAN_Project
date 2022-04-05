@@ -108,24 +108,24 @@ void test_eutra_nr_capabilities()
   mrdc_cap.feature_set_combinations.push_back(feature_set_combination);
 
   // Pack mrdc_cap
-  uint8_t       buffer[1024];
-  asn1::bit_ref bref(buffer, sizeof(buffer));
+  srsgnb::byte_buffer buffer;
+  asn1::bit_ref       bref(buffer);
   mrdc_cap.pack(bref);
 
   TESTASSERT(test_pack_unpack_consistency(mrdc_cap) == SRSASN_SUCCESS);
 
-  srslog::fetch_basic_logger("RRC").info(
-      buffer, bref.distance_bytes(), "Packed cap struct (%d bytes):", bref.distance_bytes());
+  //  srslog::fetch_basic_logger("RRC").info(
+  //      buffer, bref.distance_bytes(), "Packed cap struct ({} bytes):", bref.distance_bytes());
 }
 
 void test_ue_mrdc_capabilities()
 {
-  uint8_t msg[] = {0x01, 0x1c, 0x04, 0x81, 0x60, 0x00, 0x1c, 0x4d, 0x00, 0x00, 0x00, 0x04,
-                   0x00, 0x40, 0x04, 0x04, 0xd0, 0x10, 0x74, 0x06, 0x14, 0xe8, 0x1b, 0x10,
-                   0x78, 0x00, 0x00, 0x20, 0x00, 0x10, 0x08, 0x08, 0x01, 0x00, 0x20};
+  srsgnb::byte_buffer pdu{0x01, 0x1c, 0x04, 0x81, 0x60, 0x00, 0x1c, 0x4d, 0x00, 0x00, 0x00, 0x04,
+                          0x00, 0x40, 0x04, 0x04, 0xd0, 0x10, 0x74, 0x06, 0x14, 0xe8, 0x1b, 0x10,
+                          0x78, 0x00, 0x00, 0x20, 0x00, 0x10, 0x08, 0x08, 0x01, 0x00, 0x20};
   // 011c048160001c4d0000000400400404d010740614e81b107800002000100808010020
 
-  asn1::cbit_ref bref{msg, sizeof(msg)};
+  asn1::cbit_ref bref{pdu};
   ue_mrdc_cap_s  mrdc_cap;
 
   TESTASSERT(mrdc_cap.unpack(bref) == SRSASN_SUCCESS);
@@ -159,7 +159,9 @@ void test_ue_rrc_reconfiguration()
                       "\x08\x82\x00\x07\x10\x80\x0e\x60\x00\x40\x00\x00\x04\x10\xc0\x40"
                       "\x80\xc1\x00\xe0\xd0\x00\x0e\x48\x10\x00\x00\x02\x00\x40\x00\x80"
                       "\x60\x00\x80\x90\x02\x20\x0a\x40\x00\x02\x38\x90\x11\x31\xc8";
-  cbit_ref    bref(&rrc_msg[0], sizeof(rrc_msg));
+  srsgnb::byte_buffer pdu{rrc_msg};
+
+  cbit_ref    bref(pdu);
   rrc_recfg_s rrc_recfg;
 
   TESTASSERT(rrc_recfg.unpack(bref) == SRSASN_SUCCESS);
@@ -171,9 +173,10 @@ void test_ue_rrc_reconfiguration()
   TESTASSERT(rrc_recfg.crit_exts.type() == asn1::rrc_nr::rrc_recfg_s::crit_exts_c_::types::rrc_recfg);
   TESTASSERT(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size() > 0);
 
-  cell_group_cfg_s cell_group_cfg;
-  cbit_ref         bref0(rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.data(),
-                 rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size());
+  cell_group_cfg_s    cell_group_cfg;
+  srsgnb::byte_buffer pdu2{srsgnb::span<const uint8_t>{rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.data(),
+                                                       rrc_recfg.crit_exts.rrc_recfg().secondary_cell_group.size()}};
+  cbit_ref            bref0(pdu2);
   TESTASSERT(cell_group_cfg.unpack(bref0) == SRSASN_SUCCESS);
   // json_writer jw1;
   // cell_group_cfg.to_json(jw1);
@@ -187,13 +190,15 @@ void test_ue_rrc_reconfiguration()
 
 void test_radio_bearer_config()
 {
-  uint8_t            rrc_msg[] = "\x14\x09\x28\x17\x87\xc0\x0c\x28";
-  cbit_ref           bref(&rrc_msg[0], sizeof(rrc_msg));
+  uint8_t             rrc_msg[] = "\x14\x09\x28\x17\x87\xc0\x0c\x28";
+  srsgnb::byte_buffer pdu{rrc_msg};
+
+  cbit_ref           bref(pdu);
   radio_bearer_cfg_s radio_bearer_cfg;
   TESTASSERT(radio_bearer_cfg.unpack(bref) == SRSASN_SUCCESS);
   // json_writer jw;
   // radio_bearer_cfg.to_json(jw);
-  // srslog::fetch_basic_logger("RRC").info("RRC Bearer CFG Message: \n %s", jw.to_string().c_str());
+  // srslog::fetch_basic_logger("RRC").info("RRC Bearer CFG Message: \n {}", jw.to_string().c_str());
   TESTASSERT(radio_bearer_cfg.drb_to_add_mod_list.size() == 1);
   TESTASSERT(radio_bearer_cfg.security_cfg_present == true);
   TESTASSERT(radio_bearer_cfg.security_cfg.security_algorithm_cfg_present == true);
@@ -227,8 +232,9 @@ void test_cell_group_config()
                                     "\x60\x00\x40\x00\x00\x04\x10\xc0\x40\x80\xc1\x00\xe0\xd0\x00\x0e"
                                     "\x48\x10\x00\x00\x02\x00\x40\x00\x80\x60\x00\x80\x90\x02\x20\x0a"
                                     "\x40\x00\x02\x38\x90\x11\x31\xc8";
+  srsgnb::byte_buffer pdu{cell_group_config_raw};
 
-  cbit_ref         bref(&cell_group_config_raw[0], sizeof(cell_group_config_raw));
+  cbit_ref         bref(pdu);
   cell_group_cfg_s cell_group_cfg;
 
   TESTASSERT(cell_group_cfg.unpack(bref) == SRSASN_SUCCESS);
@@ -277,7 +283,7 @@ void test_cell_group_config()
 
   // asn1::json_writer json_writer;
   // cell_group_cfg.to_json(json_writer);
-  // srslog::fetch_basic_logger("RRC").info("RRC Secondary Cell Group: Content: {}\n", json_writer.to_string().c_str());
+  // srslog::fetch_basic_logger("RRC").info("RRC Secondary Cell Group: Content: %s\n", json_writer.to_string().c_str());
 }
 
 int main()

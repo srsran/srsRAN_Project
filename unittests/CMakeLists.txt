@@ -1,5 +1,6 @@
 add_subdirectory(adt)
 add_subdirectory(support)
+add_subdirectory(asn1)
 add_subdirectory(ran)
 add_subdirectory(phy)
 add_subdirectory(mac)

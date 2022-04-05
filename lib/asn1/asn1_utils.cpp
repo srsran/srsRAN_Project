@@ -104,218 +104,69 @@ map_enum_number<const float>(const float* array, uint32_t nof_types, uint32_t en
        bit_ref
 *********************/
 
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance(const bit_ref_impl<Ptr>& other) const
+int bit_ref::distance_bytes() const
 {
-  return ((int)offset - (int)other.offset) + 8 * ((int)(ptr - other.ptr));
+  return static_cast<int>(writer.length());
 }
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance(const uint8_t* ref_ptr) const
+
+int bit_ref::distance() const
 {
-  return (int)offset + 8 * ((int)(ptr - ref_ptr));
-}
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance() const
-{
-  return (int)offset + 8 * ((int)(ptr - start_ptr));
-}
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance_bytes(uint8_t* ref_ptr) const
-{
-  return ((int)(ptr - ref_ptr)) + ((offset) ? 1 : 0);
-}
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance_bytes() const
-{
-  return ((int)(ptr - start_ptr)) + ((offset) ? 1 : 0);
-}
-template <typename Ptr>
-int bit_ref_impl<Ptr>::distance_bytes_end() const
-{
-  return ((int)(max_ptr - ptr)) - ((offset) ? 1 : 0);
+  return 8 * (static_cast<int>(writer.length()) - (offset == 0 ? 0 : 1)) + offset;
 }
 
 SRSASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
 {
-  if (n_bits >= 64) {
-    log_error("This method only supports packing up to 64 bits");
-    return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  uint64_t mask;
+  srsran_assert(n_bits < 64, "Invalid number of bits passed to pack()");
   while (n_bits > 0) {
-    if (ptr >= max_ptr) {
-      log_error("pack: Buffer size limit was achieved");
-      return SRSASN_ERROR_ENCODE_FAIL;
+    if (offset == 0) {
+      writer.append(0);
     }
-    mask             = ((1ul << n_bits) - 1ul);
-    val              = val & mask;
-    uint8_t keepmask = ((uint8_t)-1) - (uint8_t)((1u << (8u - offset)) - 1u);
-    if ((uint32_t)(8 - offset) > n_bits) {
-      auto bit = static_cast<uint8_t>(val << (8u - offset - n_bits));
-      *ptr     = ((*ptr) & keepmask) + bit;
+    uint64_t mask = ((1ul << n_bits) - 1ul); // bitmap of n_bits ones.
+    val           = val & mask;
+    if (static_cast<uint32_t>(8U - offset) > n_bits) {
+      // in case n_bits < number of bits left in current byte (ie, last iteration).
+      auto shifted_val = static_cast<uint8_t>(val << (8u - offset - n_bits));
+      writer.back() += shifted_val;
       offset += n_bits;
       n_bits = 0;
     } else {
-      auto bit = static_cast<uint8_t>(val >> (n_bits - 8u + offset));
-      *ptr     = (*ptr & keepmask) + bit;
-      n_bits -= (8 - offset);
+      // in case, space in current byte is lower or equal to n_bits (ie, not the last iteration).
+      auto shifted_val = static_cast<uint8_t>(val >> (n_bits - 8u + offset));
+      writer.back() += shifted_val;
+      n_bits -= 8U - offset;
       offset = 0;
-      ptr++;
     }
   }
   return SRSASN_SUCCESS;
 }
 
-template <typename T, typename Ptr>
-SRSASN_CODE unpack_bits(T& val, Ptr& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits)
+SRSASN_CODE bit_ref::pack_bytes(srsgnb::span<const uint8_t> bytes)
 {
-  if (n_bits > sizeof(T) * 8) {
-    log_error("This method only supports unpacking up to {} bits", (int)sizeof(T) * 8);
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  val = 0;
-  while (n_bits > 0) {
-    if (ptr >= max_ptr) {
-      log_error("unpack_bits: Buffer size limit was achieved");
-      return SRSASN_ERROR_DECODE_FAIL;
-    }
-    if ((uint32_t)(8 - offset) > n_bits) {
-      uint8_t mask = (uint8_t)(1u << (8u - offset)) - (uint8_t)(1u << (8u - offset - n_bits));
-      val += ((uint32_t)((*ptr) & mask)) >> (8u - offset - n_bits);
-      offset += n_bits;
-      n_bits = 0;
-    } else {
-      auto mask = static_cast<uint8_t>((1u << (8u - offset)) - 1u);
-      val += ((uint32_t)((*ptr) & mask)) << (n_bits - 8 + offset);
-      n_bits -= 8 - offset;
-      offset = 0;
-      ptr++;
-    }
-  }
-  return SRSASN_SUCCESS;
-}
-
-template SRSASN_CODE
-                     unpack_bits<bool, uint8_t*>(bool& val, uint8_t*& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
-template SRSASN_CODE unpack_bits<bool, const uint8_t*>(bool&           val,
-                                                       const uint8_t*& ptr,
-                                                       uint8_t&        offset,
-                                                       const uint8_t*  max_ptr,
-                                                       uint32_t        n_bits);
-template SRSASN_CODE
-                     unpack_bits<uint8_t, uint8_t*>(uint8_t& val, uint8_t*& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
-template SRSASN_CODE unpack_bits<uint8_t, const uint8_t*>(uint8_t&        val,
-                                                          const uint8_t*& ptr,
-                                                          uint8_t&        offset,
-                                                          const uint8_t*  max_ptr,
-                                                          uint32_t        n_bits);
-template SRSASN_CODE
-                     unpack_bits<uint16_t, uint8_t*>(uint16_t& val, uint8_t*& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
-template SRSASN_CODE unpack_bits<uint16_t, const uint8_t*>(uint16_t&       val,
-                                                           const uint8_t*& ptr,
-                                                           uint8_t&        offset,
-                                                           const uint8_t*  max_ptr,
-                                                           uint32_t        n_bits);
-template SRSASN_CODE
-                     unpack_bits<uint32_t, uint8_t*>(uint32_t& val, uint8_t*& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
-template SRSASN_CODE unpack_bits<uint32_t, const uint8_t*>(uint32_t&       val,
-                                                           const uint8_t*& ptr,
-                                                           uint8_t&        offset,
-                                                           const uint8_t*  max_ptr,
-                                                           uint32_t        n_bits);
-template SRSASN_CODE
-                     unpack_bits<uint64_t, uint8_t*>(uint64_t& val, uint8_t*& ptr, uint8_t& offset, const uint8_t* max_ptr, uint32_t n_bits);
-template SRSASN_CODE unpack_bits<uint64_t, const uint8_t*>(uint64_t&       val,
-                                                           const uint8_t*& ptr,
-                                                           uint8_t&        offset,
-                                                           const uint8_t*  max_ptr,
-                                                           uint32_t        n_bits);
-
-template <typename Ptr>
-SRSASN_CODE bit_ref_impl<Ptr>::unpack_bytes(uint8_t* buf, uint32_t n_bytes)
-{
-  if (n_bytes == 0) {
+  if (bytes.empty()) {
     return SRSASN_SUCCESS;
   }
   if (offset == 0) {
     // Aligned case
-    if (ptr + n_bytes > max_ptr) {
-      log_error("unpack_bytes (aligned): Buffer size limit was achieved");
-      return SRSASN_ERROR_DECODE_FAIL;
-    }
-    memcpy(buf, ptr, n_bytes);
-    ptr += n_bytes;
+    writer.append(bytes);
   } else {
-    // Unaligned case
-    if (ptr + n_bytes >= max_ptr) {
-      log_error("unpack_bytes (unaligned): Buffer size limit was achieved");
-      return SRSASN_ERROR_DECODE_FAIL;
-    }
-    for (uint32_t i = 0; i < n_bytes; ++i) {
-      HANDLE_CODE(unpack(buf[i], 8));
+    for (uint8_t byte : bytes) {
+      pack(byte, 8U);
     }
   }
   return SRSASN_SUCCESS;
 }
 
-template <typename Ptr>
-SRSASN_CODE bit_ref_impl<Ptr>::align_bytes()
+SRSASN_CODE bit_ref::pack_bytes(srsgnb::byte_buffer_view bytes)
 {
-  if (offset == 0)
+  if (bytes.empty()) {
     return SRSASN_SUCCESS;
-  if (ptr >= max_ptr) {
-    log_error("align_bytes: Buffer size limit was achieved");
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  offset = 0;
-  ptr++;
-  return SRSASN_SUCCESS;
-}
-
-template <typename Ptr>
-SRSASN_CODE bit_ref_impl<Ptr>::advance_bits(uint32_t n_bits)
-{
-  uint32_t extra_bits     = (offset + n_bits) % 8;
-  uint32_t bytes_required = ceilf((offset + n_bits) / 8.0f);
-  uint32_t bytes_offset   = floorf((offset + n_bits) / 8.0f);
-
-  if (ptr + bytes_required > max_ptr) {
-    log_error("advance_bytes: Buffer size limit was achieved");
-    return SRSASN_ERROR_DECODE_FAIL;
-  }
-  ptr += bytes_offset;
-  offset = extra_bits;
-  return SRSASN_SUCCESS;
-}
-
-template <typename Ptr>
-void bit_ref_impl<Ptr>::set(Ptr start_ptr_, uint32_t max_size_)
-{
-  ptr       = start_ptr_;
-  offset    = 0;
-  start_ptr = start_ptr_;
-  max_ptr   = max_size_ + start_ptr_;
-}
-
-template class asn1::bit_ref_impl<uint8_t*>;
-template class asn1::bit_ref_impl<const uint8_t*>;
-
-SRSASN_CODE bit_ref::pack_bytes(const uint8_t* buf, uint32_t n_bytes)
-{
-  if (n_bytes == 0) {
-    return SRSASN_SUCCESS;
-  }
-  if (ptr + n_bytes >= max_ptr) {
-    log_error("pack_bytes: Buffer size limit was achieved");
-    return SRSASN_ERROR_ENCODE_FAIL;
   }
   if (offset == 0) {
-    // Aligned case
-    memcpy(ptr, buf, n_bytes);
-    ptr += n_bytes;
+    // Aligned case.
+    writer.append(bytes);
   } else {
-    for (uint32_t i = 0; i < n_bytes; ++i) {
-      pack(buf[i], 8);
+    for (uint8_t byte : bytes) {
+      pack(byte, 8U);
     }
   }
   return SRSASN_SUCCESS;
@@ -323,16 +174,103 @@ SRSASN_CODE bit_ref::pack_bytes(const uint8_t* buf, uint32_t n_bytes)
 
 SRSASN_CODE bit_ref::align_bytes_zero()
 {
-  if (offset == 0)
-    return SRSASN_SUCCESS;
-  if (ptr >= max_ptr) {
-    log_error("align_bytes_zero: Buffer size limit was achieved");
-    return SRSASN_ERROR_ENCODE_FAIL;
-  }
-  auto mask = static_cast<uint8_t>(256u - (1u << (8u - offset)));
-  *ptr &= mask;
   offset = 0;
-  ptr++;
+  return SRSASN_SUCCESS;
+}
+
+int cbit_ref::distance_bytes() const
+{
+  return static_cast<int>(it - buffer.begin()) + (offset != 0 ? 1 : 0);
+}
+
+int cbit_ref::distance() const
+{
+  return (int)offset + 8 * static_cast<int>(it - buffer.begin());
+}
+
+int cbit_ref::distance(const cbit_ref& other) const
+{
+  return distance() - other.distance();
+}
+
+template <class T>
+SRSASN_CODE cbit_ref::unpack(T& val, uint32_t n_bits)
+{
+  srsran_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
+  val = 0;
+  while (n_bits > 0) {
+    if ((uint32_t)(8 - offset) > n_bits) {
+      uint8_t mask = (uint8_t)(1u << (8u - offset)) - (uint8_t)(1u << (8u - offset - n_bits));
+      val += ((uint32_t)((*it) & mask)) >> (8u - offset - n_bits);
+      offset += n_bits;
+      n_bits = 0;
+    } else {
+      auto mask = static_cast<uint8_t>((1u << (8u - offset)) - 1u);
+      val += ((uint32_t)((*it) & mask)) << (n_bits - 8 + offset);
+      n_bits -= 8 - offset;
+      offset = 0;
+      if (it == buffer.end()) {
+        log_error("{}: Buffer size limit {} was achieved.", __FUNCTION__, buffer.length());
+        return SRSASN_ERROR_DECODE_FAIL;
+      }
+      ++it;
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+template SRSASN_CODE cbit_ref::unpack<bool>(bool&, uint32_t n_bits);
+template SRSASN_CODE cbit_ref::unpack<uint8_t>(uint8_t&, uint32_t n_bits);
+template SRSASN_CODE cbit_ref::unpack<uint16_t>(uint16_t&, uint32_t n_bits);
+template SRSASN_CODE cbit_ref::unpack<uint32_t>(uint32_t&, uint32_t n_bits);
+template SRSASN_CODE cbit_ref::unpack<uint64_t>(uint64_t&, uint32_t n_bits);
+
+SRSASN_CODE cbit_ref::unpack_bytes(srsgnb::span<uint8_t> bytes)
+{
+  if (bytes.empty()) {
+    return SRSASN_SUCCESS;
+  }
+  if (static_cast<std::ptrdiff_t>(bytes.size()) > buffer.end() - it) {
+    log_error("unpack_bytes: Buffer size limit was achieved");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  if (offset == 0) {
+    // Aligned case
+    std::copy(buffer.begin(), buffer.end(), bytes.begin());
+    it += bytes.size();
+  } else {
+    // Unaligned case
+    for (uint32_t i = 0; i < bytes.size(); ++i) {
+      HANDLE_CODE(unpack(bytes[i], 8));
+    }
+  }
+  return SRSASN_SUCCESS;
+}
+
+SRSASN_CODE cbit_ref::align_bytes()
+{
+  if (offset != 0) {
+    if (it == buffer.end()) {
+      log_error("{}: Buffer size limit {} was achieved.", __FUNCTION__, buffer.length());
+      return SRSASN_ERROR_DECODE_FAIL;
+    }
+    ++it;
+    offset = 0;
+  }
+  return SRSASN_SUCCESS;
+}
+
+SRSASN_CODE cbit_ref::advance_bits(uint32_t n_bits)
+{
+  uint32_t extra_bits     = (offset + n_bits) % 8;
+  uint32_t bytes_required = ceil_frac(offset + n_bits, 8U);
+  uint32_t bytes_offset   = (offset + n_bits) / 8U;
+
+  if (bytes_required > buffer.end() - it) {
+    log_error("advance_bytes: Buffer size limit was achieved");
+    return SRSASN_ERROR_DECODE_FAIL;
+  }
+  it += bytes_offset;
+  offset = extra_bits;
   return SRSASN_SUCCESS;
 }
 
@@ -350,7 +288,7 @@ SRSASN_CODE pack_unsupported_ext_flag(bit_ref& bref, bool ext)
   return SRSASN_SUCCESS;
 }
 
-SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, bit_ref& bref)
+SRSASN_CODE unpack_unsupported_ext_flag(bool& ext, cbit_ref& bref)
 {
   SRSASN_CODE ret = bref.unpack(ext, 1);
   if (ext) {
@@ -734,7 +672,7 @@ SRSASN_CODE pack_length(bit_ref& bref, uint32_t val, bool aligned)
       // TODO: Error message
       return SRSASN_ERROR_ENCODE_FAIL;
     }
-    HANDLE_CODE(bref.align_bytes());
+    HANDLE_CODE(bref.align_bytes_zero());
     if (val < 128) {
       return bref.pack(val, 8); // first bit is 0
     } else if (val < ASN_16K) {
@@ -1104,7 +1042,7 @@ SRSASN_CODE pack_bitfield(bit_ref& bref, const uint8_t* buf, uint32_t nbits, uin
     return SRSASN_ERROR_ENCODE_FAIL;
   }
   if (is_aligned and (lb != ub or ub > 16)) {
-    bref.align_bytes();
+    bref.align_bytes_zero();
   }
   uint32_t n_octs = ceil_frac(nbits, 8u);
   uint32_t offset = ((nbits - 1) % 8) + 1;
@@ -1411,15 +1349,9 @@ SRSASN_CODE ext_groups_unpacker_guard::unpack(cbit_ref& bref)
      Open Field
 *********************/
 
-varlength_field_pack_guard::varlength_field_pack_guard(bit_ref& bref, bool align_) :
-  buffer_ptr(std::make_unique<byte_array_t>())
+varlength_field_pack_guard::varlength_field_pack_guard(bit_ref& bref, bool align_) : brefstart(bref)
 {
-  if (buffer_ptr == nullptr) {
-    // failed to allocate from global byte buffer pool. Fallback to malloc
-    buffer_ptr = std::unique_ptr<byte_array_t>(new byte_array_t());
-  }
-  brefstart    = bref;
-  bref         = bit_ref(buffer_ptr->data(), buffer_ptr->size());
+  bref         = bit_ref(varlen_buffer);
   bref_tracker = &bref;
   align        = align_;
 }
@@ -1427,33 +1359,29 @@ varlength_field_pack_guard::varlength_field_pack_guard(bit_ref& bref, bool align
 varlength_field_pack_guard::~varlength_field_pack_guard()
 {
   // fill the spare bits
-  uint32_t leftover = 7 - ((bref_tracker->distance() - (uint32_t)1) % (uint32_t)8);
+  uint32_t leftover = 7U - ((bref_tracker->distance() - (uint32_t)1U) % (uint32_t)8U);
   bref_tracker->pack(0, leftover);
 
   // check how many bytes were written in total
-  uint32_t nof_bytes = bref_tracker->distance() / (uint32_t)8;
-  if (nof_bytes > buffer_ptr->size()) {
-    log_error("The packed variable sized field is too long for the reserved buffer ({} > {})",
-              (size_t)nof_bytes,
-              buffer_ptr->size());
-  }
+  uint32_t nof_bytes = bref_tracker->distance() / (uint32_t)8U;
 
   // go back in time to pack length
   pack_length(brefstart, nof_bytes, align);
 
   // pack encoded bytes
-  for (uint32_t i = 0; i < nof_bytes; ++i) {
-    brefstart.pack((*buffer_ptr)[i], 8);
-  }
+  brefstart.pack_bytes(varlen_buffer);
   *bref_tracker = brefstart;
 }
 
-varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool align)
-{
-  unpack_length(len, bref, align);
-  bref0        = bref;
-  bref_tracker = &bref;
-}
+varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool align) :
+  len([&bref, align]() {
+    uint32_t len_;
+    unpack_length(len_, bref, align);
+    return len_;
+  }()),
+  bref0(bref),
+  bref_tracker(&bref)
+{}
 
 varlength_field_unpack_guard::~varlength_field_unpack_guard()
 {

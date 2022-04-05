@@ -24,7 +24,7 @@ std::mt19937       g(rd());
 
 srsgnb::log_sink_spy* test_spy = nullptr;
 
-int test_arrays()
+void test_arrays()
 {
   /* Test Ext Array */
   ext_array<int> ext_ar;
@@ -59,140 +59,109 @@ int test_arrays()
   TESTASSERT(ext_ar.size() == 5);
   ext_ar.resize(0);
   TESTASSERT(not ext_ar.is_in_small_buffer());
-
-  return 0;
 }
 
-int test_bit_ref()
+void test_bit_ref()
 {
-  uint8_t buf[1024];
+  for (uint32_t n_bit_stride = 1; n_bit_stride < 32; ++n_bit_stride) {
+    srsgnb::byte_buffer buf;
+    uint32_t            nof_bytes_to_pack = n_bit_stride * 4;
 
-  // one bit at a time
-  {
-    uint32_t nof_bytes = 2;
-    bit_ref  bref(&buf[0], nof_bytes);
-    bit_ref  bref0 = bref;
-    for (uint32_t i = 0; i < 8 * nof_bytes; ++i) {
-      bref.pack(i, 1);
+    // Pack in batches of n_bit_stride.
+    bit_ref bref(buf);
+    for (uint32_t i = 0; i < nof_bytes_to_pack * 8 / n_bit_stride; ++i) {
+      TESTASSERT_EQ(i * n_bit_stride, (unsigned)bref.distance());
+      TESTASSERT_EQ(SRSASN_SUCCESS, bref.pack(i, n_bit_stride));
     }
-    uint8_t a[] = {85, 85};
-    TESTASSERT(bref.distance(bref0) / 8 == (int)nof_bytes);
-    TESTASSERT(memcmp(a, buf, nof_bytes) == 0);
-    bit_ref bref2(&buf[0], nof_bytes);
-    for (uint32_t i = 0; i < 8 * nof_bytes; ++i) {
-      bool val;
-      bref2.unpack(val, 1);
-      TESTASSERT((i & 1) == val);
-    }
-  }
+    TESTASSERT_EQ(nof_bytes_to_pack, (unsigned)bref.distance_bytes());
+    TESTASSERT_EQ(nof_bytes_to_pack, (unsigned)bref.distance() / 8U);
+    TESTASSERT_EQ(0, bref.distance() % 8);
+    //    bool is_eq = buf == vec_compare;
+    //    TESTASSERT(is_eq);
 
-  // three bits at a time
-  {
-    uint32_t nof_bytes = 3;
-    bit_ref  bref(&buf[0], nof_bytes);
-    bit_ref  bref0 = bref;
-    for (uint32_t i = 0; i < 8 * nof_bytes / 3; ++i) {
-      bref.pack(i, 3);
+    // Unpack in batches of n_bit_stride.
+    cbit_ref bref2(buf);
+    uint64_t bitmask = (1u << n_bit_stride) - 1;
+    TESTASSERT_EQ(0, bref2.distance_bytes());
+    for (uint32_t i = 0; i < nof_bytes_to_pack * 8 / n_bit_stride; ++i) {
+      uint64_t val;
+      TESTASSERT_EQ(i * n_bit_stride, (unsigned)bref2.distance());
+      TESTASSERT_EQ(SRSASN_SUCCESS, bref2.unpack(val, n_bit_stride));
+      TESTASSERT((i & bitmask) == val);
     }
-    uint8_t a[] = {5, 57, 119};
-    TESTASSERT(bref.distance(bref0) / 8 == (int)nof_bytes);
-    TESTASSERT(memcmp(a, buf, nof_bytes) == 0);
-    bit_ref bref2(&buf[0], nof_bytes);
-    for (uint32_t i = 0; i < 8 * nof_bytes / 3; ++i) {
-      uint32_t val;
-      bref2.unpack(val, 3);
-      TESTASSERT((i & 7) == val);
-    }
-  }
-
-  // 16 bits at a time
-  {
-    uint32_t nof_bytes = 32, bitstride = 16;
-    uint32_t start = 256, mask = (1u << bitstride) - 1u;
-    bit_ref  bref(&buf[0], nof_bytes);
-    for (uint32_t i = 0; i < 8 * nof_bytes / bitstride; ++i) {
-      bref.pack(i + start, bitstride);
-    }
-    uint8_t a[] = {1, 0, 1, 1, 1, 2, 1, 3, 1, 4};
-    TESTASSERT(bref.distance_bytes() == (int32_t)nof_bytes);
-    TESTASSERT(memcmp(a, buf, sizeof(a)) == 0);
-    bit_ref bref2(&buf[0], nof_bytes);
-    for (uint32_t i = 0; i < 8 * nof_bytes / bitstride; ++i) {
-      uint32_t val;
-      bref2.unpack(val, bitstride);
-      TESTASSERT(((i + start) & mask) == val);
-    }
+    TESTASSERT_EQ(nof_bytes_to_pack, (unsigned)bref2.distance_bytes());
+    TESTASSERT_EQ(bref.distance(), bref2.distance());
   }
 
   // pack bytes aligned
   {
-    uint32_t nof_bytes = 512;
-    uint32_t start     = 1;
-    bit_ref  bref(&buf[0], sizeof(buf));
-    uint8_t  buf2[1024];
-    for (uint32_t i = 0; i < sizeof(buf2); ++i) {
+    srsgnb::byte_buffer            buf;
+    constexpr uint32_t             nof_bytes = 512;
+    uint32_t                       start     = 1;
+    bit_ref                        bref(buf);
+    std::array<uint8_t, nof_bytes> buf2;
+    for (uint32_t i = 0; i < nof_bytes; ++i) {
       buf2[i] = start + i;
     }
-    TESTASSERT(bref.pack_bytes(buf2, nof_bytes) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance_bytes() == (int)nof_bytes);
-    TESTASSERT(memcmp(buf2, buf, bref.distance_bytes()) == 0);
-    bit_ref bref2(&buf[0], sizeof(buf));
-    TESTASSERT(bref2.unpack_bytes(&buf2[0], nof_bytes) == SRSASN_SUCCESS);
-    TESTASSERT(bref2.distance_bytes() == (int)nof_bytes);
-    TESTASSERT(memcmp(buf2, buf, bref.distance_bytes()) == 0);
+
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.pack_bytes(buf2));
+    TESTASSERT_EQ((int)nof_bytes, bref.distance_bytes());
+    TESTASSERT_EQ(nof_bytes, buf.length());
+    TESTASSERT(buf == buf2);
+    cbit_ref bref2(buf);
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref2.unpack_bytes(buf2));
+    TESTASSERT_EQ((int)nof_bytes, bref2.distance_bytes());
+    TESTASSERT(buf == buf2);
   }
 
   // pack bytes unaligned
   {
-    uint32_t nof_bytes = 128;
-    uint32_t start     = 1;
-    bit_ref  bref(&buf[0], sizeof(buf));
-    uint8_t  buf2[1024], buf3[1024];
-    for (uint32_t i = 0; i < sizeof(buf2); ++i) {
+    constexpr uint32_t             nof_bytes = 128;
+    uint32_t                       start     = 1;
+    srsgnb::byte_buffer            buf;
+    bit_ref                        bref(buf);
+    std::array<uint8_t, nof_bytes> buf2, buf3;
+    for (uint32_t i = 0; i < nof_bytes; ++i) {
       buf2[i] = start + i;
     }
-    bzero(buf3, sizeof(buf3));
-    // this unaligns
-    TESTASSERT(bref.pack(0, 1) == SRSASN_SUCCESS);
-    TESTASSERT(bref.pack_bytes(buf2, nof_bytes) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance_bytes() == (int)nof_bytes + 1);
-    uint8_t ar[] = {0, 129, 1, 130, 2, 131, 3, 132, 4, 133, 5};
-    TESTASSERT(memcmp(ar, buf, sizeof(ar)) == 0);
-    bit_ref  bref2(&buf[0], sizeof(buf));
+
+    // pack.
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.pack(0, 1)); // this unaligns.
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.pack_bytes(buf2));
+    TESTASSERT_EQ(bref.distance_bytes(), (int)nof_bytes + 1);
+    TESTASSERT_EQ(bref.distance(), (int)nof_bytes * 8 + 1);
+    TESTASSERT_EQ(bref.distance_bytes(), (int)buf.length());
+
+    // unpack and check original bytes with unpacked ones.
+    cbit_ref bref2(buf);
     uint32_t val;
-    TESTASSERT(bref2.unpack(val, 1) == SRSASN_SUCCESS);
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref2.unpack(val, 1));
     TESTASSERT(val == 0);
-    TESTASSERT(bref2.unpack_bytes(&buf3[0], nof_bytes) == SRSASN_SUCCESS);
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref2.unpack_bytes(buf3));
     TESTASSERT(bref2.distance_bytes() == (int)nof_bytes + 1);
     TESTASSERT(bref2.distance_bytes() == bref.distance_bytes());
-    TESTASSERT(memcmp(buf2, buf3, nof_bytes) == 0);
+    TESTASSERT(std::equal(buf2.begin(), buf2.end(), buf3.begin(), buf3.end()));
   }
 
   // test advance bits
   {
-    bit_ref bref(&buf[0], sizeof(buf));
-    TESTASSERT(bref.advance_bits(4) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance() == 4);
-    TESTASSERT(bref.advance_bits(4) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance() == 8);
-    TESTASSERT(bref.advance_bits(3) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance() == 11);
-    TESTASSERT(bref.advance_bits(200) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance() == 211);
-    TESTASSERT(bref.advance_bits(5) == SRSASN_SUCCESS);
-    TESTASSERT(bref.distance() == 216);
+    srsgnb::byte_buffer buf{std::vector<uint8_t>(256)};
+    cbit_ref            bref(buf);
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(4));
+    TESTASSERT_EQ(4, bref.distance());
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(4));
+    TESTASSERT_EQ(8, bref.distance());
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(3));
+    TESTASSERT_EQ(11, bref.distance());
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(200));
+    TESTASSERT_EQ(211, bref.distance());
+    TESTASSERT_EQ(SRSASN_SUCCESS, bref.advance_bits(5));
+    TESTASSERT_EQ(216, bref.distance());
   }
-
-  return 0;
 }
 
-int test_oct_string()
+void test_oct_string()
 {
-  uint8_t  buf[1024];
-  bit_ref  b(&buf[0], sizeof(buf));
-  cbit_ref b2(&buf[0], sizeof(buf));
-  bit_ref  borig(b);
-
   std::string        hexstr = "014477aaff";
   fixed_octstring<5> statstr;
   dyn_octstring      dynstr;
@@ -214,21 +183,24 @@ int test_oct_string()
   dynstr.from_number(dynstr.to_number());
   TESTASSERT(dynstr.to_number() == 5443660543);
 
+  srsgnb::byte_buffer buf;
+  bit_ref             b{buf};
   statstr.pack(b);
-  TESTASSERT(memcmp(&buf[0], &statstr[0], statstr.size()) == 0);
-  TESTASSERT(b.distance(borig) == (int)statstr.size() * 8);
+  TESTASSERT(std::equal(buf.begin(), buf.end(), statstr.begin(), statstr.end())); // no prefix in static strings.
+  TESTASSERT(b.distance() == (int)statstr.size() * 8);
   fixed_octstring<5> statstr2;
-  b2 = cbit_ref(&buf[0], sizeof(buf));
-  statstr2.unpack(b2);
+  cbit_ref           b2 = cbit_ref(buf);
+  TESTASSERT_EQ(SRSASN_SUCCESS, statstr2.unpack(b2));
   TESTASSERT(statstr == statstr2);
 
-  b = borig;
+  buf.clear();
+  b = {buf};
   dynstr.pack(b);
-  TESTASSERT(buf[0] == dynstr.size()); // true for small strings
-  TESTASSERT(memcmp(&buf[1], &dynstr[0], dynstr.size()) == 0);
-  TESTASSERT(b.distance(borig) == (int)(dynstr.size() * 8 + 8));
+  TESTASSERT(*buf.begin() == dynstr.size()); // true for small strings.
+  TESTASSERT(std::equal(buf.begin() + 1, buf.end(), dynstr.begin(), dynstr.end()));
+  TESTASSERT(b.distance() == (int)(dynstr.size() * 8 + 8));
   dyn_octstring dynstr2; // unpacker allocates automatically
-  b2 = cbit_ref(&buf[0], sizeof(buf));
+  b2 = cbit_ref(buf);
   dynstr2.unpack(b2);
   TESTASSERT(dynstr == dynstr2);
 
@@ -243,14 +215,12 @@ int test_oct_string()
   }
 
   b.pack(1, 1);
-  TESTASSERT(b.distance(borig) == (int)(hexstr.size() * 8 / 2 + 9));
+  TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 9));
   b.align_bytes_zero();
-  TESTASSERT(b.distance(borig) == (int)(hexstr.size() * 8 / 2 + 16));
-
-  return 0;
+  TESTASSERT(b.distance() == (int)(hexstr.size() * 8 / 2 + 16));
 }
 
-int test_bitstring()
+void test_bitstring()
 {
   fixed_bitstring<10>      bstr1;
   bounded_bitstring<5, 15> bound_bstr1(10);
@@ -339,61 +309,55 @@ int test_bitstring()
   TESTASSERT(not dyn_bstr1.get(10));
 
   /* Test Packing/Unpacking */
-  uint8_t  buffer[1024];
-  bit_ref  bref(&buffer[0], sizeof(buffer));
-  cbit_ref bref2(&buffer[0], sizeof(buffer));
+  srsgnb::byte_buffer buf;
+  bit_ref             bref(buf);
   // fixed
-  TESTASSERT(bstr1.pack(bref) == SRSASN_SUCCESS);
+  TESTASSERT_EQ(SRSASN_SUCCESS, bstr1.pack(bref));
   fixed_bitstring<10> bstr2;
   TESTASSERT(bstr2.length() == 10);
-  TESTASSERT(bstr2.unpack(bref2) == SRSASN_SUCCESS);
+  cbit_ref bref2(buf);
+  TESTASSERT_EQ(SRSASN_SUCCESS, bstr2.unpack(bref2));
   TESTASSERT(bstr2 == bstr1);
   TESTASSERT(bref.distance() == 10 and bref.distance() == bref2.distance());
   // bounded
-  bref  = bit_ref(&buffer[0], sizeof(buffer));
-  bref2 = cbit_ref(&buffer[0], sizeof(buffer));
+  buf.clear();
+  bref = bit_ref(buf);
   TESTASSERT(bound_bstr1.pack(bref) == SRSASN_SUCCESS);
   bounded_bitstring<5, 15> bound_bstr2(dyn_bstr1.length());
   TESTASSERT(bound_bstr2.length() == 11);
+  bref2 = cbit_ref(buf);
   TESTASSERT(bound_bstr2.unpack(bref2) == SRSASN_SUCCESS);
   TESTASSERT(bound_bstr2 == bound_bstr1);
   TESTASSERT(bref.distance() == (11 + 4) and bref.distance() == bref2.distance());
   // dyn
-  bref  = bit_ref(&buffer[0], sizeof(buffer));
-  bref2 = cbit_ref(&buffer[0], sizeof(buffer));
+  buf.clear();
+  bref = bit_ref(buf);
   TESTASSERT(dyn_bstr1.pack(bref) == SRSASN_SUCCESS);
   dyn_bitstring dyn_bstr2(dyn_bstr1.length());
   TESTASSERT(dyn_bstr2.length() == 11);
+  bref2 = cbit_ref(buf);
   TESTASSERT(dyn_bstr2.unpack(bref2) == SRSASN_SUCCESS);
   TESTASSERT(dyn_bstr2 == dyn_bstr1);
   //  printf("%s==%s\n", dyn_bstr1.to_string().c_str(), dyn_bstr2.to_string().c_str());
 
   // disable temporarily the prints to check failures
-  //  srsgnb::nullsink_log null_log("NULL");
+  //  srsran::nullsink_log null_log("NULL");
   //  bit_ref bref3(&buffer[0], sizeof(buffer));
   //  TESTASSERT(dyn_bstr1.pack(bref3, false, 5, 10)==SRSASN_ERROR_ENCODE_FAIL);
 
   /* Test Pack/Unpack 2 */
-  buffer[0] = 0;
-  buffer[1] = 7;
-  bref2     = cbit_ref(&buffer[0], sizeof(buffer));
+  buf.clear();
+  buf.append(0);
+  buf.append(7);
+  bref2 = cbit_ref(buf);
   fixed_bitstring<16> bstr3;
   bstr3.unpack(bref2);
   TESTASSERT(bstr3 == "0000000000000111");
   TESTASSERT(bstr3.to_string() == "0000000000000111");
-
-  return 0;
 }
 
-int test_seq_of()
+void test_seq_of()
 {
-  uint8_t buf[1024];
-  memset(buf, 0, 1024);
-
-  bit_ref  b(&buf[0], sizeof(buf));
-  bit_ref  borig = b;
-  cbit_ref borig2(&buf[0], sizeof(buf));
-
   uint32_t                 fixed_list_size = 33;
   std::array<uint32_t, 33> fixed_list;
   for (uint32_t i = 0; i < fixed_list_size; ++i) {
@@ -408,26 +372,29 @@ int test_seq_of()
   int      lb = 0, ub = 40;
   uint32_t n_bits = ceil(log2(ub - lb + 1));
 
-  pack_fixed_seq_of(b, &fixed_list[0], fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(b.distance(borig) == (int)(fixed_list_size * n_bits));
-  cbit_ref                 b2(&buf[0], sizeof(buf));
+  srsgnb::byte_buffer buffer;
+  bit_ref             b{buffer};
+  pack_fixed_seq_of(b, fixed_list.data(), fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
+  TESTASSERT(b.distance() == (int)(fixed_list_size * n_bits));
+  cbit_ref                 b2(buffer);
   std::array<uint32_t, 33> fixed_list2;
   unpack_fixed_seq_of(&fixed_list2[0], b2, fixed_list.size(), integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(fixed_list == fixed_list2);
 
   // bounded seq_of
+  buffer.clear();
   bounded_array<uint32_t, 33> bseq;
   TESTASSERT(bseq.size() == 0);
   bseq.resize(fixed_list_size);
   TESTASSERT(bseq.size() == fixed_list_size);
   memcpy(&bseq[0], &fixed_list[0], fixed_list_size * sizeof(uint32_t));
-  b = borig;
+  b = {buffer};
   pack_dyn_seq_of(b, bseq, 0, 33, integer_packer<uint32_t>(lb, ub, false));
-  TESTASSERT(b.distance(borig) == (int)((fixed_list_size + 1) * n_bits)); // unaligned
-  //  TESTASSERT(b.distance(borig)==fixed_list_size*n_bits+8); // aligned
+  TESTASSERT(b.distance() == (int)((fixed_list_size + 1) * n_bits)); // unaligned
+  //  TESTASSERT_EQ(b.distance(), (int)fixed_list_size * (int)n_bits + 8); // aligned
   bounded_array<uint32_t, 33> bseq2;
   bseq2.resize(fixed_list_size);
-  b2 = borig2;
+  b2 = {buffer};
   unpack_dyn_seq_of(bseq2, b2, 0, 33, integer_packer<uint32_t>(lb, ub, false));
   TESTASSERT(bseq2 == bseq);
   TESTASSERT(std::equal(&bseq2[0], &bseq2[fixed_list_size], &fixed_list[0]));
@@ -467,11 +434,9 @@ int test_seq_of()
     TESTASSERT(std::equal(vec3.begin(), vec3.end(), vec.begin()));
   }
   TESTASSERT(vec[5] == 5);
-
-  return 0;
 }
 
-int test_copy_ptr()
+void test_copy_ptr()
 {
   typedef fixed_octstring<10> TestType;
   char                        buffer[1024];
@@ -514,8 +479,6 @@ int test_copy_ptr()
   TestType* s3 = cptr.release();
   TESTASSERT(s3 == s); // same address
   delete s3;           // it should *not* double free
-
-  return 0;
 }
 
 class EnumTest
@@ -563,7 +526,7 @@ public:
   }
 };
 
-int test_enum()
+void test_enum()
 {
   EnumTest e;
   EnumTest e2;
@@ -576,31 +539,30 @@ int test_enum()
   TESTASSERT(number_to_enum<EnumTest>(e2, 10));
   TESTASSERT(e2 == e);
 
-  uint8_t buffer[1024];
-  bit_ref bref(&buffer[0], sizeof(buffer));
-  bit_ref borig = bref;
+  srsgnb::byte_buffer buffer;
+  bit_ref             bref(buffer);
   TESTASSERT(pack_enum(bref, e) == SRSASN_SUCCESS);
-  TESTASSERT(bref.distance(borig) == (int)(floor(log2(e.nof_types)) + 1));
+  TESTASSERT(bref.distance() == (int)(floor(log2(e.nof_types)) + 1));
 
-  cbit_ref bref2(&buffer[0], sizeof(buffer));
+  cbit_ref bref2(buffer);
   TESTASSERT(unpack_enum(e2, bref2) == SRSASN_SUCCESS);
   TESTASSERT(bref2.distance() == (int)bref.distance());
   TESTASSERT(e == e2);
 
   // Test fail path
+  buffer.clear();
   TESTASSERT(test_spy->get_error_counter() == 0 and test_spy->get_warning_counter() == 0);
-  bref  = bit_ref(&buffer[0], sizeof(buffer));
-  bref2 = cbit_ref(&buffer[0], sizeof(buffer));
-  e     = EnumTest::nulltype;
+  bref = bit_ref(buffer);
+  e    = EnumTest::nulltype;
   TESTASSERT(pack_enum(bref, e) == SRSASN_ERROR_ENCODE_FAIL);
-  buffer[0] = 255;
+  TESTASSERT_EQ(0, bref.distance());
+  buffer.append(255);
+  bref2 = cbit_ref(buffer);
   TESTASSERT(unpack_enum(e, bref2) == SRSASN_ERROR_DECODE_FAIL);
   TESTASSERT(test_spy->get_error_counter() == 2 and test_spy->get_warning_counter() == 0);
-
-  return 0;
 }
 
-int test_json_writer()
+void test_json_writer()
 {
   json_writer writer;
 
@@ -621,34 +583,31 @@ int test_json_writer()
   writer.end_obj();
   writer.end_array();
 
-  printf("%s\n", writer.to_string().c_str());
-  return 0;
+  fmt::print("{}\n", writer.to_string().c_str());
 }
 
-int test_big_integers()
+void test_big_integers()
 {
   integer<uint64_t, 0, 4294967295, false, true> big_integer = 3172073535;
 
-  uint8_t mem_chunk[128];
-  bit_ref bref(&mem_chunk[0], sizeof(mem_chunk));
+  srsgnb::byte_buffer buffer;
+  bit_ref             bref(buffer);
   TESTASSERT(big_integer.pack(bref) == 0);
 
-  uint8_t bytes[] = {0xC0, 0xBD, 0x12, 0x00, 0x3F};
-  TESTASSERT(memcmp(bytes, mem_chunk, sizeof(bytes)) == 0);
+  std::array<uint8_t, 5> bytes{0xC0, 0xBD, 0x12, 0x00, 0x3F};
+  TESTASSERT(std::equal(buffer.begin(), buffer.end(), bytes.begin(), bytes.end()));
 
   integer<uint64_t, 0, 4294967295, false, true> big_integer2;
-  cbit_ref                                      cbref(mem_chunk, sizeof(mem_chunk));
+  cbit_ref                                      cbref(buffer);
   TESTASSERT(big_integer2.unpack(cbref) == 0);
   TESTASSERT(big_integer == big_integer2);
-
-  return 0;
 }
 
 void test_varlength_field_pack()
 {
-  uint8_t buffer[128];
-  bit_ref bref(&buffer[0], sizeof(buffer));
-  TESTASSERT_EQ(0, bref.pack(0, 1));
+  srsgnb::byte_buffer buffer;
+  bit_ref             bref(buffer);
+  TESTASSERT_EQ(SRSASN_SUCCESS, bref.pack(0, 1));
   TESTASSERT_EQ(1, bref.distance());
   {
     varlength_field_pack_guard guard(bref);
@@ -665,11 +624,11 @@ int main()
   if (!srslog::install_custom_sink(
           srsgnb::log_sink_spy::name(),
           std::unique_ptr<srsgnb::log_sink_spy>(new srsgnb::log_sink_spy(srslog::get_default_log_formatter())))) {
-    return -1;
+    return SRSASN_ERROR;
   }
   test_spy = static_cast<srsgnb::log_sink_spy*>(srslog::find_sink(srsgnb::log_sink_spy::name()));
   if (!test_spy) {
-    return -1;
+    return SRSASN_ERROR;
   }
 
   auto& asn1_logger = srslog::fetch_basic_logger("ASN1", *test_spy, false);
@@ -679,14 +638,14 @@ int main()
   // Start the log backend.
   srslog::init();
 
-  TESTASSERT(test_arrays() == 0);
-  TESTASSERT(test_bit_ref() == 0);
-  TESTASSERT(test_oct_string() == 0);
-  TESTASSERT(test_bitstring() == 0);
-  TESTASSERT(test_seq_of() == 0);
-  TESTASSERT(test_copy_ptr() == 0);
-  TESTASSERT(test_enum() == 0);
-  TESTASSERT(test_big_integers() == 0);
+  test_arrays();
+  test_bit_ref();
+  test_oct_string();
+  test_bitstring();
+  test_seq_of();
+  test_copy_ptr();
+  test_enum();
+  test_big_integers();
   test_varlength_field_pack();
   //  TESTASSERT(test_json_writer()==0);
 

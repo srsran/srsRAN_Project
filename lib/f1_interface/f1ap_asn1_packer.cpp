@@ -12,10 +12,7 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
   logger.info("Received PDU of {} bytes", bytes.length());
 
-  std::vector<uint8_t> unpack_buffer;
-  unpack_buffer.resize(128);
-
-  asn1::cbit_ref          bref(unpack_buffer.data(), unpack_buffer.size());
+  asn1::cbit_ref          bref(bytes);
   asn1::f1ap::f1_ap_pdu_c pdu;
   if (pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Couldn't unpack F1C PDU");
@@ -30,15 +27,13 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 void f1ap_asn1_packer::handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   // pack PDU into temporary buffer
-  std::array<uint8_t, 128> pack_buffer;
-  asn1::bit_ref            bref(pack_buffer.data(), pack_buffer.size());
+  byte_buffer   tx_pdu;
+  asn1::bit_ref bref(tx_pdu);
   if (pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to pack F1AP PDU");
     return;
   }
 
-  // convert into byte buffer and send
-  byte_buffer tx_pdu(pack_buffer.begin(), pack_buffer.begin() + bref.distance_bytes());
   gw.handle_pdu(tx_pdu);
 }
 
