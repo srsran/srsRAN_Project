@@ -32,7 +32,7 @@ struct ls_description_t {
 ///
 /// Possible lifting sizes are assigned a lifting-size index (from 0 to 7), the
 /// others are marked as VOID_LIFTSIZE.
-static constexpr std::array<ls_description_t, max_lifting_size + 1> LSindex = {{{VOID_LIFTSIZE, VOID_LIFTSIZE}, // 0
+static constexpr std::array<ls_description_t, MAX_LIFTING_SIZE + 1> LSindex = {{{VOID_LIFTSIZE, VOID_LIFTSIZE}, // 0
                                                                                 {VOID_LIFTSIZE, VOID_LIFTSIZE}, // 1
                                                                                 {0, 0},                         // 2
                                                                                 {1, 1},                         // 3
@@ -425,7 +425,7 @@ static constexpr std::array<ls_description_t, max_lifting_size + 1> LSindex = {{
 /// (check node)--(variable node) connection when lifting the graph. Entries
 /// marked as NO_EDGE mean that there is no connection between the corresponding
 /// check node and variable node (in both the base graph and the lifted one).
-static constexpr std::array<BG_matrix_t, nof_lifting_indices> BG1_matrices = {
+static constexpr std::array<BG_matrix_t, NOF_LIFTING_INDICES> BG1_matrices = {
     // BG1 - lifting size index 0
     {{{{250,     69,      226,     159,     NO_EDGE, 100,     10,      NO_EDGE, NO_EDGE, 59,      229,     110,
         191,     9,       NO_EDGE, 195,     23,      NO_EDGE, 190,     35,      239,     31,      1,       0,
@@ -2657,7 +2657,7 @@ static constexpr std::array<BG_matrix_t, nof_lifting_indices> BG1_matrices = {
 ///  (check node)--(variable node) connection when lifting the graph. Entries
 ///  marked as NO_EDGE mean that there is no connection between the corresponding
 ///  check node and variable node (in both the base graph and the lifted one).
-static constexpr std::array<BG_matrix_t, nof_lifting_indices> BG2_matrices = {
+static constexpr std::array<BG_matrix_t, NOF_LIFTING_INDICES> BG2_matrices = {
     // BG2 - lifting size index 0
     {{{{9,       117,     204,     26,      NO_EDGE, NO_EDGE, 189,     NO_EDGE, NO_EDGE, 205,     0,
         0,       NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE,
@@ -4504,10 +4504,10 @@ BG_matrix_t srsgnb::ldpc::get_graph(base_graph_t bg, lifting_size_t ls)
   BG_matrix_t graph_matrix = (bg == base_graph_t::BG1) ? BG1_matrices[ls_index] : BG2_matrices[ls_index];
 
   unsigned nof_BG_check_nodes    = BG1_M;
-  unsigned nof_BG_var_nodes_full = BG1_N_full;
+  unsigned nof_BG_var_nodes_full = BG1_N_FULL;
   if (bg == base_graph_t::BG2) {
     nof_BG_check_nodes    = BG2_M;
-    nof_BG_var_nodes_full = BG2_N_full;
+    nof_BG_var_nodes_full = BG2_N_FULL;
   }
 
   // Compute the parity check matrix from the BG description matrix.

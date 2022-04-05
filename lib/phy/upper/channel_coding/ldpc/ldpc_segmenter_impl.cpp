@@ -9,9 +9,9 @@ using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
 // Length of the CRC checksum added to the segments.
-static constexpr unsigned seg_crc_length = 24;
+static constexpr unsigned SEG_CRC_LENGTH = 24;
 // Number of bits in one byte.
-static constexpr unsigned bits_per_byte = 8;
+static constexpr unsigned BITS_PER_BYTE = 8;
 
 ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
 {
@@ -31,8 +31,8 @@ void ldpc_segmenter_impl::compute_nof_segments()
     nof_segments    = 1;
     nof_tb_bits_out = nof_tb_bits_in;
   } else {
-    nof_segments    = divide_ceil(nof_tb_bits_in, max_segment_length - seg_crc_length);
-    nof_tb_bits_out = nof_tb_bits_in + nof_segments * seg_crc_length;
+    nof_segments    = divide_ceil(nof_tb_bits_in, max_segment_length - SEG_CRC_LENGTH);
+    nof_tb_bits_out = nof_tb_bits_in + nof_segments * SEG_CRC_LENGTH;
   }
 }
 
@@ -65,8 +65,8 @@ void ldpc_segmenter_impl::compute_lifting_size()
 
 void ldpc_segmenter_impl::compute_segment_length()
 {
-  constexpr unsigned base_length_BG1 = BG1_N_full - BG1_M;
-  constexpr unsigned base_length_BG2 = BG2_N_full - BG2_M;
+  constexpr unsigned base_length_BG1 = BG1_N_FULL - BG1_M;
+  constexpr unsigned base_length_BG2 = BG2_N_FULL - BG2_M;
   unsigned           base_length     = (base_graph == base_graph_t::BG1) ? base_length_BG1 : base_length_BG2;
 
   segment_length = base_length * lifting_size;
@@ -105,7 +105,7 @@ static void fill_segment(span<uint8_t>                    segment,
   }
 
   // If needed, fill the segment tail with filler bits.
-  std::fill_n(segment.begin() + nof_used_bits, nof_filler, filler_bit);
+  std::fill_n(segment.begin() + nof_used_bits, nof_filler, FILLER_BIT);
 }
 
 static void check_inputs(const static_vector<described_segment, MAX_NOF_SEGMENTS>& segments,
@@ -114,9 +114,9 @@ static void check_inputs(const static_vector<described_segment, MAX_NOF_SEGMENTS
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
-  srsran_assert(transport_block.size() * 8 + 24 <= max_tbs,
+  srsran_assert(transport_block.size() * 8 + 24 <= MAX_TBS,
                 "Transport block too long. The admissible size, including CRC, is %d bytes.",
-                max_tbs / bits_per_byte);
+                MAX_TBS / BITS_PER_BYTE);
 
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
@@ -133,10 +133,10 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   check_inputs(described_segments, transport_block, cfg);
 
   base_graph         = cfg.base_graph;
-  max_segment_length = (base_graph == base_graph_t::BG1) ? max_BG1_block_length : max_BG2_block_length;
+  max_segment_length = (base_graph == base_graph_t::BG1) ? MAX_BG1_BLOCK_LENGTH : MAX_BG2_BLOCK_LENGTH;
   // Each transport_block entry is a byte, and TBS can always be expressed as an integer number of bytes (see, e.g.,
   // TS38.214 Section 5.1.3.2).
-  unsigned nof_tb_bits_tmp = transport_block.size() * bits_per_byte;
+  unsigned nof_tb_bits_tmp = transport_block.size() * BITS_PER_BYTE;
 
   crc_calculator& tb_crc          = (nof_tb_bits_tmp <= 3824) ? *crc_set.crc16 : *crc_set.crc24A;
   unsigned        nof_tb_crc_bits = (nof_tb_bits_tmp <= 3824) ? 16 : 24;
@@ -155,7 +155,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
   unsigned nof_crc_bits = 0;
   if (nof_segments > 1) {
-    nof_crc_bits = seg_crc_length;
+    nof_crc_bits = SEG_CRC_LENGTH;
   }
   // Compute the maximum number of information bits that can be assigned to a segment.
   unsigned max_info_bits = divide_ceil(nof_tb_bits_out, nof_segments) - nof_crc_bits;
@@ -200,9 +200,9 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
     tmp_description.tb_common.cw_length    = cw_length;
 
     // BG1 has rate 1/3 and BG2 has rate 1/5.
-    constexpr unsigned inverse_BG1_rate = 3;
-    constexpr unsigned inverse_BG2_rate = 5;
-    unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? inverse_BG1_rate : inverse_BG2_rate;
+    constexpr unsigned INVERSE_BG1_RATE = 3;
+    constexpr unsigned INVERSE_BG2_RATE = 5;
+    unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
 
     tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
     tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;

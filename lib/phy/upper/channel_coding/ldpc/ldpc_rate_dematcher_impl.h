@@ -29,7 +29,7 @@ private:
 
   // Data members.
   /// Auxiliary buffer.
-  std::array<int8_t, ldpc::max_codeblock_length> auxiliary_buffer{};
+  std::array<int8_t, ldpc::MAX_CODEBLOCK_LENGTH> auxiliary_buffer{};
   /// Redundancy version, values in {0, 1, 2, 3}.
   unsigned rv = 0;
   /// Modulation scheme.

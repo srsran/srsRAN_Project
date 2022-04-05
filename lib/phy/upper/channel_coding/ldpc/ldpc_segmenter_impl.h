@@ -11,13 +11,13 @@
 namespace srsgnb {
 namespace ldpc {
 /// Maximum length of a block (number of information bits) when using base graph BG1.
-constexpr unsigned max_BG1_block_length = (BG1_N_full - BG1_M) * max_lifting_size;
+constexpr unsigned MAX_BG1_BLOCK_LENGTH = (BG1_N_FULL - BG1_M) * MAX_LIFTING_SIZE;
 /// Maximum length of a block (number of information bits) when using base graph BG2.
-constexpr unsigned max_BG2_block_length = (BG2_N_full - BG2_M) * max_lifting_size;
+constexpr unsigned MAX_BG2_BLOCK_LENGTH = (BG2_N_FULL - BG2_M) * MAX_LIFTING_SIZE;
 } // namespace ldpc
 
 /// Maximum accepted transport block size.
-static constexpr unsigned max_tbs = 1277992;
+static constexpr unsigned MAX_TBS = 1277992;
 
 /// Generic implementation of LDPC segmentation.
 class ldpc_segmenter_impl : public ldpc_segmenter
@@ -58,7 +58,7 @@ private:
 
   // Data members.
   /// Internal temporary buffer.
-  static_vector<uint8_t, max_tbs> buffer;
+  static_vector<uint8_t, MAX_TBS> buffer;
 
   /// Base graph used for encoding/decoding the current transport block.
   ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;

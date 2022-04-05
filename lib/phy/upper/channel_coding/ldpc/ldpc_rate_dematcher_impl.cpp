@@ -37,16 +37,16 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8
   uint16_t              lifting_size{};
   unsigned              BG_N_short{0};
   unsigned              BG_K{0};
-  if (block_length % BG1_N_short == 0) {
+  if (block_length % BG1_N_SHORT == 0) {
     // input is a BG1 codeblock
     shift_factor = {0, 17, 33, 56};
-    BG_N_short   = BG1_N_short;
-    BG_K         = BG1_N_full - BG1_M;
-  } else if (block_length % BG2_N_short == 0) {
+    BG_N_short   = BG1_N_SHORT;
+    BG_K         = BG1_N_FULL - BG1_M;
+  } else if (block_length % BG2_N_SHORT == 0) {
     // input is a BG2 codeblock
     shift_factor = {0, 13, 25, 43};
-    BG_N_short   = BG2_N_short;
-    BG_K         = BG2_N_full - BG2_M;
+    BG_N_short   = BG2_N_SHORT;
+    BG_K         = BG2_N_FULL - BG2_M;
   } else {
     srsran_assert(false, "LDPC rate dematching: invalid input length.");
   }
@@ -74,12 +74,12 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8
 static int8_t combine_llrs(int8_t llrs1, int8_t llrs2)
 {
   // LLRs are quantized over 7 bits and take values from -63 to 63, with INT8_MAX corresponding to infinity.
-  constexpr int max_range = 63;
+  constexpr int MAX_RANGE = 63;
 
   int tmp = llrs1 + llrs2;
 
-  if (std::abs(tmp) > max_range) {
-    tmp = (tmp > 0) ? max_range : -max_range;
+  if (std::abs(tmp) > MAX_RANGE) {
+    tmp = (tmp > 0) ? MAX_RANGE : -MAX_RANGE;
   }
   return static_cast<int8_t>(tmp);
 };

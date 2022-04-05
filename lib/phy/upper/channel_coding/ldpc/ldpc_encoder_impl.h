@@ -101,9 +101,9 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   span<const uint8_t> message = {};
   // Set up registers for the largest LS.
   /// Register to store auxiliary computation results.
-  std::array<std::array<uint8_t, ldpc::max_lifting_size>, ldpc::max_BG_M> auxiliary = {};
+  std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, ldpc::MAX_BG_M> auxiliary = {};
   /// Register to store computed encoded bits.
-  std::array<uint8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> codeblock = {};
+  std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock = {};
 };
 
 /// LDPC encoder implementation based on AVX2 intrinsics.

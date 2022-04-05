@@ -17,12 +17,12 @@
 constexpr int8_t LLRS_AMPL = 10;
 /// Transforms hard bits into log-likelihood ratios (with fixed amplitude).
 const auto compute_llrs = [](uint8_t b) {
-  return ((b == srsgnb::ldpc::filler_bit) ? LLRS_AMPL : LLRS_AMPL * (1 - 2 * b));
+  return ((b == srsgnb::ldpc::FILLER_BIT) ? LLRS_AMPL : LLRS_AMPL * (1 - 2 * b));
 };
 
 /// Checks whether two messages are equal: filler bits are counted as logical zeros.
 const auto is_msg_equal = [](uint8_t a, uint8_t b) {
-  return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::filler_bit)));
+  return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::FILLER_BIT)));
 };
 
 using namespace srsgnb;
@@ -71,8 +71,8 @@ int main()
       span<const uint8_t> cblock_i = span<const uint8_t>(codeblocks).subspan(used_cblck_bits, max_cb_length);
       used_cblck_bits += max_cb_length;
 
-      constexpr int nof_steps   = 3;
-      unsigned      length_step = (max_cb_length - min_cb_length) / nof_steps;
+      constexpr int NOF_STEPS   = 3;
+      unsigned      length_step = (max_cb_length - min_cb_length) / NOF_STEPS;
       // check several shortened codeblocks
       for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
         std::vector<uint8_t> encoded(length);

@@ -71,19 +71,19 @@ enum lifting_size_t {
   LS384 = 384
 };
 /// Total number of lifting sizes.
-constexpr unsigned nof_lifting_sizes = 51;
+constexpr unsigned NOF_LIFTING_SIZES = 51;
 /// All lifting sizes are assigned an index from 0 to 7 (see TS38.212 Table 5.3.2-1).
-constexpr unsigned nof_lifting_indices = 8;
+constexpr unsigned NOF_LIFTING_INDICES = 8;
 
 /// Array of lifting sizes, for iterations.
-static constexpr std::array<lifting_size_t, nof_lifting_sizes> all_lifting_sizes = {
+static constexpr std::array<lifting_size_t, NOF_LIFTING_SIZES> all_lifting_sizes = {
     LS2,   LS3,   LS4,   LS5,   LS6,   LS7,   LS8,   LS9,   LS10,  LS11,  LS12,  LS13,  LS14,
     LS15,  LS16,  LS18,  LS20,  LS22,  LS24,  LS26,  LS28,  LS30,  LS32,  LS36,  LS40,  LS44,
     LS48,  LS52,  LS56,  LS60,  LS64,  LS72,  LS80,  LS88,  LS96,  LS104, LS112, LS120, LS128,
     LS144, LS160, LS176, LS192, LS208, LS224, LS240, LS256, LS288, LS320, LS352, LS384};
 
 /// Filler bit identifier
-static constexpr uint8_t filler_bit = 254;
+static constexpr uint8_t FILLER_BIT = 254;
 } // namespace ldpc
 
 } // namespace srsgnb

@@ -17,23 +17,23 @@ static constexpr uint16_t NO_EDGE = 0xFFFF;
 /// Number of parity-check nodes in base graph BG1.
 static constexpr unsigned BG1_M = 46;
 /// Number of variable nodes in base graph BG1, before shortening.
-static constexpr unsigned BG1_N_full = 68;
+static constexpr unsigned BG1_N_FULL = 68;
 /// Number of variable nodes in base graph BG1, after shortening.
-static constexpr unsigned BG1_N_short = 66;
+static constexpr unsigned BG1_N_SHORT = 66;
 /// Number of parity-check nodes in base graph BG2.
 static constexpr unsigned BG2_M = 42;
 /// Number of variable nodes in base graph BG2, before shortening.
-static constexpr unsigned BG2_N_full = 52;
+static constexpr unsigned BG2_N_FULL = 52;
 /// Number of variable nodes in base graph BG2, after shortening.
-static constexpr unsigned BG2_N_short = 50;
+static constexpr unsigned BG2_N_SHORT = 50;
 /// Maximum number of variable nodes in a base graph.
-static constexpr unsigned max_BG_N_full = std::max(BG1_N_full, BG2_N_full);
+static constexpr unsigned MAX_BG_N_FULL = std::max(BG1_N_FULL, BG2_N_FULL);
 /// Maximum number of parity check nodes in a base graph.
-static constexpr unsigned max_BG_M = std::max(BG1_M, BG2_M);
+static constexpr unsigned MAX_BG_M = std::max(BG1_M, BG2_M);
 /// Maximum lifting size.
-static constexpr unsigned max_lifting_size = 384;
+static constexpr unsigned MAX_LIFTING_SIZE = 384;
 /// Maximum codeblock length (recall that 2 * LS variable nodes are punctured from the full codeword).
-static constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifting_size;
+static constexpr unsigned MAX_CODEBLOCK_LENGTH = (MAX_BG_N_FULL - 2) * MAX_LIFTING_SIZE;
 
 /// \brief Representation of a graph, inspired by TS38.212 Tables 5.3.2-2 and 5.3.2-3.
 ///
@@ -42,21 +42,21 @@ static constexpr unsigned max_codeblock_length = (max_BG_N_full - 2) * max_lifti
 /// in the base graph. The value of the number represents the circular shift applied to the connections
 /// in the lifted graph. If entry \f$(m, n)\f$ is equal to \c NO_EDGE, there is no connection in either the
 /// base graph or the lifted one.
-using BG_matrix_t = std::array<std::array<uint16_t, max_BG_N_full>, max_BG_M>;
+using BG_matrix_t = std::array<std::array<uint16_t, MAX_BG_N_FULL>, MAX_BG_M>;
 
 /// Maximum degree (number of incident edges) of a check node, in the base graphs.
-static constexpr unsigned max_BG_check_edges = 20;
+static constexpr unsigned MAX_BG_CHECK_EDGES = 20;
 
 /// \brief Represents a list of variable nodes connected to a check node.
-using BG_adjacency_row_t = std::array<uint16_t, max_BG_check_edges>;
+using BG_adjacency_row_t = std::array<uint16_t, MAX_BG_CHECK_EDGES>;
 
 /// \brief For check node \c m, BG_adjacency_matrix_t[m] provides a list of the variable nodes connected to it.
-using BG_adjacency_matrix_t = std::array<BG_adjacency_row_t, max_BG_M>;
+using BG_adjacency_matrix_t = std::array<BG_adjacency_row_t, MAX_BG_M>;
 
 /// Number of base graphs.
-static constexpr unsigned nof_base_graphs = 2;
+static constexpr unsigned NOF_BASE_GRAPHS = 2;
 /// Total number of lifted graphs.
-static constexpr unsigned total_nof_graphs = nof_lifting_sizes * nof_base_graphs;
+static constexpr unsigned TOTAL_NOF_GRAPHS = NOF_LIFTING_SIZES * NOF_BASE_GRAPHS;
 } // namespace ldpc
 
 /// Describes the Tanner graph of an LDPC code (implementation).
@@ -144,10 +144,10 @@ namespace ldpc {
 /// The graphs will be ordered by base graph and lifting size. For instance, the graph corresponding to BG2 and LS4 will
 /// be at entry ::nof_lifting_sizes <tt> + 3 </tt>, since \c LS4 is the third one in the list of all possible lifting
 /// sizes (i.e., ::all_lifting_sizes).
-std::array<ldpc_graph_impl, total_nof_graphs> create_graph_array();
+std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> create_graph_array();
 
 /// An array with all possible LDPC graphs (see create_graph_array()).
-static const std::array<ldpc_graph_impl, total_nof_graphs> graph_array = create_graph_array();
+static const std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> graph_array = create_graph_array();
 } // namespace ldpc
 
 } // namespace srsgnb

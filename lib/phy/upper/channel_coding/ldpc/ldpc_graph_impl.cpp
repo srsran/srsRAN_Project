@@ -13,23 +13,23 @@ ldpc_graph_impl::ldpc_graph_impl(ldpc::base_graph_t _bg, ldpc::lifting_size_t _l
 {
   if (_bg == base_graph_t::BG1) {
     nof_BG_check_nodes     = BG1_M;
-    nof_BG_var_nodes_full  = BG1_N_full;
-    nof_BG_var_nodes_short = BG1_N_short;
+    nof_BG_var_nodes_full  = BG1_N_FULL;
+    nof_BG_var_nodes_short = BG1_N_SHORT;
   } else {
     nof_BG_check_nodes     = BG2_M;
-    nof_BG_var_nodes_full  = BG2_N_full;
-    nof_BG_var_nodes_short = BG2_N_short;
+    nof_BG_var_nodes_full  = BG2_N_FULL;
+    nof_BG_var_nodes_short = BG2_N_SHORT;
   }
 }
 
-std::array<ldpc_graph_impl, total_nof_graphs> srsgnb::ldpc::create_graph_array()
+std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> srsgnb::ldpc::create_graph_array()
 {
-  std::array<ldpc_graph_impl, total_nof_graphs> tmp{};
+  std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> tmp{};
 
   for (auto ls : ldpc::all_lifting_sizes) {
     uint8_t pos                  = get_lifting_size_position(ls);
     tmp[pos]                     = ldpc_graph_impl(base_graph_t::BG1, ls);
-    tmp[pos + nof_lifting_sizes] = ldpc_graph_impl(base_graph_t::BG2, ls);
+    tmp[pos + NOF_LIFTING_SIZES] = ldpc_graph_impl(base_graph_t::BG2, ls);
   }
   return tmp;
 }

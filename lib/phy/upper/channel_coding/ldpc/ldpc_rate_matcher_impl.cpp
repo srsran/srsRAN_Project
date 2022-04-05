@@ -35,14 +35,14 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2
   std::array<double, 4> shift_factor{};
   uint16_t              lifting_size{};
-  if (block_length % BG1_N_short == 0) {
+  if (block_length % BG1_N_SHORT == 0) {
     // input is a BG1 codeblock
     shift_factor = {0, 17, 33, 56};
-    lifting_size = block_length / BG1_N_short;
-  } else if (block_length % BG2_N_short == 0) {
+    lifting_size = block_length / BG1_N_SHORT;
+  } else if (block_length % BG2_N_SHORT == 0) {
     // input is a BG2 codeblock
     shift_factor = {0, 13, 25, 43};
-    lifting_size = block_length / BG2_N_short;
+    lifting_size = block_length / BG2_N_SHORT;
   } else {
     srsran_assert(false, "LDPC rate matching: invalid input length.");
   }
@@ -66,7 +66,7 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
 {
   unsigned in_index = shift_k0 % buffer_length;
   for (auto& this_out : out) {
-    while (in[in_index] == filler_bit) {
+    while (in[in_index] == FILLER_BIT) {
       in_index = (in_index + 1) % buffer_length;
     }
     this_out = in[in_index];

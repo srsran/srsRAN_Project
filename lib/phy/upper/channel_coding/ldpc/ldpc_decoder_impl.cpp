@@ -14,7 +14,7 @@ constexpr int8_t LOCAL_MAX_RANGE = 63;
 void ldpc_decoder_impl::init(const config_t& cfg)
 {
   uint8_t  pos   = get_lifting_size_position(cfg.lifting_size);
-  unsigned skip  = static_cast<unsigned>(cfg.base_graph) * nof_lifting_sizes;
+  unsigned skip  = static_cast<unsigned>(cfg.base_graph) * NOF_LIFTING_SIZES;
   current_graph  = &graph_array[skip + pos];
   bg_N_full      = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short     = current_graph->get_nof_BG_var_nodes_short();

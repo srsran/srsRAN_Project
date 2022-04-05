@@ -11,7 +11,7 @@
 namespace srsgnb {
 namespace ldpc {
 /// Maximum number of information bits in a codeblock (before shortening).
-static constexpr unsigned max_BG_K = 22;
+static constexpr unsigned MAX_BG_K = 22;
 } // namespace ldpc
 
 /// Template LDPC decoder
@@ -119,20 +119,20 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   unsigned nof_hrr_nodes = 8;
 
   /// Register to store the current value of the soft bits.
-  std::array<int8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> soft_bits = {};
+  std::array<int8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits = {};
 
   /// \brief Register to store the current value of the check-to-variable messages.
   ///
   /// In the base graph, each check node is connected, at most, to all variable nodes in the high-rate region
   /// (of max length max_BG_K + 4) and an extra variable node in the extension region. Then, the graph is lifted.
-  std::array<std::array<int8_t, static_cast<size_t>((ldpc::max_BG_K + 5) * ldpc::max_lifting_size)>, ldpc::max_BG_M>
+  std::array<std::array<int8_t, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)>, ldpc::MAX_BG_M>
       check_to_var = {};
 
   /// \brief Register to store the current value of the variable-to-check messages.
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding
   /// to the current (base graph) check node.
-  std::array<int8_t, static_cast<size_t>((ldpc::max_BG_K + 5) * ldpc::max_lifting_size)> var_to_check = {};
+  std::array<int8_t, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)> var_to_check = {};
 
   /// \name Helper registers
   /// The following registers refer to a base graph check node (that is, a block of
@@ -140,13 +140,13 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
 
   ///@{
   /// \brief Register to store the minimum variable-to-check message.
-  std::array<int8_t, ldpc::max_lifting_size> min_var_to_check = {};
+  std::array<int8_t, ldpc::MAX_LIFTING_SIZE> min_var_to_check = {};
   /// \brief Register to store the second minimum variable-to-check message for each base graph check node.
-  std::array<int8_t, ldpc::max_lifting_size> second_min_var_to_check = {};
+  std::array<int8_t, ldpc::MAX_LIFTING_SIZE> second_min_var_to_check = {};
   /// \brief Index of the minimum-valued variable-to-check message.
-  std::array<unsigned, ldpc::max_lifting_size> min_var_to_check_index = {};
+  std::array<unsigned, ldpc::MAX_LIFTING_SIZE> min_var_to_check_index = {};
   /// \brief Sign product of all variable-to-check messages.
-  std::array<int8_t, ldpc::max_lifting_size> sign_prod_var_to_check = {};
+  std::array<int8_t, ldpc::MAX_LIFTING_SIZE> sign_prod_var_to_check = {};
   ///@}
 };
 

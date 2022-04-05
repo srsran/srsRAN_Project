@@ -56,7 +56,7 @@ int main()
     std::vector<uint8_t> hard(dematched.size());
     auto                 llrs_to_bit = [](const int8_t& b) {
       if (b == INT8_MAX) {
-        return filler_bit;
+        return FILLER_BIT;
       }
       return static_cast<uint8_t>((b >= 0) ? 0 : 1);
     };
