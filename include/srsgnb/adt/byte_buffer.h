@@ -321,9 +321,12 @@ public:
       span<const uint8_t> subspan  = bytes.subspan(count, to_write);
       tail->append(subspan);
       count += to_write;
+      len += to_write;
     }
-    len += bytes.size();
   }
+
+  /// Appends an initializer list of bytes.
+  void append(const std::initializer_list<uint8_t>& bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
 
   /// Appends bytes from another byte_buffer. This function may allocate new segments.
   void append(const byte_buffer& other)
@@ -344,8 +347,6 @@ public:
       len += seg->length();
     }
   }
-
-  void append(std::initializer_list<uint8_t> bytes) { append(span<const uint8_t>{bytes.begin(), bytes.size()}); }
 
   /// Appends bytes to the byte buffer. This function may allocate new segments.
   void append(uint8_t byte)
@@ -640,10 +641,12 @@ public:
   byte_buffer_view view() const { return *buffer; }
 
   /// Appends bytes.
-  template <typename Bytes>
-  void append(const Bytes& bytes)
+  void append(byte_buffer_view bytes)
   {
-    buffer->append(bytes);
+    // TODO: do batch append.
+    for (uint8_t byte : bytes) {
+      buffer->append(byte);
+    }
   }
 
   /// Appends initializer list of bytes.
@@ -651,6 +654,12 @@ public:
   {
     buffer->append(span<const uint8_t>{bytes.begin(), bytes.size()});
   }
+
+  /// Appends span of bytes.
+  void append(span<const uint8_t> bytes) { buffer->append(bytes); }
+
+  /// Appends single byte.
+  void append(uint8_t byte) { buffer->append(byte); }
 
   void append_zeros(size_t nof_zeros)
   {
