@@ -107,6 +107,25 @@ void test_byte_buffer_prepend()
   TESTASSERT(bytes_concat == pdu);
 }
 
+void test_byte_buffer_clear()
+{
+  byte_buffer pdu;
+  pdu.append(make_small_vec());
+
+  TESTASSERT(not pdu.empty());
+  TESTASSERT(pdu.length() > 0);
+  pdu.clear();
+  TESTASSERT(pdu.empty());
+  TESTASSERT(pdu.length() == 0);
+
+  pdu.append(make_big_vec());
+  pdu.append(make_big_vec());
+
+  TESTASSERT(not pdu.empty());
+  pdu.clear();
+  TESTASSERT(pdu.empty());
+}
+
 void test_byte_buffer_compare()
 {
   byte_buffer          pdu, pdu2, pdu3, pdu4;
@@ -368,6 +387,7 @@ int main()
   test_buffer_segment();
   test_byte_buffer_append();
   test_byte_buffer_prepend();
+  test_byte_buffer_clear();
   test_byte_buffer_iterator();
   test_byte_buffer_compare();
   test_byte_buffer_copy();

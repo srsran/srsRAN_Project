@@ -195,7 +195,8 @@ class byte_buffer
     using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator_impl(byte_buffer_segment* start_segment, size_t offset_) : current_segment(start_segment), offset(offset_)
+    iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
+      current_segment(start_segment), offset(offset_)
     {}
 
     reference operator*() { return *(current_segment->data() + offset); }
@@ -379,6 +380,7 @@ public:
   {
     head = nullptr;
     tail = nullptr;
+    len  = 0;
   }
 
   /// Removes "nof_bytes" from the head of the byte_buffer.
