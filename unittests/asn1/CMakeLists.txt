@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "asn1")
+
 add_executable(asn1_utils_test asn1_utils_test.cpp)
 target_link_libraries(asn1_utils_test asn1_utils)
 add_test(asn1_utils_test asn1_utils_test)
