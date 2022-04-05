@@ -20,13 +20,13 @@ public:
   /// Decoder configuration.
   struct config_t {
     /// Code base graph.
-    srsgnb::ldpc::base_graph_t base_graph{ldpc::base_graph_t::BG1};
+    srsgnb::ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
     /// Code lifting size.
-    srsgnb::ldpc::lifting_size_t lifting_size{ldpc::lifting_size_t::LS2};
+    srsgnb::ldpc::lifting_size_t lifting_size = ldpc::lifting_size_t::LS2;
     /// Maximum number of iterations.
-    unsigned max_iterations{6};
+    unsigned max_iterations = 6;
     /// Scaling factor of the normalized min-sum decoding algorithm.
-    float scaling_factor{0.8};
+    float scaling_factor = 0.8;
     /// CRC calculator
     crc_calculator* crc = nullptr;
   };

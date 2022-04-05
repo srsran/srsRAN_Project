@@ -18,20 +18,20 @@ public:
   /// Rate matching configuration parameters.
   struct config_t {
     /// Redundancy version, values in {0, 1, 2, 3}.
-    unsigned rv{0};
+    unsigned rv = 0;
     /// Number of filler bits in the current codeblock.
-    unsigned nof_filler_bits{0};
+    unsigned nof_filler_bits = 0;
     /// \brief New codeblock flag.
     ///
     /// Set to true if the current codeblock is the first (possibly unique) codeblock in a repetition sequence, false
     /// otherwise.
-    bool new_data{true};
+    bool new_data = true;
     /// Modulation scheme.
-    modulation_scheme mod{modulation_scheme::BPSK};
+    modulation_scheme mod = modulation_scheme::BPSK;
     /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
     ///
     /// Set to zero for unlimited buffer length.
-    unsigned Nref{0};
+    unsigned Nref = 0;
   };
 
   /// \brief Recovers a full codeblock from its rate-matched version.

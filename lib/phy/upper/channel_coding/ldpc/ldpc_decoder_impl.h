@@ -65,31 +65,31 @@ private:
 
 protected:
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
-  const ldpc_graph_impl* current_graph{};
+  const ldpc_graph_impl* current_graph = nullptr;
   /// Lifting size as a natural number (as opposed to an element from srsgnb::ldpc::lifting_size_t).
-  uint16_t lifting_size{};
+  uint16_t lifting_size = 2;
   /// Total number of base graph variable nodes in the current graph.
-  uint16_t bg_N_full{};
+  uint16_t bg_N_full = 68;
   /// Number of base graph variable nodes after shortening.
-  uint16_t bg_N_short{};
+  uint16_t bg_N_short = 66;
   /// Number of base graph variable nodes in the high-rate region.
-  uint16_t bg_N_high_rate{};
+  uint16_t bg_N_high_rate = 26;
   /// Number of base graph check nodes.
-  uint16_t bg_M{};
+  uint16_t bg_M = 46;
   /// Number of base graph variable nodes corresponding to information bits.
-  uint16_t bg_K{};
+  uint16_t bg_K = 22;
   /// \brief Number of used variable nodes.
   ///
   /// Instead of using all the variable nodes and setting to zero all the punctured LLRs, the decoder will work only
   /// with the enough variable nodes to accommodate all LLRs provided by the input vector. It is a multiple of the
   /// lifting size.
-  uint16_t codeblock_length{};
+  uint16_t codeblock_length = 52;
 
   /// Maximum number of iterations
-  unsigned max_iterations{6};
+  unsigned max_iterations = 6;
 
   /// Scaling factor of the normalized min-sum algorithm.
-  float scaling_factor{0.8};
+  float scaling_factor = 0.8;
 
   /// Pointer to a CRC calculator
   crc_calculator* crc = nullptr;
@@ -116,23 +116,23 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   static void compute_var_to_check_msgs(span<const int8_t> soft, span<const int8_t> c2v, span<int8_t> v2c);
 
   /// Number of nodes in the (lifted) high-rate region.
-  unsigned nof_hrr_nodes{};
+  unsigned nof_hrr_nodes = 8;
 
   /// Register to store the current value of the soft bits.
-  std::array<int8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> soft_bits{};
+  std::array<int8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> soft_bits = {};
 
   /// \brief Register to store the current value of the check-to-variable messages.
   ///
   /// In the base graph, each check node is connected, at most, to all variable nodes in the high-rate region
   /// (of max length max_BG_K + 4) and an extra variable node in the extension region. Then, the graph is lifted.
   std::array<std::array<int8_t, static_cast<size_t>((ldpc::max_BG_K + 5) * ldpc::max_lifting_size)>, ldpc::max_BG_M>
-      check_to_var{};
+      check_to_var = {};
 
   /// \brief Register to store the current value of the variable-to-check messages.
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding
   /// to the current (base graph) check node.
-  std::array<int8_t, static_cast<size_t>((ldpc::max_BG_K + 5) * ldpc::max_lifting_size)> var_to_check{};
+  std::array<int8_t, static_cast<size_t>((ldpc::max_BG_K + 5) * ldpc::max_lifting_size)> var_to_check = {};
 
   /// \name Helper registers
   /// The following registers refer to a base graph check node (that is, a block of
@@ -140,13 +140,13 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
 
   ///@{
   /// \brief Register to store the minimum variable-to-check message.
-  std::array<int8_t, ldpc::max_lifting_size> min_var_to_check{};
+  std::array<int8_t, ldpc::max_lifting_size> min_var_to_check = {};
   /// \brief Register to store the second minimum variable-to-check message for each base graph check node.
-  std::array<int8_t, ldpc::max_lifting_size> second_min_var_to_check{};
+  std::array<int8_t, ldpc::max_lifting_size> second_min_var_to_check = {};
   /// \brief Index of the minimum-valued variable-to-check message.
-  std::array<unsigned, ldpc::max_lifting_size> min_var_to_check_index{};
+  std::array<unsigned, ldpc::max_lifting_size> min_var_to_check_index = {};
   /// \brief Sign product of all variable-to-check messages.
-  std::array<int8_t, ldpc::max_lifting_size> sign_prod_var_to_check{};
+  std::array<int8_t, ldpc::max_lifting_size> sign_prod_var_to_check = {};
   ///@}
 };
 

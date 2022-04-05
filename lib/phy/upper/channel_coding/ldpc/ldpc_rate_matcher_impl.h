@@ -37,17 +37,17 @@ private:
   // Data members
 
   /// Bit selection circular buffer.
-  span<const uint8_t> buffer{};
+  span<const uint8_t> buffer = {};
   /// Auxiliary buffer.
-  std::array<uint8_t, ldpc::max_codeblock_length> auxiliary_buffer{};
+  std::array<uint8_t, ldpc::max_codeblock_length> auxiliary_buffer = {};
   /// Redundancy version, values in {0, 1, 2, 3}.
-  unsigned rv{0};
+  unsigned rv = 0;
   /// Modulation scheme.
-  unsigned modulation_order{1};
+  unsigned modulation_order = 1;
   /// Buffer length.
-  unsigned buffer_length{0};
+  unsigned buffer_length = 0;
   /// Shift \f$ k_0 \f$ as defined in TS38.212 Table 5.4.2.1-2
-  unsigned shift_k0{0};
+  unsigned shift_k0 = 0;
 };
 
 } // namespace srsgnb

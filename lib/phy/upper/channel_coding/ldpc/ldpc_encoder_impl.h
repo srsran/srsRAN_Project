@@ -55,22 +55,22 @@ private:
 protected:
   // member variables
   /// Pointer to the Tanner graph (~ parity check matrix) used by the encoding algorithm.
-  const ldpc_graph_impl* current_graph{};
+  const ldpc_graph_impl* current_graph = nullptr;
   /// Lifting size as a natural number (as opposed to an element from srsgnb::ldpc::lifting_size_t).
-  uint16_t lifting_size{};
+  uint16_t lifting_size = 2;
   /// Total number of base graph variable nodes in the current graph.
-  uint16_t bg_N_full{};
+  uint16_t bg_N_full = 68;
   /// Number of base graph variable nodes after shortening.
-  uint16_t bg_N_short{};
+  uint16_t bg_N_short = 66;
   /// Number of base graph check nodes.
-  uint16_t bg_M{};
+  uint16_t bg_M = 46;
   /// Number of base graph variable nodes corresponding to information bits.
-  uint16_t bg_K{};
+  uint16_t bg_K = 22;
   /// \brief Number of encoded bits needed to fill the output vector.
   ///
   /// Instead of computing all the variable nodes, the encoder can work with just enough bits
   /// to fill the vector returned by the ldpc_encoder_impl::encode function. It is a multiple of the lifting size.
-  uint16_t codeblock_length{};
+  uint16_t codeblock_length = 52;
 };
 
 /// Generic LDPC encoder implementation without any optimization.
@@ -98,12 +98,12 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   void high_rate_bg2_other();
 
   /// Local copy of the message to encode.
-  span<const uint8_t> message{};
+  span<const uint8_t> message = {};
   // Set up registers for the largest LS.
   /// Register to store auxiliary computation results.
-  std::array<std::array<uint8_t, ldpc::max_lifting_size>, ldpc::max_BG_M> auxiliary{};
+  std::array<std::array<uint8_t, ldpc::max_lifting_size>, ldpc::max_BG_M> auxiliary = {};
   /// Register to store computed encoded bits.
-  std::array<uint8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> codeblock{};
+  std::array<uint8_t, static_cast<size_t>(ldpc::max_BG_N_full* ldpc::max_lifting_size)> codeblock = {};
 };
 
 /// LDPC encoder implementation based on AVX2 intrinsics.
