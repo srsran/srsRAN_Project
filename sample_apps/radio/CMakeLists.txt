@@ -1,0 +1,3 @@
+
+add_executable(radio_benchmark radio_benchmark.cpp)
+target_link_libraries(radio_benchmark srsgnb_radio srslog srsgnb_support)

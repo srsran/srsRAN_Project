@@ -33,6 +33,7 @@ option(ASSERTS_ENABLED       "Enable srsRAN asserts"                    ON)
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
+option(ENABLE_UHD            "Enable UHD"                               ON)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -101,6 +102,18 @@ if (FFTW3F_FOUND)
     message(STATUS "FFT_LIBRARIES: " ${FFT_LIBRARIES})
 endif (FFTW3F_FOUND)
 
+# UHD
+if (ENABLE_UHD)
+    find_package(UHD)
+    if (UHD_FOUND)
+        include_directories(${UHD_INCLUDE_DIRS})
+        link_directories(${UHD_LIBRARY_DIRS})
+    endif (UHD_FOUND)
+endif (ENABLE_UHD)
+
+# Threads
+find_package(Threads REQUIRED)
+
 ########################################################################
 # Compiler launcher setup
 ########################################################################
@@ -117,14 +130,13 @@ if (CCACHE_EXECUTABLE)
     endforeach ()
 endif ()
 
-find_package(Threads REQUIRED)
-
 include(CTest)
 
 include_directories(include)
 
+add_subdirectory(docs)
 add_subdirectory(lib)
+add_subdirectory(sample_apps)
 add_subdirectory(units)
 add_subdirectory(unittests)
-add_subdirectory(docs)
 

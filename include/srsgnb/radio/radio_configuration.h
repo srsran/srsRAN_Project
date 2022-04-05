@@ -40,8 +40,8 @@ struct lo_frequency {
   double lo_frequency_hz;
 };
 
-/// Describes a port configuration common for transmit and receive chains.
-struct port {
+/// Describes a channel configuration common for transmit and receive chains.
+struct channel {
   /// Frequency parameters.
   lo_frequency freq;
   /// Initial gain in decibels.
@@ -53,11 +53,26 @@ struct port {
 
 /// Describes a stream configuration common for transmit and receive chains.
 struct stream {
-  /// Provides the configuration for each port. The number of elements indicates the number of ports for the stream.
-  static_vector<port, RADIO_MAX_NOF_PORTS> ports;
+  /// Provides the configuration for each channel. The number of elements indicates the number of channels for the
+  /// stream.
+  static_vector<channel, RADIO_MAX_NOF_CHANNELS> channels;
   /// \brief Indicates any device specific parameters to create the stream.
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
+};
+
+/// \brief Over the wire format. Indicates the data format baseband samples are transported between the baseband unit
+/// and the host.
+/// \note Not all driver and/or devices support this feature.
+enum class over_the_wire_format {
+  /// Default, the parameter is unset and let the driver use the default type.
+  DEFAULT = 0,
+  /// Signed 16 bit integer complex values.
+  SC16,
+  /// Signed 12 bit integer complex values.
+  SC12,
+  /// Signed 8 bit integer complex values.
+  SC8
 };
 
 /// Describes the necessary parameters to initialise a radio.
@@ -71,19 +86,14 @@ struct radio {
   /// streams.
   static_vector<stream, RADIO_MAX_NOF_STREAMS> rx_streams;
   /// Sampling rate in Hz common for all transmit and receive chains.
-  double sampling_rate_Hz;
-  /// \brief Over the wire format. Indicates the data format baseband samples are transported between the baseband unit
-  /// and the host.
-  /// \note Not all driver and/or devices support this feature.
-  enum {
-    /// Default, the parameter is unset and let the driver use the default type.
-    OTW_DEFAULT = 0,
-    /// Signed 16 bit integer complex values.
-    OTW_SC16
-  } otw_format;
+  double sampling_rate_hz;
+  /// Indicates the baseband signal transport format between the device and the host.
+  over_the_wire_format otw_format;
   /// \brief Indicates any device specific parameters to create the session.
   /// \remark Not all driver and/or devices support this feature.
   std::string args;
+  /// Logging level. Leave empty for default.
+  std::string log_level;
 };
 
 } // namespace radio_configuration
