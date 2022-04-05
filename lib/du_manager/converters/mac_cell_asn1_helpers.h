@@ -16,9 +16,10 @@ struct mib_s;
 namespace srsgnb {
 
 /// Fills mac cell configuration with parameters in ASN.1 ServingCellConfigCommonSIB
-void fill_mac_cell_cfg_from_asn1(const asn1::rrc_nr::serving_cell_cfg_common_sib_s& in,
+void fill_mac_cell_cfg_from_asn1(mac_cell_configuration&                            out,
+                                 const asn1::rrc_nr::serving_cell_cfg_common_sib_s& serv_cll_sib_in,
                                  const asn1::rrc_nr::mib_s&                         mib_in,
-                                 mac_cell_configuration&                            out);
+                                 subcarrier_spacing                                 ssb_scs);
 
 } // namespace srsgnb
 

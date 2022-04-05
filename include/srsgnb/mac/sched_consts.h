@@ -12,6 +12,8 @@ const size_t MAX_NOF_LAYERS = 2;
 const size_t MAX_NOF_PRBS = 275;
 const size_t MAX_NOF_RBGS = 18;
 
+const size_t NOF_BEAMS = 64;
+
 /// SSB constants
 /// This is the max num of SSB in a list of SSB to be passed from SCHED to MAC
 const size_t MAX_NOF_SSB  = 4;

@@ -2,12 +2,19 @@
 #ifndef SRSGNB_SCHED_CONFIGURATOR_H
 #define SRSGNB_SCHED_CONFIGURATOR_H
 
+#include "cell_configuration.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/serving_cell.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
+
+struct ssb_configuration;
+
+/// \remark Refer to ssb-periodicityServingCell, TS 38.331
+enum ssb_periodicity { ms5, ms10, ms20, ms40, ms80, ms160 };
 
 namespace srsgnb {
 
@@ -26,7 +33,8 @@ struct cell_configuration_request_message {
   asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
 
-  /// SSB parameters.
+  /// SSB parameters. We use the same struct as in MAC Cell Configuration msg.
+  ssb_configuration ssb_config;
 };
 
 /// UE Creation Request.

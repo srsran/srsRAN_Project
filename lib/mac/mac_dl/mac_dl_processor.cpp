@@ -1,9 +1,27 @@
 
 #include "mac_dl_processor.h"
 #include "sched_config_helpers.h"
+#include "../../helpers/band_helper.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/mac/sched_configurer.h"
 
 using namespace srsgnb;
+
+
+static void create_sched_cell_config(cell_configuration_request_message& sched_cell_cfg,
+                                     const mac_cell_configuration&       cell_cfg)
+{
+  // Copy SSB parameters
+  sched_cell_cfg.ssb_config = cell_cfg.ssb_cfg;
+
+  // At this point, we need to derive the SSB pattern case from Band nARFCN (
+  uint16_t dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn);
+  srsran_assert(dl_idx_nr_band < UINT16_MAX, "Invalid NR band index");
+  sched_cell_cfg.ssb_config.ssb_case = band_helper::get_ssb_pattern(dl_idx_nr_band, cell_cfg.ssb_scs);
+  // sched_cell_cfg.ssb_config.paired_spectrum = band_helper::is_paired_spectrum();
+
+  // TODO: Add remaining fields.
+}
 
 mac_dl_processor::mac_dl_processor(mac_common_config_t&    cfg_,
                                    mac_sched_configurator& sched_cfg_,
@@ -38,6 +56,11 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
   sched_msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup().ra_search_space_present = true;
   sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
   sched_obj.handle_cell_configuration_request(sched_msg);
+
+  // TODO: Pass configuration to scheduler.
+  cell_configuration_request_message sched_cell_cfg{};
+  create_sched_cell_config(sched_cell_cfg, cell_cfg);
+  sched_obj.handle_cell_configuration_request(sched_cell_cfg);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

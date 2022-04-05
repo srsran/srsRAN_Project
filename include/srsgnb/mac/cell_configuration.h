@@ -4,14 +4,15 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
-#define NOF_BEAMS 64
-
 namespace srsgnb {
+
+enum class ssb_pattern_case;
 
 /// \brief Configuration of each transmission point associated to the corresponding cell(s). This includes
 /// different physical antennas, different frequencies, bandwidths.
@@ -46,6 +47,10 @@ struct ssb_configuration {
   std::array<uint8_t, NOF_BEAMS> beam_ids;
   /// Values: 0 = 0dB, 1 = 3dB.
   uint8_t beta_pss;
+
+  /// Additional parameter not included in ORAN iface.
+  ssb_pattern_case ssb_case;
+  bool             paired_spectrum;
 };
 
 struct prach_configuration {
@@ -70,6 +75,10 @@ struct mac_cell_configuration {
   /// If present, the cell is in TDD duplex mode.
   optional<tdd_configuration> tdd_cfg;
   // TODO: Fill remaining fields
+
+  /// SSB subcarrier spacing
+  /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
+  subcarrier_spacing ssb_scs;
 };
 
 } // namespace srsgnb
