@@ -45,7 +45,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     ue_mng.add_ue(request);
 
     // 3. Create UE in scheduler
-    sched_obj.config_ue(request.crnti);
+    sched_obj.config_ue(request.ue_index);
 
     // 4. Await scheduler to respond via notifier
     CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));
@@ -97,8 +97,8 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     ue_mng.addmod_bearers(request.ue_index, request.bearers_to_addmod);
 
     // 4. Configure UE in Scheduler
-    log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
-    sched_obj.config_ue(request.crnti);
+    log_proc_started(logger, request.ue_index, request.ue_index, "Sched UE Config");
+    sched_obj.config_ue(request.ue_index);
 
     // 4. Await scheduler to respond via notifier
     CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));

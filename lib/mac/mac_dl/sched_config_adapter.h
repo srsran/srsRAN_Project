@@ -45,10 +45,12 @@ private:
     sched_config_notif_adapter(sched_config_adapter& parent_) : parent(parent_) {}
     void on_ue_config_complete(du_ue_index_t ue_index) override
     {
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
       parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true);
     }
     void on_ue_delete_response(du_ue_index_t ue_index) override
     {
+      srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
       parent.sched_cfg_notif_map[ue_index].ue_delete_ready.set(true);
     }
 
