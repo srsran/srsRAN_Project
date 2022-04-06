@@ -266,15 +266,14 @@ class byte_buffer
     size_t               offset;
   };
 
-  /// Private copy ctor. User should use copy() method instead.
-  byte_buffer(const byte_buffer&) noexcept = default;
-
 public:
   using value_type     = uint8_t;
   using iterator       = iterator_impl<uint8_t>;
   using const_iterator = iterator_impl<const uint8_t>;
 
   byte_buffer() = default;
+  /// Explicit copy ctor. User should use copy() method for copy assignments.
+  explicit byte_buffer(const byte_buffer&) noexcept = default;
   byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
   byte_buffer(span<const uint8_t> bytes) { append(bytes); }
   template <typename It>
@@ -566,7 +565,7 @@ class byte_buffer_view
 {
 public:
   using value_type     = uint8_t;
-  using iterator       = byte_buffer::const_iterator;
+  using iterator       = byte_buffer::iterator;
   using const_iterator = byte_buffer::const_iterator;
 
   byte_buffer_view() = default;

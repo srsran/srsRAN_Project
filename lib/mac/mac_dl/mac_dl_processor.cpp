@@ -6,8 +6,9 @@ using namespace srsgnb;
 
 mac_dl_processor::mac_dl_processor(mac_common_config_t&  cfg_,
                                    sched_config_adapter& sched_cfg_notif_,
-                                   sched_interface&      sched_) :
-  cfg(cfg_), logger(cfg.logger), sched_cfg_notif(sched_cfg_notif_), sched_obj(sched_)
+                                   sched_interface&      sched_,
+                                   du_rnti_table&        rnti_table_) :
+  cfg(cfg_), logger(cfg.logger), sched_cfg_notif(sched_cfg_notif_), ue_mng(rnti_table_), sched_obj(sched_)
 {}
 
 bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
@@ -41,7 +42,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
     // 2. Insert UE and DL bearers
-    ue_mng.add_ue(request.crnti, request.ue_index, request.bearers);
+    ue_mng.add_ue(request);
 
     // 3. Create UE in scheduler
     sched_obj.config_ue(request.crnti);
@@ -72,7 +73,7 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
 
     // 4. Remove UE associated DL channels
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
-    ue_mng.remove_ue(request.rnti);
+    ue_mng.remove_ue(request.ue_index);
 
     // 5. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
@@ -90,10 +91,10 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
     // 2. Remove UE DL bearers
-    ue_mng.remove_bearers(request.crnti, request.bearers_to_rem);
+    ue_mng.remove_bearers(request.ue_index, request.bearers_to_rem);
 
     // 3. AddMod UE DL bearers
-    ue_mng.addmod_bearers(request.crnti, request.bearers_to_addmod);
+    ue_mng.addmod_bearers(request.ue_index, request.bearers_to_addmod);
 
     // 4. Configure UE in Scheduler
     log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");

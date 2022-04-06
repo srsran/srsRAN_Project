@@ -31,7 +31,7 @@ public:
     CORO_AWAIT(ul_mac.remove_ue(req));
 
     // 3. Enqueue UE deletion
-    ctrl_mac.remove_ue(req.rnti);
+    ctrl_mac.remove_ue(req.ue_index);
 
     log_proc_completed(logger, req.ue_index, req.rnti, "UE Delete Request");
 

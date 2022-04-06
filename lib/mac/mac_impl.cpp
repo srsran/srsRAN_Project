@@ -12,9 +12,10 @@ mac_impl::mac_impl(mac_event_notifier&       event_notifier,
   cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_, phy_notifier_),
   logger(cfg.logger),
   sched_obj(std::make_unique<sched>(sched_cfg_notif.get_notifier())),
-  dl_unit(cfg, sched_cfg_notif, *sched_obj),
-  ul_unit(cfg, *sched_obj),
-  ctrl_unit(cfg, ul_unit, dl_unit)
+  dl_unit(cfg, sched_cfg_notif, *sched_obj, rnti_table),
+  ul_unit(cfg, *sched_obj, rnti_table),
+  ctrl_unit(cfg, ul_unit, dl_unit, rnti_table),
+  rach_hdl(*sched_obj, rnti_table)
 {
   // :TODO: remove when the log is used.
   (void)(logger);
@@ -51,9 +52,9 @@ async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac
   return ctrl_unit.ue_delete_request(msg);
 }
 
-void mac_impl::flush_ul_ccch_msg(rnti_t rnti)
+void mac_impl::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu)
 {
-  ul_unit.flush_ul_ccch_msg(rnti);
+  ul_unit.flush_ul_ccch_msg(ue_index, std::move(ccch_pdu));
 }
 
 } // namespace srsgnb

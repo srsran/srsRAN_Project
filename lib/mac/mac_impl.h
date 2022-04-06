@@ -6,6 +6,7 @@
 #include "mac_ctrl/mac_controller.h"
 #include "mac_dl/sched_config_adapter.h"
 #include "mac_ul/mac_ul_processor.h"
+#include "rach_handler.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/srslog/srslog.h"
 
@@ -27,7 +28,7 @@ public:
   async_task<mac_ue_reconfiguration_response_message>
                                              ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
   async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
-  void                                       flush_ul_ccch_msg(rnti_t rnti) override;
+  void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
 
   void handle_rx_data_indication(mac_rx_data_indication msg) override;
 
@@ -47,6 +48,9 @@ private:
   mac_common_config_t   cfg;
   srslog::basic_logger& logger;
 
+  /// Table used to convert from RNTI to UE index.
+  du_rnti_table rnti_table;
+
   /// Handle used to await scheduler configurations.
   sched_config_adapter sched_cfg_notif;
 
@@ -56,6 +60,7 @@ private:
   mac_dl_processor dl_unit;
   mac_ul_processor ul_unit;
   mac_controller   ctrl_unit;
+  rach_handler     rach_hdl;
 };
 
 } // namespace srsgnb

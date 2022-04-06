@@ -19,7 +19,7 @@ public:
   {
     // TODO: right now I dont have lazy_tasks, so I have to wrap the coroutine in a lambda.
     // TODO: forward args
-    return queue.try_push([&]() { return launch_async<AsyncTask>(args...); });
+    return queue.try_push([&]() { return launch_async<AsyncTask>(std::forward<Args>(args)...); });
   }
 
   template <typename AsyncFunc>

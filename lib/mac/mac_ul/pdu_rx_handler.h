@@ -3,6 +3,7 @@
 #define SRSGNB_PDU_RX_HANDLER_H
 
 #include "../../ran/gnb_format.h"
+#include "../du_rnti_table.h"
 #include "mac_ul_sch_pdu.h"
 #include "mac_ul_ue_manager.h"
 #include "srsgnb/adt/slot_array.h"
@@ -17,8 +18,11 @@ namespace srsgnb {
 /// Stores MAC RX PDU, as well as any contextual or temporary information related to the PDU decoding.
 struct decoded_mac_rx_pdu {
   decoded_mac_rx_pdu() = default;
-  decoded_mac_rx_pdu(slot_point slot_rx_, du_cell_index_t cell_idx_, mac_rx_pdu pdu_rx_) :
-    slot_rx(slot_rx_), cell_index_rx(cell_idx_), pdu_rx(std::move(pdu_rx_))
+  decoded_mac_rx_pdu(slot_point      slot_rx_,
+                     du_cell_index_t cell_idx_,
+                     mac_rx_pdu      pdu_rx_,
+                     du_ue_index_t   ue_index_ = MAX_NOF_UES) :
+    slot_rx(slot_rx_), cell_index_rx(cell_idx_), ue_index(ue_index_), pdu_rx(std::move(pdu_rx_))
   {
     srsran_sanity_check(not pdu_rx.pdu.empty(), "Received empty PDU");
   }
@@ -28,6 +32,7 @@ struct decoded_mac_rx_pdu {
   {
     slot_rx       = {};
     cell_index_rx = MAX_NOF_CELLS;
+    ue_index      = MAX_NOF_UES;
     pdu_rx.pdu.clear();
     decoded_subpdus.clear();
   }
@@ -37,6 +42,9 @@ struct decoded_mac_rx_pdu {
 
   /// Cell where PDU was decoded by the PHY.
   du_cell_index_t cell_index_rx;
+
+  /// UE index for which PDU is directed. ue_index = MAX_NOF_UES if no UE with provided RNTI exists.
+  du_ue_index_t ue_index;
 
   /// Received MAC PDU content.
   /// Note: C-RNTI may be later altered, depending on whether a CRNTI MAC CE is present.
@@ -52,9 +60,10 @@ struct decoded_mac_rx_pdu {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(mac_common_config_t& cfg_, sched_ue_feedback& sched_, mac_ul_ue_manager& ue_manager_) :
-    cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_)
-  {}
+  pdu_rx_handler(mac_common_config_t& cfg_,
+                 sched_ue_feedback&   sched_,
+                 mac_ul_ue_manager&   ue_manager_,
+                 du_rnti_table&       rnti_table_);
 
   /// Decode MAC Rx PDU, log contents and handle subPDUs.
   /// \param sl_rx Slot when MAC UL PDU was received.
@@ -63,7 +72,8 @@ public:
   /// \return true if all subPDUs were correctly handled.
   bool handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu);
 
-  bool push_ul_ccch_msg(rnti_t rnti);
+  /// Called to push stored UL CCCH to upper layers, once the UE has been created in the DU manager.
+  bool push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccch_msg);
 
 private:
   /// Handle subPDUs contained in a MAC UL PDU.
@@ -101,9 +111,11 @@ private:
   srslog::basic_logger& logger;
   sched_ue_feedback&    sched;
   mac_ul_ue_manager&    ue_manager;
+  du_rnti_table&        rnti_table;
 
   /// Buffer used to store Msg3 for the purposes of Contention Resolution.
-  circular_array<decoded_mac_rx_pdu, MAX_NOF_UES> msg3_buffer;
+  std::mutex                                              mutex;
+  static_circular_buffer<decoded_mac_rx_pdu, MAX_NOF_UES> buffered_msg3;
 };
 
 } // namespace srsgnb

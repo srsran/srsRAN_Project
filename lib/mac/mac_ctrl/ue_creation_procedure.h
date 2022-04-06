@@ -28,7 +28,7 @@ public:
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");
 
     // 1. Create UE in MAC CTRL
-    ctrl_ue_created = ctrl_unit.add_ue(req.crnti, req.ue_index, req.cell_index);
+    ctrl_ue_created = ctrl_unit.add_ue(req.ue_index, req.crnti, req.cell_index);
     if (not ctrl_ue_created) {
       CORO_EARLY_RETURN(handle_mac_ue_create_result(false));
     }

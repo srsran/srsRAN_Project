@@ -9,18 +9,23 @@
 namespace srsgnb {
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
-class rnti_ul_executor_mapper final : public du_l2_ul_executor_mapper
+class ue_index_based_ul_executor_mapper final : public du_l2_ul_executor_mapper
 {
 public:
-  rnti_ul_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
+  ue_index_based_ul_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
 
-  virtual task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override
+  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
     // Static lookup
-    return executor(rnti);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueIdx={}", ue_index);
+    return executor(ue_index);
   }
 
-  virtual task_executor& executor(rnti_t rnti) override { return *execs[rnti % execs.size()]; }
+  task_executor& executor(du_ue_index_t ue_index) override
+  {
+    ue_index = ue_index < MAX_NOF_UES ? ue_index : 0;
+    return *execs[ue_index % execs.size()];
+  }
 
 private:
   std::vector<task_executor*> execs;
@@ -32,22 +37,30 @@ class pcell_ul_executor_mapper final : public du_l2_ul_executor_mapper
 public:
   explicit pcell_ul_executor_mapper(std::vector<std::unique_ptr<task_executor> > execs_) : execs(std::move(execs_))
   {
-    for (auto& rnti_exec : rnti_to_exec) {
-      rnti_exec = execs[0].get();
+    // Initialize executors in a round-robin fashion.
+    unsigned count = 0;
+    for (auto& rnti_exec : ue_idx_to_exec) {
+      rnti_exec = execs[count % execs.size()].get();
+      count++;
     }
   }
 
-  virtual task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override
+  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    rnti_to_exec[rnti] = execs[pcell_index % execs.size()].get();
-    return *rnti_to_exec[rnti];
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueIdx={}", ue_index);
+    ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()].get();
+    return *ue_idx_to_exec[ue_index];
   }
 
-  virtual task_executor& executor(rnti_t rnti) override { return *rnti_to_exec[rnti]; }
+  task_executor& executor(du_ue_index_t ue_index) override
+  {
+    ue_index = ue_index < MAX_NOF_UES ? ue_index : 0;
+    return *ue_idx_to_exec[ue_index];
+  }
 
 private:
   std::vector<std::unique_ptr<task_executor> > execs;
-  circular_array<task_executor*, MAX_NOF_UES>  rnti_to_exec;
+  std::array<task_executor*, MAX_NOF_UES>      ue_idx_to_exec;
 };
 
 } // namespace srsgnb

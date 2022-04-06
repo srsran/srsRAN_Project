@@ -98,7 +98,7 @@ public:
   dummy_ul_executor_mapper(task_executor& exec_) : exec(exec_) {}
 
   task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override { return executor(rnti); }
-  task_executor& executor(rnti_t rnti) override { return exec; }
+  task_executor& executor(du_ue_index_t ue_index) override { return exec; }
 
   task_executor& exec;
 };

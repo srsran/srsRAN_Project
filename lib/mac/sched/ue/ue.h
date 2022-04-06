@@ -5,7 +5,7 @@
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/mac/sched_interface.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/rnti_map.h"
+#include "srsgnb/ran/du_ue_list.h"
 
 namespace srsgnb {
 
@@ -19,7 +19,9 @@ public:
 class ue
 {
 public:
-  ue(const add_ue_configuration_request_message& req) {}
+  ue(const add_ue_configuration_request_message& req) : ue_index(req.ue_index) {}
+
+  const du_ue_index_t ue_index;
 
   void slot_indication(slot_point sl_tx) {}
 
@@ -45,7 +47,7 @@ private:
   sr_indication_message last_sr;
 };
 
-using ue_map_t = rnti_map<std::unique_ptr<ue> >;
+using ue_map_t = du_ue_list<std::unique_ptr<ue> >;
 
 } // namespace srsgnb
 

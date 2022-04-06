@@ -20,10 +20,15 @@ struct mac_ue_context {
   du_cell_index_t pcell_idx   = -1;
 };
 
+class du_rnti_table;
+
 class mac_controller : public mac_ctrl_configurer
 {
 public:
-  mac_controller(mac_common_config_t& cfg, mac_ul_configurer& ul_unit_, mac_dl_configurer& dl_unit_);
+  mac_controller(mac_common_config_t& cfg,
+                 mac_ul_configurer&   ul_unit_,
+                 mac_dl_configurer&   dl_unit_,
+                 du_rnti_table&       rnti_table);
 
   /// UE create methods
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
@@ -40,20 +45,20 @@ public:
   mac_ue_context* find_by_rnti(rnti_t rnti);
 
 private:
-  bool add_ue(rnti_t rnti, du_ue_index_t ue_index, du_cell_index_t pcell_index) override;
+  bool add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t pcell_index) override;
 
   /// Interface of CTRL procedures to CTRL class
-  void remove_ue(rnti_t rnti) override;
+  void remove_ue(du_ue_index_t ue_index) override;
 
   // args
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
   mac_ul_configurer&    ul_unit;
   mac_dl_configurer&    dl_unit;
+  du_rnti_table&        rnti_table;
 
   // UE database
-  rnti_map<mac_ue_context>        ue_db;
-  std::array<rnti_t, MAX_NOF_UES> ue_index_to_rnti_map;
+  du_ue_list<mac_ue_context> ue_db;
 };
 
 } // namespace srsgnb

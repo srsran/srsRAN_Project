@@ -28,7 +28,9 @@ struct cell_configuration_request_message {
 };
 
 /// Add UE Configuration Request
-struct add_ue_configuration_request_message {};
+struct add_ue_configuration_request_message {
+  du_ue_index_t ue_index;
+};
 
 /// RACH indication Message
 /// \remark See ORAN WG8 9.2.3.2.12

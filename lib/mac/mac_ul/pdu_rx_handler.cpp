@@ -3,9 +3,17 @@
 
 using namespace srsgnb;
 
+pdu_rx_handler::pdu_rx_handler(mac_common_config_t& cfg_,
+                               sched_ue_feedback&   sched_,
+                               mac_ul_ue_manager&   ue_manager_,
+                               du_rnti_table&       rnti_table_) :
+  cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_), rnti_table(rnti_table_)
+{}
+
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
-  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu)};
+  du_ue_index_t      ue_index = rnti_table[pdu.rnti];
+  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
 
   // 1. Decode MAC UL PDU.
   if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
@@ -14,9 +22,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   }
 
   // 2. Log MAC UL PDU.
-  if (logger.info.enabled()) {
-    log_ul_pdu(logger, MAX_NOF_UES, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: [{}]", ctx.decoded_subpdus);
-  }
+  log_ul_pdu(logger, ctx.ue_index, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: [{}]", ctx.decoded_subpdus);
 
   // 3. Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
@@ -32,16 +38,11 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
   return handle_rx_subpdus(ctx);
 }
 
-bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
+bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccch_msg)
 {
-  if (msg3_buffer[rnti].decoded_subpdus.nof_subpdus() == 0) {
-    logger.warning("Received signal to push UL CCCH message for inexistent RNTI=0x{:x}", rnti);
-    return false;
-  }
-
-  mac_ul_ue_context* ue = ue_manager.find_rnti(rnti);
+  mac_ul_ue_context* ue = ue_manager.find_ue(ue_index);
   if (ue == nullptr) {
-    logger.warning("Received UL CCCH for inexistent RNTI=0x{:x}", rnti);
+    logger.warning("Received UL CCCH for inexistent ueId={}", ue_index);
     return false;
   }
 
@@ -51,18 +52,16 @@ bool pdu_rx_handler::push_ul_ccch_msg(rnti_t rnti)
     return false;
   }
 
-  mac_ul_sch_subpdu& sdu = msg3_buffer[rnti].decoded_subpdus.subpdu(0);
-  log_ul_pdu(
-      logger, MAX_NOF_UES, ue->rnti, msg3_buffer[rnti].cell_index_rx, "CCCH", "Pushing {} bytes", sdu.sdu_length());
+  log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_NOF_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
 
   // Push CCCH message to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->ue_index, lcid, std::move(ul_ccch_msg)});
   return true;
 }
 
 bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 {
-  mac_ul_ue_context* ue = ue_manager.find_rnti(ctx.pdu_rx.rnti);
+  mac_ul_ue_context* ue = ue_manager.find_ue(ctx.ue_index);
 
   // Process SDUs and MAC CEs that are not C-RNTI MAC CE
   for (const mac_ul_sch_subpdu& subpdu : ctx.decoded_subpdus) {
@@ -167,12 +166,17 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
   // Store Msg3 content for ConRes CE.
-  msg3_buffer[ctx.pdu_rx.rnti] = std::move(ctx);
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    buffered_msg3.push(std::move(ctx));
+  }
 
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
   msg.crnti      = ctx.pdu_rx.rnti;
   msg.cell_index = ctx.cell_index_rx;
+  msg.slot_rx    = ctx.slot_rx;
+  msg.subpdu.append(sdu.payload());
   cfg.event_notifier.on_ul_ccch_msg_received(msg);
 
   return true;
@@ -186,9 +190,10 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
     logger.error("Invalid Payload length={} for C-RNTI MAC CE", subpdu.sdu_length());
     return false;
   }
+  ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-  cfg.ul_exec_mapper.executor(ctx.pdu_rx.rnti).execute([this, ctx = std::move(ctx)]() mutable {
+  cfg.ul_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
     rnti_t rnti = ctx.pdu_rx.rnti;
 
     // 3. Handle remaining subPDUs using old C-RNTI.

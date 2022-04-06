@@ -23,9 +23,9 @@ using timing_advance_report = uint16_t;
 using rssi_report           = uint16_t;
 
 struct mac_rx_sdu {
-  rnti_t      rnti;
-  lcid_t      lcid;
-  byte_buffer pdu;
+  du_ue_index_t ue_index;
+  lcid_t        lcid;
+  byte_buffer   pdu;
 };
 
 /// MAC Received PDU that comprises the list of PDUs of Rx_Data.indication.
@@ -68,14 +68,12 @@ public:
   virtual void on_new_tx_sdu(byte_buffer& pdu) = 0;
 };
 
+/// Used to indicate UL CCCH message arrival.
 struct ul_ccch_indication_message {
   du_cell_index_t cell_index;
   rnti_t          crnti;
-  struct logical_channel_to_addmod {
-    lcid_t lcid;
-    // other params
-  };
-  std::vector<logical_channel_to_addmod> logical_channels_to_add;
+  slot_point      slot_rx;
+  byte_buffer     subpdu;
 };
 
 struct logical_channel_addmod {
@@ -89,6 +87,7 @@ struct mac_ue_create_request_message {
   du_ue_index_t                       ue_index;
   rnti_t                              crnti;
   std::vector<logical_channel_addmod> bearers;
+  const byte_buffer*                  ul_ccch_msg;
 };
 
 struct mac_ue_create_response_message {
@@ -137,7 +136,7 @@ public:
   virtual async_task<mac_ue_reconfiguration_response_message>
                                                      ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
-  virtual void                                       flush_ul_ccch_msg(rnti_t rnti)                              = 0;
+  virtual void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)  = 0;
 };
 
 /// Interface used to push Rx Data indications to L2.

@@ -38,12 +38,11 @@ public:
 /// Fill list of eligible UEs for data scheduling
 inline void fill_ue_candidate_map(du_cell_index_t cell_index, const ue_map_t& ue_db, data_sched_input& sched_input)
 {
-  for (const std::pair<rnti_t, std::unique_ptr<ue> >& ue_pair : ue_db) {
-    ue&         u     = *ue_pair.second;
-    ue_carrier* ue_cc = u.find_cc(cell_index);
-    if (ue_cc != nullptr and ue_cc->is_active() and u.has_pending_txs()) {
+  for (const std::unique_ptr<ue>& ueptr : ue_db) {
+    ue_carrier* ue_cc = ueptr->find_cc(cell_index);
+    if (ue_cc != nullptr and ue_cc->is_active() and ueptr->has_pending_txs()) {
       // TODO: Check measGaps and other factors
-      sched_input.eligible_ues.insert(ue_pair.first, ue_candidate{*ue_cc});
+      sched_input.eligible_ues.insert(ueptr->ue_index, ue_candidate{*ue_cc});
     }
   }
 }

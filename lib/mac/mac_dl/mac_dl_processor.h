@@ -21,7 +21,10 @@ namespace srsgnb {
 class mac_dl_processor final : public mac_dl_configurer
 {
 public:
-  explicit mac_dl_processor(mac_common_config_t& cfg_, sched_config_adapter& sched_cfg_notif_, sched_interface& sched_);
+  explicit mac_dl_processor(mac_common_config_t&  cfg_,
+                            sched_config_adapter& sched_cfg_notif_,
+                            sched_interface&      sched_,
+                            du_rnti_table&        rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 

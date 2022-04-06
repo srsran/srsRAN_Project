@@ -83,17 +83,17 @@ public:
     ue_ctx.bearers.emplace(0);
     ue_ctx.bearers[0].lcid            = 0;
     ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_ul);
-    for (const auto& lc : msg.logical_channels_to_add) {
-      ue_ctx.bearers.emplace(lc.lcid);
-      auto& bearer = ue_ctx.bearers[lc.lcid];
-      bearer.lcid  = 1;
-      // Create UL RLC bearer
-      bearer.ul_bearer = create_rlc_ul_bearer(ue_ctx.ue_index, lc.lcid, *cfg.rlc_ul_notifier);
-      // Create UL RLC bearer adapter that is going to be used by MAC to notify Rx SDUs
-      bearer.mac_ul_notifier = std::make_unique<mac_ul_dcch_adapter>(*bearer.ul_bearer);
-      // Create DL RLC bearer
-      // TODO
-    }
+    //    for (const auto& lc : msg.logical_channels_to_add) {
+    //      ue_ctx.bearers.emplace(lc.lcid);
+    //      auto& bearer = ue_ctx.bearers[lc.lcid];
+    //      bearer.lcid  = 1;
+    //      // Create UL RLC bearer
+    //      bearer.ul_bearer = create_rlc_ul_bearer(ue_ctx.ue_index, lc.lcid, *cfg.rlc_ul_notifier);
+    //      // Create UL RLC bearer adapter that is going to be used by MAC to notify Rx SDUs
+    //      bearer.mac_ul_notifier = std::make_unique<mac_ul_dcch_adapter>(*bearer.ul_bearer);
+    //      // Create DL RLC bearer
+    //      // TODO
+    //    }
 
     // 4. Initiate MAC UE creation and await result.
     CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
@@ -111,7 +111,9 @@ public:
     }
 
     // 6. Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
-    cfg.mac->flush_ul_ccch_msg(msg.crnti);
+    if (not msg.subpdu.empty()) {
+      cfg.mac->flush_ul_ccch_msg(ue_ctx.ue_index, std::move(msg.subpdu));
+    }
 
     log_proc_completed(logger, ue_ctx.ue_index, msg.crnti, "UE Create");
     CORO_RETURN();
@@ -141,6 +143,7 @@ private:
       lc.ul_bearer = bearer.mac_ul_notifier.get();
       lc.dl_bearer = nullptr; // TODO
     }
+    mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
     return cfg.mac->ue_create_request(mac_ue_create_msg);
   }
 

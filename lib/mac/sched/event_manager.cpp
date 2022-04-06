@@ -160,8 +160,7 @@ bool event_manager::event_requires_sync(const event_t& ev, bool verbose) const
   if (ev.rnti == INVALID_RNTI) {
     return false;
   }
-  auto it = ue_db.find(ev.rnti);
-  if (it == ue_db.end()) {
+  if (not ue_db.contains(ev.rnti)) {
     if (verbose) {
       log_invalid_rnti(ev);
     }

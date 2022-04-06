@@ -13,7 +13,7 @@ du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), u
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)
 {
   // Switch DU Manager exec context
-  cfg.du_mng_exec->execute([this, msg]() {
+  cfg.du_mng_exec->execute([this, msg = std::move(msg)]() {
     // Start UE create procedure
     ue_mng.handle_ue_create_request(msg);
   });

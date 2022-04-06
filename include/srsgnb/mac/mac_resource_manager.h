@@ -13,7 +13,7 @@ struct mac_cell_start {
   slot_point      slot;
 };
 
-/// Network slice configuration
+/// Network view configuration
 struct mac_slice_configuration {
   // TODO: Fill remaining fields
 };
