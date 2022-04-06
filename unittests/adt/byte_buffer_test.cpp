@@ -285,8 +285,8 @@ void test_byte_buffer_view()
   TESTASSERT(not view.empty());
   TESTASSERT_EQ(6, view.length());
   TESTASSERT_EQ(6, view.end() - view.begin());
-  TESTASSERT_EQ(4, view.slice(0, 4).length());
-  TESTASSERT_EQ(4, view.slice(2, 4).length());
+  TESTASSERT_EQ(4, view.view(0, 4).length());
+  TESTASSERT_EQ(4, view.view(2, 4).length());
 }
 
 void test_byte_buffer_trim()
