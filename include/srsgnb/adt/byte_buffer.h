@@ -183,6 +183,8 @@ private:
   uint8_t*                          payload_data_end_;
 };
 
+class byte_buffer_view;
+
 /// Memory buffer that store bytes in a linked list of memory chunks.
 class byte_buffer
 {
@@ -197,6 +199,9 @@ class byte_buffer
 
     iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
       current_segment(start_segment), offset(offset_)
+    {}
+    template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
+    iterator_impl(const iterator_impl<U>& other) : current_segment(other.current_segment), offset(other.offset)
     {}
 
     reference operator*() { return *(current_segment->data() + offset); }
@@ -254,6 +259,8 @@ class byte_buffer
 
   private:
     friend class byte_buffer_view;
+    template <typename OtherT>
+    friend struct iterator_impl;
 
     byte_buffer_segment* current_segment;
     size_t               offset;
@@ -305,7 +312,7 @@ public:
   }
 
   /// Performs a shallow copy. Head segment reference counter is incremented.
-  byte_buffer copy() const { return {*this}; }
+  byte_buffer copy() const { return byte_buffer{*this}; }
 
   /// Appends bytes to the byte buffer. This function may retrieve new segments from a memory pool.
   void append(span<const uint8_t> bytes)
@@ -357,6 +364,9 @@ public:
     tail->append(byte);
     len++;
   }
+
+  /// Appends a view of bytes into current byte buffer.
+  void append(const byte_buffer_view& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   void prepend(span<const uint8_t> bytes)
@@ -562,6 +572,7 @@ public:
   byte_buffer_view() = default;
   byte_buffer_view(iterator it_begin_, iterator it_end_) : it(it_begin_), it_end(it_end_) {}
   byte_buffer_view(const byte_buffer& buffer) : it(buffer.begin()), it_end(buffer.end()) {}
+  byte_buffer_view(const byte_buffer& buffer, size_t start, size_t sz) : it(buffer.begin() + start), it_end(it + sz) {}
 
   iterator       begin() { return it; }
   iterator       end() { return it_end; }
@@ -575,9 +586,9 @@ public:
   const uint8_t& operator[](size_t i) const { return *(it + i); }
 
   /// Returns another sub-view with dimensions specified in arguments.
-  byte_buffer_view slice(size_t offset, size_t size) const
+  byte_buffer_view view(size_t offset, size_t size) const
   {
-    srsran_sanity_check(offset + size <= length(), "Invalid slice dimensions.");
+    srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
     return {it + offset, it + offset + size};
   }
 
@@ -600,6 +611,17 @@ protected:
   iterator it{nullptr, 0};
   iterator it_end{nullptr, 0};
 };
+
+inline void byte_buffer::append(const byte_buffer_view& view)
+{
+  if (empty() and not view.empty()) {
+    append_segment();
+  }
+  // TODO: Optimize.
+  for (auto& b : view) {
+    append(b);
+  }
+}
 
 /// Used to read a range of bytes stored in a byte_buffer.
 class byte_buffer_reader : private byte_buffer_view
