@@ -29,7 +29,9 @@ struct cell_configuration_request_message {
 
 /// Add UE Configuration Request
 struct add_ue_configuration_request_message {
-  du_ue_index_t ue_index;
+  du_ue_index_t   ue_index;
+  rnti_t          crnti;
+  du_cell_index_t pcell_index;
 };
 
 /// RACH indication Message
@@ -53,17 +55,17 @@ public:
   virtual ~sched_configurer()                                                                   = default;
   virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg) = 0;
   virtual void handle_rach_indication(const rach_indication_message& msg)                       = 0;
-  virtual void config_ue(rnti_t rnti)                                                           = 0;
-  virtual void delete_ue_request(rnti_t rnti)                                                   = 0;
+  virtual void config_ue(du_ue_index_t ue_index)                                                = 0;
+  virtual void delete_ue_request(du_ue_index_t ue_index)                                        = 0;
 };
 
 /// Interface used by scheduler to notify MAC
 class sched_cfg_notifier
 {
 public:
-  virtual ~sched_cfg_notifier()                   = default;
-  virtual void on_ue_config_complete(rnti_t)      = 0;
-  virtual void on_ue_delete_response(rnti_t rnti) = 0;
+  virtual ~sched_cfg_notifier()                              = default;
+  virtual void on_ue_config_complete(du_ue_index_t ue_index) = 0;
+  virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
 };
 
 } // namespace srsgnb

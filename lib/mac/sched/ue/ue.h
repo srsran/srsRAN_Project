@@ -12,16 +12,32 @@ namespace srsgnb {
 class ue_carrier
 {
 public:
+  ue_carrier(du_ue_index_t ue_index, rnti_t crnti_val, du_cell_index_t cell_index) :
+    ue_index(ue_index), cell_index(cell_index), crnti_(crnti_val)
+  {}
+
+  const du_ue_index_t   ue_index;
+  const du_cell_index_t cell_index;
+
+  rnti_t rnti() const { return crnti_; }
+
   unsigned active_bwp_id() const { return 0; }
   bool     is_active() const { return true; }
+
+private:
+  rnti_t crnti_;
 };
 
 class ue
 {
 public:
-  ue(const add_ue_configuration_request_message& req) : ue_index(req.ue_index) {}
+  ue(const add_ue_configuration_request_message& req) : ue_index(req.ue_index), crnti(req.crnti)
+  {
+    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index);
+  }
 
   const du_ue_index_t ue_index;
+  const rnti_t        crnti;
 
   void slot_indication(slot_point sl_tx) {}
 

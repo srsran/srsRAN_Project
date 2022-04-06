@@ -17,7 +17,7 @@ public:
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
     // Static lookup
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueIdx={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     return executor(ue_index);
   }
 
@@ -47,7 +47,7 @@ public:
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueIdx={}", ue_index);
+    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()].get();
     return *ue_idx_to_exec[ue_index];
   }

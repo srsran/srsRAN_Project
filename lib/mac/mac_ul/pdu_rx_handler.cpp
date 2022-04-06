@@ -12,19 +12,20 @@ pdu_rx_handler::pdu_rx_handler(mac_common_config_t& cfg_,
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
-  du_ue_index_t      ue_index = rnti_table[pdu.rnti];
-  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
+  // 1. Fetch UE index based on PDU RNTI.
+  du_ue_index_t ue_index = rnti_table[pdu.rnti];
 
-  // 1. Decode MAC UL PDU.
+  // 2. Decode MAC UL PDU.
+  decoded_mac_rx_pdu ctx{sl_rx, cell_index, std::move(pdu), ue_index};
   if (not ctx.decoded_subpdus.unpack(ctx.pdu_rx.pdu)) {
     logger.warning("Failed to decode PDU");
     return false;
   }
 
-  // 2. Log MAC UL PDU.
+  // 3. Log MAC UL PDU.
   log_ul_pdu(logger, ctx.ue_index, ctx.pdu_rx.rnti, ctx.cell_index_rx, "PUSCH", "Content: [{}]", ctx.decoded_subpdus);
 
-  // 3. Check if MAC CRNTI CE is present.
+  // 4. Check if MAC CRNTI CE is present.
   for (unsigned n = ctx.decoded_subpdus.nof_subpdus(); n > 0; --n) {
     const mac_ul_sch_subpdu& subpdu = ctx.decoded_subpdus.subpdu(n - 1);
 
@@ -34,7 +35,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
     }
   }
 
-  // 4. Handle remaining MAC UL subPDUs.
+  // 5. Handle remaining MAC UL subPDUs.
   return handle_rx_subpdus(ctx);
 }
 
@@ -126,7 +127,8 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       // Send UL BSR indication to Scheduler
       ul_bsr_indication_message ul_bsr_ind{};
       ul_bsr_ind.cell_index = ctx.cell_index_rx;
-      ul_bsr_ind.rnti       = ctx.pdu_rx.rnti;
+      ul_bsr_ind.ue_index   = ctx.ue_index;
+      ul_bsr_ind.crnti      = ctx.pdu_rx.rnti;
       ul_bsr_ind.type       = bsr_fmt;
       if (sched_bsr.nof_bytes == 0) {
         // Assume all LCGs are 0 if reported SBSR is 0
@@ -147,7 +149,8 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       // Send UL BSR indication to Scheduler
       ul_bsr_indication_message ul_bsr_ind{};
       ul_bsr_ind.cell_index = ctx.cell_index_rx;
-      ul_bsr_ind.rnti       = ctx.pdu_rx.rnti;
+      ul_bsr_ind.ue_index   = ctx.ue_index;
+      ul_bsr_ind.crnti      = ctx.pdu_rx.rnti;
       ul_bsr_ind.type       = bsr_fmt;
       for (const lcg_bsr_report& lb : lbsr_ce.list) {
         ul_bsr_ind.reported_lcgs.push_back(make_sched_lcg_report(lb, bsr_fmt));
@@ -181,22 +184,21 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
   // 1. Decode CRNTI CE and update UE RNTI output parameter.
   ctx.pdu_rx.rnti = decode_crnti_ce(subpdu.payload());
   if (ctx.pdu_rx.rnti == INVALID_RNTI) {
-    logger.error("Invalid Payload length={} for C-RNTI MAC CE", subpdu.sdu_length());
+    logger.error("Invalid Payload length={} for C-RNTI MAC CE.", subpdu.sdu_length());
     return false;
   }
   ctx.ue_index = rnti_table[ctx.pdu_rx.rnti];
 
   // 2. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
   cfg.ul_exec_mapper.executor(ctx.ue_index).execute([this, ctx = std::move(ctx)]() mutable {
-    rnti_t rnti = ctx.pdu_rx.rnti;
-
     // 3. Handle remaining subPDUs using old C-RNTI.
     handle_rx_subpdus(ctx);
 
     // 4. Scheduler should provide UL grant regardless of other BSR content for UE to complete RA.
     sr_indication_message sr{};
     sr.cell_index = ctx.cell_index_rx;
-    sr.crnti      = rnti;
+    sr.ue_index   = ctx.ue_index;
+    sr.crnti      = ctx.pdu_rx.rnti;
     sr.sr_payload.resize(1);
     sr.sr_payload.set(0);
     sched.ul_sr_info(sr);

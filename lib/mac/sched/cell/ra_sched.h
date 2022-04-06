@@ -11,7 +11,10 @@ namespace srsgnb {
 /// Scheduler for RAR and Msg3
 class ra_sched
 {
-  static constexpr size_t MAX_RAR_LIST = 16; // Implementation-defined limit.
+  // Implementation-defined limit for maximum Msg3s to be allocated in a given RAR.
+  static constexpr size_t MAX_MSG3_LIST = 16;
+  /// Implementation-defined limit for maximum number of concurrent Msg3s.
+  static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
   ra_sched(const cell_configuration& cfg_);
@@ -25,10 +28,10 @@ public:
 
 private:
   struct pending_rar_t {
-    rnti_t                              ra_rnti = INVALID_RNTI;
-    slot_point                          prach_slot_rx;
-    slot_interval                       rar_window;
-    static_vector<rnti_t, MAX_RAR_LIST> tc_rntis;
+    rnti_t                               ra_rnti = INVALID_RNTI;
+    slot_point                           prach_slot_rx;
+    slot_interval                        rar_window;
+    static_vector<rnti_t, MAX_MSG3_LIST> tc_rntis;
   };
   struct pending_msg3_t {
     rach_indication_message ind_msg{};
@@ -58,8 +61,8 @@ private:
   const unsigned        ra_win_nof_slots;
 
   // variables
-  std::deque<pending_rar_t>                   pending_rars;
-  circular_array<pending_msg3_t, MAX_NOF_UES> pending_msg3s;
+  std::deque<pending_rar_t>   pending_rars;
+  std::vector<pending_msg3_t> pending_msg3s;
 };
 
 } // namespace srsgnb

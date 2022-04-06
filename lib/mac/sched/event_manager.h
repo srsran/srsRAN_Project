@@ -39,11 +39,11 @@ public:
 
 private:
   struct event_t {
-    rnti_t                               rnti = INVALID_RNTI;
+    du_ue_index_t                        ue_index = MAX_NOF_UES;
     unique_function<void(event_logger&)> callback;
 
     template <typename Callable>
-    event_t(rnti_t rnti_, Callable&& c) : rnti(rnti_), callback(std::forward<Callable>(c))
+    event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
     {}
   };
 
@@ -62,7 +62,7 @@ private:
   /// Checks whether the event requires synchronization across cells. Examples include activating component carriers
   /// in case of CA, or events directed at UEs with CA enabled.
   bool event_requires_sync(const event_t& ev, bool verbose) const;
-  void log_invalid_rnti(const event_t& ev) const;
+  void log_invalid_ue_index(const event_t& ev) const;
   void log_invalid_cc(const event_t& ev) const;
 
   srslog::basic_logger& logger;

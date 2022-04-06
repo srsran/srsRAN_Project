@@ -16,22 +16,22 @@ class sched_config_adapter
 public:
   sched_config_adapter() : notifier(*this) {}
 
-  async_task<bool> ue_configuration_completed(rnti_t rnti)
+  async_task<bool> ue_configuration_completed(du_ue_index_t ue_index)
   {
-    return launch_async([this, rnti](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, ue_index](coro_context<async_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
-      CORO_AWAIT(sched_cfg_notif_map[rnti].ue_config_ready);
-      sched_cfg_notif_map[rnti].ue_config_ready.reset();
+      CORO_AWAIT(sched_cfg_notif_map[ue_index].ue_config_ready);
+      sched_cfg_notif_map[ue_index].ue_config_ready.reset();
       CORO_RETURN(true);
     });
   }
 
-  async_task<bool> ue_deletion_completed(rnti_t rnti)
+  async_task<bool> ue_deletion_completed(du_ue_index_t ue_index)
   {
-    return launch_async([this, rnti](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, ue_index](coro_context<async_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
-      CORO_AWAIT(sched_cfg_notif_map[rnti].ue_delete_ready);
-      sched_cfg_notif_map[rnti].ue_delete_ready.reset();
+      CORO_AWAIT(sched_cfg_notif_map[ue_index].ue_delete_ready);
+      sched_cfg_notif_map[ue_index].ue_delete_ready.reset();
       CORO_RETURN(true);
     });
   }
@@ -43,8 +43,14 @@ private:
   {
   public:
     sched_config_notif_adapter(sched_config_adapter& parent_) : parent(parent_) {}
-    void on_ue_config_complete(rnti_t rnti) override { parent.sched_cfg_notif_map[rnti].ue_config_ready.set(true); }
-    void on_ue_delete_response(rnti_t rnti) override { parent.sched_cfg_notif_map[rnti].ue_delete_ready.set(true); }
+    void on_ue_config_complete(du_ue_index_t ue_index) override
+    {
+      parent.sched_cfg_notif_map[ue_index].ue_config_ready.set(true);
+    }
+    void on_ue_delete_response(du_ue_index_t ue_index) override
+    {
+      parent.sched_cfg_notif_map[ue_index].ue_delete_ready.set(true);
+    }
 
   private:
     sched_config_adapter& parent;
@@ -54,11 +60,11 @@ private:
   sched_config_notif_adapter notifier;
 
   /// List of event flags used by scheduler to notify that the configuration is complete.
-  struct rnti_context {
+  struct ue_context {
     manual_event<bool> ue_config_ready;
     manual_event<bool> ue_delete_ready;
   };
-  circular_array<rnti_context, MAX_NOF_UES> sched_cfg_notif_map;
+  std::array<ue_context, MAX_NOF_UES> sched_cfg_notif_map;
 };
 
 } // namespace srsgnb

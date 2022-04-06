@@ -17,10 +17,10 @@ public:
   bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
 
   /// Add/Configure UE.
-  void config_ue(rnti_t rnti) override;
+  void config_ue(du_ue_index_t ue_index) override;
 
   /// Delete UE.
-  void delete_ue_request(rnti_t rnti) override { mac_notifier.on_ue_delete_response(rnti); }
+  void delete_ue_request(du_ue_index_t ue_index) override { mac_notifier.on_ue_delete_response(ue_index); }
 
   /// Called when RACH is detected.
   void handle_rach_indication(const rach_indication_message& msg) override;

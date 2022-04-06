@@ -7,7 +7,8 @@ using namespace srsgnb;
 
 ra_sched::ra_sched(const cell_configuration& cfg_) :
   cfg(cfg_),
-  ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup().rach_cfg_generic.ra_resp_win.to_number())
+  ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup().rach_cfg_generic.ra_resp_win.to_number()),
+  pending_msg3s(MAX_NOF_MSG3)
 {
   srsran_assert(cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().ra_search_space_present,
                 "Creating RA scheduler for cell with no RA search space");
@@ -35,7 +36,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
               msg.timing_advance);
 
   // Check if TC-RNTI value to be scheduled is already under use
-  if (not pending_msg3s[msg.crnti].msg3_harq.empty()) {
+  if (not pending_msg3s[msg.crnti % MAX_NOF_MSG3].msg3_harq.empty()) {
     logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", msg.crnti);
     return false;
   }
@@ -72,14 +73,14 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
   }
 
   // Store Msg3 to allocate
-  pending_msg3s[msg.crnti].ind_msg = msg;
+  pending_msg3s[msg.crnti % MAX_NOF_MSG3].ind_msg = msg;
 
   return true;
 }
 
 void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 {
-  slot_resource_allocator rar_slot_res  = res_alloc[0];
+  slot_resource_allocator rar_slot_res = res_alloc[0];
   unsigned                msg3_delay;
   symbol_interval         msg3_symbols;
   get_msg3_delay(cfg.ul_cfg_common, rar_slot_res.slot, msg3_delay, msg3_symbols);
@@ -233,8 +234,8 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
 
   unsigned last_msg3_start = msg3_prbs.start();
   for (unsigned i = 0; i < nof_msg3_grants; ++i) {
-    auto& msg3_req  = pending_msg3s[rar_request.tc_rntis[i]];
-    auto& msg3_harq = pending_msg3s[rar_request.tc_rntis[i]].msg3_harq;
+    auto& msg3_req  = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
+    auto& msg3_harq = msg3_req.msg3_harq;
     srsran_sanity_check(msg3_harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Add Msg3 grant in RAR info

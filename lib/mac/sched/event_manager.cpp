@@ -62,7 +62,7 @@ void event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
 
   std::lock_guard<std::mutex> lock(common_events.mutex);
   common_events.next_events.emplace_back(
-      sr_ind.crnti, [sr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(rnti={:#x})", sr_ind.crnti); });
+      sr_ind.ue_index, [sr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(ueId={})", sr_ind.ue_index); });
 }
 
 void event_manager::handle_ul_bsr(const ul_bsr_indication_message& bsr_ind)
@@ -71,7 +71,7 @@ void event_manager::handle_ul_bsr(const ul_bsr_indication_message& bsr_ind)
 
   std::lock_guard<std::mutex> lock(common_events.mutex);
   common_events.next_events.emplace_back(
-      bsr_ind.rnti, [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(rnti={:#x})", bsr_ind.rnti); });
+      bsr_ind.ue_index, [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(ueId={})", bsr_ind.ue_index); });
 }
 
 void event_manager::handle_rach_indication(const rach_indication_message& rach_ind)
@@ -80,7 +80,7 @@ void event_manager::handle_rach_indication(const rach_indication_message& rach_i
   auto& cell = *events_per_cell_list[rach_ind.cell_index];
 
   std::lock_guard<std::mutex> lock(cell.mutex);
-  cell.next_events.emplace_back(INVALID_RNTI, [this, rach_ind](event_logger& ev_logger) {
+  cell.next_events.emplace_back(MAX_NOF_UES, [this, rach_ind](event_logger& ev_logger) {
     cells[rach_ind.cell_index].ra_sch.handle_rach_indication(rach_ind);
     ev_logger.enqueue("rach_ind(tc-rnti={:#x})", rach_ind.crnti);
   });
@@ -134,12 +134,12 @@ void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
   // Process cell-specific events.
   event_logger ev_logger{cell_index, logger};
   for (event_t& ev : cell_events.current_events) {
-    if (ev.rnti != INVALID_RNTI) {
-      if (not ue_db.contains(ev.rnti)) {
-        log_invalid_rnti(ev);
+    if (is_du_ue_index_valid(ev.ue_index)) {
+      if (not ue_db.contains(ev.ue_index)) {
+        log_invalid_ue_index(ev);
         continue;
       }
-      ue&         ue    = *ue_db[ev.rnti];
+      ue&         ue    = *ue_db[ev.ue_index];
       ue_carrier* ue_cc = ue.find_cc(cell_index);
       if (ue_cc == nullptr) {
         log_invalid_cc(ev);
@@ -157,24 +157,24 @@ bool event_manager::cell_exists(du_cell_index_t cell_index) const
 
 bool event_manager::event_requires_sync(const event_t& ev, bool verbose) const
 {
-  if (ev.rnti == INVALID_RNTI) {
+  if (not is_du_ue_index_valid(ev.ue_index)) {
     return false;
   }
-  if (not ue_db.contains(ev.rnti)) {
+  if (not ue_db.contains(ev.ue_index)) {
     if (verbose) {
-      log_invalid_rnti(ev);
+      log_invalid_ue_index(ev);
     }
     return false;
   }
-  return ue_db[ev.rnti]->is_ca_enabled();
+  return ue_db[ev.ue_index]->is_ca_enabled();
 }
 
-void event_manager::log_invalid_rnti(const event_t& ev) const
+void event_manager::log_invalid_ue_index(const event_t& ev) const
 {
-  logger.warning("SCHED: Event for rnti={:#x} ignored. Cause: UE with provided RNTI does not exist", ev.rnti);
+  logger.warning("SCHED: Event for ueId={} ignored. Cause: UE with provided ueId does not exist", ev.ue_index);
 }
 
 void event_manager::log_invalid_cc(const event_t& ev) const
 {
-  logger.warning("SCHED: Event for rnti={:#x} ignored. Cause: Cell is not configured.", ev.rnti);
+  logger.warning("SCHED: Event for ueId={} ignored. Cause: Cell is not configured.", ev.ue_index);
 }

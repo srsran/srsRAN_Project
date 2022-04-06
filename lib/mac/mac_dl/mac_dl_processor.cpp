@@ -48,7 +48,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     sched_obj.config_ue(request.crnti);
 
     // 4. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.crnti));
+    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));
 
     // 5. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
@@ -66,10 +66,10 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
 
     // 2. Remove UE from scheduler
-    sched_obj.delete_ue_request(request.rnti);
+    sched_obj.delete_ue_request(request.ue_index);
 
     // 3. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif.ue_deletion_completed(request.rnti));
+    CORO_AWAIT(sched_cfg_notif.ue_deletion_completed(request.ue_index));
 
     // 4. Remove UE associated DL channels
     CORO_AWAIT(execute_on(*cfg.dl_execs[request.cell_index]));
@@ -101,7 +101,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     sched_obj.config_ue(request.crnti);
 
     // 4. Await scheduler to respond via notifier
-    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.crnti));
+    CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));
 
     log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE Config");
 

@@ -14,6 +14,7 @@ namespace srsgnb {
 /// \remark See ORAN WG8, 9.2.3.2.17 Scheduling Request Indication.
 struct sr_indication_message {
   du_cell_index_t   cell_index;
+  du_ue_index_t     ue_index;
   rnti_t            crnti;
   bounded_bitset<8> sr_payload;
 };
@@ -30,7 +31,8 @@ using ul_bsr_lcg_report_list = static_vector<ul_bsr_lcg_report, MAX_LOGICAL_CHAN
 /// \remark See ORAN WG8, 9.2.3.2.18 UL Buffer Status Report Indication.
 struct ul_bsr_indication_message {
   du_cell_index_t        cell_index;
-  rnti_t                 rnti;
+  du_ue_index_t          ue_index;
+  rnti_t                 crnti;
   bsr_format             type;
   ul_bsr_lcg_report_list reported_lcgs;
 };
