@@ -165,12 +165,6 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
 
 bool pdu_rx_handler::handle_ccch_msg(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu)
 {
-  // Store Msg3 content for ConRes CE.
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    buffered_msg3.push(std::move(ctx));
-  }
-
   // Notify DU manager of received CCCH message.
   ul_ccch_indication_message msg{};
   msg.crnti      = ctx.pdu_rx.rnti;

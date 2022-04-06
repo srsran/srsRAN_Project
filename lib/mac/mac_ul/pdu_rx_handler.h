@@ -112,10 +112,6 @@ private:
   sched_ue_feedback&    sched;
   mac_ul_ue_manager&    ue_manager;
   du_rnti_table&        rnti_table;
-
-  /// Buffer used to store Msg3 for the purposes of Contention Resolution.
-  std::mutex                                              mutex;
-  static_circular_buffer<decoded_mac_rx_pdu, MAX_NOF_UES> buffered_msg3;
 };
 
 } // namespace srsgnb
