@@ -22,7 +22,9 @@ public:
     rnti_table(rnti_table_),
     ue_manager(cfg, rnti_table),
     pdu_handler(cfg, sched_, ue_manager, rnti_table)
-  {}
+  {
+    (void)logger;
+  }
 
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
