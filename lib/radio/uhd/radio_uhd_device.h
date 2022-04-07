@@ -8,7 +8,11 @@
 #include "srsgnb/radio/radio_session.h"
 
 #pragma GCC diagnostic push
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
 #include <uhd/usrp/multi_usrp.hpp>
 #pragma GCC diagnostic pop
 

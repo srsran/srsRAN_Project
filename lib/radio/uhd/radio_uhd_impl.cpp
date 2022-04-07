@@ -1,6 +1,15 @@
 #include "radio_uhd_impl.h"
 #include "radio_uhd_device.h"
 
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
+#include <uhd/utils/thread_priority.h>
+#pragma GCC diagnostic pop
+
 using namespace srsgnb;
 
 bool radio_session_uhd_impl::set_time_to_gps_time()
