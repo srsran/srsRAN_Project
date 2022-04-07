@@ -119,6 +119,16 @@ struct mac_ue_delete_response_message {
   bool result;
 };
 
+struct mac_rach_indication {
+  du_ue_index_t cell_index;
+  slot_point    slot_rx;
+  /// Index of the first OFDM Symbol where RACH was detected
+  unsigned symbol_index;
+  unsigned frequency_index;
+  unsigned preamble_id;
+  unsigned timing_advance;
+};
+
 /// Methods used by MAC to notify events.
 class mac_event_notifier
 {
@@ -137,6 +147,13 @@ public:
                                                      ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
   virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
   virtual void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)  = 0;
+};
+
+class mac_rach_handler
+{
+public:
+  virtual ~mac_rach_handler()                                              = default;
+  virtual void handle_rach_indication(const mac_rach_indication& rach_ind) = 0;
 };
 
 /// Interface used to push Rx Data indications to L2.
@@ -181,6 +198,9 @@ class mac_interface : public mac_resource_manager,
                       public mac_control_information_handler
 {
 public:
+  /// Returns handler of PRACHs.
+  virtual mac_rach_handler& get_rach_handler() = 0;
+
   /// Returns handler of slot indications for a cell with provided cell_index.
   virtual mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) = 0;
 

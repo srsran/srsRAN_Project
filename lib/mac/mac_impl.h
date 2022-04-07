@@ -24,6 +24,8 @@ public:
   void add_cell(const mac_cell_configuration& cell_cfg) override;
   void remove_cell(du_cell_index_t cell_index) override;
 
+  mac_rach_handler& get_rach_handler() override { return rach_hdl; }
+
   async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
   async_task<mac_ue_reconfiguration_response_message>
                                              ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;

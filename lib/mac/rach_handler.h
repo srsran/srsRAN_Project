@@ -3,39 +3,28 @@
 #define SRSGNB_RACH_HANDLER_H
 
 #include "du_rnti_table.h"
+#include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/sched_configurer.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
-struct mac_rach_indication {
-  du_ue_index_t cell_index;
-  slot_point    slot_rx;
-  /// Index of the first OFDM Symbol where RACH was detected
-  unsigned symbol_index;
-  unsigned frequency_index;
-  unsigned preamble_id;
-  unsigned timing_advance;
-};
-
 /// \brief Handles the allocation of RNTIs and forwarding of RACH indications to scheduler.
 /// This class is thread-safe.
-class rach_handler
+class rach_handler final : public mac_rach_handler
 {
 public:
   explicit rach_handler(sched_configurer& sched_, du_rnti_table& rnti_table_) :
     logger(srslog::fetch_basic_logger("MAC")), rnti_table(rnti_table_), sched(sched_)
   {}
 
-  /// Handles detected RACH by allocating an temporary RNTI and signalling the scheduler of the new RACH.
-  bool handle_rach_indication(const mac_rach_indication& rach_ind)
+  /// Handles detected PRACHs by allocating a temporary C-RNTI and signalling the scheduler to allocate an RAR.
+  void handle_rach_indication(const mac_rach_indication& rach_ind) override
   {
     rnti_t alloc_temp_crnti = allocate_rnti();
     if (alloc_temp_crnti != INITIAL_RNTI) {
       notify_sched(rach_ind, alloc_temp_crnti);
-      return true;
     }
-    return false;
   }
 
   rnti_t allocate_rnti()
