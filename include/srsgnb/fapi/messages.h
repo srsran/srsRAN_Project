@@ -3,6 +3,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/ssb_mapping.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
 #include <cstdint>
 
@@ -109,7 +110,7 @@ struct dl_dci_pdu {
 struct dl_pdcch_pdu {
   uint16_t                                 coreset_bwp_size;
   uint16_t                                 coreset_bwp_start;
-  uint8_t                                  subcarrier_spacing;
+  subcarrier_spacing                       scs;
   cyclic_prefix_type                       cyclic_prefix;
   uint8_t                                  start_symbol_index;
   uint8_t                                  duration_symbols;
@@ -192,7 +193,7 @@ struct dl_pdsch_pdu {
   uint16_t                                          pdu_index;
   uint16_t                                          bwp_size;
   uint16_t                                          bwp_start;
-  uint8_t                                           subcarrier_spacing;
+  subcarrier_spacing                                scs;
   cyclic_prefix_type                                cyclic_prefix;
   uint8_t                                           num_codewords;
   std::array<dl_pdsch_codeword, MAX_NUM_CW_PER_PDU> cws;
@@ -236,7 +237,7 @@ struct dl_csi_rs_maintenance_v3 {
 
 /// Downlink CSI-RS PDU information.
 struct dl_csi_rs_pdu {
-  uint8_t            subcarrier_spacing;
+  subcarrier_spacing scs;
   cyclic_prefix_type cyclic_prefix;
   uint16_t           start_rb;
   uint16_t           num_rbs;
@@ -273,12 +274,12 @@ struct dl_ssb_bch_payload {
 
 /// SSB/PBCH maintenance parameters added in FAPIv3.
 struct dl_ssb_maintenance_v3 {
-  uint8_t          ssb_pdu_index;
-  ssb_pattern_case case_type;
-  uint8_t          subcarrier_spacing;
-  uint8_t          lmax;
-  int16_t          ss_pbch_block_power_scaling;
-  int16_t          beta_pss_profile_sss;
+  uint8_t            ssb_pdu_index;
+  ssb_pattern_case   case_type;
+  subcarrier_spacing scs;
+  uint8_t            lmax;
+  int16_t            ss_pbch_block_power_scaling;
+  int16_t            beta_pss_profile_sss;
 };
 
 enum class beta_pss_profile_type : uint8_t { dB_0 = 0, dB_3 = 1, beta_pss_profile_sss = 255 };
@@ -477,7 +478,7 @@ struct ul_pusch_pdu {
   uint32_t                handle;
   uint16_t                bwp_size;
   uint16_t                bwp_start;
-  uint8_t                 subcarrier_spacing;
+  subcarrier_spacing      scs;
   cyclic_prefix_type      cyclic_prefix;
   uint16_t                target_code_rate;
   uint8_t                 qam_mod_order;
@@ -527,7 +528,7 @@ struct ul_pucch_pdu {
   uint32_t           handle;
   uint16_t           bwp_size;
   uint16_t           bwp_start;
-  uint8_t            subcarrier_spacing;
+  subcarrier_spacing scs;
   cyclic_prefix_type cyclic_prefix;
   uint8_t            format_type;
   uint8_t            multi_slot_tx_indicator;
@@ -567,7 +568,7 @@ struct ul_msg_a_pusch_pdu {
   uint32_t                handle;
   uint16_t                bwp_size;
   uint16_t                bwp_start;
-  uint8_t                 subcarrier_spacing;
+  subcarrier_spacing      scs;
   cyclic_prefix_type      cyclic_prefix;
   uint8_t                 msg_a_mcs;
   uint8_t                 transform_precoding;
@@ -620,7 +621,7 @@ struct ul_srs_pdu {
   uint32_t           handle;
   uint16_t           bwp_size;
   uint16_t           bwp_start;
-  uint8_t            subcarrier_spacing;
+  subcarrier_spacing scs;
   cyclic_prefix_type cyclic_prefix;
   uint8_t            num_ant_ports;
   uint8_t            num_symbols;
@@ -1450,7 +1451,7 @@ struct phy_config {
   std::array<uint8_t, 4> request_instances_per_slot;
   uint16_t               sfn;
   uint8_t                slot;
-  uint8_t                subcarrier_spacing;
+  subcarrier_spacing     scs;
   cyclic_prefix_type     cyclic_prefix;
 };
 
@@ -1610,7 +1611,7 @@ struct ssb_config {
   uint8_t                 ssb_period;
   uint8_t                 ssb_subcarrier_offset;
   ssb_pattern_case        case_kind;
-  uint8_t                 subcarrier_spacing;
+  subcarrier_spacing      scs;
   uint8_t                 sub_carrier_spacing_common;
   uint8_t                 mask_size;
   std::array<uint32_t, 2> ssb_mask;
@@ -1675,7 +1676,7 @@ struct prb_symbol_rm_pattern {
   uint8_t                 prb_symbol_rate_match_pattern_id;
   std::array<uint8_t, 35> freq_domain_rb;
   uint32_t                symbols_in_rb;
-  uint8_t                 subcarrier_spacing;
+  subcarrier_spacing      scs;
 };
 
 /// Encodes the PRB-symbol rate match patterns bitmap configuration.
@@ -1692,7 +1693,7 @@ struct coreset_rm_pattern {
   uint8_t                coreset_rate_match_pattern_id;
   std::array<uint8_t, 6> freq_domain_resources;
   uint16_t               symbols_pattern;
-  uint8_t                subcarrier_spacing;
+  subcarrier_spacing     scs;
 };
 
 /// Encodes the CORESET rate-match patterns configuration.

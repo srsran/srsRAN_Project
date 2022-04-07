@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_RNTI_H
-#define SRSGNB_RNTI_H
+#ifndef SRSGNB_RAN_RNTI_H
+#define SRSGNB_RAN_RNTI_H
 
 #include <cstdint>
 
@@ -31,4 +31,4 @@ inline bool is_crnti(rnti_t rnti)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RNTI_H
+#endif // SRSGNB_RAN_RNTI_H

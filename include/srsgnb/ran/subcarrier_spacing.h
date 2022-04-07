@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SUBCARRIER_SPACING_H
-#define SRSGNB_SUBCARRIER_SPACING_H
+#ifndef SRSGNB_RAN_SUBCARRIER_SPACING_H
+#define SRSGNB_RAN_SUBCARRIER_SPACING_H
 
 #include "srsgnb/support/srsran_assert.h"
 
@@ -25,4 +25,4 @@ inline unsigned scs_to_khz(subcarrier_spacing scs)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SUBCARRIER_SPACING_H
+#endif // SRSGNB_RAN_SUBCARRIER_SPACING_H

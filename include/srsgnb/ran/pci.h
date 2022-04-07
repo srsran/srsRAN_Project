@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_PCI_H
-#define SRSGNB_PCI_H
+#ifndef SRSGNB_RAN_PCI_H
+#define SRSGNB_RAN_PCI_H
 
 #include <cstdint>
 
@@ -12,4 +12,4 @@ const pci_t MAX_PCI = 1007;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PCI_H
+#endif // SRSGNB_RAN_PCI_H

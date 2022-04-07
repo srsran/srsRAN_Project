@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_HELPERS_H_
-#define SRSGNB_HELPERS_H_
+#ifndef SRSGNB_RAN_SSB_MAPPING_H_
+#define SRSGNB_RAN_SSB_MAPPING_H_
 
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/slot_point.h"
@@ -78,4 +78,4 @@ static inline unsigned ssb_get_k_first(unsigned numerology, unsigned pointA_offs
 
 } // namespace srsgnb
 
-#endif // SRSGNB_HELPERS_H_
+#endif // SRSGNB_RAN_SSB_MAPPING_H_

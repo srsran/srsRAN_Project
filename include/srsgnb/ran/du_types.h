@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DU_TYPES_H
-#define SRSGNB_DU_TYPES_H
+#ifndef SRSGNB_RAN_DU_TYPES_H
+#define SRSGNB_RAN_DU_TYPES_H
 
 #include <cstdint>
 
@@ -21,4 +21,4 @@ inline bool is_du_ue_index_valid(du_ue_index_t ue_idx)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_TYPES_H
+#endif // SRSGNB_RAN_DU_TYPES_H

@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DU_UE_LIST_H
-#define SRSGNB_DU_UE_LIST_H
+#ifndef SRSGNB_RAN_DU_UE_LIST_H
+#define SRSGNB_RAN_DU_UE_LIST_H
 
 #include "du_types.h"
 #include "srsgnb/adt/slot_array.h"
@@ -13,4 +13,4 @@ using du_ue_list = slot_array<T, MAX_NOF_UES>;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_UE_LIST_H
+#endif // SRSGNB_RAN_DU_UE_LIST_H

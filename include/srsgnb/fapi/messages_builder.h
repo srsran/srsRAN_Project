@@ -84,11 +84,11 @@ public:
   /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
   /// \note ssbPduIndex field is automatically filled when adding a new SSB pdu to the DL TTI request message.
   dl_ssb_pdu_builder&
-  set_maintenance_v3_basic_parameters(ssb_pattern_case case_type, uint8_t subcarrier_spacing, uint8_t l_max)
+  set_maintenance_v3_basic_parameters(ssb_pattern_case case_type, subcarrier_spacing scs, uint8_t l_max)
   {
-    v3.case_type          = case_type;
-    v3.subcarrier_spacing = subcarrier_spacing;
-    v3.lmax               = l_max;
+    v3.case_type = case_type;
+    v3.scs       = scs;
+    v3.lmax      = l_max;
 
     return *this;
   }

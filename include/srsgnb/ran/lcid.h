@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_LCID_H
-#define SRSGNB_LCID_H
+#ifndef SRSGNB_RAN_LCID_H
+#define SRSGNB_RAN_LCID_H
 
 #include <cstdint>
 
@@ -28,4 +28,4 @@ inline srb_id_t to_srb_id(lcid_t lcid)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LCID_H
+#endif // SRSGNB_RAN_LCID_H

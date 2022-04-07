@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DMRS_MAPPING_H
-#define SRSGNB_DMRS_MAPPING_H
+#ifndef SRSGNB_RAN_DMRS_MAPPING_H
+#define SRSGNB_RAN_DMRS_MAPPING_H
 
 namespace srsgnb {
 
@@ -34,4 +34,4 @@ static constexpr unsigned DMRS_MAX_NPORTS =
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DMRS_MAPPING_H
+#endif // SRSGNB_RAN_DMRS_MAPPING_H
