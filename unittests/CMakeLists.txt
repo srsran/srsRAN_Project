@@ -1,5 +1,6 @@
 add_subdirectory(adt)
 add_subdirectory(asn1)
+add_subdirectory(helpers)
 add_subdirectory(du_manager)
 add_subdirectory(du_high)
 add_subdirectory(fapi)
