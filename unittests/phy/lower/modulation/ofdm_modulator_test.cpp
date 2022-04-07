@@ -59,7 +59,7 @@ int main()
           std::unique_ptr<ofdm_slot_modulator> ofdm = ofdm_factory->create_ofdm_slot_modulator(ofdm_config);
           TESTASSERT(ofdm != nullptr);
 
-          // Check a DFT processor is created and not used.
+          // Check is a DFT processor is created and not used.
           auto& dft_processor_factory_entry = dft_factory.get_entries();
           TESTASSERT(dft_processor_factory_entry.size() == 1);
           dft_processor_spy& dft = *dft_processor_factory_entry[0].dft;
@@ -80,7 +80,7 @@ int main()
 
           // Modulate signal.
           std::vector<cf_t> output(ofdm->get_slot_size(slot_idx));
-          ofdm->modulate(output, port_idx, slot_idx, rg);
+          ofdm->modulate(output, rg, port_idx, slot_idx);
 
           // Check the number of calls to DFT processor match with the number of symbols.
           unsigned nsymb = get_nsymb_per_slot(cp);

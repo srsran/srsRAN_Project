@@ -2,8 +2,8 @@
 #ifndef LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
 #define LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
 
-#include "srsgnb/support/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/support/dft_processor.h"
 #include <fftw3.h>
 #include <memory>
 #include <mutex>
@@ -12,9 +12,9 @@ namespace srsgnb {
 
 /// Provides the necessary initialization parameters to dft_processor_fftw_impl.
 struct dft_processor_factory_fftw_config {
-  /// Set to true to avoid loading the FFTW wisdom from a file.
+  /// Sets to true to avoid loading the FFTW wisdom from a file.
   bool avoid_wisdom;
-  /// Provide the FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
+  /// Provides the FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
   std::string wisdom_filename;
 };
 
@@ -58,7 +58,7 @@ public:
   unsigned int get_size() const override { return input.size(); }
 
   // See interface for documentation.
-  span<cf_t> get_input() const override { return input; }
+  span<cf_t> get_input() override { return input; }
 
   // See interface for documentation.
   span<const cf_t> run() override;
@@ -84,10 +84,10 @@ private:
   std::unique_ptr<dft_processor> create(const dft_processor::configuration& dft_config) override;
 };
 
-/// \brief Create a DFT processor factory based on the FFTW library.
+/// \brief Creates a DFT processor factory based on the FFTW library.
 /// \param [in] factory_config Provides the required parameters to create the DFT processor factory based on the FFTW
 /// library.
-/// \return The ownership to a created DFT processor factory based on FFTW library.
+/// \return A unique pointer of a DFT processor factory based on FFTW library if the configuration is valid.
 std::unique_ptr<dft_processor_factory>
 create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config);
 

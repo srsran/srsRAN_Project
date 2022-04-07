@@ -24,9 +24,9 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_fact
 }
 
 void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          output,
+                                          const srsgnb::resource_grid_reader& grid,
                                           unsigned                            port_index,
-                                          unsigned                            symbol_index,
-                                          const srsgnb::resource_grid_reader& grid)
+                                          unsigned                            symbol_index)
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
@@ -73,9 +73,9 @@ unsigned ofdm_slot_modulator_impl::get_slot_size(unsigned slot_index) const
 }
 
 void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
+                                        const resource_grid_reader& grid,
                                         unsigned                    port_index,
-                                        unsigned                    slot_index,
-                                        const resource_grid_reader& grid)
+                                        unsigned                    slot_index)
 {
   unsigned nsymb = get_nsymb_per_slot(cp);
 
@@ -85,7 +85,7 @@ void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
     unsigned symbol_sz = symbol_modulator.get_symbol_size(nsymb * slot_index + symbol_idx);
 
     // Modulate symbol.
-    symbol_modulator.modulate(output.first(symbol_sz), port_index, nsymb * slot_index + symbol_idx, grid);
+    symbol_modulator.modulate(output.first(symbol_sz), grid, port_index, nsymb * slot_index + symbol_idx);
 
     // Advance output buffer.
     output = output.last(output.size() - symbol_sz);

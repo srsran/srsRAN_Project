@@ -26,14 +26,19 @@ public:
 
   /// Default constructor as normal.
   constexpr cyclic_prefix() = default;
-  /// Construct from value.
+
+  /// Construct from value. It allows implicit conversion from a cyclic prefix option.
   constexpr cyclic_prefix(options opt) : value(opt) {}
+
   /// Construct from another cyclic prefix type.
   constexpr cyclic_prefix(const cyclic_prefix& other) : value(other.value) {}
+
   /// Comparison to value.
   constexpr bool operator==(options opt) const { return value == opt; }
+
   /// Comparison to other instance.
   constexpr bool operator==(const cyclic_prefix& other) const { return value == other.value; }
+
   /// Get the string value.
   std::string to_string() const
   {
@@ -42,6 +47,7 @@ public:
     }
     return "extended";
   }
+
   /// Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
   constexpr unsigned get_length(unsigned symbol_idx, unsigned numerology, unsigned dft_size) const
   {

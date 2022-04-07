@@ -33,22 +33,22 @@ public:
     direction dir;
   };
 
-  /// Convert a DFT direction to string.
+  /// Converts a DFT direction to string.
   static std::string direction_to_string(direction dir) { return dir == direction::DIRECT ? "direct" : "inverse"; }
 
   /// Default destructor.
   virtual ~dft_processor() = default;
 
-  /// \brief Get the DFT direction.
+  /// \brief Gets the DFT direction.
   virtual direction get_direction() const = 0;
 
-  /// \brief Get the DFT number of points.
+  /// \brief Gets the DFT number of points.
   virtual unsigned get_size() const = 0;
 
-  /// \brief Get a view of the internal input DFT buffer.
+  /// \brief Gets a view of the internal input DFT buffer.
   virtual span<cf_t> get_input() = 0;
 
-  /// \brief Execute the DFT from the internal input data.
+  /// \brief Executes the DFT from the internal input data.
   /// \return A view of the internal output DFT buffer.
   virtual span<const cf_t> run() = 0;
 };
@@ -62,6 +62,7 @@ public:
 
   /// \brief Creates a DFT processor.
   /// \param[in] config Provides the DFT processor parameters.
+  /// \return A unique pointer of a DFT processor if the configuration is valid. Otherwise, \c nullptr.
   virtual std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) = 0;
 };
 

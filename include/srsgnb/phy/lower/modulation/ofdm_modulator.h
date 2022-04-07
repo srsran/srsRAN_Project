@@ -35,47 +35,47 @@ public:
   /// Default destructor.
   virtual ~ofdm_symbol_modulator() = default;
 
-  /// \brief Get a symbol size including cyclic prefix.
+  /// \brief Gets a symbol size including cyclic prefix.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
 
-  /// \brief Modulates a single symbol OFDM.
-  /// \param[out] output Provides the time domain modulated symbol signal destination.
-  /// \param[in] port_index Port index.
+  /// \brief Modulates an OFDM signal with symbol granularity.
+  /// \param[out] output Provides the time domain modulated signal.
+  /// \param[in] grid Provides the input as frequency-domain signal corresponding to one slot.
+  /// \param[in] port_index Indicates the port index to modulate.
   /// \param[in] symbol_index Symbol index within the subframe to modulate.
-  /// \param[in] grid Provides the input as resource grid.
-  /// \note The input size must be according to the configured bandwidth.
+  /// \note The input size must be consistent with the configured bandwidth.
   /// \note The output size must be equal to the the symbol size.
   virtual void
-  modulate(span<cf_t> output, unsigned port_index, unsigned symbol_index, const resource_grid_reader& grid) = 0;
+  modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned symbol_index) = 0;
 };
 
-/// \brief Describes an OFDM modulator that modulates at slot granularity.
+/// \brief Describes an OFDM modulator with slot granularity.
 /// \remark Performs OFDM modulation as per TS 38.211 section 5.3.1 OFDM baseband signal generation for all channels
 /// except PRACH.
 /// \remark In addition to modulation, it applies phase compensation as per TS 38.211 section 5.4 Modulation and
-/// upconversion
+/// upconversion.
 class ofdm_slot_modulator
 {
 public:
   /// Default destructor.
   virtual ~ofdm_slot_modulator() = default;
 
-  /// \brief Get a slot size.
+  /// \brief Gets a slot size.
   /// \param[in] slot_index Indicates the slot index within the subframe.
   /// \return The number of samples for the given slot index.
   virtual unsigned get_slot_size(unsigned slot_index) const = 0;
 
-  /// \brief Modulates a single slot for an OFDM transmission.
+  /// \brief Modulates an OFDM signal with slot granularity.
   /// \param[out] output Provides the time domain modulated signal destination.
-  /// \param[in] port_index Port index to modulate.
+  /// \param[in] grid Provides the input as frequency-domain signal corresponding to one slot.
+  /// \param[in] port_index Indicates the port index to modulate.
   /// \param[in] slot_index Slot index within the subframe to modulate.
-  /// \param[in] grid Provides the input as resource grid.
-  /// \note The input size must be according to the configured bandwidth.
+  /// \note The input size must be consistent with the configured bandwidth.
   /// \note The output size must be equal to the slot size.
   virtual void
-  modulate(span<cf_t> output, unsigned port_index, unsigned slot_index, const resource_grid_reader& grid) = 0;
+  modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned slot_index) = 0;
 };
 
 /// Describes an OFDM modulator factory.
@@ -85,15 +85,15 @@ public:
   /// Default destructor.
   virtual ~ofdm_modulator_factory() = default;
 
-  /// \brief Creates an OFDM modulator that modulates at symbol granularity.
+  /// \brief Creates an OFDM modulator that modulates with symbol granularity.
   /// \param[in] config Provides the configuration parameters.
-  /// \return The ownership to an OFDM symbol modulator if the provided parameters are valid, \c nullptr otherwise.
+  /// \return A unique pointer to an OFDM symbol modulator if the provided parameters are valid, \c nullptr otherwise.
   virtual std::unique_ptr<ofdm_symbol_modulator>
   create_ofdm_symbol_modulator(const ofdm_modulator_configuration& config) = 0;
 
-  /// \brief Creates an OFDM modulator that modulates at slot granularity.
+  /// \brief Creates an OFDM modulator that modulates with slot granularity.
   /// \param[in] config Provides the configuration parameters.
-  /// \return The ownership to an OFDM slot modulator if the provided parameters are valid, \c nullptr otherwise.
+  /// \return A unique pointer to an OFDM slot modulator if the provided parameters are valid, \c nullptr otherwise.
   virtual std::unique_ptr<ofdm_slot_modulator>
   create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) = 0;
 };

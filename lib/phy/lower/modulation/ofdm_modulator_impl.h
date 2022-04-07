@@ -49,7 +49,7 @@ public:
 
   // See interface for documentation.
   void
-  modulate(span<cf_t> ouput, unsigned port_index, unsigned symbol_index, const resource_grid_reader& grid) override;
+  modulate(span<cf_t> ouput, const resource_grid_reader& grid, unsigned port_index, unsigned symbol_index) override;
 };
 
 /// Describes a generic OFDM slot modulator.
@@ -76,7 +76,7 @@ public:
   unsigned get_slot_size(unsigned slot_index) const override;
 
   // See interface for documentation;
-  void modulate(span<cf_t> output, unsigned port_index, unsigned slot_index, const resource_grid_reader& grid) override;
+  void modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned slot_index) override;
 };
 
 /// Describes a generic OFDM modulator factory.
@@ -93,9 +93,7 @@ public:
     // Do nothing.
   }
 
-  /// \brief Creates an OFDM symbol modulator.
-  /// \param[in] dft_config Provides the OFDM modulator parameters.
-  /// \return The ownership to an OFDM symbol modulator.
+  // See interface for documentation.
   std::unique_ptr<ofdm_symbol_modulator>
   create_ofdm_symbol_modulator(const ofdm_modulator_configuration& dft_config) override
   {
@@ -103,9 +101,7 @@ public:
     return std::make_unique<ofdm_symbol_modulator_impl>(factory_config, dft_config);
   }
 
-  /// \brief Creates an OFDM slot modulator.
-  /// \param[in] dft_config Provides the OFDM modulator parameters.
-  /// \return The ownership to an OFDM slot modulator.
+  // See interface for documentation.
   std::unique_ptr<ofdm_slot_modulator>
   create_ofdm_slot_modulator(const ofdm_modulator_configuration& dft_config) override
   {
