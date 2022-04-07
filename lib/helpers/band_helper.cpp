@@ -215,8 +215,10 @@ duplex_mode band_helper::get_duplex_mode(uint16_t band)
   return duplex_mode::INVALID;
 }
 
-bool band_helper::is_paired_spectrum(duplex_mode mode)
+bool band_helper::is_paired_spectrum(uint16_t band)
 {
+  duplex_mode mode = get_duplex_mode(band);
+  srsran_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
   return mode == duplex_mode::FDD ? true : false;
 }
 

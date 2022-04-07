@@ -100,7 +100,7 @@ public:
    */
   static duplex_mode get_duplex_mode(uint16_t band);
 
-  static bool is_paired_spectrum(duplex_mode mode);
+  static bool is_paired_spectrum(uint16_t band);
 
 #if 0
   /**

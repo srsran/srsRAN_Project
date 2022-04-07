@@ -10,6 +10,9 @@ void test_band_helper_basic()
   TESTASSERT(helper.nr_arfcn_to_freq(530000) > 0);
   TESTASSERT(band_helper::get_band_from_dl_arfcn(530000) < UINT16_MAX);
   TESTASSERT(band_helper::get_ssb_pattern(1, subcarrier_spacing::kHz15) < ssb_pattern_case::invalid);
+  TESTASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(1, subcarrier_spacing::kHz15));
+  TESTASSERT_EQ(true, band_helper::is_paired_spectrum(1));
+  TESTASSERT_EQ(false, band_helper::is_paired_spectrum(78));
 }
 
 int main()
