@@ -1,0 +1,4 @@
+
+add_executable(radio_grid_sample radio_grid_sample.cpp)
+target_link_libraries(radio_grid_sample srsgnb_radio srslog srsgnb_support srsgnb_lower_phy_modulation
+        resource_grid_pool srsgnb_lower_phy srsgnb_generic_funcs_dft)

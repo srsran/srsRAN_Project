@@ -1,6 +1,7 @@
 #include "resource_grid_impl.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <cassert>
 
 using namespace srsgnb;
@@ -60,11 +61,15 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  assert(l < nof_symb);
-  assert(k_init + symbols.size() < nof_subc);
+  srsran_always_assert(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
+  srsran_always_assert(k_init + symbols.size() <= nof_subc,
+                       "Subcarrier indexes ({},{}) are out-of-range (max. {})",
+                       k_init,
+                       symbols.size(),
+                       nof_subc);
+  srsran_always_assert(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
 
   // Select buffer from the port index
-  assert(port < nof_ports);
   span<cf_t> buffer = port_buffers[port];
 
   // Copy

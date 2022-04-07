@@ -25,9 +25,6 @@ class slot_point
   /// Number of possible SFNs.
   static constexpr uint16_t NOF_SFNS = 1024;
 
-  /// Number of slots per system frame.
-  uint32_t nof_slots_per_system_frame() const { return nof_slots_per_frame() * NOF_SFNS; }
-
 public:
   /// Default constructor. Sets slot_point in invalid state.
   constexpr slot_point() : numerology_val(NOF_NUMEROLOGIES), count_val(0) {}
@@ -81,6 +78,9 @@ public:
   /// Radio Frame Number. Value: (0..1023).
   uint32_t sfn() const { return static_cast<uint32_t>(count_val) / nof_slots_per_frame(); }
 
+  /// Number of slots per system frame.
+  uint32_t nof_slots_per_system_frame() const { return nof_slots_per_frame() * NOF_SFNS; }
+
   /// Number of slots present in a subframe. Depends on numerology.
   uint32_t nof_slots_per_subframe() const { return 1U << static_cast<uint32_t>(numerology_val); }
 
@@ -103,6 +103,9 @@ public:
 
   /// Get MOD(slot index, Nof slots in Half Frame)
   uint32_t hrf_slot_index() const { return static_cast<uint32_t>(count_val) % nof_hrf_slots(); }
+
+  /// Get MOD(slot index, Nof slots in a subframe)
+  uint32_t subframe_slot_index() const { return static_cast<uint32_t>(count_val) % nof_slots_per_subframe(); }
 
   /// Equality comparison of two slot_point objects. Two slot points are equal if their numerology, SFN and slot index
   /// have the same value.

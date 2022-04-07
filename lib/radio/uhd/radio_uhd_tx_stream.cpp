@@ -22,10 +22,10 @@ void radio_uhd_tx_stream::recv_async_msg()
 
   // Handle event.
   radio_notification_handler::event_description event_description = {};
-  event_description.stream_id                         = stream_id;
-  event_description.channel_id                        = async_metadata.channel;
-  event_description.source                            = radio_notification_handler::event_source::TRANSMIT;
-  event_description.type                              = radio_notification_handler::event_type::UNDEFINED;
+  event_description.stream_id                                     = stream_id;
+  event_description.channel_id                                    = async_metadata.channel;
+  event_description.source                                        = radio_notification_handler::event_source::TRANSMIT;
+  event_description.type                                          = radio_notification_handler::event_type::UNDEFINED;
   switch (async_metadata.event_code) {
     case uhd::async_metadata_t::EVENT_CODE_BURST_ACK:
       state_fsm.async_event_end_of_burst_ack();
@@ -103,7 +103,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&              nof_txd_samples,
 radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
                                          task_executor&               async_executor_,
-                                         radio_notification_handler&              notifier_) :
+                                         radio_notification_handler&  notifier_) :
   stream_id(description.id),
   async_executor(async_executor_),
   notifier(notifier_),

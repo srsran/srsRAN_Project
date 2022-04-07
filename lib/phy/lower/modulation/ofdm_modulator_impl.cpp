@@ -36,8 +36,9 @@ void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          ou
 
   // Make sure output buffer matches the symbol size.
   srsran_always_assert(output.size() == (cp_len + dft_size),
-                       "The output buffer size (%d) does not match the symbol size (%d+%d=%d). Numerology=%d.",
+                       "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
                        output.size(),
+                       symbol_index,
                        cp_len,
                        dft_size,
                        cp_len + dft_size,

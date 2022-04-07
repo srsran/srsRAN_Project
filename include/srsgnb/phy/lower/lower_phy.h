@@ -8,54 +8,57 @@
 
 namespace srsgnb {
 
-/// Describes the lower physical layer input gateway
+/// Describes the lower physical layer input gateway.
 class lower_phy_input_gateway
 {
 public:
-  /// Default destructor to ensure generic ownership destroys the instance
+  /// Default destructor.
   virtual ~lower_phy_input_gateway() = default;
 
-  /// Sends resource grid through the gateway
+  /// \brief Sends resource grid through the gateway.
   ///
-  /// \param context Provides the context the resource grid belongs
-  /// \param grid Provides the resource grid reader instance
+  /// \param[in] context Indicates the resource grid context.
+  /// \param[in] grid Provides the resource grid to transmit.
   virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 
-/// Describes context of the new received symbol
+/// Describes context of the new received symbol.
 struct lower_phy_rx_symbol_context_t {
+  /// Indicates the slot.
   slot_point slot;
-  unsigned   sector;
-  unsigned   symbol;
+  /// Indicates the sector.
+  unsigned sector;
+  /// Indicates the number of symbols that are available for processing.
+  unsigned nof_symbols;
 };
 
-/// Lower physical layer's notifier to provide received symbol
-class lower_phy_rx_symbol_notifier
+/// Lower physical layer's notifier to provide received symbol.
+class lower_phy_rx_symbol_handler
 {
 public:
-  /// Default destructor
-  virtual ~lower_phy_rx_symbol_notifier() = default;
+  /// Default destructor.
+  virtual ~lower_phy_rx_symbol_handler() = default;
 
-  /// Notifies the arrival of all packets for given CC
+  /// \brief Notifies the completion of an OFDM symbol for a given context.
   ///
-  /// \param [in] context Provides the notification context
-  /// \param [in] grid Provides the resource grids for each port of the given sector
-  virtual void notify_rx_symbol(const lower_phy_rx_symbol_context_t& context,
-                                const span<resource_grid_reader>&    grid) = 0;
+  /// \param [in] context Provides the notification context.
+  /// \param [in] grid Provides the resource grid that belongs to the context.
+  virtual void notify_rx_symbol(const lower_phy_rx_symbol_context_t& context, const resource_grid_reader& grid) = 0;
 
-  /// Notifies the arrival of PRACH packets for given CC
+  /// \brief Notifies the completion of PRACH symbols.
   ///
-  /// \param [in] context Provides the notification context
+  /// \param [in] context Provides the notification context.
   virtual void notify_rx_prach_symbol(const lower_phy_rx_symbol_context_t& context) = 0;
 
-  /// Notifies the arrival of SRS packets for given CC
+  /// \brief Notifies the completion of SRS symbols.
   ///
-  /// \param [in] context Provides the notification context
+  /// \param [in] context Provides the notification context.
   virtual void notify_rx_srs_symbol(const lower_phy_rx_symbol_context_t& context) = 0;
 };
 
-/// Describes the context of the current timing boundary
+/// Describes the context of the current timing boundary.
 struct lower_phy_timing_context_t {
+  /// Indicates the slot.
   slot_point slot;
 };
 

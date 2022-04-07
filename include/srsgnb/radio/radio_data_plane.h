@@ -3,7 +3,6 @@
 #define SRSGNB_RADIO_RADIO_DATA_PLANE_H
 
 #include "radio_baseband_buffer.h"
-#include "srsgnb/radio/radio_constants.h"
 
 namespace srsgnb {
 
