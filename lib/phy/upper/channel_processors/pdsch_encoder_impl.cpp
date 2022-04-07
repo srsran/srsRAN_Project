@@ -1,0 +1,35 @@
+#include "pdsch_encoder_impl.h"
+
+using namespace srsgnb;
+
+void pdsch_encoder_impl::encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segment_config& cfg)
+{
+  // Clear the buffer.
+  d_segments.clear();
+  // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
+  segmenter->segment(d_segments, transport_block, cfg);
+
+  // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
+  span<uint8_t> tmp = span<uint8_t>(buffer_cb).first(d_segments[0].second.cb_specific.full_length);
+
+  unsigned offset = 0;
+  for (const auto& descr_seg : d_segments) {
+    // Encode the segment into a codeblock.
+    encoder->encode(tmp, descr_seg.first, descr_seg.second.tb_common);
+    // Select the correct chunk of the output codeword.
+    unsigned rm_length = descr_seg.second.cb_specific.rm_length;
+    srsran_assert(offset + rm_length <= codeword.size(), "Wrong codeword length.");
+    span<uint8_t> codeblock = span<uint8_t>(codeword).subspan(offset, rm_length);
+    offset += rm_length;
+    // Rate match the codeblock.
+    rate_matcher->rate_match(codeblock, tmp, descr_seg.second.tb_common);
+  }
+}
+
+std::unique_ptr<pdsch_encoder> srsgnb::create_pdsch_encoder()
+{
+  std::unique_ptr<ldpc_segmenter>    seg = create_ldpc_segmenter();
+  std::unique_ptr<ldpc_encoder>      enc = create_ldpc_encoder("generic");
+  std::unique_ptr<ldpc_rate_matcher> rm  = create_ldpc_rate_matcher();
+  return std::make_unique<pdsch_encoder_impl>(seg, enc, rm);
+}

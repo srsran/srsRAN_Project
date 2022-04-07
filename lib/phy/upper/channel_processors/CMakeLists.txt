@@ -24,3 +24,6 @@ add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)
 
 add_library(pdcch_processor STATIC pdcch_processor_impl.cpp)
+
+add_library(pdsch_encoder STATIC pdsch_encoder_impl.cpp)
+target_link_libraries(pdsch_encoder ldpc)
