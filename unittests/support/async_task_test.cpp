@@ -36,11 +36,6 @@ private:
   async_task<int>& t;
 };
 
-//////////////////////////////////////////////// TESTS ///////////////////////////////////////////////////////////
-
-/// Tests for chaining of multiple async tasks
-namespace task_chaining_test {
-
 /// Coroutine implementation that just awaits another tasks and forwards its result
 class passthrough_coroutine
 {
@@ -55,6 +50,11 @@ public:
     CORO_RETURN(v);
   }
 };
+
+//////////////////////////////////////////////// TESTS ///////////////////////////////////////////////////////////
+
+/// Tests for chaining of multiple async tasks
+namespace task_chaining_test {
 
 /// Unit Test that verifies the correct forwarding of events across awaiters
 template <typename TaskFactory>
@@ -155,8 +155,36 @@ void run()
 
 } // namespace task_cleanup
 
+void lazy_task_test()
+{
+  int            value = 2;
+  lazy_task<int> t     = launch_async([&value](coro_context<lazy_task<int> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+    value += 4;
+    CORO_RETURN(value * 2);
+  });
+
+  // STATUS: The lazy coroutine is not started because is still not being awaited.
+  TESTASSERT_EQ(2, value);
+
+  // Action: Start an eager passthrough coroutine that awaits on the lazy coroutine.
+  async_task<int> t2 = launch_async([&t](coro_context<async_task<int> >& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(int res, t);
+    CORO_RETURN(res + 1);
+  });
+
+  // STATUS: The lazy coroutine runs to completion.
+  TESTASSERT_EQ(6, value);
+  TESTASSERT(t.ready());
+  TESTASSERT_EQ(12, t.get());
+  TESTASSERT(t2.ready());
+  TESTASSERT_EQ(13, t2.get());
+}
+
 int main()
 {
   task_chaining_test::run();
   task_cleanup::run();
+  lazy_task_test();
 }

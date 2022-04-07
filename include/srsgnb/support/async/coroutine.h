@@ -256,6 +256,14 @@ struct suspend_never {
   suspend_never& get_awaiter() { return *this; }
 };
 
+/// Awaitable that always suspends
+struct suspend_always {
+  bool            await_ready() const { return false; }
+  void            await_suspend(coro_handle<> cb) const {}
+  void            await_resume() const {}
+  suspend_always& get_awaiter() { return *this; }
+};
+
 /// Base class for resumable tasks that are not coroutines
 template <typename FutureType>
 struct base_resumable_procedure {
@@ -430,8 +438,7 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
       printf("Jumping to invalid label %d\n", (coro_context__).state_index);                                           \
       return;                                                                                                          \
     case detail::tag_init:                                                                                             \
-      do {                                                                                                             \
-      } while (0)
+      CORO_AWAIT(coro_context__.promise().initial_suspend())
 
 /// Macro placed at the end of coroutine resume function body. Operations:
 /// 1. save return value in coroutine promise
