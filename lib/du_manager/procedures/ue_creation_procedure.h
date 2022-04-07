@@ -41,6 +41,24 @@ public:
   rlc_pdu_handler& bearer;
 };
 
+/// \brief Handles the creation of a UE and respective bearers in the DU UE manager, MAC, F1.
+///  \startuml
+///    participant DM
+///    participant MAC
+///    participant F1
+///    Note over MAC: UL CCCH subPDU decoded
+///    MAC-->>DM: UL CCCH PDU Indication
+///    Note over DM: Allocate UE index
+///    Note over DM: Buffer UL CCCH Indication
+///    DM->>F1: UE create
+///    F1-->>DM: UE create completed
+///    Note over DM: Create RLC SRB0 (Factory)
+///    DM->>MAC: UE create
+///    MAC-->>DM: UE create completed
+///    Note over DM: Create UE in UE manager
+///    DM->>MAC: Notify UL CCCH PDU
+///    MAC->>F1: SRB0 - Notify UL CCCH PDU
+///  \enduml
 class ue_creation_procedure
 {
 public:
