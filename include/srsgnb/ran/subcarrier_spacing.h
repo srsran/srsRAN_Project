@@ -7,7 +7,7 @@
 namespace srsgnb {
 
 /// Representation of subcarrier spacing.
-enum subcarrier_spacing { kHz15 = 0, kHz30, kHz60, kHz120, kHz240 };
+enum class subcarrier_spacing { kHz15 = 0, kHz30, kHz60, kHz120, kHz240 };
 
 /// Check if SCS value is valid.
 inline bool is_scs_valid(subcarrier_spacing scs)
