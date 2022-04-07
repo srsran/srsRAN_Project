@@ -6,6 +6,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+// TODO(david,borja): fix dependency.
 
 namespace srsgnb {
 
@@ -16,6 +17,8 @@ namespace srsgnb {
 struct codeblock_metadata {
   /// Common parameters for all codeblocks from the same transport block.
   struct tb_common_metadata {
+    // TODO(david,alex): Improve name and possibly merge with segment_config below.
+
     /// Code base graph.
     ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
     /// Code lifting size.
