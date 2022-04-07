@@ -20,8 +20,8 @@ public:
   /// \param[out] output  Rate matched codeblock. Each \c uint8_t entry corresponds to a single bit.
   /// \param[in]  input   Original, full codeblock (may contain filler bits). Each \c uint8_t entry corresponds to a
   ///                     single bit.
-  /// \param[in]  cfg     Configuration parameters. \remark The sizes of \c input and \c output determine
-  ///                     the behavior of the rate matching algorithm.
+  /// \param[in]  cfg     Configuration parameters.
+  /// \remark The sizes of \c input and \c output determine the behavior of the rate matching algorithm.
   virtual void
   rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };

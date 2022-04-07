@@ -142,7 +142,7 @@ namespace ldpc {
 /// \brief Creates an array with all possible LDPC graphs.
 ///
 /// The graphs will be ordered by base graph and lifting size. For instance, the graph corresponding to BG2 and LS4 will
-/// be at entry ::nof_lifting_sizes <tt> + 3 </tt>, since \c LS4 is the third one in the list of all possible lifting
+/// be at entry ::NOF_LIFTING_SIZES <tt> + 3 </tt>, since \c LS4 is the third one in the list of all possible lifting
 /// sizes (i.e., ::all_lifting_sizes).
 std::array<ldpc_graph_impl, TOTAL_NOF_GRAPHS> create_graph_array();
 
