@@ -74,6 +74,9 @@ int main()
           case ssb_pattern_case::E:
             numerology = 4; // 240 kHz
             break;
+          case ssb_pattern_case::invalid:
+            srsran_assert(false, "Invalid SSB pattern case");
+            break;
         }
 
         // Skip invalid pattern and L_max combinations

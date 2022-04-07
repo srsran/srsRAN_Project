@@ -10,7 +10,7 @@
 namespace srsgnb {
 
 /// Describes the different SS/PBCH block patterns defined in 38.213 section 4.1 Cell search
-enum class ssb_pattern_case { A, B, C, D, E };
+enum class ssb_pattern_case { A, B, C, D, E, invalid };
 
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst
 /// \param [in] pattern_case Provides the pattern
