@@ -3,7 +3,7 @@
 #define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_LOGGER_H
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wall"
 #include <uhd/utils/log.hpp>
 #pragma GCC diagnostic pop
 

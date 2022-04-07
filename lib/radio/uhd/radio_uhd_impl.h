@@ -3,7 +3,7 @@
 #define SRSGNB_LIB_RADIO_RADIO_UHD_IMPL_H
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wall"
 #include <uhd/utils/thread_priority.h>
 #pragma GCC diagnostic pop
 

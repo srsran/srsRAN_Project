@@ -11,7 +11,7 @@
 #include <mutex>
 
 #pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wsuggest-override"
+#pragma GCC diagnostic ignored "-Wall"
 #include <uhd/usrp/multi_usrp.hpp>
 #pragma GCC diagnostic pop
 
