@@ -15,10 +15,9 @@ struct task_executor_awaiter {
 
   bool await_ready() noexcept { return false; }
 
-  bool await_suspend(coro_handle<> suspending_awaitable)
+  void await_suspend(coro_handle<> suspending_awaitable)
   {
     exec.execute([suspending_awaitable]() mutable { suspending_awaitable.resume(); });
-    return false;
   }
 
   void await_resume() {}
@@ -53,14 +52,13 @@ struct task_executor_offloader {
 
   bool await_ready() noexcept { return false; }
 
-  bool await_suspend(coro_handle<> suspending_coro)
+  void await_suspend(coro_handle<> suspending_coro)
   {
     continuation = suspending_coro;
     dispatch_exec.execute([this]() mutable {
       result = task();
       resume_exec.execute([this]() { continuation.resume(); });
     });
-    return false;
   }
 
   ResultType await_resume() { return result; }
@@ -83,14 +81,13 @@ struct task_executor_offloader<DispatchTaskExecutor, ResumeTaskExecutor, Callabl
 
   bool await_ready() noexcept { return false; }
 
-  bool await_suspend(coro_handle<> suspending_coro)
+  void await_suspend(coro_handle<> suspending_coro)
   {
     continuation = suspending_coro;
     dispatch_exec.execute([this]() mutable {
       task();
       resume_exec.execute([this]() { continuation.resume(); });
     });
-    return false;
   }
 
   void await_resume() {}

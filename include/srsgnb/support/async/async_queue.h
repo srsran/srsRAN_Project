@@ -40,7 +40,7 @@ public:
     awaiter_type(async_queue* parent_) : parent(parent_) {}
 
     bool await_ready() { return not parent->queue.empty(); }
-    bool await_suspend(coro_handle<> ch)
+    void await_suspend(coro_handle<> ch)
     {
       suspended_handle = ch;
       // enqueue awaiter
@@ -52,7 +52,6 @@ public:
         parent->last->next = this;
         parent->last       = this;
       }
-      return true;
     }
     T await_resume()
     {
@@ -73,7 +72,7 @@ private:
   void notify_one_awaiter()
   {
     if (front != nullptr) {
-      front->suspended_handle.operator()();
+      front->suspended_handle.resume();
       front = front->next;
     }
   }

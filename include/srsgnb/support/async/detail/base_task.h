@@ -10,50 +10,15 @@ namespace srsgnb {
 
 namespace detail {
 
-/// Base class of async/lazy task promises
-template <typename InitialSuspend>
 struct task_promise_base {
   bool          has_value = false; ///< If result of task has been stored
   coro_handle<> continuation;      ///< Pending continuation task
-
-  /// base_task final awaiter type. It runs pending continuations and suspends
-  struct final_awaiter {
-    task_promise_base* me;
-
-    bool await_ready() const { return false; }
-
-    /// resumes awaiting continuation(s) of task that just finished
-    void await_suspend(coro_handle<> cb)
-    {
-      coro_handle<> old_then = std::exchange(me->continuation, nullptr);
-      if (not old_then.empty()) {
-        old_then.resume();
-      }
-    }
-
-    void await_resume() {}
-
-    /// Points to itself as an awaiter
-    final_awaiter& get_awaiter() { return *this; }
-  };
-
-  /// Initial suspension awaiter
-  InitialSuspend initial_suspend() { return {}; }
-
-  /// Final suspension awaiter
-  final_awaiter final_suspend() { return {this}; }
-
-  /// Append continuation to task
-  bool set_continuation(coro_handle<> promise_)
-  {
-    continuation = promise_;
-    return true;
-  }
 
   /// Check if return has been stored
   bool ready() const { return has_value; }
 };
 
+/// Common functionality to lazy and async tasks.
 template <typename Derived, typename Result>
 class task_crtp
 {

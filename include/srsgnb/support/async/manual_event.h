@@ -18,17 +18,13 @@ public:
   struct awaiter_common {
     explicit awaiter_common(manual_event_common& event_) : event(&event_) {}
     bool await_ready() const { return event->is_set(); }
-    bool await_suspend(coro_handle<> c)
+    void await_suspend(coro_handle<> c)
     {
+      // Store suspending coroutine.
       suspended_handle = c;
-      if (event->is_set()) {
-        // state is set. no need to suspend
-        return false;
-      }
 
       // enqueue awaiter
       next = static_cast<awaiter_common*>(std::exchange(event->state, static_cast<void*>(this)));
-      return true;
     }
 
     manual_event_common* event;

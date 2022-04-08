@@ -13,8 +13,8 @@ template <typename AwaiterType>
 void flush_awaiter_list(AwaiterType* current)
 {
   while (current != nullptr) {
-    auto*                     next = current->next;
-    current->suspended_handle.operator()();
+    auto* next = current->next;
+    current->suspended_handle.resume();
     current = next;
   }
 }

@@ -1,5 +1,7 @@
 
+#include "srsgnb/support/async/async_procedure.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 

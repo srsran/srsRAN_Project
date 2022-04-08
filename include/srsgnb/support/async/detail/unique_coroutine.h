@@ -33,6 +33,8 @@ public:
     }
   }
 
+  coro_handle<promise_type>& operator*() { return handle; }
+
   bool empty() const { return handle.empty(); }
 
   void resume() { handle.resume(); }
