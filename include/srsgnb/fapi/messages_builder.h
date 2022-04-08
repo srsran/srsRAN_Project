@@ -117,7 +117,11 @@ private:
 class dl_pdcch_pdu_builder
 {
 public:
-  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
+  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu)
+  {
+    // :TODO: remove this when implementing
+    (void)pdu;
+  }
 
 private:
   dl_pdcch_pdu& pdu;
@@ -127,7 +131,11 @@ private:
 class dl_pdsch_pdu_builder
 {
 public:
-  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu) {}
+  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu)
+  {
+    // :TODO: remove this when implementing
+    (void)pdu;
+  }
 
 private:
   dl_pdsch_pdu& pdu;
@@ -137,7 +145,11 @@ private:
 class dl_csi_rs_pdu_builder
 {
 public:
-  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu) {}
+  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu)
+  {
+    // :TODO: remove this when implementing
+    (void)pdu;
+  }
 
 private:
   dl_csi_rs_pdu& pdu;
