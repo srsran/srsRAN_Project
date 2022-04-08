@@ -8,10 +8,11 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
+static std::mt19937 gen(0);
+
 /// Returns random values for the maintenance v3 basic parameters.
-static std::tuple<ssb_pattern_case, subcarrier_spacing, unsigned> get_maintenance_v3_basic_random()
+static std::tuple<ssb_pattern_case, subcarrier_spacing, unsigned> generate_random_maintenance_v3_basic_params()
 {
-  std::mt19937                            gen(0);
   std::uniform_int_distribution<unsigned> enum_dist(0, 4);
 
   static constexpr std::array<unsigned, 3> lmax{4u, 8u, 64u};
@@ -22,17 +23,16 @@ static std::tuple<ssb_pattern_case, subcarrier_spacing, unsigned> get_maintenanc
           lmax[lmax_dist(gen)]};
 }
 
-/// Test to measure the performance converting SSB data structures from MAC -> FAPI -> PHY.
-static void test_ssb_conversion_performance()
+/// Benchmark that measures the performance converting SSB data structures from MAC -> FAPI -> PHY.
+static void ssb_conversion_benchmark()
 {
   static constexpr unsigned iterations = 10000;
   std::vector<unsigned>     results;
   results.reserve(iterations);
 
   // Random generators.
-  std::mt19937                            gen(0);
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 30);
+  std::uniform_int_distribution<unsigned> slot_dist(0, 5);
   std::uniform_int_distribution<unsigned> pci_dist(0, 3000);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
   std::uniform_int_distribution<unsigned> block_index_dist(0, 3000);
@@ -54,7 +54,7 @@ static void test_ssb_conversion_performance()
                                            offset_pointA_dist(gen));
 
     ssb_builder.set_bch_payload_phy_full(binary_dist(gen), sib1_dist(gen), binary_dist(gen), binary_dist(gen));
-    const auto& v3 = get_maintenance_v3_basic_random();
+    const auto& v3 = generate_random_maintenance_v3_basic_params();
     ssb_builder.set_maintenance_v3_basic_parameters(std::get<0>(v3), std::get<1>(v3), std::get<2>(v3));
     ssb_builder.set_maintenance_v3_tx_power_info(power_dist(gen), power_dist(gen));
 
@@ -62,7 +62,7 @@ static void test_ssb_conversion_performance()
 
     // Conversion block.
     auto start = std::chrono::high_resolution_clock::now();
-    convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, 2);
+    convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, std::get<1>(v3));
     auto end = std::chrono::high_resolution_clock::now();
 
     // Print how much time it took.
@@ -85,9 +85,7 @@ static void test_ssb_conversion_performance()
 
 int main()
 {
-  // Try some random conversions.
-  for (unsigned i = 0; i != 10; ++i)
-    test_ssb_conversion_performance();
+  ssb_conversion_benchmark();
 
   fmt::print("Success\n");
   return 0;

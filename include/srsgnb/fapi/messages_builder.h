@@ -117,10 +117,14 @@ private:
 class dl_pdcch_pdu_builder
 {
 public:
-  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu)
+  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
+
+  // :TODO: add rest of parameters.
+  dl_pdcch_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
   {
-    // :TODO: remove this when implementing
-    (void)pdu;
+    pdu.scs = scs;
+
+    return *this;
   }
 
 private:
@@ -131,10 +135,14 @@ private:
 class dl_pdsch_pdu_builder
 {
 public:
-  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu)
+  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu) {}
+
+  // :TODO: add rest of parameters.
+  dl_pdsch_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
   {
-    // :TODO: remove this when implementing
-    (void)pdu;
+    pdu.scs = scs;
+
+    return *this;
   }
 
 private:
@@ -145,10 +153,14 @@ private:
 class dl_csi_rs_pdu_builder
 {
 public:
-  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu)
+  explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu) {}
+
+  // :TODO: add rest of parameters.
+  dl_csi_rs_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
   {
-    // :TODO: remove this when implementing
-    (void)pdu;
+    pdu.scs = scs;
+
+    return *this;
   }
 
 private:

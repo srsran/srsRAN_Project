@@ -42,17 +42,15 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 }
 
 /// Fills the bch payload.
-static void
-fill_bch_payload(std::array<uint8_t, ssb_processor::BCH_PAYLOAD_SIZE>& dest, const dl_ssb_pdu& fapi_pdu, unsigned sfn)
+static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, unsigned sfn)
 {
-  span<uint8_t> out(dest.begin(), dest.end());
   switch (fapi_pdu.bch_payload_flag) {
     case bch_payload_type::mac_full:
-      return srsvec::bit_unpack(fapi_pdu.bch_payload.bch_payload, out, 32);
+      return srsvec::bit_unpack(fapi_pdu.bch_payload.bch_payload, dest, std::numeric_limits<uint32_t>::digits);
 
     case bch_payload_type::phy_timing_info: {
       uint32_t payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn);
-      return srsvec::bit_unpack(payload, out, 32);
+      return srsvec::bit_unpack(payload, dest, std::numeric_limits<uint32_t>::digits);
     }
     case bch_payload_type::phy_full:
       // :TODO: phy generates full PBCH payload. When the PHY function is added, call that function here to generate the
@@ -73,7 +71,7 @@ static float get_beta_pss(const dl_ssb_pdu& fapi_pdu)
     case beta_pss_profile_type::dB_3:
       return 3.f;
     case beta_pss_profile_type::beta_pss_profile_sss:
-      return fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss / 1000.f;
+      return fapi_pdu.ssb_maintenance_v3.beta_pss_profile_sss * 0.001f;
     default:
       // NOTE: We ensure that it never reaches here, as the fapi message should be validated.
       srsran_assert(0, "Invalid beta PSS profile");
@@ -85,9 +83,9 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
                                                    const dl_ssb_pdu&     fapi_pdu,
                                                    uint16_t              sfn,
                                                    uint16_t              slot,
-                                                   uint8_t               numerology)
+                                                   subcarrier_spacing    numerology)
 {
-  proc_pdu.slot                  = slot_point(numerology, sfn, slot);
+  proc_pdu.slot                  = slot_point(static_cast<uint32_t>(numerology), sfn, slot);
   proc_pdu.phys_cell_id          = fapi_pdu.phys_cell_id;
   proc_pdu.beta_pss              = get_beta_pss(fapi_pdu);
   proc_pdu.ssb_idx               = fapi_pdu.ssb_block_index;
@@ -97,7 +95,8 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
   proc_pdu.pattern_case          = fapi_pdu.ssb_maintenance_v3.case_type;
 
   // Get the BCH payload.
-  fill_bch_payload(proc_pdu.bch_payload, fapi_pdu, sfn);
+  span<uint8_t> bch_payload(proc_pdu.bch_payload.begin(), proc_pdu.bch_payload.end());
+  fill_bch_payload(bch_payload, fapi_pdu, sfn);
 
   // :TODO: Implement the ports array when the beamforming is added.
 }

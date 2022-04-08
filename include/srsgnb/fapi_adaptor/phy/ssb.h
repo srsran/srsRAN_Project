@@ -1,5 +1,5 @@
-#ifndef SRSGNB_FAPI_ADAPTOR_PHY_SSB_H_
-#define SRSGNB_FAPI_ADAPTOR_PHY_SSB_H_
+#ifndef SRSGNB_FAPI_ADAPTOR_PHY_SSB_H
+#define SRSGNB_FAPI_ADAPTOR_PHY_SSB_H
 
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
@@ -12,9 +12,9 @@ void convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
                              const fapi::dl_ssb_pdu& fapi_pdu,
                              uint16_t                sfn,
                              uint16_t                slot,
-                             uint8_t                 numerology);
+                             subcarrier_spacing      numerology);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
 
-#endif // SRSGNB_FAPI_ADAPTOR_PHY_SSB_H_
+#endif // SRSGNB_FAPI_ADAPTOR_PHY_SSB_H
