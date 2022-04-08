@@ -1,7 +1,7 @@
-#ifndef UNITTEST_SUPPORT_DFT_PROCESSOR_TEST_DOUBLES_H
-#define UNITTEST_SUPPORT_DFT_PROCESSOR_TEST_DOUBLES_H
+#ifndef UNITTEST_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
+#define UNITTEST_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
 
-#include "srsgnb/support/dft_processor.h"
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 #include <random>
 
 namespace srsgnb {
@@ -83,4 +83,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // UNITTEST_SUPPORT_DFT_PROCESSOR_TEST_DOUBLES_H
+#endif // UNITTEST_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H

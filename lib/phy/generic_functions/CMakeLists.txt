@@ -1,0 +1,2 @@
+add_library(srsgnb_generic_funcs_dft STATIC dft_processor_fftw_impl.cpp)
+target_link_libraries(srsgnb_generic_funcs_dft ${FFTW3F_LIBRARIES} srsvec)

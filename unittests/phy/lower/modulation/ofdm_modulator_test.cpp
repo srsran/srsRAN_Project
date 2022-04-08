@@ -1,5 +1,5 @@
 
-#include "../../../support/dft_processor_test_doubles.h"
+#include "../../generic_functions/dft_processor_test_doubles.h"
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/srsvec/compare.h"

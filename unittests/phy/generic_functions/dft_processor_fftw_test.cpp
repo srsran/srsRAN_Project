@@ -1,5 +1,5 @@
 
-#include "srsgnb/support/dft_processor.h"
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <cmath>

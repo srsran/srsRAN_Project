@@ -1,9 +1,9 @@
 
-#ifndef LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
-#define LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
+#ifndef LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTW_IMPL_H
+#define LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTW_IMPL_H
 
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/dft_processor.h"
 #include <fftw3.h>
 #include <memory>
 #include <mutex>
@@ -21,7 +21,6 @@ struct dft_processor_factory_fftw_config {
 /// Describes a DFT processor class configuration based on the FFTW library.
 class dft_processor_fftw_impl : public dft_processor
 {
-private:
   /// Protects the FFTW library from simultaneous plan creation.
   static std::mutex mutex_init;
   /// If wisdom was loaded earlier by any instance, it contains the FFTW wisdom file name. Otherwise, it is empty.
@@ -49,7 +48,7 @@ public:
 
   /// Frees the input and output buffers, destroys the FFTW plan, saves the wisdom if it is the first instance to be
   /// destroyed and cleans up the FFTW context if it is the last instance to be destroyed.
-  ~dft_processor_fftw_impl();
+  ~dft_processor_fftw_impl() override;
 
   // See interface for documentation.
   direction get_direction() const override { return dir; }
@@ -67,7 +66,6 @@ public:
 /// Describes a DFT processor factory class configuration based on the FFTW library.
 class dft_processor_factory_fftw_impl : public dft_processor_factory
 {
-private:
   /// Stores the FFTW specific configuration.
   dft_processor_factory_fftw_config config;
 
@@ -93,4 +91,4 @@ create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& facto
 
 } // namespace srsgnb
 
-#endif // LIB_SUPPORT_DFT_PROCESSOR_FFTW_IMPL_H
+#endif // LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTW_IMPL_H

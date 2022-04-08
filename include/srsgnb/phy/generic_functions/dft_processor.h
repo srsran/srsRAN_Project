@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SUPPORT_DFT_PROCESSOR_H
-#define SRSGNB_SUPPORT_DFT_PROCESSOR_H
+#ifndef SRSGNB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_H
+#define SRSGNB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -68,4 +68,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_LOWER_MODULATION_DFT_PROCESSOR_H
+#endif // SRSGNB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_H

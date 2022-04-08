@@ -5,7 +5,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/dft_processor.h"
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 
 namespace srsgnb {
 

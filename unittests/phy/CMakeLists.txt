@@ -1,3 +1,4 @@
+add_subdirectory(generic_functions)
 add_subdirectory(lower)
 add_subdirectory(upper)
 
