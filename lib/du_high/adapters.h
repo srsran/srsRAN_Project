@@ -25,7 +25,7 @@ namespace srsgnb {
 //   du_manager_input_gateway& du_manager;
 // };
 
-class du_manager_mac_event_indicator : public mac_event_notifier
+class du_manager_mac_event_indicator : public mac_ul_ccch_notifier
 {
 public:
   void connect(du_manager_ccch_handler& du_mng_) { du_mng = &du_mng_; }

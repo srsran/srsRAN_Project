@@ -12,27 +12,20 @@
 
 namespace srsgnb {
 
-class mac_impl : public mac_interface
+class mac_impl : public mac_interface, public mac_control_information_handler
 {
 public:
-  explicit mac_impl(mac_event_notifier&       event_notifier,
+  explicit mac_impl(mac_ul_ccch_notifier&     event_notifier,
                     du_l2_ul_executor_mapper& ul_exec_mapper,
                     span<task_executor*>      dl_execs,
                     task_executor&            ctrl_exec,
                     mac_result_notifier&      phy_notifier_);
 
-  void add_cell(const mac_cell_configuration& cell_cfg) override;
-  void remove_cell(du_cell_index_t cell_index) override;
-
   mac_rach_handler& get_rach_handler() override { return rach_hdl; }
 
-  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
-  async_task<mac_ue_reconfiguration_response_message>
-                                             ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
-  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
-  void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
+  mac_ue_configurator& get_ue_configurator() override { return ctrl_unit; }
 
-  void handle_rx_data_indication(mac_rx_data_indication msg) override;
+  mac_control_information_handler& get_control_info_handler() override { return *this; }
 
   void handle_crc(const crc_indication_message& msg) override {}
 
@@ -41,10 +34,9 @@ public:
     return dl_unit.get_slot_handler(cell_index);
   }
 
-  mac_cell_manager& get_cell_manager(du_cell_index_t cell_index) override
-  {
-    return dl_unit.get_cell_manager(cell_index);
-  }
+  mac_manager& get_manager() override { return dl_unit; }
+
+  mac_pdu_handler& get_pdu_handler() override { return ul_unit; }
 
 private:
   mac_common_config_t   cfg;

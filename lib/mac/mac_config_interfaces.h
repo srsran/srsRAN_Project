@@ -14,6 +14,7 @@ public:
   virtual async_task<bool> add_ue(const mac_ue_create_request_message& msg)                  = 0;
   virtual async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) = 0;
   virtual async_task<void> remove_ue(const mac_ue_delete_request_message& msg)               = 0;
+  virtual void             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)        = 0;
 };
 
 class mac_dl_configurer

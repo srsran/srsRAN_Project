@@ -4,7 +4,7 @@
 
 namespace srsgnb {
 
-mac_impl::mac_impl(mac_event_notifier&       event_notifier,
+mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
                    du_l2_ul_executor_mapper& ul_exec_mapper_,
                    span<task_executor*>      dl_execs_,
                    task_executor&            ctrl_exec_,
@@ -19,42 +19,6 @@ mac_impl::mac_impl(mac_event_notifier&       event_notifier,
 {
   // :TODO: remove when the log is used.
   (void)(logger);
-}
-
-void mac_impl::add_cell(const mac_cell_configuration& cell_cfg)
-{
-  dl_unit.add_cell(cell_cfg);
-}
-
-void mac_impl::remove_cell(du_cell_index_t cell_index)
-{
-  dl_unit.remove_cell(cell_index);
-}
-
-void mac_impl::handle_rx_data_indication(mac_rx_data_indication msg)
-{
-  ul_unit.handle_rx_data_indication(msg);
-}
-
-async_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
-{
-  return ctrl_unit.ue_create_request(msg);
-}
-
-async_task<mac_ue_reconfiguration_response_message>
-mac_impl::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
-{
-  return ctrl_unit.ue_reconfiguration_request(msg);
-}
-
-async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
-{
-  return ctrl_unit.ue_delete_request(msg);
-}
-
-void mac_impl::flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu)
-{
-  ul_unit.flush_ul_ccch_msg(ue_index, std::move(ccch_pdu));
 }
 
 } // namespace srsgnb

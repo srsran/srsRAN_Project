@@ -22,7 +22,7 @@ struct mac_ue_context {
 
 class du_rnti_table;
 
-class mac_controller : public mac_ctrl_configurer
+class mac_controller : public mac_ctrl_configurer, public mac_ue_configurator
 {
 public:
   mac_controller(mac_common_config_t& cfg,
@@ -31,14 +31,19 @@ public:
                  du_rnti_table&       rnti_table);
 
   /// UE create methods
-  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
+  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg) override;
 
   /// UE deletion methods
-  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg) override;
 
   /// UE reconfiguration methods
   async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
+  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+
+  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  {
+    ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
+  }
 
   /// Fetch UE context
   mac_ue_context* find_ue(du_ue_index_t ue_index);

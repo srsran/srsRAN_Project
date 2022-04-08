@@ -5,7 +5,7 @@
 
 using namespace srsgnb;
 
-class mac_test_dummy : public mac_configurer
+class mac_test_dummy : public mac_ue_configurator
 {
 public:
   optional<mac_ue_create_request_message>                           last_ue_create_msg{};

@@ -20,7 +20,8 @@ public:
 class mac_ul_dummy_configurer final : public mac_ul_configurer
 {
 public:
-  bool                                             expected_result = true;
+  bool                                             expected_result   = true;
+  bool                                             ul_ccch_forwarded = false;
   manual_event_flag                                ue_created_ev;
   optional<mac_ue_create_request_message>          last_ue_create_request;
   optional<mac_ue_delete_request_message>          last_ue_delete_request;
@@ -53,6 +54,8 @@ public:
       CORO_RETURN(true);
     });
   }
+
+  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { ul_ccch_forwarded = true; }
 };
 
 class mac_dl_dummy_configurer final : public mac_dl_configurer
@@ -103,7 +106,7 @@ public:
   task_executor& exec;
 };
 
-class dummy_mac_event_indicator : public mac_event_notifier
+class dummy_mac_event_indicator : public mac_ul_ccch_notifier
 {
 public:
   optional<ul_ccch_indication_message> last_ccch_ind;

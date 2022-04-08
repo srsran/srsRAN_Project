@@ -13,7 +13,7 @@
 
 namespace srsgnb {
 
-class mac_ul_processor final : public mac_ul_configurer
+class mac_ul_processor final : public mac_ul_configurer, public mac_pdu_handler
 {
 public:
   mac_ul_processor(mac_common_config_t& cfg_, sched_interface& sched_, du_rnti_table& rnti_table_) :
@@ -49,7 +49,7 @@ public:
                                   [this, ue_index = msg.ue_index]() { ue_manager.remove_ue(ue_index); });
   }
 
-  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu)
+  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ccch_pdu) override
   {
     cfg.ul_exec_mapper.executor(ue_index).execute([this, ue_index, pdu = std::move(ccch_pdu)]() mutable {
       pdu_handler.push_ul_ccch_msg(ue_index, std::move(pdu));
@@ -58,7 +58,7 @@ public:
 
   /// Handles FAPI Rx_Data.Indication.
   /// The PDUs contained in the Rx_Data.Indication are dispatched to different executors, depending on their RNTI.
-  void handle_rx_data_indication(mac_rx_data_indication& msg)
+  void handle_rx_data_indication(mac_rx_data_indication msg) override
   {
     for (mac_rx_pdu& pdu : msg.pdus) {
       du_ue_index_t ue_index = rnti_table[pdu.rnti];

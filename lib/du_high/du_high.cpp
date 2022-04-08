@@ -34,7 +34,7 @@ du_high::du_high(f1c_pdu_handler& f1c_pdu_handler, mac_result_notifier& phy_adap
   }
   mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, phy_adapter);
   f1ap       = create_f1ap_du(f1c_pdu_handler);
-  du_manager = create_du_manager(*mac, *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
+  du_manager = create_du_manager(mac->get_ue_configurator(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
   // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);
@@ -62,7 +62,7 @@ void du_high::stop()
 
 void du_high::push_pusch(mac_rx_data_indication pdu)
 {
-  mac->handle_rx_data_indication(std::move(pdu));
+  mac->get_pdu_handler().handle_rx_data_indication(std::move(pdu));
 }
 
 } // namespace srsgnb

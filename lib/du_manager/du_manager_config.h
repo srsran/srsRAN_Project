@@ -12,7 +12,7 @@ namespace srsgnb {
 
 struct du_manager_config_t {
   rlc_sdu_rx_notifier*  rlc_ul_notifier;
-  mac_configurer*       mac;
+  mac_ue_configurator*  mac;
   f1ap_du_configurer*   f1ap;
   f1ap_du_ul_interface* f1ap_ul;
   srslog::basic_logger& logger = srslog::fetch_basic_logger("DU-MNG");
