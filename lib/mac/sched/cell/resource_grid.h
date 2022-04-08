@@ -135,7 +135,7 @@ public:
     sl_offset(slot_offset), res_grid_pool(res_grid_pool_)
   {}
 
-  /// Access resource allocator for a given {slot, cell}. Slot correspons to the latest slot indication provided
+  /// Access resource allocator for a given {slot, cell}. Slot corresponds to the latest slot indication provided
   /// to the resource grid + a slot delay provided as argument. Given that slot_delay is unsigned, this class
   /// can only access the present and future slots.
   slot_resource_allocator operator[](unsigned slot_delay)

@@ -26,6 +26,11 @@ public:
   const asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
 
+  /// Imported from mac_cell_configuration.
+  /// For dl_carrier, only arfcn is currently used.
+  carrier_configuration   dl_carrier;
+  const ssb_configuration ssb_cfg;
+
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// DL Subcarrier Spacing

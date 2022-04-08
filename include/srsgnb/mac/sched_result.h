@@ -19,6 +19,9 @@ namespace srsgnb {
 const size_t MAX_GRANTS = 16;
 /// Maximum Logical channels per TB. Implementation-specific.
 const size_t MAX_LC_GRANTS = 4;
+/// Maximum SSB opportunity per slot. This can be derived from the candidate ODFM symbols indices within the ranges
+/// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
+const size_t MAX_SSB_PER_SLOT = 2;
 
 /// Representation of resources associated to a BWP.
 struct bwp_configuration {
@@ -74,6 +77,8 @@ struct ssb_information {
   ofdm_symbol_range symbols;
 };
 
+using ssb_informatin_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
+
 /// Stores the information associated to an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
@@ -85,8 +90,7 @@ struct sib_information {
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
 struct dl_broadcast_allocation {
-  optional<ssb_information>         ssb_info;
-  unsigned                          ssb_index;
+  static_vector<ssb_information, MAX_SSB_PER_SLOT> ssb_info;
   static_vector<sib_information, 1> sibs;
 };
 

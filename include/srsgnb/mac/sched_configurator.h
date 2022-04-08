@@ -33,7 +33,9 @@ struct cell_configuration_request_message {
   asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
 
-  /// SSB parameters. We use the same struct as in MAC Cell Configuration msg.
+  /// NOTE: Structs below do not follow ORAN specs.
+  /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1)
+  carrier_configuration dl_carrier;
   ssb_configuration ssb_config;
 };
 

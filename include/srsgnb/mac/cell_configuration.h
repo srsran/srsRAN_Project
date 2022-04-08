@@ -17,11 +17,11 @@ enum class ssb_pattern_case;
 /// \brief Configuration of each transmission point associated to the corresponding cell(s). This includes
 /// different physical antennas, different frequencies, bandwidths.
 struct carrier_configuration {
-  /// Width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 200, 400
+  /// Width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 200, 400.
   uint16_t carrier_bw_mhz;
-  /// NR Absolute Radio Frequency Channel Number (NR-ARFCN) point A in kHz. Values: (450000..52600000)
+  /// NR Absolute Radio Frequency Channel Number (NR-ARFCN) point A in kHz. Values: (450000..52600000).
   uint32_t arfcn;
-  /// Number of antennas. Values: (0..65355)
+  /// Number of antennas. Values: (0..65355).
   uint16_t nof_ant;
 };
 
@@ -33,23 +33,24 @@ struct ssb_configuration {
   /// SSB subcarrier spacing [Table 4.2-1, TS 38.211]
   /// Possible values: FR1 only {15kHz, 30kHz, 60kHz}, FR2 only {60kHz, 120kHz}.
   subcarrier_spacing scs;
-  /// Given in PRBs - Values [0, 2199] - [Table 3-79, FAPI]
+  /// Given in PRBs - Values [0, 2199] - [Table 3-79, FAPI].
   uint16_t ssb_offset_to_point_A;
   /// Values: [0: 5ms, 1: 10ms, 2: 20ms, 3: 40ms, 4: 80ms, 5: ms160].
   uint8_t ssb_period;
-  /// SSB SubcarrierOffest or k_ssb - Values [0, 31]
-  /// NOTE: According to TS 38.211, Section 7.4.3.1, values are [0, 23], but FAPI and ORAN uses [0, 31]
+  /// SSB SubcarrierOffest or k_ssb - Values [0, 31].
+  /// NOTE: According to TS 38.211, Section 7.4.3.1, values are [0, 23], but FAPI and ORAN uses [0, 31].
   uint8_t ssb_subcarrier_offset;
-  /// This ssb-PositionsInBurs in the TS 38.311, 0 = SSB beam not used, 1 = SSB beam used
+  /// This ssb-PositionsInBurs in the TS 38.311, 0 = SSB beam not used, 1 = SSB beam used.
   bounded_bitset<NOF_BEAMS> ssb_bitmap;
   /// The n-th element of the array indicates what Beam ID to use for the n-th SSB occasion in ssb_bitmap. Only relevant
-  /// if n-th bit of ssb_bitmap is 1
+  /// if n-th bit of ssb_bitmap is 1.
   std::array<uint8_t, NOF_BEAMS> beam_ids;
   /// Values: 0 = 0dB, 1 = 3dB.
   uint8_t beta_pss;
 
   /// Additional parameter not included in ORAN iface.
   ssb_pattern_case ssb_case;
+  // TODO: ssb_case and paired_spectrum could be moved to sched/cell_configuration constructor.
   bool             paired_spectrum;
 };
 
@@ -62,7 +63,7 @@ struct tdd_configuration {
 };
 
 /// Cell configuration.
-/// \remark See O-RAN WG8, Section 9.2.1.1
+/// \remark See O-RAN WG8, Section 9.2.1.1.
 struct mac_cell_configuration {
   du_cell_index_t cell_index;
   pci_t           pci;

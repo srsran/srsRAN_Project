@@ -1,5 +1,6 @@
 #include "sched_ssb.h"
 #include "srsgnb/ran/frame_types.h"
+#include "srsgnb/ran/ssb_mapping.h"
 
 #define NOF_SSB_OFDM_SYMBOLS 4
 #define NOF_SSB_PRBS 20
@@ -10,27 +11,19 @@
 
 namespace srsgnb {
 
-static void fill_ssb_parameters(uint32_t    offset_to_point_A,
-                                uint8_t     ofdm_sym_idx,
-                                uint8_t     ssb_idx,
-                                uint8_t     in_burst_bitmap,
-                                ssb_list_t& ssb_list)
+static void fill_ssb_parameters(ssb_informatin_list& ssb_list,
+                                uint32_t             offset_to_point_A,
+                                uint8_t              ofdm_sym_idx,
+                                uint8_t              ssb_idx,
+                                uint8_t              in_burst_bitmap)
 {
-  ssb_t ssb_msg = {};
-  /// Determines whether this is the first transmission of the burst. To do this, mask the "8-ssb_idx" in_burst_bitmap's
-  /// from the right. If the mask operation is equal to the in_burst_bitmap, then the ssb_idx is the first transmission
-  /// of the burst. E.g.:   in_burst_bitmap          =      [ 0 1 0 1 1 1 0 0 ]
-  ///         mask_1 (for ssb_idx = 1) =      [ 0 1 1 1 1 1 1 1 ]
-  ///         mask_4 (for ssb_idx = 4) =      [ 0 0 0 0 1 1 1 1 ]
-  /// in_burst_bitmap & mask_1 =  [ 0 1 0 1 1 1 0 0 ]  =>  ssb_idx = 1 is the first transmission of the burst
-  /// in_burst_bitmap & mask_1 =  [ 0 0 0 0 1 1 0 0 ]  =>  ssb_idx = 4 is  NOT the first transmission of the burs
-  bool is_first_transmission = (in_burst_bitmap & (0b11111111 >> ssb_idx)) == in_burst_bitmap;
-  ssb_msg.tx_mode            = is_first_transmission ? ssb_transmission : ssb_repetition;
-  ssb_msg.ssb_info.ssb_idx   = ssb_idx;
-  ssb_msg.ssb_info.ofdm_symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
+  ssb_information ssb_msg = {};
+
+  ssb_msg.ssb_index = ssb_idx;
+  ssb_msg.symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
   /// The value below is common for all SSB, regardless of the different parameters or cases.
   /// NOTE: It assumes the reference grid is that of the SSB
-  ssb_msg.ssb_info.prb_alloc.set(offset_to_point_A, offset_to_point_A + NOF_SSB_PRBS);
+  ssb_msg.prbs.set(offset_to_point_A, offset_to_point_A + NOF_SSB_PRBS);
   /// NOTE: until we understand whether the time and frequency allocation refer to the common grid or SSB grid, we
   /// leave this extra line (commented) below, which will be used if the reference is the common grid;
   /// ssb_msg.ssb_info.prb_alloc.set(offset_to_point_A, NOF_SSB_PRBS + floor(k_ssb % MAX_K_SSB));
@@ -38,12 +31,12 @@ static void fill_ssb_parameters(uint32_t    offset_to_point_A,
 }
 
 /// Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1
-static void ssb_alloc_case_A_C(uint32_t          freq_arfcn,
-                               uint32_t          freq_arfcn_cut_off,
-                               const slot_point& sl_point_mod,
-                               uint32_t          offset_to_point_A,
-                               uint8_t           in_burst_bitmap,
-                               ssb_list_t&       ssb_list)
+static void ssb_alloc_case_A_C(ssb_informatin_list& ssb_list,
+                               uint32_t             freq_arfcn,
+                               uint32_t             freq_arfcn_cut_off,
+                               const slot_point&    sl_point_mod,
+                               uint32_t             offset_to_point_A,
+                               uint8_t              in_burst_bitmap)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 
@@ -69,11 +62,11 @@ static void ssb_alloc_case_A_C(uint32_t          freq_arfcn,
       if (in_burst_bitmap & ssb_idx_mask) {
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
-        fill_ssb_parameters(offset_to_point_A,
+        fill_ssb_parameters(ssb_list,
+                            offset_to_point_A,
                             ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
-                            in_burst_bitmap,
-                            ssb_list);
+                            in_burst_bitmap);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
@@ -81,11 +74,11 @@ static void ssb_alloc_case_A_C(uint32_t          freq_arfcn,
 }
 
 /// Perform SSB allocation for case B (both paired and unpaired spectrum) - TS 38.213, Section 4.1
-static void ssb_alloc_case_B(uint32_t          freq_arfcn,
-                             const slot_point& sl_point_mod,
-                             uint32_t          offset_to_point_A,
-                             uint8_t           in_burst_bitmap,
-                             ssb_list_t&       ssb_list)
+static void ssb_alloc_case_B(ssb_informatin_list& ssb_list,
+                             uint32_t             freq_arfcn,
+                             const slot_point&    sl_point_mod,
+                             uint32_t             offset_to_point_A,
+                             uint8_t              in_burst_bitmap)
 {
   uint32_t slot_idx = sl_point_mod.to_uint();
 
@@ -110,11 +103,11 @@ static void ssb_alloc_case_B(uint32_t          freq_arfcn,
       if (in_burst_bitmap & ssb_idx_mask) {
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
-        fill_ssb_parameters(offset_to_point_A,
+        fill_ssb_parameters(ssb_list,
+                            offset_to_point_A,
                             ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
-                            in_burst_bitmap,
-                            ssb_list);
+                            in_burst_bitmap);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
@@ -130,24 +123,25 @@ static void ssb_alloc_case_B(uint32_t          freq_arfcn,
       if (in_burst_bitmap & ssb_idx_mask) {
         srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
-        fill_ssb_parameters(offset_to_point_A,
+        fill_ssb_parameters(ssb_list,
+                            offset_to_point_A,
                             ofdm_symbols[n] + (slot_idx - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx,
-                            in_burst_bitmap,
-                            ssb_list);
+                            in_burst_bitmap);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
   }
 }
 
-void sched_ssb(const slot_point& sl_point,
-               uint16_t          ssb_periodicity,
-               uint32_t          offset_to_point_A,
-               uint32_t          freq_arfcn,
-               uint8_t           in_burst_bitmap,
-               ssb_alloc_case    ssb_case,
-               ssb_list_t&       ssb_list)
+void sched_ssb(ssb_informatin_list& ssb_list,
+               const slot_point&    sl_point,
+               uint8_t              ssb_periodicity,
+               uint16_t             offset_to_point_A,
+               uint32_t             freq_arfcn,
+               uint64_t             ssb_in_burst_bitmap,
+               ssb_pattern_case     ssb_case,
+               bool                 paired_spectrum)
 {
   if (ssb_list.full()) {
     srslog::fetch_basic_logger("MAC-NR").error("SCHED: Failed to allocate SSB");
@@ -161,29 +155,31 @@ void sched_ssb(const slot_point& sl_point,
   }
 
   /// Only FR1 are supported in this implementation
-  srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN), "Frenquencies in the range FR2 not supported");
+  srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
+                "Frenquencies in the range FR2 not supported");
 
   /// Perform mod operation of slot index by ssb_periodicity;
   /// "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval
-  slot_point sl_point_mod(sl_point.numerology(), sl_point.to_uint() % (ssb_periodicity * sl_point.nof_slots_per_subframe()));
+  slot_point sl_point_mod(sl_point.numerology(),
+                          sl_point.to_uint() % (ssb_periodicity * sl_point.nof_slots_per_subframe()));
+
+  // Extract the 8 MSB bits from 64-bit ssb_in_burst_bitmap
+  uint8_t in_burst_bitmap = static_cast<uint8_t>(ssb_in_burst_bitmap >> 56);
 
   /// Select SSB case with reference to TS 38.213, Section 4.1
   switch (ssb_case) {
-    case ssb_alloc_case::A:
-    case ssb_alloc_case::C_paired:
-      ssb_alloc_case_A_C(
-          freq_arfcn, CUTOFF_FREQ_ARFCN_CASE_A_B_C, sl_point_mod, offset_to_point_A, in_burst_bitmap, ssb_list);
+    case ssb_pattern_case::A:
+    case ssb_pattern_case::C: {
+      uint32_t ssb_cut_off_freq = paired_spectrum ? CUTOFF_FREQ_ARFCN_CASE_A_B_C : CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED;
+      ssb_alloc_case_A_C(ssb_list, freq_arfcn, ssb_cut_off_freq, sl_point_mod, offset_to_point_A, in_burst_bitmap);
       break;
-    case ssb_alloc_case::B:
-      ssb_alloc_case_B(freq_arfcn, sl_point_mod, offset_to_point_A, in_burst_bitmap, ssb_list);
-      break;
-    case ssb_alloc_case::C_unpaired:
-      ssb_alloc_case_A_C(
-          freq_arfcn, CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED, sl_point_mod, offset_to_point_A, in_burst_bitmap, ssb_list);
+    }
+    case ssb_pattern_case::B:
+      ssb_alloc_case_B(ssb_list, freq_arfcn, sl_point_mod, offset_to_point_A, in_burst_bitmap);
       break;
     default:
-      srsran_assert(ssb_case < ssb_alloc_case::invalid, "Only SSB case A, B and C are currently supported");
+      srsran_assert(ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
   }
 }
 
-} /// namespace srsgnb
+} // namespace srsgnb

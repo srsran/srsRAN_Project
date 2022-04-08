@@ -12,7 +12,9 @@ cell_configuration::cell_configuration(const cell_configuration_request_message&
   nof_slots_per_frame(get_nof_slots_per_subframe(msg.dl_cfg_common.init_dl_bwp.generic_params.subcarrier_spacing)),
   dl_cfg_common(msg.dl_cfg_common),
   ul_cfg_common(msg.ul_cfg_common),
-  tdd_cfg_common(msg.tdd_ul_dl_cfg_common)
+  tdd_cfg_common(msg.tdd_ul_dl_cfg_common),
+  dl_carrier(msg.dl_carrier),
+  ssb_cfg(msg.ssb_config)
 {
   using namespace tdd_cfg_helper;
 

@@ -25,10 +25,6 @@ uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2);
 /// TS 38.214 - total number of RBGs for a uplink bandwidth part of size "bwp_nof_prb" PRBs
 uint32_t get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2);
 
-struct ofdm_symb_interval : public interval<uint8_t> {
-  using interval::interval;
-};
-
 struct bwp_rb_bitmap {
 public:
   bwp_rb_bitmap() = default;

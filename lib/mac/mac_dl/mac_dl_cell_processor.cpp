@@ -79,8 +79,8 @@ void mac_dl_cell_processor::assemble_dl_sched_request(du_cell_index_t        cel
   // Pass scheduler output directly to PHY.
   mac_res.dl_res = &dl_res;
 
-  // Encode SSB if present.
-  if (dl_res.bc.ssb_info.has_value()) {
+  // TODO Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY
+  if (dl_res.bc.ssb_info.size() > 0) {
     const ssb_information& ssb = dl_res.bc.ssb_info.value();
     mac_res.ssb_pdu.emplace();
     encode_ssb(cell_cfg, ssb, *mac_res.ssb_pdu);

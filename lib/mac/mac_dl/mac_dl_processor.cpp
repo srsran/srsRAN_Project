@@ -18,7 +18,7 @@ static void create_sched_cell_config(cell_configuration_request_message& sched_c
   uint16_t dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn);
   srsran_assert(dl_idx_nr_band < UINT16_MAX, "Invalid NR band index");
   sched_cell_cfg.ssb_config.ssb_case = band_helper::get_ssb_pattern(dl_idx_nr_band, cell_cfg.ssb_scs);
-  // sched_cell_cfg.ssb_config.paired_spectrum = band_helper::is_paired_spectrum();
+  sched_cell_cfg.ssb_config.paired_spectrum = band_helper::is_paired_spectrum(dl_idx_nr_band);
 
   // TODO: Add remaining fields.
 }

@@ -1,5 +1,6 @@
 
 #include "sched.h"
+#include "sched_ssb.h"
 
 using namespace srsgnb;
 
@@ -57,6 +58,17 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
   pending_events.run(sl_tx, cell_index);
 
   cell_resource_allocator res_alloc{cell.res_grid_pool};
+
+  // SSB scheduling
+  auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
+  sched_ssb(res_alloc[0].dl_res().bc.ssb_info,
+            sl_tx,
+            ssb_cfg.ssb_period,
+            ssb_cfg.ssb_offset_to_point_A,
+            cell.cell_cfg.dl_carrier.arfcn,
+            ssb_cfg.ssb_bitmap.to_uint64(),
+            ssb_cfg.ssb_case,
+            ssb_cfg.paired_spectrum);
 
   // 3. Schedule DL signalling.
   // TODO
