@@ -4,7 +4,7 @@
 
 #include "du_manager_context.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 
 namespace srsgnb {
 
@@ -15,7 +15,7 @@ public:
     cfg(cfg_), du_ctxt(du_ctxt_)
   {}
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<lazy_task<void> >& ctx)
   {
     CORO_BEGIN(ctx);
 

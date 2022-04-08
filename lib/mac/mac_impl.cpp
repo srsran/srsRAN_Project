@@ -36,18 +36,18 @@ void mac_impl::handle_rx_data_indication(mac_rx_data_indication msg)
   ul_unit.handle_rx_data_indication(msg);
 }
 
-async_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
+lazy_task<mac_ue_create_response_message> mac_impl::ue_create_request(const mac_ue_create_request_message& msg)
 {
   return ctrl_unit.ue_create_request(msg);
 }
 
-async_task<mac_ue_reconfiguration_response_message>
+lazy_task<mac_ue_reconfiguration_response_message>
 mac_impl::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
 {
   return ctrl_unit.ue_reconfiguration_request(msg);
 }
 
-async_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
+lazy_task<mac_ue_delete_response_message> mac_impl::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   return ctrl_unit.ue_delete_request(msg);
 }

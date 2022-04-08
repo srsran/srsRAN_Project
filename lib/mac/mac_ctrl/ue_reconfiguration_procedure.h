@@ -5,7 +5,7 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 
 namespace srsgnb {
 
@@ -19,7 +19,7 @@ public:
     req(req_), cfg(cfg_), logger(cfg.logger), ul_unit(mac_ul_), dl_unit(mac_dl_)
   {}
 
-  void operator()(coro_context<async_task<mac_ue_reconfiguration_response_message> >& ctx)
+  void operator()(coro_context<lazy_task<mac_ue_reconfiguration_response_message> >& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");

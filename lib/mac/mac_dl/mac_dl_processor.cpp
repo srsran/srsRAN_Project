@@ -33,9 +33,9 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
   cells[cell_index].reset();
 }
 
-async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
+lazy_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
+  return launch_async([this, request](coro_context<lazy_task<bool> >& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
@@ -57,9 +57,9 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
   });
 }
 
-async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message& request)
+lazy_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<void> >& ctx) {
+  return launch_async([this, request](coro_context<lazy_task<void> >& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
@@ -82,9 +82,9 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
   });
 }
 
-async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
+lazy_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
+  return launch_async([this, request](coro_context<lazy_task<bool> >& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor

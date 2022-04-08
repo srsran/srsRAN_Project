@@ -26,9 +26,9 @@ public:
   optional<mac_ue_delete_request_message>          last_ue_delete_request;
   optional<mac_ue_reconfiguration_request_message> last_ue_reconfiguration_request;
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
+  lazy_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_create_request = msg;
       CORO_AWAIT(ue_created_ev);
@@ -36,18 +36,18 @@ public:
     });
   }
 
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  lazy_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<void> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<void> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_delete_request = msg;
       CORO_RETURN();
     });
   }
 
-  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
+  lazy_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_reconfiguration_request = msg;
       CORO_RETURN(true);
@@ -64,27 +64,27 @@ public:
   optional<mac_ue_delete_request_message>          last_ue_delete_request;
   optional<mac_ue_reconfiguration_request_message> last_ue_reconfiguration_request;
 
-  async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
+  lazy_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_create_request = msg;
       CORO_AWAIT(ue_created_ev);
       CORO_RETURN(expected_result);
     });
   }
-  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  lazy_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<void> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<void> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_delete_request = msg;
       CORO_RETURN();
     });
   }
 
-  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
+  lazy_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<lazy_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       last_ue_reconfiguration_request = msg;
       CORO_RETURN(true);

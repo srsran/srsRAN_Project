@@ -2,8 +2,8 @@
 #ifndef SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
 #define SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
 
-#include "async_task.h"
 #include "detail/function_signature.h"
+#include "lazy_task.h"
 
 namespace srsgnb {
 
@@ -121,11 +121,11 @@ template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename ReturnType = detail::function_return_t<decltype(&Callable::operator())> >
-std::enable_if_t<std::is_same<ReturnType, void>::value, async_task<void> >
+std::enable_if_t<std::is_same<ReturnType, void>::value, lazy_task<void> >
 dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
   return launch_async(
-      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<async_task<void> >& ctx) {
+      [&return_exec, &dispatch_exec, task = std::forward<Callable>(callable)](coro_context<lazy_task<void> >& ctx) {
         CORO_BEGIN(ctx);
         CORO_AWAIT(execute_on(dispatch_exec));
         task();
@@ -138,12 +138,12 @@ template <typename DispatchTaskExecutor,
           typename CurrentTaskExecutor,
           typename Callable,
           typename ReturnType = detail::function_return_t<decltype(&Callable::operator())> >
-std::enable_if_t<not std::is_same<ReturnType, void>::value, async_task<ReturnType> >
+std::enable_if_t<not std::is_same<ReturnType, void>::value, lazy_task<ReturnType> >
 dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor& return_exec, Callable&& callable)
 {
   ReturnType ret{};
   return launch_async([&return_exec, &dispatch_exec, task = std::forward<Callable>(callable), ret](
-                          coro_context<async_task<ReturnType> >& ctx) mutable {
+                          coro_context<lazy_task<ReturnType> >& ctx) mutable {
     CORO_BEGIN(ctx);
     CORO_AWAIT(execute_on(dispatch_exec));
     ret = task();

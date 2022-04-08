@@ -35,13 +35,13 @@ public:
   void remove_cell(du_cell_index_t cell_index);
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
-  async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
+  lazy_task<bool> add_ue(const mac_ue_create_request_message& request) override;
 
   /// Deletes UE context in MAC DL and scheduler.
-  async_task<void> remove_ue(const mac_ue_delete_request_message& request) override;
+  lazy_task<void> remove_ue(const mac_ue_delete_request_message& request) override;
 
   /// Reconfigures UE in MAC DL and in the scheduler.
-  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override;
+  lazy_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override;
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) { return *cells[cell_index]; }
 

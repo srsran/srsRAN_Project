@@ -31,13 +31,13 @@ public:
                  du_rnti_table&       rnti_table);
 
   /// UE create methods
-  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
+  lazy_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
 
   /// UE deletion methods
-  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
+  lazy_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
 
   /// UE reconfiguration methods
-  async_task<mac_ue_reconfiguration_response_message>
+  lazy_task<mac_ue_reconfiguration_response_message>
   ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
 
   /// Fetch UE context

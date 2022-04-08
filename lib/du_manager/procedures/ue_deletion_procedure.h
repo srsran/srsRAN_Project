@@ -7,7 +7,7 @@
 #include "du_manager_interfaces.h"
 #include "du_ue_context.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 
 namespace srsgnb {
 
@@ -20,7 +20,7 @@ public:
     msg(msg_), cfg(cfg_), logger(cfg.logger), ue_mng(ue_mng_)
   {}
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<lazy_task<void> >& ctx)
   {
     CORO_BEGIN(ctx);
 
@@ -51,7 +51,7 @@ public:
   static const char* name() { return "UE Delete"; }
 
 private:
-  async_task<mac_ue_delete_response_message> launch_mac_ue_delete()
+  lazy_task<mac_ue_delete_response_message> launch_mac_ue_delete()
   {
     mac_ue_delete_request_message mac_msg{};
     mac_msg.ue_index   = ue->ue_index;

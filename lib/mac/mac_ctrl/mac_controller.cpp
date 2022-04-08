@@ -14,19 +14,19 @@ mac_controller::mac_controller(mac_common_config_t& cfg_,
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_), rnti_table(rnti_table_)
 {}
 
-async_task<mac_ue_create_response_message> mac_controller::ue_create_request(const mac_ue_create_request_message& msg)
+lazy_task<mac_ue_create_response_message> mac_controller::ue_create_request(const mac_ue_create_request_message& msg)
 {
   // Launch UE create request procedure
   return launch_async<mac_ue_create_request_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
-async_task<mac_ue_delete_response_message> mac_controller::ue_delete_request(const mac_ue_delete_request_message& msg)
+lazy_task<mac_ue_delete_response_message> mac_controller::ue_delete_request(const mac_ue_delete_request_message& msg)
 {
   // Enqueue UE delete procedure
   return launch_async<mac_ue_delete_procedure>(msg, cfg, *this, ul_unit, dl_unit);
 }
 
-async_task<mac_ue_reconfiguration_response_message>
+lazy_task<mac_ue_reconfiguration_response_message>
 mac_controller::ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg)
 {
   return launch_async<mac_ue_reconfiguration_procedure>(msg, cfg, ul_unit, dl_unit);

@@ -9,7 +9,7 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 #include <memory>
 
 namespace srsgnb {
@@ -142,11 +142,11 @@ class mac_configurer
 {
 public:
   virtual ~mac_configurer() = default;
-  virtual async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
-  virtual async_task<mac_ue_reconfiguration_response_message>
-                                                     ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
-  virtual async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
-  virtual void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)  = 0;
+  virtual lazy_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) = 0;
+  virtual lazy_task<mac_ue_reconfiguration_response_message>
+                                                    ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
+  virtual lazy_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
+  virtual void                                      flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)  = 0;
 };
 
 class mac_rach_handler
@@ -178,9 +178,9 @@ public:
 class mac_cell_manager
 {
 public:
-  virtual ~mac_cell_manager()      = default;
-  virtual async_task<void> start() = 0;
-  virtual async_task<void> stop()  = 0;
+  virtual ~mac_cell_manager()     = default;
+  virtual lazy_task<void> start() = 0;
+  virtual lazy_task<void> stop()  = 0;
 };
 
 /// Interface to handle feedback information from the PHY.

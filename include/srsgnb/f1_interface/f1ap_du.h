@@ -7,7 +7,7 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/lazy_task.h"
 
 namespace srsgnb {
 
@@ -60,17 +60,17 @@ public:
   virtual ~f1ap_du_configurer() = default;
 
   /// Initiates DU setup procedure.
-  virtual async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) = 0;
+  virtual lazy_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) = 0;
 
   /// Initiates creation of UE context in F1.
-  virtual async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;
+  virtual lazy_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;
 };
 
 /// Interface used by DU high to push unpacked F1AP PDUs.
 class f1c_pdu_handler
 {
 public:
-  virtual ~f1c_pdu_handler()                                  = default;
+  virtual ~f1c_pdu_handler()                                           = default;
   virtual void handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) = 0;
 };
 
@@ -78,7 +78,7 @@ public:
 class f1c_event_handler
 {
 public:
-  virtual ~f1c_event_handler()      = default;
+  virtual ~f1c_event_handler()          = default;
   virtual void handle_connection_loss() = 0;
 };
 

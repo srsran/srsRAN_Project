@@ -19,10 +19,10 @@ public:
                         mac_dl_ue_manager&            ue_mng);
 
   /// Starts configured cell.
-  async_task<void> start() override;
+  lazy_task<void> start() override;
 
   /// Stops configured cell.
-  async_task<void> stop() override;
+  lazy_task<void> stop() override;
 
   /// \brief Processing of a new Slot Indication. This operation involves the following sub-tasks:
   /// - The scheduler generates the scheduling grants for the provided slot and cell.

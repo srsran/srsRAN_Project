@@ -1,6 +1,7 @@
 
 #include "../../lib/mac/mac_ctrl/ue_creation_procedure.h"
 #include "mac_ctrl_test_dummies.h"
+#include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/manual_worker.h"
 #include "srsgnb/support/test_utils.h"
@@ -63,8 +64,9 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   }
 
   // ACTION: Procedure is launched
-  async_task<mac_ue_create_response_message> proc =
+  lazy_task<mac_ue_create_response_message> proc =
       launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
+  lazy_task_launcher<mac_ue_create_response_message> proc_launch{proc};
 
   // STATUS: The MAC UL received the UE creation request message
   TESTASSERT(mac_ul.last_ue_create_request.has_value());
