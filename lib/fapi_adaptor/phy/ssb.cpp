@@ -46,11 +46,10 @@ static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uns
 {
   switch (fapi_pdu.bch_payload_flag) {
     case bch_payload_type::mac_full:
-      return srsvec::bit_unpack(fapi_pdu.bch_payload.bch_payload, dest, std::numeric_limits<uint32_t>::digits);
-
+      return srsvec::bit_unpack(fapi_pdu.bch_payload.bch_payload, dest, dest.size());
     case bch_payload_type::phy_timing_info: {
       uint32_t payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn);
-      return srsvec::bit_unpack(payload, dest, std::numeric_limits<uint32_t>::digits);
+      return srsvec::bit_unpack(payload, dest, dest.size());
     }
     case bch_payload_type::phy_full:
       // :TODO: phy generates full PBCH payload. When the PHY function is added, call that function here to generate the
@@ -95,8 +94,7 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
   proc_pdu.pattern_case          = fapi_pdu.ssb_maintenance_v3.case_type;
 
   // Get the BCH payload.
-  span<uint8_t> bch_payload(proc_pdu.bch_payload.begin(), proc_pdu.bch_payload.end());
-  fill_bch_payload(bch_payload, fapi_pdu, sfn);
+  fill_bch_payload({proc_pdu.bch_payload.begin(), proc_pdu.bch_payload.end()}, fapi_pdu, sfn);
 
   // :TODO: Implement the ports array when the beamforming is added.
 }
