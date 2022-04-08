@@ -24,7 +24,7 @@ struct base_resumable_procedure {
       srsran_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
       ctx.state_index = 10;
       frame_ptr       = &ctx;
-      start();
+      async_await(suspend_always{}, &base_resumable_procedure<FutureType>::start);
       return;
     }
     resume_method();

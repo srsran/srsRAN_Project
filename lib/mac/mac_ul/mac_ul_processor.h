@@ -26,7 +26,7 @@ public:
     (void)logger;
   }
 
-  lazy_task<bool> add_ue(const mac_ue_create_request_message& request) override
+  async_task<bool> add_ue(const mac_ue_create_request_message& request) override
   {
     // Update UE executor to match new PCell.
     task_executor& ul_exec = cfg.ul_exec_mapper.rebind_executor(request.ue_index, request.cell_index);
@@ -35,14 +35,14 @@ public:
     return dispatch_and_resume_on(ul_exec, cfg.ctrl_exec, [this, request]() { return ue_manager.add_ue(request); });
   }
 
-  lazy_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override
+  async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& request) override
   {
     return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(request.ue_index), cfg.ctrl_exec, [this, request]() {
       return ue_manager.reconfigure_ue(request);
     });
   }
 
-  lazy_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
+  async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
     return dispatch_and_resume_on(cfg.ul_exec_mapper.executor(msg.ue_index),
                                   cfg.ctrl_exec,

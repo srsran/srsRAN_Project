@@ -21,12 +21,12 @@ mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
   ue_mng(ue_mng_)
 {}
 
-lazy_task<void> mac_dl_cell_processor::start()
+async_task<void> mac_dl_cell_processor::start()
 {
   return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::active; });
 }
 
-lazy_task<void> mac_dl_cell_processor::stop()
+async_task<void> mac_dl_cell_processor::stop()
 {
   return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::inactive; });
 }

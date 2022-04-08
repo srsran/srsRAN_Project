@@ -9,8 +9,8 @@
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/async/async_task.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/async/eager_async_task.h"
 
 namespace srsgnb {
 
@@ -31,13 +31,13 @@ public:
                  du_rnti_table&       rnti_table);
 
   /// UE create methods
-  lazy_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
+  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg);
 
   /// UE deletion methods
-  lazy_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg);
 
   /// UE reconfiguration methods
-  lazy_task<mac_ue_reconfiguration_response_message>
+  async_task<mac_ue_reconfiguration_response_message>
   ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg);
 
   /// Fetch UE context

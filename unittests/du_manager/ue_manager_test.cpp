@@ -15,17 +15,17 @@ public:
   wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response_message>          wait_ue_delete;
 
-  lazy_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg) override
+  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg) override
   {
     last_ue_create_msg = msg;
     return wait_ue_create.launch();
   }
-  lazy_task<mac_ue_reconfiguration_response_message>
+  async_task<mac_ue_reconfiguration_response_message>
   ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
   {
     return wait_ue_reconf.launch();
   }
-  lazy_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg) override
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg) override
   {
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
@@ -41,14 +41,14 @@ public:
   wait_manual_event_tester<du_setup_result>            wait_f1_setup;
   wait_manual_event_tester<f1ap_du_ue_create_response> wait_ue_create;
 
-  lazy_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override
+  async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override
   {
     last_f1_setup = params;
     return wait_f1_setup.launch();
   }
 
   /// Initiates creation of UE context in F1.
-  lazy_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override
+  async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override
   {
     last_ue_create = msg;
     return wait_ue_create.launch();

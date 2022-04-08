@@ -4,7 +4,7 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/mac/sched_configurer.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/manual_event.h"
 
 namespace srsgnb {
@@ -16,9 +16,9 @@ class sched_config_adapter
 public:
   sched_config_adapter() : notifier(*this) {}
 
-  async_task<bool> ue_configuration_completed(du_ue_index_t ue_index)
+  eager_async_task<bool> ue_configuration_completed(du_ue_index_t ue_index)
   {
-    return launch_async([this, ue_index](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, ue_index](coro_context<eager_async_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT(sched_cfg_notif_map[ue_index].ue_config_ready);
       sched_cfg_notif_map[ue_index].ue_config_ready.reset();
@@ -26,9 +26,9 @@ public:
     });
   }
 
-  async_task<bool> ue_deletion_completed(du_ue_index_t ue_index)
+  eager_async_task<bool> ue_deletion_completed(du_ue_index_t ue_index)
   {
-    return launch_async([this, ue_index](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, ue_index](coro_context<eager_async_task<bool> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT(sched_cfg_notif_map[ue_index].ue_delete_ready);
       sched_cfg_notif_map[ue_index].ue_delete_ready.reset();

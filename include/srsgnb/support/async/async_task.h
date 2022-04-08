@@ -1,33 +1,27 @@
 
-#ifndef SRSGNB_ASYNC_TASK_H
-#define SRSGNB_ASYNC_TASK_H
+#ifndef SRSGNB_LAZY_TAKS_H
+#define SRSGNB_LAZY_TAKS_H
 
-#include "coroutine.h"
 #include "detail/base_task.h"
 
 namespace srsgnb {
 
-/// Eager coroutine type that outputs a result of type R, when completed.
+/// Lazy awaitable coroutine type that outputs a result of type R when completed.
 /// \tparam R Result of the task
 template <typename R>
-class async_task : public detail::task_crtp<async_task<R>, R>
+class async_task : public detail::common_task_crtp<async_task<R>, R>
 {
 public:
   using result_type = R;
 
   struct promise_type : public detail::promise_data<result_type, detail::task_promise_base> {
-    /// base_task final awaiter type. It runs pending continuations and suspends
     struct final_awaiter {
-      promise_type* me;
-
+      /// Lifetime of coroutine is bounded to the lazy_task object.
       bool await_ready() const { return false; }
 
-      /// Tail-resumes continuation, if it was previously stored via an AWAIT call.
-      /// \param h suspending coroutine.
-      coro_handle<> await_suspend(coro_handle<promise_type> h)
-      {
-        return not me->continuation.empty() ? me->continuation : noop_coroutine();
-      }
+      /// \brief Tail-resumes suspending/awaiting coroutine continuation.
+      /// Lazy tasks always have a continuation, if they went beyond the initial suspension point.
+      coro_handle<> await_suspend(coro_handle<promise_type> cb) { return cb.promise().continuation; }
 
       void await_resume() {}
 
@@ -35,11 +29,11 @@ public:
       final_awaiter& get_awaiter() { return *this; }
     };
 
-    /// Initial suspension awaiter. Eager tasks never suspend at initial suspension point.
-    suspend_never initial_suspend() { return {}; }
+    /// Initial suspension awaiter. Lazy_tasks always suspend at initial suspension point.
+    suspend_always initial_suspend() { return {}; }
 
-    /// Final suspension awaiter
-    final_awaiter final_suspend() { return {this}; }
+    /// Final suspension awaiter. Tail-resumes continuation.
+    final_awaiter final_suspend() { return {}; }
 
     async_task<R> get_return_object()
     {
@@ -52,25 +46,31 @@ public:
   async_task() = default;
   explicit async_task(coro_handle<promise_type> cb) : handle(cb) {}
 
-  /// awaiter interface.
+  /// Retrieve awaiter interface.
   async_task<R>& get_awaiter() { return *this; }
 
-  /// \brief Register suspending coroutine as continuation of the current async_task.
-  /// Given that "this" task type is eager, it can be at any suspension point when await_suspend is called.
+  /// \brief Register suspending coroutine as continuation of the current lazy_task. Tail-resumes "this" lazy_task.
+  /// Called solely when "this" lazy_task is at initial suspension point.
   /// \param h suspending coroutine that is calling await_suspend.
-  void await_suspend(coro_handle<> h) noexcept
+  /// \return Coroutine handle to tail-resume.
+  coro_handle<> await_suspend(coro_handle<> h) noexcept
   {
-    srsran_sanity_check(not this->empty(), "Awaiting an empty async_task");
-    srsran_sanity_check(handle.promise().continuation.empty(), "Async task can only be awaited once.");
+    srsran_sanity_check(not this->empty(), "Awaiting an empty task");
+    srsran_sanity_check(handle.promise().continuation.empty(), "Lazy task can only be awaited once.");
+
+    // Store continuation in promise, so that it gets called at "this" coroutine final suspension point.
     handle.promise().continuation = h;
+
+    // We tail-resume the current awaiter task's coroutine, which is currently suspended at initial suspension point.
+    return *handle;
   }
 
 private:
-  friend class detail::task_crtp<async_task<R>, R>;
+  friend class detail::common_task_crtp<async_task<R>, R>;
 
   unique_coroutine<promise_type> handle;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASYNC_TASK_H
+#endif // SRSGNB_LAZY_TAKS_H

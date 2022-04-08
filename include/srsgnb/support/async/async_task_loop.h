@@ -3,7 +3,7 @@
 
 #include "async_queue.h"
 #include "async_task.h"
-#include "lazy_task.h"
+#include "eager_async_task.h"
 #include "srsgnb/adt/unique_function.h"
 
 namespace srsgnb {
@@ -16,7 +16,7 @@ public:
   async_task_sequencer& operator=(const async_task_sequencer&) = delete;
 
   template <typename R>
-  bool schedule(lazy_task<R>&& t)
+  bool schedule(async_task<R>&& t)
   {
     return queue.try_push(std::move(t));
   }
@@ -33,11 +33,11 @@ public:
     return queue.try_push(launch_async(std::forward<AsyncFunc>(async_func)));
   }
 
-  async_task<void> request_stop()
+  eager_async_task<void> request_stop()
   {
     // Enqueue task in case main loop is waiting for new procedure
     running = false;
-    queue.try_push(launch_async([](coro_context<lazy_task<void> >& ctx) {
+    queue.try_push(launch_async([](coro_context<async_task<void> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
     }));
@@ -51,7 +51,7 @@ public:
 private:
   void run()
   {
-    loop_task = launch_async([this](coro_context<async_task<void> >& ctx) {
+    loop_task = launch_async([this](coro_context<eager_async_task<void> >& ctx) {
       CORO_BEGIN(ctx);
 
       // runs until requested to stop.
@@ -67,10 +67,10 @@ private:
     });
   }
 
-  bool                          running = true;
-  async_queue<lazy_task<void> > queue;
-  async_task<void>              loop_task;
-  lazy_task<void>               next_task;
+  bool                           running = true;
+  async_queue<async_task<void> > queue;
+  eager_async_task<void>         loop_task;
+  async_task<void>               next_task;
 };
 
 } // namespace srsgnb

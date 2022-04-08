@@ -1,12 +1,14 @@
 
 #include "srsgnb/support/async/async_procedure.h"
 #include "srsgnb/support/async/async_task.h"
-#include "srsgnb/support/async/lazy_task.h"
+#include "srsgnb/support/async/async_test_utils.h"
+#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 
+/// Tester coroutine that just awaits an event to complete.
 struct wait_event_coroutine {
   manual_event<int>& event;
 
@@ -55,24 +57,71 @@ public:
 
 //////////////////////////////////////////////// TESTS ///////////////////////////////////////////////////////////
 
+/// Test that an eager_async_task starts automatically.
+void test_eager_task_start()
+{
+  int                   value = 2;
+  eager_async_task<int> t     = launch_async([&value](coro_context<eager_async_task<int> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+    value += 4;
+    CORO_RETURN(value * 2);
+  });
+  TESTASSERT_EQ(6, value);
+  TESTASSERT(t.ready());
+}
+
+/// Test that a async_task starts lazily.
+void test_lazy_task_start()
+{
+  int             value = 2;
+  async_task<int> t     = launch_async([&value](coro_context<async_task<int> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+    value += 4;
+    CORO_RETURN(value * 2);
+  });
+
+  // STATUS: The lazy coroutine is not started because is still not being awaited.
+  TESTASSERT_EQ(2, value);
+
+  // Action: Start an eager passthrough coroutine that awaits on the lazy coroutine.
+  eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int> >& ctx) {
+    CORO_BEGIN(ctx);
+    CORO_AWAIT_VALUE(int res, t);
+    CORO_RETURN(res + 1);
+  });
+
+  // STATUS: The lazy coroutine runs to completion.
+  TESTASSERT_EQ(6, value);
+  TESTASSERT(t.ready());
+  TESTASSERT_EQ(12, t.get());
+  TESTASSERT(t2.ready());
+  TESTASSERT_EQ(13, t2.get());
+}
+
 /// Tests for chaining of multiple async tasks
 namespace task_chaining_test {
 
-/// Unit Test that verifies the correct forwarding of events across awaiters
+/// Unit Test that verifies the correct forwarding of events across awaiters.
 template <typename TaskFactory>
 void run_impl(TaskFactory&& launch_passthrough_task)
 {
-  manual_event<int> event;
-  async_task<int>   task  = launch_async<wait_event_coroutine>(event);
-  async_task<int>   task2 = launch_passthrough_task(task);
-  async_task<int>   task3 = launch_passthrough_task(task2);
+  manual_event<int>       event;
+  async_task<int>         task  = launch_async<wait_event_coroutine>(event);
+  async_task<int>         task2 = launch_passthrough_task(task);
+  async_task<int>         task3 = launch_passthrough_task(task2);
+  lazy_task_launcher<int> launcher(task3);
+
+  // Status: While event is not set, the result is not propagated in the chain.
   TESTASSERT(not task3.ready());
+  TESTASSERT(not task.ready());
 
   event.set(3);
+  TESTASSERT(task.ready());
   TESTASSERT(task3.ready());
   TESTASSERT_EQ(3, task3.get());
 }
 
+/// Runs test with object-based, lambda-based async tasks and procedures.
 void run()
 {
   // Run test with coroutine object
@@ -99,14 +148,14 @@ namespace task_cleanup {
 void run_lambda()
 {
   {
-    moveonly_test_object to_destroy(5);
-    manual_event<int>    ev;
-    async_task<int>      t  = launch_async([&ev, u = std::move(to_destroy)](coro_context<async_task<int> >& ctx) {
+    moveonly_test_object  to_destroy(5);
+    manual_event<int>     ev;
+    async_task<int>       t  = launch_async([&ev, u = std::move(to_destroy)](coro_context<async_task<int> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int obj, ev);
       CORO_RETURN(obj);
     });
-    async_task<int>      t2 = launch_async([&t](coro_context<async_task<int> >& ctx) {
+    eager_async_task<int> t2 = launch_async([&t](coro_context<eager_async_task<int> >& ctx) {
       CORO_BEGIN(ctx);
       CORO_AWAIT_VALUE(int obj, t);
       CORO_RETURN(obj);
@@ -136,10 +185,11 @@ public:
 void run_async_procedure()
 {
   {
-    moveonly_test_object to_destroy(5);
-    manual_event<int>    ev;
-    async_task<int>      t  = launch_async<proc_cleanup_first>(ev, std::move(to_destroy));
-    async_task<int>      t2 = launch_async<passthrough_async_procedure>(t);
+    moveonly_test_object    to_destroy(5);
+    manual_event<int>       ev;
+    async_task<int>         t  = launch_async<proc_cleanup_first>(ev, std::move(to_destroy));
+    async_task<int>         t2 = launch_async<passthrough_async_procedure>(t);
+    lazy_task_launcher<int> t3(t2);
     TESTASSERT(not ev.is_set());
     TESTASSERT(not t.ready());
     // tasks are suspended
@@ -157,36 +207,10 @@ void run()
 
 } // namespace task_cleanup
 
-void lazy_task_test()
-{
-  int            value = 2;
-  lazy_task<int> t     = launch_async([&value](coro_context<lazy_task<int> >& ctx) mutable {
-    CORO_BEGIN(ctx);
-    value += 4;
-    CORO_RETURN(value * 2);
-  });
-
-  // STATUS: The lazy coroutine is not started because is still not being awaited.
-  TESTASSERT_EQ(2, value);
-
-  // Action: Start an eager passthrough coroutine that awaits on the lazy coroutine.
-  async_task<int> t2 = launch_async([&t](coro_context<async_task<int> >& ctx) {
-    CORO_BEGIN(ctx);
-    CORO_AWAIT_VALUE(int res, t);
-    CORO_RETURN(res + 1);
-  });
-
-  // STATUS: The lazy coroutine runs to completion.
-  TESTASSERT_EQ(6, value);
-  TESTASSERT(t.ready());
-  TESTASSERT_EQ(12, t.get());
-  TESTASSERT(t2.ready());
-  TESTASSERT_EQ(13, t2.get());
-}
-
 int main()
 {
+  test_eager_task_start();
+  test_lazy_task_start();
   task_chaining_test::run();
   task_cleanup::run();
-  lazy_task_test();
 }

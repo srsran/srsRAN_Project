@@ -18,9 +18,9 @@ struct task_promise_base {
   bool ready() const { return has_value; }
 };
 
-/// Common functionality to lazy and async tasks.
+/// Common functionality to lazy and eager async tasks.
 template <typename Derived, typename Result>
-class task_crtp
+class common_task_crtp
 {
 public:
   using result_type = Result;

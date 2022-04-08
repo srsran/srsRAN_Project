@@ -11,10 +11,10 @@ f1ap_du_impl::f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_) :
   logger(srslog::fetch_basic_logger("F1AP")), f1c(f1c_pdu_handler_)
 {}
 
-lazy_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
+async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
 {
   // TODO: add procedure implementation
-  return launch_async([this, res = du_setup_result{}](coro_context<lazy_task<du_setup_result> >& ctx) mutable {
+  return launch_async([this, res = du_setup_result{}](coro_context<async_task<du_setup_result> >& ctx) mutable {
     CORO_BEGIN(ctx);
     res.result.value()->gnb_cu_rrc_version.value.latest_rrc_version.from_number(0);
     logger.info("{}", __FUNCTION__);
@@ -22,12 +22,12 @@ lazy_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_pa
   });
 }
 
-lazy_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_du_ue_create_request& msg)
+async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_du_ue_create_request& msg)
 {
   // TODO: add UE create procedure
   // TODO: Change execution context.
   return launch_async([this, msg, resp = f1ap_du_ue_create_response{}](
-                          coro_context<lazy_task<f1ap_du_ue_create_response> >& ctx) mutable {
+                          coro_context<async_task<f1ap_du_ue_create_response> >& ctx) mutable {
     CORO_BEGIN(ctx);
     resp.result = false;
     if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {

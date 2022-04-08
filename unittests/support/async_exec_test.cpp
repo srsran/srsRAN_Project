@@ -1,6 +1,6 @@
 
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/executors/blocking_worker.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -20,9 +20,9 @@ void test_move_exec_context()
   task_worker_executor exec1{worker1};
   task_worker_executor exec2{worker2};
 
-  int             count = 0;
-  async_task<int> t =
-      launch_async([&exec0, exec1, exec2, &count, &worker0](coro_context<async_task<int> >& ctx) mutable {
+  int                   count = 0;
+  eager_async_task<int> t =
+      launch_async([&exec0, exec1, exec2, &count, &worker0](coro_context<eager_async_task<int> >& ctx) mutable {
         CORO_BEGIN(ctx);
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, thread::get_name());
@@ -61,8 +61,8 @@ void test_offload_exec()
     fmt::print("{}: Running in thread: \"{}\"\n", count, thread::get_name());
     return count;
   };
-  async_task<int> t =
-      launch_async([&exec0, exec1, exec2, &inc_count, &worker0](coro_context<async_task<int> >& ctx) mutable {
+  eager_async_task<int> t =
+      launch_async([&exec0, exec1, exec2, &inc_count, &worker0](coro_context<eager_async_task<int> >& ctx) mutable {
         CORO_BEGIN(ctx);
         inc_count();
         CORO_AWAIT(offload_to_executor(exec1, exec0, inc_count));

@@ -7,7 +7,7 @@
 #include "../mac_config_interfaces.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/support/async/lazy_task.h"
+#include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
 
@@ -22,7 +22,7 @@ public:
     req(req_), cfg(cfg_), logger(cfg.logger), ctrl_unit(mac_ctrl_), ul_unit(mac_ul_), dl_unit(mac_dl_)
   {}
 
-  void operator()(coro_context<lazy_task<mac_ue_create_response_message> >& ctx)
+  void operator()(coro_context<async_task<mac_ue_create_response_message> >& ctx)
   {
     CORO_BEGIN(ctx);
     log_proc_started(logger, req.ue_index, req.crnti, "UE Create Request");

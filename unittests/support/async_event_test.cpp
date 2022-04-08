@@ -1,5 +1,5 @@
 
-#include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -20,7 +20,7 @@ void test_manual_event_flag()
   TESTASSERT(not event.is_set());
 
   // launch task that awaits on event flag
-  async_task<void> t = launch_async([&event](coro_context<async_task<void> >& ctx) {
+  eager_async_task<void> t = launch_async([&event](coro_context<eager_async_task<void> >& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT(event);
     CORO_RETURN();
@@ -44,7 +44,7 @@ void test_manual_event()
   TESTASSERT(not event.is_set());
 
   // launch task that awaits on event
-  async_task<int> t = launch_async([&event](coro_context<async_task<int> >& ctx) {
+  eager_async_task<int> t = launch_async([&event](coro_context<eager_async_task<int> >& ctx) {
     CORO_BEGIN(ctx);
     CORO_AWAIT_VALUE(int received_value, event);
     CORO_RETURN(received_value);

@@ -28,7 +28,7 @@ void test_mac_ctrl_ue_procedures()
   ue_create_msg.ue_index                               = 1;
   ue_create_msg.cell_index                             = 0;
   ue_create_msg.crnti                                  = 0x4601;
-  lazy_task<mac_ue_create_response_message>          t = mac_ctrl.ue_create_request(ue_create_msg);
+  async_task<mac_ue_create_response_message>         t = mac_ctrl.ue_create_request(ue_create_msg);
   lazy_task_launcher<mac_ue_create_response_message> t_launcher(t);
 
   // Status: UE creation started in MAC UL but not in MAC DL
@@ -66,7 +66,7 @@ void test_mac_ctrl_ue_procedures()
   ue_delete_msg.ue_index                                = 1;
   ue_delete_msg.rnti                                    = 0x4601;
   ue_delete_msg.cell_index                              = 0;
-  lazy_task<mac_ue_delete_response_message>          t2 = mac_ctrl.ue_delete_request(ue_delete_msg);
+  async_task<mac_ue_delete_response_message>         t2 = mac_ctrl.ue_delete_request(ue_delete_msg);
   lazy_task_launcher<mac_ue_delete_response_message> t_launcher2(t2);
 
   // Status: UE deleted from MAC DL, UL and CTRL

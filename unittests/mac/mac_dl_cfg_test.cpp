@@ -43,7 +43,7 @@ struct add_reconf_delete_ue_test_task {
     delete_msg.rnti       = 0x4601;
   }
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<eager_async_task<void> >& ctx)
   {
     CORO_BEGIN(ctx);
     // UE creation
@@ -95,7 +95,7 @@ void test_dl_ue_procedure_tsan()
       ctrl_worker.request_stop();
     }
   };
-  async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
+  eager_async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
 
   ctrl_worker.run();
   TESTASSERT(not t.empty() and t.ready());
@@ -128,7 +128,7 @@ void test_dl_ue_procedure_execution_contexts()
       ctrl_worker.request_stop();
     }
   };
-  async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
+  eager_async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
 
   while (not ctrl_worker.is_stopped()) {
     if (ctrl_worker.has_pending_tasks()) {

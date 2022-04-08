@@ -10,7 +10,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_factory.h"
-#include "srsgnb/support/async/lazy_task.h"
+#include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
 
@@ -55,7 +55,7 @@ public:
     ue_ctx.pcell_index = ccch_ind_msg.cell_index;
   }
 
-  void operator()(coro_context<lazy_task<void> >& ctx)
+  void operator()(coro_context<async_task<void> >& ctx)
   {
     CORO_BEGIN(ctx);
 
@@ -119,7 +119,7 @@ private:
     // TODO: MAC RNTI needs to be cleared.
   }
 
-  lazy_task<mac_ue_create_response_message> make_mac_ue_create_req()
+  async_task<mac_ue_create_response_message> make_mac_ue_create_req()
   {
     mac_ue_create_request_message mac_ue_create_msg{};
     mac_ue_create_msg.ue_index   = ue_ctx.ue_index;
@@ -136,7 +136,7 @@ private:
     return cfg.mac->ue_create_request(mac_ue_create_msg);
   }
 
-  lazy_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
+  async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
   {
     f1ap_du_ue_create_request f1_msg{};
     f1_msg.ue_index = ue_ctx.ue_index;

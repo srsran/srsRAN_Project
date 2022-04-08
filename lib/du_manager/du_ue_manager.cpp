@@ -81,7 +81,7 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
   // Schedule UE removal task
-  ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<lazy_task<void> >& ctx) {
+  ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void> >& ctx) {
     CORO_BEGIN(ctx);
     srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_UES] = -1;

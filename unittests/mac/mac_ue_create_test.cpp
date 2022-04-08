@@ -64,7 +64,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   }
 
   // ACTION: Procedure is launched
-  lazy_task<mac_ue_create_response_message> proc =
+  async_task<mac_ue_create_response_message> proc =
       launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
   lazy_task_launcher<mac_ue_create_response_message> proc_launch{proc};
 

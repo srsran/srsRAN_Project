@@ -26,11 +26,11 @@ public:
 
   mac_rach_handler& get_rach_handler() override { return rach_hdl; }
 
-  lazy_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
-  lazy_task<mac_ue_reconfiguration_response_message>
-                                            ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
-  lazy_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
-  void                                      flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
+  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& cfg) override;
+  async_task<mac_ue_reconfiguration_response_message>
+                                             ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& cfg) override;
+  void                                       flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override;
 
   void handle_rx_data_indication(mac_rx_data_indication msg) override;
 
