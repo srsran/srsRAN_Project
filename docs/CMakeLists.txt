@@ -21,12 +21,12 @@ if (DOXYGEN_FOUND)
   set(DOXYGEN_CALLER_GRAPH "YES")
 
   # find plantuml
-  find_program(PLANT_UML_PATH plantuml.jar PATH_SUFFIXES PlantUML plantuml Plantuml
+  find_program(PLANTUML_PATH plantuml.jar PATH_SUFFIXES PlantUML plantuml Plantuml
           PATHS /usr/share /usr/local/share/ /usr/local/bin /opt/local/share/java/)
-  if (PLANT_UML_PATH)
-    message(STATUS "PLANTUML found.")
+  if (PLANTUML_PATH)
+    message(STATUS "PLANTUML found in ${PLANTUML_PATH}.")
   endif ()
-  set(DOXYGEN_PLANTUML_JAR_PATH "/home/xico/tmp/plantuml.jar")
+  set(DOXYGEN_PLANTUML_JAR_PATH "${PLANTUML_PATH}")
 
   # directories and files to process
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
