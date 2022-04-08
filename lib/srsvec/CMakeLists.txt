@@ -8,6 +8,7 @@
 
 set(SOURCES
         add.cpp
+        xor.cpp
         aligned_vec.cpp
         bit.cpp
         conversion.cpp

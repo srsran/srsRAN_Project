@@ -23,25 +23,6 @@ struct pdcch_processor_config_t {
 class pdcch_processor_impl : public pdcch_processor
 {
 private:
-  /// Defines the number of RE used for PDCCH in a RB.
-  static constexpr unsigned NOF_RE_PDCCH_PER_RB = NRE - 3;
-
-  /// Defines the number of REG per CCE.
-  static constexpr unsigned NOF_REG_PER_CCE = 6;
-
-  /// Define the maximum CORESET duration.
-  static constexpr unsigned MAX_CORESET_DURATION = 3;
-
-  /// Define the maximum aggregation level. Maximum number of CCE.
-  static constexpr unsigned MAX_AGGREGATION_LEVEL = 16;
-
-  /// Define the maximum number of RE used by PDCCH.
-  static constexpr unsigned MAX_NOF_RE_PDCCH =
-      MAX_CORESET_DURATION * MAX_AGGREGATION_LEVEL * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB;
-
-  /// Define the maximum number of encoded bits in a PDCCH transmission.
-  static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
-
   /// Provides the PDCCH encoder.
   std::unique_ptr<pdcch_encoder> encoder;
   /// Provides the PDCCH modulator.
@@ -50,12 +31,11 @@ private:
   std::unique_ptr<dmrs_pdcch_processor> dmrs;
 
   /// \brief Calculates the number of encoded bits for a PDCCH transmission.
-  /// \param[in] duration Indicates the CORESET duration in symbols {1,2,3}.
   /// \param[in] aggregation_level Indicates the PDCCH transmission aggregation level.
   /// \return The number of encoded bits.
-  static constexpr unsigned nof_encoded_bits(unsigned duration, unsigned aggregation_level)
+  static constexpr unsigned nof_encoded_bits(unsigned aggregation_level)
   {
-    return duration * aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
+    return aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
   }
 
   /// \brief Maps a CORESET REG mask to a RB mask.

@@ -2,7 +2,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_H
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/constants.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_constants.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
@@ -23,18 +23,6 @@ namespace srsgnb {
 class pdcch_processor
 {
 public:
-  /// Defines the number if resource blocks per frequency resource in a CORESET.
-  static constexpr unsigned NOF_RB_PER_FREQ_RESOURCE = 6;
-
-  /// Defines the maximum number of frequency resources in a CORESET.
-  static constexpr unsigned MAX_NOF_FREQ_RESOUCES = MAX_RB / 6;
-
-  /// Defines the maximum number of DCI in a PDCCH transmission.
-  static constexpr unsigned MAX_NOF_DCI = 1;
-
-  /// Defines the maximum payload size in bits.
-  static constexpr unsigned MAX_DCI_PAYLOAD_SIZE = 128;
-
   /// Describes a DCI transmission.
   struct dci_description {
     /// Parameter \f$n_{ID}\f$ used for DMRS scrambling as per TS 38.211 Section 7.4.1.3.1 {0...65535}.
@@ -54,7 +42,7 @@ public:
     /// Ratio of PDCCH Data EPRE to SSS EPRE in decibels.
     float data_power_offset_dB;
     /// DCI payload as unpacked bits.
-    static_vector<uint8_t, MAX_DCI_PAYLOAD_SIZE> payload;
+    static_vector<uint8_t, pdcch_constants::MAX_DCI_PAYLOAD_SIZE> payload;
     /// Port indexes the PDCCH transmission is mapped onto.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
@@ -80,7 +68,7 @@ public:
     /// \f$N^{CORESET}_{symb}\f$ as per RS 38.211 Section 7.3.2.2.
     unsigned duration;
     /// Frequency domain resources. This is a bitmap defining non-overlapping groups of 6 PRBs in ascending order.
-    std::array<bool, MAX_NOF_FREQ_RESOUCES> frequency_resources;
+    std::array<bool, pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources;
     /// CORESET-CCE-to-REG-mapping-type as per TS 38.211 Section 7.3.2.2.
     enum { NON_INTERLEAVED = 0, INTERLEAVED } cce_to_reg_mapping_type;
     /// The number of REGs in a bundle. Ignored if \c cce_to_reg_mapping_type is set to \c NON_INTERLEAVED. Otherwise,
@@ -111,7 +99,7 @@ public:
     /// Provides CORESET description.
     coreset_description coreset;
     /// List of DCI.
-    static_vector<dci_description, MAX_NOF_DCI> dci_list;
+    static_vector<dci_description, pdcch_constants::MAX_NOF_DCI> dci_list;
   };
 
   /// Default detsructor.

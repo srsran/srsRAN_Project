@@ -37,6 +37,18 @@ add_custom_command(
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
     VERBATIM)
 
+add_executable(pdcch_encoder_test pdcch_encoder_test.cpp)
+target_link_libraries(pdcch_encoder_test upper_phy pdcch_encoder srslog)
+add_test(pdcch_encoder_test pdcch_encoder_test)
+
+add_custom_command(
+        TARGET pdcch_encoder_test
+        POST_BUILD
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_encoder_test/data/pdcch_encoder_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_encoder_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pdcch_processor_test pdcch_processor_test.cpp)
 target_link_libraries(pdcch_processor_test pdcch_processor srslog)
 add_test(pdcch_processor_test pdcch_processor_test)

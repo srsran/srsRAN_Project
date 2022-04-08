@@ -27,3 +27,6 @@ add_library(pdcch_processor STATIC pdcch_processor_impl.cpp)
 
 add_library(pdsch_encoder STATIC pdsch_encoder_impl.cpp)
 target_link_libraries(pdsch_encoder ldpc)
+
+add_library(pdcch_encoder STATIC pdcch_encoder_impl.cpp)
+target_link_libraries(pdcch_encoder polar crc_calculator srsvec)

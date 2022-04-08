@@ -3,6 +3,7 @@
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
+using namespace pdcch_constants;
 
 void pdcch_processor_impl::map_reg_to_prb(span<bool>                 rb_mask,
                                           span<const bool>           reg_mask,
@@ -172,7 +173,7 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
     pdcch_encoder::config_t encoder_config = {};
 
     // Encode.
-    static_vector<uint8_t, MAX_NOF_BITS> encoded(nof_encoded_bits(coreset.duration, dci.aggregation_level));
+    static_vector<uint8_t, MAX_NOF_BITS> encoded(nof_encoded_bits(dci.aggregation_level));
     encoder->encode(encoded, payload, encoder_config);
 
     // Populate PDCCH modulator configuration.
