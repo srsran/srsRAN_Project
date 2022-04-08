@@ -25,7 +25,7 @@ void test_async_loop_empty_tasks()
   auto tp2       = std::chrono::high_resolution_clock::now();
   auto diff_usec = std::chrono::duration_cast<std::chrono::microseconds>(tp2 - tp);
 
-  fmt::print("Computes {} empty tasks in {} msec.", nof_tasks, diff_usec.count() / (float)1000);
+  fmt::print("Computes {} empty tasks in {} msec.\n", nof_tasks, diff_usec.count() / (float)1000);
 }
 
 int main()
