@@ -10,7 +10,7 @@ int main()
 {
   std::array<uint8_t, pdcch_constants::MAX_NOF_BITS> encoded_data = {};
 
-  srsgnb::span<uint8_t> encoded_data_span{encoded_data};
+  span<uint8_t> encoded_data_span{encoded_data};
 
   // Create PDCCH Encoder instance
   std::unique_ptr<pdcch_encoder> encoder = create_pdcch_encoder();

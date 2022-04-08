@@ -1,10 +1,10 @@
 
 #include "pdcch_encoder_impl.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <srsgnb/adt/static_vector.h>
-#include <srsgnb/srsvec/bit.h>
-#include <srsgnb/srsvec/copy.h>
-#include <srsgnb/srsvec/xor.h>
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/xor.h"
 
 using namespace srsgnb;
 using namespace pdcch_constants;
@@ -18,12 +18,12 @@ pdcch_encoder_impl::pdcch_encoder_impl() :
   rm(create_polar_rate_matcher())
 {}
 
-void pdcch_encoder_impl::crc_attach(srsgnb::span<uint8_t>& c, srsgnb::span<const uint8_t> a, unsigned rnti)
+void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)
 {
   std::array<uint8_t, RNTI_LEN> unpacked_rnti = {};
 
   // Unpack RNTI bits
-  srsgnb::span<uint8_t> rnti_bits{unpacked_rnti};
+  span<uint8_t> rnti_bits{unpacked_rnti};
   srsvec::bit_unpack(rnti, rnti_bits, RNTI_LEN);
 
   // Set first L bits to 1s
@@ -48,28 +48,26 @@ void pdcch_encoder_impl::crc_attach(srsgnb::span<uint8_t>& c, srsgnb::span<const
   c = c.subspan(CRC_LEN, c.size() - CRC_LEN);
 }
 
-void pdcch_encoder_impl::channel_coding(srsgnb::span<uint8_t> d, srsgnb::span<const uint8_t> c)
+void pdcch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 {
   // 5.3.1.1 Interleaving
-  srsgnb::static_vector<uint8_t, MAX_K> c_prime(c.size());
+  static_vector<uint8_t, MAX_K> c_prime(c.size());
   interleaver->interleave(c, c_prime, polar_interleaver_direction::tx);
 
   // Channel allocation
-  srsgnb::static_vector<uint8_t, polar_code::NMAX> allocated(code->get_N());
+  static_vector<uint8_t, polar_code::NMAX> allocated(code->get_N());
   alloc->allocate(c_prime, allocated, *code);
 
   // Polar encoding
   encoder->encode(allocated, code->get_n(), d);
 }
 
-void pdcch_encoder_impl::rate_matching(srsgnb::span<uint8_t> f, srsgnb::span<const uint8_t> d)
+void pdcch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 {
   rm->rate_match(d, f, *code);
 }
 
-void pdcch_encoder_impl::encode(srsgnb::span<uint8_t>                  encoded,
-                                srsgnb::span<const uint8_t>            data,
-                                const srsgnb::pdcch_encoder::config_t& config)
+void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config)
 {
   srsran_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
 
@@ -78,12 +76,12 @@ void pdcch_encoder_impl::encode(srsgnb::span<uint8_t>                  encoded,
 
   // Attach CRC
   // Allocate extra L bits for leading 1s used in CRC calculation according to TS 38.312 section 7.3.2
-  srsgnb::static_vector<uint8_t, MAX_K + CRC_LEN> c(config.K + CRC_LEN);
-  srsgnb::span<uint8_t>                           c_span{c};
+  static_vector<uint8_t, MAX_K + CRC_LEN> c(config.K + CRC_LEN);
+  span<uint8_t>                           c_span{c};
   crc_attach(c_span, data, config.rnti);
 
   // Encode
-  srsgnb::static_vector<uint8_t, polar_code::NMAX> d(code->get_N());
+  static_vector<uint8_t, polar_code::NMAX> d(code->get_N());
   channel_coding(d, c_span);
 
   // Rate match

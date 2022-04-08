@@ -18,7 +18,7 @@
 using namespace srsgnb;
 using namespace srsvec;
 
-void xor_bbb_simd(const uint8_t* x, const uint8_t* y, uint8_t* z, const int len)
+static void xor_bbb_simd(const uint8_t* x, const uint8_t* y, uint8_t* z, const int len)
 {
   int i = 0;
 #if SRSRAN_SIMD_B_SIZE
@@ -48,7 +48,7 @@ void xor_bbb_simd(const uint8_t* x, const uint8_t* y, uint8_t* z, const int len)
   }
 }
 
-void srsgnb::srsvec::xor_vec(srsgnb::span<const uint8_t> x, srsgnb::span<const uint8_t> y, srsgnb::span<uint8_t> z)
+void srsgnb::srsvec::xor_vec(span<const uint8_t> x, span<const uint8_t> y, span<uint8_t> z)
 {
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
