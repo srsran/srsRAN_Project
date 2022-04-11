@@ -71,7 +71,7 @@ inline rnti_t decode_crnti_ce(byte_buffer_view payload)
   if (payload.length() < 2) {
     return INVALID_RNTI;
   }
-  return le16toh((uint16_t)payload[0] << 8U | payload[1]);
+  return (rnti_t)le16toh((uint16_t)payload[0] << 8U | payload[1]);
 }
 
 } // namespace srsgnb

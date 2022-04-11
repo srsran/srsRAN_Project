@@ -114,7 +114,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
     ue_mng.addmod_bearers(request.ue_index, request.bearers_to_addmod);
 
     // 4. Configure UE in Scheduler
-    log_proc_started(logger, request.ue_index, request.ue_index, "Sched UE Config");
+    log_proc_started(logger, request.ue_index, request.crnti, "Sched UE Config");
     sched_obj.handle_ue_reconfiguration_request(make_ue_reconfiguration_request(request));
 
     // 4. Await scheduler to respond via notifier

@@ -8,8 +8,8 @@ using namespace srsgnb;
 class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {
 public:
-  void on_ue_config_complete(rnti_t) override {}
-  void on_ue_delete_response(rnti_t rnti) override {}
+  void on_ue_config_complete(du_ue_index_t ue_index) override {}
+  void on_ue_delete_response(du_ue_index_t ue_index) override {}
 };
 
 void test_no_ues()
@@ -43,7 +43,7 @@ void test_rach_indication()
   slot_point     sl_rx{0, 0}, sl_tx = sl_rx + tx_delay;
 
   // Action 2: Add RACH indication.
-  sch.handle_rach_indication(generate_rach_ind_msg(sl_rx, 0x4601));
+  sch.handle_rach_indication(generate_rach_ind_msg(sl_rx, (rnti_t)0x4601));
 
   // Action 3: Run slot 0.
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, 0);

@@ -12,8 +12,8 @@ namespace srsgnb {
 class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer
 {
 public:
-  bool add_ue(rnti_t rnti, du_ue_index_t ue_index, du_cell_index_t pcell_index) override { return true; }
-  void remove_ue(rnti_t rnti) override {}
+  bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override { return true; }
+  void remove_ue(du_ue_index_t ue_index) override {}
 };
 
 /// Dummy class to emulate MAC UL procedures to add/remove/configure UEs
@@ -100,7 +100,10 @@ class dummy_ul_executor_mapper : public du_l2_ul_executor_mapper
 public:
   dummy_ul_executor_mapper(task_executor& exec_) : exec(exec_) {}
 
-  task_executor& rebind_executor(rnti_t rnti, du_cell_index_t pcell_index) override { return executor(rnti); }
+  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
+  {
+    return executor(ue_index);
+  }
   task_executor& executor(du_ue_index_t ue_index) override { return exec; }
 
   task_executor& exec;

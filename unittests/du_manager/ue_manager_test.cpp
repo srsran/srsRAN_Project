@@ -30,7 +30,10 @@ public:
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
   }
-  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { last_pushed_ul_ccch_msg = std::move(pdu); }
+  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  {
+    last_pushed_ul_ccch_msg = std::move(pdu);
+  }
 };
 
 class f1_test_dummy : public f1ap_du_configurer
@@ -78,7 +81,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   // Action 1: UL CCCH indication arrives.
   ul_ccch_indication_message ccch_ind{};
   ccch_ind.cell_index = 0;
-  ccch_ind.crnti      = 0x4601;
+  ccch_ind.crnti      = (rnti_t)0x4601;
   ccch_ind.subpdu     = {0, 1, 2, 3, 4, 5};
   test_logger.info("TEST: Pushing UL CCCH indication for RNTI=0x{:x}...", ccch_ind.crnti);
   ue_mng.handle_ue_create_request(ccch_ind);
@@ -210,7 +213,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   // Action 1: Start creation of UE by notifying UL CCCH decoding.
   ul_ccch_indication_message ul_ccch_ind{};
   ul_ccch_ind.cell_index = 0;
-  ul_ccch_ind.crnti      = 0x4601;
+  ul_ccch_ind.crnti      = (rnti_t)0x4601;
   ul_ccch_ind.subpdu     = {1, 2, 3, 4, 5};
   ue_mng.handle_ue_create_request(ul_ccch_ind);
 

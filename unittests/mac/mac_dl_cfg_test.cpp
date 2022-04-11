@@ -26,13 +26,13 @@ struct add_reconf_delete_ue_test_task {
     mac_dl(mac_dl_), event_test(std::move(event_callback_))
   {
     create_msg.ue_index   = 0;
-    create_msg.crnti      = 0x4601;
+    create_msg.crnti      = (rnti_t)0x4601;
     create_msg.cell_index = 0;
     create_msg.bearers.emplace_back();
     create_msg.bearers[0].lcid = 1;
 
     reconf_msg.ue_index   = 0;
-    reconf_msg.crnti      = 0x4601;
+    reconf_msg.crnti      = (rnti_t)0x4601;
     reconf_msg.cell_index = 0;
     reconf_msg.bearers_to_addmod.emplace_back();
     reconf_msg.bearers_to_addmod[0].lcid = 2;
@@ -40,7 +40,7 @@ struct add_reconf_delete_ue_test_task {
 
     delete_msg.ue_index   = 0;
     delete_msg.cell_index = 0;
-    delete_msg.rnti       = 0x4601;
+    delete_msg.rnti       = (rnti_t)0x4601;
   }
 
   void operator()(coro_context<eager_async_task<void> >& ctx)

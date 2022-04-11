@@ -11,7 +11,7 @@ namespace srsgnb {
 struct f1ap_du_ue_context {
   du_ue_index_t gnb_du_f1ap_ue_id = -1;
   du_ue_index_t gnb_cu_f1ap_ue_id = -1;
-  rnti_t        crnti             = 0;
+  rnti_t        crnti             = rnti_t::NA_RNTI;
 };
 
 struct f1ap_du_cell_context {};

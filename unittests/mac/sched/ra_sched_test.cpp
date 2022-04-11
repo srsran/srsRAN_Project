@@ -32,8 +32,8 @@ static uint16_t get_ra_rnti(const rach_indication_message& msg)
 /// - No collision in UL PRBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
-  prb_bitmap                                total_ul_prbs{cfg.nof_ul_prbs};
-  circular_map<rnti_t, rnti_t, MAX_NOF_UES> crntis;
+  prb_bitmap                                  total_ul_prbs{cfg.nof_ul_prbs};
+  circular_map<uint16_t, rnti_t, MAX_NOF_UES> crntis;
 
   for (const rar_information& rar : rars) {
     TESTASSERT(not rar.grants.empty(),
@@ -322,7 +322,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
   // different RAPIDs)
   std::list<rach_indication_message> rach_ind_list;
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    uint16_t crnti = 0x4601 + n;
+    rnti_t crnti = static_cast<rnti_t>(0x4601 + n);
     rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
                                                     .slot_rx         = slot_point{0, slot_rx_prach},
                                                     .symbol_index    = 0,
@@ -387,7 +387,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
   // Create the list of RACH indication messages with different RA-RNTIs and different RAPIDs
   std::list<rach_indication_message> rach_ind_list;
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    uint16_t crnti = 0x4601 + n;
+    rnti_t crnti = static_cast<rnti_t>(0x4601 + n);
     rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
                                                     .slot_rx         = slot_point{0, slot_rx_prach},
                                                     .symbol_index    = 0,
@@ -398,7 +398,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   uint16_t last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    uint16_t crnti = last_crnti + n;
+    rnti_t crnti = static_cast<rnti_t>(last_crnti + n);
     rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
                                                     .slot_rx         = slot_point{0, slot_rx_prach},
                                                     .symbol_index    = 2,
@@ -409,7 +409,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    uint16_t crnti = last_crnti + n;
+    rnti_t crnti = static_cast<rnti_t>(last_crnti + n);
     rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
                                                     .slot_rx         = slot_point{0, slot_rx_prach},
                                                     .symbol_index    = 4,
@@ -420,7 +420,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    uint16_t crnti = last_crnti + n;
+    rnti_t crnti = static_cast<rnti_t>(last_crnti + n);
     rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
                                                     .slot_rx         = slot_point{0, slot_rx_prach},
                                                     .symbol_index    = 6,
@@ -477,7 +477,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
   ra_sched ra_sch{bench.cfg};
 
   slot_point              prach_sl_rx{0, 7};
-  rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, 0x4601);
+  rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, (rnti_t)0x4601);
 
   slot_point sl_rx{0, gnb_tx_delay};
   for (unsigned sl_count = 0; sl_rx <= prach_sl_rx; ++sl_count) {

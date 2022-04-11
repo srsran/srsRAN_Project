@@ -59,7 +59,7 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
     // Create new pending RAR
     pending_rars.emplace_back();
     auto& rar_req         = pending_rars.back();
-    rar_req.ra_rnti       = ra_rnti;
+    rar_req.ra_rnti       = (rnti_t)ra_rnti;
     rar_req.prach_slot_rx = msg.slot_rx;
     // First slot after PRACH with active DL slot represents the start of the RAR window.
     for (unsigned sl_idx = 0; sl_idx < cfg.nof_slots_per_frame; ++sl_idx) {

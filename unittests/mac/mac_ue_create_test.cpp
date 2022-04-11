@@ -46,7 +46,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   // Launch procedure
   mac_ue_create_request_message msg{};
   msg.ue_index   = 1;
-  msg.crnti      = 0x4601;
+  msg.crnti      = (rnti_t)0x4601;
   msg.cell_index = 0;
   msg.bearers.emplace_back();
   msg.bearers[0].lcid      = 0;

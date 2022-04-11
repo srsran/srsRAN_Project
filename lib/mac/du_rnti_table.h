@@ -18,7 +18,7 @@ class du_rnti_table
 public:
   du_rnti_table() : rnti_to_ue_index_map(std::make_unique<array_type>())
   {
-    for (rnti_t idx = 0; idx < rnti_to_ue_index_map->size(); ++idx) {
+    for (unsigned idx = 0; idx < rnti_to_ue_index_map->size(); ++idx) {
       (*rnti_to_ue_index_map)[idx].store(MAX_NOF_UES, std::memory_order_relaxed);
     }
   }
@@ -62,9 +62,9 @@ public:
   }
 
 private:
-  static constexpr rnti_t MIN_CRNTI  = static_cast<rnti_t>(rnti_values::MIN_CRNTI);
-  static constexpr rnti_t MAX_CRNTI  = static_cast<rnti_t>(rnti_values::MAX_CRNTI);
-  static constexpr rnti_t RNTI_RANGE = MAX_CRNTI + 1 - MIN_CRNTI;
+  static constexpr rnti_t MIN_CRNTI  = rnti_t::MIN_CRNTI;
+  static constexpr rnti_t MAX_CRNTI  = rnti_t::MAX_CRNTI;
+  static constexpr int    RNTI_RANGE = MAX_CRNTI + 1 - MIN_CRNTI;
   using array_type                   = std::array<std::atomic<du_ue_index_t>, RNTI_RANGE>;
 
   std::atomic<du_ue_index_t>&       get(rnti_t rnti) { return (*rnti_to_ue_index_map)[rnti - MIN_CRNTI]; }
