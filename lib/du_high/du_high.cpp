@@ -62,7 +62,7 @@ void du_high::stop()
 
 void du_high::push_pusch(mac_rx_data_indication pdu)
 {
-  mac->get_pdu_handler().handle_rx_data_indication(std::move(pdu));
+  mac->get_pdu_handler(pdu.cell_index).handle_rx_data_indication(std::move(pdu));
 }
 
 } // namespace srsgnb

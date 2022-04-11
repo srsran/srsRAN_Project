@@ -19,10 +19,10 @@ struct crc_indication_message {
 };
 
 /// Interface to handle feedback information from the PHY.
-class mac_control_information_handler
+class mac_cell_control_information_handler
 {
 public:
-  virtual ~mac_control_information_handler() = default;
+  virtual ~mac_cell_control_information_handler() = default;
 
   virtual void handle_crc(const crc_indication_message& msg) = 0;
 };

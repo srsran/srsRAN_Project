@@ -119,7 +119,7 @@ public:
 
     // 6. Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
     if (not msg.subpdu.empty()) {
-      cfg.mac->flush_ul_ccch_msg(ue_ctx.ue_index, std::move(msg.subpdu));
+      cfg.mac->handle_ul_ccch_msg(ue_ctx.ue_index, std::move(msg.subpdu));
     }
 
     log_proc_completed(logger, ue_ctx.ue_index, msg.crnti, "UE Create");

@@ -42,7 +42,7 @@ public:
   async_task<mac_ue_reconfiguration_response_message>
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
 
-  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
+  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {
     ul_unit.flush_ul_ccch_msg(ue_index, std::move(pdu));
   }

@@ -2,7 +2,8 @@
 #ifndef SRSGNB_MAC_UE_CONFIGURATOR_H
 #define SRSGNB_MAC_UE_CONFIGURATOR_H
 
-#include "mac_pdu_handler.h"
+#include "srsgnb/mac/mac_sdu_handler.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
@@ -66,7 +67,7 @@ public:
   handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& cfg) = 0;
   virtual async_task<mac_ue_delete_response_message>
                handle_ue_delete_request(const mac_ue_delete_request_message& cfg) = 0;
-  virtual void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)         = 0;
+  virtual void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)        = 0;
 };
 
 } // namespace srsgnb

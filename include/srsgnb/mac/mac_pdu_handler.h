@@ -44,30 +44,6 @@ public:
   virtual void handle_rx_data_indication(mac_rx_data_indication pdu) = 0;
 };
 
-struct mac_rx_sdu {
-  du_ue_index_t ue_index;
-  lcid_t        lcid;
-  byte_buffer   pdu;
-};
-
-/// This interface notifies to upper layers the reception of new SDUs over a logical channel.
-class mac_sdu_rx_notifier
-{
-public:
-  virtual ~mac_sdu_rx_notifier() = default;
-
-  /// This callback is invoked on each received SDU.
-  virtual void on_new_sdu(mac_rx_sdu sdu) = 0;
-};
-
-/// This interface represents the entry point of a logical channel in the MAC layer.
-class mac_sdu_tx_builder
-{
-public:
-  virtual ~mac_sdu_tx_builder()                = default;
-  virtual void on_new_tx_sdu(byte_buffer& pdu) = 0;
-};
-
 /// Used to indicate UL CCCH message arrival.
 struct ul_ccch_indication_message {
   du_cell_index_t cell_index;

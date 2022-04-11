@@ -30,7 +30,7 @@ public:
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();
   }
-  void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { last_pushed_ul_ccch_msg = std::move(pdu); }
+  void handle_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { last_pushed_ul_ccch_msg = std::move(pdu); }
 };
 
 class f1_test_dummy : public f1ap_du_configurer
