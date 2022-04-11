@@ -100,6 +100,10 @@ public:
    */
   static duplex_mode get_duplex_mode(uint16_t band);
 
+  /// \brief returns boolean indicating whether the band is in paired spectrum.
+  /// \remark Paired specrum is FDD, unpaired spectrum is TDD, SUL, SDL.
+  /// \param band Given band.
+  /// \return true for paired specrum, false otherwise.
   static bool is_paired_spectrum(uint16_t band);
 
 #if 0

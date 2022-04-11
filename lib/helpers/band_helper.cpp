@@ -69,7 +69,7 @@ uint16_t band_helper::get_band_from_dl_freq_Hz(double freq) const
   return UINT16_MAX;
 }
 
-uint16_t band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
+uint16_t srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
   for (const nr_band& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN and matches step
@@ -81,7 +81,7 @@ uint16_t band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
   return UINT16_MAX;
 }
 
-uint32_t band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
+uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
 {
   // return same ARFCN for TDD bands
   auto asd = band_helper::get_band_from_dl_arfcn(dl_arfcn);
@@ -91,7 +91,7 @@ uint32_t band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
 
   // derive UL ARFCN for FDD bands
   for (const auto& band : nr_band_table_fr1) {
-    if (band.band == get_band_from_dl_arfcn(dl_arfcn)) {
+    if (band.band == band_helper::get_band_from_dl_arfcn(dl_arfcn)) {
       uint32_t offset = (dl_arfcn - band.dl_nref_first) / band.dl_nref_step;
       return (band.ul_nref_first + offset * band.ul_nref_step);
     }
@@ -160,7 +160,7 @@ uint32_t band_helper::get_abs_freq_ssb_arfcn(uint16_t                    band,
 }
 #endif
 
-ssb_pattern_case band_helper::get_ssb_pattern(uint16_t band, subcarrier_spacing scs)
+ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(uint16_t band, subcarrier_spacing scs)
 {
   // Look for the given band and SCS
   for (const nr_band_ss_raster& ss_raster : nr_band_ss_raster_table) {
@@ -179,7 +179,7 @@ ssb_pattern_case band_helper::get_ssb_pattern(uint16_t band, subcarrier_spacing 
   return ssb_pattern_case::invalid;
 }
 
-subcarrier_spacing band_helper::get_ssb_scs(uint16_t band) const
+subcarrier_spacing srsgnb::band_helper::get_ssb_scs(uint16_t band) const
 {
   // Look for the given band and SCS
   for (const nr_band_ss_raster& ss_raster : nr_band_ss_raster_table) {
@@ -196,7 +196,7 @@ subcarrier_spacing band_helper::get_ssb_scs(uint16_t band) const
   return subcarrier_spacing::invalid;
 }
 
-duplex_mode band_helper::get_duplex_mode(uint16_t band)
+duplex_mode srsgnb::band_helper::get_duplex_mode(uint16_t band)
 {
   // Look for the given band
   for (const nr_operating_band& b : nr_operating_bands_fr1) {
