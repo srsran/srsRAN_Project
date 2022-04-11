@@ -11,7 +11,30 @@ namespace srsgnb {
 
 constexpr size_t MAX_DL_PDUS_PER_SLOT = 16;
 
+struct ssb_mib_data_pdu {
+  uint8_t dmrs_typeA_position;
+  uint8_t pdcch_config_sib1;
+  bool    cell_barred;
+  bool    intra_freq_reselection;
+};
+
 struct dl_ssb_pdu {
+  uint16_t pci;
+  uint8_t  beta_pss_profile_nr;
+  uint8_t  ssb_index;
+  uint8_t  ssb_subcarrier_offset;
+  uint16_t offset_to_point_A;
+  bool     bch_payload_flag;
+
+  ssb_pattern_case ssb_case;
+  uint8_t          L_max;
+  // TODO Determine which SCS this refers to (i.e., SSB SCS or SCS Common for MIB generation)
+  uint8_t scs;
+  int16_t beta_pss_profile_sss;
+
+  /// Data for MIB generation
+  ssb_mib_data_pdu mib_data;
+
   // TODO: Compute necessary size.
   byte_buffer payload;
 };
@@ -27,7 +50,7 @@ struct pdcch_pdu {
 /// \remark This struct will be used in FAPI to generate DL_TTI.Request.
 struct mac_dl_sched_result {
   const dl_sched_result*                         dl_res;
-  optional<dl_ssb_pdu>                           ssb_pdu;
+  static_vector<dl_ssb_pdu, MAX_SSB_PER_SLOT>    ssb_pdu;
   static_vector<pdcch_pdu, MAX_DL_PDUS_PER_SLOT> pdcch_pdus;
 };
 

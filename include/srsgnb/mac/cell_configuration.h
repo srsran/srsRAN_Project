@@ -28,6 +28,7 @@ struct carrier_configuration {
 /// SSB Configuration.
 /// \remark See O-RAN WG8, Section 9.2.1.1, Table 9-3.
 struct ssb_configuration {
+  /// ORAN defined parameters
   /// SSB block power value: (-60dBm, ..., 50dBm) [Table 3-39, FAPI and ss-PBCH-BlockPower in TS 38.311].
   int8_t ssb_power;
   /// SSB subcarrier spacing [Table 4.2-1, TS 38.211]
@@ -48,10 +49,12 @@ struct ssb_configuration {
   /// Values: 0 = 0dB, 1 = 3dB.
   uint8_t beta_pss;
 
-  /// Additional parameter not included in ORAN iface.
+  /// Additional parameter not included in ORAN iface (used by MAC and/or Scheduler.
   ssb_pattern_case ssb_case;
-  // TODO: ssb_case and paired_spectrum could be moved to sched/cell_configuration constructor.
-  bool             paired_spectrum;
+  uint8_t          L_max;
+  /// Used by Scheduler only.
+  // TODO: paired_spectrum could be moved to sched/cell_configuration constructor.
+  bool paired_spectrum;
 };
 
 struct prach_configuration {

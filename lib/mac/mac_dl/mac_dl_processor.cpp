@@ -9,16 +9,19 @@ using namespace srsgnb;
 
 
 static void create_sched_cell_config(cell_configuration_request_message& sched_cell_cfg,
-                                     const mac_cell_configuration&       cell_cfg)
+                                     const mac_cell_configuration&       cell_cfg,
+                                     const ssb_assembler&                ssb_cfg)
 {
+  // Copy general parameters
+  sched_cell_cfg.cell_index = cell_cfg.cell_index;
+  sched_cell_cfg.pci        = cell_cfg.pci;
+  sched_cell_cfg.dl_carrier = cell_cfg.dl_carrier;
+
   // Copy SSB parameters
   sched_cell_cfg.ssb_config = cell_cfg.ssb_cfg;
-
-  // At this point, we need to derive the SSB pattern case from Band nARFCN (
-  uint16_t dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn);
-  srsran_assert(dl_idx_nr_band < UINT16_MAX, "Invalid NR band index");
-  sched_cell_cfg.ssb_config.ssb_case = band_helper::get_ssb_pattern(dl_idx_nr_band, cell_cfg.ssb_scs);
-  sched_cell_cfg.ssb_config.paired_spectrum = band_helper::is_paired_spectrum(dl_idx_nr_band);
+  sched_cell_cfg.ssb_config.L_max           = ssb_cfg.get_ssb_L_max();
+  sched_cell_cfg.ssb_config.ssb_case        = ssb_cfg.get_ssb_case();
+  sched_cell_cfg.ssb_config.paired_spectrum = ssb_cfg.get_ssb_paired_spectrum();
 
   // TODO: Add remaining fields.
 }
@@ -39,6 +42,7 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
 {
   srsran_assert(not has_cell(cell_cfg.cell_index), "Overwriting existing cell is invalid.");
   // Create one cell.
+
   cells[cell_cfg.cell_index] = std::make_unique<mac_dl_cell_processor>(cfg, cell_cfg, sched_obj, ue_mng);
 
   // TODO: Pass valid configuration to scheduler (The code added below was just for passing a test).
@@ -57,10 +61,15 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
   sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
   sched_obj.handle_cell_configuration_request(sched_msg);
 
+  // Update SSB dependent parameters in the MAC DL CELL processor
+  cells[cell_cfg.cell_index]->set_ssb_configuration(cell_cfg);
+
   // TODO: Pass configuration to scheduler.
   cell_configuration_request_message sched_cell_cfg{};
-  create_sched_cell_config(sched_cell_cfg, cell_cfg);
+  create_sched_cell_config(sched_cell_cfg, cell_cfg, cells[cell_cfg.cell_index]->get_ssb_configuration());
   sched_obj.handle_cell_configuration_request(sched_cell_cfg);
+
+  // Save parameters in the MAC configuration.
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

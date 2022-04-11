@@ -7,6 +7,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/mac/sched_interface.h"
+#include "ssb_assembler.h"
 
 namespace srsgnb {
 
@@ -30,13 +31,17 @@ public:
   /// - The MAC DL PDUs are generated and passed to the PHY as well.
   void handle_slot_indication(slot_point sl_tx) override;
 
+  void set_ssb_configuration(const mac_cell_configuration& cell_cfg);
+
+  const ssb_assembler& get_ssb_configuration() const;
+
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
 
   /// Assemble struct that is going to be passed down to PHY with the DL scheduling result.
   /// \remark FAPI will use this struct to generate a DL_TTI.Request.
   void
-  assemble_dl_sched_request(du_cell_index_t cell_index, const dl_sched_result& dl_res, mac_dl_sched_result& mac_res);
+  assemble_dl_sched_request(mac_dl_sched_result& mac_res, du_cell_index_t cell_index, const dl_sched_result& dl_res);
 
   /// Assemble struct with the MAC PDUs of a given slot and cell that is going be passed to the PHY.
   /// \remark FAPI will use this struct to generate a Tx_Data.Request.
@@ -48,6 +53,7 @@ private:
   const mac_cell_configuration cell_cfg;
   task_executor&               cell_exec;
   mac_cell_result_notifier&    phy_cell;
+  ssb_assembler                ssb_helper;
 
   sched_interface&   sched_obj;
   mac_dl_ue_manager& ue_mng;

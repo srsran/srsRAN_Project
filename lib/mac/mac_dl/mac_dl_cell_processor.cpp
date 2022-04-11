@@ -53,7 +53,7 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
   mac_dl_sched_result mac_dl_res;
-  assemble_dl_sched_request(cell_cfg.cell_index, *dl_res, mac_dl_res);
+  assemble_dl_sched_request(mac_dl_res, cell_cfg.cell_index, *dl_res);
 
   // Send DL sched result to PHY.
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
@@ -72,18 +72,17 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 }
 
-void mac_dl_cell_processor::assemble_dl_sched_request(du_cell_index_t        cell_index,
-                                                      const dl_sched_result& dl_res,
-                                                      mac_dl_sched_result&   mac_res)
+void mac_dl_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
+                                                      du_cell_index_t        cell_index,
+                                                      const dl_sched_result& dl_res)
 {
   // Pass scheduler output directly to PHY.
   mac_res.dl_res = &dl_res;
 
   // TODO Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY
-  if (dl_res.bc.ssb_info.size() > 0) {
-    const ssb_information& ssb = dl_res.bc.ssb_info.value();
-    mac_res.ssb_pdu.emplace();
-    encode_ssb(cell_cfg, ssb, *mac_res.ssb_pdu);
+  for (auto& ssb : dl_res.bc.ssb_info) {
+    mac_res.ssb_pdu.emplace_back();
+    ssb_helper.assemble_ssb(mac_res.ssb_pdu.back(), cell_cfg, ssb);
   }
 
   // Encode PDCCH DCI payloads.
@@ -136,4 +135,14 @@ void mac_dl_cell_processor::assemble_dl_data_request(du_cell_index_t        cell
       }
     }
   }
+}
+
+const ssb_assembler& mac_dl_cell_processor::get_ssb_configuration() const
+{
+  return ssb_helper;
+}
+
+void mac_dl_cell_processor::set_ssb_configuration(const mac_cell_configuration& mac_cell_cfg)
+{
+  ssb_helper.set_ssb_configuration(mac_cell_cfg);
 }

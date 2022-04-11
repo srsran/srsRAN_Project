@@ -6,6 +6,7 @@
 #include "prb_grant.h"
 #include "sched_consts.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
