@@ -68,7 +68,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   f1_test_dummy  f1_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac  = &mac_dummy;
+  cfg.mac_ue_mng = &mac_dummy;
   cfg.f1ap = &f1_dummy;
 
   du_ue_manager ue_mng{cfg};
@@ -156,7 +156,7 @@ void test_inexistent_ue_removal()
   f1_test_dummy  f1_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac  = &mac_dummy;
+  cfg.mac_ue_mng = &mac_dummy;
   cfg.f1ap = &f1_dummy;
 
   du_ue_manager ue_mng{cfg};
@@ -191,7 +191,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   f1_test_dummy  f1_dummy;
 
   du_manager_config_t cfg{};
-  cfg.mac  = &mac_dummy;
+  cfg.mac_ue_mng = &mac_dummy;
   cfg.f1ap = &f1_dummy;
 
   f1_dummy.wait_ue_create.result.result = true;

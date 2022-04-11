@@ -32,9 +32,10 @@ du_high::du_high(f1c_pdu_handler& f1c_pdu_handler, mac_result_notifier& phy_adap
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, phy_adapter);
-  f1ap       = create_f1ap_du(f1c_pdu_handler);
-  du_manager = create_du_manager(mac->get_ue_configurator(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
+  mac  = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, phy_adapter);
+  f1ap = create_f1ap_du(f1c_pdu_handler);
+  du_manager =
+      create_du_manager(mac->get_ue_configurator(), mac->get_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
   // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);

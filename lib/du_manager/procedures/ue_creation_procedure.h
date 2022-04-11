@@ -119,7 +119,7 @@ public:
 
     // 6. Start Initial UL RRC Message Transfer by signalling MAC to notify CCCH to upper layers.
     if (not msg.subpdu.empty()) {
-      cfg.mac->handle_ul_ccch_msg(ue_ctx.ue_index, std::move(msg.subpdu));
+      cfg.mac_ue_mng->handle_ul_ccch_msg(ue_ctx.ue_index, std::move(msg.subpdu));
     }
 
     log_proc_completed(logger, ue_ctx.ue_index, msg.crnti, "UE Create");
@@ -151,7 +151,7 @@ private:
       lc.dl_bearer = nullptr; // TODO
     }
     mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
-    return cfg.mac->handle_ue_create_request(mac_ue_create_msg);
+    return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);
   }
 
   async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
