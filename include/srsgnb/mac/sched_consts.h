@@ -19,9 +19,9 @@ const size_t NOF_BEAMS = 64;
 const size_t DEFAULT_SSB_PERIODICITY = 5;
 /// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000
 const unsigned FR1_MAX_FREQUENCY_ARFCN = 875000;
-/// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1)
+/// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1).
 const unsigned CUTOFF_FREQ_ARFCN_CASE_A_B_C = 600000;
-/// The cutoff frequency for case C unpaired is 1.88GHz, corresponding to 376000 ARFCN (TS 38.213, Section 4.1)
+/// The cutoff frequency for case C unpaired is 1.88GHz, corresponding to 376000 ARFCN (TS 38.213, Section 4.1).
 const unsigned CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED = 376000;
 
 } // namespace srsgnb

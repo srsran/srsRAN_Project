@@ -28,18 +28,18 @@ struct carrier_configuration {
 /// SSB Configuration.
 /// \remark See O-RAN WG8, Section 9.2.1.1, Table 9-3.
 struct ssb_configuration {
-  /// ORAN defined parameters
+  /// ORAN defined parameters.
   /// SSB block power value: (-60dBm, ..., 50dBm) [Table 3-39, FAPI and ss-PBCH-BlockPower in TS 38.311].
   int8_t ssb_power;
-  /// SSB subcarrier spacing [Table 4.2-1, TS 38.211]
-  /// Possible values: FR1 only {15kHz, 30kHz, 60kHz}, FR2 only {60kHz, 120kHz}.
+  /// SSB subcarrier spacing [Table 4.2-1, TS 38.211].
+  // TODO: verify if which SCS this refers to.
   subcarrier_spacing scs;
   /// Given in PRBs - Values [0, 2199] - [Table 3-79, FAPI].
   uint16_t ssb_offset_to_point_A;
   /// Values: [0: 5ms, 1: 10ms, 2: 20ms, 3: 40ms, 4: 80ms, 5: ms160].
   uint8_t ssb_period;
   /// SSB SubcarrierOffest or k_ssb - Values [0, 31].
-  /// NOTE: According to TS 38.211, Section 7.4.3.1, values are [0, 23], but FAPI and ORAN uses [0, 31].
+  /// NOTE: According to TS 38.211, Section 7.4.3.1, values are [0, 23], but ORAN uses [0, 31].
   uint8_t ssb_subcarrier_offset;
   /// This ssb-PositionsInBurs in the TS 38.311, 0 = SSB beam not used, 1 = SSB beam used.
   bounded_bitset<NOF_BEAMS> ssb_bitmap;
@@ -80,7 +80,7 @@ struct mac_cell_configuration {
   optional<tdd_configuration> tdd_cfg;
   // TODO: Fill remaining fields
 
-  /// SSB subcarrier spacing
+  /// SSB subcarrier spacing.
   /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
   subcarrier_spacing ssb_scs;
 };

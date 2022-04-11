@@ -34,7 +34,7 @@ struct cell_configuration_request_message {
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
 
   /// NOTE: Structs below do not follow ORAN specs.
-  /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1)
+  /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).
   carrier_configuration dl_carrier;
   ssb_configuration ssb_config;
 };

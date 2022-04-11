@@ -45,6 +45,7 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
 
   cells[cell_cfg.cell_index] = std::make_unique<mac_dl_cell_processor>(cfg, cell_cfg, sched_obj, ue_mng);
 
+
   // TODO: Pass valid configuration to scheduler (The code added below was just for passing a test).
   cell_configuration_request_message sched_msg{};
   sched_msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
@@ -62,14 +63,13 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
   sched_obj.handle_cell_configuration_request(sched_msg);
 
   // Update SSB dependent parameters in the MAC DL CELL processor
+  // Update SSB dependent parameters in the MAC DL CELL processor.
   cells[cell_cfg.cell_index]->set_ssb_configuration(cell_cfg);
 
   // TODO: Pass configuration to scheduler.
   cell_configuration_request_message sched_cell_cfg{};
   create_sched_cell_config(sched_cell_cfg, cell_cfg, cells[cell_cfg.cell_index]->get_ssb_configuration());
   sched_obj.handle_cell_configuration_request(sched_cell_cfg);
-
-  // Save parameters in the MAC configuration.
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
