@@ -13,11 +13,9 @@ class pdcch_encoder
 public:
   /// Describes the necessary parameters to encode PDCCH message.
   struct config_t {
-    /// Polar encoder K parameter (payload size including CRC bits).
-    unsigned K;
     /// Number of rate-matched bits.
     unsigned E;
-    /// RNTI used for CRC bits scrambling according to TS 38.212 section 7.3.2
+    /// RNTI used for CRC bits scrambling according to TS 38.212 section 7.3.2.
     unsigned rnti;
   };
 
@@ -25,12 +23,16 @@ public:
   virtual ~pdcch_encoder() = default;
 
   /// \brief Encodes a PDCCH message.
-  /// \param [in] pdcch_msg
-  /// \param [out] encoded
+  /// \param [in]  data    - unencoded message bits
+  /// \param [out] encoded - encoded bits
+  /// \param [in]  config  - encoder configuration
+  ///
+  /// \remark size of + 24 bits of CRC gives K parameter for the Polar encoder
+
   virtual void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) = 0;
 };
 
-/// Creates a PDCCH encoder instance
+/// Creates a PDCCH encoder instance.
 std::unique_ptr<pdcch_encoder> create_pdcch_encoder();
 
 } // namespace srsgnb

@@ -4,7 +4,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/xor.h"
+#include "srsgnb/srsvec/binary.h"
 
 using namespace srsgnb;
 using namespace pdcch_constants;
@@ -33,7 +33,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
   srsvec::copy(c.subspan(CRC_LEN, a.size()), a);
 
   // Calculate checksum
-  span<uint8_t> a_prime  = c.subspan(0, CRC_LEN + a.size());
+  span<uint8_t> a_prime  = c.first(CRC_LEN + a.size());
   unsigned      checksum = crc24c->calculate_bit(a_prime);
 
   // Unpack and attach checksum
@@ -42,7 +42,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
 
   // Scramble CRC parity bits with RNTI
   p = c.last(RNTI_LEN);
-  srsvec::xor_vec(unpacked_rnti, p, p);
+  srsvec::binary_xor(span<uint8_t>{unpacked_rnti}, p, p);
 
   // Skip first L 1s added for CRC calculation
   c = c.subspan(CRC_LEN, c.size() - CRC_LEN);
@@ -72,11 +72,12 @@ void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data,
   srsran_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
 
   // Configure Polar encoder
-  code->set(config.K, config.E, polar_code::NMAX_LOG - 1, polar_code_ibil::not_present);
+  uint16_t K = data.size() + CRC_LEN;
+  code->set(K, config.E, polar_code::NMAX_LOG - 1, polar_code_ibil::not_present);
 
   // Attach CRC
   // Allocate extra L bits for leading 1s used in CRC calculation according to TS 38.312 section 7.3.2
-  static_vector<uint8_t, MAX_K + CRC_LEN> c(config.K + CRC_LEN);
+  static_vector<uint8_t, MAX_K + CRC_LEN> c(K + CRC_LEN);
   span<uint8_t>                           c_span{c};
   crc_attach(c_span, data, config.rnti);
 

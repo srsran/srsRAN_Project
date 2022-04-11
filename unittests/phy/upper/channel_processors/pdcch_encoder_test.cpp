@@ -20,7 +20,7 @@ int main()
     const std::vector<uint8_t> testvector_data = test_case.message.read();
 
     // Encode message
-    auto encoded_msg = encoded_data_span.subspan(0, test_case.config.E);
+    auto encoded_msg = encoded_data_span.first(test_case.config.E);
     encoder->encode(encoded_msg, testvector_data, test_case.config);
 
     // Load output golden data

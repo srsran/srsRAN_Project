@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
+#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
 
 #include "srsgnb/phy/constants.h"
 
@@ -11,7 +11,7 @@ namespace pdcch_constants {
 static constexpr unsigned NOF_RB_PER_FREQ_RESOURCE = 6;
 
 /// Defines the maximum number of frequency resources in a CORESET.
-static constexpr unsigned MAX_NOF_FREQ_RESOUCES = MAX_RB / 6;
+static constexpr unsigned MAX_NOF_FREQ_RESOUCES = MAX_RB / NOF_RB_PER_FREQ_RESOURCE;
 
 /// Defines the maximum number of DCI in a PDCCH transmission.
 static constexpr unsigned MAX_NOF_DCI = 1;
@@ -37,14 +37,16 @@ static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_AGGREGATION_LEVEL * NOF_REG_PER
 /// Define the maximum number of encoded bits in a PDCCH transmission.
 static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 
-/// Defines CRC length in bits
+/// Defines CRC length in bits.
 static constexpr unsigned CRC_LEN = 24;
-/// Defines RNTI length in bits
+
+/// Defines RNTI length in bits.
 static constexpr unsigned RNTI_LEN = 16;
+
 /// Defines the maximum payload size in bits, including 24 CRC bits.
 static constexpr unsigned MAX_K = MAX_DCI_PAYLOAD_SIZE + CRC_LEN;
 
 } // namespace pdcch_constants
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
