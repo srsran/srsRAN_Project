@@ -22,7 +22,21 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
   // Create one cell.
   cells[cell_cfg.cell_index] = std::make_unique<mac_dl_cell_processor>(cfg, cell_cfg, sched_obj, ue_mng);
 
-  // TODO: Pass configuration to scheduler.
+  // TODO: Pass valid configuration to scheduler (The code added below was just for passing a test).
+  cell_configuration_request_message sched_msg{};
+  sched_msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
+  sched_msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
+  sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.set_setup().rach_cfg_generic.ra_resp_win.value =
+      asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10;
+  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present = true;
+  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.set_setup().pusch_time_domain_alloc_list.resize(1);
+  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present = true;
+  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2         = 2;
+  sched_msg.ul_cfg_common.init_ul_bwp.generic_params.subcarrier_spacing.value =
+      asn1::rrc_nr::subcarrier_spacing_opts::khz15;
+  sched_msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup().ra_search_space_present = true;
+  sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
+  sched_obj.handle_cell_configuration_request(sched_msg);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

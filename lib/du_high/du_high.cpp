@@ -33,8 +33,8 @@ du_high::du_high(du_high_configuration config_) : cfg(config_)
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, *cfg.phy_adapter);
-  f1ap       = create_f1ap_du(*cfg.f1c_pdu_hdl);
+  mac  = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, *cfg.phy_adapter);
+  f1ap = create_f1ap_du(*cfg.f1c_pdu_hdl);
   du_manager =
       create_du_manager(mac->get_ue_configurator(), mac->get_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 
@@ -62,9 +62,14 @@ void du_high::stop()
   workers.clear();
 }
 
-void du_high::push_pusch(mac_rx_data_indication pdu)
+mac_pdu_handler& du_high::get_pdu_handler(du_cell_index_t cell_idx)
 {
-  mac->get_pdu_handler(pdu.cell_index).handle_rx_data_indication(std::move(pdu));
+  return mac->get_pdu_handler(cell_idx);
+}
+
+mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
+{
+  return mac->get_slot_handler(cell_idx);
 }
 
 } // namespace srsgnb

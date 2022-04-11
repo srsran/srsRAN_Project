@@ -30,7 +30,9 @@ public:
   void start();
   void stop();
 
-  void push_pusch(mac_rx_data_indication pdu);
+  mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index);
+
+  mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index);
 
 private:
   du_high_configuration cfg;

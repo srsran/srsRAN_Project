@@ -30,6 +30,12 @@ public:
       handle_f1_setup_failure(du_ctxt.f1_setup_result.result.error());
     }
 
+    // Configure DU Cells.
+    cfg.mac_cell_mng->add_cell(mac_cell_configuration{});
+
+    // Activate DU Cells.
+    cfg.mac_cell_mng->get_cell_manager(0).start();
+
     CORO_RETURN();
   }
 

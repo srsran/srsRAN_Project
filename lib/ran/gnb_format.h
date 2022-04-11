@@ -65,14 +65,12 @@ struct ue_event_prefix {
   }
 };
 
-template <typename... Args>
-void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti_t rnti, const char* proc_name)
+inline void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, rnti_t rnti, const char* proc_name)
 {
   logger.info("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index, rnti}, proc_name);
 }
 
-template <typename... Args>
-void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, const char* proc_name)
+inline void log_proc_started(srslog::basic_logger& logger, du_ue_index_t ue_index, const char* proc_name)
 {
   logger.info("{}: \"{}\" started.", ue_event_prefix{"CTRL", ue_index}, proc_name);
 }
