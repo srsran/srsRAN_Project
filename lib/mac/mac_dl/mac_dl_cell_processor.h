@@ -10,7 +10,7 @@
 
 namespace srsgnb {
 
-class mac_dl_cell_processor final : public mac_cell_slot_handler, public mac_cell_manager
+class mac_dl_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
   mac_dl_cell_processor(mac_common_config_t&          cfg_,

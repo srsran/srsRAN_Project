@@ -57,7 +57,7 @@ private:
     mac_msg.ue_index   = ue->ue_index;
     mac_msg.rnti       = ue->rnti;
     mac_msg.cell_index = ue->pcell_index;
-    return cfg.mac->ue_delete_request(mac_msg);
+    return cfg.mac->handle_ue_delete_request(mac_msg);
   }
 
   du_ue_delete_message        msg;

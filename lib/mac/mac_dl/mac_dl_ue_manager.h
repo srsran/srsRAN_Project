@@ -73,7 +73,7 @@ public:
     return true;
   }
 
-  bool addmod_bearers(du_ue_index_t ue_index, span<const logical_channel_addmod> dl_logical_channels)
+  bool addmod_bearers(du_ue_index_t ue_index, span<const mac_logical_channel_addmod> dl_logical_channels)
   {
     std::lock_guard<std::mutex> lock(ue_mutex[ue_index]);
     return addmod_bearers_nolock(ue_index, dl_logical_channels);
@@ -126,13 +126,13 @@ private:
     return true;
   }
 
-  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const logical_channel_addmod> dl_logical_channels)
+  bool addmod_bearers_nolock(du_ue_index_t ue_index, span<const mac_logical_channel_addmod> dl_logical_channels)
   {
     if (not ue_db.contains(ue_index)) {
       return false;
     }
     auto& u = ue_db[ue_index];
-    for (const logical_channel_addmod& lc : dl_logical_channels) {
+    for (const mac_logical_channel_addmod& lc : dl_logical_channels) {
       u.dl_bearers.insert(lc.lcid, lc.dl_bearer);
     }
     return true;

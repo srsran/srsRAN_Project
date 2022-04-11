@@ -21,22 +21,22 @@ struct mac_slice_configuration {
 };
 
 /// Interface used to handle a MAC cell activation/deactivation.
-class mac_cell_manager
+class mac_cell_controller
 {
 public:
-  virtual ~mac_cell_manager()      = default;
+  virtual ~mac_cell_controller()   = default;
   virtual async_task<void> start() = 0;
   virtual async_task<void> stop()  = 0;
 };
 
 /// Class used to setup the MAC cells and slices.
-class mac_manager
+class mac_cell_manager
 {
 public:
-  virtual ~mac_manager()                                                     = default;
-  virtual void              add_cell(const mac_cell_configuration& cell_cfg) = 0;
-  virtual void              remove_cell(du_cell_index_t cell_index)          = 0;
-  virtual mac_cell_manager& get_cell_manager(du_cell_index_t cell_index)     = 0;
+  virtual ~mac_cell_manager()                                                   = default;
+  virtual void                 add_cell(const mac_cell_configuration& cell_cfg) = 0;
+  virtual void                 remove_cell(du_cell_index_t cell_index)          = 0;
+  virtual mac_cell_controller& get_cell_manager(du_cell_index_t cell_index)     = 0;
 };
 
 } // namespace srsgnb

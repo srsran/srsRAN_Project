@@ -101,14 +101,14 @@ public:
   }
 
 private:
-  bool addmod_bearers(du_ue_index_t ue_index, const std::vector<logical_channel_addmod>& ul_logical_channels)
+  bool addmod_bearers(du_ue_index_t ue_index, const std::vector<mac_logical_channel_addmod>& ul_logical_channels)
   {
     if (not ue_db.contains(ue_index)) {
       return false;
     }
     mac_ul_ue_context& u = ue_db[ue_index];
 
-    for (const logical_channel_addmod& channel : ul_logical_channels) {
+    for (const mac_logical_channel_addmod& channel : ul_logical_channels) {
       u.ul_bearers.insert(channel.lcid, channel.ul_bearer);
     }
 

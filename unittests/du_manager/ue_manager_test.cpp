@@ -15,17 +15,17 @@ public:
   wait_manual_event_tester<mac_ue_reconfiguration_response_message> wait_ue_reconf;
   wait_manual_event_tester<mac_ue_delete_response_message>          wait_ue_delete;
 
-  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg) override
+  async_task<mac_ue_create_response_message> handle_ue_create_request(const mac_ue_create_request_message& msg) override
   {
     last_ue_create_msg = msg;
     return wait_ue_create.launch();
   }
   async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
   {
     return wait_ue_reconf.launch();
   }
-  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg) override
+  async_task<mac_ue_delete_response_message> handle_ue_delete_request(const mac_ue_delete_request_message& msg) override
   {
     last_ue_delete_msg = msg;
     return wait_ue_delete.launch();

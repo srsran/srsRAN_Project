@@ -10,7 +10,7 @@
 #include "sched_config_adapter.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/mac/mac_manager.h"
+#include "srsgnb/mac/mac_cell_manager.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/async/manual_event.h"
@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-class mac_dl_processor final : public mac_dl_configurer, public mac_manager
+class mac_dl_processor final : public mac_dl_configurer, public mac_cell_manager
 {
 public:
   explicit mac_dl_processor(mac_common_config_t&  cfg_,
@@ -34,7 +34,7 @@ public:
   /// Removes cell configuration from MAC DL. The cell is also removed from the scheduler.
   void remove_cell(du_cell_index_t cell_index) override;
 
-  mac_cell_manager& get_cell_manager(du_cell_index_t cell_index) override { return *cells[cell_index]; }
+  mac_cell_controller& get_cell_manager(du_cell_index_t cell_index) override { return *cells[cell_index]; }
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override;

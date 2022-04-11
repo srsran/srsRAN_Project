@@ -31,14 +31,16 @@ public:
                  du_rnti_table&       rnti_table);
 
   /// UE create methods
-  async_task<mac_ue_create_response_message> ue_create_request(const mac_ue_create_request_message& msg) override;
+  async_task<mac_ue_create_response_message>
+  handle_ue_create_request(const mac_ue_create_request_message& msg) override;
 
   /// UE deletion methods
-  async_task<mac_ue_delete_response_message> ue_delete_request(const mac_ue_delete_request_message& msg) override;
+  async_task<mac_ue_delete_response_message>
+  handle_ue_delete_request(const mac_ue_delete_request_message& msg) override;
 
   /// UE reconfiguration methods
   async_task<mac_ue_reconfiguration_response_message>
-  ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
+  handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override;
 
   void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override
   {

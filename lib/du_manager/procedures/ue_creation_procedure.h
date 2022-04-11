@@ -151,7 +151,7 @@ private:
       lc.dl_bearer = nullptr; // TODO
     }
     mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
-    return cfg.mac->ue_create_request(mac_ue_create_msg);
+    return cfg.mac->handle_ue_create_request(mac_ue_create_msg);
   }
 
   async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
