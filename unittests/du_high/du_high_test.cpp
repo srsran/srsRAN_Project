@@ -2,6 +2,7 @@
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/f1_interface/f1ap_asn1_packer.h"
 #include "../../lib/gateway/sctp_network_gateway.h"
+#include "srsgnb/support/executors/manual_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -21,6 +22,8 @@ public:
 /// Test F1 setup over "local" connection to DU.
 void test_f1_setup_local()
 {
+  test_delimit_logger delim{"Test F1 Setup Local"};
+
   class dummy_f1c_pdu_handler : public f1c_pdu_handler
   {
   public:
@@ -45,10 +48,19 @@ void test_f1_setup_local()
     }
   };
 
+  const size_t          task_worker_queue_size = 10000;
+  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size, true);
+  task_worker_executor  ctrl_exec(ctrl_worker);
   dummy_f1c_to_du_relay relay;
   dummy_f1c_pdu_handler pdu_handler(relay);
   phy_dummy             phy;
-  du_high               du_obj(pdu_handler, phy);
+
+  du_high_configuration cfg{};
+  cfg.du_mng_executor = &ctrl_exec;
+  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.phy_adapter     = &phy;
+
+  du_high du_obj(cfg);
 
   du_obj.start();
 }
@@ -57,6 +69,8 @@ void test_f1_setup_local()
 /// TODO: This is a component (or even integration) test by definition!!
 void test_f1_setup_network()
 {
+  test_delimit_logger delim{"Test F1 Setup Network"};
+
   class dummy_f1c_pdu_handler : public f1c_pdu_handler
   {
   public:
@@ -70,25 +84,51 @@ void test_f1_setup_network()
     void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
   };
 
+  const size_t          task_worker_queue_size = 10000;
+  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size, true);
+  task_worker_executor  ctrl_exec(ctrl_worker);
   dummy_f1c_pdu_handler pdu_handler;
   phy_dummy             phy;
-  du_high               du_obj(pdu_handler, phy);
+
+  du_high_configuration cfg{};
+  cfg.du_mng_executor = &ctrl_exec;
+  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.phy_adapter     = &phy;
+
+  du_high du_obj(cfg);
 
   du_obj.start();
 }
 
 void test_du_ue_create()
 {
+  test_delimit_logger delim{"Test DU UE Create"};
+
   class dummy_f1c_pdu_handler : public f1c_pdu_handler
   {
   public:
     asn1::f1ap::f1_ap_pdu_c last_pdu;
-    void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
+    task_executor*          ctrl_exec;
+    void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override
+    {
+      last_pdu = pdu;
+      // unblock waiting CTRL executor.
+      ctrl_exec->execute([]() {});
+    }
   };
 
+  const size_t          task_worker_queue_size = 10000;
+  manual_worker         ctrl_worker{task_worker_queue_size};
   dummy_f1c_pdu_handler pdu_handler;
-  phy_dummy             phy;
-  du_high               du_obj(pdu_handler, phy);
+  pdu_handler.ctrl_exec = &ctrl_worker;
+  phy_dummy phy;
+
+  du_high_configuration cfg{};
+  cfg.du_mng_executor = &ctrl_worker;
+  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.phy_adapter     = &phy;
+
+  du_high du_obj(cfg);
 
   du_obj.start();
 
@@ -101,7 +141,7 @@ void test_du_ue_create()
     if (pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
       break;
     }
-    usleep(1000);
+    ctrl_worker.run_next_blocking();
   }
   TESTASSERT(pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
 }

@@ -8,22 +8,23 @@
 
 namespace srsgnb {
 
-du_high::du_high(f1c_pdu_handler& f1c_pdu_handler, mac_result_notifier& phy_adapter)
+du_high::du_high(du_high_configuration config_) : cfg(config_)
 {
   const size_t task_worker_queue_size = 10000;
+  srsran_assert(cfg.du_mng_executor != nullptr, "Invalid CTRL Executor.");
 
   // Create worker threads
   workers.push_back(std::make_unique<task_worker>("DU-CTRL", task_worker_queue_size, true));
   workers.push_back(std::make_unique<task_worker>("DU-UL#0", task_worker_queue_size, true));
   workers.push_back(std::make_unique<task_worker>("DU-UL#1", task_worker_queue_size, true));
   workers.push_back(std::make_unique<task_worker>("DU-DL", task_worker_queue_size, true));
-  ctrl_exec = make_task_executor(*workers[0]);
+  ctrl_exec = cfg.du_mng_executor;
   dl_execs.push_back(make_task_executor(*workers[2]));
 
   // Setup UL UE executor mapper.
   std::vector<std::unique_ptr<task_executor> > ul_execs;
+  ul_execs.push_back(make_task_executor(*workers[0]));
   ul_execs.push_back(make_task_executor(*workers[1]));
-  ul_execs.push_back(make_task_executor(*workers[2]));
   ul_exec_mapper = std::make_unique<pcell_ul_executor_mapper>(std::move(ul_execs));
 
   // Create layers
@@ -32,8 +33,8 @@ du_high::du_high(f1c_pdu_handler& f1c_pdu_handler, mac_result_notifier& phy_adap
   for (auto& w : dl_execs) {
     execs.push_back(w.get());
   }
-  mac  = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, phy_adapter);
-  f1ap = create_f1ap_du(f1c_pdu_handler);
+  mac        = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, *cfg.phy_adapter);
+  f1ap       = create_f1ap_du(*cfg.f1c_pdu_hdl);
   du_manager =
       create_du_manager(mac->get_ue_configurator(), mac->get_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
 

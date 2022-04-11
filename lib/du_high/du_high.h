@@ -15,10 +15,16 @@
 
 namespace srsgnb {
 
+struct du_high_configuration {
+  task_executor*       du_mng_executor = nullptr;
+  f1c_pdu_handler*     f1c_pdu_hdl     = nullptr;
+  mac_result_notifier* phy_adapter     = nullptr;
+};
+
 class du_high
 {
 public:
-  du_high(f1c_pdu_handler& f1c_pdu_handler_, mac_result_notifier& phy_adapter_);
+  du_high(du_high_configuration cfg_);
   ~du_high();
 
   void start();
@@ -27,6 +33,8 @@ public:
   void push_pusch(mac_rx_data_indication pdu);
 
 private:
+  du_high_configuration cfg;
+
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_du_interface>      f1ap;
   std::unique_ptr<mac_interface>        mac;
@@ -36,7 +44,7 @@ private:
   du_manager_mac_event_indicator mac_ev_notifier;
 
   std::vector<std::unique_ptr<task_worker> >   workers;
-  std::unique_ptr<task_executor>               ctrl_exec;
+  task_executor*                               ctrl_exec;
   std::vector<std::unique_ptr<task_executor> > dl_execs;
   std::unique_ptr<du_l2_ul_executor_mapper>    ul_exec_mapper;
 };

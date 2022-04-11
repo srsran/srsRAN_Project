@@ -48,17 +48,17 @@ struct add_reconf_delete_ue_test_task {
     CORO_BEGIN(ctx);
     // UE creation
     tid = std::this_thread::get_id();
-    logger.info("Creating UE");
+    logger.info("Step 1: Creating UE");
     CORO_AWAIT(mac_dl.add_ue(create_msg));
     logger.info("UE created");
     event_test(test_task_event::ue_created);
     // UE reconfiguration
-    logger.info("Reconfiguring UE");
+    logger.info("Step 2: Reconfiguring UE");
     CORO_AWAIT(mac_dl.reconfigure_ue(reconf_msg));
     logger.info("UE reconfigured");
     event_test(test_task_event::ue_reconfigured);
     // UE deletion
-    logger.info("Deleting UE");
+    logger.info("Step 3: Deleting UE");
     CORO_AWAIT(mac_dl.remove_ue(delete_msg));
     logger.info("UE deleted");
     event_test(test_task_event::ue_deleted);
@@ -134,12 +134,12 @@ void test_dl_ue_procedure_execution_contexts()
     if (ctrl_worker.has_pending_tasks()) {
       logger.info("Running next task in CTRL worker");
       is_ctrl_worker = true;
-      ctrl_worker.run_next();
+      ctrl_worker.try_run_next();
     }
     if (dl_worker.has_pending_tasks()) {
       logger.info("Running next task in DL worker");
       is_ctrl_worker = false;
-      dl_worker.run_next();
+      dl_worker.try_run_next();
     }
   }
   TESTASSERT(not t.empty() and t.ready());
