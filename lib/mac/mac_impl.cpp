@@ -11,6 +11,7 @@ mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
                    mac_result_notifier&      phy_notifier_) :
   cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_, phy_notifier_),
   logger(cfg.logger),
+  sched_cfg_notif(cfg),
   sched_obj(std::make_unique<sched>(sched_cfg_notif.get_notifier())),
   dl_unit(cfg, sched_cfg_notif, *sched_obj, rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),

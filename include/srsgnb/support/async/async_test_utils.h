@@ -31,6 +31,22 @@ public:
   Result            result;
 };
 
+/// Specialization for result of type void.
+template <>
+class wait_manual_event_tester<void>
+{
+public:
+  async_task<void> launch()
+  {
+    return launch_async([this](coro_context<async_task<void> >& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_AWAIT(ready_ev);
+      CORO_RETURN();
+    });
+  }
+  manual_event_flag ready_ev;
+};
+
 template <typename R>
 struct lazy_task_launcher : public eager_async_task<R> {
   lazy_task_launcher(async_task<R>& t_) : t(t_)

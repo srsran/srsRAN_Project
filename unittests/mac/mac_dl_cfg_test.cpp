@@ -83,7 +83,7 @@ void test_dl_ue_procedure_tsan()
   mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
   du_rnti_table             rnti_table;
 
-  sched_config_adapter sched_cfg_adapter;
+  sched_config_adapter sched_cfg_adapter{cfg};
   sched                sched_obj{sched_cfg_adapter.get_notifier()};
   mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
 
@@ -116,14 +116,13 @@ void test_dl_ue_procedure_execution_contexts()
   mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
   du_rnti_table               rnti_table;
 
-  sched_config_adapter sched_cfg_adapter;
+  sched_config_adapter sched_cfg_adapter{cfg};
   sched                sched_obj{sched_cfg_adapter.get_notifier()};
   mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
 
   // TEST: Thread used for resumption does not change.
-  bool is_ctrl_worker = true;
-  auto test_event     = [&ctrl_worker, &is_ctrl_worker](test_task_event ev) {
-    TESTASSERT(is_ctrl_worker);
+  auto test_event = [&ctrl_worker](test_task_event ev) {
+    TESTASSERT(ctrl_worker.get_thread_id() == std::this_thread::get_id(), "Procedure must finish in CTRL thread.");
     if (ev == test_task_event::ue_deleted) {
       ctrl_worker.request_stop();
     }
@@ -133,12 +132,10 @@ void test_dl_ue_procedure_execution_contexts()
   while (not ctrl_worker.is_stopped()) {
     if (ctrl_worker.has_pending_tasks()) {
       logger.info("Running next task in CTRL worker");
-      is_ctrl_worker = true;
       ctrl_worker.try_run_next();
     }
     if (dl_worker.has_pending_tasks()) {
       logger.info("Running next task in DL worker");
-      is_ctrl_worker = false;
       dl_worker.try_run_next();
     }
   }
