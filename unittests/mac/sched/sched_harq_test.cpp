@@ -326,7 +326,7 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   TESTASSERT_EQ(dl_test.pid, pid);
 
   // Create HARQ entity
-  harq_entity h_entity = harq_entity((rnti_t)0x04601, nof_prbs, nof_h_procs, harq_logger);
+  harq_entity h_entity = harq_entity(to_rnti(0x04601), nof_prbs, nof_h_procs, harq_logger);
   test_bench  bench(h_entity, 0, arq_slot_delay);
 
   // ----------------  SLOT 0  ------------------
@@ -407,7 +407,7 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   TESTASSERT_EQ(ul_test.pid, pid);
 
   // Create HARQ entity
-  harq_entity h_entity = harq_entity((rnti_t)0x4601, nof_prbs, nof_h_procs, harq_logger);
+  harq_entity h_entity = harq_entity(to_rnti(0x4601), nof_prbs, nof_h_procs, harq_logger);
 
   // ----------------  SLOT 0  ------------------
   // Update slot
@@ -483,7 +483,7 @@ void test_harq(srslog::basic_logger& harq_logger)
   struct harq_entity_params common_param;
 
   // Create HARQ entity
-  harq_entity h_entity = harq_entity((rnti_t)0x4601, nof_prbs, nof_h_procs, harq_logger);
+  harq_entity h_entity = harq_entity(to_rnti(0x4601), nof_prbs, nof_h_procs, harq_logger);
   test_bench  bench{h_entity, 0, arq_slot_delay};
 
   // ----------------  SLOT 0  ------------------

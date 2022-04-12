@@ -72,7 +72,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   du_manager_config_t cfg{};
   cfg.mac_ue_mng = &mac_dummy;
-  cfg.f1ap = &f1_dummy;
+  cfg.f1ap       = &f1_dummy;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -81,7 +81,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   // Action 1: UL CCCH indication arrives.
   ul_ccch_indication_message ccch_ind{};
   ccch_ind.cell_index = 0;
-  ccch_ind.crnti      = (rnti_t)0x4601;
+  ccch_ind.crnti      = to_rnti(0x4601);
   ccch_ind.subpdu     = {0, 1, 2, 3, 4, 5};
   test_logger.info("TEST: Pushing UL CCCH indication for RNTI=0x{:x}...", ccch_ind.crnti);
   ue_mng.handle_ue_create_request(ccch_ind);
@@ -160,7 +160,7 @@ void test_inexistent_ue_removal()
 
   du_manager_config_t cfg{};
   cfg.mac_ue_mng = &mac_dummy;
-  cfg.f1ap = &f1_dummy;
+  cfg.f1ap       = &f1_dummy;
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
@@ -195,7 +195,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
 
   du_manager_config_t cfg{};
   cfg.mac_ue_mng = &mac_dummy;
-  cfg.f1ap = &f1_dummy;
+  cfg.f1ap       = &f1_dummy;
 
   f1_dummy.wait_ue_create.result.result = true;
   f1_dummy.wait_ue_create.ready_ev.set(); // set automatic completion.
@@ -213,7 +213,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   // Action 1: Start creation of UE by notifying UL CCCH decoding.
   ul_ccch_indication_message ul_ccch_ind{};
   ul_ccch_ind.cell_index = 0;
-  ul_ccch_ind.crnti      = (rnti_t)0x4601;
+  ul_ccch_ind.crnti      = to_rnti(0x4601);
   ul_ccch_ind.subpdu     = {1, 2, 3, 4, 5};
   ue_mng.handle_ue_create_request(ul_ccch_ind);
 
