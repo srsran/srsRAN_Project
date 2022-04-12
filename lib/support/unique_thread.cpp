@@ -124,7 +124,7 @@ static void print_thread_priority(pthread_t t, const char* tname, std::thread::i
       break;
   }
 
-  fmt::print("Thread [{}]: Sched policy is \"{}\". Priority is {}.\n", tname, tid, p, param.sched_priority);
+  fmt::print("Thread [{}:{}]: Sched policy is \"{}\". Priority is {}.\n", tname, tid, p, param.sched_priority);
 }
 
 void unique_thread::print_priority()
