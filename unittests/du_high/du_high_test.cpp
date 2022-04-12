@@ -49,7 +49,7 @@ void test_f1_setup_local()
   };
 
   const size_t          task_worker_queue_size = 10000;
-  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size, true);
+  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size);
   task_worker_executor  ctrl_exec(ctrl_worker);
   dummy_f1c_to_du_relay relay;
   dummy_f1c_pdu_handler pdu_handler(relay);
@@ -85,7 +85,7 @@ void test_f1_setup_network()
   };
 
   const size_t          task_worker_queue_size = 10000;
-  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size, true);
+  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size);
   task_worker_executor  ctrl_exec(ctrl_worker);
   dummy_f1c_pdu_handler pdu_handler;
   phy_dummy             phy;

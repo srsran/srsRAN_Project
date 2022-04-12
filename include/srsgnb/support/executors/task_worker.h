@@ -34,7 +34,7 @@ public:
   task_worker(task_worker&&)      = delete;
   task_worker& operator=(const task_worker&) = delete;
   task_worker& operator=(task_worker&&) = delete;
-  ~task_worker();
+  ~task_worker() override;
 
   void stop();
   void start(int32_t prio_ = -1, uint32_t mask_ = 255);
@@ -53,7 +53,7 @@ private:
   srslog::basic_logger& logger;
 
   std::thread::id         t_id;
-  bool                    is_ready{false};
+  bool                    is_running{false};
   std::mutex              mutex;
   std::condition_variable ready_cvar;
 

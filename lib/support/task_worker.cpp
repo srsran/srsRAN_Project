@@ -49,6 +49,13 @@ void task_worker::stop()
 
 void task_worker::start(int32_t prio_, uint32_t mask_)
 {
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    if (is_running) {
+      logger.error("Error: Trying to initiate task worker that is already running.");
+      return;
+    }
+  }
   prio = prio_;
   mask = mask_;
 
@@ -61,7 +68,7 @@ void task_worker::start(int32_t prio_, uint32_t mask_)
   // wait for std::thread::id to be set.
   {
     std::unique_lock<std::mutex> lock(mutex);
-    while (not is_ready) {
+    while (not is_running) {
       ready_cvar.wait(lock);
     }
   }
@@ -83,7 +90,7 @@ void task_worker::run_thread()
   t_id = std::this_thread::get_id();
   {
     std::unique_lock<std::mutex> lock(mutex);
-    is_ready = true;
+    is_running = true;
     ready_cvar.notify_one();
   }
 
