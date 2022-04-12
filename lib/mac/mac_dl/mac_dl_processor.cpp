@@ -1,5 +1,6 @@
 
 #include "mac_dl_processor.h"
+#include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
 
 using namespace srsgnb;
@@ -58,11 +59,13 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
     // 2. Insert UE and DL bearers
     ue_mng.add_ue(request);
 
-    // 3. Create UE in scheduler
-    sched_obj.config_ue(request.ue_index);
+    // 3. Create UE in scheduler.
+    log_proc_started(logger, request.ue_index, request.crnti, "Sched UE create");
+    sched_obj.handle_add_ue_request(make_ue_creation_request(request));
 
     // 4. Await scheduler to respond via notifier
     CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));
+    log_proc_completed(logger, request.ue_index, request.crnti, "Sched UE create");
 
     // 5. Change back to CTRL executor before returning
     CORO_AWAIT(execute_on(cfg.ctrl_exec));
@@ -112,7 +115,7 @@ async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_r
 
     // 4. Configure UE in Scheduler
     log_proc_started(logger, request.ue_index, request.ue_index, "Sched UE Config");
-    sched_obj.config_ue(request.ue_index);
+    sched_obj.handle_ue_reconfiguration_request(make_ue_reconfiguration_request(request));
 
     // 4. Await scheduler to respond via notifier
     CORO_AWAIT(sched_cfg_notif.ue_configuration_completed(request.ue_index));

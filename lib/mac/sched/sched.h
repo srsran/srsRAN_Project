@@ -12,12 +12,15 @@ namespace srsgnb {
 class sched final : public sched_interface
 {
 public:
-  explicit sched(sched_cfg_notifier& notifier);
+  explicit sched(sched_configuration_notifier& notifier);
 
   bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
 
-  /// Add/Configure UE.
-  void config_ue(du_ue_index_t ue_index) override;
+  /// Add UE.
+  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override;
+
+  /// Reconfiguration existing UE.
+  void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override;
 
   /// Delete UE.
   void delete_ue_request(du_ue_index_t ue_index) override { mac_notifier.on_ue_delete_response(ue_index); }
@@ -40,8 +43,8 @@ public:
 private:
   void slot_indication(slot_point sl_tx, du_cell_index_t cell_index);
 
-  sched_cfg_notifier&   mac_notifier;
-  srslog::basic_logger& logger;
+  sched_configuration_notifier& mac_notifier;
+  srslog::basic_logger&         logger;
 
   /// Repository of created UEs.
   ue_map_t ue_db;

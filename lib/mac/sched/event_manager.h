@@ -24,9 +24,7 @@ class cell_sched_manager;
 class event_manager
 {
 public:
-  event_manager(ue_map_t& ue_db_, cell_sched_manager& cell_sched_) :
-    logger(srslog::fetch_basic_logger("MAC")), ue_db(ue_db_), cells(cell_sched_)
-  {}
+  event_manager(ue_map_t& ue_db_, cell_sched_manager& cell_sched_, sched_configuration_notifier& mac_notifier_);
 
   /// Enqueue scheduler events.
   void handle_cell_configuration_request(const cell_configuration_request_message& msg);
@@ -65,9 +63,10 @@ private:
   void log_invalid_ue_index(const event_t& ev) const;
   void log_invalid_cc(const event_t& ev) const;
 
-  srslog::basic_logger& logger;
-  ue_map_t&             ue_db;
-  cell_sched_manager&   cells;
+  srslog::basic_logger&         logger;
+  ue_map_t&                     ue_db;
+  cell_sched_manager&           cells;
+  sched_configuration_notifier& mac_notifier;
 
   /// Pending Events list per cell.
   std::array<std::unique_ptr<event_list>, MAX_NOF_CELLS> events_per_cell_list;

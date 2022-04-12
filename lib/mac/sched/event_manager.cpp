@@ -46,6 +46,14 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+event_manager::event_manager(ue_map_t&                     ue_db_,
+                             cell_sched_manager&           cell_sched_,
+                             sched_configuration_notifier& mac_notifier_) :
+  logger(srslog::fetch_basic_logger("MAC")), ue_db(ue_db_), cells(cell_sched_), mac_notifier(mac_notifier_)
+{
+  (void)mac_notifier;
+}
+
 void event_manager::handle_cell_configuration_request(const cell_configuration_request_message& msg)
 {
   srsran_assert(not cell_exists(msg.cell_index), "Invalid cell index");

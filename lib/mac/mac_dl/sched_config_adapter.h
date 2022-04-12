@@ -36,10 +36,10 @@ public:
     });
   }
 
-  sched_cfg_notifier& get_notifier() { return notifier; }
+  sched_configuration_notifier& get_notifier() { return notifier; }
 
 private:
-  class sched_config_notif_adapter : public sched_cfg_notifier
+  class sched_config_notif_adapter : public sched_configuration_notifier
   {
   public:
     sched_config_notif_adapter(sched_config_adapter& parent_) : parent(parent_) {}

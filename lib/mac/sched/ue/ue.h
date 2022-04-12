@@ -31,7 +31,7 @@ private:
 class ue
 {
 public:
-  ue(const add_ue_configuration_request_message& req) : ue_index(req.ue_index), crnti(req.crnti)
+  ue(const sched_ue_creation_request_message& req) : ue_index(req.ue_index), crnti(req.crnti)
   {
     cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index);
   }
@@ -54,6 +54,8 @@ public:
   void activate_cells(bounded_bitset<MAX_NOF_CELLS> activ_bitmap) {}
 
   void handle_sr_indication(const sr_indication_message& msg);
+
+  void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
 
 private:
   static const size_t MAX_CELLS = 4;

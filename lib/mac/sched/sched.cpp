@@ -3,8 +3,8 @@
 
 using namespace srsgnb;
 
-sched::sched(sched_cfg_notifier& notifier) :
-  mac_notifier(notifier), logger(srslog::fetch_basic_logger("MAC")), pending_events(ue_db, cells)
+sched::sched(sched_configuration_notifier& notifier) :
+  mac_notifier(notifier), logger(srslog::fetch_basic_logger("MAC")), pending_events(ue_db, cells, notifier)
 {}
 
 bool sched::handle_cell_configuration_request(const cell_configuration_request_message& msg)
@@ -13,11 +13,18 @@ bool sched::handle_cell_configuration_request(const cell_configuration_request_m
   return true;
 }
 
-void sched::config_ue(du_ue_index_t ue_index)
+void sched::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
-  log_ue_proc_event(logger.info, ue_event_prefix{}.set_ue_index(ue_index), "Sched UE Configuration", "started.");
-  mac_notifier.on_ue_config_complete(ue_index);
-  log_ue_proc_event(logger.info, ue_event_prefix{}.set_ue_index(ue_index), "Sched UE Configuration", "completed.");
+  log_ue_proc_event(
+      logger.info, ue_event_prefix{}.set_ue_index(ue_request.ue_index), "Sched UE Configuration", "started.");
+  mac_notifier.on_ue_config_complete(ue_request.ue_index);
+  log_ue_proc_event(
+      logger.info, ue_event_prefix{}.set_ue_index(ue_request.ue_index), "Sched UE Configuration", "completed.");
+}
+
+void sched::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
+{
+  mac_notifier.on_ue_config_complete(ue_request.ue_index);
 }
 
 void sched::handle_rach_indication(const rach_indication_message& msg)

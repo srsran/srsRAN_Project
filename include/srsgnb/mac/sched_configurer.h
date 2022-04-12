@@ -27,8 +27,15 @@ struct cell_configuration_request_message {
   // TODO: ...
 };
 
-/// Add UE Configuration Request
-struct add_ue_configuration_request_message {
+/// UE Creation Request
+struct sched_ue_creation_request_message {
+  du_ue_index_t   ue_index;
+  rnti_t          crnti;
+  du_cell_index_t pcell_index;
+};
+
+/// UE Reconfiguration Request
+struct sched_ue_reconfiguration_message {
   du_ue_index_t   ue_index;
   rnti_t          crnti;
   du_cell_index_t pcell_index;
@@ -52,18 +59,19 @@ struct rach_indication_message {
 class sched_configurer
 {
 public:
-  virtual ~sched_configurer()                                                                   = default;
-  virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg) = 0;
-  virtual void handle_rach_indication(const rach_indication_message& msg)                       = 0;
-  virtual void config_ue(du_ue_index_t ue_index)                                                = 0;
-  virtual void delete_ue_request(du_ue_index_t ue_index)                                        = 0;
+  virtual ~sched_configurer()                                                                        = default;
+  virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg)      = 0;
+  virtual void handle_rach_indication(const rach_indication_message& msg)                            = 0;
+  virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)            = 0;
+  virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) = 0;
+  virtual void delete_ue_request(du_ue_index_t ue_index)                                             = 0;
 };
 
-/// Interface used by scheduler to notify MAC
-class sched_cfg_notifier
+/// Interface used by scheduler to notify MAC that a configuration is complete.
+class sched_configuration_notifier
 {
 public:
-  virtual ~sched_cfg_notifier()                              = default;
+  virtual ~sched_configuration_notifier()                    = default;
   virtual void on_ue_config_complete(du_ue_index_t ue_index) = 0;
   virtual void on_ue_delete_response(du_ue_index_t ue_index) = 0;
 };

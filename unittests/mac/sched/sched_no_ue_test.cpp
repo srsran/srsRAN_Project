@@ -5,7 +5,7 @@
 
 using namespace srsgnb;
 
-class sched_cfg_dummy_notifier : public sched_cfg_notifier
+class sched_cfg_dummy_notifier : public sched_configuration_notifier
 {
 public:
   void on_ue_config_complete(rnti_t) override {}
