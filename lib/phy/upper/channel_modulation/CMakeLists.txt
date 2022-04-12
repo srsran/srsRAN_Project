@@ -8,6 +8,7 @@
 
 set(SOURCES
         modulation_mapper_impl.cpp
+        demodulation_mapper_impl.cpp
         )
 
 include_directories(../../../../include/srsgnb/phy/upper/channel_modulation)
