@@ -52,7 +52,10 @@ private:
   uint32_t              mask = 255;
   srslog::basic_logger& logger;
 
-  std::thread::id t_id;
+  std::thread::id         t_id;
+  bool                    is_ready{false};
+  std::mutex              mutex;
+  std::condition_variable ready_cvar;
 
   srsgnb::dyn_blocking_queue<task_t> pending_tasks;
 };

@@ -16,13 +16,6 @@
 #include <chrono>
 #include <stdio.h>
 
-#define DEBUG 0
-#define debug_thread(fmt, ...)                                                                                         \
-  do {                                                                                                                 \
-    if (DEBUG)                                                                                                         \
-      printf(fmt, __VA_ARGS__);                                                                                        \
-  } while (0)
-
 namespace srsgnb {
 
 task_worker::task_worker(std::string thread_name_,
@@ -64,6 +57,14 @@ void task_worker::start(int32_t prio_, uint32_t mask_)
   } else {
     thread::start_cpu_mask(prio, mask);
   }
+
+  // wait for std::thread::id to be set.
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    while (not is_ready) {
+      ready_cvar.wait(lock);
+    }
+  }
 }
 
 void task_worker::push_task(task_t&& task)
@@ -78,7 +79,14 @@ void task_worker::push_task(task_t&& task)
 
 void task_worker::run_thread()
 {
+  // set std::thread::id and signal caller thread.
   t_id = std::this_thread::get_id();
+  {
+    std::unique_lock<std::mutex> lock(mutex);
+    is_ready = true;
+    ready_cvar.notify_one();
+  }
+
   while (true) {
     bool   success;
     task_t task = pending_tasks.pop_blocking(&success);

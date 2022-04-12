@@ -12,7 +12,7 @@ namespace srsgnb {
 class manual_worker : public task_executor
 {
 public:
-  manual_worker(size_t q_size) : pending_tasks(q_size) {}
+  manual_worker(size_t q_size) : t_id(std::this_thread::get_id()), pending_tasks(q_size) {}
 
   std::thread::id get_thread_id() const { return t_id; }
 
@@ -46,7 +46,7 @@ public:
   /// Run all pending tasks until queue is emptied.
   bool run_pending_tasks()
   {
-    set_thread_id();
+    assert_thread_id();
     bool ret = false, success = false;
     do {
       unique_task t;
@@ -62,7 +62,7 @@ public:
   /// Run next pending task if it is enqueued.
   bool try_run_next()
   {
-    set_thread_id();
+    assert_thread_id();
     unique_task t;
     bool        success = pending_tasks.try_pop(t);
     if (not success) {
@@ -75,7 +75,7 @@ public:
   /// Run next pending task once it is enqueued.
   bool run_next_blocking()
   {
-    set_thread_id();
+    assert_thread_id();
     bool        success = false;
     unique_task t       = pending_tasks.pop_blocking(&success);
     if (not success) {
@@ -88,14 +88,9 @@ public:
 private:
   bool has_thread_id() const { return t_id != std::thread::id{}; }
 
-  void set_thread_id()
+  void assert_thread_id()
   {
-    if (not has_thread_id()) {
-      // if not initialized.
-      t_id = std::this_thread::get_id();
-    } else {
-      srsran_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
-    }
+    srsran_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
   }
 
   std::thread::id                 t_id;

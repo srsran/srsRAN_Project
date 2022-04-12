@@ -111,9 +111,7 @@ void test_du_ue_create()
     task_executor*          ctrl_exec;
     void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override
     {
-      last_pdu = pdu;
-      // unblock waiting CTRL executor.
-      ctrl_exec->execute([]() {});
+      ctrl_exec->execute([this, pdu]() { last_pdu = pdu; });
     }
   };
 

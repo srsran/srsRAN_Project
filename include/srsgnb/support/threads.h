@@ -43,7 +43,7 @@ namespace srsgnb {
 class thread
 {
 public:
-  thread(const std::string& name_) : _thread(0), name(name_) {}
+  thread(std::string name_) : _thread(0), name(std::move(name_)) {}
 
   thread(const thread&) = delete;
 
