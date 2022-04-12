@@ -32,15 +32,15 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 option(ASSERTS_ENABLED       "Enable srsRAN asserts"                    ON)
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
+option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
 endif()
 
-if (ENABLE_TSAN)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fsanitize=thread -DHAVE_TSAN")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
-endif (ENABLE_TSAN)
+if (ENABLE_ASAN AND ENABLE_TSAN)
+    message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
+endif ()
 
 ########################################################################
 # Compiler specific setup
@@ -71,6 +71,18 @@ else(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fno-trapping-math -fno-math-errno -DBUILD_TYPE_RELEASE")
   endif(${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
 endif(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+
+if (ENABLE_ASAN)
+    # Note: When using ASAN, we need to ensure the use of RPATH instead of RUNPATH via "-Wl,--disable-new-dtags"
+    # While RPATH is default, some systems (e.g. Ubuntu 18.04 and 20.04) use RUNPATH by default, which is non-transitive.
+    # Since ASAN intercepts dlopen(), by which it replaces the dynamic string token "$ORIGIN" to its own location,
+    # the RF plugins won't be found when using ASAN + RUNPATH in the top-level executable.
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -fno-omit-frame-pointer -Wl,--disable-new-dtags")
+endif (ENABLE_ASAN)
+
+if (ENABLE_TSAN)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
+endif (ENABLE_TSAN)
 
 ########################################################################
 # Find dependencies
@@ -105,6 +117,7 @@ if (CCACHE_EXECUTABLE)
     endforeach ()
 endif ()
 
+find_package(Threads REQUIRED)
 
 include(CTest)
 
