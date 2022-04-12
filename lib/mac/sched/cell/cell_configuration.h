@@ -3,7 +3,7 @@
 #define LIB_MAC_SCHED_CELL_CONFIGURATION_H
 
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/mac/sched_configurer.h"
+#include "srsgnb/mac/sched_configurator.h"
 
 namespace srsgnb {
 

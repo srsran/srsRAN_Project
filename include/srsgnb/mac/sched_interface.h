@@ -2,13 +2,13 @@
 #ifndef SRSGNB_SCHED_INTERFACE_H
 #define SRSGNB_SCHED_INTERFACE_H
 
-#include "sched_configurer.h"
+#include "sched_configurator.h"
 #include "sched_result.h"
 #include "sched_ue_feedback.h"
 
 namespace srsgnb {
 
-class sched_interface : public sched_configurer, public sched_ue_feedback
+class sched_interface : public sched_configurator, public sched_ue_feedback
 {
 public:
   virtual ~sched_interface()                                                                = default;

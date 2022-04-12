@@ -39,14 +39,13 @@ public:
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
 
 private:
-  mac_common_config_t   cfg;
-  srslog::basic_logger& logger;
+  mac_common_config_t cfg;
 
   /// Table used to convert from RNTI to UE index.
   du_rnti_table rnti_table;
 
   /// Handle used to await scheduler configurations.
-  sched_config_adapter sched_cfg_notif;
+  sched_config_adapter sched_cfg_adapter;
 
   /// MAC Scheduler.
   std::unique_ptr<sched_interface> sched_obj;

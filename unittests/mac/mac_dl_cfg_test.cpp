@@ -9,6 +9,38 @@
 
 using namespace srsgnb;
 
+class dummy_sched : public sched_interface
+{
+public:
+  srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
+  sched_configuration_notifier& notifier;
+
+  dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
+
+  bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override { return true; }
+  void handle_rach_indication(const rach_indication_message& msg) override {}
+  void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override
+  {
+    logger.info("SCHED: ueId={} Creation", ue_request.ue_index);
+    notifier.on_ue_config_complete(ue_request.ue_index);
+  }
+  void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override
+  {
+    logger.info("SCHED: ueId={} Reconfiguration", ue_request.ue_index);
+    notifier.on_ue_config_complete(ue_request.ue_index);
+  }
+  void delete_ue_request(du_ue_index_t ue_index) override
+  {
+    logger.info("SCHED: ueId={} Deletion", ue_index);
+    notifier.on_ue_delete_response(ue_index);
+  }
+
+  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
+  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
+  void                   ul_sr_info(const sr_indication_message& sr) override {}
+  void                   ul_bsr(const ul_bsr_indication_message& bsr) override {}
+};
+
 /// Enum used to track the progress of the test task
 enum class test_task_event { ue_created, ue_reconfigured, ue_deleted };
 
@@ -67,40 +99,6 @@ struct add_reconf_delete_ue_test_task {
   }
 };
 
-void test_dl_ue_procedure_tsan()
-{
-  test_delimit_logger delimiter{"Test UE procedures TSAN"};
-
-  blocking_task_worker        ctrl_worker{128};
-  task_worker                 dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
-  task_worker_executor        dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
-  std::vector<task_executor*> dl_execs;
-  dl_execs.push_back(&dl_exec1);
-  dl_execs.push_back(&dl_exec2);
-  dummy_ul_executor_mapper  ul_exec_mapper{ctrl_worker};
-  dummy_mac_event_indicator du_mng_notifier;
-  dummy_mac_result_notifier phy_notifier;
-  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
-  du_rnti_table             rnti_table;
-
-  sched_config_adapter sched_cfg_adapter{cfg};
-  sched                sched_obj{sched_cfg_adapter.get_notifier()};
-  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
-
-  // TEST: Thread used for resumption does not change
-  std::thread::id tid        = std::this_thread::get_id();
-  auto            test_event = [&ctrl_worker, &tid](test_task_event ev) {
-    TESTASSERT(tid == std::this_thread::get_id()); // resumes back in CTRL thread
-    if (ev == test_task_event::ue_deleted) {
-      ctrl_worker.request_stop();
-    }
-  };
-  eager_async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
-
-  ctrl_worker.run();
-  TESTASSERT(not t.empty() and t.ready());
-}
-
 /// In this test, we verify the correct executors are called during creation, reconfiguration and deletion of a UE.
 void test_dl_ue_procedure_execution_contexts()
 {
@@ -117,8 +115,11 @@ void test_dl_ue_procedure_execution_contexts()
   du_rnti_table               rnti_table;
 
   sched_config_adapter sched_cfg_adapter{cfg};
-  sched                sched_obj{sched_cfg_adapter.get_notifier()};
+  dummy_sched          sched_obj{sched_cfg_adapter.get_notifier()};
   mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+
+  // Action: Add Cell.
+  mac_dl.add_cell(mac_cell_configuration{});
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
@@ -142,6 +143,48 @@ void test_dl_ue_procedure_execution_contexts()
   TESTASSERT(not t.empty() and t.ready());
 }
 
+void test_dl_ue_procedure_tsan()
+{
+  test_delimit_logger delimiter{"Test UE procedures TSAN"};
+
+  blocking_task_worker        ctrl_worker{128};
+  task_worker                 dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
+  task_worker_executor        dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
+  std::vector<task_executor*> dl_execs;
+  dl_execs.push_back(&dl_exec1);
+  dl_execs.push_back(&dl_exec2);
+  dummy_ul_executor_mapper  ul_exec_mapper{ctrl_worker};
+  dummy_mac_event_indicator du_mng_notifier;
+  dummy_mac_result_notifier phy_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
+  du_rnti_table             rnti_table;
+
+  sched_config_adapter sched_cfg_adapter{cfg};
+  dummy_sched          sched_obj{sched_cfg_adapter.get_notifier()};
+  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+
+  // Action: Add Cells.
+  mac_cell_configuration cell_cfg1{};
+  cell_cfg1.cell_index = 0;
+  mac_dl.add_cell(cell_cfg1);
+  mac_cell_configuration cell_cfg2{};
+  cell_cfg2.cell_index = 1;
+  mac_dl.add_cell(cell_cfg2);
+
+  // TEST: Thread used for resumption does not change
+  std::thread::id tid        = std::this_thread::get_id();
+  auto            test_event = [&ctrl_worker, &tid](test_task_event ev) {
+    TESTASSERT(tid == std::this_thread::get_id()); // resumes back in CTRL thread
+    if (ev == test_task_event::ue_deleted) {
+      ctrl_worker.request_stop();
+    }
+  };
+  eager_async_task<void> t = launch_async<add_reconf_delete_ue_test_task>(mac_dl, test_event);
+
+  ctrl_worker.run();
+  TESTASSERT(not t.empty() and t.ready());
+}
+
 int main()
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
@@ -149,6 +192,6 @@ int main()
 
   srslog::init();
 
-  test_dl_ue_procedure_tsan();
   test_dl_ue_procedure_execution_contexts();
+  test_dl_ue_procedure_tsan();
 }

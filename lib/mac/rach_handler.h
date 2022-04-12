@@ -4,7 +4,7 @@
 
 #include "du_rnti_table.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/sched_configurer.h"
+#include "srsgnb/mac/sched_configurator.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
@@ -14,7 +14,7 @@ namespace srsgnb {
 class rach_handler final : public mac_rach_handler
 {
 public:
-  explicit rach_handler(sched_configurer& sched_, du_rnti_table& rnti_table_) :
+  explicit rach_handler(sched_configurator& sched_, du_rnti_table& rnti_table_) :
     logger(srslog::fetch_basic_logger("MAC")), rnti_table(rnti_table_), sched(sched_)
   {}
 
@@ -63,7 +63,7 @@ private:
 
   srslog::basic_logger& logger;
   du_rnti_table&        rnti_table;
-  sched_configurer&     sched;
+  sched_configurator&   sched;
 
   std::atomic<std::underlying_type_t<rnti_t> > rnti_counter{INITIAL_RNTI - MIN_CRNTI};
 };

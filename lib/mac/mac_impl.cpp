@@ -10,16 +10,12 @@ mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
                    task_executor&            ctrl_exec_,
                    mac_result_notifier&      phy_notifier_) :
   cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_, phy_notifier_),
-  logger(cfg.logger),
-  sched_cfg_notif(cfg),
-  sched_obj(std::make_unique<sched>(sched_cfg_notif.get_notifier())),
-  dl_unit(cfg, sched_cfg_notif, *sched_obj, rnti_table),
+  sched_cfg_adapter(cfg),
+  sched_obj(std::make_unique<sched>(sched_cfg_adapter.get_notifier())),
+  dl_unit(cfg, sched_cfg_adapter, *sched_obj, rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),
   ctrl_unit(cfg, ul_unit, dl_unit, rnti_table),
   rach_hdl(*sched_obj, rnti_table)
-{
-  // :TODO: remove when the log is used.
-  (void)(logger);
-}
+{}
 
 } // namespace srsgnb
