@@ -27,3 +27,7 @@ add_test(async_queue_test async_queue_test)
 add_executable(async_task_sequencer_test async_task_sequencer_test.cpp)
 target_link_libraries(async_task_sequencer_test srslog srsgnb_support)
 add_test(async_task_sequencer_test async_task_sequencer_test)
+
+add_executable(unique_thread_test unique_thread_test.cpp)
+target_link_libraries(unique_thread_test srslog srsgnb_support)
+add_test(unique_thread_test unique_thread_test)

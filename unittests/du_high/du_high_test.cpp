@@ -4,6 +4,7 @@
 #include "../../lib/gateway/sctp_network_gateway.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
+#include <unistd.h>
 
 using namespace srsgnb;
 

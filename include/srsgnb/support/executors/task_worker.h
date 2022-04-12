@@ -5,7 +5,7 @@
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/adt/unique_function.h"
 #include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/threads.h"
+#include "srsgnb/support/unique_thread.h"
 #include "task_executor.h"
 #include <atomic>
 #include <condition_variable>
@@ -20,42 +20,46 @@
 namespace srsgnb {
 
 /// Class used to create a single worker with an input task queue with a single reader
-class task_worker : public thread
+class task_worker
 {
   using task_t = unique_task;
 
 public:
   task_worker(std::string thread_name_,
               uint32_t    queue_size,
-              bool        start_deferred = false,
-              int32_t     prio_          = -1,
-              uint32_t    mask_          = 255);
+              bool        start_postponed = false,
+              int         prio_           = -1,
+              int         mask_           = -1);
   task_worker(const task_worker&) = delete;
   task_worker(task_worker&&)      = delete;
   task_worker& operator=(const task_worker&) = delete;
   task_worker& operator=(task_worker&&) = delete;
-  ~task_worker() override;
+  ~task_worker();
 
   void stop();
-  void start(int32_t prio_ = -1, uint32_t mask_ = 255);
+  void start(int prio_ = -1, int mask_ = -1);
 
-  void     push_task(task_t&& task);
+  void push_task(task_t&& task)
+  {
+    auto ret = pending_tasks.try_push(std::move(task));
+    if (ret.is_error()) {
+      logger.error("Cannot push anymore tasks into the worker queue. maximum size is {}",
+                   uint32_t(pending_tasks.max_size()));
+      return;
+    }
+  }
+
   uint32_t nof_pending_tasks() const { return pending_tasks.size(); }
 
-  std::thread::id get_id() const { return t_id; }
+  std::thread::id get_id() const { return t_handle.get_id(); }
 
 private:
-  void run_thread() override;
-
   // args
-  int32_t               prio = -1;
-  uint32_t              mask = 255;
+  int                   prio = -1;
+  int                   mask = -1;
   srslog::basic_logger& logger;
 
-  std::thread::id         t_id;
-  bool                    is_running{false};
-  std::mutex              mutex;
-  std::condition_variable ready_cvar;
+  unique_thread t_handle;
 
   srsgnb::dyn_blocking_queue<task_t> pending_tasks;
 };

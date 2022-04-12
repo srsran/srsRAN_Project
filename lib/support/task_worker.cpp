@@ -18,18 +18,14 @@
 
 namespace srsgnb {
 
-task_worker::task_worker(std::string thread_name_,
-                         uint32_t    queue_size,
-                         bool        start_deferred,
-                         int32_t     prio_,
-                         uint32_t    mask_) :
-  thread(std::move(thread_name_)),
+task_worker::task_worker(std::string thread_name_, uint32_t queue_size, bool start_postponed, int prio_, int mask_) :
   prio(prio_),
   mask(mask_),
   logger(srslog::fetch_basic_logger("POOL")),
+  t_handle(std::move(thread_name_)),
   pending_tasks(queue_size)
 {
-  if (not start_deferred) {
+  if (not start_postponed) {
     start(prio_, mask_);
   }
 }
@@ -43,66 +39,26 @@ void task_worker::stop()
 {
   if (not pending_tasks.is_stopped()) {
     pending_tasks.stop();
-    wait_thread_finish();
+    t_handle.join();
   }
 }
 
-void task_worker::start(int32_t prio_, uint32_t mask_)
+void task_worker::start(int prio_, int mask_)
 {
-  {
-    std::lock_guard<std::mutex> lock(mutex);
-    if (is_running) {
-      logger.error("Error: Trying to initiate task worker that is already running.");
-      return;
-    }
-  }
   prio = prio_;
   mask = mask_;
 
-  if (mask == 255) {
-    thread::start(prio);
-  } else {
-    thread::start_cpu_mask(prio, mask);
-  }
-
-  // wait for std::thread::id to be set.
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    while (not is_running) {
-      ready_cvar.wait(lock);
+  t_handle.start_cpu_mask(prio, mask, [this]() {
+    while (true) {
+      bool   success;
+      task_t task = pending_tasks.pop_blocking(&success);
+      if (not success) {
+        break;
+      }
+      task();
     }
-  }
-}
-
-void task_worker::push_task(task_t&& task)
-{
-  auto ret = pending_tasks.try_push(std::move(task));
-  if (ret.is_error()) {
-    logger.error("Cannot push anymore tasks into the worker queue. maximum size is {}",
-                 uint32_t(pending_tasks.max_size()));
-    return;
-  }
-}
-
-void task_worker::run_thread()
-{
-  // set std::thread::id and signal caller thread.
-  t_id = std::this_thread::get_id();
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    is_running = true;
-    ready_cvar.notify_one();
-  }
-
-  while (true) {
-    bool   success;
-    task_t task = pending_tasks.pop_blocking(&success);
-    if (not success) {
-      break;
-    }
-    task();
-  }
-  logger.info("Task worker {} finished.", thread::get_name().c_str());
+    logger.info("Task worker {} finished.", t_handle.get_name());
+  });
 }
 
 } // namespace srsgnb

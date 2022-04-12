@@ -9,7 +9,7 @@
 set(SOURCES
         math_utils.cpp
         task_worker.cpp
-        threads.cpp
+        unique_thread.cpp
         timers.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
