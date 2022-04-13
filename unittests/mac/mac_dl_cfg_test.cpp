@@ -29,7 +29,7 @@ public:
     logger.info("SCHED: ueId={} Reconfiguration", ue_request.ue_index);
     notifier.on_ue_config_complete(ue_request.ue_index);
   }
-  void delete_ue_request(du_ue_index_t ue_index) override
+  void handle_ue_delete_request(du_ue_index_t ue_index) override
   {
     logger.info("SCHED: ueId={} Deletion", ue_index);
     notifier.on_ue_delete_response(ue_index);
@@ -114,9 +114,10 @@ void test_dl_ue_procedure_execution_contexts()
   mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
   du_rnti_table               rnti_table;
 
-  sched_config_adapter sched_cfg_adapter{cfg};
-  dummy_sched          sched_obj{sched_cfg_adapter.get_notifier()};
-  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+  srs_sched_config_adapter sched_cfg_adapter{cfg};
+  dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
+  mac_dl_processor         mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+  sched_cfg_adapter.set_sched(sched_obj);
 
   // Action: Add Cell.
   mac_dl.add_cell(mac_cell_configuration{});
@@ -148,7 +149,7 @@ void test_dl_ue_procedure_tsan()
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
   blocking_task_worker        ctrl_worker{128};
-  task_worker                 dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
+  task_worker                 dl_worker1{"DL#1", 128}, dl_worker2{"DL#2", 128};
   task_worker_executor        dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
   std::vector<task_executor*> dl_execs;
   dl_execs.push_back(&dl_exec1);
@@ -159,9 +160,10 @@ void test_dl_ue_procedure_tsan()
   mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_execs, ctrl_worker, phy_notifier};
   du_rnti_table             rnti_table;
 
-  sched_config_adapter sched_cfg_adapter{cfg};
-  dummy_sched          sched_obj{sched_cfg_adapter.get_notifier()};
-  mac_dl_processor     mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+  srs_sched_config_adapter sched_cfg_adapter{cfg};
+  dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
+  mac_dl_processor         mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
+  sched_cfg_adapter.set_sched(sched_obj);
 
   // Action: Add Cells.
   mac_cell_configuration cell_cfg1{};

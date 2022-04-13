@@ -23,7 +23,7 @@ public:
   void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) override;
 
   /// Delete UE.
-  void delete_ue_request(du_ue_index_t ue_index) override { mac_notifier.on_ue_delete_response(ue_index); }
+  void handle_ue_delete_request(du_ue_index_t ue_index) override { mac_notifier.on_ue_delete_response(ue_index); }
 
   /// Called when RACH is detected.
   void handle_rach_indication(const rach_indication_message& msg) override;

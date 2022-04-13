@@ -4,7 +4,7 @@
 
 #include "mac_config.h"
 #include "mac_ctrl/mac_controller.h"
-#include "mac_dl/sched_config_adapter.h"
+#include "mac_dl/mac_sched_configurator.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
 #include "srsgnb/mac/mac.h"
@@ -45,7 +45,7 @@ private:
   du_rnti_table rnti_table;
 
   /// Handle used to await scheduler configurations.
-  sched_config_adapter sched_cfg_adapter;
+  srs_sched_config_adapter sched_cfg_adapter;
 
   /// MAC Scheduler.
   std::unique_ptr<sched_interface> sched_obj;
