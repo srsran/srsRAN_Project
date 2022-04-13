@@ -7,10 +7,10 @@ namespace srsgnb {
 
 mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
                    du_l2_ul_executor_mapper& ul_exec_mapper_,
-                   span<task_executor*>      dl_execs_,
+                   du_l2_dl_executor_mapper& dl_exec_mapper_,
                    task_executor&            ctrl_exec_,
                    mac_result_notifier&      phy_notifier_) :
-  cfg(event_notifier, ul_exec_mapper_, dl_execs_, ctrl_exec_, phy_notifier_),
+  cfg(event_notifier, ul_exec_mapper_, dl_exec_mapper_, ctrl_exec_, phy_notifier_),
   sched_cfg_adapter(cfg),
   sched_obj(create_scheduler(sched_cfg_adapter.get_sched_notifier())),
   dl_unit(cfg, sched_cfg_adapter, *sched_obj, rnti_table),

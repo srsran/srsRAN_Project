@@ -31,14 +31,14 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   test_delimit_logger test_delim{"Single threaded UE creation procedure in mode: {}", to_string(tmode)};
 
   // Run tasks in same thread
-  manual_task_worker            worker{128};
-  std::array<task_executor*, 1> exec_lst = {&worker};
-  dummy_ul_executor_mapper      ul_exec_mapper{worker};
-  dummy_mac_event_indicator     du_mng_notif;
-  dummy_mac_result_notifier     phy_notifier;
+  manual_task_worker        worker{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{worker};
+  dummy_dl_executor_mapper  dl_exec_mapper{&worker};
+  dummy_mac_event_indicator du_mng_notif;
+  dummy_mac_result_notifier phy_notifier;
 
   // Create a MAC config object
-  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, exec_lst, worker, phy_notifier};
+  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier};
   mac_ctrl_dummy_configurer mac_ctrl;
   mac_ul_dummy_configurer   mac_ul;
   mac_dl_dummy_configurer   mac_dl;

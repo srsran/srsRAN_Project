@@ -103,7 +103,7 @@ private:
   void setup_new_configuration(du_cell_index_t cell_index, du_ue_index_t ue_index)
   {
     // Set the task executor from where the scheduler notification is going to be processed.
-    sched_cfg_notif_map[ue_index].dl_exec = cfg.dl_execs[cell_index % cfg.dl_execs.size()];
+    sched_cfg_notif_map[ue_index].dl_exec = &cfg.dl_exec_mapper.executor(cell_index);
 
     // Reset notification event state.
     sched_cfg_notif_map[ue_index].ue_config_ready.reset();

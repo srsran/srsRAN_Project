@@ -109,6 +109,16 @@ public:
   task_executor& exec;
 };
 
+class dummy_dl_executor_mapper : public du_l2_dl_executor_mapper
+{
+public:
+  dummy_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) : execs(execs_.begin(), execs_.end()) {}
+
+  task_executor& executor(du_cell_index_t cell_index) override { return *execs[cell_index % execs.size()]; }
+
+  std::vector<task_executor*> execs;
+};
+
 class dummy_mac_event_indicator : public mac_ul_ccch_notifier
 {
 public:

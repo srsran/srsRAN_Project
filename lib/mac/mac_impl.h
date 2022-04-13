@@ -17,7 +17,7 @@ class mac_impl : public mac_interface, public mac_cell_control_information_handl
 public:
   explicit mac_impl(mac_ul_ccch_notifier&     event_notifier,
                     du_l2_ul_executor_mapper& ul_exec_mapper,
-                    span<task_executor*>      dl_execs,
+                    du_l2_dl_executor_mapper& dl_exec_mapper,
                     task_executor&            ctrl_exec,
                     mac_result_notifier&      phy_notifier_);
 

@@ -1,5 +1,6 @@
 
 #include "../../lib/du_high/du_high.h"
+#include "../../lib/du_high/du_high_executor_strategies.h"
 #include "../../lib/f1_interface/f1ap_asn1_packer.h"
 #include "../../lib/gateway/sctp_network_gateway.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
@@ -17,6 +18,28 @@ struct phy_dummy : public mac_result_notifier {
 public:
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
   phy_cell_dummy            cell;
+};
+
+struct du_high_worker_manager {
+  static const uint32_t task_worker_queue_size = 10000;
+
+  void stop()
+  {
+    for (auto& w : dl_workers) {
+      w.stop();
+    }
+    for (auto& w : ul_workers) {
+      w.stop();
+    }
+  }
+
+  manual_task_worker ctrl_worker{task_worker_queue_size};
+  task_worker        dl_workers[2] = {{"DU-DL#0", task_worker_queue_size}, {"DU-DL#1", task_worker_queue_size}};
+  task_worker        ul_workers[2] = {{"DU-UL#0", task_worker_queue_size}, {"DU-UL#1", task_worker_queue_size}};
+  static_vector<task_worker_executor, 2> dl_execs{{dl_workers[0]}, {dl_workers[1]}};
+  static_vector<task_worker_executor, 2> ul_execs{{ul_workers[0]}, {ul_workers[1]}};
+  pcell_ul_executor_mapper               ul_exec_mapper{{&ul_execs[0], &ul_execs[1]}};
+  cell_dl_executor_mapper                dl_exec_mapper{{&dl_execs[0], &dl_execs[1]}};
 };
 
 /// Test F1 setup over "local" connection to DU.
@@ -48,21 +71,23 @@ void test_f1_setup_local()
     }
   };
 
-  const size_t          task_worker_queue_size = 10000;
-  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size);
-  task_worker_executor  ctrl_exec(ctrl_worker);
-  dummy_f1c_to_du_relay relay;
-  dummy_f1c_pdu_handler pdu_handler(relay);
-  phy_dummy             phy;
+  du_high_worker_manager workers;
+  dummy_f1c_to_du_relay  relay;
+  dummy_f1c_pdu_handler  pdu_handler(relay);
+  phy_dummy              phy;
 
   du_high_configuration cfg{};
-  cfg.du_mng_executor = &ctrl_exec;
+  cfg.du_mng_executor = &workers.ctrl_worker;
+  cfg.dl_executors    = &workers.dl_exec_mapper;
+  cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_pdu_hdl     = &pdu_handler;
   cfg.phy_adapter     = &phy;
 
   du_high du_obj(cfg);
 
   du_obj.start();
+
+  workers.stop();
 }
 
 /// Test F1 setup over network connection.
@@ -84,20 +109,22 @@ void test_f1_setup_network()
     void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
   };
 
-  const size_t          task_worker_queue_size = 10000;
-  task_worker           ctrl_worker("DU-CTRL", task_worker_queue_size);
-  task_worker_executor  ctrl_exec(ctrl_worker);
-  dummy_f1c_pdu_handler pdu_handler;
-  phy_dummy             phy;
+  du_high_worker_manager workers;
+  dummy_f1c_pdu_handler  pdu_handler;
+  phy_dummy              phy;
 
   du_high_configuration cfg{};
-  cfg.du_mng_executor = &ctrl_exec;
+  cfg.du_mng_executor = &workers.ctrl_worker;
+  cfg.dl_executors    = &workers.dl_exec_mapper;
+  cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_pdu_hdl     = &pdu_handler;
   cfg.phy_adapter     = &phy;
 
   du_high du_obj(cfg);
 
   du_obj.start();
+
+  workers.stop();
 }
 
 void test_du_ue_create()
@@ -115,14 +142,18 @@ void test_du_ue_create()
     }
   };
 
-  const size_t          task_worker_queue_size = 10000;
-  manual_task_worker    ctrl_worker{task_worker_queue_size};
+  // Setup Task Workers.
+  du_high_worker_manager workers;
+
+  // Setup F1c PDU handler.
   dummy_f1c_pdu_handler pdu_handler;
-  pdu_handler.ctrl_exec = &ctrl_worker;
+  pdu_handler.ctrl_exec = &workers.ctrl_worker;
   phy_dummy phy;
 
   du_high_configuration cfg{};
-  cfg.du_mng_executor = &ctrl_worker;
+  cfg.du_mng_executor = &workers.ctrl_worker;
+  cfg.dl_executors    = &workers.dl_exec_mapper;
+  cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_pdu_hdl     = &pdu_handler;
   cfg.phy_adapter     = &phy;
 
@@ -142,9 +173,11 @@ void test_du_ue_create()
     if (pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
       break;
     }
-    ctrl_worker.run_next_blocking();
+    workers.ctrl_worker.run_next_blocking();
   }
   TESTASSERT(pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+
+  workers.stop();
 }
 
 int main()

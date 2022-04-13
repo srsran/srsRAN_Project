@@ -77,7 +77,7 @@ class task_worker_executor : public task_executor
 {
 public:
   task_worker_executor() = default;
-  explicit task_worker_executor(task_worker& worker_) : worker(&worker_) {}
+  task_worker_executor(task_worker& worker_) : worker(&worker_) {}
   void execute(unique_task task) override
   {
     if (worker->get_id() == std::this_thread::get_id()) {

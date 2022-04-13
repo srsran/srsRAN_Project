@@ -126,7 +126,7 @@ void event_manager::process_common(slot_point sl_tx)
 
 void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
 {
-  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index");
+  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
 
   // Process common events, if not yet processed.
   process_common(sl_tx);

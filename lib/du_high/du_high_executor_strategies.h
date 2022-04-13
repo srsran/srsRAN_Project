@@ -4,7 +4,8 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/ran/du_l2_ul_executor_mapper.h"
+#include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
+#include "srsgnb/du_high/du_l2_ul_executor_mapper.h"
 
 namespace srsgnb {
 
@@ -35,12 +36,13 @@ private:
 class pcell_ul_executor_mapper final : public du_l2_ul_executor_mapper
 {
 public:
-  explicit pcell_ul_executor_mapper(std::vector<std::unique_ptr<task_executor> > execs_) : execs(std::move(execs_))
+  explicit pcell_ul_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
+    execs(execs_.begin(), execs_.end())
   {
     // Initialize executors in a round-robin fashion.
     unsigned count = 0;
     for (auto& rnti_exec : ue_idx_to_exec) {
-      rnti_exec = execs[count % execs.size()].get();
+      rnti_exec = execs[count % execs.size()];
       count++;
     }
   }
@@ -48,7 +50,7 @@ public:
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
     srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
-    ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()].get();
+    ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()];
     return *ue_idx_to_exec[ue_index];
   }
 
@@ -59,8 +61,24 @@ public:
   }
 
 private:
-  std::vector<std::unique_ptr<task_executor> > execs;
-  std::array<task_executor*, MAX_NOF_DU_UES>   ue_idx_to_exec;
+  std::vector<task_executor*>                execs;
+  std::array<task_executor*, MAX_NOF_DU_UES> ue_idx_to_exec;
+};
+
+/// Dispatch DL tasks based on cell index.
+class cell_dl_executor_mapper final : public du_l2_dl_executor_mapper
+{
+public:
+  explicit cell_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
+    dl_execs(execs_.begin(), execs_.end())
+  {
+    srsran_assert(not dl_execs.empty(), "The number of DL executors must be higher than 1");
+  }
+
+  task_executor& executor(du_cell_index_t cell_index) override { return *dl_execs[cell_index % dl_execs.size()]; }
+
+private:
+  std::vector<task_executor*> dl_execs;
 };
 
 } // namespace srsgnb

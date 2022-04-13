@@ -8,35 +8,22 @@
 
 namespace srsgnb {
 
-du_high::du_high(du_high_configuration config_) : cfg(config_)
+void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 {
-  const size_t task_worker_queue_size = 10000;
-  srsran_assert(cfg.du_mng_executor != nullptr, "Invalid CTRL Executor.");
+  srsran_assert(cfg.du_mng_executor != nullptr, "Invalid DU manager executor");
+  srsran_assert(cfg.dl_executors != nullptr, "Invalid DL executor mapper");
+  srsran_assert(cfg.ul_executors != nullptr, "Invalid UL executor mapper");
+}
 
-  // Create worker threads
-  workers.push_back(std::make_unique<task_worker>("DU-CTRL", task_worker_queue_size, true));
-  workers.push_back(std::make_unique<task_worker>("DU-UL#0", task_worker_queue_size, true));
-  workers.push_back(std::make_unique<task_worker>("DU-UL#1", task_worker_queue_size, true));
-  workers.push_back(std::make_unique<task_worker>("DU-DL", task_worker_queue_size, true));
-  ctrl_exec = cfg.du_mng_executor;
-  dl_execs.push_back(make_task_executor(*workers[2]));
-
-  // Setup UL UE executor mapper.
-  std::vector<std::unique_ptr<task_executor> > ul_execs;
-  ul_execs.push_back(make_task_executor(*workers[0]));
-  ul_execs.push_back(make_task_executor(*workers[1]));
-  ul_exec_mapper = std::make_unique<pcell_ul_executor_mapper>(std::move(ul_execs));
+du_high::du_high(const du_high_configuration& config_) : cfg(config_)
+{
+  assert_du_high_configuration_valid(cfg);
 
   // Create layers
-  std::vector<task_executor*> execs;
-  execs.clear();
-  for (auto& w : dl_execs) {
-    execs.push_back(w.get());
-  }
-  mac  = create_mac(mac_ev_notifier, *ul_exec_mapper, execs, *ctrl_exec, *cfg.phy_adapter);
+  mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
   f1ap = create_f1ap_du(*cfg.f1c_pdu_hdl);
-  du_manager =
-      create_du_manager(mac->get_ue_configurator(), mac->get_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *ctrl_exec);
+  du_manager = create_du_manager(
+      mac->get_ue_configurator(), mac->get_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *cfg.du_mng_executor);
 
   // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);
@@ -47,20 +34,9 @@ du_high::~du_high()
   stop();
 }
 
-void du_high::start()
-{
-  for (auto& w : workers) {
-    w->start();
-  }
-}
+void du_high::start() {}
 
-void du_high::stop()
-{
-  for (auto& w : workers) {
-    w->stop();
-  }
-  workers.clear();
-}
+void du_high::stop() {}
 
 mac_pdu_handler& du_high::get_pdu_handler(du_cell_index_t cell_idx)
 {

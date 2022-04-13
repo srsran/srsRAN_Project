@@ -2,7 +2,7 @@
 #ifndef SRSGNB_RAN_DU_L2_UL_EXECUTOR_MAPPER_H
 #define SRSGNB_RAN_DU_L2_UL_EXECUTOR_MAPPER_H
 
-#include "du_types.h"
+#include "srsgnb/ran/du_types.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
