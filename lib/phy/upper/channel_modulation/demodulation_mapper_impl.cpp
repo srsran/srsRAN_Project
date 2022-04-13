@@ -35,10 +35,9 @@ static void demodulate_soft_QPSK(span<int8_t> llrs, span<const cf_t> symbols, sp
   auto*       llr_it   = llrs.begin();
   const auto* noise_it = noise_vars.begin();
   for (const auto this_symbol : symbols) {
-    *llr_it            = demod_sym(std::real(this_symbol), *noise_it);
-    *std::next(llr_it) = demod_sym(std::imag(this_symbol), *noise_it);
-    llr_it             = std::next(llr_it, 2);
-    noise_it           = std::next(noise_it);
+    *llr_it++ = demod_sym(std::real(this_symbol), *noise_it);
+    *llr_it++ = demod_sym(std::imag(this_symbol), *noise_it);
+    ++noise_it;
   }
 }
 
@@ -69,12 +68,11 @@ static void demodulate_soft_QAM16(span<int8_t> llrs, span<const cf_t> symbols, s
   auto*       llr_it   = llrs.begin();
   const auto* noise_it = noise_vars.begin();
   for (const auto this_symbol : symbols) {
-    *llr_it               = demod_sym_01(std::real(this_symbol), *noise_it);
-    *std::next(llr_it)    = demod_sym_01(std::imag(this_symbol), *noise_it);
-    *std::next(llr_it, 2) = demod_sym_23(std::real(this_symbol), *noise_it);
-    *std::next(llr_it, 3) = demod_sym_23(std::imag(this_symbol), *noise_it);
-    llr_it                = std::next(llr_it, 4);
-    noise_it              = std::next(noise_it);
+    *llr_it++ = demod_sym_01(std::real(this_symbol), *noise_it);
+    *llr_it++ = demod_sym_01(std::imag(this_symbol), *noise_it);
+    *llr_it++ = demod_sym_23(std::real(this_symbol), *noise_it);
+    *llr_it++ = demod_sym_23(std::imag(this_symbol), *noise_it);
+    ++noise_it;
   }
 }
 

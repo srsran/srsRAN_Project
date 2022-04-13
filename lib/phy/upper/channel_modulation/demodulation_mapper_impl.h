@@ -20,6 +20,7 @@ namespace srsgnb {
 /// variance and \f$\mathcal{S}_{i,B}\f$ is the set of constellation points for which \f$b_{m+i}=B\in\{0,1\}\f$.
 class demodulation_mapper_impl : public demodulation_mapper
 {
+public:
   // See interface for the documentation.
   void demodulate_soft(span<int8_t>      llrs,
                        span<const cf_t>  symbols,
