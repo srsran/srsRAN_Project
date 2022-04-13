@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_executable(pseudo_random_test pseudo_random_generator_test.cpp)
 target_link_libraries(pseudo_random_test sequence_generators srsvec srslog)
 add_test(pseudo_random_test pseudo_random_test)

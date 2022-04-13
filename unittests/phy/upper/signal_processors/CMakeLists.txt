@@ -1,4 +1,6 @@
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_executable(dmrs_pbch_processor_test dmrs_pbch_processor_test.cpp)
 target_link_libraries(dmrs_pbch_processor_test signal_processors srsvec sequence_generators srslog)
 add_test(dmrs_pbch_processor_test dmrs_pbch_processor_test)

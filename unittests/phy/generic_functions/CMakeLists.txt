@@ -1,3 +1,6 @@
+
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_executable(dft_processor_fftw_test dft_processor_fftw_test.cpp)
 target_link_libraries(dft_processor_fftw_test srslog srsgnb_generic_funcs_dft)
 add_test(dft_processor_fftw_test dft_processor_fftw_test)

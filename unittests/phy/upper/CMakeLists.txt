@@ -4,5 +4,7 @@ add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_executable(re_pattern_test re_pattern_test.cpp)
 target_link_libraries(re_pattern_test upper_phy srslog)

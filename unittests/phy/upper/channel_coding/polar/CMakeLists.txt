@@ -1,3 +1,6 @@
+
+set_directory_properties(PROPERTIES LABELS "phy")
+
 add_executable(polar_chain_test polar_chain_test.cpp)
 target_link_libraries(polar_chain_test polar srsvec srslog)
 add_test(polar_chain_test_bch polar_chain_test -n9 -k56 -e864 -i0 -s101 -o1)
