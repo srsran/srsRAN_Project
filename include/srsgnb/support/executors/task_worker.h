@@ -25,11 +25,11 @@ class task_worker
   using task_t = unique_task;
 
 public:
-  task_worker(std::string thread_name_,
-              uint32_t    queue_size,
-              bool        start_postponed = false,
-              int         prio_           = -1,
-              int         mask_           = -1);
+  task_worker(std::string                      thread_name_,
+              uint32_t                         queue_size,
+              bool                             start_postponed = false,
+              os_thread_realtime_priority      prio_           = os_thread_realtime_priority::NO_REALTIME,
+              const os_sched_affinity_bitmask& mask_           = {});
   task_worker(const task_worker&) = delete;
   task_worker(task_worker&&)      = delete;
   task_worker& operator=(const task_worker&) = delete;
@@ -37,7 +37,8 @@ public:
   ~task_worker();
 
   void stop();
-  void start(int prio_ = -1, int mask_ = -1);
+  void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::NO_REALTIME,
+             const os_sched_affinity_bitmask& mask_ = {});
 
   void push_task(task_t&& task)
   {
@@ -54,14 +55,18 @@ public:
   std::thread::id get_id() const { return t_handle.get_id(); }
 
 private:
+  unique_thread make_thread();
+
   // args
-  int                   prio = -1;
-  int                   mask = -1;
-  srslog::basic_logger& logger;
+  std::string                 worker_name;
+  os_thread_realtime_priority prio = os_thread_realtime_priority::NO_REALTIME;
+  os_sched_affinity_bitmask   mask = {};
+  srslog::basic_logger&       logger;
+
+  // Queue of tasks.
+  srsgnb::dyn_blocking_queue<task_t> pending_tasks;
 
   unique_thread t_handle;
-
-  srsgnb::dyn_blocking_queue<task_t> pending_tasks;
 };
 
 /// Executor for single-thread task worker.

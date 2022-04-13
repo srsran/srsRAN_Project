@@ -18,16 +18,25 @@
 
 using namespace srsgnb;
 
-static bool thread_set_param(pthread_t t, int prio_offset)
+size_t srsgnb::compute_host_nof_hardware_threads()
+{
+  cpu_set_t cpuset;
+  if (sched_getaffinity(0, sizeof(cpuset), &cpuset) == 0) {
+    return std::max(1, CPU_COUNT(&cpuset));
+  }
+  return std::max(1U, std::thread::hardware_concurrency());
+}
+
+/// Sets thread OS scheduling real-time priority.
+static bool thread_set_param(pthread_t t, os_thread_realtime_priority prio)
 {
   sched_param param{};
 
   int policy = 0;
-  // All threads have normal priority except prio_offset=0,1,2,3,4
-  if (prio_offset >= 0 && prio_offset < 5) {
+  if (prio != srsgnb::os_thread_realtime_priority::NO_REALTIME) {
     // Subtract one to the priority offset to avoid scheduling threads with the highest priority that could contend with
     // OS critical tasks.
-    param.sched_priority = sched_get_priority_max(SCHED_FIFO) - prio_offset - 1;
+    param.sched_priority = sched_get_priority_max(SCHED_FIFO) + (int)prio - 32;
     policy               = SCHED_FIFO;
   } else {
     param.sched_priority = 0;
@@ -43,29 +52,18 @@ static bool thread_set_param(pthread_t t, int prio_offset)
   return true;
 }
 
-static bool thread_set_affinity(pthread_t t, int cpu)
+static bool thread_set_affinity(pthread_t t, const os_sched_affinity_bitmask& bitmap)
 {
   cpu_set_t cpuset;
-  if (cpu > 0) {
-    if (cpu > 50) {
-      uint32_t mask;
-      mask = cpu / 100;
-
-      CPU_ZERO(&cpuset);
-      for (uint32_t i = 0; i < 8; i++) {
-        if (((mask >> i) & 0x01U) == 1U) {
-          CPU_SET((size_t)i, &cpuset);
-        }
-      }
-    } else {
-      CPU_ZERO(&cpuset);
-      CPU_SET((size_t)cpu, &cpuset);
+  CPU_ZERO(&cpuset);
+  for (size_t i = 0; i < bitmap.size(); ++i) {
+    if (bitmap.test(i)) {
+      CPU_SET(i, &cpuset);
     }
-
-    if (pthread_setaffinity_np(t, sizeof(cpu_set_t), &cpuset) != 0) {
-      perror("pthread_setaffinity_np");
-      return false;
-    }
+  }
+  if (pthread_setaffinity_np(t, sizeof(cpu_set_t), &cpuset) != 0) {
+    perror("pthread_setaffinity_np");
+    return false;
   }
   return true;
 }
@@ -134,32 +132,33 @@ void unique_thread::print_priority()
 
 ///////////////////////////////////////
 
-bool unique_thread::start_impl(int cpu, int prio_offset, unique_function<void()> callable)
+std::thread unique_thread::make_thread(const std::string&               name,
+                                       unique_function<void()>          callable,
+                                       os_thread_realtime_priority      prio,
+                                       const os_sched_affinity_bitmask& cpu_mask)
 {
-  srsran_assert(not running(), "Trying to start thread {} that is already running.", get_name());
-
   // Launch thread.
-  thread_handle = std::thread([this, cpu, prio_offset, c = std::move(callable)]() {
-    // Note: At this point, thread_handle.native_handle() is not yet set. pthread_self() is used instead.
+  return std::thread([name, prio, cpu_mask, callable = std::move(callable)]() {
     pthread_t tself = pthread_self();
     if (pthread_setname_np(tself, name.c_str()) != 0) {
       perror("pthread_setname_np");
-      fmt::print("Thread [{}]: Error while setting thread name.", std::this_thread::get_id());
+      fmt::print("Thread [{}]: Error while setting thread name to {}.", std::this_thread::get_id(), name);
     }
 
-    // TSAN seems to have issues with thread attributes when running as normal user, disable them in that case.
+    // Set thread OS priority and affinity.
+    // Note: TSAN seems to have issues with thread attributes when running as normal user, disable them in that case.
 #ifndef HAVE_TSAN
-    if (prio_offset != -1) {
-      thread_set_param(tself, prio_offset);
+    if (prio != os_thread_realtime_priority::NO_REALTIME) {
+      thread_set_param(tself, prio);
     }
-    if (cpu != -1) {
-      thread_set_affinity(tself, cpu);
+    if (cpu_mask.any()) {
+      thread_set_affinity(tself, cpu_mask);
     }
 #endif
-    c();
-  });
 
-  return true;
+    // Run task.
+    callable();
+  });
 }
 
 const char* srsgnb::this_thread_name()

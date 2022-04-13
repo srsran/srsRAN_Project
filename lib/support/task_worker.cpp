@@ -18,17 +18,18 @@
 
 namespace srsgnb {
 
-task_worker::task_worker(std::string thread_name_, uint32_t queue_size, bool start_postponed, int prio_, int mask_) :
+task_worker::task_worker(std::string                      thread_name_,
+                         uint32_t                         queue_size,
+                         bool                             start_postponed,
+                         os_thread_realtime_priority      prio_,
+                         const os_sched_affinity_bitmask& mask_) :
+  worker_name(std::move(thread_name_)),
   prio(prio_),
   mask(mask_),
   logger(srslog::fetch_basic_logger("POOL")),
-  t_handle(std::move(thread_name_)),
-  pending_tasks(queue_size)
-{
-  if (not start_postponed) {
-    start(prio_, mask_);
-  }
-}
+  pending_tasks(queue_size),
+  t_handle(start_postponed ? unique_thread{} : make_thread())
+{}
 
 task_worker::~task_worker()
 {
@@ -43,12 +44,9 @@ void task_worker::stop()
   }
 }
 
-void task_worker::start(int prio_, int mask_)
+unique_thread task_worker::make_thread()
 {
-  prio = prio_;
-  mask = mask_;
-
-  t_handle.start_cpu_mask(prio, mask, [this]() {
+  auto task_func = [this]() {
     while (true) {
       bool   success;
       task_t task = pending_tasks.pop_blocking(&success);
@@ -58,7 +56,15 @@ void task_worker::start(int prio_, int mask_)
       task();
     }
     logger.info("Task worker {} finished.", t_handle.get_name());
-  });
+  };
+  return unique_thread{worker_name, prio, mask, task_func};
+}
+
+void task_worker::start(os_thread_realtime_priority prio_, const os_sched_affinity_bitmask& mask_)
+{
+  prio     = prio_;
+  mask     = mask_;
+  t_handle = make_thread();
 }
 
 } // namespace srsgnb

@@ -13,18 +13,74 @@
 #ifndef SRSRAN_THREADS_H
 #define SRSRAN_THREADS_H
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/unique_function.h"
 #include <string>
 #include <thread>
 
 namespace srsgnb {
 
+/// Computes the number of threads that usable in the given host.
+size_t compute_host_nof_hardware_threads();
+
+/// OS thread RT scheduling priority.
+/// Note: posix defines a minimum spread between sched_get_priority_max() and sched_get_priority_min() of 32.
+enum class os_thread_realtime_priority : int { NO_REALTIME = 0, MIN_PRIO = 1, MAX_PRIO = 32 };
+
+/// CPU affinity bitmap.
+struct os_sched_affinity_bitmask {
+public:
+  os_sched_affinity_bitmask() : cpu_bitset(compute_host_nof_hardware_threads()) {}
+
+  size_t size() const { return cpu_bitset.size(); }
+
+  void set(size_t cpu_idx) { cpu_bitset.set(cpu_idx); }
+
+  bool test(size_t cpu_idx) const { return cpu_bitset.test(cpu_idx); }
+
+  bool any() const { return cpu_bitset.any(); }
+
+  uint64_t to_uint64() const { return cpu_bitset.to_uint64(); }
+
+private:
+  bounded_bitset<1024> cpu_bitset;
+};
+
 /// Unique thread wrapper that ensures the thread is joined on destruction and provides an interface to set/get
 /// the thread name, priority, cpu mask.
 class unique_thread
 {
 public:
-  explicit unique_thread(std::string name_) : name(std::move(name_)) {}
+  /// Creates a unique_thread object with no associated OS thread.
+  unique_thread() = default;
+
+  /// Creates a unique_thread object with an associated OS thread with custom attributes.
+  template <typename Callable>
+  unique_thread(std::string                      name_,
+                os_thread_realtime_priority      prio,
+                const os_sched_affinity_bitmask& cpu_mask,
+                Callable&&                       c) :
+    name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c), prio, cpu_mask))
+  {}
+
+  /// Creates a unique_thread object with an associated OS thread with custom scheduling priority.
+  template <typename Callable>
+  unique_thread(std::string name_, os_thread_realtime_priority prio, Callable&& c) :
+    name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c), prio))
+  {}
+
+  /// Creates a unique_thread object with an associated OS thread with custom cpu affinity.
+  template <typename Callable>
+  unique_thread(std::string name_, const os_sched_affinity_bitmask& cpu_mask, Callable&& c) :
+    name(std::move(name_)),
+    thread_handle(make_thread(name, std::forward<Callable>(c), os_thread_realtime_priority::NO_REALTIME, cpu_mask))
+  {}
+
+  /// Creates a unique_thread object with an associated OS thread with default attributes.
+  template <typename Callable>
+  unique_thread(std::string name_, Callable&& c) :
+    name(std::move(name_)), thread_handle(make_thread(name, std::forward<Callable>(c)))
+  {}
 
   unique_thread(const unique_thread&) = delete;
 
@@ -35,21 +91,6 @@ public:
   unique_thread& operator=(const unique_thread&) = delete;
 
   unique_thread& operator=(unique_thread&& other) noexcept = default;
-
-  bool start(unique_function<void()> callable) { return start_impl(-1, -1, std::move(callable)); }
-
-  bool start(int prio, unique_function<void()> callable) { return start_impl(-1, prio, std::move(callable)); }
-
-  bool start_cpu(int prio, int cpu, unique_function<void()> callable)
-  {
-    return start_impl(cpu, prio, std::move(callable));
-  }
-
-  bool start_cpu_mask(int prio, int mask, unique_function<void()> callable)
-  {
-    // we multiply mask by 100 to distinguish it from a single cpu core id.
-    return start_impl(mask * 100, prio, std::move(callable));
-  }
 
   /// Joins thread if it is running.
   void join()
@@ -71,8 +112,11 @@ public:
   void print_priority();
 
 private:
-  /// Start thread. This function blocks until the thread has started and thread_id has been set.
-  bool start_impl(int cpu, int prio_offset, unique_function<void()> callable);
+  /// Starts thread with provided name and attributes.
+  static std::thread make_thread(const std::string&               name,
+                                 unique_function<void()>          callable,
+                                 os_thread_realtime_priority      prio     = os_thread_realtime_priority::NO_REALTIME,
+                                 const os_sched_affinity_bitmask& cpu_mask = {});
 
   /// Thread name.
   std::string name;
