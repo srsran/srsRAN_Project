@@ -12,3 +12,16 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/modulation_mapper_test/data/modulation_mapper_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/modulation_mapper_test/data/modulation_mapper_test_data.tar.gz
         VERBATIM)
+
+add_executable(demodulation_mapper_test demodulation_mapper_test.cpp)
+target_link_libraries(demodulation_mapper_test modulation_mapper srsvec srslog)
+
+add_custom_command(
+        TARGET demodulation_mapper_test
+        POST_BUILD
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_modulation/
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/demodulation_mapper_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/demodulation_mapper_test_data.tar.gz
+        VERBATIM)
+
+add_test(demodulation_mapper_test demodulation_mapper_test)
