@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_BLOCKING_WORKER_H
-#define SRSGNB_BLOCKING_WORKER_H
+#ifndef SRSGNB_BLOCKING_TASK_WORKER_H
+#define SRSGNB_BLOCKING_TASK_WORKER_H
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "task_executor.h"
@@ -9,10 +9,10 @@ namespace srsgnb {
 
 /// \brief Contrarily to other type of workers, this worker runs in the same thread where run() is called.
 /// run() is blocking.
-class blocking_worker final : public task_executor
+class blocking_task_worker final : public task_executor
 {
 public:
-  blocking_worker(size_t q_size) : pending_tasks(q_size) {}
+  blocking_task_worker(size_t q_size) : pending_tasks(q_size) {}
 
   void execute(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
 
@@ -45,4 +45,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_BLOCKING_WORKER_H
+#endif // SRSGNB_BLOCKING_TASK_WORKER_H

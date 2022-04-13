@@ -1,8 +1,8 @@
 
 #include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
-#include "srsgnb/support/executors/blocking_worker.h"
-#include "srsgnb/support/executors/manual_worker.h"
+#include "srsgnb/support/executors/blocking_task_worker.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"
 #include "thread"
@@ -71,7 +71,7 @@ void test_dl_ue_procedure_tsan()
 {
   test_delimit_logger delimiter{"Test UE procedures TSAN"};
 
-  blocking_worker             ctrl_worker{128};
+  blocking_task_worker        ctrl_worker{128};
   task_worker                 dl_worker1{"DL", 128}, dl_worker2{"DL", 128};
   task_worker_executor        dl_exec1{dl_worker1}, dl_exec2{dl_worker2};
   std::vector<task_executor*> dl_execs;
@@ -107,8 +107,8 @@ void test_dl_ue_procedure_execution_contexts()
   test_delimit_logger delimiter{"Test UE procedures execution contexts"};
 
   auto&                       logger = srslog::fetch_basic_logger("TEST");
-  manual_worker               ctrl_worker{128};
-  manual_worker               dl_worker{128};
+  manual_task_worker          ctrl_worker{128};
+  manual_task_worker          dl_worker{128};
   std::vector<task_executor*> dl_execs = {&dl_worker};
   dummy_ul_executor_mapper    ul_exec_mapper{ctrl_worker};
   dummy_mac_event_indicator   du_mng_notifier;

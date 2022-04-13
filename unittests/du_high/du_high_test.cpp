@@ -2,7 +2,7 @@
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/f1_interface/f1ap_asn1_packer.h"
 #include "../../lib/gateway/sctp_network_gateway.h"
-#include "srsgnb/support/executors/manual_worker.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -116,7 +116,7 @@ void test_du_ue_create()
   };
 
   const size_t          task_worker_queue_size = 10000;
-  manual_worker         ctrl_worker{task_worker_queue_size};
+  manual_task_worker    ctrl_worker{task_worker_queue_size};
   dummy_f1c_pdu_handler pdu_handler;
   pdu_handler.ctrl_exec = &ctrl_worker;
   phy_dummy phy;

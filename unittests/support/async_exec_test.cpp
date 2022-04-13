@@ -2,7 +2,7 @@
 #include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/execute_on.h"
-#include "srsgnb/support/executors/blocking_worker.h"
+#include "srsgnb/support/executors/blocking_task_worker.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -14,7 +14,7 @@ void test_move_exec_context()
 {
   test_delimit_logger delimiter{"Switch Execution Context"};
 
-  blocking_worker      worker0{128};
+  blocking_task_worker worker0{128};
   task_worker          worker1{"WORKER1", 128}, worker2{"WORKER2", 128};
   task_executor&       exec0{worker0};
   task_worker_executor exec1{worker1};
@@ -32,7 +32,7 @@ void test_move_exec_context()
         CORO_AWAIT(execute_on(exec2));
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, thread::get_name());
-        CORO_AWAIT(execute_on(exec0));
+        CORO_AWAIT(defer_to(exec0));
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, thread::get_name());
         worker0.request_stop(); // as we are in worker0, the cancel command is only processed after the return
@@ -40,7 +40,7 @@ void test_move_exec_context()
       });
 
   worker0.run();
-  TESTASSERT(count == 4);
+  TESTASSERT_EQ(4, count);
 }
 
 /// In this test, we verify the correctness of the task offloader. An awaitable that runs a task in another
@@ -49,7 +49,7 @@ void test_offload_exec()
 {
   test_delimit_logger delimiter{"Offload Execution Context"};
 
-  blocking_worker      worker0{128};
+  blocking_task_worker worker0{128};
   task_worker          worker1{"WORKER1", 128}, worker2{"WORKER2", 128};
   task_executor&       exec0{worker0};
   task_worker_executor exec1{worker1};

@@ -3,7 +3,7 @@
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/executors/manual_worker.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -31,7 +31,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   test_delimit_logger test_delim{"Single threaded UE creation procedure in mode: {}", to_string(tmode)};
 
   // Run tasks in same thread
-  manual_worker                 worker{128};
+  manual_task_worker            worker{128};
   std::array<task_executor*, 1> exec_lst = {&worker};
   dummy_ul_executor_mapper      ul_exec_mapper{worker};
   dummy_mac_event_indicator     du_mng_notif;

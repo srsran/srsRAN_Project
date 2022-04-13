@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MANUAL_WORKER_H
-#define SRSGNB_MANUAL_WORKER_H
+#ifndef SRSGNB_MANUAL_TASK_WORKER_H
+#define SRSGNB_MANUAL_TASK_WORKER_H
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "task_executor.h"
@@ -9,10 +9,10 @@ namespace srsgnb {
 
 /// \brief Task worker that implements the executor interface and requires manual calls to run pending deferred tasks.
 /// Useful for unit testing.
-class manual_worker : public task_executor
+class manual_task_worker : public task_executor
 {
 public:
-  manual_worker(size_t q_size) : t_id(std::this_thread::get_id()), pending_tasks(q_size) {}
+  manual_task_worker(size_t q_size) : t_id(std::this_thread::get_id()), pending_tasks(q_size) {}
 
   std::thread::id get_thread_id() const { return t_id; }
 
@@ -99,4 +99,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MANUAL_WORKER_H
+#endif // SRSGNB_MANUAL_TASK_WORKER_H

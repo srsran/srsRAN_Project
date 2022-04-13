@@ -2,7 +2,7 @@
 #include "../../lib/mac/mac_ctrl/mac_controller.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/async/async_test_utils.h"
-#include "srsgnb/support/executors/manual_worker.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -11,7 +11,7 @@ void test_mac_ctrl_ue_procedures()
 {
   test_delimit_logger delimiter{"Test UE procedures"};
 
-  manual_worker               worker{128};
+  manual_task_worker          worker{128};
   std::vector<task_executor*> dl_execs({&worker});
   dummy_ul_executor_mapper    ul_exec_mapper{worker};
   dummy_mac_event_indicator   du_mng_notifier;
