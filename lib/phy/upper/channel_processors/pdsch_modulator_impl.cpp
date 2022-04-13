@@ -264,7 +264,7 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
   for (unsigned cw_idx = 0; cw_idx != nof_codewords; ++cw_idx) {
     // Select modulation and order.
     modulation_scheme mod = (cw_idx == 0) ? config.modulation1 : config.modulation2;
-    unsigned          Qm  = static_cast<unsigned>(mod);
+    unsigned          Qm  = get_bits_per_symbol(mod);
 
     // Calculate number of REs.
     unsigned nof_bits = codewords[cw_idx].size();

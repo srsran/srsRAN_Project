@@ -81,7 +81,7 @@ unsigned ldpc_segmenter_impl::compute_rm_length(unsigned i_seg, modulation_schem
   } else {
     tmp = divide_ceil(nof_symbols_per_layer, nof_segments);
   }
-  return tmp * nof_layers * static_cast<unsigned>(mod);
+  return tmp * nof_layers * get_bits_per_symbol(mod);
 }
 
 static void fill_segment(span<uint8_t>                    segment,

@@ -22,6 +22,14 @@ enum class modulation_scheme {
   QAM256 = 8
 };
 
+/// \brief Bits per symbol for a given modulation scheme.
+/// \param[in] mod Modulation scheme.
+/// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
+inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
+{
+  return static_cast<unsigned>(mod);
+}
+
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_MODULATION_SCHEME_H

@@ -30,7 +30,7 @@ private:
   static constexpr unsigned MAX_RE = NOF_RE_PER_RB * MAX_RB_PER_PDCCH;
 
   /// Defines the maximum number of bits that can be utilised for a PDCCH transmission.
-  static constexpr unsigned MAX_BITS = MAX_RE * static_cast<unsigned>(modulation_scheme::QPSK);
+  static constexpr unsigned MAX_BITS = MAX_RE * get_bits_per_symbol(modulation_scheme::QPSK);
 
   /// Provides an implementation of the the pseudo-random generator.
   std::unique_ptr<pseudo_random_generator> scrambler;

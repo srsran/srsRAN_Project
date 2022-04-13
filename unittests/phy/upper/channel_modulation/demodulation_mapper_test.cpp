@@ -35,7 +35,7 @@ int main()
     srsran_assert(std::all_of(noise_var.cbegin(), noise_var.cend(), [](float f) { return f > 0; }),
                   "Noise variances should take positive values.");
 
-    const unsigned      nof_bits = nof_symbols * static_cast<unsigned>(mod);
+    const unsigned      nof_bits = nof_symbols * get_bits_per_symbol(mod);
     std::vector<int8_t> soft_bits(nof_bits);
     demodulator->demodulate_soft(soft_bits, symbols, noise_var, mod);
 

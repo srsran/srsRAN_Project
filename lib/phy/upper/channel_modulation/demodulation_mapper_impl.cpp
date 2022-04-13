@@ -82,8 +82,7 @@ void demodulation_mapper_impl::demodulate_soft(span<int8_t>      llrs,
                                                modulation_scheme mod)
 {
   srsran_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
-  unsigned bits_per_symbol = static_cast<unsigned>(mod);
-  srsran_assert(symbols.size() * bits_per_symbol == llrs.size(), "Input and output lengths are incompatible.");
+  srsran_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
   srsran_assert(std::all_of(noise_vars.begin(), noise_vars.end(), [](float f) { return f > 0; }),
                 "Input noise_vars must have positive entries.");
 
