@@ -11,7 +11,7 @@ static void demodulate_soft_BPSK(span<int8_t> llrs, span<const cf_t> symbols, sp
   constexpr float range_limit_int = 64;
 
   auto demod_sym = [](cf_t z, float n) {
-    float l_value = 2 * M_SQRT2 * (std::real(z) + std::imag(z)) / n;
+    float l_value = 2.0F * M_SQRT2f32 * (std::real(z) + std::imag(z)) / n;
     l_value       = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
     return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
   };
@@ -27,7 +27,7 @@ static void demodulate_soft_QPSK(span<int8_t> llrs, span<const cf_t> symbols, sp
   constexpr float range_limit_int = 64;
 
   auto demod_sym = [](float z, float n) {
-    float l_value = 2 * M_SQRT2 * z / n;
+    float l_value = 2.0F * M_SQRT2f32 * z / n;
     l_value       = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
     return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
   };
