@@ -1,7 +1,9 @@
 #ifndef SRSGNB_FAPI_VALIDATOR_REPORT_H
 #define SRSGNB_FAPI_VALIDATOR_REPORT_H
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/fapi/messages.h"
 
 namespace srsgnb {
 namespace fapi {
@@ -16,8 +18,16 @@ struct validator_report {
     int32_t                     value;
     std::pair<int32_t, int32_t> expected_value_range;
     const char*                 property_name;
-    unsigned                    cell;
+    optional<dl_pdu_type>       pdu_type;
     slot_point                  slot;
+
+    error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type) :
+      value(value), expected_value_range(range), property_name(name), pdu_type(pdu_type)
+    {}
+
+    error_report(int32_t value, const char* name, dl_pdu_type pdu_type) :
+      value(value), property_name(name), pdu_type(pdu_type)
+    {}
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name) :
       value(value), expected_value_range(range), property_name(name)
@@ -25,6 +35,18 @@ struct validator_report {
 
     error_report(int32_t value, const char* name) : value(value), property_name(name) {}
   };
+
+  /// Emplace back a report.
+  void emplace_back(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type)
+  {
+    reports.emplace_back(value, range, name, pdu_type);
+  }
+
+  /// Emplace back a report.
+  void emplace_back(int32_t value, const char* name, dl_pdu_type pdu_type)
+  {
+    reports.emplace_back(value, name, pdu_type);
+  }
 
   /// Emplace back a report.
   void emplace_back(int32_t value, std::pair<int32_t, int32_t> range, const char* name)

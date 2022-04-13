@@ -46,7 +46,7 @@ inline srsgnb::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu()
   // otherwise set to the minimum value of the range, as per SCF-222 Section 3.4.2.4.
   builder.set_maintenance_v3_tx_power_info(
       power_dist(gen),
-      ((pss_profile == srsgnb::fapi::beta_pss_profile_type::beta_pss_profile_sss) ? power_dist(gen) : -32768));
+      ((pss_profile == srsgnb::fapi::beta_pss_profile_type::beta_pss_profile_sss) ? power_dist(gen) : -32.768f));
 
   return pdu;
 }

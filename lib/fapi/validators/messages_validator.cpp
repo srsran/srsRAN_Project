@@ -23,11 +23,13 @@ static bool validate_slot(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "slot", report);
 }
 
-expected<bool, validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
+error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
 {
   validator_report report;
   // Validate SFN and slot.
-  bool success = validate_sfn(msg.sfn, report) & validate_slot(msg.slot, report);
+  bool success = true;
+  success &= validate_sfn(msg.sfn, report);
+  success &= validate_slot(msg.slot, report);
 
   // Validate the pdus.
   for (const auto& pdu : msg.pdus) {
@@ -42,7 +44,7 @@ expected<bool, validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_
   }
 
   // Build the result.
-  expected<bool, validator_report> result;
+  error_type<validator_report> result;
   if (!success) {
     result.set_error(std::move(report));
   }
