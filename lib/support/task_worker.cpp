@@ -62,6 +62,11 @@ unique_thread task_worker::make_thread()
 
 void task_worker::start(os_thread_realtime_priority prio_, const os_sched_affinity_bitmask& mask_)
 {
+  if (t_handle.running()) {
+    logger.error("ERROR: Task Worker can only be started once.");
+    return;
+  }
+
   prio     = prio_;
   mask     = mask_;
   t_handle = make_thread();

@@ -36,7 +36,10 @@ public:
   task_worker& operator=(task_worker&&) = delete;
   ~task_worker();
 
+  /// Stop task worker, if running.
   void stop();
+
+  /// Initialize task worker, if not yet running.
   void start(os_thread_realtime_priority      prio_ = os_thread_realtime_priority::NO_REALTIME,
              const os_sched_affinity_bitmask& mask_ = {});
 

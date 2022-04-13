@@ -20,7 +20,7 @@
 
 namespace srsgnb {
 
-/// Computes the number of threads that usable in the given host.
+/// Computes the number of threads that are usable in the given host.
 size_t compute_host_nof_hardware_threads();
 
 /// OS thread RT scheduling priority.
@@ -109,6 +109,7 @@ public:
   /// Checks whether thread is running.
   bool running() const { return thread_handle.joinable(); }
 
+  /// Print to console the current thread priority.
   void print_priority();
 
 private:
