@@ -20,7 +20,7 @@ enum class crc_generator_poly {
 /// Checksum type.
 using crc_calculator_checksum_t = unsigned;
 
-/// \brief Calculates the CRC, as per TS38.212 Section 5.1.
+/// \brief Calculates the CRC, as per TS38.212 Section 5.1. Interface.
 class crc_calculator
 {
 public:
