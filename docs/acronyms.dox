@@ -1,0 +1,166 @@
+/*!
+\page acronyms Frequently Used Acronyms
+
+<table>
+  <tr>
+    <td style="border-style:none"> 3GPP </td>
+    <td style="border-style:none"> 3rd Generation Partnership Project </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> 5G </td>
+    <td style="border-style:none"> 5th Generation Cellular Network Technology </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> AVX </td>
+    <td style="border-style:none"> Advanced Vector Extensions </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> AWGN </td>
+    <td style="border-style:none"> Additive White Gaussian Noise </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> BG </td>
+    <td style="border-style:none"> Base Graph </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> BLER </td>
+    <td style="border-style:none"> Block Error Rate </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> CFO </td>
+    <td style="border-style:none"> Carrier Frequency Offset </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> CRC </td>
+    <td style="border-style:none"> Cyclic Redundancy Check </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> CSI </td>
+    <td style="border-style:none"> Channel State Information </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> DCI </td>
+    <td style="border-style:none"> Downlink Control Information </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> FEC </td>
+    <td style="border-style:none"> Forward Error Correction </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> FDD </td>
+    <td style="border-style:none"> Frequency-Division Duplexing </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> GPP </td>
+    <td style="border-style:none"> General Purpose Processor </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> HARQ </td>
+    <td style="border-style:none"> Hybrid Automatic Repeat Request </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> LDPC </td>
+    <td style="border-style:none"> Low-Density Parity-Check </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> LLR </td>
+    <td style="border-style:none"> Log-Likelihood Ratio </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> LTE </td>
+    <td style="border-style:none"> Long Term Evolution </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> NR </td>
+    <td style="border-style:none"> New Radio </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> NZP </td>
+    <td style="border-style:none"> NonZero Power </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PBCH </td>
+    <td style="border-style:none"> Physical Broadcast Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PDCCH </td>
+    <td style="border-style:none"> Physical Downlink Control Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PDSCH </td>
+    <td style="border-style:none"> Physical Downlink Shared Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PHY </td>
+    <td style="border-style:none"> Physical Layer </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PRACH </td>
+    <td style="border-style:none"> Physical Random Access Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PUCCH </td>
+    <td style="border-style:none"> Physical Uplink Control Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> PUSCH </td>
+    <td style="border-style:none"> Physical Uplink Shared Channel </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> RB </td>
+    <td style="border-style:none"> Resource Block </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> RE </td>
+    <td style="border-style:none"> Resource Element </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> RNTI </td>
+    <td style="border-style:none"> Radio Network Temporary Identifier </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> RS </td>
+    <td style="border-style:none"> Reference Signal </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> QPSK </td>
+    <td style="border-style:none"> Quadrature Phase Shift Keying </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> SC </td>
+    <td style="border-style:none"> Successive Cancellation </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> SIMD </td>
+    <td style="border-style:none"> Single Instruction, Multiple Data </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> SNR </td>
+    <td style="border-style:none"> Signal-to-Noise Ratio </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> SSB </td>
+    <td style="border-style:none"> Synchronization Signal Block </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> SSE </td>
+    <td style="border-style:none"> Streaming SIMD Extensions </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> TDD </td>
+    <td style="border-style:none"> Time-Division Duplexing </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> TS </td>
+    <td style="border-style:none"> Technical Specification </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> TTI </td>
+    <td style="border-style:none"> Transmission Time Interval </td>
+  </tr>
+  <tr>
+    <td style="border-style:none"> UCI </td>
+    <td style="border-style:none"> Uplink Control Information </td>
+  </tr>
+</table>
+*/
