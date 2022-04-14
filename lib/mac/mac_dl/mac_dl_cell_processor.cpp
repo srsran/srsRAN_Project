@@ -4,7 +4,6 @@
 #include "pdu_encoder.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
-#include "ssb_encoder.h"
 
 using namespace srsgnb;
 
@@ -19,7 +18,10 @@ mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
   sched_obj(sched_),
   ue_mng(ue_mng_)
-{}
+{
+  // Update SSB dependent parameters in the MAC DL CELL processor.
+  ssb_helper.set_ssb_configuration(cell_cfg_);
+}
 
 async_task<void> mac_dl_cell_processor::start()
 {
@@ -140,9 +142,4 @@ void mac_dl_cell_processor::assemble_dl_data_request(du_cell_index_t        cell
 const ssb_assembler& mac_dl_cell_processor::get_ssb_configuration() const
 {
   return ssb_helper;
-}
-
-void mac_dl_cell_processor::set_ssb_configuration(const mac_cell_configuration& mac_cell_cfg)
-{
-  ssb_helper.set_ssb_configuration(mac_cell_cfg);
 }

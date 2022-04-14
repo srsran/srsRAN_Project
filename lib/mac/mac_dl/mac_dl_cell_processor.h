@@ -31,9 +31,6 @@ public:
   /// - The MAC DL PDUs are generated and passed to the PHY as well.
   void handle_slot_indication(slot_point sl_tx) override;
 
-  /// \brief Derive and set SSB-specific dependent parameters derived from cell_cfg.
-  void set_ssb_configuration(const mac_cell_configuration& cell_cfg);
-
   /// \brief Retrieve SSB-specific parameters.
   const ssb_assembler& get_ssb_configuration() const;
 

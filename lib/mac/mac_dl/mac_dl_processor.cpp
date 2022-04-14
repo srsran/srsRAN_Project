@@ -1,24 +1,38 @@
 
 #include "mac_dl_processor.h"
-#include "sched_config_helpers.h"
 #include "../../helpers/band_helper.h"
+#include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/mac/sched_configurer.h"
 
 using namespace srsgnb;
 
-
-static void create_sched_cell_config(cell_configuration_request_message& sched_cell_cfg,
-                                     const mac_cell_configuration&       cell_cfg,
-                                     const ssb_assembler&                ssb_cfg)
+static void fill_sched_cell_config_msg(cell_configuration_request_message& sched_cell_cfg,
+                                       const mac_cell_configuration&       cell_cfg,
+                                       const ssb_assembler&                ssb_cfg)
 {
   // Copy general parameters
   sched_cell_cfg.cell_index = cell_cfg.cell_index;
   sched_cell_cfg.pci        = cell_cfg.pci;
   sched_cell_cfg.dl_carrier = cell_cfg.dl_carrier;
 
+  // TODO: Pass valid configuration to scheduler (The code added below for dl_cfg_common and ul_cfg_common was just for
+  // ...passing a test).
+  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
+  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.set_setup().rach_cfg_generic.ra_resp_win.value =
+      asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present = true;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.set_setup().pusch_time_domain_alloc_list.resize(1);
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present = true;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2         = 2;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.subcarrier_spacing.value =
+      asn1::rrc_nr::subcarrier_spacing_opts::khz15;
+  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup().ra_search_space_present = true;
+  sched_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
+
   // Copy SSB parameters
-  sched_cell_cfg.ssb_config = cell_cfg.ssb_cfg;
+  sched_cell_cfg.ssb_config                 = cell_cfg.ssb_cfg;
   sched_cell_cfg.ssb_config.L_max           = ssb_cfg.get_ssb_L_max();
   sched_cell_cfg.ssb_config.ssb_case        = ssb_cfg.get_ssb_case();
   sched_cell_cfg.ssb_config.paired_spectrum = ssb_cfg.get_ssb_paired_spectrum();
@@ -42,34 +56,12 @@ void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)
 {
   srsran_assert(not has_cell(cell_cfg.cell_index), "Overwriting existing cell is invalid.");
   // Create one cell.
-
   cells[cell_cfg.cell_index] = std::make_unique<mac_dl_cell_processor>(cfg, cell_cfg, sched_obj, ue_mng);
 
-
-  // TODO: Pass valid configuration to scheduler (The code added below was just for passing a test).
+  // Fill sched config msg and pass it to the scheduler.
   cell_configuration_request_message sched_msg{};
-  sched_msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
-  sched_msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
-  sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.set_setup().rach_cfg_generic.ra_resp_win.value =
-      asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10;
-  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present = true;
-  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.set_setup().pusch_time_domain_alloc_list.resize(1);
-  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present = true;
-  sched_msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2         = 2;
-  sched_msg.ul_cfg_common.init_ul_bwp.generic_params.subcarrier_spacing.value =
-      asn1::rrc_nr::subcarrier_spacing_opts::khz15;
-  sched_msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup().ra_search_space_present = true;
-  sched_msg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
+  fill_sched_cell_config_msg(sched_msg, cell_cfg, cells[cell_cfg.cell_index]->get_ssb_configuration());
   sched_obj.handle_cell_configuration_request(sched_msg);
-
-  // Update SSB dependent parameters in the MAC DL CELL processor
-  // Update SSB dependent parameters in the MAC DL CELL processor.
-  cells[cell_cfg.cell_index]->set_ssb_configuration(cell_cfg);
-
-  // TODO: Pass configuration to scheduler.
-  cell_configuration_request_message sched_cell_cfg{};
-  create_sched_cell_config(sched_cell_cfg, cell_cfg, cells[cell_cfg.cell_index]->get_ssb_configuration());
-  sched_obj.handle_cell_configuration_request(sched_cell_cfg);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)

@@ -78,8 +78,6 @@ struct ssb_information {
   ofdm_symbol_range symbols;
 };
 
-using ssb_informatin_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
-
 /// Stores the information associated to an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
@@ -92,7 +90,7 @@ struct sib_information {
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
 struct dl_broadcast_allocation {
   static_vector<ssb_information, MAX_SSB_PER_SLOT> ssb_info;
-  static_vector<sib_information, 1> sibs;
+  static_vector<sib_information, 1>                sibs;
 };
 
 struct dl_sched_result {

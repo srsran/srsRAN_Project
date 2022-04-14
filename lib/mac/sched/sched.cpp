@@ -61,7 +61,7 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 
   //  3. SSB scheduling.
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
-  sched_ssb(res_alloc[0].dl_res().bc.ssb_info,
+  sched_ssb(res_alloc[0],
             sl_tx,
             ssb_cfg.ssb_period,
             ssb_cfg.ssb_offset_to_point_A,
@@ -69,6 +69,7 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
             ssb_cfg.ssb_bitmap.to_uint64(),
             ssb_cfg.ssb_case,
             ssb_cfg.paired_spectrum);
+  prb_grant ssb_prbs{};
   // TODO: Save resource USED by SSB in the grid;
 
   // 3. Schedule DL signalling.

@@ -105,8 +105,13 @@ public:
   const prb_bitmap& used_dl_prbs() const { return sl_res.dl_prbs.prbs(); }
   const prb_bitmap& used_ul_prbs() const { return sl_res.ul_prbs.prbs(); }
 
+  bwp_rb_bitmap& used_bwp_dl_prbs() { return sl_res.dl_prbs; }
+  bwp_rb_bitmap& used_bwp_ul_prbs() { return sl_res.ul_prbs; }
+
   dl_sched_result& dl_res() { return sl_res.dl_grants; }
   ul_sched_result& ul_res() { return sl_res.ul_grants; }
+
+  void update_used_dl_prbs(const prb_grant& prbs) { sl_res.dl_prbs |= prbs; }
 
   /// Create a PUSCH grant and update the slot total UL PRB bitmap
   ul_sched_info& alloc_pusch(const prb_grant& prbs)
