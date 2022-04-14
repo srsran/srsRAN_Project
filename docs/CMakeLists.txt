@@ -22,23 +22,63 @@ if (DOXYGEN_FOUND)
 
   # find plantuml
   find_program(PLANTUML_PATH plantuml.jar PATH_SUFFIXES PlantUML plantuml Plantuml
-          PATHS /usr/share /usr/local/share/ /usr/local/bin /opt/local/share/java/)
+          PATHS /usr/share /usr/local/share /usr/local/bin /opt/local/share/java)
   if (PLANTUML_PATH)
     message(STATUS "PLANTUML found in ${PLANTUML_PATH}.")
   endif ()
   set(DOXYGEN_PLANTUML_JAR_PATH "${PLANTUML_PATH}")
 
-  # directories and files to process
+  # directories and files to process for all the docs
   set(docs_inputs ${CMAKE_CURRENT_SOURCE_DIR}
-                  ${CMAKE_HOME_DIRECTORY}/include/srsgnb/
-                  ${CMAKE_HOME_DIRECTORY}/lib/
-                  ${CMAKE_HOME_DIRECTORY}/unittests/phy/upper/channel_coding/ldpc_enc_dec_test.cpp
+                  ${CMAKE_HOME_DIRECTORY}/include/srsgnb
+                  ${CMAKE_HOME_DIRECTORY}/lib
   )
   set(DOXYGEN_EXCLUDE ${CMAKE_HOME_DIRECTORY}/include/srsgnb/asn1)
 
   doxygen_add_docs(doxygen
     ${docs_inputs}
-    COMMENT "Generating documentation"
+    COMMENT "Generating all documentation."
+  )
+
+  # directories and files to process for FAPI related docs
+  set(docs_inputs_fapi ${CMAKE_CURRENT_SOURCE_DIR}
+                       ${CMAKE_HOME_DIRECTORY}/include/srsgnb/fapi
+                       ${CMAKE_HOME_DIRECTORY}/include/srsgnb/fapi_adaptor
+                       ${CMAKE_HOME_DIRECTORY}/lib/fapi
+                       ${CMAKE_HOME_DIRECTORY}/lib/fapi_adaptor
+  )
+
+  doxygen_add_docs(doxygen-fapi
+    ${docs_inputs_fapi}
+    COMMENT "Generating FAPI-related documentation."
+  )
+
+  # directories and files to process for MAC+RLC docs
+  set(docs_inputs_mac ${CMAKE_CURRENT_SOURCE_DIR}
+                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/mac
+                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/rlc
+                      ${CMAKE_HOME_DIRECTORY}/lib/mac
+                      ${CMAKE_HOME_DIRECTORY}/lib/rlc
+  )
+
+  doxygen_add_docs(doxygen-mac
+    ${docs_inputs_mac}
+    COMMENT "Generating documentation for layers MAC and RLC."
+  )
+
+  # directories and files to process for PHY+RAN docs
+  set(docs_inputs_phy ${CMAKE_CURRENT_SOURCE_DIR}
+                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/phy
+                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/ran
+                      ${CMAKE_HOME_DIRECTORY}/include/srsgnb/radio
+                      ${CMAKE_HOME_DIRECTORY}/lib/phy
+                      ${CMAKE_HOME_DIRECTORY}/lib/ran
+                      ${CMAKE_HOME_DIRECTORY}/lib/radio
+  )
+
+  doxygen_add_docs(doxygen-phy
+    ${docs_inputs_phy}
+    COMMENT "Generating documentation for layers PHY and radio."
   )
 
   add_custom_target(doxygen-clean
