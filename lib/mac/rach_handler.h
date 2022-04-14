@@ -37,16 +37,14 @@ public:
     rnti_t temp_crnti;
     do {
       uint16_t prev_counter = rnti_counter.fetch_add(1, std::memory_order_relaxed) % CRNTI_RANGE;
-      temp_crnti            = to_rnti(prev_counter + MIN_CRNTI);
+      temp_crnti            = to_rnti(prev_counter + rnti_t::MIN_CRNTI);
     } while (rnti_table.has_rnti(temp_crnti));
     return temp_crnti;
   }
 
 private:
-  static constexpr uint16_t MIN_CRNTI    = static_cast<uint16_t>(rnti_t::MIN_CRNTI);
-  static constexpr uint16_t MAX_CRNTI    = static_cast<uint16_t>(rnti_t::MAX_CRNTI);
-  static constexpr int      CRNTI_RANGE  = MAX_CRNTI + 1 - MIN_CRNTI;
-  static constexpr rnti_t   INITIAL_RNTI = to_rnti(0x4601);
+  static constexpr int    CRNTI_RANGE  = rnti_t::MAX_CRNTI + 1 - rnti_t::MIN_CRNTI;
+  static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
 
   /// Notify Scheduler of handled RACH indication.
   void notify_sched(const mac_rach_indication& rach_ind, rnti_t rnti)
