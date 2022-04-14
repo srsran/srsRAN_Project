@@ -2,7 +2,7 @@
 #ifndef SRSGNB_SSB_ASSEMBLER_H
 #define SRSGNB_SSB_ASSEMBLER_H
 
-#include "../../helpers/band_helper.h"
+#include "../../ran/band_helper.h"
 #include <cstddef>
 
 #define BCH_PAYLOAD_GENERATION_OPTION 2

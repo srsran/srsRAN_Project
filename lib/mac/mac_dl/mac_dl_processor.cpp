@@ -1,6 +1,5 @@
 
 #include "mac_dl_processor.h"
-#include "../../helpers/band_helper.h"
 #include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/mac/sched_configurer.h"
