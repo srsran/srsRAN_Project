@@ -76,7 +76,7 @@ public:
 
 /// \brief Creates a generic PDCCH modulator.
 ///
-/// \param[in] args Provides the internal dependencies instances.
+/// \param[in] config Provides the internal dependencies instances.
 /// \return A unique pointer with the modulator.
 std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t& config);
 

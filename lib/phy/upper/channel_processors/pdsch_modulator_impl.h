@@ -1,10 +1,10 @@
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H
 
+#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -78,7 +78,7 @@ private:
   map_to_prb_other(resource_grid_writer& grid, static_vector<span<cf_t>, MAX_PORTS> x_pdsch, const config_t& config);
 
   /// Temporal modulated data
-  static_vector<static_vector<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>          temp_d;
+  static_vector<static_vector<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>         temp_d;
   static_vector<static_vector<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
 public:
@@ -98,10 +98,10 @@ public:
 
 /// \brief Creates a generic PDSCH modulator.
 ///
-/// \param[in] args Provides the internal dependencies instances.
+/// \param[in] config Provides the internal dependencies instances.
 /// \return A unique pointer with the modulator.
 std::unique_ptr<pdsch_modulator> create_pdsch_modulator(pdsch_modulator_config_t& config);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H

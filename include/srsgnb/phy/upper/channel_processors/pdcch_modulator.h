@@ -30,7 +30,7 @@ public:
     unsigned duration;
     /// Higher layer parameter PDCCH-DMRS-ScramblingID if it is given, otherwise the physical cell identifier.
     unsigned n_id;
-    /// Parameter \f$n_{RNTI}\f used for PDCCH data scrambling according to TS 38.211 section 7.3.2.3.
+    /// Parameter \f$n_{RNTI}\f$ used for PDCCH data scrambling according to TS 38.211 section 7.3.2.3.
     unsigned n_rnti;
     /// Scaling factor to apply to the resource elements according to PDCCH power allocation in TS 38.213.
     float scaling;
