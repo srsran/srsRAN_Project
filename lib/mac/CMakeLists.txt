@@ -6,4 +6,4 @@ set(SOURCES mac_factory.cpp mac_impl.cpp mac_ctrl/mac_controller.cpp
             mac_ul/mac_ul_sch_pdu.cpp mac_ul/ul_bsr.cpp mac_ul/pdu_rx_handler.cpp)
 
 add_library(srsgnb_mac STATIC ${SOURCES})
-target_link_libraries(srsgnb_mac srsgnb_sched srsgnb_helpers)
+target_link_libraries(srsgnb_mac srsgnb_sched)

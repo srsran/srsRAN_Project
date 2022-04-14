@@ -1,4 +1,4 @@
-#include "../../lib/helpers/band_helper.h"
+#include "lib/ran/band_helper.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/test_utils.h"
