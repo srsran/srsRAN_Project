@@ -12,6 +12,7 @@ const size_t MAX_NOF_LAYERS = 2;
 const size_t MAX_NOF_PRBS = 275;
 const size_t MAX_NOF_RBGS = 18;
 
+// See O-RAN WG8-v05, Section 9.2.1.1, Table 9-3 SSB Configuration.
 const size_t NOF_BEAMS = 64;
 
 /// SSB constants

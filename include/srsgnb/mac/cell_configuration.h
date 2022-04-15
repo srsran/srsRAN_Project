@@ -20,7 +20,9 @@ struct carrier_configuration {
   /// Width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 200, 400.
   uint16_t carrier_bw_mhz;
   /// NR Absolute Radio Frequency Channel Number (NR-ARFCN) point A in kHz. Values: (450000..52600000).
-  uint32_t arfcn;
+  // TODO: The init value below is temporary, until we properly initialize the mac_cell_configuration in the ...
+  // TODO: initial_du_setup_procedure.
+  uint32_t arfcn = 365000;
   /// Number of antennas. Values: (0..65355).
   uint16_t nof_ant;
 };
@@ -42,7 +44,7 @@ struct ssb_configuration {
   /// NOTE: According to TS 38.211, Section 7.4.3.1, values are [0, 23], but ORAN uses [0, 31].
   uint8_t ssb_subcarrier_offset;
   /// This ssb-PositionsInBurs in the TS 38.311, 0 = SSB beam not used, 1 = SSB beam used.
-  bounded_bitset<NOF_BEAMS> ssb_bitmap;
+  uint64_t ssb_bitmap;
   /// The n-th element of the array indicates what Beam ID to use for the n-th SSB occasion in ssb_bitmap. Only relevant
   /// if n-th bit of ssb_bitmap is 1.
   std::array<uint8_t, NOF_BEAMS> beam_ids;

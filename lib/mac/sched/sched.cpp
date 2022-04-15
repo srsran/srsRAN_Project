@@ -66,7 +66,7 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
             ssb_cfg.ssb_period,
             ssb_cfg.ssb_offset_to_point_A,
             cell.cell_cfg.dl_carrier.arfcn,
-            ssb_cfg.ssb_bitmap.to_uint64(),
+            ssb_cfg.ssb_bitmap,
             ssb_cfg.ssb_case,
             ssb_cfg.paired_spectrum);
   prb_grant ssb_prbs{};

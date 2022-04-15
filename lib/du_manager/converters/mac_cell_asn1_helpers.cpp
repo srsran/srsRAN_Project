@@ -26,7 +26,7 @@ void fill_ssb_configuration_from_asn1(ssb_configuration&                        
   // - ServingCellConfigCommonSIB.ssb-PositionsInBurst, or
   // - ServingCellConfigCommon.ssb-PositionsInBurst.
   // TODO: derive bitmap from correct fields.
-  out.ssb_bitmap.set(0);
+  out.ssb_bitmap = static_cast<uint64_t>(0b1) << static_cast<uint64_t>(63U);
 
   // TODO: define which Beam ID should be used
   out.beam_ids[0] = 0;
