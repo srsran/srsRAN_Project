@@ -19,6 +19,8 @@ struct ssb_information;
 class ssb_assembler
 {
 public:
+  ssb_assembler(const mac_cell_configuration& cell_cfg);
+
   /// \brief Assemble SSB message to be sent to PHY.
   /// This function fill the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB); (ii)
   /// SSB-specific dependent parameters; (iii) SSB scheduling results.
@@ -26,9 +28,6 @@ public:
   /// \param[in]  cell_cfg MAC's Cell configuration.
   /// \param[in]  ssb_info SSB scheduling results.
   void assemble_ssb(dl_ssb_pdu& ssb_pdu, const mac_cell_configuration& cell_cfg, const ssb_information& ssb_info);
-
-  /// \brief Retrieve the SSB configuration.
-  void set_ssb_configuration(const mac_cell_configuration& cell_cfg);
 
   /// Getters
   ssb_pattern_case get_ssb_case() const { return ssb_case; }

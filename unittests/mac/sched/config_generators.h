@@ -56,6 +56,9 @@ cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
   pdcch_cfg_common.ra_search_space_present = true;
   pdcch_cfg_common.ra_search_space         = 1;
 
+  // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
+  msg.dl_carrier.arfcn = 365000;
+
   msg.ul_cfg_common = make_ul_cfg_common(k2);
 
   return msg;

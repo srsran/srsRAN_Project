@@ -19,9 +19,7 @@ void test_no_ues()
 
   // Action 1: Add Cell.
   cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
-  // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter).
-  cell_cfg_msg.dl_carrier.arfcn = 365000;
-  sch.handle_cell_configuration_request(make_cell_cfg_req());
+  sch.handle_cell_configuration_request(cell_cfg_msg);
 
   slot_point sl_tx{0, 0};
 

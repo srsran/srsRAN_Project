@@ -20,9 +20,7 @@ struct carrier_configuration {
   /// Width of this carrier in MHz. Values: 5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 80, 90, 100, 200, 400.
   uint16_t carrier_bw_mhz;
   /// NR Absolute Radio Frequency Channel Number (NR-ARFCN) point A in kHz. Values: (450000..52600000).
-  // TODO: The init value below is temporary, until we properly initialize the mac_cell_configuration in the ...
-  // TODO: initial_du_setup_procedure.
-  uint32_t arfcn = 365000;
+  uint32_t arfcn;
   /// Number of antennas. Values: (0..65355).
   uint16_t nof_ant;
 };

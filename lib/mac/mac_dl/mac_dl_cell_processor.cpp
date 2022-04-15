@@ -16,12 +16,10 @@ mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
   cell_cfg(cell_cfg_),
   cell_exec(*cfg.dl_execs[cell_cfg.cell_index]),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
+  ssb_helper(cell_cfg_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
-{
-  // Update SSB dependent parameters in the MAC DL CELL processor.
-  ssb_helper.set_ssb_configuration(cell_cfg_);
-}
+{}
 
 async_task<void> mac_dl_cell_processor::start()
 {

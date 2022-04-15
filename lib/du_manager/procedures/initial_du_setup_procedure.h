@@ -31,7 +31,10 @@ public:
     }
 
     // Configure DU Cells.
-    cfg.mac_cell_mng->add_cell(mac_cell_configuration{});
+    mac_cell_configuration mac_cell_cfg{};
+    // TODO: remove any mac_cell_cfg initialization values, which are present only to let the tests pass.
+    mac_cell_cfg.dl_carrier.arfcn = 365000;
+    cfg.mac_cell_mng->add_cell(mac_cell_cfg);
 
     // Activate DU Cells.
     cfg.mac_cell_mng->get_cell_manager(0).start();
