@@ -209,7 +209,7 @@ public:
   /// Resize of the bounded_bitset. If <tt> new_size > max_size() </tt>, an assertion is triggered.
   void resize(size_t new_size)
   {
-    srsran_assert(new_size <= max_size(), "ERROR: new size=%zd exceeds bitset capacity=%zd", new_size, max_size());
+    srsran_assert(new_size <= max_size(), "ERROR: new size='{}' exceeds bitset capacity='{}'", new_size, max_size());
     if (new_size == cur_size) {
       return;
     }
@@ -398,7 +398,7 @@ public:
   bounded_bitset<N, reversed>& operator|=(const bounded_bitset<N, reversed>& other)
   {
     srsran_assert(other.size() == size(),
-                  "ERROR: operator|= called for bitsets of different sizes (%zd!=%zd)",
+                  "ERROR: operator|= called for bitsets of different sizes ('{}'!='{}')",
                   size(),
                   other.size());
     for (size_t i = 0; i < nof_words_(); ++i) {
@@ -413,7 +413,7 @@ public:
   bounded_bitset<N, reversed>& operator&=(const bounded_bitset<N, reversed>& other)
   {
     srsran_assert(other.size() == size(),
-                  "ERROR: operator&= called for bitsets of different sizes (%zd!=%zd)",
+                  "ERROR: operator&= called for bitsets of different sizes ('{}'!='{}')",
                   size(),
                   other.size());
     for (size_t i = 0; i < nof_words_(); ++i) {
@@ -461,7 +461,7 @@ public:
   /// \return Unsigned integer representation of the bounded_bitset.
   uint64_t to_uint64() const
   {
-    srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size=%zd to uint64_t", size());
+    srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size='{}' to uint64_t", size());
     return get_word_(0);
   }
 
@@ -470,9 +470,8 @@ public:
   /// \param[in] v Integer bitmap that is going to be stored in the bitset.
   void from_uint64(uint64_t v)
   {
-    srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size=%zd to uint64_t", size());
-    srsran_assert(
-        v < (1U << size()), "ERROR: Provided mask=0x%" PRIx64 " does not fit in bitset of size=%zd", v, size());
+    srsran_assert(nof_words_() == 1, "ERROR: cannot convert bitset of size='{}' to uint64_t", size());
+    srsran_assert(v < (1U << size()), "ERROR: Provided mask='{}' does not fit in bitset of size='{}'", v, size());
     buffer[0] = v;
   }
 
@@ -541,7 +540,7 @@ private:
   void assert_within_bounds_(size_t pos, bool strict) const noexcept
   {
     srsran_assert(pos < size() or (not strict and pos == size()),
-                  "ERROR: index=%zd is out-of-bounds for bitset of size=%zd",
+                  "ERROR: index='{}' is out-of-bounds for bitset of size='{}'",
                   pos,
                   size());
   }
@@ -549,7 +548,7 @@ private:
   void assert_range_bounds_(size_t startpos, size_t endpos) const noexcept
   {
     srsran_assert(startpos <= endpos and endpos <= size(),
-                  "ERROR: range [%zd, %zd) out-of-bounds for bitsize of size=%zd",
+                  "ERROR: range ['{}', '{}') out-of-bounds for bitsize of size='{}'",
                   startpos,
                   endpos,
                   size());
