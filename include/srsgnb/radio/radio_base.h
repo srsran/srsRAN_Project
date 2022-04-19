@@ -2,6 +2,8 @@
 #ifndef SRSGNB_RADIO_RADIO_BASE_H
 #define SRSGNB_RADIO_RADIO_BASE_H
 
+namespace srsgnb {
+
 /// Describes the base interface for radio classes.
 class radio_base
 {
@@ -25,5 +27,6 @@ public:
   /// Forbid move assigment operator.
   radio_base& operator=(radio_base&&) = delete;
 };
+} // namespace srsgnb
 
 #endif // SRSGNB_RADIO_BASE_H
