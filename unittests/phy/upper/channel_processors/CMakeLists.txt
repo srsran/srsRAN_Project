@@ -71,3 +71,11 @@ add_test(ssb_processor_test ssb_processor_test)
 
 add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
 target_link_libraries(pdsch_encoder_test pdsch_encoder srslog)
+
+add_custom_command(
+  TARGET pdsch_encoder_test
+  POST_BUILD
+  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test/data/pdsch_encoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test/data/pdsch_encoder_test_data.tar.gz
+  VERBATIM)
