@@ -11,7 +11,7 @@
 
 namespace srsgnb {
 
-/// Cell Configuration Request
+/// Cell Configuration Request.
 struct cell_configuration_request_message {
   du_cell_index_t cell_index;
   uint8_t         nof_beams;     // (0..64)
@@ -27,42 +27,42 @@ struct cell_configuration_request_message {
   // TODO: ...
 };
 
-/// UE Creation Request
+/// UE Creation Request.
 struct sched_ue_creation_request_message {
   du_ue_index_t   ue_index;
   rnti_t          crnti;
   du_cell_index_t pcell_index;
 };
 
-/// UE Reconfiguration Request
+/// UE Reconfiguration Request.
 struct sched_ue_reconfiguration_message {
   du_ue_index_t   ue_index;
   rnti_t          crnti;
   du_cell_index_t pcell_index;
 };
 
-/// UE Delete Request
+/// UE Delete Request.
 struct sched_ue_delete_message {
   du_ue_index_t   ue_index;
   rnti_t          crnti;
   du_cell_index_t pcell_index;
 };
 
-/// RACH indication Message
-/// \remark See ORAN WG8 9.2.3.2.12
+/// RACH indication Message.
+/// \remark See ORAN WG8 9.2.3.2.12.
 struct rach_indication_message {
   du_ue_index_t cell_index;
   rnti_t        crnti;
   unsigned      timing_info;
   slot_point    slot_rx;
-  /// Index of the first OFDM Symbol where RACH was detected
+  /// Index of the first OFDM Symbol where RACH was detected.
   unsigned symbol_index;
   unsigned frequency_index;
   unsigned preamble_id;
   unsigned timing_advance;
 };
 
-/// Interface to Add/Remove UEs and Cells
+/// Interface to Add/Remove UEs and Cells.
 class sched_configurator
 {
 public:
