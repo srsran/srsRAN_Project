@@ -257,7 +257,7 @@ bool radio_session_uhd_impl::start_rx_stream()
 
 radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                                                task_executor&                    async_executor,
-                                               radio_notifier&                   notifier_) :
+                                               radio_notification_handler&                   notifier_) :
   device(async_executor, notifier_), sampling_rate_hz(radio_config.sampling_rate_hz)
 {
   // Disable fast-path (U/L/O) messages.
@@ -592,7 +592,7 @@ radio_data_plane_receiver::metadata radio_session_uhd_impl::receive(radio_baseba
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
-                                                              radio_notifier&                   notifier)
+                                                              radio_notification_handler&                   notifier)
 {
   std::unique_ptr<radio_session_uhd_impl> device =
       std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier);

@@ -54,7 +54,7 @@ protected:
 
 public:
   bool               is_successful() const { return error_message.empty(); }
-  const std::string& get_error_message() { return error_message; }
+  const std::string& get_error_message() const { return error_message; }
 };
 
 } // namespace srsgnb

@@ -5,7 +5,7 @@
 #include "srsgnb/radio/radio_configuration.h"
 #include "srsgnb/radio/radio_data_plane.h"
 #include "srsgnb/radio/radio_management_plane.h"
-#include "srsgnb/radio/radio_notifier.h"
+#include "srsgnb/radio/radio_notification_handler.h"
 
 namespace srsgnb {
 

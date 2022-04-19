@@ -5,7 +5,7 @@
 #include "radio_uhd_exception_handler.h"
 #include "srsgnb/radio/radio_configuration.h"
 #include "srsgnb/radio/radio_data_plane.h"
-#include "srsgnb/radio/radio_notifier.h"
+#include "srsgnb/radio/radio_notification_handler.h"
 #include <mutex>
 
 #pragma GCC diagnostic push
@@ -33,7 +33,7 @@ private:
   /// Indicates the stream identification for notifications.
   unsigned id;
   /// Radio notification interface.
-  radio_notifier& notifier;
+  radio_notification_handler& notifier;
   /// Owns the UHD Tx stream.
   uhd::rx_streamer::sptr stream;
   /// Maximum number of samples in a single packet.
@@ -73,7 +73,7 @@ public:
   /// \param[in] notifier_ Provides the radio event notification handler.
   radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
-                      radio_notifier&              notifier_);
+                      radio_notification_handler&              notifier_);
 
   /// \brief Starts the stream reception.
   /// \param[in] time_spec Indicates the start time of the stream.

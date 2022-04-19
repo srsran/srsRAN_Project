@@ -23,10 +23,10 @@ class radio_uhd_device : public uhd_exception_handler
 private:
   uhd::usrp::multi_usrp::sptr usrp = nullptr;
   task_executor&              async_executor;
-  radio_notifier&             notifier;
+  radio_notification_handler&             notifier;
 
 public:
-  radio_uhd_device(task_executor& async_executor_, radio_notifier& notifier_) :
+  radio_uhd_device(task_executor& async_executor_, radio_notification_handler& notifier_) :
     async_executor(async_executor_), notifier(notifier_)
   {
     // Do nothing.

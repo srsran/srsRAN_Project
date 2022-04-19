@@ -1,15 +1,16 @@
 
-#ifndef SRSGNB_RADIO_RADIO_NOTIFIER_H
-#define SRSGNB_RADIO_RADIO_NOTIFIER_H
+#ifndef SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
+#define SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
 
 namespace srsgnb {
 
 /// \brief Describes a baseband unit event notifier interface.
 ///
-/// This class describes a an interface used by the baseband unit to notify events related with its operation.
-class radio_notifier : public radio_base
+/// This class describes an interface used by the baseband unit to notify events related with its operation.
+class radio_notification_handler : public radio_base
 {
 public:
+  /// Defines an unknown identifier for streams and ports.
   static constexpr unsigned UNKNOWN_ID = UINT32_MAX;
 
   /// Indicates the event source.
@@ -27,7 +28,7 @@ public:
       OTHER
     };
 
-    // Get string value.
+    /// Get string value.
     const char* to_string() const
     {
       switch (value) {
@@ -46,8 +47,8 @@ public:
     event_source() = default;
     event_source(const event_source& other) : value(other.value) {}
     event_source(sources value_) : value(value_) {}
-    bool operator==(const event_source& other) { return value == other.value; }
-    bool operator==(const sources& other) { return value == other; }
+    bool operator==(const event_source& other) const { return value == other.value; }
+    bool operator==(const sources& other) const { return value == other; }
          operator sources() const { return value; }
          operator sources&() { return value; }
 
@@ -72,7 +73,7 @@ public:
       OTHER
     };
 
-    // Get string value.
+    /// Get string value.
     const char* to_string() const
     {
       switch (value) {
@@ -93,8 +94,8 @@ public:
     event_type() = default;
     event_type(const event_type& other) : value(other.value) {}
     event_type(types value_) : value(value_) {}
-    bool operator==(const event_type& other) { return value == other.value; }
-    bool operator==(const types& other) { return value == other; }
+    bool operator==(const event_type& other) const { return value == other.value; }
+    bool operator==(const types& other) const { return value == other; }
          operator types() const { return value; }
          operator types&() { return value; }
 
@@ -120,4 +121,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RADIO_RADIO_NOTIFIER_H
+#endif // SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H

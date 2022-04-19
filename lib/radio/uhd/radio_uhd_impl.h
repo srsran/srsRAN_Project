@@ -87,7 +87,7 @@ public:
   /// Constructs a radio session based on UHD.
   radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                          task_executor&                    async_executor,
-                         radio_notifier&                   notifier_);
+                         radio_notification_handler&                   notifier_);
 
   /// \brief Indicates that the radio session was initialised succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
@@ -129,7 +129,7 @@ public:
   // See interface for documentation
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notifier&                   notifier) override;
+                                        radio_notification_handler&                   notifier) override;
 };
 
 } // namespace srsgnb

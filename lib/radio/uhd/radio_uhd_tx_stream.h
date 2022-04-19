@@ -6,7 +6,7 @@
 #include "radio_uhd_tx_stream_fsm.h"
 #include "srsgnb/radio/radio_configuration.h"
 #include "srsgnb/radio/radio_data_plane.h"
-#include "srsgnb/radio/radio_notifier.h"
+#include "srsgnb/radio/radio_notification_handler.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include <mutex>
 
@@ -33,7 +33,7 @@ private:
   /// Task executor for asynchronous messages.
   task_executor& async_executor;
   /// Radio notification interface.
-  radio_notifier& notifier;
+  radio_notification_handler& notifier;
   /// Owns the UHD Tx stream.
   uhd::tx_streamer::sptr stream;
   /// Protects concurrent stream transmit.
@@ -85,7 +85,7 @@ public:
   radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
                       task_executor&               async_executor_,
-                      radio_notifier&              notifier_);
+                      radio_notification_handler&              notifier_);
 
   /// \brief Transmits baseband signal.
   /// \param[in] data Provides the baseband buffers to transmit.

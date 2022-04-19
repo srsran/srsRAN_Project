@@ -7,7 +7,7 @@
 
 using namespace srsgnb;
 
-class radio_notifier_spy : public radio_notifier
+class radio_notifier_spy : public radio_notification_handler
 {
 private:
   srslog::basic_logger& logger;

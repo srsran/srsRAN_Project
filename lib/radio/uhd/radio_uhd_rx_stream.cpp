@@ -38,7 +38,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&              nof_rxd_samples,
 
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
-                                         radio_notifier&              notifier_) :
+                                         radio_notification_handler&              notifier_) :
   id(description.id), notifier(notifier_)
 {
   // Build stream arguments.
@@ -119,11 +119,11 @@ bool radio_uhd_rx_stream::receive(radio_baseband_buffer& buffs, uhd::time_spec_t
     rxd_samples_total += rxd_samples;
 
     // Prepare notification event.
-    radio_notifier::event_description event = {};
+    radio_notification_handler::event_description event = {};
     event.stream_id                         = id;
-    event.channel_id                        = radio_notifier::UNKNOWN_ID;
-    event.source                            = radio_notifier::event_source::RECEIVE;
-    event.type                              = radio_notifier::event_type::UNDEFINED;
+    event.channel_id                        = radio_notification_handler::UNKNOWN_ID;
+    event.source                            = radio_notification_handler::event_source::RECEIVE;
+    event.type                              = radio_notification_handler::event_type::UNDEFINED;
 
     // Handle error.
     switch (md.error_code) {
@@ -138,10 +138,10 @@ bool radio_uhd_rx_stream::receive(radio_baseband_buffer& buffs, uhd::time_spec_t
         // Ignored.
         break;
       case uhd::rx_metadata_t::ERROR_CODE_LATE_COMMAND:
-        event.type = radio_notifier::event_type::LATE;
+        event.type = radio_notification_handler::event_type::LATE;
         break;
       case uhd::rx_metadata_t::ERROR_CODE_OVERFLOW:
-        event.type = radio_notifier::event_type::OVERFLOW;
+        event.type = radio_notification_handler::event_type::OVERFLOW;
         break;
       case uhd::rx_metadata_t::ERROR_CODE_BROKEN_CHAIN:
       case uhd::rx_metadata_t::ERROR_CODE_ALIGNMENT:
@@ -151,7 +151,7 @@ bool radio_uhd_rx_stream::receive(radio_baseband_buffer& buffs, uhd::time_spec_t
     }
 
     // Notify if the event type was set.
-    if (event.type != radio_notifier::event_type::UNDEFINED) {
+    if (event.type != radio_notification_handler::event_type::UNDEFINED) {
       notifier.on_radio_rt_event(event);
     }
   }
