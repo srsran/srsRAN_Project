@@ -2,7 +2,7 @@
 #include "mac_dl_processor.h"
 #include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/mac/sched_configurer.h"
+#include "srsgnb/mac/sched_configurator.h"
 
 using namespace srsgnb;
 

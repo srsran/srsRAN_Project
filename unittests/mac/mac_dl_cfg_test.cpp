@@ -120,7 +120,10 @@ void test_dl_ue_procedure_execution_contexts()
   sched_cfg_adapter.set_sched(sched_obj);
 
   // Action: Add Cell.
-  mac_dl.add_cell(mac_cell_configuration{});
+  mac_cell_configuration mac_cell_cfg{};
+  // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
+  mac_cell_cfg.dl_carrier.arfcn = 365000;
+  mac_dl.add_cell(mac_cell_cfg);
 
   // TEST: Thread used for resumption does not change.
   auto test_event = [&ctrl_worker](test_task_event ev) {
@@ -167,9 +170,12 @@ void test_dl_ue_procedure_tsan()
 
   // Action: Add Cells.
   mac_cell_configuration cell_cfg1{};
+  // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
+  cell_cfg1.dl_carrier.arfcn = 365000;
   cell_cfg1.cell_index = 0;
   mac_dl.add_cell(cell_cfg1);
   mac_cell_configuration cell_cfg2{};
+  cell_cfg2.dl_carrier.arfcn = 365000;
   cell_cfg2.cell_index = 1;
   mac_dl.add_cell(cell_cfg2);
 
