@@ -2,10 +2,10 @@
 #ifndef LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
 #define LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
 
+#include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/zero.h"
-#include "srsgnb/phy/generic_functions/dft_processor.h"
 
 namespace srsgnb {
 
@@ -18,7 +18,6 @@ struct ofdm_modulator_factory_config {
 class ofdm_symbol_modulator_impl : public ofdm_symbol_modulator
 {
 private:
-  static constexpr unsigned MAX_DFT_SIZE = 4096;
   /// Indicates the DFT size.
   unsigned dft_size;
   /// Indicates the resource grid bandwidth in resource elements.

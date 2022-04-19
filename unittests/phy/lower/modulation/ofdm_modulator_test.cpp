@@ -17,6 +17,9 @@ std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modul
 
 } // namespace srsgnb
 
+/// Defines the maximum allowed error at the OFDM modulator output.
+static constexpr float ASSERT_MAX_ERROR = 1e-6;
+
 using namespace srsgnb;
 
 int main()
@@ -34,36 +37,56 @@ int main()
   // Create OFDM modulator factory.
   std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory(ofdm_factory_config);
 
-  // For every possible DFT size.
+  // Iterate all possible numerologies.
   for (unsigned numerology : {0, 1, 2, 3, 4}) {
-    for (unsigned dft_size : {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096}) {
-      for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
-        for (unsigned slot_idx = 0, nslot = pow2(numerology); slot_idx != nslot; ++slot_idx) {
-          // Reset spies.
-          dft_factory.reset();
+    // Iterate all possible FFT sizes.
+    for (unsigned dft_size : {256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288}) {
+      // Skip combinations of SCS>15kHz with large DFT sizes.
+      if (numerology > 0 && dft_size > 4096) {
+        continue;
+      }
 
+      // Iterate all possible cyclic prefix.
+      for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
+        // Skip invalid CP, numerology and DFT size combinations that invalid.
+        if (!cp.is_valid(numerology, dft_size)) {
+          printf("Unsupported cyclic prefix (%s), numerology (%d) and DFT size (%d) combination. Skipping.\n",
+                 cp.to_string().c_str(),
+                 numerology,
+                 dft_size);
+          continue;
+        }
+
+        // Reset spies.
+        dft_factory.reset();
+
+        // Create OFDM modulator configuration. Use minimum number of RB.
+        ofdm_modulator_configuration ofdm_config = {};
+        ofdm_config.numerology                   = numerology;
+        ofdm_config.bw_rb                        = 11;
+        ofdm_config.dft_size                     = dft_size;
+        ofdm_config.cp                           = cp;
+        ofdm_config.scale                        = dist_rg(rgen);
+
+        unsigned nsubc = ofdm_config.bw_rb * NRE;
+
+        // Create OFDM modulator.
+        std::unique_ptr<ofdm_slot_modulator> ofdm = ofdm_factory->create_ofdm_slot_modulator(ofdm_config);
+        TESTASSERT(ofdm != nullptr);
+
+        // Check is a DFT processor is created and not used.
+        auto& dft_processor_factory_entry = dft_factory.get_entries();
+        TESTASSERT(dft_processor_factory_entry.size() == 1);
+        dft_processor_spy& dft = *dft_processor_factory_entry[0].dft;
+        TESTASSERT(dft.get_entries().empty());
+
+        // Define empty guard band.
+        std::vector<cf_t> zero_guard(dft_size - nsubc);
+
+        // Iterate all slots within a subframe.
+        for (unsigned slot_idx = 0, nslot = pow2(numerology); slot_idx != nslot; ++slot_idx) {
           // Select a random port.
           unsigned port_idx = dist_port(rgen);
-
-          // Create OFDM modulator configuration.
-          ofdm_modulator_configuration ofdm_config = {};
-          ofdm_config.numerology                   = numerology;
-          ofdm_config.bw_rb                        = dft_size / NRE - 4;
-          ofdm_config.dft_size                     = dft_size;
-          ofdm_config.cp                           = cp;
-          ofdm_config.scale                        = dist_rg(rgen);
-
-          unsigned nsubc = ofdm_config.bw_rb * NRE;
-
-          // Create OFDM modulator.
-          std::unique_ptr<ofdm_slot_modulator> ofdm = ofdm_factory->create_ofdm_slot_modulator(ofdm_config);
-          TESTASSERT(ofdm != nullptr);
-
-          // Check is a DFT processor is created and not used.
-          auto& dft_processor_factory_entry = dft_factory.get_entries();
-          TESTASSERT(dft_processor_factory_entry.size() == 1);
-          dft_processor_spy& dft = *dft_processor_factory_entry[0].dft;
-          TESTASSERT(dft.get_entries().empty());
 
           // Generate random data in the resource grid.
           resource_grid_reader_spy rg;
@@ -78,6 +101,9 @@ int main()
             }
           }
 
+          // Reset DFT spy entries.
+          dft.reset();
+
           // Modulate signal.
           std::vector<cf_t> output(ofdm->get_slot_size(slot_idx));
           ofdm->modulate(output, rg, port_idx, slot_idx);
@@ -86,9 +112,7 @@ int main()
           unsigned nsymb = get_nsymb_per_slot(cp);
           TESTASSERT(dft.get_entries().size() == nsymb);
 
-          // Define empty guard band.
-          std::vector<cf_t> zero_guard(dft_size - nsubc);
-
+          // Iterate all symbols.
           unsigned offset      = 0;
           auto     dft_entries = dft.get_entries();
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
@@ -116,16 +140,16 @@ int main()
             span<const cf_t> output_symbol(output);
             output_symbol = output_symbol.subspan(offset, dft_size + cp_len);
 
+            // Assert generated symbol matches ideal.
             for (unsigned idx = 0, nsamples = dft_size + cp_len; idx != nsamples; ++idx) {
               float err = std::abs(expected_output[idx] - output_symbol[idx]);
-              TESTASSERT(err < 1e6);
+              TESTASSERT(err < ASSERT_MAX_ERROR);
             }
 
+            // Increment OFDM symbol offset.
             offset += dft_size + cp_len;
           }
         }
-
-        // Process
       }
     }
   }

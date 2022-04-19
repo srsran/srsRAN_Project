@@ -33,15 +33,15 @@ public:
   span<cf_t>       get_input() override { return input_buffer; }
   span<const cf_t> run() override
   {
-    entries.emplace_back();
-    entry& e = entries.back();
-    e.input  = input_buffer;
-    e.output = output_buffer;
-
     // Generate some random output.
     for (cf_t& value : output_buffer) {
       value = {dist(rgen), dist(rgen)};
     }
+
+    entries.emplace_back();
+    entry& e = entries.back();
+    e.input  = input_buffer;
+    e.output = output_buffer;
 
     return output_buffer;
   }

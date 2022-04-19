@@ -48,6 +48,26 @@ public:
     return "extended";
   }
 
+  /// \brief Checks the validity of the DFT size for the current cyclic prefix.
+  /// \param[in] numerology Indicates the subcarrier spacing numerology.
+  /// \param[in] dft_size Indicates the DFT size.
+  /// \return True if the given cyclic prefix type, numerology and DFT size combination results in a valid cyclic prefix
+  /// length. Otherwise, false.
+  bool is_valid(unsigned numerology, unsigned dft_size)
+  {
+    unsigned N_ref = 2048;
+    unsigned kappa = 64;
+
+    // Calculate cyclic prefix length.
+    unsigned cp_len = (144 * kappa) / pow2(numerology);
+    if (value == EXTENDED) {
+      cp_len = (512 * kappa) / pow2(numerology);
+    }
+
+    // The cyclic prefix lengths must be divisible by the reference DFT size.
+    return ((cp_len * dft_size) % (N_ref * kappa) == 0) && ((16 * dft_size) % (N_ref) == 0);
+  }
+
   /// Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
   constexpr unsigned get_length(unsigned symbol_idx, unsigned numerology, unsigned dft_size) const
   {
@@ -61,7 +81,7 @@ public:
       cp_len += 16 * kappa;
     }
 
-    return (cp_len * dft_size) / N_ref;
+    return (cp_len * dft_size) / (N_ref * kappa);
   }
 };
 
