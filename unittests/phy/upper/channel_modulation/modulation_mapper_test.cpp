@@ -12,7 +12,7 @@
 
 #include "modulation_mapper_test_data.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 
@@ -20,16 +20,16 @@ static constexpr float assert_max_err = 1e-6;
 
 static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, span<const cf_t>& expected_symbols)
 {
-  srsran_assert(symbols.size() == expected_symbols.size(), "wrong number of modulated symbols");
+  TESTASSERT_EQ(symbols.size(), expected_symbols.size(), "Wrong number of modulated symbols.");
 
   for (unsigned i = 0; i < symbols.size(); ++i) {
     float err = std::abs(symbols[i] - expected_symbols[i]);
-    srsran_assert(err < assert_max_err,
-                  "Mismatched value %+f%+f but expected %+f%+f",
-                  symbols[i].real(),
-                  symbols[i].imag(),
-                  expected_symbols[i].real(),
-                  expected_symbols[i].imag());
+    TESTASSERT(err < assert_max_err,
+               "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
+               symbols[i].real(),
+               symbols[i].imag(),
+               expected_symbols[i].real(),
+               expected_symbols[i].imag());
   }
 }
 

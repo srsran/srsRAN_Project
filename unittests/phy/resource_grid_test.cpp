@@ -2,8 +2,7 @@
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/srsran_assert.h"
-#include <map>
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 using namespace srsgnb;
@@ -27,8 +26,8 @@ void test_all_zero(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
 
       for (unsigned subc = 0; subc != nof_subc; ++subc) {
         cf_t re = rg_data[subc];
-        srsran_assert(iszero(re.real()), "Real is not zero");
-        srsran_assert(iszero(re.imag()), "Imaginary is not zero");
+        TESTASSERT(iszero(re.real()), "Real is not zero.");
+        TESTASSERT(iszero(re.imag()), "Imaginary is not zero.");
       }
     }
   }
@@ -90,8 +89,8 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
           }
         }
 
-        srsran_assert(gold.real() == value.real(), "Unmatched real");
-        srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+        TESTASSERT_EQ(gold.real(), value.real());
+        TESTASSERT_EQ(gold.imag(), value.imag());
       }
     }
   }
@@ -105,8 +104,8 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     cf_t gold  = symbols_gold[i];
     cf_t value = symbols[i];
 
-    srsran_assert(gold.real() == value.real(), "Unmatched real");
-    srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+    TESTASSERT_EQ(gold.real(), value.real());
+    TESTASSERT_EQ(gold.imag(), value.imag());
   }
 }
 
@@ -148,7 +147,7 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   span<const cf_t> symbol_buffer_put = grid->put(port_gold, symbol_idx, 0, mask, symbols_gold);
 
   // Make sure all symbols are used
-  srsran_assert(symbol_buffer_put.empty(), "Failed");
+  TESTASSERT(symbol_buffer_put.empty());
 
   // Assert grid
   unsigned count = 0;
@@ -167,8 +166,8 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
           count++;
         }
 
-        srsran_assert(gold.real() == value.real(), "Unmatched real");
-        srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+        TESTASSERT_EQ(gold.real(), value.real());
+        TESTASSERT_EQ(gold.imag(), value.imag());
       }
     }
   }
@@ -178,15 +177,15 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   span<cf_t>                symbol_buffer_get = grid->get(symbols, port_gold, symbol_idx, 0, mask);
 
   // Make sure all symbols are used
-  srsran_assert(symbol_buffer_get.empty(), "Symbol buffer - not empty");
+  TESTASSERT(symbol_buffer_get.empty(), "Symbol buffer - not empty.");
 
   // Assert symbols
   for (unsigned i = 0; i != nof_elements; ++i) {
     cf_t gold  = symbols_gold[i];
     cf_t value = symbols[i];
 
-    srsran_assert(gold.real() == value.real(), "Unmatched real");
-    srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+    TESTASSERT_EQ(gold.real(), value.real());
+    TESTASSERT_EQ(gold.imag(), value.imag());
   }
 }
 
@@ -236,8 +235,8 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
           count++;
         }
 
-        srsran_assert(gold.real() == value.real(), "Unmatched real");
-        srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+        TESTASSERT_EQ(gold.real(), value.real());
+        TESTASSERT_EQ(gold.imag(), value.imag());
       }
     }
   }
@@ -251,8 +250,8 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
     cf_t gold  = symbols_gold[i];
     cf_t value = symbols[i];
 
-    srsran_assert(gold.real() == value.real(), "Unmatched real");
-    srsran_assert(gold.imag() == value.imag(), "Unmatched imaginary");
+    TESTASSERT_EQ(gold.real(), value.real());
+    TESTASSERT_EQ(gold.imag(), value.imag());
   }
 }
 

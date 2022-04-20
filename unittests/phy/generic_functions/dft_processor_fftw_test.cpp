@@ -25,7 +25,7 @@ using namespace srsgnb;
 static std::mt19937 rgen(0);
 
 // Maximum allowed error.
-static float assert_max_error = 2e-6;
+static float ASSERT_MAX_ERROR = 2e-6;
 
 // Number of repetitions.
 static constexpr unsigned nof_repetitions = 1;
@@ -135,7 +135,7 @@ int main()
 #endif
 
       // Actual assertion.
-      TESTASSERT(max_error < assert_max_error);
+      TESTASSERT(max_error < ASSERT_MAX_ERROR);
     }
   }
 

@@ -12,7 +12,7 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/binary.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -40,7 +40,7 @@ void test_binary_xor(std::size_t N)
 
   for (size_t i = 0; i != N; ++i) {
     T gold_z = x[i] ^ y[i];
-    srsran_assert(gold_z == z[i], "Failed");
+    TESTASSERT_EQ(gold_z, z[i]);
   }
 }
 
@@ -65,7 +65,7 @@ void test_binary_and(std::size_t N)
 
   for (size_t i = 0; i != N; ++i) {
     T gold_z = x[i] & y[i];
-    srsran_assert(gold_z == z[i], "Failed");
+    TESTASSERT_EQ(gold_z, z[i]);
   }
 }
 
@@ -90,7 +90,7 @@ void test_binary_or(std::size_t N)
 
   for (size_t i = 0; i != N; ++i) {
     T gold_z = x[i] | y[i];
-    srsran_assert(gold_z == z[i], "Failed");
+    TESTASSERT_EQ(gold_z, z[i]);
   }
 }
 

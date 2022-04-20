@@ -12,7 +12,7 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/bit.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -34,13 +34,13 @@ void test_unpack(unsigned N)
   srsvec::bit_unpack(value, bit_buf, N);
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
-  srsran_assert(unpacked.size() == N, "Failed");
-  srsran_assert(bit_buf.empty(), "Failed");
+  TESTASSERT_EQ(unpacked.size(), N);
+  TESTASSERT(bit_buf.empty());
 
   // Assert each bit
   for (unsigned i = 0; i != N; i++) {
     uint8_t gold = (value >> (N - 1 - i)) & 1U;
-    srsran_assert(gold == unpacked[i], "Failed");
+    TESTASSERT_EQ(gold, unpacked[i]);
   }
 }
 
@@ -67,7 +67,7 @@ void test_unpack_vector(unsigned N)
     unsigned byte_idx = i / 8;
     unsigned bit_idx  = i % 8;
     uint8_t  gold     = ((unsigned)packed[byte_idx] >> (7U - bit_idx)) & 1U;
-    srsran_assert(gold == unpacked[i], "Failed");
+    TESTASSERT_EQ(gold, unpacked[i]);
   }
 }
 
@@ -86,13 +86,13 @@ void test_pack(unsigned N)
   unsigned            value   = srsvec::bit_pack(bit_buf, N);
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
-  srsran_assert(unpacked.size() == N, "Failed");
-  srsran_assert(bit_buf.empty(), "Failed");
+  TESTASSERT_EQ(unpacked.size(), N);
+  TESTASSERT(bit_buf.empty());
 
   // Assert each bit
   for (unsigned i = 0; i != N; ++i) {
     uint8_t gold = (value >> (N - 1 - i)) & 1U;
-    srsran_assert(gold == unpacked[i], "Failed");
+    TESTASSERT_EQ(gold, unpacked[i]);
   }
 }
 
@@ -119,7 +119,7 @@ void test_pack_vector(unsigned N)
     unsigned byte_idx = i / 8;
     unsigned bit_idx  = i % 8;
     uint8_t  gold     = (packed[byte_idx] >> (7U - bit_idx)) & 1U;
-    srsran_assert(gold == unpacked[i], "Failed");
+    TESTASSERT_EQ(gold, unpacked[i]);
   }
 }
 

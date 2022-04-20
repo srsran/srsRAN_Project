@@ -10,11 +10,9 @@
  *
  */
 
-#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/srsran_assert.h"
-#include <cassert>
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -32,6 +30,8 @@ static std::array<int16_t, Nc + MAX_SEQ_LEN + 31> c_short;
 static std::array<int8_t, Nc + MAX_SEQ_LEN + 31>  c_char;
 static std::array<uint8_t, MAX_SEQ_LEN / 8>       c_packed;
 static std::array<uint8_t, MAX_SEQ_LEN>           c_unpacked;
+
+static constexpr float ASSERT_MAX_FLOAT_ERROR = 1e-6;
 
 static uint32_t bit_pack(uint8_t** bits, int nof_bits)
 {
@@ -114,7 +114,7 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   // Assert
   for (unsigned i = 0; i != N / 8; ++i) {
     uint8_t gold = c_packed[i] ^ data[i];
-    srsran_assert(gold == data_xor[i], "Failed");
+    TESTASSERT_EQ(gold, data_xor[i]);
   }
 }
 
@@ -146,7 +146,7 @@ void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
   // Assert
   for (unsigned i = 0; i != N; ++i) {
     uint8_t gold = c_unpacked[i] ^ data[i];
-    srsran_assert(gold == data_xor[i], "Failed");
+    TESTASSERT_EQ(gold, data_xor[i]);
   }
 }
 
@@ -178,7 +178,7 @@ void test_apply_xor_i8(unsigned c_init, unsigned N, unsigned offset)
   // Assert
   for (unsigned i = 0; i != N; ++i) {
     int8_t gold = c_char[i] * data[i];
-    srsran_assert(gold == data_xor[i], "Failed");
+    TESTASSERT_EQ(gold, data_xor[i]);
   }
 }
 
@@ -203,7 +203,7 @@ void test_generate_float(unsigned c_init, unsigned N, unsigned offset)
   for (unsigned i = 0; i != N; ++i) {
     float gold = c_float[i] * M_SQRT1_2;
     float err  = std::abs(gold - sequence[i]);
-    srsran_assert(err < 1e-6, "Failed err=%f", err);
+    TESTASSERT(err < ASSERT_MAX_FLOAT_ERROR, "Failed err={}.", err);
   }
 }
 

@@ -13,7 +13,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 
 namespace srsgnb {
 std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
@@ -50,7 +50,7 @@ int main()
 
       // Count calculation trial and make sure it does not exceed the maximum number of trials.
       --trials;
-      srsran_assert(trials, "Size M_zc=%d cannot derive m and delta", M_zc);
+      TESTASSERT(trials, "Size M_zc={} cannot derive m and delta.", M_zc);
     }
 
     // Create collection.
@@ -75,7 +75,7 @@ int main()
           generator->generate(sequence2, u, v, alphas[alpha_idx]);
 
           // Assert sequence matches with generator.
-          srsran_assert(srsvec::equal(sequence, sequence2), "Collected and generated sequences do not match.");
+          TESTASSERT(srsvec::equal(sequence, sequence2), "Collected and generated sequences do not match.");
 
           // Assert the sequence with an external reference.
           // ...

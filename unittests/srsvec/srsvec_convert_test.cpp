@@ -12,12 +12,12 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/conversion.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  assert_cf_max_error    = 1e-3;
-static const float  assert_float_max_error = 1e-3;
+static const float  ASSERT_CF_MAX_ERROR    = 1e-3;
+static const float  ASSERT_FLOAT_MAX_ERROR = 1e-3;
 
 using namespace srsgnb;
 
@@ -39,8 +39,8 @@ void test_convert_ci(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int16_t gold_re = static_cast<int16_t>(x[i].real() * scale);
     int16_t gold_im = static_cast<int16_t>(x[i].imag() * scale);
-    srsran_assert(gold_re == z[2 * i + 0], "Failed");
-    srsran_assert(gold_im == z[2 * i + 1], "Failed");
+    TESTASSERT_EQ(gold_re, z[2 * i + 0]);
+    TESTASSERT_EQ(gold_im, z[2 * i + 1]);
   }
 }
 
@@ -62,8 +62,8 @@ void test_convert_ci_swap(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int16_t gold_re = static_cast<int16_t>(x[i].imag() * scale);
     int16_t gold_im = static_cast<int16_t>(x[i].real() * scale);
-    srsran_assert(gold_re == z[2 * i + 0], "Failed");
-    srsran_assert(gold_im == z[2 * i + 1], "Failed");
+    TESTASSERT_EQ(gold_re, z[2 * i + 0]);
+    TESTASSERT_EQ(gold_im, z[2 * i + 1]);
   }
 }
 
@@ -85,7 +85,7 @@ void test_convert_ic(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     cf_t  gold = {static_cast<float>(x[2 * i]) / scale, static_cast<float>(x[2 * i + 1]) / scale};
     float err  = std::abs(gold - z[i]);
-    srsran_assert(err < assert_cf_max_error, "Failed");
+    TESTASSERT(err < ASSERT_CF_MAX_ERROR);
   }
 }
 
@@ -107,7 +107,7 @@ void test_convert_ic_swap(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     cf_t  gold = {static_cast<float>(x[2 * i + 1]) / scale, static_cast<float>(x[2 * i]) / scale};
     float err  = std::abs(gold - z[i]);
-    srsran_assert(err < assert_cf_max_error, "Failed");
+    TESTASSERT(err < ASSERT_CF_MAX_ERROR);
   }
 }
 
@@ -128,7 +128,7 @@ void test_convert_fi(std::size_t N)
 
   for (size_t i = 0; i != N; i++) {
     int16_t gold = static_cast<int16_t>(x[i] * scale);
-    srsran_assert(gold == z[i], "Failed");
+    TESTASSERT(gold == z[i]);
   }
 }
 
@@ -150,7 +150,7 @@ void test_convert_if(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     float gold = static_cast<float>(x[i]) / scale;
     float err  = std::abs(gold - z[i]);
-    srsran_assert(err < assert_float_max_error, "Failed");
+    TESTASSERT(err < ASSERT_FLOAT_MAX_ERROR);
   }
 }
 

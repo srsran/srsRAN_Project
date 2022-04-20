@@ -12,12 +12,12 @@
 
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  assert_cf_max_error    = 1e-6;
-static const float  assert_float_max_error = 1e-6;
+static const float  ASSERT_CF_MAX_ERROR    = 1e-6;
+static const float  ASSERT_FLOAT_MAX_ERROR = 1e-6;
 
 using namespace srsgnb;
 
@@ -42,7 +42,7 @@ void test_cf_add(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     cf_t  gold_z = x[i] + y[i];
     float err    = std::abs(gold_z - z[i]);
-     srsran_assert(err < assert_cf_max_error, "Failed");
+    TESTASSERT(err < ASSERT_CF_MAX_ERROR);
   }
 }
 
@@ -67,7 +67,7 @@ void test_float_add(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     float gold_z = x[i] + y[i];
     float err    = std::abs(gold_z - z[i]);
-     srsran_assert(err < assert_float_max_error, "Failed");
+    TESTASSERT(err < ASSERT_FLOAT_MAX_ERROR);
   }
 }
 
@@ -92,7 +92,7 @@ void test_i16_add(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int gold_z = x[i] + y[i];
     int err    = std::abs(gold_z - z[i]);
-     srsran_assert(err == 0, "Failed");
+    TESTASSERT_EQ(err, 0);
   }
 }
 
@@ -117,7 +117,7 @@ void test_i8_add(std::size_t N)
   for (size_t i = 0; i != N; i++) {
     int gold_z = x[i] + y[i];
     int err    = std::abs(gold_z - z[i]);
-     srsran_assert(err == 0, "Failed");
+    TESTASSERT_EQ(err, 0);
   }
 }
 

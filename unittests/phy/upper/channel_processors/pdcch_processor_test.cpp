@@ -123,37 +123,37 @@ int main()
               pdcch_processor_impl::compute_rb_mask(rb_mask, pdu.coreset, pdu.dci_list[0]);
 
               // Check PDCCH encoder inputs.
-              srsran_assert(encoder->get_nof_entries() == 1, "Invalid number of entries.");
+              TESTASSERT(encoder->get_nof_entries() == 1, "Invalid number of entries.");
               const auto& encoder_entry = encoder->get_entries().front();
-              srsran_assert(srsvec::equal(encoder_entry.data, pdu.dci_list[0].payload), "Detected mismatch.");
+              TESTASSERT(srsvec::equal(encoder_entry.data, pdu.dci_list[0].payload));
 
               // Check PDCCH modulator inputs.
-              srsran_assert(modulator->get_nof_entries() == 1, "Invalid number of entries.");
+              TESTASSERT(modulator->get_nof_entries() == 1, "Invalid number of entries.");
               const auto& modulator_entry = modulator->get_entries().front();
-              srsran_assert(srsvec::equal(rb_mask, modulator_entry.config.rb_mask), "Detected mismatch.");
-              srsran_assert(modulator_entry.config.start_symbol_index == start_symbol_index, "Detected mismatch.");
-              srsran_assert(modulator_entry.config.duration == duration, "Detected mismatch.");
-              srsran_assert(modulator_entry.config.n_id == dci.n_id_pdcch_data, "Detected mismatch.");
-              srsran_assert(modulator_entry.config.n_rnti == dci.n_rnti, "Detected mismatch.");
-              srsran_assert(modulator_entry.config.scaling == convert_dB_to_amplitude(dci.data_power_offset_dB),
-                            "Detected mismatch.");
-              srsran_assert(srsvec::equal(pdu.dci_list[0].ports, modulator_entry.config.ports), "Detected mismatch.");
-              srsran_assert(srsvec::equal(modulator_entry.bits, encoder_entry.encoded), "Detected mismatch.");
-              srsran_assert(modulator_entry.grid_ptr == &grid, "Detected mismatch.");
+              TESTASSERT(srsvec::equal(rb_mask, modulator_entry.config.rb_mask));
+              TESTASSERT(modulator_entry.config.start_symbol_index == start_symbol_index);
+              TESTASSERT(modulator_entry.config.duration == duration);
+              TESTASSERT(modulator_entry.config.n_id == dci.n_id_pdcch_data);
+              TESTASSERT(modulator_entry.config.n_rnti == dci.n_rnti);
+              TESTASSERT(modulator_entry.config.scaling == convert_dB_to_amplitude(dci.data_power_offset_dB),
+                         "Detected mismatch.");
+              TESTASSERT(srsvec::equal(pdu.dci_list[0].ports, modulator_entry.config.ports));
+              TESTASSERT(srsvec::equal(modulator_entry.bits, encoder_entry.encoded));
+              TESTASSERT(modulator_entry.grid_ptr == &grid);
 
               // Check PDCCH DMRS inputs.
-              srsran_assert(dmrs->get_nof_entries() == 1, "Invalid number of entries.");
+              TESTASSERT(dmrs->get_nof_entries() == 1, "Invalid number of entries.");
               const auto& dmrs_entry = dmrs->get_entries().front();
-              srsran_assert(dmrs_entry.config.slot == pdu.slot, "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.cp == cp, "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.reference_point_k_rb == 0, "Detected mismatch.");
-              srsran_assert(srsvec::equal(dmrs_entry.config.rb_mask, rb_mask), "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.start_symbol_index == coreset.start_symbol_index, "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.duration == coreset.duration, "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.n_id == dci.n_id_pdcch_dmrs, "Detected mismatch.");
-              srsran_assert(dmrs_entry.config.amplitude == convert_dB_to_amplitude(dci.dmrs_power_offset_dB),
-                            "Detected mismatch.");
-              srsran_assert(srsvec::equal(pdu.dci_list[0].ports, dmrs_entry.config.ports), "Detected mismatch.");
+              TESTASSERT(dmrs_entry.config.slot == pdu.slot);
+              TESTASSERT(dmrs_entry.config.cp == cp);
+              TESTASSERT(dmrs_entry.config.reference_point_k_rb == 0);
+              TESTASSERT(srsvec::equal(dmrs_entry.config.rb_mask, rb_mask));
+              TESTASSERT(dmrs_entry.config.start_symbol_index == coreset.start_symbol_index);
+              TESTASSERT(dmrs_entry.config.duration == coreset.duration);
+              TESTASSERT(dmrs_entry.config.n_id == dci.n_id_pdcch_dmrs);
+              TESTASSERT(dmrs_entry.config.amplitude == convert_dB_to_amplitude(dci.dmrs_power_offset_dB),
+                         "Detected mismatch.");
+              TESTASSERT(srsvec::equal(pdu.dci_list[0].ports, dmrs_entry.config.ports));
             }
           }
         }

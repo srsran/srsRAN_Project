@@ -1,6 +1,7 @@
 
-#include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 
@@ -30,7 +31,7 @@ void test_merge_1()
     pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
-  srsran_assert(list.get_nof_entries() == 1, "Failed");
+  TESTASSERT_EQ(list.get_nof_entries(), 1);
 
   // Create second pattern:
   // - Even subcarrier indexes, and
@@ -40,7 +41,7 @@ void test_merge_1()
     pattern_2.symbols[l] = (l % 2 == 1); // Only odd symbols
   }
   list.merge(pattern_2);
-  srsran_assert(list.get_nof_entries() == 1, "Failed");
+  TESTASSERT_EQ(list.get_nof_entries(), 1);
 
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
@@ -59,7 +60,7 @@ void test_merge_1()
         // Even subcarrier
         gold = (k % 2 == 0);
       }
-      srsran_assert(mask[k] == gold, "Failed");
+      TESTASSERT_EQ(mask[k], gold);
     }
 
     // Set exclude.
@@ -67,7 +68,7 @@ void test_merge_1()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_RB * NRE; ++k) {
-      srsran_assert(!mask[k], "Failed");
+      TESTASSERT(!mask[k]);
     }
   }
 }
@@ -98,7 +99,7 @@ void test_merge_2()
     pattern_1.symbols[l] = (l % 2 == 0);
   }
   list.merge(pattern_1);
-  srsran_assert(list.get_nof_entries() == 1, "Failed");
+  TESTASSERT(list.get_nof_entries() == 1);
 
   // Create second pattern:
   // - odd subcarrier indexes, and
@@ -108,7 +109,7 @@ void test_merge_2()
     pattern_2.re_mask[k] = (k % 2 == 1);
   }
   list.merge(pattern_2);
-  srsran_assert(list.get_nof_entries() == 1, "Failed");
+  TESTASSERT(list.get_nof_entries() == 1);
 
   // The pattern should be repeated for each symbol.
   for (unsigned l = 0; l != MAX_NSYMB_PER_SLOT; ++l) {
@@ -127,7 +128,7 @@ void test_merge_2()
         // Even subcarrier
         gold = (l % 2 == 0);
       }
-      srsran_assert(mask[k] == gold, "Failed");
+      TESTASSERT_EQ(mask[k], gold);
     }
 
     // Set exclude.
@@ -135,7 +136,7 @@ void test_merge_2()
 
     // All the subcarriers shall be false.
     for (unsigned k = 0; k != MAX_RB * NRE; ++k) {
-      srsran_assert(!mask[k], "Failed");
+      TESTASSERT(!mask[k]);
     }
   }
 }

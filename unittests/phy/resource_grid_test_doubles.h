@@ -2,6 +2,7 @@
 #define SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H_
 
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <map>
 #include <random>
@@ -76,28 +77,25 @@ public:
   void assert_entries(span<const expected_entry_t> expected_entries) const
   {
     // Make sure the number of elements match.
-    srsran_assert(entries.size() == expected_entries.size(),
-                  "The number of expected entries (%d) is not equal to the number of entries (%d).",
-                  expected_entries.size(),
-                  entries.size());
+    TESTASSERT_EQ(entries.size(), expected_entries.size());
 
     // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
     for (const auto& entry : expected_entries) {
       entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
-      srsran_assert(entries.count(key),
-                    "No resource element was written for port=%d, symbol=%d and subcarrier=%d.",
-                    entry.port,
-                    entry.symbol,
-                    entry.subcarrier);
+      TESTASSERT(entries.count(key),
+                 "No resource element was written for port={}, symbol={} and subcarrier={}.",
+                 entry.port,
+                 entry.symbol,
+                 entry.subcarrier);
 
       cf_t  value = entries.at(key);
       float err   = std::abs(entry.value - value);
-      srsran_assert(err < assert_max_error,
-                    "Mismatched value %+f%+f but expected %+f%+f",
-                    value.real(),
-                    value.imag(),
-                    entry.value.real(),
-                    entry.value.imag());
+      TESTASSERT(err < ASSERT_MAX_ERROR,
+                 "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
+                 value.real(),
+                 value.imag(),
+                 entry.value.real(),
+                 entry.value.imag());
     }
   }
 
@@ -109,7 +107,7 @@ private:
   using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
 
   /// Defines the maximum allowed error when asserting the resource grid.
-  static constexpr float assert_max_error = 1e-6;
+  static constexpr float ASSERT_MAX_ERROR = 1e-6;
 
   /// Stores the resource grid written entries.
   std::map<entry_key_t, cf_t> entries;

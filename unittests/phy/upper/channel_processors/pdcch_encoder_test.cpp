@@ -1,7 +1,7 @@
 
 #include "pdcch_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <srsgnb/adt/static_vector.h>
 
 using namespace srsgnb;
@@ -28,7 +28,7 @@ int main()
 
     // Assert encoded data.
     for (unsigned i = 0; i != test_case.config.E; ++i) {
-      srsran_assert(encoded_msg[i] == testvector_encoded[i], "Mismatched bit {}", i);
+      TESTASSERT_EQ(encoded_msg[i], testvector_encoded[i], "Bit index {}.", i);
     }
   }
   return 0;

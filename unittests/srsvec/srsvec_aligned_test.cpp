@@ -13,7 +13,7 @@
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 using namespace srsgnb;
@@ -39,7 +39,7 @@ void test_zero(std::size_t N)
 
   // Verify copy
   for (size_t i = 0; i != N; i++) {
-    srsran_assert(x[i] == 0, "Failed");
+    TESTASSERT_EQ(x[i], 0);
   }
 }
 
@@ -62,7 +62,7 @@ void test_copy(std::size_t N)
 
   // Verify copy
   for (size_t i = 0; i != N; i++) {
-    srsran_assert(x[i] == y[i], "Failed");
+    TESTASSERT_EQ(x[i], y[i]);
   }
 }
 
