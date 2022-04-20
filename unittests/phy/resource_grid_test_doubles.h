@@ -175,7 +175,13 @@ public:
   {
     return span<cf_t>();
   }
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override 
+  {
+    cf_t* symbol_ptr = symbols.data();
+    for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
+      *(symbol_ptr++) = get(port, l, k);
+    }
+  }
 
   void write(span<const expected_entry_t> entries_)
   {
