@@ -14,3 +14,4 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/channel_modulation)
 
 add_library(modulation_mapper STATIC ${SOURCES})
+target_link_libraries(modulation_mapper srsgnb_support)

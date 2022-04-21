@@ -1,4 +1,5 @@
 #include "demodulation_mapper_impl.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
@@ -6,14 +7,13 @@ using namespace srsgnb;
 static void demodulate_soft_BPSK(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float range_limit_float = 200;
+  constexpr float RANGE_LIMIT_FLOAT = 200;
   // Equivalent of range_limit_float in fixed point representation.
-  constexpr float range_limit_int = 64;
+  constexpr float RANGE_LIMIT_INT = 64;
 
   auto demod_sym = [](cf_t z, float n) {
     float l_value = 2.0F * M_SQRT2f32 * (std::real(z) + std::imag(z)) / n;
-    l_value       = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
-    return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
+    return clip_and_quantize(l_value, RANGE_LIMIT_FLOAT, RANGE_LIMIT_INT);
   };
 
   std::transform(symbols.begin(), symbols.end(), noise_vars.begin(), llrs.begin(), demod_sym);
@@ -22,14 +22,13 @@ static void demodulate_soft_BPSK(span<int8_t> llrs, span<const cf_t> symbols, sp
 static void demodulate_soft_QPSK(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float range_limit_float = 200;
+  constexpr float RANGE_LIMIT_FLOAT = 200;
   // Equivalent of range_limit_float in fixed point representation.
-  constexpr float range_limit_int = 64;
+  constexpr float RANGE_LIMIT_INT = 64;
 
   auto demod_sym = [](float z, float n) {
     float l_value = 2.0F * M_SQRT2f32 * z / n;
-    l_value       = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
-    return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
+    return clip_and_quantize(l_value, RANGE_LIMIT_FLOAT, RANGE_LIMIT_INT);
   };
 
   auto*       llr_it   = llrs.begin();
@@ -44,9 +43,9 @@ static void demodulate_soft_QPSK(span<int8_t> llrs, span<const cf_t> symbols, sp
 static void demodulate_soft_QAM16(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
-  constexpr float range_limit_float = 100;
+  constexpr float RANGE_LIMIT_FLOAT = 100;
   // Equivalent of range_limit_float in fixed point representation.
-  constexpr float range_limit_int = 64;
+  constexpr float RANGE_LIMIT_INT = 64;
 
   const float M_SQRT1_10 = 1.0F / std::sqrt(10.0F);
 
@@ -54,15 +53,13 @@ static void demodulate_soft_QAM16(span<int8_t> llrs, span<const cf_t> symbols, s
     float l_value = 4 * M_SQRT1_10 * z;
     l_value       = (std::abs(z) <= 2 * M_SQRT1_10) ? l_value : 2 * l_value - std::copysign(0.8F, z);
     l_value /= n;
-    l_value = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
-    return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
+    return clip_and_quantize(l_value, RANGE_LIMIT_FLOAT, RANGE_LIMIT_INT);
   };
 
   auto demod_sym_23 = [M_SQRT1_10](float z, float n) {
     float l_value = 0.8F - 4 * M_SQRT1_10 * std::abs(z);
     l_value /= n;
-    l_value = (std::abs(l_value) <= range_limit_float) ? l_value : std::copysign(range_limit_float, l_value);
-    return static_cast<int8_t>(std::round(l_value * range_limit_int / range_limit_float));
+    return clip_and_quantize(l_value, RANGE_LIMIT_FLOAT, RANGE_LIMIT_INT);
   };
 
   auto*       llr_it   = llrs.begin();
