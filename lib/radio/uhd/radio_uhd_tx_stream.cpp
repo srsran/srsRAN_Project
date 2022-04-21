@@ -62,7 +62,7 @@ void radio_uhd_tx_stream::run_recv_async_msg()
   recv_async_msg();
 
   // Enqueue the task again.
-  async_executor.execute([this]() { run_recv_async_msg(); });
+  async_executor.defer([this]() { run_recv_async_msg(); });
 }
 
 bool radio_uhd_tx_stream::transmit_block(unsigned&              nof_txd_samples,
