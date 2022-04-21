@@ -4,7 +4,7 @@
 
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_timing_handler.h"
+#include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/radio/radio_data_plane.h"
@@ -56,7 +56,7 @@ struct lower_phy_configuration {
   /// Provides a symbol handler to notify the reception of symbols.
   lower_phy_rx_symbol_notifier* symbol_handler;
   /// Provides the timing handler to notify the timing boundaries.
-  lower_phy_timing_handler* timing_handler;
+  lower_phy_timing_notifier* timing_handler;
   /// Provides the OFDM modulator factory.
   ofdm_modulator_factory* modulator_factory;
   /// Provides the uplink resource grid pool.

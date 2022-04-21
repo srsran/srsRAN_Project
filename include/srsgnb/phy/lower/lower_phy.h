@@ -3,7 +3,7 @@
 
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_timing_handler.h"
+#include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {

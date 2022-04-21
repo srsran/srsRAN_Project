@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_HANDLER_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_HANDLER_H
+#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H
+#define SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H
 
 #include "srsgnb/ran/slot_point.h"
 
@@ -12,11 +12,11 @@ struct lower_phy_timing_context_t {
 };
 
 /// Lower physical layer's notifier to align timing boundaries
-class lower_phy_timing_handler
+class lower_phy_timing_notifier
 {
 public:
   /// Default destructor
-  virtual ~lower_phy_timing_handler() = default;
+  virtual ~lower_phy_timing_notifier() = default;
 
   /// Notifies a new TTI boundary event
   ///
@@ -35,4 +35,4 @@ public:
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_HANDLER_H
+#endif // SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H

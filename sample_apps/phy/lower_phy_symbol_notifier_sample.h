@@ -1,9 +1,9 @@
 
-#ifndef SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_HANDLER_SAMPLE_H
-#define SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_HANDLER_SAMPLE_H
+#ifndef SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_NOTIFIER_SAMPLE_H
+#define SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_NOTIFIER_SAMPLE_H
 
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_timing_handler.h"
+#include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -41,4 +41,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_HANDLER_SAMPLE_H
+#endif // SAMPLE_APPS_PHY_LOWER_PHY_SYMBOL_NOTIFIER_SAMPLE_H

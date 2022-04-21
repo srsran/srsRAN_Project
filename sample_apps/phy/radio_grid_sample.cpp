@@ -1,7 +1,7 @@
 
 #include "../radio/radio_notifier_sample.h"
-#include "lower_phy_symbol_handler_sample.h"
-#include "lower_phy_timing_handler_sample.h"
+#include "lower_phy_symbol_notifier_sample.h"
+#include "lower_phy_timing_notifier_sample.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/radio/radio_factory.h"
@@ -140,7 +140,7 @@ int main(int argc, char** argv)
   lower_phy_rx_symbol_notifier_sample rx_symbol_handler(log_level);
 
   // Create timing handler.
-  lower_phy_timing_handler_sample timing_handler(log_level);
+  lower_phy_timing_notifier_sample timing_handler(log_level);
 
   // Create DFT processor factory configuration with default values.
   dft_processor_factory_fftw_config dft_factory_fftw_config;
