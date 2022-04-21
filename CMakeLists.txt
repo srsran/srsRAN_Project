@@ -34,6 +34,7 @@ option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
+option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -116,6 +117,15 @@ if (ENABLE_UHD)
         link_directories(${UHD_LIBRARY_DIRS})
     endif (UHD_FOUND)
 endif (ENABLE_UHD)
+
+# ZeroMQ
+if (ENABLE_ZEROMQ)
+    find_package(ZeroMQ)
+    if (ZEROMQ_FOUND)
+        include_directories(${ZEROMQ_INCLUDE_DIRS})
+        link_directories(${ZEROMQ_LIBRARY_DIRS})
+    endif (ZEROMQ_FOUND)
+endif (ENABLE_ZEROMQ)
 
 # Threads
 find_package(Threads REQUIRED)

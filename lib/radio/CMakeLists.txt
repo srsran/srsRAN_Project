@@ -10,5 +10,11 @@ if (UHD_FOUND AND ENABLE_UHD)
     list(APPEND SRSGNB_RADIO_LIBRARIES srsgnb_radio_uhd)
 endif (UHD_FOUND AND ENABLE_UHD)
 
+if (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
+    add_subdirectory(zmq)
+    list(APPEND SRSGNB_RADIO_DEFINITIONS -DENABLE_ZMQ)
+    list(APPEND SRSGNB_RADIO_LIBRARIES srsgnb_radio_zmq)
+endif (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
+
 add_definitions(${SRSGNB_RADIO_DEFINITIONS})
-target_link_libraries(srsgnb_radio ${SRSGNB_RADIO_LIBRARIES})
+target_link_libraries(srsgnb_radio ${SRSGNB_RADIO_LIBRARIES} srslog)

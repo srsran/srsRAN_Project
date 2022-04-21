@@ -1,0 +1,4 @@
+
+if (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
+    add_subdirectory(zmq)
+endif (ZEROMQ_FOUND AND ENABLE_ZEROMQ)

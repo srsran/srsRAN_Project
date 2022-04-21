@@ -4,6 +4,7 @@
 
 #include "radio_base.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/support/srsran_assert.h"
 #include <complex>
 #include <vector>
 

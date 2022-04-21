@@ -1,0 +1,4 @@
+
+add_executable(radio_zmq_e2e_test radio_zmq_e2e_test.cpp)
+target_link_libraries(radio_zmq_e2e_test srsgnb_radio srsgnb_support)
+add_test(radio_zmq_e2e_test radio_zmq_e2e_test)
