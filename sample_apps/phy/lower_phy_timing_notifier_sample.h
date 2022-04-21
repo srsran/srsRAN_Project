@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 
-class lower_phy_timing_handler_sample : public lower_phy_timing_handler
+class lower_phy_timing_notifier_sample : public lower_phy_timing_notifier
 {
 private:
   srslog::basic_logger&   logger;
@@ -19,7 +19,7 @@ private:
   bool                    quit = false;
 
 public:
-  lower_phy_timing_handler_sample(std::string log_level = "none") : logger(srslog::fetch_basic_logger("TimeHan"))
+  lower_phy_timing_notifier_sample(std::string log_level = "none") : logger(srslog::fetch_basic_logger("TimeHan"))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
