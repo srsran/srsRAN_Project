@@ -81,7 +81,7 @@ public:
       cp_len += 16 * kappa;
     }
 
-    return (cp_len * dft_size) / (N_ref * kappa);
+    return ceil((cp_len * dft_size * pow2(numerology)) / (N_ref * kappa));
   }
 };
 
