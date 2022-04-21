@@ -10,7 +10,7 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
@@ -39,7 +39,7 @@ int main()
     // Compare the rate matched codeblocks with the benchmark ones.
     std::vector<uint8_t> matched_bm = test_data.rm_cblock.read();
     assert(matched_bm.size() == rm_length);
-    srsran_assert(std::equal(matched.cbegin(), matched.cend(), matched_bm.cbegin()), "Wrong rate matching.");
+    TESTASSERT(std::equal(matched.cbegin(), matched.cend(), matched_bm.cbegin()), "Wrong rate matching.");
 
     // Transform rate-matched bits into log-likelihood ratios.
     std::vector<int8_t> llrs(rm_length);
@@ -65,6 +65,6 @@ int main()
     // Now, apply the rate matcher and compare results.
     std::vector<uint8_t> matched2(rm_length);
     matcher->rate_match(matched2, hard, rm_cfg);
-    srsran_assert(std::equal(matched.cbegin(), matched.cend(), matched2.cbegin()), "Wrong rate dematching.");
+    TESTASSERT(std::equal(matched.cbegin(), matched.cend(), matched2.cbegin()), "Wrong rate dematching.");
   }
 }

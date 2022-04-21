@@ -9,7 +9,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 #include <string>
 
@@ -77,26 +77,24 @@ int main()
       for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
         std::vector<uint8_t> encoded(length);
         my_encoder->encode(encoded, msg_i, cfg_enc);
-        srsran_assert(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
+        TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(length);
         std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
         my_decoder->decode(decoded, llrs, cfg_dec);
-        srsran_assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal),
-                      "Wrong recovered message.");
+        TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
       }
       // check full-length codeblock
       std::vector<uint8_t> encoded(max_cb_length);
       my_encoder->encode(encoded, msg_i, cfg_enc);
-      srsran_assert(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
+      TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
       std::vector<uint8_t> decoded(msg_length);
       std::vector<int8_t>  llrs(max_cb_length);
       std::transform(cblock_i.begin(), cblock_i.end(), llrs.begin(), compute_llrs);
       my_decoder->decode(decoded, llrs, cfg_dec);
-      srsran_assert(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal),
-                    "Wrong recovered message.");
+      TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
     }
   }
 }

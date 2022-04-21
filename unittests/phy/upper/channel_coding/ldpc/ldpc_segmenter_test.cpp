@@ -7,6 +7,7 @@
 #include "ldpc_segmenter_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <iostream>
 
 using namespace srsgnb;
@@ -31,13 +32,13 @@ int main()
     static_vector<described_segment, MAX_NOF_SEGMENTS> segments;
     segmenter->segment(segments, trans_block, seg_cfg);
 
-    srsran_assert(segments.size() == test_data.nof_segments, "Wrong number of segments.");
+    TESTASSERT_EQ(segments.size(), test_data.nof_segments, "Wrong number of segments.");
 
     unsigned seg_offset = 0;
     for (const auto& seg : segments) {
-      srsran_assert(seg.first.size() == test_data.segment_length, "Wrong segment length.");
-      srsran_assert(std::equal(seg.first.begin(), seg.first.end(), segments_check.cbegin() + seg_offset),
-                    "Wrong segment content.");
+      TESTASSERT_EQ(seg.first.size(), test_data.segment_length, "Wrong segment length.");
+      TESTASSERT(std::equal(seg.first.begin(), seg.first.end(), segments_check.cbegin() + seg_offset),
+                 "Wrong segment content.");
       seg_offset += test_data.segment_length;
     }
   }
