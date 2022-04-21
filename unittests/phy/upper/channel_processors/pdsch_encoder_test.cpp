@@ -1,5 +1,6 @@
 #include "pdsch_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
+#include "srsgnb/support/srsgnb_test.h"
 #include <iostream>
 
 using namespace srsgnb;
@@ -18,7 +19,7 @@ int main()
     constexpr unsigned max_cw_lenght = 40000;
     unsigned           cw_length =
         test_case.config.nof_ch_symbols * static_cast<unsigned>(test_case.config.mod) * test_case.config.nof_layers;
-    srsran_assert(cw_length == expected_codeword.size(), "Wrong codeword length.");
+    TESTASSERT_EQ(cw_length, expected_codeword.size(), "Wrong codeword length.");
     static_vector<uint8_t, max_cw_lenght> codeword(cw_length);
 
     // Encode the TB.
@@ -26,6 +27,6 @@ int main()
     pdsch_encoder->encode(codeword, transport_block, test_case.config);
 
     // Assert encoded data.
-    srsran_assert(std::equal(codeword.begin(), codeword.end(), expected_codeword.begin()), "Encoding went wrong.");
+    TESTASSERT(std::equal(codeword.begin(), codeword.end(), expected_codeword.begin()), "Encoding went wrong.");
   }
 }
