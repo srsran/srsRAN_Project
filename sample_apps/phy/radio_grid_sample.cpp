@@ -137,7 +137,7 @@ int main(int argc, char** argv)
   srsran_always_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
-  lower_phy_rx_symbol_handler_sample rx_symbol_handler(log_level);
+  lower_phy_rx_symbol_notifier_sample rx_symbol_handler(log_level);
 
   // Create timing handler.
   lower_phy_timing_handler_sample timing_handler(log_level);
@@ -240,8 +240,8 @@ int main(int argc, char** argv)
   phy_config.log_level = log_level;
 
   // Create lower physical layer.
-  std::unique_ptr<lower_phy_control> lower_phy_control = lower_phy_factory().create(phy_config);
-  srsran_always_assert(lower_phy_control, "Failed to create lower physical layer.");
+  std::unique_ptr<lower_phy> lower_phy = lower_phy_factory().create(phy_config);
+  srsran_always_assert(lower_phy, "Failed to create lower physical layer.");
 
   // Set signal handler.
   signal(SIGINT, signal_handler);
@@ -251,10 +251,7 @@ int main(int argc, char** argv)
   signal(SIGKILL, signal_handler);
 
   // Start processing.
-  lower_phy_control->start(*rt_task_executor);
-
-  // Get lower physical layer gateway.
-  lower_phy_input_gateway& gateway = lower_phy_control->get_input_gateway();
+  lower_phy->start(*rt_task_executor);
 
   // Receive and transmit per block basis.
   for (unsigned slot_count = 0; slot_count != duration_slots && !stop; ++slot_count) {
@@ -266,12 +263,12 @@ int main(int argc, char** argv)
       resource_grid_context context;
       context.slot   = slot;
       context.sector = sector_id;
-      gateway.send(context, dl_rg_pool->get_resource_grid(context));
+      lower_phy->send(context, dl_rg_pool->get_resource_grid(context));
     }
   }
 
   // Stop physical layer.
-  lower_phy_control->stop();
+  lower_phy->stop();
 
   // Stop radio operation prior destruction.
   radio->stop();

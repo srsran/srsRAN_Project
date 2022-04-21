@@ -2,7 +2,7 @@
 #ifndef SAMPLE_APPS_PHY_LOWER_PHY_TIMING_HANDLER_SAMPLE_H
 #define SAMPLE_APPS_PHY_LOWER_PHY_TIMING_HANDLER_SAMPLE_H
 
-#include "srsgnb/phy/lower/lower_phy.h"
+#include "srsgnb/phy/lower/lower_phy_factory.h"
 #include <condition_variable>
 #include <mutex>
 
@@ -24,7 +24,7 @@ public:
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
 
-  void notify_tti_boundary(const lower_phy_timing_context_t& context) override
+  void on_tti_boundary(const lower_phy_timing_context_t& context) override
   {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -42,11 +42,11 @@ public:
     tti_boundary_slot = context.slot;
     cvar_tti_boundary.notify_all();
   }
-  void notify_ul_half_slot_boundary(const lower_phy_timing_context_t& context) override
+  void on_ul_half_slot_boundary(const lower_phy_timing_context_t& context) override
   {
     logger.debug("UL half slot boundary.");
   }
-  void notify_ul_full_slot_boundary(const lower_phy_timing_context_t& context) override
+  void on_ul_full_slot_boundary(const lower_phy_timing_context_t& context) override
   {
     logger.debug("UL full slot boundary.");
   }

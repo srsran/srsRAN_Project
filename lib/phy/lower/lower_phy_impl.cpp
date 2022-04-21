@@ -39,7 +39,7 @@ radio_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   ul_symbol_context.sector                        = 0;
   ul_symbol_context.slot                          = ul_slot_context;
   ul_symbol_context.nof_symbols                   = symbol_id;
-  symbol_handler.notify_rx_symbol(ul_symbol_context, ul_rg);
+  symbol_handler.on_rx_symbol(ul_symbol_context, ul_rg);
 
   return aligned_receive_ts;
 }
@@ -106,10 +106,11 @@ void lower_phy_impl::process_slot()
   // Notify slot boundary.
   lower_phy_timing_context_t timing_context = {};
   timing_context.slot                       = dl_slot_context + max_processing_delay_slots;
-  timing_handler.notify_tti_boundary(timing_context);
+  timing_handler.on_tti_boundary(timing_context);
 
   // For each symbol in the slot. Skip symbol processing if stop mis signaled.
-  for (unsigned symbol_slot_idx = 0; symbol_slot_idx < nof_symbols_per_slot && !quit; ++symbol_slot_idx) {
+  for (unsigned symbol_slot_idx = 0; symbol_slot_idx < nof_symbols_per_slot && state_fsm.is_running();
+       ++symbol_slot_idx) {
     // Calculate the symbol index within the subframe.
     unsigned ul_symbol_subframe_idx = ul_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
 
@@ -117,7 +118,7 @@ void lower_phy_impl::process_slot()
     if (symbol_slot_idx == nof_symbols_per_slot / 2) {
       lower_phy_timing_context_t ul_timing_context = {};
       timing_context.slot                          = dl_slot_context;
-      timing_handler.notify_ul_half_slot_boundary(ul_timing_context);
+      timing_handler.on_ul_half_slot_boundary(ul_timing_context);
     }
 
     // Process uplink symbol.
@@ -131,32 +132,42 @@ void lower_phy_impl::process_slot()
   }
 
   // Immediate return if stop was signaled.
-  if (quit) {
+  if (!state_fsm.is_running()) {
     return;
   }
 
   // Notify the end of an uplink full slot.
   lower_phy_timing_context_t ul_timing_context = {};
   timing_context.slot                          = ul_slot_context;
-  timing_handler.notify_ul_full_slot_boundary(ul_timing_context);
+  timing_handler.on_ul_full_slot_boundary(ul_timing_context);
 
   // Reset DL resource grid buffers.
   dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()].reset();
 }
 
-void lower_phy_impl::run(task_executor& realtime_task_executor)
+void lower_phy_impl::realtime_process_loop()
 {
-  // Run slot.
-  process_slot();
+  logger.info("Starting...");
 
-  // Increment slot.
-  dl_slot_context++;
-  ul_slot_context++;
-
-  // Feedbacks the execution until stop is signaled.
-  if (!quit) {
-    realtime_task_executor.defer([this, &realtime_task_executor]() { run(realtime_task_executor); });
+  // Notify the initial slot boundaries.
+  for (unsigned slot_count = 0; slot_count != max_processing_delay_slots; ++slot_count) {
+    lower_phy_timing_context_t timing_context = {};
+    timing_context.slot                       = dl_slot_context + slot_count;
+    timing_handler.on_tti_boundary(timing_context);
   }
+
+  // Process until stop is called.
+  while (state_fsm.is_running()) {
+    // Run slot.
+    process_slot();
+
+    // Increment slot.
+    dl_slot_context++;
+    ul_slot_context++;
+  }
+
+  // Notify the stop of the asynchronous operation.
+  state_fsm.on_async_executor_stop();
 }
 
 void lower_phy_impl::send(const resource_grid_context& context, const resource_grid_reader& grid)
@@ -241,28 +252,18 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
   for (unsigned slot_count = 0; slot_count != config.nof_dl_rg_buffers; ++slot_count) {
     dl_rg_buffers.emplace_back(lower_phy_dl_rg_buffer(config.sectors.size()));
   }
+
+  // Signal a successful initialisation.
+  state_fsm.on_successful_init();
 }
 
-void lower_phy_impl::start(task_executor& realtime_task_exeutor)
+void lower_phy_impl::start(task_executor& realtime_task_executor)
 {
-  logger.info("Starting...");
-
-  // Enqueue initial task.
-  realtime_task_exeutor.execute([this, &realtime_task_exeutor]() {
-    // Notify the initial slot boundaries.
-    for (unsigned slot_count = 0; slot_count != max_processing_delay_slots; ++slot_count) {
-      lower_phy_timing_context_t timing_context = {};
-      timing_context.slot                       = dl_slot_context + slot_count;
-      timing_handler.notify_tti_boundary(timing_context);
-    }
-
-    // Process first slot.
-    run(realtime_task_exeutor);
-  });
+  realtime_task_executor.execute([this]() { realtime_process_loop(); });
 }
 
 void lower_phy_impl::stop()
 {
   logger.info("Stopping...");
-  quit = true;
+  state_fsm.stop_and_join();
 }

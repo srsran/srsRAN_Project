@@ -2,14 +2,16 @@
 #ifndef SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
 #define SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
 
+#include "lower_phy_state_fsm.h"
 #include "srsgnb/phy/lower/lower_phy.h"
-#include "srsgnb/phy/lower/lower_phy_control.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsgnb/phy/lower/lower_phy_input_gateway.h"
+#include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
+#include "srsgnb/phy/lower/lower_phy_timing_handler.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/radio/radio_data_plane.h"
 #include "srsgnb/srsvec/zero.h"
-#include <mutex>
 
 namespace srsgnb {
 
@@ -51,7 +53,7 @@ public:
 };
 
 /// Describes a generic lower physical layer.
-class lower_phy_impl : public lower_phy_control, private lower_phy_input_gateway
+class lower_phy_impl : public lower_phy
 {
 private:
   /// Logger.
@@ -59,7 +61,7 @@ private:
   /// Radio data plane.
   radio_data_plane& radio;
   /// Receive symbol handler.
-  lower_phy_rx_symbol_handler& symbol_handler;
+  lower_phy_rx_symbol_notifier& symbol_handler;
   /// Timing boundary handler.
   lower_phy_timing_handler& timing_handler;
   /// OFDM modulator factory.
@@ -88,7 +90,7 @@ private:
   /// Current downlink processing slot context.
   slot_point dl_slot_context = {};
   /// Indicates the asynchronous processing shall stop.
-  std::atomic<bool> quit = {};
+  lower_phy_state_fsm state_fsm;
 
   /// \brief Processes uplink symbol.
   /// \param[in] symbol_idx Indicates the symbol index within a subframe.
@@ -103,9 +105,8 @@ private:
   /// \brief Processes uplink and downlink slot.
   void process_slot();
 
-  /// \brief Runs the lower physical layer instance.
-  /// \param[in] realtime_task_executor Provides the real time task executor.
-  void run(task_executor& realtime_task_executor);
+  /// Runs the lower physical layer.
+  void realtime_process_loop();
 
   // See interface for documentation.
   void send(const resource_grid_context& context, const resource_grid_reader& grid) override;
@@ -116,10 +117,7 @@ public:
   lower_phy_impl(const lower_phy_configuration& config);
 
   // See interface for documentation.
-  lower_phy_input_gateway& get_input_gateway() override { return *this; }
-
-  // See interface for documentation.
-  void start(task_executor& realtime_task_exeutor) override;
+  void start(task_executor& realtime_task_executor) override;
 
   void stop() override;
 };

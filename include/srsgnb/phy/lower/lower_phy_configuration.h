@@ -3,14 +3,15 @@
 #define SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
 
 #include "srsgnb/phy/cyclic_prefix.h"
-#include "srsgnb/phy/lower/lower_phy.h"
+#include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
+#include "srsgnb/phy/lower/lower_phy_timing_handler.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/radio/radio_data_plane.h"
 
 namespace srsgnb {
 
-/// Describes the a lowe PHY RF port is mapped.
+/// Describes the lower physical layer RF port mapping.
 struct lower_phy_sector_port_mapping {
   /// Indicates the radio stream identifier.
   unsigned stream_id;
@@ -53,7 +54,7 @@ struct lower_phy_configuration {
   /// Provides the radio data plane.
   radio_data_plane* radio;
   /// Provides a symbol handler to notify the reception of symbols.
-  lower_phy_rx_symbol_handler* symbol_handler;
+  lower_phy_rx_symbol_notifier* symbol_handler;
   /// Provides the timing handler to notify the timing boundaries.
   lower_phy_timing_handler* timing_handler;
   /// Provides the OFDM modulator factory.
