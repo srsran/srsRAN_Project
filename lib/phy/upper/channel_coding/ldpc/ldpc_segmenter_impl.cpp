@@ -138,8 +138,9 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   // TS38.214 Section 5.1.3.2).
   unsigned nof_tb_bits_tmp = transport_block.size() * BITS_PER_BYTE;
 
-  crc_calculator& tb_crc          = (nof_tb_bits_tmp <= 3824) ? *crc_set.crc16 : *crc_set.crc24A;
-  unsigned        nof_tb_crc_bits = (nof_tb_bits_tmp <= 3824) ? 16 : 24;
+  constexpr unsigned MAX_BITS_CRC16  = 3824;
+  crc_calculator&    tb_crc          = (nof_tb_bits_tmp <= MAX_BITS_CRC16) ? *crc_set.crc16 : *crc_set.crc24A;
+  unsigned           nof_tb_crc_bits = (nof_tb_bits_tmp <= MAX_BITS_CRC16) ? 16 : 24;
 
   nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
 

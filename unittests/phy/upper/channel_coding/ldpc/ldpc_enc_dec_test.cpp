@@ -30,8 +30,8 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::unique_ptr<srsgnb::ldpc_encoder> my_encoder = srsgnb::create_ldpc_encoder("generic");
-  std::unique_ptr<srsgnb::ldpc_decoder> my_decoder = srsgnb::create_ldpc_decoder("generic");
+  std::unique_ptr<srsgnb::ldpc_encoder> enc_generic = srsgnb::create_ldpc_encoder("generic");
+  std::unique_ptr<srsgnb::ldpc_decoder> dec_generic = srsgnb::create_ldpc_decoder("generic");
 
   for (const auto& test_data : ldpc_encoder_test_data) {
     base_graph_t   bg = static_cast<base_graph_t>(test_data.bg - 1);
@@ -76,24 +76,24 @@ int main()
       // check several shortened codeblocks
       for (unsigned length = min_cb_length; length < max_cb_length; length += length_step) {
         std::vector<uint8_t> encoded(length);
-        my_encoder->encode(encoded, msg_i, cfg_enc);
+        enc_generic->encode(encoded, msg_i, cfg_enc);
         TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(length);
         std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
-        my_decoder->decode(decoded, llrs, cfg_dec);
+        dec_generic->decode(decoded, llrs, cfg_dec);
         TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
       }
       // check full-length codeblock
       std::vector<uint8_t> encoded(max_cb_length);
-      my_encoder->encode(encoded, msg_i, cfg_enc);
+      enc_generic->encode(encoded, msg_i, cfg_enc);
       TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
       std::vector<uint8_t> decoded(msg_length);
       std::vector<int8_t>  llrs(max_cb_length);
       std::transform(cblock_i.begin(), cblock_i.end(), llrs.begin(), compute_llrs);
-      my_decoder->decode(decoded, llrs, cfg_dec);
+      dec_generic->decode(decoded, llrs, cfg_dec);
       TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
     }
   }
