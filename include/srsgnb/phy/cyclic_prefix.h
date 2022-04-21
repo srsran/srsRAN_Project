@@ -59,29 +59,33 @@ public:
     unsigned kappa = 64;
 
     // Calculate cyclic prefix length.
-    unsigned cp_len = (144 * kappa) / pow2(numerology);
+    unsigned cp_len = 144 * kappa;
     if (value == EXTENDED) {
-      cp_len = (512 * kappa) / pow2(numerology);
+      cp_len = (512 * kappa);
     }
 
     // The cyclic prefix lengths must be divisible by the reference DFT size.
-    return ((cp_len * dft_size) % (N_ref * kappa) == 0) && ((16 * dft_size) % (N_ref) == 0);
+    return ((cp_len * dft_size) % (N_ref * kappa) == 0) && ((16 * dft_size * pow2(numerology)) % (N_ref) == 0);
   }
 
-  /// Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
+  /// \brief Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
+  /// \param[in] symbol_idx Symbol index within the subframe.
+  /// \param[in] numerology Indicates the subcarrier spacing numerology.
+  /// \param[in] dft_size Indicates the DFT size.
+  /// \return The number of samples comprising the cyclic prefix.
   constexpr unsigned get_length(unsigned symbol_idx, unsigned numerology, unsigned dft_size) const
   {
     unsigned N_ref = 2048;
     unsigned kappa = 64;
 
-    unsigned cp_len = (144 * kappa) / pow2(numerology);
+    unsigned cp_len = 144 * kappa;
     if (value == EXTENDED) {
-      cp_len = (512 * kappa) / pow2(numerology);
+      cp_len = 512 * kappa;
     } else if (symbol_idx == 0 || symbol_idx == 7 * pow2(numerology)) {
-      cp_len += 16 * kappa;
+      cp_len += 16 * kappa * pow2(numerology);
     }
-
-    return ceil((cp_len * dft_size * pow2(numerology)) / (N_ref * kappa));
+    
+    return (cp_len * dft_size) / (N_ref * kappa);
   }
 };
 
