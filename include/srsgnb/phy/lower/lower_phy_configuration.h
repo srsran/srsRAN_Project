@@ -2,12 +2,12 @@
 #ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
 #define SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
 
+#include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
-#include "srsgnb/radio/radio_data_plane.h"
 
 namespace srsgnb {
 
@@ -52,7 +52,7 @@ struct lower_phy_configuration {
   /// Indicates the cyclic prefix.
   cyclic_prefix cp;
   /// Provides the radio data plane.
-  radio_data_plane* radio;
+  baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
   lower_phy_rx_symbol_notifier* symbol_handler;
   /// Provides the timing handler to notify the timing boundaries.

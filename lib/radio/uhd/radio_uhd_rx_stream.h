@@ -3,8 +3,8 @@
 #define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_RX_STREAM_H
 
 #include "radio_uhd_exception_handler.h"
+#include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsgnb/radio/radio_configuration.h"
-#include "srsgnb/radio/radio_data_plane.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 #include <mutex>
 
@@ -49,10 +49,10 @@ private:
   /// \param[in] buffer_offset Indicates the data offset in the reception buffers.
   /// \param[in] metadata Provides the reception metadata.
   /// \return True if no exception is caught. Otherwise false.
-  bool receive_block(unsigned&              nof_rxd_samples,
-                     radio_baseband_buffer& buffs,
-                     unsigned               buffer_offset,
-                     uhd::rx_metadata_t&    metadata);
+  bool receive_block(unsigned&                nof_rxd_samples,
+                     baseband_gateway_buffer& buffs,
+                     unsigned                 buffer_offset,
+                     uhd::rx_metadata_t&      metadata);
 
 public:
   /// Describes the necessary parameters to create an UHD transmit stream.
@@ -73,7 +73,7 @@ public:
   /// \param[in] notifier_ Provides the radio event notification handler.
   radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
-                      radio_notification_handler&              notifier_);
+                      radio_notification_handler&  notifier_);
 
   /// \brief Starts the stream reception.
   /// \param[in] time_spec Indicates the start time of the stream.
@@ -84,7 +84,7 @@ public:
   /// \param[in,out] buffs Provides the baseband buffers to receive.
   /// \param[in] time_spec Indicates the baseband reception time.
   /// \return True if no exception is caught. Otherwise false.
-  bool receive(radio_baseband_buffer& buffs, uhd::time_spec_t& time_spec);
+  bool receive(baseband_gateway_buffer& buffs, uhd::time_spec_t& time_spec);
 
   /// \brief Stops the reception stream.
   /// \return True if no exception is caught. Otherwise false.

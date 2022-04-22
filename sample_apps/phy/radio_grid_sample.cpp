@@ -218,7 +218,7 @@ int main(int argc, char** argv)
   phy_config.rx_to_tx_delay             = rx_to_tx_delay;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
-  phy_config.radio                      = &radio->get_data_plane();
+  phy_config.bb_gateway                 = &radio->get_baseband_gateway();
   phy_config.symbol_handler             = &rx_symbol_handler;
   phy_config.timing_handler             = &timing_handler;
   phy_config.modulator_factory          = modulator_factory.get();

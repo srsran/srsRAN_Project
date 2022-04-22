@@ -2,8 +2,8 @@
 #ifndef SRSGNB_RADIO_RADIO_SESSION_H
 #define SRSGNB_RADIO_RADIO_SESSION_H
 
+#include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/radio/radio_configuration.h"
-#include "srsgnb/radio/radio_data_plane.h"
 #include "srsgnb/radio/radio_management_plane.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 
@@ -19,7 +19,7 @@ public:
 
   /// \brief Gets the data plane.
   /// \return The reference to the data plane for this radio session.
-  virtual radio_data_plane& get_data_plane() = 0;
+  virtual baseband_gateway& get_baseband_gateway() = 0;
 
   /// \brief Stops the radio session operation.
   /// \remark Any call to transmit or receive after calling stop() will return instantly without interacting with the

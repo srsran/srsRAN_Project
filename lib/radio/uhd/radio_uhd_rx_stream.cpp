@@ -3,10 +3,10 @@
 
 using namespace srsgnb;
 
-bool radio_uhd_rx_stream::receive_block(unsigned&              nof_rxd_samples,
-                                        radio_baseband_buffer& data,
-                                        unsigned               offset,
-                                        uhd::rx_metadata_t&    metadata)
+bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples,
+                                        baseband_gateway_buffer& data,
+                                        unsigned                 offset,
+                                        uhd::rx_metadata_t&      metadata)
 {
   // Extract number of samples.
   unsigned num_samples = data.get_nof_samples() - offset;
@@ -38,7 +38,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&              nof_rxd_samples,
 
 radio_uhd_rx_stream::radio_uhd_rx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                                          const stream_description&    description,
-                                         radio_notification_handler&              notifier_) :
+                                         radio_notification_handler&  notifier_) :
   id(description.id), notifier(notifier_)
 {
   // Build stream arguments.
@@ -95,7 +95,7 @@ bool radio_uhd_rx_stream::start(const uhd::time_spec_t& time_spec)
   return true;
 }
 
-bool radio_uhd_rx_stream::receive(radio_baseband_buffer& buffs, uhd::time_spec_t& time_spec)
+bool radio_uhd_rx_stream::receive(baseband_gateway_buffer& buffs, uhd::time_spec_t& time_spec)
 {
   uhd::rx_metadata_t md;
   unsigned           nsamples            = buffs[0].size();
@@ -120,10 +120,10 @@ bool radio_uhd_rx_stream::receive(radio_baseband_buffer& buffs, uhd::time_spec_t
 
     // Prepare notification event.
     radio_notification_handler::event_description event = {};
-    event.stream_id                         = id;
-    event.channel_id                        = radio_notification_handler::UNKNOWN_ID;
-    event.source                            = radio_notification_handler::event_source::RECEIVE;
-    event.type                              = radio_notification_handler::event_type::UNDEFINED;
+    event.stream_id                                     = id;
+    event.channel_id                                    = radio_notification_handler::UNKNOWN_ID;
+    event.source                                        = radio_notification_handler::event_source::RECEIVE;
+    event.type                                          = radio_notification_handler::event_type::UNDEFINED;
 
     // Handle error.
     switch (md.error_code) {

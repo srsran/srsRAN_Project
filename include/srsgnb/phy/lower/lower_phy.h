@@ -11,9 +11,6 @@ namespace srsgnb {
 class lower_phy : public lower_phy_input_gateway
 {
 public:
-  /// Default destructor.
-  virtual ~lower_phy() = default;
-
   /// \brief Starts the lower physical layer operation.
   /// \param[in] realtime_task_executor Provides a task executor for real time execution.
   /// \note The real time task executor is exclusively dedicated to the lower physical layer operation.

@@ -257,7 +257,7 @@ bool radio_session_uhd_impl::start_rx_stream()
 
 radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                                                task_executor&                    async_executor,
-                                               radio_notification_handler&                   notifier_) :
+                                               radio_notification_handler&       notifier_) :
   device(async_executor, notifier_), sampling_rate_hz(radio_config.sampling_rate_hz)
 {
   // Disable fast-path (U/L/O) messages.
@@ -554,8 +554,8 @@ void radio_session_uhd_impl::stop()
 }
 
 void radio_session_uhd_impl::transmit(unsigned int                                  stream_id,
-                                      const radio_data_plane_transmitter::metadata& metadata,
-                                      radio_baseband_buffer&                        data)
+                                      const baseband_gateway_transmitter::metadata& metadata,
+                                      baseband_gateway_buffer&                      data)
 {
   srsran_always_assert(stream_id < tx_streams.size(),
                        "Stream identifier (%d) exceeds the number of transmit streams  (%d).",
@@ -567,9 +567,9 @@ void radio_session_uhd_impl::transmit(unsigned int                              
 }
 
 // See interface for documentation.
-radio_data_plane_receiver::metadata radio_session_uhd_impl::receive(radio_baseband_buffer& data, unsigned stream_id)
+baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
 {
-  radio_data_plane_receiver::metadata ret = {};
+  baseband_gateway_receiver::metadata ret = {};
   srsran_always_assert(stream_id < rx_streams.size(),
                        "Stream identifier (%d) exceeds the number of receive streams  (%d).",
                        stream_id,
@@ -584,15 +584,16 @@ radio_data_plane_receiver::metadata radio_session_uhd_impl::receive(radio_baseba
     return ret;
   }
 
-  ret.ts = static_cast<radio_timestamp>(time_spec.get_full_secs()) * static_cast<radio_timestamp>(sampling_rate_hz) +
-           static_cast<radio_timestamp>(sampling_rate_hz * time_spec.get_frac_secs());
+  ret.ts = static_cast<baseband_gateway_timestamp>(time_spec.get_full_secs()) *
+               static_cast<baseband_gateway_timestamp>(sampling_rate_hz) +
+           static_cast<baseband_gateway_timestamp>(sampling_rate_hz * time_spec.get_frac_secs());
 
   return ret;
 }
 
 std::unique_ptr<radio_session> radio_factory_uhd_impl::create(const radio_configuration::radio& config,
                                                               task_executor&                    async_task_executor,
-                                                              radio_notification_handler&                   notifier)
+                                                              radio_notification_handler&       notifier)
 {
   std::unique_ptr<radio_session_uhd_impl> device =
       std::make_unique<radio_session_uhd_impl>(config, async_task_executor, notifier);

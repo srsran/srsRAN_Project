@@ -2,6 +2,8 @@
 #ifndef SRSGNB_RADIO_RADIO_MANAGEMENT_PLANE_H
 #define SRSGNB_RADIO_RADIO_MANAGEMENT_PLANE_H
 
+#include "srsgnb/radio/radio_base.h"
+
 namespace srsgnb {
 
 /// Defines a radio baseband unit management plane interface.

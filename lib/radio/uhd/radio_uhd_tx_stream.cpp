@@ -65,10 +65,10 @@ void radio_uhd_tx_stream::run_recv_async_msg()
   async_executor.defer([this]() { run_recv_async_msg(); });
 }
 
-bool radio_uhd_tx_stream::transmit_block(unsigned&              nof_txd_samples,
-                                         radio_baseband_buffer& buffs,
-                                         unsigned               buffer_offset,
-                                         uhd::time_spec_t&      time_spec)
+bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_samples,
+                                         baseband_gateway_buffer& buffs,
+                                         unsigned                 buffer_offset,
+                                         uhd::time_spec_t&        time_spec)
 {
   // Prepare metadata.
   uhd::tx_metadata_t metadata = {};
@@ -141,7 +141,7 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
   run_recv_async_msg();
 }
 
-bool radio_uhd_tx_stream::transmit(radio_baseband_buffer& data, uhd::time_spec_t time_spec)
+bool radio_uhd_tx_stream::transmit(baseband_gateway_buffer& data, uhd::time_spec_t time_spec)
 {
   // Protect stream transmitter.
   std::unique_lock<std::mutex> lock(stream_transmit_mutex);

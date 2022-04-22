@@ -2,6 +2,8 @@
 #ifndef SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
 #define SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
 
+#include "srsgnb/radio/radio_base.h"
+
 namespace srsgnb {
 
 /// \brief Describes a baseband unit event notifier interface.

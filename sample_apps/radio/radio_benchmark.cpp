@@ -118,7 +118,7 @@ int main(int argc, char** argv)
   radio_configuration::stream rx_stream_config;
 
   // Create Tx stream and channels.
-  std::vector<radio_baseband_buffer_dynamic> tx_baseband_buffers;
+  std::vector<baseband_gateway_buffer_dynamic> tx_baseband_buffers;
   for (unsigned stream_idx = 0; stream_idx != nof_tx_streams; ++stream_idx) {
     // Create transmit baseband buffer for the stream.
     tx_baseband_buffers.emplace_back(nof_channels_per_stream, block_size);
@@ -142,7 +142,7 @@ int main(int argc, char** argv)
   }
 
   // Create Rx stream and channels.
-  std::vector<radio_baseband_buffer_dynamic> rx_baseband_buffers;
+  std::vector<baseband_gateway_buffer_dynamic> rx_baseband_buffers;
   for (unsigned stream_idx = 0; stream_idx != nof_rx_streams; ++stream_idx) {
     // Create receive baseband buffer for the stream.
     rx_baseband_buffers.emplace_back(nof_channels_per_stream, block_size);
@@ -167,10 +167,10 @@ int main(int argc, char** argv)
   srsran_always_assert(radio, "Failed to create radio.");
 
   // Get transmitter data plane
-  radio_data_plane_transmitter& transmitter = radio->get_data_plane().get_transmitter();
+  baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter();
 
   // Get receiver data plane
-  radio_data_plane_receiver& receiver = radio->get_data_plane().get_receiver();
+  baseband_gateway_receiver& receiver = radio->get_baseband_gateway().get_receiver();
 
   // Set signal handler.
   signal(SIGINT, signal_handler);
@@ -188,11 +188,11 @@ int main(int argc, char** argv)
     // For each stream...
     for (unsigned stream_id = 0; stream_id != nof_rx_streams; ++stream_id) {
       // Receive baseband.
-      static_vector<radio_data_plane_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);
+      static_vector<baseband_gateway_receiver::metadata, RADIO_MAX_NOF_STREAMS> rx_metadata(nof_rx_streams);
       rx_metadata[stream_id] = receiver.receive(tx_baseband_buffers[stream_id], stream_id);
 
       // Prepare transmit metadata.
-      radio_data_plane_transmitter::metadata tx_metadata = {};
+      baseband_gateway_transmitter::metadata tx_metadata = {};
       tx_metadata.ts                                     = rx_metadata.front().ts + tx_rx_delay_samples;
 
       // Transmit baseband.

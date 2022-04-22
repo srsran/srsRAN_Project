@@ -12,9 +12,9 @@ namespace srsgnb {
 /// Describes a radio session based on UHD that also implements the management and data plane functions.
 class radio_session_uhd_impl : public radio_session,
                                private radio_management_plane,
-                               private radio_data_plane,
-                               private radio_data_plane_transmitter,
-                               private radio_data_plane_receiver
+                               private baseband_gateway,
+                               private baseband_gateway_transmitter,
+                               private baseband_gateway_receiver
 {
 private:
   /// Defines the start stream command delay in seconds.
@@ -87,7 +87,7 @@ public:
   /// Constructs a radio session based on UHD.
   radio_session_uhd_impl(const radio_configuration::radio& radio_config,
                          task_executor&                    async_executor,
-                         radio_notification_handler&                   notifier_);
+                         radio_notification_handler&       notifier_);
 
   /// \brief Indicates that the radio session was initialised succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
@@ -97,24 +97,24 @@ public:
   radio_management_plane& get_management_plane() override { return *this; }
 
   // See interface for documentation
-  radio_data_plane& get_data_plane() override { return *this; }
+  baseband_gateway& get_baseband_gateway() override { return *this; }
 
   // See interface for documentation
   void stop() override;
 
   // See interface for documentation
-  radio_data_plane_transmitter& get_transmitter() override { return *this; }
+  baseband_gateway_transmitter& get_transmitter() override { return *this; }
 
   // See interface for documentation
-  radio_data_plane_receiver& get_receiver() override { return *this; }
+  baseband_gateway_receiver& get_receiver() override { return *this; }
 
   // See interface for documentation
   void transmit(unsigned                                      stream_id,
-                const radio_data_plane_transmitter::metadata& metadata,
-                radio_baseband_buffer&                        data) override;
+                const baseband_gateway_transmitter::metadata& metadata,
+                baseband_gateway_buffer&                      data) override;
 
   // See interface for documentation.
-  radio_data_plane_receiver::metadata receive(radio_baseband_buffer& data, unsigned stream_id) override;
+  baseband_gateway_receiver::metadata receive(baseband_gateway_buffer& data, unsigned stream_id) override;
 
   // See interface for documentation
   bool set_tx_gain(unsigned port_idx, double gain_dB) override { return set_tx_gain_unprotected(port_idx, gain_dB); }
@@ -129,7 +129,7 @@ public:
   // See interface for documentation
   std::unique_ptr<radio_session> create(const radio_configuration::radio& config,
                                         task_executor&                    async_task_executor,
-                                        radio_notification_handler&                   notifier) override;
+                                        radio_notification_handler&       notifier) override;
 };
 
 } // namespace srsgnb

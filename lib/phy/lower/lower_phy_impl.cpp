@@ -1,13 +1,11 @@
 
 #include "lower_phy_impl.h"
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
-radio_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
+baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 {
-  // Get receiver instance.
-  radio_data_plane_receiver& receiver = radio.get_receiver();
-
   // Calculate symbol size. Assumes all sectors have the same symbol size.
   unsigned symbol_sz = modulators[0]->get_symbol_size(symbol_id);
 
@@ -21,7 +19,7 @@ radio_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   }
 
   // Align receive streams if misaligned.
-  radio_timestamp aligned_receive_ts = receive_metadata[0].ts;
+  baseband_gateway_timestamp aligned_receive_ts = receive_metadata[0].ts;
   // ...
 
   // Select resource grid from the UL pool.
@@ -44,10 +42,10 @@ radio_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   return aligned_receive_ts;
 }
 
-void lower_phy_impl::process_dl_symbol(unsigned symbol_id, radio_timestamp timestamp)
+void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_timestamp timestamp)
 {
   // Prepare transmit metadata.
-  radio_data_plane_transmitter::metadata transmit_metadata = {};
+  baseband_gateway_transmitter::metadata transmit_metadata = {};
   transmit_metadata.ts                                     = timestamp + rx_to_tx_delay;
 
   // Get transmit resource grid buffer for the given slot.
@@ -55,7 +53,7 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, radio_timestamp times
 
   // Resize radio buffers, assume all sectors and ports symbol sizes are the same.
   unsigned symbol_sz = modulators.front()->get_symbol_size(symbol_id);
-  for (radio_baseband_buffer_dynamic& buffer : radio_buffers) {
+  for (baseband_gateway_buffer_dynamic& buffer : radio_buffers) {
     buffer.resize(symbol_sz);
   }
 
@@ -92,7 +90,6 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, radio_timestamp times
   }
 
   // Transmit signal.
-  radio_data_plane_transmitter& transmitter = radio.get_transmitter();
   for (unsigned stream_id = 0; stream_id != radio_buffers.size(); ++stream_id) {
     transmitter.transmit(stream_id, transmit_metadata, radio_buffers[stream_id]);
   }
@@ -122,7 +119,7 @@ void lower_phy_impl::process_slot()
     }
 
     // Process uplink symbol.
-    radio_timestamp rx_timestamp = process_ul_symbol(ul_symbol_subframe_idx);
+    baseband_gateway_timestamp rx_timestamp = process_ul_symbol(ul_symbol_subframe_idx);
 
     // Calculate the symbol index within the subframe.
     unsigned dl_symbol_subframe_idx = dl_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
@@ -186,7 +183,8 @@ void lower_phy_impl::send(const resource_grid_context& context, const resource_g
 
 lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
-  radio(*config.radio),
+  transmitter(config.bb_gateway->get_transmitter()),
+  receiver(config.bb_gateway->get_receiver()),
   symbol_handler(*config.symbol_handler),
   timing_handler(*config.timing_handler),
   modulator_factory(*config.modulator_factory),
@@ -219,7 +217,7 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
       config.max_processing_delay_slots);
 
   // Make sure sub-modules are valid.
-  srsran_always_assert(config.radio != nullptr, "Invalid radio pointer.");
+  srsran_always_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
   srsran_always_assert(config.symbol_handler != nullptr, "Invalid symbol handler pointer.");
   srsran_always_assert(config.timing_handler != nullptr, "Invalid timing handler pointer.");
   srsran_always_assert(config.modulator_factory != nullptr, "Invalid modulation factory pointer.");

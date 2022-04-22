@@ -4,8 +4,8 @@
 
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_tx_stream_fsm.h"
+#include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsgnb/radio/radio_configuration.h"
-#include "srsgnb/radio/radio_data_plane.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include <mutex>
@@ -44,8 +44,6 @@ private:
   unsigned nof_channels;
   /// Indicates the current internal state.
   radio_uhd_tx_stream_fsm state_fsm;
-  /// Indicates the last detected underflow timestamp.
-  uhd::time_spec_t wait_eob_timeout;
 
   /// Receive asynchronous message.
   void recv_async_msg();
@@ -59,8 +57,10 @@ private:
   /// \param[in] offset Indicates the sample offset in the transmit buffers.
   /// \param[in] time_spec Indicates the transmission timestamp.
   /// \return True if no exception is caught in the transmission process. Otherwise, false.
-  bool
-  transmit_block(unsigned& nof_txd_samples, radio_baseband_buffer& data, unsigned offset, uhd::time_spec_t& time_spec);
+  bool transmit_block(unsigned&                nof_txd_samples,
+                      baseband_gateway_buffer& data,
+                      unsigned                 offset,
+                      uhd::time_spec_t&        time_spec);
 
 public:
   /// Describes the necessary parameters to create an UHD transmit stream.
@@ -85,13 +85,13 @@ public:
   radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
                       const stream_description&    description,
                       task_executor&               async_executor_,
-                      radio_notification_handler&              notifier_);
+                      radio_notification_handler&  notifier_);
 
   /// \brief Transmits baseband signal.
   /// \param[in] data Provides the baseband buffers to transmit.
   /// \param[in] time_spec Indicates the transmission time.
   /// \return True if the transmission was successful. Otherwise, false.
-  bool transmit(radio_baseband_buffer& data, uhd::time_spec_t time_spec);
+  bool transmit(baseband_gateway_buffer& data, uhd::time_spec_t time_spec);
 
   /// Stop the transmission.
   void stop();

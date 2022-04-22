@@ -3,6 +3,7 @@
 #define SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
 
 #include "lower_phy_state_fsm.h"
+#include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
@@ -10,8 +11,6 @@
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
-#include "srsgnb/radio/radio_data_plane.h"
-#include "srsgnb/srsvec/zero.h"
 
 namespace srsgnb {
 
@@ -25,10 +24,10 @@ private:
 
 public:
   /// Default constructor. Allow implicit construction.
-  lower_phy_dl_rg_buffer(unsigned nof_sectors) : grids(nof_sectors) {}
+  explicit lower_phy_dl_rg_buffer(unsigned nof_sectors) : grids(nof_sectors) {}
 
   /// Move constructor.
-  lower_phy_dl_rg_buffer(lower_phy_dl_rg_buffer&& other) : grids(std::move(other.grids)) {}
+  lower_phy_dl_rg_buffer(lower_phy_dl_rg_buffer&& other) noexcept : grids(std::move(other.grids)) {}
 
   void set_grid(const resource_grid_reader& grid, unsigned sector_id)
   {
@@ -58,8 +57,10 @@ class lower_phy_impl : public lower_phy
 private:
   /// Logger.
   srslog::basic_logger& logger;
-  /// Radio data plane.
-  radio_data_plane& radio;
+  /// Baseband gateway transmitter.
+  baseband_gateway_transmitter& transmitter;
+  /// Baseband gateway receiver.
+  baseband_gateway_receiver& receiver;
   /// Receive symbol handler.
   lower_phy_rx_symbol_notifier& symbol_handler;
   /// Timing boundary handler.
@@ -72,13 +73,13 @@ private:
   std::vector<lower_phy_dl_rg_buffer> dl_rg_buffers;
   /// Stores radio baseband buffers for each stream. Common for transmit and receive. The number of entries indicates
   /// the number of streams.
-  std::vector<radio_baseband_buffer_dynamic> radio_buffers;
+  std::vector<baseband_gateway_buffer_dynamic> radio_buffers;
   /// Stores radio receive metadata for each stream. The number of entries indicates the number of streams.
-  std::vector<radio_data_plane_receiver::metadata> receive_metadata;
+  std::vector<baseband_gateway_receiver::metadata> receive_metadata;
   /// Stores OFDM modulator. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
   /// Indicates the receive to transmit delay in clock ticks.
-  const radio_timestamp rx_to_tx_delay;
+  const baseband_gateway_timestamp rx_to_tx_delay;
   /// Indicates the maximum allowed processing delay in slots.
   const unsigned max_processing_delay_slots;
   /// Indicates the number of symbols per slot.
@@ -95,12 +96,12 @@ private:
   /// \brief Processes uplink symbol.
   /// \param[in] symbol_idx Indicates the symbol index within a subframe.
   /// \return The radio timestamp of the received block.
-  radio_timestamp process_ul_symbol(unsigned symbol_idx);
+  baseband_gateway_timestamp process_ul_symbol(unsigned symbol_idx);
 
   /// \brief Processes downlink symbol.
   /// \param[in] symbol_idx Indicates the symbol index within a subframe.
   /// \param[out] timestamp Indicates the radio timestamp for transmitting the symbol.
-  void process_dl_symbol(unsigned symbol_idx, radio_timestamp timestamp);
+  void process_dl_symbol(unsigned symbol_idx, baseband_gateway_timestamp timestamp);
 
   /// \brief Processes uplink and downlink slot.
   void process_slot();
@@ -114,7 +115,7 @@ private:
 public:
   /// \brief Constructs a generic lower physical layer.
   /// \param[in] config Provides the necessary parameters to construct the lower physical layer.
-  lower_phy_impl(const lower_phy_configuration& config);
+  explicit lower_phy_impl(const lower_phy_configuration& config);
 
   // See interface for documentation.
   void start(task_executor& realtime_task_executor) override;
