@@ -4,6 +4,7 @@
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
+#include <cstring>
 #include <fftw3.h>
 #include <memory>
 #include <mutex>
@@ -21,10 +22,43 @@ struct dft_processor_factory_fftw_config {
 /// Describes a DFT processor class configuration based on the FFTW library.
 class dft_processor_fftw_impl : public dft_processor
 {
+private:
+  /// Describes an FFTW wisdom file name with static memory.
+  class fftw_wisdom_filename
+  {
+  private:
+    /// Persistent memory. It does not get freed.
+    std::array<char, 256> data;
+
+  public:
+    /// Creates a default FFTW wisdom file name.
+    fftw_wisdom_filename();
+
+    /// Overwrites the current file name.
+    fftw_wisdom_filename& operator=(const std::string& new_filename)
+    {
+      if (new_filename.size() <= data.size()) {
+        strcpy(data.data(), new_filename.c_str());
+      } else {
+        clear();
+      }
+      return *this;
+    }
+
+    /// Erase the current file name.
+    void clear() { data[0] = 0; }
+
+    /// Checks if the file name was erased or non existent.
+    bool empty() const { return data[0] == 0; }
+
+    /// Get the file name.
+    const char* get() const { return data.data(); }
+  };
+
   /// Protects the FFTW library from simultaneous plan creation.
   static std::mutex mutex_init;
   /// If wisdom was loaded earlier by any instance, it contains the FFTW wisdom file name. Otherwise, it is empty.
-  static std::string wisdom_filename;
+  static fftw_wisdom_filename wisdom_filename;
   /// Counts the number of FFTW instances. Used to clean up the FFTW context.
   static unsigned fftw_count;
   /// Stores the DFT direction.
@@ -35,9 +69,6 @@ class dft_processor_fftw_impl : public dft_processor
   srsvec::aligned_vec<cf_t> output;
   /// FFTW actual plan.
   fftwf_plan plan;
-
-  /// Get the default FFTW wisdom file.
-  static std::string get_default_fftw_wisdom_file();
 
 public:
   /// \brief Constructs a DFT processor based on the FFTW library.

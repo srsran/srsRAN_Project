@@ -8,12 +8,16 @@ using namespace srsgnb;
 
 std::mutex dft_processor_fftw_impl::mutex_init = {};
 
-std::string dft_processor_fftw_impl::wisdom_filename = dft_processor_fftw_impl::get_default_fftw_wisdom_file();
+dft_processor_fftw_impl::fftw_wisdom_filename dft_processor_fftw_impl::wisdom_filename =
+    dft_processor_fftw_impl::fftw_wisdom_filename();
 
 unsigned dft_processor_fftw_impl::fftw_count = 0;
 
-std::string dft_processor_fftw_impl::get_default_fftw_wisdom_file()
+dft_processor_fftw_impl::fftw_wisdom_filename::fftw_wisdom_filename()
 {
+  // Make sure data does not contain any text.
+  clear();
+
   // Default FFT wisdom file inside home directory.
   static const char* FFTW_WISDOM_FILE = "%s/.srsran_fftwisdom";
 
@@ -26,27 +30,23 @@ std::string dft_processor_fftw_impl::get_default_fftw_wisdom_file()
     const passwd* pwuid = getpwuid(getuid());
     if (pwuid == nullptr) {
       printf("Failed to load home directory: %s. Skipping wisdom load/save.\n", strerror(errno));
-      return "";
+      return;
     }
 
     // Get home directory from user database entry.
     homedir = pwuid->pw_dir;
     if (homedir == nullptr) {
       printf("Home dir is not available. Skipping wisdom load/save.\n");
-      return "";
+      return;
     }
   }
 
   // Create full path to the wisdom file.
-  std::array<char, 256> full_path = {};
-  int                   n         = snprintf(full_path.data(), full_path.size(), FFTW_WISDOM_FILE, homedir);
+  int n = snprintf(data.data(), data.size(), FFTW_WISDOM_FILE, homedir);
   if (n == 0 || n == 256) {
     printf("Default FFTW wisdom path exceeds the maximum length. HOME=%s. Skipping wisdom load/save.\n", homedir);
-    return "";
+    return;
   }
-
-  // Create C++ string from the C style string.
-  return std::string(full_path.data());
 }
 
 dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_factory_fftw_config& fftw_config,
@@ -63,12 +63,12 @@ dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_factory_fft
 
     // If no file name is given, get default.
     if (wisdom_filename.empty()) {
-      wisdom_filename = get_default_fftw_wisdom_file();
+      wisdom_filename = fftw_wisdom_filename();
     }
 
     // Load FFTW wisdom from file name if it is available.
     if (!wisdom_filename.empty()) {
-      fftwf_import_wisdom_from_filename(wisdom_filename.c_str());
+      fftwf_import_wisdom_from_filename(wisdom_filename.get());
     }
   }
 
@@ -100,7 +100,7 @@ dft_processor_fftw_impl::~dft_processor_fftw_impl()
   // Save wisdom if it was loaded.
   if (!wisdom_filename.empty()) {
     // Save the FFT wisdom file with the same name it was loaded.
-    fftwf_export_wisdom_to_filename(wisdom_filename.c_str());
+    fftwf_export_wisdom_to_filename(wisdom_filename.get());
 
     // Make sure other instances do not save the FFTW wisdom file.
     wisdom_filename.clear();
