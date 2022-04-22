@@ -30,7 +30,7 @@ public:
     std::string log_level;
     /// Indicates the socket send and receive timeout in milliseconds. It is ignored if it is zero.
     unsigned trx_timeout_ms;
-    /// Indicates the socket linker timeout in milliseconds. If is ignored if trx_timeout_ms is zero.
+    /// Indicates the socket linger timeout in milliseconds. If is ignored if trx_timeout_ms is zero.
     unsigned linger_timeout_ms;
     /// Indicates the channel buffer size.
     unsigned buffer_size;

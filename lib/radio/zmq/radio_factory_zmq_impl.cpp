@@ -18,5 +18,5 @@ std::unique_ptr<radio_session> radio_factory_zmq_impl::create(const radio_config
   }
 
   // Otherwise, return the instance.
-  return std::move(session);
+  return session;
 }
