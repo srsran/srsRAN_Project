@@ -1,3 +1,5 @@
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
+set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
@@ -8,9 +10,9 @@ add_test(pbch_encoder_test pbch_encoder_test)
 add_custom_command(
   TARGET pbch_encoder_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test/data/pbch_encoder_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test/data/pbch_encoder_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_encoder_test_data.tar.gz
   VERBATIM)
 
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)
@@ -20,9 +22,9 @@ add_test(pbch_modulator_test pbch_modulator_test)
 add_custom_command(
   TARGET pbch_modulator_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test/data/pbch_modulator_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pbch_modulator_test_data.tar.gz
   VERBATIM)
 
 add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
@@ -32,9 +34,9 @@ add_test(pdcch_modulator_test pdcch_modulator_test)
 add_custom_command(
     TARGET pdcch_modulator_test
     POST_BUILD
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-    COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_modulator_test_data.tar.gz
+    WORKING_DIRECTORY ${TEST_DATA_DIR}
+    COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test_data.tar.gz
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test_data.tar.gz
     VERBATIM)
 
 add_executable(pdcch_encoder_test pdcch_encoder_test.cpp)
@@ -44,9 +46,9 @@ add_test(pdcch_encoder_test pdcch_encoder_test)
 add_custom_command(
         TARGET pdcch_encoder_test
         POST_BUILD
-        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_encoder_test/data/pdcch_encoder_test_data.tar.gz
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test/data/pdcch_encoder_test_data.tar.gz
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_encoder_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_encoder_test_data.tar.gz
         VERBATIM)
 
 add_executable(pdcch_processor_test pdcch_processor_test.cpp)
@@ -60,9 +62,9 @@ add_test(pdsch_modulator_test pdsch_modulator_test)
 add_custom_command(
   TARGET pdsch_modulator_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test/data/pdsch_modulator_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test/data/pdsch_modulator_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_modulator_test_data.tar.gz
   VERBATIM)
 
 add_executable(ssb_processor_test ssb_processor_test.cpp)
@@ -75,7 +77,7 @@ target_link_libraries(pdsch_encoder_test pdsch_encoder srslog)
 add_custom_command(
   TARGET pdsch_encoder_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/channel_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test/data/pdsch_encoder_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test/data/pdsch_encoder_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdsch_encoder_test_data.tar.gz
   VERBATIM)

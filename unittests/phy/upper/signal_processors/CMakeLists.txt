@@ -1,3 +1,5 @@
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
+set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
@@ -8,9 +10,9 @@ add_test(dmrs_pbch_processor_test dmrs_pbch_processor_test)
 add_custom_command(
   TARGET dmrs_pbch_processor_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test/data/dmrs_pbch_processor_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test/data/dmrs_pbch_processor_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pbch_processor_test_data.tar.gz
   VERBATIM)
 
 add_executable(dmrs_pdcch_processor_test dmrs_pdcch_processor_test.cpp)
@@ -20,9 +22,9 @@ add_test(dmrs_pdcch_processor_test dmrs_pdcch_processor_test)
 add_custom_command(
   TARGET dmrs_pdcch_processor_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test/data/dmrs_pdcch_processor_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test/data/dmrs_pdcch_processor_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdcch_processor_test_data.tar.gz
   VERBATIM)
 
 add_executable(dmrs_pdsch_processor_test dmrs_pdsch_processor_test.cpp)
@@ -32,9 +34,9 @@ add_test(dmrs_pdsch_processor_test dmrs_pdsch_processor_test)
 add_custom_command(
   TARGET dmrs_pdsch_processor_test
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/upper/signal_processors/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test/data/dmrs_pdsch_processor_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test/data/dmrs_pdsch_processor_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test_data.tar.gz
   VERBATIM)
 
 add_executable(pss_processor_test pss_processor_test.cpp)

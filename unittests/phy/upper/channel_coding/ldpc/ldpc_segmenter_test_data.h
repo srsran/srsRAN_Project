@@ -2,7 +2,7 @@
 #define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_TEST_DATA_H
 
 // This file was generated using the following MATLAB class:
-//   + "srsLDPCsegmenterUnittest.m"
+//   + "srsLDPCSegmenterUnittest.m"
 
 #include "srsgnb/support/file_vector.h"
 
@@ -19,17 +19,17 @@ struct test_case_t {
 
 static const std::vector<test_case_t> ldpc_segmenter_test_data = {
     // clang-format off
-  {96, 1, 1, 132, {"ldpc_segmenter_test_input0.dat"}, {"ldpc_segmenter_test_output0.dat"}},
-  {600, 1, 1, 616, {"ldpc_segmenter_test_input1.dat"}, {"ldpc_segmenter_test_output1.dat"}},
-  {4000, 1, 1, 4224, {"ldpc_segmenter_test_input2.dat"}, {"ldpc_segmenter_test_output2.dat"}},
-  {12000, 1, 2, 6336, {"ldpc_segmenter_test_input3.dat"}, {"ldpc_segmenter_test_output3.dat"}},
-  {40000, 1, 5, 8448, {"ldpc_segmenter_test_input4.dat"}, {"ldpc_segmenter_test_output4.dat"}},
-  {96, 2, 1, 200, {"ldpc_segmenter_test_input5.dat"}, {"ldpc_segmenter_test_output5.dat"}},
-  {320, 2, 1, 440, {"ldpc_segmenter_test_input6.dat"}, {"ldpc_segmenter_test_output6.dat"}},
-  {600, 2, 1, 720, {"ldpc_segmenter_test_input7.dat"}, {"ldpc_segmenter_test_output7.dat"}},
-  {4000, 2, 2, 2080, {"ldpc_segmenter_test_input8.dat"}, {"ldpc_segmenter_test_output8.dat"}},
-  {12000, 2, 4, 3200, {"ldpc_segmenter_test_input9.dat"}, {"ldpc_segmenter_test_output9.dat"}},
-  {40000, 2, 11, 3840, {"ldpc_segmenter_test_input10.dat"}, {"ldpc_segmenter_test_output10.dat"}},
+  {96, 1, 1, 132, {"test_data/ldpc_segmenter_test_input0.dat"}, {"test_data/ldpc_segmenter_test_output0.dat"}},
+  {600, 1, 1, 616, {"test_data/ldpc_segmenter_test_input1.dat"}, {"test_data/ldpc_segmenter_test_output1.dat"}},
+  {4000, 1, 1, 4224, {"test_data/ldpc_segmenter_test_input2.dat"}, {"test_data/ldpc_segmenter_test_output2.dat"}},
+  {12000, 1, 2, 6336, {"test_data/ldpc_segmenter_test_input3.dat"}, {"test_data/ldpc_segmenter_test_output3.dat"}},
+  {40000, 1, 5, 8448, {"test_data/ldpc_segmenter_test_input4.dat"}, {"test_data/ldpc_segmenter_test_output4.dat"}},
+  {96, 2, 1, 200, {"test_data/ldpc_segmenter_test_input5.dat"}, {"test_data/ldpc_segmenter_test_output5.dat"}},
+  {320, 2, 1, 440, {"test_data/ldpc_segmenter_test_input6.dat"}, {"test_data/ldpc_segmenter_test_output6.dat"}},
+  {600, 2, 1, 720, {"test_data/ldpc_segmenter_test_input7.dat"}, {"test_data/ldpc_segmenter_test_output7.dat"}},
+  {4000, 2, 2, 2080, {"test_data/ldpc_segmenter_test_input8.dat"}, {"test_data/ldpc_segmenter_test_output8.dat"}},
+  {12000, 2, 4, 3200, {"test_data/ldpc_segmenter_test_input9.dat"}, {"test_data/ldpc_segmenter_test_output9.dat"}},
+  {40000, 2, 11, 3840, {"test_data/ldpc_segmenter_test_input10.dat"}, {"test_data/ldpc_segmenter_test_output10.dat"}},
     // clang-format on
 };
 
