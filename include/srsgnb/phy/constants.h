@@ -1,6 +1,8 @@
 #ifndef SRSGNB_PHY_CONSTANTS_H_
 #define SRSGNB_PHY_CONSTANTS_H_
 
+#include "srsgnb/support/srsran_assert.h"
+
 namespace srsgnb {
 
 /// Defines the maximum number of Resource Blocks (RB) that a resource grid can carry
