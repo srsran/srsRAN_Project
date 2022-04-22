@@ -114,8 +114,7 @@ static void test(const test_description& config, radio_factory& factory, task_ex
     // Receive for each stream the same buffer.
     for (unsigned stream_id = 0; stream_id != config.nof_streams; ++stream_id) {
       // Receive.
-      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer, stream_id);
-      // TESTASSERT_EQ(md.ts, block_id * config.block_size);
+      receiver.receive(rx_buffer, stream_id);
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
