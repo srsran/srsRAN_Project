@@ -20,13 +20,6 @@ static constexpr unsigned SSB_BW_RE = NRE * SSB_BW_RB;
 /// Defines the maximum number of ports for any channel transmission
 static constexpr unsigned MAX_PORTS = 16;
 
-/// Defines the subcarrier spacing (Hz) according to the numerology
-static inline double SCS(unsigned numerology)
-{
-  double NR_subcarrier_spacing[5] = {15e3, 30e3, 60e3, 120e3, 240e3};
-  return NR_subcarrier_spacing[numerology];
-}
-
 namespace phys_cell_id {
 /**
  * @brief Number of NR N_id_1 Physical Cell Identifier (PCI) as described in TS 38.211 section 7.4.2.1 Physical-layer

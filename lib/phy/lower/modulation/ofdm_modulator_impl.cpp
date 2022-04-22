@@ -1,8 +1,8 @@
 
 #include "ofdm_modulator_impl.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/phy/constants.h"
 #include <complex.h>
 
 using namespace srsgnb;
@@ -25,29 +25,28 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_fact
   // Fill DFT input with zeros.
   srsvec::zero(dft->get_input());
 }
-  
+
 unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index) const
 {
   // Calculate the offset in samples to the start of the symbol including the CPs
   unsigned phase_freq_offset = 0;
-  for(unsigned symb_idx = 0; symb_idx != symbol_index; ++symb_idx)
-  {
+  for (unsigned symb_idx = 0; symb_idx != symbol_index; ++symb_idx) {
     phase_freq_offset += cp.get_length(symb_idx, numerology, dft_size) + dft_size;
   }
   phase_freq_offset += cp.get_length(symbol_index, numerology, dft_size);
-  
+
   return phase_freq_offset;
 }
 
 cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index) const
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
-  unsigned nsymb = get_nsymb_per_slot(cp);
+  unsigned nsymb         = get_nsymb_per_slot(cp);
   unsigned symbol_offset = get_symbol_offset(symbol_index % nsymb);
-  double scs = SCS(numerology);
-  double srate_hz  = scs * dft_size;
-  double phase_rad = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
-  
+  double   scs           = scs_to_khz(subcarrier_spacing(numerology)) * 1e3;
+  double   srate_hz      = scs * dft_size;
+  double   phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
+
   // Calculate compensation phase in double precision and then convert to single
   return (cf_t)std::conj(std::exp(std::complex<double>(I * phase_rad)));
 }
@@ -81,11 +80,11 @@ void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          ou
 
   // Execute DFT.
   span<const cf_t> dft_output = dft->run();
-  
+
   // Apply phase correction (TS 138.211, Section 5.4)
   cf_t phase_compensation = get_phase_compensation(symbol_index);
   srsvec::sc_prod(dft_output, phase_compensation, output.last(dft_size));
-  
+
   // Apply scaling.
   srsvec::sc_prod(output.last(dft_size), scale, output.last(dft_size));
 
