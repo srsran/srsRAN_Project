@@ -158,6 +158,7 @@ void radio_zmq_rx_channel::receive_response()
       event.channel_id = channel_id;
       event.source     = radio_notification_handler::event_source::RECEIVE;
       event.type       = radio_notification_handler::event_type::OVERFLOW;
+      notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
@@ -201,6 +202,7 @@ void radio_zmq_rx_channel::receive(span<radio_sample_type> data)
       event.channel_id = channel_id;
       event.source     = radio_notification_handler::event_source::RECEIVE;
       event.type       = radio_notification_handler::event_type::UNDERFLOW;
+      notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;

@@ -126,8 +126,20 @@ void radio_zmq_tx_channel::send_response()
     buffer[sample_count++] = sample;
   }
 
-  // If no samples are available or stopped return without transitioning.
-  if (sample_count == 0 || !state_fsm.is_running()) {
+  // If stop was called return without transitioning.
+  if (!state_fsm.is_running()) {
+    return;
+  }
+
+  // If no samples are available notify underflow and return without transitioning.
+  if (sample_count == 0) {
+    // Notify buffer overflow.
+    radio_notification_handler::event_description event;
+    event.stream_id  = stream_id;
+    event.channel_id = channel_id;
+    event.source     = radio_notification_handler::event_source::TRANSMIT;
+    event.type       = radio_notification_handler::event_type::UNDERFLOW;
+    notification_handler.on_radio_rt_event(event);
     return;
   }
 
@@ -187,6 +199,7 @@ void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
       event.channel_id = channel_id;
       event.source     = radio_notification_handler::event_source::TRANSMIT;
       event.type       = radio_notification_handler::event_type::OVERFLOW;
+      notification_handler.on_radio_rt_event(event);
 
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
