@@ -57,7 +57,13 @@ int main(int argc, char** argv)
   radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
 
   if (argc > 1 && argv[1] != nullptr) {
-    if (std::strcmp(argv[1], "b200_50MHz") == 0) {
+    if (std::strcmp(argv[1], "zmq_50MHz") == 0) {
+      driver_name      = "zmq";
+      device_arguments = "";
+      sampling_rate_hz = 61.44e6;
+      bw_rb            = 270;
+      otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+    } else if (std::strcmp(argv[1], "b200_50MHz") == 0) {
       device_arguments = "type=b200";
       sampling_rate_hz = 61.44e6;
       bw_rb            = 270;
@@ -108,7 +114,7 @@ int main(int argc, char** argv)
   radio_config.sampling_rate_hz           = sampling_rate_hz;
   radio_config.otw_format                 = otw_format;
   radio_config.args                       = device_arguments;
-  radio_config.log_level                  = "debug";
+  radio_config.log_level                  = log_level;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     // For each channel in the streams...
     radio_configuration::stream tx_stream_config;
@@ -118,11 +124,17 @@ int main(int argc, char** argv)
       radio_configuration::channel tx_ch_config;
       tx_ch_config.freq.center_frequency_hz = tx_freq;
       tx_ch_config.gain_dB                  = tx_gain;
+      if (driver_name == "zmq") {
+        tx_ch_config.args = "tcp://*:" + std::to_string(5554 + port_id);
+      }
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config;
       rx_ch_config.freq.center_frequency_hz = rx_freq;
       rx_ch_config.gain_dB                  = rx_gain;
+      if (driver_name == "zmq") {
+        rx_ch_config.args = "tcp://localhost:" + std::to_string(6554 + port_id);
+      }
       rx_stream_config.channels.emplace_back(rx_ch_config);
     }
     radio_config.tx_streams.emplace_back(tx_stream_config);
@@ -178,6 +190,7 @@ int main(int argc, char** argv)
   // Create DL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> dl_rg_pool = nullptr;
   {
+    std::vector<cf_t>         rg_data(bw_rb * NRE);
     resource_grid_pool_config rg_pool_config = {};
     rg_pool_config.nof_sectors               = 1;
     rg_pool_config.nof_slots                 = max_processing_delay_slots * 2;
@@ -189,11 +202,22 @@ int main(int argc, char** argv)
         unsigned nsymbols = get_nsymb_per_slot(cp);
         for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
           for (unsigned symbol_id = 0; symbol_id != nsymbols; ++symbol_id) {
-            std::vector<cf_t> rg_data(bw_rb * NRE);
+            unsigned nsteps      = rg_pool_config.nof_slots;
+            unsigned step        = slot_id;
+            unsigned cylon_id    = (step <= nsteps / 2) ? step : nsteps - step;
+            unsigned subc_bundle = divide_ceil(bw_rb * NRE, nsteps / 2 + 1);
+            unsigned subc_start  = subc_bundle * cylon_id;
+            unsigned subc_end    = std::min(subc_bundle * (cylon_id + 1), bw_rb * NRE);
 
-            // Generate random data.
-            for (cf_t& re : rg_data) {
-              re = {dist(rgen), dist(rgen)};
+            // Generate symbol data.
+            for (unsigned subc_id = 0; subc_id != rg_data.size(); ++subc_id) {
+              if (subc_id >= subc_start && subc_id < subc_end) {
+                rg_data[subc_id] = {dist(rgen), dist(rgen)};
+                //                rg_data[subc_id] = std::exp(COMPLEX_I * (TWOPI * static_cast<float>(subc_id +
+                //                symbol_id) / 7.0f));
+              } else {
+                rg_data[subc_id] = 0;
+              }
             }
 
             // Put random generated data in grid.
