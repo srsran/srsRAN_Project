@@ -165,10 +165,16 @@ void lower_phy_impl::realtime_process_loop()
 
   // Notify the stop of the asynchronous operation.
   state_fsm.on_async_executor_stop();
+  logger.debug("Realtime process finished.");
 }
 
 void lower_phy_impl::send(const resource_grid_context& context, const resource_grid_reader& grid)
 {
+  // Skip if it is not running
+  if (!state_fsm.is_running()) {
+    return;
+  }
+
   // Calculate slot index circular buffer.
   unsigned slot_idx = context.slot.system_slot() % dl_rg_buffers.size();
 
@@ -264,4 +270,5 @@ void lower_phy_impl::stop()
 {
   logger.info("Stopping...");
   state_fsm.stop_and_join();
+  logger.debug("Stopped successfully.");
 }

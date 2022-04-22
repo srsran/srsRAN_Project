@@ -31,6 +31,9 @@ private:
   /// Used to wait for certain state transitions.
   std::condition_variable cvar;
 
+  /// Same than is_running().
+  bool is_running_unprotected() const { return state == states::RUNNING; }
+
 public:
   /// Notifies the successful component initialisation.
   void on_successful_init()
@@ -53,11 +56,11 @@ public:
   void stop_and_join()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (state == states::RUNNING) {
+    if (is_running_unprotected()) {
       state = states::WAIT_STOP;
     }
 
-    while (state == states::RUNNING) {
+    while (state != states::UNINITIALISED && state != states::STOPPED) {
       cvar.wait(lock);
     }
   }
@@ -65,7 +68,7 @@ public:
   bool is_running() const
   {
     std::unique_lock<std::mutex> lock(mutex);
-    return state == states::RUNNING;
+    return is_running_unprotected();
   }
 };
 
