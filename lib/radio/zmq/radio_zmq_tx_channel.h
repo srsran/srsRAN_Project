@@ -3,7 +3,7 @@
 #define SRSGNB_LIB_RADIO_ZMQ_RADIO_ZMQ_TX_CHANNEL_H
 
 #include "radio_zmq_tx_channel_fsm.h"
-#include "srsgnb/radio/radio_baseband_buffer.h"
+#include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
 #include "srsgnb/radio/radio_notification_handler.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/async/async_queue.h"

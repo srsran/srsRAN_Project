@@ -43,7 +43,7 @@ public:
 
   bool is_successful() const { return successful; }
 
-  void receive(radio_baseband_buffer& data);
+  void receive(baseband_gateway_buffer& data);
 
   void stop();
 

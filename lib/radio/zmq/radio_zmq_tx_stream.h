@@ -45,7 +45,7 @@ public:
 
   void align(uint64_t ts);
 
-  void transmit(radio_baseband_buffer& data);
+  void transmit(baseband_gateway_buffer& data);
 
   void stop();
 

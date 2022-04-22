@@ -103,8 +103,8 @@ void radio_session_zmq_impl::stop()
 }
 
 void radio_session_zmq_impl::transmit(unsigned                                      stream_id,
-                                      const radio_data_plane_transmitter::metadata& metadata,
-                                      radio_baseband_buffer&                        data)
+                                      const baseband_gateway_transmitter::metadata& metadata,
+                                      baseband_gateway_buffer&                      data)
 {
   srsran_always_assert(stream_id < tx_streams.size(),
                        "Stream identifier ({}) exceeds the number of transmit streams ({})",
@@ -114,16 +114,19 @@ void radio_session_zmq_impl::transmit(unsigned                                  
   tx_streams[stream_id]->transmit(data);
 }
 
-radio_data_plane_receiver::metadata radio_session_zmq_impl::receive(radio_baseband_buffer& data, unsigned stream_id)
+baseband_gateway_receiver::metadata radio_session_zmq_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
 {
   srsran_always_assert(stream_id < rx_streams.size(),
                        "Stream identifier ({}) exceeds the number of receive streams ({})",
                        stream_id,
                        rx_streams.size());
 
+  baseband_gateway_receiver::metadata ret;
+  ret.ts = 0;
+
   rx_streams[stream_id]->receive(data);
 
-  return radio_data_plane_receiver::metadata();
+  return ret;
 }
 
 bool radio_session_zmq_impl::set_tx_gain(unsigned port_id, double gain_dB)

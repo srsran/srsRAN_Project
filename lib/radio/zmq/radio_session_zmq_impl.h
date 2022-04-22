@@ -13,9 +13,9 @@ namespace srsgnb {
 /// Describes a ZeroMQ radio based session.
 class radio_session_zmq_impl : public radio_session,
                                public radio_management_plane,
-                               public radio_data_plane,
-                               public radio_data_plane_transmitter,
-                               public radio_data_plane_receiver
+                               public baseband_gateway,
+                               public baseband_gateway_transmitter,
+                               public baseband_gateway_receiver
 {
 private:
   /// Default sockets send and receive timeout in milliseconds.
@@ -56,24 +56,24 @@ public:
   radio_management_plane& get_management_plane() override { return *this; };
 
   // See interface for documentation.
-  radio_data_plane& get_data_plane() override { return *this; }
+  baseband_gateway& get_baseband_gateway() override { return *this; }
 
   // See interface for documentation.
-  radio_data_plane_transmitter& get_transmitter() override { return *this; }
+  baseband_gateway_transmitter& get_transmitter() override { return *this; }
 
   // See interface for documentation.
-  radio_data_plane_receiver& get_receiver() override { return *this; }
+  baseband_gateway_receiver& get_receiver() override { return *this; }
 
   // See interface for documentation.
   void stop() override;
 
   // See interface for documentation.
   void transmit(unsigned                                      stream_id,
-                const radio_data_plane_transmitter::metadata& metadata,
-                radio_baseband_buffer&                        data) override;
+                const baseband_gateway_transmitter::metadata& metadata,
+                baseband_gateway_buffer&                      data) override;
 
   // See interface for documentation.
-  radio_data_plane_receiver::metadata receive(radio_baseband_buffer& data, unsigned stream_id) override;
+  baseband_gateway_receiver::metadata receive(baseband_gateway_buffer& data, unsigned stream_id) override;
 
   // See interface for documentation.
   bool set_tx_gain(unsigned port_id, double gain_dB) override;

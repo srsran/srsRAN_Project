@@ -49,7 +49,7 @@ void radio_zmq_tx_stream::wait_stop()
   }
 }
 
-void radio_zmq_tx_stream::transmit(radio_baseband_buffer& data)
+void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data)
 {
   srsran_always_assert(data.get_nof_channels() == channels.size(),
                        "Invalid number of channels ({}) expected {}.",

@@ -83,17 +83,17 @@ static void test(const test_description& config, radio_factory& factory, task_ex
   std::unique_ptr<radio_session> session = factory.create(radio_config, async_task_executor, radio_notifier);
 
   // Get data plane.
-  radio_data_plane& data_plane = session->get_data_plane();
+  baseband_gateway& data_plane = session->get_baseband_gateway();
 
   // Get transmitter and receiver.
-  radio_data_plane_transmitter& transmitter = data_plane.get_transmitter();
-  radio_data_plane_receiver&    receiver    = data_plane.get_receiver();
+  baseband_gateway_transmitter& transmitter = data_plane.get_transmitter();
+  baseband_gateway_receiver&    receiver    = data_plane.get_receiver();
 
   // Prepare transmit buffer
-  radio_baseband_buffer_dynamic tx_buffer(config.nof_channels, config.block_size);
+  baseband_gateway_buffer_dynamic tx_buffer(config.nof_channels, config.block_size);
 
   // Prepare receive buffer.
-  radio_baseband_buffer_dynamic rx_buffer(config.nof_channels, config.block_size);
+  baseband_gateway_buffer_dynamic rx_buffer(config.nof_channels, config.block_size);
 
   for (unsigned block_id = 0; block_id != config.nof_blocks; ++block_id) {
     // Transmit for each stream the same buffer.
@@ -107,14 +107,15 @@ static void test(const test_description& config, radio_factory& factory, task_ex
       }
 
       // Transmit stream buffer.
-      radio_data_plane_transmitter::metadata tx_md;
+      baseband_gateway_transmitter::metadata tx_md;
       transmitter.transmit(stream_id, tx_md, tx_buffer);
     }
 
     // Receive for each stream the same buffer.
     for (unsigned stream_id = 0; stream_id != config.nof_streams; ++stream_id) {
       // Receive.
-      receiver.receive(rx_buffer, stream_id);
+      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer, stream_id);
+      TESTASSERT_EQ(md.ts, block_id * config.block_size);
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
