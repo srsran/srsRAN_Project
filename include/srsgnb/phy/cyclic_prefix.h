@@ -84,7 +84,7 @@ public:
     } else if (symbol_idx == 0 || symbol_idx == 7 * pow2(numerology)) {
       cp_len += 16 * kappa * pow2(numerology);
     }
-    
+
     return (cp_len * dft_size) / (N_ref * kappa);
   }
 };
