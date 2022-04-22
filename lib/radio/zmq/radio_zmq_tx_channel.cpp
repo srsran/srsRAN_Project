@@ -131,20 +131,8 @@ void radio_zmq_tx_channel::send_response()
     return;
   }
 
-  // If no samples are available notify underflow and return without transitioning.
+  // If no samples are available return without transitioning state.
   if (count == 0) {
-    // Notify buffer overflow.
-    radio_notification_handler::event_description event;
-    event.stream_id  = stream_id;
-    event.channel_id = channel_id;
-    event.source     = radio_notification_handler::event_source::TRANSMIT;
-    event.type       = radio_notification_handler::event_type::UNDERFLOW;
-    notification_handler.on_radio_rt_event(event);
-
-    // Wait some time before trying again.
-    unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;
-    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
-
     return;
   }
 
@@ -154,7 +142,7 @@ void radio_zmq_tx_channel::send_response()
 
   // Check if an error occurred.
   if (n < 0) {
-    // logger.error("Exception to transmit data. {}.", zmq_strerror(zmq_errno()));
+    logger.error("Exception to transmit data. {}.", zmq_strerror(zmq_errno()));
     state_fsm.on_error();
     return;
   }
@@ -194,14 +182,6 @@ void radio_zmq_tx_channel::transmit_sample(radio_sample_type sample)
 {
   // Try to push sample.
   while (state_fsm.is_running() && !circular_buffer.try_push(sample)) {
-    // Notify buffer overflow.
-    radio_notification_handler::event_description event;
-    event.stream_id  = stream_id;
-    event.channel_id = channel_id;
-    event.source     = radio_notification_handler::event_source::TRANSMIT;
-    event.type       = radio_notification_handler::event_type::OVERFLOW;
-    notification_handler.on_radio_rt_event(event);
-
     // Wait some time before trying again.
     unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
     std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));

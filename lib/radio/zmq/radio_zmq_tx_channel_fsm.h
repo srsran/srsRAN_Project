@@ -30,6 +30,9 @@ private:
   /// Condition variable to wait for certain states.
   std::condition_variable cvar;
 
+  /// Same than is_running().
+  bool is_running_unprotected() const { return state == states::WAIT_REQUEST || state == states::WAIT_DATA; }
+
 public:
   /// Notifies that the transmit stream has been initialised successfully.
   void init_successful()
@@ -68,7 +71,9 @@ public:
   void stop()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    state = states::WAIT_STOP;
+    if (is_running_unprotected()) {
+      state = states::WAIT_STOP;
+    }
   }
 
   /// Waits for the asynchronous tasks notifies that has stopped.
@@ -92,7 +97,7 @@ public:
   bool is_running() const
   {
     std::unique_lock<std::mutex> lock(mutex);
-    return state == states::WAIT_REQUEST || state == states::WAIT_DATA;
+    return is_running_unprotected();
   }
 
   /// Indicates whether it has a pending request.

@@ -131,12 +131,12 @@ void radio_zmq_rx_channel::receive_response()
       // Ignore timeout and FSM error.
       // logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
       return;
-    } else {
-      // This error cannot be ignored.
-      logger.error("Socket failed to receive DATA. {}.", zmq_strerror(zmq_errno()));
-      state_fsm.on_error();
-      return;
     }
+
+    // This error cannot be ignored.
+    logger.error("Socket failed to receive DATA. {}.", zmq_strerror(zmq_errno()));
+    state_fsm.on_error();
+    return;
   }
 
   // Make sure the received number of bytes is valid.
@@ -202,14 +202,6 @@ void radio_zmq_rx_channel::receive(span<radio_sample_type> data)
   for (radio_sample_type& sample : data) {
     // Try to push sample.
     while (state_fsm.is_running() && !circular_buffer.try_pop(sample)) {
-      // Notify buffer underflow.
-      radio_notification_handler::event_description event;
-      event.stream_id  = stream_id;
-      event.channel_id = channel_id;
-      event.source     = radio_notification_handler::event_source::RECEIVE;
-      event.type       = radio_notification_handler::event_type::UNDERFLOW;
-      notification_handler.on_radio_rt_event(event);
-
       // Wait some time before trying again.
       unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;
       std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));

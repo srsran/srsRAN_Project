@@ -20,9 +20,7 @@ private:
   /// Lists the supported socket types.
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 10;
-  /// Wait time after a buffer try pop failed.
-  static constexpr unsigned CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS = 10;
+  static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 1;
 
   /// Indicates the stream identifier.
   unsigned stream_id;

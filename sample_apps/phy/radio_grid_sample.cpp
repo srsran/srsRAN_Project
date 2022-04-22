@@ -28,11 +28,22 @@ std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modul
 
 using namespace srsgnb;
 
-std::atomic<bool> stop = {false};
+static std::string                      log_level = "warning";
+static std::atomic<bool>                stop      = {false};
+static std::unique_ptr<lower_phy>       phy       = nullptr;
+static std::unique_ptr<radio_session>   radio     = nullptr;
+static lower_phy_timing_notifier_sample timing_handler(log_level);
 
 void signal_handler(int sig)
 {
+  if (radio != nullptr) {
+    radio->stop();
+  }
+  if (phy != nullptr) {
+    phy->stop();
+  }
   stop = true;
+  timing_handler.stop();
 }
 
 int main(int argc, char** argv)
@@ -40,7 +51,6 @@ int main(int argc, char** argv)
   // Program parameters.
   std::string                               driver_name                = "uhd";
   std::string                               device_arguments           = "type=b200";
-  std::string                               log_level                  = "info";
   double                                    sampling_rate_hz           = 23.04e6;
   unsigned                                  numerology                 = 0;
   unsigned                                  max_processing_delay_slots = 4;
@@ -145,14 +155,11 @@ int main(int argc, char** argv)
   radio_notifier_spy notification_handler(log_level);
 
   // Create radio.
-  std::unique_ptr<radio_session> radio = factory->create(radio_config, *async_task_executor, notification_handler);
+  radio = factory->create(radio_config, *async_task_executor, notification_handler);
   srsran_always_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
   lower_phy_rx_symbol_notifier_sample rx_symbol_handler(log_level);
-
-  // Create timing handler.
-  lower_phy_timing_notifier_sample timing_handler(log_level);
 
   // Create DFT processor factory configuration with default values.
   dft_processor_factory_fftw_config dft_factory_fftw_config;
@@ -213,8 +220,6 @@ int main(int argc, char** argv)
             for (unsigned subc_id = 0; subc_id != rg_data.size(); ++subc_id) {
               if (subc_id >= subc_start && subc_id < subc_end) {
                 rg_data[subc_id] = {dist(rgen), dist(rgen)};
-                //                rg_data[subc_id] = std::exp(COMPLEX_I * (TWOPI * static_cast<float>(subc_id +
-                //                symbol_id) / 7.0f));
               } else {
                 rg_data[subc_id] = 0;
               }
@@ -264,8 +269,8 @@ int main(int argc, char** argv)
   phy_config.log_level = log_level;
 
   // Create lower physical layer.
-  std::unique_ptr<lower_phy> lower_phy = lower_phy_factory().create(phy_config);
-  srsran_always_assert(lower_phy, "Failed to create lower physical layer.");
+  phy = lower_phy_factory().create(phy_config);
+  srsran_always_assert(phy, "Failed to create lower physical layer.");
 
   // Set signal handler.
   signal(SIGINT, signal_handler);
@@ -275,7 +280,7 @@ int main(int argc, char** argv)
   signal(SIGKILL, signal_handler);
 
   // Start processing.
-  lower_phy->start(*rt_task_executor);
+  phy->start(*rt_task_executor);
 
   // Receive and transmit per block basis.
   for (unsigned slot_count = 0; slot_count != duration_slots && !stop; ++slot_count) {
@@ -287,18 +292,22 @@ int main(int argc, char** argv)
       resource_grid_context context;
       context.slot   = slot;
       context.sector = sector_id;
-      lower_phy->send(context, dl_rg_pool->get_resource_grid(context));
+      phy->send(context, dl_rg_pool->get_resource_grid(context));
     }
   }
 
-  // Stop physical layer.
-  lower_phy->stop();
+  // Stop components if a signal was not caught.
+  if (!stop) {
+    // Stop radio operation prior destruction.
+    radio->stop();
 
-  // Stop radio operation prior destruction.
-  radio->stop();
+    // Stop physical layer.
+    phy->stop();
+  }
 
-  // Stop asynchronous thread.
+  // Stop workers.
   async_task_worker.stop();
+  rt_task_worker.stop();
 
   notification_handler.print();
 
