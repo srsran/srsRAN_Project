@@ -108,13 +108,15 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
       // Transmit stream buffer.
       baseband_gateway_transmitter::metadata tx_md;
+      tx_md.ts = block_id * config.block_size;
       transmitter.transmit(stream_id, tx_md, tx_buffer);
     }
 
     // Receive for each stream the same buffer.
     for (unsigned stream_id = 0; stream_id != config.nof_streams; ++stream_id) {
       // Receive.
-      receiver.receive(rx_buffer, stream_id);
+      baseband_gateway_receiver::metadata md = receiver.receive(rx_buffer, stream_id);
+      TESTASSERT_EQ(md.ts, block_id * config.block_size);
 
       // Validate data for each channel.
       for (unsigned channel_id = 0; channel_id != config.nof_channels; ++channel_id) {
@@ -144,7 +146,7 @@ int main()
   srslog::init();
 
   // Common test parameters.
-  std::string log_level = "error";
+  std::string log_level = "warning";
 
   // Create ZMQ factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory("zmq");

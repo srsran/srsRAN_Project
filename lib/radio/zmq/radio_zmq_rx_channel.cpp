@@ -91,7 +91,7 @@ void radio_zmq_rx_channel::send_request()
 
     // Request received.
     if (n > 0) {
-      logger.debug("Request sent.");
+      logger.debug("Socket sent request.");
       state_fsm.request_sent();
       return;
     }
@@ -102,10 +102,10 @@ void radio_zmq_rx_channel::send_request()
       int err = zmq_errno();
       if (err == EFSM || err == EAGAIN) {
         // Ignore timeout and FSM error.
-        logger.debug("Failed to send request. {}.", zmq_strerror(zmq_errno()));
+        // logger.debug("Exception to send request. {}.", zmq_strerror(zmq_errno()));
       } else {
         // This error cannot be ignored.
-        logger.error("Failed to send request. {}.", zmq_strerror(zmq_errno()));
+        logger.error("Socket failed to send request. {}.", zmq_strerror(zmq_errno()));
         state_fsm.on_error();
         return;
       }
@@ -121,7 +121,7 @@ void radio_zmq_rx_channel::receive_response()
   // Otherwise, send samples over socket.
   int sample_size = sizeof(radio_sample_type);
   int nbytes      = buffer.size() * sample_size;
-  int n           = zmq_recv(sock, (void*)buffer.data(), nbytes, 0);
+  int n           = zmq_recv(sock, (void*)buffer.data(), nbytes, ZMQ_DONTWAIT);
 
   // Check if an error occurred.
   if (n < 0) {
@@ -129,11 +129,11 @@ void radio_zmq_rx_channel::receive_response()
     int err = zmq_errno();
     if (err == EFSM || err == EAGAIN) {
       // Ignore timeout and FSM error.
-      logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
+      // logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
       return;
     } else {
       // This error cannot be ignored.
-      logger.error("Failed to receive data. {}.", zmq_strerror(zmq_errno()));
+      logger.error("Socket failed to receive DATA. {}.", zmq_strerror(zmq_errno()));
       state_fsm.on_error();
       return;
     }
@@ -141,14 +141,20 @@ void radio_zmq_rx_channel::receive_response()
 
   // Make sure the received number of bytes is valid.
   if (n % sample_size != 0) {
-    logger.error("Failed to receive data. Invalid number of bytes {}%{}={}.", n, sample_size, n % sample_size);
+    logger.error("Socket failed to receive DATA. Invalid number of bytes {}%{}={}.", n, sample_size, n % sample_size);
     state_fsm.on_error();
     return;
   }
 
   // Convert number of bytes to samples.
   unsigned nsamples = n / sample_size;
-  logger.debug("Received {} samples.", nsamples);
+  logger.debug("Socket received {} samples.", nsamples);
+
+  // Make sure the buffer size has not been exceeded.
+  srsran_always_assert(nsamples <= buffer.size(),
+                       "Buffer overflow. Buffer size ({}) is not enough for the received number of samples ({})",
+                       buffer.size(),
+                       nsamples);
 
   for (unsigned count = 0; count != nsamples; ++count) {
     while (state_fsm.is_running() && !circular_buffer.try_push(buffer[count])) {

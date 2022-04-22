@@ -88,11 +88,11 @@ void radio_zmq_tx_channel::receive_request()
   if (socket_type == ZMQ_REP) {
     // Receive request.
     uint8_t dummy = 0;
-    int     n     = zmq_recv(sock, &dummy, sizeof(dummy), 0);
+    int     n     = zmq_recv(sock, &dummy, sizeof(dummy), ZMQ_DONTWAIT);
 
     // Request received.
     if (n > 0) {
-      logger.debug("Request received.");
+      logger.debug("Socket received request.");
       state_fsm.request_received();
       return;
     }
@@ -103,10 +103,10 @@ void radio_zmq_tx_channel::receive_request()
       int err = zmq_errno();
       if (err == EFSM || err == EAGAIN) {
         // Ignore timeout and FSM error.
-        logger.debug("Failed to receive request. {}.", zmq_strerror(zmq_errno()));
+        // logger.debug("Exception to receive request. {}.", zmq_strerror(zmq_errno()));
       } else {
         // This error cannot be ignored.
-        logger.error("Failed to receive request. {}.", zmq_strerror(zmq_errno()));
+        logger.error("Socket failed to receive request. {}.", zmq_strerror(zmq_errno()));
         state_fsm.on_error();
         return;
       }
@@ -120,10 +120,10 @@ void radio_zmq_tx_channel::receive_request()
 void radio_zmq_tx_channel::send_response()
 {
   // Try popping samples until the circular buffer is empty.
-  unsigned          sample_count = 0;
+  unsigned          count = 0;
   radio_sample_type sample;
-  while (state_fsm.is_running() && circular_buffer.try_pop(sample)) {
-    buffer[sample_count++] = sample;
+  while (state_fsm.is_running() && circular_buffer.try_pop(sample) && count < buffer.size()) {
+    buffer[count++] = sample;
   }
 
   // If stop was called return without transitioning.
@@ -132,7 +132,7 @@ void radio_zmq_tx_channel::send_response()
   }
 
   // If no samples are available notify underflow and return without transitioning.
-  if (sample_count == 0) {
+  if (count == 0) {
     // Notify buffer overflow.
     radio_notification_handler::event_description event;
     event.stream_id  = stream_id;
@@ -140,16 +140,21 @@ void radio_zmq_tx_channel::send_response()
     event.source     = radio_notification_handler::event_source::TRANSMIT;
     event.type       = radio_notification_handler::event_type::UNDERFLOW;
     notification_handler.on_radio_rt_event(event);
+
+    // Wait some time before trying again.
+    unsigned sleep_for_ms = CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS;
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
+
     return;
   }
 
   // Otherwise, send samples over socket.
-  int nbytes = sample_count * sizeof(radio_sample_type);
+  int nbytes = count * sizeof(radio_sample_type);
   int n      = zmq_send(sock, (void*)buffer.data(), nbytes, 0);
 
   // Check if an error occurred.
   if (n < 0) {
-    logger.error("Exception to transmit data. {}.", zmq_strerror(zmq_errno()));
+    // logger.error("Exception to transmit data. {}.", zmq_strerror(zmq_errno()));
     state_fsm.on_error();
     return;
   }
@@ -161,7 +166,7 @@ void radio_zmq_tx_channel::send_response()
     return;
   }
 
-  logger.debug("Sent {} samples.", sample_count);
+  logger.debug("Socket sent {} samples.", count);
 
   // If successful transition to wait for data.
   state_fsm.data_sent();
@@ -185,26 +190,49 @@ void radio_zmq_tx_channel::run_async()
   }
 }
 
+void radio_zmq_tx_channel::transmit_sample(radio_sample_type sample)
+{
+  // Try to push sample.
+  while (state_fsm.is_running() && !circular_buffer.try_push(sample)) {
+    // Notify buffer overflow.
+    radio_notification_handler::event_description event;
+    event.stream_id  = stream_id;
+    event.channel_id = channel_id;
+    event.source     = radio_notification_handler::event_source::TRANSMIT;
+    event.type       = radio_notification_handler::event_type::OVERFLOW;
+    notification_handler.on_radio_rt_event(event);
+
+    // Wait some time before trying again.
+    unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
+    std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
+  }
+
+  // Increment sample count.
+  sample_count++;
+}
+
+void radio_zmq_tx_channel::align(uint64_t timestamp)
+{
+  unsigned count = 0;
+
+  // Transmit zeros until the sample count reaches the timestamp.
+  while (sample_count < timestamp) {
+    transmit_sample(0.0);
+    ++count;
+  }
+
+  if (count > 0) {
+    logger.debug("Aligned with {} zeros.", count);
+  }
+}
+
 void radio_zmq_tx_channel::transmit(span<radio_sample_type> data)
 {
   logger.debug("Requested to transmit {} samples.", data.size());
 
   // For each sample...
   for (radio_sample_type sample : data) {
-    // Try to push sample.
-    while (state_fsm.is_running() && !circular_buffer.try_push(sample)) {
-      // Notify buffer overflow.
-      radio_notification_handler::event_description event;
-      event.stream_id  = stream_id;
-      event.channel_id = channel_id;
-      event.source     = radio_notification_handler::event_source::TRANSMIT;
-      event.type       = radio_notification_handler::event_type::OVERFLOW;
-      notification_handler.on_radio_rt_event(event);
-
-      // Wait some time before trying again.
-      unsigned sleep_for_ms = CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS;
-      std::this_thread::sleep_for(std::chrono::milliseconds(sleep_for_ms));
-    }
+    transmit_sample(sample);
   }
 }
 

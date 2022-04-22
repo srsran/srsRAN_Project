@@ -49,6 +49,13 @@ void radio_zmq_tx_stream::wait_stop()
   }
 }
 
+void radio_zmq_tx_stream::align(uint64_t timestamp)
+{
+  for (auto& channel : channels) {
+    channel->align(timestamp);
+  }
+}
+
 void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data)
 {
   srsran_always_assert(data.get_nof_channels() == channels.size(),

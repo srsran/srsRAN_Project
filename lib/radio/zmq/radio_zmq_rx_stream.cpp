@@ -51,12 +51,17 @@ void radio_zmq_rx_stream::wait_stop()
 
 void radio_zmq_rx_stream::receive(baseband_gateway_buffer& data)
 {
+  // Make sure the number of data channels is coherent with the number of the stream channels.
   srsran_always_assert(data.get_nof_channels() == channels.size(),
                        "Invalid number of channels ({}) expected {}.",
                        data.get_nof_channels(),
                        channels.size());
 
+  // Receive samples for each channel.
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
     channels[channel_id]->receive(data.get_channel_buffer(channel_id));
   }
+
+  // Increment the number of samples.
+  sample_count += data.get_nof_samples();
 }

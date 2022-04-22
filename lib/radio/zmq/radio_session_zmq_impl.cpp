@@ -111,6 +111,10 @@ void radio_session_zmq_impl::transmit(unsigned                                  
                        stream_id,
                        tx_streams.size());
 
+  // Align stream to the new timestamp.
+  tx_streams[stream_id]->align(metadata.ts);
+
+  // Actual transmission.
   tx_streams[stream_id]->transmit(data);
 }
 
@@ -121,9 +125,19 @@ baseband_gateway_receiver::metadata radio_session_zmq_impl::receive(baseband_gat
                        stream_id,
                        rx_streams.size());
 
+  // Prepare return metadata.
   baseband_gateway_receiver::metadata ret;
-  ret.ts = 0;
+  ret.ts = rx_streams[stream_id]->get_sample_count();
 
+  // Calculate transmit timestamp that has already expired.
+  uint64_t passed_timestamp = ret.ts + data.get_nof_samples();
+
+  // Align all transmit timestamps.
+  for (auto& tx_stream : tx_streams) {
+    tx_stream->align(passed_timestamp);
+  }
+
+  // Actual reception.
   rx_streams[stream_id]->receive(data);
 
   return ret;

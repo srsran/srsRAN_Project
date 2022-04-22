@@ -23,7 +23,7 @@ private:
   /// Default linger timeout in milliseconds.
   static constexpr unsigned DEFAULT_LINGER_TIMEOUT_MS = 0;
   /// Default buffer size in samples.
-  static constexpr unsigned DEFAULT_BUFFER_SIZE_SAMPLES = 8192;
+  static constexpr unsigned DEFAULT_BUFFER_SIZE_SAMPLES = 61440;
 
   /// Radio session logger.
   srslog::basic_logger& logger;

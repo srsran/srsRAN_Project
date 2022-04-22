@@ -14,6 +14,8 @@ private:
   bool successful = false;
   /// Stores independent channels.
   std::vector<std::unique_ptr<radio_zmq_rx_channel> > channels;
+  /// Counts the number of received samples.
+  uint64_t sample_count = 0;
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx stream.
@@ -42,6 +44,8 @@ public:
                       radio_notification_handler& notification_handler);
 
   bool is_successful() const { return successful; }
+
+  uint64_t get_sample_count() const { return sample_count; }
 
   void receive(baseband_gateway_buffer& data);
 

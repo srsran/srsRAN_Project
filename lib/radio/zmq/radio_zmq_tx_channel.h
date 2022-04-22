@@ -21,6 +21,8 @@ private:
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
   static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 10;
+  /// Wait time after a buffer try pop failed.
+  static constexpr unsigned CIRC_BUFFER_TRY_POP_SLEEP_FOR_MS = 10;
 
   /// Indicates the stream identifier.
   unsigned stream_id;
@@ -44,6 +46,11 @@ private:
   radio_notification_handler& notification_handler;
   /// Asynchronous task executor.
   task_executor& async_executor;
+  /// Indicates the number of transmitted samples.
+  uint64_t sample_count = 0;
+
+  /// Transmits a single sample.
+  void transmit_sample(radio_sample_type sample);
 
 public:
   /// Describes the necessary parameters to create a ZMQ Tx channel.
@@ -82,6 +89,8 @@ public:
   void send_response();
 
   void run_async();
+
+  void align(uint64_t timestamp);
 
   void transmit(span<radio_sample_type> buffer);
 
