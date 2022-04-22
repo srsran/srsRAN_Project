@@ -27,7 +27,7 @@ std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modul
 } // namespace srsgnb
 
 /// Defines the maximum allowed error at the OFDM modulator output.
-static constexpr float ASSERT_MAX_ERROR = 1e-4;
+static constexpr float ASSERT_MAX_ERROR = 1e-5;
 
 using namespace srsgnb;
 

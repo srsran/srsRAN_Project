@@ -28,6 +28,8 @@ private:
   unsigned numerology;
   /// Indicates the scaling factor at the DFT output.
   float scale;
+  /// Indicates the center frequency of the carrier in Hz.
+  double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
   /// Temporal data buffer.
@@ -45,6 +47,12 @@ public:
   {
     return cp.get_length(symbol_index, numerology, dft_size) + dft_size;
   }
+
+  // See interface for documentation.
+  unsigned get_symbol_offset(unsigned symbol_index) const override;
+
+  // See interface for documentation.
+  cf_t get_phase_compensation(unsigned symbol_index) const override;
 
   // See interface for documentation.
   void

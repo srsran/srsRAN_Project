@@ -22,6 +22,8 @@ struct ofdm_modulator_configuration {
   cyclic_prefix cp;
   /// Indicates the scaling factor at the DFT output.
   float scale;
+  /// Indicates the center frequency of the carrier in Hz.
+  double center_freq_hz;
 };
 
 /// \brief Describes an OFDM modulator that modulates at symbol granularity.
@@ -39,6 +41,16 @@ public:
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples for the given symbol index.
   virtual unsigned get_symbol_size(unsigned symbol_index) const = 0;
+
+  /// \brief Gets the offset to a symbol including the cyclic prefixes.
+  /// \param[in] symbol_index Indicates the symbol index within the subframe.
+  /// \return The number of samples to the start of the given symbol.
+  virtual unsigned get_symbol_offset(unsigned symbol_index) const = 0;
+
+  /// \brief Computes the phase compensation (TS 138.211, Section 5.4) for a given symbol.
+  /// \param[in] symbol_index Indicates the symbol index within the subframe.
+  /// \return The phase compensation to be applied to the given symbol.
+  virtual cf_t get_phase_compensation(unsigned symbol_index) const = 0;
 
   /// \brief Modulates an OFDM signal with symbol granularity.
   /// \param[out] output Provides the time domain modulated signal.
