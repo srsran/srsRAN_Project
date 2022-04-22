@@ -144,7 +144,7 @@ int main()
   srslog::init();
 
   // Common test parameters.
-  std::string log_level = "debug";
+  std::string log_level = "error";
 
   // Create ZMQ factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory("zmq");
@@ -153,6 +153,7 @@ int main()
   // Asynchronous task executor.
   task_worker                    async_task_worker("async_thread", 2 * RADIO_MAX_NOF_PORTS);
   std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
+  srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
 
   {
     test_description test_config;
