@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding)
+include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/ldpc)
 add_library(ldpc STATIC
         ldpc_graph_impl.cpp
         ldpc_luts_impl.cpp
