@@ -20,7 +20,7 @@ public:
   void handle_ue_create_request(const ul_ccch_indication_message& msg);
   void handle_ue_delete_request(const du_ue_delete_message& msg);
 
-  const slot_array<du_ue_context, MAX_NOF_UES>& get_ues() { return ue_db; }
+  const slot_array<du_ue_context, MAX_DU_NOF_UES>& get_ues() { return ue_db; }
 
 private:
   du_ue_context* add_ue(du_ue_context ue_ctx) override;
@@ -31,11 +31,11 @@ private:
   du_manager_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  slot_array<du_ue_context, MAX_NOF_UES> ue_db;
-  std::array<int, MAX_NOF_UES>           rnti_to_ue_index;
+  slot_array<du_ue_context, MAX_DU_NOF_UES> ue_db;
+  std::array<int, MAX_DU_NOF_UES>           rnti_to_ue_index;
 
   // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
+  slot_array<async_task_sequencer, MAX_DU_NOF_UES> ue_ctrl_loop;
 };
 
 } // namespace srsgnb

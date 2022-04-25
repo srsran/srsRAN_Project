@@ -51,7 +51,7 @@ public:
 
   bool is_ca_enabled() const { return false; }
 
-  void activate_cells(bounded_bitset<MAX_NOF_CELLS> activ_bitmap) {}
+  void activate_cells(bounded_bitset<MAX_DU_NOF_CELLS> activ_bitmap) {}
 
   void handle_sr_indication(const sr_indication_message& msg);
 

@@ -24,7 +24,7 @@ size_t du_manager_impl::nof_ues()
   // TODO: This is temporary code.
   static std::mutex              mutex;
   static std::condition_variable cvar;
-  size_t                         result = MAX_NOF_UES;
+  size_t                         result = MAX_DU_NOF_UES;
   cfg.du_mng_exec->execute([this, &result]() {
     std::unique_lock<std::mutex> lock(mutex);
     result = ue_mng.get_ues().size();
@@ -32,7 +32,7 @@ size_t du_manager_impl::nof_ues()
   });
   {
     std::unique_lock<std::mutex> lock(mutex);
-    while (result == MAX_NOF_UES) {
+    while (result == MAX_DU_NOF_UES) {
       cvar.wait(lock);
     }
   }

@@ -53,7 +53,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
     return false;
   }
 
-  log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_NOF_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
+  log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_DU_NOF_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
 
   // Push CCCH message to upper layers
   ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->ue_index, lcid, std::move(ul_ccch_msg)});
@@ -90,7 +90,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
 
   // Log MAC UL SDU
   if (lcid == 0) {
-    log_ul_pdu(logger, MAX_NOF_UES, ue->rnti, ctx.cell_index_rx, "CCCH", "Pushing {} bytes", sdu.sdu_length());
+    log_ul_pdu(logger, MAX_DU_NOF_UES, ue->rnti, ctx.cell_index_rx, "CCCH", "Pushing {} bytes", sdu.sdu_length());
   } else {
     log_ul_pdu(logger,
                ue->ue_index,

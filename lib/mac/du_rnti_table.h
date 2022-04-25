@@ -19,7 +19,7 @@ public:
   du_rnti_table() : rnti_to_ue_index_map(std::make_unique<array_type>())
   {
     for (unsigned idx = 0; idx < rnti_to_ue_index_map->size(); ++idx) {
-      (*rnti_to_ue_index_map)[idx].store(MAX_NOF_UES, std::memory_order_relaxed);
+      (*rnti_to_ue_index_map)[idx].store(MAX_DU_NOF_UES, std::memory_order_relaxed);
     }
   }
   du_rnti_table(const du_rnti_table&) = delete;
@@ -42,7 +42,7 @@ public:
   {
     srsran_sanity_check(is_crnti(crnti), "Invalid C-RNTI={:#x}", crnti);
     std::atomic<du_ue_index_t>& ue_pos      = get(crnti);
-    du_ue_index_t               prev_ue_idx = ue_pos.exchange(MAX_NOF_UES, std::memory_order_relaxed);
+    du_ue_index_t               prev_ue_idx = ue_pos.exchange(MAX_DU_NOF_UES, std::memory_order_relaxed);
     if (is_du_ue_index_valid(prev_ue_idx)) {
       nof_ues_.fetch_sub(1, std::memory_order_relaxed);
     }

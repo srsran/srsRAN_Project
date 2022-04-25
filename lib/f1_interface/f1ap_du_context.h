@@ -9,8 +9,8 @@
 namespace srsgnb {
 
 struct f1ap_du_ue_context {
-  du_ue_index_t gnb_du_f1ap_ue_id = -1;
-  du_ue_index_t gnb_cu_f1ap_ue_id = -1;
+  du_ue_index_t   gnb_du_f1ap_ue_id = -1;
+  du_ue_index_t   gnb_cu_f1ap_ue_id = -1;
   rnti_t        crnti             = rnti_t::INVALID_RNTI;
 };
 
@@ -18,7 +18,7 @@ struct f1ap_du_cell_context {};
 
 struct f1ap_du_context {
   std::vector<f1ap_du_cell_context>           cell_ctxt_manager;
-  slot_array<f1ap_du_ue_context, MAX_NOF_UES> ue_ctxt_manager;
+  slot_array<f1ap_du_ue_context, MAX_DU_NOF_UES> ue_ctxt_manager;
 };
 
 } // namespace srsgnb

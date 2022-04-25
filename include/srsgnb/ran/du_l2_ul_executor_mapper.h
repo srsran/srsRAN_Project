@@ -27,7 +27,7 @@ public:
   /// Method to return the default executor with no associated UE index.
   /// \param ue_index Index of the UE
   /// \return task executor.
-  task_executor& executor() { return executor(MAX_NOF_UES); }
+  task_executor& executor() { return executor(MAX_DU_NOF_UES); }
 };
 
 } // namespace srsgnb

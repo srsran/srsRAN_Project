@@ -21,7 +21,7 @@ private:
 };
 
 /// Container of eligible UEs for scheduling
-using ue_candidate_map_t = circular_map<uint16_t, ue_candidate, MAX_NOF_UES>;
+using ue_candidate_map_t = circular_map<uint16_t, ue_candidate, MAX_DU_NOF_UES>;
 
 /// Input parameters relative to a {slot, cell} which the scheduling strategy uses to allocate UEs
 class data_sched_input

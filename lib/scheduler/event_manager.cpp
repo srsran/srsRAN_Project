@@ -18,7 +18,7 @@ public:
   ~event_logger()
   {
     if (enabled and fmtbuf.size() > 0) {
-      if (cell_index < MAX_NOF_CELLS) {
+      if (cell_index < MAX_DU_NOF_CELLS) {
         logger.info("SCHED: Processed events, cell_index={}: [{}]", cell_index, to_c_str(fmtbuf));
       } else {
         logger.info("SCHED: Processed events: [{}]", cell_index, to_c_str(fmtbuf));
@@ -88,7 +88,7 @@ void event_manager::handle_rach_indication(const rach_indication_message& rach_i
   auto& cell = *events_per_cell_list[rach_ind.cell_index];
 
   std::lock_guard<std::mutex> lock(cell.mutex);
-  cell.next_events.emplace_back(MAX_NOF_UES, [this, rach_ind](event_logger& ev_logger) {
+  cell.next_events.emplace_back(MAX_DU_NOF_UES, [this, rach_ind](event_logger& ev_logger) {
     cells[rach_ind.cell_index].ra_sch.handle_rach_indication(rach_ind);
     ev_logger.enqueue("rach_ind(tc-rnti={:#x})", rach_ind.crnti);
   });
@@ -96,7 +96,7 @@ void event_manager::handle_rach_indication(const rach_indication_message& rach_i
 
 void event_manager::process_common(slot_point sl_tx)
 {
-  event_logger ev_logger{MAX_NOF_CELLS, logger};
+  event_logger ev_logger{MAX_DU_NOF_CELLS, logger};
 
   common_events.current_events.clear();
   {
@@ -160,7 +160,7 @@ void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
 
 bool event_manager::cell_exists(du_cell_index_t cell_index) const
 {
-  return cell_index < MAX_NOF_CELLS and events_per_cell_list[cell_index] != nullptr;
+  return cell_index < MAX_DU_NOF_CELLS and events_per_cell_list[cell_index] != nullptr;
 }
 
 bool event_manager::event_requires_sync(const event_t& ev, bool verbose) const

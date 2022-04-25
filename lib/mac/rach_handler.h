@@ -29,7 +29,7 @@ public:
 
   rnti_t allocate_rnti()
   {
-    if (rnti_table.nof_ues() >= MAX_NOF_UES) {
+    if (rnti_table.nof_ues() >= MAX_DU_NOF_UES) {
       // If the number of UEs is already maximum, ignore RACH.
       return INITIAL_RNTI;
     }

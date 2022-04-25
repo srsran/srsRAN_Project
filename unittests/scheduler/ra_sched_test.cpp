@@ -33,7 +33,7 @@ static uint16_t get_ra_rnti(const rach_indication_message& msg)
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
   prb_bitmap                                  total_ul_prbs{cfg.nof_ul_prbs};
-  circular_map<uint16_t, rnti_t, MAX_NOF_UES> crntis;
+  circular_map<uint16_t, rnti_t, MAX_DU_NOF_UES> crntis;
 
   for (const rar_information& rar : rars) {
     TESTASSERT(not rar.grants.empty(),

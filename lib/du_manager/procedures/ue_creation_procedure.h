@@ -80,12 +80,12 @@ public:
     log_proc_started(logger, ue_ctx.ue_index, msg.crnti, "UE Create");
 
     // 1. Verify if UE index was successfully allocated and params are valid.
-    if (ue_ctx.ue_index == MAX_NOF_UES) {
-      log_proc_failure(logger, MAX_NOF_UES, msg.crnti, name(), "Failure to allocate DU UE index.");
+    if (ue_ctx.ue_index == MAX_DU_NOF_UES) {
+      log_proc_failure(logger, MAX_DU_NOF_UES, msg.crnti, name(), "Failure to allocate DU UE index.");
       CORO_EARLY_RETURN();
     }
     if (ue_mng.find_rnti(ue_ctx.rnti) != nullptr) {
-      log_proc_failure(logger, MAX_NOF_UES, msg.crnti, name(), "Repeated RNTI.");
+      log_proc_failure(logger, MAX_DU_NOF_UES, msg.crnti, name(), "Repeated RNTI.");
       CORO_EARLY_RETURN();
     }
 

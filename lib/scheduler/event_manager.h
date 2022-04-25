@@ -37,7 +37,7 @@ public:
 
 private:
   struct event_t {
-    du_ue_index_t                        ue_index = MAX_NOF_UES;
+    du_ue_index_t                        ue_index = MAX_DU_NOF_UES;
     unique_function<void(event_logger&)> callback;
 
     template <typename Callable>
@@ -69,7 +69,7 @@ private:
   sched_configuration_notifier& mac_notifier;
 
   /// Pending Events list per cell.
-  std::array<std::unique_ptr<event_list>, MAX_NOF_CELLS> events_per_cell_list;
+  std::array<std::unique_ptr<event_list>, MAX_DU_NOF_CELLS> events_per_cell_list;
 
   /// Pending Events list common to all cells. We use this list for events that require synchronization across
   /// UE carriers when CA is enabled (e.g. SR, BSR, reconfig).

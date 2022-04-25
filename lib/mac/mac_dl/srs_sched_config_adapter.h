@@ -122,7 +122,7 @@ private:
     task_executor*     dl_exec = nullptr;
     manual_event<bool> ue_config_ready;
   };
-  std::array<ue_notification_context, MAX_NOF_UES> sched_cfg_notif_map;
+  std::array<ue_notification_context, MAX_DU_NOF_UES> sched_cfg_notif_map;
 };
 
 } // namespace srsgnb

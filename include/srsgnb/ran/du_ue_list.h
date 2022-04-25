@@ -9,7 +9,7 @@ namespace srsgnb {
 
 /// \brief Representation of a list of UEs indexed by DU UE Index.
 template <typename T>
-using du_ue_list = slot_array<T, MAX_NOF_UES>;
+using du_ue_list = slot_array<T, MAX_DU_NOF_UES>;
 
 } // namespace srsgnb
 

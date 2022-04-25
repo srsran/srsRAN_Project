@@ -36,7 +36,7 @@ cell_configuration::cell_configuration(const cell_configuration_request_message&
 
 error_type<std::string> srsgnb::is_cell_configuration_request_valid(const cell_configuration_request_message& msg)
 {
-  CHECK(msg.cell_index < MAX_NOF_CELLS, "Invalid cell index={}", msg.cell_index);
+  CHECK(msg.cell_index < MAX_DU_NOF_CELLS, "Invalid cell index={}", msg.cell_index);
   CHECK(msg.nof_beams <= 64, "Invalid number of beams={}", msg.nof_beams);
   CHECK(msg.pci <= MAX_PCI, "Invalid pci={}", msg.pci);
   CHECK(msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present, "PDSCHConfigCommon must be present");
