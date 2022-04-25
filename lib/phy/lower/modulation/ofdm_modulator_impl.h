@@ -35,6 +35,12 @@ private:
   /// Temporal data buffer.
   srsvec::aligned_vec<cf_t> temp_buffer;
 
+  // See interface for documentation.
+  unsigned get_symbol_offset(unsigned symbol_index) const override;
+
+  // See interface for documentation.
+  cf_t get_phase_compensation(unsigned symbol_index) const override;
+
 public:
   /// \brief Constructs an OFDM symbol modulator.
   /// \param[in] factory_config Provides specific configuration parameters from the factory.
@@ -47,12 +53,6 @@ public:
   {
     return cp.get_length(symbol_index, numerology, dft_size) + dft_size;
   }
-
-  // See interface for documentation.
-  unsigned get_symbol_offset(unsigned symbol_index) const override;
-
-  // See interface for documentation.
-  cf_t get_phase_compensation(unsigned symbol_index) const override;
 
   // See interface for documentation.
   void

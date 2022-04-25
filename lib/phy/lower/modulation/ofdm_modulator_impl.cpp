@@ -81,12 +81,11 @@ void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          ou
   // Execute DFT.
   span<const cf_t> dft_output = dft->run();
 
-  // Apply phase correction (TS 138.211, Section 5.4)
+  // Get phase correction (TS 138.211, Section 5.4)
   cf_t phase_compensation = get_phase_compensation(symbol_index);
-  srsvec::sc_prod(dft_output, phase_compensation, output.last(dft_size));
 
-  // Apply scaling.
-  srsvec::sc_prod(output.last(dft_size), scale, output.last(dft_size));
+  // Apply scaling and phase compensation.
+  srsvec::sc_prod(dft_output, phase_compensation * scale, output.last(dft_size));
 
   // Copy cyclic prefix.
   srsvec::copy(output.first(cp_len), output.last(cp_len));

@@ -38,16 +38,16 @@ int main()
   std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory(ofdm_factory_config);
 
   // Iterate all possible numerologies.
-  for (unsigned numerology : {0}) {
+  for (unsigned numerology : {0, 1, 2, 3, 4}) {
     // Iterate all possible FFT sizes.
-    for (unsigned dft_size : {256}) {
+    for (unsigned dft_size : {256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288}) {
       // Skip combinations of SCS>15kHz with large DFT sizes.
       if (numerology > 0 && dft_size > 4096) {
         continue;
       }
 
       // Iterate all possible cyclic prefix.
-      for (cyclic_prefix cp : {cyclic_prefix::NORMAL}) {
+      for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
         // Skip invalid CP, numerology and DFT size combinations that invalid.
         if (!cp.is_valid(numerology, dft_size)) {
           printf("Unsupported cyclic prefix (%s), numerology (%d) and DFT size (%d) combination. Skipping.\n",
