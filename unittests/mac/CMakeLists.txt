@@ -1,6 +1,4 @@
 
-add_subdirectory(sched)
-
 set_directory_properties(PROPERTIES LABELS "mac")
 
 add_executable(mac_ue_create_test mac_ue_create_test.cpp)

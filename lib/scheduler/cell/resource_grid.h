@@ -5,8 +5,8 @@
 #include "../sched_prb.h"
 #include "cell_configuration.h"
 #include "srsgnb/adt/circular_array.h"
-#include "srsgnb/mac/sched_interface.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
 

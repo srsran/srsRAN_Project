@@ -1,7 +1,7 @@
 
 set_directory_properties(PROPERTIES LABELS "sched")
 
-include_directories(../../../)
+include_directories(../..)
 
 add_executable(sched_prb_test sched_prb_test.cpp)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)

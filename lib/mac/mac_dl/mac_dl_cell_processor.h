@@ -6,7 +6,7 @@
 #include "mac_dl_ue_manager.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/mac/sched_interface.h"
+#include "srsgnb/scheduler/sched_interface.h"
 #include "ssb_assembler.h"
 
 namespace srsgnb {

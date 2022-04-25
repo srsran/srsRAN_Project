@@ -2,12 +2,12 @@
 #ifndef SRSGNB_SCHED_RESULT_H
 #define SRSGNB_SCHED_RESULT_H
 
-#include "ofdm_symbol_range.h"
 #include "prb_grant.h"
 #include "sched_consts.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"

@@ -3,9 +3,9 @@
 #define SRSGNB_UE_H
 
 #include "srsgnb/adt/circular_map.h"
-#include "srsgnb/mac/sched_interface.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
+#include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
 

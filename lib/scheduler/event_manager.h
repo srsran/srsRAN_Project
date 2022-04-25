@@ -2,12 +2,12 @@
 #ifndef SRSGNB_CELL_EVENT_MANAGER_H
 #define SRSGNB_CELL_EVENT_MANAGER_H
 
-#include "../../ran/gnb_format.h"
+#include "../ran/gnb_format.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/unique_function.h"
-#include "srsgnb/mac/sched_interface.h"
-#include "srsgnb/mac/sched_ue_feedback.h"
+#include "srsgnb/scheduler/sched_interface.h"
+#include "srsgnb/scheduler/sched_ue_feedback.h"
 #include "ue/ue.h"
 #include <mutex>
 

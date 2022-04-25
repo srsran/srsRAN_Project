@@ -1,6 +1,6 @@
 
-#include "../../../lib/mac/sched/sched.h"
 #include "config_generators.h"
+#include "lib/scheduler/sched.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

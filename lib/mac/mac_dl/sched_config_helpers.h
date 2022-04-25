@@ -3,7 +3,7 @@
 #define SRSGNB_SCHED_CONFIG_HELPERS_H
 
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/sched_configurator.h"
+#include "srsgnb/scheduler/sched_configurator.h"
 
 namespace srsgnb {
 

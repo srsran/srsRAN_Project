@@ -2,9 +2,9 @@
 #ifndef SRSGNB_SCHED_UE_FEEDBACK_H
 #define SRSGNB_SCHED_UE_FEEDBACK_H
 
-#include "bsr_format.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/mac/bsr_format.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
 

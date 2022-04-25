@@ -4,11 +4,11 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/scheduler/sched_consts.h"
 
 namespace srsgnb {
 

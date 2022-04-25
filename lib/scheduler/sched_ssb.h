@@ -3,8 +3,8 @@
 
 #include "sched_prb.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/mac/sched_result.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_result.h"
 
 namespace srsgnb {
 

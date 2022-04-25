@@ -1,6 +1,4 @@
 
-add_subdirectory(sched)
-
 set(SOURCES mac_factory.cpp mac_impl.cpp mac_ctrl/mac_controller.cpp
             mac_dl/mac_dl_processor.cpp mac_dl/mac_dl_cell_processor.cpp
             mac_ul/mac_ul_sch_pdu.cpp mac_ul/ul_bsr.cpp mac_ul/pdu_rx_handler.cpp mac_dl/ssb_assembler.cpp)

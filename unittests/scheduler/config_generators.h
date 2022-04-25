@@ -2,7 +2,7 @@
 #ifndef SRSGNB_CONFIG_GENERATORS_H
 #define SRSGNB_CONFIG_GENERATORS_H
 
-#include "srsgnb/mac/sched_interface.h"
+#include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
 

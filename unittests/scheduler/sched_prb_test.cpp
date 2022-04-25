@@ -10,7 +10,7 @@
  *
  */
 
-#include "../../../lib/mac/sched/sched_prb.h"
+#include "lib/scheduler/sched_prb.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

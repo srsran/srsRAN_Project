@@ -1,5 +1,5 @@
 
-#include "../../../lib/mac/sched/cell/resource_grid.h"
+#include "lib/scheduler/cell/resource_grid.h"
 #include "config_generators.h"
 #include "srsgnb/support/test_utils.h"
 

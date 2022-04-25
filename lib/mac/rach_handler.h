@@ -4,8 +4,8 @@
 
 #include "du_rnti_table.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/sched_configurator.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_configurator.h"
 
 namespace srsgnb {
 

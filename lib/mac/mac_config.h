@@ -2,7 +2,6 @@
 #ifndef SRSGNB_LIB_MAC_MAC_CONFIG_H
 #define SRSGNB_LIB_MAC_MAC_CONFIG_H
 
-#include "sched/sched.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"

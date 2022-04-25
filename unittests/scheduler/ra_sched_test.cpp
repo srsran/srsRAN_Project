@@ -1,6 +1,6 @@
-#include "../../../lib/mac/sched/cell/phy_helpers.h"
-#include "../../../lib/mac/sched/cell/ra_sched.h"
 #include "config_generators.h"
+#include "lib/scheduler/cell/phy_helpers.h"
+#include "lib/scheduler/cell/ra_sched.h"
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/support/test_utils.h"

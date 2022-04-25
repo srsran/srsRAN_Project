@@ -2,9 +2,9 @@
 #ifndef SRSGNB_SCHED_CONFIGURATOR_H
 #define SRSGNB_SCHED_CONFIGURATOR_H
 
-#include "cell_configuration.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/serving_cell.h"
+#include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"

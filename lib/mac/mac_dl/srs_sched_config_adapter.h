@@ -5,7 +5,7 @@
 #include "mac_sched_configurator.h"
 #include "sched_config_helpers.h"
 #include "srsgnb/adt/circular_array.h"
-#include "srsgnb/mac/sched_configurator.h"
+#include "srsgnb/scheduler/sched_configurator.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/manual_event.h"
 

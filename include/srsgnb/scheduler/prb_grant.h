@@ -2,8 +2,8 @@
 #ifndef SRSGNB_PRB_GRANT_H
 #define SRSGNB_PRB_GRANT_H
 
-#include "sched_consts.h"
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/scheduler/sched_consts.h"
 
 namespace srsgnb {
 

@@ -1,8 +1,8 @@
-#include "lib/mac/sched/cell/resource_grid.h"
-#include "lib/mac/sched/sched_ssb.h"
-#include "srsgnb/mac/sched_consts.h"
+#include "lib/scheduler/cell/resource_grid.h"
+#include "lib/scheduler/sched_ssb.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
+#include "srsgnb/scheduler/sched_consts.h"
 #include "srsgnb/support/test_utils.h"
 
 #define NOF_PRBS 52

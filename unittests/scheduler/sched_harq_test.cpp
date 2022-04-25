@@ -1,5 +1,5 @@
 
-#include "../../../lib/mac/sched/sched_harq.h"
+#include "lib/scheduler/sched_harq.h"
 #include "srsgnb/support/test_utils.h"
 
 #define TEST_HARQ_ASSERT_MSG(SLOT, PID) "Failed at slot: '{}', HARQ PID: '{}'", SLOT, PID

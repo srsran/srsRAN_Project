@@ -1,6 +1,6 @@
 
 #include "ra_sched.h"
-#include "../../../ran/gnb_format.h"
+#include "../../ran/gnb_format.h"
 #include "phy_helpers.h"
 
 using namespace srsgnb;

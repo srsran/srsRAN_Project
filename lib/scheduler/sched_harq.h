@@ -17,9 +17,9 @@
 #include "sched_prb.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/mac/sched_consts.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_consts.h"
 #include <array>
 
 namespace srsgnb {

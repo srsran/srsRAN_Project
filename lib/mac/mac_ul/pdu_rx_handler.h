@@ -8,9 +8,9 @@
 #include "mac_ul_ue_manager.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/sched_ue_feedback.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_ue_feedback.h"
 #include "ul_bsr.h"
 
 namespace srsgnb {

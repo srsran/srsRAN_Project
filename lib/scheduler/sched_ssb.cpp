@@ -1,5 +1,5 @@
 #include "sched_ssb.h"
-#include "../../mac/sched/cell/resource_grid.h"
+#include "cell/resource_grid.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
 

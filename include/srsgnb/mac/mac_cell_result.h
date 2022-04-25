@@ -2,10 +2,10 @@
 #ifndef SRSGNB_MAC_MAC_CELL_RESULT_H
 #define SRSGNB_MAC_MAC_CELL_RESULT_H
 
-#include "sched_result.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_result.h"
 
 namespace srsgnb {
 

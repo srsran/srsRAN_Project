@@ -3,7 +3,7 @@
 #define SRSGNB_PDU_ENCODER_H
 
 #include "srsgnb/mac/mac_cell_manager.h"
-#include "srsgnb/mac/sched_result.h"
+#include "srsgnb/scheduler/sched_result.h"
 
 namespace srsgnb {
 

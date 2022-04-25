@@ -1,6 +1,6 @@
 
 #include "config_generators.h"
-#include "lib/mac/sched/cell/cell_configuration.h"
+#include "lib/scheduler/cell/cell_configuration.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

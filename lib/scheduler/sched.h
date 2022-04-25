@@ -5,7 +5,7 @@
 #include "cell/cell_sched.h"
 #include "event_manager.h"
 #include "sched_strategy/data_scheduler.h"
-#include "srsgnb/mac/sched_interface.h"
+#include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
 
