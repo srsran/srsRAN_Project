@@ -56,10 +56,13 @@ class empty_table_t final : public oper_table_t<R, Args...>
 {
 public:
   constexpr empty_table_t() = default;
-  R call(void* src, Args... args) const final { srsran_terminate("bad function call (cause: function ptr is empty)"); }
-  void move(void* src, void* dest) const final {}
-  void dtor(void* src) const final {}
-  bool is_in_small_buffer() const final { return true; }
+  R         call(void* src, Args... args) const override
+  {
+    srsran_terminate("bad function call (cause: function ptr is empty)");
+  }
+  void move(void* src, void* dest) const override {}
+  void dtor(void* src) const override {}
+  bool is_in_small_buffer() const override { return true; }
 };
 
 /// specialization of move/call/destroy operations for when the functor is stored in "unique_function<R(Args...)>"
@@ -69,14 +72,14 @@ class smallbuffer_table_t final : public oper_table_t<R, Args...>
 {
 public:
   constexpr smallbuffer_table_t() = default;
-  R    call(void* src, Args... args) const final { return (*static_cast<FunT*>(src))(std::forward<Args>(args)...); }
-  void move(void* src, void* dest) const final
+  R    call(void* src, Args... args) const override { return (*static_cast<FunT*>(src))(std::forward<Args>(args)...); }
+  void move(void* src, void* dest) const override
   {
     ::new (dest) FunT(std::move(*static_cast<FunT*>(src)));
     static_cast<FunT*>(src)->~FunT();
   }
-  void dtor(void* src) const final { static_cast<FunT*>(src)->~FunT(); }
-  bool is_in_small_buffer() const final { return true; }
+  void dtor(void* src) const override { static_cast<FunT*>(src)->~FunT(); }
+  bool is_in_small_buffer() const override { return true; }
 };
 
 /// move/call/destroy operations for when the functor is stored outside of "unique_function<R(Args...)>" buffer
@@ -85,14 +88,14 @@ class heap_table_t final : public oper_table_t<R, Args...>
 {
 public:
   constexpr heap_table_t() = default;
-  R    call(void* src, Args... args) const final { return (**static_cast<FunT**>(src))(std::forward<Args>(args)...); }
-  void move(void* src, void* dest) const final
+  R call(void* src, Args... args) const override { return (**static_cast<FunT**>(src))(std::forward<Args>(args)...); }
+  void move(void* src, void* dest) const override
   {
     *static_cast<FunT**>(dest) = *static_cast<FunT**>(src);
     *static_cast<FunT**>(src)  = nullptr;
   }
-  void dtor(void* src) const final { delete (*static_cast<FunT**>(src)); }
-  bool is_in_small_buffer() const final { return false; }
+  void dtor(void* src) const override { delete (*static_cast<FunT**>(src)); }
+  bool is_in_small_buffer() const override { return false; }
 };
 
 /// Metafunction to check if a type is an instantiation of unique_function<R(Args...)>
