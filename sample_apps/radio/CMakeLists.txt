@@ -1,3 +1,3 @@
 
-add_executable(radio_benchmark radio_benchmark.cpp)
-target_link_libraries(radio_benchmark srsgnb_radio srslog srsgnb_support)
+add_executable(radio_util_sample radio_util_sample.cpp)
+target_link_libraries(radio_util_sample srsgnb_radio srslog srsgnb_support)

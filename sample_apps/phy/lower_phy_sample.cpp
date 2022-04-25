@@ -9,6 +9,7 @@
 #include "srsgnb/support/math_utils.h"
 #include <atomic>
 #include <csignal>
+#include <getopt.h>
 #include <random>
 #include <string>
 
@@ -26,12 +27,76 @@ std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modul
 
 } // namespace srsgnb
 
+/// Describes a benchmark configuration profile.
+struct benchmark_configuration_profile {
+  std::string           name;
+  std::string           description;
+  std::function<void()> function;
+};
+
 using namespace srsgnb;
 
-static std::string                      log_level = "warning";
-static std::atomic<bool>                stop      = {false};
-static std::unique_ptr<lower_phy>       phy       = nullptr;
-static std::unique_ptr<radio_session>   radio     = nullptr;
+static std::string log_level = "warning";
+
+// Program parameters.
+static unsigned                                  numerology                 = 0;
+static unsigned                                  max_processing_delay_slots = 4;
+static unsigned                                  ul_to_dl_slot_offset       = 1;
+static cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
+static double                                    tx_freq                    = 3.5e9;
+static double                                    tx_gain                    = 60.0;
+static double                                    rx_freq                    = 3.5e9;
+static double                                    rx_gain                    = 60.0;
+static unsigned                                  nof_ports                  = 1;
+static unsigned                                  nof_sectors                = 1;
+static std::string                               driver_name                = "uhd";
+static std::string                               device_arguments           = "type=b200";
+static std::vector<std::string>                  tx_channel_args            = {};
+static std::vector<std::string>                  rx_channel_args            = {};
+static double                                    sampling_rate_hz           = 23.04e6;
+static unsigned                                  bw_rb                      = 52;
+static radio_configuration::over_the_wire_format otw_format     = radio_configuration::over_the_wire_format::SC16;
+static unsigned                                  duration_slots = 60000;
+static bool                                      zmq_loopback   = true;
+
+/// Defines a set of configuration profiles.
+static const std::vector<benchmark_configuration_profile> profiles = {
+    {"b200_20MHz",
+     "Single channel B200 USRP 20MHz bandwidth.",
+     []() {
+       // Do nothing.
+     }},
+    {"b200_50MHz",
+     "Single channel B200 USRP 50MHz bandwidth.",
+     []() {
+       device_arguments = "type=b200";
+       sampling_rate_hz = 61.44e6;
+       bw_rb            = 270;
+       otw_format       = radio_configuration::over_the_wire_format::SC12;
+     }},
+    {"x300_50MHz",
+     "Single channel X3x0 USRP 50MHz bandwidth.",
+     []() {
+       device_arguments = "type=x300";
+       sampling_rate_hz = 92.16e6;
+       tx_gain          = 10;
+       rx_gain          = 10;
+     }},
+    {"zmq_50MHz",
+     "Single channel using ZMQ.",
+     []() {
+       driver_name      = "zmq";
+       device_arguments = "";
+       sampling_rate_hz = 61.44e6;
+       bw_rb            = 270;
+       otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+     }},
+};
+
+// Global instances.
+static std::atomic<bool>                stop  = {false};
+static std::unique_ptr<lower_phy>       phy   = nullptr;
+static std::unique_ptr<radio_session>   radio = nullptr;
 static lower_phy_timing_notifier_sample timing_handler(log_level);
 
 void signal_handler(int sig)
@@ -46,48 +111,80 @@ void signal_handler(int sig)
   timing_handler.stop();
 }
 
-int main(int argc, char** argv)
+static void usage(std::string prog)
 {
-  // Program parameters.
-  std::string                               driver_name                = "uhd";
-  std::string                               device_arguments           = "type=b200";
-  double                                    sampling_rate_hz           = 23.04e6;
-  unsigned                                  numerology                 = 0;
-  unsigned                                  max_processing_delay_slots = 4;
-  unsigned                                  ul_to_dl_slot_offset       = 1;
-  cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
-  double                                    tx_freq                    = 3.5e9;
-  double                                    tx_gain                    = 60.0;
-  double                                    rx_freq                    = 3.5e9;
-  double                                    rx_gain                    = 60.0;
-  unsigned                                  duration_slots             = 60000;
-  unsigned                                  nof_ports                  = 1;
-  unsigned                                  nof_sectors                = 1;
-  unsigned                                  bw_rb                      = 52;
-  radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::SC16;
+  fmt::print("Usage: {} [-P profile] [-D duration] [-v level] [-o file name]\n", prog);
+  fmt::print("\t-P Profile. [Default {}]\n", profiles.front().name);
+  for (benchmark_configuration_profile profile : profiles) {
+    fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
+  }
+  fmt::print("\t-D Duration in slots. [Default {}]\n", duration_slots);
+  fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true [Default {}].\n", zmq_loopback);
+  fmt::print("\t-v Logging level. [Default {}]\n", log_level);
+  fmt::print("\t-h print this message.\n");
+}
 
-  if (argc > 1 && argv[1] != nullptr) {
-    if (std::strcmp(argv[1], "zmq_50MHz") == 0) {
-      driver_name      = "zmq";
-      device_arguments = "";
-      sampling_rate_hz = 61.44e6;
-      bw_rb            = 270;
-      otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
-    } else if (std::strcmp(argv[1], "b200_50MHz") == 0) {
-      device_arguments = "type=b200";
-      sampling_rate_hz = 61.44e6;
-      bw_rb            = 270;
-      otw_format       = radio_configuration::over_the_wire_format::SC12;
-    } else if (std::strcmp(argv[1], "x300_50MHz") == 0) {
-      device_arguments = "type=x300";
-      sampling_rate_hz = 92.16e6;
-      tx_gain          = 10;
-      rx_gain          = 10;
-    } else {
-      printf("Invalid arguments.\n");
-      return -1;
+static void parse_args(int argc, char** argv)
+{
+  std::string profile_name;
+
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "D:P:L:v:h")) != -1) {
+    switch (opt) {
+      case 'P':
+        if (optarg != nullptr) {
+          profile_name = std::string(optarg);
+        }
+        break;
+      case 'D':
+        if (optarg != nullptr) {
+          duration_slots = std::strtol(optarg, nullptr, 10);
+        }
+        break;
+      case 'L':
+        if (optarg != nullptr) {
+          zmq_loopback = (std::strtol(optarg, nullptr, 10) > 0);
+        }
+        break;
+      case 'v':
+        log_level = std::string(optarg);
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(-1);
     }
   }
+
+  // Search profile if set.
+  if (!profile_name.empty()) {
+    bool found = false;
+    for (const benchmark_configuration_profile& profile : profiles) {
+      if (strcmp(profile_name.c_str(), profile.name.c_str()) == 0) {
+        profile.function();
+        found = true;
+        break;
+      }
+    }
+    if (!found) {
+      usage(argv[0]);
+      srsran_terminate("Invalid profile {}.", profile_name);
+    }
+  }
+
+  if (driver_name == "zmq") {
+    unsigned port_offset = zmq_loopback ? 0 : 1000;
+    for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
+      tx_channel_args.emplace_back("tcp://*:" + std::to_string(5554 + channel_id));
+      rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(5554 + channel_id + port_offset));
+    }
+  }
+}
+
+int main(int argc, char** argv)
+{
+  // Parse arguments.
+  parse_args(argc, argv);
 
   // Derived parameters.
   unsigned dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
@@ -134,16 +231,16 @@ int main(int argc, char** argv)
       radio_configuration::channel tx_ch_config;
       tx_ch_config.freq.center_frequency_hz = tx_freq;
       tx_ch_config.gain_dB                  = tx_gain;
-      if (driver_name == "zmq") {
-        tx_ch_config.args = "tcp://*:" + std::to_string(5554 + port_id);
+      if (!tx_channel_args.empty()) {
+        tx_ch_config.args = tx_channel_args[sector_id * nof_ports + port_id];
       }
       tx_stream_config.channels.emplace_back(tx_ch_config);
 
       radio_configuration::channel rx_ch_config;
       rx_ch_config.freq.center_frequency_hz = rx_freq;
       rx_ch_config.gain_dB                  = rx_gain;
-      if (driver_name == "zmq") {
-        rx_ch_config.args = "tcp://localhost:" + std::to_string(6554 + port_id);
+      if (!rx_channel_args.empty()) {
+        rx_ch_config.args = rx_channel_args[sector_id * nof_ports + port_id];
       }
       rx_stream_config.channels.emplace_back(rx_ch_config);
     }
