@@ -29,7 +29,7 @@ struct ue_event_prefix {
                   rnti_t          rnti_     = INVALID_RNTI,
                   du_cell_index_t cell_idx_ = MAX_DU_NOF_CELLS,
                   const char*     channel_  = nullptr,
-                  lcid_t          lcid_     = MAX_LCID + 1) :
+                  lcid_t          lcid_     = INVALID_LCID) :
     direction(dir_), ue_index(ue_index_), rnti(rnti_), cell_index(cell_idx_), channel(channel_), lcid(lcid_)
   {}
 

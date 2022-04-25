@@ -61,14 +61,14 @@ struct add_reconf_delete_ue_test_task {
     create_msg.crnti      = to_rnti(0x4601);
     create_msg.cell_index = 0;
     create_msg.bearers.emplace_back();
-    create_msg.bearers[0].lcid = 1;
+    create_msg.bearers[0].lcid = LCID_SRB1;
 
     reconf_msg.ue_index   = 0;
     reconf_msg.crnti      = to_rnti(0x4601);
     reconf_msg.cell_index = 0;
     reconf_msg.bearers_to_addmod.emplace_back();
-    reconf_msg.bearers_to_addmod[0].lcid = 2;
-    reconf_msg.bearers_to_rem.emplace_back(1);
+    reconf_msg.bearers_to_addmod[0].lcid = LCID_SRB2;
+    reconf_msg.bearers_to_rem.emplace_back(LCID_SRB1);
 
     delete_msg.ue_index   = 0;
     delete_msg.cell_index = 0;
@@ -172,11 +172,11 @@ void test_dl_ue_procedure_tsan()
   mac_cell_configuration cell_cfg1{};
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   cell_cfg1.dl_carrier.arfcn = 365000;
-  cell_cfg1.cell_index = 0;
+  cell_cfg1.cell_index       = 0;
   mac_dl.add_cell(cell_cfg1);
   mac_cell_configuration cell_cfg2{};
   cell_cfg2.dl_carrier.arfcn = 365000;
-  cell_cfg2.cell_index = 1;
+  cell_cfg2.cell_index       = 1;
   mac_dl.add_cell(cell_cfg2);
 
   // TEST: Thread used for resumption does not change

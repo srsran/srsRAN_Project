@@ -49,7 +49,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   msg.crnti      = to_rnti(0x4601);
   msg.cell_index = 0;
   msg.bearers.emplace_back();
-  msg.bearers[0].lcid      = 0;
+  msg.bearers[0].lcid      = LCID_SRB0;
   msg.bearers[0].dl_bearer = nullptr; // procedure should not use bearers
   msg.bearers[0].ul_bearer = nullptr; // procedure should not use bearers
 

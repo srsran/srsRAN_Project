@@ -4,26 +4,20 @@
 
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
 
 class lcid_ul_sch_t
 {
-  static const lcid_t MAX_LCID_SCH = 63;
-
 public:
   /// 3GPP 38.321 v15.3.0, Table 6.2.1-2 - Values of LCID for UL-SCH Index
-  enum options : lcid_t {
+  enum options : uint16_t {
     /// CCCH of 64 bits
     CCCH_SIZE_64 = 0b000000,
 
     /// Identity of the logical channel
     LCID1 = 1,
-    LCID2,
-    LCID3,
-    LCID4,
-    LCID5,
-    LCID6,
     // ...
     LCID32 = 32,
 
@@ -45,15 +39,19 @@ public:
     PADDING         = 0b111111
   };
 
-  lcid_ul_sch_t(lcid_t lcid_ = PADDING) : lcid_val(lcid_) {}
-  lcid_ul_sch_t& operator=(lcid_t lcid)
+  lcid_ul_sch_t(uint16_t lcid_ = PADDING) : lcid_val(static_cast<options>(lcid_))
   {
-    lcid_val = lcid;
+    srsran_assert(lcid_ <= PADDING, "Invalid LCID");
+  }
+  lcid_ul_sch_t& operator=(uint16_t lcid)
+  {
+    srsran_assert(lcid <= PADDING, "Invalid LCID");
+    lcid_val = static_cast<options>(lcid);
     return *this;
   }
 
-  explicit operator lcid_t() const { return lcid_val; }
-  lcid_t   value() const { return lcid_val; }
+  explicit operator uint16_t() const { return lcid_val; }
+  uint16_t value() const { return lcid_val; }
 
   /// Whether LCID belongs to CCCH
   bool is_ccch() const { return (lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64); }
@@ -65,10 +63,7 @@ public:
   bool is_sdu() const { return lcid_val <= LCID32 and lcid_val >= LCID1; }
 
   /// Returns false for all reserved values in Table 6.2.1-1 and 6.2.1-2
-  bool is_valid_lcid() const
-  {
-    return lcid_val <= MAX_LCID_SCH and (lcid_val < MIN_RESERVED or lcid_val > MAX_RESERVED);
-  }
+  bool is_valid_lcid() const { return lcid_val <= PADDING and (lcid_val < MIN_RESERVED or lcid_val > MAX_RESERVED); }
 
   /// Whether LCID subPDU has associated length field
   bool has_length_field() const
@@ -110,17 +105,17 @@ public:
         return 1; // minimum size, could be more than that
       case PADDING:
         return 0;
+      default:
+        break;
     }
     return 0;
   }
 
-  bool operator==(lcid_t other) const { return lcid_val == other; }
-  bool operator!=(lcid_t other) const { return lcid_val != other; }
   bool operator==(lcid_ul_sch_t other) const { return lcid_val == other.lcid_val; }
   bool operator!=(lcid_ul_sch_t other) const { return lcid_val != other.lcid_val; }
 
 private:
-  lcid_t lcid_val;
+  options lcid_val;
 };
 
 } // namespace srsgnb
@@ -133,7 +128,7 @@ struct formatter<srsgnb::lcid_ul_sch_t> : public formatter<uint32_t> {
   template <typename FormatContext>
   auto format(srsgnb::lcid_ul_sch_t lcid, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", (srsgnb::lcid_t)lcid);
+    return format_to(ctx.out(), "{}", (uint16_t)lcid);
   }
 };
 

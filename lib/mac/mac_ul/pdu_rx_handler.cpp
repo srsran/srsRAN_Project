@@ -47,16 +47,16 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
     return false;
   }
 
-  lcid_t lcid = 0;
-  if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(lcid));
+  if (not ue->ul_bearers.contains(LCID_SRB0)) {
+    logger.warning("{}: Received UL PDU for inexistent bearer.",
+                   ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(LCID_SRB0));
     return false;
   }
 
   log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_DU_NOF_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
 
   // Push CCCH message to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->ue_index, lcid, std::move(ul_ccch_msg)});
+  ue->ul_bearers[LCID_SRB0]->on_new_sdu(mac_rx_sdu{ue->ue_index, LCID_SRB0, std::move(ul_ccch_msg)});
   return true;
 }
 
@@ -82,7 +82,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
     return false;
   }
 
-  lcid_t lcid = (lcid_t)sdu.lcid();
+  lcid_t lcid = (lcid_t)sdu.lcid().value();
   if (not ue->ul_bearers.contains(lcid)) {
     logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(lcid));
     return false;
@@ -110,7 +110,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
 bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& subpdu)
 {
   // Handle MAC CEs
-  switch ((lcid_t)subpdu.lcid()) {
+  switch (subpdu.lcid().value()) {
     case lcid_ul_sch_t::CCCH_SIZE_48:
     case lcid_ul_sch_t::CCCH_SIZE_64:
       return handle_ccch_msg(ctx, subpdu);

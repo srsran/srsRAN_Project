@@ -60,7 +60,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subpdu)
 {
   using namespace srsgnb;
-  switch ((lcid_t)subpdu.lcid()) {
+  switch (subpdu.lcid().value()) {
     case lcid_ul_sch_t::CCCH_SIZE_48:
       fmt::print(os, "CCCH48: len={}", subpdu.sdu_length());
       break;

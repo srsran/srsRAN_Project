@@ -22,7 +22,7 @@ public:
   {
     f1_rx_pdu msg{};
     msg.ue_index = ue_index;
-    msg.lcid     = 0;
+    msg.lcid     = LCID_SRB0;
     msg.pdu      = std::move(sdu.pdu);
     f1ap.handle_pdu(std::move(msg));
   }
@@ -99,7 +99,7 @@ public:
 
     // 3. Create UE RLC bearers.
     ue_ctx.bearers.emplace(0);
-    ue_ctx.bearers[0].lcid            = 0;
+    ue_ctx.bearers[0].lcid            = LCID_SRB0;
     ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_ul);
 
     // 4. Initiate MAC UE creation and await result.
