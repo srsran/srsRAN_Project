@@ -82,6 +82,22 @@ if (DOXYGEN_FOUND)
     COMMENT "Generating documentation for layers PHY and radio."
   )
 
+  # directories and files to process for support-related docs
+  set(docs_inputs_support ${CMAKE_CURRENT_SOURCE_DIR}
+                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/adt
+                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/srslog
+                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/srsvec
+                          ${CMAKE_HOME_DIRECTORY}/include/srsgnb/support
+                          ${CMAKE_HOME_DIRECTORY}/lib/srslog
+                          ${CMAKE_HOME_DIRECTORY}/lib/srsvec
+                          ${CMAKE_HOME_DIRECTORY}/lib/support
+  )
+
+  doxygen_add_docs(doxygen-support
+    ${docs_inputs_support}
+    COMMENT "Generating documentation for support libraries."
+  )
+
   add_custom_target(doxygen-clean
     COMMAND ${CMAKE_COMMAND} -E rm -rf ${CMAKE_CURRENT_BINARY_DIR}/html
                                        ${CMAKE_CURRENT_BINARY_DIR}/doxygen.log
