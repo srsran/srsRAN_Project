@@ -62,7 +62,7 @@ if (DOXYGEN_FOUND)
                       ${CMAKE_HOME_DIRECTORY}/lib/rlc
   )
 
-  doxygen_add_docs(doxygen-mac
+  doxygen_add_docs(doxygen-du-high
     ${docs_inputs_mac}
     COMMENT "Generating documentation for layers MAC and RLC."
   )
