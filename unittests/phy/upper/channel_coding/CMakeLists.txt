@@ -15,3 +15,4 @@ add_test(crc_calculator_test crc_calculator_test)
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)
+add_subdirectory(short)
