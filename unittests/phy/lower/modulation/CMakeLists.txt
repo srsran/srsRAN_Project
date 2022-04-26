@@ -12,7 +12,7 @@ add_test(ofdm_modulator_vectortest ofdm_modulator_vectortest)
 add_custom_command(
   TARGET ofdm_modulator_vectortest
   POST_BUILD
-  WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/unittests/phy/lower/modulation/
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test/data/ofdm_modulator_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test/data/ofdm_modulator_test_data.tar.gz
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test_data.tar.gz
   VERBATIM)
