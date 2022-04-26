@@ -38,27 +38,31 @@ struct ue_event_prefix {
     direction = t;
     return *this;
   }
-  ue_event_prefix& set_rnti(rnti_t rnti_)
-  {
-    rnti = rnti_;
-    return *this;
-  }
-  ue_event_prefix& set_ue_index(du_ue_index_t ue_index_)
-  {
-    ue_index = ue_index_;
-    return *this;
-  }
-  ue_event_prefix& set_cell_id(du_cell_index_t cell_index_)
-  {
-    cell_index = cell_index_;
-    return *this;
-  }
   ue_event_prefix& set_channel(const char* ch_)
   {
     channel = ch_;
     return *this;
   }
-  ue_event_prefix& set_lcid(lcid_t lcid_)
+
+  ue_event_prefix& operator|(rnti_t rnti_)
+  {
+    rnti = rnti_;
+    return *this;
+  }
+
+  ue_event_prefix& operator|(du_ue_index_t ue_index_)
+  {
+    ue_index = ue_index_;
+    return *this;
+  }
+
+  ue_event_prefix& operator|(du_cell_index_t cell_index_)
+  {
+    cell_index = cell_index_;
+    return *this;
+  }
+
+  ue_event_prefix& operator|(lcid_t lcid_)
   {
     lcid = lcid_;
     return *this;

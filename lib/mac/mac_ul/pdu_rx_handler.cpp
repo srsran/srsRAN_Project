@@ -48,8 +48,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
   }
 
   if (not ue->ul_bearers.contains(LCID_SRB0)) {
-    logger.warning("{}: Received UL PDU for inexistent bearer.",
-                   ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(LCID_SRB0));
+    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{} | ue->rnti | LCID_SRB0);
     return false;
   }
 
@@ -78,13 +77,13 @@ bool pdu_rx_handler::handle_rx_subpdus(decoded_mac_rx_pdu& ctx)
 bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_subpdu& sdu, mac_ul_ue_context* ue)
 {
   if (ue == nullptr) {
-    logger.warning("{}: Received MAC SDU for inexistent RNTI.", ue_event_prefix{}.set_rnti(ue->rnti));
+    logger.warning("Received MAC SDU for inexistent RNTI.");
     return false;
   }
 
   lcid_t lcid = (lcid_t)sdu.lcid().value();
   if (not ue->ul_bearers.contains(lcid)) {
-    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{}.set_rnti(ue->rnti).set_lcid(lcid));
+    logger.warning("{}: Received UL PDU for inexistent bearer.", ue_event_prefix{} | ue->rnti | lcid);
     return false;
   }
 

@@ -16,11 +16,9 @@ bool sched::handle_cell_configuration_request(const cell_configuration_request_m
 
 void sched::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
-  log_ue_proc_event(
-      logger.info, ue_event_prefix{}.set_ue_index(ue_request.ue_index), "Sched UE Configuration", "started.");
+  log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "started.");
   mac_notifier.on_ue_config_complete(ue_request.ue_index);
-  log_ue_proc_event(
-      logger.info, ue_event_prefix{}.set_ue_index(ue_request.ue_index), "Sched UE Configuration", "completed.");
+  log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "completed.");
 }
 
 void sched::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
