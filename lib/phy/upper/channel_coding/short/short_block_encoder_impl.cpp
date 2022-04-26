@@ -108,6 +108,17 @@ void short_block_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> 
   }
 }
 
+void short_block_encoder_impl::rate_match(span<uint8_t> output, span<const uint8_t> input)
+{
+  unsigned output_size = output.size();
+  unsigned input_size  = input.size();
+  srsran_assert(output_size >= input_size, "Output size cannot be smaller than input size.");
+
+  for (unsigned idx = 0; idx != output_size; ++idx) {
+    output[idx] = input[idx % input_size];
+  }
+}
+
 std::unique_ptr<short_block_encoder> srsgnb::create_short_block_encoder()
 {
   return std::make_unique<short_block_encoder_impl>();

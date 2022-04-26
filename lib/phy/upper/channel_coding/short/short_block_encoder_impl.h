@@ -14,6 +14,9 @@ class short_block_encoder_impl : public short_block_encoder
 public:
   // See interface for the documentation.
   void encode(span<uint8_t> output, span<const uint8_t> input) override;
+
+  // See interface for the documentation.
+  void rate_match(span<uint8_t> output, span<const uint8_t> input) override;
 };
 
 } // namespace srsgnb

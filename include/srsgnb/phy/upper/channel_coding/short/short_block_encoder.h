@@ -1,11 +1,10 @@
 /// \file
-/// \brief Encoder interface for small block lengths.
+/// \brief Encoder interface for short blocks.
 
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_ENCODER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_ENCODER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/modulation_scheme.h"
 
 #include <memory>
 
@@ -43,6 +42,15 @@ public:
   ///   - \f$N=3Q_m\f$ if \c input consists of 2 bits;
   ///   - \f$N=32\f$ otherwise (\c input size from 3 to 11 bits).
   virtual void encode(span<uint8_t> output, span<const uint8_t> input) = 0;
+
+  /// \brief Rate matching for short blocks.
+  ///
+  /// Matches the rate of a short block according to TS38.212 Section 5.4.3.
+  /// \param[out] output  Rate-matched codeblock.
+  /// \param[in]  input   Original codeblock.
+  /// \remark Both \c output and \c input follow an unpacked representation, that is one bit per entry.
+  /// \remark The size of \c output should not be smaller of the size of \c input.
+  virtual void rate_match(span<uint8_t> output, span<const uint8_t> input) = 0;
 };
 
 std::unique_ptr<short_block_encoder> create_short_block_encoder();
