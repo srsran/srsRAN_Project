@@ -34,7 +34,7 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
       ctxt.ue_ctxt_manager.emplace(msg.ue_index);
       ctxt.ue_ctxt_manager[msg.ue_index].crnti             = INVALID_RNTI; // Needed?
       ctxt.ue_ctxt_manager[msg.ue_index].gnb_du_f1ap_ue_id = msg.ue_index;
-      ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = -1; // TODO
+      ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = (du_ue_index_t)-1; // TODO
 
       resp.result = true;
     }

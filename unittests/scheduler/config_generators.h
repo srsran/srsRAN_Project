@@ -23,7 +23,7 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
   // Configure PUSCH
   ul_cfg.init_ul_bwp.pusch_cfg_common_present = true;
   ul_cfg.init_ul_bwp.pusch_cfg_common.set_setup();
-  auto& pusch_cfg_common                                = ul_cfg.init_ul_bwp.pusch_cfg_common.setup();
+  auto& pusch_cfg_common = ul_cfg.init_ul_bwp.pusch_cfg_common.setup();
   pusch_cfg_common.pusch_time_domain_alloc_list.resize(1);
   pusch_cfg_common.pusch_time_domain_alloc_list[0].k2_present           = true;
   pusch_cfg_common.pusch_time_domain_alloc_list[0].k2                   = k2;
@@ -39,7 +39,7 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
 cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
   cell_configuration_request_message msg{};
-  msg.cell_index        = 0;
+  msg.cell_index        = to_du_cell_index(0);
   msg.dl_cell_bandwidth = 10e6;
   msg.dl_cell_bandwidth = 10e6;
   msg.pci               = 1;
@@ -67,7 +67,7 @@ cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
 {
   rach_indication_message msg{};
-  msg.cell_index      = 0;
+  msg.cell_index      = to_du_cell_index(0);
   msg.crnti           = temp_crnti;
   msg.timing_info     = 0;
   msg.slot_rx         = prach_slot_rx;

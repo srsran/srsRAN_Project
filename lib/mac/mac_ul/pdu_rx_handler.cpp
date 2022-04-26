@@ -103,7 +103,8 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   }
 
   // Push PDU to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(mac_rx_sdu{ue->rnti, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  ue->ul_bearers[lcid]->on_new_sdu(
+      mac_rx_sdu{ue->ue_index, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
   return true;
 }
 

@@ -45,9 +45,9 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 
   // Launch procedure
   mac_ue_create_request_message msg{};
-  msg.ue_index   = 1;
+  msg.ue_index   = to_du_ue_index(1);
   msg.crnti      = to_rnti(0x4601);
-  msg.cell_index = 0;
+  msg.cell_index = to_du_cell_index(0);
   msg.bearers.emplace_back();
   msg.bearers[0].lcid      = LCID_SRB0;
   msg.bearers[0].dl_bearer = nullptr; // procedure should not use bearers

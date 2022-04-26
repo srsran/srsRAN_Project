@@ -23,7 +23,7 @@ public:
 
   task_executor& executor(du_ue_index_t ue_index) override
   {
-    ue_index = ue_index < MAX_DU_NOF_UES ? ue_index : 0;
+    ue_index = ue_index < MAX_DU_NOF_UES ? ue_index : to_du_ue_index(0);
     return *execs[ue_index % execs.size()];
   }
 
@@ -54,13 +54,13 @@ public:
 
   task_executor& executor(du_ue_index_t ue_index) override
   {
-    ue_index = ue_index < MAX_DU_NOF_UES ? ue_index : 0;
+    ue_index = ue_index < MAX_DU_NOF_UES ? ue_index : to_du_ue_index(0);
     return *ue_idx_to_exec[ue_index];
   }
 
 private:
   std::vector<std::unique_ptr<task_executor> > execs;
-  std::array<task_executor*, MAX_DU_NOF_UES>      ue_idx_to_exec;
+  std::array<task_executor*, MAX_DU_NOF_UES>   ue_idx_to_exec;
 };
 
 } // namespace srsgnb

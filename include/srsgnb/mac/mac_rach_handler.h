@@ -10,8 +10,8 @@ namespace srsgnb {
 using timing_advance_report = uint16_t;
 
 struct mac_rach_indication {
-  du_ue_index_t cell_index;
-  slot_point    slot_rx;
+  du_cell_index_t cell_index;
+  slot_point      slot_rx;
   /// Index of the first OFDM Symbol where RACH was detected
   unsigned symbol_index;
   unsigned frequency_index;

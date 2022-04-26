@@ -10,9 +10,11 @@ namespace srsgnb {
 
 class lcid_ul_sch_t
 {
+  using underlying_type = std::underlying_type_t<lcid_t>;
+
 public:
   /// 3GPP 38.321 v15.3.0, Table 6.2.1-2 - Values of LCID for UL-SCH Index
-  enum options : uint16_t {
+  enum options : underlying_type {
     /// CCCH of 64 bits
     CCCH_SIZE_64 = 0b000000,
 
@@ -39,19 +41,16 @@ public:
     PADDING         = 0b111111
   };
 
-  lcid_ul_sch_t(uint16_t lcid_ = PADDING) : lcid_val(static_cast<options>(lcid_))
-  {
-    srsran_assert(lcid_ <= PADDING, "Invalid LCID");
-  }
-  lcid_ul_sch_t& operator=(uint16_t lcid)
+  lcid_ul_sch_t(underlying_type lcid_ = PADDING) : lcid_val(lcid_) { srsran_assert(lcid_ <= PADDING, "Invalid LCID"); }
+  lcid_ul_sch_t& operator=(underlying_type lcid)
   {
     srsran_assert(lcid <= PADDING, "Invalid LCID");
-    lcid_val = static_cast<options>(lcid);
+    lcid_val = lcid;
     return *this;
   }
 
-  explicit operator uint16_t() const { return lcid_val; }
-  uint16_t value() const { return lcid_val; }
+  explicit        operator underlying_type() const { return lcid_val; }
+  underlying_type value() const { return lcid_val; }
 
   /// Whether LCID belongs to CCCH
   bool is_ccch() const { return (lcid_val == CCCH_SIZE_48 || lcid_val == CCCH_SIZE_64); }
@@ -115,7 +114,7 @@ public:
   bool operator!=(lcid_ul_sch_t other) const { return lcid_val != other.lcid_val; }
 
 private:
-  options lcid_val;
+  underlying_type lcid_val;
 };
 
 } // namespace srsgnb

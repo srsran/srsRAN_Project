@@ -80,7 +80,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   // Action 1: UL CCCH indication arrives.
   ul_ccch_indication_message ccch_ind{};
-  ccch_ind.cell_index = 0;
+  ccch_ind.cell_index = to_du_cell_index(0);
   ccch_ind.crnti      = to_rnti(0x4601);
   ccch_ind.subpdu     = {0, 1, 2, 3, 4, 5};
   test_logger.info("TEST: Pushing UL CCCH indication for RNTI=0x{:x}...", ccch_ind.crnti);
@@ -167,7 +167,7 @@ void test_inexistent_ue_removal()
 
   // Action 1: Start UE deletion
   du_ue_delete_message ue_delete_msg{};
-  ue_delete_msg.ue_index = 0;
+  ue_delete_msg.ue_index = to_du_ue_index(0);
   ue_mng.handle_ue_delete_request(ue_delete_msg);
 
   // There should not be any reply from MAC and F1AP should receive failure signal
@@ -201,7 +201,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   f1_dummy.wait_ue_create.ready_ev.set(); // set automatic completion.
 
   mac_dummy.wait_ue_create.result.ue_index   = first_ue_index;
-  mac_dummy.wait_ue_create.result.cell_index = 0;
+  mac_dummy.wait_ue_create.result.cell_index = to_du_cell_index(0);
   mac_dummy.wait_ue_create.result.result     = true;
   if (mode == test_duplicate_ue_creation_mode::mac_ue_create_auto) {
     mac_dummy.wait_ue_create.ready_ev.set();
@@ -212,7 +212,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
 
   // Action 1: Start creation of UE by notifying UL CCCH decoding.
   ul_ccch_indication_message ul_ccch_ind{};
-  ul_ccch_ind.cell_index = 0;
+  ul_ccch_ind.cell_index = to_du_cell_index(0);
   ul_ccch_ind.crnti      = to_rnti(0x4601);
   ul_ccch_ind.subpdu     = {1, 2, 3, 4, 5};
   ue_mng.handle_ue_create_request(ul_ccch_ind);

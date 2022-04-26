@@ -3,20 +3,33 @@
 #define SRSGNB_RAN_DU_TYPES_H
 
 #include <cstdint>
+#include <type_traits>
 
 namespace srsgnb {
 
-using du_cell_index_t = uint16_t;
-using du_ue_index_t   = uint16_t;
-using du_bwp_id_t     = uint16_t;
+/// Maximum number of UEs supported by DU (implementation-defined).
+enum du_ue_index_t : uint16_t { MIN_DU_UE_INDEX = 0, MAX_DU_UE_INDEX = 1023, MAX_DU_NOF_UES = 1024 };
 
-/// Maximum number of UEs supported by DU (implementation-defined)
-constexpr du_ue_index_t   MAX_DU_NOF_UES   = 1024;
-constexpr du_cell_index_t MAX_DU_NOF_CELLS = 16;
+/// Maximum number of cells supported by DU (implementation-defined).
+enum du_cell_index_t : uint16_t { MIN_DU_CELL_INDEX = 0, MAX_DU_CELL_INDEX = 15, MAX_DU_NOF_CELLS = 16 };
 
-inline bool is_du_ue_index_valid(du_ue_index_t ue_idx)
+using du_bwp_id_t = uint16_t;
+
+/// Convert integer to DU UE index type.
+constexpr inline du_ue_index_t to_du_ue_index(std::underlying_type_t<du_ue_index_t> idx)
+{
+  return static_cast<du_ue_index_t>(idx);
+}
+
+constexpr inline bool is_du_ue_index_valid(du_ue_index_t ue_idx)
 {
   return ue_idx < MAX_DU_NOF_UES;
+}
+
+/// Convert integer to DU cell index type.
+inline du_cell_index_t to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
+{
+  return static_cast<du_cell_index_t>(idx);
 }
 
 } // namespace srsgnb

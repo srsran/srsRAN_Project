@@ -36,7 +36,7 @@ struct cell_configuration_request_message {
   /// NOTE: Structs below do not follow ORAN specs.
   /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).
   carrier_configuration dl_carrier;
-  ssb_configuration ssb_config;
+  ssb_configuration     ssb_config;
 };
 
 /// UE Creation Request.
@@ -63,10 +63,10 @@ struct sched_ue_delete_message {
 /// RACH indication Message.
 /// \remark See ORAN WG8 9.2.3.2.12.
 struct rach_indication_message {
-  du_ue_index_t cell_index;
-  rnti_t        crnti;
-  unsigned      timing_info;
-  slot_point    slot_rx;
+  du_cell_index_t cell_index;
+  rnti_t          crnti;
+  unsigned        timing_info;
+  slot_point      slot_rx;
   /// Index of the first OFDM Symbol where RACH was detected.
   unsigned symbol_index;
   unsigned frequency_index;

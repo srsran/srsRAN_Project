@@ -133,11 +133,12 @@ void test_du_ue_create()
   // Add UE
   mac_rx_pdu_list lst;
   lst.push_back(mac_rx_pdu{to_rnti(0x4601), 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});
-  du_obj.get_pdu_handler(0).handle_rx_data_indication(mac_rx_data_indication{slot_point{0, 0}, 0, std::move(lst)});
+  du_obj.get_pdu_handler(to_du_cell_index(0))
+      .handle_rx_data_indication(mac_rx_data_indication{slot_point{0, 0}, to_du_cell_index(0), std::move(lst)});
 
   slot_point sl_tx{0, 0};
   for (uint32_t count = 0; count < 10000; count++) {
-    du_obj.get_slot_handler(0).handle_slot_indication(sl_tx++);
+    du_obj.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx++);
     if (pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
       break;
     }

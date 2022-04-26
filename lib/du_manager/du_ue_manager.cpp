@@ -21,7 +21,7 @@ void du_ue_manager::handle_ue_create_request(const ul_ccch_indication_message& m
   du_ue_index_t ue_idx_candidate = MAX_DU_NOF_UES;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
     if (not ue_db.contains(i) and ue_ctrl_loop[i].empty()) {
-      ue_idx_candidate = i;
+      ue_idx_candidate = to_du_ue_index(i);
       break;
     }
   }

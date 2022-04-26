@@ -25,8 +25,8 @@ void test_mac_ctrl_ue_procedures()
 
   // Action 1: Create UE
   mac_ue_create_request_message ue_create_msg{};
-  ue_create_msg.ue_index                               = 1;
-  ue_create_msg.cell_index                             = 0;
+  ue_create_msg.ue_index                               = to_du_ue_index(1);
+  ue_create_msg.cell_index                             = to_du_cell_index(0);
   ue_create_msg.crnti                                  = to_rnti(0x4601);
   async_task<mac_ue_create_response_message>         t = mac_ctrl.handle_ue_create_request(ue_create_msg);
   lazy_task_launcher<mac_ue_create_response_message> t_launcher(t);
@@ -63,9 +63,9 @@ void test_mac_ctrl_ue_procedures()
 
   // Action 4: Delete UE
   mac_ue_delete_request_message ue_delete_msg{};
-  ue_delete_msg.ue_index                                = 1;
+  ue_delete_msg.ue_index                                = to_du_ue_index(1);
   ue_delete_msg.rnti                                    = to_rnti(0x4601);
-  ue_delete_msg.cell_index                              = 0;
+  ue_delete_msg.cell_index                              = to_du_cell_index(0);
   async_task<mac_ue_delete_response_message>         t2 = mac_ctrl.handle_ue_delete_request(ue_delete_msg);
   lazy_task_launcher<mac_ue_delete_response_message> t_launcher2(t2);
 
