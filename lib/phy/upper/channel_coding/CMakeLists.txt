@@ -12,3 +12,4 @@ add_library(crc_calculator STATIC crc_calculator_impl.cpp)
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)
+add_subdirectory(short)

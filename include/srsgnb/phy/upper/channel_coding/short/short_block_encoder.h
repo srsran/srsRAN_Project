@@ -11,6 +11,19 @@
 
 namespace srsgnb {
 
+// TODO(david,borja): These will probably need to be moved somewhere else since they must be accessible by the
+// scrambler.
+/// \brief UCI placeholder bit.
+///
+/// A placeholder for setting a bit to 1 in the scrambler. It is denoted as "\c x" in TS38.212 Section 5.3.3 and in
+/// TS38.211 Section 6.3.1.1.
+constexpr uint8_t PLACEHOLDER_ONE = 255;
+/// \brief UCI placeholder bit.
+///
+/// A placeholder for repeating the previous bit in the scrambler. It is denoted as "\c y" in TS38.212 Section 5.3.3 and
+/// in TS38.211 Section 6.3.1.1.
+constexpr uint8_t PLACEHOLDER_REPEAT = 254;
+
 /// Short-block encoder interface.
 class short_block_encoder
 {
