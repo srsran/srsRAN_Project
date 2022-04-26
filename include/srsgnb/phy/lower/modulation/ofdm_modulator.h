@@ -51,17 +51,6 @@ public:
   /// \note The output size must be equal to the the symbol size.
   virtual void
   modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned symbol_index) = 0;
-
-private:
-  /// \brief Gets the offset to a symbol including the cyclic prefixes.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The number of samples to the start of the given symbol.
-  virtual unsigned get_symbol_offset(unsigned symbol_index) const = 0;
-
-  /// \brief Computes the phase compensation (TS 138.211, Section 5.4) for a given symbol.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The phase compensation to be applied to the given symbol.
-  virtual cf_t get_phase_compensation(unsigned symbol_index) const = 0;
 };
 
 /// \brief Describes an OFDM modulator with slot granularity.

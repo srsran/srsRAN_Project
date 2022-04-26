@@ -26,7 +26,7 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_fact
   srsvec::zero(dft->get_input());
 }
 
-unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index) const
+unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index)
 {
   // Calculate the offset in samples to the start of the symbol including the CPs
   unsigned phase_freq_offset = 0;
@@ -38,7 +38,7 @@ unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index) co
   return phase_freq_offset;
 }
 
-cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index) const
+cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index)
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
   unsigned nsymb         = get_nsymb_per_slot(cp);
