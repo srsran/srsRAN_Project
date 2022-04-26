@@ -21,7 +21,7 @@ struct decoded_mac_rx_pdu {
   decoded_mac_rx_pdu(slot_point      slot_rx_,
                      du_cell_index_t cell_idx_,
                      mac_rx_pdu      pdu_rx_,
-                     du_ue_index_t   ue_index_ = MAX_DU_NOF_UES) :
+                     du_ue_index_t   ue_index_ = MAX_NOF_DU_UES) :
     slot_rx(slot_rx_), cell_index_rx(cell_idx_), ue_index(ue_index_), pdu_rx(std::move(pdu_rx_))
   {
     srsran_sanity_check(not pdu_rx.pdu.empty(), "Received empty PDU");
@@ -31,8 +31,8 @@ struct decoded_mac_rx_pdu {
   void clear()
   {
     slot_rx       = {};
-    cell_index_rx = MAX_DU_NOF_CELLS;
-    ue_index      = MAX_DU_NOF_UES;
+    cell_index_rx = MAX_NOF_DU_CELLS;
+    ue_index      = MAX_NOF_DU_UES;
     pdu_rx.pdu.clear();
     decoded_subpdus.clear();
   }

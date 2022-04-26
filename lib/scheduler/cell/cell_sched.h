@@ -31,12 +31,12 @@ class cell_sched_manager
 public:
   bool cell_exists(du_cell_index_t cell_index) const
   {
-    return cell_index < MAX_DU_NOF_CELLS and cells[cell_index] != nullptr;
+    return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
   }
 
   void add_cell(du_cell_index_t cell_index, const cell_configuration_request_message& msg)
   {
-    srsran_assert(cell_index < MAX_DU_NOF_CELLS, "Cell index={} is not valid", cell_index);
+    srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Cell index={} is not valid", cell_index);
     srsran_assert(not cell_exists(cell_index), "Cell={} already exists", cell_index);
     cells[cell_index] = std::make_unique<cell_sched>(msg);
     nof_cells_++;
@@ -58,7 +58,7 @@ public:
 
 private:
   size_t                                                 nof_cells_ = 0;
-  std::array<std::unique_ptr<cell_sched>, MAX_DU_NOF_CELLS> cells;
+  std::array<std::unique_ptr<cell_sched>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsgnb

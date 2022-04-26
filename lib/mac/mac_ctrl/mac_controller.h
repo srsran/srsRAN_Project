@@ -15,9 +15,9 @@
 namespace srsgnb {
 
 struct mac_ue_context {
-  du_ue_index_t   du_ue_index = MAX_DU_NOF_UES;
+  du_ue_index_t   du_ue_index = MAX_NOF_DU_UES;
   rnti_t          rnti        = INVALID_RNTI;
-  du_cell_index_t pcell_idx   = MAX_DU_NOF_CELLS;
+  du_cell_index_t pcell_idx   = MAX_NOF_DU_CELLS;
 };
 
 class du_rnti_table;

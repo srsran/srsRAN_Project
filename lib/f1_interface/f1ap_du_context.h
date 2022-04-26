@@ -18,7 +18,7 @@ struct f1ap_du_cell_context {};
 
 struct f1ap_du_context {
   std::vector<f1ap_du_cell_context>              cell_ctxt_manager;
-  slot_array<f1ap_du_ue_context, MAX_DU_NOF_UES> ue_ctxt_manager;
+  slot_array<f1ap_du_ue_context, MAX_NOF_DU_UES> ue_ctxt_manager;
 };
 
 } // namespace srsgnb

@@ -105,7 +105,7 @@ public:
 private:
   struct ue_item {
     rnti_t                           rnti     = INVALID_RNTI;
-    du_ue_index_t                    ue_index = MAX_DU_NOF_UES;
+    du_ue_index_t                    ue_index = MAX_NOF_DU_UES;
     slot_vector<mac_sdu_tx_builder*> dl_bearers;
     byte_buffer                      msg3_subpdu;
   };
@@ -140,7 +140,7 @@ private:
 
   du_rnti_table& rnti_table;
 
-  mutable circular_array<std::mutex, MAX_DU_NOF_UES> ue_mutex;
+  mutable circular_array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 
   du_ue_list<ue_item> ue_db;
 };

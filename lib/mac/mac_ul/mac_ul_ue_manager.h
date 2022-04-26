@@ -19,7 +19,7 @@ class mac_ul_ue_context
 public:
   explicit mac_ul_ue_context(du_ue_index_t ue_index_, rnti_t rnti_) : ue_index(ue_index_), rnti(rnti_) {}
 
-  const du_ue_index_t ue_index = MAX_DU_NOF_UES;
+  const du_ue_index_t ue_index = MAX_NOF_DU_UES;
   const rnti_t        rnti     = INVALID_RNTI;
 
   /// List of UL PDU notification endpoints associated to UE's logical channels.

@@ -48,7 +48,7 @@ mac_dl_processor::mac_dl_processor(mac_common_config_t&    cfg_,
 
 bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
 {
-  return cell_index < MAX_DU_NOF_CELLS and cells[cell_index] != nullptr;
+  return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
 }
 
 void mac_dl_processor::add_cell(const mac_cell_configuration& cell_cfg)

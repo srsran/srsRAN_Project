@@ -25,9 +25,9 @@ struct ue_event_prefix {
   lcid_t          lcid;
 
   ue_event_prefix(const char*     dir_      = "CTRL",
-                  du_ue_index_t   ue_index_ = MAX_DU_NOF_UES,
+                  du_ue_index_t   ue_index_ = MAX_NOF_DU_UES,
                   rnti_t          rnti_     = INVALID_RNTI,
-                  du_cell_index_t cell_idx_ = MAX_DU_NOF_CELLS,
+                  du_cell_index_t cell_idx_ = MAX_NOF_DU_CELLS,
                   const char*     channel_  = nullptr,
                   lcid_t          lcid_     = INVALID_LCID) :
     direction(dir_), ue_index(ue_index_), rnti(rnti_), cell_index(cell_idx_), channel(channel_), lcid(lcid_)
@@ -169,7 +169,7 @@ void log_ul_pdu(srslog::basic_logger& logger,
 template <typename... Args>
 void log_ul_pdu(srslog::basic_logger& logger, rnti_t rnti, du_cell_index_t cc, const char* cause_fmt, Args&&... args)
 {
-  log_ue_event(logger, ue_event_prefix{"UL", MAX_DU_NOF_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
+  log_ue_event(logger, ue_event_prefix{"UL", MAX_NOF_DU_UES, rnti, cc}, cause_fmt, std::forward<Args>(args)...);
 }
 
 } // namespace srsgnb
@@ -190,7 +190,7 @@ struct formatter<srsgnb::ue_event_prefix> {
   {
     using namespace srsgnb;
     auto ret = format_to(ctx.out(), "{:<4}", ue_prefix.direction);
-    if (ue_prefix.ue_index != srsgnb::MAX_DU_NOF_UES) {
+    if (ue_prefix.ue_index != srsgnb::MAX_NOF_DU_UES) {
       ret = format_to(ctx.out(), " ueId={}", ue_prefix.ue_index);
     } else {
       ret = format_to(ctx.out(), "{: <7}", "");
@@ -200,7 +200,7 @@ struct formatter<srsgnb::ue_event_prefix> {
     } else {
       ret = format_to(ctx.out(), " {: <6}", "");
     }
-    if (ue_prefix.cell_index != srsgnb::MAX_DU_NOF_CELLS) {
+    if (ue_prefix.cell_index != srsgnb::MAX_NOF_DU_CELLS) {
       ret = format_to(ctx.out(), " cell={}", ue_prefix.cell_index);
     }
     if (ue_prefix.channel != nullptr) {

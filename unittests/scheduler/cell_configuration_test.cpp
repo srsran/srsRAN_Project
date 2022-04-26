@@ -15,7 +15,7 @@ void test_cell_config_request()
 
   // Test invalid cell_index
   msg            = default_msg;
-  msg.cell_index = MAX_DU_NOF_CELLS;
+  msg.cell_index = MAX_NOF_DU_CELLS;
   auto err       = is_cell_configuration_request_valid(msg);
   TESTASSERT(err.is_error());
   fmt::print("Error: {}\n", err.error());

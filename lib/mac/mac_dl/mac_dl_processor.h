@@ -51,7 +51,7 @@ private:
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  std::array<std::unique_ptr<mac_dl_cell_processor>, MAX_DU_NOF_CELLS> cells;
+  std::array<std::unique_ptr<mac_dl_cell_processor>, MAX_NOF_DU_CELLS> cells;
 
   mac_sched_configurator& sched_cfg;
 

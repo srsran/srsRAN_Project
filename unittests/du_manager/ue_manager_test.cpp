@@ -76,7 +76,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
 
   du_ue_manager ue_mng{cfg};
   TESTASSERT(ue_mng.get_ues().empty());
-  du_ue_index_t ue_index = MAX_DU_NOF_UES;
+  du_ue_index_t ue_index = MAX_NOF_DU_UES;
 
   // Action 1: UL CCCH indication arrives.
   ul_ccch_indication_message ccch_ind{};
@@ -89,7 +89,7 @@ void test_ue_concurrent_procedures(test_outcome outcome)
   // TEST: F1 UE Creation started, but hasn't finished.
   TESTASSERT(f1_dummy.last_ue_create.has_value());
   ue_index = f1_dummy.last_ue_create.value().ue_index;
-  TESTASSERT(f1_dummy.last_ue_create.value().ue_index < MAX_DU_NOF_UES);
+  TESTASSERT(f1_dummy.last_ue_create.value().ue_index < MAX_NOF_DU_UES);
   TESTASSERT(not mac_dummy.last_ue_create_msg.has_value()); // The MAC UE creation hasn't started.
   TESTASSERT(mac_dummy.last_pushed_ul_ccch_msg.empty());
   TESTASSERT(ue_mng.get_ues().empty());
@@ -188,7 +188,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   test_delimit_logger delimiter{"Test duplicate UE creation. Mode: {}",
                                 mode == test_duplicate_ue_creation_mode::mac_ue_create_auto ? "auto" : "manual"};
 
-  du_ue_index_t first_ue_index = MAX_DU_NOF_UES;
+  du_ue_index_t first_ue_index = MAX_NOF_DU_UES;
 
   mac_test_dummy mac_dummy;
   f1_test_dummy  f1_dummy;
@@ -220,7 +220,7 @@ void test_duplicate_ue_creation(test_duplicate_ue_creation_mode mode)
   // TEST: F1 started creating first UE.
   TESTASSERT(f1_dummy.last_ue_create.has_value());
   first_ue_index = f1_dummy.last_ue_create.value().ue_index;
-  TESTASSERT(f1_dummy.last_ue_create.value().ue_index < MAX_DU_NOF_UES);
+  TESTASSERT(f1_dummy.last_ue_create.value().ue_index < MAX_NOF_DU_UES);
 
   // TEST: MAC started creating first UE.
   TESTASSERT(mac_dummy.last_ue_create_msg.has_value());
