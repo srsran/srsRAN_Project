@@ -19,7 +19,7 @@ using namespace fapi_adaptor;
 
 /// Fill PHY timing information for the given fapi_pdu. Returns a BCH payload with the timing information filled, as per
 /// TS38.212 Section 7.1.1.
-static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn)
+static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
 {
   // Move the BCH payload to the MSB.
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8u;
@@ -28,7 +28,61 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
   payload |= ((sfn & 0xF) << 4u);
 
   // Half radio frame bit.
-  // :TODO: Add bit.
+  payload |= ((hrf & 0x1) << 3u);
+
+  if (fapi_pdu.ssb_maintenance_v3.lmax == 64) {
+    // Use the 6th, 5th and 4th bits of SS/PBCH block index.
+    payload |= ((fapi_pdu.ssb_block_index >> 3u) & 7u);
+  } else {
+    // 3rd LSB set to MSB of SSB subcarrier offset. 2nd and 1st bits reserved.
+    payload |= (((fapi_pdu.ssb_subcarrier_offset >> 7u) & 1u) << 2u);
+  }
+
+  return payload;
+}
+
+/// Fill PHY full information for the given fapi_pdu. Returns a BCH payload, as per  TS38.212 Section 7.1.1.
+static uint32_t fill_phy_full_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
+{
+  const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
+  uint32_t                  payload = 0;
+
+  // MIB - 1 bit.
+  // Leave to zero.
+
+  // systemFrameNumber - 6 bits MSB.
+  payload |= ((sfn & 0x3F) << 25u);
+
+  // subCarrierSpacingCommon - 1 bit.
+  uint32_t scs_flag = (fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz15 ||
+                       fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz60)
+                          ? 0
+                          : 1;
+  payload |= ((scs_flag & 0x1) << 24u);
+
+  // ssb-SubcarrierOffset - 4 bits.
+  payload |= ((fapi_pdu.ssb_subcarrier_offset & 0xF) << 20u);
+
+  // dmrs-TypeA-Position - 1 bit.
+  payload |= ((mib.dmrs_typeA_position & 0x1) << 19u);
+
+  // pdcch-ConfigSIB1 - 8 bits.
+  payload |= ((mib.pdcch_config_sib1 & 0xFF) << 11u);
+
+  // Barred - 1 bit.
+  payload |= ((mib.cell_barred & 0x1) << 10u);
+
+  // intraFreqReselection - 1 bit.
+  payload |= ((mib.intrafreq_reselection & 0x1) << 9u);
+
+  // Spare - 1 bit.
+  // Leave to zero.
+
+  // Add the sfn. - 4 bit.
+  payload |= ((sfn & 0xF) << 4u);
+
+  // Half radio frame bit.
+  payload |= ((hrf & 0x1) << 3u);
 
   if (fapi_pdu.ssb_maintenance_v3.lmax == 64) {
     // Use the 6th, 5th and 4th bits of SS/PBCH block index.
@@ -42,23 +96,24 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 }
 
 /// Fills the bch payload.
-static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, unsigned sfn)
+static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, unsigned sfn, unsigned hrf)
 {
+  uint32_t payload = 0;
   switch (fapi_pdu.bch_payload_flag) {
     case bch_payload_type::mac_full:
-      return srsvec::bit_unpack(fapi_pdu.bch_payload.bch_payload, dest, dest.size());
-    case bch_payload_type::phy_timing_info: {
-      uint32_t payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn);
-      return srsvec::bit_unpack(payload, dest, dest.size());
-    }
+      payload = fapi_pdu.bch_payload.bch_payload;
+      break;
+    case bch_payload_type::phy_timing_info:
+      payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn, hrf);
+      break;
     case bch_payload_type::phy_full:
-      // :TODO: phy generates full PBCH payload. When the PHY function is added, call that function here to generate the
-      // BCH payload.
+      payload = fill_phy_full_in_bch_payload(fapi_pdu, sfn, hrf);
       break;
     default:
       srsran_assert(0, "Invalid BCH payload flag");
       break;
   }
+  srsvec::bit_unpack(payload, dest, dest.size());
 }
 
 /// Returns the beta pss from the given SSB pdu.
@@ -93,8 +148,12 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
   proc_pdu.ssb_offset_pointA     = fapi_pdu.ssb_offset_pointA;
   proc_pdu.pattern_case          = fapi_pdu.ssb_maintenance_v3.case_type;
 
+  // Calculate half radio frame.
+  unsigned hrf = proc_pdu.slot.is_odd_hrf() ? 1 : 0;
+
   // Get the BCH payload.
-  fill_bch_payload({proc_pdu.bch_payload.begin(), proc_pdu.bch_payload.end()}, fapi_pdu, sfn);
+  fill_bch_payload(proc_pdu.bch_payload, fapi_pdu, sfn, hrf);
 
   // :TODO: Implement the ports array when the beamforming is added.
+  proc_pdu.ports = {0};
 }
