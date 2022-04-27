@@ -6,10 +6,13 @@
 # the distribution.
 #
 
+add_subdirectory(pucch)
+
 set(SOURCES
         dmrs_pbch_processor_impl.cpp
         dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
+        dmrs_pucch_processor_impl.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
         )
@@ -17,3 +20,4 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
 
 add_library(signal_processors STATIC ${SOURCES})
+target_link_libraries(signal_processors dmrs_pucch_impl)

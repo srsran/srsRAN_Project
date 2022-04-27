@@ -5,6 +5,7 @@
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
+#include <srsgnb/phy/constants.h>
 #include <map>
 
 namespace srsgnb {
@@ -18,16 +19,16 @@ namespace srsgnb {
 class low_papr_sequence_collection
 {
 private:
+  /// Stores generated signals indexed by \c u, \c v and \f$\alpha\f$ index.
+  std::map<std::tuple<unsigned, unsigned, unsigned>, std::vector<cf_t> > pregen_signals;
+
+public:
   /// Defines the number of sequence groups (u).
   static constexpr unsigned NOF_GROUPS = 30;
 
   /// Defines the number of sequence bases (v).
   static constexpr unsigned MAX_NOF_BASES = 2;
 
-  /// Stores generated signals indexed by \c u, \c v and \f$\alpha\f$ index.
-  std::map<std::tuple<unsigned, unsigned, unsigned>, std::vector<cf_t> > pregen_signals;
-
-public:
   /// \brief Initialize the sequence generator with the length and an alpha list.
   ///
   /// This method generates a collection of low PAPR sequences \f$r^{(\alpha, \beta)}_{u,v}\f$ as per TS 38.211
