@@ -129,7 +129,6 @@ void radio_zmq_rx_channel::receive_response()
     int err = zmq_errno();
     if (err == EFSM || err == EAGAIN) {
       // Ignore timeout and FSM error.
-      logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 

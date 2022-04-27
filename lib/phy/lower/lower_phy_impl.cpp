@@ -33,11 +33,11 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   ul_rg.set_all_zero();
 
   // Notify the received symbols.
-  lower_phy_rx_symbol_context_t ul_symbol_context = {};
-  ul_symbol_context.sector                        = 0;
-  ul_symbol_context.slot                          = ul_slot_context;
-  ul_symbol_context.nof_symbols                   = symbol_id;
-  symbol_handler.on_rx_symbol(ul_symbol_context, ul_rg);
+  lower_phy_rx_symbol_context ul_symbol_context = {};
+  ul_symbol_context.sector                      = 0;
+  ul_symbol_context.slot                        = ul_slot_context;
+  ul_symbol_context.nof_symbols                 = symbol_id;
+  rx_symbol_notifier.on_rx_symbol(ul_symbol_context, ul_rg);
 
   return aligned_receive_ts;
 }
@@ -101,9 +101,9 @@ void lower_phy_impl::process_slot()
   logger.set_context(dl_slot_context.system_slot());
 
   // Notify slot boundary.
-  lower_phy_timing_context_t timing_context = {};
-  timing_context.slot                       = dl_slot_context + max_processing_delay_slots;
-  timing_handler.on_tti_boundary(timing_context);
+  lower_phy_timing_context timing_context = {};
+  timing_context.slot                     = dl_slot_context + max_processing_delay_slots;
+  timing_notifier.on_tti_boundary(timing_context);
 
   // For each symbol in the slot. Skip symbol processing if stop mis signaled.
   for (unsigned symbol_slot_idx = 0; symbol_slot_idx < nof_symbols_per_slot && state_fsm.is_running();
@@ -113,9 +113,9 @@ void lower_phy_impl::process_slot()
 
     // Notify UL half slot.
     if (symbol_slot_idx == nof_symbols_per_slot / 2) {
-      lower_phy_timing_context_t ul_timing_context = {};
-      timing_context.slot                          = dl_slot_context;
-      timing_handler.on_ul_half_slot_boundary(ul_timing_context);
+      lower_phy_timing_context ul_timing_context = {};
+      timing_context.slot                        = dl_slot_context;
+      timing_notifier.on_ul_half_slot_boundary(ul_timing_context);
     }
 
     // Process uplink symbol.
@@ -134,9 +134,9 @@ void lower_phy_impl::process_slot()
   }
 
   // Notify the end of an uplink full slot.
-  lower_phy_timing_context_t ul_timing_context = {};
-  timing_context.slot                          = ul_slot_context;
-  timing_handler.on_ul_full_slot_boundary(ul_timing_context);
+  lower_phy_timing_context ul_timing_context = {};
+  timing_context.slot                        = ul_slot_context;
+  timing_notifier.on_ul_full_slot_boundary(ul_timing_context);
 
   // Reset DL resource grid buffers.
   dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()].reset();
@@ -148,9 +148,9 @@ void lower_phy_impl::realtime_process_loop()
 
   // Notify the initial slot boundaries.
   for (unsigned slot_count = 0; slot_count != max_processing_delay_slots; ++slot_count) {
-    lower_phy_timing_context_t timing_context = {};
-    timing_context.slot                       = dl_slot_context + slot_count;
-    timing_handler.on_tti_boundary(timing_context);
+    lower_phy_timing_context timing_context = {};
+    timing_context.slot                     = dl_slot_context + slot_count;
+    timing_notifier.on_tti_boundary(timing_context);
   }
 
   // Process until stop is called.
@@ -191,9 +191,8 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
   transmitter(config.bb_gateway->get_transmitter()),
   receiver(config.bb_gateway->get_receiver()),
-  symbol_handler(*config.symbol_handler),
-  timing_handler(*config.timing_handler),
-  modulator_factory(*config.modulator_factory),
+  rx_symbol_notifier(*config.rx_symbol_notifier),
+  timing_notifier(*config.timing_notifier),
   ul_rg_pool(*config.ul_resource_grid_pool),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
   max_processing_delay_slots(config.max_processing_delay_slots),
@@ -224,8 +223,8 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
 
   // Make sure sub-modules are valid.
   srsran_always_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
-  srsran_always_assert(config.symbol_handler != nullptr, "Invalid symbol handler pointer.");
-  srsran_always_assert(config.timing_handler != nullptr, "Invalid timing handler pointer.");
+  srsran_always_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
+  srsran_always_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
   srsran_always_assert(config.modulator_factory != nullptr, "Invalid modulation factory pointer.");
   srsran_always_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
 
@@ -246,7 +245,7 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
     configuration.scale                        = config.tx_scale;
 
     // Create modulator.
-    modulators.emplace_back(modulator_factory.create_ofdm_symbol_modulator(configuration));
+    modulators.emplace_back(config.modulator_factory->create_ofdm_symbol_modulator(configuration));
 
     // Make sure the modulator creation is successful.
     srsran_always_assert(modulators.back() != nullptr, "Error: failed to create OFDM modulator.");

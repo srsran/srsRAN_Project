@@ -2,29 +2,28 @@
 #ifndef SAMPLE_APPS_PHY_LOWER_PHY_TIMING_NOTIFIER_SAMPLE_H
 #define SAMPLE_APPS_PHY_LOWER_PHY_TIMING_NOTIFIER_SAMPLE_H
 
-#include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include <condition_variable>
 #include <mutex>
 
 namespace srsgnb {
 
-class lower_phy_timing_notifier_sample : public lower_phy_timing_notifier
+class timing_handler_sample : public upper_phy_timing_handler
 {
 private:
   srslog::basic_logger&   logger;
   std::mutex              mutex;
   std::condition_variable cvar_tti_boundary;
-  bool                    tti_boundary = false;
-  slot_point              tti_boundary_slot;
-  bool                    quit = false;
+  bool                    tti_boundary      = false;
+  slot_point              tti_boundary_slot = {};
+  bool                    quit              = false;
 
 public:
-  lower_phy_timing_notifier_sample(std::string log_level = "none") : logger(srslog::fetch_basic_logger("TimeHan"))
-  {
-    logger.set_level(srslog::str_to_basic_level(log_level));
-  }
+  timing_handler_sample() : logger(srslog::fetch_basic_logger("TimeHan")) {}
 
-  void on_tti_boundary(const lower_phy_timing_context_t& context) override
+  void set_log_level(std::string log_level) { logger.set_level(srslog::str_to_basic_level(log_level)); }
+
+  void handle_tti_boundary(const upper_phy_timing_context& context) override
   {
     std::unique_lock<std::mutex> lock(mutex);
 
@@ -42,11 +41,11 @@ public:
     tti_boundary_slot = context.slot;
     cvar_tti_boundary.notify_all();
   }
-  void on_ul_half_slot_boundary(const lower_phy_timing_context_t& context) override
+  void handle_ul_half_slot_boundary(const upper_phy_timing_context& context) override
   {
     logger.debug("UL half slot boundary.");
   }
-  void on_ul_full_slot_boundary(const lower_phy_timing_context_t& context) override
+  void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override
   {
     logger.debug("UL full slot boundary.");
   }

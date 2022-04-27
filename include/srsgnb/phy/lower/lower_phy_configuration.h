@@ -54,9 +54,9 @@ struct lower_phy_configuration {
   /// Provides the radio data plane.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
-  lower_phy_rx_symbol_notifier* symbol_handler;
+  lower_phy_rx_symbol_notifier* rx_symbol_notifier;
   /// Provides the timing handler to notify the timing boundaries.
-  lower_phy_timing_notifier* timing_handler;
+  lower_phy_timing_notifier* timing_notifier;
   /// Provides the OFDM modulator factory.
   ofdm_modulator_factory* modulator_factory;
   /// Provides the uplink resource grid pool.

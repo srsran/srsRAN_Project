@@ -1,12 +1,15 @@
 
 #include "../radio/radio_notifier_sample.h"
-#include "lower_phy_symbol_notifier_sample.h"
-#include "lower_phy_timing_notifier_sample.h"
+#include "rx_symbol_handler_sample.h"
+#include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
+#include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
+#include "srsgnb/phy/adapters/phy_timing_adapter.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/radio/radio_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/math_utils.h"
+#include "timing_handler_sample.h"
 #include <atomic>
 #include <csignal>
 #include <getopt.h>
@@ -101,10 +104,10 @@ static const std::vector<benchmark_configuration_profile> profiles = {
 };
 
 // Global instances.
-static std::atomic<bool>                stop  = {false};
-static std::unique_ptr<lower_phy>       phy   = nullptr;
-static std::unique_ptr<radio_session>   radio = nullptr;
-static lower_phy_timing_notifier_sample timing_handler(log_level);
+static std::atomic<bool>              stop  = {false};
+static std::unique_ptr<lower_phy>     phy   = nullptr;
+static std::unique_ptr<radio_session> radio = nullptr;
+static timing_handler_sample          timing_handler;
 
 void signal_handler(int sig)
 {
@@ -255,7 +258,8 @@ int main(int argc, char** argv)
   srsran_always_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
-  lower_phy_rx_symbol_notifier_sample rx_symbol_handler(log_level);
+  rx_symbol_handler_sample rx_symbol_handler(log_level);
+  timing_handler.set_log_level(log_level);
 
   // Create DFT processor factory configuration with default values.
   dft_processor_factory_fftw_config dft_factory_fftw_config;
@@ -333,7 +337,14 @@ int main(int argc, char** argv)
     srsran_always_assert(dl_rg_pool, "Failed to create resource grid pool for DL");
   }
 
-  // Create lower physical layer configuration.
+  // Create receive symbols adapter.
+  phy_rx_symbol_adapter rx_symbol_adapter;
+  rx_symbol_adapter.connect(&rx_symbol_handler);
+
+  // Create timing adapter.
+  phy_timing_adapter timing_adapter;
+  timing_adapter.connect(&timing_handler);
+
   lower_phy_configuration phy_config;
   phy_config.dft_size_15kHz             = dft_size_15kHz;
   phy_config.numerology                 = numerology;
@@ -344,8 +355,8 @@ int main(int argc, char** argv)
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
-  phy_config.symbol_handler             = &rx_symbol_handler;
-  phy_config.timing_handler             = &timing_handler;
+  phy_config.rx_symbol_notifier         = &rx_symbol_adapter;
+  phy_config.timing_notifier            = &timing_adapter;
   phy_config.modulator_factory          = modulator_factory.get();
   phy_config.ul_resource_grid_pool      = ul_rg_pool.get();
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {

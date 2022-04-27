@@ -127,7 +127,6 @@ void radio_zmq_tx_channel::receive_request()
       int err = zmq_errno();
       if (err == EFSM || err == EAGAIN) {
         // Ignore timeout and FSM error.
-        // logger.debug("Exception to receive request. {}.", zmq_strerror(zmq_errno()));
       } else {
         // This error cannot be ignored.
         logger.error("Socket failed to receive request. {}.", zmq_strerror(zmq_errno()));

@@ -14,7 +14,6 @@ public:
   virtual ~lower_phy_input_gateway() = default;
 
   /// \brief Sends resource grid through the gateway.
-  ///
   /// \param[in] context Indicates the resource grid context.
   /// \param[in] grid Provides the resource grid to transmit.
   virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;

@@ -62,11 +62,9 @@ private:
   /// Baseband gateway receiver.
   baseband_gateway_receiver& receiver;
   /// Receive symbol handler.
-  lower_phy_rx_symbol_notifier& symbol_handler;
+  lower_phy_rx_symbol_notifier& rx_symbol_notifier;
   /// Timing boundary handler.
-  lower_phy_timing_notifier& timing_handler;
-  /// OFDM modulator factory.
-  ofdm_modulator_factory& modulator_factory;
+  lower_phy_timing_notifier& timing_notifier;
   /// Uplink resource grid pool.
   resource_grid_pool& ul_rg_pool;
   /// Stores resource grids buffers. Each entry belongs to a slot.

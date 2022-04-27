@@ -8,7 +8,7 @@
 namespace srsgnb {
 
 /// Describes context of the new received symbol.
-struct lower_phy_rx_symbol_context_t {
+struct lower_phy_rx_symbol_context {
   /// Indicates the slot.
   slot_point slot;
   /// Indicates the sector.
@@ -28,17 +28,17 @@ public:
   ///
   /// \param [in] context Provides the notification context.
   /// \param [in] grid Provides the resource grid that belongs to the context.
-  virtual void on_rx_symbol(const lower_phy_rx_symbol_context_t& context, const resource_grid_reader& grid) = 0;
+  virtual void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
   /// \brief Notifies the completion of PRACH symbols.
   ///
   /// \param [in] context Provides the notification context.
-  virtual void on_rx_prach_symbol(const lower_phy_rx_symbol_context_t& context) = 0;
+  virtual void on_rx_prach_symbol(const lower_phy_rx_symbol_context& context) = 0;
 
   /// \brief Notifies the completion of SRS symbols.
   ///
   /// \param [in] context Provides the notification context.
-  virtual void on_rx_srs_symbol(const lower_phy_rx_symbol_context_t& context) = 0;
+  virtual void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) = 0;
 };
 
 } // namespace srsgnb
