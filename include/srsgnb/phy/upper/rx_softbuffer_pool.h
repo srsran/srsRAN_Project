@@ -22,7 +22,14 @@ struct rx_softbuffer_identifier {
   }
 };
 
-/// Describes a receive softbuffer pool. Unique for each sector.
+/// \brief Describes a receive softbuffer pool.
+///
+/// The aim of this interface is to provide the physical layer shared channel decoder with receiver softbuffers.
+///
+/// The receiver softbuffers are selected from a pool of resources for a given rx_softbuffer_identifier and kept
+/// persistent until the identifier is freed or expires.
+///
+/// The pool is designed for being unique in a sector. So, every sector must create its own pool.
 class rx_softbuffer_pool
 {
 public:
@@ -39,21 +46,22 @@ public:
   /// - a softbuffer reservation is performed with the same identifier but different number of codeblocks, or
   /// - softbuffer reservation expires (run_slot()).
   ///
-  /// The pool does not initialise or modify the contents of the softbuffers. The modules that suse the softbuffers are
-  /// responsible to initialise and modify their contents upon new transmissions.
+  /// The pool does not initialise or modify the contents of the softbuffers. The modules that use the softbuffers are
+  /// responsible for initializing and modifying their contents upon new transmissions.
   ///
   /// \param[in] slot Indicates the slot context in which the reservation occurs.
-  /// \param[in] context Indicates the context for the softbuffer processing.
-  /// \return A reference to the reserved softbuffer.
-  virtual rx_softbuffer&
+  /// \param[in] id Identifies the softbuffer.
+  /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
+  /// \return A pointer to the reserved softbuffer if the reservation was successful. Otherwise, nullptr.
+  virtual rx_softbuffer*
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) = 0;
 
-  /// \brief Makes available a softbuffer that was reserved with a given identifier.
+  /// \brief Releases the specified softbuffer.
+  /// \param[in] id Identifies the softbuffer.
   /// \remark If the indicated identifier is invalid, the call is ignored.
-  /// \param[in] context Indicates the softbuffer identifier.
   virtual void free_softbuffer(const rx_softbuffer_identifier& id) = 0;
 
-  /// \brief Runs internal state machines to expire softbuffers that are reserved and not freed.
+  /// \brief Runs internal state machines and releases expired softbuffers.
   /// \param[in] slot Indicates the current slot.
   virtual void run_slot(const slot_point& slot) = 0;
 };

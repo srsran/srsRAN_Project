@@ -2,7 +2,7 @@
 #include "rx_softbuffer_pool_impl.h"
 
 using namespace srsgnb;
-rx_softbuffer& rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
+rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&               slot,
                                                            const rx_softbuffer_identifier& id,
                                                            unsigned int                    nof_codeblocks)
 {
@@ -11,7 +11,7 @@ rx_softbuffer& rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
     if (buffer.match_id(id)) {
       slot_point expire_slot = slot + expire_timeout_slots;
       buffer.reserve(id, expire_slot, nof_codeblocks);
-      return buffer;
+      return &buffer;
     }
   }
 
@@ -20,13 +20,12 @@ rx_softbuffer& rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
     if (!buffer.is_reserved()) {
       slot_point expire_slot = slot + expire_timeout_slots;
       buffer.reserve(id, expire_slot, nof_codeblocks);
-      return buffer;
+      return &buffer;
     }
   }
 
-  // If no available buffer is found, terminate.
-  srsran_terminate("Failed to reserve softbuffer. {} entries are not enough.", buffers.size());
-  return *(rx_softbuffer*)nullptr;
+  // If no available buffer is found...
+  return nullptr;
 }
 
 void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id)

@@ -16,14 +16,14 @@ struct rx_softbuffer_pool_description {
   unsigned max_softbuffers;
   /// Indicates the number of codeblocks available in the pool for all the softbuffers.
   unsigned max_nof_codeblocks;
-  /// Indicates the number of slots a softbuffer reservation shall expire.
+  /// Indicates the softbuffer lifetime as a number of slots.
   unsigned expire_timeout_slots;
 };
 
 class rx_softbuffer_codeblock_pool
 {
 private:
-  /// Describes a codeblock soft-bits entry.
+  /// Describes a codeblock soft-bit buffer entry.
   struct entry {
     /// Indicates if the entry is reserved.
     bool reserved;
@@ -47,7 +47,7 @@ public:
     }
   }
 
-  /// \brief Reserve a codeblock softbuffer.
+  /// \brief Reserves a codeblock softbuffer.
   /// \return The codeblock identifier in the pool.
   unsigned reserve()
   {
@@ -69,9 +69,9 @@ public:
     entries[cb_id].reserved = false;
   }
 
-  /// \brief Gets a codeblock soft-bits buffer.
+  /// \brief Gets a codeblock soft-bit buffer.
   /// \param[in] cb_id Indicates the codeblock identifier.
-  /// \return A view to the codeblock soft-bits.
+  /// \return A view to the codeblock soft-bits buffer.
   span<int8_t> get_soft_bits(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
@@ -79,26 +79,25 @@ public:
   }
 };
 
+/// Implements a receiver softbuffer interface.
 class rx_softbuffer_impl : public rx_softbuffer
 {
 private:
   /// Reservation identifier.
   rx_softbuffer_identifier reservation_id;
-  /// Indicates the slot to expire.
+  /// Indicates the slot the softbuffer will expire at.
   slot_point reservation_expire_slot;
   /// Maximum number of codeblocks.
   static constexpr unsigned MAX_CODEBLOCKS = 52;
   /// Reference to the codeblock pool.
   rx_softbuffer_codeblock_pool& codeblock_pool;
-  /// Stores codeblocks CRC.
+  /// Stores codeblocks CRCs.
   static_vector<bool, MAX_CODEBLOCKS> crc;
-  /// Stores codeblocks identifiers.
+  /// Stores codeblock identifiers.
   static_vector<unsigned, MAX_CODEBLOCKS> codeblock_ids;
-  /// Protects concurrent access to codeblock identifiers.
-  std::mutex mutex;
 
 public:
-  /// \brief Create a receive softbuffer.
+  /// \brief Creates a receive softbuffer.
   /// \param[in] pool Provides the codeblock softbuffer pool.
   rx_softbuffer_impl(rx_softbuffer_codeblock_pool& pool) : codeblock_pool(pool)
   {
@@ -107,7 +106,7 @@ public:
 
   /// \brief Reserves the buffer.
   /// \param id Indicates the reservation identifier.
-  /// \param expire_slot Indicates the slot in which the reservation expires.
+  /// \param expire_slot Indicates the slot at which the reservation expires.
   /// \param nof_codeblocks Indicates the number of codeblocks to reserve.
   void reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
@@ -145,7 +144,7 @@ public:
     codeblock_ids.clear();
   }
 
-  /// \brief Runs per slot basis for expiring reserved buffers.
+  /// \brief Releases buffers that expire at the current slot.
   /// \param[in] slot Indicates the current slot.
   void run_slot(const slot_point& slot)
   {
@@ -160,7 +159,7 @@ public:
     }
   }
 
-  /// Determines if the buffer matches with an identifier.
+  /// Determines if the buffer matches the given identifier.
   bool match_id(const rx_softbuffer_identifier& identifier) const
   {
     return is_reserved() && (reservation_id == identifier);
@@ -204,18 +203,20 @@ private:
   rx_softbuffer_codeblock_pool codeblock_pool;
   /// Storage of softbuffers.
   std::vector<rx_softbuffer_impl> buffers;
-  /// Indicates the number of slots a softbuffer reservation shall expire.
+  /// Indicates the lifetime of a softbuffer reservation as a number of slots.
   unsigned expire_timeout_slots;
 
 public:
   /// \brief Creates a generic receiver softbuffer pool.
-  /// \param[in] config Provide the pool required parameters.
+  /// \param[in] config Provides the pool required parameters.
   rx_softbuffer_pool_impl(rx_softbuffer_pool_description& config) :
     codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size)
-  {}
+  {
+    // Do nothing.
+  }
 
   // See interface for documentation.
-  rx_softbuffer&
+  rx_softbuffer*
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned int nof_codeblocks) override;
 
   // See interface for documentation.
