@@ -10,10 +10,10 @@
 namespace srsgnb {
 
 struct test_case_t {
-  unsigned             nof_messages  = 0;
-  unsigned             input_length  = 0;
-  unsigned             output_length = 0;
-  modulation_scheme    mod           = {};
+  unsigned             nof_messages     = 0;
+  unsigned             message_length   = 0;
+  unsigned             codeblock_length = 0;
+  modulation_scheme    mod              = {};
   file_vector<uint8_t> messages;
   file_vector<uint8_t> codeblocks;
 };
