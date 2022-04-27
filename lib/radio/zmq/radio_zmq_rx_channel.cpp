@@ -102,7 +102,7 @@ void radio_zmq_rx_channel::send_request()
       int err = zmq_errno();
       if (err == EFSM || err == EAGAIN) {
         // Ignore timeout and FSM error.
-        // logger.debug("Exception to send request. {}.", zmq_strerror(zmq_errno()));
+        logger.debug("Exception to send request. {}.", zmq_strerror(zmq_errno()));
       } else {
         // This error cannot be ignored.
         logger.error("Socket failed to send request. {}.", zmq_strerror(zmq_errno()));
@@ -129,7 +129,7 @@ void radio_zmq_rx_channel::receive_response()
     int err = zmq_errno();
     if (err == EFSM || err == EAGAIN) {
       // Ignore timeout and FSM error.
-      // logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
+      logger.debug("Exception to receive data. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 
