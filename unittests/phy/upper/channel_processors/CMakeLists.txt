@@ -71,6 +71,18 @@ add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
 target_link_libraries(ssb_processor_unittest ssb_processor srslog)
 add_test(ssb_processor_unittest ssb_processor_unittest)
 
+add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
+target_link_libraries(ssb_processor_vectortest ssb_processor srsgnb_lower_phy_modulation srslog)
+add_test(ssb_processor_vectortest ssb_processor_vectortest)
+
+add_custom_command(
+  TARGET ssb_processor_vectortest
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
+  VERBATIM)
+
 add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
 target_link_libraries(pdsch_encoder_test pdsch_encoder srslog)
 
