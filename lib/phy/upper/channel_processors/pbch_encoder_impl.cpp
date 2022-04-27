@@ -25,22 +25,22 @@ pbch_encoder_impl::pbch_encoder_impl() :
   encoder(create_polar_encoder_pipelined(POLAR_N_MAX)),
   rm(create_polar_rate_matcher())
 {
-  code->set(K, E, POLAR_N_MAX, polar_code_ibil::not_present);
+  code->set(B, E, POLAR_N_MAX, polar_code_ibil::not_present);
 }
 
-/*
- *  Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G ( j )
- */
-static const uint32_t G[32] = {16, 23, 18, 17, 8,  30, 10, 6,  24, 7,  0,  5,  3,  2,  1,  4,
-                               9,  11, 12, 13, 14, 15, 19, 20, 21, 22, 25, 26, 27, 28, 29, 31};
+// Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
+static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 10, 6,  24, 7,  0,  5,  3,  2,  1,  4,
+                                                        9,  11, 12, 13, 14, 15, 19, 20, 21, 22, 25, 26, 27, 28, 29, 31};
 
 #define PBCH_SFN_PAYLOAD_BEGIN 1
 #define PBCH_SFN_PAYLOAD_LENGTH 6
 #define PBCH_SFN_2ND_LSB_G (G[PBCH_SFN_PAYLOAD_LENGTH + 2])
 #define PBCH_SFN_3RD_LSB_G (G[PBCH_SFN_PAYLOAD_LENGTH + 1])
 
-void pbch_encoder_impl::payload_generate(const srsgnb::pbch_encoder::pbch_msg_t& msg, std::array<uint8_t, A>& a)
+void pbch_encoder_impl::payload_generate(span<uint8_t> a, const srsgnb::pbch_encoder::pbch_msg_t& msg)
 {
+  assert(a.size() == A);
+
   // Extract actual payload size
   uint32_t A_hat = 24;
 
@@ -76,9 +76,9 @@ void pbch_encoder_impl::payload_generate(const srsgnb::pbch_encoder::pbch_msg_t&
   }
 }
 
-void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
-                                 const std::array<uint8_t, 32>&          a,
-                                 std::array<uint8_t, 32>&                a_prime)
+void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime,
+                                 const srsgnb::pbch_encoder::pbch_msg_t& msg,
+                                 span<const uint8_t>                     a)
 {
   uint32_t i = 0;
   uint32_t j = 0;
@@ -99,10 +99,10 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
   scrambler->advance(M * v);
 
   // Generate actual sequence
-  std::array<uint8_t, A> c = {};
+  std::array<uint8_t, PAYLOAD_SIZE> c = {};
   scrambler->apply_xor_bit(c, c);
 
-  while (i < A) {
+  while (i < PAYLOAD_SIZE) {
     uint8_t s_i = c[j];
 
     // Check if i belongs to a SS/PBCH block index which is only multiplexed when L_max is 64
@@ -121,66 +121,71 @@ void pbch_encoder_impl::scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
   }
 }
 
-void pbch_encoder_impl::crc_attach(std::array<uint8_t, A>& a_prime, std::array<uint8_t, B>& b)
+void pbch_encoder_impl::crc_attach(span<uint8_t> b, span<const uint8_t> a_prime)
 {
-  // Convert arrays to span
-  span<uint8_t> a_prime_span = {a_prime};
-  span<uint8_t> b_span       = {b};
+  assert(a_prime.size() == A);
+  assert(b.size() == B);
 
-  // Copy data if pointers do not match
-  if (a_prime.data() != b.data()) {
-    srsvec::copy(b_span.subspan(0, A), a_prime_span);
+  // Copy data if pointers do not match.
+  if (b.data() != a_prime.data()) {
+    srsvec::copy(b.first(A), a_prime);
   }
 
-  // Calculate checksum
-  unsigned checksum = crc24c->calculate_bit(a_prime_span);
+  // Calculate checksum.
+  unsigned checksum = crc24c->calculate_bit(a_prime);
 
-  // unpack and attach checksum
-  span<uint8_t> p = b_span.last(CRC_LEN);
-  srsvec::bit_unpack(checksum, p, CRC_LEN);
+  // Unpack and attach checksum.
+  srsvec::bit_unpack(b.last(CRC_LEN), checksum, CRC_LEN);
 }
 
-void pbch_encoder_impl::channel_coding(std::array<uint8_t, K>& c, std::array<uint8_t, POLAR_N>& d)
+void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 {
-  // 5.3.1.1 Interleaving
-  std::array<uint8_t, K> c_prime;
+  assert(c.size() == B);
+  assert(d.size() == POLAR_N);
+
+  // 5.3.1.1 Interleaving.
+  std::array<uint8_t, B> c_prime;
   interleaver->interleave(c, c_prime, polar_interleaver_direction::tx);
 
-  // Channel allocation
+  // Channel allocation.
   std::array<uint8_t, POLAR_N> allocated;
   alloc->allocate(c_prime, allocated, *code);
 
-  // Polar encoding
+  // Polar encoding.
   encoder->encode(allocated, code->get_n(), d);
 }
 
-void pbch_encoder_impl::rate_matching(std::array<uint8_t, POLAR_N>& d, span<uint8_t> f)
+void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 {
+  assert(d.size() == POLAR_N);
+  assert(f.size() == E);
+
   rm->rate_match(d, f, *code);
 }
 
-void pbch_encoder_impl::encode(const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg, span<uint8_t> f)
+void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg)
 {
-  assert(f.size() == E);
+  srsran_always_assert(
+      encoded.size() == E, "Invalid encoded size ({}), expected {}.", encoded.size(), static_cast<unsigned>(E));
 
-  // PBCH payload generation
+  // PBCH payload generation.
   std::array<uint8_t, A> a = {};
-  payload_generate(pbch_msg, a);
+  payload_generate(a, pbch_msg);
 
-  // Scrambling
+  // Scrambling.
   std::array<uint8_t, A> a_prime = {};
-  scramble(pbch_msg, a, a_prime);
+  scramble(a_prime, pbch_msg, a);
 
-  // CRC Attach
-  std::array<uint8_t, K> k = {};
-  crc_attach(a_prime, k);
+  // CRC Attach.
+  std::array<uint8_t, B> k = {};
+  crc_attach(k, a_prime);
 
-  // Channel coding
+  // Channel coding.
   std::array<uint8_t, POLAR_N> d = {};
-  channel_coding(k, d);
+  channel_coding(d, k);
 
-  // Rate matching
-  rate_matching(d, f);
+  // Rate matching.
+  rate_matching(encoded, d);
 }
 
 std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()

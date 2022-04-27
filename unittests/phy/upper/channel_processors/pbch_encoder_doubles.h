@@ -17,7 +17,7 @@ private:
   std::vector<entry_t> entries;
 
 public:
-  void encode(const pbch_msg_t& pbch_msg, span<uint8_t> encoded) override
+  void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) override
   {
     // Generate new entry
     entry_t entry = {};

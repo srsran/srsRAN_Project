@@ -23,7 +23,7 @@ int main()
   for (const test_case_t& test_case : pbch_encoder_test_data) {
     // Encode PBCH message.
     std::array<uint8_t, pbch_encoder::E> encoded_data = {};
-    encoder->encode(test_case.pbch_msg, encoded_data);
+    encoder->encode(encoded_data, test_case.pbch_msg);
 
     // Load output golden data
     const std::vector<uint8_t> testvector_encoded = test_case.encoded.read();

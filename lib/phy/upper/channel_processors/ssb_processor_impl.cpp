@@ -41,7 +41,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
 
   // Encode PBCH
   std::array<uint8_t, pbch_encoder::E> encoded_bits;
-  encoder->encode(pbch_msg, encoded_bits);
+  encoder->encode(encoded_bits, pbch_msg);
 
   // Create modulator configuration
   pbch_modulator::config_t modulator_config = {};

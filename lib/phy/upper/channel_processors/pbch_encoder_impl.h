@@ -34,50 +34,38 @@ private:
   std::unique_ptr<polar_encoder>           encoder;
   std::unique_ptr<polar_rate_matcher>      rm;
 
-  /**
-   * @brief Implements TS 38.312 section 7.1.1 PBCH payload generation
-   * @param msg PBCH message
-   * @param a Generated payload
-   */
-  void payload_generate(const srsgnb::pbch_encoder::pbch_msg_t& msg, std::array<uint8_t, A>& a);
+  /// \brief Implements TS 38.312 section 7.1.1 PBCH payload generation.
+  /// \param[out] a Generated payload.
+  /// \param[in] msg PBCH message.
+  void payload_generate(span<uint8_t> a, const srsgnb::pbch_encoder::pbch_msg_t& msg);
 
-  /**
-   * @brief Implements TS 38.312 section 7.1.2 Scrambling
-   * @param msg PBCH message
-   * @param a Payload
-   * @param a_prime Scrambled payload
-   */
-  void scramble(const srsgnb::pbch_encoder::pbch_msg_t& msg,
-                const std::array<uint8_t, A>&           a,
-                std::array<uint8_t, A>&                 a_prime);
+  /// \brief Implements TS 38.312 section 7.1.2 Scrambling.
+  /// \param[out] a_prime Scrambled payload.
+  /// \param[in] msg PBCH message.
+  /// \param[in] a Payload.
+  void scramble(span<uint8_t> a_prime, const srsgnb::pbch_encoder::pbch_msg_t& msg, span<const uint8_t> a);
 
-  /**
-   * @brief Implements TS 38.312 section 7.1.3 Transport block CRC attachment
-   * @param a_prime Payload after scrambling
-   * @param k Data with CRC attached
-   */
-  void crc_attach(std::array<uint8_t, A>& a_prime, std::array<uint8_t, K>& k);
+  /// \brief Implements TS 38.312 section 7.1.3 Transport block CRC attachment.
+  /// \param[in] b Data with CRC attached.
+  /// \param[in] a_prime Payload after scrambling.
+  void crc_attach(span<uint8_t> b, span<const uint8_t> a_prime);
 
-  /**
-   * @brief Implements TS 38.312 section 7.1.4 Channel coding
-   * @param c Payload after scrambling
-   * @param d Data with CRC attached
-   */
-  void channel_coding(std::array<uint8_t, K>& c, std::array<uint8_t, POLAR_N>& d);
+  /// \brief Implements TS 38.312 section 7.1.4 Channel coding.
+  /// \param[out] d Encoded data.
+  /// \param[in] c Payload after scrambling.
+  void channel_coding(span<uint8_t> d, span<const uint8_t> c);
 
-  /**
-   * @brief Implements TS 38.312 section 7.1.5 Rate matching
-   * @param a_prime Payload after scrambling
-   * @param k Data with CRC attached
-   */
-  void rate_matching(std::array<uint8_t, POLAR_N>& d, span<uint8_t> f);
+  /// \brief Implements TS 38.312 section 7.1.5 Rate matching.
+  /// \param[out] f Rate matched data.
+  /// \param[in] d Encoded data.
+  void rate_matching(span<uint8_t> f, span<const uint8_t> d);
 
 public:
-  explicit pbch_encoder_impl();
+  /// Constructs a generic PBCH encoder.
+  pbch_encoder_impl();
 
-  ~pbch_encoder_impl() = default;
-
-  void encode(const pbch_msg_t& pbch_msg, span<uint8_t> encoded) override;
+  // See interface for documentation.
+  void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) override;
 };
 
 } // namespace srsgnb
