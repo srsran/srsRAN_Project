@@ -98,9 +98,8 @@ static void fill_segment(span<uint8_t>                    segment,
   unsigned nof_used_bits = tr_block.size();
   // If needed, compute the CRC and append it to the information bits.
   if (nof_crc_bits > 0) {
-    unsigned      tmp_crc  = crc->calculate_bit(tr_block);
-    span<uint8_t> tmp_bits = segment.subspan(nof_used_bits, nof_crc_bits);
-    srsvec::bit_unpack(tmp_crc, tmp_bits, nof_crc_bits);
+    unsigned tmp_crc = crc->calculate_bit(tr_block);
+    srsvec::bit_unpack(segment.subspan(nof_used_bits, nof_crc_bits), tmp_crc, nof_crc_bits);
     nof_used_bits += nof_crc_bits;
   }
 
@@ -146,9 +145,8 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
   buffer.resize(nof_tb_bits_in);
   srsvec::bit_unpack(transport_block, span<uint8_t>(buffer).first(nof_tb_bits_tmp));
-  unsigned      tb_checksum = tb_crc.calculate_byte(transport_block);
-  span<uint8_t> p           = span<uint8_t>(buffer).last(nof_tb_crc_bits);
-  srsvec::bit_unpack(tb_checksum, p, nof_tb_crc_bits);
+  unsigned tb_checksum = tb_crc.calculate_byte(transport_block);
+  srsvec::bit_unpack(span<uint8_t>(buffer).last(nof_tb_crc_bits), tb_checksum, nof_tb_crc_bits);
 
   compute_nof_segments();
   compute_lifting_size();

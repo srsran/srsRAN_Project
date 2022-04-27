@@ -20,11 +20,18 @@ namespace srsgnb {
 
 namespace srsvec {
 
-void bit_unpack(unsigned value, span<uint8_t>& bits, unsigned nof_bits);
+/// \brief Unpacks an unsigned integer value into bits. The MSB is mapped to the first bit.
+/// \param[out] bits Unpacked bits.
+/// \param[in] value Provides the value to unpack.
+/// \param[in] nof_bits Indicates the number of bits to unpack.
+/// \return A view of the remainder of unpacked bits.
+span<uint8_t> bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits);
+
 void bit_unpack(span<const uint8_t> packed, span<uint8_t> unpacked);
 
 unsigned bit_pack(span<const uint8_t>& bits, unsigned nof_bits);
-void     bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed);
+
+void bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed);
 
 } // namespace srsvec
 } // namespace srsgnb

@@ -1,10 +1,10 @@
 
 #include "pdcch_encoder_impl.h"
-#include "srsgnb/support/srsran_assert.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/srsvec/binary.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/binary.h"
+#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 using namespace pdcch_constants;
@@ -24,7 +24,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
 
   // Unpack RNTI bits
   span<uint8_t> rnti_bits{unpacked_rnti};
-  srsvec::bit_unpack(rnti, rnti_bits, RNTI_LEN);
+  srsvec::bit_unpack(rnti_bits, rnti, RNTI_LEN);
 
   // Set first L bits to 1s
   std::fill(c.begin(), c.begin() + CRC_LEN, 1U);
@@ -37,8 +37,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
   unsigned      checksum = crc24c->calculate_bit(a_prime);
 
   // Unpack and attach checksum
-  span<uint8_t> p = c.last(CRC_LEN);
-  srsvec::bit_unpack(checksum, p, CRC_LEN);
+  span<uint8_t> p = srsvec::bit_unpack(c.last(CRC_LEN), checksum, CRC_LEN);
 
   // Scramble CRC parity bits with RNTI
   p = c.last(RNTI_LEN);

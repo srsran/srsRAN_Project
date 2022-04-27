@@ -113,7 +113,7 @@ static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uns
       srsran_assert(0, "Invalid BCH payload flag");
       break;
   }
-  srsvec::bit_unpack(payload, dest, dest.size());
+  srsvec::bit_unpack(dest, payload, dest.size());
 }
 
 /// Returns the beta pss from the given SSB pdu.

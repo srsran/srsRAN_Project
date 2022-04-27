@@ -30,8 +30,7 @@ void test_unpack(unsigned N)
   srsvec::aligned_vec<uint8_t> unpacked(N);
 
   // Unpack
-  span<uint8_t> bit_buf = unpacked;
-  srsvec::bit_unpack(value, bit_buf, N);
+  span<uint8_t> bit_buf = srsvec::bit_unpack(unpacked, value, N);
 
   // Make sure the allocate dbvector size remains the same while all bits are taken in bit_buff
   TESTASSERT_EQ(unpacked.size(), N);

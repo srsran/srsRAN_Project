@@ -17,7 +17,7 @@
 using namespace srsgnb;
 using namespace srsvec;
 
-void srsgnb::srsvec::bit_unpack(unsigned value, span<uint8_t>& bits, unsigned nof_bits)
+span<uint8_t> srsgnb::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, unsigned nof_bits)
 {
   assert(bits.size() >= nof_bits);
 
@@ -25,23 +25,22 @@ void srsgnb::srsvec::bit_unpack(unsigned value, span<uint8_t>& bits, unsigned no
     bits[i] = (value >> (nof_bits - i - 1)) & 0x1;
   }
 
-  bits = bits.subspan(nof_bits, bits.size() - nof_bits);
+  return bits.subspan(nof_bits, bits.size() - nof_bits);
 }
 
 void srsgnb::srsvec::bit_unpack(span<const uint8_t> packed, span<uint8_t> unpacked)
 {
-  unsigned      nbits  = unpacked.size();
-  unsigned      nbytes = packed.size();
-  unsigned      i;
-  span<uint8_t> unpacked_tmp = unpacked;
+  unsigned nbits  = unpacked.size();
+  unsigned nbytes = packed.size();
+  unsigned i;
 
   srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
   for (i = 0; i < nbytes; i++) {
-    bit_unpack(packed[i], unpacked_tmp, 8);
+    unpacked = bit_unpack(unpacked, packed[i], 8);
   }
   if (nbits % 8) {
-    bit_unpack(packed[i] >> (8 - nbits % 8), unpacked_tmp, nbits % 8);
+    bit_unpack(unpacked, packed[i] >> (8 - nbits % 8), nbits % 8);
   }
 }
 
