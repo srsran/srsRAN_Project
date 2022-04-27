@@ -4,7 +4,6 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
-#include <mutex>
 
 namespace srsgnb {
 
@@ -66,6 +65,7 @@ public:
   void free(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     entries[cb_id].reserved = false;
   }
 
@@ -75,6 +75,7 @@ public:
   span<int8_t> get_soft_bits(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].soft_bits;
   }
 };
@@ -115,7 +116,7 @@ public:
     reservation_expire_slot = expire_slot;
 
     // If the number of codeblocks match, skip the rest.
-    if (nof_codeblocks != codeblock_ids.size()) {
+    if (nof_codeblocks == codeblock_ids.size()) {
       return;
     }
 
@@ -169,11 +170,16 @@ public:
   bool is_reserved() const { return !codeblock_ids.empty(); }
 
   // See interface for documentation.
-  unsigned get_nof_codeblocks() const override { return crc.size(); }
+  unsigned get_nof_codeblocks() const override
+  {
+    srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
+    return crc.size();
+  }
 
   // See interface for documentation.
   void reset_codeblocks_crc() override
   {
+    srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
     // Set all codeblock CRC to false.
     for (bool& cb_crc : crc) {
       cb_crc = false;
@@ -181,11 +187,16 @@ public:
   }
 
   // See interface for documentation.
-  span<bool> get_codeblocks_crc() override { return crc; }
+  span<bool> get_codeblocks_crc() override
+  {
+    srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
+    return crc;
+  }
 
   // See interface for documentation.
   span<int8_t> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
+    srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
     srsran_always_assert(codeblock_id < codeblock_ids.size(),
                          "Codeblock index ({}) is out-of-range ({}).",
                          codeblock_id,
@@ -210,7 +221,9 @@ public:
   /// \brief Creates a generic receiver softbuffer pool.
   /// \param[in] config Provides the pool required parameters.
   rx_softbuffer_pool_impl(rx_softbuffer_pool_description& config) :
-    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size)
+    codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size),
+    buffers(config.max_softbuffers, codeblock_pool),
+    expire_timeout_slots(config.expire_timeout_slots)
   {
     // Do nothing.
   }
