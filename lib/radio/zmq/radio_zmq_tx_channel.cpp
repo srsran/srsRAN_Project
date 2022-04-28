@@ -24,21 +24,45 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
 
   // Validate the socket type.
   if (VALID_SOCKET_TYPES.count(config.socket_type) == 0) {
-    logger.error("Invalid transmitter type {} ({}).\n", config.socket_type, config.address);
+    logger.error("Invalid transmitter type {} ({}).", config.socket_type, config.address);
     return;
   }
 
   // Create socket.
   sock = zmq_socket(zmq_context, config.socket_type);
   if (sock == nullptr) {
-    logger.error("Failed to open transmitter socket ({}). {}.\n", config.address, zmq_strerror(zmq_errno()));
+    logger.error("Failed to open transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;
   }
 
   // Bind socket.
   logger.debug("Binding to address {}.", config.address);
-  if (zmq_bind(sock, config.address.c_str()) == -1) {
-    logger.error("Failed to bind transmitter socket ({}). {}.\n", config.address, zmq_strerror(zmq_errno()));
+  bool     bind_success     = false;
+  unsigned bind_trial_count = 0;
+  while (!bind_success && bind_trial_count != BIND_MAX_TRIALS) {
+    // Sleep if it is not the first trial.
+    if (bind_trial_count != 0) {
+      zmq_sleep(BIND_FAILURE_SLEEP_SECONDS);
+    }
+
+    // Try to bind.
+    bind_success = (zmq_bind(sock, config.address.c_str()) == 0);
+    if (!bind_success) {
+      // Unhandled error.
+      if (zmq_errno() != EADDRINUSE) {
+        break;
+      }
+
+      // Address already in use error.
+      logger.warning("Failed to bind transmitter socket ({}). {}. Trying in 1 seconds.",
+                     config.address,
+                     zmq_strerror(zmq_errno()));
+      bind_trial_count++;
+    }
+  }
+  
+  if (!bind_success) {
+    logger.error("Failed to bind transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;
   }
 
@@ -48,20 +72,20 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
 
     // Set receive timeout.
     if (zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set receive timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set receive timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 
     // Set send timeout.
     if (zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set send timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set send timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 
     // Set linger timeout.
     timeout = config.linger_timeout_ms;
     if (zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set linger timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set linger timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
   }

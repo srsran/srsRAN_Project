@@ -23,21 +23,21 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
 
   // Validate the socket type.
   if (VALID_SOCKET_TYPES.count(config.socket_type) == 0) {
-    logger.error("Invalid receiver type {} ({}).\n", config.socket_type, config.address);
+    logger.error("Invalid receiver type {} ({}).", config.socket_type, config.address);
     return;
   }
 
   // Create socket.
   sock = zmq_socket(zmq_context, config.socket_type);
   if (sock == nullptr) {
-    logger.error("Failed to open transmitter socket ({}). {}.\n", config.address, zmq_strerror(zmq_errno()));
+    logger.error("Failed to open transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;
   }
 
   // Bind socket.
   logger.debug("Connecting to address {}.", config.address);
   if (zmq_connect(sock, config.address.c_str()) == -1) {
-    logger.error("Failed to bind transmitter socket ({}). {}.\n", config.address, zmq_strerror(zmq_errno()));
+    logger.error("Failed to bind transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;
   }
 
@@ -47,20 +47,20 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
 
     // Set receive timeout.
     if (zmq_setsockopt(sock, ZMQ_RCVTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set receive timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set receive timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 
     // Set send timeout.
     if (zmq_setsockopt(sock, ZMQ_SNDTIMEO, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set send timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set send timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
 
     // Set linger timeout.
     timeout = config.linger_timeout_ms;
     if (zmq_setsockopt(sock, ZMQ_LINGER, &timeout, sizeof(timeout)) == -1) {
-      logger.error("Failed to set linger timeout on tx socket. {}.\n", zmq_strerror(zmq_errno()));
+      logger.error("Failed to set linger timeout on tx socket. {}.", zmq_strerror(zmq_errno()));
       return;
     }
   }

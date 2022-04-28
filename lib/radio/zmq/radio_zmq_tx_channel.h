@@ -21,6 +21,10 @@ private:
   static const std::set<int> VALID_SOCKET_TYPES;
   /// Wait time after a buffer try push failed.
   static constexpr unsigned CIRC_BUFFER_TRY_PUSH_SLEEP_FOR_MS = 1;
+  /// Maximum number of trials for binding.
+  static constexpr unsigned BIND_MAX_TRIALS = 10;
+  /// Sleep time after a bind failure in seconds.
+  static constexpr unsigned BIND_FAILURE_SLEEP_SECONDS = 1;
 
   /// Indicates the stream identifier.
   unsigned stream_id;

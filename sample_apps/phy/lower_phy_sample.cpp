@@ -90,6 +90,13 @@ static const std::vector<benchmark_configuration_profile> profiles = {
        sampling_rate_hz = 61.44e6;
        bw_rb            = 270;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+
+       unsigned port_base   = 5000;
+       unsigned port_offset = zmq_loopback ? 0 : 1000;
+       for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
+         tx_channel_args.emplace_back("tcp://*:" + std::to_string(port_base + channel_id));
+         rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(port_base + channel_id + port_offset));
+       }
      }},
 };
 
@@ -169,14 +176,6 @@ static void parse_args(int argc, char** argv)
     if (!found) {
       usage(argv[0]);
       srsran_terminate("Invalid profile {}.", profile_name);
-    }
-  }
-
-  if (driver_name == "zmq") {
-    unsigned port_offset = zmq_loopback ? 0 : 1000;
-    for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
-      tx_channel_args.emplace_back("tcp://*:" + std::to_string(5554 + channel_id));
-      rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(5554 + channel_id + port_offset));
     }
   }
 }

@@ -81,6 +81,7 @@ static void test(const test_description& config, radio_factory& factory, task_ex
 
   // Create radio session.
   std::unique_ptr<radio_session> session = factory.create(radio_config, async_task_executor, radio_notifier);
+  TESTASSERT(session, "Failed to open radio session.");
 
   // Get data plane.
   baseband_gateway& data_plane = session->get_baseband_gateway();
