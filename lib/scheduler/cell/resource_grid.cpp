@@ -3,11 +3,17 @@
 
 using namespace srsgnb;
 
-cell_resource_grid::cell_resource_grid(const cell_configuration& cfg_, slot_index_t sl_idx) :
-  cfg(cfg_), slot_index(sl_idx), dl_prbs(cfg.nof_dl_prbs, 0, false), ul_prbs(cfg.nof_ul_prbs, 0, false)
+cell_resource_grid::cell_resource_grid(const cell_configuration& cfg_) :
+  cfg(cfg_), dl_prbs(cfg.nof_dl_prbs), ul_prbs(cfg.nof_ul_prbs)
 {
   dl_grants.pci = cfg.pci;
   ul_grants.pci = cfg.pci;
+}
+
+void cell_resource_grid::slot_indication(slot_point sl)
+{
+  reset();
+  slot = sl;
 }
 
 void cell_resource_grid::reset()
@@ -22,9 +28,8 @@ void cell_resource_grid::reset()
 
 cell_resource_grid_pool::cell_resource_grid_pool(const cell_configuration& cfg_) : cfg(cfg_)
 {
-  slots_.reserve(RESOURCE_GRID_SIZE);
   for (unsigned i = 0; i < RESOURCE_GRID_SIZE; ++i) {
-    slots_.push_back(cell_resource_grid{cfg, i % 10});
+    slots_.emplace_back(cfg);
   }
 }
 

@@ -17,7 +17,7 @@ class ra_sched
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  ra_sched(const cell_configuration& cfg_);
+  explicit ra_sched(const cell_configuration& cfg_);
 
   /// Enqueue RACH indication
   /// See TS 38.321, 5.1.3 - RAP transmission
@@ -43,15 +43,14 @@ private:
 
   /// Allocate pending RAR and associated Msg3 grants
   /// \return The number of allocated Msg3 grants
-  unsigned
-  allocate_rar(const pending_rar_t& rar, slot_resource_allocator& rar_alloc, slot_resource_allocator& msg3_alloc);
+  unsigned allocate_rar(const pending_rar_t& rar, cell_resource_grid& rar_alloc, cell_resource_grid& msg3_alloc);
 
-  void fill_rar_grant(const pending_rar_t&     rar,
-                      const prb_interval&      rar_prbs,
-                      const prb_interval&      msg3_prbs,
-                      slot_resource_allocator& rar_alloc,
-                      slot_resource_allocator& msg3_alloc,
-                      unsigned                 nof_msg3_grants);
+  void fill_rar_grant(const pending_rar_t& rar,
+                      const prb_interval&  rar_prbs,
+                      const prb_interval&  msg3_prbs,
+                      cell_resource_grid&  rar_alloc,
+                      cell_resource_grid&  msg3_alloc,
+                      unsigned             nof_msg3_grants);
 
   // args
   const cell_configuration& cfg;

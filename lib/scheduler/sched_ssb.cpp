@@ -121,16 +121,16 @@ static void ssb_alloc_case_B(ssb_information_list& ssb_list,
   }
 }
 
-void sched_ssb(slot_resource_allocator slot_allocator,
-               const slot_point&       sl_point,
-               uint8_t                 ssb_periodicity,
-               uint16_t                offset_to_point_A,
-               uint32_t                freq_arfcn,
-               uint64_t                ssb_in_burst_bitmap,
-               ssb_pattern_case        ssb_case,
-               bool                    paired_spectrum)
+void sched_ssb(cell_resource_grid& res_grid,
+               const slot_point&   sl_point,
+               uint8_t             ssb_periodicity,
+               uint16_t            offset_to_point_A,
+               uint32_t            freq_arfcn,
+               uint64_t            ssb_in_burst_bitmap,
+               ssb_pattern_case    ssb_case,
+               bool                paired_spectrum)
 {
-  ssb_information_list& ssb_list = slot_allocator.dl_res().bc.ssb_info;
+  ssb_information_list& ssb_list = res_grid.dl_grants.bc.ssb_info;
 
   if (ssb_list.full()) {
     srslog::fetch_basic_logger("MAC-NR").error("SCHED: Failed to allocate SSB");
@@ -172,7 +172,7 @@ void sched_ssb(slot_resource_allocator slot_allocator,
 
   // Update the used DL PRBs with those allocated to the SSBs.
   for (auto& ssb : ssb_list) {
-    slot_allocator.used_bwp_dl_prbs() |= ssb.prbs;
+    res_grid.dl_prbs.fill(ssb.prbs.start(), ssb.prbs.stop());
   }
 }
 

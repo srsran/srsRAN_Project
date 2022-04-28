@@ -121,6 +121,12 @@ private:
   } alloc;
 };
 
+inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
+{
+  prb_bitmap.fill(grant.start(), grant.stop());
+  return prb_bitmap;
+}
+
 } // namespace srsgnb
 
 namespace fmt {

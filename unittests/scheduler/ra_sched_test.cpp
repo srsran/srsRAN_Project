@@ -32,7 +32,7 @@ static uint16_t get_ra_rnti(const rach_indication_message& msg)
 /// - No collision in UL PRBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
-  prb_bitmap                                  total_ul_prbs{cfg.nof_ul_prbs};
+  prb_bitmap                                     total_ul_prbs{cfg.nof_ul_prbs};
   circular_map<uint16_t, rnti_t, MAX_NOF_DU_UES> crntis;
 
   for (const rar_information& rar : rars) {
@@ -144,9 +144,9 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
                                              cell_resource_allocator&                  resource_grid)
 {
   // Check how many MSG3 grant allocations have been scheduled
-  slot_resource_allocator rar_alloc          = resource_grid[0];
-  unsigned                nof_allocated_msg3 = 0;
-  for (auto& rar : rar_alloc.dl_res().rar_grants) {
+  cell_resource_grid& rar_alloc          = resource_grid[0];
+  unsigned            nof_allocated_msg3 = 0;
+  for (auto& rar : rar_alloc.dl_grants.rar_grants) {
     nof_allocated_msg3 += rar.grants.size();
   }
 
@@ -178,10 +178,10 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
 /// Helper function that tests whether RARs have been allocated DL PRBs.
 static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
 {
-  slot_resource_allocator rar_alloc = resource_grid[0];
+  cell_resource_grid& rar_alloc = resource_grid[0];
 
-  if (rar_alloc.dl_res().rar_grants.size() > 0) {
-    TESTASSERT(rar_alloc.used_dl_prbs().count() > 0);
+  if (rar_alloc.dl_grants.rar_grants.size() > 0) {
+    TESTASSERT(rar_alloc.dl_prbs.any());
   }
 }
 
@@ -242,7 +242,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     return;
   }
 
-  slot_resource_allocator rar_alloc = resource_grid[0];
+  cell_resource_grid& rar_alloc = resource_grid[0];
 
   // For each RA-RNTI RACH list, test the RACH indication and corresponding RAR/MSG3 grants
   for (const auto& it : rach_per_ra_rnti_map) {
@@ -260,10 +260,10 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     };
 
     // Retrive RAR for given RA-RNTI from all RAR grants
-    auto wanted_rar_ra_rnti = find_rar(rar_alloc.dl_res().rar_grants, ra_ranti);
+    auto wanted_rar_ra_rnti = find_rar(rar_alloc.dl_grants.rar_grants, ra_ranti);
 
     // Per-RA-RANTI checks on RAR grant
-    TESTASSERT(wanted_rar_ra_rnti != rar_alloc.dl_res().rar_grants.end(),
+    TESTASSERT(wanted_rar_ra_rnti != rar_alloc.dl_grants.rar_grants.end(),
                "RAR with corrsponding RA-RNTI '{}' not found",
                ra_ranti);
     TESTASSERT_EQ(rach_ra_rnti_list.front().cell_index,
@@ -353,7 +353,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rar_grants);
+    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_grants.rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
     test_rar_general_allocation(bench.res_alloc);
@@ -451,7 +451,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_res().rar_grants);
+    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_grants.rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
     test_rar_general_allocation(bench.res_alloc);
@@ -500,24 +500,24 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
-      slot_resource_allocator pdcch_sl_res = bench.res_alloc[0];
-      slot_resource_allocator msg3_sl_res  = bench.res_alloc[msg3_delay];
+      cell_resource_grid& pdcch_sl_res = bench.res_alloc[0];
+      cell_resource_grid& msg3_sl_res  = bench.res_alloc[msg3_delay];
 
-      TESTASSERT(pdcch_sl_res.used_dl_prbs().count() > 0);
+      TESTASSERT(pdcch_sl_res.dl_prbs.any());
 
-      TESTASSERT_EQ(1, pdcch_sl_res.dl_res().rar_grants.size());
-      test_rar_consistency(bench.cfg, pdcch_sl_res.dl_res().rar_grants);
+      TESTASSERT_EQ(1, pdcch_sl_res.dl_grants.rar_grants.size());
+      test_rar_consistency(bench.cfg, pdcch_sl_res.dl_grants.rar_grants);
 
       // RAR
-      rar_information& rar = pdcch_sl_res.dl_res().rar_grants[0];
+      rar_information& rar = pdcch_sl_res.dl_grants.rar_grants[0];
 
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.used_ul_prbs().count());
+      TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.dl_prbs.count());
 
     } else {
-      TESTASSERT(bench.res_alloc[0].used_dl_prbs().count() == 0);
+      TESTASSERT(bench.res_alloc[0].dl_prbs.none());
     }
 
     sl_rx++;

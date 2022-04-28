@@ -36,7 +36,7 @@ struct test_bench {
   const slot_index_t tx_delay = 4;
 
   test_bench(ssb_pattern_case ssb_case, cell_configuration_request_message cell_cfg_msg) :
-    cell_res_grid(cell_configuration{cell_cfg_msg}, tx_delay)
+    cell_res_grid(cell_configuration{cell_cfg_msg})
   {
     uint8_t numerology = 0;
     switch (ssb_case) {
@@ -58,12 +58,12 @@ struct test_bench {
   void new_slot()
   {
     t++;
-    cell_res_grid.slot_index = t.to_uint() + tx_delay;
+    cell_res_grid.slot_indication(t + tx_delay);
     test_logger.set_context(t.to_uint());
     mac_logger.set_context(t.to_uint());
   }
 
-  slot_resource_allocator get_slot_allocator() { return slot_resource_allocator{cell_res_grid, t}; }
+  cell_resource_grid& get_slot_allocator() { return cell_res_grid; }
 
   slot_point slot_tx() { return t; }
 
@@ -76,14 +76,14 @@ srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST
 srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
 
 /// This function tests SSB case A and C (both paired and unpaired spectrum).
-void test_ssb_case_A_C(const slot_point&       slot_tx,
-                       uint16_t                ssb_periodicity,
-                       uint32_t                offset_to_point_A,
-                       uint32_t                freq_arfcn,
-                       uint32_t                freq_cutoff,
-                       uint8_t                 in_burst_bitmap,
-                       ssb_pattern_case        ssb_case,
-                       slot_resource_allocator slot_alloc)
+void test_ssb_case_A_C(const slot_point&   slot_tx,
+                       uint16_t            ssb_periodicity,
+                       uint32_t            offset_to_point_A,
+                       uint32_t            freq_arfcn,
+                       uint32_t            freq_cutoff,
+                       uint8_t             in_burst_bitmap,
+                       ssb_pattern_case    ssb_case,
+                       cell_resource_grid& slot_alloc)
 {
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).
@@ -105,7 +105,7 @@ void test_ssb_case_A_C(const slot_point&       slot_tx,
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1U) + (in_burst_bitmap & 0b00000001);
   }
 
-  const ssb_information_list& ssb_list = slot_alloc.dl_res().bc.ssb_info;
+  const ssb_information_list& ssb_list = slot_alloc.dl_grants.bc.ssb_info;
   // Check the SSB list size
   TESTASSERT_EQ(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
@@ -143,22 +143,22 @@ void test_ssb_case_A_C(const slot_point&       slot_tx,
     for (uint32_t prb_idx = 0; prb_idx < NOF_PRBS; prb_idx++) {
       bool expected_prb = prb_idx < offset_to_point_A or prb_idx >= (offset_to_point_A + NOF_SSB_PRBS) ? false : true;
       TESTASSERT_EQ(expected_prb,
-                    slot_alloc.used_bwp_dl_prbs().test(prb_idx),
+                    slot_alloc.dl_prbs.test(prb_idx),
                     "PRB index '{}' is '{}'",
                     prb_idx,
-                    slot_alloc.used_bwp_dl_prbs().test(prb_idx) ? "true" : "false");
+                    slot_alloc.dl_prbs.test(prb_idx) ? "true" : "false");
     }
   }
 }
 
 /// This function tests SSB case B.
-void test_ssb_case_B(const slot_point&       slot_tx,
-                     uint16_t                ssb_periodicity,
-                     uint32_t                offset_to_point_A,
-                     uint32_t                freq_arfcn,
-                     uint8_t                 in_burst_bitmap,
-                     ssb_pattern_case        ssb_case,
-                     slot_resource_allocator slot_alloc)
+void test_ssb_case_B(const slot_point&   slot_tx,
+                     uint16_t            ssb_periodicity,
+                     uint32_t            offset_to_point_A,
+                     uint32_t            freq_arfcn,
+                     uint8_t             in_burst_bitmap,
+                     ssb_pattern_case    ssb_case,
+                     cell_resource_grid& slot_alloc)
 {
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).
@@ -180,7 +180,7 @@ void test_ssb_case_B(const slot_point&       slot_tx,
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1U) + (in_burst_bitmap & 0b00000001);
   }
 
-  const ssb_information_list& ssb_list = slot_alloc.dl_res().bc.ssb_info;
+  const ssb_information_list& ssb_list = slot_alloc.dl_grants.bc.ssb_info;
   // Check the SSB list size
   TESTASSERT_EQ(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
@@ -251,10 +251,10 @@ void test_ssb_case_B(const slot_point&       slot_tx,
     for (uint32_t prb_idx = 0; prb_idx < NOF_PRBS; prb_idx++) {
       bool expected_prb = prb_idx < offset_to_point_A or prb_idx >= (offset_to_point_A + NOF_SSB_PRBS) ? false : true;
       TESTASSERT_EQ(expected_prb,
-                    slot_alloc.used_bwp_dl_prbs().test(prb_idx),
+                    slot_alloc.dl_prbs.test(prb_idx),
                     "PRB index '{}' is '{}'",
                     prb_idx,
-                    slot_alloc.used_bwp_dl_prbs().test(prb_idx) ? "true" : "false");
+                    slot_alloc.dl_prbs.test(prb_idx) ? "true" : "false");
     }
   }
 }
@@ -277,7 +277,7 @@ void test_ssb_time_allocation(uint16_t         ssb_periodicity,
   // Run test for a given number of slots.
   for (size_t slot_count = 0; slot_count < NUM_OF_TEST_SLOTS; slot_count++, bench.new_slot()) {
     // Clear the SSB list of it is not empty.
-    auto& ssb_list = bench.get_slot_allocator().dl_res().bc.ssb_info;
+    auto& ssb_list = bench.get_slot_allocator().dl_grants.bc.ssb_info;
     if (ssb_list.size() > 0) {
       ssb_list.clear();
     }
