@@ -42,7 +42,7 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 }
 
 /// Fill PHY full information for the given fapi_pdu. Returns a BCH payload, as per  TS38.212 Section 7.1.1.
-static uint32_t fill_phy_full_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
+static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
 {
   const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
   uint32_t                  payload = 0;
@@ -107,7 +107,7 @@ static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uns
       payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn, hrf);
       break;
     case bch_payload_type::phy_full:
-      payload = fill_phy_full_in_bch_payload(fapi_pdu, sfn, hrf);
+      payload = generate_bch_payload(fapi_pdu, sfn, hrf);
       break;
     default:
       srsran_assert(0, "Invalid BCH payload flag");
