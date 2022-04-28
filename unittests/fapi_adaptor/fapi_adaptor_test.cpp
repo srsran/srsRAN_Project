@@ -43,7 +43,7 @@ static void ssb_conversion_test()
     subcarrier_spacing    scs                   = static_cast<subcarrier_spacing>(enum_dist(gen));
 
     // :TODO: Begin with the MAC structure when it is defined.
-    dl_tti_request_message         msg;
+    dl_tti_request_message         msg = {};
     dl_tti_request_message_builder builder(msg);
     // :TODO: when the groups are available, add them.
     builder.set_basic_parameters(sfn, slot, 0);
