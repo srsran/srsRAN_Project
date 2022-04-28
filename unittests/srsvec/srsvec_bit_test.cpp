@@ -59,7 +59,7 @@ void test_unpack_vector(unsigned N)
   srsvec::aligned_vec<uint8_t> unpacked(nbits);
 
   // Unpack
-  srsvec::bit_unpack(packed, unpacked);
+  srsvec::bit_unpack(unpacked, packed);
 
   // Assert each bit
   for (unsigned i = 0; i != nbits; ++i) {
@@ -111,7 +111,7 @@ void test_pack_vector(unsigned N)
   srsvec::aligned_vec<uint8_t> packed(nbytes);
 
   // Unpack
-  srsvec::bit_pack(unpacked, packed);
+  srsvec::bit_pack(packed, unpacked);
 
   // Assert each bit
   for (unsigned i = 0; i != nbits; i++) {

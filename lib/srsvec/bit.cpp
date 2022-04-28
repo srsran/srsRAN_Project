@@ -28,7 +28,7 @@ span<uint8_t> srsgnb::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, uns
   return bits.subspan(nof_bits, bits.size() - nof_bits);
 }
 
-void srsgnb::srsvec::bit_unpack(span<const uint8_t> packed, span<uint8_t> unpacked)
+void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)
 {
   unsigned nbits  = unpacked.size();
   unsigned nbytes = packed.size();
@@ -58,7 +58,7 @@ unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
   return value;
 }
 
-void srsgnb::srsvec::bit_pack(span<const uint8_t> unpacked, span<uint8_t> packed)
+void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked)
 {
   unsigned nbits  = unpacked.size();
   unsigned nbytes = packed.size();

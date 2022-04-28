@@ -144,7 +144,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   nof_tb_bits_in = nof_tb_bits_tmp + nof_tb_crc_bits;
 
   buffer.resize(nof_tb_bits_in);
-  srsvec::bit_unpack(transport_block, span<uint8_t>(buffer).first(nof_tb_bits_tmp));
+  srsvec::bit_unpack(span<uint8_t>(buffer).first(nof_tb_bits_tmp), transport_block);
   unsigned tb_checksum = tb_crc.calculate_byte(transport_block);
   srsvec::bit_unpack(span<uint8_t>(buffer).last(nof_tb_crc_bits), tb_checksum, nof_tb_crc_bits);
 
