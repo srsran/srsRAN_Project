@@ -1,21 +1,98 @@
 
 #include "dmrs_pucch_processor_format1_impl.h"
+#include "srsgnb/phy/upper/channel_processors/pucch_helper.h"
+#include "srsgnb/srsvec/add.h"
+#include "srsgnb/srsvec/copy.h"
+#include "srsgnb/srsvec/prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
 
+namespace {
+
+// Implements TS 38.211 table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH...
+unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
+{
+  if (config.intra_slot_hopping) {
+    if (m_prime == 0) {
+      switch (config.nof_symbols) {
+        case 4:
+        case 5:
+          return 1;
+        case 6:
+        case 7:
+        case 8:
+        case 9:
+          return 2;
+        case 10:
+        case 11:
+        case 12:
+        case 13:
+          return 3;
+        case 14:
+          return 4;
+        default:; // Do nothing
+      }
+    } else {
+      switch (config.nof_symbols) {
+        case 4:
+        case 6:
+          return 1;
+        case 5:
+        case 7:
+        case 8:
+        case 10:
+          return 2;
+        case 9:
+        case 11:
+        case 12:
+        case 14:
+          return 3;
+        case 13:
+          return 4;
+        default:; // Do nothing
+      }
+    }
+  } else if (m_prime == 0) {
+    switch (config.nof_symbols) {
+      case 4:
+        return 2;
+      case 5:
+      case 6:
+        return 3;
+      case 7:
+      case 8:
+        return 4;
+      case 9:
+      case 10:
+        return 5;
+      case 11:
+      case 12:
+        return 6;
+      case 13:
+      case 14:
+        return 7;
+      default:; // Do nothing
+    }
+  }
+  srsran_assert(false, "Invalid case nof_symbols={} and m_prime={}", config.nof_symbols, m_prime);
+  return 0;
+}
+
+} // anonymous namespace
+
 void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>                    sequence,
                                                             const dmrs_pucch_processor::config_t& pucch_config,
-                                                            const seq_generation_config&          cfg,
+                                                            const sequence_generation_config&     cfg,
                                                             unsigned                              symbol) const
 {
   // Get Alpha index
-  unsigned alpha_idx = 0;
-  pucch_alpha_index(alpha_idx, pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
+  unsigned alpha_idx =
+      pucch_helper::get_alpha_index(pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
 
   // Get r_uv sequence from the sequence collection
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
-  srsran_assert(r_uv.size() != 0, "low PAPR sequence not implemented for the specified u, v and alpha");
+  srsran_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
 
   // Get orthogonal sequence
   cf_t w_i_m = occ->get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
@@ -24,48 +101,122 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
   srsvec::sc_prod(r_uv, w_i_m, sequence);
 }
 
-void dmrs_pucch_processor_format1_impl::mapping(resource_grid_writer&    grid,
-                                                span<const srsgnb::cf_t> sequence,
-                                                unsigned                 start_prb,
-                                                unsigned                 symbol) const
+void dmrs_pucch_processor_format1_impl::mapping(span<cf_t>                  ce,
+                                                const resource_grid_reader& grid,
+                                                unsigned                    start_prb,
+                                                unsigned                    symbol) const
 {
   std::array<resource_grid_coordinate, NRE> coordinates = {};
   for (unsigned i = 0; i < NRE; ++i) {
     coordinates[i].subcarrier = start_prb * NRE + i;
     coordinates[i].symbol     = symbol;
   }
-  grid.put(0, coordinates, sequence);
+  grid.get(ce, 0, coordinates);
 }
 
-void dmrs_pucch_processor_format1_impl::map(resource_grid_writer& grid, const dmrs_pucch_processor::config_t& config)
+void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&                     estimate,
+                                                 const resource_grid_reader&           grid,
+                                                 const dmrs_pucch_processor::config_t& config)
 {
   unsigned u, v;
   // Get group sequence.
-  pucch_group_sequence(config.group_hopping, config.n_id, u, v);
+  pucch_helper::compute_group_sequence(config.group_hopping, config.n_id, u, v);
 
+  // Array for the channel estimates.
+  std::array<std::array<cf_t, NRE>, 2U * PUCCH_FORMAT1_N_MAX> ce = {};
+  // Array for measurements
+  std::array<cf_t, 2U * PUCCH_FORMAT1_N_MAX> corr = {};
+
+  // Total number of processed PUCCH DMRS symbols.
+  unsigned n_pucch_sum = 0;
   // First symbol index.
   unsigned l_prime = config.start_symbol_index;
 
   // Clause 6.4.1.3.1.2 specifies l = 0, 2, 4...
   for (unsigned m_prime = 0, l = 0; m_prime < (config.intra_slot_hopping ? 2 : 1); m_prime++) {
     // Get number of symbols carrying DMRS
-    unsigned n_pucch = pucch_dmrs_symbols(config, m_prime);
+    unsigned n_pucch = dmrs_pucch_symbols(config, m_prime);
+
     srsran_assert(n_pucch > 0, "Error getting number of symbols");
 
     // Get the starting PRB.
     unsigned starting_prb = (m_prime == 0) ? config.starting_prb : config.second_hop_prb;
 
     // For each symbol carrying DM-RS
-    for (unsigned m = 0; m < n_pucch; m++, l += 2) {
+    for (unsigned m = 0; m != n_pucch; m++, l += 2) {
       unsigned symbol = l_prime + l;
 
-      // Generate sequence.
-      std::array<cf_t, NRE> sequence = {};
-      seq_generation_config cfg      = {.u = u, .v = v, .m = m, .n_pucch = n_pucch};
+      std::array<cf_t, NRE> sequence     = {};
+      std::array<cf_t, NRE> slot_symbols = {};
+      // Aggregate parameters and generate sequence.
+      sequence_generation_config cfg = {.u = u, .v = v, .m = m, .n_pucch = n_pucch};
       sequence_generation(sequence, config, cfg, symbol);
 
-      // Map sequence in symbols.
-      mapping(grid, sequence, starting_prb, symbol);
+      // Get DMRS symbols from the grid.
+      mapping(slot_symbols, grid, starting_prb, symbol);
+
+      // Perform estimation (calculate least square estimates for this symbol)
+      srsvec::prod_conj(slot_symbols, sequence, ce[n_pucch_sum]);
+
+      n_pucch_sum++;
+    }
+  }
+
+  // Perform measurements
+  float rsrp = 0.0f;
+  float epre = 0.0f;
+  for (unsigned m = 0; m < n_pucch_sum; ++m) {
+    // Compute RSRP
+    cf_t correlation = 0.0f;
+    std::for_each(std::begin(ce[m]), std::end(ce[m]), [&correlation](cf_t ce) {
+      // accumulate
+      correlation += ce;
+    });
+    corr[m] = correlation / static_cast<float>(NRE);
+    rsrp += std::norm(corr[m]);
+
+    // Compute EPRE
+    cf_t avg_power = 0;
+    std::for_each(std::begin(ce[m]), std::end(ce[m]), [&avg_power](cf_t ce) {
+      // conjugate dot-product
+      avg_power += (ce * std::conj(ce));
+    });
+    epre += std::real(avg_power) / static_cast<float>(NRE);
+  }
+
+  // Average measurements
+  rsrp /= n_pucch_sum;
+  epre /= n_pucch_sum;
+
+  // Set power measures
+  rsrp                         = std::min(rsrp, epre);
+  estimate.rsrp                = rsrp;
+  estimate.rsrp_dBfs           = convert_power_to_dB(rsrp);
+  estimate.epre                = epre;
+  estimate.epre_dBfs           = convert_power_to_dB(epre);
+  estimate.noise_estimate      = std::max(epre - rsrp, 1e-6f);
+  estimate.noise_estimate_dbFs = convert_power_to_dB(estimate.noise_estimate);
+  estimate.snr                 = rsrp / estimate.noise_estimate;
+  estimate.snr_db              = convert_power_to_dB(estimate.snr);
+
+  // Interpolates between DMRS symbols
+  for (uint32_t m = 0; m < n_pucch_sum; ++m) {
+    span<cf_t> ce_span(&estimate.ce[m * NRE], NRE);
+
+    if (m != n_pucch_sum - 1) {
+      // If it is not the last symbol with DMRS, average between
+      srsvec::add(ce[m], ce[m + 1], ce_span);
+      srsvec::sc_prod(ce_span, 0.5f, ce_span);
+    } else if (m != 0) {
+      // Extrapolate for the last if more than 1 are provided
+      srsvec::sc_prod(ce[m], 3.0f, ce_span);
+      // Subtraction ce[m - 1] - ce[m]
+      std::transform(
+          std::begin(ce_span), std::end(ce_span), std::begin(ce[m - 1]), std::begin(ce_span), std::minus<>());
+      srsvec::sc_prod(ce_span, 0.5f, ce_span);
+    } else {
+      // Simply copy the estimated channel
+      srsvec::copy(ce_span, span<cf_t>{ce[m]});
     }
   }
 }

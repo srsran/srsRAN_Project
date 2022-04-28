@@ -4,7 +4,6 @@
 
 #include <array>
 #include "srsgnb/ran/pucch_mapping.h"
-#include "srsgnb/adt/complex.h"
 #include "srsgnb/support/math_utils.h"
 #include <srsgnb/support/srsran_assert.h>
 
@@ -17,7 +16,7 @@ private:
       std::array<std::array<std::array<cf_t, PUCCH_FORMAT1_N_MAX>, PUCCH_FORMAT1_N_MAX>, PUCCH_FORMAT1_N_MAX>;
 
   // TS 38.211 Table 6.3.2.4.1-2: Orthogonal sequences for PUCCH format 1
-  static constexpr unsigned pucch_format1_rho[PUCCH_FORMAT1_N_MAX][PUCCH_FORMAT1_N_MAX][PUCCH_FORMAT1_N_MAX] = {
+  const unsigned pucch_format1_rho[PUCCH_FORMAT1_N_MAX][PUCCH_FORMAT1_N_MAX][PUCCH_FORMAT1_N_MAX] = {
       {{0}, {0, 0}, {0, 0, 0}, {0, 0, 0, 0}, {0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0}},
       {{}, {0, 1}, {0, 1, 2}, {0, 2, 0, 2}, {0, 1, 2, 3, 4}, {0, 1, 2, 3, 4, 5}, {0, 1, 2, 3, 4, 5, 6}},
       {{}, {}, {0, 2, 1}, {0, 0, 2, 2}, {0, 2, 4, 1, 3}, {0, 2, 4, 0, 2, 4}, {0, 2, 4, 6, 1, 3, 5}},

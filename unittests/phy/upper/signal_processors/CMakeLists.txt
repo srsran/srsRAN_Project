@@ -39,6 +39,18 @@ add_custom_command(
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pdsch_processor_test_data.tar.gz
   VERBATIM)
 
+add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)
+target_link_libraries(dmrs_pucch_processor_test signal_processors srsvec sequence_generators srslog srsgnb_support)
+add_test(dmrs_pucch_processor_test dmrs_pucch_processor_test)
+
+add_custom_command(
+        TARGET dmrs_pucch_processor_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pucch_processor_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pucch_processor_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pss_processor_test pss_processor_test.cpp)
 target_link_libraries(pss_processor_test signal_processors srsvec srslog)
 add_test(pss_processor_test pss_processor_test)

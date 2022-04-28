@@ -2,11 +2,17 @@
 #define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_H
 
 #include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsgnb/phy/upper/channel_estimate.h"
 #include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/slot_point.h"
+#include "srsgnb/adt/static_vector.h"
 #include <memory>
 
 namespace srsgnb {
+
+// forward declarations
+class pucch_orthogonal_sequence;
+class low_papr_sequence_collection;
 
 /// Describes a DMRS for PUCCH processor interface.
 class dmrs_pucch_processor
@@ -45,6 +51,8 @@ public:
     /// Higher layer parameter scramblingID0 in DMRS-UplinkConfig if it is given, otherwise the physical cell
     /// identifier.
     unsigned n_id_0;
+    /// Port indexes the PDSCH transmission is mapped onto.
+    static_vector<uint8_t, MAX_PORTS> ports;
   };
 
   /// Default destructor.
@@ -52,10 +60,16 @@ public:
 
   /// \brief Generates and maps DMRS for PUCCH according to TS 38.211 section 6.4.1.3.
   ///
-  /// \param[out] grid Provides the destination resource grid.
-  /// \param[in] config Provides the required configuration to generate and map the signal.
-  virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
+  /// \param[out] estimate Channel estimation results.
+  /// \param[in]  grid     Provides the source resource grid.
+  /// \param[in]  config   Provides the required configuration to estimate channel.
+  virtual void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) = 0;
 };
+
+/// Creates a generic DMRS for PUCCH instance.
+std::unique_ptr<dmrs_pucch_processor> create_dmrs_pucch_processor(const pucch_format&                 format,
+                                                                  const low_papr_sequence_collection* c   = nullptr,
+                                                                  const pucch_orthogonal_sequence*    occ = nullptr);
 
 } // namespace srsgnb
 

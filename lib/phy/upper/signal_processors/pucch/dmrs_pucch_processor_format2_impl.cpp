@@ -19,4 +19,7 @@ void dmrs_pucch_processor_format2_impl::mapping(resource_grid_writer&           
                                                 const dmrs_pucch_processor::config_t& config)
 {}
 
-void dmrs_pucch_processor_format2_impl::map(resource_grid_writer& grid, const dmrs_pucch_processor::config_t& config) {}
+void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&                     estimate,
+                                                 const resource_grid_reader&           grid,
+                                                 const dmrs_pucch_processor::config_t& config)
+{}

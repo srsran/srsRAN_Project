@@ -39,7 +39,7 @@ private:
                const config_t&       config);
 
 public:
-  void map(resource_grid_writer& grid, const config_t& config) override;
+  void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

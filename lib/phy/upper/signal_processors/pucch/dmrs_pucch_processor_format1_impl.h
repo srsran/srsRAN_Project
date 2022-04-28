@@ -4,8 +4,8 @@
 
 #include "srsgnb/phy/upper/signal_processors/pucch_orthogonal_sequence.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
+#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
-#include "srsgnb/phy/upper/channel_processors/pucch_helper.h"
 
 namespace srsgnb {
 
@@ -20,7 +20,7 @@ private:
   const pucch_orthogonal_sequence* occ;
 
   // Internal struct holding sequence generation parameters
-  struct seq_generation_config {
+  struct sequence_generation_config {
     // sequence group
     unsigned u;
     // sequence number
@@ -39,16 +39,16 @@ private:
   /// \param[in]  symbol       Denotes the symbol index.
   void sequence_generation(span<srsgnb::cf_t>                    sequence,
                            const dmrs_pucch_processor::config_t& pucch_config,
-                           const seq_generation_config&          gen_config,
+                           const sequence_generation_config&     gen_config,
                            unsigned                              symbol) const;
 
   /// \brief Implements TS 38.211 section 6.4.1.3.1.2 Mapping to physical resources.
   ///
-  /// \param[out] grid     Provides the grid destination to map the signal.
-  /// \param[in] sequence  Provides the generated sequence for the given symbol.
-  /// \param[in] start_prb Provides a PRB index for the given symbol.
-  /// \param[in] symbol    Denotes the symbol index.
-  void mapping(resource_grid_writer& grid, span<const cf_t> sequence, unsigned start_prb, unsigned symbol) const;
+  /// \param[out] ce        Container for storing extracted slot symbol DMRS pilots.
+  /// \param[in]  grid      Provides the source grid to read the signal.
+  /// \param[in]  start_prb Provides a PRB index for the given symbol.
+  /// \param[in]  symbol    Denotes the symbol index.
+  void mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned symbol) const;
 
 public:
   dmrs_pucch_processor_format1_impl(const low_papr_sequence_collection* c, const pucch_orthogonal_sequence* occ) :
@@ -56,7 +56,7 @@ public:
     occ(occ)
   {}
 
-  void map(resource_grid_writer& grid, const config_t& config) override;
+  void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

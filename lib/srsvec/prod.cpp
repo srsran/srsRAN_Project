@@ -11,6 +11,7 @@
  */
 
 #include "srsgnb/srsvec/prod.h"
+#include <cmath>
 
 #define HAVE_SSE
 #include "simd.h"
@@ -94,4 +95,14 @@ void srsgnb::srsvec::prod(span<const float> x, span<const float> y, span<float> 
   srsgnb_srsvec_assert_size(x, z);
 
   prod_fff_simd(x.data(), y.data(), z.data(), x.size());
+}
+
+void srsgnb::srsvec::prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z)
+{
+  srsgnb_srsvec_assert_size(x, y);
+  srsgnb_srsvec_assert_size(x, z);
+
+  for (unsigned i = 0; i < x.size(); ++i) {
+    z[i] = x[i] * std::conj(y[i]);
+  }
 }
