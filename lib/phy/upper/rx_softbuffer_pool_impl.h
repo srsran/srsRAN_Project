@@ -4,6 +4,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include <mutex>
 
 namespace srsgnb {
 
@@ -216,6 +217,8 @@ private:
   std::vector<rx_softbuffer_impl> buffers;
   /// Indicates the lifetime of a softbuffer reservation as a number of slots.
   unsigned expire_timeout_slots;
+  /// Protects methods from concurrent calls.
+  std::mutex mutex;
 
 public:
   /// \brief Creates a generic receiver softbuffer pool.

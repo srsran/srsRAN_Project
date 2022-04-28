@@ -6,6 +6,8 @@ rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
                                                            const rx_softbuffer_identifier& id,
                                                            unsigned int                    nof_codeblocks)
 {
+  std::unique_lock<std::mutex> lock(mutex);
+
   // Look for the same identifier.
   for (rx_softbuffer_impl& buffer : buffers) {
     if (buffer.match_id(id)) {
@@ -30,6 +32,8 @@ rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
 
 void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id)
 {
+  std::unique_lock<std::mutex> lock(mutex);
+
   // Search for a buffer that matches the id.
   for (rx_softbuffer_impl& buffer : buffers) {
     if (buffer.match_id(id)) {
@@ -42,6 +46,8 @@ void rx_softbuffer_pool_impl::free_softbuffer(const rx_softbuffer_identifier& id
 
 void rx_softbuffer_pool_impl::run_slot(const slot_point& slot)
 {
+  std::unique_lock<std::mutex> lock(mutex);
+
   // Run slot for each buffer.
   for (rx_softbuffer_impl& buffer : buffers) {
     buffer.run_slot(slot);
