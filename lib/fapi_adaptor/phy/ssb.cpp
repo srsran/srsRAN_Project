@@ -51,7 +51,7 @@ static uint32_t fill_phy_full_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_
   // Leave to zero.
 
   // systemFrameNumber - 6 bits MSB.
-  payload |= ((sfn & 0x3F) << 25u);
+  payload |= (((sfn >> 4u) & 0x3F) << 25u);
 
   // subCarrierSpacingCommon - 1 bit.
   uint32_t scs_flag = (fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz15 ||
@@ -78,7 +78,7 @@ static uint32_t fill_phy_full_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_
   // Spare - 1 bit.
   // Leave to zero.
 
-  // Add the sfn. - 4 bit.
+  // Add the sfn. - 4 bit LSB.
   payload |= ((sfn & 0xF) << 4u);
 
   // Half radio frame bit.
