@@ -15,8 +15,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(const ofdm_demodulato
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
   center_freq_hz(ofdm_config.center_freq_hz),
-  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::DIRECT})),
-  temp_buffer(dft_size)
+  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::DIRECT}))
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(
@@ -51,7 +50,7 @@ cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index)
   return (cf_t)std::conj(std::exp(std::complex<double>(I * phase_rad)));
 }
 
-unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index) const
+unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index)
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
@@ -98,7 +97,7 @@ void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    g
   // Apply scaling and phase compensation.
   std::vector<cf_t> compensated_output(dft_size);
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
-  
+
   // Map the upper bound frequency domain data.
   span<cf_t> upper_bound(&compensated_output[dft_size - rg_size / 2], rg_size / 2);
   grid.put(port_index, symbol_index % nsymb, 0, upper_bound);
@@ -135,7 +134,7 @@ void ofdm_slot_demodulator_impl::demodulate(resource_grid_writer& grid,
 
     // Get the offset to the start of the (CP of the) current symbol within the slot.
     unsigned offset = symbol_demodulator.get_cp_offset(symbol_idx, slot_index);
-    
+
     // Demodulate symbol.
     symbol_demodulator.demodulate(grid, input.subspan(offset, symbol_sz), port_index, nsymb * slot_index + symbol_idx);
   }

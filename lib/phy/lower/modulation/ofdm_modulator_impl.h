@@ -32,8 +32,6 @@ private:
   double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
-  /// Temporal data buffer.
-  srsvec::aligned_vec<cf_t> temp_buffer;
 
   /// \brief Gets the offset to a symbol including the cyclic prefixes.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.

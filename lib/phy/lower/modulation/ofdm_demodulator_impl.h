@@ -32,8 +32,6 @@ private:
   double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
-  /// Temporal data buffer.
-  srsvec::aligned_vec<cf_t> temp_buffer;
 
   /// \brief Gets the offset to a symbol including the cyclic prefixes.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
@@ -52,17 +50,21 @@ public:
   ofdm_symbol_demodulator_impl(const ofdm_demodulator_factory_config& factory_config,
                                const ofdm_demodulator_configuration&  ofdm_config);
 
+  /// \brief Gets the resource grid bandwidth in resource elements.
+  /// \return The number of resource elements in the grid.
+  unsigned get_rg_size() const { return rg_size; };
+
+  /// \brief Gets the offset in samples to the start of (the cyclic prefix of) a given symbol.
+  /// \param[in] symbol_index Indicates the symbol index within the subframe.
+  /// \param[in] slot_index Slot index within the subframe containing the symbol to demodulate.
+  /// \return The number of samples preceding the given symbol.
+  unsigned get_cp_offset(unsigned symbol_index, unsigned slot_index);
+
   // See interface for documentation.
   unsigned get_symbol_size(unsigned symbol_index) const override
   {
     return cp.get_length(symbol_index, numerology, dft_size) + dft_size;
   }
-
-  // See interface for documentation.
-  unsigned get_rg_size() const override { return rg_size; }
-
-  // See interface for documentation.
-  unsigned get_cp_offset(unsigned symbol_index, unsigned slot_index) const override;
 
   // See interface for documentation.
   void

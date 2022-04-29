@@ -15,8 +15,7 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_fact
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
   center_freq_hz(ofdm_config.center_freq_hz),
-  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::INVERSE})),
-  temp_buffer(dft_size)
+  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::INVERSE}))
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(
