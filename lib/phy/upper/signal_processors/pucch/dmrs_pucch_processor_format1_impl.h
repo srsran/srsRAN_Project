@@ -2,9 +2,8 @@
 #ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
 
-#include "srsgnb/phy/upper/signal_processors/pucch_orthogonal_sequence.h"
+#include "pucch_orthogonal_sequence.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
 
 namespace srsgnb {

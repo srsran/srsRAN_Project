@@ -5,7 +5,7 @@
 #include <array>
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/support/math_utils.h"
-#include <srsgnb/support/srsran_assert.h>
+#include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
 

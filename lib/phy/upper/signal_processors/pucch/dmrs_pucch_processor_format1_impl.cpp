@@ -1,6 +1,6 @@
 
 #include "dmrs_pucch_processor_format1_impl.h"
-#include "srsgnb/phy/upper/channel_processors/pucch_helper.h"
+#include "pucch_helper.h"
 #include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/prod.h"
@@ -8,10 +8,8 @@
 
 using namespace srsgnb;
 
-namespace {
-
 // Implements TS 38.211 table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH...
-unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
+static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
 {
   if (config.intra_slot_hopping) {
     if (m_prime == 0) {
@@ -79,16 +77,17 @@ unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsign
   return 0;
 }
 
-} // anonymous namespace
-
 void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>                    sequence,
                                                             const dmrs_pucch_processor::config_t& pucch_config,
                                                             const sequence_generation_config&     cfg,
                                                             unsigned                              symbol) const
 {
-  // Get Alpha index
+  // Get an instance of pucch_helper
+  pucch_helper helper;
+
+  // Compute alpha index
   unsigned alpha_idx =
-      pucch_helper::get_alpha_index(pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
+      helper.get_alpha_index(pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
 
   // Get r_uv sequence from the sequence collection
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
@@ -106,7 +105,7 @@ void dmrs_pucch_processor_format1_impl::mapping(span<cf_t>                  ce,
                                                 unsigned                    start_prb,
                                                 unsigned                    symbol) const
 {
-  std::array<resource_grid_coordinate, NRE> coordinates = {};
+  std::array<resource_grid_coordinate, NRE> coordinates;
   for (unsigned i = 0; i < NRE; ++i) {
     coordinates[i].subcarrier = start_prb * NRE + i;
     coordinates[i].symbol     = symbol;
@@ -118,9 +117,12 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
+  // Get an instance of pucch_helper
+  pucch_helper helper;
+
   unsigned u, v;
-  // Get group sequence.
-  pucch_helper::compute_group_sequence(config.group_hopping, config.n_id, u, v);
+  // Compute group sequence.
+  helper.compute_group_sequence(config.group_hopping, config.n_id, u, v);
 
   // Array for the channel estimates.
   std::array<std::array<cf_t, NRE>, 2U * PUCCH_FORMAT1_N_MAX> ce = {};

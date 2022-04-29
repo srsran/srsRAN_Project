@@ -2,7 +2,7 @@
 #include "dmrs_pucch_processor_test_data.h"
 #include "../../resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
-#include "srsgnb/phy/upper/signal_processors/pucch_orthogonal_sequence.h"
+#include "../../../../lib/phy/upper/signal_processors/pucch/pucch_orthogonal_sequence.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 
 using namespace srsgnb;

@@ -3,15 +3,20 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUCCH_HELPER_H
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include <srsgnb/ran/frame_types.h>
+#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/frame_types.h"
 
 namespace srsgnb {
 
 class pucch_helper
 {
+private:
+  // Pseudo-random sequence generator instance
+  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+
 public:
   /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).
-  static void compute_group_sequence(pucch_group_hopping group_hopping, unsigned n_id, unsigned& u, unsigned& v)
+  void compute_group_sequence(pucch_group_hopping group_hopping, unsigned n_id, unsigned& u, unsigned& v)
   {
     unsigned f_gh = 0;
     unsigned f_ss = 0;
@@ -21,10 +26,10 @@ public:
         f_ss = n_id % low_papr_sequence_collection::NOF_GROUPS;
         break;
       case pucch_group_hopping::ENABLE:
-        srsran_assert(false, "Group hopping is not implemented");
+        srsran_terminate("Group hopping is not implemented");
         return;
       case pucch_group_hopping::DISABLE:
-        srsran_assert(false, "Hopping is not implemented");
+        srsran_terminate("Hopping is not implemented");
         return;
     }
 
@@ -40,11 +45,8 @@ public:
   /// \param m0[in]         Initial cyclic shift
   /// \param m_cs[in]       Cyclic shift
   /// \return NR alpha index
-  static unsigned get_alpha_index(const slot_point& slot, unsigned n_id, unsigned symbol, unsigned m0, unsigned m_cs)
+  unsigned get_alpha_index(const slot_point& slot, unsigned n_id, unsigned symbol, unsigned m0, unsigned m_cs)
   {
-    // Pseudo-random sequence generator instance
-    std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
-
     // Initialize pseudo-random sequence with the seed set to nid
     unsigned cinit = n_id;
 
