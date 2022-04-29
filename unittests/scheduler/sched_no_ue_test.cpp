@@ -26,7 +26,6 @@ void test_no_ues()
   // Action 2: Run slot 0.
   const dl_sched_result* res = sch.get_dl_sched(sl_tx, to_du_cell_index(0));
   TESTASSERT(res != nullptr);
-  TESTASSERT_EQ(cell_cfg_msg.pci, res->pci);
   TESTASSERT(res->ue_grants.empty());
 }
 
@@ -50,7 +49,6 @@ void test_rach_indication()
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.
   TESTASSERT(res != nullptr);
-  TESTASSERT_EQ(cell_cfg_msg.pci, res->pci);
   TESTASSERT(res->ue_grants.empty());
   TESTASSERT(not res->rar_grants.empty());
 }

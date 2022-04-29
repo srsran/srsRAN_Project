@@ -37,8 +37,8 @@ void test_pusch_resource_allocation()
 
   // Action 3: Allocate PUSCH grant in slot_tx + 1
   prb_interval ul_grant2{4, 20};
-  res_alloc[0].ul_prbs |= ul_grant2;
-  res_alloc[0].ul_grants.puschs.emplace_back();
+  res_alloc[1].ul_prbs |= ul_grant2;
+  res_alloc[1].ul_grants.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx + 1
   TESTASSERT(res_grid_pool[sl_tx + 1].ul_prbs.any());

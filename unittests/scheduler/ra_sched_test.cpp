@@ -111,10 +111,10 @@ struct test_bench {
 
   void slot_indication(slot_point sl_tx)
   {
+    test_logger.info("Starting new slot {}", sl_tx);
     mac_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
     res_grid.slot_indication(sl_tx);
     test_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
-    test_logger.info("Starting new slot - for k2: '{}'", k2);
   }
 
   uint8_t k2 = 0;
@@ -514,7 +514,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.dl_prbs.count());
+      TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.ul_prbs.count());
 
     } else {
       TESTASSERT(bench.res_alloc[0].dl_prbs.none());

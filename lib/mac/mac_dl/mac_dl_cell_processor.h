@@ -39,13 +39,17 @@ private:
 
   /// Assemble struct that is going to be passed down to PHY with the DL scheduling result.
   /// \remark FAPI will use this struct to generate a DL_TTI.Request.
-  void
-  assemble_dl_sched_request(mac_dl_sched_result& mac_res, du_cell_index_t cell_index, const dl_sched_result& dl_res);
+  void assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
+                                 slot_point             sl_tx,
+                                 du_cell_index_t        cell_index,
+                                 const dl_sched_result& dl_res);
 
   /// Assemble struct with the MAC PDUs of a given slot and cell that is going be passed to the PHY.
   /// \remark FAPI will use this struct to generate a Tx_Data.Request.
-  void
-  assemble_dl_data_request(du_cell_index_t cell_index, const dl_sched_result& dl_res, mac_dl_data_result& mac_data);
+  void assemble_dl_data_request(mac_dl_data_result&    mac_data,
+                                slot_point             sl_tx,
+                                du_cell_index_t        cell_index,
+                                const dl_sched_result& dl_res);
 
   mac_common_config_t&         cfg;
   srslog::basic_logger&        logger;

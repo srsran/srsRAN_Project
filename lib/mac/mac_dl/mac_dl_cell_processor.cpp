@@ -53,14 +53,14 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
   mac_dl_sched_result mac_dl_res;
-  assemble_dl_sched_request(mac_dl_res, cell_cfg.cell_index, *dl_res);
+  assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, *dl_res);
 
   // Send DL sched result to PHY.
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
   // Start assembling Slot Data Result.
   mac_dl_data_result data_res;
-  assemble_dl_data_request(cell_cfg.cell_index, *dl_res, data_res);
+  assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, *dl_res);
 
   // Send DL Data to PHY.
   phy_cell.on_new_downlink_data(data_res);
@@ -73,6 +73,7 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 }
 
 void mac_dl_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
+                                                      slot_point             sl_tx,
                                                       du_cell_index_t        cell_index,
                                                       const dl_sched_result& dl_res)
 {
@@ -100,12 +101,11 @@ void mac_dl_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac
   }
 }
 
-void mac_dl_cell_processor::assemble_dl_data_request(du_cell_index_t        cell_index,
-                                                     const dl_sched_result& dl_res,
-                                                     mac_dl_data_result&    data_res)
+void mac_dl_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_res,
+                                                     slot_point             sl_tx,
+                                                     du_cell_index_t        cell_index,
+                                                     const dl_sched_result& dl_res)
 {
-  data_res.slot = dl_res.slot_value;
-
   // Assemble scheduled SIBs' payload.
   for (const sib_information& sib : dl_res.bc.sibs) {
     data_res.pdus.emplace_back();

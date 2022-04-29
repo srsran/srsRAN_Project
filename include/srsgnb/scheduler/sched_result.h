@@ -94,9 +94,6 @@ struct dl_broadcast_allocation {
 };
 
 struct dl_sched_result {
-  pci_t      pci;
-  slot_point slot_value;
-
   /// Allocation of SSB and SIBs
   dl_broadcast_allocation bc;
 
@@ -112,7 +109,6 @@ struct ul_sched_info {
 };
 
 struct ul_sched_result {
-  pci_t pci;
   /// Allocation of PUSCHs
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
 };

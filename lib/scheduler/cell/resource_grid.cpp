@@ -5,10 +5,7 @@ using namespace srsgnb;
 
 cell_resource_grid::cell_resource_grid(const cell_configuration& cfg_) :
   cfg(cfg_), dl_prbs(cfg.nof_dl_prbs), ul_prbs(cfg.nof_ul_prbs)
-{
-  dl_grants.pci = cfg.pci;
-  ul_grants.pci = cfg.pci;
-}
+{}
 
 void cell_resource_grid::slot_indication(slot_point sl)
 {
