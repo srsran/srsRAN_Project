@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-/// Bitset of PRBs with size up to 275
+/// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
 /// Bitset of RBGs with size up to 18

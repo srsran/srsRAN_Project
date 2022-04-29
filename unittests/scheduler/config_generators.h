@@ -39,12 +39,12 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
 cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
   cell_configuration_request_message msg{};
-  msg.cell_index        = to_du_cell_index(0);
-  msg.dl_cell_bandwidth = 10e6;
-  msg.dl_cell_bandwidth = 10e6;
-  msg.pci               = 1;
-  msg.nof_ant_ports     = 1;
-  msg.nof_beams         = 1;
+  msg.cell_index                = to_du_cell_index(0);
+  msg.dl_carrier.carrier_bw_mhz = 10;
+  msg.ul_cell_bw_mhz            = 10;
+  msg.pci                       = 1;
+  msg.nof_ant_ports             = 1;
+  msg.nof_beams                 = 1;
 
   msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
   msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;

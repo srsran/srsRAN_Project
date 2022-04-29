@@ -10,17 +10,41 @@ namespace srsgnb {
 enum class subcarrier_spacing { kHz15 = 0, kHz30, kHz60, kHz120, kHz240, invalid };
 
 /// Check if SCS value is valid.
-inline bool is_scs_valid(subcarrier_spacing scs)
+constexpr inline bool is_scs_valid(subcarrier_spacing scs)
 {
   return scs <= subcarrier_spacing::kHz240;
 }
+constexpr inline bool is_scs_valid(subcarrier_spacing scs, bool is_fr2)
+{
+  return is_scs_valid(scs) and
+         ((is_fr2 and scs >= subcarrier_spacing::kHz60) or (not is_fr2 and scs <= subcarrier_spacing::kHz60));
+}
 
 /// Convert SCS into integer in kHz
-inline unsigned scs_to_khz(subcarrier_spacing scs)
+constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
 {
-  constexpr static unsigned values[] = {15, 30, 60, 120, 240};
-  srsran_sanity_check(is_scs_valid(scs), "Invalid SCS");
-  return values[(unsigned)scs];
+  switch (scs) {
+    case subcarrier_spacing::kHz15:
+      return 15;
+    case subcarrier_spacing::kHz30:
+      return 30;
+    case subcarrier_spacing::kHz60:
+      return 60;
+    case subcarrier_spacing::kHz120:
+      return 120;
+    case subcarrier_spacing::kHz240:
+      return 240;
+    default:
+      break;
+  }
+  srsran_terminate("Invalid SCS");
+  return 0;
+}
+
+/// Convert SCS to numerology index (mu)
+constexpr unsigned to_numerology_value(subcarrier_spacing scs)
+{
+  return static_cast<unsigned>(scs);
 }
 
 } // namespace srsgnb

@@ -2,6 +2,7 @@
 #ifndef SRSGNB_SCHED_CONSTS_H
 #define SRSGNB_SCHED_CONSTS_H
 
+#include "srsgnb/ran/resource_block.h"
 #include <cstddef>
 
 namespace srsgnb {
@@ -9,7 +10,6 @@ namespace srsgnb {
 /// Maximum number of layers (implementation-defined)
 const size_t MAX_NOF_LAYERS = 2;
 
-const size_t MAX_NOF_PRBS = 275;
 const size_t MAX_NOF_RBGS = 18;
 
 // See O-RAN WG8-v05, Section 9.2.1.1, Table 9-3 SSB Configuration.

@@ -26,8 +26,7 @@ struct cell_configuration_request_message {
   uint8_t         nof_layers;    // (0..8)
   uint8_t         nof_ant_ports; // (0..64)
   pci_t           pci;
-  unsigned        dl_cell_bandwidth;
-  unsigned        ul_cell_bandwidth;
+  unsigned        ul_cell_bw_mhz;
 
   asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
   asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
@@ -35,6 +34,7 @@ struct cell_configuration_request_message {
 
   /// NOTE: Structs below do not follow ORAN specs.
   /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).
+  subcarrier_spacing    scs_common;
   carrier_configuration dl_carrier;
   ssb_configuration     ssb_config;
 };

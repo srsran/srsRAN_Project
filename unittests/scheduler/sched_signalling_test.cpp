@@ -268,7 +268,9 @@ void test_ssb_time_allocation(uint16_t         ssb_periodicity,
   const size_t   NUM_OF_TEST_SLOTS = 1000;
   const uint32_t offset_to_point_A = 14;
 
-  test_bench bench{ssb_case, cell_configuration_request_message{}};
+  cell_configuration_request_message cell_cfg_msg{};
+  cell_cfg_msg.dl_carrier.carrier_bw_mhz = 10;
+  test_bench bench{ssb_case, cell_cfg_msg};
 
   bench.new_slot();
 
