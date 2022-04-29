@@ -94,40 +94,34 @@ public:
     return *this;
   }
 
-  /// Power scaling SS PBCH in dB maximum possible value.
-  static constexpr float POWER_SCALING_SS_PBCH_DB_MAX = 120.0;
-  /// Power scaling SS PBCH in dB minimum possible value.
-  static constexpr float POWER_SCALING_SS_PBCH_DB_MIN = -110.0;
-  /// PSS to SSS ratio in dB maximum possible value.
-  static constexpr float PSS_TO_SSS_RATIO_DB_MAX = 32.767;
-  /// PSS to SSS ratio in dB minimum possible value.
-  static constexpr float SS_TO_SSS_RATIO_DB_MIN = -32.767;
-
   /// Sets the SSB power information and returns a reference to the builder.
   /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
   dl_ssb_pdu_builder& set_maintenance_v3_tx_power_info(float power_scaling_ss_pbch_dB, float pss_to_sss_ratio_dB)
   {
     // Power scaling in SS-PBCH in hundredth of dB.
-    srsran_assert(power_scaling_ss_pbch_dB <= POWER_SCALING_SS_PBCH_DB_MAX,
+    int ss_block_power = power_scaling_ss_pbch_dB * 100;
+    srsran_assert(ss_block_power <= std::numeric_limits<int16_t>::max(),
                   "SS PBCH block power scaling ({}) exceeds the maximum ({}).",
-                  power_scaling_ss_pbch_dB,
-                  (float)POWER_SCALING_SS_PBCH_DB_MAX);
-    srsran_assert(power_scaling_ss_pbch_dB >= POWER_SCALING_SS_PBCH_DB_MIN,
-                  "PSS to SSS ratio ({}) does not reach the minimum ({}).",
-                  power_scaling_ss_pbch_dB,
-                  (float)POWER_SCALING_SS_PBCH_DB_MIN);
-    v3.ss_pbch_block_power_scaling = static_cast<int16_t>(power_scaling_ss_pbch_dB * 100);
+                  ss_block_power,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(ss_block_power >= std::numeric_limits<int16_t>::min(),
+                  "SS PBCH block power scaling ({}) exceeds the minimum ({}).",
+                  ss_block_power,
+                  std::numeric_limits<int16_t>::min());
+    v3.ss_pbch_block_power_scaling = static_cast<int16_t>(ss_block_power);
 
+    int beta_pss = pss_to_sss_ratio_dB * 1000;
     // SSS to PSS ratio in thousandth of dB.
-    srsran_assert(pss_to_sss_ratio_dB <= PSS_TO_SSS_RATIO_DB_MAX,
+    srsran_assert(beta_pss <= std::numeric_limits<int16_t>::max(),
                   "PSS to SSS ratio ({}) exceeds the maximum ({}).",
-                  pss_to_sss_ratio_dB,
-                  (float)PSS_TO_SSS_RATIO_DB_MAX);
-    srsran_assert(pss_to_sss_ratio_dB >= SS_TO_SSS_RATIO_DB_MIN,
+                  beta_pss,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(beta_pss >= std::numeric_limits<int16_t>::min(),
                   "PSS to SSS ratio ({}) does not reach the minimum ({}).",
-                  pss_to_sss_ratio_dB,
-                  (float)SS_TO_SSS_RATIO_DB_MIN);
-    v3.beta_pss_profile_sss = static_cast<int16_t>(pss_to_sss_ratio_dB * 1000);
+                  beta_pss,
+                  std::numeric_limits<int16_t>::min());
+
+    v3.beta_pss_profile_sss = static_cast<int16_t>(beta_pss);
 
     return *this;
   }

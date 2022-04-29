@@ -39,7 +39,7 @@ static void ssb_conversion_benchmark()
   std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 3000);
   std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 3000);
   std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
-  std::uniform_real_distribution<>        power_dist(-30.8, 69.5);
+  std::uniform_real_distribution<>        power_dist(-30.8, 30.5);
 
   for (unsigned i = 0; i != iterations; ++i) {
     // :TODO: Begin with the MAC structure when it is defined.
