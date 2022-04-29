@@ -28,12 +28,12 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
 } // namespace detail
 
 #define TESTASSERT_EQ(EXPECTED, ACTUAL, ...)                                                                           \
-  srsran_always_assert((EXPECTED == ACTUAL),                                                                           \
+  srsran_always_assert(((EXPECTED) == (ACTUAL)),                                                                       \
                        "{}",                                                                                           \
                        srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, true, fmt::format("" __VA_ARGS__)))
 
 #define TESTASSERT_NEQ(EXPECTED, ACTUAL, ...)                                                                          \
-  srsran_always_assert((EXPECTED != ACTUAL),                                                                           \
+  srsran_always_assert(((EXPECTED) != (ACTUAL)),                                                                       \
                        "{}",                                                                                           \
                        srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, fmt::format("" __VA_ARGS__)))
 

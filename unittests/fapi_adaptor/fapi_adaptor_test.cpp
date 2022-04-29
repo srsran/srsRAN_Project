@@ -14,75 +14,156 @@ static std::mt19937 gen(0);
 /// Benchmark that measures the performance converting SSB data structures from MAC -> FAPI -> PHY.
 static void ssb_conversion_test()
 {
-  static constexpr std::array<unsigned, 3> LMAX{4u, 8u, 64u};
-  static constexpr unsigned                ITERATIONS = 10000;
-
   // Random generators.
   std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 5);
   std::uniform_int_distribution<unsigned> pci_dist(0, 3000);
+  std::uniform_int_distribution<uint8_t>  binary_1bit_dist(0, 1);
+  std::uniform_int_distribution<uint8_t>  binary_8bit_dist(0, UINT8_MAX);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<unsigned> block_index_dist(0, LMAX.back() - 1);
-  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 15);
+  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 31);
   std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 2199);
   std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
-  std::uniform_real_distribution<>        power_dist(-30.8, 69.5);
-  std::uniform_int_distribution<unsigned> enum_dist(0, 4);
-  std::uniform_int_distribution<unsigned> lmax_dist(0, 2);
+  std::uniform_real_distribution<float>   power_scaling_ss_pbch_dist(dl_ssb_pdu_builder::POWER_SCALING_SS_PBCH_DB_MIN,
+                                                                   dl_ssb_pdu_builder::POWER_SCALING_SS_PBCH_DB_MAX);
+  std::uniform_real_distribution<float>   pss_to_sss_ratio_dist(dl_ssb_pdu_builder::SS_TO_SSS_RATIO_DB_MIN,
+                                                              dl_ssb_pdu_builder::PSS_TO_SSS_RATIO_DB_MAX);
 
-  for (unsigned iteration = 0; iteration != ITERATIONS; ++iteration) {
-    unsigned              sfn                   = sfn_dist(gen);
-    unsigned              slot                  = slot_dist(gen);
-    unsigned              pci                   = pci_dist(gen);
-    beta_pss_profile_type beta_pss              = static_cast<beta_pss_profile_type>(binary_dist(gen));
-    unsigned              lmax                  = LMAX[lmax_dist(gen)];
-    unsigned              ssb_idx               = block_index_dist(gen) % lmax;
-    unsigned              ssb_subcarrier_offset = subcarrier_offset_dist(gen);
-    unsigned              offset_pointA         = offset_pointA_dist(gen);
-    ssb_pattern_case      pattern_case          = static_cast<ssb_pattern_case>(enum_dist(gen));
-    subcarrier_spacing    scs                   = static_cast<subcarrier_spacing>(enum_dist(gen));
+  for (unsigned lmax : {4u, 8u, 64u}) {
+    for (unsigned ssb_idx = 0; ssb_idx != lmax; ++ssb_idx) {
+      for (unsigned numerology = 0; numerology != 5; ++numerology) {
+        for (beta_pss_profile_type beta_pss :
+             {beta_pss_profile_type::dB_0, beta_pss_profile_type::dB_3, beta_pss_profile_type::beta_pss_profile_sss}) {
+          for (ssb_pattern_case pattern_case : {ssb_pattern_case::A,
+                                                ssb_pattern_case::B,
+                                                ssb_pattern_case::C,
+                                                ssb_pattern_case::D,
+                                                ssb_pattern_case::E}) {
+            for (unsigned slot_idx = 0; slot_idx != (10U << numerology); ++slot_idx) {
+              slot_point         slot(numerology, sfn_dist(gen), slot_idx);
+              unsigned           sfn                    = slot.sfn();
+              unsigned           pci                    = pci_dist(gen);
+              unsigned           ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
+              unsigned           offset_pointA          = offset_pointA_dist(gen);
+              subcarrier_spacing scs                    = static_cast<subcarrier_spacing>(slot.numerology());
+              uint8_t            dmrs_type_a_position   = binary_dist(gen);
+              uint8_t            pdcch_config_sib1      = binary_8bit_dist(gen);
+              uint8_t            cell_barred            = binary_dist(gen);
+              uint8_t            intra_freq_reselection = binary_dist(gen);
 
-    // :TODO: Begin with the MAC structure when it is defined.
-    dl_tti_request_message         msg = {};
-    dl_tti_request_message_builder builder(msg);
-    // :TODO: when the groups are available, add them.
-    builder.set_basic_parameters(sfn, slot, 0);
-    auto ssb_builder = builder.add_ssb_pdu(pci, beta_pss, ssb_idx, ssb_subcarrier_offset, offset_pointA);
+              // :TODO: Begin with the MAC structure when it is defined.
+              dl_tti_request_message         msg = {};
+              dl_tti_request_message_builder builder(msg);
+              // :TODO: when the groups are available, add them.
+              builder.set_basic_parameters(slot.sfn(), slot.slot_index(), 0);
+              auto ssb_builder = builder.add_ssb_pdu(pci, beta_pss, ssb_idx, ssb_subcarrier_offset, offset_pointA);
 
-    ssb_builder.set_bch_payload_phy_full(binary_dist(gen), sib1_dist(gen), binary_dist(gen), binary_dist(gen));
-    ssb_builder.set_maintenance_v3_basic_parameters(pattern_case, scs, lmax);
+              ssb_builder.set_bch_payload_phy_full(
+                  dmrs_type_a_position, pdcch_config_sib1, cell_barred, intra_freq_reselection);
+              ssb_builder.set_maintenance_v3_basic_parameters(pattern_case, scs, lmax);
 
-    float power_scaling_ss_pbch_dB = power_dist(gen);
-    float pss_to_sss_ratio_dB      = power_dist(gen);
-    ssb_builder.set_maintenance_v3_tx_power_info(power_scaling_ss_pbch_dB, pss_to_sss_ratio_dB);
+              float power_scaling_ss_pbch_dB = power_scaling_ss_pbch_dist(gen);
+              float pss_to_sss_ratio_dB      = pss_to_sss_ratio_dist(gen);
+              ssb_builder.set_maintenance_v3_tx_power_info(power_scaling_ss_pbch_dB, pss_to_sss_ratio_dB);
 
-    // PHY processor PDU.
-    ssb_processor::pdu_t pdu;
+              // PHY processor PDU.
+              ssb_processor::pdu_t pdu;
 
-    // Conversion block.
-    convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, scs);
+              // Conversion block.
+              convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, scs);
 
-    // Assert contents.
-    TESTASSERT_EQ(pdu.slot.sfn(), sfn);
-    TESTASSERT_EQ(pdu.slot.slot_index(), slot);
-    TESTASSERT_EQ(pdu.phys_cell_id, pci);
-    switch (beta_pss) {
-      case beta_pss_profile_type::dB_0:
-        TESTASSERT_EQ(pdu.beta_pss, 0.0);
-        break;
-      case beta_pss_profile_type::dB_3:
-        TESTASSERT_EQ(pdu.beta_pss, 3.0);
-        break;
-      case beta_pss_profile_type::beta_pss_profile_sss:
-        TESTASSERT(std::abs(pdu.beta_pss - pss_to_sss_ratio_dB) < 0.01);
-        break;
+              // Assert contents.
+              TESTASSERT_EQ(pdu.slot.sfn(), sfn);
+              TESTASSERT_EQ(pdu.slot.slot_index(), slot.slot_index());
+              TESTASSERT_EQ(pdu.phys_cell_id, pci);
+              switch (beta_pss) {
+                case beta_pss_profile_type::dB_0:
+                  TESTASSERT_EQ(pdu.beta_pss, 0.0);
+                  break;
+                case beta_pss_profile_type::dB_3:
+                  TESTASSERT_EQ(pdu.beta_pss, 3.0);
+                  break;
+                case beta_pss_profile_type::beta_pss_profile_sss:
+                  TESTASSERT(std::abs(pdu.beta_pss - pss_to_sss_ratio_dB) < 0.01,
+                             "Beta PSS is {} but expected {}.",
+                             pdu.beta_pss,
+                             pss_to_sss_ratio_dB);
+                  break;
+              }
+              TESTASSERT_EQ(pdu.ssb_idx, ssb_idx);
+              TESTASSERT_EQ(pdu.L_max, lmax);
+              TESTASSERT_EQ(pdu.ssb_subcarrier_offset, ssb_subcarrier_offset);
+              TESTASSERT_EQ(pdu.ssb_offset_pointA, offset_pointA);
+              TESTASSERT_EQ(pdu.pattern_case, pattern_case);
+              TESTASSERT(srsvec::equal(pdu.ports, std::vector<uint8_t>{0}));
+
+              // MIB - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[0], 0);
+              // systemFrameNumber - 6 bits MSB
+              TESTASSERT_EQ(pdu.bch_payload[1], (sfn >> 9U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[2], (sfn >> 8U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[3], (sfn >> 7U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[4], (sfn >> 6U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[5], (sfn >> 5U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[6], (sfn >> 4U) & 1U);
+              // subCarrierSpacingCommon - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[7],
+                            (scs == subcarrier_spacing::kHz15 || scs == subcarrier_spacing::kHz60) ? 0 : 1);
+              // ssb-SubcarrierOffset - 4 bits
+              TESTASSERT_EQ(pdu.bch_payload[8], (ssb_subcarrier_offset >> 3U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[9], (ssb_subcarrier_offset >> 2U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[10], (ssb_subcarrier_offset >> 1U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[11], (ssb_subcarrier_offset >> 0U) & 1U);
+
+              // dmrs-TypeA-Position - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[12], dmrs_type_a_position);
+
+              // pdcch-ConfigSIB1
+              // controlResourceSetZero - 4 bits
+              TESTASSERT_EQ(pdu.bch_payload[13], (pdcch_config_sib1 >> 7U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[14], (pdcch_config_sib1 >> 6U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[15], (pdcch_config_sib1 >> 5U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[16], (pdcch_config_sib1 >> 4U) & 1U);
+
+              // searchSpaceZero - 4 bits
+              TESTASSERT_EQ(pdu.bch_payload[17], (pdcch_config_sib1 >> 3U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[18], (pdcch_config_sib1 >> 2U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[19], (pdcch_config_sib1 >> 1U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[20], (pdcch_config_sib1 >> 0U) & 1U);
+
+              // Barred - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[21], cell_barred & 1U);
+
+              // intraFreqReselection - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[22], intra_freq_reselection & 1U);
+
+              // Spare - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[23], 0);
+
+              // systemFrameNumber - 4 bits LSB
+              TESTASSERT_EQ(pdu.bch_payload[24], (sfn >> 3U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[25], (sfn >> 2U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[26], (sfn >> 1U) & 1U);
+              TESTASSERT_EQ(pdu.bch_payload[27], (sfn >> 0U) & 1U);
+
+              // Half radio frame - 1 bit
+              TESTASSERT_EQ(pdu.bch_payload[28], slot.is_odd_hrf());
+
+              if (lmax == 64) {
+                // SS/PBCH block index - 3 MSB
+                TESTASSERT_EQ(pdu.bch_payload[29], (ssb_idx >> 5U) & 1U);
+                TESTASSERT_EQ(pdu.bch_payload[30], (ssb_idx >> 4U) & 1U);
+                TESTASSERT_EQ(pdu.bch_payload[31], (ssb_idx >> 3U) & 1U);
+              } else {
+                // 3rd LSB set to MSB of SSB subcarrier offset. 2nd and 1st bits reserved.
+                TESTASSERT_EQ(pdu.bch_payload[29], (ssb_subcarrier_offset >> 5U) & 1U);
+                TESTASSERT_EQ(pdu.bch_payload[30], 0);
+                TESTASSERT_EQ(pdu.bch_payload[31], 0);
+              }
+            }
+          }
+        }
+      }
     }
-    TESTASSERT_EQ(pdu.ssb_idx, ssb_idx);
-    TESTASSERT_EQ(pdu.L_max, lmax);
-    TESTASSERT_EQ(pdu.ssb_subcarrier_offset, ssb_subcarrier_offset);
-    TESTASSERT_EQ(pdu.ssb_offset_pointA, offset_pointA);
-    TESTASSERT_EQ(pdu.pattern_case, pattern_case);
-    TESTASSERT(srsvec::equal(pdu.ports, std::vector<uint8_t>{0}));
   }
 }
 
