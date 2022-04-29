@@ -54,7 +54,7 @@ int main()
 
     // Create DFT processor
     std::unique_ptr<dft_processor> dft = dft_factory->create(config);
-
+    
     // Create OFDM modulator.
     std::unique_ptr<ofdm_slot_demodulator> ofdm = ofdm_factory->create_ofdm_slot_demodulator(test_case.test_config.config);
     TESTASSERT(ofdm != nullptr);

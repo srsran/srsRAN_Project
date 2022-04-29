@@ -48,8 +48,9 @@ public:
 
   /// \brief Gets the offset in samples to the start of (the cyclic prefix of) a given symbol.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
+  /// \param[in] slot_index Slot index within the subframe containing the symbol to demodulate.
   /// \return The number of samples preceding the given symbol.
-  virtual unsigned get_cp_offset(unsigned symbol_index) const = 0;
+  virtual unsigned get_cp_offset(unsigned symbol_index, unsigned slot_index) const = 0;
 
   /// \brief Demodulates an OFDM signal with symbol granularity.
   /// \param[out] grid Provides the output as frequency-domain signal corresponding to one slot.

@@ -62,7 +62,7 @@ public:
   unsigned get_rg_size() const override { return rg_size; }
 
   // See interface for documentation.
-  unsigned get_cp_offset(unsigned symbol_index) const override;
+  unsigned get_cp_offset(unsigned symbol_index, unsigned slot_index) const override;
 
   // See interface for documentation.
   void
