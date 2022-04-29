@@ -2,9 +2,23 @@
 #ifndef SRSGNB_CONFIG_GENERATORS_H
 #define SRSGNB_CONFIG_GENERATORS_H
 
+#include "../mac/cell_configuration_helpers.h"
+#include "srsgnb/scheduler/sched_configuration_helpers.h"
 #include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
+
+namespace test_helpers {
+
+/// Create default Scheduler Cell Configuration Request.
+cell_configuration_request_message make_default_sched_cell_configuration_request()
+{
+  mac_cell_configuration             mac_cell_cfg = make_default_mac_cell_configuration();
+  cell_configuration_request_message msg          = make_sched_cell_configuration_request_message(mac_cell_cfg);
+  return msg;
+}
+
+} // namespace test_helpers
 
 asn1::rrc_nr::rach_cfg_common_s make_rach_cfg_common()
 {
@@ -38,29 +52,8 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
 
 cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
-  cell_configuration_request_message msg{};
-  msg.cell_index                = to_du_cell_index(0);
-  msg.dl_carrier.carrier_bw_mhz = 10;
-  msg.ul_cell_bw_mhz            = 10;
-  msg.pci                       = 1;
-  msg.nof_ant_ports             = 1;
-  msg.nof_beams                 = 1;
-
-  msg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
-  msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
-  msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup();
-
-  auto& pdcch_cfg_common = msg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup();
-
-  // RA search space
-  pdcch_cfg_common.ra_search_space_present = true;
-  pdcch_cfg_common.ra_search_space         = 1;
-
-  // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  msg.dl_carrier.arfcn = 365000;
-
-  msg.ul_cfg_common = make_ul_cfg_common(k2);
-
+  cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
+  msg.ul_cfg_common                      = make_ul_cfg_common(k2);
   return msg;
 }
 

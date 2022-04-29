@@ -2,6 +2,7 @@
 #include "mac_dl_processor.h"
 #include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/scheduler/sched_configuration_helpers.h"
 #include "srsgnb/scheduler/sched_configurator.h"
 
 using namespace srsgnb;
@@ -10,33 +11,13 @@ static void fill_sched_cell_config_msg(cell_configuration_request_message& sched
                                        const mac_cell_configuration&       cell_cfg,
                                        const ssb_assembler&                ssb_cfg)
 {
-  // Copy general parameters
-  sched_cell_cfg.cell_index = cell_cfg.cell_index;
-  sched_cell_cfg.pci        = cell_cfg.pci;
-  sched_cell_cfg.dl_carrier = cell_cfg.dl_carrier;
-
-  // TODO: Pass valid configuration to scheduler (The code added below for dl_cfg_common and ul_cfg_common was just for
-  // ...passing a test).
-  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_cfg_common_present = true;
-  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common_present = true;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.set_setup().rach_cfg_generic.ra_resp_win.value =
-      asn1::rrc_nr::rach_cfg_generic_s::ra_resp_win_opts::sl10;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present = true;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.set_setup().pusch_time_domain_alloc_list.resize(1);
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present = true;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2         = 2;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.subcarrier_spacing.value =
-      asn1::rrc_nr::subcarrier_spacing_opts::khz15;
-  sched_cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.set_setup().ra_search_space_present = true;
-  sched_cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present                              = true;
+  sched_cell_cfg = make_sched_cell_configuration_request_message(cell_cfg);
 
   // Copy SSB parameters
-  sched_cell_cfg.ssb_config                 = cell_cfg.ssb_cfg;
+  // TODO: Remove these parameters from ssb_config.
   sched_cell_cfg.ssb_config.L_max           = ssb_cfg.get_ssb_L_max();
   sched_cell_cfg.ssb_config.ssb_case        = ssb_cfg.get_ssb_case();
   sched_cell_cfg.ssb_config.paired_spectrum = ssb_cfg.get_ssb_paired_spectrum();
-
-  // TODO: Add remaining fields.
 }
 
 mac_dl_processor::mac_dl_processor(mac_common_config_t&    cfg_,
