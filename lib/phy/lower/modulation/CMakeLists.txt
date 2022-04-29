@@ -1,4 +1,4 @@
 
 
-add_library(srsgnb_lower_phy_modulation STATIC ofdm_modulator_impl.cpp)
+add_library(srsgnb_lower_phy_modulation STATIC ofdm_modulator_impl.cpp ofdm_demodulator_impl.cpp)
 target_link_libraries(srsgnb_lower_phy_modulation srsvec)

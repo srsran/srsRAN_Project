@@ -18,3 +18,15 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_modulator_test_data.tar.gz
   VERBATIM)
+
+add_executable(ofdm_demodulator_vectortest ofdm_demodulator_vectortest.cpp)
+target_link_libraries(ofdm_demodulator_vectortest srslog srsgnb_lower_phy_modulation srsgnb_generic_funcs_dft)
+add_test(ofdm_demodulator_vectortest ofdm_demodulator_vectortest)
+
+add_custom_command(
+  TARGET ofdm_demodulator_vectortest
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_demodulator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_demodulator_test_data.tar.gz
+  VERBATIM)

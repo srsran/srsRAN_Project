@@ -99,6 +99,39 @@ public:
     }
   }
 
+  /// \brief Asserts that the mapped resource elements match with a list of expected entries.
+  ///
+  /// This method asserts that mapped resource elements using the put() methods match a list of expected entries
+  /// without considering any writing order, while using a parametrizable maximkum error threshold.
+  ///
+  /// \param[in] expected_entries Provides a list of golden symbols to assert.
+  /// \param[in] max_error Provides the maximum allowable error when comparing the data in the entries.
+  /// \note The test is terminated in case of mismatch.
+  void assert_entries(span<const expected_entry_t> expected_entries, float max_error) const
+  {
+    // Make sure the number of elements match.
+    TESTASSERT_EQ(entries.size(), expected_entries.size());
+
+    // Iterate each expected entry, check that there is an entry and that the expected value error is below a threshold.
+    for (const auto& entry : expected_entries) {
+      entry_key_t key = {entry.port, entry.symbol, entry.subcarrier};
+      TESTASSERT(entries.count(key),
+                 "No resource element was written for port={}, symbol={} and subcarrier={}.",
+                 entry.port,
+                 entry.symbol,
+                 entry.subcarrier);
+
+      cf_t  value = entries.at(key);
+      float err   = std::abs(entry.value - value);
+      TESTASSERT(err < max_error,
+                 "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
+                 value.real(),
+                 value.imag(),
+                 entry.value.real(),
+                 entry.value.imag());
+    }
+  }
+
   /// Clears any possible state.
   void reset() { entries.clear(); }
 
@@ -175,7 +208,7 @@ public:
   {
     return span<cf_t>();
   }
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override 
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
     cf_t* symbol_ptr = symbols.data();
     for (unsigned k = k_init, k_end = k_init + symbols.size(); k != k_end; ++k) {
