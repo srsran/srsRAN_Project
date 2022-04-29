@@ -9,7 +9,7 @@
 namespace srsgnb {
 
 enum class ssb_pattern_case;
-class cell_slot_resource_grid;
+struct cell_slot_resource_grid;
 
 using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
 
