@@ -92,9 +92,9 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg), res_alloc{res_grid} {};
+  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg){};
 
-  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_req(paramters.k2)), res_grid(cfg), res_alloc(res_grid)
+  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_req(paramters.k2)), res_grid(cfg)
   {
     srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present,
                   "BWP-UplinkCommon has no pusch-ConfigCommon configured");
@@ -105,9 +105,8 @@ struct test_bench {
     k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2;
   };
 
-  cell_configuration      cfg;
-  cell_resource_grid_pool res_grid;
-  cell_resource_allocator res_alloc;
+  cell_configuration cfg;
+  cell_resource_grid res_grid;
 
   void slot_indication(slot_point sl_tx)
   {
@@ -141,11 +140,11 @@ void static enqueue_rach_indications(const std::list<rach_indication_message>& r
 static unsigned test_expected_nof_allocation(const cell_configuration&                 cell_cfg,
                                              const slot_point&                         slot_rx,
                                              const std::list<rach_indication_message>& pending_rach_ind_list,
-                                             cell_resource_allocator&                  resource_grid)
+                                             cell_resource_grid&                       resource_grid)
 {
   // Check how many MSG3 grant allocations have been scheduled
-  cell_resource_grid& rar_alloc          = resource_grid[0];
-  unsigned            nof_allocated_msg3 = 0;
+  cell_slot_resource_grid& rar_alloc          = resource_grid[0];
+  unsigned                 nof_allocated_msg3 = 0;
   for (auto& rar : rar_alloc.dl_grants.rar_grants) {
     nof_allocated_msg3 += rar.grants.size();
   }
@@ -176,9 +175,9 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
 }
 
 /// Helper function that tests whether RARs have been allocated DL PRBs.
-static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
+static void test_rar_general_allocation(cell_resource_grid& resource_grid)
 {
-  cell_resource_grid& rar_alloc = resource_grid[0];
+  cell_slot_resource_grid& rar_alloc = resource_grid[0];
 
   if (rar_alloc.dl_grants.rar_grants.size() > 0) {
     TESTASSERT(rar_alloc.dl_prbs.any());
@@ -199,7 +198,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
                                            const slot_point&                         slot_rx,
                                            const unsigned                            nof_allocations,
                                            const std::list<rach_indication_message>& rach_ind_list,
-                                           cell_resource_allocator&                  resource_grid)
+                                           cell_resource_grid&                       resource_grid)
 {
   // This function, first, retrieves all RACH indications that have been received (and not yet allocated) in the
   // past up until slot_rx; among these RACH indications, only an expected number can be allocated by the
@@ -242,7 +241,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     return;
   }
 
-  cell_resource_grid& rar_alloc = resource_grid[0];
+  cell_slot_resource_grid& rar_alloc = resource_grid[0];
 
   // For each RA-RNTI RACH list, test the RACH indication and corresponding RAR/MSG3 grants
   for (const auto& it : rach_per_ra_rnti_map) {
@@ -347,19 +346,19 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
     enqueue_rach_indications(rach_ind_list, slot_rx, ra_sch);
 
     // Run RA scheduler
-    ra_sch.run_slot(bench.res_alloc);
+    ra_sch.run_slot(bench.res_grid);
 
     // Test whether the scheduler has allocated the expected number of MSG3 grants
-    unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
+    unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_grid);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_grants.rar_grants);
+    test_rar_consistency(bench.cfg, bench.res_grid[0].dl_grants.rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
-    test_rar_general_allocation(bench.res_alloc);
+    test_rar_general_allocation(bench.res_grid);
 
     // Test the match between RACH indication messages and RAR/MSG3 grants
-    test_per_ra_ranti_rapid_grants(bench.cfg, slot_rx, nof_msg3_allocation, rach_ind_list, bench.res_alloc);
+    test_per_ra_ranti_rapid_grants(bench.cfg, slot_rx, nof_msg3_allocation, rach_ind_list, bench.res_grid);
 
     remove_processed_rach_ind(nof_msg3_allocation, rach_ind_list);
   }
@@ -445,19 +444,19 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
     enqueue_rach_indications(rach_ind_list, slot_rx, ra_sch);
 
     // Run RA scheduler
-    ra_sch.run_slot(bench.res_alloc);
+    ra_sch.run_slot(bench.res_grid);
 
     // Test whether the scheduler has allocated the expected number of MSG3 grants
-    unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_alloc);
+    unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_grid);
 
     // Test whether the RAR info is consistent with cell_config and there are no duplicates C-RNTI
-    test_rar_consistency(bench.cfg, bench.res_alloc[0].dl_grants.rar_grants);
+    test_rar_consistency(bench.cfg, bench.res_grid[0].dl_grants.rar_grants);
 
     // Test whether the RAR has grants and PRBs allocated
-    test_rar_general_allocation(bench.res_alloc);
+    test_rar_general_allocation(bench.res_grid);
 
     // Test the match between RACH indication messages and RAR/MSG3 grants
-    test_per_ra_ranti_rapid_grants(bench.cfg, slot_rx, nof_msg3_allocation, rach_ind_list, bench.res_alloc);
+    test_per_ra_ranti_rapid_grants(bench.cfg, slot_rx, nof_msg3_allocation, rach_ind_list, bench.res_grid);
 
     // Remove the RACH indications that have been tested from the list of RACHs
     remove_processed_rach_ind(nof_msg3_allocation, rach_ind_list);
@@ -496,12 +495,12 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
     bench.slot_indication(sl_tx);
 
     // Run RA scheduler
-    ra_sch.run_slot(bench.res_alloc);
+    ra_sch.run_slot(bench.res_grid);
 
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
-      cell_resource_grid& pdcch_sl_res = bench.res_alloc[0];
-      cell_resource_grid& msg3_sl_res  = bench.res_alloc[msg3_delay];
+      cell_slot_resource_grid& pdcch_sl_res = bench.res_grid[0];
+      cell_slot_resource_grid& msg3_sl_res  = bench.res_grid[msg3_delay];
 
       TESTASSERT(pdcch_sl_res.dl_prbs.any());
 
@@ -517,7 +516,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.ul_prbs.count());
 
     } else {
-      TESTASSERT(bench.res_alloc[0].dl_prbs.none());
+      TESTASSERT(bench.res_grid[0].dl_prbs.none());
     }
 
     sl_rx++;

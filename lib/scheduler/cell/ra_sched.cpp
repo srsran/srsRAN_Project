@@ -78,13 +78,13 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
   return true;
 }
 
-void ra_sched::run_slot(cell_resource_allocator& res_alloc)
+void ra_sched::run_slot(cell_resource_grid& res_alloc)
 {
-  cell_resource_grid& rar_slot_res = res_alloc[0];
-  unsigned            msg3_delay;
-  symbol_interval     msg3_symbols;
+  cell_slot_resource_grid& rar_slot_res = res_alloc[0];
+  unsigned                 msg3_delay;
+  symbol_interval          msg3_symbols;
   get_msg3_delay(cfg.ul_cfg_common, rar_slot_res.slot, msg3_delay, msg3_symbols);
-  cell_resource_grid& msg3_slot_res = res_alloc[msg3_delay];
+  cell_slot_resource_grid& msg3_slot_res = res_alloc[msg3_delay];
 
   if (not rar_slot_res.is_dl_active() or not msg3_slot_res.is_ul_active()) {
     // Early exit. RAR only allowed if PDCCH and PDSCH are available and respective Msg3 slot is available for UL
@@ -144,7 +144,9 @@ void ra_sched::run_slot(cell_resource_allocator& res_alloc)
   }
 }
 
-unsigned ra_sched::allocate_rar(const pending_rar_t& rar, cell_resource_grid& rar_alloc, cell_resource_grid& msg3_alloc)
+unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
+                                cell_slot_resource_grid& rar_alloc,
+                                cell_slot_resource_grid& msg3_alloc)
 {
   // TODO: Make smarter algorithm for RAR size derivation
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
@@ -209,12 +211,12 @@ unsigned ra_sched::allocate_rar(const pending_rar_t& rar, cell_resource_grid& ra
   return max_nof_allocs;
 }
 
-void ra_sched::fill_rar_grant(const pending_rar_t& rar_request,
-                              const prb_interval&  rar_prbs,
-                              const prb_interval&  msg3_prbs,
-                              cell_resource_grid&  rar_alloc,
-                              cell_resource_grid&  msg3_alloc,
-                              unsigned             nof_msg3_grants)
+void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
+                              const prb_interval&      rar_prbs,
+                              const prb_interval&      msg3_prbs,
+                              cell_slot_resource_grid& rar_alloc,
+                              cell_slot_resource_grid& msg3_alloc,
+                              unsigned                 nof_msg3_grants)
 {
   static const unsigned nof_prbs_per_msg3 = 3;
   static const unsigned max_msg3_retxs    = 4;

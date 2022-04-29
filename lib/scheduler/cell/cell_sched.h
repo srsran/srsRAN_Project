@@ -12,16 +12,15 @@ namespace srsgnb {
 class cell_sched
 {
 public:
-  cell_sched(const cell_configuration_request_message& msg) : cell_cfg(msg), res_grid_pool(cell_cfg), ra_sch(cell_cfg)
-  {}
+  cell_sched(const cell_configuration_request_message& msg) : cell_cfg(msg), res_grid(cell_cfg), ra_sch(cell_cfg) {}
 
-  void slot_indication(slot_point sl_tx) { res_grid_pool.slot_indication(sl_tx); }
+  void slot_indication(slot_point sl_tx) { res_grid.slot_indication(sl_tx); }
 
-  dl_sched_result* get_dl_sched(slot_point sl_tx) { return &res_grid_pool[sl_tx].dl_grants; }
-  ul_sched_result* get_ul_sched(slot_point sl_tx) { return &res_grid_pool[sl_tx].ul_grants; }
+  dl_sched_result* get_dl_sched(slot_point sl_tx) { return &res_grid[sl_tx - res_grid.slot_tx()].dl_grants; }
+  ul_sched_result* get_ul_sched(slot_point sl_tx) { return &res_grid[sl_tx - res_grid.slot_tx()].ul_grants; }
 
   const cell_configuration cell_cfg;
-  cell_resource_grid_pool  res_grid_pool;
+  cell_resource_grid       res_grid;
 
   ra_sched ra_sch;
 };
@@ -57,7 +56,7 @@ public:
   size_t nof_cells() const { return nof_cells_; }
 
 private:
-  size_t                                                 nof_cells_ = 0;
+  size_t                                                    nof_cells_ = 0;
   std::array<std::unique_ptr<cell_sched>, MAX_NOF_DU_CELLS> cells;
 };
 

@@ -10,6 +10,9 @@ namespace srsgnb {
 /// Number of subframers per frame. This constant doesn't depend on the numerology used
 constexpr uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
 
+/// Represents the difference between two slot points.
+using slot_difference = int;
+
 /// Represents the numerology, SFN and slot index of the current slot.
 /// It provides several functionalities compared to a simple integer type, namely:
 /// - automatic wrap-around of SFN and slot_index on increment/decrement
@@ -137,7 +140,7 @@ public:
 
   /// Implements the subtraction of two slot points.
   /// @return a signed integer that is positive if "lhs" is higher than "rhs", zero if equal, and negative otherwise.
-  int32_t operator-(const slot_point& other) const
+  slot_difference operator-(const slot_point& other) const
   {
     int a = static_cast<int>(count_val) - static_cast<int>(other.count_val);
     if (a >= (int)nof_slots_per_system_frame() / 2) {
@@ -166,7 +169,8 @@ public:
   }
 
   /// Sum of slot_point by an integer jump value.
-  slot_point& operator+=(uint32_t jump)
+  template <typename Unsigned, std::enable_if_t<std::is_unsigned<Unsigned>::value, int> = 0>
+  slot_point& operator+=(Unsigned jump)
   {
     count_val = (count_val + jump) % nof_slots_per_system_frame();
     return *this;
@@ -194,13 +198,10 @@ public:
 };
 
 /// Sum and subtraction operations between slot_point types.
-inline slot_point operator+(slot_point slot, uint32_t jump)
+template <typename Integer>
+inline slot_point operator+(slot_point slot, Integer jump)
 {
-  slot += jump;
-  return slot;
-}
-inline slot_point operator+(slot_point slot, int jump)
-{
+  static_assert(std::is_integral<Integer>::value, "Invalid integer type");
   slot += jump;
   return slot;
 }

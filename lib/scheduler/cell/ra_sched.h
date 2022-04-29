@@ -24,7 +24,7 @@ public:
   bool handle_rach_indication(const rach_indication_message& msg);
 
   /// Allocate pending RARs + Msg3s
-  void run_slot(cell_resource_allocator& res_alloc);
+  void run_slot(cell_resource_grid& res_alloc);
 
 private:
   struct pending_rar_t {
@@ -43,14 +43,15 @@ private:
 
   /// Allocate pending RAR and associated Msg3 grants
   /// \return The number of allocated Msg3 grants
-  unsigned allocate_rar(const pending_rar_t& rar, cell_resource_grid& rar_alloc, cell_resource_grid& msg3_alloc);
+  unsigned
+  allocate_rar(const pending_rar_t& rar, cell_slot_resource_grid& rar_alloc, cell_slot_resource_grid& msg3_alloc);
 
-  void fill_rar_grant(const pending_rar_t& rar,
-                      const prb_interval&  rar_prbs,
-                      const prb_interval&  msg3_prbs,
-                      cell_resource_grid&  rar_alloc,
-                      cell_resource_grid&  msg3_alloc,
-                      unsigned             nof_msg3_grants);
+  void fill_rar_grant(const pending_rar_t&     rar,
+                      const prb_interval&      rar_prbs,
+                      const prb_interval&      msg3_prbs,
+                      cell_slot_resource_grid& rar_alloc,
+                      cell_slot_resource_grid& msg3_alloc,
+                      unsigned                 nof_msg3_grants);
 
   // args
   const cell_configuration& cfg;

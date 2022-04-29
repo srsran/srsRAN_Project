@@ -33,7 +33,7 @@ struct test_bench {
   static srslog::basic_logger& test_logger;
   static srslog::basic_logger& mac_logger;
 
-  const slot_index_t tx_delay = 4;
+  const slot_difference tx_delay = 4;
 
   test_bench(ssb_pattern_case ssb_case, cell_configuration_request_message cell_cfg_msg) :
     cell_res_grid(cell_configuration{cell_cfg_msg})
@@ -63,27 +63,27 @@ struct test_bench {
     mac_logger.set_context(t.to_uint());
   }
 
-  cell_resource_grid& get_slot_allocator() { return cell_res_grid; }
+  cell_slot_resource_grid& get_slot_allocator() { return cell_res_grid; }
 
   slot_point slot_tx() { return t; }
 
 private:
-  slot_point         t;
-  cell_resource_grid cell_res_grid;
+  slot_point              t;
+  cell_slot_resource_grid cell_res_grid;
 };
 
 srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
 srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
 
 /// This function tests SSB case A and C (both paired and unpaired spectrum).
-void test_ssb_case_A_C(const slot_point&   slot_tx,
-                       uint16_t            ssb_periodicity,
-                       uint32_t            offset_to_point_A,
-                       uint32_t            freq_arfcn,
-                       uint32_t            freq_cutoff,
-                       uint8_t             in_burst_bitmap,
-                       ssb_pattern_case    ssb_case,
-                       cell_resource_grid& slot_alloc)
+void test_ssb_case_A_C(const slot_point&        slot_tx,
+                       uint16_t                 ssb_periodicity,
+                       uint32_t                 offset_to_point_A,
+                       uint32_t                 freq_arfcn,
+                       uint32_t                 freq_cutoff,
+                       uint8_t                  in_burst_bitmap,
+                       ssb_pattern_case         ssb_case,
+                       cell_slot_resource_grid& slot_alloc)
 {
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).
@@ -152,13 +152,13 @@ void test_ssb_case_A_C(const slot_point&   slot_tx,
 }
 
 /// This function tests SSB case B.
-void test_ssb_case_B(const slot_point&   slot_tx,
-                     uint16_t            ssb_periodicity,
-                     uint32_t            offset_to_point_A,
-                     uint32_t            freq_arfcn,
-                     uint8_t             in_burst_bitmap,
-                     ssb_pattern_case    ssb_case,
-                     cell_resource_grid& slot_alloc)
+void test_ssb_case_B(const slot_point&        slot_tx,
+                     uint16_t                 ssb_periodicity,
+                     uint32_t                 offset_to_point_A,
+                     uint32_t                 freq_arfcn,
+                     uint8_t                  in_burst_bitmap,
+                     ssb_pattern_case         ssb_case,
+                     cell_slot_resource_grid& slot_alloc)
 {
   // For frequencies lower than the cutoff, there should only be at most 4 SSB opportunities (4 left-most bits in
   // in_burst_bitmap).

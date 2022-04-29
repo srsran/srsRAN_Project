@@ -55,11 +55,9 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
   // 2. Process pending events.
   pending_events.run(sl_tx, cell_index);
 
-  cell_resource_allocator res_alloc{cell.res_grid_pool};
-
   //  3. SSB scheduling.
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
-  sched_ssb(res_alloc[0],
+  sched_ssb(cell.res_grid[0],
             sl_tx,
             ssb_cfg.ssb_period,
             ssb_cfg.ssb_offset_to_point_A,
@@ -72,7 +70,7 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
   // TODO
 
   // 4. Schedule RARs and Msg3.
-  cell.ra_sch.run_slot(res_alloc);
+  cell.ra_sch.run_slot(cell.res_grid);
 
   // 5. Schedule UE DL and UL data.
   // TODO

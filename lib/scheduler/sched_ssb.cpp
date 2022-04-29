@@ -121,14 +121,14 @@ static void ssb_alloc_case_B(ssb_information_list& ssb_list,
   }
 }
 
-void sched_ssb(cell_resource_grid& res_grid,
-               const slot_point&   sl_point,
-               uint8_t             ssb_periodicity,
-               uint16_t            offset_to_point_A,
-               uint32_t            freq_arfcn,
-               uint64_t            ssb_in_burst_bitmap,
-               ssb_pattern_case    ssb_case,
-               bool                paired_spectrum)
+void sched_ssb(cell_slot_resource_grid& res_grid,
+               const slot_point&        sl_point,
+               uint8_t                  ssb_periodicity,
+               uint16_t                 offset_to_point_A,
+               uint32_t                 freq_arfcn,
+               uint64_t                 ssb_in_burst_bitmap,
+               ssb_pattern_case         ssb_case,
+               bool                     paired_spectrum)
 {
   ssb_information_list& ssb_list = res_grid.dl_grants.bc.ssb_info;
 
