@@ -12,11 +12,13 @@ public:
   circular_array<slot_record_list, cell_resource_grid::RESOURCE_GRID_SIZE> slots;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 pdcch_scheduler::pdcch_scheduler(cell_resource_grid& res_grid_) :
   res_grid(res_grid_), records(std::make_unique<alloc_record_list>())
 {}
 
-pdcch_scheduler::~pdcch_scheduler() {}
+pdcch_scheduler::~pdcch_scheduler() = default;
 
 void pdcch_scheduler::slot_indication(slot_point sl_tx)
 {

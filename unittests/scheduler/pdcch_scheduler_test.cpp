@@ -1,6 +1,7 @@
 
 #include "../../lib/scheduler/cell/pdcch_scheduler.h"
 #include "config_generators.h"
+#include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
