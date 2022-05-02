@@ -99,6 +99,9 @@ public:
         return 1;
       case SE_PHR:
         return 2;
+      // NOTE: LONG_BSR and LONG_TRUNC_BSR are variable-sized MAC CE, not fixed-sized. Right now this function is not
+      // called for these two cases.
+      // TODO: Verify if these two cases will be used in the future by this function.
       case LONG_BSR:
       case LONG_TRUNC_BSR:
         return 1; // minimum size, could be more than that

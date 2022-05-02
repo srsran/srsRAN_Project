@@ -27,6 +27,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
 
   uint32_t sdu_length = 0;
   if (lcid_val.is_valid_lcid()) {
+    // Variable-sized MAC CEs
     if (lcid_val.has_length_field()) {
       // Read first length byte
       sdu_length = (uint32_t)*subpdu_reader;
@@ -41,6 +42,7 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
       }
       payload_view = subpdu_reader.split_and_advance(sdu_length);
     } else {
+      // Fixed-sized MAC CEs
       if (lcid_val == lcid_ul_sch_t::PADDING) {
         // set subPDU length to rest of PDU
         // 1 Byte R/LCID MAC subheader
@@ -70,9 +72,11 @@ std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subp
     case lcid_ul_sch_t::CRNTI:
       fmt::print(os, "C-RNTI: {:#04x}", decode_crnti_ce(subpdu.payload()));
       break;
-    case lcid_ul_sch_t::SHORT_TRUNC_BSR:
-      fmt::print(os, "SHORT_TRUNC_BSR: len={}", subpdu.total_length());
+    case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
+      lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
+      fmt::print(os, "SHORT_TRUNC_BSR: len={} bs={}", subpdu.total_length(), sbsr.buffer_size);
       break;
+    }
     case lcid_ul_sch_t::LONG_TRUNC_BSR:
       fmt::print(os, "LONG_TRUNC_BSR: len={}", subpdu.total_length());
       break;
@@ -82,9 +86,9 @@ std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subp
     } break;
     case lcid_ul_sch_t::LONG_BSR: {
       long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
-      fmt::print(os, "LBSR: bitmap={:#02x}", lbsr.bitmap);
+      fmt::print(os, "LBSR: bitmap={:#02x} ", lbsr.bitmap);
       for (const auto& lcg : lbsr.list) {
-        fmt::print(os, "lcg={} bs={}", lcg.lcg_id, lcg.buffer_size);
+        fmt::print(os, "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
       }
     } break;
     case lcid_ul_sch_t::SE_PHR:

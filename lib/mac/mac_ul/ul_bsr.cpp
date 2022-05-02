@@ -82,16 +82,15 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = i;
       // For the Long truncated, some BSR words can be not present, assume BSR > 0 in that case
-      if (reader.length() > 1) {
+      if (reader.length() > 0) {
         bsr.buffer_size = *reader;
         ++reader;
       } else if (format == bsr_format::LONG_TRUNC_BSR) {
         bsr.buffer_size = 63; // just assume it has 526 bytes to transmit
       } else {
-        srslog::fetch_basic_logger("MAC-NR").error(
-            "Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
-            payload.length(),
-            lbsr.list.size());
+        srslog::fetch_basic_logger("MAC").error("Error parsing LongBSR CE: sdu_length={} but there are {} active bsr\n",
+                                                payload.length(),
+                                                lbsr.list.size());
       }
       lbsr.list.push_back(bsr);
     }
