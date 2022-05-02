@@ -86,7 +86,7 @@ void ra_sched::run_slot(cell_resource_grid& res_alloc)
   get_msg3_delay(cfg.ul_cfg_common, rar_slot_res.slot, msg3_delay, msg3_symbols);
   cell_slot_resource_grid& msg3_slot_res = res_alloc[msg3_delay];
 
-  if (not rar_slot_res.is_dl_active() or not msg3_slot_res.is_ul_active()) {
+  if (not cfg.is_dl_enabled(rar_slot_res.slot) or not cfg.is_ul_enabled(msg3_slot_res.slot)) {
     // Early exit. RAR only allowed if PDCCH and PDSCH are available and respective Msg3 slot is available for UL
     return;
   }

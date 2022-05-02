@@ -42,9 +42,6 @@ struct cell_slot_resource_grid {
 
   /// Clears all allocations.
   void reset();
-
-  bool is_dl_active() const { return true; }
-  bool is_ul_active() const { return true; }
 };
 
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of
@@ -79,7 +76,7 @@ struct cell_resource_grid {
   {
     assert_valid_sl(slot_delay);
     slot_point                     sl_tx = last_slot_ind + slot_delay;
-    const cell_slot_resource_grid& r     = slots_[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
+    const cell_slot_resource_grid& r     = slots[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
     srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
@@ -87,7 +84,7 @@ struct cell_resource_grid {
   {
     assert_valid_sl(slot_delay);
     slot_point               sl_tx = last_slot_ind + slot_delay;
-    cell_slot_resource_grid& r     = slots_[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
+    cell_slot_resource_grid& r     = slots[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
     srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
@@ -105,7 +102,7 @@ private:
   slot_point last_slot_ind;
 
   /// Circular pool of cell resource grids, where each entry represents a separate slot.
-  static_vector<cell_slot_resource_grid, RESOURCE_GRID_SIZE> slots_;
+  static_vector<cell_slot_resource_grid, RESOURCE_GRID_SIZE> slots;
 };
 
 } // namespace srsgnb
