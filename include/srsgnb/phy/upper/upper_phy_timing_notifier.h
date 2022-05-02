@@ -9,12 +9,11 @@ class slot_point;
 class upper_phy_timing_notifier
 {
 public:
-  /// Default destructor
   virtual ~upper_phy_timing_notifier() = default;
 
-  /// Notifies a new TTI boundary event
+  /// \brief Notifies a new TTI boundary event.
   ///
-  /// \param [in] slot Provides the notification context
+  /// \param [in] slot Provides the notification context.
   virtual void on_tti_boundary(const slot_point& slot) = 0;
 };
 } // namespace srsgnb
