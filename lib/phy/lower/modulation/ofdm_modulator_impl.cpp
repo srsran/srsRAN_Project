@@ -45,9 +45,10 @@ cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index) c
   double   scs           = scs_to_khz(subcarrier_spacing(numerology)) * 1e3;
   double   srate_hz      = scs * dft_size;
   double   phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
+  std::complex<double> i (0.0, 1.0);
 
   // Calculate compensation phase in double precision and then convert to single
-  return (cf_t)std::conj(std::exp(std::complex<double>(1.0i * phase_rad)));
+  return (cf_t)std::conj(std::exp(i * phase_rad));
 }
 
 void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          output,
