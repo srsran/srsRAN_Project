@@ -28,7 +28,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(const ofdm_demodulato
   compensated_output.resize(dft_size);
 }
 
-const unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index)
+unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index) const
 {
   // Calculate the offset in samples to the start of the symbol including the CPs
   unsigned phase_freq_offset = 0;
@@ -40,7 +40,7 @@ const unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_i
   return phase_freq_offset;
 }
 
-const cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index)
+cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index) const
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
   unsigned nsymb         = get_nsymb_per_slot(cp);
@@ -53,7 +53,7 @@ const cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_
   return (cf_t)std::conj(std::exp(std::complex<double>(1.0i * phase_rad)));
 }
 
-const unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index)
+unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index) const
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);

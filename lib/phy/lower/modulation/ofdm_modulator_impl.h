@@ -36,12 +36,12 @@ private:
   /// \brief Gets the offset to a symbol including the cyclic prefixes.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The number of samples to the start of the given symbol.
-  const unsigned get_symbol_offset(unsigned symbol_index);
+  unsigned get_symbol_offset(unsigned symbol_index) const;
 
   /// \brief Computes the phase compensation (TS 138.211, Section 5.4) for a given symbol.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
   /// \return The phase compensation to be applied to the given symbol.
-  const cf_t get_phase_compensation(unsigned symbol_index);
+  cf_t get_phase_compensation(unsigned symbol_index) const;
 
 public:
   /// \brief Constructs an OFDM symbol modulator.
