@@ -12,7 +12,7 @@ namespace srsgnb {
 
 /// Setup configuration parameters.
 struct ofdm_demodulator_configuration {
-  /// Indicates the numeorology of the OFDM demodulator.
+  /// Indicates the numerology of the OFDM demodulator.
   unsigned numerology;
   /// Indicates the resource grid bandwidth in resource blocks.
   unsigned bw_rb;

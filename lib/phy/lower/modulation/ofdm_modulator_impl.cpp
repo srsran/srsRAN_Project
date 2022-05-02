@@ -3,7 +3,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
-#include <complex.h>
+#include <complex>
 
 using namespace srsgnb;
 
@@ -25,7 +25,7 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_fact
   srsvec::zero(dft->get_input());
 }
 
-unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index)
+const unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index)
 {
   // Calculate the offset in samples to the start of the symbol including the CPs
   unsigned phase_freq_offset = 0;
@@ -37,7 +37,7 @@ unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index)
   return phase_freq_offset;
 }
 
-cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index)
+const cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index)
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
   unsigned nsymb         = get_nsymb_per_slot(cp);
@@ -47,7 +47,7 @@ cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index)
   double   phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
 
   // Calculate compensation phase in double precision and then convert to single
-  return (cf_t)std::conj(std::exp(std::complex<double>(I * phase_rad)));
+  return (cf_t)std::conj(std::exp(std::complex<double>(1.0i * phase_rad)));
 }
 
 void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          output,
@@ -85,7 +85,7 @@ void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          ou
 
   // Apply scaling and phase compensation.
   srsvec::sc_prod(dft_output, phase_compensation * scale, output.last(dft_size));
-  
+
   // Copy cyclic prefix.
   srsvec::copy(output.first(cp_len), output.last(cp_len));
 }

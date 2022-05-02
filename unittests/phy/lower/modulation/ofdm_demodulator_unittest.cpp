@@ -62,11 +62,11 @@ int main()
 
         // Create OFDM demodulator configuration. Use minimum number of RB.
         ofdm_demodulator_configuration ofdm_config = {};
-        ofdm_config.numerology                   = numerology;
-        ofdm_config.bw_rb                        = 11;
-        ofdm_config.dft_size                     = dft_size;
-        ofdm_config.cp                           = cp;
-        ofdm_config.scale                        = dist_rg(rgen);
+        ofdm_config.numerology                     = numerology;
+        ofdm_config.bw_rb                          = 11;
+        ofdm_config.dft_size                       = dft_size;
+        ofdm_config.cp                             = cp;
+        ofdm_config.scale                          = dist_rg(rgen);
 
         unsigned nsubc = ofdm_config.bw_rb * NRE;
 
@@ -84,38 +84,38 @@ int main()
         for (unsigned slot_idx = 0, nslot = pow2(numerology); slot_idx != nslot; ++slot_idx) {
           // Select a random port.
           unsigned port_idx = dist_port(rgen);
-          
+
           // Generate random time domain data.
-          unsigned nsymb = get_nsymb_per_slot(cp);
-          std::vector<cf_t> time_data ;
+          unsigned          nsymb = get_nsymb_per_slot(cp);
+          std::vector<cf_t> time_data;
           // Iterate all symbols in the slot.
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             // Get the size of the current time-domain symbol.
             unsigned nsamples = cp.get_length(nsymb * slot_idx + symbol_idx, numerology, dft_size) + dft_size;
-            for (unsigned sample_idx = 0; sample_idx != nsamples; ++ sample_idx) {
-               cf_t random_value = {dist_rg(rgen), dist_rg(rgen)};
+            for (unsigned sample_idx = 0; sample_idx != nsamples; ++sample_idx) {
+              cf_t random_value = {dist_rg(rgen), dist_rg(rgen)};
               time_data.push_back(random_value);
             }
           }
-          
+
           // Reset DFT spy entries.
           dft.reset();
 
           // Demodulate signal.
           resource_grid_writer_spy rg;
           ofdm->demodulate(rg, time_data, port_idx, slot_idx);
-          
+
           // Check the number of calls to DFT processor match with the number of symbols.
           TESTASSERT(dft.get_entries().size() == nsymb);
-          
+
           // Iterate all symbols.
           std::vector<resource_grid_writer_spy::expected_entry_t> expected_rg;
-          unsigned offset      = 0;
-          auto     dft_entries = dft.get_entries();
+          unsigned                                                offset      = 0;
+          auto                                                    dft_entries = dft.get_entries();
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             // Get the size of the current time-domain symbol.
             unsigned symb_size = cp.get_length(nsymb * slot_idx + symbol_idx, numerology, dft_size) + dft_size;
-            
+
             // Get input time data.
             span<cf_t> time_data_symbol(&time_data[offset], symb_size);
 
@@ -124,28 +124,25 @@ int main()
 
             // Verify DFT input.
             TESTASSERT(srsvec::equal(time_data_symbol.last(dft_size), dft_input.first(dft_size)));
-            
+
             // Generate ideal frequency domain outputs.
             for (unsigned subc_idx = 0; subc_idx != nsubc; ++subc_idx) {
-                resource_grid_writer_spy::expected_entry_t entry = {};
-                entry.port                                       = port_idx;
-                entry.symbol                                     = symbol_idx;
-                entry.subcarrier                                 = subc_idx;
-                if(subc_idx < nsubc/2)
-                {
-                    entry.value                                  = dft_entries[symbol_idx].output[dft_size - (nsubc / 2) + subc_idx] * ofdm_config.scale;
-                }
-                else
-                {
-                    entry.value                                  = dft_entries[symbol_idx].output[subc_idx - (nsubc / 2)] * ofdm_config.scale;
-                }
-                expected_rg.push_back(entry);
-            }            
-            
+              resource_grid_writer_spy::expected_entry_t entry = {};
+              entry.port                                       = port_idx;
+              entry.symbol                                     = symbol_idx;
+              entry.subcarrier                                 = subc_idx;
+              if (subc_idx < nsubc / 2) {
+                entry.value = dft_entries[symbol_idx].output[dft_size - (nsubc / 2) + subc_idx] * ofdm_config.scale;
+              } else {
+                entry.value = dft_entries[symbol_idx].output[subc_idx - (nsubc / 2)] * ofdm_config.scale;
+              }
+              expected_rg.push_back(entry);
+            }
+
             // Increment OFDM symbol offset.
             offset += symb_size;
           }
-          
+
           // Assert resource grid entries.
           rg.assert_entries(expected_rg, ASSERT_MAX_ERROR);
         }

@@ -3,7 +3,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
-#include <complex.h>
+#include <complex>
 
 using namespace srsgnb;
 
@@ -25,7 +25,7 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(const ofdm_demodulato
   srsvec::zero(dft->get_input());
 }
 
-unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index)
+const unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index)
 {
   // Calculate the offset in samples to the start of the symbol including the CPs
   unsigned phase_freq_offset = 0;
@@ -37,7 +37,7 @@ unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index)
   return phase_freq_offset;
 }
 
-cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index)
+const cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index)
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
   unsigned nsymb         = get_nsymb_per_slot(cp);
@@ -47,10 +47,10 @@ cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index)
   double   phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
 
   // Calculate compensation phase in double precision and then convert to single
-  return (cf_t)std::conj(std::exp(std::complex<double>(I * phase_rad)));
+  return (cf_t)std::conj(std::exp(std::complex<double>(1.0i * phase_rad)));
 }
 
-unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index)
+const unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index)
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
@@ -93,15 +93,15 @@ void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    g
 
   // Get phase correction (TS 138.211, Section 5.4)
   cf_t phase_compensation = get_phase_compensation(symbol_index);
-  
+
   // Apply scaling and phase compensation.
   std::vector<cf_t> compensated_output(dft_size);
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
-  
+
   // Map the upper bound frequency domain data.
   span<cf_t> upper_bound(&compensated_output[dft_size - rg_size / 2], rg_size / 2);
   grid.put(port_index, symbol_index % nsymb, 0, upper_bound);
-  
+
   // Map the lower bound frequency domain data.
   span<cf_t> lower_bound(&compensated_output[0], rg_size / 2);
   grid.put(port_index, symbol_index % nsymb, rg_size / 2, lower_bound);
