@@ -47,7 +47,6 @@ public:
   /// \param[in] input Provides the time domain modulated signal.
   /// \param[in] port_index Indicates the port index to demodulate.
   /// \param[in] symbol_index Symbol index within the subframe to demodulate.
-  /// \param[in] cp_length Indicates the number of samples comprising the cyclic prefix of the current symbol.
   /// \note The input size must be equal to the the symbol size including the cyclic prefix.
   /// \note The output size must be consistent with the configured bandwidth.
   virtual void

@@ -85,7 +85,7 @@ void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          ou
 
   // Apply scaling and phase compensation.
   srsvec::sc_prod(dft_output, phase_compensation * scale, output.last(dft_size));
-
+  
   // Copy cyclic prefix.
   srsvec::copy(output.first(cp_len), output.last(cp_len));
 }

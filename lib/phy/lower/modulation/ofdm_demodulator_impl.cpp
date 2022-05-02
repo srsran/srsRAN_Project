@@ -93,15 +93,15 @@ void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    g
 
   // Get phase correction (TS 138.211, Section 5.4)
   cf_t phase_compensation = get_phase_compensation(symbol_index);
-
+  
   // Apply scaling and phase compensation.
   std::vector<cf_t> compensated_output(dft_size);
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
-
+  
   // Map the upper bound frequency domain data.
   span<cf_t> upper_bound(&compensated_output[dft_size - rg_size / 2], rg_size / 2);
   grid.put(port_index, symbol_index % nsymb, 0, upper_bound);
-
+  
   // Map the lower bound frequency domain data.
   span<cf_t> lower_bound(&compensated_output[0], rg_size / 2);
   grid.put(port_index, symbol_index % nsymb, rg_size / 2, lower_bound);
