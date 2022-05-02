@@ -23,6 +23,9 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(const ofdm_demodulato
 
   // Fill DFT input with zeros.
   srsvec::zero(dft->get_input());
+  
+  // Set the right size to the internal phase compensation buffer.
+  compensated_output.resize(dft_size);
 }
 
 const unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index)
@@ -95,7 +98,6 @@ void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    g
   cf_t phase_compensation = get_phase_compensation(symbol_index);
 
   // Apply scaling and phase compensation.
-  std::vector<cf_t> compensated_output(dft_size);
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
 
   // Map the upper bound frequency domain data.

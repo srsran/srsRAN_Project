@@ -32,6 +32,8 @@ private:
   double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
+  /// Internal buffer aimed at storing the phase compensated DFT outputs.
+  std::vector<cf_t> compensated_output;
 
   /// \brief Gets the offset to a symbol including the cyclic prefixes.
   /// \param[in] symbol_index Indicates the symbol index within the subframe.
