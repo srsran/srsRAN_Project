@@ -40,12 +40,12 @@ unsigned ofdm_symbol_modulator_impl::get_symbol_offset(unsigned symbol_index) co
 cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index) const
 {
   // Calculate the phase compensation (TS 138.211, Section 5.4)
-  unsigned nsymb         = get_nsymb_per_slot(cp);
-  unsigned symbol_offset = get_symbol_offset(symbol_index % nsymb);
-  double   scs           = scs_to_khz(subcarrier_spacing(numerology)) * 1e3;
-  double   srate_hz      = scs * dft_size;
-  double   phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
-  std::complex<double> i (0.0, 1.0);
+  unsigned             nsymb         = get_nsymb_per_slot(cp);
+  unsigned             symbol_offset = get_symbol_offset(symbol_index % nsymb);
+  double               scs           = scs_to_khz(subcarrier_spacing(numerology)) * 1e3;
+  double               srate_hz      = scs * dft_size;
+  double               phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
+  std::complex<double> i(0.0, 1.0);
 
   // Calculate compensation phase in double precision and then convert to single
   return (cf_t)std::conj(std::exp(i * phase_rad));
