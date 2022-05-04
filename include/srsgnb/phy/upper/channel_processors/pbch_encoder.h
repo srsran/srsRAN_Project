@@ -21,9 +21,9 @@ public:
   static const unsigned B = (PAYLOAD_SIZE + CRC_LEN);
   /// Number of encoded bits.
   static const unsigned E = 864;
-  /// Polar encoder order logarithmic.
+  /// Polar encoder order, logarithmic representation.
   static const unsigned POLAR_N_MAX = 9;
-  /// Polar encoder order linear.
+  /// Number of encoded bits.
   static const unsigned POLAR_N = (1U << POLAR_N_MAX);
 
   /// Describes a PBCH message to encode.
@@ -32,9 +32,9 @@ public:
     unsigned N_id;
     /// SSB candidate index in a 5ms burst.
     unsigned ssb_idx;
-    /// Maximum number if SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
+    /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
     unsigned L_max;
-    /// Indicates if the SS/PBCH block transmission is in an odd half frame true if subframe index is >=5.
+    /// Indicates if the SS/PBCH block transmission is in an odd half frame.
     bool hrf;
     /// Actual PBCH payload provided by higher layers.
     std::array<uint8_t, A> payload;

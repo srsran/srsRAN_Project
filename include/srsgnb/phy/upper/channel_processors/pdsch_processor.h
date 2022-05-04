@@ -46,7 +46,7 @@ public:
     static_vector<codeword_description, MAX_NOF_TRANSPORT_BLOCKS> codewords;
     /// Higher layer parameter PDCCH-DMRS-ScramblingID if it is given, otherwise the physical cell identifier.
     unsigned n_id;
-    /// Ports indexes the PDSCH transmission is mapped to. The number of ports indicates the number of layers.
+    /// Port indexes the PDSCH transmission is mapped to. The number of ports indicates the number of layers.
     static_vector<uint8_t, MAX_PORTS> ports;
     /// Indicates the transmission scheme.
     enum {

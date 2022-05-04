@@ -31,7 +31,7 @@ public:
     unsigned ssb_first_symbol;
     /// PSS linear signal amplitude
     float amplitude;
-    /// Ports indexes to map the channel
+    /// Port indexes to map the channel.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 
