@@ -46,6 +46,8 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
 
 unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
+  srsran_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
+
   unsigned value = 0;
 
   for (unsigned i = 0; i < nof_bits; i++) {
