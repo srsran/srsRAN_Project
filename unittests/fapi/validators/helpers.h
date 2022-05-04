@@ -42,11 +42,13 @@ inline srsgnb::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu()
   builder.set_bch_payload_phy_full(binary_dist(gen), sib1_dist(gen), binary_dist(gen), binary_dist(gen));
   const auto& v3 = generate_random_maintenance_v3_basic_params();
   builder.set_maintenance_v3_basic_parameters(std::get<0>(v3), std::get<1>(v3), std::get<2>(v3));
-  // When the PSS to SSS NR profile is configured to use the field beta PSS Profile SSS generate random number,
-  // otherwise set to the minimum value of the range, as per SCF-222 Section 3.4.2.4.
-  builder.set_maintenance_v3_tx_power_info(
-      power_dist(gen),
-      ((pss_profile == srsgnb::fapi::beta_pss_profile_type::beta_pss_profile_sss) ? power_dist(gen) : -32.768f));
+  // When the PSS to SSS NR profile is configured to use the field beta PSS Profile SSS then generate a random number,
+  // otherwise leave it unset, as per SCF-222 Section 3.4.2.4.
+  srsgnb::optional<float> beta_pss;
+  if (pss_profile == srsgnb::fapi::beta_pss_profile_type::beta_pss_profile_sss) {
+    beta_pss = power_dist(gen);
+  }
+  builder.set_maintenance_v3_tx_power_info(power_dist(gen), beta_pss);
 
   return pdu;
 }

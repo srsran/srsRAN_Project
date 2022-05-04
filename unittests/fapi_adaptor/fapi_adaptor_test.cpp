@@ -45,8 +45,8 @@ static void ssb_conversion_test()
             subcarrier_spacing scs                    = static_cast<subcarrier_spacing>(slot.numerology());
             uint8_t            dmrs_type_a_position   = binary_dist(gen);
             uint8_t            pdcch_config_sib1      = binary_8bit_dist(gen);
-            uint8_t            cell_barred            = binary_dist(gen);
-            uint8_t            intra_freq_reselection = binary_dist(gen);
+            bool               cell_barred            = binary_dist(gen);
+            bool               intra_freq_reselection = binary_dist(gen);
 
             // :TODO: Begin with the MAC structure when it is defined.
             dl_tti_request_message         msg = {};
@@ -129,10 +129,10 @@ static void ssb_conversion_test()
             TESTASSERT_EQ(pdu.bch_payload[20], (pdcch_config_sib1 >> 0U) & 1U);
 
             // Barred - 1 bit
-            TESTASSERT_EQ(pdu.bch_payload[21], cell_barred & 1U);
+            TESTASSERT_EQ(pdu.bch_payload[21], cell_barred ? 0U : 1U);
 
             // intraFreqReselection - 1 bit
-            TESTASSERT_EQ(pdu.bch_payload[22], intra_freq_reselection & 1U);
+            TESTASSERT_EQ(pdu.bch_payload[22], intra_freq_reselection ? 0U : 1U);
 
             // Spare - 1 bit
             TESTASSERT_EQ(pdu.bch_payload[23], 0);
