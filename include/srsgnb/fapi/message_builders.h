@@ -1,5 +1,5 @@
-#ifndef SRSGNB_FAPI_MESSAGES_BUILDER_H
-#define SRSGNB_FAPI_MESSAGES_BUILDER_H
+#ifndef SRSGNB_FAPI_MESSAGE_BUILDERS_H
+#define SRSGNB_FAPI_MESSAGE_BUILDERS_H
 
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/ran/pci.h"
@@ -295,4 +295,4 @@ private:
 } // namespace fapi
 } // namespace srsgnb
 
-#endif // SRSGNB_FAPI_MESSAGES_BUILDER_H
+#endif // SRSGNB_FAPI_MESSAGE_BUILDERS_H

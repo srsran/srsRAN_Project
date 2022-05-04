@@ -1,7 +1,7 @@
-#ifndef SRSGNB_UNITTESTS_FAPI_VALIDATORS_TOOLS_H
-#define SRSGNB_UNITTESTS_FAPI_VALIDATORS_TOOLS_H
+#ifndef SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H
+#define SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H
 
-#include "srsgnb/fapi/messages_builder.h"
+#include "srsgnb/fapi/message_builders.h"
 #include <random>
 
 namespace unittest {
@@ -74,4 +74,4 @@ inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
 
 } // namespace unittest
 
-#endif // SRSGNB_UNITTESTS_FAPI_VALIDATORS_TOOLS_H
+#endif // SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H

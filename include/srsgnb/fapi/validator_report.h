@@ -8,18 +8,17 @@
 namespace srsgnb {
 namespace fapi {
 
-/// Defines a validator report that contains useful information to debug when the validation of a fapi message fails.
+/// A validator report holds the context of the fields and values that caused a FAPI message validation to fail.
 struct validator_report {
-  /// Maximum number of reports supported.
+  /// Maximum number of supported reports.
   static constexpr unsigned MAX_NUM_REPORTS = 4u;
 
-  /// Error report information structure. Contains the information that helps to identify the source of the error.
+  /// Error report information structure. Contains the information that helps to identify the source of the failure.
   struct error_report {
     int32_t                     value;
     std::pair<int32_t, int32_t> expected_value_range;
     const char*                 property_name;
     optional<dl_pdu_type>       pdu_type;
-    slot_point                  slot;
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type) :
       value(value), expected_value_range(range), property_name(name), pdu_type(pdu_type)
@@ -36,27 +35,28 @@ struct validator_report {
     error_report(int32_t value, const char* name) : value(value), property_name(name) {}
   };
 
-  /// Emplace back a report.
-  void emplace_back(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type)
+  validator_report(uint16_t sfn, uint16_t slot) : sfn(sfn), slot(slot) {}
+
+  /// Appends an error report.
+  void append(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type)
   {
     reports.emplace_back(value, range, name, pdu_type);
   }
 
-  /// Emplace back a report.
-  void emplace_back(int32_t value, const char* name, dl_pdu_type pdu_type)
-  {
-    reports.emplace_back(value, name, pdu_type);
-  }
+  /// Appends an error report.
+  void append(int32_t value, const char* name, dl_pdu_type pdu_type) { reports.emplace_back(value, name, pdu_type); }
 
-  /// Emplace back a report.
-  void emplace_back(int32_t value, std::pair<int32_t, int32_t> range, const char* name)
+  /// Appends an error report.
+  void append(int32_t value, std::pair<int32_t, int32_t> range, const char* name)
   {
     reports.emplace_back(value, range, name);
   }
 
-  /// Emplace back a report.
-  void emplace_back(int32_t value, const char* name) { reports.emplace_back(value, name); }
+  /// Appends an error report.
+  void append(int32_t value, const char* name) { reports.emplace_back(value, name); }
 
+  uint16_t                                     sfn;
+  uint16_t                                     slot;
   static_vector<error_report, MAX_NUM_REPORTS> reports;
 };
 

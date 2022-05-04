@@ -1,4 +1,4 @@
-#include "srsgnb/fapi/messages_builder.h"
+#include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/phy/ssb.h"
 #include "srsgnb/support/test_utils.h"
 #include <chrono>

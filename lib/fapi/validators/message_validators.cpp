@@ -1,11 +1,11 @@
+#include "srsgnb/fapi/message_validators.h"
 #include "dl_ssb_pdu.h"
 #include "helpers.h"
-#include "srsgnb/fapi/validators.h"
 
 using namespace srsgnb;
 using namespace fapi;
 
-/// Validates the sfn property of the DL TTI request, as per SCF-222 v4.0 section 3.4.2.
+/// Validates the SFN property of a message.
 static bool validate_sfn(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -14,7 +14,7 @@ static bool validate_sfn(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "sfn", report);
 }
 
-/// Validates the slot property of the DL TTI request, as per SCF-222 v4.0 section 3.4.2.
+/// Validates the slot property of any message.
 static bool validate_slot(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -25,13 +25,14 @@ static bool validate_slot(unsigned value, validator_report& report)
 
 error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
 {
-  validator_report report;
-  // Validate SFN and slot.
+  validator_report report(msg.sfn, msg.slot);
+
+  // Validate the SFN and slot.
   bool success = true;
   success &= validate_sfn(msg.sfn, report);
   success &= validate_slot(msg.slot, report);
 
-  // Validate the pdus.
+  // Validate each PDU.
   for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case dl_pdu_type::SSB:
@@ -44,10 +45,9 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
   }
 
   // Build the result.
-  error_type<validator_report> result;
   if (!success) {
-    result.set_error(std::move(report));
+    return error_type<validator_report>(std::move(report));
   }
 
-  return result;
+  return {};
 }

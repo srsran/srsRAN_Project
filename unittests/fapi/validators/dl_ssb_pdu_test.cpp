@@ -1,6 +1,6 @@
 #include "../../../lib/fapi/validators/dl_ssb_pdu.h"
 #include "helpers.h"
-#include "srsgnb/fapi/validators.h"
+#include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -12,7 +12,7 @@ static void test_dl_ssb_pdu_ok()
 {
   dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
-  validator_report report;
+  validator_report report(0, 0);
   TESTASSERT(validate_dl_ssb_pdu(pdu, report));
   // Assert no reports were generated.
   TESTASSERT(report.reports.empty());
@@ -28,7 +28,7 @@ static void test_dl_ssb_pdu_error()
   pdu.ssb_block_index                                = 100;
   pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = -12000;
 
-  validator_report report;
+  validator_report report(0, 0);
   TESTASSERT(!validate_dl_ssb_pdu(pdu, report));
   // Assert 3 reports were generated.
   TESTASSERT_EQ(report.reports.size(), 3u);

@@ -1,13 +1,13 @@
-#ifndef SRSGNB_LIB_FAPI_VALIDATORS_TOOLS_H
-#define SRSGNB_LIB_FAPI_VALIDATORS_TOOLS_H
+#ifndef SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H
+#define SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H
 
-#include "srsgnb/fapi/validators.h"
+#include "srsgnb/fapi/message_validators.h"
 
 namespace srsgnb {
 namespace fapi {
 
-/// Helper validation function. If the values are within [min,max] range, returns true, otherwise returns false. If the
-/// validation fails, given report is filled.
+/// Helper validation function. If the values are within the [min,max] range, returns true, otherwise returns false. If
+/// the validation fails, given report is filled.
 inline bool validate_field(int32_t           min,
                            int32_t           max,
                            int32_t           value,
@@ -19,7 +19,7 @@ inline bool validate_field(int32_t           min,
     return true;
   }
 
-  report.emplace_back(value, std::make_pair(min, max), property, pdu_type);
+  report.append(value, std::make_pair(min, max), property, pdu_type);
   return false;
 }
 
@@ -31,11 +31,11 @@ inline bool validate_field(int32_t min, int32_t max, int32_t value, const char* 
     return true;
   }
 
-  report.emplace_back(value, std::make_pair(min, max), property);
+  report.append(value, std::make_pair(min, max), property);
   return false;
 }
 
 } // namespace fapi
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_FAPI_VALIDATORS_TOOLS_H
+#endif // SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H
