@@ -67,6 +67,7 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, bool
   srsran_sanity_check(is_scs_valid(scs, is_fr2), "Invalid SCS");
   static constexpr std::array<std::size_t, 3> rb_table_fr1[] = {
       // clang-format off
+      // SCS
       // 15,  30,  60.
       {  25,  11,   0}, // 5 MHz.
       {  52,  24,  11}, // 10 MHz.
@@ -84,6 +85,7 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, bool
   };
   static constexpr std::array<std::size_t, 2> rb_table_fr2[] = {
       // clang-format off
+      // SCS
       // 60, 120.
       {  66,  32}, // 50 MHz.
       { 132,  66}, // 100 MHz.
