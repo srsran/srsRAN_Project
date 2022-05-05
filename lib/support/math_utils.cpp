@@ -79,3 +79,17 @@ int8_t srsgnb::clip_and_quantize(float value, float range_limit_float, float ran
   }
   return static_cast<int8_t>(std::round(clipped * range_limit_int / range_limit_float));
 }
+
+int8_t srsgnb::saturated_sum(int8_t a, int8_t b, int8_t limit)
+{
+  srsran_assert(limit > 0, "Third input should be positive.");
+
+  int value = static_cast<int>(a) + b;
+
+  if (value > limit) {
+    value = 1 * limit;
+  } else if (value < -limit) {
+    value = -1 * limit;
+  }
+  return static_cast<int8_t>(value);
+}
