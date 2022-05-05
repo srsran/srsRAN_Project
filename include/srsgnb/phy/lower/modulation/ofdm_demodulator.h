@@ -65,8 +65,9 @@ public:
   virtual ~ofdm_slot_demodulator() = default;
 
   /// \brief Gets a slot size.
-  /// \return The number of samples for a frequency-domain slot.
-  virtual unsigned get_slot_size() const = 0;
+  /// \param[in] slot_index Indicates the slot index within the subframe.
+  /// \return The number of samples for the given slot index.
+  virtual unsigned get_slot_size(unsigned slot_index) const = 0;
 
   /// \brief Demodulates an OFDM signal with slot granularity.
   /// \param[out] grid Provides the output as frequency-domain signal corresponding to one slot.

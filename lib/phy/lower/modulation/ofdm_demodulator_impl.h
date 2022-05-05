@@ -94,7 +94,7 @@ public:
   }
 
   // See interface for documentation;
-  unsigned get_slot_size() const override;
+  unsigned get_slot_size(unsigned slot_index) const override;
 
   // See interface for documentation;
   void

@@ -110,14 +110,14 @@ void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    g
   grid.put(port_index, symbol_index % nsymb, rg_size / 2, lower_bound);
 }
 
-unsigned ofdm_slot_demodulator_impl::get_slot_size() const
+unsigned ofdm_slot_demodulator_impl::get_slot_size(unsigned slot_index) const
 {
   unsigned nsymb = get_nsymb_per_slot(cp);
   unsigned count = 0;
 
   // Iterate all symbols of the slot and accumulate
   for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
-    count += symbol_demodulator.get_rg_size();
+    count += symbol_demodulator.get_symbol_size(nsymb * slot_index + symbol_idx);
   }
 
   return count;

@@ -60,7 +60,7 @@ int main()
     TESTASSERT(ofdm != nullptr);
     
     // Load the input data.
-    std::vector<cf_t> data(ofdm->get_slot_size());
+    std::vector<cf_t> data(ofdm->get_slot_size(test_case.test_config.slot_idx));
     data = test_case.data.read();
     
     // Demodulate signal.
