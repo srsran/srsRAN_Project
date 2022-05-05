@@ -93,12 +93,12 @@ public:
 class rx_softbuffer_impl : public rx_softbuffer
 {
 private:
+  /// Maximum number of codeblocks.
+  static constexpr unsigned MAX_CODEBLOCKS = 52;
   /// Reservation identifier.
   rx_softbuffer_identifier reservation_id;
   /// Indicates the slot the softbuffer will expire at.
   slot_point reservation_expire_slot;
-  /// Maximum number of codeblocks.
-  static constexpr unsigned MAX_CODEBLOCKS = 52;
   /// Reference to the codeblock pool.
   rx_softbuffer_codeblock_pool& codeblock_pool;
   /// Stores codeblocks CRCs.
@@ -109,7 +109,7 @@ private:
 public:
   /// \brief Creates a receive softbuffer.
   /// \param[in] pool Provides the codeblock softbuffer pool.
-  rx_softbuffer_impl(rx_softbuffer_codeblock_pool& pool) : codeblock_pool(pool)
+  rx_softbuffer_impl(rx_softbuffer_codeblock_pool& pool) : reservation_id(), codeblock_pool(pool)
   {
     // Do nothing.
   }
