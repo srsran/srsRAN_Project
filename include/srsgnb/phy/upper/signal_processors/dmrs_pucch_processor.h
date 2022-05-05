@@ -6,6 +6,7 @@
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/adt/static_vector.h"
+#include <srsgnb/phy/cyclic_prefix.h>
 #include <memory>
 
 namespace srsgnb {
@@ -24,6 +25,8 @@ public:
     pucch_format format;
     /// Provides the slot timing and numerology.
     slot_point slot;
+    /// Indicates the cyclic prefix.
+    cyclic_prefix cp;
     /// Configuration of group and sequence hopping.
     pucch_group_hopping group_hopping;
     /// Start symbol index, see TS 38.331 PUCCH-Resource IE.

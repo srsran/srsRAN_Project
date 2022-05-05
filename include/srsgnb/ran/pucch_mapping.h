@@ -20,6 +20,15 @@ enum class pucch_format { FORMAT_0, FORMAT_1, FORMAT_2, FORMAT_3, FORMAT_4, NOF_
 /// Maximum number of symbols (without DMRS) that NR-PUCCH format 1 can transmit.
 static constexpr unsigned PUCCH_FORMAT1_N_MAX = 7;
 
+/// Minimum number of symbols that NR-PUCCH format 2 can transmit.
+static constexpr unsigned PUCCH_FORMAT2_MIN_NSYMB = 1;
+
+/// Maximum number of symbols that NR-PUCCH format 2 can transmit.
+static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
+
+/// Maximum number of PRBs allocated for NR-PUCCH format 2.
+static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
+
 } // namespace srsgnb
 
 #endif // SRSGNB_RAN_PUCCH_MAPPING_H

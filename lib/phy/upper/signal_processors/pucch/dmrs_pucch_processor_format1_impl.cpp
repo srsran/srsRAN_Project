@@ -212,7 +212,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     } else if (m != 0) {
       // Extrapolate for the last if more than 1 are provided
       srsvec::sc_prod(ce[m], 3.0f, ce_span);
-      // Subtraction ce[m - 1] - ce[m]
+      // Subtraction ce[m] - ce[m - 1]
       std::transform(
           std::begin(ce_span), std::end(ce_span), std::begin(ce[m - 1]), std::begin(ce_span), std::minus<>());
       srsvec::sc_prod(ce_span, 0.5f, ce_span);

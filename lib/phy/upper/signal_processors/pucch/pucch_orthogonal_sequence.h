@@ -42,7 +42,7 @@ public:
 
   cf_t get_sequence_value(unsigned n_pucch, unsigned i, unsigned m) const
   {
-    srsran_assert(n_pucch > 1 && n_pucch <= PUCCH_FORMAT1_N_MAX, "Invalid n_pucch");
+    srsran_assert(n_pucch >= 1 && n_pucch <= PUCCH_FORMAT1_N_MAX, "Invalid n_pucch");
     srsran_assert(i < PUCCH_FORMAT1_N_MAX, "Invalid i");
     srsran_assert(m < PUCCH_FORMAT1_N_MAX, "Invalid m");
     // Get value
