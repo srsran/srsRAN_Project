@@ -15,3 +15,13 @@ add_custom_command(
     )
 add_test(short_block_encoder_test short_block_encoder_test)
 
+add_executable(short_block_detector_test short_block_detector_test.cpp)
+target_link_libraries(short_block_detector_test short_block srslog)
+add_custom_command(
+    TARGET short_block_detector_test
+    POST_BUILD
+    WORKING_DIRECTORY ${TEST_DATA_DIR}
+    COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/short_block_detector_test_data.tar.gz
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/short_block_detector_test_data.tar.gz
+    VERBATIM
+    )
