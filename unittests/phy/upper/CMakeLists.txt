@@ -8,3 +8,8 @@ set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(re_pattern_test re_pattern_test.cpp)
 target_link_libraries(re_pattern_test upper_phy srslog)
+add_test(re_pattern_test re_pattern_test)
+
+add_executable(rx_softbuffer_pool_test rx_softbuffer_pool_test.cpp)
+target_link_libraries(rx_softbuffer_pool_test upper_phy srslog)
+add_test(rx_softbuffer_pool_test rx_softbuffer_pool_test)

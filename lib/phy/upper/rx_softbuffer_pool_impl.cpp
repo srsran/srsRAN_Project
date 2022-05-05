@@ -12,7 +12,15 @@ rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
   for (rx_softbuffer_impl& buffer : buffers) {
     if (buffer.match_id(id)) {
       slot_point expire_slot = slot + expire_timeout_slots;
+
+      // Rserve buffer.
       buffer.reserve(id, expire_slot, nof_codeblocks);
+
+      // If the reservation failed, return nullptr.
+      if (!buffer.is_reserved()) {
+        return nullptr;
+      }
+
       return &buffer;
     }
   }
@@ -22,6 +30,12 @@ rx_softbuffer* rx_softbuffer_pool_impl::reserve_softbuffer(const slot_point&    
     if (!buffer.is_reserved()) {
       slot_point expire_slot = slot + expire_timeout_slots;
       buffer.reserve(id, expire_slot, nof_codeblocks);
+
+      // If the reservation failed, return nullptr.
+      if (!buffer.is_reserved()) {
+        return nullptr;
+      }
+
       return &buffer;
     }
   }
@@ -52,4 +66,9 @@ void rx_softbuffer_pool_impl::run_slot(const slot_point& slot)
   for (rx_softbuffer_impl& buffer : buffers) {
     buffer.run_slot(slot);
   }
+}
+
+std::unique_ptr<rx_softbuffer_pool> srsgnb::create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config)
+{
+  return std::make_unique<rx_softbuffer_pool_impl>(config);
 }

@@ -35,6 +35,9 @@ private:
   std::vector<entry> entries;
 
 public:
+  /// Default CB identifier for unreserved codeblocks.
+  static constexpr unsigned UNRESERVED_CB_ID = UINT32_MAX;
+
   /// \brief Creates a receive buffer codeblock pool.
   /// \param[in] nof_codeblocks Indicates the maximum number of codeblocks.
   /// \param[in] max_codeblock_size Indicates the maximum codeblock size.
@@ -48,7 +51,7 @@ public:
   }
 
   /// \brief Reserves a codeblock softbuffer.
-  /// \return The codeblock identifier in the pool.
+  /// \return The codeblock identifier in the pool if it is reserved succesfully. Otherwise, \c UNRESERVED_CB_ID
   unsigned reserve()
   {
     // Find the first available codeblock.
@@ -58,13 +61,18 @@ public:
         return cb_id;
       }
     }
-    srsran_terminate("Failed to reserve codeblock.");
+    return UNRESERVED_CB_ID;
   }
 
   /// \brief Frees a codeblock softbuffer.
   /// \param[in] cb_id Indicates the codeblock identifier in the pool.
   void free(unsigned cb_id)
   {
+    // Skip if the codeblock identifier is equal to the unreserved identifier.
+    if (cb_id == UNRESERVED_CB_ID) {
+      return;
+    }
+
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
     srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     entries[cb_id].reserved = false;
@@ -124,13 +132,23 @@ public:
     // Make sure there are no buffers before reserving.
     free();
 
-    // Resize storage.
+    // Resize CRCs.
     crc.resize(nof_codeblocks);
-    codeblock_ids.resize(nof_codeblocks);
+
+    // Resize codeblocks with codeblock unreserved identifier.
+    codeblock_ids.resize(nof_codeblocks, static_cast<unsigned>(rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID));
 
     // Reserve codeblocks.
     for (unsigned& cb_id : codeblock_ids) {
+      // Reserve codeblock.
       cb_id = codeblock_pool.reserve();
+
+      // Make sure the CB identifier is valid.
+      if (cb_id == rx_softbuffer_codeblock_pool::UNRESERVED_CB_ID) {
+        // Free the rest of the softbuffer.
+        free();
+        return;
+      }
     }
   }
 
@@ -223,7 +241,7 @@ private:
 public:
   /// \brief Creates a generic receiver softbuffer pool.
   /// \param[in] config Provides the pool required parameters.
-  rx_softbuffer_pool_impl(rx_softbuffer_pool_description& config) :
+  rx_softbuffer_pool_impl(const rx_softbuffer_pool_description& config) :
     codeblock_pool(config.max_nof_codeblocks, config.max_codeblock_size),
     buffers(config.max_softbuffers, codeblock_pool),
     expire_timeout_slots(config.expire_timeout_slots)
@@ -241,6 +259,8 @@ public:
   // See interface for documentation.
   void run_slot(const slot_point& slot) override;
 };
+
+std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config);
 
 } // namespace srsgnb
 
