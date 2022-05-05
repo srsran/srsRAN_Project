@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_RX_SOFTBUFFER_POOL_H
-#define SRSGNB_RX_SOFTBUFFER_POOL_H
+#ifndef SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H
+#define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H
 
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 #include "srsgnb/ran/slot_point.h"
@@ -29,9 +29,9 @@ struct rx_softbuffer_identifier {
 /// The receiver softbuffers are selected from a pool of resources for a given rx_softbuffer_identifier and kept
 /// persistent until the identifier is freed or expires.
 ///
-/// The pool is designed for being unique in a sector. So, every sector must create its own pool.
+/// The pool is designed for being unique in a sector. In other words, every sector must create its own pool.
 ///
-/// The implementation must be thread safe, reserve_softbuffer(), free_softbuffer() and run_slot() can potentially be
+/// The implementation must be thread safe: reserve_softbuffer(), free_softbuffer() and run_slot() can potentially be
 /// called from different threads.
 class rx_softbuffer_pool
 {
@@ -47,15 +47,15 @@ public:
   /// The softbuffers are reserved until:
   /// - the softbuffer identifier is freed using free_softbuffer(),
   /// - a softbuffer reservation is performed with the same identifier but different number of codeblocks, or
-  /// - softbuffer reservation expires (run_slot()).
+  /// - softbuffer reservation expires (by means run_slot()).
   ///
-  /// The pool does not initialise or modify the contents of the softbuffers. The modules that use the softbuffers are
+  /// The pool does not initialize or modify the contents of the softbuffers. The modules that use the softbuffers are
   /// responsible for initializing and modifying their contents upon new transmissions.
   ///
   /// \param[in] slot Indicates the slot context in which the reservation occurs.
   /// \param[in] id Identifies the softbuffer.
   /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
-  /// \return A pointer to the reserved softbuffer if the reservation was successful. Otherwise, nullptr.
+  /// \return A pointer to the reserved softbuffer if the reservation was successful. Otherwise, \c nullptr.
   virtual rx_softbuffer*
   reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) = 0;
 
@@ -71,4 +71,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RX_SOFTBUFFER_POOL_H
+#endif // SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H

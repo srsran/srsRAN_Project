@@ -27,9 +27,9 @@ private:
   static constexpr bool ONE_PACKET = false;
 
   /// Defines the Rx stream internal states.
-  enum class states { UNINITIALISED, SUCCESSFUL_INIT, STREAMING, STOP };
+  enum class states { UNINITIALIZED, SUCCESSFUL_INIT, STREAMING, STOP };
   /// Indicates the current stream state.
-  std::atomic<states> state = {states::UNINITIALISED};
+  std::atomic<states> state = {states::UNINITIALIZED};
   /// Indicates the stream identification for notifications.
   unsigned id;
   /// Radio notification interface.

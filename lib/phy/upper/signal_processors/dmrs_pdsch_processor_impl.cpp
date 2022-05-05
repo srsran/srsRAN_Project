@@ -59,7 +59,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
   // Calculate initial sequence state.
   unsigned c_init = ((nsymb * nslot + symbol + 1) * (2 * nidnscid + 1) * pow2(17) + (2 * nidnscid + nscid)) % pow2(31);
 
-  // Initialise sequence.
+  // Initialize sequence.
   prg->init(c_init);
 
   // Generate sequence.

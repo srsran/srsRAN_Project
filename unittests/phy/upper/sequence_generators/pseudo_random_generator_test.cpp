@@ -62,7 +62,7 @@ static void pack_vector(uint8_t* unpacked, uint8_t* packed, int nof_bits)
 
 static void generate_gold(unsigned c_init, unsigned length, unsigned offset)
 {
-  // Initialise states
+  // Initialize states
   for (uint32_t n = 0; n < 31; n++) {
     x2[n] = (c_init >> n) & 0x1;
   }
@@ -101,7 +101,7 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   // Create sequence generator
   std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
 
-  // Initialise sequence generator
+  // Initialize sequence generator.
   generator->init(c_init);
 
   // Advance
@@ -133,7 +133,7 @@ void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
   // Create sequence generator
   std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
 
-  // Initialise sequence generator
+  // Initialize sequence generator.
   generator->init(c_init);
 
   // Advance
@@ -165,7 +165,7 @@ void test_apply_xor_i8(unsigned c_init, unsigned N, unsigned offset)
   // Create sequence generator
   std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
 
-  // Initialise sequence generator
+  // Initialize sequence generator.
   generator->init(c_init);
 
   // Advance
@@ -190,7 +190,7 @@ void test_generate_float(unsigned c_init, unsigned N, unsigned offset)
   // Create sequence generator
   std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
 
-  // Initialise sequence generator
+  // Initialize sequence generator.
   generator->init(c_init);
 
   // Advance

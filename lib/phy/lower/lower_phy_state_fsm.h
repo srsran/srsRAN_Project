@@ -13,19 +13,19 @@ class lower_phy_state_fsm
 private:
   /// Describes the possible states.
   enum class states {
-    /// Indicates the lower physical layer has not been initialised.
-    UNINITIALISED,
-    /// Indicates the lower physical layer has been successfully initialised and started the execution of asynchronous
+    /// Indicates the lower physical layer has not been initialized.
+    UNINITIALIZED,
+    /// Indicates the lower physical layer has been successfully initialized and started the execution of asynchronous
     /// tasks.
     RUNNING,
     /// Indicates stop has been signaled and it is waiting for the execution of asynchronous tasks to finish.
     WAIT_STOP,
-    /// Indicates the component was initialised successfully and no asynchronous task is performed.
+    /// Indicates the component was initialized successfully and no asynchronous task is performed.
     STOPPED
   };
 
   /// Indicates the current state.
-  states state = states::UNINITIALISED;
+  states state = states::UNINITIALIZED;
   /// Protects the concurrent access to the instance.
   mutable std::mutex mutex;
   /// Used to wait for certain state transitions.
@@ -35,11 +35,11 @@ private:
   bool is_running_unprotected() const { return state == states::RUNNING; }
 
 public:
-  /// Notifies the successful component initialisation.
+  /// Notifies the successful component initialization.
   void on_successful_init()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    if (state == states::UNINITIALISED) {
+    if (state == states::UNINITIALIZED) {
       state = states::RUNNING;
     }
   }
@@ -60,7 +60,7 @@ public:
       state = states::WAIT_STOP;
     }
 
-    while (state != states::UNINITIALISED && state != states::STOPPED) {
+    while (state != states::UNINITIALIZED && state != states::STOPPED) {
       cvar.wait(lock);
     }
   }

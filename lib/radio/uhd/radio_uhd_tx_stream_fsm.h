@@ -23,8 +23,8 @@ private:
 
   /// Defines the Tx stream internal states.
   enum class states {
-    /// Indicates the stream was not initialised successfully.
-    UNINITIALISED = 0,
+    /// Indicates the stream was not initialized successfully.
+    UNINITIALIZED = 0,
     /// Indicates the stream is ready to start burst.
     START_BURST,
     /// Indicates the stream is transmitting a burst.
@@ -46,7 +46,7 @@ private:
   uhd::time_spec_t wait_eob_timeout = uhd::time_spec_t();
 
 public:
-  /// \brief Notifies that the transmit stream has been initialised successfully.
+  /// \brief Notifies that the transmit stream has been initialized successfully.
   void init_successful()
   {
     std::unique_lock<std::mutex> lock(mutex);
@@ -122,7 +122,7 @@ public:
           Debug("Waiting for end-of-burst ACK (until " << wait_eob_timeout.get_real_secs() << "), now "
                                                        << time_spec.get_real_secs() << "... ");
         }
-      case states::UNINITIALISED:
+      case states::UNINITIALIZED:
       case states::STOP:
         // Ignore transmission.
         return false;

@@ -9,7 +9,7 @@ void pdcch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, 
   // Calculate initial sequence state.
   unsigned c_init = ((config.n_rnti << 16U) + config.n_id) % (1 << 31);
 
-  // Initialise the scrambler with the initial state.
+  // Initialize the scrambler with the initial state.
   scrambler->init(c_init);
 
   // Apply sequence as unpacked XOR.

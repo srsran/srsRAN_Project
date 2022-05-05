@@ -28,7 +28,7 @@ private:
   std::map<std::tuple<unsigned, unsigned, unsigned>, std::vector<cf_t> > pregen_signals;
 
 public:
-  /// \brief Initialise the sequence generator with the length and an alpha list.
+  /// \brief Initialize the sequence generator with the length and an alpha list.
   ///
   /// This method generates a collection of low PAPR sequences \f$r^{(\alpha, \beta)}_{u,v}\f$ as per TS 38.211
   /// section 5.2.2 that can be later accessed by the method get(). The sequence length is
@@ -79,7 +79,7 @@ public:
 
     // Make sure the sequence exists.
     srsran_assert(pregen_signals.count(key),
-                  "The sequence collection was not initialised with u=%d, v=%d and alpha_idx=%d",
+                  "The sequence collection was not initialized with u=%d, v=%d and alpha_idx=%d",
                   u,
                   v,
                   alpha_idx);

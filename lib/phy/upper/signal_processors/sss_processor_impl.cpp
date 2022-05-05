@@ -18,7 +18,7 @@ using namespace srsgnb;
 
 sss_processor_impl::pregen_d0_s::pregen_d0_s()
 {
-  // Initialise M sequence x0
+  // Initialize M sequence x0
   std::array<uint32_t, SEQUENCE_LEN + 7> x0 = {};
   x0[6]                                     = 0;
   x0[5]                                     = 0;
@@ -41,7 +41,7 @@ sss_processor_impl::pregen_d0_s::pregen_d0_s()
 
 sss_processor_impl::pregen_d1_s::pregen_d1_s()
 {
-  // Initialise M sequence x1
+  // Initialize M sequence x1
   std::array<uint32_t, SEQUENCE_LEN + 7> x1 = {};
   x1[6]                                     = 0;
   x1[5]                                     = 0;

@@ -75,7 +75,7 @@ enum class over_the_wire_format {
   SC8
 };
 
-/// Describes the necessary parameters to initialise a radio.
+/// Describes the necessary parameters to initialize a radio.
 struct radio {
   /// Clock configuration.
   clock_sources clock;

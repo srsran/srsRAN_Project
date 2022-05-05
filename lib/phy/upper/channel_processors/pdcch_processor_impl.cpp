@@ -21,7 +21,7 @@ void pdcch_processor_impl::map_reg_to_prb(span<bool>                 rb_mask,
     return;
   }
 
-  // Initialise RB mask to all false.
+  // Initialize RB mask to all false.
   std::fill(rb_mask.begin(), rb_mask.end(), false);
 
   // For each available frequency resource map REG into RB.

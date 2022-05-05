@@ -72,7 +72,7 @@ public:
 
   /// \brief Gets a codeblock soft-bit buffer.
   /// \param[in] cb_id Indicates the codeblock identifier.
-  /// \return A view to the codeblock soft-bits buffer.
+  /// \return A view to the codeblock soft bit buffer.
   span<int8_t> get_soft_bits(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
@@ -107,9 +107,9 @@ public:
   }
 
   /// \brief Reserves the buffer.
-  /// \param id Indicates the reservation identifier.
-  /// \param expire_slot Indicates the slot at which the reservation expires.
-  /// \param nof_codeblocks Indicates the number of codeblocks to reserve.
+  /// \param[in] id Indicates the reservation identifier.
+  /// \param[in] expire_slot Indicates the slot at which the reservation expires.
+  /// \param[in] nof_codeblocks Indicates the number of codeblocks to reserve.
   void reserve(const rx_softbuffer_identifier& id, const slot_point& expire_slot, unsigned int nof_codeblocks)
   {
     // Update reservation information.
@@ -199,7 +199,7 @@ public:
   {
     srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
     srsran_always_assert(codeblock_id < codeblock_ids.size(),
-                         "Codeblock index ({}) is out-of-range ({}).",
+                         "Codeblock index ({}) is out of range ({}).",
                          codeblock_id,
                          codeblock_ids.size());
     unsigned cb_id = codeblock_ids[codeblock_id];

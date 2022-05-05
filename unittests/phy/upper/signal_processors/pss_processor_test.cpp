@@ -22,7 +22,7 @@ static std::mt19937 rgen(0);
 
 void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float scale)
 {
-  // Initialise M sequence x
+  // Initialize M sequence x
   std::array<uint32_t, 127 + 7> x = {};
 
   x[6] = 1;

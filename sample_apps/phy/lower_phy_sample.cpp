@@ -202,7 +202,7 @@ int main(int argc, char** argv)
                        cp.to_string(),
                        numerology,
                        sampling_rate_hz);
-  // Initialise random generator for data.
+  // Initialize random generator for data.
   std::mt19937                          rgen(1234);
   std::uniform_real_distribution<float> dist(-1.0, +1.0);
 

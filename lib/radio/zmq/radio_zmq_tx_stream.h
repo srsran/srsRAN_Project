@@ -10,7 +10,7 @@ namespace srsgnb {
 class radio_zmq_tx_stream
 {
 private:
-  /// Indicates whether the class was initialised successfully.
+  /// Indicates whether the class was initialized successfully.
   bool successful = false;
   /// Stores independent channels.
   std::vector<std::unique_ptr<radio_zmq_tx_channel> > channels;

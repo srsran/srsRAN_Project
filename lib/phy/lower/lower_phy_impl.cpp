@@ -215,7 +215,7 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
                        config.max_processing_delay_slots);
 
   logger.info(
-      "Initialised with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
+      "Initialized with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
       config.rx_to_tx_delay,
       rx_to_tx_delay,
       config.ul_to_dl_slot_offset,
@@ -256,7 +256,7 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
     dl_rg_buffers.emplace_back(lower_phy_dl_rg_buffer(config.sectors.size()));
   }
 
-  // Signal a successful initialisation.
+  // Signal a successful initialization.
   state_fsm.on_successful_init();
 }
 

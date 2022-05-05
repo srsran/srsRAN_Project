@@ -18,7 +18,7 @@ namespace srsgnb {
 /// \param[in] reference_point_k_rb Indicates the RB index for reference.
 /// \param[in] nof_dmrs_per_rb Indicates the number of DMRS to generate per active RB.
 /// \param[in] rb_mask Indicates the active resource blocks.
-/// \note It assumes that the pseudo-random generator is initialised.
+/// \note It assumes that the pseudo-random generator is initialized.
 /// \note The sequence size must be consistent with the number of active RBs and the number of DMRS per RB.
 inline void dmrs_sequence_generate(span<cf_t>               sequence,
                                    pseudo_random_generator& prg,

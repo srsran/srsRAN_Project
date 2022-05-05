@@ -20,7 +20,7 @@ private:
   /// Defines the start stream command delay in seconds.
   static constexpr double START_STREAM_DELAY_S = 0.1;
   /// Enumerates possible UHD session states.
-  enum class states { UNINITIALISED, SUCCESSFUL_INIT, STOP };
+  enum class states { UNINITIALIZED, SUCCESSFUL_INIT, STOP };
   /// Maps ports to stream and channel indexes.
   using port_to_stream_channel = std::pair<unsigned, unsigned>;
   /// Indicates the current state.
@@ -89,9 +89,9 @@ public:
                          task_executor&                    async_executor,
                          radio_notification_handler&       notifier_);
 
-  /// \brief Indicates that the radio session was initialised succesfully.
+  /// \brief Indicates that the radio session was initialized succesfully.
   /// \return True if no exception is caught during initialization. Otherwise false.
-  bool is_successful() const { return (state != states::UNINITIALISED); }
+  bool is_successful() const { return (state != states::UNINITIALIZED); }
 
   // See interface for documentation
   radio_management_plane& get_management_plane() override { return *this; }

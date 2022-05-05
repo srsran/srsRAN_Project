@@ -83,7 +83,7 @@ void pbch_encoder_impl::scramble(span<uint8_t>                           a_prime
   uint32_t i = 0;
   uint32_t j = 0;
 
-  // Initialise sequence
+  // Initialize sequence.
   scrambler->init(msg.N_id);
 
   // Select value M

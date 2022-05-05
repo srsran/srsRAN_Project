@@ -134,7 +134,7 @@ radio_uhd_tx_stream::radio_uhd_tx_stream(uhd::usrp::multi_usrp::sptr& usrp,
     return;
   }
 
-  // Notify FSM that it was successfully initialised.
+  // Notify FSM that it was successfully initialized.
   state_fsm.init_successful();
 
   // Create asynchronous task.

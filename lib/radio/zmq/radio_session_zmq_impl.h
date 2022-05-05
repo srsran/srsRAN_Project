@@ -41,7 +41,7 @@ public:
   /// \param[in] config Provides the required parameters to start a ZMQ radio based session.
   /// \param[in] async_task_executor Provides a task executor to perform asynchronous tasks.
   /// \param[in] notification_handler Provides a radio event notification handler.
-  /// \note Use is_successful() to check that the instance was successfully initialised.
+  /// \note Use is_successful() to check that the instance was successfully initialized.
   radio_session_zmq_impl(const radio_configuration::radio& config,
                          task_executor&                    async_task_executor,
                          radio_notification_handler&       notification_handler);
@@ -49,7 +49,7 @@ public:
   /// Default destructor.
   ~radio_session_zmq_impl();
 
-  /// Indicates if the instance was successfully initialised.
+  /// Indicates if the instance was successfully initialized.
   bool is_successful() const { return successful; }
 
   // See interface for documentation.

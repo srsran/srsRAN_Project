@@ -533,7 +533,7 @@ radio_session_uhd_impl::radio_session_uhd_impl(const radio_configuration::radio&
     return;
   }
 
-  // Transition to successfully initialised.
+  // Transition to successfully initialized.
   state = states::SUCCESSFUL_INIT;
 }
 

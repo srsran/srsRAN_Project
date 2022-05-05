@@ -11,11 +11,11 @@ class radio_zmq_rx_channel_fsm
 private:
   /// Describes the possible states.
   enum class states {
-    /// Indicates it failed to initialise.
-    UNINITIALISED = 0,
-    /// Indicates it has been successfully initialised and it is waiting for request.
+    /// Indicates it failed to initialize.
+    UNINITIALIZED = 0,
+    /// Indicates it has been successfully initialized and it is waiting for request.
     SEND_REQUEST,
-    /// Indicates it has been successfully initialised and it is waiting for data to transmit.
+    /// Indicates it has been successfully initialized and it is waiting for data to transmit.
     RECEIVE_DATA,
     /// Signals a stop to the asynchronous thread.
     WAIT_STOP,
@@ -24,7 +24,7 @@ private:
   };
 
   /// Indicates the current state.
-  states state = states::UNINITIALISED;
+  states state = states::UNINITIALIZED;
   /// Protects the state and transitions.
   mutable std::mutex mutex;
   /// Condition variable to wait for certain states.
@@ -34,7 +34,7 @@ private:
   bool is_running_unprotected() const { return state == states::SEND_REQUEST || state == states::RECEIVE_DATA; }
 
 public:
-  /// Notifies that the transmit stream has been initialised successfully.
+  /// Notifies that the transmit stream has been initialized successfully.
   void init_successful()
   {
     std::unique_lock<std::mutex> lock(mutex);

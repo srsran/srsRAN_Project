@@ -17,7 +17,7 @@ using namespace srsgnb;
 
 pss_processor_impl::pregen_signal_s::pregen_signal_s()
 {
-  // Initialise M sequence x
+  // Initialize M sequence x.
   std::array<uint32_t, SEQUENCE_LEN + 7> x;
   x[6] = 1;
   x[5] = 1;

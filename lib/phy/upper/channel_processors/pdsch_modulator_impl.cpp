@@ -37,7 +37,7 @@ void pdsch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, 
   // Calculate initial scrambling state.
   unsigned c_init = (static_cast<unsigned>(config.rnti) << 15U) + (q << 14U) + config.n_id;
 
-  // Initialise scrambling sequence.
+  // Initialize scrambling sequence.
   scrambler->init(c_init);
 
   // Apply scrambling sequence.

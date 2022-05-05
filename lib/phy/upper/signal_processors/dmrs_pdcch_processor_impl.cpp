@@ -17,7 +17,7 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
                                                     unsigned int                          symbol,
                                                     const dmrs_pdcch_processor::config_t& config) const
 {
-  // Initialise pseudo-random generator.
+  // Initialize pseudo-random generator.
   prg->init(c_init(symbol, config));
 
   // Generate sequence.
