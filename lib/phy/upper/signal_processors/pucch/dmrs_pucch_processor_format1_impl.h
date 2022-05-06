@@ -18,7 +18,7 @@ private:
   /// Pre-generated orthogonal cover code.
   const pucch_orthogonal_sequence* occ;
 
-  // Internal struct holding sequence generation parameters
+  // Internal struct holding sequence generation parameters.
   struct sequence_generation_config {
     // sequence group
     unsigned u;

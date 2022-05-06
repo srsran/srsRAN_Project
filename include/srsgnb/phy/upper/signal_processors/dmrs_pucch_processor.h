@@ -6,7 +6,7 @@
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/adt/static_vector.h"
-#include <srsgnb/phy/cyclic_prefix.h>
+#include "srsgnb/phy/cyclic_prefix.h"
 #include <memory>
 
 namespace srsgnb {

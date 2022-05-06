@@ -6,7 +6,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <srsgnb/adt/static_vector.h>
+#include "srsgnb/adt/static_vector.h"
 
 namespace srsgnb {
 

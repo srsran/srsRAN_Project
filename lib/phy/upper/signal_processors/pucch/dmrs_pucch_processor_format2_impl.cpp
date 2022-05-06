@@ -1,6 +1,7 @@
 
 #include "dmrs_pucch_processor_format2_impl.h"
-#include <srsgnb/srsvec/prod.h>
+#include "srsgnb/srsvec/prod.h"
+#include <numeric>
 
 using namespace srsgnb;
 
@@ -54,7 +55,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
 {
   // Array for the channel estimates.
   std::array<std::array<cf_t, MAX_NOF_DMRS_PER_SYMBOL>, PUCCH_FORMAT2_MAX_NSYMB> ce = {};
-  // Array for measurements
+  // Array for measurements.
   std::array<cf_t, PUCCH_FORMAT2_MAX_NSYMB> corr = {};
 
   unsigned nof_symbols = config.intra_slot_hopping ? config.nof_symbols : PUCCH_FORMAT2_MIN_NSYMB;
@@ -63,7 +64,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   unsigned l_end   = config.start_symbol_index + nof_symbols;
   unsigned nof_ref = config.nof_prb * NOF_DMRS_PER_RB;
 
-  // For each symbol carrying DM-RS (up to 2 symbols maximum)
+  // For each symbol carrying DM-RS (up to 2 symbols maximum).
   for (unsigned l = l_start, i = 0; l != l_end; ++l, ++i) {
     std::array<cf_t, MAX_NOF_DMRS_PER_SYMBOL> sequence     = {};
     std::array<cf_t, MAX_NOF_DMRS_PER_SYMBOL> slot_symbols = {};
@@ -79,7 +80,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
     // Get DM-RS symbols from the grid.
     mapping(symb_span, grid, start_prb, config.nof_prb, l);
 
-    // Perform estimation (calculate least square estimates for this symbol)
+    // Perform estimation (calculate least square estimates for this symbol).
     srsvec::prod_conj(symb_span, sequence_span, {ce[i].data(), nof_ref});
   }
 
@@ -87,29 +88,25 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   float rsrp = 0.0f;
   float epre = 0.0f;
   for (unsigned i = 0; i < nof_symbols; ++i) {
-    // Compute RSRP
-    cf_t correlation = 0.0f;
-    std::for_each(std::begin(ce[i]), std::end(ce[i]), [&correlation](cf_t ce) {
-      // accumulate
-      correlation += ce;
-    });
-    corr[i] = correlation / static_cast<float>(nof_ref);
+    // Compute RSRP.
+    cf_t correlation = std::accumulate(std::begin(ce[i]), std::end(ce[i]), cf_t(0));
+    corr[i]          = correlation / static_cast<float>(nof_ref);
     rsrp += std::norm(corr[i]);
 
-    // Compute EPRE
+    // Compute EPRE.
     cf_t avg_power = 0;
     std::for_each(std::begin(ce[i]), std::end(ce[i]), [&avg_power](cf_t ce) {
-      // conjugate dot-product
+      // Conjugate dot-product.
       avg_power += (ce * std::conj(ce));
     });
     epre += std::real(avg_power) / static_cast<float>(nof_ref);
   }
 
-  // Average measurements
+  // Average measurements.
   rsrp /= nof_symbols;
   epre /= nof_symbols;
 
-  // Set power measures
+  // Set power measures.
   rsrp                         = std::min(rsrp, epre);
   estimate.rsrp                = rsrp;
   estimate.rsrp_dBfs           = convert_power_to_dB(rsrp);

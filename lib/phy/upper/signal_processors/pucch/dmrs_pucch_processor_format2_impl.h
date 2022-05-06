@@ -24,12 +24,12 @@ private:
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
 
-  /// \brief Computes the initial pseudo-random state.
+  /// \brief     Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
   /// \param[in] config Provides the required parameters.
-  /// \return The initial pseudo-random state.
+  /// \return    The initial pseudo-random state.
   ///
-  /// \remark implemented according to TS 38.211 section 6.4.1.3.2.1
+  /// \remark implemented according to TS 38.211 section 6.4.1.3.2.1.
   static unsigned c_init(unsigned symbol, const config_t& config);
 
   /// \brief Implements TS 38.211 section 6.4.1.3.2.1 Sequence generation.
@@ -51,7 +51,7 @@ private:
   mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned nof_prb, unsigned symbol) const;
 
 public:
-  void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) override;
+  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

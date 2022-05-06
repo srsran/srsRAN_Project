@@ -5,10 +5,11 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
+#include <numeric>
 
 using namespace srsgnb;
 
-// Implements TS 38.211 table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH...
+// Implements TS 38.211 table 6.4.1.3.1.1-1: Number of DM-RS symbols and the corresponding N_PUCCH.
 static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config, unsigned m_prime)
 {
   if (config.intra_slot_hopping) {
@@ -82,21 +83,21 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
                                                             const sequence_generation_config&     cfg,
                                                             unsigned                              symbol) const
 {
-  // Get an instance of pucch_helper
+  // Get an instance of pucch_helper.
   pucch_helper helper;
 
-  // Compute alpha index
+  // Compute alpha index.
   unsigned alpha_idx =
       helper.get_alpha_index(pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
 
-  // Get r_uv sequence from the sequence collection
+  // Get r_uv sequence from the sequence collection.
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
   srsran_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
 
-  // Get orthogonal sequence
+  // Get orthogonal sequence.
   cf_t w_i_m = occ->get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
 
-  // Compute z(n) = w(i) * r_uv(n)
+  // Compute z(n) = w(i) * r_uv(n).
   srsvec::sc_prod(r_uv, w_i_m, sequence);
 }
 
@@ -144,7 +145,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     // Get the starting PRB.
     unsigned starting_prb = (m_prime == 0) ? config.starting_prb : config.second_hop_prb;
 
-    // For each symbol carrying DM-RS
+    // For each symbol carrying DM-RS.
     for (unsigned m = 0; m != n_pucch; m++, l += 2) {
       unsigned symbol = l_prime + l;
 
@@ -157,40 +158,36 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
       // Get DMRS symbols from the grid.
       mapping(slot_symbols, grid, starting_prb, symbol);
 
-      // Perform estimation (calculate least square estimates for this symbol)
+      // Perform estimation (calculate least square estimates for this symbol).
       srsvec::prod_conj(slot_symbols, sequence, ce[n_pucch_sum]);
 
       n_pucch_sum++;
     }
   }
 
-  // Perform measurements
+  // Perform measurements.
   float rsrp = 0.0f;
   float epre = 0.0f;
   for (unsigned m = 0; m < n_pucch_sum; ++m) {
-    // Compute RSRP
-    cf_t correlation = 0.0f;
-    std::for_each(std::begin(ce[m]), std::end(ce[m]), [&correlation](cf_t ce) {
-      // accumulate
-      correlation += ce;
-    });
-    corr[m] = correlation / static_cast<float>(NRE);
+    // Compute RSRP.
+    cf_t correlation = std::accumulate(std::begin(ce[m]), std::end(ce[m]), cf_t(0));
+    corr[m]          = correlation / static_cast<float>(NRE);
     rsrp += std::norm(corr[m]);
 
-    // Compute EPRE
+    // Compute EPRE.
     cf_t avg_power = 0;
     std::for_each(std::begin(ce[m]), std::end(ce[m]), [&avg_power](cf_t ce) {
-      // conjugate dot-product
+      // Conjugate dot-product.
       avg_power += (ce * std::conj(ce));
     });
     epre += std::real(avg_power) / static_cast<float>(NRE);
   }
 
-  // Average measurements
+  // Average measurements.
   rsrp /= n_pucch_sum;
   epre /= n_pucch_sum;
 
-  // Set power measures
+  // Set power measures.
   rsrp                         = std::min(rsrp, epre);
   estimate.rsrp                = rsrp;
   estimate.rsrp_dBfs           = convert_power_to_dB(rsrp);
@@ -201,23 +198,23 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   estimate.snr                 = rsrp / estimate.noise_estimate;
   estimate.snr_db              = convert_power_to_dB(estimate.snr);
 
-  // Interpolates between DMRS symbols
+  // Interpolates between DMRS symbols.
   for (uint32_t m = 0; m < n_pucch_sum; ++m) {
     span<cf_t> ce_span(&estimate.ce[m * NRE], NRE);
 
     if (m != n_pucch_sum - 1) {
-      // If it is not the last symbol with DMRS, average between
+      // If it is not the last symbol with DMRS, average between.
       srsvec::add(ce[m], ce[m + 1], ce_span);
       srsvec::sc_prod(ce_span, 0.5f, ce_span);
     } else if (m != 0) {
-      // Extrapolate for the last if more than 1 are provided
+      // Extrapolate for the last if more than 1 are provided.
       srsvec::sc_prod(ce[m], 3.0f, ce_span);
-      // Subtraction ce[m] - ce[m - 1]
+      // Subtraction ce[m] - ce[m - 1].
       std::transform(
           std::begin(ce_span), std::end(ce_span), std::begin(ce[m - 1]), std::begin(ce_span), std::minus<>());
       srsvec::sc_prod(ce_span, 0.5f, ce_span);
     } else {
-      // Simply copy the estimated channel
+      // Simply copy the estimated channel.
       srsvec::copy(ce_span, span<cf_t>{ce[m]});
     }
   }
