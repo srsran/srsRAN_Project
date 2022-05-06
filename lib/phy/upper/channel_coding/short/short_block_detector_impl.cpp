@@ -6,34 +6,38 @@
 
 using namespace srsgnb;
 
-static std::array<std::array<int8_t, MAX_IN_BITS>, 1U << MAX_OUT_BITS> create_lut()
+static std::array<std::array<int8_t, MAX_IN_LENGTH>, MAX_NOF_CODEWORDS_2> create_lut()
 {
   short_block_encoder_impl encoder;
 
-  std::array<std::array<int8_t, MAX_IN_BITS>, 1U << MAX_OUT_BITS> table = {};
+  std::array<std::array<int8_t, MAX_IN_LENGTH>, MAX_NOF_CODEWORDS_2> table = {};
 
-  for (unsigned idx = 0; idx != MAX_NOF_CODEWORDS; ++idx) {
-    std::array<uint8_t, MAX_OUT_BITS> bits = {};
-    srsvec::bit_unpack(bits, idx, MAX_OUT_BITS);
+  // Encode all possible codewords corresponding to "even-valued" messages.
+  for (unsigned idx = 0; idx != MAX_NOF_CODEWORDS_2; ++idx) {
+    // Generate an "even-valued" message.
+    std::array<uint8_t, MAX_OUT_LENGTH> bits = {};
+    srsvec::bit_unpack(bits, 2 * idx, MAX_OUT_LENGTH);
     std::reverse(bits.begin(), bits.end());
 
-    std::array<uint8_t, MAX_IN_BITS> cdwd = {};
+    // Encode the message.
+    std::array<uint8_t, MAX_IN_LENGTH> cdwd = {};
     encoder.encode(cdwd, bits);
+    // Save the codeword in the (+1, -1) representation.
     std::transform(cdwd.cbegin(), cdwd.cend(), table[idx].begin(), [](uint8_t a) { return (1 - 2 * a); });
   }
   return table;
 };
 
-const std::array<std::array<int8_t, MAX_IN_BITS>, MAX_NOF_CODEWORDS> short_block_detector_impl::DETECT_TABLE =
+const std::array<std::array<int8_t, MAX_IN_LENGTH>, MAX_NOF_CODEWORDS_2> short_block_detector_impl::DETECT_TABLE =
     create_lut();
 
 static void validate_spans(span<uint8_t> output, span<const int8_t> input)
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
-  srsran_assert((out_size > 0) && (out_size <= MAX_OUT_BITS), "The output length should be between 1 and 11 bits.");
+  srsran_assert((out_size > 0) && (out_size <= MAX_OUT_LENGTH), "The output length should be between 1 and 11 bits.");
   if (out_size > 2) {
-    srsran_assert(in_size == MAX_IN_BITS, "Invalid output length.");
+    srsran_assert(in_size == MAX_IN_LENGTH, "Invalid output length.");
   } else {
     std::array<unsigned, 5> in_lengths = {};
     if (out_size == 1) {
@@ -93,26 +97,31 @@ static double detect_2(span<uint8_t> output, span<const int8_t> input)
 double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const int8_t> input)
 {
   unsigned out_size      = output.size();
-  unsigned nof_codewords = (1U << out_size);
+  unsigned nof_codewords = (1U << (out_size - 1));
 
   unsigned max_idx    = 0;
   double   max_metric = std::numeric_limits<double>::min();
+  uint8_t  bit0       = 0U;
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != nof_codewords; ++cdwd_idx) {
-    int metric = srsvec::dot_prod(input, span<const int8_t>(DETECT_TABLE[cdwd_idx]), 0);
-    if (metric > max_metric) {
-      max_metric = metric;
+    int metric     = srsvec::dot_prod(input, span<const int8_t>(DETECT_TABLE[cdwd_idx]), 0);
+    int metric_abs = std::abs(metric);
+    if (metric_abs > max_metric) {
+      max_metric = metric_abs;
       max_idx    = cdwd_idx;
+      bit0       = static_cast<uint8_t>(metric < 0);
     }
   }
 
-  srsvec::bit_unpack(output, max_idx, output.size());
+  // Recover the message from the index of the codeword with the highest correlation. Recall that only "even-valued"
+  // messages have been correlated, the "odd-values" ones are those with negative correlation and, in turn, bit0 = 1.
+  srsvec::bit_unpack(output, 2 * max_idx + bit0, output.size());
   std::reverse(output.begin(), output.end());
 
   // GLRT detector metric.
   max_metric *= max_metric;
   int in_norm_sqr = srsvec::dot_prod(input, input, 0);
-  return (MAX_IN_BITS - 1) * max_metric / (MAX_IN_BITS * in_norm_sqr - max_metric);
+  return (MAX_IN_LENGTH - 1) * max_metric / (MAX_IN_LENGTH * in_norm_sqr - max_metric);
 }
 
 bool short_block_detector_impl::detect(span<uint8_t> output, span<const int8_t> input)
@@ -135,7 +144,7 @@ bool short_block_detector_impl::detect(span<uint8_t> output, span<const int8_t> 
 
   // Detection threshold values computed with the generalized likelihood ratio test.
   // TODO(david): Thresholds for the 1- and 2-bit cases are not meaningful.
-  constexpr std::array<double, MAX_OUT_BITS> THRESHOLDS = {0, 0, 12, 14, 16, 18, 20, 22, 24, 26, 29};
+  constexpr std::array<double, MAX_OUT_LENGTH> THRESHOLDS = {0, 0, 12, 14, 16, 18, 20, 22, 24, 26, 29};
   return (max_metric > THRESHOLDS[out_size - 1]);
 };
 
