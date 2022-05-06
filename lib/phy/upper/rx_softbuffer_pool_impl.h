@@ -3,6 +3,7 @@
 #define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include <mutex>
 
@@ -93,8 +94,6 @@ public:
 class rx_softbuffer_impl : public rx_softbuffer
 {
 private:
-  /// Maximum number of codeblocks.
-  static constexpr unsigned MAX_CODEBLOCKS = 52;
   /// Reservation identifier.
   rx_softbuffer_identifier reservation_id;
   /// Indicates the slot the softbuffer will expire at.
@@ -102,9 +101,9 @@ private:
   /// Reference to the codeblock pool.
   rx_softbuffer_codeblock_pool& codeblock_pool;
   /// Stores codeblocks CRCs.
-  static_vector<bool, MAX_CODEBLOCKS> crc;
+  static_vector<bool, MAX_NOF_SEGMENTS> crc;
   /// Stores codeblock identifiers.
-  static_vector<unsigned, MAX_CODEBLOCKS> codeblock_ids;
+  static_vector<unsigned, MAX_NOF_SEGMENTS> codeblock_ids;
 
 public:
   /// \brief Creates a receive softbuffer.
