@@ -72,10 +72,10 @@ static void encode_2(span<uint8_t> output, span<const uint8_t> input)
     // validate_spans ensures that output.size() is a multiple of 3.
     unsigned step = output.size() / 3;
 
-    output[step]         = c2;
-    output[step + 1]     = c0;
-    output[2 * step]     = c1;
-    output[2 * step + 1] = c2;
+    output[step]           = c2;
+    output[step + 1]       = c0;
+    output[2UL * step]     = c1;
+    output[2UL * step + 1] = c2;
   }
 }
 
@@ -87,8 +87,7 @@ static void encode_3_11(span<uint8_t> output, span<const uint8_t> input)
 
   for (unsigned c_i = 0, length = input.size(); c_i != length; ++c_i) {
     if (input[c_i] == 1) {
-      span<uint8_t> m(basis_sequences[c_i]);
-      srsvec::binary_xor(output, m, output);
+      srsvec::binary_xor(output, span<uint8_t>(basis_sequences[c_i]), output);
     }
   }
 }
