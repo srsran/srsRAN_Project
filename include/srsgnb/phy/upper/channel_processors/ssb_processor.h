@@ -34,8 +34,13 @@ public:
     unsigned ssb_offset_pointA;
     /// SS/PBCH pattern case (A,B,C,D,E).
     ssb_pattern_case pattern_case;
-    /// PBCH payload. The first 24 bits correspond to the packed MIB, while the last 8 bits are SFN (4 bit), half-radio
-    /// frame (1 bit) and SS/PBCH block index (1 bit), in the same order as specified in 3GPP TS 38.212 section 7.1.1.
+    /// \brief PBCH payload.
+    /// The first 24 bits correspond to the packed MIB, while the last 8 bits are:
+    /// - SFN (4 bit),
+    /// - half-radio frame (1 bit), and
+    /// - SS/PBCH block index (3 bit) for L_max=64, otherwise
+    /// - SS/PBCH subcarrier offset (1 bit) and 2 padding bits.
+    /// \remark Bit order is specified in 3GPP TS 38.212 section 7.1.1.
     std::array<uint8_t, BCH_PAYLOAD_SIZE> bch_payload;
     /// Port indexes to map the SS/PBCH transmission.
     static_vector<uint8_t, MAX_PORTS> ports;

@@ -22,10 +22,10 @@ pbch_encoder_impl::pbch_encoder_impl() :
   interleaver(create_polar_interleaver()),
   alloc(create_polar_allocator()),
   code(create_polar_code()),
-  encoder(create_polar_encoder_pipelined(POLAR_N_MAX)),
+  encoder(create_polar_encoder_pipelined(POLAR_N_MAX_LOG)),
   rm(create_polar_rate_matcher())
 {
-  code->set(B, E, POLAR_N_MAX, polar_code_ibil::not_present);
+  code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
 }
 
 // Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
@@ -141,14 +141,14 @@ void pbch_encoder_impl::crc_attach(span<uint8_t> b, span<const uint8_t> a_prime)
 void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 {
   assert(c.size() == B);
-  assert(d.size() == POLAR_N);
+  assert(d.size() == POLAR_N_MAX);
 
   // 5.3.1.1 Interleaving.
   std::array<uint8_t, B> c_prime;
   interleaver->interleave(c, c_prime, polar_interleaver_direction::tx);
 
   // Channel allocation.
-  std::array<uint8_t, POLAR_N> allocated;
+  std::array<uint8_t, POLAR_N_MAX> allocated;
   alloc->allocate(c_prime, allocated, *code);
 
   // Polar encoding.
@@ -157,7 +157,7 @@ void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
 void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 {
-  assert(d.size() == POLAR_N);
+  assert(d.size() == POLAR_N_MAX);
   assert(f.size() == E);
 
   rm->rate_match(d, f, *code);
@@ -181,7 +181,7 @@ void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder
   crc_attach(k, a_prime);
 
   // Channel coding.
-  std::array<uint8_t, POLAR_N> d = {};
+  std::array<uint8_t, POLAR_N_MAX> d = {};
   channel_coding(d, k);
 
   // Rate matching.

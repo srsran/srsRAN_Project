@@ -17,8 +17,8 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-/// Fills PHY timing information for the given fapi_pdu. Returns a BCH payload with the timing information filled, as
-/// per TS38.212 Section 7.1.1.
+/// \brief Fills PHY timing information for the given \c fapi_pdu.
+/// \return Packed BCH payload with the timing information filled, as per TS38.212 Section 7.1.1.
 static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
 {
   // Move the BCH payload to the MSB.
@@ -41,7 +41,8 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
   return payload;
 }
 
-/// Fills PHY full information for the given fapi_pdu. Returns a BCH payload, as per  TS38.212 Section 7.1.1.
+/// \brief Fills PHY full information for the given \c fapi_pdu.
+/// \return Packed BCH payload, as per TS38.212 Section 7.1.1.
 static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
 {
   const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;

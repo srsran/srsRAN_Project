@@ -19,12 +19,12 @@ public:
   static const unsigned CRC_LEN = 24;
   /// Payload size plus CRC length.
   static const unsigned B = (PAYLOAD_SIZE + CRC_LEN);
-  /// Number of encoded bits.
+  /// Number of rate matched bits.
   static const unsigned E = 864;
   /// Polar encoder order, logarithmic representation.
-  static const unsigned POLAR_N_MAX = 9;
+  static const unsigned POLAR_N_MAX_LOG = 9;
   /// Number of encoded bits.
-  static const unsigned POLAR_N = (1U << POLAR_N_MAX);
+  static const unsigned POLAR_N_MAX = (1U << POLAR_N_MAX_LOG);
 
   /// Describes a PBCH message to encode.
   struct pbch_msg_t {
