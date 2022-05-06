@@ -1,37 +1,37 @@
 
-#include "sched.h"
 #include "sched_ssb.h"
+#include "scheduler_impl.h"
 
 using namespace srsgnb;
 
-sched::sched(sched_configuration_notifier& notifier) :
+scheduler_impl::scheduler_impl(sched_configuration_notifier& notifier) :
   mac_notifier(notifier), logger(srslog::fetch_basic_logger("MAC")), pending_events(ue_db, cells, notifier)
 {}
 
-bool sched::handle_cell_configuration_request(const cell_configuration_request_message& msg)
+bool scheduler_impl::handle_cell_configuration_request(const cell_configuration_request_message& msg)
 {
   pending_events.handle_cell_configuration_request(msg);
   return true;
 }
 
-void sched::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
+void scheduler_impl::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
   log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "started.");
   mac_notifier.on_ue_config_complete(ue_request.ue_index);
   log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "completed.");
 }
 
-void sched::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
+void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
   mac_notifier.on_ue_config_complete(ue_request.ue_index);
 }
 
-void sched::handle_rach_indication(const rach_indication_message& msg)
+void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
   pending_events.handle_rach_indication(msg);
 }
 
-const sched_result* sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
+const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   srsran_sanity_check(cells.cell_exists(cell_index), "Invalid cell index");
   auto& cell = cells[cell_index];

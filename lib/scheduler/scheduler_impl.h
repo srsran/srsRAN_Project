@@ -1,20 +1,18 @@
 
-#ifndef SRSGNB_SCHED_H
-#define SRSGNB_SCHED_H
+#ifndef SRSGNB_SCHEDULER_IMPL_H
+#define SRSGNB_SCHEDULER_IMPL_H
 
 #include "cell/cell_sched.h"
 #include "event_manager.h"
 #include "sched_strategy/data_scheduler.h"
-#include "srsgnb/scheduler/scheduler_configurator.h"
-#include "srsgnb/scheduler/scheduler_feedback_handler.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 
-class sched final : public mac_scheduler
+class scheduler_impl final : public mac_scheduler
 {
 public:
-  explicit sched(sched_configuration_notifier& notifier);
+  explicit scheduler_impl(sched_configuration_notifier& notifier);
 
   bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
 
@@ -57,4 +55,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_H
+#endif // SRSGNB_SCHEDULER_IMPL_H

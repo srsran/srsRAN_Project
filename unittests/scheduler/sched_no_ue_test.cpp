@@ -1,6 +1,6 @@
 
 #include "config_generators.h"
-#include "lib/scheduler/sched.h"
+#include "lib/scheduler/scheduler_impl.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -15,7 +15,7 @@ public:
 void test_no_ues()
 {
   sched_cfg_dummy_notifier cfg_notif;
-  sched                    sch{cfg_notif};
+  scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
   cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
@@ -33,7 +33,7 @@ void test_no_ues()
 void test_rach_indication()
 {
   sched_cfg_dummy_notifier cfg_notif;
-  sched                    sch{cfg_notif};
+  scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
   cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
