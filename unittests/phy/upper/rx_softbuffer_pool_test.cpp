@@ -161,7 +161,7 @@ static void test_softbuffer_expire()
     softbuffer_id1.harq_ack_id = softbuffer_id0.harq_ack_id + 1;
     softbuffer_id1.rnti        = 0x1234;
     TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks) == nullptr);
-    slot++;
+    ++slot;
     pool->run_slot(slot);
   } while (slot.system_slot() < pool_config.expire_timeout_slots + delay);
 
