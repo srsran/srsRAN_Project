@@ -114,7 +114,7 @@ void ra_sched::run_slot(cell_resource_grid& res_alloc)
     }
 
     // Early checks for space
-    if (rar_slot_res.dl_grants.rar_grants.full() or msg3_slot_res.ul_grants.puschs.full()) {
+    if (rar_slot_res.result.dl.rar_grants.full() or msg3_slot_res.result.ul.puschs.full()) {
       log_postponed_rar(rar_req, "No space in sched result.");
       break;
     }
@@ -152,7 +152,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
 
   // 1. Check space in DL sched result for RAR
-  if (rar_alloc.dl_grants.rar_grants.full()) {
+  if (rar_alloc.result.dl.rar_grants.full()) {
     // early exit
     log_postponed_rar(rar, "No PDSCH space for RAR");
     return 0;
@@ -163,7 +163,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
 
   // 2. Check space in UL sched result for Msg3
   max_nof_allocs =
-      std::min(max_nof_allocs, (unsigned)(msg3_alloc.ul_grants.puschs.capacity() - msg3_alloc.ul_grants.puschs.size()));
+      std::min(max_nof_allocs, (unsigned)(msg3_alloc.result.ul.puschs.capacity() - msg3_alloc.result.ul.puschs.size()));
   if (max_nof_allocs == 0) {
     // early exit
     log_postponed_rar(rar, "No space in PUSCH for Msg3");
@@ -224,8 +224,8 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
 
   // Allocate PRBs and space for RAR
   rar_alloc.dl_prbs.fill(rar_prbs.start(), rar_prbs.stop());
-  rar_alloc.dl_grants.rar_grants.emplace_back();
-  rar_information& rar = rar_alloc.dl_grants.rar_grants.back();
+  rar_alloc.result.dl.rar_grants.emplace_back();
+  rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
   // Fill RAR DCI
   // TODO
@@ -257,8 +257,8 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
 
     // Allocate and fill PUSCH for Msg3
     msg3_alloc.ul_prbs.fill(msg3_grant.prbs.start(), msg3_grant.prbs.stop());
-    msg3_alloc.ul_grants.puschs.emplace_back();
-    ul_sched_info& pusch = msg3_alloc.ul_grants.puschs.back();
+    msg3_alloc.result.ul.puschs.emplace_back();
+    ul_sched_info& pusch = msg3_alloc.result.ul.puschs.back();
     pusch.crnti          = msg3_req.ind_msg.crnti;
     // TODO
 

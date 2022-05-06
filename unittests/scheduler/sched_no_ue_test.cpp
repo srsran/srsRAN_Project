@@ -24,9 +24,10 @@ void test_no_ues()
   slot_point sl_tx{0, 0};
 
   // Action 2: Run slot 0.
-  const dl_sched_result* res = sch.get_dl_sched(sl_tx, to_du_cell_index(0));
+  const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
   TESTASSERT(res != nullptr);
-  TESTASSERT(res->ue_grants.empty());
+  TESTASSERT(res->dl.ue_grants.empty());
+  TESTASSERT(res->ul.puschs.empty());
 }
 
 void test_rach_indication()
@@ -45,12 +46,12 @@ void test_rach_indication()
   sch.handle_rach_indication(generate_rach_ind_msg(sl_rx, to_rnti(0x4601)));
 
   // Action 3: Run slot 0.
-  const dl_sched_result* res = sch.get_dl_sched(sl_tx, to_du_cell_index(0));
+  const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.
   TESTASSERT(res != nullptr);
-  TESTASSERT(res->ue_grants.empty());
-  TESTASSERT(not res->rar_grants.empty());
+  TESTASSERT(res->dl.ue_grants.empty());
+  TESTASSERT(not res->dl.rar_grants.empty());
 }
 
 int main()

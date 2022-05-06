@@ -48,7 +48,7 @@ private:
   srs_sched_config_adapter sched_cfg_adapter;
 
   /// MAC Scheduler.
-  std::unique_ptr<sched_interface> sched_obj;
+  std::unique_ptr<mac_scheduler> sched_obj;
 
   mac_dl_processor dl_unit;
   mac_ul_processor ul_unit;

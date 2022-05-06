@@ -9,7 +9,7 @@ using namespace srsgnb;
 
 mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
                                              const mac_cell_configuration& cell_cfg_,
-                                             sched_interface&              sched_,
+                                             mac_scheduler&                sched_,
                                              mac_dl_ue_manager&            ue_mng_) :
   cfg(cfg_),
   logger(cfg.logger),
@@ -45,30 +45,29 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   }
 
   // Generate DL scheduling result for provided slot and cell.
-  const dl_sched_result* dl_res = sched_obj.get_dl_sched(sl_tx, cell_cfg.cell_index);
-  if (dl_res == nullptr) {
+  const sched_result* sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
+  if (sl_res == nullptr) {
     logger.warning("Unable to compute scheduling result for slot={}, cell={}", sl_tx, cell_cfg.cell_index);
     return;
   }
 
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
   mac_dl_sched_result mac_dl_res;
-  assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, *dl_res);
+  assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
   // Send DL sched result to PHY.
   phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
 
   // Start assembling Slot Data Result.
   mac_dl_data_result data_res;
-  assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, *dl_res);
+  assemble_dl_data_request(data_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
   // Send DL Data to PHY.
   phy_cell.on_new_downlink_data(data_res);
 
   // Send UL sched result to PHY.
-  const ul_sched_result* ul_res = sched_obj.get_ul_sched(sl_tx, cell_cfg.cell_index);
-  mac_ul_sched_result    mac_ul_res;
-  mac_ul_res.ul_res = ul_res;
+  mac_ul_sched_result mac_ul_res;
+  mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 }
 

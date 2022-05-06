@@ -17,8 +17,7 @@ void cell_slot_resource_grid::reset()
 {
   dl_prbs.reset();
   ul_prbs.reset();
-  dl_grants = {};
-  ul_grants = {};
+  result = {};
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -3,7 +3,7 @@
 #include "sched_config_helpers.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/scheduler/sched_configuration_helpers.h"
-#include "srsgnb/scheduler/sched_configurator.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 
 using namespace srsgnb;
 
@@ -22,7 +22,7 @@ static void fill_sched_cell_config_msg(cell_configuration_request_message& sched
 
 mac_dl_processor::mac_dl_processor(mac_common_config_t&    cfg_,
                                    mac_sched_configurator& sched_cfg_,
-                                   sched_interface&        sched_,
+                                   mac_scheduler&        sched_,
                                    du_rnti_table&          rnti_table_) :
   cfg(cfg_), logger(cfg.logger), sched_cfg(sched_cfg_), ue_mng(rnti_table_), sched_obj(sched_)
 {}

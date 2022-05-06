@@ -23,27 +23,27 @@ void test_pusch_resource_allocation()
 
   // Test: No allocations made yet
   TESTASSERT(res_grid_alloc[0].ul_prbs.none());
-  TESTASSERT(res_grid_alloc[0].ul_grants.puschs.empty());
+  TESTASSERT(res_grid_alloc[0].result.ul.puschs.empty());
 
   // Action 2: Allocate PUSCH grant in current slot_tx
   prb_interval ul_grant{1, 5};
   res_grid_alloc[0].ul_prbs |= ul_grant;
-  res_grid_alloc[0].ul_grants.puschs.emplace_back();
+  res_grid_alloc[0].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx
   TESTASSERT(res_grid_alloc[0].ul_prbs.any());
   TESTASSERT_EQ(res_grid_alloc[0].ul_prbs.count(), ul_grant.length());
-  TESTASSERT_EQ(1, res_grid_alloc[0].ul_grants.puschs.size());
+  TESTASSERT_EQ(1, res_grid_alloc[0].result.ul.puschs.size());
 
   // Action 3: Allocate PUSCH grant in slot_tx + 1
   prb_interval ul_grant2{4, 20};
   res_grid_alloc[1].ul_prbs |= ul_grant2;
-  res_grid_alloc[1].ul_grants.puschs.emplace_back();
+  res_grid_alloc[1].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx + 1
   TESTASSERT(res_grid_alloc[1].ul_prbs.any());
   TESTASSERT_EQ(res_grid_alloc[1].ul_prbs.count(), ul_grant2.length());
-  TESTASSERT_EQ(1, res_grid_alloc[1].ul_grants.puschs.size());
+  TESTASSERT_EQ(1, res_grid_alloc[1].result.ul.puschs.size());
 
   // Action 4: New slot
   res_grid_alloc.slot_indication(++sl_tx);

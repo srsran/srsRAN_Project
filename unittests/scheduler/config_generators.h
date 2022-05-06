@@ -3,8 +3,8 @@
 #define SRSGNB_CONFIG_GENERATORS_H
 
 #include "../mac/cell_configuration_helpers.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/scheduler/sched_configuration_helpers.h"
-#include "srsgnb/scheduler/sched_interface.h"
 
 namespace srsgnb {
 

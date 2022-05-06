@@ -4,7 +4,7 @@
 #include "sched_prb.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/sched_result.h"
+#include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {
 

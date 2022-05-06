@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SCHED_UE_FEEDBACK_H
-#define SRSGNB_SCHED_UE_FEEDBACK_H
+#ifndef SRSGNB_SCHEDULER_FEEDBACK_HANDLER_H
+#define SRSGNB_SCHEDULER_FEEDBACK_HANDLER_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
@@ -37,14 +37,14 @@ struct ul_bsr_indication_message {
   ul_bsr_lcg_report_list reported_lcgs;
 };
 
-class sched_ue_feedback
+class scheduler_feedback_handler
 {
 public:
-  virtual ~sched_ue_feedback()                              = default;
+  virtual ~scheduler_feedback_handler()                     = default;
   virtual void ul_sr_info(const sr_indication_message& sr)  = 0;
   virtual void ul_bsr(const ul_bsr_indication_message& bsr) = 0;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_UE_FEEDBACK_H
+#endif // SRSGNB_SCHEDULER_FEEDBACK_HANDLER_H

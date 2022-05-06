@@ -106,7 +106,7 @@ void test_ssb_case_A_C(const slot_point&        slot_tx,
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1U) + (in_burst_bitmap & 0b00000001);
   }
 
-  const ssb_information_list& ssb_list = slot_alloc.dl_grants.bc.ssb_info;
+  const ssb_information_list& ssb_list = slot_alloc.result.dl.bc.ssb_info;
   // Check the SSB list size
   TESTASSERT_EQ(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
@@ -181,7 +181,7 @@ void test_ssb_case_B(const slot_point&        slot_tx,
     ssb_list_size = ((in_burst_bitmap & 0b00000010) >> 1U) + (in_burst_bitmap & 0b00000001);
   }
 
-  const ssb_information_list& ssb_list = slot_alloc.dl_grants.bc.ssb_info;
+  const ssb_information_list& ssb_list = slot_alloc.result.dl.bc.ssb_info;
   // Check the SSB list size
   TESTASSERT_EQ(ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
 
@@ -279,7 +279,7 @@ void test_ssb_time_allocation(uint16_t         ssb_periodicity,
   // Run test for a given number of slots.
   for (size_t slot_count = 0; slot_count < NUM_OF_TEST_SLOTS; slot_count++, bench.new_slot()) {
     // Clear the SSB list of it is not empty.
-    auto& ssb_list = bench.get_slot_allocator().dl_grants.bc.ssb_info;
+    auto& ssb_list = bench.get_slot_allocator().result.dl.bc.ssb_info;
     if (ssb_list.size() > 0) {
       ssb_list.clear();
     }

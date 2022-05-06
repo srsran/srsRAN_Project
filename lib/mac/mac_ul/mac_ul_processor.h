@@ -16,7 +16,7 @@ namespace srsgnb {
 class mac_ul_processor final : public mac_ul_configurer, public mac_pdu_handler
 {
 public:
-  mac_ul_processor(mac_common_config_t& cfg_, sched_interface& sched_, du_rnti_table& rnti_table_) :
+  mac_ul_processor(mac_common_config_t& cfg_, mac_scheduler& sched_, du_rnti_table& rnti_table_) :
     cfg(cfg_),
     logger(cfg.logger),
     rnti_table(rnti_table_),

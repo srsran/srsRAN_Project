@@ -2,7 +2,7 @@
 #ifndef SRSGNB_SCHED_CONFIGURATION_HELPERS_H
 #define SRSGNB_SCHED_CONFIGURATION_HELPERS_H
 
-#include "srsgnb/scheduler/sched_configurator.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 
 namespace srsgnb {
 

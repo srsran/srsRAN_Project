@@ -4,7 +4,7 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<sched_interface> srsgnb::create_scheduler(sched_configuration_notifier& config_notifier)
+std::unique_ptr<mac_scheduler> srsgnb::create_scheduler(sched_configuration_notifier& config_notifier)
 {
   return std::make_unique<sched>(config_notifier);
 }

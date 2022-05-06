@@ -9,7 +9,7 @@
 
 using namespace srsgnb;
 
-class dummy_sched : public sched_interface
+class dummy_sched : public mac_scheduler
 {
 public:
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
@@ -35,10 +35,9 @@ public:
     notifier.on_ue_delete_response(ue_index);
   }
 
-  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
-  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
-  void                   ul_sr_info(const sr_indication_message& sr) override {}
-  void                   ul_bsr(const ul_bsr_indication_message& bsr) override {}
+  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
+  void                ul_sr_info(const sr_indication_message& sr) override {}
+  void                ul_bsr(const ul_bsr_indication_message& bsr) override {}
 };
 
 /// Enum used to track the progress of the test task

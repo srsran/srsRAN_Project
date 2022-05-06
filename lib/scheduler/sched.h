@@ -5,11 +5,13 @@
 #include "cell/cell_sched.h"
 #include "event_manager.h"
 #include "sched_strategy/data_scheduler.h"
-#include "srsgnb/scheduler/sched_interface.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
+#include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {
 
-class sched final : public sched_interface
+class sched final : public mac_scheduler
 {
 public:
   explicit sched(sched_configuration_notifier& notifier);
@@ -28,11 +30,8 @@ public:
   /// Called when RACH is detected.
   void handle_rach_indication(const rach_indication_message& msg) override;
 
-  /// Obtain DL scheduling result.
-  const dl_sched_result* get_dl_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
-
-  /// Obtain UL scheduling result.
-  const ul_sched_result* get_ul_sched(slot_point sl_tx, du_cell_index_t cell_index) override;
+  /// Obtain scheduling result for a given slot.
+  const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   /// UE Scheduling Request.
   void ul_sr_info(const sr_indication_message& sr) override { pending_events.handle_sr_indication(sr); }
@@ -41,8 +40,6 @@ public:
   void ul_bsr(const ul_bsr_indication_message& bsr) override { pending_events.handle_ul_bsr(bsr); }
 
 private:
-  void slot_indication(slot_point sl_tx, du_cell_index_t cell_index);
-
   sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;
 

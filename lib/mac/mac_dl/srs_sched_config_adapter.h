@@ -5,7 +5,7 @@
 #include "mac_sched_configurator.h"
 #include "sched_config_helpers.h"
 #include "srsgnb/adt/circular_array.h"
-#include "srsgnb/scheduler/sched_configurator.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/manual_event.h"
 
@@ -20,7 +20,7 @@ class srs_sched_config_adapter final : public mac_sched_configurator
 public:
   srs_sched_config_adapter(mac_common_config_t& cfg_) : cfg(cfg_), notifier(*this) {}
 
-  void set_sched(sched_configurator& sched_) { srs_sched = &sched_; }
+  void set_sched(scheduler_configurator& sched_) { srs_sched = &sched_; }
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
   {
@@ -112,7 +112,7 @@ private:
   mac_common_config_t& cfg;
 
   /// srsGNB scheduler.
-  sched_configurator* srs_sched = nullptr;
+  scheduler_configurator* srs_sched = nullptr;
 
   /// Notifier that is used by MAC to start and await configurations of the scheduler.
   sched_config_notif_adapter notifier;

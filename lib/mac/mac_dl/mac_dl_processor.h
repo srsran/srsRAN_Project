@@ -23,7 +23,7 @@ class mac_dl_processor final : public mac_dl_configurer, public mac_cell_manager
 public:
   explicit mac_dl_processor(mac_common_config_t&    cfg_,
                             mac_sched_configurator& sched_cfg_,
-                            sched_interface&        sched_,
+                            mac_scheduler&        sched_,
                             du_rnti_table&          rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
@@ -57,7 +57,7 @@ private:
 
   mac_dl_ue_manager ue_mng;
 
-  sched_interface& sched_obj;
+  mac_scheduler& sched_obj;
 };
 
 } // namespace srsgnb

@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SCHED_RESULT_H
-#define SRSGNB_SCHED_RESULT_H
+#ifndef SRSGNB_SCHEDULER_SLOT_HANDLER_H
+#define SRSGNB_SCHEDULER_SLOT_HANDLER_H
 
 #include "prb_grant.h"
 #include "sched_consts.h"
@@ -113,6 +113,18 @@ struct ul_sched_result {
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
 };
 
+struct sched_result {
+  dl_sched_result dl;
+  ul_sched_result ul;
+};
+
+class scheduler_slot_handler
+{
+public:
+  virtual ~scheduler_slot_handler()                                                         = default;
+  virtual const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) = 0;
+};
+
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_RESULT_H
+#endif // SRSGNB_SCHEDULER_SLOT_HANDLER_H

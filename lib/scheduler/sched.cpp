@@ -31,20 +31,7 @@ void sched::handle_rach_indication(const rach_indication_message& msg)
   pending_events.handle_rach_indication(msg);
 }
 
-const dl_sched_result* sched::get_dl_sched(slot_point sl, du_cell_index_t cell_index)
-{
-  slot_indication(sl, cell_index);
-
-  return cells[cell_index].get_dl_sched(sl);
-}
-
-const ul_sched_result* sched::get_ul_sched(slot_point sl, du_cell_index_t cell_index)
-{
-  // TODO
-  return cells[cell_index].get_ul_sched(sl);
-}
-
-void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
+const sched_result* sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   srsran_sanity_check(cells.cell_exists(cell_index), "Invalid cell index");
   auto& cell = cells[cell_index];
@@ -74,4 +61,7 @@ void sched::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 
   // 5. Schedule UE DL and UL data.
   // TODO
+
+  // Return result for the slot.
+  return &cell.res_grid[0].result;
 }

@@ -2,7 +2,7 @@
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/ran/ssb_mapping.h"
-#include "srsgnb/scheduler/sched_result.h"
+#include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 using namespace srsgnb;
 

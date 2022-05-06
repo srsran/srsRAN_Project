@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SCHED_CONFIGURATOR_H
-#define SRSGNB_SCHED_CONFIGURATOR_H
+#ifndef SRSGNB_SCHEDULER_CONFIGURATOR_H
+#define SRSGNB_SCHEDULER_CONFIGURATOR_H
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/serving_cell.h"
@@ -75,10 +75,10 @@ struct rach_indication_message {
 };
 
 /// Interface to Add/Remove UEs and Cells.
-class sched_configurator
+class scheduler_configurator
 {
 public:
-  virtual ~sched_configurator()                                                                      = default;
+  virtual ~scheduler_configurator()                                                                  = default;
   virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg)      = 0;
   virtual void handle_rach_indication(const rach_indication_message& msg)                            = 0;
   virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)            = 0;
@@ -97,4 +97,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_CONFIGURATOR_H
+#endif // SRSGNB_SCHEDULER_CONFIGURATOR_H

@@ -7,7 +7,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/adt/to_array.h"
 #include "srsgnb/mac/bsr_format.h"
-#include "srsgnb/scheduler/sched_ue_feedback.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 
 namespace srsgnb {
 

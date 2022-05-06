@@ -130,7 +130,7 @@ void sched_ssb(cell_slot_resource_grid& res_grid,
                ssb_pattern_case         ssb_case,
                bool                     paired_spectrum)
 {
-  ssb_information_list& ssb_list = res_grid.dl_grants.bc.ssb_info;
+  ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
   if (ssb_list.full()) {
     srslog::fetch_basic_logger("MAC-NR").error("SCHED: Failed to allocate SSB");

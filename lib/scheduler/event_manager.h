@@ -6,8 +6,8 @@
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/unique_function.h"
-#include "srsgnb/scheduler/sched_interface.h"
-#include "srsgnb/scheduler/sched_ue_feedback.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 #include "ue/ue.h"
 #include <mutex>
 

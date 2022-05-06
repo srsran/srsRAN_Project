@@ -5,7 +5,7 @@
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
-#include "srsgnb/scheduler/sched_interface.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 

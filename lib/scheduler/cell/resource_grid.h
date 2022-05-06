@@ -6,7 +6,7 @@
 #include "cell_configuration.h"
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/sched_interface.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 
 namespace srsgnb {
 
@@ -23,11 +23,8 @@ struct cell_slot_resource_grid {
   /// Stores the sum of all PRBs used for UL grants.
   prb_bitmap ul_prbs;
 
-  /// Saves DL grants allocated for the given slot and cell.
-  dl_sched_result dl_grants;
-
-  /// Saves UL grants allocated for the given slot and cell.
-  ul_sched_result ul_grants;
+  /// Saves grants allocated for the given slot and cell.
+  sched_result result;
 
   explicit cell_slot_resource_grid(const cell_configuration& cfg_);
 

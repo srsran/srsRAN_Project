@@ -4,7 +4,7 @@
 using namespace srsgnb;
 
 pdu_rx_handler::pdu_rx_handler(mac_common_config_t& cfg_,
-                               sched_ue_feedback&   sched_,
+                               scheduler_feedback_handler&   sched_,
                                mac_ul_ue_manager&   ue_manager_,
                                du_rnti_table&       rnti_table_) :
   cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_), rnti_table(rnti_table_)

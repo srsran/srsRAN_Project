@@ -16,9 +16,6 @@ public:
 
   void slot_indication(slot_point sl_tx) { res_grid.slot_indication(sl_tx); }
 
-  dl_sched_result* get_dl_sched(slot_point sl_tx) { return &res_grid[sl_tx - res_grid.slot_tx()].dl_grants; }
-  ul_sched_result* get_ul_sched(slot_point sl_tx) { return &res_grid[sl_tx - res_grid.slot_tx()].ul_grants; }
-
   const cell_configuration cell_cfg;
   cell_resource_grid       res_grid;
 

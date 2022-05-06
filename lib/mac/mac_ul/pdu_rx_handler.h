@@ -10,7 +10,7 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/scheduler/sched_ue_feedback.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
 #include "ul_bsr.h"
 
 namespace srsgnb {
@@ -61,7 +61,7 @@ class pdu_rx_handler
 {
 public:
   pdu_rx_handler(mac_common_config_t& cfg_,
-                 sched_ue_feedback&   sched_,
+                 scheduler_feedback_handler&   sched_,
                  mac_ul_ue_manager&   ue_manager_,
                  du_rnti_table&       rnti_table_);
 
@@ -109,7 +109,7 @@ private:
 
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
-  sched_ue_feedback&    sched;
+  scheduler_feedback_handler&    sched;
   mac_ul_ue_manager&    ue_manager;
   du_rnti_table&        rnti_table;
 };
