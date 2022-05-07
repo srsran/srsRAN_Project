@@ -39,5 +39,5 @@ target_link_libraries(ra_scheduler_test srsgnb_sched srslog rrc_nr_asn1 mac_conf
 add_test(ra_scheduler_test ra_scheduler_test)
 
 add_executable(pdcch_sched_test pdcch_sched_test.cpp)
-target_link_libraries(pdcch_sched_test srsgnb_sched srslog)
+target_link_libraries(pdcch_sched_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(pdcch_sched_test pdcch_sched_test)
