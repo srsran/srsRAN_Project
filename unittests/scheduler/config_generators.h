@@ -2,23 +2,11 @@
 #ifndef SRSGNB_CONFIG_GENERATORS_H
 #define SRSGNB_CONFIG_GENERATORS_H
 
-#include "../mac/cell_configuration_helpers.h"
+#include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
+#include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
-#include "srsgnb/scheduler/sched_configuration_helpers.h"
 
 namespace srsgnb {
-
-namespace test_helpers {
-
-/// Create default Scheduler Cell Configuration Request.
-cell_configuration_request_message make_default_sched_cell_configuration_request()
-{
-  mac_cell_configuration             mac_cell_cfg = make_default_mac_cell_configuration();
-  cell_configuration_request_message msg          = make_sched_cell_configuration_request_message(mac_cell_cfg);
-  return msg;
-}
-
-} // namespace test_helpers
 
 asn1::rrc_nr::rach_cfg_common_s make_rach_cfg_common()
 {
@@ -50,10 +38,11 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
   return ul_cfg;
 }
 
-cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
+sched_cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
-  cell_configuration_request_message msg = test_helpers::make_default_sched_cell_configuration_request();
-  msg.ul_cfg_common                      = make_ul_cfg_common(k2);
+  sched_cell_configuration_request_message msg =
+      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
+  msg.ul_cfg_common = make_ul_cfg_common(k2);
   return msg;
 }
 

@@ -33,10 +33,10 @@ public:
 class mac_cell_manager
 {
 public:
-  virtual ~mac_cell_manager()                                                   = default;
-  virtual void                 add_cell(const mac_cell_configuration& cell_cfg) = 0;
-  virtual void                 remove_cell(du_cell_index_t cell_index)          = 0;
-  virtual mac_cell_controller& get_cell_manager(du_cell_index_t cell_index)     = 0;
+  virtual ~mac_cell_manager()                                                      = default;
+  virtual void                 add_cell(const mac_cell_creation_request& cell_cfg) = 0;
+  virtual void                 remove_cell(du_cell_index_t cell_index)             = 0;
+  virtual mac_cell_controller& get_cell_manager(du_cell_index_t cell_index)        = 0;
 };
 
 } // namespace srsgnb

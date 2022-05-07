@@ -19,7 +19,7 @@ struct ssb_information;
 class ssb_assembler
 {
 public:
-  ssb_assembler(const mac_cell_configuration& cell_cfg);
+  explicit ssb_assembler(const mac_cell_configuration& cell_cfg);
 
   /// \brief Assemble SSB message to be sent to PHY.
   /// This function fill the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB); (ii)
@@ -38,10 +38,10 @@ private:
   /// SSB pattern case, see TS 38.213, Section 4.1. Possible values are {A, B, C, D, E}.
   ssb_pattern_case ssb_case;
   /// L_max, or max number of SSB occasions per SSB period. See TS 38.213, Section 4.1. Possible values are {4, 8, 64}.
-  uint8_t          L_max;
+  uint8_t L_max;
   /// Flag indicating whether cell is on paired spectrum (FDD) or unpaired (TDD, SDL, SUL).
   /// NOTE: no reference to "Paired Spectrum" could be found in TS docs.
-  bool             paired_spectrum;
+  bool paired_spectrum;
 };
 
 } // namespace srsgnb

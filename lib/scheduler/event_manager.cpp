@@ -54,7 +54,7 @@ event_manager::event_manager(ue_map_t&                     ue_db_,
   (void)mac_notifier;
 }
 
-void event_manager::handle_cell_configuration_request(const cell_configuration_request_message& msg)
+void event_manager::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
   srsran_assert(not cell_exists(msg.cell_index), "Invalid cell index");
   srsran_sanity_check(is_cell_configuration_request_valid(msg), "Invalid cell configuration");

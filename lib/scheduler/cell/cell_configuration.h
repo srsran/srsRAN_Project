@@ -13,7 +13,7 @@ namespace srsgnb {
 class cell_configuration
 {
 public:
-  explicit cell_configuration(const cell_configuration_request_message& msg);
+  explicit cell_configuration(const sched_cell_configuration_request_message& msg);
   cell_configuration(const cell_configuration&) = delete;
   cell_configuration(cell_configuration&&)      = delete;
 
@@ -58,7 +58,7 @@ private:
 };
 
 /// Verify correctness of cell configuration request message
-error_type<std::string> is_cell_configuration_request_valid(const cell_configuration_request_message& msg);
+error_type<std::string> is_cell_configuration_request_valid(const sched_cell_configuration_request_message& msg);
 
 } // namespace srsgnb
 

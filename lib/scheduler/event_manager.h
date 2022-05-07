@@ -27,7 +27,7 @@ public:
   event_manager(ue_map_t& ue_db_, cell_sched_manager& cell_sched_, sched_configuration_notifier& mac_notifier_);
 
   /// Enqueue scheduler events.
-  void handle_cell_configuration_request(const cell_configuration_request_message& msg);
+  void handle_cell_configuration_request(const sched_cell_configuration_request_message& msg);
   void handle_sr_indication(const sr_indication_message& sr_ind);
   void handle_ul_bsr(const ul_bsr_indication_message& bsr_ind);
   void handle_rach_indication(const rach_indication_message& rach_ind);

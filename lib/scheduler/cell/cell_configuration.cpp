@@ -5,7 +5,7 @@
 
 using namespace srsgnb;
 
-cell_configuration::cell_configuration(const cell_configuration_request_message& msg) :
+cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
   cell_index(msg.cell_index),
   pci(msg.pci),
   nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, msg.scs_common, false)),
@@ -35,7 +35,7 @@ cell_configuration::cell_configuration(const cell_configuration_request_message&
   if (not(cond))                                                                                                       \
     return {fmt::format(__VA_ARGS__)};
 
-error_type<std::string> srsgnb::is_cell_configuration_request_valid(const cell_configuration_request_message& msg)
+error_type<std::string> srsgnb::is_cell_configuration_request_valid(const sched_cell_configuration_request_message& msg)
 {
   CHECK(msg.cell_index < MAX_NOF_DU_CELLS, "Invalid cell index={}", msg.cell_index);
   CHECK(msg.nof_beams <= 64, "Invalid number of beams={}", msg.nof_beams);

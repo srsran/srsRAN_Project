@@ -12,7 +12,8 @@ namespace srsgnb {
 class cell_sched
 {
 public:
-  cell_sched(const cell_configuration_request_message& msg) : cell_cfg(msg), res_grid(cell_cfg), ra_sch(cell_cfg) {}
+  cell_sched(const sched_cell_configuration_request_message& msg) : cell_cfg(msg), res_grid(cell_cfg), ra_sch(cell_cfg)
+  {}
 
   void slot_indication(slot_point sl_tx) { res_grid.slot_indication(sl_tx); }
 
@@ -30,7 +31,7 @@ public:
     return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
   }
 
-  void add_cell(du_cell_index_t cell_index, const cell_configuration_request_message& msg)
+  void add_cell(du_cell_index_t cell_index, const sched_cell_configuration_request_message& msg)
   {
     srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Cell index={} is not valid", cell_index);
     srsran_assert(not cell_exists(cell_index), "Cell={} already exists", cell_index);

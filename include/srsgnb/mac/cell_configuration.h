@@ -22,7 +22,7 @@ struct tdd_configuration {
   // TODO
 };
 
-/// Cell configuration.
+/// MAC Cell configuration.
 /// \remark See O-RAN WG8, Section 9.2.1.1.
 struct mac_cell_configuration {
   du_cell_index_t cell_index;
@@ -40,6 +40,26 @@ struct mac_cell_configuration {
   /// SSB subcarrier spacing.
   /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
   subcarrier_spacing ssb_scs;
+};
+
+/// Request to create Cell in MAC and Scheduler.
+/// \remark See O-RAN WG8, Section 9.2.1.1.
+struct mac_cell_creation_request {
+  du_cell_index_t cell_index;
+  pci_t           pci;
+
+  /// subcarrierSpacing for common, used for initial access and broadcast message.
+  subcarrier_spacing scs_common;
+  /// SSB subcarrier spacing.
+  /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
+  subcarrier_spacing ssb_scs;
+
+  carrier_configuration dl_carrier;
+  carrier_configuration ul_carrier;
+  ssb_configuration     ssb_cfg;
+  prach_configuration   prach_cfg;
+  /// If present, the cell is in TDD duplex mode.
+  optional<tdd_configuration> tdd_cfg;
 };
 
 } // namespace srsgnb

@@ -23,13 +23,13 @@ class mac_dl_processor final : public mac_dl_configurer, public mac_cell_manager
 public:
   explicit mac_dl_processor(mac_common_config_t&    cfg_,
                             mac_sched_configurator& sched_cfg_,
-                            mac_scheduler&        sched_,
+                            mac_scheduler&          sched_,
                             du_rnti_table&          rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 
   /// Adds new cell configuration to MAC DL. The configuration is forwarded to the scheduler.
-  void add_cell(const mac_cell_configuration& cell_cfg) override;
+  void add_cell(const mac_cell_creation_request& cell_cfg) override;
 
   /// Removes cell configuration from MAC DL. The cell is also removed from the scheduler.
   void remove_cell(du_cell_index_t cell_index) override;

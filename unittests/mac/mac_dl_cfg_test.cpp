@@ -1,4 +1,5 @@
 
+#include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
 #include "srsgnb/support/executors/blocking_task_worker.h"
@@ -17,7 +18,7 @@ public:
 
   dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
 
-  bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override { return true; }
+  bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_rach_indication(const rach_indication_message& msg) override {}
   void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override
   {
@@ -120,9 +121,8 @@ void test_dl_ue_procedure_execution_contexts()
   sched_cfg_adapter.set_sched(sched_obj);
 
   // Action: Add Cell.
-  mac_cell_configuration mac_cell_cfg{};
+  mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_creation_request();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  mac_cell_cfg.dl_carrier.arfcn = 365000;
   mac_dl.add_cell(mac_cell_cfg);
 
   // TEST: Thread used for resumption does not change.
@@ -167,14 +167,11 @@ void test_dl_ue_procedure_tsan()
   sched_cfg_adapter.set_sched(sched_obj);
 
   // Action: Add Cells.
-  mac_cell_configuration cell_cfg1{};
+  mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_creation_request();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
-  cell_cfg1.dl_carrier.arfcn = 365000;
-  cell_cfg1.cell_index       = to_du_cell_index(0);
   mac_dl.add_cell(cell_cfg1);
-  mac_cell_configuration cell_cfg2{};
-  cell_cfg2.dl_carrier.arfcn = 365000;
-  cell_cfg2.cell_index       = to_du_cell_index(1);
+  mac_cell_creation_request cell_cfg2 = test_helpers::make_default_mac_cell_creation_request();
+  cell_cfg2.cell_index                = to_du_cell_index(1);
   mac_dl.add_cell(cell_cfg2);
 
   // TEST: Thread used for resumption does not change

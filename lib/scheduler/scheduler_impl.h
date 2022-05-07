@@ -14,7 +14,7 @@ class scheduler_impl final : public mac_scheduler
 public:
   explicit scheduler_impl(sched_configuration_notifier& notifier);
 
-  bool handle_cell_configuration_request(const cell_configuration_request_message& msg) override;
+  bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override;
 
   /// Add UE.
   void handle_add_ue_request(const sched_ue_creation_request_message& ue_request) override;

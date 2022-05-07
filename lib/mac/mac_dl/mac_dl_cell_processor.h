@@ -16,7 +16,7 @@ class mac_dl_cell_processor final : public mac_cell_slot_handler, public mac_cel
 public:
   mac_dl_cell_processor(mac_common_config_t&          cfg_,
                         const mac_cell_configuration& cell_cfg_,
-                        mac_scheduler&              sched_,
+                        mac_scheduler&                sched_,
                         mac_dl_ue_manager&            ue_mng);
 
   /// Starts configured cell.
@@ -30,9 +30,6 @@ public:
   /// - The scheduling grants are passed to the PHY.
   /// - The MAC DL PDUs are generated and passed to the PHY as well.
   void handle_slot_indication(slot_point sl_tx) override;
-
-  /// \brief Retrieve SSB-specific parameters.
-  const ssb_assembler& get_ssb_configuration() const;
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
@@ -60,7 +57,7 @@ private:
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
-  mac_scheduler&   sched_obj;
+  mac_scheduler&     sched_obj;
   mac_dl_ue_manager& ue_mng;
 
   /// Represents activation cell state.

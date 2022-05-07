@@ -12,21 +12,21 @@ target_link_libraries(sched_harq_test srsgnb_sched srslog)
 add_test(sched_harq_test sched_prb_test)
 
 add_executable(sched_no_ue_test sched_no_ue_test.cpp)
-target_link_libraries(sched_no_ue_test srsgnb_sched srslog)
+target_link_libraries(sched_no_ue_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(sched_signalling_test sched_signalling_test.cpp)
-target_link_libraries(sched_signalling_test srsgnb_sched srslog)
+target_link_libraries(sched_signalling_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(sched_signalling_test sched_signalling_test)
 
 add_executable(cell_configuration_test cell_configuration_test.cpp)
-target_link_libraries(cell_configuration_test srsgnb_sched srslog)
+target_link_libraries(cell_configuration_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(cell_configuration_test cell_configuration_test)
 
 add_executable(resource_allocator_test resource_allocator_test.cpp)
-target_link_libraries(resource_allocator_test srsgnb_sched srslog)
+target_link_libraries(resource_allocator_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(resource_allocator_test resource_allocator_test)
 
 add_executable(ra_sched_test ra_sched_test.cpp)
-target_link_libraries(ra_sched_test srsgnb_sched srslog rrc_nr_asn1)
+target_link_libraries(ra_sched_test srsgnb_sched srslog rrc_nr_asn1 mac_configuration_helpers)
 add_test(ra_sched_test ra_sched_test)

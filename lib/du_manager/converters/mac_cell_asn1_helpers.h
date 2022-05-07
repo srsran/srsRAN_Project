@@ -10,7 +10,8 @@ namespace rrc_nr {
 
 struct serving_cell_cfg_common_sib_s;
 struct mib_s;
-}
+
+} // namespace rrc_nr
 } // namespace asn1
 
 namespace srsgnb {

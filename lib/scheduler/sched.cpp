@@ -8,7 +8,7 @@ scheduler_impl::scheduler_impl(sched_configuration_notifier& notifier) :
   mac_notifier(notifier), logger(srslog::fetch_basic_logger("MAC")), pending_events(ue_db, cells, notifier)
 {}
 
-bool scheduler_impl::handle_cell_configuration_request(const cell_configuration_request_message& msg)
+bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
   pending_events.handle_cell_configuration_request(msg);
   return true;

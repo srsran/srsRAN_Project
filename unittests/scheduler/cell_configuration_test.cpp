@@ -7,8 +7,8 @@ using namespace srsgnb;
 
 void test_cell_config_request()
 {
-  cell_configuration_request_message default_msg = make_cell_cfg_req();
-  cell_configuration_request_message msg         = default_msg;
+  sched_cell_configuration_request_message default_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message msg         = default_msg;
 
   // Test default config
   TESTASSERT(is_cell_configuration_request_valid(msg).has_value());

@@ -4,23 +4,19 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/serving_cell.h"
-#include "srsgnb/mac/cell_configuration.h"
+#include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
-
-struct ssb_configuration;
-
-/// \remark Refer to ssb-periodicityServingCell, TS 38.331
-enum ssb_periodicity { ms5, ms10, ms20, ms40, ms80, ms160 };
 
 namespace srsgnb {
 
 /// Cell Configuration Request.
 /// \remark See O-RAN WG8, Section 9.2.3.2.1, Table 9.18.
-struct cell_configuration_request_message {
+struct sched_cell_configuration_request_message {
   du_cell_index_t cell_index;
   uint8_t         nof_beams;     // (0..64)
   uint8_t         nof_layers;    // (0..8)
@@ -78,12 +74,12 @@ struct rach_indication_message {
 class scheduler_configurator
 {
 public:
-  virtual ~scheduler_configurator()                                                                  = default;
-  virtual bool handle_cell_configuration_request(const cell_configuration_request_message& msg)      = 0;
-  virtual void handle_rach_indication(const rach_indication_message& msg)                            = 0;
-  virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)            = 0;
-  virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) = 0;
-  virtual void handle_ue_delete_request(du_ue_index_t ue_index)                                      = 0;
+  virtual ~scheduler_configurator()                                                                   = default;
+  virtual bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) = 0;
+  virtual void handle_rach_indication(const rach_indication_message& msg)                             = 0;
+  virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)             = 0;
+  virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)  = 0;
+  virtual void handle_ue_delete_request(du_ue_index_t ue_index)                                       = 0;
 };
 
 /// Interface used by scheduler to notify MAC that a configuration is complete.

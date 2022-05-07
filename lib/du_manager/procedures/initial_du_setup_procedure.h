@@ -2,6 +2,7 @@
 #ifndef SRSGNB_INITIAL_DU_SETUP_PROCEDURE_H
 #define SRSGNB_INITIAL_DU_SETUP_PROCEDURE_H
 
+#include "../converters/mac_cell_configuration_helpers.h"
 #include "du_manager_context.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
@@ -31,9 +32,8 @@ public:
     }
 
     // Configure DU Cells.
-    mac_cell_configuration mac_cell_cfg{};
     // TODO: remove any mac_cell_cfg initialization values, which are present only to let the tests pass.
-    mac_cell_cfg.dl_carrier.arfcn = 365000;
+    mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_creation_request();
     cfg.mac_cell_mng->add_cell(mac_cell_cfg);
 
     // Activate DU Cells.

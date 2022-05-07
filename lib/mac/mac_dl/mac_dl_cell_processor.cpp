@@ -135,8 +135,3 @@ void mac_dl_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data
     }
   }
 }
-
-const ssb_assembler& mac_dl_cell_processor::get_ssb_configuration() const
-{
-  return ssb_helper;
-}

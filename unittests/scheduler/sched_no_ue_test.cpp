@@ -18,7 +18,7 @@ void test_no_ues()
   scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
-  cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
   slot_point sl_tx{0, 0};
@@ -36,7 +36,7 @@ void test_rach_indication()
   scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
-  cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
   sch.handle_cell_configuration_request(make_cell_cfg_req());
 
   const unsigned tx_delay = 2;

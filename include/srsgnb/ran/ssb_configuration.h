@@ -11,6 +11,10 @@ namespace srsgnb {
 /// \remark See O-RAN WG8-v05, Section 9.2.1.1, Table 9-3 SSB Configuration.
 const size_t NOF_BEAMS = 64;
 
+/// SSB periodicity in msec.
+/// \remark Refer to ssb-periodicityServingCell, TS 38.331
+enum class ssb_periodicity { ms5, ms10, ms20, ms40, ms80, ms160 };
+
 /// SSB Configuration.
 /// \remark See O-RAN WG8, Section 9.2.1.1, Table 9-3.
 struct ssb_configuration {
