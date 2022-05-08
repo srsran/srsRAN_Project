@@ -2,6 +2,8 @@
 #define SRSGNB_FAPI_MESSAGES_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
@@ -71,7 +73,7 @@ struct dl_pdcch_pdu_maintenance_v3 {
     int16_t  pdcch_data_power_offset_profile_sss;
   };
 
-  std::array<maintenance_info, MAX_DCI_PER_SLOT> info;
+  static_vector<maintenance_info, MAX_DCI_PER_SLOT> info;
 };
 
 /// PDCCH PDU parameters added in FAPIv4.
@@ -80,7 +82,7 @@ struct dl_pdcch_pdu_parameters_v4 {
   struct dci_params {
     uint16_t nid_pdcch_dmrs;
   };
-  std::array<dci_params, MAX_DCI_PER_SLOT> params;
+  static_vector<dci_params, MAX_DCI_PER_SLOT> params;
 
   //: TODO: spatial_stream_indices_present
   //: TODO: mu_mimo;
@@ -94,37 +96,40 @@ struct dl_dci_pdu {
   /// Maximum number of bytes supported by the DCI payload.
   static constexpr unsigned MAX_DCI_PAYLOAD_BYTES = 32;
 
-  uint16_t rnti;
+  rnti_t   rnti;
   uint16_t nid_pdcch_data;
   uint16_t nrnti_pdcch_data;
   uint8_t  cce_index;
   uint8_t  aggregation_level;
   //: TODO: beamforming info
-  uint8_t                                    beta_pdcch_1_0;
-  int8_t                                     power_control_offset_ss_profile_nr;
-  uint16_t                                   payload_size_bits;
-  std::array<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
+  uint8_t                                       beta_pdcch_1_0;
+  int8_t                                        power_control_offset_ss_profile_nr;
+  static_vector<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
 };
+
+/// CORESET CCE to REG mapping type.
+enum class cce_to_reg_mapping_type : uint8_t { non_interleaved, interleaved };
+enum class pdcch_coreset_type : uint8_t { pbch_or_sib1, other };
+enum class precoder_granularity_type : uint8_t { same_as_reg_bundle, all_contiguous_rbs };
 
 /// Downlink PDCCH PDU information.
 struct dl_pdcch_pdu {
-  uint16_t                                 coreset_bwp_size;
-  uint16_t                                 coreset_bwp_start;
-  subcarrier_spacing                       scs;
-  cyclic_prefix_type                       cyclic_prefix;
-  uint8_t                                  start_symbol_index;
-  uint8_t                                  duration_symbols;
-  std::array<uint8_t, 6>                   freq_domain_resource;
-  uint8_t                                  cce_reg_mapping_type;
-  uint8_t                                  reg_bundle_size;
-  uint8_t                                  interleaver_size;
-  uint8_t                                  core_set_type;
-  uint16_t                                 shift_index;
-  uint8_t                                  precoder_granularity;
-  uint16_t                                 num_dl_dci;
-  std::array<dl_dci_pdu, MAX_DCI_PER_SLOT> dl_dci;
-  dl_pdcch_pdu_maintenance_v3              maintenance_v3;
-  dl_pdcch_pdu_parameters_v4               parameters_v4;
+  uint16_t                                    coreset_bwp_size;
+  uint16_t                                    coreset_bwp_start;
+  subcarrier_spacing                          scs;
+  cyclic_prefix_type                          cyclic_prefix;
+  uint8_t                                     start_symbol_index;
+  uint8_t                                     duration_symbols;
+  std::array<uint8_t, 6>                      freq_domain_resource;
+  cce_to_reg_mapping_type                     cce_reg_mapping_type;
+  uint8_t                                     reg_bundle_size;
+  uint8_t                                     interleaver_size;
+  pdcch_coreset_type                          coreset_type;
+  uint16_t                                    shift_index;
+  precoder_granularity_type                   precoder_granularity;
+  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT> dl_dci;
+  dl_pdcch_pdu_maintenance_v3                 maintenance_v3;
+  dl_pdcch_pdu_parameters_v4                  parameters_v4;
 };
 
 /// \note For this release num_coreset_rm_patterns = 0.
@@ -288,7 +293,7 @@ enum class bch_payload_type : uint8_t { mac_full, phy_timing_info, phy_full };
 
 /// Downlink SSB PDU information.
 struct dl_ssb_pdu {
-  uint16_t              phys_cell_id;
+  pci_t                 phys_cell_id;
   beta_pss_profile_type beta_pss_profile_nr;
   uint8_t               ssb_block_index;
   uint8_t               ssb_subcarrier_offset;
@@ -305,14 +310,14 @@ enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB };
 
 /// Common downlink PDU information.
 struct dl_tti_request_pdu {
-  dl_pdu_type pdu_type;
-  uint16_t    pdu_size;
-  union {
-    dl_pdcch_pdu  pdcch_pdu;
-    dl_pdsch_pdu  pdsch_pdu;
-    dl_csi_rs_pdu csi_rs_pdu;
-    dl_ssb_pdu    ssb_pdu;
-  };
+  dl_pdu_type   pdu_type;
+  uint16_t      pdu_size;
+
+  // :TODO: add a variant for the PDUs.
+  dl_pdcch_pdu  pdcch_pdu;
+  dl_pdsch_pdu  pdsch_pdu;
+  dl_csi_rs_pdu csi_rs_pdu;
+  dl_ssb_pdu    ssb_pdu;
 };
 
 /// Downlink TTI request message.

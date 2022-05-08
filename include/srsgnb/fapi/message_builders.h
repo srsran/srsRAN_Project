@@ -2,10 +2,10 @@
 #define SRSGNB_FAPI_MESSAGE_BUILDERS_H
 
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/adt/span.h"
 #include "srsgnb/fapi/messages.h"
-#include "srsgnb/ran/pci.h"
-#include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/support/math_utils.h"
+#include <algorithm>
 
 namespace srsgnb {
 namespace fapi {
@@ -21,7 +21,7 @@ public:
   }
 
   /// Sets the basic parameters for the fields of the SSB/PBCH PDU.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU.
   dl_ssb_pdu_builder& set_basic_parameters(pci_t                 phys_cell_id,
                                            beta_pss_profile_type beta_pss_profile_nr,
                                            uint8_t               ssb_block_index,
@@ -38,9 +38,9 @@ public:
   }
 
   /// Sets the BCH payload configured by the MAC and returns a reference to the builder.
-  /// \note use this function when the MAC generates the full PBCH payload.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table MAC generated MIB PDU.
-  /// \note this function assumes that given bch_payload value is codified as: a0,a1,a2,...,a29,a30,a31, with the most
+  /// \note Use this function when the MAC generates the full PBCH payload.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table MAC generated MIB PDU.
+  /// \note This function assumes that given bch_payload value is codified as: a0,a1,a2,...,a29,a30,a31, with the most
   /// significant bit being the leftmost (in this case a0 in position 31 of the uint32_t).
   dl_ssb_pdu_builder& set_bch_payload_mac_full(uint32_t bch_payload)
   {
@@ -52,9 +52,9 @@ public:
   }
 
   /// Sets the BCH payload and returns a reference to the builder. PHY configures the timing PBCH bits.
-  /// \note use this function when the PHY generates the timing PBCH information.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table MAC generated MIB PDU.
-  /// \note this function assumes that given bch_payload value is codified as: 0,0,0,0,0,0,0,0,a0,a1,a2,...,a21,a22,a23,
+  /// \note Use this function when the PHY generates the timing PBCH information.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table MAC generated MIB PDU.
+  /// \note This function assumes that given bch_payload value is codified as: 0,0,0,0,0,0,0,0,a0,a1,a2,...,a21,a22,a23,
   /// with the most significant bit being the leftmost (in this case a0 in position 24 of the uint32_t).
   dl_ssb_pdu_builder& set_bch_payload_phy_timing_info(uint32_t bch_payload)
   {
@@ -66,8 +66,8 @@ public:
   }
 
   /// Sets the BCH payload configured by the PHY and returns a reference to the builder.
-  /// \note use this function when the PHY generates the full PBCH payload.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table PHY generated MIB PDU.
+  /// \note Use this function when the PHY generates the full PBCH payload.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table PHY generated MIB PDU.
   dl_ssb_pdu_builder& set_bch_payload_phy_full(uint8_t dmrs_type_a_position,
                                                uint8_t pdcch_config_sib1,
                                                bool    cell_barred,
@@ -83,7 +83,7 @@ public:
   }
 
   /// Sets the maintenance v3 basic parameters and returns a reference to the builder.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
   /// \note ssbPduIndex field is automatically filled when adding a new SSB PDU to the DL TTI request message.
   dl_ssb_pdu_builder&
   set_maintenance_v3_basic_parameters(ssb_pattern_case case_type, subcarrier_spacing scs, uint8_t l_max)
@@ -96,7 +96,7 @@ public:
   }
 
   /// Sets the SSB power information and returns a reference to the builder.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.4, in table SSB/PBCH PDU maintenance FAPIv3.
   dl_ssb_pdu_builder& set_maintenance_v3_tx_power_info(optional<float> power_scaling_ss_pbch_dB,
                                                        optional<float> pss_to_sss_ratio_dB)
   {
@@ -135,18 +135,198 @@ private:
   dl_ssb_maintenance_v3& v3;
 };
 
+/// Helper class to fill in the DL DCI PDU parameters specified in SCF-222 v4.0 section 3.4.2.1, including the PDCCH PDU
+/// maintenance FAPIv3 and PDCCH PDU FAPIv4 parameters.
+class dl_dci_pdu_builder
+{
+public:
+  dl_dci_pdu_builder(dl_dci_pdu&                                    pdu,
+                     dl_pdcch_pdu_maintenance_v3::maintenance_info& pdu_v3,
+                     dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4) :
+    pdu(pdu), pdu_v3(pdu_v3), pdu_v4(pdu_v4)
+  {
+    pdu_v3.pdcch_data_power_offset_profile_sss = std::numeric_limits<int16_t>::min();
+    pdu_v3.pdcch_dmrs_power_offset_profile_sss = std::numeric_limits<int16_t>::min();
+  }
+
+  /// Sets the basic parameters for the fields of the DL DCI PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
+  dl_dci_pdu_builder& set_basic_parameters(rnti_t   rnti,
+                                           uint16_t nid_pdcch_data,
+                                           uint16_t nrnti_pdcch_data,
+                                           uint8_t  cce_index,
+                                           uint8_t  aggregation_level)
+  {
+    pdu.rnti              = rnti;
+    pdu.nid_pdcch_data    = nid_pdcch_data;
+    pdu.nrnti_pdcch_data  = nrnti_pdcch_data;
+    pdu.cce_index         = cce_index;
+    pdu.aggregation_level = aggregation_level;
+
+    return *this;
+  }
+
+  /// Sets the transmission power info parameters for the fields of the DL DCI PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
+  dl_dci_pdu_builder& set_tx_power_info_parameter(optional<float> power_control_offset_ss_profile_nr_dB)
+  {
+    int value = (power_control_offset_ss_profile_nr_dB)
+                    ? static_cast<int>(power_control_offset_ss_profile_nr_dB.value())
+                    : -127;
+
+    srsran_assert(value <= std::numeric_limits<int8_t>::max(),
+                  "SS profile NR ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int8_t>::max());
+    srsran_assert(value >= std::numeric_limits<int8_t>::min(),
+                  "SS profile NR ({}) does not reach the minimum ({}).",
+                  value,
+                  std::numeric_limits<int8_t>::min());
+
+    pdu.power_control_offset_ss_profile_nr = static_cast<int8_t>(value);
+
+    return *this;
+  }
+
+  /// Sets the payload of the DL DCI PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
+  dl_dci_pdu_builder& set_payload(span<const uint8_t> payload)
+  {
+    // :TODO: Confirm that the bit order is: bit0-bit7 are mapped to first byte of MSB - LSB.
+    srsran_assert(payload.size() <= pdu.payload.capacity(), "Payload size exceeds maximum expected size");
+    std::copy(payload.begin(), payload.end(), pdu.payload.begin());
+
+    return *this;
+  }
+
+  // :TODO: Beamforming.
+
+  /// Sets the maintenance v3 DCI parameters of the PDCCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU maintenance FAPIv3.
+  dl_dci_pdu_builder& set_maintenance_v3_dci_parameters(bool            collocated_al16_candidate_present,
+                                                        optional<float> pdcch_dmrs_power_offset_profile_sss_dB,
+                                                        optional<float> pdcch_data_power_offset_profile_sss_dB)
+  {
+    pdu_v3.collocated_AL16_candidate = (collocated_al16_candidate_present) ? 1U : 0U;
+
+    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
+
+    int value = (pdcch_dmrs_power_offset_profile_sss_dB)
+                    ? static_cast<int>(pdcch_dmrs_power_offset_profile_sss_dB.value() * 1000)
+                    : USE_OTHER_FIELDS;
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "PDCCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "PDCCH DMRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu_v3.pdcch_dmrs_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    value = (pdcch_data_power_offset_profile_sss_dB)
+                ? static_cast<int>(pdcch_data_power_offset_profile_sss_dB.value() * 1000)
+                : USE_OTHER_FIELDS;
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "PDCCH data power offset profile SSS ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "PDCCH data power offset profile SSS ({}) exceeds the minimum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu_v3.pdcch_data_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    return *this;
+  }
+
+  /// Sets the DCI parameters of the PDCCH parameters v4.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU parameters FAPIv4.
+  dl_dci_pdu_builder& set_parameters_v4_dci(uint16_t nid_pdcch_dmrs)
+  {
+    pdu_v4.nid_pdcch_dmrs = nid_pdcch_dmrs;
+
+    return *this;
+  }
+
+private:
+  dl_dci_pdu&                                    pdu;
+  dl_pdcch_pdu_maintenance_v3::maintenance_info& pdu_v3;
+  dl_pdcch_pdu_parameters_v4::dci_params&        pdu_v4;
+};
+
 /// Helper class to fill in the DL PDCCH PDU parameters specified in SCF-222 v4.0 section 3.4.2.1.
 class dl_pdcch_pdu_builder
 {
 public:
   explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
 
-  // :TODO: add rest of parameters.
-  dl_pdcch_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
+  /// Sets the BWP parameters for the fields of the PDCCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
+  dl_pdcch_pdu_builder& set_bwp_parameters(uint16_t           coreset_bwp_size,
+                                           uint16_t           coreset_bwp_start,
+                                           subcarrier_spacing scs,
+                                           cyclic_prefix_type prefix)
   {
-    pdu.scs = scs;
+    pdu.coreset_bwp_size  = coreset_bwp_size;
+    pdu.coreset_bwp_start = coreset_bwp_start;
+    pdu.scs               = scs;
+    pdu.cyclic_prefix     = prefix;
 
     return *this;
+  }
+
+  /// Sets the coreset parameters for the fields of the PDCCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
+  dl_pdcch_pdu_builder& set_coreset_parameters(uint8_t                   start_symbol_index,
+                                               uint8_t                   duration_symbols,
+                                               span<const uint8_t>       freq_domain_resource,
+                                               cce_to_reg_mapping_type   cce_req_mapping_type,
+                                               uint8_t                   reg_bundle_size,
+                                               uint8_t                   interleaver_size,
+                                               pdcch_coreset_type        coreset_type,
+                                               uint16_t                  shift_index,
+                                               precoder_granularity_type precoder_granularity)
+  {
+    pdu.start_symbol_index   = start_symbol_index;
+    pdu.duration_symbols     = duration_symbols;
+    pdu.cce_reg_mapping_type = cce_req_mapping_type;
+    pdu.reg_bundle_size      = reg_bundle_size;
+    pdu.interleaver_size     = interleaver_size;
+    pdu.coreset_type         = coreset_type;
+    pdu.shift_index          = shift_index;
+    pdu.precoder_granularity = precoder_granularity;
+
+    // :TODO: confirm the format of the freq_domain_resource. Here it's expecting the LSB of the first Byte of the array
+    // to contain the first bit of the frequency domain resources, and so on.
+    srsran_assert(freq_domain_resource.size() == pdu.freq_domain_resource.size(), "Unexpected size mismatch");
+    std::copy(freq_domain_resource.begin(), freq_domain_resource.end(), pdu.freq_domain_resource.begin());
+
+    return *this;
+  }
+
+  /// Adds a DL DCI PDU to the PDCCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
+  dl_dci_pdu_builder add_dl_dci()
+  {
+    // Save the size as the index value for the DL DCI.
+    unsigned dci_id = pdu.dl_dci.size();
+
+    pdu.dl_dci.emplace_back();
+    pdu.maintenance_v3.info.emplace_back();
+    pdu.parameters_v4.params.emplace_back();
+
+    // Set the DL DCI index.
+    dl_pdcch_pdu_maintenance_v3::maintenance_info& info = pdu.maintenance_v3.info.back();
+    info.dci_index                                      = dci_id;
+
+    dl_dci_pdu_builder builder(pdu.dl_dci.back(), info, pdu.parameters_v4.params.back());
+
+    return builder;
   }
 
 private:
@@ -211,16 +391,23 @@ public:
     return *this;
   }
 
-  /// Adds a PDCCH PDU to the message and returns a PDCCH PDU builder.
+  /// Adds a PDCCH PDU to the message, fills its basic parameters using the given arguments and returns a PDCCH PDU
+  /// builder.
   dl_pdcch_pdu_builder add_pdcch_pdu()
   {
-    ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
-    // :TODO: Need to fill the number of DLDCIs across all PDCCH PDU in the message.
-
-    // Add a new PDU.
+    // Add a new pdu.
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
-    pdu.pdu_type            = dl_pdu_type::PDCCH;
+
+    // Fill the pdcch pdu index value. The index value will be the index of the pdu in the array of PDCCH pdus.
+    dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
+    auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
+    info.pdcch_pdu_index                       = num_pdcch_pdu;
+
+    // Increase the number of SSB pdus in the request.
+    ++num_pdcch_pdu;
+
+    pdu.pdu_type = dl_pdu_type::PDCCH;
 
     dl_pdcch_pdu_builder builder(pdu.pdcch_pdu);
 
