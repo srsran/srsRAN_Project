@@ -31,6 +31,11 @@ public:
   carrier_configuration   dl_carrier;
   const ssb_configuration ssb_cfg;
 
+  // Derived Parameters.
+  ssb_pattern_case ssb_case;
+  bool             paired_spectrum;
+  uint8_t          L_max;
+
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// DL Subcarrier Spacing

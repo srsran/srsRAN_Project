@@ -36,10 +36,6 @@ struct mac_cell_configuration {
   /// If present, the cell is in TDD duplex mode.
   optional<tdd_configuration> tdd_cfg;
   // TODO: Fill remaining fields
-
-  /// SSB subcarrier spacing.
-  /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
-  subcarrier_spacing ssb_scs;
 };
 
 /// Request to create Cell in MAC and Scheduler.

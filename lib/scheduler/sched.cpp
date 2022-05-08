@@ -50,8 +50,8 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
             ssb_cfg.ssb_offset_to_point_A,
             cell.cell_cfg.dl_carrier.arfcn,
             ssb_cfg.ssb_bitmap,
-            ssb_cfg.ssb_case,
-            ssb_cfg.paired_spectrum);
+            cell.cell_cfg.ssb_case,
+            cell.cell_cfg.paired_spectrum);
 
   // 3. Schedule DL signalling.
   // TODO

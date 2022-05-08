@@ -2,14 +2,14 @@
 #ifndef SRSGNB_SSB_ASSEMBLER_H
 #define SRSGNB_SSB_ASSEMBLER_H
 
-#include "../../ran/band_helper.h"
+#include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/ssb_configuration.h"
 #include <cstddef>
 
 #define BCH_PAYLOAD_GENERATION_OPTION 2
 
 namespace srsgnb {
 
-enum class ssb_pattern_case;
 struct dl_ssb_pdu;
 struct mac_cell_configuration;
 struct ssb_information;
@@ -27,21 +27,17 @@ public:
   /// \param[out] ssb_pdu SSB message to be sent to PHY.
   /// \param[in]  cell_cfg MAC's Cell configuration.
   /// \param[in]  ssb_info SSB scheduling results.
-  void assemble_ssb(dl_ssb_pdu& ssb_pdu, const mac_cell_configuration& cell_cfg, const ssb_information& ssb_info);
-
-  /// Getters
-  ssb_pattern_case get_ssb_case() const { return ssb_case; }
-  uint8_t          get_ssb_L_max() const { return L_max; }
-  bool             get_ssb_paired_spectrum() const { return paired_spectrum; }
+  void assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info);
 
 private:
-  /// SSB pattern case, see TS 38.213, Section 4.1. Possible values are {A, B, C, D, E}.
+  /// Cell PCI.
+  pci_t pci;
+  /// SSB configuration for the cell.
+  const ssb_configuration ssb_cfg;
+
+  /// Other derived SSB parameters.
   ssb_pattern_case ssb_case;
-  /// L_max, or max number of SSB occasions per SSB period. See TS 38.213, Section 4.1. Possible values are {4, 8, 64}.
-  uint8_t L_max;
-  /// Flag indicating whether cell is on paired spectrum (FDD) or unpaired (TDD, SDL, SUL).
-  /// NOTE: no reference to "Paired Spectrum" could be found in TS docs.
-  bool paired_spectrum;
+  uint8_t          L_max;
 };
 
 } // namespace srsgnb

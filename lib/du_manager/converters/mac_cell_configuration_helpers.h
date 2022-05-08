@@ -30,7 +30,6 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_carrier = make_default_carrier_configuration();
   msg.ul_carrier = make_default_carrier_configuration();
 
-  msg.ssb_cfg.ssb_case = ssb_pattern_case::A;
   // TODO: Remaining fields.
 
   return msg;

@@ -38,13 +38,6 @@ struct ssb_configuration {
   std::array<uint8_t, NOF_BEAMS> beam_ids;
   /// Values: 0 = 0dB, 1 = 3dB.
   uint8_t beta_pss;
-
-  /// Additional parameter not included in ORAN iface (used by MAC and/or Scheduler.
-  ssb_pattern_case ssb_case;
-  uint8_t          L_max;
-  /// Used by Scheduler only.
-  // TODO: paired_spectrum could be moved to sched/cell_configuration constructor.
-  bool paired_spectrum;
 };
 
 } // namespace srsgnb
