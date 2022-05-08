@@ -3,21 +3,6 @@
 
 using namespace srsgnb;
 
-mac_cell_configuration srsgnb::make_mac_cell_configuration(const mac_cell_creation_request& request)
-{
-  mac_cell_configuration ret{};
-
-  ret.cell_index = request.cell_index;
-  ret.pci        = request.pci;
-  ret.scs_common = request.scs_common;
-  ret.dl_carrier = request.dl_carrier;
-  ret.ul_carrier = request.ul_carrier;
-  ret.ssb_cfg    = request.ssb_cfg;
-  ret.prach_cfg  = request.prach_cfg;
-  ret.tdd_cfg    = request.tdd_cfg;
-  return ret;
-}
-
 sched_cell_configuration_request_message
 srsgnb::make_scheduler_cell_configuration_request(const mac_cell_creation_request& request)
 {

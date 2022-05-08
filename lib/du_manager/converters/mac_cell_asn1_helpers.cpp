@@ -15,7 +15,7 @@ void fill_tdd_cfg_from_asn1(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& in, tdd_
 
 } // namespace
 
-void srsgnb::fill_mac_cell_cfg_from_asn1(mac_cell_configuration&                            out,
+void srsgnb::fill_mac_cell_cfg_from_asn1(mac_cell_creation_request&                         out,
                                          const asn1::rrc_nr::serving_cell_cfg_common_sib_s& serv_cell_sib_in,
                                          const asn1::rrc_nr::mib_s&                         mib_in,
                                          subcarrier_spacing                                 ssb_scs)

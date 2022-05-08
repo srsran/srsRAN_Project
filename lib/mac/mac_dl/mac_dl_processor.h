@@ -5,7 +5,7 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
-#include "mac_dl_cell_processor.h"
+#include "mac_cell_processor.h"
 #include "mac_dl_ue_manager.h"
 #include "srs_sched_config_adapter.h"
 #include "srsgnb/mac/mac.h"
@@ -34,7 +34,7 @@ public:
   /// Removes cell configuration from MAC DL. The cell is also removed from the scheduler.
   void remove_cell(du_cell_index_t cell_index) override;
 
-  mac_cell_controller& get_cell_manager(du_cell_index_t cell_index) override { return *cells[cell_index]; }
+  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return *cells[cell_index]; }
 
   /// Creates new UE DL context, updates logical channel MUX, adds UE in scheduler.
   async_task<bool> add_ue(const mac_ue_create_request_message& request) override;
@@ -51,7 +51,7 @@ private:
   mac_common_config_t&  cfg;
   srslog::basic_logger& logger;
 
-  std::array<std::unique_ptr<mac_dl_cell_processor>, MAX_NOF_DU_CELLS> cells;
+  std::array<std::unique_ptr<mac_cell_processor>, MAX_NOF_DU_CELLS> cells;
 
   mac_sched_configurator& sched_cfg;
 

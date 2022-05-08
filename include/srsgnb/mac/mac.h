@@ -28,7 +28,7 @@ public:
   virtual mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) = 0;
 
   /// Returns MAC management handler.
-  virtual mac_cell_manager& get_manager() = 0;
+  virtual mac_cell_manager& get_cell_manager() = 0;
 
   /// Returns MAC UE configuration handler.
   virtual mac_ue_configurator& get_ue_configurator() = 0;

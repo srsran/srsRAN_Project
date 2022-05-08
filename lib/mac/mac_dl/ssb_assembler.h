@@ -19,7 +19,7 @@ struct ssb_information;
 class ssb_assembler
 {
 public:
-  explicit ssb_assembler(const mac_cell_configuration& cell_cfg);
+  explicit ssb_assembler(pci_t pci, const ssb_configuration& ssb_cfg_, unsigned dl_arfcn);
 
   /// \brief Assemble SSB message to be sent to PHY.
   /// This function fill the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB); (ii)

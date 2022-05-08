@@ -11,13 +11,13 @@
 
 namespace srsgnb {
 
-class mac_dl_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
+class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
-  mac_dl_cell_processor(mac_common_config_t&          cfg_,
-                        const mac_cell_configuration& cell_cfg_,
-                        mac_scheduler&                sched_,
-                        mac_dl_ue_manager&            ue_mng);
+  mac_cell_processor(mac_common_config_t&             cfg_,
+                     const mac_cell_creation_request& cell_cfg_req_,
+                     mac_scheduler&                   sched_,
+                     mac_dl_ue_manager&               ue_mng);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -48,11 +48,11 @@ private:
                                 du_cell_index_t        cell_index,
                                 const dl_sched_result& dl_res);
 
-  mac_common_config_t&         cfg;
-  srslog::basic_logger&        logger;
-  const mac_cell_configuration cell_cfg;
-  task_executor&               cell_exec;
-  mac_cell_result_notifier&    phy_cell;
+  mac_common_config_t&            cfg;
+  srslog::basic_logger&           logger;
+  const mac_cell_creation_request cell_cfg;
+  task_executor&                  cell_exec;
+  mac_cell_result_notifier&       phy_cell;
   /// ssb_helper: contains the SSB-specific parameters that are derived from those passed by the DU interface. These
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;

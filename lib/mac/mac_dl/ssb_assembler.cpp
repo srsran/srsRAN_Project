@@ -1,17 +1,16 @@
 
 #include "ssb_assembler.h"
-#include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 using namespace srsgnb;
 
-ssb_assembler::ssb_assembler(const mac_cell_configuration& cell_cfg) :
-  pci(cell_cfg.pci),
-  ssb_cfg(cell_cfg.ssb_cfg),
-  ssb_case(ssb_get_ssb_pattern(cell_cfg.ssb_cfg.scs, cell_cfg.dl_carrier.arfcn)),
-  L_max(ssb_get_L_max(cell_cfg.ssb_cfg.scs, cell_cfg.dl_carrier.arfcn))
+ssb_assembler::ssb_assembler(pci_t pci_, const ssb_configuration& ssb_cfg_, unsigned dl_arfcn) :
+  pci(pci_),
+  ssb_cfg(ssb_cfg_),
+  ssb_case(ssb_get_ssb_pattern(ssb_cfg.scs, dl_arfcn)),
+  L_max(ssb_get_L_max(ssb_cfg.scs, dl_arfcn))
 {}
 
 void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)

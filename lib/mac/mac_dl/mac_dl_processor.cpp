@@ -23,8 +23,7 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
   // Create one cell.
-  cells[cell_cfg_req.cell_index] =
-      std::make_unique<mac_dl_cell_processor>(cfg, make_mac_cell_configuration(cell_cfg_req), sched_obj, ue_mng);
+  cells[cell_cfg_req.cell_index] = std::make_unique<mac_cell_processor>(cfg, cell_cfg_req, sched_obj, ue_mng);
 
   // Fill sched config msg and pass it to the scheduler.
   sched_obj.handle_cell_configuration_request(make_scheduler_cell_configuration_request(cell_cfg_req));

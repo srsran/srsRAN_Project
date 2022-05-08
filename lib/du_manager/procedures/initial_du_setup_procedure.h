@@ -37,7 +37,7 @@ public:
     cfg.mac_cell_mng->add_cell(mac_cell_cfg);
 
     // Activate DU Cells.
-    cfg.mac_cell_mng->get_cell_manager(to_du_cell_index(0)).start();
+    cfg.mac_cell_mng->get_cell_controller(to_du_cell_index(0)).start();
 
     CORO_RETURN();
   }

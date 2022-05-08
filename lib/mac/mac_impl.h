@@ -34,7 +34,7 @@ public:
     return dl_unit.get_slot_handler(cell_index);
   }
 
-  mac_cell_manager& get_manager() override { return dl_unit; }
+  mac_cell_manager& get_cell_manager() override { return dl_unit; }
 
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
 

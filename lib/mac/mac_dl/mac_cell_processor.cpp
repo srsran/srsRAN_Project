@@ -1,5 +1,5 @@
 
-#include "mac_dl_cell_processor.h"
+#include "mac_cell_processor.h"
 #include "dci_encoder.h"
 #include "pdu_encoder.h"
 #include "srsgnb/mac/mac_cell_result.h"
@@ -7,40 +7,42 @@
 
 using namespace srsgnb;
 
-mac_dl_cell_processor::mac_dl_cell_processor(mac_common_config_t&          cfg_,
-                                             const mac_cell_configuration& cell_cfg_,
-                                             mac_scheduler&                sched_,
-                                             mac_dl_ue_manager&            ue_mng_) :
+mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
+                                       const mac_cell_creation_request& cell_cfg_req_,
+                                       mac_scheduler&                   sched_,
+                                       mac_dl_ue_manager&               ue_mng_) :
   cfg(cfg_),
   logger(cfg.logger),
-  cell_cfg(cell_cfg_),
+  cell_cfg(cell_cfg_req_),
   cell_exec(cfg.dl_exec_mapper.executor(cell_cfg.cell_index)),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
-  ssb_helper(cell_cfg_),
+  ssb_helper(cell_cfg_req_.pci, cell_cfg_req_.ssb_cfg, cell_cfg_req_.dl_carrier.arfcn),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {}
 
-async_task<void> mac_dl_cell_processor::start()
+async_task<void> mac_cell_processor::start()
 {
   return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::active; });
 }
 
-async_task<void> mac_dl_cell_processor::stop()
+async_task<void> mac_cell_processor::stop()
 {
   return dispatch_and_resume_on(cell_exec, cfg.ctrl_exec, [this]() { state = cell_state::inactive; });
 }
 
-void mac_dl_cell_processor::handle_slot_indication(slot_point sl_tx)
+void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
   // Change execution context to DL executors.
   cell_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
 }
 
-void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
+void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 {
+  mac_dl_sched_result mac_dl_res{};
+
   if (state != cell_state::active) {
-    // TODO: Report empty result to PHY.
+    phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
     return;
   }
 
@@ -48,11 +50,11 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   const sched_result* sl_res = sched_obj.slot_indication(sl_tx, cell_cfg.cell_index);
   if (sl_res == nullptr) {
     logger.warning("Unable to compute scheduling result for slot={}, cell={}", sl_tx, cell_cfg.cell_index);
+    phy_cell.on_new_downlink_scheduler_results(mac_dl_res);
     return;
   }
 
   // Assemble MAC DL scheduling request that is going to be passed to the PHY.
-  mac_dl_sched_result mac_dl_res;
   assemble_dl_sched_request(mac_dl_res, sl_tx, cell_cfg.cell_index, sl_res->dl);
 
   // Send DL sched result to PHY.
@@ -66,15 +68,15 @@ void mac_dl_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   phy_cell.on_new_downlink_data(data_res);
 
   // Send UL sched result to PHY.
-  mac_ul_sched_result mac_ul_res;
+  mac_ul_sched_result mac_ul_res{};
   mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 }
 
-void mac_dl_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
-                                                      slot_point             sl_tx,
-                                                      du_cell_index_t        cell_index,
-                                                      const dl_sched_result& dl_res)
+void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
+                                                   slot_point             sl_tx,
+                                                   du_cell_index_t        cell_index,
+                                                   const dl_sched_result& dl_res)
 {
   // Pass scheduler output directly to PHY.
   mac_res.dl_res = &dl_res;
@@ -100,10 +102,10 @@ void mac_dl_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac
   }
 }
 
-void mac_dl_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_res,
-                                                     slot_point             sl_tx,
-                                                     du_cell_index_t        cell_index,
-                                                     const dl_sched_result& dl_res)
+void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_res,
+                                                  slot_point             sl_tx,
+                                                  du_cell_index_t        cell_index,
+                                                  const dl_sched_result& dl_res)
 {
   // Assemble scheduled SIBs' payload.
   for (const sib_information& sib : dl_res.bc.sibs) {

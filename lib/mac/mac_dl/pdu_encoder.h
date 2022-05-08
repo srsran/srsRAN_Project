@@ -7,12 +7,12 @@
 
 namespace srsgnb {
 
-inline void encode_sib_pdu(const mac_cell_configuration& cell_cfg, const sib_information& rar, byte_buffer& pdu)
+inline void encode_sib_pdu(const mac_cell_creation_request& cell_cfg, const sib_information& rar, byte_buffer& pdu)
 {
   // TODO
 }
 
-inline void encode_rar_pdu(const mac_cell_configuration& cell_cfg, const rar_information& rar, byte_buffer& pdu)
+inline void encode_rar_pdu(const mac_cell_creation_request& cell_cfg, const rar_information& rar, byte_buffer& pdu)
 {
   // TODO
 }
