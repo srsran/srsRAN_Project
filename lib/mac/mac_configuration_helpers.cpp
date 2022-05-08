@@ -10,7 +10,6 @@ mac_cell_configuration srsgnb::make_mac_cell_configuration(const mac_cell_creati
   ret.cell_index = request.cell_index;
   ret.pci        = request.pci;
   ret.scs_common = request.scs_common;
-  ret.ssb_scs    = request.ssb_scs;
   ret.dl_carrier = request.dl_carrier;
   ret.ul_carrier = request.ul_carrier;
   ret.ssb_cfg    = request.ssb_cfg;
