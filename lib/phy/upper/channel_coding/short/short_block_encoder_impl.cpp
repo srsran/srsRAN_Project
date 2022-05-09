@@ -1,16 +1,17 @@
 #include "short_block_encoder_impl.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/srsvec/binary.h"
 #include "srsgnb/support/srsran_assert.h"
 
-#include <iostream>
-
 using namespace srsgnb;
 
-static constexpr unsigned MAX_IN_BITS  = 11;
-static constexpr unsigned MAX_OUT_BITS = 32;
+// Maximum message length.
+static constexpr unsigned MAX_IN_BITS = 11;
+// Maximum codeblock length.
+static constexpr unsigned MAX_BLOCK_BITS = 32;
 
 // TODO(david): this should be constexpr, but then the rows are not accepted as inputs to binary_xor.
-static std::array<std::array<uint8_t, MAX_OUT_BITS>, MAX_IN_BITS> basis_sequences = {
+static std::array<std::array<uint8_t, MAX_BLOCK_BITS>, MAX_IN_BITS> basis_sequences = {
     {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
      {1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0},
      {0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0},
@@ -23,25 +24,24 @@ static std::array<std::array<uint8_t, MAX_OUT_BITS>, MAX_IN_BITS> basis_sequence
      {0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0},
      {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0}}};
 
-static void validate_spans(span<uint8_t> output, span<const uint8_t> input)
+static void validate_spans(span<uint8_t> output, span<const uint8_t> input, unsigned bits_per_symbol)
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
   srsran_assert((in_size > 0) && (in_size <= MAX_IN_BITS), "The input length should be between 1 and 11 bits.");
   if (in_size > 2) {
-    srsran_assert(out_size == MAX_OUT_BITS, "Invalid output length.");
+    // Output length should be no less than MAX_OUT_BITS.
+    srsran_assert(out_size >= MAX_BLOCK_BITS, "Invalid output length.");
   } else {
-    std::array<unsigned, 5> out_lengths = {};
+    unsigned min_out_length = 0;
     if (in_size == 1) {
       // Output length must be equal to the number of bits per symbol of the block modulation.
-      out_lengths = {1, 2, 4, 6, 8};
+      min_out_length = bits_per_symbol;
     } else if (in_size == 2) {
       // Output length must be equal to three times the number of bits per symbol of the block modulation.
-      out_lengths = {3, 6, 12, 18, 24};
+      min_out_length = 3 * bits_per_symbol;
     }
-    auto this_length = {out_size};
-    srsran_assert(std::includes(out_lengths.cbegin(), out_lengths.cend(), this_length.begin(), this_length.end()),
-                  "Invalid output length.");
+    srsran_assert(out_size >= min_out_length, "Invalid output length.");
   }
 }
 
@@ -92,22 +92,8 @@ static void encode_3_11(span<uint8_t> output, span<const uint8_t> input)
   }
 }
 
-void short_block_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input)
-{
-  validate_spans(output, input);
-  switch (input.size()) {
-    case 1:
-      encode_1(output, input);
-      break;
-    case 2:
-      encode_2(output, input);
-      break;
-    default:
-      encode_3_11(output, input);
-  }
-}
-
-void short_block_encoder_impl::rate_match(span<uint8_t> output, span<const uint8_t> input)
+// Matches the rate of a short block according to TS38.212 Section 5.4.3.
+static void rate_match(span<uint8_t> output, span<const uint8_t> input)
 {
   unsigned output_size = output.size();
   unsigned input_size  = input.size();
@@ -116,6 +102,29 @@ void short_block_encoder_impl::rate_match(span<uint8_t> output, span<const uint8
   for (unsigned idx = 0; idx != output_size; ++idx) {
     output[idx] = input[idx % input_size];
   }
+}
+
+void short_block_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, modulation_scheme mod)
+{
+  unsigned bits_per_symbol = get_bits_per_symbol(mod);
+  validate_spans(output, input, bits_per_symbol);
+
+  static_vector<uint8_t, MAX_BLOCK_BITS> tmp = {};
+
+  switch (input.size()) {
+    case 1:
+      tmp.resize(bits_per_symbol);
+      encode_1(tmp, input);
+      break;
+    case 2:
+      tmp.resize(3UL * bits_per_symbol);
+      encode_2(tmp, input);
+      break;
+    default:
+      tmp.resize(MAX_BLOCK_BITS);
+      encode_3_11(tmp, input);
+  }
+  rate_match(output, tmp);
 }
 
 std::unique_ptr<short_block_encoder> srsgnb::create_short_block_encoder()

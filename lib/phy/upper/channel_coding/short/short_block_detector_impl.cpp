@@ -19,9 +19,10 @@ static std::array<std::array<int8_t, MAX_IN_LENGTH>, MAX_NOF_CODEWORDS_2> create
     srsvec::bit_unpack(bits, 2 * idx, MAX_OUT_LENGTH);
     std::reverse(bits.begin(), bits.end());
 
-    // Encode the message.
+    // Encode the message. Note that, since the message is longer than 2 bits, all modulation schemes give the same
+    // result.
     std::array<uint8_t, MAX_IN_LENGTH> cdwd = {};
-    encoder.encode(cdwd, bits);
+    encoder.encode(cdwd, bits, modulation_scheme::BPSK);
     // Save the codeword in the (+1, -1) representation.
     std::transform(cdwd.cbegin(), cdwd.cend(), table[idx].begin(), [](uint8_t a) { return (1 - 2 * a); });
   }
