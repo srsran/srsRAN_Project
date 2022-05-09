@@ -12,4 +12,4 @@ add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
-add_library(upper_phy re_pattern.cpp rb_allocation.cpp rx_softbuffer_pool_impl.cpp)
+add_library(srsgnb_upper_phy_support re_pattern.cpp rb_allocation.cpp rx_softbuffer_pool_impl.cpp)

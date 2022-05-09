@@ -15,9 +15,9 @@ add_subdirectory(signal_processors)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(re_pattern_test re_pattern_test.cpp)
-target_link_libraries(re_pattern_test upper_phy srslog)
+target_link_libraries(re_pattern_test srsgnb_upper_phy_support srslog)
 add_test(re_pattern_test re_pattern_test)
 
 add_executable(rx_softbuffer_pool_test rx_softbuffer_pool_test.cpp)
-target_link_libraries(rx_softbuffer_pool_test upper_phy srslog)
+target_link_libraries(rx_softbuffer_pool_test srsgnb_upper_phy_support srslog)
 add_test(rx_softbuffer_pool_test rx_softbuffer_pool_test)

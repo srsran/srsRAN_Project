@@ -10,8 +10,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_RE_PATTERN_H_
-#define SRSGNB_PHY_UPPER_RE_PATTERN_H_
+#ifndef SRSGNB_PHY_UPPER_RE_PATTERN_H
+#define SRSGNB_PHY_UPPER_RE_PATTERN_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
@@ -81,6 +81,17 @@ private:
   static_vector<re_pattern, MAX_RE_PATTERN> list = {};
 
 public:
+  /// Default constructor.
+  re_pattern_list() = default;
+
+  /// \brief Copy constructor.
+  ///
+  /// \param[in] other Provides other instance.
+  re_pattern_list(const re_pattern_list& other) : list(other.list)
+  {
+    // Do nothing.
+  }
+
   /// Clear the current pattern list.
   void clear() { list.clear(); }
 
@@ -97,26 +108,51 @@ public:
   /// \param[in] pattern Provides the reference to a resource element pattern.
   void merge(const re_pattern& pattern);
 
+  /// \brief Checks if the pattern list is equal to other pattern list.
+  ///
+  /// \remark Two pattern list are equal if their generated inclusion masks are equal for the maximum number of RB and
+  /// symbols.
+  /// \param other The other pattern list.
+  /// \return True if the patterns the list describes are equal.
+  bool operator==(re_pattern_list& other) const;
+
+  /// \brief Checks if the pattern list is not equal to other pattern list.
+  ///
+  /// \param other The other pattern list.
+  /// \return False if the patterns the list describes are equal.
+  bool operator!=(re_pattern_list& other) const { return !(*this == other); }
+
   /// \brief Include the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to true the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
   ///
-  /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in] symbol Indicates the symbol index for the mask to be included.
+  /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
+  /// \param[in]     symbol Indicates the symbol index for the mask to be included.
   /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
   void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
+
+  /// \brief Count the number of elements included in the pattern.
+  ///
+  /// This method counts the included elements in the describes pattern bounded by the start and number of symbols and
+  /// a physical resource block mask.
+  ///
+  /// \param[in] start_symbol Indicates the start symbol index.
+  /// \param[in] nof_symbols  Indicates the number of symbols to consider.
+  /// \param[in] prb_mask     Provides a mask representing the resource blocks to consider.
+  /// \return The number of included elements.
+  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, span<const bool> prb_mask) const;
 
   /// \brief Exclude the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to false the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
   ///
-  /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
-  /// \param[in] symbol Indicates the symbol index for the mask to be excluded.
+  /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
+  /// \param[in]     symbol Indicates the symbol index for the mask to be excluded.
   /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
   void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_UPPER_RE_PATTERN_H_
+#endif // SRSGNB_PHY_UPPER_RE_PATTERN_H

@@ -17,7 +17,7 @@
 using namespace srsgnb;
 
 // Tests that two patterns with subcarrier mask in common are merged into one.
-void test_merge_1()
+void test_merge_even()
 {
   unsigned rb_begin  = 1;
   unsigned rb_end    = 50;
@@ -85,11 +85,11 @@ void test_merge_1()
 }
 
 // Tests that two patterns with symbol mask in common are merged into one.
-void test_merge_2()
+void test_merge_odd()
 {
   unsigned rb_begin  = 1;
   unsigned rb_end    = 50;
-  unsigned rb_stride = 50;
+  unsigned rb_stride = 2;
 
   re_pattern_list list;
 
@@ -136,7 +136,7 @@ void test_merge_2()
 
       // if it is in the RB range, then check the subcarrier index.
       if (k >= rb_begin * NRE && k < rb_end * NRE && (k / NRE - rb_begin) % rb_stride == 0) {
-        // Even subcarrier
+        // Even symbol
         gold = (l % 2 == 0);
       }
       TESTASSERT_EQ(mask[k], gold);
@@ -152,9 +152,125 @@ void test_merge_2()
   }
 }
 
+// Tests a merge between two patterns are the same.
+void test_merge_same()
+{
+  // Create a pattern.
+  re_pattern pattern;
+  pattern.rb_begin   = 0;
+  pattern.rb_end     = 1;
+  pattern.rb_stride  = 1;
+  pattern.re_mask    = {};
+  pattern.re_mask[0] = true;
+  pattern.symbols    = {};
+  pattern.symbols[0] = true;
+
+  // Add the pattern to a list twice.
+  re_pattern_list list;
+  list.merge(pattern);
+  list.merge(pattern);
+
+  // The number of entries shall be 1.
+  TESTASSERT_EQ(list.get_nof_entries(), 1);
+}
+
+// Tests a merge between two patterns with different RB mapping.
+void test_merge_diff_rb()
+{
+  // Create pattern 1.
+  re_pattern pattern1;
+  pattern1.rb_begin   = 0;
+  pattern1.rb_end     = 1;
+  pattern1.rb_stride  = 1;
+  pattern1.re_mask    = {};
+  pattern1.re_mask[0] = true;
+  pattern1.symbols    = {};
+  pattern1.symbols[0] = true;
+
+  // Create a pattern 2.
+  re_pattern pattern2;
+  pattern1.rb_begin   = 1;
+  pattern1.rb_end     = 2;
+  pattern1.rb_stride  = 1;
+  pattern1.re_mask    = {};
+  pattern1.re_mask[0] = true;
+  pattern1.symbols    = {};
+  pattern1.symbols[0] = true;
+
+  // Add the pattern to the list.
+  re_pattern_list list;
+  list.merge(pattern1);
+  list.merge(pattern2);
+
+  // The number of entries shall be 2.
+  TESTASSERT_EQ(list.get_nof_entries(), 2);
+}
+
+void test_inclusion_count()
+{
+  // Create a pattern.
+  re_pattern pattern;
+  pattern.rb_begin   = 0;
+  pattern.rb_end     = 1;
+  pattern.rb_stride  = 1;
+  pattern.re_mask    = {};
+  pattern.re_mask[0] = true;
+  pattern.symbols    = {};
+  pattern.symbols[0] = true;
+
+  // Add the pattern to a list.
+  re_pattern_list list;
+  list.merge(pattern);
+
+  // Validate the inclusion count with an RB mask that matches.
+  std::array<bool, MAX_RB* NRE> rb_mask_match = {};
+  rb_mask_match[pattern.rb_begin]             = true;
+  TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_match), 1);
+
+  // Validate the inclusion count with an RB mask that does not match.
+  std::array<bool, MAX_RB* NRE> rb_mask_unmatch = {};
+  rb_mask_match[pattern.rb_end]                 = true;
+  TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
+}
+
+void test_equal()
+{
+  // Create a pattern.
+  re_pattern pattern;
+  pattern.rb_begin   = 0;
+  pattern.rb_end     = 1;
+  pattern.rb_stride  = 1;
+  pattern.re_mask    = {};
+  pattern.re_mask[0] = true;
+  pattern.symbols    = {};
+  pattern.symbols[0] = true;
+
+  // Add the pattern to a first list.
+  re_pattern_list list1;
+  list1.merge(pattern);
+
+  // Modify pattern.
+  pattern.symbols[1] = true;
+
+  // Add the pattern to a list.
+  re_pattern_list list2;
+  list2.merge(pattern);
+
+  // Validate the equal operator.
+  TESTASSERT(list1 == list1);
+  TESTASSERT(list2 == list2);
+
+  // Validate the not equal operator.
+  TESTASSERT(list1 != list2);
+}
+
 int main()
 {
-  test_merge_1();
-  test_merge_2();
+  test_merge_even();
+  test_merge_odd();
+  test_merge_same();
+  test_merge_diff_rb();
+  test_inclusion_count();
+  test_equal();
   return 0;
 }

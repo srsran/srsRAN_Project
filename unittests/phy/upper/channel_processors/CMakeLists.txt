@@ -36,7 +36,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
-target_link_libraries(pdcch_modulator_test upper_phy pdcch_modulator srslog modulation_mapper sequence_generators)
+target_link_libraries(pdcch_modulator_test pdcch_modulator srslog modulation_mapper sequence_generators)
 add_test(pdcch_modulator_test pdcch_modulator_test)
 
 add_custom_command(
@@ -48,7 +48,7 @@ add_custom_command(
     VERBATIM)
 
 add_executable(pdcch_encoder_test pdcch_encoder_test.cpp)
-target_link_libraries(pdcch_encoder_test upper_phy pdcch_encoder srslog)
+target_link_libraries(pdcch_encoder_test pdcch_encoder srslog)
 add_test(pdcch_encoder_test pdcch_encoder_test)
 
 add_custom_command(
@@ -64,7 +64,7 @@ target_link_libraries(pdcch_processor_test pdcch_processor srslog)
 add_test(pdcch_processor_test pdcch_processor_test)
 
 add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)
-target_link_libraries(pdsch_modulator_test upper_phy pdsch_modulator srslog)
+target_link_libraries(pdsch_modulator_test srsgnb_upper_phy_support pdsch_modulator srslog)
 add_test(pdsch_modulator_test pdsch_modulator_test)
 
 add_custom_command(

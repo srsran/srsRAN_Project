@@ -12,15 +12,16 @@
 
 #include "srsgnb/phy/upper/re_pattern.h"
 #include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/srsvec/compare.h"
 
 using namespace srsgnb;
 
 // Helper macro to assert the RB allocation of the pattern keeping the file and line for code tracing purposes.
 #define re_pattern_assert()                                                                                            \
   do {                                                                                                                 \
-    srsran_assert(rb_begin < MAX_RB, "RB begin (%d) is out-of-range", rb_begin);                                       \
-    srsran_assert(rb_end > 1 && rb_end <= MAX_RB, "RB end (%d) is out-of-range", rb_end);                              \
-    srsran_assert(rb_stride > 0, "RB stride (%d) is out-of-range", rb_stride);                                         \
+    srsran_assert(rb_begin < MAX_RB, "RB begin ({}) is out-of-range", rb_begin);                                       \
+    srsran_assert(rb_end > 0 && rb_end <= MAX_RB, "RB end ({}) is out-of-range", rb_end);                              \
+    srsran_assert(rb_stride > 0, "RB stride ({}) is out-of-range", rb_stride);                                         \
   } while (false)
 
 void re_pattern::get_inclusion_mask(span<bool> mask, unsigned symbol) const
@@ -117,12 +118,61 @@ void re_pattern_list::merge(const re_pattern& pattern)
   list.emplace_back(pattern);
 }
 
+bool re_pattern_list::operator==(re_pattern_list& other) const
+{
+  // Generates the inclusion mask for each symbol and compare if they are equal.
+  for (unsigned symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
+    std::array<bool, MAX_RB* NRE> inclusion_mask = {};
+    get_inclusion_mask(inclusion_mask, symbol);
+
+    std::array<bool, MAX_RB* NRE> inclusion_mask_other = {};
+    other.get_inclusion_mask(inclusion_mask_other, symbol);
+
+    // Early return false if they are not equal for this symbol.
+    if (!srsvec::equal(inclusion_mask, inclusion_mask_other)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 void re_pattern_list::get_inclusion_mask(span<bool> mask, unsigned symbol) const
 {
   // Iterate all given patterns.
   for (const re_pattern& p : list) {
     p.get_inclusion_mask(mask, symbol);
   }
+}
+
+unsigned
+re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, span<const bool> rb_mask) const
+{
+  unsigned count = 0;
+
+  for (unsigned symbol_idx = start_symbol; symbol_idx != start_symbol + nof_symbols; ++symbol_idx) {
+    std::array<bool, MAX_RB* NRE> inclusion_mask = {};
+
+    // Iterate all patterns.
+    for (const re_pattern& p : list) {
+      p.get_inclusion_mask(inclusion_mask, symbol_idx);
+    }
+
+    // Count all the included elements.
+    for (unsigned rb_idx = 0; rb_idx != rb_mask.size(); ++rb_idx) {
+      // Skip RB if it is not selected.
+      if (!rb_mask[rb_idx]) {
+        continue;
+      }
+
+      // Count each positive element in the inclusion mask.
+      for (unsigned re_idx = rb_idx * NRE, re_idx_end = (rb_idx + 1) * NRE; re_idx != re_idx_end; ++re_idx) {
+        count += inclusion_mask[re_idx] ? 1 : 0;
+      }
+    }
+  }
+
+  return count;
 }
 
 void re_pattern_list::get_exclusion_mask(span<bool> mask, unsigned symbol) const
