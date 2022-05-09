@@ -30,7 +30,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 {
   test_delimit_logger test_delim{"Single threaded UE creation procedure in mode: {}", to_string(tmode)};
 
-  // Run tasks in same thread
+  // Run all async tasks in same thread.
   manual_task_worker        worker{128};
   dummy_ul_executor_mapper  ul_exec_mapper{worker};
   dummy_dl_executor_mapper  dl_exec_mapper{&worker};
@@ -38,10 +38,11 @@ void test_mac_ue_creation_procedure(test_mode tmode)
   dummy_mac_result_notifier phy_notifier;
 
   // Create a MAC config object
-  mac_common_config_t       mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier};
-  mac_ctrl_dummy_configurer mac_ctrl;
-  mac_ul_dummy_configurer   mac_ul;
-  mac_dl_dummy_configurer   mac_dl;
+  mac_common_config_t         mac_cfg{du_mng_notif, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier};
+  mac_ctrl_dummy_configurer   mac_ctrl;
+  mac_ul_dummy_configurer     mac_ul;
+  mac_dl_dummy_configurer     mac_dl;
+  mac_scheduler_dummy_adapter sched_cfg_adapter;
 
   // Launch procedure
   mac_ue_create_request_message msg{};
@@ -65,7 +66,7 @@ void test_mac_ue_creation_procedure(test_mode tmode)
 
   // ACTION: Procedure is launched
   async_task<mac_ue_create_response_message> proc =
-      launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl);
+      launch_async<mac_ue_create_request_procedure>(msg, mac_cfg, mac_ctrl, mac_ul, mac_dl, sched_cfg_adapter);
   lazy_task_launcher<mac_ue_create_response_message> proc_launch{proc};
 
   // STATUS: The MAC UL received the UE creation request message

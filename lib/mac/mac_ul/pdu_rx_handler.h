@@ -60,10 +60,10 @@ struct decoded_mac_rx_pdu {
 class pdu_rx_handler
 {
 public:
-  pdu_rx_handler(mac_common_config_t& cfg_,
-                 scheduler_feedback_handler&   sched_,
-                 mac_ul_ue_manager&   ue_manager_,
-                 du_rnti_table&       rnti_table_);
+  pdu_rx_handler(mac_common_config_t&        cfg_,
+                 scheduler_feedback_handler& sched_,
+                 mac_ul_ue_manager&          ue_manager_,
+                 du_rnti_table&              rnti_table_);
 
   /// Decode MAC Rx PDU, log contents and handle subPDUs.
   /// \param sl_rx Slot when MAC UL PDU was received.
@@ -107,11 +107,11 @@ private:
   /// \return true if correctly handled.
   bool handle_crnti_ce(decoded_mac_rx_pdu& pdu, const mac_ul_sch_subpdu& subpdu);
 
-  mac_common_config_t&  cfg;
-  srslog::basic_logger& logger;
-  scheduler_feedback_handler&    sched;
-  mac_ul_ue_manager&    ue_manager;
-  du_rnti_table&        rnti_table;
+  mac_common_config_t&        cfg;
+  srslog::basic_logger&       logger;
+  scheduler_feedback_handler& sched;
+  mac_ul_ue_manager&          ue_manager;
+  du_rnti_table&              rnti_table;
 };
 
 } // namespace srsgnb

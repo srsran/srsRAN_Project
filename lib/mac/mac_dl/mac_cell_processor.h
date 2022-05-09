@@ -5,8 +5,7 @@
 #include "../mac_config.h"
 #include "mac_dl_ue_manager.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/scheduler/mac_scheduler.h"
+#include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "ssb_assembler.h"
 
 namespace srsgnb {
@@ -16,7 +15,7 @@ class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_c
 public:
   mac_cell_processor(mac_common_config_t&             cfg_,
                      const mac_cell_creation_request& cell_cfg_req_,
-                     mac_scheduler&                   sched_,
+                     scheduler_slot_handler&          sched_,
                      mac_dl_ue_manager&               ue_mng);
 
   /// Starts configured cell.
@@ -57,8 +56,8 @@ private:
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
-  mac_scheduler&     sched_obj;
-  mac_dl_ue_manager& ue_mng;
+  scheduler_slot_handler& sched_obj;
+  mac_dl_ue_manager&      ue_mng;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

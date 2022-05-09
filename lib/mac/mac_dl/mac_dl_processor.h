@@ -5,33 +5,26 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
+#include "../mac_ctrl/srs_sched_config_adapter.h"
 #include "mac_cell_processor.h"
 #include "mac_dl_ue_manager.h"
-#include "srs_sched_config_adapter.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/mac/mac_cell_manager.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/execute_on.h"
-#include "srsgnb/support/async/manual_event.h"
-#include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
 
-class mac_dl_processor final : public mac_dl_configurer, public mac_cell_manager
+class mac_dl_processor final : public mac_dl_configurer
 {
 public:
-  explicit mac_dl_processor(mac_common_config_t&    cfg_,
-                            mac_sched_configurator& sched_cfg_,
-                            mac_scheduler&          sched_,
-                            du_rnti_table&          rnti_table_);
+  explicit mac_dl_processor(mac_common_config_t& cfg_, scheduler_slot_handler& sched_, du_rnti_table& rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 
-  /// Adds new cell configuration to MAC DL. The configuration is forwarded to the scheduler.
+  /// Adds new cell configuration to MAC DL.
   void add_cell(const mac_cell_creation_request& cell_cfg) override;
 
-  /// Removes cell configuration from MAC DL. The cell is also removed from the scheduler.
+  /// Removes cell configuration from MAC DL.
   void remove_cell(du_cell_index_t cell_index) override;
 
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return *cells[cell_index]; }
@@ -53,11 +46,9 @@ private:
 
   std::array<std::unique_ptr<mac_cell_processor>, MAX_NOF_DU_CELLS> cells;
 
-  mac_sched_configurator& sched_cfg;
-
   mac_dl_ue_manager ue_mng;
 
-  mac_scheduler& sched_obj;
+  scheduler_slot_handler& sched_obj;
 };
 
 } // namespace srsgnb

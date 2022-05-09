@@ -5,6 +5,7 @@
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
+#include "mac_scheduler_configurator.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
@@ -18,8 +19,15 @@ public:
                                            mac_common_config_t&                 cfg_,
                                            mac_ctrl_configurer&                 mac_ctrl_,
                                            mac_ul_configurer&                   mac_ul_,
-                                           mac_dl_configurer&                   mac_dl_) :
-    req(req_), cfg(cfg_), logger(cfg.logger), ctrl_unit(mac_ctrl_), ul_unit(mac_ul_), dl_unit(mac_dl_)
+                                           mac_dl_configurer&                   mac_dl_,
+                                           mac_scheduler_configurator&          sched_configurator_) :
+    req(req_),
+    cfg(cfg_),
+    logger(cfg.logger),
+    ctrl_unit(mac_ctrl_),
+    ul_unit(mac_ul_),
+    dl_unit(mac_dl_),
+    sched_configurator(sched_configurator_)
   {}
 
   void operator()(coro_context<async_task<mac_ue_create_response_message> >& ctx)
@@ -41,6 +49,11 @@ public:
 
     // 3. Create UE DL context and channels
     CORO_AWAIT_VALUE(add_ue_result, dl_unit.add_ue(req));
+
+    // 4. Create UE context in Scheduler.
+    log_proc_started(logger, req.ue_index, req.crnti, "Sched UE create");
+    CORO_AWAIT(sched_configurator.handle_ue_creation_request(req));
+    log_proc_completed(logger, req.ue_index, req.crnti, "Sched UE create");
 
     // 4. After UE insertion in scheduler, send response to DU manager
     CORO_RETURN(handle_mac_ue_create_result(add_ue_result));
@@ -76,6 +89,7 @@ private:
   mac_ctrl_configurer&                ctrl_unit;
   mac_ul_configurer&                  ul_unit;
   mac_dl_configurer&                  dl_unit;
+  mac_scheduler_configurator&         sched_configurator;
 
   bool ctrl_ue_created = false;
   bool add_ue_result   = false;

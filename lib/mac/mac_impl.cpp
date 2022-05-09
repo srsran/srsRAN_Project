@@ -1,6 +1,6 @@
 
 #include "mac_impl.h"
-#include "mac_dl/srs_sched_config_adapter.h"
+#include "mac_ctrl/srs_sched_config_adapter.h"
 #include "srsgnb/scheduler/scheduler_factory.h"
 
 namespace srsgnb {
@@ -13,9 +13,9 @@ mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
   cfg(event_notifier, ul_exec_mapper_, dl_exec_mapper_, ctrl_exec_, phy_notifier_),
   sched_cfg_adapter(cfg),
   sched_obj(create_scheduler(sched_cfg_adapter.get_sched_notifier())),
-  dl_unit(cfg, sched_cfg_adapter, *sched_obj, rnti_table),
+  dl_unit(cfg, *sched_obj, rnti_table),
   ul_unit(cfg, *sched_obj, rnti_table),
-  ctrl_unit(cfg, ul_unit, dl_unit, rnti_table),
+  ctrl_unit(cfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter),
   rach_hdl(*sched_obj, rnti_table)
 {
   sched_cfg_adapter.set_sched(*sched_obj);

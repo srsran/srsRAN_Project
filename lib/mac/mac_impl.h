@@ -4,10 +4,12 @@
 
 #include "mac_config.h"
 #include "mac_ctrl/mac_controller.h"
-#include "mac_dl/mac_sched_configurator.h"
+#include "mac_ctrl/mac_scheduler_configurator.h"
+#include "mac_dl/mac_dl_processor.h"
 #include "mac_ul/mac_ul_processor.h"
 #include "rach_handler.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
@@ -34,7 +36,7 @@ public:
     return dl_unit.get_slot_handler(cell_index);
   }
 
-  mac_cell_manager& get_cell_manager() override { return dl_unit; }
+  mac_cell_manager& get_cell_manager() override { return ctrl_unit; }
 
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
 

@@ -9,7 +9,7 @@ using namespace srsgnb;
 
 mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
                                        const mac_cell_creation_request& cell_cfg_req_,
-                                       mac_scheduler&                   sched_,
+                                       scheduler_slot_handler&          sched_,
                                        mac_dl_ue_manager&               ue_mng_) :
   cfg(cfg_),
   logger(cfg.logger),

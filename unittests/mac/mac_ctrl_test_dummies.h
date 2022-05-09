@@ -58,6 +58,19 @@ public:
   void flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu) override { ul_ccch_forwarded = true; }
 };
 
+class mac_cell_dummy_controller final : public mac_cell_controller
+{
+public:
+  async_task<void> start() override
+  {
+    return launch_async([](coro_context<async_task<void> >& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN();
+    });
+  }
+  async_task<void> stop() override { return start(); }
+};
+
 class mac_dl_dummy_configurer final : public mac_dl_configurer
 {
 public:
@@ -66,6 +79,7 @@ public:
   optional<mac_ue_create_request_message>          last_ue_create_request;
   optional<mac_ue_delete_request_message>          last_ue_delete_request;
   optional<mac_ue_reconfiguration_request_message> last_ue_reconfiguration_request;
+  mac_cell_dummy_controller                        cell_ctrl;
 
   async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
@@ -93,6 +107,10 @@ public:
       CORO_RETURN(true);
     });
   }
+
+  void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
+  void                 remove_cell(du_cell_index_t cell_index) override {}
+  mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
 };
 
 class dummy_ul_executor_mapper : public du_l2_ul_executor_mapper
@@ -142,6 +160,46 @@ class dummy_mac_result_notifier : public mac_result_notifier
 
 public:
   mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) override { return cell; }
+};
+
+class mac_scheduler_dummy_adapter : public mac_scheduler_configurator
+{
+public:
+  void add_cell(const mac_cell_creation_request& msg) override {}
+
+  void remove_cell(du_cell_index_t cell_index) override {}
+
+  async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
+  {
+    return launch_async([](coro_context<async_task<bool> >& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
+  {
+    return launch_async([](coro_context<async_task<bool> >& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) override
+  {
+    return launch_async([](coro_context<async_task<bool> >& ctx) {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(true);
+    });
+  }
+
+  sched_configuration_notifier& get_sched_notifier() override { return notifier; }
+
+  class dummy_notifier : public sched_configuration_notifier
+  {
+    void on_ue_config_complete(du_ue_index_t ue_index) override {}
+    void on_ue_delete_response(du_ue_index_t ue_index) override {}
+  } notifier;
 };
 
 } // namespace srsgnb

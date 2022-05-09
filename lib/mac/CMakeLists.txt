@@ -1,5 +1,5 @@
 
-set(SOURCES mac_configuration_helpers.cpp)
+set(SOURCES mac_ctrl/mac_configuration_helpers.cpp)
 add_library(mac_configuration_helpers SHARED ${SOURCES})
 
 set(SOURCES mac_factory.cpp mac_impl.cpp mac_ctrl/mac_controller.cpp

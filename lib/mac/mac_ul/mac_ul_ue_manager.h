@@ -3,9 +3,9 @@
 #define SRSGNB_MAC_UL_UE_MANAGER_H
 
 #include "../../ran/gnb_format.h"
+#include "../du_rnti_table.h"
 #include "../mac_config.h"
 #include "mac_ul_sch_pdu.h"
-#include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"

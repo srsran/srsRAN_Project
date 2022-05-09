@@ -17,7 +17,7 @@ public:
   virtual void             flush_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer pdu)        = 0;
 };
 
-class mac_dl_configurer
+class mac_dl_configurer : public mac_cell_manager
 {
 public:
   virtual ~mac_dl_configurer()                                                               = default;

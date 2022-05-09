@@ -3,9 +3,6 @@
 #define SRSGNB_MAC_DL_UE_MANAGER_H
 
 #include "../du_rnti_table.h"
-#include "srsgnb/adt/circular_array.h"
-#include "srsgnb/adt/circular_map.h"
-#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
@@ -140,7 +137,7 @@ private:
 
   du_rnti_table& rnti_table;
 
-  mutable circular_array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
+  mutable std::array<std::mutex, MAX_NOF_DU_UES> ue_mutex;
 
   du_ue_list<ue_item> ue_db;
 };

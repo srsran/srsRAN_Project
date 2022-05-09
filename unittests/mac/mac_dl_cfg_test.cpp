@@ -2,6 +2,7 @@
 #include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
+#include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/executors/blocking_task_worker.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -117,8 +118,8 @@ void test_dl_ue_procedure_execution_contexts()
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
-  mac_dl_processor         mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
   sched_cfg_adapter.set_sched(sched_obj);
+  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cell.
   mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_creation_request();
@@ -163,8 +164,8 @@ void test_dl_ue_procedure_tsan()
 
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
-  mac_dl_processor         mac_dl(cfg, sched_cfg_adapter, sched_obj, rnti_table);
   sched_cfg_adapter.set_sched(sched_obj);
+  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_creation_request();

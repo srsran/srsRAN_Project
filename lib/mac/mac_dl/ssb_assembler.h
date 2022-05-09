@@ -11,7 +11,6 @@
 namespace srsgnb {
 
 struct dl_ssb_pdu;
-struct mac_cell_configuration;
 struct ssb_information;
 
 /// This class implements a helper to compute some SSB-specific parameters from the MAC's Cell configuration. These
