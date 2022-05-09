@@ -1,6 +1,7 @@
 
 set(SOURCES mac_ctrl/mac_configuration_helpers.cpp)
-add_library(mac_configuration_helpers SHARED ${SOURCES})
+add_library(mac_configuration_helpers STATIC ${SOURCES})
+target_link_libraries(mac_configuration_helpers srsgnb_support srsgnb_ran rrc_nr_asn1)
 
 set(SOURCES mac_factory.cpp mac_impl.cpp mac_ctrl/mac_controller.cpp
         mac_dl/mac_dl_processor.cpp mac_dl/mac_cell_processor.cpp

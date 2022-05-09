@@ -109,6 +109,9 @@ if (FFTW3F_FOUND)
     message(STATUS "FFT_LIBRARIES: " ${FFT_LIBRARIES})
 endif (FFTW3F_FOUND)
 
+# Threads
+find_package(Threads REQUIRED)
+
 # UHD
 if (ENABLE_UHD)
     find_package(UHD)
@@ -126,9 +129,6 @@ if (ENABLE_ZEROMQ)
         link_directories(${ZEROMQ_LIBRARY_DIRS})
     endif (ZEROMQ_FOUND)
 endif (ENABLE_ZEROMQ)
-
-# Threads
-find_package(Threads REQUIRED)
 
 ########################################################################
 # Compiler launcher setup

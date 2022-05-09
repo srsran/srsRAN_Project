@@ -4,8 +4,6 @@
 
 #include "srsgnb_test.h"
 
-#ifdef __cplusplus
-
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
 
@@ -210,12 +208,10 @@ private:
   int val;
 };
 
-} // namespace srsgnb
-
 #define CONDERROR(cond, fmt, ...) srsran_assert(not(cond), fmt, ##__VA_ARGS__)
 
 #define TESTERROR(fmt, ...) CONDERROR(true, fmt, ##__VA_ARGS__)
 
-#endif // __cplusplus
+} // namespace srsgnb
 
 #endif // SRSGNB_TEST_UTILS_H

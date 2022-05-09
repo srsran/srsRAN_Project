@@ -6,7 +6,7 @@ target_link_libraries(mac_ue_create_test srsgnb_support srslog rrc_nr_asn1)
 add_test(mac_ue_create_test mac_ue_create_test)
 
 add_executable(mac_ctrl_test mac_ctrl_test.cpp)
-target_link_libraries(mac_ctrl_test srsgnb_mac srsgnb_support srslog rrc_nr_asn1)
+target_link_libraries(mac_ctrl_test srsgnb_support srslog rrc_nr_asn1 srsgnb_mac)
 add_test(mac_ctrl_test mac_ctrl_test)
 
 add_executable(mac_dl_cfg_test mac_dl_cfg_test.cpp)

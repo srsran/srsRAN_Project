@@ -13,4 +13,4 @@ set(SOURCES
         timers.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
-target_link_libraries(srsgnb_support srslog pthread)
+target_link_libraries(srsgnb_support ${CMAKE_THREAD_LIBS_INIT} srslog)
