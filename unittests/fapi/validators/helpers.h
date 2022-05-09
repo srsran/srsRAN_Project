@@ -65,6 +65,74 @@ inline srsgnb::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu()
   return pdu;
 }
 
+/// Builds and returns a valid DL PDCCH pdu. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.2.4.
+inline srsgnb::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu()
+{
+  srsgnb::fapi::dl_pdcch_pdu         pdu;
+  srsgnb::fapi::dl_pdcch_pdu_builder builder(pdu);
+
+  // Random generators.
+  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
+  std::uniform_int_distribution<unsigned> duration_symbol_dist(0, 3);
+  std::uniform_int_distribution<unsigned> shift_index_dist(0, 275);
+  std::uniform_int_distribution<unsigned> n_rnti_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> cce_dist(0, 135);
+  std::uniform_int_distribution<unsigned> aggregation_dist(0, 4);
+  std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
+  std::uniform_int_distribution<int>      power_dist(-8, 8);
+  std::uniform_int_distribution<unsigned> custom_dist(2, 3);
+
+  // :TODO: generate  better frequency domain resource bitmap.
+  srsgnb::static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
+
+  // Always work with the biggest numerology.
+  builder.set_bwp_parameters(bwp_size_dist(gen),
+                             bwp_start_dist(gen),
+                             srsgnb::subcarrier_spacing::kHz240,
+                             static_cast<srsgnb::fapi::cyclic_prefix_type>(binary_dist(gen)));
+
+  builder.set_coreset_parameters(start_symbol_index_dist(gen),
+                                 duration_symbol_dist(gen),
+                                 {freq_domain},
+                                 static_cast<srsgnb::fapi::cce_to_reg_mapping_type>(binary_dist(gen)),
+                                 custom_dist(gen),
+                                 custom_dist(gen),
+                                 static_cast<srsgnb::fapi::pdcch_coreset_type>(binary_dist(gen)),
+                                 shift_index_dist(gen),
+                                 static_cast<srsgnb::fapi::precoder_granularity_type>(binary_dist(gen)));
+
+  // Add DCI.
+  auto builder_dci = builder.add_dl_dci();
+
+  builder_dci.set_basic_parameters(srsgnb::to_rnti(n_rnti_dist(gen) + 1),
+                                   nid_data_dist(gen),
+                                   n_rnti_dist(gen),
+                                   cce_dist(gen),
+                                   std::pow(2, aggregation_dist(gen)));
+  srsgnb::optional<float> profile_nr;
+  profile_nr.emplace(power_dist(gen));
+  builder_dci.set_tx_power_info_parameter(profile_nr);
+
+  // Payload.
+  srsgnb::static_vector<uint8_t, 128> payload(32, 1);
+
+  builder_dci.set_payload({payload});
+
+  srsgnb::optional<float> profile_data;
+  srsgnb::optional<float> profile_dmrs;
+  builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
+  builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
+
+  return pdu;
+}
+
 /// Builds and returns a valid DL TTI request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.
 inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
@@ -78,10 +146,15 @@ inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
   // :TODO: at this moment code does not support groups, the number of groups is set to 0.
   builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen), 0);
 
-  // Manually add the ssb pdu to reuse the functions above.
+  // Manually add the SSB PDU to reuse the functions above.
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type = srsgnb::fapi::dl_pdu_type::SSB;
   msg.pdus.back().ssb_pdu  = build_valid_dl_ssb_pdu();
+
+  // Manually add the PDCCH PDU to reuse the functions above.
+  msg.pdus.emplace_back();
+  msg.pdus.back().pdu_type  = srsgnb::fapi::dl_pdu_type::PDCCH;
+  msg.pdus.back().pdcch_pdu = build_valid_dl_pdcch_pdu();
 
   return msg;
 }

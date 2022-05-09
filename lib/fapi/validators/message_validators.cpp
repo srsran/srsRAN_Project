@@ -11,6 +11,7 @@
  */
 
 #include "srsgnb/fapi/message_validators.h"
+#include "dl_pdcch_pdu.h"
 #include "dl_ssb_pdu.h"
 #include "helpers.h"
 
@@ -50,7 +51,10 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
       case dl_pdu_type::SSB:
         success &= validate_dl_ssb_pdu(pdu.ssb_pdu, report);
         break;
-      // :TODO: Implement the rest of the PDUs when they validators exist.
+      case dl_pdu_type::PDCCH:
+        success &= validate_dl_pdcch_pdu(pdu.pdcch_pdu, report);
+        break;
+        // :TODO: Implement the rest of the PDUs when they validators exist.
       default:
         srsran_assert(0, "Invalid pdu_type");
     }
