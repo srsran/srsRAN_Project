@@ -25,3 +25,4 @@ add_custom_command(
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/short_block_detector_test_data.tar.gz
     VERBATIM
     )
+add_test(short_block_detector_test short_block_detector_test)
