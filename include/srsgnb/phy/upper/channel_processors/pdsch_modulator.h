@@ -4,12 +4,12 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/dmrs_mapping.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 
 namespace srsgnb {
 

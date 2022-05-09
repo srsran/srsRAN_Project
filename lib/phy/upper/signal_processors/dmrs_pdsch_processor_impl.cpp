@@ -17,31 +17,33 @@
 
 using namespace srsgnb;
 
-const std::array<dmrs_pdsch_processor_impl::params_t, DMRS_MAX_PORTS_TYPE1> dmrs_pdsch_processor_impl::params_type1 = {{
-    /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-    /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-    /* Port 1002 */ {1, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-    /* Port 1003 */ {1, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-    /* Port 1004 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-    /* Port 1005 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-    /* Port 1006 */ {1, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-    /* Port 1007 */ {1, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-}};
+const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE1>
+    dmrs_pdsch_processor_impl::params_type1 = {{
+        /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1002 */ {1, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1003 */ {1, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1004 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1005 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1006 */ {1, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1007 */ {1, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+    }};
 
-const std::array<dmrs_pdsch_processor_impl::params_t, DMRS_MAX_PORTS_TYPE2> dmrs_pdsch_processor_impl::params_type2 = {{
-    /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-    /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-    /* Port 1002 */ {2, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-    /* Port 1003 */ {2, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-    /* Port 1004 */ {4, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
-    /* Port 1005 */ {4, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
-    /* Port 1006 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-    /* Port 1007 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-    /* Port 1008 */ {2, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-    /* Port 1009 */ {2, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-    /* Port 1010 */ {4, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
-    /* Port 1011 */ {4, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
-}};
+const std::array<dmrs_pdsch_processor_impl::params_t, dmrs_type::DMRS_MAX_PORTS_TYPE2>
+    dmrs_pdsch_processor_impl::params_type2 = {{
+        /* Port 1000 */ {0, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1001 */ {0, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1002 */ {2, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1003 */ {2, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1004 */ {4, {+1.0f, +1.0f}, {+1.0f, +1.0f}},
+        /* Port 1005 */ {4, {+1.0f, -1.0f}, {+1.0f, +1.0f}},
+        /* Port 1006 */ {0, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1007 */ {0, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1008 */ {2, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1009 */ {2, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+        /* Port 1010 */ {4, {+1.0f, +1.0f}, {+1.0f, -1.0f}},
+        /* Port 1011 */ {4, {+1.0f, -1.0f}, {+1.0f, -1.0f}},
+    }};
 
 void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequence,
                                                             unsigned int    symbol,
@@ -64,7 +66,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
 
   // Generate sequence.
   dmrs_sequence_generate(
-      sequence, *prg, amplitude, config.reference_point_k_rb, dmrs_nof_dmrs_per_rb(config.type), config.rb_mask);
+      sequence, *prg, amplitude, config.reference_point_k_rb, config.type.nof_dmrs_per_rb(), config.rb_mask);
 }
 
 void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
@@ -137,7 +139,7 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
   for (unsigned rb = 0; rb < MAX_RB; ++rb) {
     rb_count += config.rb_mask[rb] ? 1 : 0;
   }
-  unsigned dmrs_re_count = dmrs_nof_dmrs_per_rb(config.type) * rb_count;
+  unsigned dmrs_re_count = config.type.nof_dmrs_per_rb() * rb_count;
 
   // Generate DMRS mask, with NRE padding at the first samples
   std::array<bool, (MAX_RB + 1)* NRE> base_mask = {};

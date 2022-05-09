@@ -27,7 +27,7 @@ class dmrs_pdsch_processor_impl : public dmrs_pdsch_processor
 private:
   /// Defines the maximum number of DMRS per RB.
   static constexpr unsigned MAX_DRMS_PER_RB =
-      std::max(dmrs_nof_dmrs_per_rb(dmrs_type::TYPE1), dmrs_nof_dmrs_per_rb(dmrs_type::TYPE2));
+      std::max(dmrs_type(dmrs_type::TYPE1).nof_dmrs_per_rb(), dmrs_type(dmrs_type::TYPE2).nof_dmrs_per_rb());
 
   /// Define the maximum number of DMRS per symbol.
   static constexpr unsigned MAX_DMRS_PER_SYMBOL = MAX_RB * MAX_DRMS_PER_RB;

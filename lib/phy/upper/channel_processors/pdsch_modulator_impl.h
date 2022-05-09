@@ -23,12 +23,6 @@ private:
   std::unique_ptr<modulation_mapper>       modulator;
   std::unique_ptr<pseudo_random_generator> scrambler;
 
-  /// \brief Generates the DMRS for PDSCH resource element pattern.
-  ///
-  /// \param[in] config Provides the PDSCH modulation configuration.
-  /// \return A RE pattern that describes the position of the DMRS.
-  static re_pattern generate_dmrs_pattern(const config_t& config);
-
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.1.1 Scrambling.
   ///
   /// \param[out] b_hat Output bits after scrambling.

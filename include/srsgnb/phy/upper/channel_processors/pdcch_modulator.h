@@ -7,9 +7,9 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/dmrs_mapping.h"
 
 namespace srsgnb {
 

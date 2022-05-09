@@ -5,33 +5,6 @@
 
 using namespace srsgnb;
 
-re_pattern pdsch_modulator_impl::generate_dmrs_pattern(const pdsch_modulator::config_t& config)
-{
-  re_pattern ret = {};
-
-  // Set the frequency mapping to the entire BWP.
-  ret.rb_begin  = config.bwp_start_rb;
-  ret.rb_end    = config.bwp_start_rb + config.bwp_size_rb;
-  ret.rb_stride = 1;
-
-  // Load RE mask.
-  if (config.dmrs_config_type == dmrs_type::TYPE1) {
-    for (unsigned re_idx = 0; re_idx != NRE; ++re_idx) {
-      ret.re_mask[re_idx] = (re_idx % 2) < config.nof_cdm_groups_without_data;
-    }
-  } else {
-    for (unsigned re_idx = 0; re_idx != NRE / 6; ++re_idx) {
-      ret.re_mask[2 * re_idx]     = (re_idx % 3) < config.nof_cdm_groups_without_data;
-      ret.re_mask[2 * re_idx + 1] = ret.re_mask[2 * re_idx];
-    }
-  }
-
-  // Load symbol mask.
-  std::copy(config.dmrs_symb_pos.begin(), config.dmrs_symb_pos.end(), ret.symbols.begin());
-
-  return ret;
-}
-
 void pdsch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, unsigned q, const config_t& config)
 {
   // Calculate initial scrambling state.
@@ -126,7 +99,8 @@ void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer
   unsigned nof_rb         = contiguous_alloc.second;
 
   // Get DMRS RE pattern.
-  re_pattern dmrs_pattern = generate_dmrs_pattern(config);
+  re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
+      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
 
   // Generate frequency allocation mask for each symbol in the transmission.
   for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
@@ -191,7 +165,8 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
                 end_symbol_index);
 
   // Get DMRS RE pattern.
-  re_pattern dmrs_pattern = generate_dmrs_pattern(config);
+  re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
+      config.bwp_start_rb, config.bwp_size_rb, config.nof_cdm_groups_without_data, config.dmrs_symb_pos);
 
   // Generate frequency allocation mask for each symbol in the transmission.
   for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {

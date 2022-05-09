@@ -4,7 +4,6 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 #include <memory>
 
