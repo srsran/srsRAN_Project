@@ -4,7 +4,6 @@
 // This file was generated using the following MATLAB class:
 //   + "srsModulationMapperUnittest.m"
 
-#include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/support/file_vector.h"
 
