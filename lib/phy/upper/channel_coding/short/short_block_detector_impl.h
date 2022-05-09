@@ -9,11 +9,11 @@
 namespace srsgnb {
 
 /// Maximum length of a codeword.
-static constexpr unsigned MAX_IN_LENGTH = 32;
+static constexpr unsigned MAX_BLOCK_LENGTH = 32;
 /// Maximum length of a message.
-static constexpr unsigned MAX_OUT_LENGTH = 11;
+static constexpr unsigned MAX_MSG_LENGTH = 11;
 /// Half of the maximum codebook size.
-static constexpr unsigned MAX_NOF_CODEWORDS_2 = 1U << (MAX_OUT_LENGTH - 1);
+static constexpr unsigned MAX_NOF_CODEWORDS_2 = 1U << (MAX_MSG_LENGTH - 1);
 
 /// \brief Generic implementation of the short-block detector.
 ///
@@ -22,10 +22,7 @@ class short_block_detector_impl : public short_block_detector
 {
 public:
   // See interface for the documentation.
-  bool detect(span<uint8_t> output, span<const int8_t> input) override;
-
-  // See interface for the documentation.
-  void rate_dematch(span<int8_t> output, span<const int8_t> input) override;
+  bool detect(span<uint8_t> output, span<const int8_t> input, modulation_scheme mod) override;
 
 private:
   /// \brief Brute force ML detection for messages of length 3-11 bits.
@@ -41,7 +38,7 @@ private:
   /// TS 38.211 Section 5.3.3.3.
   /// \note The codeword corresponding to the binary expansion of \f$ 2r + 1 \f$ can be obtained from the codeword with
   /// index \f$ r \f$ by inverting all the signs.
-  static const std::array<std::array<int8_t, MAX_IN_LENGTH>, MAX_NOF_CODEWORDS_2> DETECT_TABLE;
+  static const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> DETECT_TABLE;
 };
 
 } // namespace srsgnb
