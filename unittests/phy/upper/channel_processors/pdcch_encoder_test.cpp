@@ -2,7 +2,6 @@
 #include "pdcch_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <srsgnb/adt/static_vector.h>
 
 using namespace srsgnb;
 

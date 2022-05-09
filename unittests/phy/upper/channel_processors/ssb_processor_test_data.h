@@ -5,10 +5,8 @@
 //   + "srsSSBProcessorUnittest.m"
 
 #include "../../resource_grid_test_doubles.h"
-#include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/support/file_vector.h"
-#include <array>
 
 namespace srsgnb {
 

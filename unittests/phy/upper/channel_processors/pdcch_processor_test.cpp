@@ -5,7 +5,6 @@
 #include "pdcch_modulator_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/math_utils.h"
 #include <random>
 
 static std::mt19937 rgen(0);

@@ -8,8 +8,6 @@
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/srsvec/compare.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
 using namespace srsgnb;
