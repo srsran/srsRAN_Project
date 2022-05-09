@@ -2,6 +2,7 @@
 #define SRSGNB_FAPI_MESSAGES_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_mapping.h"
@@ -132,35 +133,43 @@ struct dl_pdcch_pdu {
   dl_pdcch_pdu_parameters_v4                  parameters_v4;
 };
 
+enum class dl_pdsch_trans_type : uint8_t {
+  non_interleaved_common_ss,
+  non_interleaved_other,
+  interleaved_common_type0_coreset0,
+  interleaved_common_any_coreset0_present,
+  interleaved_common_any_coreset0_not_present,
+  interleaved_other
+};
+enum class ldpc_base_graph_type : uint8_t { bg_1 = 1, bg_2 };
+
 /// \note For this release num_coreset_rm_patterns = 0.
 /// \note For this release num_prb_sym_rm_patts_by_value = 0.
 struct dl_pdsch_maintenance_parameters_v3 {
-  uint8_t                 pdsch_trans_type;
-  uint16_t                coreset_start_point;
-  uint16_t                initial_dl_bwp_size;
-  uint8_t                 ldpc_base_graph;
-  uint32_t                tb_size_lbrm_bytes;
-  uint8_t                 tb_crc_required;
-  std::array<uint16_t, 8> ssb_pdus_for_rate_matching;
-  uint16_t                ssb_config_for_rate_matching;
-  uint8_t                 prb_sym_rm_patt_bmp_size_byref;
+  static constexpr unsigned MAX_SIZE_SSB_PDU_FOR_RM = 8;
+
+  dl_pdsch_trans_type                           pdsch_trans_type;
+  uint16_t                                      coreset_start_point;
+  uint16_t                                      initial_dl_bwp_size;
+  ldpc_base_graph_type                          ldpc_base_graph;
+  uint32_t                                      tb_size_lbrm_bytes;
+  uint8_t                                       tb_crc_required;
+  std::array<uint16_t, MAX_SIZE_SSB_PDU_FOR_RM> ssb_pdus_for_rate_matching;
+  uint16_t                                      ssb_config_for_rate_matching;
   //: TODO: determine max size of this array
-  std::array<uint8_t, 16> prb_sym_rm_patt_bmp_byref;
-  uint8_t                 num_prb_sym_rm_patts_by_value;
-  uint8_t                 num_coreset_rm_patterns;
-  uint16_t                pdcch_pdu_index;
-  uint16_t                dci_index;
-  uint8_t                 lte_crs_rm_pattern_bmp_size;
+  static_vector<uint8_t, 16> prb_sym_rm_patt_bmp_byref;
+  uint8_t                    num_prb_sym_rm_patts_by_value;
+  uint8_t                    num_coreset_rm_patterns;
+  uint16_t                   pdcch_pdu_index;
+  uint16_t                   dci_index;
   //: TODO: determine max size of this array
-  std::array<uint8_t, 16> lte_crs_rm_pattern;
-  uint8_t                 num_csi_rs_for_rm;
-  //: TODO: determine max size of this array
-  std::array<uint16_t, 16> csi_for_rm;
-  int16_t                  pdsch_dmrs_power_offset_profile_sss;
-  int16_t                  pdsch_data_power_offset_profile_sss;
-  uint8_t                  max_num_cbg_per_tb;
+  static_vector<uint8_t, 16>  lte_crs_rm_pattern;
+  static_vector<uint16_t, 16> csi_for_rm;
+  int16_t                     pdsch_dmrs_power_offset_profile_sss;
+  int16_t                     pdsch_data_power_offset_profile_sss;
+  uint8_t                     max_num_cbg_per_tb;
   //: TODO: determine max size of this array.
-  std::array<uint8_t, 16> cbg_tx_information;
+  static_vector<uint8_t, 16> cbg_tx_information;
 };
 
 /// PDSCH PTRS maintenance parameters added in FAPIv3.
@@ -169,12 +178,12 @@ struct dl_pdsch_ptrs_maintenance_v3 {
 };
 
 struct dl_pdsch_parameters_v4 {
-  uint8_t coreset_rm_pattern_bmp_size_by_ref;
   //: TODO: determine max size of this array
-  std::array<uint8_t, 16> coreset_rm_pattern_bmp_by_ref;
-  uint8_t                 lte_crs_mbsfn_derivation_method;
-  //: TODO: determine max size of this array
-  std::array<uint8_t, 16> lte_crs_mbsfn_pattern;
+  static_vector<uint8_t, 16> coreset_rm_pattern_bmp_by_ref;
+  uint8_t                    lte_crs_mbsfn_derivation_method;
+  // :TODO: determine max size of this array. This size is either 0 or lte_crs_rm_pattern.size() parameter in
+  // maintenance v3.
+  static_vector<uint8_t, 16> lte_crs_mbsfn_pattern;
   //: TODO: MU-MIMO fields
 };
 
@@ -188,49 +197,59 @@ struct dl_pdsch_codeword {
   uint32_t tb_size;
 };
 
+enum class pdsch_low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
+enum class pdsch_allocation_type : uint8_t { type_0, type_1 };
+enum class pdsch_vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
+enum class ss_profile_nr_type : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
+enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
+enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
+
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {
   /// Maximum number of codewords per PDU.
   static constexpr unsigned MAX_NUM_CW_PER_PDU = 2;
+  /// Maximum size of the RB bitmap in Bytes.
+  static constexpr unsigned MAX_SIZE_RB_BITMAP = 36;
+  /// Maximum size of DL TB CRC.
+  static constexpr unsigned MAX_SIZE_DL_TB_CRC = 2;
 
-  uint16_t                                          pdu_bitmap;
-  uint16_t                                          rnti;
-  uint16_t                                          pdu_index;
-  uint16_t                                          bwp_size;
-  uint16_t                                          bwp_start;
-  subcarrier_spacing                                scs;
-  cyclic_prefix_type                                cyclic_prefix;
-  uint8_t                                           num_codewords;
-  std::array<dl_pdsch_codeword, MAX_NUM_CW_PER_PDU> cws;
-  uint16_t                                          nid_pdsch;
-  uint8_t                                           num_layers;
-  uint8_t                                           transmission_scheme;
-  uint8_t                                           ref_point;
-  uint16_t                                          dl_dmrs_symb_pos;
-  uint8_t                                           dmrs_config_type;
-  uint16_t                                          pdsch_dmrs_scrambling_id;
-  uint16_t                                          pdsch_dmrs_scrambling_id_compl;
-  uint8_t                                           low_papr_dmrs;
-  uint8_t                                           nscid;
-  uint8_t                                           num_dmrs_cdm_grps_no_data;
-  uint16_t                                          dmrs_ports;
-  uint8_t                                           resource_alloc;
-  std::array<uint8_t, 36>                           rb_bitmap;
-  uint16_t                                          rb_start;
-  uint16_t                                          rb_size;
-  uint8_t                                           vrb_to_prb_mapping;
-  uint8_t                                           start_symbol_index;
-  uint8_t                                           nr_of_symbols;
-  //: TODO: PTRS
-  //: TODO: beamforming
-  uint8_t                            power_control_offset_profile_nr;
-  uint8_t                            power_control_offset_ss_profile_nr;
-  uint8_t                            is_last_cb_present;
-  uint8_t                            is_inline_tb_crc;
-  std::array<uint32_t, 2>            dl_tb_crc_cw;
-  dl_pdsch_maintenance_parameters_v3 pdsch_maintenance_v3;
-  dl_pdsch_ptrs_maintenance_v3       ptrs_maintenance_v3;
-  //: TODO: Rel16 PDSCH params v3
+  uint16_t                                             pdu_bitmap;
+  rnti_t                                               rnti;
+  uint16_t                                             pdu_index;
+  uint16_t                                             bwp_size;
+  uint16_t                                             bwp_start;
+  subcarrier_spacing                                   scs;
+  cyclic_prefix_type                                   cyclic_prefix;
+  static_vector<dl_pdsch_codeword, MAX_NUM_CW_PER_PDU> cws;
+  uint16_t                                             nid_pdsch;
+  uint8_t                                              num_layers;
+  uint8_t                                              transmission_scheme;
+  pdsch_ref_point_type                                 ref_point;
+  uint16_t                                             dl_dmrs_symb_pos;
+  dmrs_type                                            dmrs_config_type;
+  uint16_t                                             pdsch_dmrs_scrambling_id;
+  uint16_t                                             pdsch_dmrs_scrambling_id_compl;
+  pdsch_low_papr_dmrs_type                             low_papr_dmrs;
+  uint8_t                                              nscid;
+  uint8_t                                              num_dmrs_cdm_grps_no_data;
+  uint16_t                                             dmrs_ports;
+  pdsch_allocation_type                                resource_alloc;
+  std::array<uint8_t, MAX_SIZE_RB_BITMAP>              rb_bitmap;
+  uint16_t                                             rb_start;
+  uint16_t                                             rb_size;
+  pdsch_vrb_to_prb_mapping_type                        vrb_to_prb_mapping;
+  uint8_t                                              start_symbol_index;
+  uint8_t                                              nr_of_symbols;
+  // :TODO: PTRS
+  // :TODO: beamforming
+  uint8_t                                  power_control_offset_profile_nr;
+  ss_profile_nr_type                       power_control_offset_ss_profile_nr;
+  uint8_t                                  is_last_cb_present;
+  inline_tb_crc_type                       is_inline_tb_crc;
+  std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;
+  dl_pdsch_maintenance_parameters_v3       pdsch_maintenance_v3;
+  dl_pdsch_ptrs_maintenance_v3             ptrs_maintenance_v3;
+  // :TODO: Rel16 PDSCH params v3
   dl_pdsch_parameters_v4 pdsch_parameters_v4;
 };
 
@@ -310,10 +329,10 @@ enum class dl_pdu_type : uint16_t { PDCCH, PDSCH, CSI_RS, SSB };
 
 /// Common downlink PDU information.
 struct dl_tti_request_pdu {
-  dl_pdu_type   pdu_type;
-  uint16_t      pdu_size;
+  dl_pdu_type pdu_type;
+  uint16_t    pdu_size;
 
-  // :TODO: add a variant for the PDUs.
+  // :TODO: add these fields in a std::variant.
   dl_pdcch_pdu  pdcch_pdu;
   dl_pdsch_pdu  pdsch_pdu;
   dl_csi_rs_pdu csi_rs_pdu;

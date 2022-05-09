@@ -14,9 +14,13 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_PROCESSOR_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
-#include <srsgnb/phy/upper/channel_coding/ldpc/ldpc.h>
 
 namespace srsgnb {
 

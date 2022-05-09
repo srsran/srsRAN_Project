@@ -333,19 +333,392 @@ private:
   dl_pdcch_pdu& pdu;
 };
 
-/// Helper class to fill in the DL PDSCH PDU parameters specified in SCF-222 v4.0 section 3.4.2.2.
-class dl_pdsch_pdu_builder
+/// Changes the value of a bit in the bitmap. When enable is true, it sets the bit, otherwise it clears the bit.
+template <typename T>
+void change_bitmap_status(T& bitmap, unsigned bit, bool enable)
+{
+  if (enable) {
+    bitmap |= (1U << bit);
+  } else {
+    bitmap &= ~(1U << bit);
+  }
+}
+
+/// Builder that helps to fill the parameters of a DL PDSCH codeword.
+class dl_pdsch_codeword_builder
 {
 public:
-  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu) {}
+  dl_pdsch_codeword_builder(dl_pdsch_codeword& cw, uint8_t& cbg_tx_information) :
+    cw(cw), cbg_tx_information(cbg_tx_information)
+  {}
 
-  // :TODO: add rest of parameters.
-  dl_pdsch_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
+  /// Sets the codeword basic parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_codeword_builder& set_basic_parameters(uint16_t target_code,
+                                                  uint8_t  qam_mod,
+                                                  uint8_t  mcs_index,
+                                                  uint8_t  mcs_table,
+                                                  uint8_t  rv_index,
+                                                  uint32_t tb_size)
   {
-    pdu.scs = scs;
+    cw.target_code_rate = target_code;
+    cw.qam_mod_order    = qam_mod;
+    cw.mcs_index        = mcs_index;
+    cw.mcs_table        = mcs_table;
+    cw.rv_index         = rv_index;
+    cw.tb_size          = tb_size;
 
     return *this;
   }
+
+  /// Sets the maintenance v3 parameters of the codeword.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters V3.
+  dl_pdsch_codeword_builder& set_maintenance_v3_parameters(uint8_t cbg_tx_info)
+  {
+    cbg_tx_information = cbg_tx_info;
+
+    return *this;
+  }
+
+private:
+  dl_pdsch_codeword& cw;
+  uint8_t&           cbg_tx_information;
+};
+
+/// DL PDSCH PDU builder that helps to fill the parameters specified in SCF-222 v4.0 section 3.4.2.2.
+class dl_pdsch_pdu_builder
+{
+public:
+  explicit dl_pdsch_pdu_builder(dl_pdsch_pdu& pdu) : pdu(pdu)
+  {
+    pdu.pdu_bitmap                           = 0U;
+    pdu.is_last_cb_present                   = 0U;
+    pdu.pdsch_maintenance_v3.tb_crc_required = 0U;
+  }
+
+  /// Sets the basic parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_basic_parameters(bool enable_ptrs, bool enable_cbg_retx, rnti_t rnti)
+  {
+    static constexpr auto     PTRS_BIT          = 0U;
+    static constexpr unsigned CBG_RETX_CTRL_BIT = 1U;
+
+    change_bitmap_status<uint16_t>(pdu.pdu_bitmap, PTRS_BIT, enable_ptrs);
+    change_bitmap_status<uint16_t>(pdu.pdu_bitmap, CBG_RETX_CTRL_BIT, enable_cbg_retx);
+
+    pdu.rnti = rnti;
+
+    return *this;
+  }
+
+  /// Sets the BWP parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder&
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type prefix)
+  {
+    pdu.bwp_size      = bwp_size;
+    pdu.bwp_start     = bwp_start;
+    pdu.scs           = scs;
+    pdu.cyclic_prefix = prefix;
+
+    return *this;
+  }
+
+  /// Adds a codeword to the PDSCH PDU and returns a codeword builder to fill the codeword parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_codeword_builder add_codeword()
+  {
+    pdu.cws.emplace_back();
+    pdu.pdsch_maintenance_v3.cbg_tx_information.emplace_back();
+
+    dl_pdsch_codeword_builder builder(pdu.cws.back(), pdu.pdsch_maintenance_v3.cbg_tx_information.back());
+
+    return builder;
+  }
+
+  /// Sets the codeword information parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_codeword_information_parameters(uint16_t             n_id_pdsch,
+                                                            uint8_t              num_layers,
+                                                            uint8_t              trasnmission_scheme,
+                                                            pdsch_ref_point_type ref_point)
+  {
+    pdu.nid_pdsch           = n_id_pdsch;
+    pdu.num_layers          = num_layers;
+    pdu.transmission_scheme = trasnmission_scheme;
+    pdu.ref_point           = ref_point;
+
+    return *this;
+  }
+
+  /// Sets the DMRS parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_dmrs_parameters(uint16_t                 dl_dmrs_symb_pos,
+                                            dmrs_type                dmrs_config_type,
+                                            uint16_t                 pdsch_dmrs_scrambling_id,
+                                            uint16_t                 pdsch_dmrs_scrambling_id_complement,
+                                            pdsch_low_papr_dmrs_type low_parp_dmrs,
+                                            uint8_t                  nscid,
+                                            uint8_t                  num_dmrs_cdm_groups_no_data,
+                                            uint16_t                 dmrs_ports)
+  {
+    pdu.dl_dmrs_symb_pos               = dl_dmrs_symb_pos;
+    pdu.dmrs_config_type               = dmrs_config_type;
+    pdu.pdsch_dmrs_scrambling_id       = pdsch_dmrs_scrambling_id;
+    pdu.pdsch_dmrs_scrambling_id_compl = pdsch_dmrs_scrambling_id_complement;
+    pdu.low_papr_dmrs                  = low_parp_dmrs;
+    pdu.nscid                          = nscid;
+    pdu.num_dmrs_cdm_grps_no_data      = num_dmrs_cdm_groups_no_data;
+    pdu.dmrs_ports                     = dmrs_ports;
+
+    return *this;
+  }
+
+  /// Sets the PDSCH allocation in frequency type 0 parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_0(span<const uint8_t>           rb_map,
+                                                                 pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+  {
+    pdu.resource_alloc     = pdsch_allocation_type::type_0;
+    pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
+
+    srsran_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
+                  "[PDSCH Builder] - Incoming RB bitmap size {} exceeds FAPI bitmap field {}",
+                  rb_map.size(),
+                  dl_pdsch_pdu::MAX_SIZE_RB_BITMAP);
+
+    std::copy(rb_map.begin(), rb_map.end(), pdu.rb_bitmap.begin());
+
+    // Filling these fields, although they belong to allocation type 1.
+    pdu.rb_start = 0;
+    pdu.rb_size  = 0;
+
+    return *this;
+  }
+
+  /// Sets the PDSCH allocation in frequency type 1 parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_1(uint16_t                      rb_start,
+                                                                 uint16_t                      rb_size,
+                                                                 pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+  {
+    pdu.resource_alloc     = pdsch_allocation_type::type_1;
+    pdu.rb_start           = rb_start;
+    pdu.rb_size            = rb_size;
+    pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
+
+    return *this;
+  }
+
+  /// Sets the PDSCH allocation in time parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_pdsch_allocation_in_time_parameters(uint8_t start_symbol_index, uint8_t nof_symbols)
+  {
+    pdu.start_symbol_index = start_symbol_index;
+    pdu.nr_of_symbols      = nof_symbols;
+
+    return *this;
+  }
+
+  // :TODO: PTRS.
+  // :TODO: Beamforming.
+
+  /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>      power_control_offset_profile_nr,
+                                                     ss_profile_nr_type ss_profile_nr)
+  {
+    unsigned power_profile_nr =
+        power_control_offset_profile_nr ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U) : 255U;
+
+    srsran_assert(power_profile_nr <= std::numeric_limits<uint8_t>::max(),
+                  "Power control offset Profile NR value exceeds the maximum ({}).",
+                  power_profile_nr);
+
+    pdu.power_control_offset_profile_nr = static_cast<uint8_t>(power_profile_nr);
+
+    pdu.power_control_offset_ss_profile_nr = ss_profile_nr;
+
+    return *this;
+  }
+
+  /// Sets the CBG ReTx Ctrl parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
+  dl_pdsch_pdu_builder& set_cbg_re_tx_ctrl_parameters(bool                 last_cb_present_first_tb,
+                                                      bool                 last_cb_present_second_tb,
+                                                      inline_tb_crc_type   tb_crc,
+                                                      span<const uint32_t> dl_tb_crc_cw)
+  {
+    change_bitmap_status<uint8_t>(pdu.is_last_cb_present, 0, last_cb_present_first_tb);
+    change_bitmap_status<uint8_t>(pdu.is_last_cb_present, 1, last_cb_present_second_tb);
+
+    pdu.is_inline_tb_crc = tb_crc;
+
+    srsran_assert(dl_tb_crc_cw.size() <= dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC,
+                  "[PDSCH Builder] - Incoming DL TB CRC size ({}) out of bounds ({})",
+                  dl_tb_crc_cw.size(),
+                  dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC);
+    std::copy(dl_tb_crc_cw.begin(), dl_tb_crc_cw.end(), pdu.dl_tb_crc_cw.begin());
+
+    return *this;
+  }
+
+  /// Sets the maintenance v3 BWP information parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder& set_maintenance_v3_bwp_parameters(dl_pdsch_trans_type pdsch_trans_type,
+                                                          uint16_t            coreset_start_point,
+                                                          uint16_t            initial_dl_bwp_size)
+  {
+    pdu.pdsch_maintenance_v3.pdsch_trans_type    = pdsch_trans_type;
+    pdu.pdsch_maintenance_v3.coreset_start_point = coreset_start_point;
+    pdu.pdsch_maintenance_v3.initial_dl_bwp_size = initial_dl_bwp_size;
+
+    return *this;
+  }
+
+  /// Sets the maintenance v3 codeword information parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder& set_maintenance_v3_codeword_parameters(ldpc_base_graph_type ldpc_base_graph,
+                                                               uint32_t             tb_size_lbrm_bytes,
+                                                               bool                 tb_crc_first_tb_required,
+                                                               bool                 tb_crc_second_tb_required)
+  {
+    pdu.pdsch_maintenance_v3.ldpc_base_graph    = ldpc_base_graph;
+    pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes = tb_size_lbrm_bytes;
+
+    // Fill the bitmap.
+    change_bitmap_status<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required, 0, tb_crc_first_tb_required);
+    change_bitmap_status<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required, 1, tb_crc_second_tb_required);
+
+    return *this;
+  }
+
+  /// Sets the maintenance v3 rate matching references parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder&
+  set_maintenance_v3_rm_references_parameters(span<const uint16_t> ssb_pdus_for_rm,
+                                              uint16_t             ssb_config_for_rm,
+                                              span<const uint8_t>  prb_sym_rm_pattern_bitmap_by_reference,
+                                              uint16_t             pdcch_pdu_index,
+                                              uint16_t             dci_index,
+                                              span<const uint8_t>  lte_crs_rm_pattern,
+                                              span<const uint16_t> csi_rs_for_rm)
+  {
+    srsran_assert(ssb_pdus_for_rm.size() <= dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM,
+                  "[PDSCH Builder] - Incoming SSB PDUs for RM matching size ({}) doesn't fit the field ({})",
+                  ssb_pdus_for_rm.size(),
+                  dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM);
+    std::copy(
+        ssb_pdus_for_rm.begin(), ssb_pdus_for_rm.end(), pdu.pdsch_maintenance_v3.ssb_pdus_for_rate_matching.begin());
+
+    pdu.pdsch_maintenance_v3.ssb_config_for_rate_matching = ssb_config_for_rm;
+
+    pdu.pdsch_maintenance_v3.prb_sym_rm_patt_bmp_byref.assign(prb_sym_rm_pattern_bitmap_by_reference.begin(),
+                                                              prb_sym_rm_pattern_bitmap_by_reference.end());
+
+    // These two parameters are set to 0 for this release FAPI v4.
+    pdu.pdsch_maintenance_v3.num_prb_sym_rm_patts_by_value = 0U;
+    pdu.pdsch_maintenance_v3.num_coreset_rm_patterns       = 0U;
+
+    pdu.pdsch_maintenance_v3.pdcch_pdu_index = pdcch_pdu_index;
+    pdu.pdsch_maintenance_v3.dci_index       = dci_index;
+
+    pdu.pdsch_maintenance_v3.lte_crs_rm_pattern.assign(lte_crs_rm_pattern.begin(), lte_crs_rm_pattern.end());
+    pdu.pdsch_maintenance_v3.csi_for_rm.assign(csi_rs_for_rm.begin(), csi_rs_for_rm.end());
+
+    return *this;
+  }
+
+  /// Sets the maintenance v3 Tx power info parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder& set_maintenance_v3_tx_power_info_parameters(optional<float> dmrs_power_offset_profile_sss,
+                                                                    optional<float> data_power_offset_profile_sss)
+  {
+    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
+
+    int value = (dmrs_power_offset_profile_sss) ? static_cast<int>(dmrs_power_offset_profile_sss.value() * 1000)
+                                                : USE_OTHER_FIELDS;
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "PDSCH DMRS power offset profile SSS ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "PDSCH DMRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    value = (data_power_offset_profile_sss) ? static_cast<int>(data_power_offset_profile_sss.value() * 1000)
+                                            : USE_OTHER_FIELDS;
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "PDSCH data power offset profile SSS ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "PDSCH data power offset profile SSS ({}) exceeds the minimum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    return *this;
+  }
+
+  /// Sets the maintenance v3 CBG retx control parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
+  dl_pdsch_pdu_builder& set_maintenance_v3_cbg_tx_crtl_parameters(uint8_t max_num_cbg_per_tb)
+  {
+    pdu.pdsch_maintenance_v3.max_num_cbg_per_tb = max_num_cbg_per_tb;
+
+    return *this;
+  }
+
+  /// Sets the PDSCH-PTRS Tx power info parameter for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PTRS maintenance
+  /// parameters v3.
+  dl_pdsch_pdu_builder& set_ptrs_maintenance_v3_tx_power_info_parameters(optional<float> ptrs_power_offset_profile_sss)
+  {
+    static constexpr int USE_OTHER_FIELDS = std::numeric_limits<int16_t>::min();
+
+    int value = ptrs_power_offset_profile_sss ? static_cast<int>(ptrs_power_offset_profile_sss.value() * 1000)
+                                              : USE_OTHER_FIELDS;
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "PDSCH PTRS power offset profile SSS ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "PDSCH PTRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.ptrs_maintenance_v3.pdsch_ptrs_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    return *this;
+  }
+
+  /// Sets the PDSCH maintenance v4 basic parameters for the fields of the PDSCH PDU.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance FAPIv4.
+  dl_pdsch_pdu_builder& set_maintenance_v4_basic_parameters(span<const uint8_t> coreset_rm_pattern_bitmap_by_reference,
+                                                            uint8_t             lte_crs_mbsfn_derivation_method,
+                                                            span<const uint8_t> lte_crs_mbsfn_pattern)
+  {
+    pdu.pdsch_parameters_v4.lte_crs_mbsfn_derivation_method = lte_crs_mbsfn_derivation_method;
+
+    pdu.pdsch_parameters_v4.coreset_rm_pattern_bmp_by_ref.assign(coreset_rm_pattern_bitmap_by_reference.begin(),
+                                                                 coreset_rm_pattern_bitmap_by_reference.end());
+
+    // :TODO: check the incoming data format for this field. It will probably change once the MAC structure is defined.
+    pdu.pdsch_parameters_v4.lte_crs_mbsfn_pattern.assign(lte_crs_mbsfn_pattern.begin(), lte_crs_mbsfn_pattern.end());
+
+    return *this;
+  }
+
+  // :TODO: FAPIv4 MU-MIMO.
 
 private:
   dl_pdsch_pdu& pdu;
@@ -414,17 +787,26 @@ public:
     return builder;
   }
 
-  /// Adds a PDSCH PDU to the message and returns a PDSCH PDU builder.
-  dl_pdsch_pdu_builder add_pdsch_pdu()
+  /// Adds a PDSCH PDU to the message, fills its basic parameters using the given arguments and returns a PDSCH PDU
+  /// builder.
+  dl_pdsch_pdu_builder add_pdsch_pdu(bool enable_ptrs, bool enable_cbg_retx, rnti_t rnti)
   {
-    ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDSCH)];
-
     // Add a new PDU.
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
-    pdu.pdu_type            = dl_pdu_type::PDSCH;
+
+    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
+    auto& num_pdsch_pdu     = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDSCH)];
+    pdu.pdsch_pdu.pdu_index = num_pdsch_pdu;
+
+    // Increase the number of PDSCH PDU.
+    ++num_pdsch_pdu;
+
+    pdu.pdu_type = dl_pdu_type::PDSCH;
 
     dl_pdsch_pdu_builder builder(pdu.pdsch_pdu);
+
+    builder.set_basic_parameters(enable_ptrs, enable_cbg_retx, rnti);
 
     return builder;
   }
