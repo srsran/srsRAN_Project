@@ -23,7 +23,8 @@ public:
   /// followed TS38.212 Section 5.3.3.
   /// \param[out] output Detected message.
   /// \param[in]  input  Received codeblock (log-likelihood ratios).
-  /// \return True if \c input passes a detection test. If false, the content of \c output is unreliable.
+  /// \return True if \c input passes a detection test.
+  /// \remark When the detection test fails, the function returns \c false and the content of \c output is unreliable.
   virtual bool detect(span<uint8_t> output, span<const int8_t> input) = 0;
 
   /// \brief Rate dematching for short blocks.

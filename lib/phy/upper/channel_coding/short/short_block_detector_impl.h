@@ -1,3 +1,6 @@
+/// \file
+/// \brief Short-block detector implementation.
+
 #ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_IMPL_H
 
@@ -12,6 +15,9 @@ static constexpr unsigned MAX_OUT_LENGTH = 11;
 /// Half of the maximum codebook size.
 static constexpr unsigned MAX_NOF_CODEWORDS_2 = 1U << (MAX_OUT_LENGTH - 1);
 
+/// \brief Generic implementation of the short-block detector.
+///
+/// Implements a brute-force, maximum-likelihood detector for short-block codes (up to 11 information bits).
 class short_block_detector_impl : public short_block_detector
 {
 public:
