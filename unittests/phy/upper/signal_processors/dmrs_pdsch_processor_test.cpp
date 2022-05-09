@@ -10,10 +10,8 @@
  *
  */
 
-#include "../../resource_grid_test_doubles.h"
 #include "dmrs_pdsch_processor_test_data.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
-#include <random>
 
 using namespace srsgnb;
 
@@ -28,7 +26,7 @@ int main()
 
     // Map DMRS-PDSCH using the test case arguments.
     dmrs_pdsch->map(grid, test_case.config);
-    
+
     // Load output golden data.
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
 

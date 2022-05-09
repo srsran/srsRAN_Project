@@ -5,10 +5,8 @@
 //   + "srsPDSCHdmrsUnittest.m"
 
 #include "../../resource_grid_test_doubles.h"
-#include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/support/file_vector.h"
-#include <vector>
 
 namespace srsgnb {
 

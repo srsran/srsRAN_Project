@@ -10,11 +10,8 @@
  *
  */
 
-#include "../../resource_grid_test_doubles.h"
 #include "dmrs_pbch_processor_test_data.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
-#include <cassert>
-#include <random>
 
 using namespace srsgnb;
 
