@@ -1,6 +1,7 @@
 #ifndef SRSGNB_FAPI_MESSAGE_BUILDERS_H
 #define SRSGNB_FAPI_MESSAGE_BUILDERS_H
 
+#include "srsgnb/adt/bitmap_utils.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/fapi/messages.h"
@@ -333,24 +334,14 @@ private:
   dl_pdcch_pdu& pdu;
 };
 
-/// Changes the value of a bit in the bitmap. When enable is true, it sets the bit, otherwise it clears the bit.
-template <typename T>
-void change_bitmap_status(T& bitmap, unsigned bit, bool enable)
-{
-  if (enable) {
-    bitmap |= (1U << bit);
-  } else {
-    bitmap &= ~(1U << bit);
-  }
-}
-
 /// Builder that helps to fill the parameters of a DL PDSCH codeword.
 class dl_pdsch_codeword_builder
 {
 public:
   dl_pdsch_codeword_builder(dl_pdsch_codeword& cw, uint8_t& cbg_tx_information) :
     cw(cw), cbg_tx_information(cbg_tx_information)
-  {}
+  {
+  }
 
   /// Sets the codeword basic parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
