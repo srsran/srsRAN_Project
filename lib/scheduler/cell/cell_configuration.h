@@ -33,7 +33,7 @@ public:
   const unsigned                                       nof_dl_prbs;
   const unsigned                                       nof_ul_prbs;
   const unsigned                                       nof_slots_per_frame;
-  const asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
+  const dl_configuration_common                        dl_cfg_common;
   const asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
 
@@ -48,9 +48,6 @@ public:
   uint8_t          L_max;
 
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
-
-  /// DL Subcarrier Spacing
-  asn1::rrc_nr::subcarrier_spacing_e scs() const { return dl_cfg_common.init_dl_bwp.generic_params.subcarrier_spacing; }
 
   /// Checks if DL/UL is active for current slot
   bool is_dl_enabled(slot_point sl) const

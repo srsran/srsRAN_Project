@@ -15,6 +15,7 @@
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/asn1/rrc_nr/serving_cell.h"
+#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
@@ -34,7 +35,8 @@ struct sched_cell_configuration_request_message {
   uint8_t         nof_ant_ports; // (0..64)
   pci_t           pci;
 
-  asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
+  dl_configuration_common dl_cfg_common;
+  //  asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
   asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
 

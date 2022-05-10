@@ -48,7 +48,8 @@ unsigned srsgnb::tdd_cfg_helper::nof_slots_per_period(const asn1::rrc_nr::tdd_ul
   float pattern1_period_ms = get_period_ms(cfg.pattern1.dl_ul_tx_periodicity);
   float total_tdd_period_ms =
       pattern1_period_ms + (cfg.pattern2_present ? get_period_ms(cfg.pattern2.dl_ul_tx_periodicity) : 0);
-  return (unsigned)std::round(total_tdd_period_ms * get_nof_slots_per_subframe(cfg.ref_subcarrier_spacing));
+  return (unsigned)std::round(total_tdd_period_ms *
+                              get_nof_slots_per_subframe((subcarrier_spacing)cfg.ref_subcarrier_spacing.value));
 }
 
 bool srsgnb::tdd_cfg_helper::slot_is_dl(const tdd_ul_dl_cfg_common_s& cfg, slot_point slot)

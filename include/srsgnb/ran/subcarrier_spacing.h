@@ -52,10 +52,16 @@ constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
   return 0;
 }
 
-/// Convert SCS to numerology index (mu)
+/// Convert SCS to numerology index (mu).
 constexpr unsigned to_numerology_value(subcarrier_spacing scs)
 {
   return static_cast<unsigned>(scs);
+}
+
+/// Calculates number of slots per subframe.
+inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
+{
+  return 1U << to_numerology_value(scs);
 }
 
 } // namespace srsgnb

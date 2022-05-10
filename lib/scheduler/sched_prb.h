@@ -15,7 +15,7 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
-#include "srsgnb/scheduler/prb_grant.h"
+#include "srsgnb/ran/prb_grant.h"
 
 namespace srsgnb {
 

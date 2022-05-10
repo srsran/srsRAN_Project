@@ -4,6 +4,7 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
@@ -40,6 +41,8 @@ struct mac_cell_creation_request {
   prach_configuration   prach_cfg;
   /// If present, the cell is in TDD duplex mode.
   optional<tdd_configuration> tdd_cfg;
+  /// DL Configuration Common.
+  dl_configuration_common dl_cfg_common;
 
   // TODO: Fill remaining fields
 };

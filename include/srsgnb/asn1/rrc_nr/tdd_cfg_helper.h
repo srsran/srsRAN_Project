@@ -5,14 +5,9 @@
 #include "rrc_nr.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
-
-/// Get number of slots per frame given a SCS
-inline unsigned get_nof_slots_per_subframe(asn1::rrc_nr::subcarrier_spacing_e scs)
-{
-  return 1U << scs.value;
-}
 
 namespace tdd_cfg_helper {
 

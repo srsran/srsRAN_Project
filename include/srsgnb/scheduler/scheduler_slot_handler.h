@@ -13,13 +13,14 @@
 #ifndef SRSGNB_SCHEDULER_SLOT_HANDLER_H
 #define SRSGNB_SCHEDULER_SLOT_HANDLER_H
 
-#include "prb_grant.h"
 #include "sched_consts.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/prb_grant.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -35,16 +36,24 @@ const size_t MAX_LC_GRANTS = 4;
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
 
-/// Representation of resources associated to a BWP.
-struct bwp_configuration {
-  subcarrier_spacing scs;
-  uint8_t            cp;
-  prb_interval       freq_alloc;
+/// Aggregation Level of PDCCH allocation.
+enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8 };
+
+inline unsigned to_cce_size(aggregation_level lvl)
+{
+  return 1U << static_cast<uint8_t>(lvl);
+}
+
+struct dci_alloc {
+  rnti_t            rnti;
+  aggregation_level L;
 };
 
-struct dl_dci_alloc {};
-
-struct pdcch_configuration {};
+struct pdcch_information {
+  const bwp_configuration*     bwp_cfg;
+  const coreset_configuration* coreset_cfg;
+  dci_alloc                    dci;
+};
 
 struct pdsch_configuration {};
 
@@ -79,7 +88,7 @@ struct rar_information {
   du_cell_index_t                             cell_index;
   rnti_t                                      ra_rnti;
   static_vector<msg3_information, MAX_GRANTS> grants;
-  pdcch_configuration                         pdcch;
+  const pdcch_information*                    pdcch_cfg;
 };
 
 /// Stores the information associated to an SSB.
@@ -92,10 +101,9 @@ struct ssb_information {
 /// Stores the information associated to an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
-  unsigned            nof_txs;
-  bwp_configuration   bwp_cfg;
-  pdcch_configuration pdcch_cfg;
-  pdsch_configuration pdsch_cfg;
+  unsigned                 nof_txs;
+  const pdcch_information* pdcch_cfg;
+  pdsch_configuration      pdsch_cfg;
 };
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
@@ -105,6 +113,9 @@ struct dl_broadcast_allocation {
 };
 
 struct dl_sched_result {
+  /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
+  static_vector<pdcch_information, MAX_GRANTS> dl_pdcchs;
+
   /// Allocation of SSB and SIBs
   dl_broadcast_allocation bc;
 

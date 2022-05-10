@@ -97,6 +97,9 @@ struct cell_resource_grid {
     return r;
   }
 
+  cell_slot_resource_grid&       operator[](slot_point slot) { return this->operator[](slot - last_slot_ind); }
+  const cell_slot_resource_grid& operator[](slot_point slot) const { return this->operator[](slot - last_slot_ind); }
+
 private:
   /// Ensure we are not overflowing the ring.
   void assert_valid_sl(unsigned slot_delay) const

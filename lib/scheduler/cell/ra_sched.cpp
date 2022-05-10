@@ -20,12 +20,7 @@ ra_sched::ra_sched(const cell_configuration& cfg_) :
   cfg(cfg_),
   ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common.setup().rach_cfg_generic.ra_resp_win.to_number()),
   pending_msg3s(MAX_NOF_MSG3)
-{
-  srsran_assert(cfg.dl_cfg_common.init_dl_bwp.pdcch_cfg_common.setup().ra_search_space_present,
-                "Creating RA scheduler for cell with no RA search space");
-  srsran_assert(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common_present,
-                "Creating RA scheduler for cell with no rach-ConfigCommon");
-}
+{}
 
 bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
 {
