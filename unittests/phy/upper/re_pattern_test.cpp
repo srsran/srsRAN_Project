@@ -67,7 +67,7 @@ void test_merge_even()
       bool gold = false;
 
       // if it is in the RB range, then check the subcarrier index.
-      if (k >= rb_begin * NRE && k < rb_end * NRE && (k / NRE - rb_begin) % rb_stride == 0) {
+      if ((k >= rb_begin * NRE) && (k < rb_end * NRE) && ((k / NRE - rb_begin) % rb_stride == 0)) {
         // Even subcarrier
         gold = (k % 2 == 0);
       }

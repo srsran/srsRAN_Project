@@ -56,7 +56,7 @@ struct re_pattern {
   ///
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be included.
-  /// \note This method expects that mask number of elements is equal to or greater than \c rb_end
+  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
   void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
 
   /// \brief Exclude the described resource element pattern in a resource grid symbol mask.
@@ -66,7 +66,7 @@ struct re_pattern {
   ///
   /// \param[in,out] mask Provides a mask representing an entire symbol in a resource grid.
   /// \param[in] symbol Indicates the symbol index for the mask to be excluded.
-  /// \note This method expects that mask number of elements is equal to or greater than \c rb_end
+  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end
   void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
 };
 
@@ -108,49 +108,49 @@ public:
   /// \param[in] pattern Provides the reference to a resource element pattern.
   void merge(const re_pattern& pattern);
 
-  /// \brief Checks if the pattern list is equal to other pattern list.
+  /// \brief Checks if the pattern list is equal to another pattern list.
   ///
-  /// \remark Two pattern list are equal if their generated inclusion masks are equal for the maximum number of RB and
-  /// symbols.
-  /// \param other The other pattern list.
-  /// \return True if the patterns the list describes are equal.
+  /// \remark Two pattern lists are considered equal if their generated inclusion masks are equal for the maximum number
+  /// of RBs and symbols.
+  /// \param[in] other The other pattern list.
+  /// \return True if the patterns described by the two lists are equal.
   bool operator==(re_pattern_list& other) const;
 
-  /// \brief Checks if the pattern list is not equal to other pattern list.
+  /// \brief Checks if the pattern list is the pattern list is different from another pattern list.
   ///
-  /// \param other The other pattern list.
-  /// \return False if the patterns the list describes are equal.
+  /// \param[in] other The other pattern list.
+  /// \return True if the patterns described by the two lists are different.
   bool operator!=(re_pattern_list& other) const { return !(*this == other); }
 
-  /// \brief Include the described resource element pattern list in a resource grid symbol mask.
+  /// \brief Includes the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to true the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
   ///
   /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
   /// \param[in]     symbol Indicates the symbol index for the mask to be included.
-  /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
+  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
   void get_inclusion_mask(span<bool> mask, unsigned symbol) const;
 
-  /// \brief Count the number of elements included in the pattern.
+  /// \brief Counts the number of elements included in the described pattern.
   ///
-  /// This method counts the included elements in the describes pattern bounded by the start and number of symbols and
-  /// a physical resource block mask.
+  /// This method counts the included elements in the described pattern for a symbol range and a selection of resource
+  /// blocks.
   ///
-  /// \param[in] start_symbol Indicates the start symbol index.
-  /// \param[in] nof_symbols  Indicates the number of symbols to consider.
-  /// \param[in] prb_mask     Provides a mask representing the resource blocks to consider.
+  /// \param[in] start_symbol Indicates the start symbol index within the slot.
+  /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
+  /// \param[in] prb_mask     Selection of physical resource blocks to count.
   /// \return The number of included elements.
   unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, span<const bool> prb_mask) const;
 
-  /// \brief Exclude the described resource element pattern list in a resource grid symbol mask.
+  /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
   ///
   /// This method sets to false the elements that are described in the pattern list for a given symbol index. The mask
   /// represents resource elements allocation for a given symbol in a resource grid.
   ///
   /// \param[in,out] mask   Provides a mask representing an entire symbol in a resource grid.
   /// \param[in]     symbol Indicates the symbol index for the mask to be excluded.
-  /// \note This method expects that mask number of elements is equal to or greater than \c rb_end.
+  /// \note This method expects that the number of elements of \c mask is equal to or greater than \c rb_end.
   void get_exclusion_mask(span<bool> mask, unsigned symbol) const;
 };
 
