@@ -29,13 +29,13 @@ int main()
   config.pss                  = create_pss_processor();
   config.sss                  = create_sss_processor();
 
-  std::unique_ptr<ssb_processor> pbch = create_ssb_processor(config);
+  std::unique_ptr<ssb_processor> ssb = create_ssb_processor(config);
 
   for (const test_case_t& test_case : ssb_processor_test_data) {
     resource_grid_writer_spy grid;
 
     // Process PDU
-    pbch->process(test_case.config, grid);
+    ssb->process(test_case.config, grid);
 
     // Load output golden data
     const std::vector<resource_grid_writer_spy::expected_entry_t> testvector_symbols = test_case.symbols.read();
