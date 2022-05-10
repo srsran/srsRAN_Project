@@ -106,12 +106,7 @@ void dmrs_pucch_processor_format1_impl::mapping(span<cf_t>                  ce,
                                                 unsigned                    start_prb,
                                                 unsigned                    symbol) const
 {
-  std::array<resource_grid_coordinate, NRE> coordinates;
-  for (unsigned i = 0; i < NRE; ++i) {
-    coordinates[i].subcarrier = start_prb * NRE + i;
-    coordinates[i].symbol     = symbol;
-  }
-  grid.get(ce, 0, coordinates);
+  grid.get(ce, 0, symbol, start_prb * NRE);
 }
 
 void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&                     estimate,

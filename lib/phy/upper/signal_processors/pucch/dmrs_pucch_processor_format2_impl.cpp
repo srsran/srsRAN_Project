@@ -35,18 +35,13 @@ void dmrs_pucch_processor_format2_impl::mapping(span<cf_t>                  ce,
                                                 unsigned                    symbol) const
 {
   unsigned k_start = start_prb * NRE + 1;
-  unsigned k_end   = (start_prb + nof_prb) * NRE;
-  unsigned nof_ref = nof_prb * NOF_DMRS_PER_RB;
+  unsigned nof_re  = nof_prb * NRE;
 
-  static_vector<resource_grid_coordinate, MAX_NOF_DMRS_PER_SYMBOL> coordinates(nof_ref);
-
-  // Get pilots in k = 3 * m + 1.
-  for (unsigned k = k_start, i = 0; k < k_end; k += STRIDE, ++i) {
-    coordinates[i].subcarrier = k;
-    coordinates[i].symbol     = symbol;
+  static_vector<bool, PUCCH_FORMAT2_MAX_NPRB * NRE> mask(nof_re, false);
+  for (unsigned k = 0; k < nof_re; k += STRIDE) {
+    mask[k] = true;
   }
-  span<resource_grid_coordinate> coord_span{coordinates.data(), nof_ref};
-  grid.get(ce, 0, coord_span);
+  grid.get(ce, 0, symbol, k_start, mask);
 }
 
 void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&                     estimate,

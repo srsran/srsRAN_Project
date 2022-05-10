@@ -206,7 +206,16 @@ public:
   }
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
-    return span<cf_t>();
+    unsigned count = 0;
+    for (unsigned k = 0; k != mask.size(); ++k) {
+      if (mask[k]) {
+        symbols[count] = get(static_cast<uint8_t>(port), l, k_init + k);
+        count++;
+      }
+    }
+
+    // Consume buffer.
+    return symbols.last(symbols.size() - count);
   }
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
