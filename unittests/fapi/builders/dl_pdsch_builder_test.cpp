@@ -99,8 +99,8 @@ static void test_add_codeword()
 
 static void test_dmrs_parameters()
 {
-  uint16_t dmrs_symbol_pos; // <- create bitmap.
-  uint16_t dmrs_ports;      // <- create bitmap.
+  uint16_t dmrs_symbol_pos = 3; 
+  uint16_t dmrs_ports      = 4;
 
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_dist(0, 65535);
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_complement_dist(0, 65535);
