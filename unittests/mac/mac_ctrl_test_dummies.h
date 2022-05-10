@@ -9,7 +9,7 @@
 
 namespace srsgnb {
 
-class mac_ctrl_dummy_configurer final : public mac_ctrl_configurer
+class mac_ctrl_dummy_configurer final : public mac_ctrl_configurator
 {
 public:
   bool add_ue(du_ue_index_t ue_index, rnti_t rnti, du_cell_index_t pcell_index) override { return true; }
@@ -17,7 +17,7 @@ public:
 };
 
 /// Dummy class to emulate MAC UL procedures to add/remove/configure UEs
-class mac_ul_dummy_configurer final : public mac_ul_configurer
+class mac_ul_dummy_configurer final : public mac_ul_configurator
 {
 public:
   bool                                             expected_result   = true;
@@ -71,7 +71,7 @@ public:
   async_task<void> stop() override { return start(); }
 };
 
-class mac_dl_dummy_configurer final : public mac_dl_configurer
+class mac_dl_dummy_configurer final : public mac_dl_configurator
 {
 public:
   bool                                             expected_result = true;

@@ -14,8 +14,8 @@ class mac_ue_reconfiguration_procedure
 public:
   explicit mac_ue_reconfiguration_procedure(const mac_ue_reconfiguration_request_message& req_,
                                             mac_common_config_t&                          cfg_,
-                                            mac_ul_configurer&                            mac_ul_,
-                                            mac_dl_configurer&                            mac_dl_,
+                                            mac_ul_configurator&                          mac_ul_,
+                                            mac_dl_configurator&                          mac_dl_,
                                             mac_scheduler_configurator&                   sched_cfg_) :
     req(req_), cfg(cfg_), logger(cfg.logger), ul_unit(mac_ul_), dl_unit(mac_dl_), sched_cfg(sched_cfg_)
   {}
@@ -65,8 +65,8 @@ private:
   mac_ue_reconfiguration_request_message req;
   mac_common_config_t&                   cfg;
   srslog::basic_logger&                  logger;
-  mac_ul_configurer&                     ul_unit;
-  mac_dl_configurer&                     dl_unit;
+  mac_ul_configurator&                   ul_unit;
+  mac_dl_configurator&                   dl_unit;
   mac_scheduler_configurator&            sched_cfg;
 
   bool add_ue_result = false;

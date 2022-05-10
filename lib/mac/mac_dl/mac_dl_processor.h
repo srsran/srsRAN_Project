@@ -14,7 +14,7 @@
 
 namespace srsgnb {
 
-class mac_dl_processor final : public mac_dl_configurer
+class mac_dl_processor final : public mac_dl_configurator
 {
 public:
   explicit mac_dl_processor(mac_common_config_t& cfg_, scheduler_slot_handler& sched_, du_rnti_table& rnti_table_);

@@ -18,12 +18,12 @@ struct mac_ue_context {
 
 class du_rnti_table;
 
-class mac_controller : public mac_ctrl_configurer, public mac_ue_configurator, public mac_cell_manager
+class mac_controller : public mac_ctrl_configurator, public mac_ue_configurator, public mac_cell_manager
 {
 public:
   mac_controller(mac_common_config_t&        cfg,
-                 mac_ul_configurer&          ul_unit_,
-                 mac_dl_configurer&          dl_unit_,
+                 mac_ul_configurator&        ul_unit_,
+                 mac_dl_configurator&        dl_unit_,
                  du_rnti_table&              rnti_table_,
                  mac_scheduler_configurator& sched_cfg_);
 
@@ -60,14 +60,14 @@ private:
   /// Adds UE solely in MAC controller.
   bool add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t pcell_index) override;
 
-  /// Interface used by MAC controller procedures to MAC controller main class.
+  /// Interface to MAC controller main class used by MAC controller procedures.
   void remove_ue(du_ue_index_t ue_index) override;
 
   // args
   mac_common_config_t&        cfg;
   srslog::basic_logger&       logger;
-  mac_ul_configurer&          ul_unit;
-  mac_dl_configurer&          dl_unit;
+  mac_ul_configurator&        ul_unit;
+  mac_dl_configurator&        dl_unit;
   du_rnti_table&              rnti_table;
   mac_scheduler_configurator& sched_cfg;
 

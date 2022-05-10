@@ -12,9 +12,9 @@ class mac_ue_delete_procedure
 public:
   explicit mac_ue_delete_procedure(const mac_ue_delete_request_message& msg,
                                    mac_common_config_t&                 cfg_,
-                                   mac_ctrl_configurer&                 mac_ctrl_,
-                                   mac_ul_configurer&                   mac_ul_,
-                                   mac_dl_configurer&                   mac_dl_,
+                                   mac_ctrl_configurator&               mac_ctrl_,
+                                   mac_ul_configurator&                 mac_ul_,
+                                   mac_dl_configurator&                 mac_dl_,
                                    mac_scheduler_configurator&          sched_configurator_) :
     req(msg),
     cfg(cfg_),
@@ -57,9 +57,9 @@ private:
   mac_ue_delete_request_message req;
   mac_common_config_t&          cfg;
   srslog::basic_logger&         logger;
-  mac_ctrl_configurer&          ctrl_mac;
-  mac_ul_configurer&            ul_mac;
-  mac_dl_configurer&            dl_mac;
+  mac_ctrl_configurator&        ctrl_mac;
+  mac_ul_configurator&          ul_mac;
+  mac_dl_configurator&          dl_mac;
   mac_scheduler_configurator&   sched_configurator;
 };
 

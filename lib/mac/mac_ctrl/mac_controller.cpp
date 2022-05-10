@@ -8,8 +8,8 @@
 using namespace srsgnb;
 
 mac_controller::mac_controller(mac_common_config_t&        cfg_,
-                               mac_ul_configurer&          ul_unit_,
-                               mac_dl_configurer&          dl_unit_,
+                               mac_ul_configurator&        ul_unit_,
+                               mac_dl_configurator&        dl_unit_,
                                du_rnti_table&              rnti_table_,
                                mac_scheduler_configurator& sched_cfg_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_), rnti_table(rnti_table_), sched_cfg(sched_cfg_)
