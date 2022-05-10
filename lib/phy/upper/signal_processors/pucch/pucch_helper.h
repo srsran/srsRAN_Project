@@ -39,20 +39,26 @@ public:
 
   /// \brief Computes the NR alpha index (1-NRE) (TS 38.211 clause 6.3.2.2.2 Cyclic shift hopping)
   ///
-  /// \param slot[in]       Current slot
-  /// \param n_id[in]       Higher layer parameter hopingID if configured, physical cell id otherwise
-  /// \param symbol[in]     OFDM symbol index in the slot
-  /// \param m0[in]         Initial cyclic shift
-  /// \param m_cs[in]       Cyclic shift
+  /// \param slot[in]    Current slot
+  /// \param cp[in]      Cyclic prefix type
+  /// \param n_id[in]    Higher layer parameter hopingID if configured, physical cell id otherwise
+  /// \param symbol[in]  OFDM symbol index in the slot
+  /// \param m0[in]      Initial cyclic shift
+  /// \param m_cs[in]    Cyclic shift
   /// \return NR alpha index
-  unsigned get_alpha_index(const slot_point& slot, unsigned n_id, unsigned symbol, unsigned m0, unsigned m_cs)
+  unsigned get_alpha_index(const slot_point&    slot,
+                           const cyclic_prefix& cp,
+                           unsigned             n_id,
+                           unsigned             symbol,
+                           unsigned             m0,
+                           unsigned             m_cs)
   {
     // Initialize pseudo-random sequence with the seed set to nid
     unsigned cinit = n_id;
 
     // Pseudo-random sequence length for max numerology (i.e. 4)
-    const size_t max_seq_length  = 8U * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * NOF_SUBFRAMES_PER_FRAME * (1U << 4U);
-    unsigned     sequence_length = 8U * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * slot.nof_slots_per_frame();
+    const size_t max_seq_length  = 8U * MAX_NSYMB_PER_SLOT * NOF_SUBFRAMES_PER_FRAME * (1U << 4U);
+    unsigned     sequence_length = 8U * get_nsymb_per_slot(cp) * slot.nof_slots_per_frame();
 
     std::array<uint8_t, max_seq_length> cs = {};
     // view on first sequence_length elements
@@ -66,7 +72,7 @@ public:
 
     // Create n_cs parameter
     unsigned n_cs     = 0;
-    unsigned base_idx = 8U * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * n_slot + 8U * symbol;
+    unsigned base_idx = 8U * get_nsymb_per_slot(cp) * n_slot + 8U * symbol;
 
     for (uint32_t m = 0; m < 8; m++) {
       n_cs += cs[base_idx + m] << m;

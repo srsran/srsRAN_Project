@@ -87,8 +87,8 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
   pucch_helper helper;
 
   // Compute alpha index.
-  unsigned alpha_idx =
-      helper.get_alpha_index(pucch_config.slot, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
+  unsigned alpha_idx = helper.get_alpha_index(
+      pucch_config.slot, pucch_config.cp, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
 
   // Get r_uv sequence from the sequence collection.
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
