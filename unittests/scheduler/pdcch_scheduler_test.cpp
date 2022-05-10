@@ -23,7 +23,8 @@ void test_pdcch_sched_sib1()
   pdcch_sch.slot_indication(sl_tx);
 
   // SIB1 allocation should be successful.
-  pdcch_sch.alloc_dl_pdcch(sl_tx);
+  pdcch_sch.alloc_pdcch_common(
+      sl_tx, srsgnb::SI_RNTI, to_search_space_id(0), srsgnb::aggregation_level::n4, srsgnb::dci_format::f1_0);
 }
 
 int main()

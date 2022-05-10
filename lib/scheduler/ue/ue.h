@@ -15,6 +15,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/du_ue_list.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "ue_configuration.h"
 
 namespace srsgnb {
 
@@ -34,7 +35,8 @@ public:
   bool     is_active() const { return true; }
 
 private:
-  rnti_t crnti_;
+  rnti_t                   crnti_;
+  ue_carrier_configuration cfg;
 };
 
 class ue
