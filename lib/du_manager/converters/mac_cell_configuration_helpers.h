@@ -41,6 +41,13 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_carrier = make_default_carrier_configuration();
   msg.ul_carrier = make_default_carrier_configuration();
 
+  // Configure FrequencyInfoDL.
+  msg.dl_cfg_common.freq_info_dl.offset_to_point_a = 0;
+  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back();
+  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs               = subcarrier_spacing::kHz15;
+  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
+  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = 52;
+
   // Configure initial DL BWP.
   msg.dl_cfg_common.init_dl_bwp.generic_params.scs  = subcarrier_spacing::kHz15;
   msg.dl_cfg_common.init_dl_bwp.generic_params.prbs = {0, 52};

@@ -84,9 +84,31 @@ struct bwp_downlink_common {
   pdcch_configuration_common pdcch_common;
 };
 
-/// Downlink Configuration, common to the serving cell.
+/// \brief It provides parameters determining the location and width of the actual carrier.
+/// \remark See TS 38.331, "SCS-SpecificCarrier".
+struct scs_specific_carrier {
+  /// Offset between Point A (lowest subcarrier of common RB 0) and the lowest usable subcarrier in this carrier in
+  /// number of PRBs. Values: (0..2199).
+  unsigned           offset_to_carrier;
+  subcarrier_spacing scs;
+  /// With of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
+  unsigned carrier_bandwidth;
+};
+
+/// \brief This class provides basic parameters of a downlink carrier and transmission.
+/// \remark See TS 38.331, "FrequencyInfoDL-SIB".
+struct frequency_info_dl {
+  /// Represents the offset to Point A, as defined in TS 38.211, clause 4.4.4.2. Values: (0..2199).
+  unsigned offset_to_point_a;
+  /// Set of carriers for different subcarrier spacings. The network configures this for all SCSs that are used in
+  /// DL BWPs in this serving cell. Size: (1..maxSCSs=5).
+  std::vector<scs_specific_carrier> scs_carrier_list;
+};
+
+/// \brief Downlink Configuration, common to the serving cell.
 /// \remark See TS 38.331, "DownlinkConfigCommonSIB".
 struct dl_configuration_common {
+  frequency_info_dl   freq_info_dl;
   bwp_downlink_common init_dl_bwp;
 };
 
