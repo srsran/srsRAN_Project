@@ -15,10 +15,10 @@ public:
   /// Default dmrs_type as normal.
   constexpr dmrs_type() = default;
 
-  /// Construct from value. It allows implicit conversion from a cyclic prefix option.
+  /// Construct from value. It allows implicit conversion from a DMRS type option.
   constexpr dmrs_type(options opt) : value(opt) {}
 
-  /// Construct from another cyclic prefix type.
+  /// Construct from another DMRS type.
   constexpr dmrs_type(const dmrs_type& other) : value(other.value) {}
 
   /// Comparison to value.
@@ -53,7 +53,7 @@ public:
   /// \param[in] bwp_start_rb                Indicates the start of the BWP.
   /// \param[in] bwp_size_rb                 Indicates the size of the BWP.
   /// \param[in] nof_cdm_groups_without_data Indicates the number of CDM groups without data for the transmission.
-  /// \param[in] symbol_mask                 Indicates with a mask the symbols carrying DMRS.
+  /// \param[in] symbol_mask                 Indicates, with a mask, the symbols carrying DMRS.
   /// \return An RE pattern describing the reserved elements for DMRS.
   re_pattern get_dmrs_pattern(unsigned         bwp_start_rb,
                               unsigned         bwp_size_rb,
@@ -92,7 +92,7 @@ private:
   options value = TYPE1;
 };
 
-/// Defines the maximum number of ports DMRS can be map to.
+/// Defines the maximum number of ports DMRS can be mapped to.
 static constexpr unsigned DMRS_MAX_NPORTS =
     std::max(dmrs_type(dmrs_type::TYPE1).dmrs_max_ports_type(), dmrs_type(dmrs_type::TYPE2).dmrs_max_ports_type());
 
