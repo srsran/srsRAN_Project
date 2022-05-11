@@ -85,9 +85,14 @@ radio_session_zmq_impl::radio_session_zmq_impl(const radio_configuration::radio&
 
 radio_session_zmq_impl::~radio_session_zmq_impl()
 {
+  // Destroy transmit and receive streams prior to ZMQ context destruction.
+  tx_streams.clear();
+  rx_streams.clear();
+
   // Destroy ZMQ context.
   if (zmq_context != nullptr) {
     zmq_ctx_shutdown(zmq_context);
+    zmq_ctx_destroy(zmq_context);
     zmq_context = nullptr;
   }
 }
