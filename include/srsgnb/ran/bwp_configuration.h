@@ -6,12 +6,14 @@
 #include "resource_block.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
+#include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/prb_grant.h"
 #include <bitset>
 
 namespace srsgnb {
 
-/// \remark See TS 38.331, --TAG-CONTROLRESOURCESET-START.
+/// Max number of frequency domain resources for the CORESET. Each resource corresponds to a group of 6 PRBs.
+/// \remark See TS 38.331, "ControlResourceSet"
 const size_t CORESET_FREQ_DOMAIN_RESOURCE_SIZE = 45;
 
 /// Max number of OFDM symbols in a control resource set.
@@ -28,17 +30,8 @@ inline coreset_id to_coreset_id(unsigned cs_id)
   return static_cast<coreset_id>(cs_id);
 }
 
-/// \brief Search Space identifier. This value is UE-specific, which means that a UE can have up to
-/// "maxNrofControlResourceSets" CORESETS configured.
-enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE = 39, MAX_NOF_SEARCH_SPACES = 40 };
-
-inline search_space_id to_search_space_id(unsigned ss_id)
-{
-  return static_cast<search_space_id>(ss_id);
-}
-
 /// CORESET configuration.
-/// \remark See TS 38.331, --TAG-CONTROLRESOURCESET-START.
+/// \remark See TS 38.331, "ControlResourceSet".
 struct coreset_configuration {
   struct interleaved_mapping_type {
     /// Values: (2, 3, 6).
@@ -58,9 +51,32 @@ struct coreset_configuration {
   precoder_granularity_type          precoder_granurality;
 };
 
+/// \brief Search Space identifier. This value is UE-specific, which means that a UE can have up to
+/// "maxNrofControlResourceSets" CORESETS configured.
+enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE = 39, MAX_NOF_SEARCH_SPACES = 40 };
+
+inline search_space_id to_search_space_id(unsigned ss_id)
+{
+  return static_cast<search_space_id>(ss_id);
+}
+
+/// SearchSpace configuration.
+/// \remark See TS 38.331, "SearchSpace".
 struct search_space_configuration {
+  /// SearchSpace Type.
+  enum search_space_type { common, ue_dedicated };
+
   search_space_id id;
   coreset_id      cs_id;
+  /// Number of consecutive slots that a SearchSpace lasts in every occasion. Values: (1..2559).
+  unsigned duration;
+  /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring. The most significant bit represents
+  /// the first OFDM in a slot.
+  optional<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> > monitoring_symbols_within_slot;
+  /// Number of PDCCH candidates per aggregation level. The aggregation level for the array element with index "x"
+  /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
+  std::array<uint8_t, 5> nof_candidates;
+  search_space_type      type;
 };
 
 struct pdcch_configuration_common {
