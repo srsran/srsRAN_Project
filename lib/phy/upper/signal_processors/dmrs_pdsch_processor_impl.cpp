@@ -50,7 +50,7 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
                                                             const config_t& config) const
 {
   // Get signal amplitude.
-  float amplitude = M_SQRT1_2 * get_amplitude(config.nof_cdm_groups_without_data);
+  float amplitude = M_SQRT1_2 * config.amplitude;
 
   // Extract parameters to calculate the PRG initial state.
   unsigned nslot    = config.slot.slot_index();
@@ -89,8 +89,8 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     // Get parameter for this port and symbol
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
-    // If no precoding, neither weights are applied, use sequence reference
-    if (config.pmi == 0 && params.w_t[l_prime] == +1.0f && params.w_f[0] == params.w_f[1]) {
+    // If no weights are applied, use sequence reference
+    if (params.w_t[l_prime] == +1.0f && params.w_f[0] == params.w_f[1]) {
       re[port] = sequence;
       continue;
     }
@@ -115,11 +115,6 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
 
     // Setup RE
     re[port] = temp_re[port];
-  }
-
-  // Apply precoding
-  if (config.pmi != 0) {
-    srsran_assertion_failure("Precoding is not currently supported\n");
   }
 
   // For each port put elements in grid

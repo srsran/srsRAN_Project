@@ -38,10 +38,8 @@ public:
     unsigned scrambling_id;
     /// DMRS sequence initialization (\f$n_{SCID}\f$).
     bool n_scid;
-    /// Number of DMRS CDM groups without data.
-    unsigned nof_cdm_groups_without_data;
-    /// Precoding matrix indicator, set to 0 for no precoding.
-    unsigned pmi;
+    /// Indicates the generated signal linear amplitude.
+    float amplitude;
     /// DMRS symbol position indexes.
     std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list, the entries set to true are used for transmission.

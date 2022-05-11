@@ -48,24 +48,6 @@ private:
   /// Pseudo-random sequence generator instance.
   std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
 
-  /// \brief Helper function to determine the DMRS for PDSCH amplitude.
-  ///
-  /// This method determines the DMRS for PDSCH amplitude from the number of DMRS CDM groups without data. It is
-  /// implemented according to TS 38.214 V15.10.0 tables 4.1-1 and 6.2.2-1 for PDSCH and PUSCH respectively.
-  ///
-  /// \param[in] nof_dmrs_cdm_groups_without_data Provides the number of DMRS CDM groups without data.
-  /// \return The amplitude of the DMRS for PDSCH.
-  static inline unsigned get_amplitude(unsigned nof_dmrs_cdm_groups_without_data)
-  {
-    static constexpr std::array<float, 3> ratio_dB = {0, -3, -4.77};
-
-    srsran_assert(nof_dmrs_cdm_groups_without_data > 0 && nof_dmrs_cdm_groups_without_data < 3,
-                  "Invalid number of DMRS CDM groups without data (%d)",
-                  nof_dmrs_cdm_groups_without_data);
-
-    return convert_dB_to_amplitude(-ratio_dB[nof_dmrs_cdm_groups_without_data - 1]);
-  }
-
   /// \brief Implements TS 38.211 section 7.4.1.1.1 Sequence generation.
   ///
   /// This method generates the sequence described in TS 38.211 section 7.4.1.1.1, considering the only values required
