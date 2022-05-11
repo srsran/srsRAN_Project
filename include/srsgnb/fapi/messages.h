@@ -2,7 +2,6 @@
 #define SRSGNB_FAPI_MESSAGES_H
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_mapping.h"
@@ -146,7 +145,11 @@ enum class ldpc_base_graph_type : uint8_t { bg_1 = 1, bg_2 };
 /// \note For this release num_coreset_rm_patterns = 0.
 /// \note For this release num_prb_sym_rm_patts_by_value = 0.
 struct dl_pdsch_maintenance_parameters_v3 {
-  static constexpr unsigned MAX_SIZE_SSB_PDU_FOR_RM = 8;
+  static constexpr unsigned MAX_SIZE_SSB_PDU_FOR_RM = 8U;
+  /// Bit position of the first TB inside the tb_crc_required bitmap.
+  static constexpr unsigned TB_BITMAP_FIRST_TB_BIT = 0U;
+  /// Bit position of the second TB inside the tb_crc_required bitmap.
+  static constexpr unsigned TB_BITMAP_SECOND_TB_BIT = 1U;
 
   dl_pdsch_trans_type                           pdsch_trans_type;
   uint16_t                                      coreset_start_point;
@@ -203,9 +206,19 @@ enum class pdsch_vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleave
 enum class ss_profile_nr_type : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
+enum class dmrs_config_type : uint8_t { type_1, type_2 };
 
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {
+  /// Bit position of PTRS in the PDU bitmap.
+  static constexpr unsigned PDU_BITMAP_PTRS_BIT = 0U;
+  /// Bit position of CBG retransmission control in the PDU bitmap.
+  static constexpr unsigned PDU_BITMAP_CBG_RETX_CTRL_BIT = 1U;
+  /// Bit position of the first TB in the is_last_cb_present bitmap.
+  static constexpr unsigned LAST_CB_BITMAP_FIRST_TB_BIT = 0U;
+  /// Bit position of the second TB in the is_last_cb_present bitmap.
+  static constexpr unsigned LAST_CB_BITMAP_SECOND_TB_BIT = 1U;
+
   /// Maximum number of codewords per PDU.
   static constexpr unsigned MAX_NUM_CW_PER_PDU = 2;
   /// Maximum size of the RB bitmap in Bytes.
@@ -226,8 +239,8 @@ struct dl_pdsch_pdu {
   uint8_t                                              transmission_scheme;
   pdsch_ref_point_type                                 ref_point;
   uint16_t                                             dl_dmrs_symb_pos;
-  dmrs_type                                            dmrs_config_type;
   uint16_t                                             pdsch_dmrs_scrambling_id;
+  dmrs_config_type                                     dmrs_type;
   uint16_t                                             pdsch_dmrs_scrambling_id_compl;
   pdsch_low_papr_dmrs_type                             low_papr_dmrs;
   uint8_t                                              nscid;

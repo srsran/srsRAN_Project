@@ -391,11 +391,8 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
   dl_pdsch_pdu_builder& set_basic_parameters(bool enable_ptrs, bool enable_cbg_retx, rnti_t rnti)
   {
-    static constexpr auto     PTRS_BIT          = 0U;
-    static constexpr unsigned CBG_RETX_CTRL_BIT = 1U;
-
-    change_bitmap_status<uint16_t>(pdu.pdu_bitmap, PTRS_BIT, enable_ptrs);
-    change_bitmap_status<uint16_t>(pdu.pdu_bitmap, CBG_RETX_CTRL_BIT, enable_cbg_retx);
+    set_bitmap_bit<uint16_t>(pdu.pdu_bitmap, dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT, enable_ptrs);
+    set_bitmap_bit<uint16_t>(pdu.pdu_bitmap, dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT, enable_cbg_retx);
 
     pdu.rnti = rnti;
 
@@ -445,7 +442,7 @@ public:
   /// Sets the DMRS parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
   dl_pdsch_pdu_builder& set_dmrs_parameters(uint16_t                 dl_dmrs_symb_pos,
-                                            dmrs_type                dmrs_config_type,
+                                            dmrs_config_type         dmrs_type,
                                             uint16_t                 pdsch_dmrs_scrambling_id,
                                             uint16_t                 pdsch_dmrs_scrambling_id_complement,
                                             pdsch_low_papr_dmrs_type low_parp_dmrs,
@@ -454,7 +451,7 @@ public:
                                             uint16_t                 dmrs_ports)
   {
     pdu.dl_dmrs_symb_pos               = dl_dmrs_symb_pos;
-    pdu.dmrs_config_type               = dmrs_config_type;
+    pdu.dmrs_type                      = dmrs_type;
     pdu.pdsch_dmrs_scrambling_id       = pdsch_dmrs_scrambling_id;
     pdu.pdsch_dmrs_scrambling_id_compl = pdsch_dmrs_scrambling_id_complement;
     pdu.low_papr_dmrs                  = low_parp_dmrs;
@@ -480,7 +477,7 @@ public:
 
     std::copy(rb_map.begin(), rb_map.end(), pdu.rb_bitmap.begin());
 
-    // Filling these fields, although they belong to allocation type 1.
+    // Fill in these fields, although they belong to allocation type 1.
     pdu.rb_start = 0;
     pdu.rb_size  = 0;
 
@@ -540,8 +537,10 @@ public:
                                                       inline_tb_crc_type   tb_crc,
                                                       span<const uint32_t> dl_tb_crc_cw)
   {
-    change_bitmap_status<uint8_t>(pdu.is_last_cb_present, 0, last_cb_present_first_tb);
-    change_bitmap_status<uint8_t>(pdu.is_last_cb_present, 1, last_cb_present_second_tb);
+    set_bitmap_bit<uint8_t>(
+        pdu.is_last_cb_present, dl_pdsch_pdu::LAST_CB_BITMAP_FIRST_TB_BIT, last_cb_present_first_tb);
+    set_bitmap_bit<uint8_t>(
+        pdu.is_last_cb_present, dl_pdsch_pdu::LAST_CB_BITMAP_SECOND_TB_BIT, last_cb_present_second_tb);
 
     pdu.is_inline_tb_crc = tb_crc;
 
@@ -578,8 +577,12 @@ public:
     pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes = tb_size_lbrm_bytes;
 
     // Fill the bitmap.
-    change_bitmap_status<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required, 0, tb_crc_first_tb_required);
-    change_bitmap_status<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required, 1, tb_crc_second_tb_required);
+    set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
+                            dl_pdsch_maintenance_parameters_v3::TB_BITMAP_FIRST_TB_BIT,
+                            tb_crc_first_tb_required);
+    set_bitmap_bit<uint8_t>(pdu.pdsch_maintenance_v3.tb_crc_required,
+                            dl_pdsch_maintenance_parameters_v3::TB_BITMAP_SECOND_TB_BIT,
+                            tb_crc_second_tb_required);
 
     return *this;
   }

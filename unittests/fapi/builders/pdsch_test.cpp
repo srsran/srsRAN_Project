@@ -9,62 +9,66 @@ static std::mt19937 gen(0);
 
 static void test_basic_parameters()
 {
-  dl_pdsch_pdu         pdu;
-  dl_pdsch_pdu_builder builder(pdu);
+  std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
 
   for (unsigned ptrs = 0; ptrs != 2; ++ptrs) {
     for (unsigned cbg = 0; cbg != 2; ++cbg) {
-      for (unsigned rnti = 0, e = std::numeric_limits<uint16_t>::max(); rnti != e; ++rnti) {
-        builder.set_basic_parameters(ptrs, cbg, to_rnti(rnti));
+      dl_pdsch_pdu         pdu;
+      dl_pdsch_pdu_builder builder(pdu);
 
-        TESTASSERT_EQ(to_rnti(rnti), pdu.rnti);
-        TESTASSERT_EQ(cbg, (pdu.pdu_bitmap >> 1) & 1U);
-        TESTASSERT_EQ(ptrs, pdu.pdu_bitmap & 1U);
-      }
+      rnti_t rnti = to_rnti(rnti_dist(gen));
+      builder.set_basic_parameters(ptrs, cbg, rnti);
+
+      TESTASSERT_EQ(rnti, pdu.rnti);
+      TESTASSERT_EQ(cbg, (pdu.pdu_bitmap >> dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT) & 1U);
+      TESTASSERT_EQ(ptrs, (pdu.pdu_bitmap >> dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT) & 1U);
     }
   }
 }
 
 static void test_bwp_parameters()
 {
-  dl_pdsch_pdu         pdu;
-  dl_pdsch_pdu_builder builder(pdu);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
+  for (auto scs : {subcarrier_spacing::kHz15,
+                   subcarrier_spacing::kHz30,
+                   subcarrier_spacing::kHz60,
+                   subcarrier_spacing::kHz120,
+                   subcarrier_spacing::kHz240}) {
+    for (auto cprefix : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
+      dl_pdsch_pdu         pdu;
+      dl_pdsch_pdu_builder builder(pdu);
 
-  for (unsigned bwp_size = 0; bwp_size != 200; ++bwp_size) {
-    for (unsigned bwp_start = 0; bwp_start != 200; ++bwp_start) {
-      for (unsigned scs = 0; scs != 5; ++scs) {
-        for (unsigned cprefix = 0; cprefix != 2; ++cprefix) {
-          builder.set_bwp_parameters(
-              bwp_size, bwp_start, static_cast<subcarrier_spacing>(scs), static_cast<cyclic_prefix_type>(cprefix));
+      unsigned bwp_size  = bwp_size_dist(gen);
+      unsigned bwp_start = bwp_start_dist(gen);
 
-          TESTASSERT_EQ(bwp_size, pdu.bwp_size);
-          TESTASSERT_EQ(bwp_start, pdu.bwp_start);
-          TESTASSERT_EQ(static_cast<subcarrier_spacing>(scs), pdu.scs);
-          TESTASSERT_EQ(static_cast<cyclic_prefix_type>(cprefix), pdu.cyclic_prefix);
-        }
-      }
+      builder.set_bwp_parameters(bwp_size, bwp_start, scs, cprefix);
+
+      TESTASSERT_EQ(bwp_size, pdu.bwp_size);
+      TESTASSERT_EQ(bwp_start, pdu.bwp_start);
+      TESTASSERT_EQ(scs, pdu.scs);
+      TESTASSERT_EQ(cprefix, pdu.cyclic_prefix);
     }
   }
 }
 
 static void test_codewords_parameters()
 {
-  for (unsigned n_id_pdsch = 0; n_id_pdsch != 1024; ++n_id_pdsch) {
-    for (unsigned num_layers = 1; num_layers != 9; ++num_layers) {
-      for (unsigned trasnmission_scheme = 0; trasnmission_scheme != 8; ++trasnmission_scheme) {
-        for (unsigned ref_point = 0; ref_point != 2; ++ref_point) {
-          dl_pdsch_pdu         pdu;
-          dl_pdsch_pdu_builder builder(pdu);
+  std::uniform_int_distribution<unsigned> n_id_pdsch_dist(0, 1023);
 
-          builder.set_codeword_information_parameters(
-              n_id_pdsch, num_layers, trasnmission_scheme, static_cast<pdsch_ref_point_type>(ref_point));
+  for (unsigned num_layers = 1; num_layers != 9; ++num_layers) {
+    for (auto ref_point : {pdsch_ref_point_type::point_a, pdsch_ref_point_type::subcarrier_0}) {
+      dl_pdsch_pdu         pdu;
+      dl_pdsch_pdu_builder builder(pdu);
 
-          TESTASSERT_EQ(n_id_pdsch, pdu.nid_pdsch);
-          TESTASSERT_EQ(num_layers, pdu.num_layers);
-          TESTASSERT_EQ(trasnmission_scheme, pdu.transmission_scheme);
-          TESTASSERT_EQ(static_cast<pdsch_ref_point_type>(ref_point), pdu.ref_point);
-        }
-      }
+      unsigned transmission_scheme = 0;
+      unsigned n_id_pdsch          = n_id_pdsch_dist(gen);
+      builder.set_codeword_information_parameters(n_id_pdsch, num_layers, transmission_scheme, ref_point);
+
+      TESTASSERT_EQ(n_id_pdsch, pdu.nid_pdsch);
+      TESTASSERT_EQ(num_layers, pdu.num_layers);
+      TESTASSERT_EQ(transmission_scheme, pdu.transmission_scheme);
+      TESTASSERT_EQ(ref_point, pdu.ref_point);
     }
   }
 }
@@ -75,6 +79,16 @@ static void test_add_codeword()
   dl_pdsch_pdu_builder builder(pdu);
   TESTASSERT(pdu.cws.empty());
   TESTASSERT(pdu.pdsch_maintenance_v3.cbg_tx_information.empty());
+
+  builder.add_codeword();
+  TESTASSERT_EQ(1, pdu.cws.size());
+  TESTASSERT_EQ(1, pdu.pdsch_maintenance_v3.cbg_tx_information.size());
+}
+
+static void test_codeword_basic_parameters()
+{
+  dl_pdsch_pdu         pdu;
+  dl_pdsch_pdu_builder builder(pdu);
 
   auto builder_cw = builder.add_codeword();
 
@@ -93,22 +107,20 @@ static void test_add_codeword()
   TESTASSERT_EQ(rv_index, pdu.cws[0].rv_index);
   TESTASSERT_EQ(qam_mod, pdu.cws[0].qam_mod_order);
   TESTASSERT_EQ(target_code_rate, pdu.cws[0].target_code_rate);
-  TESTASSERT_EQ(1, pdu.cws.size());
-  TESTASSERT_EQ(1, pdu.pdsch_maintenance_v3.cbg_tx_information.size());
 }
 
 static void test_dmrs_parameters()
 {
-  uint16_t dmrs_symbol_pos = 3; 
+  uint16_t dmrs_symbol_pos = 3;
   uint16_t dmrs_ports      = 4;
 
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_dist(0, 65535);
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_complement_dist(0, 65535);
 
-  for (const auto& config_type : {dmrs_type::TYPE1, dmrs_type::TYPE2}) {
-    for (const auto& low_papr :
+  for (auto config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
+    for (auto low_papr :
          {pdsch_low_papr_dmrs_type::dependent_cdm_group, pdsch_low_papr_dmrs_type::independent_cdm_group}) {
-      for (const auto& nscid : {0U, 1U}) {
+      for (auto nscid : {0U, 1U}) {
         for (unsigned num_dmrs_cdm_grp_no_data = 0; num_dmrs_cdm_grp_no_data != 4; ++num_dmrs_cdm_grp_no_data) {
           dl_pdsch_pdu         pdu;
           dl_pdsch_pdu_builder builder(pdu);
@@ -126,7 +138,7 @@ static void test_dmrs_parameters()
                                       dmrs_ports);
 
           TESTASSERT_EQ(dmrs_symbol_pos, pdu.dl_dmrs_symb_pos);
-          TESTASSERT_EQ(config_type, pdu.dmrs_config_type);
+          TESTASSERT_EQ(config_type, pdu.dmrs_type);
           TESTASSERT_EQ(dmrs_scrambling_id, pdu.pdsch_dmrs_scrambling_id);
           TESTASSERT_EQ(dmrs_scrambling_id_complement, pdu.pdsch_dmrs_scrambling_id_compl);
           TESTASSERT_EQ(low_papr, pdu.low_papr_dmrs);
@@ -142,9 +154,9 @@ static void test_dmrs_parameters()
 static void test_allocation_in_freq_parameters()
 {
   // Type 0.
-  for (const auto& vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                                 pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
-                                 pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
+  for (auto vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
+                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
+                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -159,9 +171,10 @@ static void test_allocation_in_freq_parameters()
   // Type 1.
   std::uniform_int_distribution<unsigned> rb_start_dist(0, 274);
   std::uniform_int_distribution<unsigned> rb_size_dist(1, 275);
-  for (const auto& vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                                 pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
-                                 pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
+
+  for (auto vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
+                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
+                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -180,6 +193,7 @@ static void test_allocation_in_time_parameters()
 {
   std::uniform_int_distribution<unsigned> start_sym_dist(0, 13);
   std::uniform_int_distribution<unsigned> nof_symbols_dist(1, 14);
+
   for (unsigned i = 0; i != 10; ++i) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
@@ -197,11 +211,11 @@ static void test_allocation_in_time_parameters()
 static void test_tx_power_info_parameters()
 {
   for (int power = -8; power != 17; ++power) {
-    for (const auto& ss_profile : {ss_profile_nr_type::dB0,
-                                   ss_profile_nr_type::dB6,
-                                   ss_profile_nr_type::L1_use_profile_sss,
-                                   ss_profile_nr_type::dB3,
-                                   ss_profile_nr_type::dB_minus_3}) {
+    for (auto ss_profile : {ss_profile_nr_type::dB0,
+                            ss_profile_nr_type::dB6,
+                            ss_profile_nr_type::L1_use_profile_sss,
+                            ss_profile_nr_type::dB3,
+                            ss_profile_nr_type::dB_minus_3}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
@@ -221,7 +235,7 @@ static void test_tx_power_info_parameters()
 static void test_cbg_retx_ctrl_parameters()
 {
   for (unsigned last_cb = 0; last_cb != 4; ++last_cb) {
-    for (const auto& inline_tb_crc : {inline_tb_crc_type::control_message, inline_tb_crc_type::data_payload}) {
+    for (auto inline_tb_crc : {inline_tb_crc_type::control_message, inline_tb_crc_type::data_payload}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
@@ -240,12 +254,13 @@ static void test_cbg_retx_ctrl_parameters()
 static void test_maintenance_v3_bwp_parameters()
 {
   std::uniform_int_distribution<unsigned> dist(0, 274);
-  for (const auto& trans_type : {dl_pdsch_trans_type::interleaved_common_any_coreset0_not_present,
-                                 dl_pdsch_trans_type::interleaved_common_type0_coreset0,
-                                 dl_pdsch_trans_type::interleaved_common_any_coreset0_present,
-                                 dl_pdsch_trans_type::interleaved_other,
-                                 dl_pdsch_trans_type::non_interleaved_common_ss,
-                                 dl_pdsch_trans_type::non_interleaved_other}) {
+
+  for (auto trans_type : {dl_pdsch_trans_type::interleaved_common_any_coreset0_not_present,
+                          dl_pdsch_trans_type::interleaved_common_type0_coreset0,
+                          dl_pdsch_trans_type::interleaved_common_any_coreset0_present,
+                          dl_pdsch_trans_type::interleaved_other,
+                          dl_pdsch_trans_type::non_interleaved_common_ss,
+                          dl_pdsch_trans_type::non_interleaved_other}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -265,7 +280,7 @@ static void test_maintenance_v3_codeword_info_parameters()
   std::uniform_int_distribution<unsigned> tb_size_dist(1, 274);
 
   for (unsigned tb_crc = 0; tb_crc != 4; ++tb_crc) {
-    for (const auto& graph_type : {ldpc_base_graph_type::bg_2, ldpc_base_graph_type::bg_1}) {
+    for (auto graph_type : {ldpc_base_graph_type::bg_2, ldpc_base_graph_type::bg_1}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
@@ -336,7 +351,7 @@ static void test_maintenance_v3_tx_power_info_parameters()
 
 static void test_maintenance_v3_cbg_tx_crtl_parameters()
 {
-  for (const auto& cbg_per_tb : {2U, 4U, 6U, 8U}) {
+  for (auto cbg_per_tb : {2U, 4U, 6U, 8U}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -383,7 +398,7 @@ static void test_ptrs_maintenance_v3_tx_power_parameters()
 
 static void test_maintenance_v4_basic_parameters()
 {
-  for (const auto& derivation_method : {0, 1}) {
+  for (auto derivation_method : {0, 1}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -410,6 +425,8 @@ static void test_pdsch_builder_ok()
   fmt::print("[PDSCH Builder] - Codewords parameters -> OK\n");
   test_add_codeword();
   fmt::print("[PDSCH Builder] - Added codeword -> OK\n");
+  test_codeword_basic_parameters();
+  fmt::print("[PDSCH Builder] - Codeword basic parameters -> OK\n");
   test_dmrs_parameters();
   fmt::print("[PDSCH Builder] - DMRS parameters -> OK\n");
   test_allocation_in_freq_parameters();
