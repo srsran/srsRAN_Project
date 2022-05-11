@@ -11,7 +11,9 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/ssb.h"
+#include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/test_utils.h"
 #include <chrono>
 #include <random>
@@ -83,7 +85,105 @@ static void ssb_conversion_benchmark()
 
   std::sort(results.begin(), results.end());
 
-  fmt::print("MAC -> FAPI -> PHY conversion Benchmark\n"
+  fmt::print("SSB MAC -> FAPI -> PHY conversion Benchmark\n"
+             "All values in nanoseconds\n"
+             "Percentiles: | 50th | 75th | 90th | 99th | 99.9th | Worst |\n"
+             "             |{:6}|{:6}|{:6}|{:6}|{:8}|{:7}|\n",
+             results[static_cast<size_t>(results.size() * 0.5)],
+             results[static_cast<size_t>(results.size() * 0.75)],
+             results[static_cast<size_t>(results.size() * 0.9)],
+             results[static_cast<size_t>(results.size() * 0.99)],
+             results[static_cast<size_t>(results.size() * 0.999)],
+             results.back());
+}
+
+static void pdcch_conversion_benchark()
+{
+  static constexpr unsigned iterations = 10000;
+  std::vector<unsigned>     results;
+  results.reserve(iterations);
+
+  // Random generators.
+  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
+  std::uniform_int_distribution<unsigned> duration_symbol_dist(0, 3);
+  std::uniform_int_distribution<unsigned> shift_index_dist(0, 275);
+  std::uniform_int_distribution<unsigned> n_rnti_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> cce_dist(0, 135);
+  std::uniform_int_distribution<unsigned> aggregation_dist(0, 4);
+  std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
+  std::uniform_int_distribution<int>      power_dist(-8, 8);
+  std::uniform_int_distribution<unsigned> custom_dist(2, 3);
+
+  for (unsigned i = 0; i != iterations; ++i) {
+    // :TODO: Begin with the MAC structure when it is defined.
+    dl_tti_request_message         msg;
+    dl_tti_request_message_builder builder(msg);
+    // :TODO: when the groups are available, add them.
+    builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen), 0);
+
+    dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu();
+
+    // :TODO: generate  better frequency domain resource bitmap.
+    static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
+
+    // Always work with the biggest numerology.
+    builder_pdcch.set_bwp_parameters(bwp_size_dist(gen),
+                                     bwp_start_dist(gen),
+                                     subcarrier_spacing::kHz240,
+                                     static_cast<cyclic_prefix_type>(binary_dist(gen)));
+
+    builder_pdcch.set_coreset_parameters(start_symbol_index_dist(gen),
+                                         duration_symbol_dist(gen),
+                                         {freq_domain},
+                                         static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
+                                         custom_dist(gen),
+                                         custom_dist(gen),
+                                         static_cast<pdcch_coreset_type>(binary_dist(gen)),
+                                         shift_index_dist(gen),
+                                         static_cast<precoder_granularity_type>(binary_dist(gen)));
+
+    // Add DCI.
+    auto builder_dci = builder_pdcch.add_dl_dci();
+
+    builder_dci.set_basic_parameters(
+        to_rnti(0), nid_data_dist(gen), n_rnti_dist(gen), cce_dist(gen), aggregation_dist(gen));
+    optional<float> profile_nr;
+    profile_nr.emplace(power_dist(gen));
+    builder_dci.set_tx_power_info_parameter(profile_nr);
+
+    // Payload.
+    static_vector<uint8_t, 128> payload(128,1);
+    static_vector<uint8_t, 128> packed_payload;
+    packed_payload.resize(std::ceil(payload.size() / 8.F));
+    srsvec::bit_pack({packed_payload}, {payload});
+
+    builder_dci.set_payload({packed_payload});
+
+    optional<float> profile_data;
+    optional<float> profile_dmrs;
+    builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
+    builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
+
+    pdcch_processor::pdu_t proc_pdu;
+
+    // Conversion block.
+    auto start = std::chrono::high_resolution_clock::now();
+    convert_pdcch_fapi_to_phy(proc_pdu, msg.pdus[0].pdcch_pdu, msg.sfn, msg.slot);
+    auto end = std::chrono::high_resolution_clock::now();
+
+    // Print how much time it took.
+    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
+  }
+
+  std::sort(results.begin(), results.end());
+
+  fmt::print("PDCCH MAC -> FAPI -> PHY conversion Benchmark\n"
              "All values in nanoseconds\n"
              "Percentiles: | 50th | 75th | 90th | 99th | 99.9th | Worst |\n"
              "             |{:6}|{:6}|{:6}|{:6}|{:8}|{:7}|\n",
@@ -98,6 +198,7 @@ static void ssb_conversion_benchmark()
 int main()
 {
   ssb_conversion_benchmark();
+  pdcch_conversion_benchark();
 
   fmt::print("Success\n");
   return 0;

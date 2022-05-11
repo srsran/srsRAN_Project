@@ -101,7 +101,7 @@ static void pdcch_conversion_test()
                   builder_dci.set_parameters_v4_dci(nid_dmrs);
 
                   pdcch_processor::pdu_t proc_pdu;
-                  srsgnb::fapi_adaptor::convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot);
+                  convert_pdcch_fapi_to_phy(proc_pdu, pdu, sfn, slot);
 
                   // Test basic parameters.
                   TESTASSERT_EQ(sfn, proc_pdu.slot.sfn());
