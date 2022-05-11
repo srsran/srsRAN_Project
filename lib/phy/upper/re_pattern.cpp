@@ -11,8 +11,6 @@
  */
 
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/phy/cyclic_prefix.h"
-#include "srsgnb/srsvec/compare.h"
 
 using namespace srsgnb;
 
@@ -118,7 +116,7 @@ void re_pattern_list::merge(const re_pattern& pattern)
   list.emplace_back(pattern);
 }
 
-bool re_pattern_list::operator==(re_pattern_list& other) const
+bool re_pattern_list::operator==(const re_pattern_list& other) const
 {
   // Generates the inclusion mask for each symbol and compare if they are equal.
   for (unsigned symbol = 0; symbol != MAX_NSYMB_PER_SLOT; ++symbol) {
@@ -129,7 +127,7 @@ bool re_pattern_list::operator==(re_pattern_list& other) const
     other.get_inclusion_mask(inclusion_mask_other, symbol);
 
     // Early return false if they are not equal for this symbol.
-    if (!srsvec::equal(inclusion_mask, inclusion_mask_other)) {
+    if (inclusion_mask != inclusion_mask_other) {
       return false;
     }
   }

@@ -114,13 +114,13 @@ public:
   /// of RBs and symbols.
   /// \param[in] other The other pattern list.
   /// \return True if the patterns described by the two lists are equal.
-  bool operator==(re_pattern_list& other) const;
+  bool operator==(const re_pattern_list& other) const;
 
   /// \brief Checks if the pattern list is the pattern list is different from another pattern list.
   ///
   /// \param[in] other The other pattern list.
   /// \return True if the patterns described by the two lists are different.
-  bool operator!=(re_pattern_list& other) const { return !(*this == other); }
+  bool operator!=(const re_pattern_list& other) const { return !(*this == other); }
 
   /// \brief Includes the described resource element pattern list in a resource grid symbol mask.
   ///
