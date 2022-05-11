@@ -32,6 +32,8 @@ public:
   /// \brief Describes a codeword configuration.
   /// \note The transport block size is given by transport block data size.
   struct codeword_description {
+    enum mcs_table_type { QAM64 = 0, QAM256, QAM64LOWSE };
+
     /// Target coding rate.
     float target_code_rate;
     /// Indicates the modulation scheme.
@@ -39,7 +41,7 @@ public:
     /// Modulation and code scheme index {0...31}.
     unsigned mcs;
     /// Indicates the MCS table used to determine the amount of redundancy.
-    enum { QAM64 = 0, QAM256, QAM64LOWSE } mcs_table;
+    mcs_table_type mcs_table;
     /// Redundancy version index.
     unsigned rv;
   };
@@ -105,9 +107,9 @@ public:
     /// Indicates the transmission type of PDSCH.
     enum {
       /// Non-interleaved PDSCH which is scheduled by DCI format 1_0 in a common search space.
-      NON_INTERLAVED_COMMON_SS = 0,
+      NON_INTERLEAVED_COMMON_SS = 0,
       /// Any non-interleaved PDSCH except above case.
-      NON_INTERLAVED_OTHER = 1,
+      NON_INTERLEAVED_OTHER = 1,
       /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in Type0-PDCCH common search space in CORESET 0.
       /// In this case, BWP start and size of the PDSCH PDU shall be set to CORESET 0 start and size respectively
       /// instead of active downlink BWP start and size.

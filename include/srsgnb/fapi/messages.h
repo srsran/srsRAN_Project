@@ -140,6 +140,7 @@ enum class dl_pdsch_trans_type : uint8_t {
   interleaved_common_any_coreset0_not_present,
   interleaved_other
 };
+
 enum class ldpc_base_graph_type : uint8_t { bg_1 = 1, bg_2 };
 
 /// \note For this release num_coreset_rm_patterns = 0.
