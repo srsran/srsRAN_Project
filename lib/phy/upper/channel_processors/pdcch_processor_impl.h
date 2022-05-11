@@ -1,3 +1,14 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_IMPL_H
 #define LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_IMPL_H

@@ -1,3 +1,14 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #include "mac_cell_asn1_helpers.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"

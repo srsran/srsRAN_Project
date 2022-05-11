@@ -1,4 +1,12 @@
 
+#
+# Copyright 2013-2022 Software Radio Systems Limited
+#
+# By using this file, you agree to the terms and conditions set
+# forth in the LICENSE file which can be found at the top level of
+# the distribution.
+#
+
 # ASN1 utils
 add_library(asn1_utils STATIC asn1_utils.cpp)
 target_link_libraries(asn1_utils srslog)
