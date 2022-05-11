@@ -105,11 +105,24 @@ static const std::vector<benchmark_configuration_profile> profiles = {
        bw_rb            = 270;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
 
-       unsigned port_base   = 5000;
-       unsigned port_offset = zmq_loopback ? 0 : 1000;
-       for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
-         tx_channel_args.emplace_back("tcp://*:" + std::to_string(port_base + channel_id));
-         rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(port_base + channel_id + port_offset));
+       if (zmq_loopback) {
+         // Prepare ZMQ addresses using in-process communication instead of TCP. It avoids port collision and allows
+         // parallel execution.
+         for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
+           fmt::memory_buffer buffer;
+           fmt::format_to(buffer, "inproc://#{}", channel_id);
+           tx_channel_args.emplace_back(to_string(buffer));
+           rx_channel_args.emplace_back(to_string(buffer));
+         }
+       } else {
+         // Prepare ZMQ addresses using TCP. Transmitter ports start at 5000+channel_id while receivers connect to
+         // 6000+channel_id.
+         unsigned port_base   = 5000;
+         unsigned port_offset = 1000;
+         for (unsigned channel_id = 0; channel_id != nof_ports * nof_sectors; ++channel_id) {
+           tx_channel_args.emplace_back("tcp://*:" + std::to_string(port_base + channel_id));
+           rx_channel_args.emplace_back("tcp://localhost:" + std::to_string(port_base + channel_id + port_offset));
+         }
        }
      }},
 };
