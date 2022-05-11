@@ -194,8 +194,7 @@ public:
   dl_dci_pdu_builder& set_payload(span<const uint8_t> payload)
   {
     // :TODO: Confirm that the bit order is: bit0-bit7 are mapped to first byte of MSB - LSB.
-    srsran_assert(payload.size() <= pdu.payload.capacity(), "Payload size exceeds maximum expected size");
-    std::copy(payload.begin(), payload.end(), pdu.payload.begin());
+    pdu.payload.assign(payload.begin(), payload.end());
 
     return *this;
   }

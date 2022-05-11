@@ -30,9 +30,9 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
                                    : float(fapi_dci_v3.pdcch_data_power_offset_profile_sss) * 0.001F;
 
     // Unpack the payload.
-    span<uint8_t>       dest(dci.payload.begin(), dci.payload.begin() + (fapi_dci.payload.size() * 8));
-    span<const uint8_t> origin(fapi_dci.payload.begin(), fapi_dci.payload.end());
-    srsvec::bit_unpack(dest, origin);
+    // :TODO: Verify in the future that the payload should be unpacked.
+    dci.payload.resize(fapi_dci.payload.size() * 8);
+    srsvec::bit_unpack({dci.payload}, {fapi_dci.payload});
 
     // :TODO: Fill this in the future.
     dci.ports = {0};

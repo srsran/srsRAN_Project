@@ -94,7 +94,7 @@ enum class cyclic_prefix_type : uint8_t { normal, extended };
 /// Downlink DCI PDU configuration.
 struct dl_dci_pdu {
   /// Maximum number of bytes supported by the DCI payload.
-  static constexpr unsigned MAX_DCI_PAYLOAD_BYTES = 32;
+  static constexpr unsigned MAX_DCI_PAYLOAD_BYTES = 128;
 
   rnti_t   rnti;
   uint16_t nid_pdcch_data;
