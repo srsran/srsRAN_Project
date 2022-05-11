@@ -44,7 +44,7 @@ public:
 
     // Wait for TTI boundary to be cleared.
     while (tti_boundary && !quit) {
-      cvar_tti_boundary.wait(lock);
+      cvar_tti_boundary.wait_for(lock, std::chrono::milliseconds(1));
     }
 
     // Raise TTI boundary, save slot point and notify.
@@ -67,7 +67,7 @@ public:
 
     // Wait for TTI boundary to be raised.
     while (!tti_boundary && !quit) {
-      cvar_tti_boundary.wait(lock);
+      cvar_tti_boundary.wait_for(lock, std::chrono::milliseconds(1));
     }
 
     // Clear TTI boundary and notify

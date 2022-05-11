@@ -115,21 +115,43 @@ static const std::vector<benchmark_configuration_profile> profiles = {
 };
 
 // Global instances.
+static std::mutex                     stop_execution_mutex;
 static std::atomic<bool>              stop  = {false};
 static std::unique_ptr<lower_phy>     phy   = nullptr;
 static std::unique_ptr<radio_session> radio = nullptr;
 static timing_handler_sample          timing_handler;
 
-void signal_handler(int sig)
+static void stop_execution()
 {
+  // Make sure this function is not executed simultaneously.
+  std::unique_lock<std::mutex> lock(stop_execution_mutex);
+
+  // Skip if stop has already been signaled.
+  if (stop) {
+    return;
+  }
+
+  // Signal program to stop.
+  stop = true;
+
+  // Stop radio. It stops blocking the radio transmit and receive operations. The timing handler prevents the PHY from
+  // free running.
   if (radio != nullptr) {
     radio->stop();
   }
+
+  // Stop the timing handler. It stops blocking notifier and allows the PHY to free run.
+  timing_handler.stop();
+
+  // Stop PHY.
   if (phy != nullptr) {
     phy->stop();
   }
-  stop = true;
-  timing_handler.stop();
+}
+
+static void signal_handler(int sig)
+{
+  stop_execution();
 }
 
 static void usage(std::string prog)
@@ -198,6 +220,9 @@ int main(int argc, char** argv)
 {
   // Parse arguments.
   parse_args(argc, argv);
+
+  // Make sure thread pool logging matches the test level.
+  srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
 
   // Derived parameters.
   unsigned dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
@@ -414,20 +439,18 @@ int main(int argc, char** argv)
     }
   }
 
-  // Stop components if a signal was not caught.
-  if (!stop) {
-    // Stop radio operation prior destruction.
-    radio->stop();
-
-    // Stop physical layer.
-    phy->stop();
-  }
+  // Stop execution.
+  stop_execution();
 
   // Stop workers.
   async_task_worker.stop();
   rt_task_worker.stop();
 
+  // Prints radio notification summary (number of overflow, underflow and other events).
   notification_handler.print();
+
+  // Avoids pending log messages before destruction starts.
+  srslog::flush();
 
   return 0;
 }

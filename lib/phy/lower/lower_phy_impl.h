@@ -129,6 +129,7 @@ public:
   // See interface for documentation.
   void start(task_executor& realtime_task_executor) override;
 
+  // See interface for documentation.
   void stop() override;
 };
 
