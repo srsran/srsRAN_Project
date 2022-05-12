@@ -1,3 +1,15 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/phy/pdsch.h"
 #include "srsgnb/support/test_utils.h"
@@ -63,21 +75,21 @@ static void pdsch_conversion_test()
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
   for (unsigned pdu_bitmap = 0; pdu_bitmap != 4; ++pdu_bitmap) {
-    for (const auto& cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
-      for (const auto& ref_point : {pdsch_ref_point_type::point_a, pdsch_ref_point_type::subcarrier_0}) {
-        for (const auto& config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
-          for (const auto& low_papr :
+    for (auto cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
+      for (auto ref_point : {pdsch_ref_point_type::point_a, pdsch_ref_point_type::subcarrier_0}) {
+        for (auto config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
+          for (auto low_papr :
                {pdsch_low_papr_dmrs_type::independent_cdm_group, pdsch_low_papr_dmrs_type::dependent_cdm_group}) {
-            for (const auto& resource_alloc :
+            for (auto resource_alloc :
                  {pdsch_resource_allocation_type::type_0, pdsch_resource_allocation_type::type_1}) {
-              for (const auto& vrb_prb_mapping : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                                                  pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4,
-                                                  pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2}) {
-                for (const auto& power_ss_profile_nr : {pdsch_ss_profile_nr_type::dB_minus_3,
-                                                        pdsch_ss_profile_nr_type::dB0,
-                                                        pdsch_ss_profile_nr_type::dB3,
-                                                        pdsch_ss_profile_nr_type::dB6,
-                                                        pdsch_ss_profile_nr_type::dB6}) {
+              for (auto vrb_prb_mapping : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
+                                           pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4,
+                                           pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2}) {
+                for (auto power_ss_profile_nr : {pdsch_ss_profile_nr_type::dB_minus_3,
+                                                 pdsch_ss_profile_nr_type::dB0,
+                                                 pdsch_ss_profile_nr_type::dB3,
+                                                 pdsch_ss_profile_nr_type::dB6,
+                                                 pdsch_ss_profile_nr_type::dB6}) {
                   for (int power_nr = -9; power_nr != -7; ++power_nr) {
                     for (int power = -33; power != -30; ++power) {
                       for (auto trasn_type : {pdsch_trans_type::non_interleaved_other,
@@ -203,7 +215,7 @@ static void pdsch_conversion_test()
                           TESTASSERT_EQ(start_symbol_index, proc_pdu.start_symbol_index);
                           TESTASSERT_EQ(nr_of_symbols, proc_pdu.nof_symbols);
 
-                          // :TODO: allocation
+                          // :TODO: rb_allocation
 
                           // Powers.
                           float value = profile_nr ? profile_nr.value() : dmrs_profile.value();
@@ -228,7 +240,7 @@ static void pdsch_conversion_test()
                                         proc_pdu.ldpc_base_graph);
                           TESTASSERT_EQ(tb_size_lbrm_bytes, proc_pdu.tbs_lbrm_bytes);
 
-                          // :TODO: reserved.
+                          // :TODO: re_pattern.
                         }
                       }
                     }

@@ -1,3 +1,15 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #ifndef SRSGNB_FAPI_VALIDATOR_REPORT_H
 #define SRSGNB_FAPI_VALIDATOR_REPORT_H
 
@@ -22,15 +34,18 @@ struct validator_report {
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, dl_pdu_type pdu_type) :
       value(value), expected_value_range(range), property_name(name), pdu_type(pdu_type)
-    {}
+    {
+    }
 
     error_report(int32_t value, const char* name, dl_pdu_type pdu_type) :
       value(value), property_name(name), pdu_type(pdu_type)
-    {}
+    {
+    }
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name) :
       value(value), expected_value_range(range), property_name(name)
-    {}
+    {
+    }
 
     error_report(int32_t value, const char* name) : value(value), property_name(name) {}
   };
