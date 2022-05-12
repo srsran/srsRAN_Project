@@ -11,14 +11,21 @@
 #ifndef SRSGNB_SRSVEC_BINARY_H_
 #define SRSGNB_SRSVEC_BINARY_H_
 
+#include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
 namespace srsgnb {
 namespace srsvec {
 
-template <typename T>
-void binary_xor(span<T> x, span<T> y, span<T> z)
+template <typename T, typename U, typename V>
+void binary_xor(const T& x, const U& y, V&& z)
 {
+  static_assert(detail::is_integral_span_compatible<T>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<U>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<V>::value,
+                "Template type is not compatible with a span of integers");
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
 
@@ -27,9 +34,15 @@ void binary_xor(span<T> x, span<T> y, span<T> z)
   }
 }
 
-template <typename T>
-void binary_and(span<T> x, span<T> y, span<T> z)
+template <typename T, typename U, typename V>
+void binary_and(const T& x, const U& y, V&& z)
 {
+  static_assert(detail::is_integral_span_compatible<T>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<U>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<V>::value,
+                "Template type is not compatible with a span of integers");
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
 
@@ -38,9 +51,15 @@ void binary_and(span<T> x, span<T> y, span<T> z)
   }
 }
 
-template <typename T>
-void binary_or(span<T> x, span<T> y, span<T> z)
+template <typename T, typename U, typename V>
+void binary_or(const T& x, const U& y, V&& z)
 {
+  static_assert(detail::is_integral_span_compatible<T>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<U>::value,
+                "Template type is not compatible with a span of integers");
+  static_assert(detail::is_integral_span_compatible<V>::value,
+                "Template type is not compatible with a span of integers");
   srsgnb_srsvec_assert_size(x, y);
   srsgnb_srsvec_assert_size(x, z);
 
