@@ -219,7 +219,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
       srsvec::sc_prod(ce_span, 0.5f, ce_span);
     } else {
       // Simply copy the estimated channel.
-      srsvec::copy(ce_span, span<cf_t>{ce[m]});
+      srsvec::copy(ce_span, ce[m]);
     }
   }
 }

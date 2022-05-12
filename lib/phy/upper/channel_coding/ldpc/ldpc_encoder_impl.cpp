@@ -119,7 +119,7 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
   }
 
   // LDPC codes are systematic: the first bits of the codeblock coincide with the message
-  srsvec::copy(span<uint8_t>{codeblock.begin(), message.size()}, message);
+  srsvec::copy(span<uint8_t>(codeblock).first(message.size()), message);
 }
 
 void ldpc_encoder_generic::encode_ext_region()

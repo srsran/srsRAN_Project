@@ -194,7 +194,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
 }
 
 void polar_decoder_impl::init(span<const int8_t> input_llr,
-                              span<uint8_t>         data_decoded,
+                              span<uint8_t>      data_decoded,
                               const uint8_t      code_size_log,
                               const uint16_t*    frozen_set,
                               const uint16_t     frozen_set_size)
@@ -204,10 +204,10 @@ void polar_decoder_impl::init(span<const int8_t> input_llr,
   uint16_t code_half_size = param.code_stage_size[code_size_log - 1];
 
   // Initializes the data_decoded_vector to all zeros
-  srsvec::zero(span<uint8_t>(data_decoded.data(), code_size));
+  srsvec::zero(data_decoded.first(code_size));
 
   // Initialize est_bit vector to all zeros
-  srsvec::zero(est_bit.subspan(0, code_size));
+  srsvec::zero(est_bit.first(code_size));
 
   // Initializes LLR buffer for the last stage/level with the input LLRs values
   for (uint16_t i = 0; i != code_half_size; ++i) {

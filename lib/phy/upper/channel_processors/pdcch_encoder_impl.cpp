@@ -32,8 +32,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
   std::array<uint8_t, RNTI_LEN> unpacked_rnti = {};
 
   // Unpack RNTI bits
-  span<uint8_t> rnti_bits{unpacked_rnti};
-  srsvec::bit_unpack(rnti_bits, rnti, RNTI_LEN);
+  srsvec::bit_unpack(unpacked_rnti, rnti, RNTI_LEN);
 
   // Set first L bits to 1s
   std::fill(c.begin(), c.begin() + CRC_LEN, 1U);
@@ -50,7 +49,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
 
   // Scramble CRC parity bits with RNTI
   p = c.last(RNTI_LEN);
-  srsvec::binary_xor(span<uint8_t>{unpacked_rnti}, p, p);
+  srsvec::binary_xor(unpacked_rnti, p, p);
 
   // Skip first L 1s added for CRC calculation
   c = c.subspan(CRC_LEN, c.size() - CRC_LEN);

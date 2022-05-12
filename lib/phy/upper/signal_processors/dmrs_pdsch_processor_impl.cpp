@@ -100,7 +100,7 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     if (params.w_t[l_prime] != +1.0f) {
       srsvec::sc_prod(sequence, -1, temp_re[port]);
     } else {
-      srsvec::copy(span<cf_t>(temp_re[port]), sequence);
+      srsvec::copy(temp_re[port], sequence);
     }
 
     // Apply w_f weight. It can be {+1, +1} or {+1, -1} depending on l_prime and port. On the first case, no operation
