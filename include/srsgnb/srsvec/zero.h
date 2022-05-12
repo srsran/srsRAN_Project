@@ -11,14 +11,16 @@
 #ifndef SRSGNB_SRSVEC_ZERO_H_
 #define SRSGNB_SRSVEC_ZERO_H_
 
+#include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
 namespace srsgnb {
 namespace srsvec {
 
 template <typename T>
-void zero(span<T> x)
+void zero(T&& x)
 {
+  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
   std::fill(x.begin(), x.end(), 0);
 }
 
