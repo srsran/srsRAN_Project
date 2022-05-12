@@ -35,17 +35,6 @@ ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
   crc_set.crc24B = std::move(c.crc24B);
 }
 
-void ldpc_segmenter_impl::compute_nof_segments()
-{
-  if (nof_tb_bits_in <= max_segment_length) {
-    nof_segments    = 1;
-    nof_tb_bits_out = nof_tb_bits_in;
-  } else {
-    nof_segments    = divide_ceil(nof_tb_bits_in, max_segment_length - SEG_CRC_LENGTH);
-    nof_tb_bits_out = nof_tb_bits_in + nof_segments * SEG_CRC_LENGTH;
-  }
-}
-
 void ldpc_segmenter_impl::compute_lifting_size()
 {
   unsigned ref_length = 22;
@@ -142,7 +131,6 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   check_inputs(described_segments, transport_block, cfg);
 
   base_graph         = cfg.base_graph;
-  max_segment_length = (base_graph == base_graph_t::BG1) ? MAX_BG1_BLOCK_LENGTH : MAX_BG2_BLOCK_LENGTH;
   // Each transport_block entry is a byte, and TBS can always be expressed as an integer number of bytes (see, e.g.,
   // TS38.214 Section 5.1.3.2).
   unsigned nof_tb_bits_tmp = transport_block.size() * BITS_PER_BYTE;
@@ -158,7 +146,11 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   unsigned tb_checksum = tb_crc.calculate_byte(transport_block);
   srsvec::bit_unpack(span<uint8_t>(buffer).last(nof_tb_crc_bits), tb_checksum, nof_tb_crc_bits);
 
-  compute_nof_segments();
+  nof_segments    = ldpc::compute_nof_codeblocks(nof_tb_bits_tmp, base_graph);
+  nof_tb_bits_out = nof_tb_bits_in;
+  if (nof_segments > 1) {
+    nof_tb_bits_out += nof_segments * SEG_CRC_LENGTH;
+  }
   compute_lifting_size();
   compute_segment_length();
 

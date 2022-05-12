@@ -20,10 +20,6 @@
 
 namespace srsgnb {
 namespace ldpc {
-/// Maximum length of a block (number of information bits) when using base graph BG1.
-constexpr unsigned MAX_BG1_BLOCK_LENGTH = (BG1_N_FULL - BG1_M) * MAX_LIFTING_SIZE;
-/// Maximum length of a block (number of information bits) when using base graph BG2.
-constexpr unsigned MAX_BG2_BLOCK_LENGTH = (BG2_N_FULL - BG2_M) * MAX_LIFTING_SIZE;
 } // namespace ldpc
 
 /// Maximum accepted transport block size.
@@ -54,9 +50,6 @@ public:
                const segment_config&                               cfg) override;
 
 private:
-  /// Computes the number of segments the transport block is split into, as per TS38.212 Section 5.2.2.
-  void compute_nof_segments();
-
   /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
   void compute_lifting_size();
 
@@ -78,8 +71,6 @@ private:
   /// \name Attributes relative to TS38.212 Section 5.2.2.
   ///@{
 
-  /// Maximum length of a segment (corresponds to \f$K_{cb}\f$ in ).
-  unsigned max_segment_length = 0;
   /// Final length of a segment (corresponds to \f$K\f$).
   unsigned segment_length = 0;
   /// Number of bits in the transport block (corresponds to \f$B\f$).

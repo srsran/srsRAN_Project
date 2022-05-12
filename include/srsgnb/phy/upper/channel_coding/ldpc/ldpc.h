@@ -16,6 +16,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
 
+#include "srsgnb/support/math_utils.h"
 #include <array>
 #include <memory>
 
@@ -97,6 +98,24 @@ static constexpr uint8_t FILLER_BIT = 254;
 
 /// Maximum LDPC encoded codeblock size in bits.
 static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
+
+/// \brief Computes the number of codeblocks from the transport block size.
+///
+/// \param[in] tbs Transport block size as a number of bits (not including CRC).
+/// \param[in] bg  Base graph.
+/// \return The number of codeblocks a transport block of size \c tbs is encoded into when using using base graph \c bg.
+inline constexpr unsigned compute_nof_codeblocks(unsigned tbs, base_graph_t bg)
+{
+  constexpr unsigned CBLOC_CRC_LENGTH = 24;
+  constexpr unsigned MAX_BITS_CRC16   = 3824;
+  unsigned           tb_and_crc_bits  = tbs + ((tbs <= MAX_BITS_CRC16) ? 16 : 24);
+
+  unsigned max_segment_length = (bg == base_graph_t::BG1) ? 8448 : 3840;
+
+  return ((tb_and_crc_bits <= max_segment_length)
+              ? 1
+              : divide_ceil(tb_and_crc_bits, max_segment_length - CBLOC_CRC_LENGTH));
+}
 
 } // namespace ldpc
 
