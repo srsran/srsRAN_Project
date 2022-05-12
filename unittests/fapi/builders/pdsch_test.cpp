@@ -106,7 +106,7 @@ static void test_codeword_basic_parameters()
   TESTASSERT_EQ(mcs_index, pdu.cws[0].mcs_index);
   TESTASSERT_EQ(rv_index, pdu.cws[0].rv_index);
   TESTASSERT_EQ(qam_mod, pdu.cws[0].qam_mod_order);
-  TESTASSERT_EQ(target_code_rate, pdu.cws[0].target_code_rate);
+  TESTASSERT_EQ(target_code_rate * 10, pdu.cws[0].target_code_rate);
 }
 
 static void test_dmrs_parameters()
@@ -211,11 +211,11 @@ static void test_allocation_in_time_parameters()
 static void test_tx_power_info_parameters()
 {
   for (int power = -8; power != 17; ++power) {
-    for (auto ss_profile : {ss_profile_nr_type::dB0,
-                            ss_profile_nr_type::dB6,
-                            ss_profile_nr_type::L1_use_profile_sss,
-                            ss_profile_nr_type::dB3,
-                            ss_profile_nr_type::dB_minus_3}) {
+    for (auto ss_profile : {pdsch_ss_profile_nr_type::dB0,
+                            pdsch_ss_profile_nr_type::dB6,
+                            pdsch_ss_profile_nr_type::L1_use_profile_sss,
+                            pdsch_ss_profile_nr_type::dB3,
+                            pdsch_ss_profile_nr_type::dB_minus_3}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 
@@ -255,12 +255,12 @@ static void test_maintenance_v3_bwp_parameters()
 {
   std::uniform_int_distribution<unsigned> dist(0, 274);
 
-  for (auto trans_type : {dl_pdsch_trans_type::interleaved_common_any_coreset0_not_present,
-                          dl_pdsch_trans_type::interleaved_common_type0_coreset0,
-                          dl_pdsch_trans_type::interleaved_common_any_coreset0_present,
-                          dl_pdsch_trans_type::interleaved_other,
-                          dl_pdsch_trans_type::non_interleaved_common_ss,
-                          dl_pdsch_trans_type::non_interleaved_other}) {
+  for (auto trans_type : {pdsch_trans_type::interleaved_common_any_coreset0_not_present,
+                          pdsch_trans_type::interleaved_common_type0_coreset0,
+                          pdsch_trans_type::interleaved_common_any_coreset0_present,
+                          pdsch_trans_type::interleaved_other,
+                          pdsch_trans_type::non_interleaved_common_ss,
+                          pdsch_trans_type::non_interleaved_other}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -269,7 +269,7 @@ static void test_maintenance_v3_bwp_parameters()
 
     builder.set_maintenance_v3_bwp_parameters(trans_type, start_point, initial_dl_bwp_size);
 
-    TESTASSERT_EQ(trans_type, pdu.pdsch_maintenance_v3.pdsch_trans_type);
+    TESTASSERT_EQ(trans_type, pdu.pdsch_maintenance_v3.trans_type);
     TESTASSERT_EQ(start_point, pdu.pdsch_maintenance_v3.coreset_start_point);
     TESTASSERT_EQ(initial_dl_bwp_size, pdu.pdsch_maintenance_v3.initial_dl_bwp_size);
   }

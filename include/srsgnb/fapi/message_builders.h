@@ -344,14 +344,14 @@ public:
 
   /// Sets the codeword basic parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_codeword_builder& set_basic_parameters(uint16_t target_code,
+  dl_pdsch_codeword_builder& set_basic_parameters(float    target_code,
                                                   uint8_t  qam_mod,
                                                   uint8_t  mcs_index,
                                                   uint8_t  mcs_table,
                                                   uint8_t  rv_index,
                                                   uint32_t tb_size)
   {
-    cw.target_code_rate = target_code;
+    cw.target_code_rate = target_code * 10U;
     cw.qam_mod_order    = qam_mod;
     cw.mcs_index        = mcs_index;
     cw.mcs_table        = mcs_table;
@@ -466,7 +466,7 @@ public:
   dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_0(span<const uint8_t>           rb_map,
                                                                  pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
   {
-    pdu.resource_alloc     = pdsch_allocation_type::type_0;
+    pdu.resource_alloc     = pdsch_resource_allocation_type::type_0;
     pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
 
     srsran_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
@@ -489,7 +489,7 @@ public:
                                                                  uint16_t                      rb_size,
                                                                  pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
   {
-    pdu.resource_alloc     = pdsch_allocation_type::type_1;
+    pdu.resource_alloc     = pdsch_resource_allocation_type::type_1;
     pdu.rb_start           = rb_start;
     pdu.rb_size            = rb_size;
     pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
@@ -512,8 +512,8 @@ public:
 
   /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>      power_control_offset_profile_nr,
-                                                     ss_profile_nr_type ss_profile_nr)
+  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>            power_control_offset_profile_nr,
+                                                     pdsch_ss_profile_nr_type ss_profile_nr)
   {
     unsigned power_profile_nr =
         power_control_offset_profile_nr ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U) : 255U;
@@ -554,11 +554,11 @@ public:
 
   /// Sets the maintenance v3 BWP information parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH maintenance parameters v3.
-  dl_pdsch_pdu_builder& set_maintenance_v3_bwp_parameters(dl_pdsch_trans_type pdsch_trans_type,
-                                                          uint16_t            coreset_start_point,
-                                                          uint16_t            initial_dl_bwp_size)
+  dl_pdsch_pdu_builder& set_maintenance_v3_bwp_parameters(pdsch_trans_type trans_type,
+                                                          uint16_t         coreset_start_point,
+                                                          uint16_t         initial_dl_bwp_size)
   {
-    pdu.pdsch_maintenance_v3.pdsch_trans_type    = pdsch_trans_type;
+    pdu.pdsch_maintenance_v3.trans_type          = trans_type;
     pdu.pdsch_maintenance_v3.coreset_start_point = coreset_start_point;
     pdu.pdsch_maintenance_v3.initial_dl_bwp_size = initial_dl_bwp_size;
 

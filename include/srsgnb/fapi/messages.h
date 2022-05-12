@@ -132,7 +132,7 @@ struct dl_pdcch_pdu {
   dl_pdcch_pdu_parameters_v4                  parameters_v4;
 };
 
-enum class dl_pdsch_trans_type : uint8_t {
+enum class pdsch_trans_type : uint8_t {
   non_interleaved_common_ss,
   non_interleaved_other,
   interleaved_common_type0_coreset0,
@@ -152,7 +152,7 @@ struct dl_pdsch_maintenance_parameters_v3 {
   /// Bit position of the second TB inside the tb_crc_required bitmap.
   static constexpr unsigned TB_BITMAP_SECOND_TB_BIT = 1U;
 
-  dl_pdsch_trans_type                           pdsch_trans_type;
+  pdsch_trans_type                              trans_type;
   uint16_t                                      coreset_start_point;
   uint16_t                                      initial_dl_bwp_size;
   ldpc_base_graph_type                          ldpc_base_graph;
@@ -202,9 +202,9 @@ struct dl_pdsch_codeword {
 };
 
 enum class pdsch_low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
-enum class pdsch_allocation_type : uint8_t { type_0, type_1 };
+enum class pdsch_resource_allocation_type : uint8_t { type_0, type_1 };
 enum class pdsch_vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
-enum class ss_profile_nr_type : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
+enum class pdsch_ss_profile_nr_type : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
 enum class dmrs_config_type : uint8_t { type_1, type_2 };
@@ -247,7 +247,7 @@ struct dl_pdsch_pdu {
   uint8_t                                              nscid;
   uint8_t                                              num_dmrs_cdm_grps_no_data;
   uint16_t                                             dmrs_ports;
-  pdsch_allocation_type                                resource_alloc;
+  pdsch_resource_allocation_type                       resource_alloc;
   std::array<uint8_t, MAX_SIZE_RB_BITMAP>              rb_bitmap;
   uint16_t                                             rb_start;
   uint16_t                                             rb_size;
@@ -257,7 +257,7 @@ struct dl_pdsch_pdu {
   // :TODO: PTRS
   // :TODO: beamforming
   uint8_t                                  power_control_offset_profile_nr;
-  ss_profile_nr_type                       power_control_offset_ss_profile_nr;
+  pdsch_ss_profile_nr_type                 power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
   inline_tb_crc_type                       is_inline_tb_crc;
   std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;

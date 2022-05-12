@@ -16,12 +16,12 @@
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/phy/upper/dmrs_mapping.h"
+#include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
-
 /// Describes the PDSCH processor interface.
 class pdsch_processor
 {
@@ -75,7 +75,8 @@ public:
       /// When the reference point is subcarrier 0 of the common resource block 0 (CRB 0).
       CRB0,
       ///  When the reference point is subcarrier 0 of the physical resource block 0 of the bandwidth part (BWP). Use
-      ///  this option when PDSCH is signalled by CORESET 0. For this case, the BWP parameters must align with CORESET0.
+      ///  this option when PDSCH is signalled by CORESET 0. For this case, the BWP parameters must align with
+      ///  CORESET0.
       PRB0
     } ref_point;
     /// Indicates which symbol in the slot transmit DMRS.
@@ -110,14 +111,17 @@ public:
       NON_INTERLEAVED_COMMON_SS = 0,
       /// Any non-interleaved PDSCH except above case.
       NON_INTERLEAVED_OTHER = 1,
-      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in Type0-PDCCH common search space in CORESET 0.
+      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in Type0-PDCCH common search space in CORESET
+      /// 0.
       /// In this case, BWP start and size of the PDSCH PDU shall be set to CORESET 0 start and size respectively
       /// instead of active downlink BWP start and size.
       INTERLEAVED_COMMON_TYPE0_CORESET0 = 2,
-      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in any common search space other than Type0-PDCCH
+      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in any common search space other than
+      /// Type0-PDCCH
       /// common search space in CORESET 0 when CORESET 0 is configured for the cell.
       INTERLEAVED_COMMON_ANY_CORESET0_PRESENT = 3,
-      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in any common search space other than Type0 PDCCH
+      /// Interleaved PDSCH which is scheduled by PDCCH DCI format 1_0 in any common search space other than Type0
+      /// PDCCH
       /// common search space in CORESET 0 when CORESET 0 is not configured for the cell.
       INTERLEAVED_COMMON_ANY_CORESET0_NOT_PRESENT = 4,
       /// Any interleaved PDSCH which not fall into above 3 interleaved PDSCH categories.

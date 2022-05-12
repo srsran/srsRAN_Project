@@ -174,70 +174,9 @@ static void ssb_conversion_test()
   }
 }
 
-
-static void pdsch_conversion_test(){
-
-
-
-
-
-
-  std::array<dl_pdsch_codeword, MAX_NUM_CW_PER_PDU> cws;
-
-  uint8_t                                           transmission_scheme;
-
-  uint16_t                                          dl_dmrs_symb_pos;
-  dmrs_type                                         dmrs_config_type;
-  uint16_t                                          pdsch_dmrs_scrambling_id;
-  uint16_t                                          pdsch_dmrs_scrambling_id_compl;
-  uint8_t                                           low_papr_dmrs;
-  uint8_t                                           nscid;
-  uint8_t                                           num_dmrs_cdm_grps_no_data;
-  uint16_t                                          dmrs_ports;
-  pdsch_allocation_type                             resource_alloc;
-  std::array<uint8_t, 36>                           rb_bitmap;
-  uint16_t                                          rb_start;
-  uint16_t                                          rb_size;
-  uint8_t                                           vrb_to_prb_mapping;
-  uint8_t                                           start_symbol_index;
-  uint8_t                                           nr_of_symbols;
-  //: TODO: PTRS
-  //: TODO: beamforming
-  uint8_t                            power_control_offset_profile_nr;
-  ss_profile_nr_type                 power_control_offset_ss_profile_nr;
-  uint8_t                            is_last_cb_present;
-  uint8_t                            is_inline_tb_crc;
-  std::array<uint32_t, 2>            dl_tb_crc_cw;
-  dl_pdsch_maintenance_parameters_v3 pdsch_maintenance_v3;
-  dl_pdsch_ptrs_maintenance_v3       ptrs_maintenance_v3;
-  //: TODO: Rel16 PDSCH params v3
-  dl_pdsch_parameters_v4 pdsch_parameters_v4;
-
-  for(unsigned pdubitmap = 0; pdubitmap != 4; ++pdubitmap){
-    for(unsigned rnti = 0; rnti != 2000; ++rnti){
-      for(unsigned pdu_index = 0; pdu_index != 2000; ++pdu_index){
-        for(unsigned bwp_size = 0; bwp_size != 2000; ++bwp_size){
-          for(unsigned bwp_start = 0; bwp_start != 2000; ++bwp_start){
-              for(unsigned cyclic_prefix = 0; cyclic_prefix != 2; ++cyclic_prefix){
-                for(unsigned nid_pdsch = 0; nid_pdsch != 2; ++nid_pdsch){
-                  for(unsigned ref_point = 0; ref_point != 2; ++ref_point){
-
-                  }
-                }
-              }
-            }
-        }
-      }
-    }
-  }
-
-}
-
 int main()
 {
   ssb_conversion_test();
-
-  pdsch_conversion_test();
 
   fmt::print("Success\n");
   return 0;

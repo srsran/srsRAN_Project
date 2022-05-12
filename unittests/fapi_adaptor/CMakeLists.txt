@@ -19,3 +19,7 @@ add_test(fapi_adaptor_performance_dl_tti_request fapi_adaptor_performance_dl_tti
 add_executable(pdcch_adaptor_test pdcch_adaptor_test.cpp)
 target_link_libraries(pdcch_adaptor_test pdcch_fapi_adaptor srslog)
 add_test(pdcch_adaptor_test pdcch_adaptor_test)
+
+add_executable(pdsch_adaptor_test pdsch_adaptor_test.cpp)
+target_link_libraries(pdsch_adaptor_test pdsch_fapi_adaptor srslog)
+add_test(pdsch_adaptor_test pdsch_adaptor_test)

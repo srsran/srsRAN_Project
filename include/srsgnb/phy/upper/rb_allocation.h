@@ -66,6 +66,9 @@ private:
                                           unsigned                bwp_start_rb);
 
 public:
+  /// Default constructor.
+  rb_allocation() = default;
+
   /// \brief Build resource allocation from a resource block index list. This constructor is a Type0 mapping.
   ///
   /// \param[in] vrb_indexes Provides a list of Virtual Resource Blocks indexes.
