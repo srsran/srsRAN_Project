@@ -8,25 +8,20 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_COPY_H_
-#define SRSGNB_SRSVEC_COPY_H_
+#ifndef SRSGNB_SRSVEC_COPY_H
+#define SRSGNB_SRSVEC_COPY_H
 
+#include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
 
 namespace srsgnb {
 namespace srsvec {
 
-template <typename T>
-void copy(span<T> dst, span<T> src)
+template <typename T, typename U>
+void copy(T&& dst, const U& src)
 {
-  srsgnb_srsvec_assert_size(dst, src);
-
-  std::copy(src.begin(), src.end(), dst.begin());
-}
-
-template <typename T>
-void copy(span<T> dst, span<const T> src)
-{
+  static_assert(detail::is_span_compatible<T>::value, "Template type is not compatible with a span");
+  static_assert(detail::is_span_compatible<U>::value, "Template type is not compatible with a span");
   srsgnb_srsvec_assert_size(dst, src);
 
   std::copy(src.begin(), src.end(), dst.begin());
@@ -35,4 +30,4 @@ void copy(span<T> dst, span<const T> src)
 } // namespace srsvec
 } // namespace srsgnb
 
-#endif // SRSGNB_SRSVEC_COPY_H_
+#endif // SRSGNB_SRSVEC_COPY_H
