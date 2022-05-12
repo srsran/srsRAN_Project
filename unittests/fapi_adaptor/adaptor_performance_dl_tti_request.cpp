@@ -158,7 +158,7 @@ static void pdcch_conversion_benchark()
     builder_dci.set_tx_power_info_parameter(profile_nr);
 
     // Payload.
-    static_vector<uint8_t, 128> payload(128,1);
+    static_vector<uint8_t, 128> payload(128, 1);
     static_vector<uint8_t, 128> packed_payload;
     packed_payload.resize(std::ceil(payload.size() / 8.F));
     srsvec::bit_pack({packed_payload}, {payload});

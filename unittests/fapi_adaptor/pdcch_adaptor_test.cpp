@@ -1,3 +1,15 @@
+/**
+ *
+ * \section COPYRIGHT
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/srsvec/bit.h"
@@ -28,13 +40,12 @@ static void pdcch_conversion_test()
   std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
   std::uniform_real_distribution<float>   power_dmrs_dist(-32.767, 32.767);
 
-  for (const auto& cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
-    for (const auto& cce_reg_mapping :
-         {cce_to_reg_mapping_type::non_interleaved, cce_to_reg_mapping_type::interleaved}) {
-      for (const auto& reg_bundle : {2U, 3U, 6U}) {
-        for (const auto& interleaver_size : {2U, 3U, 6U}) {
-          for (const auto& type : {pdcch_coreset_type::pbch_or_sib1, pdcch_coreset_type::other}) {
-            for (const auto& precoder :
+  for (auto cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
+    for (auto cce_reg_mapping : {cce_to_reg_mapping_type::non_interleaved, cce_to_reg_mapping_type::interleaved}) {
+      for (auto reg_bundle : {2U, 3U, 6U}) {
+        for (auto interleaver_size : {2U, 3U, 6U}) {
+          for (auto type : {pdcch_coreset_type::pbch_or_sib1, pdcch_coreset_type::other}) {
+            for (auto precoder :
                  {precoder_granularity_type::same_as_reg_bundle, precoder_granularity_type::all_contiguous_rbs}) {
               for (int power_nr = -9; power_nr != -7; ++power_nr) {
                 for (int power = -33; power != 3; power += 3) {
@@ -55,7 +66,6 @@ static void pdcch_conversion_test()
                   dl_pdcch_pdu         pdu;
                   dl_pdcch_pdu_builder builder(pdu);
 
-                  // :TODO: generate  better frequency domain resource bitmap.
                   static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
 
                   // Always work with the biggest numerology.
