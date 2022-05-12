@@ -12,6 +12,7 @@
 #define SRSGNB_UNIQUE_COROUTINE_H
 
 #include "../coroutine.h"
+#include <utility>
 
 namespace srsgnb {
 
