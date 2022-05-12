@@ -48,14 +48,14 @@ public:
 class f1_test_dummy : public f1ap_du_configurer
 {
 public:
-  optional<du_setup_params>                            last_f1_setup{};
+  optional<f1_setup_request_message>                   last_f1_setup{};
   optional<f1ap_du_ue_create_request>                  last_ue_create{};
   wait_manual_event_tester<du_setup_result>            wait_f1_setup;
   wait_manual_event_tester<f1ap_du_ue_create_response> wait_ue_create;
 
-  async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) override
+  async_task<du_setup_result> handle_f1ap_setup_request(const f1_setup_request_message& msg) override
   {
-    last_f1_setup = params;
+    last_f1_setup = msg;
     return wait_f1_setup.launch();
   }
 

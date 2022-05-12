@@ -11,8 +11,10 @@
 #ifndef SRSGNB_INITIAL_DU_SETUP_PROCEDURE_H
 #define SRSGNB_INITIAL_DU_SETUP_PROCEDURE_H
 
+#include "../converters/f1_procedure_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "du_manager_context.h"
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -27,10 +29,13 @@ public:
 
   void operator()(coro_context<async_task<void> >& ctx)
   {
+    f1_setup_request_message request_msg = {};
+    f1ap::fill_f1_setup_request_message(request_msg, cfg.setup_params);
+
     CORO_BEGIN(ctx);
 
     // Initiate F1 Setup.
-    CORO_AWAIT_VALUE(du_ctxt.f1_setup_result, cfg.f1ap->f1ap_du_setup_request(cfg.setup_params));
+    CORO_AWAIT_VALUE(du_ctxt.f1_setup_result, cfg.f1ap->handle_f1ap_setup_request(request_msg));
 
     // Handle F1 setup result.
     if (du_ctxt.f1_setup_result.result.has_value()) {

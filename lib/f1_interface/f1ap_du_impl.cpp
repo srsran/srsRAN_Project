@@ -10,6 +10,7 @@
 
 #include "f1ap_du_impl.h"
 #include "../ran/gnb_format.h"
+#include "f1_procedure_asn1_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
@@ -20,8 +21,11 @@ f1ap_du_impl::f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_) :
   logger(srslog::fetch_basic_logger("F1AP")), f1c(f1c_pdu_handler_)
 {}
 
-async_task<du_setup_result> f1ap_du_impl::f1ap_du_setup_request(const du_setup_params& params)
+async_task<du_setup_result> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& msg)
 {
+  asn1::f1ap::f1_setup_request_s request;
+  fill_asn1_f1_setup_request(request, msg);
+
   // TODO: add procedure implementation
   return launch_async([this, res = du_setup_result{}](coro_context<async_task<du_setup_result> >& ctx) mutable {
     CORO_BEGIN(ctx);

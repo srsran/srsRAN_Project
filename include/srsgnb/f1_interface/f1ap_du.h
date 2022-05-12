@@ -50,6 +50,10 @@ struct du_setup_params {
   std::string gnb_du_name;
 };
 
+struct f1_setup_request_message {
+  du_setup_params setup_params;
+};
+
 struct du_setup_result {
   expected<asn1::f1ap::f1_setup_resp_s, asn1::f1ap::f1_setup_fail_s> result;
 };
@@ -59,8 +63,10 @@ class f1ap_du_configurer
 public:
   virtual ~f1ap_du_configurer() = default;
 
-  /// Initiates DU setup procedure.
-  virtual async_task<du_setup_result> f1ap_du_setup_request(const du_setup_params& params) = 0;
+  /// \brief Initiates F1 Setup procedure.
+  /// \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3 and
+  /// awaits the response.
+  virtual async_task<du_setup_result> handle_f1ap_setup_request(const f1_setup_request_message& msg) = 0;
 
   /// Initiates creation of UE context in F1.
   virtual async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;
