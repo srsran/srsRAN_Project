@@ -39,9 +39,9 @@ struct value_type_of_container<T<U...> > {
   using type = const typename get_first_type_in_pack<U...>::type;
 };
 
-template <typename T, size_t N>
-struct value_type_of_container<std::array<T, N> > {
-  using type = const T;
+template <template <typename, size_t> class T, typename U, size_t N>
+struct value_type_of_container<T<U, N> > {
+  using type = const U;
 };
 
 template <typename T>
@@ -75,6 +75,14 @@ template <typename T>
 struct is_arithmetic_span_compatible<T,
                                      std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T> > >::value &&
                                                       std::is_arithmetic<value_type_of_t<T> >::value> >
+  : std::true_type {};
+
+/// Checks if T is compatible with a span.
+template <typename T, typename = void>
+struct is_span_compatible : std::false_type {};
+
+template <typename T>
+struct is_span_compatible<T, std::enable_if_t<std::is_convertible<T, span<value_type_of_t<T> > >::value> >
   : std::true_type {};
 
 } // namespace detail
