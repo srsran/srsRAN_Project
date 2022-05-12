@@ -29,10 +29,9 @@ struct get_first_type_in_pack {
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T> >;
 
+/// Default template left undefined to avoid pages of compiler template errors when substitution fails.
 template <typename T>
-struct value_type_of_container {
-  using type = void;
-};
+struct value_type_of_container;
 
 template <template <typename...> class T, typename... U>
 struct value_type_of_container<T<U...> > {
