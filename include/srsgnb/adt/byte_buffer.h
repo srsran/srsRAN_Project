@@ -233,10 +233,11 @@ class byte_buffer
     iterator_impl& operator+=(difference_type n)
     {
       offset += n;
-      while (offset > current_segment->length()) {
+      while (current_segment != nullptr and offset >= current_segment->length()) {
         offset -= current_segment->length();
         current_segment = current_segment->next();
       }
+      srsran_sanity_check(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
       return *this;
     }
 
