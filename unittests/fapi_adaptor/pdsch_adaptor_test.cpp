@@ -37,26 +37,6 @@ static float ss_profile_nr_to_float(pdsch_ss_profile_nr_type type)
   }
 }
 
-/// Returns a PDSCH PDU modulation scheme from the FAPI parameter.
-static modulation_scheme get_modulation(uint8_t modulation)
-{
-  switch (modulation) {
-    case 2:
-      return modulation_scheme::QPSK;
-    case 4:
-      return modulation_scheme::QAM16;
-    case 6:
-      return modulation_scheme::QAM64;
-    case 8:
-      return modulation_scheme::QAM256;
-    default:
-      srsran_assert(0, "PDSCH - Invalid modulation order");
-      break;
-  }
-
-  return modulation_scheme::BPSK;
-}
-
 static void pdsch_conversion_test()
 {
   // Random generators.
@@ -194,7 +174,7 @@ static void pdsch_conversion_test()
 
                           // Codeword.
                           TESTASSERT_EQ(float(target_code), proc_pdu.codewords[0].target_code_rate);
-                          TESTASSERT_EQ(get_modulation(qam_mod), proc_pdu.codewords[0].modulation);
+                          TESTASSERT_EQ(static_cast<modulation_scheme>(qam_mod), proc_pdu.codewords[0].modulation);
                           TESTASSERT_EQ(mcs, proc_pdu.codewords[0].mcs);
                           TESTASSERT_EQ(mcs_table, static_cast<unsigned>(proc_pdu.codewords[0].mcs_table));
                           TESTASSERT_EQ(rv_index, proc_pdu.codewords[0].rv);
