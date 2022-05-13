@@ -368,6 +368,122 @@ void test_byte_buffer_from_hexdump()
   TESTASSERT(pdu == bytes);
 }
 
+void test_byte_buffer_plus_equal_op()
+{
+  // Test with small vector of bytes
+  // Make initial vector
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+  pdu.append(bytes);
+
+  auto it = pdu.begin();
+  TESTASSERT(pdu.cend() == nullptr);
+  TESTASSERT(it != pdu.cend());
+
+  // Point reader at 1 byte before the end
+  it += (pdu.length() - 1);
+  TESTASSERT(it != pdu.cend());
+
+  // Point reader at the end
+  it = pdu.begin();
+  it += pdu.length();
+  TESTASSERT(it == pdu.cend());
+
+  // Test with big vector of bytes
+  bytes = make_big_vec();
+  pdu.clear();
+  pdu.append(bytes);
+
+  it = pdu.begin();
+  TESTASSERT(pdu.cend() == nullptr);
+  TESTASSERT(it != pdu.cend());
+
+  // Point reader at 1 byte before the end
+  it += (pdu.length() - 1);
+  TESTASSERT(pdu.cend() != it);
+
+  // Point reader at the end
+  it = pdu.begin();
+  it += pdu.length();
+  TESTASSERT(it == pdu.cend());
+
+  // Test with byte buffer made of several segments
+  pdu.append(bytes);
+  pdu.append(bytes);
+
+  it = pdu.begin();
+  TESTASSERT(pdu.cend() == nullptr);
+  TESTASSERT(pdu.cend() != it);
+
+  // Point reader at 1 byte before the end
+  it += (pdu.length() - 1);
+  TESTASSERT(it != pdu.cend());
+
+  // Point reader at the end
+  it = pdu.begin();
+  it += pdu.length();
+  TESTASSERT(it == pdu.cend());
+}
+
+void test_byte_buffer_reader_split_advance()
+{
+  // Test with small vector of bytes
+  // Make initial vector
+  byte_buffer          pdu;
+  std::vector<uint8_t> bytes = make_small_vec();
+  pdu.append(bytes);
+
+  auto it = pdu.begin();
+  TESTASSERT(pdu.cend() == nullptr);
+  TESTASSERT(it != pdu.cend());
+
+  // Get reader and check that beginning and end coincide with the original
+  byte_buffer_reader pdu_reader{byte_buffer_view{pdu}};
+  TESTASSERT(pdu_reader.begin() == pdu.begin());
+  TESTASSERT(pdu_reader.end() == pdu.end());
+
+  // Stop reader at 1 byte to the end
+  auto view = pdu_reader.split_and_advance(pdu.length() - 1);
+  TESTASSERT(pdu_reader.begin() != pdu_reader.end());
+  TESTASSERT(pdu_reader.end() == pdu.end());
+  TESTASSERT(view.begin() == pdu.begin());
+  TESTASSERT(view.end() == pdu_reader.begin());
+
+  // Move reader 1 byte ahead, to the end
+  view = pdu_reader.split_and_advance(1);
+  TESTASSERT(pdu_reader.begin() == pdu_reader.end());
+  TESTASSERT(view.end() == pdu_reader.begin());
+
+  // Test with byte buffer made of several segments
+  // Make initial vector
+  bytes = make_big_vec();
+  pdu.clear();
+  pdu.append(bytes);
+  pdu.append(bytes);
+  pdu.append(bytes);
+
+  it = pdu.begin();
+  TESTASSERT(pdu.cend() == nullptr);
+  TESTASSERT(it != pdu.cend());
+
+  // Get reader and check that beginning and end coincide with the original
+  byte_buffer_reader pdu_long_reader{byte_buffer_view{pdu}};
+  TESTASSERT(pdu_long_reader.begin() == pdu.begin());
+  TESTASSERT(pdu_long_reader.end() == pdu.end());
+
+  // Stop reader at 1 byte to the end
+  view = pdu_long_reader.split_and_advance(pdu.length() - 1);
+  TESTASSERT(pdu_long_reader.begin() != pdu_long_reader.end());
+  TESTASSERT(pdu_long_reader.end() == pdu.end());
+  TESTASSERT(view.begin() == pdu.begin());
+  TESTASSERT(view.end() == pdu_long_reader.begin());
+
+  // Move reader 1 byte ahead, to the end
+  view = pdu_long_reader.split_and_advance(1);
+  TESTASSERT(pdu_long_reader.begin() == pdu_long_reader.end());
+  TESTASSERT(view.end() == pdu_long_reader.begin());
+}
+
 void test_byte_buffer_writer()
 {
   byte_buffer        pdu;
@@ -409,5 +525,7 @@ int main()
   test_byte_buffer_linearize();
   test_byte_buffer_initializer_list();
   test_byte_buffer_from_hexdump();
+  test_byte_buffer_plus_equal_op();
+  test_byte_buffer_reader_split_advance();
   test_byte_buffer_writer();
 }
