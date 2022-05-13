@@ -12,7 +12,11 @@
 #define SRSGNB_MAC_CTRL_TEST_DUMMIES_H
 
 #include "../../lib/mac/mac_config_interfaces.h"
+#include "../../lib/mac/mac_ctrl/mac_scheduler_configurator.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
+#include "srsgnb/du_high/du_l2_ul_executor_mapper.h"
+#include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/task_executor.h"
 
@@ -152,6 +156,18 @@ public:
   optional<ul_ccch_indication_message> last_ccch_ind;
 
   void on_ul_ccch_msg_received(const ul_ccch_indication_message& msg) override { last_ccch_ind = msg; }
+
+  bool verify_ul_ccch_msg(const ul_ccch_indication_message& test_msg)
+  {
+    if (not last_ccch_ind.has_value()) {
+      return false;
+    }
+    bool test = last_ccch_ind.value().crnti == test_msg.crnti &&
+                last_ccch_ind.value().cell_index == test_msg.cell_index &&
+                last_ccch_ind.value().slot_rx == test_msg.slot_rx &&
+                last_ccch_ind.value().subpdu.length() == test_msg.subpdu.length();
+    return test;
+  }
 };
 
 class dummy_mac_cell_result_notifier : public mac_cell_result_notifier

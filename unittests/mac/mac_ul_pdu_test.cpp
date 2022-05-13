@@ -8,11 +8,47 @@
  *
  */
 
-#include "../../lib/mac/mac_ul/mac_ul_sch_pdu.h"
-#include "../../lib/mac/mac_ul/ul_bsr.h"
+#include "../../lib/mac/du_rnti_table.h"
+#include "../../lib/mac/mac_config.h"
+#include "../../lib/mac/mac_ul/mac_ul_processor.h"
+#include "mac_ctrl_test_dummies.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
+#include "srsgnb/scheduler/scheduler_feedback_handler.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
+
+class sched_cfg_dummy_notifier : public sched_configuration_notifier
+{
+public:
+  void on_ue_config_complete(du_ue_index_t ue_index) override {}
+  void on_ue_delete_response(du_ue_index_t ue_index) override {}
+};
+
+class dummy_scheduler_feedback_handler : public scheduler_feedback_handler
+{
+public:
+  dummy_scheduler_feedback_handler() = default;
+  void ul_sr_info(const sr_indication_message& sr) override{};
+  void ul_bsr(const ul_bsr_indication_message& bsr) override { last_bsr_msg = bsr; };
+
+  bool verify_bsr_msg(ul_bsr_indication_message& test_usr_msg)
+  {
+    bool test_msg = last_bsr_msg.cell_index == test_usr_msg.cell_index &&
+                    last_bsr_msg.ue_index == test_usr_msg.ue_index && last_bsr_msg.crnti == test_usr_msg.crnti &&
+                    last_bsr_msg.type == test_usr_msg.type;
+    for (size_t n = 0; n < test_usr_msg.reported_lcgs.size(); ++n) {
+      test_msg = test_msg && last_bsr_msg.reported_lcgs[n].lcg_id == test_usr_msg.reported_lcgs[n].lcg_id &&
+                 last_bsr_msg.reported_lcgs[n].nof_bytes == test_usr_msg.reported_lcgs[n].nof_bytes;
+    }
+
+    return test_msg;
+  }
+
+private:
+  ul_bsr_indication_message last_bsr_msg;
+};
 
 void test_mac_ul_subpdu_ccch_48_unpack()
 {
@@ -165,10 +201,10 @@ void test_mac_ul_subpdu_long_bsr_unpack_decode()
   bool lcg_0_flag = (bool)(lbsr.bitmap & 0b00000001U);
   TESTASSERT_EQ(true, lcg_0_flag);
 
-  unsigned buffer_size_lcg0 = lbsr.list[1].buffer_size;
-  TESTASSERT_EQ(171U, buffer_size_lcg0);
-  unsigned buffer_size_lcg7 = lbsr.list[0].buffer_size;
-  TESTASSERT_EQ(217U, buffer_size_lcg7);
+  unsigned buffer_size_lcg0 = lbsr.list[0].buffer_size;
+  TESTASSERT_EQ(217U, buffer_size_lcg0);
+  unsigned buffer_size_lcg7 = lbsr.list[1].buffer_size;
+  TESTASSERT_EQ(171U, buffer_size_lcg7);
 
   fmt::print("subPDU: {}\n", subpdu);
 }
@@ -450,9 +486,285 @@ void test_mac_ul_pdu()
   fmt::print("PDU:\n  Hex={:X}\n  subPDUs: {}\n", fmt::join(msg.begin(), msg.end(), ""), pdu);
 }
 
+void test_rx_indication_processing_ccch_48bits()
+{
+  auto& logger = srslog::fetch_basic_logger("TEST");
+  // Use manual task worker for this unittest
+  manual_task_worker        task_exec{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier phy_notifier;
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+
+  // Add 1 UE to RNTI table
+  du_rnti_table rnti_table{};
+  rnti_t        ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t ue1_idx  = to_du_ue_index(1U);
+  rnti_table.add_ue(ue1_rnti, ue1_idx);
+
+  // Create MAC UL processor
+  dummy_scheduler_feedback_handler sched_feedback{};
+  mac_ul_processor                 mac_ul(cfg, sched_feedback, rnti_table);
+
+  // Create PDU content
+  mac_rx_pdu pdu{.rnti = to_rnti(0x4601), .rapid = 1, .harq_id = 0};
+  // R/LCID MAC subheader | MAC SDU (UL CCCH 48 bits)
+  // { 0x34  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06}  (Random 6B sequence)
+  pdu.pdu.append({0x34, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
+
+  // Create RX data indication
+  mac_rx_data_indication rx_msg;
+  rx_msg.cell_index = to_du_cell_index(1U);
+  rx_msg.sl_rx      = slot_point{0, 2};
+  rx_msg.pdus.push_back(pdu);
+
+  // Send RX data indication to MAC UL
+  mac_ul.handle_rx_data_indication(rx_msg);
+
+  // Call task executor manually
+  while (task_exec.has_pending_tasks()) {
+    logger.info("Running next task in main worker");
+    task_exec.try_run_next();
+  }
+
+  // Create UL CCCH indication msg to verify MAC processing of PDU
+  struct ul_ccch_indication_message ul_ccch_msg {};
+  ul_ccch_msg.cell_index = to_du_cell_index(1U);
+  ul_ccch_msg.slot_rx    = slot_point{0, 2};
+  ul_ccch_msg.crnti      = ue1_rnti;
+  // Remove R/R/LCID header (0x34) from PDU
+  ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06});
+
+  // Test if notification sent to DU manager has been received and it is correct
+  TESTASSERT(du_mng_notifier.verify_ul_ccch_msg(ul_ccch_msg));
+}
+
+void test_rx_indication_processing_ccch_64bits()
+{
+  auto& logger = srslog::fetch_basic_logger("TEST");
+  // Use manual task worker for this unittest
+  manual_task_worker        task_exec{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier phy_notifier;
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+
+  // Add 1 UE to RNTI table
+  du_rnti_table rnti_table{};
+  rnti_t        ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t ue1_idx  = to_du_ue_index(1U);
+  rnti_table.add_ue(ue1_rnti, ue1_idx);
+
+  // Create MAC UL processor
+  dummy_scheduler_feedback_handler sched_feedback{};
+  mac_ul_processor                 mac_ul(cfg, sched_feedback, rnti_table);
+
+  // Create PDU content
+  mac_rx_pdu pdu{.rnti = to_rnti(0x4601), .rapid = 1, .harq_id = 0};
+  // R/LCID MAC subheader | MAC SDU (UL CCCH 64 bits)
+  // { 0x00  | 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54}  (Random 8B sequence)
+  pdu.pdu.append({0x00, 0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
+
+  // Create RX data indication
+  mac_rx_data_indication rx_msg;
+  rx_msg.cell_index = to_du_cell_index(1);
+  rx_msg.sl_rx      = slot_point{0, 2};
+  rx_msg.pdus.push_back(pdu);
+
+  // Send RX data indication to MAC UL
+  mac_ul.handle_rx_data_indication(rx_msg);
+
+  // Call task executor manually
+  while (task_exec.has_pending_tasks()) {
+    logger.info("Running next task in main worker");
+    task_exec.try_run_next();
+  }
+
+  // Create UL CCCH indication msg to verify MAC processing of PDU
+  struct ul_ccch_indication_message ul_ccch_msg {};
+  ul_ccch_msg.cell_index = to_du_cell_index(1U);
+  ul_ccch_msg.slot_rx    = slot_point{0, 2};
+  ul_ccch_msg.crnti      = ue1_rnti;
+  // Remove R/R/LCID header (0x00) from PDU
+  ul_ccch_msg.subpdu.append({0x1e, 0x4f, 0xc0, 0x04, 0xa6, 0x06, 0x13, 0x54});
+
+  // Test if notification sent to DU manager has been received and it is correct
+  TESTASSERT(du_mng_notifier.verify_ul_ccch_msg(ul_ccch_msg));
+}
+
+void test_rx_indication_processing_sbsr()
+{
+  auto& logger = srslog::fetch_basic_logger("TEST");
+  // Use manual task worker for this unittest
+  manual_task_worker        task_exec{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier phy_notifier;
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+
+  // Add 1 UE to RNTI table
+  du_rnti_table rnti_table{};
+  rnti_t        ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t ue1_idx  = to_du_ue_index(1U);
+  rnti_table.add_ue(ue1_rnti, ue1_idx);
+
+  // Create MAC UL processor
+  dummy_scheduler_feedback_handler sched_feedback{};
+  mac_ul_processor                 mac_ul(cfg, sched_feedback, rnti_table);
+
+  // Create PDU content
+  mac_rx_pdu pdu{.rnti = to_rnti(0x4601), .rapid = 1, .harq_id = 0};
+  // R/LCID MAC subheader | MAC CE Short BSR
+  // { 0x3d | 0x59}
+  pdu.pdu.append({0x3d, 0x59});
+
+  // Create RX data indication
+  mac_rx_data_indication rx_msg_sbsr;
+  rx_msg_sbsr.cell_index = to_du_cell_index(1);
+  rx_msg_sbsr.sl_rx      = slot_point(0, 1);
+  rx_msg_sbsr.pdus.push_back(pdu);
+
+  // Send RX data indication to MAC UL
+  mac_ul.handle_rx_data_indication(rx_msg_sbsr);
+
+  // Call task executor manually
+  while (task_exec.has_pending_tasks()) {
+    logger.info("Running next task in main worker");
+    task_exec.try_run_next();
+  }
+
+  // Create UL BSR indication  message to compare with one passed to the scheduler
+  ul_bsr_indication_message ul_bsr_ind{};
+  ul_bsr_ind.cell_index = to_du_cell_index(1U);
+  ul_bsr_ind.ue_index   = ue1_idx;
+  ul_bsr_ind.crnti      = ue1_rnti;
+  ul_bsr_ind.type       = bsr_format::SHORT_BSR;
+  ul_bsr_lcg_report sbsr_report{.lcg_id = 2U, .nof_bytes = 28581};
+  ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
+
+  // Test if notification sent to Scheduler has been received and it is correct
+  TESTASSERT(sched_feedback.verify_bsr_msg(ul_bsr_ind));
+}
+
+void test_rx_indication_processing_s_trunc_bsr()
+{
+  auto& logger = srslog::fetch_basic_logger("TEST");
+  // Use manual task worker for this unittest
+  manual_task_worker        task_exec{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier phy_notifier;
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+
+  // Add 1 UE to RNTI table
+  du_rnti_table rnti_table{};
+  rnti_t        ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t ue1_idx  = to_du_ue_index(1U);
+  rnti_table.add_ue(ue1_rnti, ue1_idx);
+
+  // Create MAC UL processor
+  dummy_scheduler_feedback_handler sched_feedback{};
+  mac_ul_processor                 mac_ul(cfg, sched_feedback, rnti_table);
+
+  // Create PDU content
+  mac_rx_pdu pdu{.rnti = to_rnti(0x4601), .rapid = 1, .harq_id = 0};
+  // R/LCID MAC subheader | MAC CE Short Truncated BSR
+  // { 0x3b | 0xae}
+  pdu.pdu.append({0x3b, 0xae});
+
+  // Create RX data indication
+  mac_rx_data_indication rx_msg_sbsr;
+  rx_msg_sbsr.cell_index = to_du_cell_index(1);
+  rx_msg_sbsr.sl_rx      = slot_point(0, 1);
+  rx_msg_sbsr.pdus.push_back(pdu);
+
+  // Send RX data indication to MAC UL
+  mac_ul.handle_rx_data_indication(rx_msg_sbsr);
+
+  // Call task executor manually
+  while (task_exec.has_pending_tasks()) {
+    logger.info("Running next task in main worker");
+    task_exec.try_run_next();
+  }
+
+  // Create UL BSR indication  message to compare with one passed to the scheduler
+  ul_bsr_indication_message ul_bsr_ind{};
+  ul_bsr_ind.cell_index = to_du_cell_index(1U);
+  ul_bsr_ind.ue_index   = ue1_idx;
+  ul_bsr_ind.crnti      = ue1_rnti;
+  ul_bsr_ind.type       = bsr_format::SHORT_TRUNC_BSR;
+  ul_bsr_lcg_report sbsr_report{.lcg_id = 5U, .nof_bytes = 745};
+  ul_bsr_ind.reported_lcgs.push_back(sbsr_report);
+
+  // Test if notification sent to Scheduler has been received and it is correct
+  TESTASSERT(sched_feedback.verify_bsr_msg(ul_bsr_ind));
+}
+
+void test_rx_indication_processing_long_bsr()
+{
+  auto& logger = srslog::fetch_basic_logger("TEST");
+  // Use manual task worker for this unittest
+  manual_task_worker        task_exec{128};
+  dummy_ul_executor_mapper  ul_exec_mapper{task_exec};
+  dummy_dl_executor_mapper  dl_exec_mapper{&task_exec};
+  dummy_mac_result_notifier phy_notifier;
+  dummy_mac_event_indicator du_mng_notifier;
+  mac_common_config_t       cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, task_exec, phy_notifier};
+
+  // Add 1 UE to RNTI table
+  du_rnti_table rnti_table{};
+  rnti_t        ue1_rnti = to_rnti(0x4601);
+  du_ue_index_t ue1_idx  = to_du_ue_index(1U);
+  rnti_table.add_ue(ue1_rnti, ue1_idx);
+
+  // Create MAC UL processor
+  dummy_scheduler_feedback_handler sched_feedback{};
+  mac_ul_processor                 mac_ul(cfg, sched_feedback, rnti_table);
+
+  // Create PDU content
+  mac_rx_pdu pdu{.rnti = to_rnti(0x4601), .rapid = 1, .harq_id = 0};
+  // R/F/LCID/L MAC subheader | MAC CE Short BSR
+  // { 0x3e, 0x03 | 0x81, 0xd9, 0xab }
+  pdu.pdu.append({0x3e, 0x03, 0x81, 0xd9, 0xab});
+
+  // Create RX data indication
+  mac_rx_data_indication rx_msg_sbsr;
+  rx_msg_sbsr.cell_index = to_du_cell_index(1);
+  rx_msg_sbsr.sl_rx      = slot_point(0, 1);
+  rx_msg_sbsr.pdus.push_back(pdu);
+
+  // Send RX data indication to MAC UL
+  mac_ul.handle_rx_data_indication(rx_msg_sbsr);
+
+  // Call task executor manually
+  while (task_exec.has_pending_tasks()) {
+    logger.info("Running next task in main worker");
+    task_exec.try_run_next();
+  }
+
+  // Create UL BSR indication  message to compare with one passed to the scheduler
+  ul_bsr_indication_message ul_bsr_ind{};
+  ul_bsr_ind.cell_index = to_du_cell_index(1);
+  ul_bsr_ind.ue_index   = ue1_idx;
+  ul_bsr_ind.crnti      = ue1_rnti;
+  ul_bsr_ind.type       = bsr_format::LONG_BSR;
+  ul_bsr_lcg_report bsr_report_lcg0{.lcg_id = 0U, .nof_bytes = 8453028U};
+  ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg0);
+  ul_bsr_lcg_report bsr_report_lcg7{.lcg_id = 7U, .nof_bytes = 468377U};
+  ul_bsr_ind.reported_lcgs.push_back(bsr_report_lcg7);
+
+  // Test if notification sent to Scheduler has been received and it is correct
+  TESTASSERT(sched_feedback.verify_bsr_msg(ul_bsr_ind));
+}
+
 int main()
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
   srslog::init();
 
   // Test Unpacking/decoding function for MAC CEs and SDUs
@@ -468,4 +780,11 @@ int main()
   test_mac_ul_subpdu_se_phr_unpack();
 
   test_mac_ul_pdu();
+
+  // Test generation of RX indication message and dispatching to correct entity.
+  test_rx_indication_processing_ccch_48bits();
+  test_rx_indication_processing_ccch_64bits();
+  test_rx_indication_processing_sbsr();
+  test_rx_indication_processing_s_trunc_bsr();
+  test_rx_indication_processing_long_bsr();
 }

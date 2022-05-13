@@ -91,6 +91,7 @@ long_bsr_report srsgnb::decode_lbsr(bsr_format format, byte_buffer_view payload)
       lcg_bsr_report bsr = {};
       bsr.lcg_id         = i;
       // For the Long truncated, some BSR words can be not present, assume BSR > 0 in that case
+      // TODO Modify this so that it takes LCG priotity into account for LONG TRUNCATED BSR
       if (reader.length() > 0) {
         bsr.buffer_size = *reader;
         ++reader;
