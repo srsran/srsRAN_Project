@@ -82,13 +82,13 @@ bool ra_sched::handle_rach_indication(const rach_indication_message& msg)
   return true;
 }
 
-void ra_sched::run_slot(cell_resource_grid& res_alloc)
+void ra_sched::run_slot(cell_resource_allocator& res_alloc)
 {
-  cell_slot_resource_grid& rar_slot_res = res_alloc[0];
-  unsigned                 msg3_delay;
-  symbol_interval          msg3_symbols;
+  cell_slot_resource_allocator& rar_slot_res = res_alloc[0];
+  unsigned                      msg3_delay;
+  symbol_interval               msg3_symbols;
   get_msg3_delay(cfg.ul_cfg_common, rar_slot_res.slot, msg3_delay, msg3_symbols);
-  cell_slot_resource_grid& msg3_slot_res = res_alloc[msg3_delay];
+  cell_slot_resource_allocator& msg3_slot_res = res_alloc[msg3_delay];
 
   if (not cfg.is_dl_enabled(rar_slot_res.slot) or not cfg.is_ul_enabled(msg3_slot_res.slot)) {
     // Early exit. RAR only allowed if PDCCH and PDSCH are available and respective Msg3 slot is available for UL
@@ -148,9 +148,9 @@ void ra_sched::run_slot(cell_resource_grid& res_alloc)
   }
 }
 
-unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
-                                cell_slot_resource_grid& rar_alloc,
-                                cell_slot_resource_grid& msg3_alloc)
+unsigned ra_sched::allocate_rar(const pending_rar_t&          rar,
+                                cell_slot_resource_allocator& rar_alloc,
+                                cell_slot_resource_allocator& msg3_alloc)
 {
   // TODO: Make smarter algorithm for RAR size derivation
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
@@ -169,7 +169,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   max_nof_allocs =
       std::min(max_nof_allocs, (unsigned)(msg3_alloc.result.ul.puschs.capacity() - msg3_alloc.result.ul.puschs.size()));
   if (max_nof_allocs == 0) {
-    // early exit
+    // early exit.
     log_postponed_rar(rar, "No space in PUSCH for Msg3");
     return 0;
   }
@@ -177,10 +177,10 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   // 3. Check PRBs available in PDSCH for RAR
   prb_interval avail_dl_prbs;
   {
-    unsigned   nof_rar_prbs = nof_prbs_per_rar * max_nof_allocs;
-    prb_bitmap used_prbs    = rar_alloc.dl_prbs;
-    avail_dl_prbs           = find_empty_interval_of_length(used_prbs, nof_rar_prbs, 0);
-    max_nof_allocs          = avail_dl_prbs.length() / nof_prbs_per_rar;
+    unsigned          nof_rar_prbs = nof_prbs_per_rar * max_nof_allocs;
+    const prb_bitmap& used_prbs    = rar_alloc.dl_res_grid.sch_prbs(cfg.dl_cfg_common.init_dl_bwp.generic_params);
+    avail_dl_prbs                  = find_empty_interval_of_length(used_prbs, nof_rar_prbs, 0);
+    max_nof_allocs                 = avail_dl_prbs.length() / nof_prbs_per_rar;
     if (max_nof_allocs == 0) {
       // early exit
       log_postponed_rar(rar, "Not enough PRBs for RAR.");
@@ -191,10 +191,11 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   // 4. Check PRBs available in PUSCH for Msg3
   prb_interval avail_ul_prbs;
   {
-    unsigned   nof_msg3_prbs = nof_prbs_per_msg3 * max_nof_allocs;
-    prb_bitmap used_ul_prbs  = msg3_alloc.ul_prbs;
-    avail_ul_prbs            = find_empty_interval_of_length(used_ul_prbs, nof_msg3_prbs, 0);
-    max_nof_allocs           = avail_ul_prbs.length() / nof_prbs_per_msg3;
+    unsigned nof_msg3_prbs = nof_prbs_per_msg3 * max_nof_allocs;
+    // FIXME: Use UL BWP params.
+    prb_bitmap used_ul_prbs = msg3_alloc.ul_res_grid.sch_prbs(cfg.dl_cfg_common.init_dl_bwp.generic_params);
+    avail_ul_prbs           = find_empty_interval_of_length(used_ul_prbs, nof_msg3_prbs, 0);
+    max_nof_allocs          = avail_ul_prbs.length() / nof_prbs_per_msg3;
     if (max_nof_allocs == 0) {
       // early exit
       log_postponed_rar(rar, "No enough PRBs for Msg3.");
@@ -215,19 +216,21 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&     rar,
   return max_nof_allocs;
 }
 
-void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
-                              const prb_interval&      rar_prbs,
-                              const prb_interval&      msg3_prbs,
-                              cell_slot_resource_grid& rar_alloc,
-                              cell_slot_resource_grid& msg3_alloc,
-                              unsigned                 nof_msg3_grants)
+void ra_sched::fill_rar_grant(const pending_rar_t&          rar_request,
+                              const prb_interval&           rar_prbs,
+                              const prb_interval&           msg3_prbs,
+                              cell_slot_resource_allocator& rar_alloc,
+                              cell_slot_resource_allocator& msg3_alloc,
+                              unsigned                      nof_msg3_grants)
 {
   static const unsigned nof_prbs_per_msg3 = 3;
   static const unsigned max_msg3_retxs    = 4;
   static const unsigned msg3_mcs          = 0;
 
   // Allocate PRBs and space for RAR
-  rar_alloc.dl_prbs.fill(rar_prbs.start(), rar_prbs.stop());
+  // FIXME: Take PDSCH symbols from Config.
+  rar_alloc.dl_res_grid.allocate(cfg.dl_cfg_common.init_dl_bwp.generic_params,
+                                 bwp_grant_params{bwp_grant_params::channel::sch, {2, 14}, rar_prbs});
   rar_alloc.result.dl.rar_grants.emplace_back();
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
@@ -260,7 +263,9 @@ void ra_sched::fill_rar_grant(const pending_rar_t&     rar_request,
     // TODO
 
     // Allocate and fill PUSCH for Msg3
-    msg3_alloc.ul_prbs.fill(msg3_grant.prbs.start(), msg3_grant.prbs.stop());
+    // FIXME: Take PUSCH symbols from Config.
+    msg3_alloc.ul_res_grid.allocate(cfg.dl_cfg_common.init_dl_bwp.generic_params,
+                                    {bwp_grant_params::channel::sch, {2, 14}, msg3_grant.prbs});
     msg3_alloc.result.ul.puschs.emplace_back();
     ul_sched_info& pusch = msg3_alloc.result.ul.puschs.back();
     pusch.crnti          = msg3_req.ind_msg.crnti;
@@ -285,8 +290,11 @@ void ra_sched::log_rar(const rar_information& rar)
     return;
   }
   fmt::memory_buffer fmtbuf;
+  const char*        prefix = "";
   for (const msg3_information& msg3 : rar.grants) {
-    fmt::format_to(fmtbuf, "{{0x{:x}: rapid={}, prbs={}, ta={}}}", msg3.temp_crnti, msg3.rapid, msg3.prbs, msg3.ta);
+    fmt::format_to(
+        fmtbuf, "{}{{0x{:x}: rapid={}, prbs={}, ta={}}}", prefix, msg3.temp_crnti, msg3.rapid, msg3.prbs, msg3.ta);
+    prefix = ", ";
   }
   logger.info("SCHED: RAR ra-rnti=0x{:x}, cell={}, msg3s=[{}]", rar.ra_rnti, rar.cell_index, to_c_str(fmtbuf));
 }

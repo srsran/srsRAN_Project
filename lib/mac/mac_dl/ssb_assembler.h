@@ -30,7 +30,7 @@ public:
   explicit ssb_assembler(pci_t pci, const ssb_configuration& ssb_cfg_, unsigned dl_arfcn);
 
   /// \brief Assemble SSB message to be sent to PHY.
-  /// This function fill the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB); (ii)
+  /// This function fills the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB); (ii)
   /// SSB-specific dependent parameters; (iii) SSB scheduling results.
   /// \param[out] ssb_pdu SSB message to be sent to PHY.
   /// \param[in]  cell_cfg MAC's Cell configuration.

@@ -27,7 +27,7 @@ public:
   void slot_indication(slot_point sl_tx) { res_grid.slot_indication(sl_tx); }
 
   const cell_configuration cell_cfg;
-  cell_resource_grid       res_grid;
+  cell_resource_allocator  res_grid;
 
   ra_sched ra_sch;
 };

@@ -38,7 +38,7 @@ namespace detail {
                                                   const std::string& msg     = "") noexcept
 {
   fmt::memory_buffer fmtbuf;
-  fmt::format_to(fmtbuf, "{}:{}: {}: ", filename, line, funcname);
+  fmt::format_to(fmtbuf, "{}:{}: {}: \n", filename, line, funcname);
   if (condstr == nullptr) {
     fmt::format_to(fmtbuf, "Assertion failed");
   } else {

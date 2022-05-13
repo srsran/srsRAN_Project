@@ -19,50 +19,149 @@
 
 namespace srsgnb {
 
+struct bwp_grant_params {
+  enum class channel { cch, sch, ssb };
+  channel           ch;
+  ofdm_symbol_range symbols;
+  prb_interval      prbs;
+};
+
+inline prb_interval get_carrier_rb_dims(const scs_specific_carrier& carrier_cfg)
+{
+  return prb_interval{carrier_cfg.offset_to_carrier, carrier_cfg.offset_to_carrier + carrier_cfg.carrier_bandwidth};
+}
+
+/// \brief Represents the Symbol x RB resource grid of a DL/UL Carrier. The number of RBs of the grid will depend on
+/// the carrier bandwidth and numerology used.
+class carrier_subslot_resource_grid
+{
+public:
+  explicit carrier_subslot_resource_grid(const scs_specific_carrier& carrier_cfg);
+
+  subcarrier_spacing scs() const { return carrier_cfg.scs; }
+  unsigned           nof_prbs() const { return carrier_cfg.carrier_bandwidth; }
+  unsigned           offset() const { return carrier_cfg.offset_to_carrier; }
+  prb_interval       rb_dims() const { return get_carrier_rb_dims(carrier_cfg); }
+
+  /// Clearer Carrier Resource Grid.
+  void clear();
+
+  /// Allocates the symbol x PRB range in the carrier resource grid.
+  /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
+  /// \param prbs PRB interval, where PRB=0 corresponds to the PRB closest to pointA.
+  void fill(ofdm_symbol_range symbols, prb_interval prbs);
+
+  /// Checks whether the provided symbol x PRB range collides with any other allocation in the carrier resource grid.
+  /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
+  /// \param prbs PRB interval, where PRB=0 corresponds to the PRB closest to pointA.
+  /// \return true if a collision was detected. False otherwise.
+  bool collides(ofdm_symbol_range symbols, prb_interval prbs) const;
+
+private:
+  using slot_rb_bitmap = bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * MAX_NOF_PRBS>;
+
+  scs_specific_carrier carrier_cfg;
+  slot_rb_bitmap       slot_rbs;
+};
+
+/// \brief Manages the allocation of RBs in the resource grid of a given service cell for a given slot. This class
+/// manages multiple carriers of different numerologies associated to the same cell.
+class cell_slot_resource_grid
+{
+public:
+  explicit cell_slot_resource_grid(span<const scs_specific_carrier> scs_carriers);
+
+  /// Reset the resource grid to empty.
+  void clear();
+
+  /// Allocates the symbol x PRB range in the cell resource grid.
+  /// \param bwp_cfg BWP configuration of this allocation.
+  /// \param prbs PRB interval of the allocation. PRB=0 corresponds to the first PRB of the BWP.
+  /// \param symbols OFDM symbol interval of the allocation.
+  void allocate(const bwp_configuration& bwp_cfg, bwp_grant_params grant);
+
+  /// Checks whether the provided symbol x PRB range collides with any other allocation in the cell resource grid.
+  /// \param bwp_cfg BWP configuration where the check takes place.
+  /// \param symbols OFDM symbol interval of the allocation.
+  /// \param prbs PRB interval, where PRB=0 corresponds to the first PRB of the BWP.
+  /// \return true if a collision was detected. False otherwise.
+  bool collides(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols, prb_interval prbs) const;
+  bool collides(const bwp_configuration& bwp_cfg, bwp_grant_params grant) const;
+
+  prb_bitmap sch_prbs(const bwp_configuration& bwp_cfg) const;
+
+private:
+  friend struct cell_resource_allocator;
+
+  struct carrier_resource_grid {
+    /// Stores the sum of all RBs used for SCH grants.
+    prb_bitmap sch_prbs;
+
+    /// Stores the sum of all symbol x RB resources used for data and control grants.
+    carrier_subslot_resource_grid subslot_prbs;
+
+    /// List of overlapping carrier resource grids.
+    std::vector<std::pair<carrier_resource_grid*, bool> > overlapped_carrier_slots;
+
+    explicit carrier_resource_grid(const scs_specific_carrier& carrier_cfg);
+  };
+
+  carrier_resource_grid&       get_carrier(const bwp_configuration& bwp_cfg);
+  const carrier_resource_grid& get_carrier(const bwp_configuration& bwp_cfg) const;
+
+  /// Carrier Resource Grids.
+  std::vector<carrier_resource_grid>     carrier_grids;
+  std::array<unsigned, NOF_NUMEROLOGIES> numerology_to_grid_idx;
+};
+
 /// Stores all the scheduled information relative to a {slot, cell}.
-struct cell_slot_resource_grid {
+struct cell_slot_resource_allocator {
   const cell_configuration& cfg;
 
   /// Current slot that "this" slot resource grid refers to.
   slot_point slot;
 
-  /// Stores the sum of all PRBs used for DL grants.
-  prb_bitmap dl_prbs;
-
-  /// Stores the sum of all PRBs used for UL grants.
-  prb_bitmap ul_prbs;
-
   /// Saves grants allocated for the given slot and cell.
   sched_result result;
 
-  explicit cell_slot_resource_grid(const cell_configuration& cfg_);
+  /// Stores all the allocated RBs and symbols for DL.
+  cell_slot_resource_grid dl_res_grid;
+
+  /// Stores all the allocated RBs and symbols for UL.
+  cell_slot_resource_grid ul_res_grid;
+
+  explicit cell_slot_resource_allocator(const cell_configuration&  cfg_);
+  explicit cell_slot_resource_allocator(const cell_configuration&  cfg_,
+                                        span<scs_specific_carrier> dl_scs_carriers,
+                                        span<scs_specific_carrier> ul_scs_carriers);
 
   /// copies and moves are disabled to ensure pointer/reference validity.
-  cell_slot_resource_grid(const cell_slot_resource_grid&) = delete;
-  cell_slot_resource_grid(cell_slot_resource_grid&&)      = delete;
-  cell_slot_resource_grid& operator=(const cell_slot_resource_grid&) = delete;
-  cell_slot_resource_grid& operator=(cell_slot_resource_grid&&) = delete;
+  cell_slot_resource_allocator(const cell_slot_resource_allocator&) = delete;
+  cell_slot_resource_allocator(cell_slot_resource_allocator&&)      = delete;
+  cell_slot_resource_allocator& operator=(const cell_slot_resource_allocator&) = delete;
+  cell_slot_resource_allocator& operator=(cell_slot_resource_allocator&&) = delete;
 
   /// Sets new slot.
   void slot_indication(slot_point sl);
 
+private:
   /// Clears all allocations.
-  void reset();
+  void clear();
 };
 
 /// Circular Ring of cell_slot_resource_grid objects. This class manages the automatic resetting of
 /// cell_slot_resource_grid objects, once they become old.
-struct cell_resource_grid {
-  /// Number of cell resource grid objects stored in the pool
-  static const size_t RESOURCE_GRID_SIZE = 40;
+struct cell_resource_allocator {
+  /// Number of subframes managed by this container.
+  static const size_t GRID_NOF_SUBFRAMES = 20;
 
   /// Highest difference between a slot and the last slot indication that avoids overflowing the ring pool.
-  static const int MAXIMUM_SLOT_DIFF = RESOURCE_GRID_SIZE / 2;
+  static const int MAXIMUM_SLOT_DIFF = GRID_NOF_SUBFRAMES / 2;
 
   /// Cell configuration
   const cell_configuration& cfg;
 
-  explicit cell_resource_grid(const cell_configuration& cfg_);
+  explicit cell_resource_allocator(const cell_configuration& cfg_);
 
   /// Indicate the processing of a new slot in the scheduler.
   void slot_indication(slot_point sl_tx);
@@ -78,25 +177,28 @@ struct cell_resource_grid {
   /// Given that slot_delay is unsigned, this class can only access the present and future slots.
   /// \param slot_delay delay in #slots added to the last slot indication value.
   /// \return the cell resource grid corresponding to the accessed slot.
-  const cell_slot_resource_grid& operator[](unsigned slot_delay) const
+  const cell_slot_resource_allocator& operator[](unsigned slot_delay) const
   {
     assert_valid_sl(slot_delay);
-    slot_point                     sl_tx = last_slot_ind + slot_delay;
-    const cell_slot_resource_grid& r     = slots[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
+    slot_point                          sl_tx = last_slot_ind + slot_delay;
+    const cell_slot_resource_allocator& r     = *slots[sl_tx.to_uint() % slots.size()];
     srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
-  cell_slot_resource_grid& operator[](unsigned slot_delay)
+  cell_slot_resource_allocator& operator[](unsigned slot_delay)
   {
     assert_valid_sl(slot_delay);
-    slot_point               sl_tx = last_slot_ind + slot_delay;
-    cell_slot_resource_grid& r     = slots[sl_tx.to_uint() % RESOURCE_GRID_SIZE];
+    slot_point                    sl_tx = last_slot_ind + slot_delay;
+    cell_slot_resource_allocator& r     = *slots[sl_tx.to_uint() % slots.size()];
     srsran_assert(r.slot == sl_tx, "Bad access to uninitialized cell_resource_grid");
     return r;
   }
 
-  cell_slot_resource_grid&       operator[](slot_point slot) { return this->operator[](slot - last_slot_ind); }
-  const cell_slot_resource_grid& operator[](slot_point slot) const { return this->operator[](slot - last_slot_ind); }
+  cell_slot_resource_allocator&       operator[](slot_point slot) { return this->operator[](slot - last_slot_ind); }
+  const cell_slot_resource_allocator& operator[](slot_point slot) const
+  {
+    return this->operator[](slot - last_slot_ind);
+  }
 
 private:
   /// Ensure we are not overflowing the ring.
@@ -111,7 +213,7 @@ private:
   slot_point last_slot_ind;
 
   /// Circular pool of cell resource grids, where each entry represents a separate slot.
-  static_vector<cell_slot_resource_grid, RESOURCE_GRID_SIZE> slots;
+  std::vector<std::unique_ptr<cell_slot_resource_allocator> > slots;
 };
 
 } // namespace srsgnb

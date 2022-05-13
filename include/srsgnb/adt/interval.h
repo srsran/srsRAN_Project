@@ -62,8 +62,11 @@ public:
   /// Move interval by an offset
   void displace_by(int offset)
   {
-    srsran_assert(std::is_signed<T>::value or static_cast<int64_t>(start_) > -offset,
-                  "Cannot have negative starting_points in case interval<T> underlying type is unsigned");
+    srsran_assert(
+        std::is_signed<T>::value or static_cast<int64_t>(start_) >= -offset,
+        "Cannot have negative starting_points in case interval<T> underlying type is unsigned. Start={} < offset={}",
+        start_,
+        -offset);
     start_ += offset;
     stop_ += offset;
   }
@@ -82,8 +85,11 @@ public:
     return start_ < other.stop_ and other.start_ < stop_;
   }
 
-  /// If interval contains provided point
+  /// If interval contains provided point.
   bool contains(T point) const { return start_ <= point and point < stop_; }
+
+  /// If interval contains provided interval.
+  bool contains(interval other) const { return start_ <= other.start_ and other.stop_ <= stop_; }
 
   /// Assign to this interval the intersection between this and the provided interval
   interval<T>& intersect(const interval<T>& other)

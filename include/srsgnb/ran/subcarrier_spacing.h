@@ -15,6 +15,9 @@
 
 namespace srsgnb {
 
+/// Number of possible numerology values.
+const size_t NOF_NUMEROLOGIES = 5;
+
 /// Representation of subcarrier spacing.
 enum class subcarrier_spacing { kHz15 = 0, kHz30, kHz60, kHz120, kHz240, invalid };
 
@@ -51,13 +54,13 @@ constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
 }
 
 /// Convert SCS to numerology index (mu).
-constexpr unsigned to_numerology_value(subcarrier_spacing scs)
+constexpr inline unsigned to_numerology_value(subcarrier_spacing scs)
 {
   return static_cast<unsigned>(scs);
 }
 
 /// Calculates number of slots per subframe.
-inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
+constexpr inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
 {
   return 1U << to_numerology_value(scs);
 }

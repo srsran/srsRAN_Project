@@ -115,8 +115,8 @@ struct test_bench {
     k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2;
   };
 
-  cell_configuration cfg;
-  cell_resource_grid res_grid;
+  cell_configuration      cfg;
+  cell_resource_allocator res_grid;
 
   void slot_indication(slot_point sl_tx)
   {
@@ -150,11 +150,11 @@ void static enqueue_rach_indications(const std::list<rach_indication_message>& r
 static unsigned test_expected_nof_allocation(const cell_configuration&                 cell_cfg,
                                              const slot_point&                         slot_rx,
                                              const std::list<rach_indication_message>& pending_rach_ind_list,
-                                             cell_resource_grid&                       resource_grid)
+                                             cell_resource_allocator&                  resource_grid)
 {
   // Check how many MSG3 grant allocations have been scheduled
-  cell_slot_resource_grid& rar_alloc          = resource_grid[0];
-  unsigned                 nof_allocated_msg3 = 0;
+  cell_slot_resource_allocator& rar_alloc          = resource_grid[0];
+  unsigned                      nof_allocated_msg3 = 0;
   for (auto& rar : rar_alloc.result.dl.rar_grants) {
     nof_allocated_msg3 += rar.grants.size();
   }
@@ -185,12 +185,12 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
 }
 
 /// Helper function that tests whether RARs have been allocated DL PRBs.
-static void test_rar_general_allocation(cell_resource_grid& resource_grid)
+static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
 {
-  cell_slot_resource_grid& rar_alloc = resource_grid[0];
+  cell_slot_resource_allocator& rar_alloc = resource_grid[0];
 
   if (rar_alloc.result.dl.rar_grants.size() > 0) {
-    TESTASSERT(rar_alloc.dl_prbs.any());
+    TESTASSERT(rar_alloc.dl_res_grid.sch_prbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
   }
 }
 
@@ -208,7 +208,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
                                            const slot_point&                         slot_rx,
                                            const unsigned                            nof_allocations,
                                            const std::list<rach_indication_message>& rach_ind_list,
-                                           cell_resource_grid&                       resource_grid)
+                                           cell_resource_allocator&                  resource_grid)
 {
   // This function, first, retrieves all RACH indications that have been received (and not yet allocated) in the
   // past up until slot_rx; among these RACH indications, only an expected number can be allocated by the
@@ -251,7 +251,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     return;
   }
 
-  cell_slot_resource_grid& rar_alloc = resource_grid[0];
+  cell_slot_resource_allocator& rar_alloc = resource_grid[0];
 
   // For each RA-RNTI RACH list, test the RACH indication and corresponding RAR/MSG3 grants
   for (const auto& it : rach_per_ra_rnti_map) {
@@ -509,10 +509,10 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
-      cell_slot_resource_grid& pdcch_sl_res = bench.res_grid[0];
-      cell_slot_resource_grid& msg3_sl_res  = bench.res_grid[msg3_delay];
+      cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
+      cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
 
-      TESTASSERT(pdcch_sl_res.dl_prbs.any());
+      TESTASSERT(pdcch_sl_res.dl_res_grid.sch_prbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
 
       TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
       test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);
@@ -523,10 +523,14 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      TESTASSERT_EQ(rar.grants[0].prbs.length(), msg3_sl_res.ul_prbs.count());
+      // FIXME: Use UL BWP config.
+      TESTASSERT_EQ(
+          rar.grants[0].prbs.length(),
+          msg3_sl_res.ul_res_grid.sch_prbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).count());
 
     } else {
-      TESTASSERT(bench.res_grid[0].dl_prbs.none());
+      TESTASSERT(
+          bench.res_grid[0].dl_res_grid.sch_prbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params).none());
     }
 
     sl_rx++;

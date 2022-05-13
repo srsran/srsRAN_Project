@@ -19,7 +19,7 @@
 namespace srsgnb {
 
 enum class ssb_pattern_case;
-struct cell_slot_resource_grid;
+struct cell_slot_resource_allocator;
 
 using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
 
@@ -36,7 +36,7 @@ using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_
 /// @param[in]  ssb_case            Determines which OFDM symbols to use (see TS 38.213, Section 4.1).
 ///
 /// @remark This function only works for FR1, or L_max = 4 or 8.
-void sched_ssb(cell_slot_resource_grid& slot_allocator,
+void sched_ssb(cell_slot_resource_allocator& slot_allocator,
                const slot_point&        sl_point,
                uint8_t                  ssb_periodicity,
                uint16_t                 offset_to_point_A,
