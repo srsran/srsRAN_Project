@@ -19,8 +19,6 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter.h"
 
 namespace srsgnb {
-namespace ldpc {
-} // namespace ldpc
 
 /// Maximum accepted transport block size.
 static constexpr unsigned MAX_TBS = 1277992;
@@ -45,9 +43,15 @@ public:
   explicit ldpc_segmenter_impl(sch_crc& c);
 
   // See interface for the documentation.
-  void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
-               span<const uint8_t>                                 transport_block,
-               const segment_config&                               cfg) override;
+  void segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+                  span<const uint8_t>                                 transport_block,
+                  const segment_config&                               cfg) override;
+
+  // See interface for the documentation.
+  void segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
+                  span<const int8_t>                                       codeword_llrs,
+                  unsigned                                                 tbs,
+                  const segment_config&                                    cfg) override;
 
 private:
   /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
@@ -56,7 +60,8 @@ private:
   /// Computes the length of each segment, as per TS38.212 Section 5.2.2.
   void compute_segment_length();
 
-  /// Computes the length of the rate-matched codeblock corresponding to each segment, as per TS38.212 Section 5.4.2.1.
+  /// Computes the length of the rate-matched codeblock corresponding to each segment, as per TS38.212
+  /// Section 5.4.2.1.
   unsigned compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const;
 
   // Data members.

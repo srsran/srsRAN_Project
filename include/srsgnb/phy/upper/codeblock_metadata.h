@@ -13,6 +13,7 @@
 #ifndef SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 #define SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 
+#include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
@@ -79,8 +80,15 @@ using segment_data = static_vector<uint8_t, MAX_SEG_LENGTH>;
 ///   - \c described_segment.first()   Contains the segment data, including CRC, in unpacked format (each bit is
 ///                                      represented by a \c uint8_t entry).
 ///   - \c described_segment.second()  Contains the segment metadata, useful for processing the corresponding
-///                                      codeblock (e.g., encoding/decoding, rate-matching).
+///                                      segment (e.g., encoding, rate-matching).
 using described_segment = std::pair<segment_data, codeblock_metadata>;
+
+/// \brief Alias for the full codeblock characterization at the receiver.
+///
+///   - \c described_rx_codeblock.first()   Contains a view to the LLRs corresponding to one codeblock.
+///   - \c described_rx_codeblock.second()  Contains the codeblock metadata, useful for processing the corresponding
+///                                      codeblock (e.g., decoding, rate-dematching).
+using described_rx_codeblock = std::pair<span<const int8_t>, codeblock_metadata>;
 
 /// Gathers all segmentation configuration parameters.
 struct segment_config {
