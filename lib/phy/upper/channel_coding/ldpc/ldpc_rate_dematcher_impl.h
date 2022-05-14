@@ -25,11 +25,12 @@ namespace srsgnb {
 class ldpc_rate_dematcher_impl : public ldpc_rate_dematcher
 {
 public:
-  void rate_dematch(span<int8_t> output, span<const int8_t> input, const config_t& cfg) override;
+  void
+  rate_dematch(span<int8_t> output, span<const int8_t> input, bool new_data, const codeblock_metadata& cfg) override;
 
 private:
   /// Initializes the rate dematcher internal state.
-  void init(const config_t& cfg);
+  void init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg);
 
   /// Allots LLRs from the rate-matched input sequence to the full-sized output codeblock (i.e., reverts bit selection).
   void allot_llrs(span<int8_t> out, span<const int8_t> in) const;

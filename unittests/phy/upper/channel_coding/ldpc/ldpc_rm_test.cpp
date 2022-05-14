@@ -56,10 +56,12 @@ int main()
     auto                bit_to_llrs = [](const uint8_t& b) { return 1 - 2 * b; };
     std::transform(matched_bm.cbegin(), matched_bm.cend(), llrs.begin(), bit_to_llrs);
 
-    std::vector<int8_t>           dematched(codeblock.size());
-    unsigned                      nof_filler_bits = test_data.nof_filler;
-    ldpc_rate_dematcher::config_t cfg{test_data.rv, nof_filler_bits, true, mod, n_ref};
-    dematcher->rate_dematch(dematched, llrs, cfg);
+    std::vector<int8_t> dematched(codeblock.size());
+    unsigned            nof_filler_bits = test_data.nof_filler;
+
+    codeblock_metadata rdm_cfg          = {rm_cfg, {}};
+    rdm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
+    dematcher->rate_dematch(dematched, llrs, true, rdm_cfg);
 
     // To check the dematcher output, we need to apply the rate matcher to it and compare with the output
     // obtained in the first part of the test. First, transform LLRs into hard bits.

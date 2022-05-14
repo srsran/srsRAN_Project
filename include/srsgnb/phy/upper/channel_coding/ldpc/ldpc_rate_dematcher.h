@@ -15,6 +15,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/phy/upper/codeblock_metadata.h"
 
 namespace srsgnb {
 
@@ -24,25 +25,6 @@ class ldpc_rate_dematcher
 public:
   /// Default virtual destructor.
   virtual ~ldpc_rate_dematcher() = default;
-
-  /// Rate matching configuration parameters.
-  struct config_t {
-    /// Redundancy version, values in {0, 1, 2, 3}.
-    unsigned rv = 0;
-    /// Number of filler bits in the current codeblock.
-    unsigned nof_filler_bits = 0;
-    /// \brief New codeblock flag.
-    ///
-    /// Set to true if the current codeblock is the first (possibly unique) codeblock in a repetition sequence, false
-    /// otherwise.
-    bool new_data = true;
-    /// Modulation scheme.
-    modulation_scheme mod = modulation_scheme::BPSK;
-    /// \brief Limited buffer rate matching length, as per TS38.212 Section 5.4.2.
-    ///
-    /// Set to zero for unlimited buffer length.
-    unsigned Nref = 0;
-  };
 
   /// \brief Recovers a full codeblock from its rate-matched version.
   ///
@@ -55,7 +37,8 @@ public:
   /// \param[in]     input           Rate-matched codeblock (log-likelihood ratios).
   /// \param[in]     cfg             Configuration parameters.
   /// \remark The sizes of \c input and \c output determine the behavior of the rate recovering algorithm.
-  virtual void rate_dematch(span<int8_t> output, span<const int8_t> input, const config_t& cfg) = 0;
+  virtual void
+  rate_dematch(span<int8_t> output, span<const int8_t> input, bool new_data, const codeblock_metadata& cfg) = 0;
 };
 
 std::unique_ptr<ldpc_rate_dematcher> create_ldpc_rate_dematcher();

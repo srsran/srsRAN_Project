@@ -16,25 +16,28 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-void ldpc_rate_dematcher_impl::init(const config_t& cfg)
+void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg)
 {
   srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
 
-  modulation_order = static_cast<uint8_t>(cfg.mod);
+  modulation_order = get_bits_per_symbol(cfg.mod);
 
-  is_new_data = cfg.new_data;
+  is_new_data = new_data;
 }
 
-void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8_t> input, const config_t& cfg)
+void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>              output,
+                                            span<const int8_t>        input,
+                                            const bool                new_data,
+                                            const codeblock_metadata& cfg)
 {
-  init(cfg);
+  init(new_data, cfg.tb_common);
 
   unsigned block_length = output.size();
 
-  srsran_assert(block_length >= cfg.Nref, "N_ref should be smaller than the output length.");
-  if (cfg.Nref > 0) {
-    buffer_length = cfg.Nref;
+  srsran_assert(block_length >= cfg.tb_common.Nref, "N_ref should be smaller than the output length.");
+  if (cfg.tb_common.Nref > 0) {
+    buffer_length = cfg.tb_common.Nref;
   } else {
     buffer_length = block_length;
   }
@@ -66,8 +69,9 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8
 
   // Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.
   nof_systematic_bits = (BG_K - 2) * lifting_size;
-  srsran_assert(cfg.nof_filler_bits < nof_systematic_bits, "LDPC rate dematching: invalid number of filler bits.");
-  nof_filler_bits = cfg.nof_filler_bits;
+  srsran_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
+                "LDPC rate dematching: invalid number of filler bits.");
+  nof_filler_bits = cfg.cb_specific.nof_filler_bits;
 
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
