@@ -55,6 +55,8 @@ struct codeblock_metadata {
     unsigned nof_filler_bits = 0;
     /// Codeblock starting index within the codeword.
     unsigned cw_offset = 0;
+    /// CRC bits
+    unsigned nof_crc_bits = 16;
   };
 
   /// Contains common transport block parameters.

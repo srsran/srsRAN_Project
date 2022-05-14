@@ -70,8 +70,8 @@ int main()
     assert(messages.size() == static_cast<size_t>(nof_messages * msg_length));
     assert(codeblocks.size() == static_cast<size_t>(nof_messages * max_cb_length));
 
-    srsgnb::codeblock_metadata::tb_common_metadata cfg_enc{bg, ls};
-    srsgnb::ldpc_decoder::config_t                 cfg_dec{bg, ls};
+    srsgnb::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
+    srsgnb::ldpc_decoder::configuration            cfg_dec = {cfg_enc, {}};
 
     unsigned used_msg_bits   = 0;
     unsigned used_cblck_bits = 0;

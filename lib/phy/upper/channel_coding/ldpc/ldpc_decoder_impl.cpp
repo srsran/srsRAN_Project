@@ -21,10 +21,10 @@ static constexpr int8_t LOCAL_INF = INT8_MAX;
 // Messages depending on uncertain bits are quantized over 7 bits (from -63 to 63).
 constexpr int8_t LOCAL_MAX_RANGE = 63;
 
-void ldpc_decoder_impl::init(const config_t& cfg)
+void ldpc_decoder_impl::init(const configuration& cfg)
 {
-  uint8_t  pos   = get_lifting_size_position(cfg.lifting_size);
-  unsigned skip  = static_cast<unsigned>(cfg.base_graph) * NOF_LIFTING_SIZES;
+  uint8_t  pos   = get_lifting_size_position(cfg.block_conf.tb_common.lifting_size);
+  unsigned skip  = static_cast<unsigned>(cfg.block_conf.tb_common.base_graph) * NOF_LIFTING_SIZES;
   current_graph  = &graph_array[skip + pos];
   bg_N_full      = current_graph->get_nof_BG_var_nodes_full();
   bg_N_short     = current_graph->get_nof_BG_var_nodes_short();
@@ -32,20 +32,22 @@ void ldpc_decoder_impl::init(const config_t& cfg)
   bg_K           = current_graph->get_nof_BG_info_nodes();
   bg_N_high_rate = bg_K + 4;
   assert(bg_K == bg_N_full - bg_M);
-  lifting_size = static_cast<uint16_t>(cfg.lifting_size);
+  lifting_size = static_cast<uint16_t>(cfg.block_conf.tb_common.lifting_size);
 
-  max_iterations = cfg.max_iterations;
+  max_iterations = cfg.algorithm_conf.max_iterations;
   assert(max_iterations > 0);
 
-  scaling_factor = cfg.scaling_factor;
+  scaling_factor = cfg.algorithm_conf.scaling_factor;
   assert((scaling_factor > 0) && (scaling_factor < 2));
 
-  crc = cfg.crc;
+  unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
+  srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
 
   select_strategy();
 }
 
-unsigned ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, const config_t& cfg)
+unsigned
+ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg)
 {
   init(cfg);
 

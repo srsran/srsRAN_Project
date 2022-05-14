@@ -39,18 +39,25 @@ public:
   ldpc_decoder_impl(ldpc_decoder_impl&&) = delete;
 
   // no copy and move operators
-  ldpc_decoder_impl& operator=(ldpc_decoder_impl&) = delete;
+  ldpc_decoder_impl& operator=(ldpc_decoder_impl&)  = delete;
   ldpc_decoder_impl& operator=(ldpc_decoder_impl&&) = delete;
 
   ~ldpc_decoder_impl() override = default;
   ///@}
 
   // See interface for the documentation.
-  unsigned decode(span<uint8_t> output, span<const int8_t> input, const config_t& cfg) override;
+  unsigned decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
+  {
+    return decode(output, input, nullptr, cfg);
+  };
+
+  // See interface for the documentation.
+  unsigned
+  decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) override;
 
 private:
   /// Initializes the decoder inner variables.
-  void init(const config_t& cfg);
+  void init(const configuration& cfg);
 
   /// Selects the appropriate decoding strategy and initializes concrete implementation registers and variables.
   virtual void select_strategy() = 0;
@@ -100,9 +107,6 @@ protected:
 
   /// Scaling factor of the normalized min-sum algorithm.
   float scaling_factor = 0.8;
-
-  /// Pointer to a CRC calculator
-  crc_calculator* crc = nullptr;
 };
 
 /// Generic LDPC decoder implementation without any optimization.
