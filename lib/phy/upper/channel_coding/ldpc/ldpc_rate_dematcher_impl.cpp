@@ -46,16 +46,15 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>              output,
   srsran_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
-  std::array<double, 4> shift_factor{};
-  uint16_t              lifting_size{};
-  unsigned              BG_N_short{0};
-  unsigned              BG_K{0};
-  if (block_length % BG1_N_SHORT == 0) {
+  std::array<double, 4> shift_factor = {};
+  unsigned              BG_N_short   = 0;
+  unsigned              BG_K         = 0;
+  if ((block_length % BG1_N_SHORT) == 0) {
     // input is a BG1 codeblock
     shift_factor = {0, 17, 33, 56};
     BG_N_short   = BG1_N_SHORT;
     BG_K         = BG1_N_FULL - BG1_M;
-  } else if (block_length % BG2_N_SHORT == 0) {
+  } else if ((block_length % BG2_N_SHORT) == 0) {
     // input is a BG2 codeblock
     shift_factor = {0, 13, 25, 43};
     BG_N_short   = BG2_N_SHORT;
@@ -63,7 +62,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>              output,
   } else {
     srsran_assert(false, "LDPC rate dematching: invalid input length.");
   }
-  lifting_size = block_length / BG_N_short;
+  uint16_t lifting_size = block_length / BG_N_short;
   srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
                 "LDPC rate dematching: invalid input length.");
 
