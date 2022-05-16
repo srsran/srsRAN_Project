@@ -1,25 +1,15 @@
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsgnb/adt/optional.h"
 #include <cmath>
 
 using namespace srsgnb;
 
-namespace {
-// Helper structure to store results of special cases.
-struct special_result {
-  bool is_special = false;
-  int  value      = 0;
-};
-} // namespace
-
 // Computes the sum when at least one of the summands is plus/minus infinity.
 // The indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
-static void tackle_special_sums(special_result& result, int val_a, int val_b)
+static optional<int> tackle_special_sums(int val_a, int val_b)
 {
-  result.is_special = true;
-
   if (val_a == -val_b) {
-    result.value = 0;
-    return;
+    return 0;
   }
 
   // When at least one of the summands is infinity, the sum is also infinity (with sign).
@@ -27,23 +17,18 @@ static void tackle_special_sums(special_result& result, int val_a, int val_b)
   int abs_a = std::abs(val_a);
   int abs_b = std::abs(val_b);
   if (abs_a == log_likelihood_ratio::LLR_INFTY) {
-    result.value = val_a;
-    return;
+    return val_a;
   }
   if (abs_b == log_likelihood_ratio::LLR_INFTY) {
-    result.value = val_b;
-    return;
+    return val_b;
   }
-  result.is_special = false;
+  return {};
 }
 
 log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) const
 {
-  special_result special;
-
-  tackle_special_sums(special, this->value, rhs.value);
-  if (special.is_special) {
-    return special.value;
+  if (auto special = tackle_special_sums(this->value, rhs.value)) {
+    return special.value();
   }
 
   // When not dealing with special cases, classic saturated sum.
@@ -56,11 +41,8 @@ log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) c
 
 log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a, log_likelihood_ratio b)
 {
-  special_result special;
-
-  tackle_special_sums(special, a.value, b.value);
-  if (special.is_special) {
-    return special.value;
+  if (auto special = tackle_special_sums(a.value, b.value)) {
+    return special.value();
   }
 
   // When not dealing with special cases, promotion sum: if the sum exceeds LLR_MAX (in absolute value), then return

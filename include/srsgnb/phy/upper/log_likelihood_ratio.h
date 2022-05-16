@@ -1,8 +1,18 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 /// \file
 /// \brief Log-likelihood ratio type declaration.
 ///
 /// Type used for representing log-likelihood ratios. Values are stored in an \c int8_t variable, but the sum operator
-/// is overloaded with a saturated sum, meaning that the result is clipped if it (absolutely) exceeds LLR_MAX.
+/// is overloaded with a saturated sum, meaning that the result is clipped if it (absolutely) exceeds \c LLR_MAX.
 
 #ifndef SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
 #define SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
@@ -113,7 +123,7 @@ struct formatter<srsgnb::log_likelihood_ratio> {
   template <typename FormatContext>
   auto format(srsgnb::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "LLR({})", static_cast<int8_t>(llr) + 0);
+    return format_to(ctx.out(), "LLR({})", static_cast<int8_t>(llr));
   }
 };
 
