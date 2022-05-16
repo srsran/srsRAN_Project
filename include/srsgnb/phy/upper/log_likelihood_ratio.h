@@ -18,9 +18,9 @@
 #define SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/support/srsran_assert.h"
 
 #include <cstdint>
-#include <stdexcept>
 
 namespace srsgnb {
 
@@ -46,15 +46,16 @@ public:
   /// \tparam    T    The input type. Must be an integral type.
   /// \param[in] val  The value the LLR is set to.
   /// \remark Implicit conversions are allowed on purpose.
-  template <typename T, std::enable_if_t<std::is_integral<T>::value, bool> = false>
+  template <typename T>
   log_likelihood_ratio(T val)
   {
+    static_assert(std::is_integral<T>::value, "LLRs must be initialized with integer values.");
     T abs_val = std::abs(val);
     if ((abs_val <= LLR_MAX) || (abs_val == LLR_INFTY)) {
       value = static_cast<int8_t>(val);
       return;
     }
-    throw std::out_of_range("Invalid LLR value.");
+    srsran_terminate("Invalid LLR value.");
   };
 
   /// Converts the LLR to a plain \c int8_t value.
