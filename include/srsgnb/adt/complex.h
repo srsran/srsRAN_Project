@@ -11,6 +11,7 @@
 #ifndef SRSGNB_ADT_COMPLEX_H
 #define SRSGNB_ADT_COMPLEX_H
 
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include <complex>
 
 namespace srsgnb {
@@ -19,5 +20,24 @@ namespace srsgnb {
 using cf_t = std::complex<float>;
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// FMT formatter of cf_t type.
+template <>
+struct formatter<srsgnb::cf_t> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(srsgnb::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{:+f}{:+f}j", value.real(), value.imag());
+  }
+};
+
+} // namespace fmt
 
 #endif // SRSGNB_ADT_COMPLEX_H

@@ -22,12 +22,7 @@ static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, spa
 
   for (unsigned i = 0; i < symbols.size(); ++i) {
     float err = std::abs(symbols[i] - expected_symbols[i]);
-    TESTASSERT(err < assert_max_err,
-               "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
-               symbols[i].real(),
-               symbols[i].imag(),
-               expected_symbols[i].real(),
-               expected_symbols[i].imag());
+    TESTASSERT(err < assert_max_err, "Mismatched value {} but expected {}", symbols[i], expected_symbols[i]);
   }
 }
 

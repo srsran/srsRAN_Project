@@ -100,12 +100,7 @@ public:
 
       cf_t  value = entries.at(key);
       float err   = std::abs(entry.value - value);
-      TESTASSERT(err < ASSERT_MAX_ERROR,
-                 "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
-                 value.real(),
-                 value.imag(),
-                 entry.value.real(),
-                 entry.value.imag());
+      TESTASSERT(err < ASSERT_MAX_ERROR, "Mismatched value {} but expected {}", value, entry.value);
     }
   }
 
@@ -133,12 +128,7 @@ public:
 
       cf_t  value = entries.at(key);
       float err   = std::abs(entry.value - value);
-      TESTASSERT(err < max_error,
-                 "Mismatched value {:+f}{:+f} but expected {:+f}{:+f}",
-                 value.real(),
-                 value.imag(),
-                 entry.value.real(),
-                 entry.value.imag());
+      TESTASSERT(err < max_error, "Mismatched value {} but expected {}", value, entry.value);
     }
   }
 
@@ -178,12 +168,11 @@ private:
                   subcarrier);
 
     // Debug trace.
-    logger.debug("[put] port={:>2}; symbol={:>2}; subcarrier={:>4}; value={:+}{:+}j; count={};",
+    logger.debug("[put] port={:>2}; symbol={:>2}; subcarrier={:>4}; value={}; count={};",
                  port,
                  symbol,
                  subcarrier,
-                 value.real(),
-                 value.imag(),
+                 value,
                  entries.size() + 1);
 
     // Write element.

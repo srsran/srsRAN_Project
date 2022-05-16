@@ -135,13 +135,11 @@ static void test(const test_description& config, radio_factory& factory, task_ex
           radio_sample_type expected_sample = {dist(rx_rgen), dist(rx_rgen)};
           float             error           = std::abs(sample - expected_sample);
           TESTASSERT(error < ASSERT_MAX_ERROR,
-                     "Error ({}) exceeds maximum ({}). Unmatched data {:+f}{:+f}j!={:+f}{:+f}j",
+                     "Error ({}) exceeds maximum ({}). Unmatched data {}!={}",
                      error,
                      ASSERT_MAX_ERROR,
-                     expected_sample.real(),
-                     expected_sample.imag(),
-                     sample.real(),
-                     sample.imag());
+                     expected_sample,
+                     sample);
         }
       }
     }
