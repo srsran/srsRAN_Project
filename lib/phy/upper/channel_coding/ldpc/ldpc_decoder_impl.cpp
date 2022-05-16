@@ -46,7 +46,7 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   select_strategy();
 }
 
-unsigned
+optional<unsigned>
 ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg)
 {
   init(cfg);
@@ -101,13 +101,13 @@ ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_ca
   // If a CRC calculator was passed with the configuration parameters and we hit this point, the codeblock wasn't
   // decoded correctly.
   if (crc != nullptr) {
-    return 0;
+    return {};
   }
 
   // We reach this point only if we don't have a CRC calculator for early stopping: we return whatever message we could
   // reconstruct after max_iterations (note that we don't know whether the message is correct or not).
   get_hard_bits(output);
-  return max_iterations;
+  return {};
 }
 
 void ldpc_decoder_generic::load_soft_bits(span<const int8_t> llrs)

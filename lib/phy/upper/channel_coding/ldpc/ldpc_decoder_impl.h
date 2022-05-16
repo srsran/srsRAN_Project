@@ -46,13 +46,13 @@ public:
   ///@}
 
   // See interface for the documentation.
-  unsigned decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
+  optional<unsigned> decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
   {
     return decode(output, input, nullptr, cfg);
   };
 
   // See interface for the documentation.
-  unsigned
+  optional<unsigned>
   decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) override;
 
 private:

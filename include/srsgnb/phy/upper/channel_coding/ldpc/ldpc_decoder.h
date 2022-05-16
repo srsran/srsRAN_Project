@@ -14,6 +14,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_DECODER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_DECODER_H
 
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -42,10 +43,13 @@ public:
 
   /// \brief Decodes a codeblock.
   ///
+  /// If a CRC calculator is provided, the decoding process stops as soon as the decoded messages passes the CRC check.
   /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  cfg     Decoder configuration.
-  virtual unsigned decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) = 0;
+  /// \return If a CRC calculator is provided and the decoding is successful, returns the number of LDPC iterations
+  /// needed by the decoder.
+  virtual optional<unsigned> decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) = 0;
 
   /// \brief Decodes a codeblock.
   ///
@@ -53,7 +57,9 @@ public:
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  crc     Pointer to a CRC calculator for early stopping.
   /// \param[in]  cfg     Decoder configuration.
-  virtual unsigned
+  /// \return If a CRC calculator is provided and the decoding is successful, returns the number of LDPC iterations
+  /// needed by the decoder.
+  virtual optional<unsigned>
   decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
 
