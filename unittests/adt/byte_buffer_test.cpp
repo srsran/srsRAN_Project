@@ -368,7 +368,7 @@ void test_byte_buffer_from_hexdump()
   TESTASSERT(pdu == bytes);
 }
 
-void test_byte_buffer_plus_equal_op()
+void test_byte_buffer_iterator_plus_equal_op()
 {
   // Test with small vector of bytes
   // Make initial vector
@@ -525,7 +525,7 @@ int main()
   test_byte_buffer_linearize();
   test_byte_buffer_initializer_list();
   test_byte_buffer_from_hexdump();
-  test_byte_buffer_plus_equal_op();
+  test_byte_buffer_iterator_plus_equal_op();
   test_byte_buffer_reader_split_advance();
   test_byte_buffer_writer();
 }
