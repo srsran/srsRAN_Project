@@ -5,21 +5,19 @@
 using namespace srsgnb;
 
 // Computes the sum when at least one of the summands is plus/minus infinity.
-// The indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
-static optional<int> tackle_special_sums(int val_a, int val_b)
+// Note that also the indeterminate case +LLR_INFTY + (-LLR_INFTY) is set to zero.
+static optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ratio val_a, log_likelihood_ratio val_b)
 {
   if (val_a == -val_b) {
-    return 0;
+    return log_likelihood_ratio(0);
   }
 
   // When at least one of the summands is infinity, the sum is also infinity (with sign).
   // The indeterminate case LLR_INFTY + (-LLR_INFTY) has already been dealt with in the previous case.
-  int abs_a = std::abs(val_a);
-  int abs_b = std::abs(val_b);
-  if (abs_a == log_likelihood_ratio::LLR_INFTY) {
+  if (log_likelihood_ratio::isinf(val_a)) {
     return val_a;
   }
-  if (abs_b == log_likelihood_ratio::LLR_INFTY) {
+  if (log_likelihood_ratio::isinf(val_b)) {
     return val_b;
   }
   return {};
@@ -27,7 +25,7 @@ static optional<int> tackle_special_sums(int val_a, int val_b)
 
 log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) const
 {
-  if (auto special = tackle_special_sums(this->value, rhs.value)) {
+  if (auto special = tackle_special_sums(*this, rhs)) {
     return special.value();
   }
 
@@ -41,7 +39,7 @@ log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) c
 
 log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a, log_likelihood_ratio b)
 {
-  if (auto special = tackle_special_sums(a.value, b.value)) {
+  if (auto special = tackle_special_sums(a, b)) {
     return special.value();
   }
 

@@ -24,42 +24,39 @@
 
 namespace srsgnb {
 
-/// Represents log-likelihood ratio (LLR) values.
+/// \brief Represents log-likelihood ratio (LLR) values.
+///
+/// Log-likelihood ratios are represented as \c int8_t values between <tt>-LLR_MAX</tt> and \c LLR_MAX. The values
+/// <tt>&plusmn;LLR_INFTY = &plusmn;127</tt> are reserved for denoting fixed bits, that is bits that are surely set to
+/// zero (log-likelihood ratio equal to <tt>+LLR_INFTY</tt>) or one (log-likelihood ratio equal to <tt>-LLR_INFTY</tt>).
 class log_likelihood_ratio
 {
 public:
-  /// \brief Represents a log-likelihood ratio set to infinity.
-  ///
-  /// An LLR takes the value \c LLR_INFTY when the corresponding bit is certainly zero. Similarly, an LLR takes the
-  /// value <tt>-LLR_INFTY</tt> when the corresponding bit is certainly one.
-  static constexpr int8_t LLR_INFTY = 127;
-
-  /// \brief Maximum (finite) value of a log-likelihood ratio.
-  ///
-  /// Finite LLRs take values between <tt>-LLR_MAX</tt> and \c LLR_MAX (both included).
-  static constexpr int8_t LLR_MAX = 120;
-
   /// \brief Constructor from integral type.
   ///
   /// Creates a new LLR set to the provided value if the latter is in the range <tt>-LLR_MAX</tt> to \c LLR_MAX, or
-  /// if it is <tt>&plusmn;LLR_INFTY</tt>. Otherwise, throws an "out of range" exception.
+  /// if it is <tt>&plusmn;LLR_INFTY</tt>. Otherwise, terminates the program execution.
   /// \tparam    T    The input type. Must be an integral type.
   /// \param[in] val  The value the LLR is set to.
   /// \remark Implicit conversions are allowed on purpose.
   template <typename T>
-  log_likelihood_ratio(T val)
+  constexpr log_likelihood_ratio(T val)
   {
     static_assert(std::is_integral<T>::value, "LLRs must be initialized with integer values.");
-    T abs_val = std::abs(val);
-    if ((abs_val <= LLR_MAX) || (abs_val == LLR_INFTY)) {
+    if (((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY)) {
       value = static_cast<int8_t>(val);
       return;
     }
     srsran_terminate("Invalid LLR value.");
   };
 
+  /// \name Conversion operators.
+  ///@{
+
   /// Converts the LLR to a plain \c int8_t value.
   explicit operator int8_t() const { return value; };
+  int8_t   to_int8_t() const { return value; };
+  ///@}
 
   /// Default assignment operator.
   log_likelihood_ratio& operator=(const log_likelihood_ratio& other) = default;
@@ -90,6 +87,24 @@ public:
   bool operator<=(log_likelihood_ratio rhs) const { return value <= rhs.value; }
   ///@}
 
+  /// Returns the special value "positive infinity."
+  static constexpr log_likelihood_ratio infinity() { return LLR_INFTY; }
+
+  /// Returns the maximum finite LLR value.
+  static constexpr log_likelihood_ratio max() { return LLR_MAX; }
+
+  /// Returns the minimum finite LLR value.
+  static constexpr log_likelihood_ratio min() { return -LLR_MAX; }
+
+  /// Checks whether a log-likelihood ratio has a finite value.
+  static constexpr bool isfinite(log_likelihood_ratio llr)
+  {
+    return ((llr.value >= -LLR_MAX) && (llr.value <= LLR_MAX));
+  }
+
+  /// Checks whether a log-likelihood ratio has an infinite value.
+  static constexpr bool isinf(log_likelihood_ratio llr) { return !isfinite(llr); }
+
   /// \brief Promotion sum.
   ///
   /// As opposed to the saturated sum (i.e., log_likelihood_ratio::operator+), results larger (in absolut value) than
@@ -102,7 +117,31 @@ public:
 private:
   /// Actual LLR value.
   int8_t value = 0;
+
+  /// \brief Represents a log-likelihood ratio set to infinity.
+  ///
+  /// An LLR takes the value \c LLR_INFTY when the corresponding bit is certainly zero. Similarly, an LLR takes the
+  /// value <tt>-LLR_INFTY</tt> when the corresponding bit is certainly one.
+  static constexpr int8_t LLR_INFTY = 127;
+
+  /// \brief Maximum (finite) value of a log-likelihood ratio.
+  ///
+  /// Finite LLRs take values between <tt>-LLR_MAX</tt> and \c LLR_MAX (both included).
+  static constexpr int8_t LLR_MAX = 120;
 };
+
+/// \name Common numerical constants.
+///@{
+
+/// Maximum finite log-likelihood ratio value.
+constexpr log_likelihood_ratio LLR_MAX = log_likelihood_ratio::max();
+
+/// Minimum finite log-likelihood ratio value.
+constexpr log_likelihood_ratio LLR_MIN = log_likelihood_ratio::min();
+
+/// "Positive infinity" log-likelihood ratio.
+constexpr log_likelihood_ratio LLR_INFINITY = log_likelihood_ratio::infinity();
+///@}
 
 } // namespace srsgnb
 
