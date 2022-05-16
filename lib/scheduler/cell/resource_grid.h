@@ -19,11 +19,54 @@
 
 namespace srsgnb {
 
-struct bwp_grant_params {
+/// Parameters of a SCH grant allocation within a BWP.
+struct bwp_sch_grant_info {
+  const bwp_configuration* bwp_cfg;
+  ofdm_symbol_range        symbols;
+  /// PRBs with BWP.
+  prb_interval prbs;
+
+  bwp_sch_grant_info(const bwp_configuration& bwp_, ofdm_symbol_range symbols_, prb_interval prbs_) :
+    bwp_cfg(&bwp_), symbols(symbols_), prbs(prbs_)
+  {
+    srsran_sanity_check(symbols.stop() <= 14, "OFDM symbols do not fit slot");
+    srsran_sanity_check(prbs.stop() <= bwp_cfg->prbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->prbs);
+  }
+};
+
+/// Convert PRBs within a BWP into Common RBs, which use pointA as reference point.
+inline prb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval prbs)
+{
+  prbs.displace_by(bwp_cfg.prbs.start());
+  srsran_sanity_check(
+      bwp_cfg.prbs.contains(prbs), "Mismatch between PRB interval={} and BWP lims={}", prbs, bwp_cfg.prbs);
+  return prbs;
+}
+
+/// Convert CRBs to PRBs within a BWP.
+inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, prb_interval crbs)
+{
+  crbs.displace_by(bwp_cfg.prbs.start());
+  srsran_sanity_check(
+      bwp_cfg.prbs.contains(crbs), "Mismatch between PRB interval={} and BWP lims={}", crbs, bwp_cfg.prbs);
+  return crbs;
+}
+
+/// Parameters of a grant allocation in the cell resource grid.
+struct grant_info {
   enum class channel { cch, sch, ssb };
-  channel           ch;
-  ofdm_symbol_range symbols;
-  prb_interval      prbs;
+  channel            ch;
+  subcarrier_spacing scs;
+  ofdm_symbol_range  symbols;
+  /// Common RBs of the grant. RB==0 corresponds to the RB that overlaps with the pointA.
+  prb_interval crbs;
+
+  grant_info(grant_info::channel ch_, subcarrier_spacing scs_, ofdm_symbol_range symbols_, prb_interval crbs_) :
+    ch(ch_), scs(scs_), symbols(symbols_), crbs(crbs_)
+  {}
+  grant_info(const bwp_sch_grant_info& grant) :
+    ch(channel::sch), scs(grant.bwp_cfg->scs), symbols(grant.symbols), crbs(prb_to_crb(*grant.bwp_cfg, grant.prbs))
+  {}
 };
 
 inline prb_interval get_carrier_rb_dims(const scs_specific_carrier& carrier_cfg)
@@ -74,19 +117,16 @@ public:
   /// Reset the resource grid to empty.
   void clear();
 
-  /// Allocates the symbol x PRB range in the cell resource grid.
-  /// \param bwp_cfg BWP configuration of this allocation.
+  /// Allocates the symbol x RB range in the cell resource grid.
   /// \param prbs PRB interval of the allocation. PRB=0 corresponds to the first PRB of the BWP.
   /// \param symbols OFDM symbol interval of the allocation.
-  void allocate(const bwp_configuration& bwp_cfg, bwp_grant_params grant);
+  void fill(grant_info grant);
 
-  /// Checks whether the provided symbol x PRB range collides with any other allocation in the cell resource grid.
-  /// \param bwp_cfg BWP configuration where the check takes place.
-  /// \param symbols OFDM symbol interval of the allocation.
-  /// \param prbs PRB interval, where PRB=0 corresponds to the first PRB of the BWP.
-  /// \return true if a collision was detected. False otherwise.
-  bool collides(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols, prb_interval prbs) const;
-  bool collides(const bwp_configuration& bwp_cfg, bwp_grant_params grant) const;
+  /// Checks whether the provided symbol x RB range collides with any other allocation in the cell resource grid.
+  /// \param grant contains the symbol x RB range whose available we want to check.
+  /// \return true if at least one symbol x RB of grant is currently occupied in the resource grid.
+  bool collides(grant_info grant) const;
+  bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, prb_interval crbs) const;
 
   prb_bitmap sch_prbs(const bwp_configuration& bwp_cfg) const;
 
@@ -106,8 +146,8 @@ private:
     explicit carrier_resource_grid(const scs_specific_carrier& carrier_cfg);
   };
 
-  carrier_resource_grid&       get_carrier(const bwp_configuration& bwp_cfg);
-  const carrier_resource_grid& get_carrier(const bwp_configuration& bwp_cfg) const;
+  carrier_resource_grid&       get_carrier(const subcarrier_spacing scs);
+  const carrier_resource_grid& get_carrier(const subcarrier_spacing scs) const;
 
   /// Carrier Resource Grids.
   std::vector<carrier_resource_grid>     carrier_grids;
@@ -130,7 +170,7 @@ struct cell_slot_resource_allocator {
   /// Stores all the allocated RBs and symbols for UL.
   cell_slot_resource_grid ul_res_grid;
 
-  explicit cell_slot_resource_allocator(const cell_configuration&  cfg_);
+  explicit cell_slot_resource_allocator(const cell_configuration& cfg_);
   explicit cell_slot_resource_allocator(const cell_configuration&  cfg_,
                                         span<scs_specific_carrier> dl_scs_carriers,
                                         span<scs_specific_carrier> ul_scs_carriers);

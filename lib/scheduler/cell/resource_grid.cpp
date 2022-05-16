@@ -101,19 +101,14 @@ void cell_slot_resource_grid::clear()
   }
 }
 
-void cell_slot_resource_grid::allocate(const bwp_configuration& bwp_cfg, bwp_grant_params grant)
+void cell_slot_resource_grid::fill(grant_info grant)
 {
-  auto& carrier = get_carrier(bwp_cfg);
-
-  // Convert BWP PRBs to Cell RBs.
-  grant.prbs.displace_by(bwp_cfg.prbs.start());
-  srsran_sanity_check(
-      bwp_cfg.prbs.contains(grant.prbs), "Mismatch between PRB interval={} and BWP lims={}", grant.prbs, bwp_cfg.prbs);
+  auto& carrier = get_carrier(grant.scs);
 
   // Fill RB grid.
-  carrier.subslot_prbs.fill(grant.symbols, grant.prbs);
-  if (grant.ch == bwp_grant_params::channel::sch) {
-    carrier.sch_prbs.fill(grant.prbs.start(), grant.prbs.stop());
+  carrier.subslot_prbs.fill(grant.symbols, grant.crbs);
+  if (grant.ch == grant_info::channel::sch) {
+    carrier.sch_prbs.fill(grant.crbs.start(), grant.crbs.stop());
   }
 
   // Mark PRBs of other carriers that overlap with this BWP as unavailable in this slot.
@@ -121,53 +116,43 @@ void cell_slot_resource_grid::allocate(const bwp_configuration& bwp_cfg, bwp_gra
     if (not overlapped.second) {
       overlapped.second   = true;
       auto& other_carrier = overlapped.first->subslot_prbs;
-      other_carrier.fill(grant.symbols, grant.prbs);
-      prb_interval      other_prbs    = convert_carrier_rb_dims(bwp_cfg.prbs, bwp_cfg.scs, other_carrier.scs());
+      other_carrier.fill(grant.symbols, grant.crbs);
+      prb_interval      other_prbs    = convert_carrier_rb_dims(grant.crbs, grant.scs, other_carrier.scs());
       ofdm_symbol_range other_symbols = grant.symbols; // TODO.
       other_carrier.fill(other_symbols, other_prbs);
     }
   }
 }
 
-bool cell_slot_resource_grid::collides(const bwp_configuration& bwp_cfg,
-                                       ofdm_symbol_range        symbols,
-                                       prb_interval             prbs) const
+bool cell_slot_resource_grid::collides(grant_info grant) const
 {
-  auto& carrier = get_carrier(bwp_cfg);
-
-  prbs.displace_by(bwp_cfg.prbs.start());
-  srsran_sanity_check(
-      bwp_cfg.prbs.contains(prbs), "Mismatch between PRB interval={} and BWP lims={}", prbs, bwp_cfg.prbs);
-  return carrier.subslot_prbs.collides(symbols, prbs);
+  auto& carrier = get_carrier(grant.scs);
+  return carrier.subslot_prbs.collides(grant.symbols, grant.crbs);
 }
 
-bool cell_slot_resource_grid::collides(const bwp_configuration& bwp_cfg, bwp_grant_params grant) const
+bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, prb_interval crbs) const
 {
-  if (grant.ch == bwp_grant_params::channel::sch) {
-    grant.prbs.displace_by(bwp_cfg.prbs.start());
-    return get_carrier(bwp_cfg).sch_prbs.any(grant.prbs.start(), grant.prbs.stop());
-  }
-  return collides(bwp_cfg, grant.symbols, grant.prbs);
+  auto& carrier = get_carrier(scs);
+  return carrier.subslot_prbs.collides(ofdm_symbols, crbs);
 }
 
 prb_bitmap cell_slot_resource_grid::sch_prbs(const bwp_configuration& bwp_cfg) const
 {
   // TODO: Need to display PRB bitmap by BWP offset.
-  return get_carrier(bwp_cfg).sch_prbs;
+  return get_carrier(bwp_cfg.scs).sch_prbs;
 }
 
-cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(const bwp_configuration& bwp_cfg)
+cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)
 {
-  size_t idx = numerology_to_grid_idx[to_numerology_value(bwp_cfg.scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", bwp_cfg.scs);
+  size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
+  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
   return carrier_grids[idx];
 }
 
-const cell_slot_resource_grid::carrier_resource_grid&
-cell_slot_resource_grid::get_carrier(const bwp_configuration& bwp_cfg) const
+const cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs) const
 {
-  size_t idx = numerology_to_grid_idx[to_numerology_value(bwp_cfg.scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", bwp_cfg.scs);
+  size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
+  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
   return carrier_grids[idx];
 }
 

@@ -23,6 +23,9 @@ struct cell_slot_resource_allocator;
 
 using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_SLOT>;
 
+/// Derive SSB Subcarrier Spacing from SSB pattern case.
+subcarrier_spacing ssb_case_to_scs(ssb_pattern_case ssb_case);
+
 /// @brief Schedule grant for SSB.
 ///
 /// The functions schedules the SSB according to a given periodicity, depending on the frequency and SSB case
@@ -37,13 +40,13 @@ using ssb_information_list = srsgnb::static_vector<ssb_information, MAX_SSB_PER_
 ///
 /// @remark This function only works for FR1, or L_max = 4 or 8.
 void sched_ssb(cell_slot_resource_allocator& slot_allocator,
-               const slot_point&        sl_point,
-               uint8_t                  ssb_periodicity,
-               uint16_t                 offset_to_point_A,
-               uint32_t                 freq_arfcn,
-               uint64_t                 ssb_in_burst_bitmap,
-               ssb_pattern_case         ssb_case,
-               bool                     paired_spectrum);
+               const slot_point&             sl_point,
+               uint8_t                       ssb_periodicity,
+               uint16_t                      offset_to_point_A,
+               uint32_t                      freq_arfcn,
+               uint64_t                      ssb_in_burst_bitmap,
+               ssb_pattern_case              ssb_case,
+               bool                          paired_spectrum);
 
 } // namespace srsgnb
 

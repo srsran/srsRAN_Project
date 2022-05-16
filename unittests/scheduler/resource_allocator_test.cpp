@@ -89,17 +89,17 @@ void test_cell_resource_grid()
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
     bwp_cfg.prbs = {0, 52};
 
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 52}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info(bwp_cfg, {0, 14}, {0, 52})));
 
-    bwp_grant_params grant{srsgnb::bwp_grant_params::channel::cch, {2, 14}, {5, 10}};
-    cell_grid.allocate(bwp_cfg, grant);
-    TESTASSERT(cell_grid.collides(bwp_cfg, {0, 14}, {0, 52}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 5}));
-    TESTASSERT(cell_grid.collides(bwp_cfg, {2, 3}, {0, 6}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 2}, {0, 6}));
+    bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
+    cell_grid.fill(grant);
+    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 5}));
+    TESTASSERT(cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, {0, 6}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 2}, {0, 6}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {2, 3}, {0, 6}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {2, 3}, {0, 6}));
   }
 
   // Narrow BWP, 15 kHz case.
@@ -109,17 +109,17 @@ void test_cell_resource_grid()
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
     bwp_cfg.prbs = {10, 30};
 
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 20}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
 
-    bwp_grant_params grant{srsgnb::bwp_grant_params::channel::cch, {2, 14}, {5, 10}};
-    cell_grid.allocate(bwp_cfg, grant);
-    TESTASSERT(cell_grid.collides(bwp_cfg, {0, 14}, {0, 20}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 5}));
-    TESTASSERT(cell_grid.collides(bwp_cfg, {2, 3}, {0, 6}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 2}, {0, 6}));
+    bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 10}};
+    cell_grid.fill(grant);
+    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 20}}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
+    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 6}}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {2, 3}, {0, 6}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 6}}));
   }
 
   // Wide BWP, 120 kHz case.
@@ -129,17 +129,17 @@ void test_cell_resource_grid()
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz120;
     bwp_cfg.prbs = {10, 275};
 
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 265}));
+    TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, {0, 265}));
 
-    bwp_grant_params grant{srsgnb::bwp_grant_params::channel::cch, {2, 14}, {5, 200}};
-    cell_grid.allocate(bwp_cfg, grant);
-    TESTASSERT(cell_grid.collides(bwp_cfg, {0, 14}, {10, 30}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 14}, {0, 5}));
-    TESTASSERT(cell_grid.collides(bwp_cfg, {2, 3}, {0, 30}));
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {0, 2}, {0, 30}));
+    bwp_sch_grant_info grant{bwp_cfg, {2, 14}, {5, 200}};
+    cell_grid.fill(grant);
+    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {10, 30}}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 14}, {0, 5}}));
+    TESTASSERT(cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {0, 2}, {0, 30}}));
 
     cell_grid.clear();
-    TESTASSERT(not cell_grid.collides(bwp_cfg, {2, 3}, {0, 30}));
+    TESTASSERT(not cell_grid.collides(bwp_sch_grant_info{bwp_cfg, {2, 3}, {0, 30}}));
   }
 }
 
@@ -167,8 +167,8 @@ void test_pusch_resource_allocation()
   TESTASSERT(res_grid_alloc[0].result.ul.puschs.empty());
 
   // Action 2: Allocate PUSCH grant in current slot_tx
-  bwp_grant_params ul_grant{bwp_grant_params::channel::sch, {0, 14}, {1, 5}};
-  res_grid_alloc[0].ul_res_grid.allocate(bwp_cfg, ul_grant);
+  bwp_sch_grant_info ul_grant{bwp_cfg, {0, 14}, {1, 5}};
+  res_grid_alloc[0].ul_res_grid.fill(ul_grant);
   res_grid_alloc[0].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx
@@ -177,8 +177,8 @@ void test_pusch_resource_allocation()
   TESTASSERT_EQ(1, res_grid_alloc[0].result.ul.puschs.size());
 
   // Action 3: Allocate PUSCH grant in slot_tx + 1
-  bwp_grant_params ul_grant2{bwp_grant_params::channel::sch, {0, 14}, {4, 20}};
-  res_grid_alloc[1].ul_res_grid.allocate(bwp_cfg, ul_grant2);
+  bwp_sch_grant_info ul_grant2{bwp_cfg, {0, 14}, {4, 20}};
+  res_grid_alloc[1].ul_res_grid.fill(ul_grant2);
   res_grid_alloc[1].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx + 1

@@ -229,8 +229,7 @@ void ra_sched::fill_rar_grant(const pending_rar_t&          rar_request,
 
   // Allocate PRBs and space for RAR
   // FIXME: Take PDSCH symbols from Config.
-  rar_alloc.dl_res_grid.allocate(cfg.dl_cfg_common.init_dl_bwp.generic_params,
-                                 bwp_grant_params{bwp_grant_params::channel::sch, {2, 14}, rar_prbs});
+  rar_alloc.dl_res_grid.fill(bwp_sch_grant_info(cfg.dl_cfg_common.init_dl_bwp.generic_params, {2, 14}, rar_prbs));
   rar_alloc.result.dl.rar_grants.emplace_back();
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
@@ -264,8 +263,8 @@ void ra_sched::fill_rar_grant(const pending_rar_t&          rar_request,
 
     // Allocate and fill PUSCH for Msg3
     // FIXME: Take PUSCH symbols from Config.
-    msg3_alloc.ul_res_grid.allocate(cfg.dl_cfg_common.init_dl_bwp.generic_params,
-                                    {bwp_grant_params::channel::sch, {2, 14}, msg3_grant.prbs});
+    msg3_alloc.ul_res_grid.fill(
+        bwp_sch_grant_info(cfg.dl_cfg_common.init_dl_bwp.generic_params, {2, 14}, msg3_grant.prbs));
     msg3_alloc.result.ul.puschs.emplace_back();
     ul_sched_info& pusch = msg3_alloc.result.ul.puschs.back();
     pusch.crnti          = msg3_req.ind_msg.crnti;

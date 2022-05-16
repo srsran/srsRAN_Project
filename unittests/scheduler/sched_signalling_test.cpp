@@ -152,11 +152,14 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
 
   // Check if DL PRB allocation is correct.
   if (ssb_list.size() > 0) {
-    auto&            bwp_cfg = slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
-    bwp_grant_params empty_rbs{bwp_grant_params::channel::ssb, {0, 14}, {0, offset_to_point_A}};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(bwp_cfg, empty_rbs), "PRBs {} should be empty", empty_rbs.prbs);
-    empty_rbs.prbs = prb_interval{offset_to_point_A + NOF_SSB_PRBS, bwp_cfg.prbs.length()};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(bwp_cfg, empty_rbs), "PRBs {} should be empty", empty_rbs.prbs);
+    grant_info empty_space{grant_info::channel::ssb,
+                           slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                           {0, 14},
+                           {0, offset_to_point_A}};
+    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "CRBs {} should be empty", empty_space.crbs);
+    empty_space.crbs = {offset_to_point_A + NOF_SSB_PRBS,
+                        slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
+    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
     // FIXME: Check the non-empty PRBs.
   }
 }
@@ -258,11 +261,14 @@ void test_ssb_case_B(const slot_point&             slot_tx,
 
   // Check if DL PRB allocation is correct.
   if (ssb_list.size() > 0) {
-    auto&            bwp_cfg = slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
-    bwp_grant_params empty_rbs{bwp_grant_params::channel::ssb, {0, 14}, {0, offset_to_point_A}};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(bwp_cfg, empty_rbs), "PRBs {} should be empty", empty_rbs.prbs);
-    empty_rbs.prbs = prb_interval{offset_to_point_A + NOF_SSB_PRBS, bwp_cfg.prbs.length()};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(bwp_cfg, empty_rbs), "PRBs {} should be empty", empty_rbs.prbs);
+    grant_info empty_space{grant_info::channel::ssb,
+                           slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                           {0, 14},
+                           {0, offset_to_point_A}};
+    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
+    empty_space.crbs = {(offset_to_point_A + NOF_SSB_PRBS),
+                        slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
+    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
     // FIXME: Check the non-empty PRBs.
   }
 }
