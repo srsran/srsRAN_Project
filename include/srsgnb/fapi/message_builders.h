@@ -472,7 +472,7 @@ public:
     srsran_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
                   "[PDSCH Builder] - Incoming RB bitmap size {} exceeds FAPI bitmap field {}",
                   rb_map.size(),
-                  dl_pdsch_pdu::MAX_SIZE_RB_BITMAP);
+                  int(dl_pdsch_pdu::MAX_SIZE_RB_BITMAP));
 
     std::copy(rb_map.begin(), rb_map.end(), pdu.rb_bitmap.begin());
 
@@ -546,7 +546,7 @@ public:
     srsran_assert(dl_tb_crc_cw.size() <= dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC,
                   "[PDSCH Builder] - Incoming DL TB CRC size ({}) out of bounds ({})",
                   dl_tb_crc_cw.size(),
-                  dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC);
+                  int(dl_pdsch_pdu::MAX_SIZE_DL_TB_CRC));
     std::copy(dl_tb_crc_cw.begin(), dl_tb_crc_cw.end(), pdu.dl_tb_crc_cw.begin());
 
     return *this;
@@ -600,7 +600,7 @@ public:
     srsran_assert(ssb_pdus_for_rm.size() <= dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM,
                   "[PDSCH Builder] - Incoming SSB PDUs for RM matching size ({}) doesn't fit the field ({})",
                   ssb_pdus_for_rm.size(),
-                  dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM);
+                  int(dl_pdsch_maintenance_parameters_v3::MAX_SIZE_SSB_PDU_FOR_RM));
     std::copy(
         ssb_pdus_for_rm.begin(), ssb_pdus_for_rm.end(), pdu.pdsch_maintenance_v3.ssb_pdus_for_rate_matching.begin());
 
