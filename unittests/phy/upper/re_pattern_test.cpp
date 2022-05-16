@@ -231,6 +231,7 @@ void test_inclusion_count()
   TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
 }
 
+// Test that a pattern is equal to itself and different to others.
 void test_equal()
 {
   // Create a pattern.
@@ -262,6 +263,39 @@ void test_equal()
   TESTASSERT(list1 != list2);
 }
 
+// Test a pattern creation from an initializer list.
+void test_bracket_initializer()
+{
+  // Create pattern list from full initializer list.
+  re_pattern_list list1 = {
+      {0, 52, 1, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}},
+      {0, 52, 1, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}}};
+
+  // Create same pattern using parameters.
+  re_pattern pattern;
+  pattern.rb_begin    = 0;
+  pattern.rb_end      = 52;
+  pattern.rb_stride   = 1;
+  pattern.re_mask     = {};
+  pattern.re_mask[0]  = true;
+  pattern.re_mask[4]  = true;
+  pattern.re_mask[8]  = true;
+  pattern.symbols     = {};
+  pattern.symbols[6]  = true;
+  pattern.symbols[10] = true;
+
+  // Create list using initializer list of pattern.
+  re_pattern_list list2 = {pattern};
+
+  // Create list using default constructor and merge pattern.
+  re_pattern_list list3;
+  list3.merge(pattern);
+
+  // Validate that all lists are equal.
+  TESTASSERT(list1 == list2);
+  TESTASSERT(list1 == list3);
+}
+
 int main()
 {
   test_merge_even();
@@ -270,5 +304,6 @@ int main()
   test_merge_diff_rb();
   test_inclusion_count();
   test_equal();
+  test_bracket_initializer();
   return 0;
 }

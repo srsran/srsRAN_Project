@@ -34,6 +34,23 @@ struct re_pattern {
   /// Default constructor. It allows instantiating the structure without using other constructors.
   re_pattern() = default;
 
+  /// \brief Construct an RE pattern from parameters.
+  ///
+  /// \param[in] rb_begin_  Start RB block index.
+  /// \param[in] rb_end_    End RB block index (excluded).
+  /// \param[in] rb_stride_ RB index jump.
+  /// \param[in] re_mask_   RE Mask.
+  /// \param[in] symbols_   Symbol mask.
+  re_pattern(unsigned                             rb_begin_,
+             unsigned                             rb_end_,
+             unsigned                             rb_stride_,
+             std::array<bool, NRE>                re_mask_,
+             std::array<bool, MAX_NSYMB_PER_SLOT> symbols_) :
+    rb_begin(rb_begin_), rb_end(rb_end_), rb_stride(rb_stride_), re_mask(re_mask_), symbols(symbols_)
+  {
+    // Do nothing.
+  }
+
   /// \brief Copy constructor.
   ///
   /// \param[in] other Provides the reference to other resource element pattern to copy.
@@ -76,11 +93,28 @@ private:
   static constexpr unsigned MAX_RE_PATTERN = 4;
 
   /// Resource element pattern storage.
-  static_vector<re_pattern, MAX_RE_PATTERN> list = {};
+  static_vector<re_pattern, MAX_RE_PATTERN> list;
 
 public:
   /// Default constructor.
   re_pattern_list() = default;
+
+  /// \brief Create a pattern list from an initializer list of patterns.
+  ///
+  /// This is useful for static constant pattern list creation. For example:
+  /// \code
+  ///   re_pattern_list list = {
+  ///      {0, 52, 1, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0}},
+  ///      {0, 52, 1, {1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0}, {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0}}};
+  /// \endcode
+  ///
+  /// \param[in] patterns Initializer list with patterns.
+  re_pattern_list(std::initializer_list<const re_pattern> patterns)
+  {
+    for (const re_pattern& pattern : patterns) {
+      merge(pattern);
+    }
+  }
 
   /// \brief Copy constructor.
   ///
