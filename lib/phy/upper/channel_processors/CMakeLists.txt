@@ -34,3 +34,6 @@ target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 
 add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)
+
+add_library(pusch_decoder STATIC pusch_decoder_impl.cpp)
+target_link_libraries(pusch_decoder ldpc crc_calculator srsvec)
