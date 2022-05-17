@@ -33,9 +33,8 @@ struct sched_cell_configuration_request_message {
   uint8_t         nof_ant_ports; // (0..64)
   pci_t           pci;
 
-  dl_configuration_common dl_cfg_common;
-  //  asn1::rrc_nr::dl_cfg_common_sib_s              dl_cfg_common;
-  asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
+  dl_config_common                               dl_cfg_common;
+  ul_config_common                               ul_cfg_common;
   optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
 
   /// NOTE: Structs below do not follow ORAN specs.

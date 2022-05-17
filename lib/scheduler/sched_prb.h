@@ -120,22 +120,22 @@ bwp_rb_bitmap operator|(const bwp_rb_bitmap& lhs, const Other& rhs)
   return bwp_rb_bitmap(lhs) |= rhs;
 }
 
-inline prb_interval
-find_next_empty_interval(const prb_bitmap& mask, size_t start_prb_idx = 0, size_t last_prb_idx = MAX_NOF_PRBS)
+inline crb_interval
+find_next_empty_interval(const prb_bitmap& mask, size_t start_crb_idx = 0, size_t last_crb_idx = MAX_NOF_PRBS)
 {
-  int rb_start = mask.find_lowest(start_prb_idx, std::min(mask.size(), last_prb_idx), false);
+  int rb_start = mask.find_lowest(start_crb_idx, std::min(mask.size(), last_crb_idx), false);
   if (rb_start != -1) {
-    int rb_end = mask.find_lowest(rb_start + 1, std::min(mask.size(), last_prb_idx), true);
+    int rb_end = mask.find_lowest(rb_start + 1, std::min(mask.size(), last_crb_idx), true);
     return {(uint32_t)rb_start, (uint32_t)(rb_end < 0 ? mask.size() : rb_end)};
   }
   return {};
 }
 
-inline prb_interval find_empty_interval_of_length(const prb_bitmap& mask, size_t nof_prbs, uint32_t start_prb_idx = 0)
+inline crb_interval find_empty_interval_of_length(const prb_bitmap& mask, size_t nof_prbs, uint32_t start_prb_idx = 0)
 {
-  prb_interval max_interv;
+  crb_interval max_interv;
   do {
-    prb_interval interv = find_next_empty_interval(mask, start_prb_idx, mask.size());
+    crb_interval interv = find_next_empty_interval(mask, start_prb_idx, mask.size());
     if (interv.empty()) {
       break;
     }

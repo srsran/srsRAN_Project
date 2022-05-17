@@ -56,6 +56,17 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].cs_id = to_coreset_id(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id     = to_search_space_id(1);
 
+  // Configure initial UL BWP.
+  msg.ul_cfg_common.init_ul_bwp.generic_params = msg.dl_cfg_common.init_dl_bwp.generic_params;
+  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.emplace();
+  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
+  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
+  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
+  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window   = 10;
+  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.emplace();
+  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
+  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 2;
+
   // TODO: Remaining fields.
 
   return msg;

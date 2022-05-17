@@ -131,7 +131,7 @@ public:
   bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
 
   /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
-  prb_bitmap sch_crbs(subcarrier_spacing scs) const;
+  prb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
 
 private:
   friend struct cell_resource_allocator;

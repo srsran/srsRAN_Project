@@ -89,15 +89,60 @@ struct pdcch_configuration_common {
   search_space_id                         ra_search_space_id;
 };
 
+/// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.
+/// \remark See TS 38.331, Bandwidth-Part (BWP).
 struct bwp_configuration {
   bool               cp_extended;
   subcarrier_spacing scs;
   crb_interval       crbs;
 };
 
+/// Used to configure the common, cell-specific parameters of a DL BWP.
+/// \remark See TS 38.331, BWP-DownlinkCommon.
 struct bwp_downlink_common {
   bwp_configuration          generic_params;
   pdcch_configuration_common pdcch_common;
+};
+
+/// \remark See TS 38.331, RACH-ConfigGeneric.
+struct rach_config_generic {
+  /// Msg2 RAR window length in #slots. Network configures a value < 10msec. Values: (1, 2, 4, 8, 10, 20, 40, 80).
+  unsigned ra_resp_window;
+};
+
+struct rach_config_common {
+  rach_config_generic rach_cfg_generic;
+  /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
+  unsigned total_nof_ra_preambles;
+  /// PRACH root sequence index. Values: (1..839).
+  /// \remark See TS 38.211, clause 6.3.3.1.
+  bool     prach_root_seq_index_l839_present;
+  unsigned prach_root_seq_index;
+};
+
+struct pusch_time_domain_resource_allocation {
+  enum class mapping_type { typeA, typeB };
+
+  /// Values: (0..32).
+  unsigned     k2;
+  mapping_type map_type;
+  /// OFDM symbol boundaries for PUSCH. Network configures the fields so it does not cross the slot boundary.
+  ofdm_symbol_range symbols;
+};
+
+/// \remark See TS 38.331, "PUSCH-ConfigCommon".
+struct pusch_config_common {
+  /// PUSCH time domain resource allocations. Size: (0..maxNrofUL-Allocations=16).
+  std::vector<pusch_time_domain_resource_allocation> pusch_td_alloc_list;
+};
+
+/// Used to configure the common, cell-specific parameters of an UL BWP.
+/// \remark See TS 38.331, BWP-UplinkCommon.
+struct bwp_uplink_common {
+  bwp_configuration             generic_params;
+  optional<rach_config_common>  rach_cfg_common;
+  optional<pusch_config_common> pusch_cfg_common;
+  // TODO: Other fields.
 };
 
 /// \brief It provides parameters determining the location and width of the actual carrier.
@@ -123,9 +168,26 @@ struct frequency_info_dl {
 
 /// \brief Downlink Configuration, common to the serving cell.
 /// \remark See TS 38.331, "DownlinkConfigCommonSIB".
-struct dl_configuration_common {
+struct dl_config_common {
   frequency_info_dl   freq_info_dl;
   bwp_downlink_common init_dl_bwp;
+};
+
+struct frequency_info_ul {
+  /// Absolute frequency (in ARFCN) of the CRB0.
+  unsigned absolute_freq_point_a;
+  /// Set of carriers for different subcarrier spacings. The network configures this for all SCSs that are used in
+  /// UL BWPs in this serving cell. Size: (1..maxSCSs=5).
+  std::vector<scs_specific_carrier> scs_carrier_list;
+  bool                              freq_shift_7p5khz_present;
+  // TODO: Add other fields.
+};
+
+/// \brief Uplink Configuration, common to the serving cell.
+/// \remark See TS 38.331, "UplinkConfigCommonSIB".
+struct ul_config_common {
+  frequency_info_ul freq_info_ul;
+  bwp_uplink_common init_ul_bwp;
 };
 
 } // namespace srsgnb

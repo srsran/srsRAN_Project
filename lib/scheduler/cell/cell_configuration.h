@@ -31,8 +31,8 @@ public:
   const unsigned                                       nof_dl_prbs;
   const unsigned                                       nof_ul_prbs;
   const unsigned                                       nof_slots_per_frame;
-  const dl_configuration_common                        dl_cfg_common;
-  const asn1::rrc_nr::ul_cfg_common_sib_s              ul_cfg_common;
+  const dl_config_common                               dl_cfg_common;
+  const ul_config_common                               ul_cfg_common;
   const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
 
   /// Imported from mac_cell_configuration.

@@ -42,7 +42,8 @@ struct mac_cell_creation_request {
   /// If present, the cell is in TDD duplex mode.
   optional<tdd_configuration> tdd_cfg;
   /// DL Configuration Common.
-  dl_configuration_common dl_cfg_common;
+  dl_config_common dl_cfg_common;
+  ul_config_common ul_cfg_common;
 
   // TODO: Fill remaining fields
 };

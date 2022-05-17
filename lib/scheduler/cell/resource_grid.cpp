@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-static subcarrier_spacing get_max_scs(const dl_configuration_common& dl_cfg)
+static subcarrier_spacing get_max_scs(const dl_config_common& dl_cfg)
 {
   // Note: assumes sorted list. TODO: Verify.
   return dl_cfg.freq_info_dl.scs_carrier_list.back().scs;
@@ -100,9 +100,13 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
 }
 
-prb_bitmap cell_slot_resource_grid::sch_crbs(subcarrier_spacing scs) const
+prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const
 {
-  return get_carrier(scs).sch_crbs;
+  prb_bitmap crbs = get_carrier(bwp_cfg.scs).sch_crbs;
+  // filter out CRBs that are outside of the BWP.
+  crbs.fill(0, bwp_cfg.crbs.start());
+  crbs.fill(bwp_cfg.crbs.stop(), crbs.size());
+  return crbs;
 }
 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)

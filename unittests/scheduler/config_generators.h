@@ -51,7 +51,7 @@ sched_cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
 {
   sched_cell_configuration_request_message msg =
       make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  msg.ul_cfg_common = make_ul_cfg_common(k2);
+  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = k2;
   return msg;
 }
 

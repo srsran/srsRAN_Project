@@ -9,13 +9,12 @@
  */
 
 #include "config_generators.h"
-#include "lib/scheduler/cell/phy_helpers.h"
 #include "lib/scheduler/cell/ra_sched.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
-#include <set>
 #include <map>
+#include <set>
 
 using namespace srsgnb;
 
@@ -27,14 +26,6 @@ const unsigned nof_grants_per_rar = 16;
 /// Struct used to convey parameters to the test functions
 struct ra_sched_param {
   uint8_t k2 = 2;
-};
-
-/// Helper function that computes the RA-RNTI from the rach_indication_message.
-static uint16_t get_ra_rnti(const rach_indication_message& msg)
-{
-  // See 38.321, 5.1.3 - Random Access Preamble transmission
-  uint16_t ra_rnti = 1 + msg.symbol_index + 14 * msg.slot_rx.slot_index() + 14 * 80 * msg.frequency_index;
-  return ra_rnti;
 };
 
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
@@ -105,13 +96,7 @@ struct test_bench {
 
   test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_req(paramters.k2)), res_grid(cfg)
   {
-    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common_present,
-                  "BWP-UplinkCommon has no pusch-ConfigCommon configured");
-    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list.size() > 0,
-                  "PUSCH-ConfigCommon has no PUSCH-TimeDomainResourceAllocationList configured");
-    srsran_assert(cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2_present,
-                  "K2 not present in PUSCH-TimeDomainAllocationList[0]");
-    k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.setup().pusch_time_domain_alloc_list[0].k2;
+    k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2;
   };
 
   cell_configuration      cfg;
@@ -189,7 +174,7 @@ static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
   cell_slot_resource_allocator& rar_alloc = resource_grid[0];
 
   if (rar_alloc.result.dl.rar_grants.size() > 0) {
-    TESTASSERT(rar_alloc.dl_res_grid.sch_crbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).any());
+    TESTASSERT(rar_alloc.dl_res_grid.sch_crbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
   }
 }
 
@@ -344,10 +329,6 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
     // Slot for which Scheduler schedules PHY DL transmission (RAR)
     slot_point slot_tx{0, t + gnb_tx_delay};
 
-    unsigned        msg3_delay;
-    symbol_interval symbols;
-    get_msg3_delay(bench.cfg.ul_cfg_common, slot_tx, msg3_delay, symbols);
-
     // Update slot in the resource allocation grid pool
     bench.slot_indication(slot_tx);
 
@@ -442,10 +423,6 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
     // Slot for which Scheduler schedules PHY DL transmission (RAR)
     slot_point slot_tx{0, t + gnb_tx_delay};
 
-    unsigned        msg3_delay;
-    symbol_interval symbols;
-    get_msg3_delay(bench.cfg.ul_cfg_common, slot_tx, msg3_delay, symbols);
-
     // Update slot in the resource allocation grid pool
     bench.slot_indication(slot_tx);
 
@@ -496,9 +473,8 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       TESTASSERT(ra_sch.handle_rach_indication(rach_ind));
     }
 
-    unsigned        msg3_delay;
-    symbol_interval symbols;
-    get_msg3_delay(bench.cfg.ul_cfg_common, sl_tx, msg3_delay, symbols);
+    unsigned msg3_delay = get_msg3_delay(bench.cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0],
+                                         bench.cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
 
     // Update slot
     bench.slot_indication(sl_tx);
@@ -511,8 +487,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
       cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
 
-      TESTASSERT(
-          pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).any());
+      TESTASSERT(pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
 
       TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
       test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);
@@ -526,12 +501,11 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // FIXME: Use UL BWP config.
       TESTASSERT_EQ(
           rar.grants[0].prbs.length(),
-          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).count());
+          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).count());
 
     } else {
-      TESTASSERT(bench.res_grid[0]
-                     .dl_res_grid.sch_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)
-                     .none());
+      TESTASSERT(
+          bench.res_grid[0].dl_res_grid.sch_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params).none());
     }
 
     sl_rx++;

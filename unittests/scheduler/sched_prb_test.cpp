@@ -101,7 +101,7 @@ void test_bwp_rb_bitmap_search()
 {
   bwp_rb_bitmap rb_bitmap(275, 0, true);
 
-  prb_interval prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 5);
+  crb_interval prbs = find_empty_interval_of_length(rb_bitmap.prbs(), 5);
   TESTASSERT(prbs == prb_interval(0, 5));
   prbs = find_empty_interval_of_length(rb_bitmap.prbs(), rb_bitmap.prbs().size());
   TESTASSERT(prbs == prb_interval(0, rb_bitmap.prbs().size()));
