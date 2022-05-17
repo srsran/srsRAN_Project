@@ -28,22 +28,8 @@ static constexpr unsigned MAX_BG_K = 22;
 class ldpc_decoder_impl : public ldpc_decoder
 {
 public:
-  /// \name Constructors, destructor, copy and move operators
-  /// Either default or deleted.
-
-  ///@{
+  /// Default constructor.
   ldpc_decoder_impl() = default;
-
-  // no copy and move constructors
-  ldpc_decoder_impl(ldpc_decoder_impl&)  = delete;
-  ldpc_decoder_impl(ldpc_decoder_impl&&) = delete;
-
-  // no copy and move operators
-  ldpc_decoder_impl& operator=(ldpc_decoder_impl&)  = delete;
-  ldpc_decoder_impl& operator=(ldpc_decoder_impl&&) = delete;
-
-  ~ldpc_decoder_impl() override = default;
-  ///@}
 
   // See interface for the documentation.
   optional<unsigned> decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
@@ -101,6 +87,8 @@ protected:
   /// with the enough variable nodes to accommodate all LLRs provided by the input vector. It is a multiple of the
   /// lifting size.
   uint16_t codeblock_length = 52;
+  /// Number of significant (not filler) bits.
+  uint16_t nof_significant_bits = 44;
 
   /// Maximum number of iterations
   unsigned max_iterations = 6;

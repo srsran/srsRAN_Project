@@ -43,6 +43,8 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
   srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
 
+  nof_significant_bits = bg_K * lifting_size - cfg.block_conf.cb_specific.nof_filler_bits;
+
   select_strategy();
 }
 
@@ -92,7 +94,7 @@ ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_ca
       get_hard_bits(output);
 
       // Early stop
-      if (crc->calculate_bit(output) == 0) {
+      if (crc->calculate_bit(output.first(nof_significant_bits)) == 0) {
         return i_iteration + 1;
       }
     }
