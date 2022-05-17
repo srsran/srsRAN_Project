@@ -178,8 +178,8 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&          rar,
   prb_interval avail_dl_prbs;
   {
     unsigned          nof_rar_prbs = nof_prbs_per_rar * max_nof_allocs;
-    const prb_bitmap& used_prbs    = rar_alloc.dl_res_grid.sch_prbs(cfg.dl_cfg_common.init_dl_bwp.generic_params);
-    avail_dl_prbs                  = find_empty_interval_of_length(used_prbs, nof_rar_prbs, 0);
+    const prb_bitmap& used_crbs    = rar_alloc.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
+    avail_dl_prbs                  = find_empty_interval_of_length(used_crbs, nof_rar_prbs, 0);
     max_nof_allocs                 = avail_dl_prbs.length() / nof_prbs_per_rar;
     if (max_nof_allocs == 0) {
       // early exit
@@ -193,7 +193,7 @@ unsigned ra_sched::allocate_rar(const pending_rar_t&          rar,
   {
     unsigned nof_msg3_prbs = nof_prbs_per_msg3 * max_nof_allocs;
     // FIXME: Use UL BWP params.
-    prb_bitmap used_ul_prbs = msg3_alloc.ul_res_grid.sch_prbs(cfg.dl_cfg_common.init_dl_bwp.generic_params);
+    prb_bitmap used_ul_prbs = msg3_alloc.ul_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs);
     avail_ul_prbs           = find_empty_interval_of_length(used_ul_prbs, nof_msg3_prbs, 0);
     max_nof_allocs          = avail_ul_prbs.length() / nof_prbs_per_msg3;
     if (max_nof_allocs == 0) {

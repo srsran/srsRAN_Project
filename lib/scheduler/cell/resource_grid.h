@@ -19,7 +19,7 @@
 
 namespace srsgnb {
 
-/// Parameters of a SCH grant allocation within a BWP.
+/// Parameters of a PDSCH or PUSCH grant allocation within a BWP.
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;
   ofdm_symbol_range        symbols;
@@ -71,12 +71,13 @@ struct grant_info {
   {}
 };
 
+/// Derives Carrier CRB limits from scs-SpecificCarrier.
 inline prb_interval get_carrier_rb_dims(const scs_specific_carrier& carrier_cfg)
 {
   return prb_interval{carrier_cfg.offset_to_carrier, carrier_cfg.offset_to_carrier + carrier_cfg.carrier_bandwidth};
 }
 
-/// \brief Represents the Symbol x RB resource grid of a DL/UL Carrier. The number of RBs of the grid will depend on
+/// \brief Represents the Symbol x CRB resource grid of a DL/UL Carrier. The number of CRBs of the grid will depend on
 /// the carrier bandwidth and numerology used.
 class carrier_subslot_resource_grid
 {
@@ -130,16 +131,17 @@ public:
   bool collides(grant_info grant) const;
   bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, prb_interval crbs) const;
 
-  prb_bitmap sch_prbs(const bwp_configuration& bwp_cfg) const;
+  /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
+  prb_bitmap sch_crbs(subcarrier_spacing scs) const;
 
 private:
   friend struct cell_resource_allocator;
 
   struct carrier_resource_grid {
-    /// Stores the sum of all RBs used for SCH grants.
-    prb_bitmap sch_prbs;
+    /// Stores the sum of all CRBs used for SCH grants.
+    prb_bitmap sch_crbs;
 
-    /// Stores the sum of all symbol x RB resources used for data and control grants.
+    /// Stores the sum of all symbol x CRB resources used for data and control grants.
     carrier_subslot_resource_grid subslot_prbs;
 
     explicit carrier_resource_grid(const scs_specific_carrier& carrier_cfg);

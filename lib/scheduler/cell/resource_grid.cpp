@@ -54,7 +54,7 @@ bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, prb_inte
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cell_slot_resource_grid::carrier_resource_grid::carrier_resource_grid(const scs_specific_carrier& carrier_cfg) :
-  sch_prbs(carrier_cfg.carrier_bandwidth), subslot_prbs(carrier_cfg)
+  sch_crbs(carrier_cfg.carrier_bandwidth), subslot_prbs(carrier_cfg)
 {}
 
 cell_slot_resource_grid::cell_slot_resource_grid(span<const scs_specific_carrier> scs_carriers)
@@ -73,7 +73,7 @@ void cell_slot_resource_grid::clear()
 {
   for (auto& carrier : carrier_grids) {
     carrier.subslot_prbs.clear();
-    carrier.sch_prbs.reset();
+    carrier.sch_crbs.reset();
   }
 }
 
@@ -84,7 +84,7 @@ void cell_slot_resource_grid::fill(grant_info grant)
   // Fill RB grid.
   carrier.subslot_prbs.fill(grant.symbols, grant.crbs);
   if (grant.ch == grant_info::channel::sch) {
-    carrier.sch_prbs.fill(grant.crbs.start(), grant.crbs.stop());
+    carrier.sch_crbs.fill(grant.crbs.start(), grant.crbs.stop());
   }
 }
 
@@ -100,10 +100,9 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
   return carrier.subslot_prbs.collides(ofdm_symbols, crbs);
 }
 
-prb_bitmap cell_slot_resource_grid::sch_prbs(const bwp_configuration& bwp_cfg) const
+prb_bitmap cell_slot_resource_grid::sch_crbs(subcarrier_spacing scs) const
 {
-  // TODO: Need to display PRB bitmap by BWP offset.
-  return get_carrier(bwp_cfg.scs).sch_prbs;
+  return get_carrier(scs).sch_crbs;
 }
 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)

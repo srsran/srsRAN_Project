@@ -163,7 +163,7 @@ void test_pusch_resource_allocation()
   TESTASSERT_EQ(sl_tx + 1, res_grid_alloc[1].slot);
 
   // Test: No allocations made yet
-  TESTASSERT(res_grid_alloc[0].ul_res_grid.sch_prbs(bwp_cfg).none());
+  TESTASSERT(res_grid_alloc[0].ul_res_grid.sch_crbs(bwp_cfg.scs).none());
   TESTASSERT(res_grid_alloc[0].result.ul.puschs.empty());
 
   // Action 2: Allocate PUSCH grant in current slot_tx
@@ -172,8 +172,8 @@ void test_pusch_resource_allocation()
   res_grid_alloc[0].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx
-  TESTASSERT(res_grid_alloc[0].ul_res_grid.sch_prbs(bwp_cfg).any());
-  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.sch_prbs(bwp_cfg).count(), ul_grant.prbs.length());
+  TESTASSERT(res_grid_alloc[0].ul_res_grid.sch_crbs(bwp_cfg.scs).any());
+  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.sch_crbs(bwp_cfg.scs).count(), ul_grant.prbs.length());
   TESTASSERT_EQ(1, res_grid_alloc[0].result.ul.puschs.size());
 
   // Action 3: Allocate PUSCH grant in slot_tx + 1
@@ -182,15 +182,15 @@ void test_pusch_resource_allocation()
   res_grid_alloc[1].result.ul.puschs.emplace_back();
 
   // Test: Allocated PUSCH was registered in the cell resource grid for slot_tx + 1
-  TESTASSERT(res_grid_alloc[1].ul_res_grid.sch_prbs(bwp_cfg).any());
-  TESTASSERT_EQ(res_grid_alloc[1].ul_res_grid.sch_prbs(bwp_cfg).count(), ul_grant2.prbs.length());
+  TESTASSERT(res_grid_alloc[1].ul_res_grid.sch_crbs(bwp_cfg.scs).any());
+  TESTASSERT_EQ(res_grid_alloc[1].ul_res_grid.sch_crbs(bwp_cfg.scs).count(), ul_grant2.prbs.length());
   TESTASSERT_EQ(1, res_grid_alloc[1].result.ul.puschs.size());
 
   // Action 4: New slot
   res_grid_alloc.slot_indication(++sl_tx);
 
   // Test: Current slot_tx allocations match the ones done with "slot_tx + 1" in the previous slot
-  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.sch_prbs(bwp_cfg).count(), ul_grant2.prbs.length());
+  TESTASSERT_EQ(res_grid_alloc[0].ul_res_grid.sch_crbs(bwp_cfg.scs).count(), ul_grant2.prbs.length());
 }
 
 int main()

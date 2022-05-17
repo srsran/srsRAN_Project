@@ -190,7 +190,7 @@ static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
   cell_slot_resource_allocator& rar_alloc = resource_grid[0];
 
   if (rar_alloc.result.dl.rar_grants.size() > 0) {
-    TESTASSERT(rar_alloc.dl_res_grid.sch_prbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    TESTASSERT(rar_alloc.dl_res_grid.sch_crbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).any());
   }
 }
 
@@ -512,7 +512,8 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
       cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
 
-      TESTASSERT(pdcch_sl_res.dl_res_grid.sch_prbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+      TESTASSERT(
+          pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).any());
 
       TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
       test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);
@@ -526,11 +527,12 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // FIXME: Use UL BWP config.
       TESTASSERT_EQ(
           rar.grants[0].prbs.length(),
-          msg3_sl_res.ul_res_grid.sch_prbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).count());
+          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs).count());
 
     } else {
-      TESTASSERT(
-          bench.res_grid[0].dl_res_grid.sch_prbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params).none());
+      TESTASSERT(bench.res_grid[0]
+                     .dl_res_grid.sch_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)
+                     .none());
     }
 
     sl_rx++;
