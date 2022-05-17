@@ -90,7 +90,7 @@ struct pdcch_configuration_common {
 };
 
 struct bwp_configuration {
-  bool               cp_present;
+  bool               cp_extended;
   subcarrier_spacing scs;
   prb_interval       prbs;
 };

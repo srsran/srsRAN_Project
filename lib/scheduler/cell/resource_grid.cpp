@@ -12,27 +12,6 @@
 
 using namespace srsgnb;
 
-static prb_interval
-convert_carrier_rb_dims(prb_interval prbs, subcarrier_spacing src_scs, subcarrier_spacing target_scs)
-{
-  if (src_scs == target_scs) {
-    return prbs;
-  }
-  uint8_t mu_other = to_numerology_value(target_scs), mu_self = to_numerology_value(src_scs);
-  if (mu_self < mu_other) {
-    unsigned div = (1U << mu_other) / (1U << mu_self);
-    return prb_interval{divide_ceil(prbs.start(), div), divide_ceil(prbs.stop(), div)};
-  }
-  unsigned div = (1U << mu_self) / (1U << mu_other);
-  return prb_interval{prbs.start() * div, prbs.stop() * div};
-}
-
-static prb_interval convert_carrier_rb_dims(const scs_specific_carrier& carrier_cfg, subcarrier_spacing target_scs)
-{
-  prb_interval prbs = get_carrier_rb_dims(carrier_cfg);
-  return convert_carrier_rb_dims(prbs, carrier_cfg.scs, target_scs);
-}
-
 static subcarrier_spacing get_max_scs(const dl_configuration_common& dl_cfg)
 {
   // Note: assumes sorted list. TODO: Verify.
@@ -53,7 +32,7 @@ void carrier_subslot_resource_grid::clear()
 void carrier_subslot_resource_grid::fill(ofdm_symbol_range symbols, prb_interval prbs)
 {
   srsran_sanity_check(rb_dims().contains(prbs), "PRB interval out-of-bounds");
-  srsran_sanity_check(symbols.stop() <= 14, "OFDM symbols out-of-bounds");
+  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
 
   prbs.displace_by(-(int)offset());
   for (unsigned i = symbols.start(); i < symbols.stop(); ++i) {
@@ -95,9 +74,6 @@ void cell_slot_resource_grid::clear()
   for (auto& carrier : carrier_grids) {
     carrier.subslot_prbs.clear();
     carrier.sch_prbs.reset();
-    for (auto& overlapped : carrier.overlapped_carrier_slots) {
-      overlapped.second = false;
-    }
   }
 }
 
@@ -109,18 +85,6 @@ void cell_slot_resource_grid::fill(grant_info grant)
   carrier.subslot_prbs.fill(grant.symbols, grant.crbs);
   if (grant.ch == grant_info::channel::sch) {
     carrier.sch_prbs.fill(grant.crbs.start(), grant.crbs.stop());
-  }
-
-  // Mark PRBs of other carriers that overlap with this BWP as unavailable in this slot.
-  for (auto& overlapped : carrier.overlapped_carrier_slots) {
-    if (not overlapped.second) {
-      overlapped.second   = true;
-      auto& other_carrier = overlapped.first->subslot_prbs;
-      other_carrier.fill(grant.symbols, grant.crbs);
-      prb_interval      other_prbs    = convert_carrier_rb_dims(grant.crbs, grant.scs, other_carrier.scs());
-      ofdm_symbol_range other_symbols = grant.symbols; // TODO.
-      other_carrier.fill(other_symbols, other_prbs);
-    }
   }
 }
 
@@ -201,25 +165,6 @@ cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_)
     }
     slots[i] = std::make_unique<cell_slot_resource_allocator>(cfg, slot_scs_carriers, slot_scs_carriers);
     slot_scs_carriers.clear();
-  }
-
-  // For carriers that overlap in frequency, couple the respective resource grids.
-  for (unsigned j = 0; j < cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.size(); ++j) {
-    const scs_specific_carrier& c = cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[j];
-    for (unsigned j2 = 0; j2 < cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.size(); ++j2) {
-      const scs_specific_carrier& c2 = cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[j2];
-      if (j2 != j and get_carrier_rb_dims(c).overlaps(convert_carrier_rb_dims(c2, c.scs))) {
-        // Carriers overlap.
-        for (unsigned i = 0; i < slots.size(); ++i) {
-          for (unsigned k = 0; k < get_nof_slots_per_subframe(c2.scs) / get_nof_slots_per_subframe(c.scs); ++k) {
-            slots[i]->dl_res_grid.carrier_grids[j].overlapped_carrier_slots.emplace_back();
-            slots[i]->dl_res_grid.carrier_grids[j].overlapped_carrier_slots.back().first =
-                &slots[i + k]->dl_res_grid.carrier_grids[j2];
-            slots[i]->dl_res_grid.carrier_grids[j].overlapped_carrier_slots.back().second = false;
-          }
-        }
-      }
-    }
   }
 }
 

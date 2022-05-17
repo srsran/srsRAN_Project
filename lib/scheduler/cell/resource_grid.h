@@ -29,7 +29,9 @@ struct bwp_sch_grant_info {
   bwp_sch_grant_info(const bwp_configuration& bwp_, ofdm_symbol_range symbols_, prb_interval prbs_) :
     bwp_cfg(&bwp_), symbols(symbols_), prbs(prbs_)
   {
-    srsran_sanity_check(symbols.stop() <= 14, "OFDM symbols do not fit slot");
+    srsran_sanity_check(
+        symbols.stop() <= (bwp_cfg->cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP),
+        "OFDM symbols do not fit slot");
     srsran_sanity_check(prbs.stop() <= bwp_cfg->prbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->prbs);
   }
 };
@@ -46,7 +48,7 @@ inline prb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
 /// Convert CRBs to PRBs within a BWP.
 inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, prb_interval crbs)
 {
-  crbs.displace_by(bwp_cfg.prbs.start());
+  crbs.displace_by(-(int)bwp_cfg.prbs.start());
   srsran_sanity_check(
       bwp_cfg.prbs.contains(crbs), "Mismatch between PRB interval={} and BWP lims={}", crbs, bwp_cfg.prbs);
   return crbs;
@@ -140,14 +142,11 @@ private:
     /// Stores the sum of all symbol x RB resources used for data and control grants.
     carrier_subslot_resource_grid subslot_prbs;
 
-    /// List of overlapping carrier resource grids.
-    std::vector<std::pair<carrier_resource_grid*, bool> > overlapped_carrier_slots;
-
     explicit carrier_resource_grid(const scs_specific_carrier& carrier_cfg);
   };
 
-  carrier_resource_grid&       get_carrier(const subcarrier_spacing scs);
-  const carrier_resource_grid& get_carrier(const subcarrier_spacing scs) const;
+  carrier_resource_grid&       get_carrier(subcarrier_spacing scs);
+  const carrier_resource_grid& get_carrier(subcarrier_spacing scs) const;
 
   /// Carrier Resource Grids.
   std::vector<carrier_resource_grid>     carrier_grids;
