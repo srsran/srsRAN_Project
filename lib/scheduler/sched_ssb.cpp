@@ -55,7 +55,7 @@ fill_ssb_parameters(ssb_information_list& ssb_list, uint32_t offset_to_point_A, 
   ssb_msg.symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
   // The value below is common for all SSB, regardless of the different parameters or cases.
   // NOTE: It assumes the reference grid is that of the SSB
-  ssb_msg.prbs.set(offset_to_point_A, offset_to_point_A + NOF_SSB_PRBS);
+  ssb_msg.crbs.set(offset_to_point_A, offset_to_point_A + NOF_SSB_PRBS);
   // NOTE: until we understand whether the time and frequency allocation refer to the common grid or SSB grid, we
   // leave this extra line (commented) below, which will be used if the reference is the common grid;
   // ssb_msg.ssb_info.prb_alloc.set(offset_to_point_A, NOF_SSB_PRBS + floor(k_ssb % MAX_K_SSB)).
@@ -209,7 +209,7 @@ void sched_ssb(cell_slot_resource_allocator& res_grid,
   // Update the used DL PRBs with those allocated to the SSBs.
   subcarrier_spacing scs_common = res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs;
   for (auto& ssb : ssb_list) {
-    grant_info grant{grant_info::channel::ssb, scs_common, ssb_symbols_to_slot_symbols(ssb.symbols), ssb.prbs};
+    grant_info grant{grant_info::channel::ssb, scs_common, ssb_symbols_to_slot_symbols(ssb.symbols), ssb.crbs};
     res_grid.dl_res_grid.fill(grant);
   }
 }

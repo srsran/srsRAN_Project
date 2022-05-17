@@ -48,7 +48,7 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
 
   // Configure initial DL BWP.
   msg.dl_cfg_common.init_dl_bwp.generic_params.scs  = subcarrier_spacing::kHz15;
-  msg.dl_cfg_common.init_dl_bwp.generic_params.prbs = {0, 52};
+  msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {0, 52};
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets.emplace(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets[0].id = to_coreset_id(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(0);

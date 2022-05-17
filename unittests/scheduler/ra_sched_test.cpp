@@ -11,10 +11,10 @@
 #include "config_generators.h"
 #include "lib/scheduler/cell/phy_helpers.h"
 #include "lib/scheduler/cell/ra_sched.h"
-#include "srsgnb/adt/circular_map.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
+#include <set>
 #include <map>
 
 using namespace srsgnb;
@@ -37,27 +37,26 @@ static uint16_t get_ra_rnti(const rach_indication_message& msg)
   return ra_rnti;
 };
 
-/// Tests whether the fields in a RAR grant are consistent. Current tests:
-/// - no repeated C-RNTIs as MSG3 grants.
-/// - No collision in UL PRBs between MSG3 grants.
+/// Tests whether the fields in a list of RAR grant are consistent. Current tests:
+/// - No repeated RA-RNTIs across RAR grants and no repeated C-RNTIs across Msg3 grants.
+/// - No collision in UL RBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
-  prb_bitmap                                     total_ul_prbs{cfg.nof_ul_prbs};
-  circular_map<uint16_t, rnti_t, MAX_NOF_DU_UES> crntis;
+  prb_bitmap       total_ul_prbs{cfg.nof_ul_prbs};
+  std::set<rnti_t> temp_crntis, ra_rntis;
 
   for (const rar_information& rar : rars) {
-    TESTASSERT(not rar.grants.empty(),
-               "RAR corrsponding to RA-RNTI '{}' has no corresponding allocated MSG3 grants",
-               rar.ra_rnti);
+    TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", rar.ra_rnti);
+    TESTASSERT(ra_rntis.count(rar.ra_rnti) == 0);
+    ra_rntis.insert(rar.ra_rnti);
     for (const msg3_information& msg3 : rar.grants) {
-      TESTASSERT(msg3.prbs.length() > 0,
-                 "RAR corrsponding to RA-RNTI '{}' has no PRBs allocated for MSG3 grants",
-                 rar.ra_rnti);
+      TESTASSERT(
+          not msg3.prbs.empty(), "Msg3 with RA-RNTI={:#x},temp-CRNTI={:#x} has no RBs", rar.ra_rnti, msg3.temp_crnti);
       TESTASSERT(not total_ul_prbs.any(msg3.prbs.start(), msg3.prbs.stop()));
-      TESTASSERT(not crntis.contains(msg3.temp_crnti));
+      TESTASSERT(temp_crntis.count(msg3.temp_crnti) == 0);
 
       total_ul_prbs.fill(msg3.prbs.start(), msg3.prbs.stop());
-      crntis.insert(msg3.temp_crnti, msg3.temp_crnti);
+      temp_crntis.insert(msg3.temp_crnti);
     }
   }
 }

@@ -139,9 +139,9 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(
-            offset_to_point_A, ssb_item.prbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+            offset_to_point_A, ssb_item.crbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(offset_to_point_A + 20,
-                      ssb_item.prbs.stop(),
+                      ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }
@@ -150,7 +150,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
     }
   }
 
-  // Check if DL PRB allocation is correct.
+  // Check if DL CRB allocation is correct.
   if (ssb_list.size() > 0) {
     grant_info empty_space{grant_info::channel::ssb,
                            slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
@@ -217,9 +217,9 @@ void test_ssb_case_B(const slot_point&             slot_tx,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(
-            offset_to_point_A, ssb_item.prbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+            offset_to_point_A, ssb_item.crbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(offset_to_point_A + 20,
-                      ssb_item.prbs.stop(),
+                      ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }
@@ -248,9 +248,9 @@ void test_ssb_case_B(const slot_point&             slot_tx,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(
-            offset_to_point_A, ssb_item.prbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
+            offset_to_point_A, ssb_item.crbs.start(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         TESTASSERT_EQ(offset_to_point_A + 20,
-                      ssb_item.prbs.stop(),
+                      ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_periodicity, ssb_case));
         it++;
       }

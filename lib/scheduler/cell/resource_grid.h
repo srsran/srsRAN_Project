@@ -19,6 +19,23 @@
 
 namespace srsgnb {
 
+/// Convert PRBs within a BWP into Common RBs, which use pointA as reference point.
+inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval prbs)
+{
+  srsran_sanity_check(
+      prbs.stop() <= bwp_cfg.crbs.length(), "Mismatch between PRBs={} and BWP lims={}", prbs, bwp_cfg.crbs);
+  crb_interval crbs{prbs.start() + bwp_cfg.crbs.start(), prbs.stop() + bwp_cfg.crbs.start()};
+  return crbs;
+}
+
+/// Convert CRBs to PRBs within a BWP.
+inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval crbs)
+{
+  srsran_sanity_check(bwp_cfg.crbs.contains(crbs), "Mismatch between CRBs={} and BWP lims={}", crbs, bwp_cfg.crbs);
+  prb_interval prbs{crbs.start() - bwp_cfg.crbs.start(), crbs.stop() - bwp_cfg.crbs.start()};
+  return prbs;
+}
+
 /// Parameters of a PDSCH or PUSCH grant allocation within a BWP.
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;
@@ -32,27 +49,9 @@ struct bwp_sch_grant_info {
     srsran_sanity_check(
         symbols.stop() <= (bwp_cfg->cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP),
         "OFDM symbols do not fit slot");
-    srsran_sanity_check(prbs.stop() <= bwp_cfg->prbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->prbs);
+    srsran_sanity_check(prbs.stop() <= bwp_cfg->crbs.length(), "PRBs={} do not fit BWP={}", prbs, bwp_cfg->crbs);
   }
 };
-
-/// Convert PRBs within a BWP into Common RBs, which use pointA as reference point.
-inline prb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval prbs)
-{
-  prbs.displace_by(bwp_cfg.prbs.start());
-  srsran_sanity_check(
-      bwp_cfg.prbs.contains(prbs), "Mismatch between PRB interval={} and BWP lims={}", prbs, bwp_cfg.prbs);
-  return prbs;
-}
-
-/// Convert CRBs to PRBs within a BWP.
-inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, prb_interval crbs)
-{
-  crbs.displace_by(-(int)bwp_cfg.prbs.start());
-  srsran_sanity_check(
-      bwp_cfg.prbs.contains(crbs), "Mismatch between PRB interval={} and BWP lims={}", crbs, bwp_cfg.prbs);
-  return crbs;
-}
 
 /// Parameters of a grant allocation in the cell resource grid.
 struct grant_info {
@@ -61,9 +60,9 @@ struct grant_info {
   subcarrier_spacing scs;
   ofdm_symbol_range  symbols;
   /// Common RBs of the grant. RB==0 corresponds to the RB that overlaps with the pointA.
-  prb_interval crbs;
+  crb_interval crbs;
 
-  grant_info(grant_info::channel ch_, subcarrier_spacing scs_, ofdm_symbol_range symbols_, prb_interval crbs_) :
+  grant_info(grant_info::channel ch_, subcarrier_spacing scs_, ofdm_symbol_range symbols_, crb_interval crbs_) :
     ch(ch_), scs(scs_), symbols(symbols_), crbs(crbs_)
   {}
   grant_info(const bwp_sch_grant_info& grant) :
@@ -72,9 +71,9 @@ struct grant_info {
 };
 
 /// Derives Carrier CRB limits from scs-SpecificCarrier.
-inline prb_interval get_carrier_rb_dims(const scs_specific_carrier& carrier_cfg)
+inline crb_interval get_carrier_rb_dims(const scs_specific_carrier& carrier_cfg)
 {
-  return prb_interval{carrier_cfg.offset_to_carrier, carrier_cfg.offset_to_carrier + carrier_cfg.carrier_bandwidth};
+  return crb_interval{carrier_cfg.offset_to_carrier, carrier_cfg.offset_to_carrier + carrier_cfg.carrier_bandwidth};
 }
 
 /// \brief Represents the Symbol x CRB resource grid of a DL/UL Carrier. The number of CRBs of the grid will depend on
@@ -87,21 +86,21 @@ public:
   subcarrier_spacing scs() const { return carrier_cfg.scs; }
   unsigned           nof_prbs() const { return carrier_cfg.carrier_bandwidth; }
   unsigned           offset() const { return carrier_cfg.offset_to_carrier; }
-  prb_interval       rb_dims() const { return get_carrier_rb_dims(carrier_cfg); }
+  crb_interval       rb_dims() const { return get_carrier_rb_dims(carrier_cfg); }
 
   /// Clearer Carrier Resource Grid.
   void clear();
 
-  /// Allocates the symbol x PRB range in the carrier resource grid.
+  /// Allocates the symbol x CRB range in the carrier resource grid.
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
-  /// \param prbs PRB interval, where PRB=0 corresponds to the PRB closest to pointA.
-  void fill(ofdm_symbol_range symbols, prb_interval prbs);
+  /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
+  void fill(ofdm_symbol_range symbols, crb_interval crbs);
 
   /// Checks whether the provided symbol x PRB range collides with any other allocation in the carrier resource grid.
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
-  /// \param prbs PRB interval, where PRB=0 corresponds to the PRB closest to pointA.
+  /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
   /// \return true if a collision was detected. False otherwise.
-  bool collides(ofdm_symbol_range symbols, prb_interval prbs) const;
+  bool collides(ofdm_symbol_range symbols, crb_interval crbs) const;
 
 private:
   using slot_rb_bitmap = bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * MAX_NOF_PRBS>;
@@ -129,7 +128,7 @@ public:
   /// \param grant contains the symbol x RB range whose available we want to check.
   /// \return true if at least one symbol x RB of grant is currently occupied in the resource grid.
   bool collides(grant_info grant) const;
-  bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, prb_interval crbs) const;
+  bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
 
   /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
   prb_bitmap sch_crbs(subcarrier_spacing scs) const;
@@ -142,7 +141,7 @@ private:
     prb_bitmap sch_crbs;
 
     /// Stores the sum of all symbol x CRB resources used for data and control grants.
-    carrier_subslot_resource_grid subslot_prbs;
+    carrier_subslot_resource_grid subslot_rbs;
 
     explicit carrier_resource_grid(const scs_specific_carrier& carrier_cfg);
   };

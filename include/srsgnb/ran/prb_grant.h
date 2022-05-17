@@ -22,8 +22,13 @@ using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 /// Bitset of RBGs with size up to 18
 using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 
-/// Struct to express a {min,...,max} range of PRBs
-struct prb_interval : public interval<uint32_t> {
+/// Struct to express a {min,...,max} range of CRBs within a carrier.
+struct crb_interval : public interval<unsigned> {
+  using interval::interval;
+};
+
+/// Struct to express a {min,...,max} range of PRBs within a BWP.
+struct prb_interval : public interval<unsigned> {
   using interval::interval;
 };
 
@@ -143,6 +148,10 @@ namespace fmt {
 /// FMT formatter for prb_intervals
 template <>
 struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
+
+/// FMT formatter for crb_intervals
+template <>
+struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
 
 } // namespace fmt
 

@@ -92,7 +92,7 @@ struct rar_information {
 /// Stores the information associated to an SSB.
 struct ssb_information {
   unsigned          ssb_index;
-  prb_interval      prbs;
+  crb_interval      crbs;
   ofdm_symbol_range symbols;
 };
 

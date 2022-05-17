@@ -40,18 +40,18 @@ void test_carrier_subslot_resource_grid()
     TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
     TESTASSERT_EQ(52, carrier_grid.nof_prbs());
     TESTASSERT_EQ(0, carrier_grid.offset());
-    prb_interval lims{0, 52};
+    crb_interval lims{0, 52};
     TESTASSERT(carrier_grid.rb_dims() == lims);
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, prb_interval{2, 5}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{2, 5}));
 
-    carrier_grid.fill({2, 5}, prb_interval{2, 4});
-    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{1, 3}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{1, 2}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, prb_interval{1, 3}));
+    carrier_grid.fill({2, 5}, crb_interval{2, 4});
+    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 2}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{1, 3}));
 
     carrier_grid.clear();
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{1, 3}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
   }
 
   // Narrowband Carrier, 15kHz case.
@@ -63,18 +63,18 @@ void test_carrier_subslot_resource_grid()
     TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
     TESTASSERT_EQ(20, carrier_grid.nof_prbs());
     TESTASSERT_EQ(10, carrier_grid.offset());
-    prb_interval lims{10, 30};
+    crb_interval lims{10, 30};
     TESTASSERT(carrier_grid.rb_dims() == lims);
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, prb_interval{12, 15}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{12, 15}));
 
-    carrier_grid.fill({2, 5}, prb_interval{12, 14});
-    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{11, 13}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{11, 12}));
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, prb_interval{11, 13}));
+    carrier_grid.fill({2, 5}, crb_interval{12, 14});
+    TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 12}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{11, 13}));
 
     carrier_grid.clear();
-    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, prb_interval{11, 13}));
+    TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{11, 13}));
   }
 }
 
@@ -87,7 +87,7 @@ void test_cell_resource_grid()
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
-    bwp_cfg.prbs = {0, 52};
+    bwp_cfg.crbs = {0, 52};
 
     TESTASSERT(not cell_grid.collides(bwp_sch_grant_info(bwp_cfg, {0, 14}, {0, 52})));
 
@@ -107,7 +107,7 @@ void test_cell_resource_grid()
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz15;
-    bwp_cfg.prbs = {10, 30};
+    bwp_cfg.crbs = {10, 30};
 
     TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz15, {0, 14}, {0, 52}));
 
@@ -127,7 +127,7 @@ void test_cell_resource_grid()
     cell_slot_resource_grid cell_grid{carrier_cfgs};
     bwp_configuration       bwp_cfg{};
     bwp_cfg.scs  = srsgnb::subcarrier_spacing::kHz120;
-    bwp_cfg.prbs = {10, 275};
+    bwp_cfg.crbs = {10, 275};
 
     TESTASSERT(not cell_grid.collides(subcarrier_spacing::kHz120, {0, 14}, {0, 265}));
 
@@ -149,7 +149,7 @@ void test_pusch_resource_allocation()
   cell_configuration      cell_cfg{make_cell_cfg_req()};
   cell_resource_allocator res_grid_alloc{cell_cfg};
   bwp_configuration       bwp_cfg{};
-  bwp_cfg.prbs = {0, 52};
+  bwp_cfg.crbs = {0, 52};
   bwp_cfg.scs  = cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].scs;
 
   slot_point sl_tx{0, 0};
