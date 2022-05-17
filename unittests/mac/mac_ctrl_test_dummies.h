@@ -164,8 +164,7 @@ public:
     }
     bool test = last_ccch_ind.value().crnti == test_msg.crnti &&
                 last_ccch_ind.value().cell_index == test_msg.cell_index &&
-                last_ccch_ind.value().slot_rx == test_msg.slot_rx &&
-                last_ccch_ind.value().subpdu.length() == test_msg.subpdu.length();
+                last_ccch_ind.value().slot_rx == test_msg.slot_rx && last_ccch_ind.value().subpdu == test_msg.subpdu;
     return test;
   }
 };
