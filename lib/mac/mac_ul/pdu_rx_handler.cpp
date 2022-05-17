@@ -12,11 +12,15 @@
 
 using namespace srsgnb;
 
-pdu_rx_handler::pdu_rx_handler(mac_common_config_t& cfg_,
-                               scheduler_feedback_handler&   sched_,
-                               mac_ul_ue_manager&   ue_manager_,
-                               du_rnti_table&       rnti_table_) :
-  cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_), rnti_table(rnti_table_)
+pdu_rx_handler::pdu_rx_handler(mac_common_config_t&        cfg_,
+                               scheduler_feedback_handler& sched_,
+                               mac_ul_ue_manager&          ue_manager_,
+                               du_rnti_table&              rnti_table_) :
+  cfg(cfg_),
+  logger(cfg.logger),
+  sched(sched_),
+  ue_manager(ue_manager_),
+  rnti_table(rnti_table_)
 {}
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
@@ -40,7 +44,7 @@ bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index,
 
     if (subpdu.lcid() == lcid_ul_sch_t::CRNTI) {
       // 4. Dispatch continuation of subPDU handling to execution context of previous C-RNTI.
-      return handle_mac_ce(ctx, subpdu);
+      return handle_crnti_ce(ctx, subpdu);
     }
   }
 
@@ -123,8 +127,6 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
     case lcid_ul_sch_t::CCCH_SIZE_48:
     case lcid_ul_sch_t::CCCH_SIZE_64:
       return handle_ccch_msg(ctx, subpdu);
-    case lcid_ul_sch_t::CRNTI:
-      return handle_crnti_ce(ctx, subpdu);
     case lcid_ul_sch_t::SHORT_BSR:
     case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
       // Decode Short BSR
@@ -166,6 +168,10 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       }
       sched.ul_bsr(ul_bsr_ind);
     } break;
+      // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
+      // After the MAC C-RNTI is processed, this function is invoked for all subPDUs (including the MAC C-RNTI itself).
+      // Therefore, to avoid logging a warning for MAC C-RNTI, we added below.
+    case lcid_ul_sch_t::CRNTI:
     case lcid_ul_sch_t::PADDING:
       break;
     default:
