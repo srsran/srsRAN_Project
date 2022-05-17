@@ -104,3 +104,14 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         VERBATIM)
+
+add_executable(pusch_decoder_test pusch_decoder_test.cpp)
+target_link_libraries(pusch_decoder_test pusch_decoder srslog srsgnb_upper_phy_support)
+
+add_custom_command(
+  TARGET pusch_decoder_test
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
+  VERBATIM)
