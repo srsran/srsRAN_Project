@@ -263,6 +263,6 @@ std::unique_ptr<ldpc_decoder> srsgnb::create_ldpc_decoder(const std::string& dec
   if (dec_type == "avx2") {
     return std::make_unique<ldpc_decoder_avx2>();
   }
-  srsran_assert(false, "Invalid decoder type '%s'. Valid types are: generic and avx2", dec_type.c_str());
+  srsran_assert(false, "Invalid decoder type '{}'. Valid types are: generic and avx2", dec_type.c_str());
   return {};
 }

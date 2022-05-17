@@ -296,7 +296,7 @@ void ldpc_segmenter_impl::segment_rx(static_vector<described_rx_codeblock, MAX_N
     tmp_description.cb_specific.rm_length       = rm_length;
     tmp_description.cb_specific.cw_offset       = cw_offset;
     // nof_crc_bits == 0 indicates that we are using the TB CRC with length 16.
-    tmp_description.cb_specific.nof_crc_bits = (nof_crc_bits == 0) ? 16 : nof_crc_bits;
+    tmp_description.cb_specific.nof_crc_bits = (nof_segments == 1) ? nof_tb_crc_bits : nof_crc_bits;
 
     described_codeblocks.push_back({codeword_llrs.subspan(cw_offset, rm_length), tmp_description});
     cw_offset += rm_length;
