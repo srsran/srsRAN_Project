@@ -32,9 +32,9 @@ public:
   ldpc_decoder_impl() = default;
 
   // See interface for the documentation.
-  optional<unsigned> decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
+  void decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) override
   {
-    return decode(output, input, nullptr, cfg);
+    decode(output, input, nullptr, cfg);
   };
 
   // See interface for the documentation.

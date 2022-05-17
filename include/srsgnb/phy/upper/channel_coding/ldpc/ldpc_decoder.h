@@ -30,6 +30,7 @@ public:
 
   /// Decoder configuration.
   struct configuration {
+    /// LDPC decoding algorithm configuration parameters.
     struct algorithm_details {
       /// Maximum number of iterations.
       unsigned max_iterations = 6;
@@ -37,28 +38,28 @@ public:
       float scaling_factor = 0.8;
     };
 
-    codeblock_metadata block_conf     = {};
-    algorithm_details  algorithm_conf = {};
+    /// Codeblock configuration.
+    codeblock_metadata block_conf = {};
+    /// LDPC decoding algorithm configuration.
+    algorithm_details algorithm_conf = {};
   };
 
   /// \brief Decodes a codeblock.
   ///
-  /// If a CRC calculator is provided, the decoding process stops as soon as the decoded messages passes the CRC check.
   /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  cfg     Decoder configuration.
-  /// \return If a CRC calculator is provided and the decoding is successful, returns the number of LDPC iterations
-  /// needed by the decoder.
-  virtual optional<unsigned> decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) = 0;
+  virtual void decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) = 0;
 
   /// \brief Decodes a codeblock.
+  ///
+  /// The CRC is verified after each iteration allowing, when successful, an early stop of the decoding process.
   ///
   /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  crc     Pointer to a CRC calculator for early stopping.
   /// \param[in]  cfg     Decoder configuration.
-  /// \return If a CRC calculator is provided and the decoding is successful, returns the number of LDPC iterations
-  /// needed by the decoder.
+  /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder.
   virtual optional<unsigned>
   decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
