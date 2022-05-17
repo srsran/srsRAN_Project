@@ -25,7 +25,7 @@ generate_random_maintenance_v3_basic_params()
 {
   std::uniform_int_distribution<unsigned> enum_dist(0, 4);
 
-  static constexpr std::array<unsigned, 3> lmax{4u, 8u, 64u};
+  static constexpr std::array<unsigned, 3> lmax{4U, 8U, 64U};
   std::uniform_int_distribution<unsigned>  lmax_dist(0, 2);
 
   return {static_cast<srsgnb::ssb_pattern_case>(enum_dist(gen)),
@@ -63,8 +63,8 @@ inline srsgnb::fapi::dl_ssb_pdu build_valid_dl_ssb_pdu()
   return pdu;
 }
 
-/// Builds and returns a valid DL PDCCH pdu. Every parameter is within the range defined in SCF-222 v4.0
-/// Section 3.4.2.4.
+/// Builds and returns a valid DL PDCCH PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.2.1.
 inline srsgnb::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu()
 {
   srsgnb::fapi::dl_pdcch_pdu         pdu;
@@ -131,6 +131,123 @@ inline srsgnb::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu()
   return pdu;
 }
 
+/// Builds and returns a valid DL PDSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.2.2.
+inline srsgnb::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu()
+{
+  static constexpr unsigned iterations = 10000;
+  std::vector<unsigned>     results;
+  results.reserve(iterations);
+
+  // Random generators.
+  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
+  std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
+  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
+  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
+  std::uniform_int_distribution<unsigned> nid_pdsch_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> nof_layers_dist(1, 8);
+  std::uniform_int_distribution<unsigned> dmrs_scrambling_dist(0, 65535);
+  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
+  std::uniform_int_distribution<unsigned> dmrs_cdm_grps_no_data_dist(1, 3);
+  std::uniform_int_distribution<unsigned> nr_of_symbols_dist(1, 14);
+  std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
+  std::uniform_real_distribution<float>   power_dist(-32, 32.0);
+
+  unsigned                                     pdu_bitmap  = 0;
+  srsgnb::fapi::cyclic_prefix_type             cyclic_p    = srsgnb::fapi::cyclic_prefix_type::normal;
+  srsgnb::fapi::pdsch_ref_point_type           ref_point   = srsgnb::fapi::pdsch_ref_point_type::point_a;
+  srsgnb::fapi::dmrs_config_type               config_type = srsgnb::fapi::dmrs_config_type::type_1;
+  srsgnb::fapi::pdsch_low_papr_dmrs_type       low_papr = srsgnb::fapi::pdsch_low_papr_dmrs_type::independent_cdm_group;
+  srsgnb::fapi::pdsch_resource_allocation_type resource_alloc = srsgnb::fapi::pdsch_resource_allocation_type::type_0;
+  srsgnb::fapi::pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping =
+      srsgnb::fapi::pdsch_vrb_to_prb_mapping_type::non_interleaved;
+  srsgnb::fapi::pdsch_ss_profile_nr_type power_ss_profile_nr = srsgnb::fapi::pdsch_ss_profile_nr_type::dB_minus_3;
+  int                                    power_nr            = -7;
+  int                                    power               = -30;
+  srsgnb::fapi::pdsch_trans_type         trasn_type          = srsgnb::fapi::pdsch_trans_type::non_interleaved_other;
+  srsgnb::fapi::ldpc_base_graph_type     ldpc_graph          = srsgnb::fapi::ldpc_base_graph_type::bg_1;
+
+  srsgnb::rnti_t rnti                     = srsgnb::to_rnti(rnti_dist(gen));
+  unsigned       bwp_size                 = bwp_size_dist(gen);
+  unsigned       bwp_start                = bwp_start_dist(gen);
+  unsigned       nid_pdsch                = nid_pdsch_dist(gen);
+  unsigned       scrambling_id            = dmrs_scrambling_dist(gen);
+  unsigned       scrambling_id_complement = dmrs_scrambling_dist(gen);
+  bool           n_scid                   = binary_dist(gen);
+  unsigned       dmrs_cdm_grps_no_data    = dmrs_cdm_grps_no_data_dist(gen);
+  unsigned       start_symbol_index       = start_symbol_index_dist(gen);
+  unsigned       nr_of_symbols            = nr_of_symbols_dist(gen);
+  unsigned       coreset_start            = bwp_size_dist(gen);
+  unsigned       initial_bwp_size         = bwp_size_dist(gen);
+  unsigned       tb_size_lbrm_bytes       = bwp_size_dist(gen);
+  unsigned       dl_dmrs_symbol           = rnti_dist(gen);
+  unsigned       rb_size                  = nr_of_symbols_dist(gen);
+  unsigned       rb_start                 = start_symbol_index_dist(gen);
+  float          profile_sss              = power_dist(gen);
+
+  std::array<uint8_t, 36> rb_bitmap;
+
+  srsgnb::fapi::dl_pdsch_pdu         pdu;
+  srsgnb::fapi::dl_pdsch_pdu_builder builder_pdsch(pdu);
+
+  builder_pdsch.set_basic_parameters(pdu_bitmap & 1, (pdu_bitmap >> 1) & 1, rnti);
+
+  // Always work with the biggest numerology.
+  builder_pdsch.set_bwp_parameters(bwp_size, bwp_start, srsgnb::subcarrier_spacing::kHz240, cyclic_p);
+  builder_pdsch.set_codeword_information_parameters(nid_pdsch, 1, 0, ref_point);
+  builder_pdsch.set_dmrs_parameters(
+      dl_dmrs_symbol, config_type, scrambling_id, scrambling_id_complement, low_papr, n_scid, dmrs_cdm_grps_no_data, 0);
+
+  auto builder_cw = builder_pdsch.add_codeword();
+
+  unsigned target_code = 2;
+  unsigned qam_mod     = 2;
+  unsigned mcs         = 20;
+  unsigned mcs_table   = 1;
+  unsigned rv_index    = 0;
+  unsigned tb_size     = 42;
+
+  builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
+
+  if (resource_alloc == srsgnb::fapi::pdsch_resource_allocation_type::type_0) {
+    builder_pdsch.set_pdsch_allocation_in_frequency_type_0({rb_bitmap}, vrb_prb_mapping);
+  } else {
+    builder_pdsch.set_pdsch_allocation_in_frequency_type_1(rb_start, rb_size, vrb_prb_mapping);
+  }
+
+  builder_pdsch.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
+
+  srsgnb::optional<int>   profile_nr;
+  srsgnb::optional<float> dmrs_profile;
+  if (power_nr != -9) {
+    profile_nr.emplace(power_nr);
+  } else {
+    dmrs_profile.emplace(profile_sss);
+  }
+
+  builder_pdsch.set_tx_power_info_parameters(profile_nr, power_ss_profile_nr);
+
+  // :TODO: not filling CBG to retx control parameters.
+
+  builder_pdsch.set_maintenance_v3_bwp_parameters(trasn_type, coreset_start, initial_bwp_size);
+  builder_pdsch.set_maintenance_v3_codeword_parameters(
+      ldpc_graph, tb_size_lbrm_bytes, pdu_bitmap & 1U, (pdu_bitmap >> 1) & 1U);
+
+  srsgnb::optional<float> data_profile;
+  if (power != -33) {
+    data_profile.emplace(power);
+  }
+
+  builder_pdsch.set_maintenance_v3_tx_power_info_parameters(dmrs_profile, data_profile);
+
+  std::vector<uint8_t> rm_vector;
+
+  builder_pdsch.set_maintenance_v4_basic_parameters({rm_vector}, binary_dist(gen), {rm_vector});
+
+  return pdu;
+}
+
 /// Builds and returns a valid DL TTI request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.
 inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
@@ -153,6 +270,11 @@ inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type  = srsgnb::fapi::dl_pdu_type::PDCCH;
   msg.pdus.back().pdcch_pdu = build_valid_dl_pdcch_pdu();
+
+  // Manually add the PDSCH PDU to reuse the functions above.
+  msg.pdus.emplace_back();
+  msg.pdus.back().pdu_type  = srsgnb::fapi::dl_pdu_type::PDSCH;
+  msg.pdus.back().pdsch_pdu = build_valid_dl_pdsch_pdu();
 
   return msg;
 }

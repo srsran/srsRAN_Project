@@ -19,3 +19,7 @@ add_test(dl_tti_request_validator_test dl_tti_request_validator_test)
 add_executable(dl_pdcch_pdu_validator_test dl_pdcch_pdu_test.cpp)
 target_link_libraries(dl_pdcch_pdu_validator_test srsgnb_support srslog fapi_validators)
 add_test(dl_pdcch_pdu_validator_test dl_pdcch_pdu_validator_test)
+
+add_executable(dl_pdsch_pdu_validator_test dl_pdsch_pdu_test.cpp)
+target_link_libraries(dl_pdsch_pdu_validator_test srsgnb_support srslog fapi_validators)
+add_test(dl_pdsch_pdu_validator_test dl_pdsch_pdu_validator_test)

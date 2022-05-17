@@ -19,7 +19,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-/// Tests that a valid SSB pdu validates correctly.
+/// Tests that a valid PDCCH PDU validates correctly.
 static void test_dl_pdcch_pdu_ok()
 {
   dl_pdcch_pdu pdu = build_valid_dl_pdcch_pdu();
@@ -30,7 +30,7 @@ static void test_dl_pdcch_pdu_ok()
   TESTASSERT(report.reports.empty());
 }
 
-/// Tests that a SSB pdu that contains errors fails to validate.
+/// Tests that a PDCCH PDU that contains errors fails to validate.
 static void test_dl_pdcch_pdu_error()
 {
   dl_pdcch_pdu pdu = build_valid_dl_pdcch_pdu();

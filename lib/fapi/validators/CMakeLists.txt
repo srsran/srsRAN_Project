@@ -8,6 +8,7 @@
 
 set(SOURCES
         dl_pdcch_pdu.cpp
+        dl_pdsch_pdu.cpp
         dl_ssb_pdu.cpp
         message_validators.cpp)
 
