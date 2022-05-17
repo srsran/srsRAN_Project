@@ -156,9 +156,7 @@ include(CTest)
 
 include_directories(include)
 
+add_subdirectory(apps)
 add_subdirectory(docs)
 add_subdirectory(lib)
-add_subdirectory(sample_apps)
-add_subdirectory(units)
 add_subdirectory(unittests)
-

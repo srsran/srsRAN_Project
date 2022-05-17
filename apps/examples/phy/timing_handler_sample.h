@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SAMPLE_APPS_PHY_LOWER_PHY_TIMING_NOTIFIER_SAMPLE_H
-#define SAMPLE_APPS_PHY_LOWER_PHY_TIMING_NOTIFIER_SAMPLE_H
+#ifndef SRSGNB_APPS_EXAMPLES_PHY_TIMING_HANDLER_SAMPLE_H
+#define SRSGNB_APPS_EXAMPLES_PHY_TIMING_HANDLER_SAMPLE_H
 
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include <condition_variable>
@@ -86,4 +86,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SAMPLE_APPS_PHY_LOWER_PHY_TIMING_NOTIFIER_SAMPLE_H
+#endif // SRSGNB_APPS_EXAMPLES_PHY_TIMING_HANDLER_SAMPLE_H
