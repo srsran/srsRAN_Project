@@ -1,6 +1,4 @@
-/**
- *
- * \section COPYRIGHT
+/*
  *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
