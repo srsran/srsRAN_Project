@@ -23,7 +23,7 @@ span<uint8_t> srsgnb::srsvec::bit_unpack(span<uint8_t> bits, unsigned value, uns
     bits[i] = (value >> (nof_bits - i - 1)) & 0x1;
   }
 
-  return bits.subspan(nof_bits, bits.size() - nof_bits);
+  return bits.last(bits.size() - nof_bits);
 }
 
 void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> packed)

@@ -52,7 +52,7 @@ void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, uns
   srsvec::binary_xor(unpacked_rnti, p, p);
 
   // Skip first L 1s added for CRC calculation
-  c = c.subspan(CRC_LEN, c.size() - CRC_LEN);
+  c = c.last(c.size() - CRC_LEN);
 }
 
 void pdcch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)

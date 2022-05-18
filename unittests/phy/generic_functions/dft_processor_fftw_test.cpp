@@ -47,7 +47,7 @@ void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, unsigne
   } else if (N % 2 == 0) {
     // Radix 2.
     ditfft(out.first(N / 2), in, table, N / 2, 2 * s);
-    ditfft(out.last(N / 2), in.subspan(s, in.size() - s), table, N / 2, 2 * s);
+    ditfft(out.last(N / 2), in.last(in.size() - s), table, N / 2, 2 * s);
     for (unsigned k = 0; k != N / 2; ++k) {
       cf_t p         = out[k];
       cf_t q         = table[k * (table.size() / N)] * out[k + N / 2];
