@@ -56,9 +56,42 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
       case dl_pdu_type::PDSCH:
         success &= validate_dl_pdsch_pdu(pdu.pdsch_pdu, report);
         break;
-        // :TODO: Implement the rest of the PDUs when they validators exist.
+        // :TODO: Implement the rest of the PDUs when their validators exist.
       default:
         srsran_assert(0, "Invalid pdu_type");
+        report.append(static_cast<unsigned>(pdu.pdu_type), "DL_TTI.request PDU type");
+        break;
+    }
+  }
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+error_type<validator_report> srsgnb::fapi::validate_ul_dci_request(const ul_dci_request_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, report);
+  success &= validate_slot(msg.slot, report);
+
+  // Validate each PDU.
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case ul_dci_pdu_type::PDCCH:
+        success &= validate_dl_pdcch_pdu(pdu.pdu, report);
+        break;
+        // :TODO: Implement the rest of the PDUs when their validators exist.
+      default:
+        srsran_assert(0, "Invalid pdu_type");
+        report.append(static_cast<unsigned>(pdu.pdu_type), "UL_DCI.request PDU type");
+        break;
     }
   }
 

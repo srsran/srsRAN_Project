@@ -367,6 +367,8 @@ struct dl_tti_request_pdu {
 
 /// Downlink TTI request message.
 struct dl_tti_request_message : public base_message {
+  /// DL DCI index in the array number PDUs of each type.
+  static constexpr unsigned DL_DCI_INDEX = 4;
   /// Maximum number of supported DL PDU types or DCIs supported in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 5;
   /// Maximum number of supported PDUs in this message.
@@ -724,26 +726,29 @@ struct ul_tti_request_message : public base_message {
   //: TODO: groups array
 };
 
+enum class ul_dci_pdu_type : uint16_t { PDCCH };
+
 /// Uplink DCI PDU information.
 struct ul_dci_pdu {
-  uint16_t     pdu_type;
-  uint16_t     pdu_size;
-  dl_pdcch_pdu pdu;
+  ul_dci_pdu_type pdu_type;
+  uint16_t        pdu_size;
+  dl_pdcch_pdu    pdu;
 };
 
 /// Uplink DCI request message.
 struct ul_dci_request_message : public base_message {
+  /// DCI index in the array number PDUs of each type.
+  static constexpr unsigned DCI_INDEX = 1;
   /// Maximum number of supported UL PDU types in this release.
   static constexpr unsigned MAX_NUM_DL_TYPES = 2;
   /// Maximum number of supported UCI PDUs in this message.
   static constexpr unsigned MAX_NUM_UCI_PDUS = 128;
 
-  uint16_t                                 sfn;
-  uint16_t                                 slot;
-  uint16_t                                 num_pdus;
-  uint8_t                                  num_dl_types;
-  std::array<uint16_t, MAX_NUM_DL_TYPES>   num_pdus_of_each_type;
-  std::array<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
+  uint16_t                                    sfn;
+  uint16_t                                    slot;
+  uint8_t                                     num_dl_types;
+  std::array<uint16_t, MAX_NUM_DL_TYPES>      num_pdus_of_each_type;
+  static_vector<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
 
 /// Encodes the generic information of a TLV.

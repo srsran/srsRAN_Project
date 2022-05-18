@@ -126,7 +126,7 @@ static void pdcch_conversion_benchmark()
     // :TODO: when the groups are available, add them.
     builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen), 0);
 
-    dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu();
+    dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu(10);
 
     // :TODO: generate  better frequency domain resource bitmap.
     static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};

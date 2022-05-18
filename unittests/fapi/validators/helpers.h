@@ -279,6 +279,26 @@ inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
   return msg;
 }
 
+/// Builds and returns a valid UL_DCI.request message. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.4.
+inline srsgnb::fapi::ul_dci_request_message build_valid_ul_dci_request()
+{
+  srsgnb::fapi::ul_dci_request_message         msg;
+  srsgnb::fapi::ul_dci_request_message_builder builder(msg);
+
+  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
+
+  builder.set_basic_parameters(sfn_dist(gen), slot_dist(gen));
+
+  // Manually add the PDCCH PDU to reuse the functions above.ul
+  msg.pdus.emplace_back();
+  msg.pdus.back().pdu_type = srsgnb::fapi::ul_dci_pdu_type::PDCCH;
+  msg.pdus.back().pdu      = build_valid_dl_pdcch_pdu();
+
+  return msg;
+}
+
 } // namespace unittest
 
 #endif // SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H
