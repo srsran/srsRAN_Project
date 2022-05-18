@@ -29,18 +29,27 @@ public:
     std::shared_ptr<byte_buffer_segment> next = nullptr;
   };
 
-  byte_buffer_segment(size_t headroom = DEFAULT_HEADROOM) :
-    payload_data_(buffer.data() + headroom), payload_data_end_(buffer.data() + headroom)
-  {}
-  byte_buffer_segment(const byte_buffer_segment& other) noexcept
-    : payload_data_(buffer.data() + other.headroom()),
-      payload_data_end_(buffer.data() + other.tailroom_start())
+  byte_buffer_segment(size_t headroom = DEFAULT_HEADROOM)
   {
+    // Members initialized here instead of the initialization list to avoid
+    // GCC 12.1.0 to warn about uninitialized use of buffer [-Werror=uninitialized]
+    payload_data_     = buffer.data() + headroom;
+    payload_data_end_ = buffer.data() + headroom;
+  }
+  byte_buffer_segment(const byte_buffer_segment& other) noexcept
+  {
+    // Members initialized here instead of the initialization list to avoid
+    // GCC 12.1.0 to warn about uninitialized use of buffer [-Werror=uninitialized]
+    payload_data_     = buffer.data() + other.headroom();
+    payload_data_end_ = buffer.data() + other.tailroom_start();
     std::copy(other.begin(), other.end(), begin());
   }
-  byte_buffer_segment(byte_buffer_segment&& other) noexcept : payload_data_(buffer.data() + other.headroom()),
-                                                              payload_data_end_(buffer.data() + other.tailroom_start())
+  byte_buffer_segment(byte_buffer_segment&& other) noexcept
   {
+    // Members initialized here instead of the initialization list to avoid
+    // GCC 12.1.0 to warn about uninitialized use of buffer [-Werror=uninitialized]
+    payload_data_     = buffer.data() + other.headroom();
+    payload_data_end_ = buffer.data() + other.tailroom_start();
     std::copy(other.begin(), other.end(), begin());
   }
   byte_buffer_segment& operator=(const byte_buffer_segment& other) noexcept
