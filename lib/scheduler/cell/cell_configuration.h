@@ -16,6 +16,15 @@
 
 namespace srsgnb {
 
+/// Calculates number of slots, using TDD reference SCS, of the TDD UL-DL configuration.
+unsigned nof_slots_per_tdd_period(const tdd_ul_dl_config_common& cfg);
+
+/// Checks whether provided slot corresponds to a DL slot.
+bool slot_is_dl(const tdd_ul_dl_config_common& cfg, slot_point slot);
+
+/// Checks whether provided slot corresponds to an UL slot.
+bool slot_is_ul(const tdd_ul_dl_config_common& cfg, slot_point slot);
+
 /// Holds the configuration of a cell.
 /// Additionally, this class pre-caches the computation of some const values related to the cell configuration
 /// and provide parameter getter helpers.
@@ -26,14 +35,14 @@ public:
   cell_configuration(const cell_configuration&) = delete;
   cell_configuration(cell_configuration&&)      = delete;
 
-  const du_cell_index_t                                cell_index;
-  const pci_t                                          pci;
-  const unsigned                                       nof_dl_prbs;
-  const unsigned                                       nof_ul_prbs;
-  const unsigned                                       nof_slots_per_frame;
-  const dl_config_common                               dl_cfg_common;
-  const ul_config_common                               ul_cfg_common;
-  const optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_cfg_common;
+  const du_cell_index_t                   cell_index;
+  const pci_t                             pci;
+  const unsigned                          nof_dl_prbs;
+  const unsigned                          nof_ul_prbs;
+  const unsigned                          nof_slots_per_frame;
+  const dl_config_common                  dl_cfg_common;
+  const ul_config_common                  ul_cfg_common;
+  const optional<tdd_ul_dl_config_common> tdd_cfg_common;
 
   /// Imported from mac_cell_configuration.
   /// For dl_carrier, only arfcn is currently used.
@@ -58,7 +67,7 @@ public:
   {
     // Note: ul_enabled_slot_lst is empty in the FDD case.
     return ul_enabled_slot_lst.empty() or
-           not static_cast<bool>(ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()]);
+           static_cast<bool>(ul_enabled_slot_lst[sl.to_uint() % ul_enabled_slot_lst.size()]);
   }
 
 private:

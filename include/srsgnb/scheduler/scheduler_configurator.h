@@ -21,6 +21,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/ran/tdd_ul_dl_config.h"
 
 namespace srsgnb {
 
@@ -33,9 +34,9 @@ struct sched_cell_configuration_request_message {
   uint8_t         nof_ant_ports; // (0..64)
   pci_t           pci;
 
-  dl_config_common                               dl_cfg_common;
-  ul_config_common                               ul_cfg_common;
-  optional<asn1::rrc_nr::tdd_ul_dl_cfg_common_s> tdd_ul_dl_cfg_common; // absent == FDD
+  dl_config_common                  dl_cfg_common;
+  ul_config_common                  ul_cfg_common;
+  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common; // absent == FDD
 
   /// NOTE: Structs below do not follow ORAN specs.
   /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).

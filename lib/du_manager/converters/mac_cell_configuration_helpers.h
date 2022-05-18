@@ -12,6 +12,7 @@
 #define SRSGNB_MAC_CELL_CONFIGURATION_HELPERS_H
 
 #include "srsgnb/mac/cell_configuration.h"
+#include "srsgnb/ran/tdd_ul_dl_config.h"
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 
@@ -25,6 +26,18 @@ inline carrier_configuration make_default_carrier_configuration()
   cfg.carrier_bw_mhz = 10;
   cfg.arfcn          = 365000;
   cfg.nof_ant        = 1;
+  return cfg;
+}
+
+inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common()
+{
+  tdd_ul_dl_config_common cfg{};
+  cfg.ref_scs                            = subcarrier_spacing::kHz15;
+  cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
+  cfg.pattern1.nof_dl_slots              = 6;
+  cfg.pattern1.nof_dl_symbols            = 0;
+  cfg.pattern1.nof_ul_slots              = 3;
+  cfg.pattern1.nof_ul_symbols            = 0;
   return cfg;
 }
 

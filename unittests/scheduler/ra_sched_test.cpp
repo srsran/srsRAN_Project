@@ -11,6 +11,7 @@
 #include "config_generators.h"
 #include "lib/scheduler/cell/ra_sched.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
 #include <map>
@@ -25,7 +26,8 @@ const unsigned nof_grants_per_rar = 16;
 
 /// Struct used to convey parameters to the test functions
 struct ra_sched_param {
-  uint8_t k2 = 2;
+  bool                 is_tdd = false;
+  std::vector<uint8_t> k2_list{2};
 };
 
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
@@ -94,23 +96,34 @@ struct test_bench {
 
   test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg){};
 
-  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_req(paramters.k2)), res_grid(cfg)
-  {
-    k2 = cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2;
-  };
+  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_request(paramters)), res_grid(cfg){};
 
   cell_configuration      cfg;
   cell_resource_allocator res_grid;
 
   void slot_indication(slot_point sl_tx)
   {
+    mac_logger.set_context(sl_tx.to_uint());
+    test_logger.set_context(sl_tx.to_uint());
     test_logger.info("Starting new slot {}", sl_tx);
-    mac_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
     res_grid.slot_indication(sl_tx);
-    test_logger.set_context((sl_tx - gnb_tx_delay).to_uint());
   }
 
-  uint8_t k2 = 0;
+  static sched_cell_configuration_request_message make_cell_cfg_request(const ra_sched_param& params)
+  {
+    sched_cell_configuration_request_message cfg_req = make_cell_cfg_req();
+    auto& pusch_list = cfg_req.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+    pusch_list.resize(params.k2_list.size());
+    for (unsigned i = 0; i < params.k2_list.size(); ++i) {
+      pusch_list[i].k2       = params.k2_list[i];
+      pusch_list[i].symbols  = {0, 14};
+      pusch_list[i].map_type = pusch_time_domain_resource_allocation::mapping_type::typeA;
+    }
+    if (params.is_tdd) {
+      cfg_req.tdd_ul_dl_cfg_common = test_helpers::make_default_tdd_ul_dl_config_common();
+    }
+    return cfg_req;
+  }
 };
 
 /// Helper function that executes and tests the success of handle_rach_indication() for a rach_indication_message list.
@@ -301,7 +314,7 @@ static void remove_processed_rach_ind(const unsigned nof_allocations, std::list<
 /// The scheduler is expected to allocate a RAR and multiple MSG3 grants (as many as RACH indication messages).
 void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
 {
-  test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RAR & MULTIPLE MSG3"};
+  test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RAR & MULTIPLE MSG3, K2={}", params.k2_list};
 
   // We can increase the test length and create a list with RACH messages received at different time slots
   const unsigned nof_test_slots = 20;
@@ -364,7 +377,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
 /// indication messages).
 void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
 {
-  test_delimit_logger delimiter{"RA SCHEDULER - FDD - MULTIPLE RAR & MSG3"};
+  test_delimit_logger delimiter{"RA SCHEDULER - FDD - MULTIPLE RAR & MSG3, K2={}", params.k2_list};
   // We can increase the test length and create a list with RACH messages received at different time slots
   const unsigned nof_test_slots = 20;
   const unsigned slot_rx_prach  = 5;
@@ -512,38 +525,110 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
   }
 }
 
+/// In this test, we check for the TDD case:
+/// - the scheduler is able to choose a valid K2 to schedule Msg3. The K2 value needs to fall in a valid TDD UL slot.
+void test_ra_sched_tdd_single_rach()
+{
+  test_delimit_logger delimiter{"RA SCHEDULER - TDD - SINGLE RACH"};
+
+  ra_sched_param params{.is_tdd = true, .k2_list{1, 3}}; // Msg3 delays 3 and 5.
+  test_bench     bench{params};
+
+  // TDD configuration.
+  ra_sched ra_sch{bench.cfg};
+
+  // Enqueue RACH.
+  slot_point              prach_sl_rx{0, 7};
+  rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, to_rnti(0x4601));
+  TESTASSERT(ra_sch.handle_rach_indication(rach_ind));
+
+  slot_point rar_sl;
+  slot_point sl_rx = prach_sl_rx;
+  for (unsigned sl_count = 0; sl_count <= 1000 and not rar_sl.valid(); ++sl_count, ++sl_rx) {
+    // Update slot
+    slot_point sl_tx{sl_rx + gnb_tx_delay};
+    bench.slot_indication(sl_tx);
+
+    // Run RA scheduler
+    ra_sch.run_slot(bench.res_grid);
+
+    // In case slot_tx corresponds to a TDD UL slot, ensure no RARs are allocated.
+    bool is_dl_slot = slot_is_dl(*bench.cfg.tdd_cfg_common, sl_tx);
+    if (not is_dl_slot) {
+      TESTASSERT_EQ(0, bench.res_grid[0].result.dl.rar_grants.size());
+      continue;
+    }
+
+    // Find a Msg3 delay for which the respective PUSCH slot corresponds to a valid TDD UL slot.
+    unsigned msg3_delay = 0;
+    bool     is_ul_slot = false;
+    for (const auto& pusch : bench.cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list) {
+      msg3_delay = get_msg3_delay(pusch, bench.cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+      is_ul_slot = slot_is_ul(*bench.cfg.tdd_cfg_common, sl_tx + msg3_delay);
+      if (is_ul_slot) {
+        break;
+      }
+    }
+    if (not is_ul_slot) {
+      // No valid PUSCH for Msg3 was found.
+      TESTASSERT_EQ(0, bench.res_grid[0].result.dl.rar_grants.size());
+      continue;
+    }
+    bench.test_logger.info("Expecting RAR at slot={} and Msg3 at slot={}", sl_tx, sl_tx + msg3_delay);
+
+    // RAR allocated right after PRACH is detected
+    cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
+    cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
+
+    TESTASSERT(pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+
+    TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
+    test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);
+
+    // RAR
+    rar_information& rar = pdcch_sl_res.result.dl.rar_grants[0];
+
+    // Msg3
+    test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
+    TESTASSERT_EQ(1, rar.grants.size());
+    TESTASSERT_EQ(rar.grants[0].prbs.length(),
+                  msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
+    TESTASSERT_EQ(1, msg3_sl_res.result.ul.puschs.size());
+
+    rar_sl = sl_tx;
+  }
+  slot_point expected_rar_sl{0, 11};
+  TESTASSERT_EQ(expected_rar_sl, rar_sl);
+}
+
 int main()
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 
-  // Test scheduler for single RACH
-  ra_sched_param parameters{.k2 = 1};
-  test_ra_sched_fdd_single_rach(parameters);
+  {
+    // Test scheduler for single RACH FDD.
+    ra_sched_param parameters{.k2_list{1}};
+    test_ra_sched_fdd_single_rach(parameters);
+  }
+
+  {
+    // Test scheduler for single RACH and TDD.
+    test_ra_sched_tdd_single_rach();
+  }
 
   // Test scheduler for multiple RACH (single RAR, multiple MSG3) for different k2 parameter (MSG3 delay)
-  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
-
-  parameters.k2 = 2;
-  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
-
-  parameters.k2 = 3;
-  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
-
-  parameters.k2 = 4;
-  test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
+  for (uint8_t k2 : {1, 2, 3, 4}) {
+    ra_sched_param parameters{.k2_list{k2}};
+    test_ra_sched_fdd_1_rar_multiple_msg3(parameters);
+  }
 
   // Test scheduler for multiple RACH (multiple RAR, multiple MSG3) for different k2 parameter (MSG3 delay)
-  parameters.k2 = 1;
-  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+  for (uint8_t k2 : {1, 2, 3, 4}) {
+    ra_sched_param parameters{.k2_list{k2}};
+    test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+  }
 
-  parameters.k2 = 2;
-  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
-
-  parameters.k2 = 3;
-  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
-
-  parameters.k2 = 4;
-  test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
+  return 0;
 }

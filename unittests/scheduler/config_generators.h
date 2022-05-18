@@ -47,11 +47,10 @@ asn1::rrc_nr::ul_cfg_common_sib_s make_ul_cfg_common(uint8_t k2 = 2)
   return ul_cfg;
 }
 
-sched_cell_configuration_request_message make_cell_cfg_req(uint8_t k2 = 2)
+sched_cell_configuration_request_message make_cell_cfg_req()
 {
   sched_cell_configuration_request_message msg =
       make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = k2;
   return msg;
 }
 
