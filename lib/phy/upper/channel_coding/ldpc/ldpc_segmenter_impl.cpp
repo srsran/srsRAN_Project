@@ -191,26 +191,8 @@ void ldpc_segmenter_impl::segment_tx(static_vector<described_segment, MAX_NOF_SE
                  nof_filler_bits);
     input_idx += max_info_bits;
 
-    codeblock_metadata tmp_description = {};
-
-    tmp_description.tb_common.base_graph   = base_graph;
-    tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);
-    tmp_description.tb_common.rv           = cfg.rv;
-    tmp_description.tb_common.mod          = cfg.mod;
-    tmp_description.tb_common.Nref         = cfg.Nref;
-    tmp_description.tb_common.cw_length    = cw_length;
-
-    // BG1 has rate 1/3 and BG2 has rate 1/5.
-    constexpr unsigned INVERSE_BG1_RATE = 3;
-    constexpr unsigned INVERSE_BG2_RATE = 5;
-    unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
-
-    tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
-    tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;
-    tmp_description.cb_specific.rm_length       = compute_rm_length(i_segment, cfg.mod, cfg.nof_layers);
-    tmp_description.cb_specific.cw_offset       = cw_offset;
-    // nof_crc_bits == 0 indicates that we are using the TB CRC with length 16.
-    tmp_description.cb_specific.nof_crc_bits = (nof_crc_bits == 0) ? 16 : nof_crc_bits;
+    codeblock_metadata tmp_description =
+        generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
     cw_offset += tmp_description.cb_specific.rm_length;
 
@@ -276,33 +258,43 @@ void ldpc_segmenter_impl::segment_rx(static_vector<described_rx_codeblock, MAX_N
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
     unsigned nof_filler_bits = segment_length - max_info_bits - nof_crc_bits;
 
-    codeblock_metadata tmp_description = {};
+    codeblock_metadata tmp_description =
+        generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
-    tmp_description.tb_common.base_graph   = base_graph;
-    tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);
-    tmp_description.tb_common.rv           = cfg.rv;
-    tmp_description.tb_common.mod          = cfg.mod;
-    tmp_description.tb_common.Nref         = cfg.Nref;
-    tmp_description.tb_common.cw_length    = cw_length;
-
-    // BG1 has rate 1/3 and BG2 has rate 1/5.
-    constexpr unsigned INVERSE_BG1_RATE = 3;
-    constexpr unsigned INVERSE_BG2_RATE = 5;
-    unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
-    unsigned           rm_length        = compute_rm_length(i_segment, cfg.mod, cfg.nof_layers);
-
-    tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
-    tmp_description.cb_specific.nof_filler_bits = nof_filler_bits;
-    tmp_description.cb_specific.rm_length       = rm_length;
-    tmp_description.cb_specific.cw_offset       = cw_offset;
-    // nof_crc_bits == 0 indicates that we are using the TB CRC with length 16.
-    tmp_description.cb_specific.nof_crc_bits = (nof_segments == 1) ? nof_tb_crc_bits : nof_crc_bits;
-
+    unsigned rm_length = tmp_description.cb_specific.rm_length;
     described_codeblocks.push_back({codeword_llrs.subspan(cw_offset, rm_length), tmp_description});
     cw_offset += rm_length;
   }
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
   assert(cw_length == cw_offset);
+}
+
+codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,
+                                                             const segment_config&   cfg) const
+{
+  codeblock_metadata tmp_description = {};
+
+  tmp_description.tb_common.base_graph   = base_graph;
+  tmp_description.tb_common.lifting_size = static_cast<lifting_size_t>(lifting_size);
+  tmp_description.tb_common.rv           = cfg.rv;
+  tmp_description.tb_common.mod          = cfg.mod;
+  tmp_description.tb_common.Nref         = cfg.Nref;
+  tmp_description.tb_common.cw_length    = seg_extra.cw_length;
+
+  // BG1 has rate 1/3 and BG2 has rate 1/5.
+  constexpr unsigned INVERSE_BG1_RATE = 3;
+  constexpr unsigned INVERSE_BG2_RATE = 5;
+  unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
+  unsigned           rm_length        = compute_rm_length(seg_extra.i_segment, cfg.mod, cfg.nof_layers);
+
+  tmp_description.cb_specific.full_length     = segment_length * inverse_rate;
+  tmp_description.cb_specific.nof_filler_bits = seg_extra.nof_filler_bits;
+  tmp_description.cb_specific.rm_length       = rm_length;
+  tmp_description.cb_specific.cw_offset       = seg_extra.cw_offset;
+  // nof_crc_bits == 0 indicates that we are using the TB CRC with length 16.
+  tmp_description.cb_specific.nof_crc_bits = (nof_segments == 1) ? seg_extra.nof_tb_crc_bits : seg_extra.nof_crc_bits;
+
+  return tmp_description;
 }
 
 std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()

@@ -64,6 +64,25 @@ private:
   /// Section 5.4.2.1.
   unsigned compute_rm_length(unsigned i_seg, modulation_scheme mod, unsigned nof_layers) const;
 
+  /// Internally computed segment metadata.
+  struct segment_internal {
+    /// Segment index.
+    unsigned i_segment;
+    /// Total codeword length.
+    unsigned cw_length;
+    /// Codeblock starting index within the codeword.
+    unsigned cw_offset;
+    /// Number of filler bits.
+    unsigned nof_filler_bits;
+    /// Number of segment-specific CRC bits.
+    unsigned nof_crc_bits;
+    /// Number of TB-specific CRC bits.
+    unsigned nof_tb_crc_bits;
+  };
+
+  /// Generates a codeblock metadata structure for the current segment configuration.
+  codeblock_metadata generate_cb_metadata(const segment_internal& seg_extra, const segment_config& cfg) const;
+
   // Data members.
   /// Internal temporary buffer.
   static_vector<uint8_t, MAX_TBS> buffer;
