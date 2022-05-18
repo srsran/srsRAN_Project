@@ -40,6 +40,9 @@ inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
   return static_cast<unsigned>(mod);
 }
 
+/// Defines the maximum bits per symbol.
+static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = get_bits_per_symbol(modulation_scheme::QAM256);
+
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_MODULATION_SCHEME_H

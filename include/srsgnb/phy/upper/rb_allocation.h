@@ -69,7 +69,7 @@ public:
   /// Default constructor.
   rb_allocation() = default;
 
-  /// \brief Build resource allocation from a resource block index list. This constructor is a Type0 mapping.
+  /// \brief Builds a resource allocation from a resource block index list. This constructor is a Type0 mapping.
   ///
   /// \param[in] vrb_indexes Provides a list of Virtual Resource Blocks indexes.
   /// \param[in] mapping_type_ Indicates the mapping type.
@@ -88,7 +88,7 @@ public:
     }
   }
 
-  /// \brief Build resource allocation from a start and size parameter. This constructor is a Type1 mapping.
+  /// \brief Builds a resource allocation from a start and size parameter. This constructor is a Type1 mapping.
   ///
   /// \param[in] vrb_start Indicates the starting resource block corresponds to VRB0.
   /// \param[in] vrb_size Indicates the number of RB.
@@ -109,7 +109,7 @@ public:
     std::fill(vrb_mask.begin() + vrb_start + rb_count, vrb_mask.end(), false);
   }
 
-  /// \brief Build resource allocation from a packed mask. This constructor is a Type0 mapping.
+  /// \brief Builds a resource allocation from a packed mask. This constructor is a Type0 mapping.
   ///
   /// \param[in] packed_mask Indicates the starting resource block corresponding to VRB0.
   /// \param[in] mapping_type_ Indicates the mapping type.
@@ -127,6 +127,29 @@ public:
       // Count active RB.
       rb_count += mask;
     }
+  }
+
+  /// \brief Compare the allocation with other.
+  ///
+  /// Two allocations are considered equal when all of their fields are equal.
+  ///
+  /// \param[in] other Another RB allocation.
+  /// \return True if both allocations are equal. Otherwise, false.
+  bool operator==(const rb_allocation& other) const
+  {
+    if (other.allocation_type != allocation_type) {
+      return false;
+    }
+    if (other.mapping_type != mapping_type) {
+      return false;
+    }
+    if (other.vrb_mask != vrb_mask) {
+      return false;
+    }
+    if (other.type1_vrb_start != type1_vrb_start) {
+      return false;
+    }
+    return true;
   }
 
   /// Get the number of allocated VRB.
@@ -157,12 +180,12 @@ public:
     return {bwp_start_rb + type1_vrb_start, rb_count - exceed_rb};
   }
 
-  /// \brief Calculates a PDSCH or PUSCH frequency allocation mask from the configured VRB allocation.
+  /// \brief Calculates a PDSCH or PUSCH physical frequency allocation mask from the configured VRB allocation.
   ///
-  /// \param[out] mask Provides the destination of the allocation mask. The size of the mask determines the BWP size.
+  /// \param[out] mask Provides the destination of the allocation mask.
   /// \param[in] bwp_start_rb Indicates the BWP start physical resource block index.
   /// \param[in] bwp_size_rb Indicates the BWP size in resource blocks.
-  /// \note The mask size shall be greater than the start plus the size of the BWP.
+  /// \note The mask size shall be greater than greater than the sum of \c bwp_start_rb and \c bwp_size_rb.
   void get_allocation_mask(span<bool> mask, unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
   /// \brief Calculates a PDSCH or PUSCH allocation PRB indices from the configured VRB allocation and the BWP start.

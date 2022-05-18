@@ -5,6 +5,8 @@
 # forth in the LICENSE file which can be found at the top level of
 # the distribution.
 #
+file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/test_data)
+set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 
 add_subdirectory(channel_coding)
 add_subdirectory(channel_modulation)
@@ -13,6 +15,18 @@ add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
 set_directory_properties(PROPERTIES LABELS "phy")
+
+add_executable(dl_processor_vectortest dl_processor_vectortest.cpp)
+target_link_libraries(dl_processor_vectortest srsgnb_pdsch_processor sequence_generators srsgnb_pdsch_encoder srsgnb_pdsch_modulator signal_processors srslog)
+add_test(dl_processor_vectortest dl_processor_vectortest)
+
+add_custom_command(
+        TARGET dl_processor_vectortest
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dl_processor_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dl_processor_test_data.tar.gz
+        VERBATIM)
 
 add_executable(re_pattern_test re_pattern_test.cpp)
 target_link_libraries(re_pattern_test srsgnb_upper_phy_support srslog)

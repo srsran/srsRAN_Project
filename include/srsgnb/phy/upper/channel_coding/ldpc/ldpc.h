@@ -94,6 +94,10 @@ static constexpr std::array<lifting_size_t, NOF_LIFTING_SIZES> all_lifting_sizes
 
 /// Filler bit identifier
 static constexpr uint8_t FILLER_BIT = 254;
+
+/// Maximum LDPC encoded codeblock size in bits.
+static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
+
 } // namespace ldpc
 
 } // namespace srsgnb

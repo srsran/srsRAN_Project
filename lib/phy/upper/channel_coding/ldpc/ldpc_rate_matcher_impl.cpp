@@ -31,9 +31,8 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
 
   unsigned block_length = input.size();
 
-  srsran_assert(block_length >= cfg.Nref, "N_ref should be smaller than the input length.");
   if (cfg.Nref > 0) {
-    buffer_length = cfg.Nref;
+    buffer_length = std::min(cfg.Nref, block_length);
   } else {
     buffer_length = block_length;
   }

@@ -34,7 +34,7 @@ struct re_pattern {
   /// Default constructor. It allows instantiating the structure without using other constructors.
   re_pattern() = default;
 
-  /// \brief Construct an RE pattern from parameters.
+  /// \brief Constructs an RE pattern from parameters.
   ///
   /// \param[in] rb_begin_  Start RB block index.
   /// \param[in] rb_end_    End RB block index (excluded).

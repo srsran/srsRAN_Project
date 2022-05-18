@@ -43,7 +43,7 @@ public:
     /// Allocation RB list, the entries set to true are used for transmission.
     std::array<bool, MAX_RB> rb_mask;
     /// List of ports, every entry is an index.
-    static_vector<unsigned, DMRS_MAX_NPORTS> ports;
+    static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
   };
 
   /// Default destructor.

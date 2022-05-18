@@ -67,14 +67,22 @@ void rb_allocation::generate_vrb_to_prb_indexes(span<unsigned>          prb_indi
 void rb_allocation::get_allocation_mask(span<bool> mask, unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
   srsran_assert(mask.size() >= bwp_start_rb + bwp_size_rb,
-                "The mask with size %d cannot fit the BWP %d:%d",
+                "The mask with size {} cannot fit the BWP {}:{}",
                 mask.size(),
                 bwp_start_rb,
                 bwp_start_rb + bwp_size_rb);
 
   // Non-interleaved case, copy VRB mask.
   if (mapping_type == vrb_to_prb_mapping_type::NON_INTERLEAVED) {
-    std::copy(vrb_mask.begin(), vrb_mask.begin() + bwp_size_rb, mask.begin() + bwp_start_rb);
+    // Fill from the beginning of the grid to the beginning of the BWP with false entries.
+    std::fill_n(mask.begin(), bwp_start_rb, false);
+
+    // Copy the VRB mask into the RB mask.
+    std::copy_n(vrb_mask.begin(), bwp_size_rb, mask.begin() + bwp_start_rb);
+
+    // Fill from the end of the BWP to the end of the BWP with false entries.
+    std::fill(mask.begin() + bwp_start_rb + bwp_size_rb, mask.end(), false);
+
     return;
   }
 
