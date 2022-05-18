@@ -242,29 +242,42 @@ namespace fmt {
 template <typename T>
 struct formatter<srsgnb::span<T> > {
   // Stores parsed format string.
-  std::string format_str = "{}";
+  memory_buffer format_buffer;
 
   // Stores parsed delimiter string.
-  std::string delimiter_str = " ";
+  memory_buffer delimiter_buffer;
+
+  formatter()
+  {
+    static const string_view DEFAULT_FORMAT    = "{}";
+    static const string_view DEFAULT_DELIMITER = " ";
+    format_buffer.append(DEFAULT_FORMAT.begin(), DEFAULT_FORMAT.end());
+    delimiter_buffer.append(DEFAULT_DELIMITER.begin(), DEFAULT_DELIMITER.end());
+  }
 
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
+    static const string_view PREAMBLE_FORMAT = "{:";
+    static const string_view COMMA_DELIMITER = ", ";
+
     // Skip if context is empty and use default format.
     if (ctx.begin() == ctx.end()) {
       return ctx.end();
     }
 
     // Store the format string.
-    format_str = "{:";
+    format_buffer.clear();
+    format_buffer.append(PREAMBLE_FORMAT.begin(), PREAMBLE_FORMAT.end());
     for (auto& it : ctx) {
       // Detect if comma is in the context.
       if (it == ',') {
-        delimiter_str = ", ";
+        delimiter_buffer.clear();
+        delimiter_buffer.append(COMMA_DELIMITER.begin(), COMMA_DELIMITER.end());
         continue;
       }
 
-      format_str.push_back(it);
+      format_buffer.push_back(it);
 
       // Found the end of the context.
       if (it == '}') {
@@ -279,6 +292,8 @@ struct formatter<srsgnb::span<T> > {
   template <typename FormatContext>
   auto format(const srsgnb::span<T>& buf, FormatContext& ctx)
   {
+    string_view format_str    = string_view(format_buffer.data(), format_buffer.size());
+    string_view delimiter_str = string_view(delimiter_buffer.data(), delimiter_buffer.size());
     return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
   }
 };

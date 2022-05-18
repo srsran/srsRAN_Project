@@ -27,25 +27,35 @@ namespace fmt {
 template <>
 struct formatter<srsgnb::cf_t> {
   // Stores parsed format string.
-  std::string format_str = "{:+f}{:+f}j";
+  memory_buffer format_buffer;
+
+  formatter()
+  {
+    static const string_view DEFAULT_FORMAT = "{:+f}{:+f}j";
+    format_buffer.append(DEFAULT_FORMAT.begin(), DEFAULT_FORMAT.end());
+  }
 
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
+    static const fmt::string_view PREAMBLE_FORMAT = "{:";
+
     // Skip if context is empty and use default format.
     if (ctx.begin() == ctx.end()) {
       return ctx.end();
     }
 
     // Store the format string.
-    format_str = "{:";
+    format_buffer.clear();
+    format_buffer.append(PREAMBLE_FORMAT.begin(), PREAMBLE_FORMAT.end());
     for (auto& it : ctx) {
-      format_str.push_back(it);
+      format_buffer.push_back(it);
 
       // Found the end of the context.
       if (it == '}') {
         // Replicate the format string for the imaginary part.
-        format_str += format_str + "j";
+        format_buffer.append(format_buffer.begin(), format_buffer.end());
+        format_buffer.push_back('j');
         return &it;
       }
     }
@@ -57,6 +67,7 @@ struct formatter<srsgnb::cf_t> {
   template <typename FormatContext>
   auto format(srsgnb::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
+    const string_view format_str = string_view(format_buffer.data(), format_buffer.size());
     return format_to(ctx.out(), format_str, value.real(), value.imag());
   }
 };
