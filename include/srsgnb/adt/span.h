@@ -11,6 +11,7 @@
 #ifndef SRSGNB_SPAN_H
 #define SRSGNB_SPAN_H
 
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include <algorithm>
 #include <array>
 #include <cassert>
@@ -234,5 +235,53 @@ template <typename T>
 using const_span = span<const T>;
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// \brief Custom formatter for span<T>.
+template <typename T>
+struct formatter<srsgnb::span<T> > {
+  // Stores parsed format string.
+  std::string format_str = "{}";
+
+  // Stores parsed delimiter string.
+  std::string delimiter_str = " ";
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    // Skip if context is empty and use default format.
+    if (ctx.begin() == ctx.end()) {
+      return ctx.end();
+    }
+
+    // Store the format string.
+    format_str = "{:";
+    for (auto& it : ctx) {
+      // Detect if comma is in the context.
+      if (it == ',') {
+        delimiter_str = ", ";
+        continue;
+      }
+
+      format_str.push_back(it);
+
+      // Found the end of the context.
+      if (it == '}') {
+        return &it;
+      }
+    }
+
+    // No end of context was found.
+    return ctx.end();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::span<T>& buf, FormatContext& ctx)
+  {
+    return format_to(ctx.out(), format_str, fmt::join(buf.begin(), buf.end(), delimiter_str));
+  }
+};
+} // namespace fmt
 
 #endif // SRSGNB_SPAN_H

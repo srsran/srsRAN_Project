@@ -26,15 +26,38 @@ namespace fmt {
 /// FMT formatter of cf_t type.
 template <>
 struct formatter<srsgnb::cf_t> {
+  // Stores parsed format string.
+  std::string format_str = "{:+f}{:+f}j";
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
-    return ctx.begin();
+    // Skip if context is empty and use default format.
+    if (ctx.begin() == ctx.end()) {
+      return ctx.end();
+    }
+
+    // Store the format string.
+    format_str = "{:";
+    for (auto& it : ctx) {
+      format_str.push_back(it);
+
+      // Found the end of the context.
+      if (it == '}') {
+        // Replicate the format string for the imaginary part.
+        format_str += format_str + "j";
+        return &it;
+      }
+    }
+
+    // No end of context was found.
+    return ctx.end();
   }
+
   template <typename FormatContext>
   auto format(srsgnb::cf_t value, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{:+f}{:+f}j", value.real(), value.imag());
+    return format_to(ctx.out(), format_str, value.real(), value.imag());
   }
 };
 
