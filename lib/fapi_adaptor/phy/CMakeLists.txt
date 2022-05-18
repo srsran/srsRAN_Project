@@ -6,8 +6,8 @@
 # the distribution.
 #
 
-add_library(pdsch_fapi_adaptor STATIC pdsch.cpp)
-target_link_libraries(pdsch_fapi_adaptor)
+#add_library(pdsch_fapi_adaptor STATIC pdsch.cpp)
+#target_link_libraries(pdsch_fapi_adaptor)
 
 add_subdirectory(messages)
 

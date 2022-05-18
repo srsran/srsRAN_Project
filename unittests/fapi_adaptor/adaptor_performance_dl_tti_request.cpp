@@ -195,6 +195,7 @@ static void pdcch_conversion_benchmark()
 }
 
 /// Benchmark that measures the performance converting PDSCH data structures from MAC -> FAPI -> PHY.
+#if 0
 static void pdsch_conversion_benchmark()
 {
   static constexpr unsigned iterations = 10000;
@@ -336,12 +337,13 @@ static void pdsch_conversion_benchmark()
              results[static_cast<size_t>(results.size() * 0.999)],
              results.back());
 }
+#endif // 0
 
 int main()
 {
   ssb_conversion_benchmark();
   pdcch_conversion_benchmark();
-  pdsch_conversion_benchmark();
+//  pdsch_conversion_benchmark();
 
   fmt::print("Success\n");
   return 0;
