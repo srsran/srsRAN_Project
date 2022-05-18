@@ -77,7 +77,7 @@ static double detect_2(span<uint8_t> output, span<const int8_t> input)
   double   max_metric = std::numeric_limits<double>::min();
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != 4; ++cdwd_idx) {
-    int metric = srsvec::dot_prod(span<const int>(llr), span<const int>(TABLE2[cdwd_idx]), 0);
+    int metric = srsvec::dot_prod(llr, TABLE2[cdwd_idx], 0);
     if (metric > max_metric) {
       max_metric = metric;
       max_idx    = cdwd_idx;
@@ -89,7 +89,7 @@ static double detect_2(span<uint8_t> output, span<const int8_t> input)
 
   // TODO(david): this is not really working, 3 symbols are not enough for a meaningful GLRT detector.
   max_metric *= max_metric;
-  int in_norm_sqr = srsvec::dot_prod(span<const int>(llr), span<const int>(llr), 0);
+  int in_norm_sqr = srsvec::dot_prod(llr, llr, 0);
   return 2.0 * max_metric / (3.0 * in_norm_sqr - max_metric);
 }
 
@@ -104,7 +104,7 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const i
   uint8_t  bit0       = 0U;
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != nof_codewords; ++cdwd_idx) {
-    int metric     = srsvec::dot_prod(input, span<const int8_t>(DETECT_TABLE[cdwd_idx]), 0);
+    int metric     = srsvec::dot_prod(input, DETECT_TABLE[cdwd_idx], 0);
     int metric_abs = std::abs(metric);
     if (metric_abs > max_metric) {
       max_metric = metric_abs;

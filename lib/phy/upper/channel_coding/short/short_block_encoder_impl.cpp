@@ -10,8 +10,7 @@ static constexpr unsigned MAX_IN_BITS = 11;
 // Maximum codeblock length.
 static constexpr unsigned MAX_BLOCK_BITS = 32;
 
-// TODO(david): this should be constexpr, but then the rows are not accepted as inputs to binary_xor.
-static std::array<std::array<uint8_t, MAX_BLOCK_BITS>, MAX_IN_BITS> basis_sequences = {
+static constexpr std::array<std::array<uint8_t, MAX_BLOCK_BITS>, MAX_IN_BITS> BASIS_SEQUENCES = {
     {{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
      {1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 0, 1, 0},
      {0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 0},
@@ -87,7 +86,7 @@ static void encode_3_11(span<uint8_t> output, span<const uint8_t> input)
 
   for (unsigned c_i = 0, length = input.size(); c_i != length; ++c_i) {
     if (input[c_i] == 1) {
-      srsvec::binary_xor(output, span<uint8_t>(basis_sequences[c_i]), output);
+      srsvec::binary_xor(output, BASIS_SEQUENCES[c_i], output);
     }
   }
 }
