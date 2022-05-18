@@ -129,9 +129,9 @@ void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node
   span<const int8_t> this_check_to_var(check_to_var[check_node]);
   span<int8_t>       this_var_to_check(var_to_check);
 
-  compute_var_to_check_msgs(this_soft_bits.subspan(0, nof_hrr_nodes),
-                            this_check_to_var.subspan(0, nof_hrr_nodes),
-                            this_var_to_check.subspan(0, nof_hrr_nodes));
+  compute_var_to_check_msgs(this_soft_bits.first(nof_hrr_nodes),
+                            this_check_to_var.first(nof_hrr_nodes),
+                            this_var_to_check.first(nof_hrr_nodes));
 
   // Next, update the messages corresponding to the extension region, if applicable.
   // From layer 4 onwards, each layer is connected to only one consecutive block of lifting_size bits.

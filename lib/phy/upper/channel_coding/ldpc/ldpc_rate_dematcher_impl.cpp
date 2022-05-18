@@ -75,7 +75,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8
   if (modulation_order == 1) {
     allot_llrs(output, input);
   } else {
-    span<int8_t> aux = span<int8_t>(auxiliary_buffer).subspan(0, input.size());
+    span<int8_t> aux = span<int8_t>(auxiliary_buffer).first(input.size());
     deinterleave_llrs(aux, input);
     allot_llrs(output, aux);
   }

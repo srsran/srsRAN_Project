@@ -110,8 +110,8 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
   uint8_t  code_size_log_1 = code_size_log - 1;
   uint16_t code_half_size  = (1U << code_size_log_1);
 
-  srsvec::zero(i_even.subspan(0, code_half_size));
-  srsvec::zero(i_odd.subspan(0, code_half_size));
+  srsvec::zero(i_even.first(code_half_size));
+  srsvec::zero(i_odd.first(code_half_size));
   for (uint16_t i = 0; i != code_half_size; ++i) {
     i_even[i] = 2 * i;
     i_odd[i]  = 2 * i + 1;

@@ -437,7 +437,7 @@ void srsgnb::polar_code_impl::set(const uint16_t K_, const uint16_t E_, const ui
                    blk_interleaver.first(tmp_F_set_size)); // The first (less reliable) after interleaving
 
     } else { // Shortening
-      srsvec::copy(F_set.subspan(0, tmp_F_set_size),
+      srsvec::copy(F_set.first(tmp_F_set_size),
                    blk_interleaver.subspan(E, tmp_F_set_size)); // The first (less reliable) after interleaving
     }
   } else {
@@ -525,7 +525,7 @@ span<const uint16_t> polar_code_impl::get_PC_set() const
 
 span<const uint16_t> polar_code_impl::get_F_set() const
 {
-  return F_set.subspan(0, F_set_size);
+  return F_set.first(F_set_size);
 }
 
 span<const uint16_t> polar_code_impl::get_mother_code() const

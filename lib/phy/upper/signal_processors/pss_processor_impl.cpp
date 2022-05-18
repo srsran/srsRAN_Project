@@ -48,10 +48,10 @@ void srsgnb::pss_processor_impl::generation(std::array<cf_t, SEQUENCE_LEN>& sequ
   span<const cf_t> pregen = signal;
 
   // Copy sequence from offset to the end
-  srsvec::sc_prod(pregen.subspan(m, SEQUENCE_LEN - m), config.amplitude, tmp.subspan(0, SEQUENCE_LEN - m));
+  srsvec::sc_prod(pregen.subspan(m, SEQUENCE_LEN - m), config.amplitude, tmp.first(SEQUENCE_LEN - m));
 
   // Copy sequence from 0 to offset
-  srsvec::sc_prod(pregen.subspan(0, m), config.amplitude, tmp.subspan(SEQUENCE_LEN - m, m));
+  srsvec::sc_prod(pregen.first(m), config.amplitude, tmp.subspan(SEQUENCE_LEN - m, m));
 }
 
 void srsgnb::pss_processor_impl::mapping(const std::array<cf_t, SEQUENCE_LEN>& sequence,

@@ -61,12 +61,12 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;
 
-  buffer = input.subspan(0, buffer_length);
+  buffer = input.first(buffer_length);
 
   if (modulation_order == 1) {
     select_bits(output, buffer);
   } else {
-    span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).subspan(0, output.size());
+    span<uint8_t> aux = span<uint8_t>(auxiliary_buffer).first(output.size());
     select_bits(aux, buffer);
     interleave_bits(output, aux);
   }
