@@ -99,7 +99,7 @@ static void pdsch_conversion_test()
                           unsigned rb_start                 = start_symbol_index_dist(gen);
                           float    profile_sss              = power_dist(gen);
 
-                          std::array<uint8_t, 36> rb_bitmap;
+                          std::array<uint8_t, 36> rb_bitmap = {};
 
                           dl_pdsch_pdu         pdu;
                           dl_pdsch_pdu_builder builder(pdu);

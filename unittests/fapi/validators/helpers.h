@@ -186,7 +186,7 @@ inline srsgnb::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu()
   unsigned       rb_start                 = start_symbol_index_dist(gen);
   float          profile_sss              = power_dist(gen);
 
-  std::array<uint8_t, 36> rb_bitmap;
+  std::array<uint8_t, 36> rb_bitmap = {};
 
   srsgnb::fapi::dl_pdsch_pdu         pdu;
   srsgnb::fapi::dl_pdsch_pdu_builder builder_pdsch(pdu);

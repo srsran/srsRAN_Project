@@ -250,7 +250,7 @@ static void pdsch_conversion_benchmark()
     unsigned rb_start                 = start_symbol_index_dist(gen);
     float    profile_sss              = power_dist(gen);
 
-    std::array<uint8_t, 36> rb_bitmap;
+    std::array<uint8_t, 36> rb_bitmap = {};
 
     // :TODO: Begin with the MAC structure when it is defined.
     dl_tti_request_message         msg;
