@@ -9,7 +9,7 @@
  */
 
 #include "config_generators.h"
-#include "lib/scheduler/cell/ra_sched.h"
+#include "lib/scheduler/cell/ra_scheduler.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
@@ -129,7 +129,7 @@ struct test_bench {
 /// Helper function that executes and tests the success of handle_rach_indication() for a rach_indication_message list.
 void static enqueue_rach_indications(const std::list<rach_indication_message>& rach_ind_list,
                                      const slot_point&                         slot_rx_prach,
-                                     ra_sched&                                 rach_sched)
+                                     ra_scheduler&                             rach_sched)
 {
   // Process all RACH indications received at sl_rx_prach
   for (auto& rach_ind_item : rach_ind_list) {
@@ -322,7 +322,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
 
   test_bench bench{params};
 
-  ra_sched ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg};
 
   // Create the list of RACH indication messages with as many elements as the nof_grants_per_rar (1 RA-RNTI and
   // different RAPIDs)
@@ -384,7 +384,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
 
   test_bench bench{params};
 
-  ra_sched ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg};
 
   // Create the list of RACH indication messages with different RA-RNTIs and different RAPIDs
   std::list<rach_indication_message> rach_ind_list;
@@ -472,7 +472,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
   test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RACH"};
   test_bench          bench{params};
 
-  ra_sched ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg};
 
   slot_point              prach_sl_rx{0, 7};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, to_rnti(0x4601));
@@ -535,7 +535,7 @@ void test_ra_sched_tdd_single_rach()
   test_bench     bench{params};
 
   // TDD configuration.
-  ra_sched ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg};
 
   // Enqueue RACH.
   slot_point              prach_sl_rx{0, 7};

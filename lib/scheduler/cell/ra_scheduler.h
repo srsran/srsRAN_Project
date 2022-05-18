@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RA_SCHED_H
-#define SRSGNB_RA_SCHED_H
+#ifndef SRSGNB_RA_SCHEDULER_H
+#define SRSGNB_RA_SCHEDULER_H
 
 #include "../sched_harq.h"
 #include "resource_grid.h"
@@ -28,7 +28,7 @@ unsigned get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_re
 uint16_t get_ra_rnti(const rach_indication_message& rach_ind, bool is_sul = false);
 
 /// Scheduler for RAR and Msg3
-class ra_sched
+class ra_scheduler
 {
   /// Implementation-defined limit for maximum Msg3s to be allocated in a given RAR.
   static constexpr size_t MAX_MSG3_LIST = 16;
@@ -36,7 +36,7 @@ class ra_sched
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  explicit ra_sched(const cell_configuration& cfg_);
+  explicit ra_scheduler(const cell_configuration& cfg_);
 
   /// Enqueue RACH indication
   /// See TS 38.321, 5.1.3 - RAP transmission
@@ -56,23 +56,32 @@ private:
     rach_indication_message ind_msg{};
     ul_harq_proc            msg3_harq{0};
   };
+  struct msg3_alloc_info {
+    cell_slot_resource_allocator* msg3_alloc;
+    ofdm_symbol_range             symbols;
+    crb_interval                  crbs;
+  };
 
-  const bwp_configuration& get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
-  const bwp_configuration& get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
+  const bwp_configuration&   get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
+  const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
+  const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
 
-  void log_postponed_rar(const pending_rar_t& rar, const char* cause_str);
-  void log_rar(const rar_information& rar);
+  void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
+  void log_rars(const cell_resource_allocator& res_alloc) const;
 
-  /// Allocate pending RAR and associated Msg3 grants
-  /// \return The number of allocated Msg3 grants
+  /// Allocate pending RAR and associated Msg3 grants.
+  /// \return The number of allocated Msg3 grants.
   unsigned allocate_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc);
 
-  void fill_rar_grant(const pending_rar_t&          rar,
-                      const crb_interval&           rar_crbs,
-                      const crb_interval&           msg3_prbs,
+  /// Schedule RAR grant and associated Msg3 grants in the provided scheduling resources.
+  /// \param rar pending RAR with an associated RA-RNTI that is going to be scheduled.
+  /// \param rar_crbs CRBs of the RAR to be scheduled.
+  /// \param rar_alloc Slot Resource Grid allocator for the RAR.
+  /// \param msg3_grants List of Msg3s with respective resource information (e.g. RBs and symbols) to allocate.
+  void fill_rar_grant(const pending_rar_t&          pending_rar,
+                      crb_interval                  rar_crbs,
                       cell_slot_resource_allocator& rar_alloc,
-                      cell_slot_resource_allocator& msg3_alloc,
-                      unsigned                      nof_msg3_grants);
+                      span<const msg3_alloc_info>   msg3_grants);
 
   // args
   const cell_configuration& cfg;
@@ -88,4 +97,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RA_SCHED_H
+#endif // SRSGNB_RA_SCHEDULER_H

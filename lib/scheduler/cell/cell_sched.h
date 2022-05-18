@@ -13,7 +13,7 @@
 
 #include "../sched_strategy/data_scheduler.h"
 #include "cell_configuration.h"
-#include "ra_sched.h"
+#include "ra_scheduler.h"
 #include "resource_grid.h"
 
 namespace srsgnb {
@@ -29,7 +29,7 @@ public:
   const cell_configuration cell_cfg;
   cell_resource_allocator  res_grid;
 
-  ra_sched ra_sch;
+  ra_scheduler ra_sch;
 };
 
 class cell_sched_manager
