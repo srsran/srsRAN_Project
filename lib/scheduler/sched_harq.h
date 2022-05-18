@@ -11,13 +11,13 @@
 #ifndef SCHED_HARQ_H
 #define SCHED_HARQ_H
 
-#include "sched_dci.h"
 #include "sched_prb.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/sched_consts.h"
+#include "srsgnb/scheduler/scheduler_dci.h"
 #include <array>
 
 namespace srsgnb {
@@ -94,12 +94,12 @@ public:
               const prb_grant& grant,
               uint32_t         mcs,
               uint32_t         max_retx,
-              dci_dl_t&        dci);
+              dci_dl_info&     dci);
 
-  bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, dci_dl_t& dci);
+  bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, dci_dl_info& dci);
 
 private:
-  void fill_dci(dci_dl_t& dci);
+  void fill_dci(dci_dl_info& dci);
 
   std::vector<uint8_t> softbuffer;
   byte_buffer          pdu;
@@ -110,9 +110,9 @@ class ul_harq_proc : public harq_proc
 public:
   ul_harq_proc(uint32_t id_) : harq_proc(id_) {}
 
-  bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx, dci_ul_t& dci);
+  bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx, dci_ul_info& dci);
 
-  bool new_retx(slot_point slot_tx, const prb_grant& grant, dci_ul_t& dci);
+  bool new_retx(slot_point slot_tx, const prb_grant& grant, dci_ul_info& dci);
 
   std::vector<uint8_t>& get_softbuffer() { return softbuffer; }
 
@@ -123,7 +123,7 @@ public:
   }
 
 private:
-  void fill_dci(dci_ul_t& dci);
+  void fill_dci(dci_ul_info& dci);
 
   std::vector<uint8_t> softbuffer;
 };

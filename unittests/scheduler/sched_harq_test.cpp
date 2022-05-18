@@ -114,8 +114,8 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
                                      harq_entity&                     h_entity)
 
 {
-  dl_harq_proc*   dl_proc;
-  struct dci_dl_t dci_dl;
+  dl_harq_proc*      dl_proc;
+  struct dci_dl_info dci_dl;
 
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
@@ -171,8 +171,8 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
                                      struct harq_proc_vars&           ul_var,
                                      harq_entity&                     h_entity)
 {
-  ul_harq_proc*   ul_proc;
-  struct dci_ul_t dci_ul;
+  ul_harq_proc*      ul_proc;
+  struct dci_ul_info dci_ul;
 
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
@@ -233,7 +233,7 @@ void test_dl_harq_proc(test_mode tmode)
   constexpr unsigned tbs          = 1224;
 
   dl_harq_proc dl_proc{pid};
-  dci_dl_t     dci{};
+  dci_dl_info  dci{};
   prb_grant    prbgrant{prb_interval{0, 60}};
   slot_point   sl_tx{0, tx_gnb_delay};
   auto         sl_rx = [&sl_tx]() { return sl_tx - tx_gnb_delay; };
@@ -327,8 +327,8 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
   rbg_btmp.from_uint64(0b101000111000111101);
-  prb_grant       grant_dl(rbg_btmp);
-  struct dci_dl_t dci_dl;
+  prb_grant          grant_dl(rbg_btmp);
+  struct dci_dl_info dci_dl;
 
   // Create DL_HARQ object
   dl_harq_proc dl_test = dl_harq_proc(pid);
@@ -408,8 +408,8 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
   rbg_btmp.from_uint64(0b101000111000111101);
-  prb_grant       grant_ul(rbg_btmp);
-  struct dci_ul_t dci_ul;
+  prb_grant          grant_ul(rbg_btmp);
+  struct dci_ul_info dci_ul;
 
   // Create UL_HARQ object
   ul_harq_proc ul_test = ul_harq_proc(pid);

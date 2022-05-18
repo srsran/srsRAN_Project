@@ -321,7 +321,7 @@ void ra_scheduler::fill_rar_grant(const pending_rar_t&          rar_request,
     msg3_info.prbs              = crb_to_prb(get_ul_bwp_cfg(), msg3_grant.crbs);
 
     // Fill Msg3 DCI in RAR
-    dci_ul_t msg3_dci{};
+    dci_ul_info msg3_dci{};
     // TODO
 
     // Allocate and fill PUSCH for Msg3.
