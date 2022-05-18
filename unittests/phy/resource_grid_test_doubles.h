@@ -162,7 +162,7 @@ private:
 
     // Ensure the resource element does not exist.
     srsran_assert(entries.count(key) == 0,
-                  "Detected resource grid overwrite for port=%d, symbol=%d and subcarrier=%d.",
+                  "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.",
                   port,
                   symbol,
                   subcarrier);
