@@ -152,7 +152,7 @@ struct scs_specific_carrier {
   /// number of PRBs. Values: (0..2199).
   unsigned           offset_to_carrier;
   subcarrier_spacing scs;
-  /// With of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
+  /// Width of this carrier in number of PRBs. Values: (0..MAX_NOF_PRBS).
   unsigned carrier_bandwidth;
 };
 

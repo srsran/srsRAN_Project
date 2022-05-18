@@ -38,7 +38,7 @@ void test_carrier_subslot_resource_grid()
   {
     carrier_subslot_resource_grid carrier_grid(carrier_cfgs[0]);
     TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
-    TESTASSERT_EQ(52, carrier_grid.nof_prbs());
+    TESTASSERT_EQ(52, carrier_grid.nof_rbs());
     TESTASSERT_EQ(0, carrier_grid.offset());
     crb_interval lims{0, 52};
     TESTASSERT(carrier_grid.rb_dims() == lims);
@@ -61,7 +61,7 @@ void test_carrier_subslot_resource_grid()
     carrier_cfg.carrier_bandwidth    = 20;
     carrier_subslot_resource_grid carrier_grid(carrier_cfg);
     TESTASSERT_EQ(subcarrier_spacing::kHz15, carrier_grid.scs());
-    TESTASSERT_EQ(20, carrier_grid.nof_prbs());
+    TESTASSERT_EQ(20, carrier_grid.nof_rbs());
     TESTASSERT_EQ(10, carrier_grid.offset());
     crb_interval lims{10, 30};
     TESTASSERT(carrier_grid.rb_dims() == lims);

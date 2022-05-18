@@ -19,7 +19,11 @@
 
 namespace srsgnb {
 
-/// Convert PRBs within a BWP into Common RBs, which use pointA as reference point.
+/// Convert PRBs within a BWP into Common RBs, which use pointA as reference point. CRBs and PRBs are assumed to have
+/// the same numerology of the provided BWP configuration.
+/// \param bwp_cfg BWP configuration of the respective PRB interval.
+/// \param prbs PRBs to be converted to CRBs.
+/// \return Calculated CRB interval.
 inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval prbs)
 {
   srsran_sanity_check(
@@ -28,7 +32,8 @@ inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
   return crbs;
 }
 
-/// Convert CRBs to PRBs within a BWP.
+/// Convert CRBs to PRBs within a BWP. CRBs and PRBs are assumed to have the same numerology of the provided
+/// BWP configuration.
 inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval crbs)
 {
   srsran_sanity_check(bwp_cfg.crbs.contains(crbs), "Mismatch between CRBs={} and BWP lims={}", crbs, bwp_cfg.crbs);
@@ -40,7 +45,7 @@ inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval cr
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;
   ofdm_symbol_range        symbols;
-  /// PRBs with BWP.
+  /// PRB interval within respective BWP.
   prb_interval prbs;
 
   bwp_sch_grant_info(const bwp_configuration& bwp_, ofdm_symbol_range symbols_, prb_interval prbs_) :
@@ -84,7 +89,7 @@ public:
   explicit carrier_subslot_resource_grid(const scs_specific_carrier& carrier_cfg);
 
   subcarrier_spacing scs() const { return carrier_cfg.scs; }
-  unsigned           nof_prbs() const { return carrier_cfg.carrier_bandwidth; }
+  unsigned           nof_rbs() const { return carrier_cfg.carrier_bandwidth; }
   unsigned           offset() const { return carrier_cfg.offset_to_carrier; }
   crb_interval       rb_dims() const { return get_carrier_rb_dims(carrier_cfg); }
 
@@ -96,7 +101,7 @@ public:
   /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
   void fill(ofdm_symbol_range symbols, crb_interval crbs);
 
-  /// Checks whether the provided symbol x PRB range collides with any other allocation in the carrier resource grid.
+  /// Checks whether the provided symbol x CRB range collides with any other allocation in the carrier resource grid.
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
   /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
   /// \return true if a collision was detected. False otherwise.
@@ -105,8 +110,11 @@ public:
 private:
   using slot_rb_bitmap = bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * MAX_NOF_PRBS>;
 
+  /// Carrier configuration containining numerology, carrier offset and carrier bandwidth.
   scs_specific_carrier carrier_cfg;
-  slot_rb_bitmap       slot_rbs;
+
+  /// RB bitmap of the this carrier. RB bit=0 corresponds to CRB=carrier_offset.
+  slot_rb_bitmap slot_rbs;
 };
 
 /// \brief Manages the allocation of RBs in the resource grid of a given service cell for a given slot. This class

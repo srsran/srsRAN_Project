@@ -19,7 +19,7 @@ namespace srsgnb {
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
-/// Bitset of RBGs with size up to 18
+/// Bitset of RBGs with size up to 18.
 using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 
 /// Struct to express a {min,...,max} range of CRBs within a carrier.
@@ -32,7 +32,7 @@ struct prb_interval : public interval<unsigned> {
   using interval::interval;
 };
 
-/// PRB grant that can be of allocation type 0 (RBGs) or 1 (PRB interval)
+/// PRB grant that can be of allocation type 0 (RBGs) or 1 (PRB interval).
 struct prb_grant {
   prb_grant() = default;
   prb_grant(const prb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
@@ -145,11 +145,11 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
 
 namespace fmt {
 
-/// FMT formatter for prb_intervals
+/// FMT formatter for prb_intervals.
 template <>
 struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
 
-/// FMT formatter for crb_intervals
+/// FMT formatter for crb_intervals.
 template <>
 struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
 

@@ -19,7 +19,7 @@
 
 namespace srsgnb {
 
-/// Representation of an interval between two numeric-types with the math representation [start, stop)
+/// Representation of an interval between two numeric-types with the math representation [start, stop).
 template <typename T>
 class interval
 {
@@ -44,7 +44,7 @@ public:
     stop_  = stop_point;
   }
 
-  /// Increase the interval length, maintaining the same starting point
+  /// Increase the interval length, maintaining the same starting point.
   void resize_by(T len)
   {
     // Detect length overflows
@@ -52,14 +52,14 @@ public:
     stop_ += len;
   }
 
-  /// Set the interval length, maintaining the same starting point
+  /// Set the interval length, maintaining the same starting point.
   void resize_to(T len)
   {
     srsran_assert(std::is_unsigned<T>::value or len >= 0, "Interval width must be positive");
     stop_ = start_ + len;
   }
 
-  /// Move interval by an offset
+  /// Move interval by an offset.
   void displace_by(int offset)
   {
     srsran_assert(
@@ -71,14 +71,14 @@ public:
     stop_ += offset;
   }
 
-  /// Move interval start to provided starting point
+  /// Move interval start to provided starting point.
   void displace_to(T start_point)
   {
     stop_  = start_point + length();
     start_ = start_point;
   }
 
-  /// If this and other intervals overlap
+  /// If this and other intervals overlap.
   bool overlaps(interval other) const
   {
     // Note: if one or both intervals are empty, this will always return false
@@ -91,7 +91,7 @@ public:
   /// If interval contains provided interval.
   bool contains(interval other) const { return start_ <= other.start_ and other.stop_ <= stop_; }
 
-  /// Assign to this interval the intersection between this and the provided interval
+  /// Assign to this interval the intersection between this and the provided interval.
   interval<T>& intersect(const interval<T>& other)
   {
     if (not overlaps(other)) {
