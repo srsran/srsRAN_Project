@@ -94,7 +94,8 @@ struct pdcch_configuration_common {
 struct bwp_configuration {
   bool               cp_extended;
   subcarrier_spacing scs;
-  crb_interval       crbs;
+  /// Common RBs where the BWP is located. CRB=0 overlaps with pointA.
+  crb_interval crbs;
 };
 
 /// Used to configure the common, cell-specific parameters of a DL BWP.

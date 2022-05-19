@@ -108,7 +108,7 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
 prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const
 {
   prb_bitmap crbs = get_carrier(bwp_cfg.scs).sch_crbs;
-  // filter out CRBs that are outside of the BWP.
+  // Set as used (true) the CRBs outside of the BWP.
   crbs.fill(0, bwp_cfg.crbs.start());
   crbs.fill(bwp_cfg.crbs.stop(), crbs.size());
   return crbs;
