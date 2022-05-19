@@ -19,6 +19,17 @@
 
 namespace srsgnb {
 
+/// Convert PRB within a BWP into a Common RB, which use pointA as reference point. The CRB and PRB are assumed to have
+/// the same numerology of the provided BWP configuration.
+/// \param bwp_cfg BWP configuration of the respective PRB.
+/// \param prb PRB to be converted to CRB.
+/// \return Calculated CRB.
+inline unsigned prb_to_crb(const bwp_configuration& bwp_cfg, unsigned prb)
+{
+  srsran_sanity_check(prb <= bwp_cfg.crbs.length(), "Mismatch between PRB={} and BWP lims={}", prb, bwp_cfg.crbs);
+  return prb + bwp_cfg.crbs.start();
+}
+
 /// Convert PRBs within a BWP into Common RBs, which use pointA as reference point. CRBs and PRBs are assumed to have
 /// the same numerology of the provided BWP configuration.
 /// \param bwp_cfg BWP configuration of the respective PRB interval.
@@ -26,10 +37,7 @@ namespace srsgnb {
 /// \return Calculated CRB interval.
 inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval prbs)
 {
-  srsran_sanity_check(
-      prbs.stop() <= bwp_cfg.crbs.length(), "Mismatch between PRBs={} and BWP lims={}", prbs, bwp_cfg.crbs);
-  crb_interval crbs{prbs.start() + bwp_cfg.crbs.start(), prbs.stop() + bwp_cfg.crbs.start()};
-  return crbs;
+  return {prb_to_crb(bwp_cfg, prbs.start()), prb_to_crb(bwp_cfg, prbs.stop())};
 }
 
 /// Convert CRBs to PRBs within a BWP. CRBs and PRBs are assumed to have the same numerology of the provided
@@ -67,6 +75,7 @@ struct grant_info {
   /// Common RBs of the grant. RB==0 corresponds to the RB that overlaps with the pointA.
   crb_interval crbs;
 
+  grant_info() = default;
   grant_info(grant_info::channel ch_, subcarrier_spacing scs_, ofdm_symbol_range symbols_, crb_interval crbs_) :
     ch(ch_), scs(scs_), symbols(symbols_), crbs(crbs_)
   {}

@@ -20,7 +20,7 @@ namespace srsgnb {
 /// Aggregation Level of PDCCH allocation.
 enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8 };
 
-inline unsigned to_cce_size(aggregation_level lvl)
+inline unsigned to_nof_cces(aggregation_level lvl)
 {
   return 1U << static_cast<uint8_t>(lvl);
 }
@@ -28,6 +28,8 @@ inline unsigned to_cce_size(aggregation_level lvl)
 enum class dci_dl_format { f1_0, f1_1, f2_0 };
 enum class dci_ul_format { f0_0, f0_1 };
 
+/// \brief DCI format 1_0 content. It is used for scheduling PDSCH in one cell.
+/// It can be scrambled by C-RNTI, RA-RNTI, TC-RNTI, SI-RNTI and P-RNTI.
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
 struct dci_format1_0_info {
   /// Frequency domain resource assignment.

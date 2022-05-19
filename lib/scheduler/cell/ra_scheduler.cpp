@@ -10,6 +10,7 @@
 
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
+#include "pdcch_scheduler.h"
 
 using namespace srsgnb;
 
@@ -20,7 +21,7 @@ get_pusch_time_domain_resource_table(const pusch_config_common& pusch_cfg)
 {
   if (pusch_cfg.pusch_td_alloc_list.empty()) {
     // Use default tables 6.1.2.1.1-2/3.
-    // TODO: PHY procedure.
+    // TODO: PHY helper.
   }
   return pusch_cfg.pusch_td_alloc_list;
 }
@@ -56,8 +57,9 @@ uint16_t srsgnb::get_ra_rnti(const rach_indication_message& rach_ind, bool is_su
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ra_scheduler::ra_scheduler(const cell_configuration& cfg_) :
+ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch_) :
   cfg(cfg_),
+  pdcch_sch(pdcch_sch_),
   ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   pending_msg3s(MAX_NOF_MSG3)
 {}
@@ -274,9 +276,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   rar_crbs.resize_to(nof_prbs_per_rar * max_nof_allocs);
 
   // 7. Find space in PDCCH for RAR.
-  // TODO
-  rar_alloc.result.dl.pdcchs.emplace_back();
-  rar_alloc.result.dl.pdcchs.back().bwp_cfg = &get_dl_bwp_cfg();
+  const static aggregation_level aggr_lvl = aggregation_level::n4;
+  search_space_id                ss_id    = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+  pdcch_information*             pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc.slot, rar.ra_rnti, ss_id, aggr_lvl);
+  if (pdcch == nullptr) {
+    return 0;
+  }
 
   // Status: RAR allocation is successful.
 
@@ -304,8 +309,6 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
   // Fill RAR DCI.
   rar.pdcch_cfg                                 = &rar_alloc.result.dl.pdcchs.back();
-  rar.pdcch_cfg->dci.rnti                       = rar_request.ra_rnti;
-  rar.pdcch_cfg->dci.format_type                = dci_dl_format::f1_0;
   rar.pdcch_cfg->dci.f1_0.time_domain_assigment = 0;
   // TODO
 

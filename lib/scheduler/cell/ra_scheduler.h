@@ -17,6 +17,8 @@
 
 namespace srsgnb {
 
+class pdcch_scheduler;
+
 /// Get MSG3 Delay.
 /// \param[in] pusch_td_res_alloc PUSCH-TimeDomainResourceAllocation.
 /// \param[in] pusch_scs SCS used by initial UL BWP.
@@ -36,7 +38,7 @@ class ra_scheduler
   static constexpr size_t MAX_NOF_MSG3 = 1024;
 
 public:
-  explicit ra_scheduler(const cell_configuration& cfg_);
+  explicit ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sched_);
 
   /// Enqueue RACH indication
   /// See TS 38.321, 5.1.3 - RAP transmission
@@ -86,6 +88,7 @@ private:
 
   // args
   const cell_configuration& cfg;
+  pdcch_scheduler&          pdcch_sch;
 
   // derived from args
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");

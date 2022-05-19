@@ -13,6 +13,7 @@
 
 #include "../sched_strategy/data_scheduler.h"
 #include "cell_configuration.h"
+#include "pdcch_scheduler.h"
 #include "ra_scheduler.h"
 #include "resource_grid.h"
 
@@ -21,15 +22,21 @@ namespace srsgnb {
 class cell_sched
 {
 public:
-  cell_sched(const sched_cell_configuration_request_message& msg) : cell_cfg(msg), res_grid(cell_cfg), ra_sch(cell_cfg)
+  cell_sched(const sched_cell_configuration_request_message& msg) :
+    cell_cfg(msg), res_grid(cell_cfg), pdcch_sch(res_grid), ra_sch(cell_cfg, pdcch_sch)
   {}
 
-  void slot_indication(slot_point sl_tx) { res_grid.slot_indication(sl_tx); }
+  void slot_indication(slot_point sl_tx)
+  {
+    res_grid.slot_indication(sl_tx);
+    pdcch_sch.slot_indication(sl_tx);
+  }
 
   const cell_configuration cell_cfg;
   cell_resource_allocator  res_grid;
 
-  ra_scheduler ra_sch;
+  pdcch_scheduler pdcch_sch;
+  ra_scheduler    ra_sch;
 };
 
 class cell_sched_manager
