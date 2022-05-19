@@ -1,7 +1,5 @@
 /*
  *
- * \section COPYRIGHT
- *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
@@ -18,6 +16,9 @@
 using namespace srsgnb;
 using namespace fapi;
 
+/// This validator checks a DL_TTI,request message.
+static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
+
 /// This validator checks the PDSCH PDU.
 static constexpr dl_pdu_type pdu_type = dl_pdu_type::PDSCH;
 
@@ -27,7 +28,7 @@ static bool validate_rnti(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 65535;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", msg_type, pdu_type, report);
 }
 
 /// Validates the BWP size property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -36,7 +37,7 @@ static bool validate_bwp_size(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 275;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP Size", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP Size", msg_type, pdu_type, report);
 }
 
 /// Validates the BWP start property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -45,7 +46,7 @@ static bool validate_bwp_start(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 274;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP Start", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "BWP Start", msg_type, pdu_type, report);
 }
 
 /// Validates the subcarrier spacing property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -54,7 +55,7 @@ static bool validate_scs(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 4;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier spacing", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier spacing", msg_type, pdu_type, report);
 }
 
 /// Validates the cyclic prefix property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -63,7 +64,7 @@ static bool validate_cp(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Cyclic prefix", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Cyclic prefix", msg_type, pdu_type, report);
 }
 
 /// Validates the QAM modulation order property of the PDSCH codeword, as per SCF-222 v4.0 section 3.4.2.2.
@@ -73,7 +74,7 @@ static bool validate_codeword_qam_mod_order(unsigned value, validator_report& re
     return true;
   }
 
-  report.append(static_cast<int32_t>(value), "QAM modulation order", pdu_type);
+  report.append(static_cast<int32_t>(value), "QAM modulation order", msg_type, pdu_type);
   return false;
 }
 
@@ -83,7 +84,7 @@ static bool validate_codeword_mcs_index(unsigned value, validator_report& report
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 31;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS Index", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS Index", msg_type, pdu_type, report);
 }
 
 /// Validates the MCS table property of the PDSCH codeword, as per SCF-222 v4.0 section 3.4.2.2.
@@ -92,7 +93,7 @@ static bool validate_codeword_mcs_table(unsigned value, validator_report& report
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 2;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS Table", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "MCS Table", msg_type, pdu_type, report);
 }
 
 /// Validates the RV index property of the PDSCH codeword, as per SCF-222 v4.0 section 3.4.2.2.
@@ -101,7 +102,7 @@ static bool validate_codeword_rv_index(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 3;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RV Index", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RV Index", msg_type, pdu_type, report);
 }
 
 /// Validates the n ID PDSCH property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -110,7 +111,7 @@ static bool validate_nid_pdsch(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1023;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "nID PDSCH", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "nID PDSCH", msg_type, pdu_type, report);
 }
 
 /// Validates the number of layers property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -119,7 +120,7 @@ static bool validate_nof_layers(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 8;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of layers", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of layers", msg_type, pdu_type, report);
 }
 
 /// Validates the QAM modulation order property of the PDSCH codeword, as per SCF-222 v4.0 section 3.4.2.2.
@@ -129,7 +130,7 @@ static bool validate_transmission_scheme(unsigned value, validator_report& repor
     return true;
   }
 
-  report.append(static_cast<int32_t>(value), "Trasnmission scheme", pdu_type);
+  report.append(static_cast<int32_t>(value), "Trasnmission scheme", msg_type, pdu_type);
   return false;
 }
 
@@ -139,7 +140,7 @@ static bool validate_ref_point(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Reference point", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Reference point", msg_type, pdu_type, report);
 }
 
 /// Validates the DMRS config type property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -148,7 +149,7 @@ static bool validate_dmrs_config_type(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "DMRS config type", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "DMRS config type", msg_type, pdu_type, report);
 }
 
 /// Validates the low PAPR DMRS property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -157,7 +158,7 @@ static bool validate_low_papr_dmrs(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Low PAPR DMRS", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Low PAPR DMRS", msg_type, pdu_type, report);
 }
 
 /// Validates the DMRS sequence initialization property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -166,7 +167,8 @@ static bool validate_nscid(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "NSCID (DMRS sequence initialization)", pdu_type, report);
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, value, "NSCID (DMRS sequence initialization)", msg_type, pdu_type, report);
 }
 
 /// Validates the number of DMRS CDM groups without data property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -175,7 +177,8 @@ static bool validate_num_dmrs_cdm_grps_no_data(unsigned value, validator_report&
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 3;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of DMRS CDM groups without data", pdu_type, report);
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, value, "Number of DMRS CDM groups without data", msg_type, pdu_type, report);
 }
 
 /// Validates the resource allocation property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -184,7 +187,7 @@ static bool validate_resource_allocation(unsigned value, validator_report& repor
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Resource allocation", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Resource allocation", msg_type, pdu_type, report);
 }
 
 /// Validates the RB size property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -193,7 +196,7 @@ static bool validate_rb_size(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 275;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RB Size", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RB Size", msg_type, pdu_type, report);
 }
 
 /// Validates the RB start property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -202,7 +205,7 @@ static bool validate_rb_start(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 274;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RB Start", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RB Start", msg_type, pdu_type, report);
 }
 
 /// Validates the VRB-to-PRB-mapping property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -211,7 +214,7 @@ static bool validate_vrb_to_prb_mapping(unsigned value, validator_report& report
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 2;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "VRB-to-PRB-mapping", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "VRB-to-PRB-mapping", msg_type, pdu_type, report);
 }
 
 /// Validates the start symbol index property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -220,7 +223,7 @@ static bool validate_start_symbol_index(unsigned value, validator_report& report
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 13;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Start symbol index", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Start symbol index", msg_type, pdu_type, report);
 }
 
 /// Validates the PDSCH duration in symbols property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -229,7 +232,7 @@ static bool validate_nr_of_symbols(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 14;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "PDSCH duration in symbols", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "PDSCH duration in symbols", msg_type, pdu_type, report);
 }
 
 /// Validates the ratio of PDSCH EPRE to NZP CSI-RSEPRE and the PDSCH DMRS power offset profile SSS properties of the
@@ -255,7 +258,7 @@ static bool validate_power_control_offset_profile_nr(unsigned          power_con
     return true;
   }
 
-  report.append(dmrs_power_profile_sss, "Ratio PDSCH EPRE to NZP CSI-RSEPRE", pdu_type);
+  report.append(dmrs_power_profile_sss, "Ratio PDSCH EPRE to NZP CSI-RSEPRE", msg_type, pdu_type);
   return false;
 }
 
@@ -282,7 +285,7 @@ static bool validate_power_control_offset_ss_profile_nr(unsigned          power_
     return true;
   }
 
-  report.append(dmrs_power_profile_sss, "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE", pdu_type);
+  report.append(dmrs_power_profile_sss, "Ratio of NZP CSI-RS EPRE to SSB/PBCH block EPRE", msg_type, pdu_type);
   return false;
 }
 
@@ -292,7 +295,7 @@ static bool validate_is_inline_tb_crc(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Is inline TB CRC", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Is inline TB CRC", msg_type, pdu_type, report);
 }
 
 /// Validates the PDSCH transmission type property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -301,7 +304,7 @@ static bool validate_maintenance_v3_pdsch_trans_type(unsigned value, validator_r
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 5;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "PDSCH transmission type", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "PDSCH transmission type", msg_type, pdu_type, report);
 }
 
 /// Validates the CORESET start point property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -310,7 +313,7 @@ static bool validate_maintenance_v3_coreset_start_point(unsigned value, validato
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 274;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "CORESET start point", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "CORESET start point", msg_type, pdu_type, report);
 }
 
 /// Validates the initial DL BWP size property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -319,7 +322,7 @@ static bool validate_maintenance_v3_initial_dl_bwp_size(unsigned value, validato
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 274;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Initial DL BWP size", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Initial DL BWP size", msg_type, pdu_type, report);
 }
 
 /// Validates the LDPC base graph property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
@@ -328,7 +331,7 @@ static bool validate_maintenance_v3_ldpc_base_graph(unsigned value, validator_re
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 2;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "LDPC base graph", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "LDPC base graph", msg_type, pdu_type, report);
 }
 
 /// Validates the maximum number CBG per TB property of the PDSCH codeword, as per SCF-222 v4.0 section 3.4.2.2.
@@ -338,7 +341,7 @@ static bool validate_maintenance_v3_max_num_cbg_per_tb(unsigned value, validator
     return true;
   }
 
-  report.append(static_cast<int32_t>(value), "Maximum number CBG per TB", pdu_type);
+  report.append(static_cast<int32_t>(value), "Maximum number CBG per TB", msg_type, pdu_type);
   return false;
 }
 
@@ -348,7 +351,7 @@ static bool validate_parameters_v4_lte_crs_mbsfn_derivation_method(unsigned valu
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "LTE CRS MBSFN derivation method", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "LTE CRS MBSFN derivation method", msg_type, pdu_type, report);
 }
 
 bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_report& report)

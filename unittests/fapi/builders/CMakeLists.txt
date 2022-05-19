@@ -16,6 +16,11 @@ add_executable(dl_pdsch_builder_test pdsch_test.cpp)
 target_link_libraries(dl_pdsch_builder_test srsgnb_support srslog)
 add_test(dl_pdsch_builder_test dl_pdsch_builder_test)
 
+add_executable(tx_data_request_builder_test tx_data_request_test.cpp)
+target_link_libraries(tx_data_request_builder_test srsgnb_support srslog)
+add_test(tx_data_request_builder_test tx_data_request_builder_test)
+
 add_executable(ul_dci_request_builder_test ul_dci_request_test.cpp)
 target_link_libraries(ul_dci_request_builder_test srsgnb_support srslog)
 add_test(ul_dci_request_builder_test ul_dci_request_builder_test)
+

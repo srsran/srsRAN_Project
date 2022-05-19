@@ -1,7 +1,5 @@
 /*
  *
- * \section COPYRIGHT
- *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
@@ -25,7 +23,7 @@ static void test_dl_pdcch_pdu_ok()
   dl_pdcch_pdu pdu = build_valid_dl_pdcch_pdu();
 
   validator_report report(0, 0);
-  TESTASSERT(validate_dl_pdcch_pdu(pdu, report));
+  TESTASSERT(validate_dl_pdcch_pdu(message_type_id::ul_dci_request, pdu, report));
   // Assert no reports were generated.
   TESTASSERT(report.reports.empty());
 }
@@ -41,7 +39,7 @@ static void test_dl_pdcch_pdu_error()
   pdu.dl_dci[0].rnti   = to_rnti(0);
 
   validator_report report(0, 0);
-  TESTASSERT(!validate_dl_pdcch_pdu(pdu, report));
+  TESTASSERT(!validate_dl_pdcch_pdu(message_type_id::ul_dci_request, pdu, report));
   // Assert 3 reports were generated.
   TESTASSERT_EQ(report.reports.size(), 3u);
 }

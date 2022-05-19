@@ -16,6 +16,9 @@
 using namespace srsgnb;
 using namespace fapi;
 
+/// This validator checks a DL_TTI,request message.
+static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
+
 /// This validator checks the SSB PDU.
 static constexpr dl_pdu_type pdu_type = dl_pdu_type::SSB;
 
@@ -25,7 +28,7 @@ static bool validate_phy_cell_id(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1007;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Physical cell ID", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Physical cell ID", msg_type, pdu_type, report);
 }
 
 /// Validates the block index property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
@@ -34,7 +37,7 @@ static bool validate_block_index(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 63;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "SS/PBCH block index", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "SS/PBCH block index", msg_type, pdu_type, report);
 }
 
 /// Validates the subcarrier offset property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
@@ -43,7 +46,7 @@ static bool validate_subcarrier_offset(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 31;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier offset", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier offset", msg_type, pdu_type, report);
 }
 
 /// Validates the offset point A property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
@@ -52,7 +55,7 @@ static bool validate_offset_point_a(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 2199;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Offset point A", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Offset point A", msg_type, pdu_type, report);
 }
 
 /// Validates the DMRS type A position property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table PHY
@@ -62,7 +65,7 @@ static bool validate_dmrs_type_a_position(unsigned value, validator_report& repo
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Dmrs type A position", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Dmrs type A position", msg_type, pdu_type, report);
 }
 
 /// Validates the cell barred property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table PHY
@@ -72,7 +75,7 @@ static bool validate_cell_barred(unsigned value, validator_report& report)
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Cell barred", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Cell barred", msg_type, pdu_type, report);
 }
 
 /// Validates the intra freq reselection property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table
@@ -82,7 +85,7 @@ static bool validate_intra_freq_reselection(unsigned value, validator_report& re
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 1;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Intra frequency reselection", pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Intra frequency reselection", msg_type, pdu_type, report);
 }
 
 /// Validates the baseband power scaling for SS-PBCH property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4
@@ -97,7 +100,8 @@ static bool validate_ss_pbch_power_scaling(int value, validator_report& report)
     return true;
   }
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Baseband power scaling applied to SS-PBCH", pdu_type, report);
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, value, "Baseband power scaling applied to SS-PBCH", msg_type, pdu_type, report);
 }
 
 /// Validates the beta PSS profile SSS property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4
@@ -119,7 +123,7 @@ static bool validate_beta_pss_profile_sss(const dl_ssb_pdu& pdu, validator_repor
     return true;
   }
 
-  report.append(power_value, "Beta PSS profile SSS", pdu_type);
+  report.append(power_value, "Beta PSS profile SSS", msg_type, pdu_type);
   return false;
 }
 
@@ -130,7 +134,7 @@ static bool validate_lmax(unsigned value, validator_report& report)
     return true;
   }
 
-  report.append(value, "LMax", pdu_type);
+  report.append(value, "LMax", msg_type, pdu_type);
   return false;
 }
 

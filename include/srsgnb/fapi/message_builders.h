@@ -1,7 +1,5 @@
 /*
  *
- * \section COPYRIGHT
- *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
@@ -757,9 +755,9 @@ public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
   explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg) { msg.num_dl_types = NUM_DL_TYPES; }
 
-  /// Sets the DL TTI request basic parameters and returns a reference to the builder.
+  /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
   /// \note nPDUs and nPDUsOfEachType properties are filled by the add_*_pdu() functions.
-  /// \note these parameters are specified in SCF-222 v4.0 section 3.4.2 in table DL_TTI.request message body.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2 in table DL_TTI.request message body.
   dl_tti_request_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot, uint16_t n_group)
   {
     msg.sfn        = sfn;
@@ -913,6 +911,46 @@ public:
 
     return builder;
   }
+};
+
+/// Tx_Data.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.6.
+class tx_data_request_builder
+{
+public:
+  explicit tx_data_request_builder(tx_data_request_message& msg) : msg(msg) {}
+
+  /// Sets the Tx_Data.request basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
+  tx_data_request_builder& set_basic_parameters(uint16_t sfn, uint16_t slot)
+  {
+    msg.sfn  = sfn;
+    msg.slot = slot;
+
+    // NOTE: Set to 0 temporarily.
+    msg.control_length = 0U;
+
+    return *this;
+  }
+
+  /// Adds a new PDU to the Tx_Data.request message and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
+  tx_data_request_builder& add_pdu_tlv_tag_1(uint16_t pdu_index, uint8_t cw_index, span<const uint8_t> payload)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu = msg.pdus.back();
+
+    pdu.pdu_index = pdu_index;
+    pdu.cw_index  = cw_index;
+
+    // Fill custom TLV. This TLV always uses a pointer to payload.
+    pdu.tlv_custom.length  = payload.size();
+    pdu.tlv_custom.payload = payload.data();
+
+    return *this;
+  }
+
+private:
+  tx_data_request_message& msg;
 };
 
 } // namespace fapi

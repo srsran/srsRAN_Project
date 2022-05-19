@@ -18,27 +18,36 @@ namespace fapi {
 
 /// Helper validation function. If the values are within the [min,max] range, returns true, otherwise returns false. If
 /// the validation fails, given report is filled.
-template <typename T>
-inline bool validate_field(T min, T max, T value, const char* property, dl_pdu_type pdu_type, validator_report& report)
+inline bool validate_field(int32_t           min,
+                           int32_t           max,
+                           int32_t           value,
+                           const char*       property,
+                           message_type_id   msg_type,
+                           dl_pdu_type       pdu_type,
+                           validator_report& report)
 {
   if (min <= value && value <= max) {
     return true;
   }
 
-  report.append(value, std::make_pair(min, max), property, pdu_type);
+  report.append(value, std::make_pair(min, max), property, msg_type, pdu_type);
   return false;
 }
 
 /// Helper validation function. If the values are within [min,max] range, returns true, otherwise returns false. If the
 /// validation fails, given report is filled.
-template <typename T>
-inline bool validate_field(T min, T max, T value, const char* property, validator_report& report)
+inline bool validate_field(int32_t           min,
+                           int32_t           max,
+                           int32_t           value,
+                           const char*       property,
+                           message_type_id   msg_type,
+                           validator_report& report)
 {
   if (min <= value && value <= max) {
     return true;
   }
 
-  report.append(value, std::make_pair(min, max), property);
+  report.append(value, std::make_pair(min, max), property, msg_type);
   return false;
 }
 

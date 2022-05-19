@@ -1,7 +1,5 @@
 ﻿/*
  *
- * \section COPYRIGHT
- *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
  * By using this file, you agree to the terms and conditions set
@@ -760,16 +758,21 @@ struct tlv_info {
   uint32_t value;
 };
 
+/// Custom TLV payload.
+struct tlv_custom_payload {
+  uint32_t       length;
+  const uint8_t* payload;
+};
+
 /// Transmission data request PDU information.
 struct tx_data_req_pdu {
   /// Maximum number of TLVs.
   static constexpr unsigned MAX_NUM_TLVS = 1024;
 
-  uint32_t                           pdu_length;
-  uint16_t                           pdu_index;
-  uint8_t                            cw_index;
-  uint32_t                           num_tlvs;
-  std::array<tlv_info, MAX_NUM_TLVS> tlvs;
+  uint32_t           pdu_length;
+  uint16_t           pdu_index;
+  uint8_t            cw_index;
+  tlv_custom_payload tlv_custom;
 };
 
 /// Transmission request message.
@@ -777,11 +780,10 @@ struct tx_data_request_message : public base_message {
   /// Maximum number of supported UCI PDUs in this message.
   static constexpr unsigned MAX_NUM_DL_PDUS_PER_SLOT = 128;
 
-  uint16_t                                              sfn;
-  uint16_t                                              slot;
-  uint16_t                                              control_length;
-  uint16_t                                              num_pdus;
-  std::array<tx_data_req_pdu, MAX_NUM_DL_PDUS_PER_SLOT> pdus;
+  uint16_t                                                 sfn;
+  uint16_t                                                 slot;
+  uint16_t                                                 control_length;
+  static_vector<tx_data_req_pdu, MAX_NUM_DL_PDUS_PER_SLOT> pdus;
 };
 
 /// Reception data indication PDU information.
