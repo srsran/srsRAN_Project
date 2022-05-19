@@ -185,6 +185,8 @@ static void test_softbuffer_contents()
 {
   unsigned nof_cb_x_buffer = 2;
   unsigned cb_size         = 16;
+  // Data size cannot be larger than cb_size / 3 (recall that 1/3 is the maximum coding rate).
+  unsigned data_size = 5;
 
   // Create pool configuration for the test.
   rx_softbuffer_pool_description pool_config;
@@ -211,16 +213,21 @@ static void test_softbuffer_contents()
 
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
-    // Get codeblock soft bits.
-    span<int8_t> buffer = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
+    // Get codeblock soft and data bits.
+    span<int8_t>  buffer      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
+    span<uint8_t> data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure size matches.
     TESTASSERT(buffer.size() == cb_size);
+    TESTASSERT(data_buffer.size() == data_size);
 
     // Write data in codeblock.
     for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
       int8_t data     = (cb_id << 4) | bit_idx;
       buffer[bit_idx] = data;
+      if (bit_idx < data_size) {
+        data_buffer[bit_idx] = bit_idx & 1U;
+      }
     }
   }
 
@@ -231,16 +238,22 @@ static void test_softbuffer_contents()
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft bits.
-    span<int8_t> buffer0 = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    span<int8_t> buffer1 = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
+    span<int8_t>  buffer0      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
+    span<int8_t>  buffer1      = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
+    span<uint8_t> data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+    span<uint8_t> data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());
+    TESTASSERT(data_buffer0.data() == data_buffer1.data());
 
     // Validate data persists in the codeblock.
     for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
-      int8_t data      = (cb_id << 4) | bit_idx;
-      buffer0[bit_idx] = data;
+      int8_t data = (cb_id << 4) | bit_idx;
+      TESTASSERT_EQ(buffer0[bit_idx], data);
+      if (bit_idx < data_size) {
+        TESTASSERT_EQ(data_buffer0[bit_idx], bit_idx & 1U);
+      }
     }
   }
 }

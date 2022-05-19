@@ -47,6 +47,14 @@ public:
   /// \return A view of the codeblock soft bits.
   /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
   virtual span<int8_t> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) = 0;
+
+  /// \brief Gets a codeblock data-bit buffer.
+  /// \param[in] codeblock_id Indicates the codeblock identifier.
+  /// \param[in] data_size Indicates the data size, i.e. the number of data/information bits in the codeblock.
+  /// \return A view of the codeblock data bits (the information message).
+  /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
+  /// \note Data bits do not include filler bits, codeblock-specific CRC bits or zero-padding bits.
+  virtual span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) = 0;
 };
 
 } // namespace srsgnb

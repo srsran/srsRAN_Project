@@ -8,12 +8,13 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
-#define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
+#ifndef SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include "srsgnb/support/math_utils.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -30,15 +31,18 @@ struct rx_softbuffer_pool_description {
   unsigned expire_timeout_slots;
 };
 
+/// Manages a codeblock buffer pool.
 class rx_softbuffer_codeblock_pool
 {
 private:
-  /// Describes a codeblock soft-bit buffer entry.
+  /// Describes a codeblock buffer entry.
   struct entry {
     /// Indicates if the entry is reserved.
     bool reserved;
     /// Contains the codeblock soft bits.
     std::vector<int8_t> soft_bits;
+    /// Contains the codeblock data bits.
+    std::vector<uint8_t> data_bits;
   };
 
   /// Stores all codeblock entries.
@@ -57,11 +61,14 @@ public:
     for (entry& e : entries) {
       e.reserved = false;
       e.soft_bits.resize(max_codeblock_size);
+      // The maximum number of data bits is
+      // max_codeblock_size * max(BG coding rate) = max_codeblock_size * (1/3)
+      e.data_bits.resize(divide_ceil(max_codeblock_size, 3));
     }
   }
 
   /// \brief Reserves a codeblock softbuffer.
-  /// \return The codeblock identifier in the pool if it is reserved succesfully. Otherwise, \c UNRESERVED_CB_ID
+  /// \return The codeblock identifier in the pool if it is reserved successfully. Otherwise, \c UNRESERVED_CB_ID
   unsigned reserve()
   {
     // Find the first available codeblock.
@@ -90,12 +97,22 @@ public:
 
   /// \brief Gets a codeblock soft-bit buffer.
   /// \param[in] cb_id Indicates the codeblock identifier.
-  /// \return A view to the codeblock soft bit buffer.
+  /// \return A view to the codeblock soft-bit buffer.
   span<int8_t> get_soft_bits(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
     srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].soft_bits;
+  }
+
+  /// \brief Gets a codeblock data-bit buffer.
+  /// \param[in] cb_id Indicates the codeblock identifier.
+  /// \return A view to the codeblock data-bit buffer.
+  span<uint8_t> get_data_bits(unsigned cb_id)
+  {
+    srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
+    return entries[cb_id].data_bits;
   }
 };
 
@@ -228,8 +245,26 @@ public:
                          "Codeblock index ({}) is out of range ({}).",
                          codeblock_id,
                          codeblock_ids.size());
-    unsigned cb_id = codeblock_ids[codeblock_id];
+    unsigned cb_id       = codeblock_ids[codeblock_id];
+    unsigned cb_max_size = codeblock_pool.get_soft_bits(cb_id).size();
+    srsran_assert(
+        codeblock_size <= cb_max_size, "Codeblock size {} exceeds maximum size {}.", codeblock_size, cb_max_size);
     return codeblock_pool.get_soft_bits(cb_id).first(codeblock_size);
+  }
+
+  // See interface for documentation.
+  span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
+  {
+    srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
+    srsran_always_assert(codeblock_id < codeblock_ids.size(),
+                         "Codeblock index ({}) is out of range ({}).",
+                         codeblock_id,
+                         codeblock_ids.size());
+    unsigned cb_id         = codeblock_ids[codeblock_id];
+    unsigned data_max_size = codeblock_pool.get_data_bits(cb_id).size();
+    srsran_assert(
+        data_size <= data_max_size, "Codeblock data size {} exceeds maximum size {}.", data_size, data_max_size);
+    return codeblock_pool.get_data_bits(cb_id).first(data_size);
   }
 };
 
@@ -259,7 +294,7 @@ public:
 
   // See interface for documentation.
   rx_softbuffer*
-  reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned int nof_codeblocks) override;
+  reserve_softbuffer(const slot_point& slot, const rx_softbuffer_identifier& id, unsigned nof_codeblocks) override;
 
   // See interface for documentation.
   void free_softbuffer(const rx_softbuffer_identifier& id) override;
@@ -272,4 +307,4 @@ std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffe
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
+#endif // SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
