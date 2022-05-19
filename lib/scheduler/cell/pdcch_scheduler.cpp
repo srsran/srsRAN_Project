@@ -10,7 +10,6 @@
 
 #include "pdcch_scheduler.h"
 #include "../phy_helpers.h"
-#include "symbol_prb_res_grid.h"
 
 using namespace srsgnb;
 
