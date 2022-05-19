@@ -52,14 +52,14 @@ private:
     slot_interval                        rar_window;
     static_vector<rnti_t, MAX_MSG3_LIST> tc_rntis;
   };
-  struct pending_msg3_t {
+  struct pending_msg3 {
     rach_indication_message ind_msg{};
-    ul_harq_proc            msg3_harq{0};
+    /// UL Harq used to schedule Msg3.
+    ul_harq_proc harq{0};
   };
-  struct msg3_alloc_info {
-    cell_slot_resource_allocator* msg3_alloc;
-    ofdm_symbol_range             symbols;
-    crb_interval                  crbs;
+  struct msg3_alloc_candidate {
+    unsigned     pusch_td_res_index;
+    crb_interval crbs;
   };
 
   const bwp_configuration&   get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
@@ -68,20 +68,21 @@ private:
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
   void log_rars(const cell_resource_allocator& res_alloc) const;
+  void log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const;
 
-  /// Allocate pending RAR and associated Msg3 grants.
+  /// Find and allocate DL and UL resources for pending RAR and associated Msg3 grants.
   /// \return The number of allocated Msg3 grants.
-  unsigned allocate_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc);
+  unsigned schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc);
 
   /// Schedule RAR grant and associated Msg3 grants in the provided scheduling resources.
+  /// \param res_alloc Cell Resource Allocator.
   /// \param rar pending RAR with an associated RA-RNTI that is going to be scheduled.
   /// \param rar_crbs CRBs of the RAR to be scheduled.
-  /// \param rar_alloc Slot Resource Grid allocator for the RAR.
-  /// \param msg3_grants List of Msg3s with respective resource information (e.g. RBs and symbols) to allocate.
-  void fill_rar_grant(const pending_rar_t&          pending_rar,
-                      crb_interval                  rar_crbs,
-                      cell_slot_resource_allocator& rar_alloc,
-                      span<const msg3_alloc_info>   msg3_grants);
+  /// \param msg3_candidates List of Msg3s with respective resource information (e.g. RBs and symbols) to allocate.
+  void fill_rar_grant(cell_resource_allocator&         res_alloc,
+                      const pending_rar_t&             pending_rar,
+                      crb_interval                     rar_crbs,
+                      span<const msg3_alloc_candidate> msg3_candidates);
 
   // args
   const cell_configuration& cfg;
@@ -91,8 +92,8 @@ private:
   const unsigned        ra_win_nof_slots;
 
   // variables
-  std::deque<pending_rar_t>   pending_rars;
-  std::vector<pending_msg3_t> pending_msg3s;
+  std::deque<pending_rar_t> pending_rars;
+  std::vector<pending_msg3> pending_msg3s;
 };
 
 } // namespace srsgnb

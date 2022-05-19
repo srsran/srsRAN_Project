@@ -76,7 +76,7 @@ bool ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
               msg.timing_advance);
 
   // Check if TC-RNTI value to be scheduled is already under use
-  if (not pending_msg3s[msg.crnti % MAX_NOF_MSG3].msg3_harq.empty()) {
+  if (not pending_msg3s[msg.crnti % MAX_NOF_MSG3].harq.empty()) {
     logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", msg.crnti);
     return false;
   }
@@ -174,7 +174,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
     }
 
     // Try to schedule DCIs + RBGs for RAR Grants
-    size_t nof_allocs = allocate_rar(rar_req, res_alloc);
+    size_t nof_allocs = schedule_rar(rar_req, res_alloc);
     srsran_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
@@ -201,7 +201,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   log_rars(res_alloc);
 }
 
-unsigned ra_scheduler::allocate_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
+unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
 {
   // TODO: Make smarter algorithm for RAR size derivation.
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
@@ -209,9 +209,9 @@ unsigned ra_scheduler::allocate_rar(const pending_rar_t& rar, cell_resource_allo
   cell_slot_resource_allocator& rar_alloc = res_alloc[0];
 
   // 1. Check space in DL sched result for RAR.
-  if (rar_alloc.result.dl.rar_grants.full()) {
+  if (rar_alloc.result.dl.rar_grants.full() or rar_alloc.result.dl.pdcchs.full()) {
     // early exit.
-    log_postponed_rar(rar, "No PDSCH space for RAR");
+    log_postponed_rar(rar, "No PDCCH/PDSCH space for RAR.");
     return 0;
   }
 
@@ -234,11 +234,12 @@ unsigned ra_scheduler::allocate_rar(const pending_rar_t& rar, cell_resource_allo
 
   // 3. Find available RBs in PUSCH for Msg3 grants. This process requires searching for a valid K2 value in
   // the list of PUSCH-TimeDomainResourceAllocation in PUSCHConfigCommon.
-  static_vector<msg3_alloc_info, MAX_GRANTS> msg3_reqs;
-  for (const auto& pusch_res : get_pusch_time_domain_resource_table(get_pusch_cfg())) {
-    unsigned pusch_res_max_allocs = max_nof_allocs - msg3_reqs.size();
+  static_vector<msg3_alloc_candidate, MAX_GRANTS> msg3_candidates;
+  auto                                            pusch_list = get_pusch_time_domain_resource_table(get_pusch_cfg());
+  for (unsigned puschidx = 0; puschidx < pusch_list.size(); ++puschidx) {
+    unsigned pusch_res_max_allocs = max_nof_allocs - msg3_candidates.size();
     // 3. Verify if Msg3 delay provided by current PUSCH-TimeDomainResourceAllocation corresponds to an UL slot.
-    unsigned                      msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
+    unsigned                      msg3_delay = get_msg3_delay(pusch_list[puschidx], get_ul_bwp_cfg().scs);
     cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
     if (not cfg.is_ul_enabled(msg3_alloc.slot)) {
       continue;
@@ -263,77 +264,82 @@ unsigned ra_scheduler::allocate_rar(const pending_rar_t& rar, cell_resource_allo
     // 6. Register Msg3 allocations for this PUSCH resource as successful.
     unsigned last_crb = msg3_crbs.start();
     for (unsigned i = 0; i < pusch_res_max_allocs; ++i) {
-      msg3_reqs.emplace_back();
-      msg3_reqs.back().crbs       = {last_crb, last_crb + nof_prbs_per_msg3};
-      msg3_reqs.back().symbols    = pusch_res.symbols;
-      msg3_reqs.back().msg3_alloc = &msg3_alloc;
+      msg3_candidates.emplace_back();
+      msg3_candidates.back().crbs               = {last_crb, last_crb + nof_prbs_per_msg3};
+      msg3_candidates.back().pusch_td_res_index = puschidx;
       last_crb += nof_prbs_per_msg3;
     }
   }
-  max_nof_allocs = msg3_reqs.size();
+  max_nof_allocs = msg3_candidates.size();
   rar_crbs.resize_to(nof_prbs_per_rar * max_nof_allocs);
 
   // 7. Find space in PDCCH for RAR.
   // TODO
+  rar_alloc.result.dl.pdcchs.emplace_back();
+  rar_alloc.result.dl.pdcchs.back().bwp_cfg = &get_dl_bwp_cfg();
 
-  // Status: RAR allocation was successful.
+  // Status: RAR allocation is successful.
 
   // 8. Fill RAR and Msg3 PDSCH, PUSCH and DCI.
-  fill_rar_grant(rar, rar_crbs, rar_alloc, msg3_reqs);
+  fill_rar_grant(res_alloc, rar, rar_crbs, msg3_candidates);
 
-  return msg3_reqs.size();
+  return msg3_candidates.size();
 }
 
-void ra_scheduler::fill_rar_grant(const pending_rar_t&          rar_request,
-                                  crb_interval                  rar_crbs,
-                                  cell_slot_resource_allocator& rar_alloc,
-                                  span<const msg3_alloc_info>   msg3s_to_alloc)
+void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
+                                  const pending_rar_t&             rar_request,
+                                  crb_interval                     rar_crbs,
+                                  span<const msg3_alloc_candidate> msg3_candidates)
 {
-  static const unsigned max_msg3_retxs = 4;
-  static const unsigned msg3_mcs       = 0;
+  static const unsigned         max_msg3_retxs = 4;
+  static const unsigned         msg3_mcs       = 0;
+  cell_slot_resource_allocator& rar_alloc      = res_alloc[0];
 
-  // Allocate PRBs and space for RAR.
+  // Allocate RBs and space for RAR.
   // TODO: Use PDSCH Configuration to derive OFDM symbols.
   ofdm_symbol_range dl_symbols{2, 14};
   rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch, get_dl_bwp_cfg().scs, dl_symbols, rar_crbs});
   rar_alloc.result.dl.rar_grants.emplace_back();
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
-  // Fill RAR DCI
+  // Fill RAR DCI.
+  rar.pdcch_cfg                                 = &rar_alloc.result.dl.pdcchs.back();
+  rar.pdcch_cfg->dci.rnti                       = rar_request.ra_rnti;
+  rar.pdcch_cfg->dci.format_type                = dci_dl_format::f1_0;
+  rar.pdcch_cfg->dci.f1_0.time_domain_assigment = 0;
   // TODO
 
-  // Fill RAR information
-  rar.cell_index = cfg.cell_index;
-  rar.ra_rnti    = rar_request.ra_rnti;
+  for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
+    const auto&                   msg3_candidate = msg3_candidates[i];
+    const auto&                   pusch_res  = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index];
+    unsigned                      msg3_delay = get_msg3_delay(pusch_res, get_ul_bwp_cfg().scs);
+    cell_slot_resource_allocator& msg3_alloc = res_alloc[msg3_delay];
+    prb_interval                  prbs       = crb_to_prb(get_ul_bwp_cfg(), msg3_candidate.crbs);
 
-  for (unsigned i = 0; i < msg3s_to_alloc.size(); ++i) {
-    auto& msg3_grant   = msg3s_to_alloc[i];
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
-    auto& msg3_harq    = pending_msg3.msg3_harq;
-    srsran_sanity_check(msg3_harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
+    srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
-    // Add Msg3 grant in RAR info.
+    // Add MAC SDU with UL grant (Msg3) in RAR PDU.
     rar.grants.emplace_back();
-    msg3_information& msg3_info = rar.grants.back();
-    msg3_info.rapid             = pending_msg3.ind_msg.preamble_id;
-    msg3_info.ta                = pending_msg3.ind_msg.timing_advance;
-    msg3_info.temp_crnti        = pending_msg3.ind_msg.crnti;
-    msg3_info.prbs              = crb_to_prb(get_ul_bwp_cfg(), msg3_grant.crbs);
-
-    // Fill Msg3 DCI in RAR
-    dci_ul_info msg3_dci{};
+    rar_ul_grant& msg3_info            = rar.grants.back();
+    msg3_info.rapid                    = pending_msg3.ind_msg.preamble_id;
+    msg3_info.ta                       = pending_msg3.ind_msg.timing_advance;
+    msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
+    msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
+    msg3_info.freq_resource_assignment = sliv_from_prbs(get_ul_bwp_cfg().crbs.length(), prbs);
     // TODO
 
     // Allocate and fill PUSCH for Msg3.
-    msg3_grant.msg3_alloc->ul_res_grid.fill(
-        grant_info{grant_info::channel::sch, get_dl_bwp_cfg().scs, msg3_grant.symbols, msg3_grant.crbs});
-    msg3_grant.msg3_alloc->result.ul.puschs.emplace_back();
-    ul_sched_info& pusch = msg3_grant.msg3_alloc->result.ul.puschs.back();
+    const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
+    msg3_alloc.ul_res_grid.fill(
+        grant_info{grant_info::channel::sch, get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
+    msg3_alloc.result.ul.puschs.emplace_back();
+    ul_sched_info& pusch = msg3_alloc.result.ul.puschs.back();
     pusch.crnti          = pending_msg3.ind_msg.crnti;
     // TODO
 
     // Allocate Msg3 UL HARQ
-    bool success = msg3_harq.new_tx(msg3_grant.msg3_alloc->slot, msg3_info.prbs, msg3_mcs, max_msg3_retxs, msg3_dci);
+    bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_mcs, max_msg3_retxs);
     srsran_sanity_check(success, "Unexpected HARQ allocation return");
   }
 }
@@ -344,13 +350,18 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause
 }
 
 /// Helper to log single RAR grant.
-static void log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar)
+void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const
 {
   const char* prefix = "";
-  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3s=[", rar.ra_rnti);
-  for (const msg3_information& msg3 : rar.grants) {
-    fmt::format_to(
-        fmtbuf, "{}{{{:#x}: rapid={}, prbs={}, ta={}}}", prefix, msg3.temp_crnti, msg3.rapid, msg3.prbs, msg3.ta);
+  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3s=[", rar.pdcch_cfg->dci.rnti);
+  for (const rar_ul_grant& msg3 : rar.grants) {
+    fmt::format_to(fmtbuf,
+                   "{}{{{:#x}: rapid={}, prbs={}, ta={}}}",
+                   prefix,
+                   msg3.temp_crnti,
+                   msg3.rapid,
+                   pending_msg3s[msg3.temp_crnti % MAX_NOF_MSG3].harq.prbs().prbs(),
+                   msg3.ta);
     prefix = ", ";
   }
   fmt::format_to(fmtbuf, "]");

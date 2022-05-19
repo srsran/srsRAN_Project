@@ -35,20 +35,25 @@ struct ra_sched_param {
 /// - No collision in UL RBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
-  prb_bitmap       total_ul_prbs{cfg.nof_ul_prbs};
-  std::set<rnti_t> temp_crntis, ra_rntis;
+  prb_bitmap                 total_ul_prbs{cfg.nof_ul_prbs};
+  std::set<rnti_t>           temp_crntis, ra_rntis;
+  const bwp_configuration&   ul_bwp_cfg = cfg.ul_cfg_common.init_ul_bwp.generic_params;
+  const pusch_config_common& pusch_cfg  = *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common;
 
   for (const rar_information& rar : rars) {
-    TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", rar.ra_rnti);
-    TESTASSERT(ra_rntis.count(rar.ra_rnti) == 0);
-    ra_rntis.insert(rar.ra_rnti);
-    for (const msg3_information& msg3 : rar.grants) {
-      TESTASSERT(
-          not msg3.prbs.empty(), "Msg3 with RA-RNTI={:#x},temp-CRNTI={:#x} has no RBs", rar.ra_rnti, msg3.temp_crnti);
-      TESTASSERT(not total_ul_prbs.any(msg3.prbs.start(), msg3.prbs.stop()));
-      TESTASSERT(temp_crntis.count(msg3.temp_crnti) == 0);
+    rnti_t ra_rnti = rar.pdcch_cfg->dci.rnti;
+    TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
+    TESTASSERT(ra_rntis.count(ra_rnti) == 0);
+    ra_rntis.insert(ra_rnti);
+    for (const rar_ul_grant& msg3 : rar.grants) {
+      prb_interval msg3_prbs = sliv_to_prbs(ul_bwp_cfg.crbs.length(), msg3.freq_resource_assignment);
 
-      total_ul_prbs.fill(msg3.prbs.start(), msg3.prbs.stop());
+      TESTASSERT(not msg3_prbs.empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3.temp_crnti);
+      TESTASSERT(not total_ul_prbs.any(msg3_prbs.start(), msg3_prbs.stop()), "Msg3 UL PRB collision");
+      TESTASSERT(temp_crntis.count(msg3.temp_crnti) == 0, "Repeated C-RNTI={:#x}", msg3.temp_crnti);
+      TESTASSERT(msg3.time_resource_assignment < pusch_cfg.pusch_td_alloc_list.size());
+
+      total_ul_prbs.fill(msg3_prbs.start(), msg3_prbs.stop());
       temp_crntis.insert(msg3.temp_crnti);
     }
   }
@@ -57,12 +62,11 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
 /// Helper function that tests match between MSG3 grant with RACH Indication message.
 /// \param rach_ind scheduled RACH indication.
 /// \param msg3_grant MSG3 grant.
-static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind, const msg3_information& msg3_grant)
+static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind, const rar_ul_grant& msg3_grant)
 {
   TESTASSERT_EQ(
       rach_ind.timing_advance, msg3_grant.ta, "Time-advance mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
   TESTASSERT_EQ(rach_ind.crnti, msg3_grant.temp_crnti, "C-RNTI mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
-  TESTASSERT(msg3_grant.prbs.length() > 0);
 }
 
 /// Tests whether a RACH indication is served in RAR grant and verify RAR and Msg3 parameter consistency with RACH
@@ -77,9 +81,9 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
                           const rar_information&         rar)
 {
   uint16_t ra_rnti = get_ra_rnti(rach_ind);
-  TESTASSERT_EQ(ra_rnti, rar.ra_rnti);
+  TESTASSERT_EQ(ra_rnti, rar.pdcch_cfg->dci.rnti);
 
-  for (const msg3_information& msg3 : rar.grants) {
+  for (const rar_ul_grant& msg3 : rar.grants) {
     if (rach_ind.crnti == msg3.temp_crnti) {
       test_rach_ind_msg3_grant(rach_ind, msg3);
       return true;
@@ -258,7 +262,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     // Define lambda to find RAR grant (from allocated RARs grants) with given RA-RNTI
     auto find_rar = [](const static_vector<rar_information, MAX_GRANTS>& rar_grants, uint16_t expected_ra_rnti) {
       for (auto rar_iter = rar_grants.begin(); rar_iter != rar_grants.end(); ++rar_iter) {
-        if (rar_iter->ra_rnti == expected_ra_rnti) {
+        if (rar_iter->pdcch_cfg->dci.rnti == expected_ra_rnti) {
           return rar_iter;
         }
       }
@@ -272,13 +276,9 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     TESTASSERT(wanted_rar_ra_rnti != rar_alloc.result.dl.rar_grants.end(),
                "RAR with corrsponding RA-RNTI '{}' not found",
                ra_ranti);
-    TESTASSERT_EQ(rach_ra_rnti_list.front().cell_index,
-                  wanted_rar_ra_rnti->cell_index,
-                  "Cell-index mismatch for RAR corrsponding to RA-RNTI '{}'",
-                  ra_ranti);
 
     // Define lambda to find MSG3 grant with given RAPID
-    auto find_rapid = [](const static_vector<msg3_information, MAX_GRANTS>& msg3_grants, unsigned expected_rapid) {
+    auto find_rapid = [](const static_vector<rar_ul_grant, MAX_GRANTS>& msg3_grants, unsigned expected_rapid) {
       for (auto msg3_grant_iter = msg3_grants.begin(); msg3_grant_iter != msg3_grants.end(); ++msg3_grant_iter) {
         if (msg3_grant_iter->rapid == expected_rapid) {
           return msg3_grant_iter;
@@ -511,10 +511,11 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      // FIXME: Use UL BWP config.
+      prb_interval prbs = sliv_to_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                       rar.grants[0].freq_resource_assignment);
       TESTASSERT_EQ(
-          rar.grants[0].prbs.length(),
-          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).count());
+          prbs.length(),
+          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
 
     } else {
       TESTASSERT(
@@ -591,7 +592,9 @@ void test_ra_sched_tdd_single_rach()
     // Msg3
     test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
     TESTASSERT_EQ(1, rar.grants.size());
-    TESTASSERT_EQ(rar.grants[0].prbs.length(),
+    prb_interval prbs = sliv_to_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                     rar.grants[0].freq_resource_assignment);
+    TESTASSERT_EQ(prbs.length(),
                   msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
     TESTASSERT_EQ(1, msg3_sl_res.result.ul.puschs.size());
 

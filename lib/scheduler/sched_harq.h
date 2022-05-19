@@ -89,18 +89,11 @@ public:
   std::vector<uint8_t>& get_softbuffer() { return softbuffer; }
   byte_buffer*          get_tx_pdu() { return &pdu; }
 
-  bool new_tx(slot_point       slot_tx,
-              slot_point       slot_ack,
-              const prb_grant& grant,
-              uint32_t         mcs,
-              uint32_t         max_retx,
-              dci_dl_info&     dci);
+  bool new_tx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
 
-  bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, dci_dl_info& dci);
+  bool new_retx(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant);
 
 private:
-  void fill_dci(dci_dl_info& dci);
-
   std::vector<uint8_t> softbuffer;
   byte_buffer          pdu;
 };
@@ -108,11 +101,11 @@ private:
 class ul_harq_proc : public harq_proc
 {
 public:
-  ul_harq_proc(uint32_t id_) : harq_proc(id_) {}
+  explicit ul_harq_proc(uint32_t id_) : harq_proc(id_) {}
 
-  bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx, dci_ul_info& dci);
+  bool new_tx(slot_point slot_tx, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
 
-  bool new_retx(slot_point slot_tx, const prb_grant& grant, dci_ul_info& dci);
+  bool new_retx(slot_point slot_tx, const prb_grant& grant);
 
   std::vector<uint8_t>& get_softbuffer() { return softbuffer; }
 
@@ -123,8 +116,6 @@ public:
   }
 
 private:
-  void fill_dci(dci_ul_info& dci);
-
   std::vector<uint8_t> softbuffer;
 };
 

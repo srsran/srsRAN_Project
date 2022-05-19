@@ -12,6 +12,7 @@
 #define SRSGNB_SCHEDULER_SLOT_HANDLER_H
 
 #include "sched_consts.h"
+#include "scheduler_dci.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
@@ -34,23 +35,15 @@ const size_t MAX_LC_GRANTS = 4;
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
 
-/// Aggregation Level of PDCCH allocation.
-enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8 };
-
-inline unsigned to_cce_size(aggregation_level lvl)
-{
-  return 1U << static_cast<uint8_t>(lvl);
-}
-
 struct dci_alloc {
-  rnti_t            rnti;
+  uint16_t          rnti;
   aggregation_level L;
 };
 
 struct pdcch_information {
   const bwp_configuration*     bwp_cfg;
   const coreset_configuration* coreset_cfg;
-  dci_alloc                    dci;
+  dci_dl_info                  dci;
 };
 
 struct pdsch_configuration {};
@@ -73,20 +66,29 @@ struct dl_msg_alloc {
   static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tbs;
 };
 
-/// Msg3 grant
-struct msg3_information {
-  unsigned     rapid;
-  unsigned     ta;
-  prb_interval prbs;
-  rnti_t       temp_crnti;
+/// RAR grant.
+/// \remark See TS 38.213, Table 8.2-1.
+struct rar_ul_grant {
+  // MAC subheader.
+  uint16_t rapid;
+
+  // RAR payload.
+  uint16_t ta;
+  rnti_t   temp_crnti;
+
+  // RAR Payload
+  bool    freq_hop_flag;
+  uint8_t freq_resource_assignment;
+  uint8_t time_resource_assignment;
+  int8_t  mcs;
+  int8_t  tpc;
+  bool    csi_req;
 };
 
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.
 struct rar_information {
-  du_cell_index_t                             cell_index;
-  rnti_t                                      ra_rnti;
-  static_vector<msg3_information, MAX_GRANTS> grants;
-  const pdcch_information*                    pdcch_cfg;
+  pdcch_information*                      pdcch_cfg;
+  static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };
 
 /// Stores the information associated to an SSB.
@@ -112,7 +114,7 @@ struct dl_broadcast_allocation {
 
 struct dl_sched_result {
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
-  static_vector<pdcch_information, MAX_GRANTS> dl_pdcchs;
+  static_vector<pdcch_information, MAX_GRANTS> pdcchs;
 
   /// Allocation of SSB and SIBs
   dl_broadcast_allocation bc;
