@@ -4,14 +4,17 @@
 
 namespace srsgnb {
 
+/// \remark See TS 38.331, "TDD-UL-DL-Pattern".
 struct tdd_ul_dl_pattern {
   /// Periodicity of the DL-UL pattern.
   unsigned dl_ul_tx_period_nof_slots;
   /// Values: (0..maxNrofSlots=320).
   unsigned nof_dl_slots;
-  /// Values: (0..maxNrofSymbols-1=13)
+  /// Values: (0..maxNrofSymbols-1=13).
   unsigned nof_dl_symbols;
+  /// Values: (0..maxNrofSlots=320).
   unsigned nof_ul_slots;
+  /// Values: (0..maxNrofSymbols-1=13).
   unsigned nof_ul_symbols;
 };
 

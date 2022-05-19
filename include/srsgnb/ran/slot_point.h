@@ -250,15 +250,15 @@ inline slot_point min(slot_point lhs, slot_point rhs)
 /// Slot Interval [start, stop).
 using slot_interval = interval<slot_point>;
 
-/// Apply floor operation while converting a slot point between different numerologies.
-inline slot_point change_numerology(slot_point sl, unsigned new_numerology)
+/// Apply "floor" operation while converting a slot point between different numerologies.
+inline slot_point set_slot_numerology(slot_point sl, unsigned new_numerology)
 {
   unsigned old_numerology = sl.numerology();
   if (old_numerology > new_numerology) {
-    return slot_point{new_numerology, sl.to_uint() / (1U << (old_numerology - new_numerology))};
+    return slot_point{new_numerology, sl.to_uint() >> (old_numerology - new_numerology)};
   }
   if (old_numerology < new_numerology) {
-    return slot_point{new_numerology, sl.to_uint() / (1U << (new_numerology - old_numerology))};
+    return slot_point{new_numerology, sl.to_uint() << (new_numerology - old_numerology)};
   }
   return sl;
 }

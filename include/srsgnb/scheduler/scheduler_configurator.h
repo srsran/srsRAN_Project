@@ -12,7 +12,6 @@
 #define SRSGNB_SCHEDULER_CONFIGURATOR_H
 
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/asn1/rrc_nr/serving_cell.h"
 #include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
@@ -34,11 +33,12 @@ struct sched_cell_configuration_request_message {
   uint8_t         nof_ant_ports; // (0..64)
   pci_t           pci;
 
-  dl_config_common                  dl_cfg_common;
-  ul_config_common                  ul_cfg_common;
-  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common; // absent == FDD
+  dl_config_common dl_cfg_common;
+  ul_config_common ul_cfg_common;
 
-  /// NOTE: Structs below do not follow ORAN specs.
+  /// Defines the TDD DL-UL pattern and periodicity. If no value is set, the cell is in FDD mode.
+  optional<tdd_ul_dl_config_common> tdd_ul_dl_cfg_common;
+
   /// Imported from mac_cell_configuration (NR Cell Configuration, O-RAN WG8, Section 9.2.1.1).
   subcarrier_spacing    scs_common;
   carrier_configuration dl_carrier;

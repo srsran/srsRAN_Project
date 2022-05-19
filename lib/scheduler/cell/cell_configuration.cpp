@@ -9,7 +9,6 @@
  */
 
 #include "cell_configuration.h"
-#include "srsgnb/asn1/rrc_nr/tdd_cfg_helper.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/resource_block.h"
 
@@ -27,7 +26,7 @@ bool srsgnb::slot_is_dl(const tdd_ul_dl_config_common& cfg, slot_point slot)
 
   // Convert slot into reference SCS.
   if (slot.numerology() != to_numerology_value(cfg.ref_scs)) {
-    slot = change_numerology(slot, to_numerology_value(cfg.ref_scs));
+    slot = set_slot_numerology(slot, to_numerology_value(cfg.ref_scs));
   }
 
   // Calculate slot index within the TDD overall period
