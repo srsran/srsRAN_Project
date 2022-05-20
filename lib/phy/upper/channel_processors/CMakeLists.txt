@@ -18,6 +18,7 @@ add_library(pdcch_modulator STATIC pdcch_modulator_impl.cpp)
 target_link_libraries(pdcch_modulator srsvec)
 
 add_library(pdcch_processor STATIC pdcch_processor_impl.cpp)
+target_link_libraries(pdcch_processor srsgnb_ran)
 
 add_library(pdcch_encoder STATIC pdcch_encoder_impl.cpp)
 target_link_libraries(pdcch_encoder polar crc_calculator srsvec)
