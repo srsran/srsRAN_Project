@@ -842,14 +842,16 @@ struct crc_indication_message : public base_message {
   static_vector<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
 };
 
+enum class uci_detection_status : uint8_t { crc_pass = 1, crc_failure, dtx, no_dtx, dtx_not_checked };
+
 /// UCI CSI part1 information.
 struct uci_csi_part1 {
   /// Maximum number of supported CSI part 1 bytes in this message.
   static constexpr unsigned MAX_CSI_PART1_LEN = 214;
 
-  uint8_t                                csi_part1_detection_status;
-  uint16_t                               expected_csi_part1_bitlen;
-  std::array<uint8_t, MAX_CSI_PART1_LEN> csi_part1_payload;
+  uci_detection_status                      detection_status;
+  uint16_t                                  bit_length;
+  static_vector<uint8_t, MAX_CSI_PART1_LEN> payload;
 };
 
 /// UCI CSI part2 information.
@@ -857,9 +859,9 @@ struct uci_csi_part2 {
   /// Maximum number of supported CSI part 2 bytes in this message.
   static constexpr unsigned MAX_CSI_PART2_LEN = 214;
 
-  uint8_t                                csi_part2_detection_status;
-  uint16_t                               expected_csi_part2_bitlen;
-  std::array<uint8_t, MAX_CSI_PART2_LEN> csi_part2_payload;
+  uci_detection_status                      detection_status;
+  uint16_t                                  bit_length;
+  static_vector<uint8_t, MAX_CSI_PART2_LEN> payload;
 };
 
 /// UCI HARQ PDU information.
@@ -867,13 +869,17 @@ struct uci_harq_pdu {
   /// Maximum number of supported bytes in this message.
   static constexpr unsigned MAX_UCI_HARQ_LEN = 214;
 
-  uint8_t                               harq_detection_status;
-  uint16_t                              expected_harq_bitlen;
-  std::array<uint8_t, MAX_UCI_HARQ_LEN> harq_payload;
+  uci_detection_status                     detection_status;
+  uint16_t                                 bit_length;
+  static_vector<uint8_t, MAX_UCI_HARQ_LEN> payload;
 };
 
 /// PUSCH UCI PDU information.
 struct uci_pusch_pdu {
+  static constexpr unsigned HARQ_BIT      = 1U;
+  static constexpr unsigned CSI_PART1_BIT = 2U;
+  static constexpr unsigned CSI_PART2_BIT = 3U;
+
   uint8_t       pdu_bitmap;
   uint32_t      handle;
   uint16_t      rnti;
@@ -895,17 +901,24 @@ struct sr_pdu_format_0_1 {
 
 /// UCI HARQ PDU for format 0 or 1.
 struct uci_harq_format_0_1 {
-  uint8_t                num_harq;
-  uint8_t                harq_confidence_level;
-  std::array<uint8_t, 2> harq_values;
+  /// Maximum number of HARQ.
+  static constexpr unsigned MAX_NUM_HARQ = 2U;
+
+  uint8_t                              harq_confidence_level;
+  static_vector<uint8_t, MAX_NUM_HARQ> harq_values;
 };
 
 /// UCI PUCCH for format 0 or 1.
-struct uci_pucch_format_0_1 {
+struct uci_pucch_pdu_format_0_1 {
+  static constexpr unsigned SR_BIT   = 0U;
+  static constexpr unsigned HARQ_BIT = 1U;
+
+  enum class format_type : uint8_t { format_0, format_1 };
+
   uint8_t             pdu_bitmap;
   uint32_t            handle;
   uint16_t            rnti;
-  uint8_t             pucch_format;
+  format_type         pucch_format;
   int16_t             ul_sinr_metric;
   uint16_t            timing_advance_offset;
   int16_t             timing_advance_offset_ns;
@@ -920,8 +933,8 @@ struct sr_pdu_format_2_3_4 {
   /// Maximum number of supported bytes in this message.
   static constexpr unsigned MAX_SR_PAYLOAD_SIZE = 1;
 
-  uint16_t                                 sr_bitlen;
-  std::array<uint8_t, MAX_SR_PAYLOAD_SIZE> sr_payload;
+  uint16_t                                    sr_bitlen;
+  static_vector<uint8_t, MAX_SR_PAYLOAD_SIZE> sr_payload;
 };
 
 /// UCI payload for PUSCH or PUCCH.
@@ -929,17 +942,24 @@ struct uci_payload_pusch_pucch {
   /// Maximum number of supported bytes in this message.
   static constexpr unsigned MAX_UCI_PAYLOAD_LEN = 214;
 
-  uint8_t                                  uci_detection_status;
-  uint16_t                                 expected_uci_payload_size;
-  std::array<uint8_t, MAX_UCI_PAYLOAD_LEN> uci_payload;
+  uci_detection_status                        detection_status;
+  uint16_t                                    expected_uci_payload_size;
+  static_vector<uint8_t, MAX_UCI_PAYLOAD_LEN> payload;
 };
 
 /// UCI PUCCH for format 2, 3, or 4.
-struct uci_pucch_format_2_3_4 {
+struct uci_pucch_pdu_format_2_3_4 {
+  static constexpr unsigned SR_BIT        = 0U;
+  static constexpr unsigned HARQ_BIT      = 1U;
+  static constexpr unsigned CSI_PART1_BIT = 2U;
+  static constexpr unsigned CSI_PART2_BIT = 3U;
+
+  enum class format_type : uint8_t { format_2, format_3, format_4 };
+
   uint8_t                 pdu_bitmap;
   uint32_t                handle;
   uint16_t                rnti;
-  uint8_t                 pucch_format;
+  format_type             pucch_format;
   int16_t                 ul_sinr_metric;
   uint16_t                timing_advance_offset;
   int16_t                 timing_advance_offset_ns;
@@ -953,15 +973,17 @@ struct uci_pucch_format_2_3_4 {
   uci_payload_pusch_pucch uci_part2;
 };
 
+enum class uci_pdu_type : uint16_t { PUSCH, PUCCH_format_0_1, PUCCH_format_2_3 };
+
 /// Reception data indication PDU information.
 struct uci_indication_pdu {
-  uint16_t pdu_type;
-  uint16_t pdu_size;
-  union {
-    uci_pusch_pdu          pusch_pdu;
-    uci_pucch_format_0_1   pucch_pdu_f01;
-    uci_pucch_format_2_3_4 pucch_pdu_f234;
-  };
+  uci_pdu_type pdu_type;
+  uint16_t     pdu_size;
+
+  // :TODO: add a variant for this fields below.
+  uci_pusch_pdu              pusch_pdu;
+  uci_pucch_pdu_format_0_1   pucch_pdu_f01;
+  uci_pucch_pdu_format_2_3_4 pucch_pdu_f234;
 };
 
 /// UCI indication message.
@@ -970,10 +992,9 @@ struct uci_indication_message : public base_message {
   //: TODO: shared with ul_dci_request_message
   static constexpr unsigned MAX_NUM_UCI_PDUS = 128;
 
-  uint16_t                                         sfn;
-  uint16_t                                         slot;
-  uint16_t                                         num_ucis;
-  std::array<uci_indication_pdu, MAX_NUM_UCI_PDUS> pdus;
+  uint16_t                                            sfn;
+  uint16_t                                            slot;
+  static_vector<uci_indication_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
 
 /// Encodes the PRGs.

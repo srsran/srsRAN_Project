@@ -236,7 +236,7 @@ static void test_tx_power_info_parameters()
 
       builder.set_tx_power_info_parameters(p, ss_profile);
 
-      TESTASSERT_EQ(p ? p.value() + 8 : 255, pdu.power_control_offset_profile_nr);
+      TESTASSERT_EQ(p ? static_cast<unsigned>(p.value() + 8) : 255, pdu.power_control_offset_profile_nr);
       TESTASSERT_EQ(ss_profile, pdu.power_control_offset_ss_profile_nr);
     }
   }
@@ -354,8 +354,10 @@ static void test_maintenance_v3_tx_power_info_parameters()
 
     builder.set_maintenance_v3_tx_power_info_parameters(dmrs, data);
 
-    TESTASSERT_EQ(dmrs ? dmrs.value() * 1000 : -32768, pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss);
-    TESTASSERT_EQ(data ? data.value() * 1000 : -32768, pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss);
+    TESTASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
+                  pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss);
+    TESTASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
+                  pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss);
   }
 }
 
@@ -402,7 +404,8 @@ static void test_ptrs_maintenance_v3_tx_power_parameters()
 
     builder.set_ptrs_maintenance_v3_tx_power_info_parameters(ptrs);
 
-    TESTASSERT_EQ(ptrs ? ptrs.value() * 1000 : -32768, pdu.ptrs_maintenance_v3.pdsch_ptrs_power_offset_profile_sss);
+    TESTASSERT_EQ(ptrs ? static_cast<int>(ptrs.value() * 1000) : -32768,
+                  pdu.ptrs_maintenance_v3.pdsch_ptrs_power_offset_profile_sss);
   }
 }
 

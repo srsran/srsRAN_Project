@@ -119,7 +119,7 @@ static void test_dci_tx_power_params()
 
     builder_dci.set_tx_power_info_parameter(power);
 
-    TESTASSERT_EQ(power ? power.value() : -127, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
+    TESTASSERT_EQ(power ? static_cast<int>(power.value()) : -127, pdu.dl_dci[0].power_control_offset_ss_profile_nr);
   }
 }
 
@@ -148,9 +148,9 @@ static void test_maintenance_v3_dci_params()
       builder_dci.set_maintenance_v3_dci_parameters(collocated, dmrs, data);
 
       TESTASSERT_EQ(collocated, pdu.maintenance_v3.info[0].collocated_AL16_candidate);
-      TESTASSERT_EQ(dmrs ? dmrs.value() * 1000 : -32768,
+      TESTASSERT_EQ(dmrs ? static_cast<int>(dmrs.value() * 1000) : -32768,
                     pdu.maintenance_v3.info[0].pdcch_dmrs_power_offset_profile_sss);
-      TESTASSERT_EQ(data ? data.value() * 1000 : -32768,
+      TESTASSERT_EQ(data ? static_cast<int>(data.value() * 1000) : -32768,
                     pdu.maintenance_v3.info[0].pdcch_data_power_offset_profile_sss);
     }
   }

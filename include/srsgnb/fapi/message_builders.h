@@ -230,7 +230,7 @@ public:
                   value,
                   std::numeric_limits<int16_t>::max());
     srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDCCH DMRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  "PDCCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
 
@@ -245,7 +245,7 @@ public:
                   value,
                   std::numeric_limits<int16_t>::max());
     srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDCCH data power offset profile SSS ({}) exceeds the minimum ({}).",
+                  "PDCCH data power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
 
@@ -647,7 +647,7 @@ public:
                   value,
                   std::numeric_limits<int16_t>::max());
     srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH DMRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  "PDSCH DMRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
 
@@ -661,7 +661,7 @@ public:
                   value,
                   std::numeric_limits<int16_t>::max());
     srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH data power offset profile SSS ({}) exceeds the minimum ({}).",
+                  "PDSCH data power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
 
@@ -695,7 +695,7 @@ public:
                   std::numeric_limits<int16_t>::max());
 
     srsran_assert(value >= std::numeric_limits<int16_t>::min(),
-                  "PDSCH PTRS power offset profile SSS ({}) exceeds the minimum ({}).",
+                  "PDSCH PTRS power offset profile SSS ({}) is under the minimum ({}).",
                   value,
                   std::numeric_limits<int16_t>::min());
 
@@ -1073,7 +1073,7 @@ public:
                                           optional<int>       timing_advance_offset_in_ns,
                                           optional<float>     rssi_dB,
                                           optional<float>     rsrp,
-                                          bool                rsrp_use_dB = true)
+                                          bool                rsrp_use_dBm = true)
   {
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();
@@ -1099,7 +1099,7 @@ public:
 
     pdu.rssi = static_cast<uint16_t>(rssi);
 
-    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dB) ? 140.F : 128.F)) * 10.F)
+    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
                                  : std::numeric_limits<uint16_t>::max();
 
     srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
@@ -1117,7 +1117,7 @@ public:
                   std::numeric_limits<int16_t>::max());
 
     srsran_assert(ul_sinr >= std::numeric_limits<int16_t>::min(),
-                  "UL SINR metric ({}) exceeds the minimum ({}).",
+                  "UL SINR metric ({}) is under the minimum ({}).",
                   ul_sinr,
                   std::numeric_limits<int16_t>::min());
 
@@ -1251,6 +1251,460 @@ public:
     rach_indication_pdu_builder builder(pdu);
 
     builder.set_basic_params(handle, symbol_index, slot_index, ra_index, avg_rssi, rsrp, avg_snr, rsrp_use_dBm);
+
+    return builder;
+  }
+};
+
+/// UCI PUSCH PDU builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.1
+class uci_pusch_pdu_builder
+{
+  uci_pusch_pdu& pdu;
+
+public:
+  explicit uci_pusch_pdu_builder(uci_pusch_pdu& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+
+  /// Sets the UCI PUSCH PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.1 in table UCI PUSCH PDU.
+  uci_pusch_pdu_builder& set_basic_parameters(uint32_t handle, rnti_t rnti)
+  {
+    pdu.handle = handle;
+    pdu.rnti   = rnti;
+
+    return *this;
+  }
+
+  /// Sets the UCI PUSCH PDU metrics parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.1 in table UCI PUSCH PDU.
+  uci_pusch_pdu_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
+                                                optional<unsigned> timing_advance_offset,
+                                                optional<int>      timing_advance_offset_ns,
+                                                optional<float>    rssi,
+                                                optional<float>    rsrp,
+                                                bool               rsrp_use_dBm = true)
+  {
+    pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
+                                                           : std::numeric_limits<uint16_t>::max();
+    pdu.timing_advance_offset_ns = (timing_advance_offset_ns) ? static_cast<int16_t>(timing_advance_offset_ns.value())
+                                                              : std::numeric_limits<int16_t>::min();
+
+    // SINR.
+    int sinr =
+        (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
+
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
+                  "UL SINR metric ({}) exceeds the maximum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
+                  "UL SINR metric ({}) is under the minimum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.ul_sinr_metric = static_cast<int16_t>(sinr);
+
+    // RSSI.
+    unsigned rssi_value =
+        (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSSI metric ({}) exceeds the maximum ({}).",
+                  rssi_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rssi = static_cast<uint16_t>(rssi_value);
+
+    // RSRP.
+    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
+                                 : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSRP metric ({}) exceeds the maximum ({}).",
+                  rsrp_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rsrp = static_cast<uint16_t>(rsrp_value);
+
+    return *this;
+  }
+
+  /// Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table HARQ PDU for format 2,3 or 4 or for
+  /// PUSCH.
+  uci_pusch_pdu_builder&
+  set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pusch_pdu::HARQ_BIT, true);
+
+    auto& harq            = pdu.harq;
+    harq.detection_status = detection;
+    harq.bit_length       = bit_length;
+
+    harq.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the CSI part 1 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part1 PDU.
+  uci_pusch_pdu_builder&
+  set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pusch_pdu::CSI_PART1_BIT, true);
+
+    auto& csi            = pdu.csi_part1;
+    csi.detection_status = detection;
+    csi.bit_length       = bit_length;
+    csi.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the CSI part 2 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part2 PDU.
+  uci_pusch_pdu_builder&
+  set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pusch_pdu::CSI_PART2_BIT, true);
+
+    auto& csi            = pdu.csi_part2;
+    csi.detection_status = detection;
+    csi.bit_length       = bit_length;
+    csi.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+};
+
+/// UCI PUCCH PDU format 0/1 builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.2
+class uci_pucch_pdu_format_0_1_builder
+{
+  uci_pucch_pdu_format_0_1& pdu;
+
+public:
+  explicit uci_pucch_pdu_format_0_1_builder(uci_pucch_pdu_format_0_1& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+
+  /// Sets the UCI PUCCH PDU format 0/1 basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table UCI PUCCH format 0 or 1 PDU.
+  uci_pucch_pdu_format_0_1_builder&
+  set_basic_parameters(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_0_1::format_type type)
+  {
+    pdu.handle       = handle;
+    pdu.rnti         = rnti;
+    pdu.pucch_format = type;
+
+    return *this;
+  }
+
+  /// Sets the UCI PUCCH PDU format 0/1 metrics parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table UCI PUCCH format 0 or 1 PDU.
+  uci_pucch_pdu_format_0_1_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
+                                                           optional<unsigned> timing_advance_offset,
+                                                           optional<int>      timing_advance_offset_ns,
+                                                           optional<float>    rssi,
+                                                           optional<float>    rsrp,
+                                                           bool               rsrp_use_dBm = true)
+  {
+    pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
+                                                           : std::numeric_limits<uint16_t>::max();
+    pdu.timing_advance_offset_ns = (timing_advance_offset_ns) ? static_cast<int16_t>(timing_advance_offset_ns.value())
+                                                              : std::numeric_limits<int16_t>::min();
+
+    // SINR.
+    int sinr =
+        (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
+
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
+                  "UL SINR metric ({}) exceeds the maximum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
+                  "UL SINR metric ({}) is under the minimum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.ul_sinr_metric = static_cast<int16_t>(sinr);
+
+    // RSSI.
+    unsigned rssi_value =
+        (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSSI metric ({}) exceeds the maximum ({}).",
+                  rssi_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rssi = static_cast<uint16_t>(rssi_value);
+
+    // RSRP.
+    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
+                                 : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSRP metric ({}) exceeds the maximum ({}).",
+                  rsrp_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rsrp = static_cast<uint16_t>(rsrp_value);
+
+    return *this;
+  }
+
+  /// Sets the SR PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 0 or 1 PDU.
+  uci_pucch_pdu_format_0_1_builder& set_sr_parameters(bool detected, optional<unsigned> confidence_level)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_0_1::SR_BIT, true);
+    auto& sr_pdu = pdu.sr;
+
+    sr_pdu.sr_indication = (detected) ? 1U : 0U;
+
+    sr_pdu.sr_confidence_level = (confidence_level) ? confidence_level.value() : std::numeric_limits<uint8_t>::max();
+
+    return *this;
+  }
+
+  /// Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table HARQ PDU for format 0 or 1 PDU.
+  uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned> confidence_level, span<const uint8_t> value)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_0_1::HARQ_BIT, true);
+
+    auto& harq                 = pdu.harq;
+    harq.harq_confidence_level = (confidence_level) ? confidence_level.value() : std::numeric_limits<uint8_t>::max();
+    harq.harq_values.assign(value.begin(), value.end());
+
+    return *this;
+  }
+};
+
+/// UCI PUSCH PDU format 2/3/4 builder that helps fill in the parameters specified in SCF-222 v4.0 section 3.4.9.3
+class uci_pucch_pdu_format_2_3_4_builder
+{
+  uci_pucch_pdu_format_2_3_4& pdu;
+
+public:
+  explicit uci_pucch_pdu_format_2_3_4_builder(uci_pucch_pdu_format_2_3_4& pdu) : pdu(pdu) { pdu.pdu_bitmap = 0; }
+
+  /// Sets the UCI PUCCH format 2/3/4 PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.3 in table UCI PUCCH format 2,3 or 4 PDU.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_basic_parameters(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_2_3_4::format_type type)
+  {
+    pdu.handle       = handle;
+    pdu.rnti         = rnti;
+    pdu.pucch_format = type;
+
+    return *this;
+  }
+
+  /// Sets the UCI PUCCH format 2/3/4 PDU metric parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.3 in table UCI PUCCH format 2,3 or 4 PDU.
+  uci_pucch_pdu_format_2_3_4_builder& set_metrics_parameters(optional<float>    ul_sinr_metric,
+                                                             optional<unsigned> timing_advance_offset,
+                                                             optional<int>      timing_advance_offset_ns,
+                                                             optional<float>    rssi,
+                                                             optional<float>    rsrp,
+                                                             bool               rsrp_use_dBm = true)
+  {
+    pdu.timing_advance_offset    = (timing_advance_offset) ? static_cast<uint16_t>(timing_advance_offset.value())
+                                                           : std::numeric_limits<uint16_t>::max();
+    pdu.timing_advance_offset_ns = (timing_advance_offset_ns) ? static_cast<int16_t>(timing_advance_offset_ns.value())
+                                                              : std::numeric_limits<int16_t>::min();
+
+    // SINR.
+    int sinr =
+        (ul_sinr_metric) ? static_cast<int>(ul_sinr_metric.value() * 500.F) : std::numeric_limits<int16_t>::min();
+
+    srsran_assert(sinr <= std::numeric_limits<int16_t>::max(),
+                  "UL SINR metric ({}) exceeds the maximum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(sinr >= std::numeric_limits<int16_t>::min(),
+                  "UL SINR metric ({}) is under the minimum ({}).",
+                  sinr,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.ul_sinr_metric = static_cast<int16_t>(sinr);
+
+    // RSSI.
+    unsigned rssi_value =
+        (rssi) ? static_cast<unsigned>((rssi.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rssi_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSSI metric ({}) exceeds the maximum ({}).",
+                  rssi_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rssi = static_cast<uint16_t>(rssi_value);
+
+    // RSRP.
+    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dBm) ? 140.F : 128.F)) * 10.F)
+                                 : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSRP metric ({}) exceeds the maximum ({}).",
+                  rsrp_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rsrp = static_cast<uint16_t>(rsrp_value);
+
+    return *this;
+  }
+
+  /// Sets the SR PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 2,3 or 4 PDU.
+  uci_pucch_pdu_format_2_3_4_builder& set_sr_parameters(uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_2_3_4::SR_BIT, true);
+    auto& sr_pdu = pdu.sr;
+
+    sr_pdu.sr_bitlen = bit_length;
+
+    sr_pdu.sr_payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the HARQ PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table HARQ PDU for format 2,3 or 4 PDU.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_2_3_4::HARQ_BIT, true);
+
+    auto& harq            = pdu.harq;
+    harq.detection_status = detection;
+    harq.bit_length       = bit_length;
+
+    harq.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the CSI Part 1 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part 1 PDU.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT, true);
+
+    auto& csi            = pdu.csi_part1;
+    csi.detection_status = detection;
+    csi.bit_length       = bit_length;
+    csi.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the CSI Part 2 PDU parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table CSI Part 2 PDU.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT, true);
+
+    auto& csi            = pdu.csi_part2;
+    csi.detection_status = detection;
+    csi.bit_length       = bit_length;
+    csi.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the UCI Part 1 Payload parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table UCI Payload for PUSCH or PUCCH
+  /// transport.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_uci_part1_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    srsran_assert(pdu.pdu_bitmap & (1U << uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT),
+                  "Expected the UCI Part 1 payload to be enabled");
+
+    auto& uci                     = pdu.uci_part1;
+    uci.detection_status          = detection;
+    uci.expected_uci_payload_size = bit_length;
+    uci.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+
+  /// Sets the UCI Part 2 Payload parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table UCI Payload for PUSCH or PUCCH
+  /// transport.
+  uci_pucch_pdu_format_2_3_4_builder&
+  set_uci_part2_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
+  {
+    srsran_assert(pdu.pdu_bitmap & (1U << uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT),
+                  "Expected the UCI Part 2 payload to be enabled");
+
+    auto& uci                     = pdu.uci_part2;
+    uci.detection_status          = detection;
+    uci.expected_uci_payload_size = bit_length;
+    uci.payload.assign(payload.begin(), payload.end());
+
+    return *this;
+  }
+};
+
+/// UCI.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.9.
+class uci_indication_message_builder
+{
+  uci_indication_message& msg;
+
+public:
+  explicit uci_indication_message_builder(uci_indication_message& msg) : msg(msg) {}
+
+  /// Sets the UCI.indication basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9 in table UCI.indication message body.
+  uci_indication_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot)
+  {
+    msg.sfn  = sfn;
+    msg.slot = slot;
+
+    return *this;
+  }
+
+  uci_pusch_pdu_builder add_pusch_pdu(uint32_t handle, rnti_t rnti)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu = msg.pdus.back();
+
+    pdu.pdu_type = uci_pdu_type::PUSCH;
+
+    uci_pusch_pdu_builder builder(pdu.pusch_pdu);
+    builder.set_basic_parameters(handle, rnti);
+
+    return builder;
+  }
+
+  uci_pucch_pdu_format_0_1_builder
+  add_uci_pucch_pdu_format_0_1_pdu(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_0_1::format_type type)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu = msg.pdus.back();
+
+    pdu.pdu_type = uci_pdu_type::PUCCH_format_0_1;
+
+    uci_pucch_pdu_format_0_1_builder builder(pdu.pucch_pdu_f01);
+    builder.set_basic_parameters(handle, rnti, type);
+
+    return builder;
+  }
+
+  uci_pucch_pdu_format_2_3_4_builder
+  add_uci_pucch_pdu_format_2_3_4_pdu(uint32_t handle, rnti_t rnti, uci_pucch_pdu_format_2_3_4::format_type type)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu = msg.pdus.back();
+
+    pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3;
+
+    uci_pucch_pdu_format_2_3_4_builder builder(pdu.pucch_pdu_f234);
+    builder.set_basic_parameters(handle, rnti, type);
 
     return builder;
   }
