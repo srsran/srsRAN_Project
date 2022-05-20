@@ -127,14 +127,19 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resour
     // TODO: Optimize.
     pdcch_reg_position_list regs =
         get_pdcch_regs(*record.pdcch->coreset_cfg, *record.ss_cfg, node.ncce, record.pdcch->dci.aggr_level);
+    bool collision_detected = false;
     for (pdcch_reg_position& reg : regs) {
       unsigned crb       = prb_to_crb(*record.pdcch->bwp_cfg, reg.prb);
       node.grant.crbs    = {crb, crb + 1};
       node.grant.symbols = {reg.symbol, (uint8_t)(reg.symbol + 1)};
       if (slot_alloc.dl_res_grid.collides(node.grant)) {
         // Collision detected. Try another CCE position.
-        continue;
+        collision_detected = true;
+        break;
       }
+    }
+    if (collision_detected) {
+      continue;
     }
 
     // Allocation successful.
@@ -179,13 +184,13 @@ span<const unsigned> pdcch_scheduler_impl::pdcch_slot_allocator::get_cce_loc_tab
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-pdcch_scheduler_impl::pdcch_scheduler_impl(cell_resource_allocator& res_grid_) : res_alloc(res_grid_)
+pdcch_scheduler_impl::pdcch_scheduler_impl(const cell_configuration& cell_cfg_) : cell_cfg(cell_cfg_)
 {
-  subcarrier_spacing max_scs             = res_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs;
+  subcarrier_spacing max_scs             = cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs;
   unsigned           nof_slots_per_frame = NOF_SUBFRAMES_PER_FRAME * get_nof_slots_per_subframe(max_scs);
   for (unsigned i = 0; i < SLOT_ALLOCATOR_RING_SIZE; ++i) {
     unsigned slot_index = i % nof_slots_per_frame;
-    slot_records[i]     = std::make_unique<pdcch_slot_allocator>(res_alloc.cfg, slot_index);
+    slot_records[i]     = std::make_unique<pdcch_slot_allocator>(cell_cfg, slot_index);
   }
 }
 
@@ -208,10 +213,10 @@ pdcch_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resource_a
                                                             aggregation_level             aggr_lvl)
 {
   // Find Common BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = res_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  const bwp_configuration&          bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   const search_space_configuration& ss_cfg =
-      res_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
-  const coreset_configuration& cs_cfg = res_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets[ss_cfg.cs_id];
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
+  const coreset_configuration& cs_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_dl_format::f1_0);
 }

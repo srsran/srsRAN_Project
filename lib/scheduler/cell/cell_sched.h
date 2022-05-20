@@ -23,7 +23,7 @@ class cell_sched
 {
 public:
   cell_sched(const sched_cell_configuration_request_message& msg) :
-    cell_cfg(msg), res_grid(cell_cfg), pdcch_sch(res_grid), ra_sch(cell_cfg, pdcch_sch)
+    cell_cfg(msg), res_grid(cell_cfg), pdcch_sch(cell_cfg), ra_sch(cell_cfg, pdcch_sch)
   {}
 
   void slot_indication(slot_point sl_tx)

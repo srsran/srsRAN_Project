@@ -21,7 +21,7 @@ namespace srsgnb {
 class pdcch_scheduler_impl final : public pdcch_scheduler
 {
 public:
-  explicit pdcch_scheduler_impl(cell_resource_allocator& res_grid_);
+  explicit pdcch_scheduler_impl(const cell_configuration& cell_cfg_);
   ~pdcch_scheduler_impl();
 
   void slot_indication(slot_point sl_tx);
@@ -55,7 +55,7 @@ private:
                                               aggregation_level                 L,
                                               dci_dl_format                     dci_fmt);
 
-  cell_resource_allocator& res_alloc;
+  const cell_configuration& cell_cfg;
 
   slot_point last_sl_ind;
 
