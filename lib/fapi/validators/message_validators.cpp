@@ -144,3 +144,148 @@ error_type<validator_report> srsgnb::fapi::validate_tx_data_request(const tx_dat
 
   return {};
 }
+
+/// Validates the RNTI property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_rnti(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 1;
+  static constexpr unsigned MAX_VALUE = 65535;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", message_type_id::crc_indication, report);
+}
+
+/// Validates the RAPID property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_rapid(unsigned value, validator_report& report)
+{
+  static constexpr unsigned OTHERWISE = 255;
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 63;
+
+  if (value == OTHERWISE) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RAPID", message_type_id::crc_indication, report);
+}
+
+/// Validates the HARQ ID property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_harq_id(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 15;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", message_type_id::crc_indication, report);
+}
+
+/// Validates the TB CRC status property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_tb_crc_status(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 1;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "TB CRC status", message_type_id::crc_indication, report);
+}
+
+/// Validates the UL SINR metric property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_ul_sinr_metric(int value, validator_report& report)
+{
+  static constexpr int INVALID   = -32768;
+  static constexpr int MIN_VALUE = -32767;
+  static constexpr int MAX_VALUE = 32767;
+
+  if (value == INVALID) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "UL SINR metric", message_type_id::crc_indication, report);
+}
+
+/// Validates the timing advance offset property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_timing_advance_offset(unsigned value, validator_report& report)
+{
+  static constexpr unsigned INVALID   = 65535;
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 63;
+
+  if (value == INVALID) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Timing advance offset", message_type_id::crc_indication, report);
+}
+
+/// Validates the timing advance offset in nanoseconds property of a CRC.indication PDU, as per  SCF-222 v4.0
+/// section 3.4.8.
+static bool validate_timing_advance_offset_ns(int value, validator_report& report)
+{
+  static constexpr int INVALID   = -32768;
+  static constexpr int MIN_VALUE = -16800;
+  static constexpr int MAX_VALUE = 16800;
+
+  if (value == INVALID) {
+    return true;
+  }
+
+  return validate_field(
+      MIN_VALUE, MAX_VALUE, value, "Timing advance offset in nanoseconds", message_type_id::crc_indication, report);
+}
+
+/// Validates the RSSI property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_rssi(unsigned value, validator_report& report)
+{
+  static constexpr unsigned INVALID   = 65535;
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 1280;
+
+  if (value == INVALID) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RSSI", message_type_id::crc_indication, report);
+}
+
+/// Validates the RSRP property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+static bool validate_rsrp(unsigned value, validator_report& report)
+{
+  static constexpr unsigned INVALID   = 65535;
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 1280;
+
+  if (value == INVALID) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RSRP", message_type_id::crc_indication, report);
+}
+
+error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, message_type_id::crc_indication, report);
+  success &= validate_slot(msg.slot, message_type_id::crc_indication, report);
+
+  // Validate each PDU.
+  for (const auto& pdu : msg.pdus) {
+    // NOTE: Handle property will no be validated as the values are not specified in the document.
+    success &= validate_rnti(pdu.rnti, report);
+    success &= validate_rapid(pdu.rapid, report);
+    success &= validate_harq_id(pdu.harq_id, report);
+    success &= validate_tb_crc_status(pdu.tb_crc_status, report);
+    // NOTE: CB CRC status bitmap property will not be validated.
+    success &= validate_ul_sinr_metric(pdu.ul_sinr_metric, report);
+    success &= validate_timing_advance_offset(pdu.timing_advance_offset, report);
+    success &= validate_timing_advance_offset_ns(pdu.timing_advance_offset_ns, report);
+    success &= validate_rssi(pdu.rssi, report);
+    success &= validate_rsrp(pdu.rsrp, report);
+  }
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}

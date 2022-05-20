@@ -8,13 +8,9 @@
 
 set_directory_properties(PROPERTIES LABELS "fapi")
 
-add_executable(dl_ssb_pdu_validator_test dl_ssb_pdu_test.cpp)
-target_link_libraries(dl_ssb_pdu_validator_test srsgnb_support srslog fapi_validators)
-add_test(dl_ssb_pdu_validator_test dl_ssb_pdu_validator_test)
-
-add_executable(dl_tti_request_validator_test dl_tti_request_test.cpp)
-target_link_libraries(dl_tti_request_validator_test srsgnb_support srslog fapi_validators)
-add_test(dl_tti_request_validator_test dl_tti_request_validator_test)
+add_executable(crc_indication_validator_test crc_indication_test.cpp)
+target_link_libraries(crc_indication_validator_test srsgnb_support srslog fapi_validators)
+add_test(crc_indication_validator_test crc_indication_validator_test)
 
 add_executable(dl_pdcch_pdu_validator_test dl_pdcch_pdu_test.cpp)
 target_link_libraries(dl_pdcch_pdu_validator_test srsgnb_support srslog fapi_validators)
@@ -24,6 +20,14 @@ add_executable(dl_pdsch_pdu_validator_test dl_pdsch_pdu_test.cpp)
 target_link_libraries(dl_pdsch_pdu_validator_test srsgnb_support srslog fapi_validators)
 add_test(dl_pdsch_pdu_validator_test dl_pdsch_pdu_validator_test)
 
+add_executable(dl_ssb_pdu_validator_test dl_ssb_pdu_test.cpp)
+target_link_libraries(dl_ssb_pdu_validator_test srsgnb_support srslog fapi_validators)
+add_test(dl_ssb_pdu_validator_test dl_ssb_pdu_validator_test)
+
+add_executable(dl_tti_request_validator_test dl_tti_request_test.cpp)
+target_link_libraries(dl_tti_request_validator_test srsgnb_support srslog fapi_validators)
+add_test(dl_tti_request_validator_test dl_tti_request_validator_test)
+
 add_executable(tx_data_request_validator_test tx_data_request_test.cpp)
 target_link_libraries(tx_data_request_validator_test srsgnb_support srslog fapi_validators)
 add_test(tx_data_request_validator_test tx_data_request_validator_test)
@@ -31,4 +35,3 @@ add_test(tx_data_request_validator_test tx_data_request_validator_test)
 add_executable(ul_dci_request_validator_test ul_dci_request_test.cpp)
 target_link_libraries(ul_dci_request_validator_test srsgnb_support srslog fapi_validators)
 add_test(ul_dci_request_validator_test ul_dci_request_validator_test)
-

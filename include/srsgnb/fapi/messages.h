@@ -815,18 +815,17 @@ struct crc_ind_pdu {
   /// Maximum number of supported CBs in this message.
   static constexpr unsigned MAX_NUM_CB_PER_TTI_BYTES = 192;
 
-  uint32_t                                      handle;
-  uint16_t                                      rnti;
-  uint8_t                                       RAPID;
-  uint8_t                                       harq_id;
-  uint8_t                                       tb_crc_status;
-  uint16_t                                      num_cb;
-  std::array<uint8_t, MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
-  int16_t                                       ul_sinr_metric;
-  uint16_t                                      timing_advance_offset;
-  int16_t                                       timing_advance_offset_ns;
-  uint16_t                                      rssi;
-  uint16_t                                      rsrp;
+  uint32_t                                         handle;
+  rnti_t                                           rnti;
+  uint8_t                                          rapid;
+  uint8_t                                          harq_id;
+  uint8_t                                          tb_crc_status;
+  static_vector<uint8_t, MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
+  int16_t                                          ul_sinr_metric;
+  uint16_t                                         timing_advance_offset;
+  int16_t                                          timing_advance_offset_ns;
+  uint16_t                                         rssi;
+  uint16_t                                         rsrp;
 };
 
 /// CRC indication message.
@@ -834,10 +833,9 @@ struct crc_indication_message : public base_message {
   /// Maximum number of supported CRCs in this message.
   static constexpr unsigned MAX_NUM_CRCS_PER_SLOT = 32;
 
-  uint16_t                                       sfn;
-  uint16_t                                       slot;
-  uint16_t                                       num_crcs;
-  std::array<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
+  uint16_t                                          sfn;
+  uint16_t                                          slot;
+  static_vector<crc_ind_pdu, MAX_NUM_CRCS_PER_SLOT> pdus;
 };
 
 /// UCI CSI part1 information.

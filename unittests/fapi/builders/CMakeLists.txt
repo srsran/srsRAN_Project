@@ -8,6 +8,10 @@
 
 set_directory_properties(PROPERTIES LABELS "fapi")
 
+add_executable(crc_indication_builder_test crc_indication_test.cpp)
+target_link_libraries(crc_indication_builder_test srsgnb_support srslog)
+add_test(crc_indication_builder_test crc_indication_builder_test)
+
 add_executable(dl_pdcch_builder_test pdcch_test.cpp)
 target_link_libraries(dl_pdcch_builder_test srsgnb_support srslog)
 add_test(dl_pdcch_builder_test dl_pdcch_builder_test)
@@ -23,4 +27,3 @@ add_test(tx_data_request_builder_test tx_data_request_builder_test)
 add_executable(ul_dci_request_builder_test ul_dci_request_test.cpp)
 target_link_libraries(ul_dci_request_builder_test srsgnb_support srslog)
 add_test(ul_dci_request_builder_test ul_dci_request_builder_test)
-

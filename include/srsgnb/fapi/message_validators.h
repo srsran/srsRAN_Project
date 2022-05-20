@@ -17,6 +17,10 @@
 namespace srsgnb {
 namespace fapi {
 
+/// Validates the given CRC.indication message and returns a report for the result of the validation. The validation
+/// checks every property of the message, as per SCF-222 v4.0 Section 3.4.8.
+error_type<validator_report> validate_crc_indication(const crc_indication_message& msg);
+
 /// Validates the given DL_TTI.request message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.2.
 error_type<validator_report> validate_dl_tti_request(const dl_tti_request_message& msg);

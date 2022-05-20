@@ -953,6 +953,90 @@ private:
   tx_data_request_message& msg;
 };
 
+/// CRC.indication message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.8.
+class crc_indication_message_builder
+{
+  crc_indication_message& msg;
+
+public:
+  explicit crc_indication_message_builder(crc_indication_message& msg) : msg(msg) {}
+
+  /// Sets the CRC.indication basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.8 in table CRC.indication message body.
+  crc_indication_message_builder& set_basic_parameters(uint16_t sfn, uint16_t slot)
+  {
+    msg.sfn  = sfn;
+    msg.slot = slot;
+
+    return *this;
+  }
+
+  /// Adds a CRC.indication PDU to the message and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.8 in table CRC.indication message body.
+  crc_indication_message_builder& add_pdu(uint32_t            handle,
+                                          rnti_t              rnti,
+                                          optional<uint8_t>   rapid,
+                                          uint8_t             harq_id,
+                                          uint8_t             tb_crc_status,
+                                          span<const uint8_t> cb_crc_status,
+                                          optional<float>     ul_sinr_dB,
+                                          optional<unsigned>  timing_advance_offset,
+                                          optional<int>       timing_advance_offset_in_ns,
+                                          optional<float>     rssi_dB,
+                                          optional<float>     rsrp,
+                                          bool                rsrp_use_dB = true)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu = msg.pdus.back();
+
+    pdu.handle        = handle;
+    pdu.rnti          = rnti;
+    pdu.rapid         = (rapid) ? rapid.value() : 255U;
+    pdu.harq_id       = harq_id;
+    pdu.tb_crc_status = tb_crc_status;
+    pdu.cb_crc_status.assign(cb_crc_status.begin(), cb_crc_status.end());
+    pdu.timing_advance_offset =
+        (timing_advance_offset) ? timing_advance_offset.value() : std::numeric_limits<uint16_t>::max();
+    pdu.timing_advance_offset_ns =
+        (timing_advance_offset_in_ns) ? timing_advance_offset_in_ns.value() : std::numeric_limits<int16_t>::min();
+
+    unsigned rssi =
+        (rssi_dB) ? static_cast<unsigned>((rssi_dB.value() + 128.F) * 10.F) : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rssi <= std::numeric_limits<uint16_t>::max(),
+                  "RSSI ({}) exceeds the maximum ({}).",
+                  rssi,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rssi = static_cast<uint16_t>(rssi);
+
+    unsigned rsrp_value = (rsrp) ? static_cast<unsigned>((rsrp.value() + ((rsrp_use_dB) ? 140.F : 128.F)) * 10.F)
+                                 : std::numeric_limits<uint16_t>::max();
+
+    srsran_assert(rsrp_value <= std::numeric_limits<uint16_t>::max(),
+                  "RSRP ({}) exceeds the maximum ({}).",
+                  rsrp_value,
+                  std::numeric_limits<uint16_t>::max());
+
+    pdu.rsrp = static_cast<uint16_t>(rsrp_value);
+
+    int ul_sinr = (ul_sinr_dB) ? static_cast<int>(ul_sinr_dB.value() * 500.F) : std::numeric_limits<int16_t>::min();
+
+    srsran_assert(ul_sinr <= std::numeric_limits<int16_t>::max(),
+                  "UL SINR metric ({}) exceeds the maximum ({}).",
+                  ul_sinr,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(ul_sinr >= std::numeric_limits<int16_t>::min(),
+                  "UL SINR metric ({}) exceeds the minimum ({}).",
+                  ul_sinr,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.ul_sinr_metric = static_cast<int16_t>(ul_sinr);
+    return *this;
+  }
+};
+
 } // namespace fapi
 } // namespace srsgnb
 
