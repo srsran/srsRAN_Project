@@ -32,10 +32,10 @@ static void test_dl_tti_request_error()
   dl_tti_request_message msg = build_valid_dl_tti_request();
 
   // Set some errors.
-  msg.slot                               = 1000;
   msg.pdus[0].ssb_pdu.phys_cell_id       = 2000;
   msg.pdus[1].pdcch_pdu.coreset_bwp_size = 2000;
   msg.pdus[2].pdsch_pdu.bwp_size         = 2000;
+  msg.pdus[3].csi_rs_pdu.scramb_id       = 2000;
 
   const auto& result = validate_dl_tti_request(msg);
 

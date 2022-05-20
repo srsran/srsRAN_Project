@@ -221,11 +221,11 @@ static void test_allocation_in_time_parameters()
 static void test_tx_power_info_parameters()
 {
   for (int power = -8; power != 17; ++power) {
-    for (auto ss_profile : {pdsch_ss_profile_nr_type::dB0,
-                            pdsch_ss_profile_nr_type::dB6,
-                            pdsch_ss_profile_nr_type::L1_use_profile_sss,
-                            pdsch_ss_profile_nr_type::dB3,
-                            pdsch_ss_profile_nr_type::dB_minus_3}) {
+    for (auto ss_profile : {nzp_csi_rs_epre_to_ssb::dB0,
+                            nzp_csi_rs_epre_to_ssb::dB6,
+                            nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
+                            nzp_csi_rs_epre_to_ssb::dB3,
+                            nzp_csi_rs_epre_to_ssb::dB_minus_3}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 

@@ -12,6 +12,10 @@ add_executable(crc_indication_builder_test crc_indication_test.cpp)
 target_link_libraries(crc_indication_builder_test srsgnb_support srslog)
 add_test(crc_indication_builder_test crc_indication_builder_test)
 
+add_executable(dl_csi_pdu_builder_test dl_csi_pdu_test.cpp)
+target_link_libraries(dl_csi_pdu_builder_test srsgnb_support srslog)
+add_test(dl_csi_pdu_builder_test dl_csi_pdu_builder_test)
+
 add_executable(dl_pdcch_builder_test pdcch_test.cpp)
 target_link_libraries(dl_pdcch_builder_test srsgnb_support srslog)
 add_test(dl_pdcch_builder_test dl_pdcch_builder_test)

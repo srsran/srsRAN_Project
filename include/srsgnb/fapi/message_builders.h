@@ -522,8 +522,8 @@ public:
 
   /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>            power_control_offset_profile_nr,
-                                                     pdsch_ss_profile_nr_type ss_profile_nr)
+  dl_pdsch_pdu_builder& set_tx_power_info_parameters(optional<int>          power_control_offset_profile_nr,
+                                                     nzp_csi_rs_epre_to_ssb ss_profile_nr)
   {
     unsigned power_profile_nr =
         power_control_offset_profile_nr ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U) : 255U;
@@ -727,22 +727,93 @@ private:
   dl_pdsch_pdu& pdu;
 };
 
-/// Helper class to fill in the DL CSI-RS PDU parameters specified in SCF-222 v4.0 section 3.4.2.3.
+/// CSI-RS PDU builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.2.3.
 class dl_csi_rs_pdu_builder
 {
+  dl_csi_rs_pdu& pdu;
+
 public:
   explicit dl_csi_rs_pdu_builder(dl_csi_rs_pdu& pdu) : pdu(pdu) {}
 
-  // :TODO: add rest of parameters.
-  dl_csi_rs_pdu_builder& set_basic_parameters(subcarrier_spacing scs)
+  /// Sets the CSI-RS PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
+  dl_csi_rs_pdu_builder& set_basic_parameters(uint16_t              start_rb,
+                                              uint16_t              nof_rbs,
+                                              csi_type              type,
+                                              uint8_t               row,
+                                              uint16_t              freq_domain,
+                                              uint8_t               symb_l0,
+                                              uint8_t               symb_l1,
+                                              csi_cdm_type          cdm_type,
+                                              csi_freq_density_type freq_density,
+                                              uint16_t              scrambling_id)
   {
-    pdu.scs = scs;
+    pdu.start_rb     = start_rb;
+    pdu.num_rbs      = nof_rbs;
+    pdu.type         = type;
+    pdu.row          = row;
+    pdu.freq_domain  = freq_domain;
+    pdu.symb_L0      = symb_l0;
+    pdu.symb_L1      = symb_l1;
+    pdu.cdm_type     = cdm_type;
+    pdu.freq_density = freq_density;
+    pdu.scramb_id    = scrambling_id;
 
     return *this;
   }
 
-private:
-  dl_csi_rs_pdu& pdu;
+  /// Sets the CSI-RS PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
+  dl_csi_rs_pdu_builder& set_bwp_parameters(subcarrier_spacing scs, cyclic_prefix_type prefix)
+  {
+    pdu.scs           = scs;
+    pdu.cyclic_prefix = prefix;
+
+    return *this;
+  }
+
+  /// Sets the CSI-RS PDU tx power info parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
+  dl_csi_rs_pdu_builder& set_tx_power_info_parameters(optional<float>        power_control_offset_profile_nr,
+                                                      nzp_csi_rs_epre_to_ssb ss_profile_nr)
+  {
+    pdu.power_control_offset_ss_profile_nr = ss_profile_nr;
+
+    unsigned value = (power_control_offset_profile_nr)
+                         ? static_cast<unsigned>(power_control_offset_profile_nr.value() + 8U)
+                         : std::numeric_limits<uint8_t>::max();
+
+    srsran_assert(value <= std::numeric_limits<uint8_t>::max(),
+                  "Ratio of PDSCH EPRE to NZP CSI-RS EPRE ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<uint8_t>::max());
+
+    pdu.power_control_offset_profile_nr = static_cast<uint8_t>(value);
+
+    return *this;
+  }
+
+  /// Sets the CSI-RS PDU mainterance v3 tx power info parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.3 in table CSI-RS PDU.
+  dl_csi_rs_pdu_builder& set_maintenance_v3_tx_power_info_parameters(optional<float> profile_sss_dB)
+  {
+    int value =
+        (profile_sss_dB) ? static_cast<int>(profile_sss_dB.value() * 1000.F) : std::numeric_limits<int16_t>::min();
+
+    srsran_assert(value <= std::numeric_limits<int16_t>::max(),
+                  "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::max());
+
+    srsran_assert(value >= std::numeric_limits<int16_t>::min(),
+                  "Ratio of CSI-RS EPRE to SSS EPRE ({}) exceeds the maximum ({}).",
+                  value,
+                  std::numeric_limits<int16_t>::min());
+
+    pdu.csi_rs_maintenance_v3.csi_rs_power_offset_profile_sss = static_cast<int16_t>(value);
+
+    return *this;
+  }
 };
 
 /// DL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.2.
@@ -776,7 +847,7 @@ public:
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
 
-    // Fill the pdcch pdu index value. The index value will be the index of the pdu in the array of PDCCH pdus.
+    // Fill the PDCCH PDU index value. The index value will be the index of the pdu in the array of PDCCH pdus.
     dl_pdcch_pdu_maintenance_v3& info          = pdu.pdcch_pdu.maintenance_v3;
     auto&                        num_pdcch_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDCCH)];
     info.pdcch_pdu_index                       = num_pdcch_pdu;
@@ -800,7 +871,7 @@ public:
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
 
-    // Fill the SSB PDU index value. The index value will be the index of the PDU in the array of SSB pdus.
+    // Fill the PDSCH PDU index value. The index value will be the index of the PDU in the array of PDSCH PDUs.
     auto& num_pdsch_pdu     = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::PDSCH)];
     pdu.pdsch_pdu.pdu_index = num_pdsch_pdu;
 
@@ -817,16 +888,34 @@ public:
   }
 
   /// Adds a CSI-RS PDU to the message and returns a CSI-RS PDU builder.
-  dl_csi_rs_pdu_builder add_csi_rs_pdu()
+  dl_csi_rs_pdu_builder add_csi_rs_pdu(uint16_t              start_rb,
+                                       uint16_t              nof_rbs,
+                                       csi_type              type,
+                                       uint8_t               row,
+                                       uint16_t              freq_domain,
+                                       uint8_t               symb_l0,
+                                       uint8_t               symb_l1,
+                                       csi_cdm_type          cdm_type,
+                                       csi_freq_density_type freq_density,
+                                       uint16_t              scrambling_id)
   {
-    ++msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::CSI_RS)];
-
     // Add a new PDU.
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
-    pdu.pdu_type            = dl_pdu_type::CSI_RS;
+
+    // Fill the CSI PDU index value. The index value will be the index of the PDU in the array of CSI PDUs.
+    auto& num_csi_pdu = msg.num_pdus_of_each_type[static_cast<int>(dl_pdu_type::CSI_RS)];
+    pdu.csi_rs_pdu.csi_rs_maintenance_v3.csi_rs_pdu_index = num_csi_pdu;
+
+    // Increase the number of CSI PDU.
+    ++num_csi_pdu;
+
+    pdu.pdu_type = dl_pdu_type::CSI_RS;
 
     dl_csi_rs_pdu_builder builder(pdu.csi_rs_pdu);
+
+    builder.set_basic_parameters(
+        start_rb, nof_rbs, type, row, freq_domain, symb_l0, symb_l1, cdm_type, freq_density, scrambling_id);
 
     return builder;
   }

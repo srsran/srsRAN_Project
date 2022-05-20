@@ -76,7 +76,7 @@ inline srsgnb::fapi::dl_pdcch_pdu build_valid_dl_pdcch_pdu()
   std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
   std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
-  std::uniform_int_distribution<unsigned> duration_symbol_dist(0, 3);
+  std::uniform_int_distribution<unsigned> duration_symbol_dist(1, 3);
   std::uniform_int_distribution<unsigned> shift_index_dist(0, 275);
   std::uniform_int_distribution<unsigned> n_rnti_dist(0, 65535);
   std::uniform_int_distribution<unsigned> cce_dist(0, 135);
@@ -162,11 +162,11 @@ inline srsgnb::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu()
   srsgnb::fapi::pdsch_resource_allocation_type resource_alloc = srsgnb::fapi::pdsch_resource_allocation_type::type_0;
   srsgnb::fapi::pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping =
       srsgnb::fapi::pdsch_vrb_to_prb_mapping_type::non_interleaved;
-  srsgnb::fapi::pdsch_ss_profile_nr_type power_ss_profile_nr = srsgnb::fapi::pdsch_ss_profile_nr_type::dB_minus_3;
-  int                                    power_nr            = -7;
-  int                                    power               = -30;
-  srsgnb::fapi::pdsch_trans_type         trasn_type          = srsgnb::fapi::pdsch_trans_type::non_interleaved_other;
-  srsgnb::fapi::ldpc_base_graph_type     ldpc_graph          = srsgnb::fapi::ldpc_base_graph_type::bg_1;
+  srsgnb::fapi::nzp_csi_rs_epre_to_ssb power_ss_profile_nr = srsgnb::fapi::nzp_csi_rs_epre_to_ssb::dB_minus_3;
+  int                                  power_nr            = -7;
+  int                                  power               = -30;
+  srsgnb::fapi::pdsch_trans_type       trasn_type          = srsgnb::fapi::pdsch_trans_type::non_interleaved_other;
+  srsgnb::fapi::ldpc_base_graph_type   ldpc_graph          = srsgnb::fapi::ldpc_base_graph_type::bg_1;
 
   srsgnb::rnti_t rnti                     = srsgnb::to_rnti(rnti_dist(gen));
   unsigned       bwp_size                 = bwp_size_dist(gen);
@@ -248,6 +248,53 @@ inline srsgnb::fapi::dl_pdsch_pdu build_valid_dl_pdsch_pdu()
   return pdu;
 }
 
+/// Builds and returns a valid DL CSI-RS pdu. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.2.3.
+inline srsgnb::fapi::dl_csi_rs_pdu build_valid_dl_csi_pdu()
+{
+  srsgnb::fapi::dl_csi_rs_pdu         pdu;
+  srsgnb::fapi::dl_csi_rs_pdu_builder builder(pdu);
+
+  std::uniform_int_distribution<unsigned> nof_rb_dist(24, 276);
+  std::uniform_int_distribution<unsigned> start_rb_dist(0, 274);
+  std::uniform_int_distribution<unsigned> csi_type_dist(0, 2);
+  std::uniform_int_distribution<unsigned> row_dist(1, 18);
+  std::uniform_int_distribution<unsigned> symb_l0_dist(0, 13);
+  std::uniform_int_distribution<unsigned> symb_l1_dist(2, 12);
+  std::uniform_int_distribution<unsigned> cdm_type_dist(0, 3);
+  std::uniform_int_distribution<unsigned> freq_density_dist(0, 3);
+  std::uniform_int_distribution<unsigned> scram_id_dist(0, 1023);
+  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
+  std::uniform_int_distribution<int>      power_dist(-8, 8);
+  std::uniform_int_distribution<unsigned> ss_power_dist(0, 10);
+
+  builder.set_basic_parameters(start_rb_dist(gen),
+                               nof_rb_dist(gen),
+                               static_cast<srsgnb::fapi::csi_type>(csi_type_dist(gen)),
+                               row_dist(gen),
+                               freq_density_dist(gen),
+                               symb_l0_dist(gen),
+                               symb_l1_dist(gen),
+                               static_cast<srsgnb::fapi::csi_cdm_type>(cdm_type_dist(gen)),
+                               static_cast<srsgnb::fapi::csi_freq_density_type>(freq_density_dist(gen)),
+                               scram_id_dist(gen));
+
+  // Always work with the biggest numerology.
+  builder.set_bwp_parameters(srsgnb::subcarrier_spacing::kHz240,
+                             static_cast<srsgnb::fapi::cyclic_prefix_type>(binary_dist(gen)));
+
+  srsgnb::optional<float> profile_nr;
+  profile_nr.emplace(power_dist(gen));
+  unsigned ss_power = ss_power_dist(gen);
+  ss_power          = (ss_power > 3) ? 255 : ss_power;
+  builder.set_tx_power_info_parameters(profile_nr, static_cast<srsgnb::fapi::nzp_csi_rs_epre_to_ssb>(ss_power));
+
+  srsgnb::optional<float> profile_sss;
+  builder.set_maintenance_v3_tx_power_info_parameters(profile_sss);
+
+  return pdu;
+}
+
 /// Builds and returns a valid DL TTI request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.
 inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
@@ -275,6 +322,11 @@ inline srsgnb::fapi::dl_tti_request_message build_valid_dl_tti_request()
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type  = srsgnb::fapi::dl_pdu_type::PDSCH;
   msg.pdus.back().pdsch_pdu = build_valid_dl_pdsch_pdu();
+
+  // Manually add the CSI PDU to reuse the functions above.
+  msg.pdus.emplace_back();
+  msg.pdus.back().pdu_type   = srsgnb::fapi::dl_pdu_type::CSI_RS;
+  msg.pdus.back().csi_rs_pdu = build_valid_dl_csi_pdu();
 
   return msg;
 }

@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/fapi/message_validators.h"
+#include "dl_csi_pdu.h"
 #include "dl_pdcch_pdu.h"
 #include "dl_pdsch_pdu.h"
 #include "dl_ssb_pdu.h"
@@ -56,7 +57,9 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
       case dl_pdu_type::PDSCH:
         success &= validate_dl_pdsch_pdu(pdu.pdsch_pdu, report);
         break;
-        // :TODO: Implement the rest of the PDUs when their validators exist.
+      case dl_pdu_type::CSI_RS:
+        success &= validate_dl_csi_pdu(pdu.csi_rs_pdu, report);
+        break;
       default:
         srsran_assert(0, "Invalid pdu_type");
         report.append(static_cast<unsigned>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);

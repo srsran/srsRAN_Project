@@ -214,7 +214,7 @@ struct dl_pdsch_codeword {
 enum class pdsch_low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
 enum class pdsch_resource_allocation_type : uint8_t { type_0, type_1 };
 enum class pdsch_vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
-enum class pdsch_ss_profile_nr_type : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
+enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
 enum class dmrs_config_type : uint8_t { type_1, type_2 };
@@ -267,7 +267,7 @@ struct dl_pdsch_pdu {
   // :TODO: PTRS
   // :TODO: beamforming
   uint8_t                                  power_control_offset_profile_nr;
-  pdsch_ss_profile_nr_type                 power_control_offset_ss_profile_nr;
+  nzp_csi_rs_epre_to_ssb                   power_control_offset_ss_profile_nr;
   uint8_t                                  is_last_cb_present;
   inline_tb_crc_type                       is_inline_tb_crc;
   std::array<uint32_t, MAX_SIZE_DL_TB_CRC> dl_tb_crc_cw;
@@ -283,22 +283,26 @@ struct dl_csi_rs_maintenance_v3 {
   int16_t  csi_rs_power_offset_profile_sss;
 };
 
+enum class csi_type : uint8_t { TRS, CSI_RS_NZP, CSI_RS_ZP };
+enum class csi_cdm_type : uint8_t { no_CDM, fd_CDM2, cdm4_FD2_TD2, cdm8_FD2_TD4 };
+enum class csi_freq_density_type : uint8_t { dot5_even_RB, dot5_odd_RB, one, three };
+
 /// Downlink CSI-RS PDU information.
 struct dl_csi_rs_pdu {
-  subcarrier_spacing scs;
-  cyclic_prefix_type cyclic_prefix;
-  uint16_t           start_rb;
-  uint16_t           num_rbs;
-  uint8_t            csi_type;
-  uint8_t            row;
-  uint16_t           freq_domain;
-  uint8_t            symb_L0;
-  uint8_t            symb_L1;
-  uint8_t            cdm_type;
-  uint8_t            freq_density;
-  uint16_t           scramb_id;
-  uint8_t            power_control_offset_profile_nr;
-  uint8_t            power_control_offset_ss_profile_nr;
+  subcarrier_spacing     scs;
+  cyclic_prefix_type     cyclic_prefix;
+  uint16_t               start_rb;
+  uint16_t               num_rbs;
+  csi_type               type;
+  uint8_t                row;
+  uint16_t               freq_domain;
+  uint8_t                symb_L0;
+  uint8_t                symb_L1;
+  csi_cdm_type           cdm_type;
+  csi_freq_density_type  freq_density;
+  uint16_t               scramb_id;
+  uint8_t                power_control_offset_profile_nr;
+  nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr;
   //: TODO: beamforming struct
   dl_csi_rs_maintenance_v3 csi_rs_maintenance_v3;
   //: TODO: csi params v4
