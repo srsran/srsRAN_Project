@@ -25,6 +25,10 @@ error_type<validator_report> validate_crc_indication(const crc_indication_messag
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.2.
 error_type<validator_report> validate_dl_tti_request(const dl_tti_request_message& msg);
 
+/// Validates the given RACH.indication message and returns a report for the result of the validation. The validation
+/// checks every property of the message, as per SCF-222 v4.0 Section 3.4.11.
+error_type<validator_report> validate_rach_indication(const rach_indication_message& msg);
+
 /// Validates the given UL_DCI.request message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.4.
 error_type<validator_report> validate_ul_dci_request(const ul_dci_request_message& msg);
