@@ -13,7 +13,7 @@
 
 #include "../sched_strategy/data_scheduler.h"
 #include "cell_configuration.h"
-#include "pdcch_scheduler.h"
+#include "pdcch_scheduler_impl.h"
 #include "ra_scheduler.h"
 #include "resource_grid.h"
 
@@ -35,8 +35,8 @@ public:
   const cell_configuration cell_cfg;
   cell_resource_allocator  res_grid;
 
-  pdcch_scheduler pdcch_sch;
-  ra_scheduler    ra_sch;
+  pdcch_scheduler_impl pdcch_sch;
+  ra_scheduler         ra_sch;
 };
 
 class cell_sched_manager

@@ -10,7 +10,7 @@
 
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
-#include "pdcch_scheduler.h"
+#include "pdcch_scheduler_impl.h"
 
 using namespace srsgnb;
 
@@ -278,7 +278,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // 7. Find space in PDCCH for RAR.
   const static aggregation_level aggr_lvl = aggregation_level::n4;
   search_space_id                ss_id    = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  pdcch_information*             pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc.slot, rar.ra_rnti, ss_id, aggr_lvl);
+  pdcch_information*             pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {
     return 0;
   }

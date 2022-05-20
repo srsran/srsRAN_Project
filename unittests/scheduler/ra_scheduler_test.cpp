@@ -9,8 +9,8 @@
  */
 
 #include "config_generators.h"
+#include "lib/scheduler/cell/pdcch_scheduler.h"
 #include "lib/scheduler/cell/ra_scheduler.h"
-#include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
@@ -28,6 +28,33 @@ const unsigned nof_grants_per_rar = 16;
 struct ra_sched_param {
   bool                 is_tdd = false;
   std::vector<uint8_t> k2_list{2};
+};
+
+class dummy_pdcch_scheduler : public pdcch_scheduler
+{
+public:
+  pdcch_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                        rnti_t                        rnti,
+                                        search_space_id               ss_id,
+                                        aggregation_level             aggr_lvl) override
+  {
+    TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
+    slot_alloc.result.dl.pdcchs.emplace_back();
+    slot_alloc.result.dl.pdcchs.back().dci.rnti = rnti;
+    return &slot_alloc.result.dl.pdcchs[0];
+  }
+
+  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator&   slot_alloc,
+                                    rnti_t                          rnti,
+                                    const ue_carrier_configuration& user,
+                                    du_bwp_id_t                     bwp_id,
+                                    search_space_id                 ss_id,
+                                    aggregation_level               aggr_lvl,
+                                    dci_dl_format                   dci_fmt) override
+  {
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    return nullptr;
+  }
 };
 
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
@@ -98,12 +125,13 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg){};
-
-  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_request(paramters)), res_grid(cfg){};
-
   cell_configuration      cfg;
   cell_resource_allocator res_grid;
+  dummy_pdcch_scheduler   pdcch_sch;
+
+  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg) {}
+
+  test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_request(paramters)), res_grid(cfg){};
 
   void slot_indication(slot_point sl_tx)
   {
@@ -322,7 +350,7 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
 
   test_bench bench{params};
 
-  ra_scheduler ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg, bench.pdcch_sch};
 
   // Create the list of RACH indication messages with as many elements as the nof_grants_per_rar (1 RA-RNTI and
   // different RAPIDs)
@@ -384,7 +412,7 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
 
   test_bench bench{params};
 
-  ra_scheduler ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg, bench.pdcch_sch};
 
   // Create the list of RACH indication messages with different RA-RNTIs and different RAPIDs
   std::list<rach_indication_message> rach_ind_list;
@@ -472,7 +500,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
   test_delimit_logger delimiter{"RA SCHEDULER - FDD - SINGLE RACH"};
   test_bench          bench{params};
 
-  ra_scheduler ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg, bench.pdcch_sch};
 
   slot_point              prach_sl_rx{0, 7};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, to_rnti(0x4601));
@@ -536,7 +564,7 @@ void test_ra_sched_tdd_single_rach()
   test_bench     bench{params};
 
   // TDD configuration.
-  ra_scheduler ra_sch{bench.cfg};
+  ra_scheduler ra_sch{bench.cfg, bench.pdcch_sch};
 
   // Enqueue RACH.
   slot_point              prach_sl_rx{0, 7};

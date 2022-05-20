@@ -1,5 +1,5 @@
 
-#include "../../lib/scheduler/cell/pdcch_scheduler.h"
+#include "../../lib/scheduler/cell/pdcch_scheduler_impl.h"
 #include "config_generators.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/test_utils.h"
@@ -15,7 +15,7 @@ void test_pdcch_sched_sib1()
   cell_configuration      cfg{msg};
   cell_resource_allocator res_grid{cfg};
 
-  pdcch_scheduler pdcch_sch(res_grid);
+  pdcch_scheduler_impl pdcch_sch(res_grid);
 
   slot_point sl_tx{0, 0};
 
@@ -26,7 +26,8 @@ void test_pdcch_sched_sib1()
   TESTASSERT(res_grid[0].result.dl.pdcchs.empty());
 
   // Action: Allocate one SIB1.
-  pdcch_information* pdcch = pdcch_sch.alloc_pdcch_common(sl_tx, SI_RNTI, to_search_space_id(0), aggregation_level::n4);
+  pdcch_information* pdcch =
+      pdcch_sch.alloc_pdcch_common(res_grid[0], SI_RNTI, to_search_space_id(0), aggregation_level::n4);
 
   // TEST: SIB1 allocation should be successful and the PDCCH contents valid.
   TESTASSERT_EQ(1, res_grid[0].result.dl.pdcchs.size());

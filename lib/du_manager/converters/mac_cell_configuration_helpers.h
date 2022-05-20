@@ -67,6 +67,9 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].id    = to_search_space_id(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].cs_id = to_coreset_id(0);
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(1);
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].id    = to_search_space_id(1);
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].cs_id = to_coreset_id(0);
   msg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id     = to_search_space_id(1);
 
   // Configure initial UL BWP.

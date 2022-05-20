@@ -96,7 +96,7 @@ public:
   }
   T& back()
   {
-    srsran_assert(size_ > 0, "Trying to get back of empty array.");
+    srsran_assert(size_ > 0, "Trying to get back of empty array");
     return *(begin() + size_ - 1);
   }
   const T& back() const

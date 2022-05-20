@@ -12,12 +12,11 @@
 #define SRSGNB_RA_SCHEDULER_H
 
 #include "../sched_harq.h"
+#include "pdcch_scheduler.h"
 #include "resource_grid.h"
 #include <deque>
 
 namespace srsgnb {
-
-class pdcch_scheduler;
 
 /// Get MSG3 Delay.
 /// \param[in] pusch_td_res_alloc PUSCH-TimeDomainResourceAllocation.
