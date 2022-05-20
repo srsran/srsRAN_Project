@@ -25,7 +25,7 @@ inline unsigned to_cce_size(aggregation_level lvl)
   return 1U << static_cast<uint8_t>(lvl);
 }
 
-enum class dci_dl_format { f1_0, f2_0 };
+enum class dci_dl_format { f1_0, f1_1, f2_0 };
 enum class dci_ul_format { f0_0, f0_1 };
 
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
@@ -46,12 +46,16 @@ struct dci_format1_0_info {
 };
 
 /// \brief Describes an unpacked DL DCI message.
-/// \remark See TS 38.212, 7.3.1.2. DCI formats for scheduling of PDSCH.
+/// \remark See FAPI DCI PDU and ORAN WG8 DL-DCI Configuration.
 struct dci_dl_info {
-  rnti_t            rnti;
-  uint8_t           cce_index;
+  /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
+  rnti_t rnti;
+  /// CCE start index. Values: (0..135).
+  uint8_t cce_index;
+  /// Aggregation level of the DCI.
   aggregation_level aggr_level;
-  dci_dl_format     format_type;
+  /// DCI format type used.
+  dci_dl_format format_type;
   union {
     dci_format1_0_info f1_0;
   };

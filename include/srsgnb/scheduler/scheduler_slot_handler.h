@@ -35,11 +35,6 @@ const size_t MAX_LC_GRANTS = 4;
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
 
-struct dci_alloc {
-  uint16_t          rnti;
-  aggregation_level L;
-};
-
 struct pdcch_information {
   const bwp_configuration*     bwp_cfg;
   const coreset_configuration* coreset_cfg;

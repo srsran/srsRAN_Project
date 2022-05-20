@@ -250,7 +250,9 @@ inline slot_point min(slot_point lhs, slot_point rhs)
 /// Slot Interval [start, stop).
 using slot_interval = interval<slot_point>;
 
-/// Apply "floor" operation while converting a slot point between different numerologies.
+/// Convert a slot point to another numerology. This function applies a "floor" operation when the new numerology is
+/// lower than the old one. E.g. Given two numerologies mu1 and mu2, where m1 < m2, this conversion function "f" will
+/// always ensure that, for a slot t1 with m1 numerology, the condition "f(f(t1, mu2), m1) <= t1" is satisfied.
 inline slot_point set_slot_numerology(slot_point sl, unsigned new_numerology)
 {
   unsigned old_numerology = sl.numerology();
