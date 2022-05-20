@@ -95,6 +95,19 @@ void pusch_decoder_impl::decode(span<uint8_t>            transport_block,
     unsigned msg_length = cb_length / inverse_rate;
     // Number of data bits (no CRC, no filler bits - may contain zero-padding).
     unsigned nof_data_bits = msg_length - cb_meta.cb_specific.nof_crc_bits - cb_meta.cb_specific.nof_filler_bits;
+
+    // Get data bits from previous transmissions, if any.
+    // Messages are written on a dedicated buffer associated to the softbuffer. By doing this, we keep the decoded
+    // message in memory and we don't need to compute it again if there is a retransmission.
+    span<uint8_t> message = soft_codeword->get_codeblock_data_bits(cb_id, msg_length);
+
+    // Number of TB bits still "empty".
+    unsigned free_tb_bits = tb_and_crc_size - tb_offset;
+    // Avoid including zero-padding in the TB.
+    unsigned nof_new_bits = std::min(free_tb_bits, nof_data_bits);
+    // Pick a view of the segment of the transport block corresponding to the current codeblock.
+    span<uint8_t> this_segment = span<uint8_t>(tmp_tb_bits).subspan(tb_offset, nof_new_bits);
+
     if (!cb_crcs[cb_id]) {
       // Get the LLRs from previous transmissions, if any, or a clean buffer.
       span<int8_t> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
@@ -102,22 +115,16 @@ void pusch_decoder_impl::decode(span<uint8_t>            transport_block,
       // Dematch the new LLRs and combine them with the ones from previous transmissions.
       dematcher->rate_dematch(codeblock, cb_llrs, new_data, cb_meta);
 
-      // Temporary buffer to store decoded bits.
-      static_vector<uint8_t, MAX_SEG_LENGTH> message(msg_length);
-
-      // Number of TB bits still "empty".
-      unsigned free_tb_bits = tb_and_crc_size - tb_offset;
-      // Avoid including zero-padding in the TB.
-      unsigned nof_new_bits = std::min(free_tb_bits, nof_data_bits);
       // Try to decode
       if (decoder->decode(message, codeblock, block_crc, {cb_meta, alg_cfg})) {
         // If successful decoding, flag the CRC and copy bits to the TB buffer.
-        cb_crcs[cb_id]             = true;
-        span<uint8_t> this_segment = span<uint8_t>(tmp_tb_bits).subspan(tb_offset, nof_new_bits);
+        cb_crcs[cb_id] = true;
         std::copy_n(message.begin(), nof_new_bits, this_segment.begin());
       }
-      tb_offset += nof_new_bits;
+    } else {
+      std::copy_n(message.begin(), nof_new_bits, this_segment.begin());
     }
+    tb_offset += nof_new_bits;
   }
   srsran_assert(tb_offset == tb_and_crc_size, "All TB bits should be filled at this point.");
 
