@@ -13,7 +13,7 @@
 
 #include "../converters/f1_procedure_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
-#include "du_manager_context.h"
+#include "../du_manager_context.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
