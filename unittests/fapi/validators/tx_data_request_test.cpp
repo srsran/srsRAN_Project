@@ -28,7 +28,7 @@ static void test_validate_tx_data_request_ok()
   unsigned                  cw_index  = 0;
   static_vector<uint8_t, 5> data      = {5, 3, 4, 5};
 
-  builder.add_pdu_tlv_tag_1(pdu_index, cw_index, {data});
+  builder.add_pdu_custom_payload(pdu_index, cw_index, {data});
 
   const auto& result = validate_tx_data_request(msg);
 
@@ -48,7 +48,7 @@ static void test_validate_tx_data_request_error()
   unsigned                  cw_index  = 3;
   static_vector<uint8_t, 5> data      = {5, 3, 4, 5};
 
-  builder.add_pdu_tlv_tag_1(pdu_index, cw_index, {data});
+  builder.add_pdu_custom_payload(pdu_index, cw_index, {data});
 
   const auto& result = validate_tx_data_request(msg);
 

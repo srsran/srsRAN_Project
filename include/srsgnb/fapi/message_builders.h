@@ -934,7 +934,7 @@ public:
 
   /// Adds a new PDU to the Tx_Data.request message and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.6 in table Tx_Data.request message body.
-  tx_data_request_builder& add_pdu_tlv_tag_1(uint16_t pdu_index, uint8_t cw_index, span<const uint8_t> payload)
+  tx_data_request_builder& add_pdu_custom_payload(uint16_t pdu_index, uint8_t cw_index, span<const uint8_t> payload)
   {
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();
