@@ -15,6 +15,7 @@
 #include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/support/async/async_queue.h"
 #include <memory>
 
 namespace srsgnb {
@@ -41,6 +42,8 @@ private:
   f1c_message_handler&  f1c;
 
   f1ap_du_context ctxt;
+
+  async_queue<asn1::f1ap::f1_ap_pdu_c> pdu_queue{64};
 };
 
 } // namespace srsgnb

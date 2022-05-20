@@ -27,10 +27,22 @@ async_task<du_setup_result> f1ap_du_impl::handle_f1ap_setup_request(const f1_set
   fill_asn1_f1_setup_request(request, msg);
 
   // TODO: add procedure implementation
-  return launch_async([this, res = du_setup_result{}](coro_context<async_task<du_setup_result> >& ctx) mutable {
+  return launch_async([this, res_pdu = asn1::f1ap::f1_ap_pdu_c{}, res = du_setup_result{}](
+                          coro_context<async_task<du_setup_result> >& ctx) mutable {
     CORO_BEGIN(ctx);
-    res.result.value()->gnb_cu_rrc_version.value.latest_rrc_version.from_number(0);
-    logger.info("{}", __FUNCTION__);
+
+    CORO_AWAIT_VALUE(res_pdu, pdu_queue);
+
+    if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome) {
+      logger.info("Received F1AP PDU with successful outcome.");
+      res.result = res_pdu.successful_outcome().value.f1_setup_resp();
+    }
+
+    if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome) {
+      logger.info("Received F1AP PDU with unsuccessful outcome.");
+      res.result = res_pdu.unsuccessful_outcome().value.f1_setup_fail();
+    }
+
     CORO_RETURN(res);
   });
 }
@@ -72,6 +84,7 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
+  pdu_queue.try_push(pdu);
 }
 
 } // namespace srsgnb
