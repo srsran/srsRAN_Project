@@ -35,8 +35,8 @@ public:
   bool     is_active() const { return true; }
 
 private:
-  rnti_t                   crnti_;
-  ue_carrier_configuration cfg;
+  rnti_t                crnti_;
+  ue_cell_configuration cfg;
 };
 
 class ue

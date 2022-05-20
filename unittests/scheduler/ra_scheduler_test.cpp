@@ -44,13 +44,13 @@ public:
     return &slot_alloc.result.dl.pdcchs[0];
   }
 
-  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator&   slot_alloc,
-                                    rnti_t                          rnti,
-                                    const ue_carrier_configuration& user,
-                                    du_bwp_id_t                     bwp_id,
-                                    search_space_id                 ss_id,
-                                    aggregation_level               aggr_lvl,
-                                    dci_dl_format                   dci_fmt) override
+  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                    rnti_t                        rnti,
+                                    const ue_cell_configuration&  user,
+                                    du_bwp_id_t                   bwp_id,
+                                    search_space_id               ss_id,
+                                    aggregation_level             aggr_lvl,
+                                    dci_dl_format                 dci_fmt) override
   {
     srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;

@@ -7,7 +7,8 @@
 
 namespace srsgnb {
 
-class ue_carrier_configuration
+/// UE-dedicated configuration for a given cell.
+class ue_cell_configuration
 {
 public:
   /// Find Common or UE-dedicated BWP configuration.

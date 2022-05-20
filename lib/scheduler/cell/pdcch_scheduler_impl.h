@@ -22,7 +22,7 @@ class pdcch_scheduler_impl final : public pdcch_scheduler
 {
 public:
   explicit pdcch_scheduler_impl(const cell_configuration& cell_cfg_);
-  ~pdcch_scheduler_impl();
+  ~pdcch_scheduler_impl() override;
 
   void slot_indication(slot_point sl_tx);
 
@@ -31,13 +31,13 @@ public:
                                         search_space_id               ss_id,
                                         aggregation_level             aggr_lvl) override;
 
-  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator&   slot_alloc,
-                                    rnti_t                          rnti,
-                                    const ue_carrier_configuration& user,
-                                    du_bwp_id_t                     bwp_id,
-                                    search_space_id                 ss_id,
-                                    aggregation_level               aggr_lvl,
-                                    dci_dl_format                   dci_fmt) override;
+  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                    rnti_t                        rnti,
+                                    const ue_cell_configuration&  user,
+                                    du_bwp_id_t                   bwp_id,
+                                    search_space_id               ss_id,
+                                    aggregation_level             aggr_lvl,
+                                    dci_dl_format                 dci_fmt) override;
 
 private:
   class pdcch_slot_allocator;
@@ -57,6 +57,7 @@ private:
 
   const cell_configuration& cell_cfg;
 
+  /// Last slot for which slot_indication has been called.
   slot_point last_sl_ind;
 
   /// Intermediate results used by PDCCH scheduler.
