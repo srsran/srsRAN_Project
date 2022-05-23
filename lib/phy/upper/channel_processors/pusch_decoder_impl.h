@@ -51,6 +51,9 @@ public:
     decoder(std::move(dec)),
     crc_set({std::move(crcs.crc16), std::move(crcs.crc24A), std::move(crcs.crc24B)})
   {
+    srsran_assert(crc_set.crc16, "Invalid CRC16 calculator.");
+    srsran_assert(crc_set.crc24A, "Invalid CRC24A calculator.");
+    srsran_assert(crc_set.crc24B, "Invalid CRC24B calculator.");
     srsran_assert(crc_set.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Wrong TB CRC calculator.");
     srsran_assert(crc_set.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Wrong TB CRC calculator.");

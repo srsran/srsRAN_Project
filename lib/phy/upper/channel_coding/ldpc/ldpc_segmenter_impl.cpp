@@ -25,6 +25,9 @@ static constexpr unsigned BITS_PER_BYTE = 8;
 
 ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
 {
+  srsran_assert(c.crc16, "Invalid CRC16 calculator.");
+  srsran_assert(c.crc24A, "Invalid CRC24A calculator.");
+  srsran_assert(c.crc24B, "Invalid CRC24B calculator.");
   srsran_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
   srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
   srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");

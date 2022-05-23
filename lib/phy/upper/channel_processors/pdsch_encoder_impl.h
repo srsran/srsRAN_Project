@@ -34,7 +34,11 @@ public:
                      std::unique_ptr<ldpc_encoder>&      enc,
                      std::unique_ptr<ldpc_rate_matcher>& rm) :
     segmenter(std::move(seg)), encoder(std::move(enc)), rate_matcher(std::move(rm))
-  {}
+  {
+    srsran_assert(segmenter, "Invalid LDPC segmenter.");
+    srsran_assert(encoder, "Invalid LDPC encoder.");
+    srsran_assert(rate_matcher, "Invalid LDPC rate matcher.");
+  }
 
   // See interface for the documentation.
   void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override;
