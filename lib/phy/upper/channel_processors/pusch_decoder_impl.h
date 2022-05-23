@@ -61,7 +61,7 @@ public:
 
   // See interface for the documentation.
   void decode(span<uint8_t>                    transport_block,
-              statistics&                      info,
+              statistics&                      stats,
               rx_softbuffer*                   soft_codeword,
               span<const log_likelihood_ratio> llrs,
               const configuration&             cfg) override;

@@ -63,6 +63,8 @@ int main()
   std::unique_ptr<pusch_decoder> decoder = pusch_decoder_factory->create();
   TESTASSERT(decoder);
 
+  pusch_decoder::statistics dec_stats = {};
+
   rx_softbuffer_pool_description pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
@@ -100,8 +102,7 @@ int main()
     rx_softbuffer* softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
     TESTASSERT(softbuffer);
 
-    pusch_decoder::statistics    dec_stats = {};
-    pusch_decoder::configuration dec_cfg   = {};
+    pusch_decoder::configuration dec_cfg = {};
 
     std::size_t cw_offset  = 0;
     dec_cfg.new_data       = true;
@@ -119,9 +120,10 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
-      TESTASSERT_EQ(
-          dec_stats.nof_codeblocks_decoded, dec_stats.nof_codeblocks_total, "Error reporting decoded codeblocks.");
-      TESTASSERT(dec_stats.nof_ldpc_iterations < 2.2, "Too many decoder iterations.");
+      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_samples(),
+                    dec_stats.nof_codeblocks_total,
+                    "Error reporting decoded codeblocks.");
+      TESTASSERT(dec_stats.ldpc_decoder_stats.get_max() <= 2, "Too many decoder iterations.");
 
       // Force all CRCs to false to test LLR combining.
       softbuffer->reset_codeblocks_crc();
@@ -143,11 +145,11 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed (no early stop).");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly (no early stop).");
-      TESTASSERT_EQ(dec_stats.nof_codeblocks_decoded,
+      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_samples(),
                     dec_stats.nof_codeblocks_total,
                     "Error reporting decoded codeblocks (no early stop).");
       TESTASSERT_EQ(dec_cfg.nof_ldpc_iterations,
-                    dec_stats.nof_ldpc_iterations,
+                    dec_stats.ldpc_decoder_stats.get_min(),
                     "Something wrong with iteration counting (no early stop).");
 
       // Force all CRCs to false to test LLR combining.
