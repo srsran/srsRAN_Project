@@ -59,7 +59,8 @@ public:
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
   /// \param[in]  crc     Pointer to a CRC calculator for early stopping.
   /// \param[in]  cfg     Decoder configuration.
-  /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder.
+  /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder. Otherwise, no
+  ///         value is returned.
   virtual optional<unsigned>
   decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
