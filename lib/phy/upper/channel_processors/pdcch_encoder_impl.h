@@ -17,8 +17,8 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_constants.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsgnb/ran/pdcch/pdcch_constants.h"
 
 namespace srsgnb {
 
@@ -29,6 +29,15 @@ namespace srsgnb {
 class pdcch_encoder_impl : public pdcch_encoder
 {
 private:
+  /// Defines CRC length in bits.
+  static constexpr unsigned CRC_LEN = 24;
+
+  /// Defines RNTI length in bits.
+  static constexpr unsigned RNTI_LEN = 16;
+
+  /// Defines the maximum payload size in bits, including 24 CRC bits.
+  static constexpr unsigned MAX_K = pdcch_constants::MAX_DCI_PAYLOAD_SIZE + CRC_LEN;
+
   std::unique_ptr<crc_calculator>     crc24c;
   std::unique_ptr<polar_interleaver>  interleaver;
   std::unique_ptr<polar_allocator>    alloc;

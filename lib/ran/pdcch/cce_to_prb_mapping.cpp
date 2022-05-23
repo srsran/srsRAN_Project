@@ -12,14 +12,15 @@
 
 using namespace srsgnb;
 
-using reg_index_list = static_vector<uint16_t, 6 * 16>;
+// Describes a REG index list of unsigned 16 bit indicating the REG index.
+using reg_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
 
 static reg_index_list cce_to_reg_mapping_non_interleaved(unsigned aggregation_level, unsigned cce_index)
 {
   reg_index_list result;
 
   unsigned reg_index_begin = cce_index;
-  unsigned reg_index_end   = cce_index + 6 * aggregation_level;
+  unsigned reg_index_end   = cce_index + pdcch_constants::NOF_REG_PER_CCE * aggregation_level;
   for (unsigned reg_index = reg_index_begin; reg_index != reg_index_end; ++reg_index) {
     result.push_back(reg_index);
   }
@@ -49,11 +50,12 @@ static reg_index_list cce_to_reg_mapping_interleaved(unsigned N_rb_coreset,
                 "Invalid CORESET configuration.");
 
   // Number of REG bundles in a CCE.
-  unsigned nof_reg_bundle_in_cce = 6 / L;
+  unsigned nof_reg_bundle_in_cce = pdcch_constants::NOF_REG_PER_CCE / L;
 
   // Calculate the REG bundle boundaries for the PDCCH transmission.
   unsigned reg_bundle_index_begin = cce_index * nof_reg_bundle_in_cce;
-  unsigned reg_bundle_index_end   = (cce_index + 6 * aggregation_level) * nof_reg_bundle_in_cce;
+  unsigned reg_bundle_index_end =
+      (cce_index + pdcch_constants::NOF_REG_PER_CCE * aggregation_level) * nof_reg_bundle_in_cce;
 
   // For each REG bundle index in the CCE...
   for (unsigned reg_bundle_index = reg_bundle_index_begin; reg_bundle_index != reg_bundle_index_end;
@@ -95,7 +97,7 @@ static prb_index_list reg_to_prb_mapping_coreset0(unsigned              N_corese
 }
 
 static prb_index_list reg_to_prb_mapping_other(unsigned              N_bwp_start,
-                                               bounded_bitset<45>    freq_resources,
+                                               freq_resource_bitmap  freq_resources,
                                                unsigned              N_symb_coreset,
                                                const reg_index_list& reg_indexes)
 {
@@ -146,11 +148,11 @@ prb_index_list srsgnb::cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
   return reg_to_prb_mapping_coreset0(N_coreset0_start, N_coreset0_size, N_symb_coreset, reg_indexes);
 }
 
-prb_index_list srsgnb::cce_to_prb_mapping_non_interleaved(unsigned           N_bwp_start,
-                                                          bounded_bitset<45> freq_resources,
-                                                          unsigned           N_symb_coreset,
-                                                          unsigned           aggregation_level,
-                                                          unsigned           cce_index)
+prb_index_list srsgnb::cce_to_prb_mapping_non_interleaved(unsigned             N_bwp_start,
+                                                          freq_resource_bitmap freq_resources,
+                                                          unsigned             N_symb_coreset,
+                                                          unsigned             aggregation_level,
+                                                          unsigned             cce_index)
 {
   // Calculate the REG indexes.
   reg_index_list reg_indexes = cce_to_reg_mapping_non_interleaved(aggregation_level, cce_index);
@@ -159,14 +161,14 @@ prb_index_list srsgnb::cce_to_prb_mapping_non_interleaved(unsigned           N_b
   return reg_to_prb_mapping_other(N_bwp_start, freq_resources, N_symb_coreset, reg_indexes);
 }
 
-prb_index_list srsgnb::cce_to_prb_mapping_interleaved(unsigned           N_bwp_start,
-                                                      bounded_bitset<45> freq_resources,
-                                                      unsigned           N_symb_coreset,
-                                                      unsigned           reg_bundle_size,
-                                                      unsigned           interleaver_size,
-                                                      unsigned           shift_index,
-                                                      unsigned           aggregation_level,
-                                                      unsigned           cce_index)
+prb_index_list srsgnb::cce_to_prb_mapping_interleaved(unsigned             N_bwp_start,
+                                                      freq_resource_bitmap freq_resources,
+                                                      unsigned             N_symb_coreset,
+                                                      unsigned             reg_bundle_size,
+                                                      unsigned             interleaver_size,
+                                                      unsigned             shift_index,
+                                                      unsigned             aggregation_level,
+                                                      unsigned             cce_index)
 {
   // Calculate the REG indexes.
   reg_index_list reg_indexes = cce_to_reg_mapping_interleaved(freq_resources.count() * 6,

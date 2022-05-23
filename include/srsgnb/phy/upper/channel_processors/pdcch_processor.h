@@ -12,9 +12,9 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_H
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_constants.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {

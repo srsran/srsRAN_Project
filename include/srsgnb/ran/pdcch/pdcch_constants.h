@@ -40,20 +40,16 @@ static constexpr unsigned MAX_CORESET_DURATION = 3;
 /// Define the maximum aggregation level. Maximum number of CCE.
 static constexpr unsigned MAX_AGGREGATION_LEVEL = 16;
 
+/// \brief Define the maximum number of RBs that can be used for a single PDCCH transmission.
+///
+/// It coincides with the maximum number of REG that can be used for a single PDSHC transmission.
+static constexpr unsigned MAX_NOF_RB_PDCCH = MAX_AGGREGATION_LEVEL * NOF_REG_PER_CCE;
+
 /// Define the maximum number of RE used by PDCCH.
-static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_AGGREGATION_LEVEL * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB;
+static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_NOF_RB_PDCCH * NOF_RE_PDCCH_PER_RB;
 
 /// Define the maximum number of encoded bits in a PDCCH transmission.
 static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
-
-/// Defines CRC length in bits.
-static constexpr unsigned CRC_LEN = 24;
-
-/// Defines RNTI length in bits.
-static constexpr unsigned RNTI_LEN = 16;
-
-/// Defines the maximum payload size in bits, including 24 CRC bits.
-static constexpr unsigned MAX_K = MAX_DCI_PAYLOAD_SIZE + CRC_LEN;
 
 } // namespace pdcch_constants
 } // namespace srsgnb

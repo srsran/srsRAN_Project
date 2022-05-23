@@ -12,7 +12,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_ENCODER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_constants.h"
+#include "srsgnb/ran/pdcch/pdcch_constants.h"
 #include <memory>
 
 namespace srsgnb {
