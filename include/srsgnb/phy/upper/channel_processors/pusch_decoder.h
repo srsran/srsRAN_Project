@@ -33,8 +33,8 @@ public:
   struct statistics {
     /// Denotes whether the received transport block passed the CRC.
     bool tb_crc_ok = false;
-    /// Number of LDPC iterations???
-    unsigned nof_ldpc_iters = 0;
+    /// Average number of LDPC iterations across all codeblocks of the current transport block.
+    float nof_ldpc_iterations = 0;
   };
 
   /// Alias for LDPC decoding algorithm configuration.

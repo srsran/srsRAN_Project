@@ -93,6 +93,7 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
       TESTASSERT(std::equal(rx_tb.cbegin(), rx_tb.cend(), ref_tb.cbegin()), "TB not decoded correctly.");
+      TESTASSERT(dec_stats.nof_ldpc_iterations < 2.2, "Too many decoder iterations.");
 
       // Force all CRCs to false to test LLR combining.
       softbuffer->reset_codeblocks_crc();
