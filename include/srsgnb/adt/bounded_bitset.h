@@ -435,21 +435,19 @@ public:
         continue;
       }
 
-      size_t startbit = 0;
       if (i == startword) {
-        startbit = startpos % bits_per_word;
+        w &= mask_msb_zeros<word_t>(startpos % bits_per_word);
       }
 
-      size_t endbit = bits_per_word;
       if (i == lastword) {
-        endbit = bits_per_word - (endpos % bits_per_word);
+        w &= mask_lsb_zeros<word_t>(endpos % bits_per_word);
       }
 
-      for (size_t bitpos = startbit; bitpos != endbit; ++bitpos) {
-        if ((w & maskbit(bitpos)) != static_cast<word_t>(0)) {
-          size_t j = i * bits_per_word + bitpos;
-          function(j);
+      for (size_t bitpos = i * bits_per_word; w != static_cast<word_t>(0); ++bitpos) {
+        if ((w & static_cast<word_t>(1)) != static_cast<word_t>(0)) {
+          function(bitpos);
         }
+        w = (w >> static_cast<word_t>(1));
       }
     }
   }
