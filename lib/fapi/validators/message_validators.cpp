@@ -14,6 +14,7 @@
 #include "dl_pdsch_pdu.h"
 #include "dl_ssb_pdu.h"
 #include "helpers.h"
+#include "uci_pdus.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -431,6 +432,42 @@ error_type<validator_report> srsgnb::fapi::validate_rach_indication(const rach_i
       success &= validate_timing_advance_offset_ns(preamble.timing_advance_offset_ns, report);
       success &= validate_preamble_power(preamble.preamble_pwr, report);
       // NOTE: Preamble SNR property uses the whole range of the property,so it will not be validated.
+    }
+  }
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+error_type<validator_report> srsgnb::fapi::validate_uci_indication(const uci_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, message_type_id::uci_indication, report);
+  success &= validate_slot(msg.slot, message_type_id::uci_indication, report);
+
+  // Validate each PDU.
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case uci_pdu_type::PUSCH:
+        success &= validate_uci_pusch_pdu(pdu.pusch_pdu, report);
+        break;
+      case uci_pdu_type::PUCCH_format_0_1:
+        success &= validate_uci_pucch_format01_pdu(pdu.pucch_pdu_f01, report);
+        break;
+      case uci_pdu_type::PUCCH_format_2_3_4:
+        success &= validate_uci_pucch_format234_pdu(pdu.pucch_pdu_f234, report);
+        break;
+      default:
+        srsran_assert(0, "Invalid pdu_type");
+        report.append(static_cast<unsigned>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
+        break;
     }
   }
 

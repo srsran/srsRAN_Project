@@ -23,7 +23,7 @@ inline bool validate_field(int32_t           min,
                            int32_t           value,
                            const char*       property,
                            message_type_id   msg_type,
-                           dl_pdu_type       pdu_type,
+                           unsigned          pdu_type,
                            validator_report& report)
 {
   if (min <= value && value <= max) {

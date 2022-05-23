@@ -469,7 +469,7 @@ static void test_uci_add_pucch_format_2_3_4_pdu()
   builder.add_uci_pucch_pdu_format_2_3_4_pdu(handle, rnti, format);
 
   TESTASSERT_EQ(1, msg.pdus.size());
-  TESTASSERT_EQ(uci_pdu_type::PUCCH_format_2_3, msg.pdus.back().pdu_type);
+  TESTASSERT_EQ(uci_pdu_type::PUCCH_format_2_3_4, msg.pdus.back().pdu_type);
 
   const auto& pdu = msg.pdus.back().pucch_pdu_f234;
   TESTASSERT_EQ(rnti, pdu.rnti);

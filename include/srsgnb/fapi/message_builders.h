@@ -1701,7 +1701,7 @@ public:
     msg.pdus.emplace_back();
     auto& pdu = msg.pdus.back();
 
-    pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3;
+    pdu.pdu_type = uci_pdu_type::PUCCH_format_2_3_4;
 
     uci_pucch_pdu_format_2_3_4_builder builder(pdu.pucch_pdu_f234);
     builder.set_basic_parameters(handle, rnti, type);

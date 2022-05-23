@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 
 /// This validator checks the PDCCH PDU.
-static constexpr dl_pdu_type pdu_type = dl_pdu_type::PDCCH;
+static constexpr unsigned pdu_type = static_cast<unsigned>(dl_pdu_type::PDCCH);
 
 /// Validates the CORESET BWP size property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
 static bool validate_coreset_bwp_size(message_type_id msg_type, unsigned value, validator_report& report)

@@ -29,18 +29,18 @@ struct validator_report {
     std::pair<int32_t, int32_t> expected_value_range;
     const char*                 property_name;
     message_type_id             message_type;
-    optional<dl_pdu_type>       pdu_type;
+    optional<unsigned>          pdu_type;
 
     error_report(int32_t                     value,
                  std::pair<int32_t, int32_t> range,
                  const char*                 name,
                  message_type_id             message_type,
-                 dl_pdu_type                 pdu_type) :
+                 unsigned                    pdu_type) :
       value(value), expected_value_range(range), property_name(name), message_type(message_type), pdu_type(pdu_type)
     {
     }
 
-    error_report(int32_t value, const char* name, message_type_id message_type, dl_pdu_type pdu_type) :
+    error_report(int32_t value, const char* name, message_type_id message_type, unsigned pdu_type) :
       value(value), property_name(name), message_type(message_type), pdu_type(pdu_type)
     {
     }
@@ -63,13 +63,13 @@ struct validator_report {
               std::pair<int32_t, int32_t> range,
               const char*                 name,
               message_type_id             message_type,
-              dl_pdu_type                 pdu_type)
+              unsigned                    pdu_type)
   {
     reports.emplace_back(value, range, name, message_type, pdu_type);
   }
 
   /// Appends an error report.
-  void append(int32_t value, const char* name, message_type_id message_type, dl_pdu_type pdu_type)
+  void append(int32_t value, const char* name, message_type_id message_type, unsigned pdu_type)
   {
     reports.emplace_back(value, name, message_type, pdu_type);
   }

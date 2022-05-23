@@ -20,7 +20,7 @@ using namespace fapi;
 static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
 
 /// This validator checks the PDSCH PDU.
-static constexpr dl_pdu_type pdu_type = dl_pdu_type::PDSCH;
+static constexpr unsigned pdu_type = static_cast<unsigned>(dl_pdu_type::PDSCH);
 
 /// Validates the RNTI property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
 static bool validate_rnti(unsigned value, validator_report& report)

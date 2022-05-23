@@ -973,7 +973,7 @@ struct uci_pucch_pdu_format_2_3_4 {
   uci_payload_pusch_pucch uci_part2;
 };
 
-enum class uci_pdu_type : uint16_t { PUSCH, PUCCH_format_0_1, PUCCH_format_2_3 };
+enum class uci_pdu_type : uint16_t { PUSCH, PUCCH_format_0_1, PUCCH_format_2_3_4 };
 
 /// Reception data indication PDU information.
 struct uci_indication_pdu {

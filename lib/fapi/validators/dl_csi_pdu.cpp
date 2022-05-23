@@ -20,7 +20,7 @@ using namespace fapi;
 static constexpr message_type_id msg_type = message_type_id::dl_tti_request;
 
 /// This validator checks the CSI-RS PDU.
-static constexpr dl_pdu_type pdu_type = dl_pdu_type::CSI_RS;
+static constexpr unsigned pdu_type = static_cast<unsigned>(dl_pdu_type::CSI_RS);
 
 /// Validates the subcarrier spacing property of the CSI PDU, as per SCF-222 v4.0 section 3.4.2.3.
 static bool validate_scs(unsigned value, validator_report& report)
