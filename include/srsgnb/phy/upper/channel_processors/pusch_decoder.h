@@ -56,8 +56,9 @@ public:
   /// \param[in,out] soft_codeword   A soft-buffer for combining log-likelihood ratios from different retransmissions.
   /// \param[in]     llrs            The received codeword, as a sequence of log-likelihood ratios.
   /// \param[in]     new_data        Flags new data transmissions (as opposed to retransmissions of previously failed
-  /// transport blocks). \param[in]     blk_cfg         Transport block configuration. \param[in]     alg_cfg LDPC
-  /// decoding algorithm configuration.
+  ///                                transport blocks).
+  /// \param[in]     blk_cfg         Transport block configuration.
+  /// \param[in]     alg_cfg         LDPC decoding algorithm configuration.
   virtual void decode(span<uint8_t>            transport_block,
                       statistics&              info,
                       rx_softbuffer*           soft_codeword,
