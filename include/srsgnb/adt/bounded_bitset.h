@@ -403,6 +403,57 @@ public:
     return find_first_reversed_(startpos, endpos, value);
   }
 
+  template <class T>
+  inline void for_each(size_t startpos, size_t endpos, const T&& function, bool value = true) const noexcept
+  {
+    assert_range_bounds_(startpos, endpos);
+
+    if (all()) {
+      for (size_t bitpos = startpos; bitpos != endpos; ++bitpos) {
+        function(bitpos);
+      }
+      return;
+    }
+
+    size_t startword = startpos / bits_per_word;
+    size_t lastword  = (endpos + bits_per_word - 1) / bits_per_word;
+    for (size_t i = startword; i != lastword; ++i) {
+      word_t w = buffer[i];
+      if (not value) {
+        w = ~w;
+      }
+
+      if (w == 0) {
+        continue;
+      }
+
+      if (w == static_cast<word_t>(std::numeric_limits<word_t>::max())) {
+        for (size_t bitpos = 0; bitpos != bits_per_word; ++bitpos) {
+          size_t j = i * bits_per_word + bitpos;
+          function(j);
+        }
+        continue;
+      }
+
+      size_t startbit = 0;
+      if (i == startword) {
+        startbit = startpos % bits_per_word;
+      }
+
+      size_t endbit = bits_per_word;
+      if (i == lastword) {
+        endbit = bits_per_word - (endpos % bits_per_word);
+      }
+
+      for (size_t bitpos = startbit; bitpos != endbit; ++bitpos) {
+        if ((w & maskbit(bitpos)) != static_cast<word_t>(0)) {
+          size_t j = i * bits_per_word + bitpos;
+          function(j);
+        }
+      }
+    }
+  }
+
   /// \brief Checks if all bits in the bitset are set to 1.
   /// \return Returns true if all bits are 1.
   bool all() const noexcept
