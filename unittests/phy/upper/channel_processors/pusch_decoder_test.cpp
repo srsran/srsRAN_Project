@@ -92,7 +92,7 @@ int main()
       new_data = false;
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
-      TESTASSERT(std::equal(rx_tb.cbegin(), rx_tb.cend(), ref_tb.cbegin()), "TB not decoded correctly.");
+      TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
       TESTASSERT(dec_stats.nof_ldpc_iterations < 2.2, "Too many decoder iterations.");
 
       // Force all CRCs to false to test LLR combining.
