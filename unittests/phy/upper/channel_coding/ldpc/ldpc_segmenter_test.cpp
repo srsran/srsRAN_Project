@@ -27,7 +27,7 @@ int main()
 {
   std::unique_ptr<ldpc_segmenter> segmenter = create_ldpc_segmenter();
 
-  segment_config seg_cfg{};
+  segmenter_config seg_cfg{};
 
   for (const auto& test_data : ldpc_segmenter_test_data) {
     seg_cfg.base_graph     = static_cast<base_graph_t>(test_data.bg - 1);

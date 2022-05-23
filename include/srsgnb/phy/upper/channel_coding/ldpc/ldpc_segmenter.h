@@ -40,7 +40,7 @@ public:
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
   virtual void segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
                           span<const uint8_t>                                 transport_block,
-                          const segment_config&                               cfg) = 0;
+                          const segmenter_config&                             cfg) = 0;
 
   /// \brief Splits a codeword into codeblocks and computes the metadata of all codeblocks.
   ///
@@ -55,7 +55,7 @@ public:
   virtual void segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
                           span<const int8_t>                                       codeword_llrs,
                           unsigned                                                 tbs,
-                          const segment_config&                                    cfg) = 0;
+                          const segmenter_config&                                  cfg) = 0;
 };
 
 std::unique_ptr<ldpc_segmenter> create_ldpc_segmenter();

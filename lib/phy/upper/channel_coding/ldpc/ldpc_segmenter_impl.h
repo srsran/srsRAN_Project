@@ -45,13 +45,13 @@ public:
   // See interface for the documentation.
   void segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
                   span<const uint8_t>                                 transport_block,
-                  const segment_config&                               cfg) override;
+                  const segmenter_config&                             cfg) override;
 
   // See interface for the documentation.
   void segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
                   span<const int8_t>                                       codeword_llrs,
                   unsigned                                                 tbs,
-                  const segment_config&                                    cfg) override;
+                  const segmenter_config&                                  cfg) override;
 
 private:
   /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
@@ -81,7 +81,7 @@ private:
   };
 
   /// Generates a codeblock metadata structure for the current segment configuration.
-  codeblock_metadata generate_cb_metadata(const segment_internal& seg_extra, const segment_config& cfg) const;
+  codeblock_metadata generate_cb_metadata(const segment_internal& seg_extra, const segmenter_config& cfg) const;
 
   // Data members.
   /// Internal temporary buffer.

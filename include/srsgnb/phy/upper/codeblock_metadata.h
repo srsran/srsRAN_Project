@@ -93,7 +93,7 @@ using described_segment = std::pair<segment_data, codeblock_metadata>;
 using described_rx_codeblock = std::pair<span<const int8_t>, codeblock_metadata>;
 
 /// Gathers all segmentation configuration parameters.
-struct segment_config {
+struct segmenter_config {
   /// Code base graph.
   ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
   /// Redundancy version, values in {0, 1, 2, 3}.

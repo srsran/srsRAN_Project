@@ -1,6 +1,6 @@
 
-#ifndef UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
-#define UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
+#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
+#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/srsvec/copy.h"
@@ -11,14 +11,14 @@ class pdsch_encoder_spy : public pdsch_encoder
 {
 private:
   struct entry_t {
-    segment_config       config;
+    segmenter_config     config;
     std::vector<uint8_t> transport_block;
     std::vector<uint8_t> codeword;
   };
   std::vector<entry_t> entries;
 
 public:
-  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segment_config& cfg) override
+  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override
   { // Generate new entry.
     entry_t entry = {};
     entry.config  = cfg;
@@ -45,4 +45,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
+#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H

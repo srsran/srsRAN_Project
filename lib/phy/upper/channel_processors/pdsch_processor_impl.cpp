@@ -40,7 +40,7 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
   static_vector<uint8_t, MAX_CODEWORD_SIZE>& codeword   = codewords[codeword_id];
 
   // Prepare encoder configuration.
-  segment_config encoder_config;
+  segmenter_config encoder_config;
   encoder_config.base_graph     = pdu.ldpc_base_graph;
   encoder_config.rv             = rv;
   encoder_config.mod            = modulation;

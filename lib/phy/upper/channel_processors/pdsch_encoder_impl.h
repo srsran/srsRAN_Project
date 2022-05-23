@@ -37,7 +37,7 @@ public:
   {}
 
   // See interface for the documentation.
-  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segment_config& cfg) override;
+  void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) override;
 
 private:
   /// Pointer to an LDPC segmenter.

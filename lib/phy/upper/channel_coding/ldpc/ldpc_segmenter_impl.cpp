@@ -108,7 +108,7 @@ static void fill_segment(span<uint8_t>                    segment,
 
 static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGMENTS>& segments,
                             span<const uint8_t>                                       transport_block,
-                            const segment_config&                                     cfg)
+                            const segmenter_config&                                   cfg)
 {
   srsran_assert(segments.empty(), "Argument segments should be empty.");
   srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
@@ -126,7 +126,7 @@ static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGME
 
 void ldpc_segmenter_impl::segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
                                      span<const uint8_t>                                 transport_block,
-                                     const segment_config&                               cfg)
+                                     const segmenter_config&                             cfg)
 {
   check_inputs_tx(described_segments, transport_block, cfg);
 
@@ -202,7 +202,7 @@ void ldpc_segmenter_impl::segment_tx(static_vector<described_segment, MAX_NOF_SE
   assert(cw_length == cw_offset);
 }
 
-static void check_inputs_rx(span<const int8_t> codeword_llrs, const segment_config& cfg)
+static void check_inputs_rx(span<const int8_t> codeword_llrs, const segmenter_config& cfg)
 {
   srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
   srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod), "Wrong number of LLRs.");
@@ -218,7 +218,7 @@ static void check_inputs_rx(span<const int8_t> codeword_llrs, const segment_conf
 void ldpc_segmenter_impl::segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
                                      span<const int8_t>                                       codeword_llrs,
                                      unsigned                                                 tbs,
-                                     const segment_config&                                    cfg)
+                                     const segmenter_config&                                  cfg)
 {
   check_inputs_rx(codeword_llrs, cfg);
 
@@ -270,7 +270,7 @@ void ldpc_segmenter_impl::segment_rx(static_vector<described_rx_codeblock, MAX_N
 }
 
 codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_internal& seg_extra,
-                                                             const segment_config&   cfg) const
+                                                             const segmenter_config& cfg) const
 {
   codeblock_metadata tmp_description = {};
 

@@ -40,7 +40,7 @@ public:
   /// \param[out] codeword         Final PDSCH codeword.
   /// \param[in]  transport_block  Transport block to be transmitted.
   /// \param[in]  cfg              PDSCH configuration parameters.
-  virtual void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segment_config& cfg) = 0;
+  virtual void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) = 0;
 };
 
 std::unique_ptr<pdsch_encoder> create_pdsch_encoder();

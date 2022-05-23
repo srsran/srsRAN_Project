@@ -62,7 +62,7 @@ public:
               rx_softbuffer*           soft_codeword,
               span<const int8_t>       llrs,
               bool                     new_data,
-              const segment_config&    cfg,
+              const segmenter_config&  cfg,
               const algorithm_details& alg_cfg) override;
 
 private:

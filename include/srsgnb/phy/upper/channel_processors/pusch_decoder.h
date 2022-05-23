@@ -64,7 +64,7 @@ public:
                       rx_softbuffer*           soft_codeword,
                       span<const int8_t>       llrs,
                       bool                     new_data,
-                      const segment_config&    blk_cfg,
+                      const segmenter_config&  blk_cfg,
                       const algorithm_details& alg_cfg) = 0;
 };
 

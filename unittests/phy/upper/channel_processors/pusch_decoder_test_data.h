@@ -20,7 +20,7 @@
 namespace srsgnb {
 
 struct test_case_t {
-  segment_config        config;
+  segmenter_config      config;
   std::vector<unsigned> rv_sequence;
   file_vector<int8_t>   llrs;
   file_vector<uint8_t>  transport_block;

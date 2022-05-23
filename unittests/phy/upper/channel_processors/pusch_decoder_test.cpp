@@ -44,7 +44,7 @@ int main()
   rx_softbuffer_pool_description pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
-    segment_config        cfg         = test_data.config;
+    segmenter_config      cfg         = test_data.config;
     std::vector<unsigned> rv_sequence = test_data.rv_sequence;
     std::vector<int8_t>   llrs_all    = test_data.llrs.read();
     TESTASSERT(!llrs_all.empty());

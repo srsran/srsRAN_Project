@@ -12,7 +12,9 @@
 
 using namespace srsgnb;
 
-void pdsch_encoder_impl::encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segment_config& cfg)
+void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
+                                span<const uint8_t>     transport_block,
+                                const segmenter_config& cfg)
 {
   // Clear the buffer.
   d_segments.clear();

@@ -50,7 +50,7 @@ void pusch_decoder_impl::decode(span<uint8_t>            transport_block,
                                 rx_softbuffer*           soft_codeword,
                                 span<const int8_t>       llrs,
                                 const bool               new_data,
-                                const segment_config&    cfg,
+                                const segmenter_config&  cfg,
                                 const algorithm_details& alg_cfg)
 {
   // Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
