@@ -97,14 +97,6 @@ unsigned prime_lower_than(unsigned n);
 /// range_limit_int, preserving the sign.
 int8_t clip_and_quantize(float value, float range_limit_float, float range_limit_int);
 
-/// \brief Saturated sum.
-///
-/// Computes the sum of two numbers and saturates the result to the given limit (in absolute value).
-/// \param[in] a      First summand.
-/// \param[in] b      Second summand.
-/// \param[in] limit  Maximum absolute value of the sum.
-/// \return The sum <tt> a + b </tt>, saturated between <tt> -limit</tt> and \c limit.
-int8_t saturated_sum(int8_t a, int8_t b, int8_t limit);
 } // namespace srsgnb
 
 #endif // SRSGNB_SUPPORT_MATH_UTILS_H
