@@ -46,18 +46,12 @@ public:
 
   /// \brief Decodes a codeblock.
   ///
-  /// \param[out] output  Reconstructed message of information bits.
-  /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
-  /// \param[in]  cfg     Decoder configuration.
-  virtual void decode(span<uint8_t> output, span<const int8_t> input, const configuration& cfg) = 0;
-
-  /// \brief Decodes a codeblock.
-  ///
   /// The CRC is verified after each iteration allowing, when successful, an early stop of the decoding process.
   ///
   /// \param[out] output  Reconstructed message of information bits.
   /// \param[in]  input   Log-likelihood ratios of the codeblock to be decoded.
-  /// \param[in]  crc     Pointer to a CRC calculator for early stopping.
+  /// \param[in]  crc     Pointer to a CRC calculator for early stopping. Set to \c nullptr for disabling early
+  ///                     stopping.
   /// \param[in]  cfg     Decoder configuration.
   /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder. Otherwise, no
   ///         value is returned.

@@ -92,7 +92,7 @@ int main()
         std::vector<uint8_t> decoded(msg_length);
         std::vector<int8_t>  llrs(length);
         std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
-        dec_generic->decode(decoded, llrs, cfg_dec);
+        dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
         TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
       }
       // check full-length codeblock
@@ -103,7 +103,7 @@ int main()
       std::vector<uint8_t> decoded(msg_length);
       std::vector<int8_t>  llrs(max_cb_length);
       std::transform(cblock_i.begin(), cblock_i.end(), llrs.begin(), compute_llrs);
-      dec_generic->decode(decoded, llrs, cfg_dec);
+      dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
       TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
     }
   }
