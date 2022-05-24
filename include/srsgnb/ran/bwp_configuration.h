@@ -20,12 +20,15 @@ const size_t CORESET_FREQ_DOMAIN_RESOURCE_SIZE = 45;
 /// \remark See TS 38.331, "maxCoReSetDuration".
 const size_t MAX_CORESET_DURATION = 3;
 
+/// Max number of CORESETs per BWP per cell (including UE-specific and common CORESETs).
+const size_t MAX_NOF_CORESETS_PER_BWP = 3;
+
 /// \brief CORESET identifier. This value is UE-specific, which means that a UE can have up to
 /// "maxNrofControlResourceSets" CORESETS configured.
 /// \remark See TS 38.331, "maxNrofControlResourceSets".
 enum coreset_id : uint8_t { MIN_CORESET_ID = 0, MAX_CORESET_ID = 11, MAX_NOF_CORESETS = 12 };
 
-inline coreset_id to_coreset_id(unsigned cs_id)
+constexpr inline coreset_id to_coreset_id(unsigned cs_id)
 {
   return static_cast<coreset_id>(cs_id);
 }
@@ -89,8 +92,10 @@ struct search_space_configuration {
 
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"
 struct pdcch_configuration_common {
-  /// Contains Coreset#0 and common Coreset. Size: (0..2).
-  slot_vector<coreset_configuration> coresets;
+  /// Contains Coreset#0.
+  coreset_configuration coreset0;
+  /// Contains common Coreset.
+  coreset_configuration common_coreset;
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
   slot_vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
@@ -99,6 +104,15 @@ struct pdcch_configuration_common {
   /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
   search_space_id ra_search_space_id;
 };
+
+/// \remark See TS 38.331, "BWP-Id".
+enum bwp_id_t : uint8_t { MIN_BWP_ID = 0, MAX_BWP_ID = 3, MAX_NOF_BWPS = 4 };
+
+/// Converts integer value to BWP-Id".
+constexpr inline bwp_id_t to_bwp_id(std::underlying_type_t<bwp_id_t> value)
+{
+  return static_cast<bwp_id_t>(value);
+}
 
 /// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.
 /// \remark See TS 38.331, Bandwidth-Part (BWP).

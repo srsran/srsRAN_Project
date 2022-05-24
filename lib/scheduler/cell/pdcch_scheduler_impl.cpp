@@ -216,21 +216,27 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resourc
   const bwp_configuration&          bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
   const search_space_configuration& ss_cfg =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
-  const coreset_configuration& cs_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets[ss_cfg.cs_id];
+  const coreset_configuration* cs_cfg = nullptr;
+  if (ss_cfg.cs_id == to_coreset_id(0)) {
+    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+  } else {
+    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
+    srsran_sanity_check(cs_cfg->id == ss_cfg.cs_id, "Invalid SearchSpace CoresetId={}", ss_cfg.cs_id);
+  }
 
-  return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_dl_format::f1_0);
+  return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, *cs_cfg, ss_cfg, aggr_lvl, dci_dl_format::f1_0);
 }
 
 pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                                               rnti_t                        rnti,
                                                               const ue_cell_configuration&  user,
-                                                              du_bwp_id_t                   bwp_id,
+                                                              bwp_id_t                      bwpid,
                                                               search_space_id               ss_id,
                                                               aggregation_level             aggr_lvl,
                                                               dci_dl_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwp_id];
+  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwpid];
   const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
   const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
 
@@ -240,13 +246,13 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
 pdcch_ul_information* pdcch_scheduler_impl::alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                                               rnti_t                        rnti,
                                                               const ue_cell_configuration&  user,
-                                                              du_bwp_id_t                   bwp_id,
+                                                              bwp_id_t                      bwpid,
                                                               search_space_id               ss_id,
                                                               aggregation_level             aggr_lvl,
                                                               dci_ul_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwp_id];
+  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwpid];
   const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
   const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
 

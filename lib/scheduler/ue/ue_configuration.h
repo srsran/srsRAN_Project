@@ -25,11 +25,11 @@ public:
 
   /// List of UE CORESETs.
   /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
-  slot_vector<coreset_configuration> dl_coresets;
+  slot_array<coreset_configuration, MAX_NOF_CORESETS> dl_coresets;
 
   /// List of UE SearchSpaces.
   /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
-  slot_vector<search_space_configuration> dl_search_spaces;
+  slot_array<search_space_configuration, MAX_NOF_SEARCH_SPACES> dl_search_spaces;
 };
 
 } // namespace srsgnb

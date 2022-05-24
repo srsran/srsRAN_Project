@@ -47,7 +47,7 @@ public:
   pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          du_bwp_id_t                   bwp_id,
+                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl,
                                           dci_dl_format                 dci_fmt) override
@@ -59,7 +59,7 @@ public:
   pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
                                           rnti_t                        rnti,
                                           const ue_cell_configuration&  user,
-                                          du_bwp_id_t                   bwp_id,
+                                          bwp_id_t                      bwp_id,
                                           search_space_id               ss_id,
                                           aggregation_level             aggr_lvl,
                                           dci_ul_format                 dci_fmt) override
@@ -133,7 +133,7 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
-  const du_bwp_id_t     bwp_id      = 0;
+  const bwp_id_t        bwp_id      = to_bwp_id(0);
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 

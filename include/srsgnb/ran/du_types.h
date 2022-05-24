@@ -22,8 +22,6 @@ enum du_ue_index_t : uint16_t { MIN_DU_UE_INDEX = 0, MAX_DU_UE_INDEX = 1023, MAX
 /// Maximum number of cells supported by DU (implementation-defined).
 enum du_cell_index_t : uint16_t { MIN_DU_CELL_INDEX = 0, MAX_DU_CELL_INDEX = 15, MAX_NOF_DU_CELLS = 16 };
 
-using du_bwp_id_t = uint16_t;
-
 /// Convert integer to DU UE index type.
 constexpr inline du_ue_index_t to_du_ue_index(std::underlying_type_t<du_ue_index_t> idx)
 {

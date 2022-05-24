@@ -9,9 +9,9 @@ ue_cell_configuration::ue_cell_configuration(const cell_configuration&          
 {
   // Apply Common Config.
   dl_bwps.emplace(0, cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params);
-  for (const coreset_configuration& cs_cfg : cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.coresets) {
-    dl_coresets.emplace(cs_cfg.id, cs_cfg);
-  }
+  dl_coresets.emplace(to_coreset_id(0), cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
+  dl_coresets.emplace(cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.id,
+                      cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset);
   for (const search_space_configuration& ss_cfg :
        cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces) {
     dl_search_spaces.emplace(ss_cfg.id, ss_cfg);
@@ -25,7 +25,15 @@ void ue_cell_configuration::reconfigure(const serving_cell_ue_configuration_requ
 {
   const bwp_downlink_dedicated& dl_bwp_cfg = cell_cfg_ded_req.dl_bwps[0];
   for (coreset_id cs_id : dl_bwp_cfg.pdcch_cfg->coreset_to_rel_list) {
-    dl_coresets.erase(cs_id);
+    if (cs_id == cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.id) {
+      // TS 38.331, "PDCCH-Config" - In case network reconfigures control resource set with the same
+      // ControlResourceSetId as used for commonControlResourceSet configured via PDCCH-ConfigCommon,
+      // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
+      // servingCellConfigCommon.
+      dl_coresets[cs_id] = cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
+    } else {
+      dl_coresets.erase(cs_id);
+    }
   }
   for (const coreset_configuration& cs_cfg : dl_bwp_cfg.pdcch_cfg->coreset_to_addmod_list) {
     dl_coresets.insert(cs_cfg.id, cs_cfg);

@@ -80,6 +80,61 @@ inline search_space_configuration make_default_ue_search_space_config()
   return cfg;
 }
 
+inline bwp_configuration make_default_init_bwp()
+{
+  bwp_configuration cfg{};
+  cfg.scs         = subcarrier_spacing::kHz15;
+  cfg.crbs        = {0, 52};
+  cfg.cp_extended = false;
+  return cfg;
+}
+
+inline dl_config_common make_default_dl_config_common()
+{
+  dl_config_common cfg{};
+
+  // Configure FrequencyInfoDL.
+  cfg.freq_info_dl.offset_to_point_a = 0;
+  cfg.freq_info_dl.scs_carrier_list.emplace_back();
+  cfg.freq_info_dl.scs_carrier_list.back().scs               = subcarrier_spacing::kHz15;
+  cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
+  cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = 52;
+
+  // Configure initial DL BWP.
+  cfg.init_dl_bwp.generic_params        = make_default_init_bwp();
+  cfg.init_dl_bwp.pdcch_common.coreset0 = make_default_coreset_config();
+  cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
+  cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
+  cfg.init_dl_bwp.pdcch_common.ra_search_space_id = to_search_space_id(1);
+
+  return cfg;
+}
+
+inline ul_config_common make_default_ul_config_common()
+{
+  ul_config_common cfg{};
+  cfg.init_ul_bwp.generic_params = make_default_init_bwp();
+  cfg.init_ul_bwp.rach_cfg_common.emplace();
+  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window   = 10;
+  cfg.init_ul_bwp.pusch_cfg_common.emplace();
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 2;
+  return cfg;
+}
+
+inline ssb_configuration make_default_ssb_config()
+{
+  ssb_configuration cfg{};
+  cfg.scs        = subcarrier_spacing::kHz15;
+  cfg.ssb_period = 10;
+  // TODO: Add remaining.
+  return cfg;
+}
+
+// TODO: Temporary. Remove once DU manager takes config from file or orchestrator.
 inline mac_cell_creation_request make_default_mac_cell_creation_request()
 {
   mac_cell_creation_request msg{};
@@ -87,35 +142,13 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.cell_index = to_du_cell_index(0);
   msg.pci        = 1;
 
-  msg.scs_common = subcarrier_spacing::kHz15;
-  msg.dl_carrier = make_default_carrier_configuration();
-  msg.ul_carrier = make_default_carrier_configuration();
-
-  // Configure FrequencyInfoDL.
-  msg.dl_cfg_common.freq_info_dl.offset_to_point_a = 0;
-  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back();
-  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs               = subcarrier_spacing::kHz15;
-  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
-  msg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = 52;
-
-  // Configure initial DL BWP.
-  msg.dl_cfg_common.init_dl_bwp.generic_params.scs  = subcarrier_spacing::kHz15;
-  msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {0, 52};
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets.emplace(0, make_default_coreset_config());
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id = to_search_space_id(1);
-
-  // Configure initial UL BWP.
-  msg.ul_cfg_common.init_ul_bwp.generic_params = msg.dl_cfg_common.init_dl_bwp.generic_params;
-  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common.emplace();
-  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
-  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
-  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
-  msg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window   = 10;
-  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common.emplace();
-  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
-  msg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 2;
+  msg.scs_common    = subcarrier_spacing::kHz15;
+  msg.ssb_scs       = subcarrier_spacing::kHz15;
+  msg.ssb_cfg       = make_default_ssb_config();
+  msg.dl_carrier    = make_default_carrier_configuration();
+  msg.ul_carrier    = make_default_carrier_configuration();
+  msg.dl_cfg_common = make_default_dl_config_common();
+  msg.ul_cfg_common = make_default_ul_config_common();
 
   // TODO: Remaining fields.
 
