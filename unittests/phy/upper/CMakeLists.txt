@@ -35,3 +35,7 @@ add_test(re_pattern_test re_pattern_test)
 add_executable(rx_softbuffer_pool_test rx_softbuffer_pool_test.cpp)
 target_link_libraries(rx_softbuffer_pool_test srsgnb_upper_phy_support srslog)
 add_test(rx_softbuffer_pool_test rx_softbuffer_pool_test)
+
+add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
+target_link_libraries(log_likelihood_ratio_test srsgnb_upper_phy_support srslog)
+add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
