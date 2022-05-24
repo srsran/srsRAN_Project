@@ -80,9 +80,11 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
   // Select CRC calculator for inner codeblock checks.
   crc_calculator* block_crc = select_crc(crc_set, tb_size, nof_cbs);
 
-  span<bool> cb_crcs       = soft_codeword->get_codeblocks_crc();
-  unsigned   tb_offset     = 0;
-  info.nof_ldpc_iterations = 0;
+  span<bool> cb_crcs          = soft_codeword->get_codeblocks_crc();
+  unsigned   tb_offset        = 0;
+  info.nof_ldpc_iterations    = 0;
+  info.nof_codeblocks_total   = nof_cbs;
+  info.nof_codeblocks_decoded = 0;
   for (unsigned cb_id = 0; cb_id != nof_cbs; ++cb_id) {
     const auto& cb_llrs = codeblock_llrs[cb_id].first;
     const auto& cb_meta = codeblock_llrs[cb_id].second;
@@ -117,10 +119,12 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
       // Try to decode
       ldpc_decoder::configuration::algorithm_details alg_details = {};
       alg_details.max_iterations                                 = cfg.nof_ldpc_iterations;
-      if (auto nof_iters = decoder->decode(message, codeblock, block_crc, {cb_meta, alg_details})) {
+      optional<unsigned> nof_iters = decoder->decode(message, codeblock, block_crc, {cb_meta, alg_details});
+      if (nof_iters.has_value()) {
         // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
         cb_crcs[cb_id] = true;
         info.nof_ldpc_iterations += static_cast<float>(nof_iters.value());
+        ++info.nof_codeblocks_decoded;
         std::copy_n(message.begin(), nof_new_bits, this_segment.begin());
       }
     } else {
@@ -129,18 +133,30 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
     tb_offset += nof_new_bits;
   }
   srsran_assert(tb_offset == tb_and_crc_size, "All TB bits should be filled at this point.");
-  info.nof_ldpc_iterations /= static_cast<float>(nof_cbs);
+  info.nof_ldpc_iterations /= static_cast<float>(info.nof_codeblocks_decoded);
 
   if (nof_cbs == 1) {
     // When only one codeblock, the CRC of codeblock and transport block are the same.
     info.tb_crc_ok = cb_crcs[0];
+    if (info.tb_crc_ok) {
+      srsvec::bit_pack(transport_block, span<uint8_t>(tmp_tb_bits).first(tb_size));
+    }
   } else {
     // When more than one codeblock, we need to check the global transport block CRC. Note that there is no need to
     // compute the CRC if any of the codeblocks was not decoded correctly.
-    info.tb_crc_ok = (std::all_of(cb_crcs.begin(), cb_crcs.end(), [](bool a) { return a; })) &&
-                     (crc_set.crc24A->calculate_bit(tmp_tb_bits) == 0);
+    if (std::all_of(cb_crcs.begin(), cb_crcs.end(), [](bool a) { return a; })) {
+      srsvec::bit_pack(transport_block, span<uint8_t>(tmp_tb_bits).first(tb_size));
+      crc_calculator_checksum_t checksum_tbs = crc_set.crc24A->calculate_byte(transport_block);
+      span<const uint8_t>       crc_bits     = span<uint8_t>(tmp_tb_bits).last(24);
+      unsigned                  checksum_cmp = srsvec::bit_pack(crc_bits, 24);
+      if (checksum_tbs == checksum_cmp) {
+        info.tb_crc_ok = true;
+      } else {
+        // If the checksum is wrong, then at least one of the codeblocks is a false negative. Reset all of them.
+        info.nof_codeblocks_decoded = 0;
+        info.nof_ldpc_iterations    = 0;
+        soft_codeword->reset_codeblocks_crc();
+      }
+    }
   }
-
-  // Pack the transport block.
-  srsvec::bit_pack(transport_block, span<uint8_t>(tmp_tb_bits).first(tb_size));
 }

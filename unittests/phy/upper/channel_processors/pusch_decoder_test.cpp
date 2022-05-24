@@ -95,6 +95,8 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
+      TESTASSERT_EQ(
+          dec_stats.nof_codeblocks_decoded, dec_stats.nof_codeblocks_total, "Error reporting decoded codeblocks.");
       TESTASSERT(dec_stats.nof_ldpc_iterations < 2.2, "Too many decoder iterations.");
 
       // Force all CRCs to false to test LLR combining.
