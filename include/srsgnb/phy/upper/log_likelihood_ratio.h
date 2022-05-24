@@ -214,13 +214,8 @@ template <typename T>
 inline int norm_sqr_llr(const T& x)
 {
   static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
-  return std::inner_product(
-      x.begin(),
-      x.end(),
-      x.begin(),
-      0,
-      [](int a, int b) { return a + b; },
-      [](log_likelihood_ratio a, log_likelihood_ratio b) { return a.to_int8_t() * a.to_int8_t(); });
+  return std::accumulate(
+      x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int8_t() * b.to_int8_t(); });
 }
 
 } // namespace srsvec
