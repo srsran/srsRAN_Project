@@ -17,10 +17,12 @@
 #ifndef SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
 #define SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
 
+#include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
+#include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/support/srsran_assert.h"
 
-#include <cstdint>
+#include <numeric>
 
 namespace srsgnb {
 
@@ -32,6 +34,9 @@ namespace srsgnb {
 class log_likelihood_ratio
 {
 public:
+  /// Default constructor.
+  constexpr log_likelihood_ratio() = default;
+
   /// \brief Constructor from integral type.
   ///
   /// Creates a new LLR set to the provided value if the latter is in the range <tt>-LLR_MAX</tt> to \c LLR_MAX, or
@@ -54,15 +59,15 @@ public:
   ///@{
 
   /// Converts the LLR to a plain \c int8_t value.
-  explicit operator int8_t() const { return value; };
-  int8_t   to_int8_t() const { return value; };
+  explicit constexpr operator int8_t() const { return value; };
+  int8_t constexpr   to_int8_t() const { return value; };
   ///@}
 
   /// Default assignment operator.
-  log_likelihood_ratio& operator=(const log_likelihood_ratio& other) = default;
+  constexpr log_likelihood_ratio& operator=(const log_likelihood_ratio& other) = default;
 
   /// Negation (additive inverse).
-  log_likelihood_ratio operator-() const { return -value; }
+  constexpr log_likelihood_ratio operator-() const { return -value; }
 
   /// \brief Saturated sum.
   ///
@@ -70,21 +75,36 @@ public:
   /// <tt>LLR_MAX + 2 = LLR_MAX</tt> and <tt>-LLR_MAX - 2 = -LLR_MAX</tt>.
   log_likelihood_ratio operator+(log_likelihood_ratio rhs) const;
 
+  /// \brief Addition assignment with saturated sum.
+  log_likelihood_ratio operator+=(log_likelihood_ratio rhs)
+  {
+    *this = *this + rhs;
+    return *this;
+  }
+
   /// \brief Saturated difference.
   ///
   /// Follows naturally from the saturated sum: <tt>a - b = a + (-b)</tt>.
   log_likelihood_ratio operator-(log_likelihood_ratio rhs) const { return *this + (-rhs); }
 
+  /// \brief Multiplication by an arithmetic type.
+  template <typename T>
+  T operator*(T rhs) const
+  {
+    static_assert(std::is_arithmetic<T>::value, "LLRs can only be multiplied by arithmetic types.");
+    return rhs * value;
+  }
+
   /// \name Comparison operators.
   ///@{
 
   /// Plain comparison operator.
-  bool operator==(log_likelihood_ratio rhs) const { return value == rhs.value; }
-  bool operator!=(log_likelihood_ratio rhs) const { return value != rhs.value; }
-  bool operator>(log_likelihood_ratio rhs) const { return value > rhs.value; }
-  bool operator<(log_likelihood_ratio rhs) const { return value < rhs.value; }
-  bool operator>=(log_likelihood_ratio rhs) const { return value >= rhs.value; }
-  bool operator<=(log_likelihood_ratio rhs) const { return value <= rhs.value; }
+  constexpr bool operator==(log_likelihood_ratio rhs) const { return value == rhs.value; }
+  constexpr bool operator!=(log_likelihood_ratio rhs) const { return value != rhs.value; }
+  constexpr bool operator>(log_likelihood_ratio rhs) const { return value > rhs.value; }
+  constexpr bool operator<(log_likelihood_ratio rhs) const { return value < rhs.value; }
+  constexpr bool operator>=(log_likelihood_ratio rhs) const { return value >= rhs.value; }
+  constexpr bool operator<=(log_likelihood_ratio rhs) const { return value <= rhs.value; }
   ///@}
 
   /// Returns the special value "positive infinity."
@@ -143,6 +163,67 @@ constexpr log_likelihood_ratio LLR_MIN = log_likelihood_ratio::min();
 constexpr log_likelihood_ratio LLR_INFINITY = log_likelihood_ratio::infinity();
 ///@}
 
+namespace srsvec {
+namespace detail {
+
+/// Checks if \c T is compatible with a span of log_likelihood_ratios.
+template <typename T, typename = void>
+struct is_llr_span_compatible : std::false_type {};
+
+/// Checks if \c T is compatible with a span of log_likelihood_ratios.
+template <typename T>
+struct is_llr_span_compatible<T,
+                              std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio> >::value ||
+                                               std::is_convertible<T, span<const log_likelihood_ratio> >::value> >
+  : std::true_type {};
+
+} // namespace detail
+
+/// \brief Dot product of a span of LLRs and a span of an arithmetic type.
+///
+/// Computes the dot product (a.k.a. inner product or scalar product) of the two sequences represented by the input
+/// spans, adding an initial offset.
+/// \tparam T         A span of a log-likelihood ratios (either constant or volatile).
+/// \tparam U         A span of an arithmetic type.
+/// \tparam V         Output type (must be compatible with the product of object of type \c T and \c U).
+/// \param[in] x      Span of (possibly constant) log-likelihood ratios.
+/// \param[in] y      Second span.
+/// \param[in] init   Initialization value.
+/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot y + \mathrm{init} = \sum_i x_i y_i +
+/// \mathrm{init}\f$.
+/// \remark The two input spans must have the same length.
+template <typename T, typename U, typename V>
+inline V dot_prod_llr(const T& x, const U& y, V init)
+{
+  static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
+  static_assert(detail::is_arithmetic_span_compatible<U>::value,
+                "Template type is not compatible with a span of arithmetics");
+  assert(x.size() == y.size());
+  return std::inner_product(x.begin(), x.end(), y.begin(), init);
+}
+
+/// \brief Squared Euclidean norm of a span of LLRs.
+///
+/// Computes the squared Euclidean norm (sum of the squares of the elements) of the sequence represented by the input
+/// span.
+///
+/// \tparam T     A span of a log-likelihood ratios (either constant or volatile).
+/// \param[in] x  Span of (possibly constant) log-likelihood ratios.
+/// \return The squared Euclidean norm of \c x as an integer.
+template <typename T>
+inline int norm_sqr_llr(const T& x)
+{
+  static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
+  return std::inner_product(
+      x.begin(),
+      x.end(),
+      x.begin(),
+      0,
+      [](int a, int b) { return a + b; },
+      [](log_likelihood_ratio a, log_likelihood_ratio b) { return a.to_int8_t() * a.to_int8_t(); });
+}
+
+} // namespace srsvec
 } // namespace srsgnb
 
 namespace fmt {

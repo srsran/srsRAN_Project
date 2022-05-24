@@ -29,7 +29,7 @@ log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) c
     return special.value();
   }
 
-  // When not dealing with special cases, classic saturated sum.
+  //  When not dealing with special cases, classic saturated sum.
   int tmp = value + static_cast<int>(rhs.value);
   if (std::abs(tmp) > LLR_MAX) {
     return ((tmp > 0) ? LLR_MAX : -LLR_MAX);
