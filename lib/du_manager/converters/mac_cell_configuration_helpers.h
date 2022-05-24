@@ -12,6 +12,7 @@
 #define SRSGNB_MAC_CELL_CONFIGURATION_HELPERS_H
 
 #include "srsgnb/mac/cell_configuration.h"
+#include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
@@ -41,6 +42,44 @@ inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common()
   return cfg;
 }
 
+inline coreset_configuration make_default_coreset_config()
+{
+  coreset_configuration cfg{};
+  cfg.id = to_coreset_id(0);
+  for (size_t i = 0; i < 6; ++i) {
+    cfg.freq_domain_resources.set(i);
+  }
+  cfg.duration             = 1;
+  cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
+  return cfg;
+}
+
+inline search_space_configuration make_default_search_space_zero_config()
+{
+  search_space_configuration cfg{};
+  cfg.id             = to_search_space_id(0);
+  cfg.cs_id          = to_coreset_id(0);
+  cfg.duration       = 1;
+  cfg.type           = search_space_configuration::common;
+  cfg.nof_candidates = {0, 0, 0, 0, 0};
+  return cfg;
+}
+
+inline search_space_configuration make_default_common_search_space_config()
+{
+  search_space_configuration cfg = make_default_search_space_zero_config();
+  cfg.id                         = to_search_space_id(1);
+  return cfg;
+}
+
+inline search_space_configuration make_default_ue_search_space_config()
+{
+  search_space_configuration cfg = make_default_common_search_space_config();
+  cfg.cs_id                      = to_coreset_id(1);
+  cfg.id                         = to_search_space_id(2);
+  return cfg;
+}
+
 inline mac_cell_creation_request make_default_mac_cell_creation_request()
 {
   mac_cell_creation_request msg{};
@@ -62,15 +101,10 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   // Configure initial DL BWP.
   msg.dl_cfg_common.init_dl_bwp.generic_params.scs  = subcarrier_spacing::kHz15;
   msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {0, 52};
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets.emplace(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets[0].id = to_coreset_id(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].id    = to_search_space_id(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].cs_id = to_coreset_id(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(1);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].id    = to_search_space_id(1);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].cs_id = to_coreset_id(0);
-  msg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id     = to_search_space_id(1);
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.coresets.emplace(0, make_default_coreset_config());
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
+  msg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id = to_search_space_id(1);
 
   // Configure initial UL BWP.
   msg.ul_cfg_common.init_ul_bwp.generic_params = msg.dl_cfg_common.init_dl_bwp.generic_params;
@@ -85,6 +119,26 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
 
   // TODO: Remaining fields.
 
+  return msg;
+}
+
+inline mac_ue_create_request_message make_default_ue_creation_request()
+{
+  mac_ue_create_request_message msg{};
+
+  msg.ue_index   = to_du_ue_index(0);
+  msg.crnti      = to_rnti(0x4601);
+  msg.cell_index = to_du_cell_index(0);
+  msg.serv_cell_cfg.emplace();
+  msg.serv_cell_cfg->dl_bwps.emplace_back();
+
+  bwp_downlink_dedicated& dl_bwp = msg.serv_cell_cfg->dl_bwps.back();
+  dl_bwp.pdcch_cfg.emplace();
+  dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back();
+  coreset_configuration& cs_cfg = dl_bwp.pdcch_cfg->coreset_to_addmod_list.back();
+  cs_cfg.id                     = to_coreset_id(1);
+
+  dl_bwp.pdcch_cfg->ss_to_addmod_list.emplace_back(make_default_ue_search_space_config());
   return msg;
 }
 

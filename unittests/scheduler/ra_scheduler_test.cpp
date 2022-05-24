@@ -33,24 +33,36 @@ struct ra_sched_param {
 class dummy_pdcch_scheduler : public pdcch_scheduler
 {
 public:
-  pdcch_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                        rnti_t                        rnti,
-                                        search_space_id               ss_id,
-                                        aggregation_level             aggr_lvl) override
+  pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                           rnti_t                        rnti,
+                                           search_space_id               ss_id,
+                                           aggregation_level             aggr_lvl) override
   {
     TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
-    slot_alloc.result.dl.pdcchs.emplace_back();
-    slot_alloc.result.dl.pdcchs.back().dci.rnti = rnti;
-    return &slot_alloc.result.dl.pdcchs[0];
+    slot_alloc.result.dl.dl_pdcchs.emplace_back();
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti = rnti;
+    return &slot_alloc.result.dl.dl_pdcchs[0];
   }
 
-  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
-                                    rnti_t                        rnti,
-                                    const ue_cell_configuration&  user,
-                                    du_bwp_id_t                   bwp_id,
-                                    search_space_id               ss_id,
-                                    aggregation_level             aggr_lvl,
-                                    dci_dl_format                 dci_fmt) override
+  pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                          rnti_t                        rnti,
+                                          const ue_cell_configuration&  user,
+                                          du_bwp_id_t                   bwp_id,
+                                          search_space_id               ss_id,
+                                          aggregation_level             aggr_lvl,
+                                          dci_dl_format                 dci_fmt) override
+  {
+    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    return nullptr;
+  }
+
+  pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                          rnti_t                        rnti,
+                                          const ue_cell_configuration&  user,
+                                          du_bwp_id_t                   bwp_id,
+                                          search_space_id               ss_id,
+                                          aggregation_level             aggr_lvl,
+                                          dci_ul_format                 dci_fmt) override
   {
     srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
@@ -68,7 +80,7 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
   const pusch_config_common& pusch_cfg  = *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common;
 
   for (const rar_information& rar : rars) {
-    rnti_t ra_rnti = rar.pdcch_cfg->dci.rnti;
+    rnti_t ra_rnti = rar.pdcch_cfg->ctx.rnti;
     TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
     TESTASSERT(ra_rntis.count(ra_rnti) == 0);
     ra_rntis.insert(ra_rnti);
@@ -108,7 +120,7 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
                           const rar_information&         rar)
 {
   uint16_t ra_rnti = get_ra_rnti(rach_ind);
-  TESTASSERT_EQ(ra_rnti, rar.pdcch_cfg->dci.rnti);
+  TESTASSERT_EQ(ra_rnti, rar.pdcch_cfg->ctx.rnti);
 
   for (const rar_ul_grant& msg3 : rar.grants) {
     if (rach_ind.crnti == msg3.temp_crnti) {
@@ -290,7 +302,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     // Define lambda to find RAR grant (from allocated RARs grants) with given RA-RNTI
     auto find_rar = [](const static_vector<rar_information, MAX_GRANTS>& rar_grants, uint16_t expected_ra_rnti) {
       for (auto rar_iter = rar_grants.begin(); rar_iter != rar_grants.end(); ++rar_iter) {
-        if (rar_iter->pdcch_cfg->dci.rnti == expected_ra_rnti) {
+        if (rar_iter->pdcch_cfg->ctx.rnti == expected_ra_rnti) {
           return rar_iter;
         }
       }

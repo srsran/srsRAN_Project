@@ -4,6 +4,7 @@
 
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
@@ -22,6 +23,8 @@ struct mac_ue_create_request_message {
   rnti_t                                  crnti;
   std::vector<mac_logical_channel_addmod> bearers;
   const byte_buffer*                      ul_ccch_msg;
+  // Scheduler-only params
+  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
 };
 
 /// Outcome of a MAC UE creation request procedure.

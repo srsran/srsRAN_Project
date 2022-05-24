@@ -52,12 +52,20 @@ struct coreset_configuration {
 };
 
 /// \brief Search Space identifier. This value is UE-specific, which means that a UE can have up to
-/// "maxNrofControlResourceSets" CORESETS configured.
+/// "maxNrofSearchSpaces=40" Search Spaces configured. The ID space is used across BWPs of a serving cell.
 enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE = 39, MAX_NOF_SEARCH_SPACES = 40 };
+
+/// \remark See TS 38.331, "SearchSpaceId" - The number of Search Spaces per BWP is limited to 10 including the common
+/// and UE specific Search Spaces.
+constexpr size_t MAX_NOF_SEARCH_SPACE_PER_BWP = 10;
 
 inline search_space_id to_search_space_id(unsigned ss_id)
 {
   return static_cast<search_space_id>(ss_id);
+}
+inline bool is_search_space_valid(search_space_id ss_id)
+{
+  return ss_id < MAX_NOF_SEARCH_SPACES;
 }
 
 /// SearchSpace configuration.
@@ -79,14 +87,17 @@ struct search_space_configuration {
   search_space_type      type;
 };
 
+/// \remark See TS 38.331, "PDCCH-ConfigCommon"
 struct pdcch_configuration_common {
-  /// May Contain CORESET#0 and common CORESET.
-  slot_vector<coreset_configuration>      coresets;
+  /// Contains Coreset#0 and common Coreset. Size: (0..2).
+  slot_vector<coreset_configuration> coresets;
+  /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
   slot_vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
   search_space_id                         other_si_search_space_id;
   search_space_id                         paging_search_space_id;
-  search_space_id                         ra_search_space_id;
+  /// SearchSpace of RA procedure. If field is invalid, the UE does not receive RAR in this BWP.
+  search_space_id ra_search_space_id;
 };
 
 /// Generic parameters of a bandwidth part as defined in TS 38.211, clause 4.5 and TS 38.213, clause 12.

@@ -35,10 +35,29 @@ const size_t MAX_LC_GRANTS = 4;
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
 
-struct pdcch_information {
+struct pdcch_context_information {
   const bwp_configuration*     bwp_cfg;
   const coreset_configuration* coreset_cfg;
-  dci_dl_info                  dci;
+  /// CCE position of the allocated PDCCH.
+  cce_position cces;
+  /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
+  rnti_t rnti;
+};
+
+/// PDCCH DL allocation.
+struct pdcch_dl_information {
+  /// Context associated with PDCCH allocation.
+  pdcch_context_information ctx;
+  /// DL DCI unpacked content.
+  dci_dl_info dci;
+};
+
+/// PDCCH UL allocation.
+struct pdcch_ul_information {
+  /// Context associated with PDCCH allocation.
+  pdcch_context_information ctx;
+  /// UL DCI unpacked content.
+  dci_ul_info dci;
 };
 
 struct pdsch_configuration {};
@@ -82,7 +101,7 @@ struct rar_ul_grant {
 
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.
 struct rar_information {
-  pdcch_information*                      pdcch_cfg;
+  pdcch_dl_information*                   pdcch_cfg;
   static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };
 
@@ -96,9 +115,9 @@ struct ssb_information {
 /// Stores the information associated to an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
-  unsigned                 nof_txs;
-  const pdcch_information* pdcch_cfg;
-  pdsch_configuration      pdsch_cfg;
+  unsigned                    nof_txs;
+  const pdcch_dl_information* pdcch_cfg;
+  pdsch_configuration         pdsch_cfg;
 };
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
@@ -109,7 +128,10 @@ struct dl_broadcast_allocation {
 
 struct dl_sched_result {
   /// Allocated DL PDCCHs. Includes both SIB, RAR and Data PDCCHs.
-  static_vector<pdcch_information, MAX_GRANTS> pdcchs;
+  static_vector<pdcch_dl_information, MAX_GRANTS> dl_pdcchs;
+
+  /// Allocated UL PDCCHs.
+  static_vector<pdcch_ul_information, MAX_GRANTS> ul_pdcchs;
 
   /// Allocation of SSB and SIBs
   dl_broadcast_allocation bc;

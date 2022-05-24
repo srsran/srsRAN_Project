@@ -25,10 +25,17 @@ inline unsigned to_nof_cces(aggregation_level lvl)
   return 1U << static_cast<uint8_t>(lvl);
 }
 
+struct cce_position {
+  /// CCE start index. Values: (0..135).
+  unsigned ncce;
+  /// Aggregation level of the DCI.
+  aggregation_level aggr_lvl;
+};
+
 enum class dci_dl_format { f1_0, f1_1, f2_0 };
 enum class dci_ul_format { f0_0, f0_1 };
 
-/// \brief DCI format 1_0 content. It is used for scheduling PDSCH in one cell.
+/// \brief DCI format 1_0 unpacked content. It is used for scheduling PDSCH in one cell.
 /// It can be scrambled by C-RNTI, RA-RNTI, TC-RNTI, SI-RNTI and P-RNTI.
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
 struct dci_format1_0_info {
@@ -50,12 +57,6 @@ struct dci_format1_0_info {
 /// \brief Describes an unpacked DL DCI message.
 /// \remark See FAPI DCI PDU and ORAN WG8 DL-DCI Configuration.
 struct dci_dl_info {
-  /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
-  rnti_t rnti;
-  /// CCE start index. Values: (0..135).
-  uint8_t cce_index;
-  /// Aggregation level of the DCI.
-  aggregation_level aggr_level;
   /// DCI format type used.
   dci_dl_format format_type;
   union {

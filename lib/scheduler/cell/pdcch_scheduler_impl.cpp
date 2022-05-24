@@ -19,7 +19,7 @@ public:
   /// PDCCH grant allocation in a given slot.
   struct alloc_record {
     bool                              is_dl;
-    pdcch_information*                pdcch;
+    pdcch_context_information*        pdcch_ctx;
     const search_space_configuration* ss_cfg;
   };
 
@@ -36,7 +36,7 @@ public:
 
   void clear();
 
-  bool alloc_pdcch(pdcch_information&                pdcch,
+  bool alloc_pdcch(pdcch_context_information&        pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg);
 
@@ -71,7 +71,7 @@ void pdcch_scheduler_impl::pdcch_slot_allocator::clear()
   saved_dfs_tree.clear();
 }
 
-bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_pdcch(pdcch_information&                pdcch,
+bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_pdcch(pdcch_context_information&        pdcch_ctx,
                                                              cell_slot_resource_allocator&     slot_alloc,
                                                              const search_space_configuration& ss_cfg)
 {
@@ -79,9 +79,9 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_pdcch(pdcch_information& 
 
   // Create an DL Allocation Record.
   alloc_record record{};
-  record.is_dl  = true;
-  record.pdcch  = &pdcch;
-  record.ss_cfg = &ss_cfg;
+  record.is_dl     = true;
+  record.pdcch_ctx = &pdcch_ctx;
+  record.ss_cfg    = &ss_cfg;
 
   // Try to allocate PDCCH for one of the possible CCE positions. If this operation fails, retry it, but using a
   // different permutation of past grant CCE positions.
@@ -117,7 +117,7 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resour
   node.dci_iter_index = dci_iter_index;
   node.record_index   = dfs_tree.size();
   node.grant.ch       = grant_info::channel::cch;
-  node.grant.scs      = record.pdcch->bwp_cfg->scs;
+  node.grant.scs      = record.pdcch_ctx->bwp_cfg->scs;
 
   // Find in the list of possible CCEs, a CCE that does not cause PDCCH collisions.
   for (; node.dci_iter_index < cce_locs.size(); ++node.dci_iter_index) {
@@ -126,10 +126,10 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resour
     // Check the current CCE position collides with an existing one.
     // TODO: Optimize.
     pdcch_reg_position_list regs =
-        get_pdcch_regs(*record.pdcch->coreset_cfg, *record.ss_cfg, node.ncce, record.pdcch->dci.aggr_level);
+        get_pdcch_regs(*record.pdcch_ctx->coreset_cfg, *record.ss_cfg, node.ncce, record.pdcch_ctx->cces.aggr_lvl);
     bool collision_detected = false;
     for (pdcch_reg_position& reg : regs) {
-      unsigned crb       = prb_to_crb(*record.pdcch->bwp_cfg, reg.prb);
+      unsigned crb       = prb_to_crb(*record.pdcch_ctx->bwp_cfg, reg.prb);
       node.grant.crbs    = {crb, crb + 1};
       node.grant.symbols = {reg.symbol, (uint8_t)(reg.symbol + 1)};
       if (slot_alloc.dl_res_grid.collides(node.grant)) {
@@ -145,7 +145,7 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resour
     // Allocation successful.
     // TODO: Optimize.
     for (pdcch_reg_position& reg : regs) {
-      unsigned crb       = prb_to_crb(*record.pdcch->bwp_cfg, reg.prb);
+      unsigned crb       = prb_to_crb(*record.pdcch_ctx->bwp_cfg, reg.prb);
       node.grant.crbs    = {crb, crb + 1};
       node.grant.symbols = {reg.symbol, (uint8_t)(reg.symbol + 1)};
       slot_alloc.dl_res_grid.fill(node.grant);
@@ -207,10 +207,10 @@ void pdcch_scheduler_impl::slot_indication(slot_point sl_tx)
   slot_records[(last_sl_ind - 1).to_uint() % slot_records.size()]->clear();
 }
 
-pdcch_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                                            rnti_t                        rnti,
-                                                            search_space_id               ss_id,
-                                                            aggregation_level             aggr_lvl)
+pdcch_dl_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                                               rnti_t                        rnti,
+                                                               search_space_id               ss_id,
+                                                               aggregation_level             aggr_lvl)
 {
   // Find Common BWP and CORESET configurations.
   const bwp_configuration&          bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
@@ -221,44 +221,77 @@ pdcch_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resource_a
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_dl_format::f1_0);
 }
 
-pdcch_information* pdcch_scheduler_impl::alloc_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
-                                                        rnti_t                        rnti,
-                                                        const ue_cell_configuration&  user,
-                                                        du_bwp_id_t                   bwp_id,
-                                                        search_space_id               ss_id,
-                                                        aggregation_level             aggr_lvl,
-                                                        dci_dl_format                 dci_fmt)
+pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                                              rnti_t                        rnti,
+                                                              const ue_cell_configuration&  user,
+                                                              du_bwp_id_t                   bwp_id,
+                                                              search_space_id               ss_id,
+                                                              aggregation_level             aggr_lvl,
+                                                              dci_dl_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = *user.get_bwp_cfg(bwp_id);
-  const search_space_configuration& ss_cfg  = *user.get_ss_cfg(bwp_id, ss_id);
-  const coreset_configuration&      cs_cfg  = *user.get_cs_cfg(bwp_id, ss_cfg.cs_id);
+  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwp_id];
+  const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
+  const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);
 }
 
-pdcch_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
-                                                               rnti_t                            rnti,
-                                                               const bwp_configuration&          bwp_cfg,
-                                                               const coreset_configuration&      cs_cfg,
-                                                               const search_space_configuration& ss_cfg,
-                                                               aggregation_level                 L,
-                                                               dci_dl_format                     dci_fmt)
+pdcch_ul_information* pdcch_scheduler_impl::alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                                              rnti_t                        rnti,
+                                                              const ue_cell_configuration&  user,
+                                                              du_bwp_id_t                   bwp_id,
+                                                              search_space_id               ss_id,
+                                                              aggregation_level             aggr_lvl,
+                                                              dci_ul_format                 dci_fmt)
+{
+  // Find Common or UE-specific BWP and CORESET configurations.
+  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwp_id];
+  const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
+  const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
+
+  // Create PDCCH list element.
+  slot_alloc.result.dl.ul_pdcchs.emplace_back();
+  pdcch_ul_information& pdcch = slot_alloc.result.dl.ul_pdcchs.back();
+  pdcch.ctx.bwp_cfg           = &bwp_cfg;
+  pdcch.ctx.coreset_cfg       = &cs_cfg;
+  pdcch.ctx.rnti              = rnti;
+  pdcch.ctx.cces.ncce         = 0;
+  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  pdcch.dci.format_type       = dci_fmt;
+
+  // Allocate a position for UL PDCCH in CORESET.
+  pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
+  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {
+    slot_alloc.result.dl.ul_pdcchs.pop_back();
+    return nullptr;
+  }
+  return &pdcch;
+}
+
+pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
+                                                                  rnti_t                            rnti,
+                                                                  const bwp_configuration&          bwp_cfg,
+                                                                  const coreset_configuration&      cs_cfg,
+                                                                  const search_space_configuration& ss_cfg,
+                                                                  aggregation_level                 aggr_lvl,
+                                                                  dci_dl_format                     dci_fmt)
 {
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
 
   // Create PDCCH list element.
-  slot_alloc.result.dl.pdcchs.emplace_back();
-  pdcch_information& pdcch = slot_alloc.result.dl.pdcchs.back();
-  pdcch.bwp_cfg            = &bwp_cfg;
-  pdcch.coreset_cfg        = &cs_cfg;
-  pdcch.dci.rnti           = rnti;
-  pdcch.dci.aggr_level     = L;
-  pdcch.dci.format_type    = dci_fmt;
+  slot_alloc.result.dl.dl_pdcchs.emplace_back();
+  pdcch_dl_information& pdcch = slot_alloc.result.dl.dl_pdcchs.back();
+  pdcch.ctx.bwp_cfg           = &bwp_cfg;
+  pdcch.ctx.coreset_cfg       = &cs_cfg;
+  pdcch.ctx.rnti              = rnti;
+  pdcch.ctx.cces.ncce         = 0;
+  pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  pdcch.dci.format_type       = dci_fmt;
 
   // Allocate a position for DL PDCCH in CORESET.
-  if (not pdcch_alloc.alloc_pdcch(pdcch, slot_alloc, ss_cfg)) {
-    slot_alloc.result.dl.pdcchs.pop_back();
+  if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {
+    slot_alloc.result.dl.dl_pdcchs.pop_back();
     return nullptr;
   }
   return &pdcch;

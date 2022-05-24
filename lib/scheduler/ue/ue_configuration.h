@@ -2,6 +2,8 @@
 #ifndef SRSGNB_UE_CONFIGURATION_H
 #define SRSGNB_UE_CONFIGURATION_H
 
+#include "../cell/cell_configuration.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
 
@@ -11,13 +13,23 @@ namespace srsgnb {
 class ue_cell_configuration
 {
 public:
-  /// Find Common or UE-dedicated BWP configuration.
-  const bwp_configuration*          get_bwp_cfg(du_bwp_id_t bwp_id) const { return nullptr; }
-  const coreset_configuration*      get_cs_cfg(du_bwp_id_t bwp_id, coreset_id cs_id) const { return nullptr; }
-  const search_space_configuration* get_ss_cfg(du_bwp_id_t bwp_id, search_space_id ss_id) const { return nullptr; }
+  ue_cell_configuration(const cell_configuration&                    cell_cfg_common_,
+                        const serving_cell_ue_configuration_request& cell_cfg_ded_);
 
-private:
-  slot_vector<bwp_downlink_common> dl_bwps;
+  void reconfigure(const serving_cell_ue_configuration_request& cell_cfg_ded_);
+
+  const cell_configuration& cell_cfg_common;
+
+  /// List of DL BWPs.
+  slot_vector<bwp_configuration> dl_bwps;
+
+  /// List of UE CORESETs.
+  /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
+  slot_vector<coreset_configuration> dl_coresets;
+
+  /// List of UE SearchSpaces.
+  /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
+  slot_vector<search_space_configuration> dl_search_spaces;
 };
 
 } // namespace srsgnb

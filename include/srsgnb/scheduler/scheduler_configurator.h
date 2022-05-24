@@ -46,18 +46,43 @@ struct sched_cell_configuration_request_message {
   ssb_configuration     ssb_config;
 };
 
+/// \remark See TS 38.331, "PDCCH-Config"
+struct pdcch_config {
+  /// List of CORESETs to be used by the UE. In case of CORESET Id overlap with commonControlResourceSet,
+  /// the CORESET in this list takes precedence. Size: (0..3).
+  std::vector<coreset_configuration>      coreset_to_addmod_list;
+  std::vector<coreset_id>                 coreset_to_rel_list;
+  std::vector<search_space_configuration> ss_to_addmod_list;
+  std::vector<search_space_id>            ss_to_rel_list;
+  // TODO: add remaining fields.
+};
+
+/// \remark See TS 38.331, "BWP-DownlinkDedicated"
+struct bwp_downlink_dedicated {
+  optional<pdcch_config> pdcch_cfg;
+  // TODO: Remaining
+};
+
+/// \remark See TS 38.331, "ServingCellConfig"
+struct serving_cell_ue_configuration_request {
+  /// List of UE DL BWPs. BWP#0 corresponds to initial DL BWP. Size: (0..maxNrofBWPs=4)
+  std::vector<bwp_downlink_dedicated> dl_bwps;
+};
+
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
-  du_cell_index_t pcell_index;
+  du_ue_index_t                                   ue_index;
+  rnti_t                                          crnti;
+  du_cell_index_t                                 pcell_index;
+  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
 };
 
 /// UE Reconfiguration Request.
 struct sched_ue_reconfiguration_message {
-  du_ue_index_t   ue_index;
-  rnti_t          crnti;
-  du_cell_index_t pcell_index;
+  du_ue_index_t                                   ue_index;
+  rnti_t                                          crnti;
+  du_cell_index_t                                 pcell_index;
+  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
 };
 
 /// UE Delete Request.

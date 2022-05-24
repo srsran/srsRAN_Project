@@ -22,8 +22,12 @@ namespace srsgnb {
 class ue_carrier
 {
 public:
-  ue_carrier(du_ue_index_t ue_index, rnti_t crnti_val, du_cell_index_t cell_index) :
-    ue_index(ue_index), cell_index(cell_index), crnti_(crnti_val)
+  ue_carrier(du_ue_index_t                                ue_index,
+             rnti_t                                       crnti_val,
+             du_cell_index_t                              cell_index,
+             const cell_configuration&                    cell_cfg_common_,
+             const serving_cell_ue_configuration_request& ue_serv_cell) :
+    ue_index(ue_index), cell_index(cell_index), crnti_(crnti_val), ue_cfg(cell_cfg_common_, ue_serv_cell)
   {}
 
   const du_ue_index_t   ue_index;
@@ -34,17 +38,20 @@ public:
   unsigned active_bwp_id() const { return 0; }
   bool     is_active() const { return true; }
 
+  const ue_cell_configuration& cfg() const { return ue_cfg; }
+
 private:
   rnti_t                crnti_;
-  ue_cell_configuration cfg;
+  ue_cell_configuration ue_cfg;
 };
 
 class ue
 {
 public:
-  ue(const sched_ue_creation_request_message& req) : ue_index(req.ue_index), crnti(req.crnti)
+  ue(const cell_configuration& cell_cfg_common_, const sched_ue_creation_request_message& req) :
+    ue_index(req.ue_index), crnti(req.crnti), cell_cfg_common(cell_cfg_common_)
   {
-    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index);
+    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, *req.serv_cell_cfg);
   }
 
   const du_ue_index_t ue_index;
@@ -70,6 +77,8 @@ public:
 
 private:
   static const size_t MAX_CELLS = 4;
+
+  const cell_configuration& cell_cfg_common;
 
   std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> cells;
 

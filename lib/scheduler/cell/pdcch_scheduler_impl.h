@@ -26,18 +26,26 @@ public:
 
   void slot_indication(slot_point sl_tx);
 
-  pdcch_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
-                                        rnti_t                        rnti,
-                                        search_space_id               ss_id,
-                                        aggregation_level             aggr_lvl) override;
+  pdcch_dl_information* alloc_pdcch_common(cell_slot_resource_allocator& slot_alloc,
+                                           rnti_t                        rnti,
+                                           search_space_id               ss_id,
+                                           aggregation_level             aggr_lvl) override;
 
-  pdcch_information* alloc_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
-                                    rnti_t                        rnti,
-                                    const ue_cell_configuration&  user,
-                                    du_bwp_id_t                   bwp_id,
-                                    search_space_id               ss_id,
-                                    aggregation_level             aggr_lvl,
-                                    dci_dl_format                 dci_fmt) override;
+  pdcch_dl_information* alloc_dl_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                          rnti_t                        rnti,
+                                          const ue_cell_configuration&  user,
+                                          du_bwp_id_t                   bwp_id,
+                                          search_space_id               ss_id,
+                                          aggregation_level             aggr_lvl,
+                                          dci_dl_format                 dci_fmt) override;
+
+  pdcch_ul_information* alloc_ul_pdcch_ue(cell_slot_resource_allocator& slot_alloc,
+                                          rnti_t                        rnti,
+                                          const ue_cell_configuration&  user,
+                                          du_bwp_id_t                   bwp_id,
+                                          search_space_id               ss_id,
+                                          aggregation_level             aggr_lvl,
+                                          dci_ul_format                 dci_fmt) override;
 
 private:
   class pdcch_slot_allocator;
@@ -47,7 +55,7 @@ private:
   static const size_t SLOT_ALLOCATOR_RING_SIZE = 10;
 
   pdcch_slot_allocator& get_pdcch_slot_alloc(slot_point sl);
-  pdcch_information*    alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
+  pdcch_dl_information* alloc_dl_pdcch_helper(cell_slot_resource_allocator&     slot_alloc,
                                               rnti_t                            rnti,
                                               const bwp_configuration&          bwp_cfg,
                                               const coreset_configuration&      cs_cfg,

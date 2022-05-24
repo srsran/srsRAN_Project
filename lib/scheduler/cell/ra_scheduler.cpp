@@ -211,7 +211,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   cell_slot_resource_allocator& rar_alloc = res_alloc[0];
 
   // 1. Check space in DL sched result for RAR.
-  if (rar_alloc.result.dl.rar_grants.full() or rar_alloc.result.dl.pdcchs.full()) {
+  if (rar_alloc.result.dl.rar_grants.full() or rar_alloc.result.dl.dl_pdcchs.full()) {
     // early exit.
     log_postponed_rar(rar, "No PDCCH/PDSCH space for RAR.");
     return 0;
@@ -278,7 +278,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // 7. Find space in PDCCH for RAR.
   const static aggregation_level aggr_lvl = aggregation_level::n4;
   search_space_id                ss_id    = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  pdcch_information*             pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc, rar.ra_rnti, ss_id, aggr_lvl);
+  pdcch_dl_information*          pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {
     return 0;
   }
@@ -308,7 +308,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
   // Fill RAR DCI.
-  rar.pdcch_cfg                                 = &rar_alloc.result.dl.pdcchs.back();
+  rar.pdcch_cfg                                 = &rar_alloc.result.dl.dl_pdcchs.back();
   rar.pdcch_cfg->dci.f1_0.time_domain_assigment = 0;
   // TODO
 
@@ -356,7 +356,7 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause
 void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const
 {
   const char* prefix = "";
-  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3s=[", rar.pdcch_cfg->dci.rnti);
+  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3s=[", rar.pdcch_cfg->ctx.rnti);
   for (const rar_ul_grant& msg3 : rar.grants) {
     fmt::format_to(fmtbuf,
                    "{}{{{:#x}: rapid={}, prbs={}, ta={}}}",
