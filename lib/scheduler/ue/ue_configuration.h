@@ -20,16 +20,23 @@ public:
 
   const cell_configuration& cell_cfg_common;
 
-  /// List of DL BWPs.
-  slot_vector<bwp_configuration> dl_bwps;
+  /// Map of BWP-id to DL BWPs.
+  std::array<const bwp_configuration*, MAX_NOF_BWPS> dl_bwps = {};
 
   /// List of UE CORESETs.
   /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
-  slot_array<coreset_configuration, MAX_NOF_CORESETS> dl_coresets;
+  std::array<const coreset_configuration*, MAX_NOF_CORESETS> dl_coresets = {};
 
   /// List of UE SearchSpaces.
   /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
-  slot_array<search_space_configuration, MAX_NOF_SEARCH_SPACES> dl_search_spaces;
+  std::array<const search_space_configuration*, MAX_NOF_SEARCH_SPACES> dl_search_spaces = {};
+
+private:
+  void addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded);
+  void rel_bwp_ded_cfg(bwp_id_t bwpid);
+
+  /// List of UE BWP configurations.
+  slot_array<bwp_downlink, MAX_NOF_BWPS> dl_bwps_cfg;
 };
 
 } // namespace srsgnb

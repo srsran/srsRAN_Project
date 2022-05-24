@@ -109,8 +109,8 @@ void test_pdcch_sched_ue()
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(rnti, pdcch->ctx.rnti);
-  TESTASSERT(pdcch->ctx.bwp_cfg == &ue_cfg.dl_bwps[0]);
-  TESTASSERT(pdcch->ctx.coreset_cfg == &ue_cfg.dl_coresets[1]);
+  TESTASSERT(pdcch->ctx.bwp_cfg == ue_cfg.dl_bwps[0]);
+  TESTASSERT(pdcch->ctx.coreset_cfg == ue_cfg.dl_coresets[1]);
 
   // Action: Try allocate an DL PDCCH for another UE that fails due to lack of PDCCH resources.
   rnti  = to_rnti(0x4602);

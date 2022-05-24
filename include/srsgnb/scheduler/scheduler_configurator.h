@@ -63,10 +63,21 @@ struct bwp_downlink_dedicated {
   // TODO: Remaining
 };
 
+/// \remark TS 38.331, "BWP-Downlink".
+struct bwp_downlink {
+  bwp_id_t               bwp_id;
+  bwp_downlink_common    bwp_dl_common;
+  bwp_downlink_dedicated bwp_dl_ded;
+};
+
 /// \remark See TS 38.331, "ServingCellConfig"
 struct serving_cell_ue_configuration_request {
-  /// List of UE DL BWPs. BWP#0 corresponds to initial DL BWP. Size: (0..maxNrofBWPs=4)
-  std::vector<bwp_downlink_dedicated> dl_bwps;
+  /// Initial Downlink BWP.
+  optional<bwp_downlink_dedicated> init_dl_bwp;
+  /// List of UE DL BWPs. Size: (0..maxNrofBWPs=4)
+  std::vector<bwp_downlink> dl_bwps_to_addmod_list;
+  /// List of UE DL BWPs to remove. Size: (0..maxNrofBWPs=4)
+  std::vector<bwp_id_t> dl_bwps_to_rel_list;
 };
 
 /// UE Creation Request.

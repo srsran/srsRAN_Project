@@ -95,7 +95,7 @@ struct pdcch_configuration_common {
   /// Contains Coreset#0.
   coreset_configuration coreset0;
   /// Contains common Coreset.
-  coreset_configuration common_coreset;
+  optional<coreset_configuration> common_coreset;
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
   slot_vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;

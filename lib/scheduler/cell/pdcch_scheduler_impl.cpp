@@ -220,7 +220,7 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resourc
   if (ss_cfg.cs_id == to_coreset_id(0)) {
     cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
   } else {
-    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset;
+    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
     srsran_sanity_check(cs_cfg->id == ss_cfg.cs_id, "Invalid SearchSpace CoresetId={}", ss_cfg.cs_id);
   }
 
@@ -236,9 +236,9 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
                                                               dci_dl_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwpid];
-  const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
-  const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
+  const bwp_configuration&          bwp_cfg = *user.dl_bwps[bwpid];
+  const search_space_configuration& ss_cfg  = *user.dl_search_spaces[ss_id];
+  const coreset_configuration&      cs_cfg  = *user.dl_coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);
 }
@@ -252,9 +252,9 @@ pdcch_ul_information* pdcch_scheduler_impl::alloc_ul_pdcch_ue(cell_slot_resource
                                                               dci_ul_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwpid];
-  const search_space_configuration& ss_cfg  = user.dl_search_spaces[ss_id];
-  const coreset_configuration&      cs_cfg  = user.dl_coresets[ss_cfg.cs_id];
+  const bwp_configuration&          bwp_cfg = *user.dl_bwps[bwpid];
+  const search_space_configuration& ss_cfg  = *user.dl_search_spaces[ss_id];
+  const coreset_configuration&      cs_cfg  = *user.dl_coresets[ss_cfg.cs_id];
 
   // Create PDCCH list element.
   slot_alloc.result.dl.ul_pdcchs.emplace_back();
