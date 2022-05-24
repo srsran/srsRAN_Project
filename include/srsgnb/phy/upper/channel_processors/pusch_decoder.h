@@ -15,7 +15,6 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_H
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 
@@ -29,16 +28,29 @@ namespace srsgnb {
 class pusch_decoder
 {
 public:
+  /// PUSCH decoder configuration.
+  struct configuration {
+    /// Configuration of the LDPC segmenter.
+    segmenter_config segmenter_cfg = {};
+    /// Maximum number of iterations of the LDPC decoder.
+    unsigned nof_ldpc_iterations = 6;
+    /// Flag for LDPC decoder early stopping: \c true to activate.
+    bool use_early_stop = true;
+    /// Flag to denote new data (first HARQ transmission).
+    bool new_data = true;
+  };
+
   /// PUSCH decoding statistics.
   struct statistics {
     /// Denotes whether the received transport block passed the CRC.
     bool tb_crc_ok = false;
-    /// Average number of LDPC iterations across all codeblocks of the current transport block.
+    /// Average number of LDPC iterations across all decoded codeblocks of the current codeword.
     float nof_ldpc_iterations = 0;
+    /// Total number of codeblocks in the current codeword.
+    unsigned nof_codeblocks_total = 0;
+    /// Number of decoded codeblocks in the current codeword.
+    unsigned nof_codeblocks_decoded = 0;
   };
-
-  /// Alias for LDPC decoding algorithm configuration.
-  using algorithm_details = ldpc_decoder::configuration::algorithm_details;
 
   /// Default destructor.
   virtual ~pusch_decoder() = default;
@@ -59,13 +71,11 @@ public:
   ///                                transport blocks).
   /// \param[in]     blk_cfg         Transport block configuration.
   /// \param[in]     alg_cfg         LDPC decoding algorithm configuration.
-  virtual void decode(span<uint8_t>            transport_block,
-                      statistics&              info,
-                      rx_softbuffer*           soft_codeword,
-                      span<const int8_t>       llrs,
-                      bool                     new_data,
-                      const segmenter_config&  blk_cfg,
-                      const algorithm_details& alg_cfg) = 0;
+  virtual void decode(span<uint8_t>        transport_block,
+                      statistics&          info,
+                      rx_softbuffer*       soft_codeword,
+                      span<const int8_t>   llrs,
+                      const configuration& cfg) = 0;
 };
 
 std::unique_ptr<pusch_decoder> create_pusch_decoder();

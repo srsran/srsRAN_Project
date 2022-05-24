@@ -78,18 +78,20 @@ int main()
     rx_softbuffer* softbuffer = pool->reserve_softbuffer({}, {}, nof_codeblocks);
     TESTASSERT(softbuffer);
 
-    pusch_decoder::statistics dec_stats = {};
+    pusch_decoder::statistics    dec_stats = {};
+    pusch_decoder::configuration dec_cfg   = {};
 
     std::size_t cw_offset = 0;
-    bool        new_data  = true;
+    dec_cfg.new_data      = true;
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
 
-      decoder->decode(
-          rx_tb, dec_stats, softbuffer, span<const int8_t>(llrs_all).subspan(cw_offset, cws), new_data, cfg, {});
+      dec_cfg.segmenter_cfg = cfg;
+
+      decoder->decode(rx_tb, dec_stats, softbuffer, span<const int8_t>(llrs_all).subspan(cw_offset, cws), dec_cfg);
       cw_offset += cws;
-      new_data = false;
+      dec_cfg.new_data = false;
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");

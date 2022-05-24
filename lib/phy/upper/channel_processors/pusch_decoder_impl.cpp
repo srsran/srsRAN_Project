@@ -45,19 +45,17 @@ crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsi
   return crcs.crc16.get();
 }
 
-void pusch_decoder_impl::decode(span<uint8_t>            transport_block,
-                                statistics&              info,
-                                rx_softbuffer*           soft_codeword,
-                                span<const int8_t>       llrs,
-                                const bool               new_data,
-                                const segmenter_config&  cfg,
-                                const algorithm_details& alg_cfg)
+void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
+                                statistics&          info,
+                                rx_softbuffer*       soft_codeword,
+                                span<const int8_t>   llrs,
+                                const configuration& cfg)
 {
   // Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs = {};
   // Recall that the TB is in packed format.
   unsigned tb_size = transport_block.size() * BITS_PER_BYTE;
-  segmenter->segment_rx(codeblock_llrs, llrs, tb_size, cfg);
+  segmenter->segment_rx(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
 
   unsigned nof_cbs = codeblock_llrs.size();
   srsran_assert(nof_cbs == soft_codeword->get_nof_codeblocks(), "Wrong number of codeblocks.");
@@ -114,10 +112,12 @@ void pusch_decoder_impl::decode(span<uint8_t>            transport_block,
       span<int8_t> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
 
       // Dematch the new LLRs and combine them with the ones from previous transmissions.
-      dematcher->rate_dematch(codeblock, cb_llrs, new_data, cb_meta);
+      dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
 
       // Try to decode
-      if (auto nof_iters = decoder->decode(message, codeblock, block_crc, {cb_meta, alg_cfg})) {
+      ldpc_decoder::configuration::algorithm_details alg_details = {};
+      alg_details.max_iterations                                 = cfg.nof_ldpc_iterations;
+      if (auto nof_iters = decoder->decode(message, codeblock, block_crc, {cb_meta, alg_details})) {
         // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
         cb_crcs[cb_id] = true;
         info.nof_ldpc_iterations += static_cast<float>(nof_iters.value());
