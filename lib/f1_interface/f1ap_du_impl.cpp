@@ -21,26 +21,33 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_handler& f1c_pdu_handler_) :
   logger(srslog::fetch_basic_logger("F1AP")), f1c(f1c_pdu_handler_)
 {}
 
-async_task<du_setup_result> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& msg)
+async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  asn1::f1ap::f1_setup_request_s request;
-  fill_asn1_f1_setup_request(request, msg);
+  asn1::f1ap::f1_setup_request_s request_asn1;
+  fill_asn1_f1_setup_request(request_asn1, request);
 
   // TODO: add procedure implementation
-  return launch_async([this, res_pdu = asn1::f1ap::f1_ap_pdu_c{}, res = du_setup_result{}](
-                          coro_context<async_task<du_setup_result> >& ctx) mutable {
+  return launch_async([this, res_pdu = asn1::f1ap::f1_ap_pdu_c{}, res = f1_setup_response_message{}, request](
+                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(res_pdu, pdu_queue);
 
     if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome) {
       logger.info("Received F1AP PDU with successful outcome.");
-      res.result = res_pdu.successful_outcome().value.f1_setup_resp();
+      res.msg     = res_pdu.successful_outcome().value.f1_setup_resp();
+      res.success = true;
     }
 
     if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome) {
       logger.info("Received F1AP PDU with unsuccessful outcome.");
-      res.result = res_pdu.unsuccessful_outcome().value.f1_setup_fail();
+      if (f1_setup_retry_no < request.setup_params.max_setup_retries) {
+        CORO_AWAIT_VALUE(res, handle_f1_setup_failure(request, res_pdu.unsuccessful_outcome().value.f1_setup_fail()));
+      } else {
+        logger.error("Reached maximum number of F1 Setup connection retries ({}).",
+                     request.setup_params.max_setup_retries);
+        res.success = false;
+      }
     }
 
     CORO_RETURN(res);
@@ -64,6 +71,50 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
       resp.result = true;
     }
     CORO_RETURN(resp);
+  });
+}
+
+async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                            const asn1::f1ap::f1_setup_fail_s& failure)
+{
+  return launch_async([this, res = f1_setup_response_message{}, request, failure](
+                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    if (failure->time_to_wait_present) {
+      f1_setup_retry_no++;
+      logger.info("Received F1SetupFailure with Time to Wait IE. Reinitiating F1 setup in {}s (retry={}/{}).",
+                  failure->time_to_wait.value.to_number(),
+                  f1_setup_retry_no,
+                  request.setup_params.max_setup_retries);
+
+      // TODO add timer
+
+      CORO_AWAIT_VALUE(res, handle_f1ap_setup_request(request));
+    } else {
+      std::string cause_str = "";
+      switch (failure->cause.value.type()) {
+        case asn1::f1ap::cause_c::types_opts::radio_network:
+          cause_str = failure->cause.value.radio_network().to_string();
+          break;
+        case asn1::f1ap::cause_c::types_opts::transport:
+          cause_str = failure->cause.value.transport().to_string();
+          break;
+        case asn1::f1ap::cause_c::types_opts::protocol:
+          cause_str = failure->cause.value.protocol().to_string();
+          break;
+        case asn1::f1ap::cause_c::types_opts::misc:
+          cause_str = failure->cause.value.misc().to_string();
+          break;
+        default:
+          cause_str = "unknown";
+          break;
+      }
+
+      logger.error("Received F1SetupFailure with {} error: {}", failure->cause.value.type().to_string(), cause_str);
+    }
+
+    CORO_RETURN(res);
   });
 }
 

@@ -19,9 +19,7 @@
 
 namespace srsgnb {
 
-struct du_manager_context {
-  du_setup_result f1_setup_result;
-};
+struct du_manager_context {};
 
 } // namespace srsgnb
 

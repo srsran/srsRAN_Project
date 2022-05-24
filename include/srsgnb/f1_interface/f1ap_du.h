@@ -49,14 +49,17 @@ struct du_setup_params {
 
   // optional
   std::string gnb_du_name;
+
+  int max_setup_retries = 5;
 };
 
 struct f1_setup_request_message {
   du_setup_params setup_params;
 };
 
-struct du_setup_result {
-  expected<asn1::f1ap::f1_setup_resp_s, asn1::f1ap::f1_setup_fail_s> result;
+struct f1_setup_response_message {
+  asn1::f1ap::f1_setup_resp_s msg;
+  bool                        success;
 };
 
 class f1ap_du_configurator
@@ -64,10 +67,13 @@ class f1ap_du_configurator
 public:
   virtual ~f1ap_du_configurator() = default;
 
-  /// \brief Initiates F1 Setup procedure.
-  /// \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3 and
-  /// awaits the response.
-  virtual async_task<du_setup_result> handle_f1ap_setup_request(const f1_setup_request_message& msg) = 0;
+  /// \brief Initiates the F1 Setup procedure.
+  /// \param[in] request The F1SetupRequest message to transmit.
+  /// \return Returns a f1_setup_response_message struct with the success member set to 'true' in case of a successful
+  /// outcome, 'false' otherwise.
+  /// \remark The DU transmits the F1SetupRequest as per TS 38.473 section 8.2.3 and awaits
+  /// the response. If a the F1SetupFailure is received the F1AP will handle the failure.
+  virtual async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) = 0;
 
   /// Initiates creation of UE context in F1.
   virtual async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;

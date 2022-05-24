@@ -29,20 +29,19 @@ public:
 
   void operator()(coro_context<async_task<void> >& ctx)
   {
-    f1_setup_request_message request_msg = {};
-    f1ap::fill_f1_setup_request_message(request_msg, cfg.setup_params);
-
     CORO_BEGIN(ctx);
 
+    du_ctxt = {};
+
+    f1ap::fill_f1_setup_request_message(request_msg, cfg.setup_params);
+
     // Initiate F1 Setup.
-    CORO_AWAIT_VALUE(du_ctxt.f1_setup_result, cfg.f1ap->handle_f1ap_setup_request(request_msg));
+    CORO_AWAIT_VALUE(response_msg, cfg.f1ap->handle_f1ap_setup_request(request_msg));
 
     // Handle F1 setup result.
-    if (du_ctxt.f1_setup_result.result.has_value()) {
+    if (response_msg.success) {
       // In case of F1 Setup Response.
-      handle_f1_setup_response(du_ctxt.f1_setup_result.result.value());
-    } else {
-      handle_f1_setup_failure(du_ctxt.f1_setup_result.result.error());
+      handle_f1_setup_response(response_msg.msg);
     }
 
     // Configure DU Cells.
@@ -70,13 +69,11 @@ private:
     }
   }
 
-  void handle_f1_setup_failure(const asn1::f1ap::f1_setup_fail_s& failure)
-  {
-    // TODO
-  }
-
   const du_manager_config_t& cfg;
   du_manager_context&        du_ctxt;
+
+  f1_setup_request_message  request_msg  = {};
+  f1_setup_response_message response_msg = {};
 };
 
 } // namespace srsgnb

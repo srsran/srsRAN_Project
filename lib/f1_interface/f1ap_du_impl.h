@@ -25,7 +25,7 @@ class f1ap_du_impl final : public f1_du_interface
 public:
   f1ap_du_impl(f1c_message_handler& f1c_handler);
 
-  async_task<du_setup_result> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
+  async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
   async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override;
 
@@ -37,6 +37,9 @@ public:
 
   void handle_connection_loss() override {}
 
+  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                const asn1::f1ap::f1_setup_fail_s& failure);
+
 private:
   srslog::basic_logger& logger;
   f1c_message_handler&  f1c;
@@ -44,6 +47,8 @@ private:
   f1ap_du_context ctxt;
 
   async_queue<asn1::f1ap::f1_ap_pdu_c> pdu_queue{64};
+
+  int f1_setup_retry_no = 0;
 };
 
 } // namespace srsgnb

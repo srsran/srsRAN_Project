@@ -8,10 +8,10 @@
  *
  */
 
-#include "../../lib/du_manager/converters/f1_procedure_helpers.h"
-#include "../../lib/du_manager/du_manager_config.h"
-#include "../../lib/du_manager/du_manager_context.h"
-#include "../../lib/du_manager/procedures/initial_du_setup_procedure.h"
+#include "../../du_manager/converters/f1_procedure_helpers.h"
+#include "../../du_manager/du_manager_config.h"
+#include "../../du_manager/du_manager_context.h"
+#include "../../du_manager/procedures/initial_du_setup_procedure.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/f1_interface/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
