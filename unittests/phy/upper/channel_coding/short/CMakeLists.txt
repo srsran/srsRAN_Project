@@ -24,7 +24,7 @@ add_custom_command(
 add_test(short_block_encoder_test short_block_encoder_test)
 
 add_executable(short_block_detector_test short_block_detector_test.cpp)
-target_link_libraries(short_block_detector_test short_block srslog)
+target_link_libraries(short_block_detector_test short_block srsgnb_upper_phy_support srslog)
 add_custom_command(
         TARGET short_block_detector_test
         POST_BUILD

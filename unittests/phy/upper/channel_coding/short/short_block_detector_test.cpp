@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 #include "srsgnb/support/srsgnb_test.h"
 
+/// \cond
 using namespace srsgnb;
 int main()
 {
@@ -31,15 +32,17 @@ int main()
 
     const std::vector<uint8_t> messages = test_data.messages.read();
     TESTASSERT_EQ(messages.size(), nof_messages * message_length, "Error reading messages.");
-    const std::vector<int8_t> codeblocks = test_data.codeblocks.read();
+    std::vector<log_likelihood_ratio> codeblocks = test_data.codeblocks.read();
     TESTASSERT_EQ(codeblocks.size(), nof_messages * codeblock_length, "Error reading codeblocks.");
 
     std::vector<uint8_t> messages_test(messages.size());
     for (unsigned msg_idx = 0; msg_idx != nof_messages; ++msg_idx) {
-      span<const int8_t> input  = span<const int8_t>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
-      span<uint8_t>      output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
+      span<const log_likelihood_ratio> input =
+          span<const log_likelihood_ratio>(codeblocks).subspan(msg_idx * codeblock_length, codeblock_length);
+      span<uint8_t> output = span<uint8_t>(messages_test).subspan(msg_idx * message_length, message_length);
       TESTASSERT(test_detector->detect(output, input, mod), "Meaningless detection.");
     }
     TESTASSERT(std::equal(messages_test.cbegin(), messages_test.cend(), messages.cbegin()), "Detection went wrong.");
   }
 }
+/// \endcond

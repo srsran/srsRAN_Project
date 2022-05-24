@@ -43,7 +43,7 @@ static std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> cre
 const std::array<std::array<int8_t, MAX_BLOCK_LENGTH>, MAX_NOF_CODEWORDS_2> short_block_detector_impl::DETECT_TABLE =
     create_lut();
 
-static void validate_spans(span<uint8_t> output, span<const int8_t> input, unsigned bits_per_symbol)
+static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio> input, unsigned bits_per_symbol)
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
@@ -64,20 +64,21 @@ static void validate_spans(span<uint8_t> output, span<const int8_t> input, unsig
 }
 
 // ML detection for 2-bit messages.
-static double detect_2(span<uint8_t> output, span<const int8_t> input)
+static double detect_2(span<uint8_t> output, span<const log_likelihood_ratio> input)
 {
-  constexpr unsigned        NOF_BITS = 3;
-  std::array<int, NOF_BITS> llr      = {};
+  constexpr unsigned        NOF_BITS   = 3;
+  std::array<int, NOF_BITS> llr_as_int = {};
 
   unsigned in_size = input.size();
   if (in_size == NOF_BITS) {
-    std::copy(input.begin(), input.end(), llr.begin());
+    std::transform(
+        input.begin(), input.end(), llr_as_int.begin(), [](log_likelihood_ratio a) { return a.to_int8_t(); });
   } else {
     // in_size > NOF_BITS is equivalent to modulation of order higher than 1: combine repeated symbols.
     unsigned step = in_size / 3 - 2;
-    llr[0]        = input[0] + input[step + 3];
-    llr[1]        = input[1] + input[2 * step + 4];
-    llr[2]        = input[step + 2] + input[2 * step + 5];
+    llr_as_int[0] = input[0].to_int8_t() + input[step + 3].to_int8_t();
+    llr_as_int[1] = input[1].to_int8_t() + input[2 * step + 4].to_int8_t();
+    llr_as_int[2] = input[step + 2].to_int8_t() + input[2 * step + 5].to_int8_t();
   }
 
   // All possible 2-bit codewords (including redundancy bit).
@@ -87,7 +88,7 @@ static double detect_2(span<uint8_t> output, span<const int8_t> input)
   double   max_metric = std::numeric_limits<double>::min();
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != 4; ++cdwd_idx) {
-    int metric = srsvec::dot_prod(llr, TABLE2[cdwd_idx], 0);
+    int metric = srsvec::dot_prod(llr_as_int, TABLE2[cdwd_idx], 0);
     if (metric > max_metric) {
       max_metric = metric;
       max_idx    = cdwd_idx;
@@ -99,12 +100,12 @@ static double detect_2(span<uint8_t> output, span<const int8_t> input)
 
   // TODO(david): this is not really working, 3 symbols are not enough for a meaningful GLRT detector.
   max_metric *= max_metric;
-  int in_norm_sqr = srsvec::dot_prod(llr, llr, 0);
+  int in_norm_sqr = srsvec::dot_prod(llr_as_int, llr_as_int, 0);
   return 2.0 * max_metric / (3.0 * in_norm_sqr - max_metric);
 }
 
 // ML detection for (3-to-11)-bit messages.
-double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const int8_t> input)
+double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const log_likelihood_ratio> input)
 {
   unsigned out_size      = output.size();
   unsigned nof_codewords = (1U << (out_size - 1));
@@ -114,7 +115,7 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const i
   uint8_t  bit0       = 0U;
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != nof_codewords; ++cdwd_idx) {
-    int metric     = srsvec::dot_prod(input, DETECT_TABLE[cdwd_idx], 0);
+    int metric     = srsvec::dot_prod_llr(input, DETECT_TABLE[cdwd_idx], 0);
     int metric_abs = std::abs(metric);
     if (metric_abs > max_metric) {
       max_metric = metric_abs;
@@ -130,12 +131,12 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const i
 
   // GLRT detector metric.
   max_metric *= max_metric;
-  int in_norm_sqr = srsvec::dot_prod(input, input, 0);
+  int in_norm_sqr = srsvec::norm_sqr_llr(input);
   return (MAX_BLOCK_LENGTH - 1) * max_metric / (MAX_BLOCK_LENGTH * in_norm_sqr - max_metric);
 }
 
 // Recovers the original short codeblock from its rate-matched version.
-static void rate_dematch(span<int8_t> output, span<const int8_t> input)
+static void rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input)
 {
   unsigned output_size = output.size();
   unsigned input_size  = input.size();
@@ -143,16 +144,18 @@ static void rate_dematch(span<int8_t> output, span<const int8_t> input)
 
   std::fill(output.begin(), output.end(), 0);
   for (unsigned idx = 0; idx != input_size; ++idx) {
-    output[idx % output_size] = saturated_sum(output[idx % output_size], input[idx], INT8_MAX);
+    output[idx % output_size] += input[idx];
   }
 };
 
-bool short_block_detector_impl::detect(span<uint8_t> output, span<const int8_t> input, modulation_scheme mod)
+bool short_block_detector_impl::detect(span<uint8_t>                    output,
+                                       span<const log_likelihood_ratio> input,
+                                       modulation_scheme                mod)
 {
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
   validate_spans(output, input, bits_per_symbol);
 
-  static_vector<int8_t, MAX_BLOCK_LENGTH> tmp = {};
+  static_vector<log_likelihood_ratio, MAX_BLOCK_LENGTH> tmp = {};
 
   double   max_metric = 0;
   unsigned out_size   = output.size();

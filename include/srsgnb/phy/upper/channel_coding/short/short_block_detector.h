@@ -16,6 +16,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 #include <memory>
 
@@ -37,7 +38,7 @@ public:
   /// \param[in]  mod    Modulation scheme.
   /// \return True if \c input passes a detection test.
   /// \remark When the detection test fails, the function returns \c false and the content of \c output is unreliable.
-  virtual bool detect(span<uint8_t> output, span<const int8_t> input, modulation_scheme mod) = 0;
+  virtual bool detect(span<uint8_t> output, span<const log_likelihood_ratio> input, modulation_scheme mod) = 0;
 };
 
 std::unique_ptr<short_block_detector> create_short_block_detector();

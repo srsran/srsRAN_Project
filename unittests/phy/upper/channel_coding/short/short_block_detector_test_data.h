@@ -15,17 +15,18 @@
 //   + "srsShortBlockDetectorUnittest.m"
 
 #include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/file_vector.h"
 
 namespace srsgnb {
 
 struct test_case_t {
-  unsigned             nof_messages     = 0;
-  unsigned             message_length   = 0;
-  unsigned             codeblock_length = 0;
-  modulation_scheme    mod              = {};
-  file_vector<int8_t>  codeblocks;
-  file_vector<uint8_t> messages;
+  unsigned                          nof_messages     = 0;
+  unsigned                          message_length   = 0;
+  unsigned                          codeblock_length = 0;
+  modulation_scheme                 mod              = {};
+  file_vector<log_likelihood_ratio> codeblocks;
+  file_vector<uint8_t>              messages;
 };
 
 static const std::vector<test_case_t> short_block_detector_test_data = {

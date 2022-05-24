@@ -32,7 +32,7 @@ class short_block_detector_impl : public short_block_detector
 {
 public:
   // See interface for the documentation.
-  bool detect(span<uint8_t> output, span<const int8_t> input, modulation_scheme mod) override;
+  bool detect(span<uint8_t> output, span<const log_likelihood_ratio> input, modulation_scheme mod) override;
 
 private:
   /// \brief Brute force ML detection for messages of length 3-11 bits.
@@ -40,7 +40,7 @@ private:
   /// \param[in]  input  The received codeword (represented as a sequence of 32 LLRs).
   /// \returns The value of the GLRT detection metric.
   /// \remark The size of \c output must match the length of the expected message.
-  static double detect_3_11(span<uint8_t> output, span<const int8_t> input);
+  static double detect_3_11(span<uint8_t> output, span<const log_likelihood_ratio> input);
 
   /// \brief Look-up table of possible transmitted sequences of 32 bits.
   ///
