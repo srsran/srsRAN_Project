@@ -23,7 +23,7 @@ static constexpr unsigned SEG_CRC_LENGTH = 24;
 // Number of bits in one byte.
 static constexpr unsigned BITS_PER_BYTE = 8;
 
-ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc c)
+std::unique_ptr<ldpc_segmenter_tx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(ldpc_segmenter_impl::sch_crc c)
 {
   srsran_assert(c.crc16, "Invalid CRC16 calculator.");
   srsran_assert(c.crc24A, "Invalid CRC24A calculator.");
@@ -32,10 +32,12 @@ ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc c)
   srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
   srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
 
-  // Transfer CRC calculators' ownership.
-  crc_set.crc16  = std::move(c.crc16);
-  crc_set.crc24A = std::move(c.crc24A);
-  crc_set.crc24B = std::move(c.crc24B);
+  return std::unique_ptr<ldpc_segmenter_impl>(new ldpc_segmenter_impl(std::move(c)));
+}
+
+std::unique_ptr<ldpc_segmenter_rx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_rx()
+{
+  return std::unique_ptr<ldpc_segmenter_impl>(new ldpc_segmenter_impl());
 }
 
 void ldpc_segmenter_impl::compute_lifting_size()
@@ -307,13 +309,10 @@ std::unique_ptr<ldpc_segmenter_tx> srsgnb::create_ldpc_segmenter_tx()
   ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                        create_crc_calculator(crc_generator_poly::CRC24A),
                                        create_crc_calculator(crc_generator_poly::CRC24B)};
-  return std::make_unique<ldpc_segmenter_impl>(std::move(crcs));
+  return ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(std::move(crcs));
 }
 
 std::unique_ptr<ldpc_segmenter_rx> srsgnb::create_ldpc_segmenter_rx()
 {
-  ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
-                                       create_crc_calculator(crc_generator_poly::CRC24A),
-                                       create_crc_calculator(crc_generator_poly::CRC24B)};
-  return std::make_unique<ldpc_segmenter_impl>(std::move(crcs));
+  return ldpc_segmenter_impl::create_ldpc_segmenter_impl_rx();
 }

@@ -23,7 +23,10 @@ namespace srsgnb {
 /// Maximum accepted transport block size.
 static constexpr unsigned MAX_TBS = 1277992;
 
-/// Generic implementation of LDPC segmentation.
+/// \brief Generic implementation of LDPC segmentation.
+///
+/// Implements both ldpc_segmenter_tx and ldpc_segmenter_rx. For this reason, the constructor has been hidden behind the
+/// static wrapper methods create_ldpc_segmenter_impl_tx() and create_ldpc_segmenter_impl_rx().
 class ldpc_segmenter_impl : public ldpc_segmenter_tx, public ldpc_segmenter_rx
 {
 public:
@@ -37,10 +40,12 @@ public:
     std::unique_ptr<crc_calculator> crc24B;
   };
 
-  /// \brief Creates an LDPC segmentation object that aggregates a crc_calculator.
-  ///
-  /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
-  explicit ldpc_segmenter_impl(sch_crc c);
+  /// \brief Wraps the constructor of the Tx version of the LDPC segmenter.
+  static std::unique_ptr<ldpc_segmenter_tx> create_ldpc_segmenter_impl_tx(sch_crc);
+
+  /// \brief Wraps the constructor of the Rx version of the LDPC segmenter.
+  /// \remark The receive-chain version of the segmenter does not need CRC calculators.
+  static std::unique_ptr<ldpc_segmenter_rx> create_ldpc_segmenter_impl_rx();
 
   // Tx-chain segmentation.
   // See interface for the documentation.
@@ -56,6 +61,14 @@ public:
                const segmenter_config&                                  cfg) override;
 
 private:
+  /// Default constructor.
+  ldpc_segmenter_impl() : crc_set({nullptr, nullptr, nullptr}){};
+
+  /// \brief Creates an LDPC segmentation object that aggregates a crc_calculator.
+  ///
+  /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
+  explicit ldpc_segmenter_impl(sch_crc c) : crc_set({std::move(c.crc16), std::move(c.crc24A), std::move(c.crc24B)}){};
+
   /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
   void compute_lifting_size();
 
