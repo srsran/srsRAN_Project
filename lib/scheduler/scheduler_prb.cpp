@@ -8,7 +8,7 @@
  *
  */
 
-#include "sched_prb.h"
+#include "scheduler_prb.h"
 
 using namespace srsgnb;
 

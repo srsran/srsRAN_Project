@@ -8,19 +8,19 @@
  *
  */
 
-#include "sched_ssb.h"
+#include "scheduler_ssb.h"
 #include "cell/resource_grid.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
+
+using namespace srsgnb;
 
 /// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1).
 #define CUTOFF_FREQ_ARFCN_CASE_A_B_C 600000
 /// The cutoff frequency for case C unpaired is 1.88GHz, corresponding to 376000 ARFCN (TS 38.213, Section 4.1).
 #define CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED 376000
 
-namespace srsgnb {
-
-subcarrier_spacing ssb_case_to_scs(ssb_pattern_case ssb_case)
+subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
 {
   switch (ssb_case) {
     case ssb_pattern_case::A:
@@ -157,14 +157,14 @@ static void ssb_alloc_case_B(ssb_information_list& ssb_list,
   }
 }
 
-void sched_ssb(cell_slot_resource_allocator& res_grid,
-               const slot_point&             sl_point,
-               uint8_t                       ssb_periodicity,
-               uint16_t                      offset_to_point_A,
-               uint32_t                      freq_arfcn,
-               uint64_t                      ssb_in_burst_bitmap,
-               ssb_pattern_case              ssb_case,
-               bool                          paired_spectrum)
+void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
+                          const slot_point&             sl_point,
+                          uint8_t                       ssb_periodicity,
+                          uint16_t                      offset_to_point_A,
+                          uint32_t                      freq_arfcn,
+                          uint64_t                      ssb_in_burst_bitmap,
+                          ssb_pattern_case              ssb_case,
+                          bool                          paired_spectrum)
 {
   ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
@@ -213,5 +213,3 @@ void sched_ssb(cell_slot_resource_allocator& res_grid,
     res_grid.dl_res_grid.fill(grant);
   }
 }
-
-} // namespace srsgnb

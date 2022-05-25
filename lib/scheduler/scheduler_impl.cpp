@@ -8,8 +8,8 @@
  *
  */
 
-#include "sched_ssb.h"
 #include "scheduler_impl.h"
+#include "scheduler_ssb.h"
 
 using namespace srsgnb;
 
@@ -53,14 +53,14 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
   //  3. SSB scheduling.
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
-  sched_ssb(cell.res_grid[0],
-            sl_tx,
-            ssb_cfg.ssb_period,
-            ssb_cfg.ssb_offset_to_point_A,
-            cell.cell_cfg.dl_carrier.arfcn,
-            ssb_cfg.ssb_bitmap,
-            cell.cell_cfg.ssb_case,
-            cell.cell_cfg.paired_spectrum);
+  schedule_ssb(cell.res_grid[0],
+               sl_tx,
+               ssb_cfg.ssb_period,
+               ssb_cfg.ssb_offset_to_point_A,
+               cell.cell_cfg.dl_carrier.arfcn,
+               ssb_cfg.ssb_bitmap,
+               cell.cell_cfg.ssb_case,
+               cell.cell_cfg.paired_spectrum);
 
   // 3. Schedule DL signalling.
   // TODO

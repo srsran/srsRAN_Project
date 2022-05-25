@@ -55,7 +55,7 @@ private:
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-event_manager::event_manager(ue_map_t&                     ue_db_,
+event_manager::event_manager(ue_list&                      ue_db_,
                              cell_sched_manager&           cell_sched_,
                              sched_configuration_notifier& mac_notifier_) :
   logger(srslog::fetch_basic_logger("MAC")), ue_db(ue_db_), cells(cell_sched_), mac_notifier(mac_notifier_)

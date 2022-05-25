@@ -85,7 +85,7 @@ private:
   sr_indication_message last_sr;
 };
 
-using ue_map_t = du_ue_list<std::unique_ptr<ue> >;
+using ue_list = du_ue_list<std::unique_ptr<ue> >;
 
 } // namespace srsgnb
 

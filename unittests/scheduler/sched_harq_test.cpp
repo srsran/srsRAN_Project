@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/sched_harq.h"
+#include "lib/scheduler/ue/harq_process.h"
 #include "srsgnb/support/test_utils.h"
 
 #define TEST_HARQ_ASSERT_MSG(SLOT, PID) "Failed at slot: '{}', HARQ PID: '{}'", SLOT, PID
@@ -33,7 +33,7 @@ struct test_bench {
     ++t;
     test_logger.set_context(t.to_uint());
     mac_logger.set_context(t.to_uint());
-    h_entity.new_slot(t);
+    h_entity.slot_indication(t);
   }
 
   slot_point slot_rx() { return t; }
@@ -57,11 +57,11 @@ struct harq_proc_params {
 };
 
 struct harq_proc_vars {
-  uint32_t      pid;
-  bool          ack        = false;
-  bool          latest_ndi = false;
-  dl_harq_proc* dl_proc    = nullptr;
-  ul_harq_proc* ul_proc    = nullptr;
+  uint32_t         pid;
+  bool             ack        = false;
+  bool             latest_ndi = false;
+  dl_harq_process* dl_proc    = nullptr;
+  ul_harq_process* ul_proc    = nullptr;
 };
 
 struct harq_entity_params {
@@ -114,7 +114,7 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
                                      harq_entity&                     h_entity)
 
 {
-  dl_harq_proc* dl_proc;
+  dl_harq_process* dl_proc;
 
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
@@ -133,10 +133,10 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
     dl_proc->new_tx(slot, slot + dl_param.arq_slot_delay, grant_dl, dl_param.mcs, dl_param.max_n_rtx);
     dl_proc->set_tbs(dl_param.tbs);
     test_bench::test_logger.info(
-        "New DL HARQ tx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
+        "New DL HARQ tx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(0), dl_proc->harq_slot_ack());
 
     // For a new TX, verify the NDI gets toggled
-    TESTASSERT_EQ(dl_proc->ndi(), not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dl_proc->ndi(0), not dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
   }
   // Case of NEW RE-TX
   else {
@@ -148,16 +148,16 @@ static void test_dl_harq_entity_slot(const struct harq_entity_params& common,
     dl_proc->new_retx(slot, slot + dl_param.arq_slot_delay, grant_dl);
     dl_proc->set_tbs(dl_param.tbs);
     test_bench::test_logger.info(
-        "New DL HARQ retx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(), dl_proc->harq_slot_ack());
+        "New DL HARQ retx for pid={}: [ndi={}, ack_slot={}]", dl_proc->pid, dl_proc->ndi(0), dl_proc->harq_slot_ack());
 
     // For a new RE-TX, verify the NDI is the same as for the original TX
-    TESTASSERT_EQ(dl_proc->ndi(), dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+    TESTASSERT_EQ(dl_proc->ndi(0), dl_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
   }
 
-  dl_var.latest_ndi = dl_proc->ndi();
+  dl_var.latest_ndi = dl_proc->ndi(0);
   // test whether DCI has been filled correctly and DL HARQ has the correct parameters
-  TESTASSERT_EQ(dl_proc->mcs(), dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
-  TESTASSERT_EQ(dl_proc->tbs(), dl_param.tbs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dl_proc->mcs(0), dl_param.mcs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
+  TESTASSERT_EQ(dl_proc->tbs(0), dl_param.tbs, TEST_HARQ_ASSERT_MSG(slot, dl_var.pid));
 }
 
 static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
@@ -166,7 +166,7 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
                                      struct harq_proc_vars&           ul_var,
                                      harq_entity&                     h_entity)
 {
-  ul_harq_proc* ul_proc;
+  ul_harq_process* ul_proc;
 
   // The specific grant does not matter for this test
   rbg_bitmap rbg_btmp(18);
@@ -186,7 +186,7 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
     ul_proc->set_tbs(ul_param.tbs);
 
     // For a new TX, verify the NDI gets toggled
-    TESTASSERT_EQ(ul_proc->ndi(), not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(ul_proc->ndi(0), not ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
   }
   // Case of NEW RE-TX: verify the saved pointer coincides with the one in the h_entity
   else {
@@ -199,14 +199,13 @@ static void test_ul_harq_entity_slot(const struct harq_entity_params& common,
     ul_proc->set_tbs(ul_param.tbs);
 
     // For a new RE-TX, verify the NDI is the same as for the original TX
-    TESTASSERT_EQ(ul_proc->ndi(), ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+    TESTASSERT_EQ(ul_proc->ndi(0), ul_var.latest_ndi, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
   }
 
-  ul_var.latest_ndi = ul_proc->ndi();
+  ul_var.latest_ndi = ul_proc->ndi(0);
   // test whether DCI has been filled correctly and DL HARQ has the correct parameters
-  TESTASSERT_EQ(ul_proc->mcs(), ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ(ul_proc->tbs(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
-  TESTASSERT_EQ(ul_proc->get_softbuffer().size(), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(ul_proc->mcs(0), ul_param.mcs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
+  TESTASSERT_EQ(ul_proc->tbs(0), ul_param.tbs, TEST_HARQ_ASSERT_MSG(slot, ul_var.pid));
 }
 
 /// Parameter used to choose between different outcomes for HARQ process test
@@ -222,10 +221,10 @@ void test_dl_harq_proc(test_mode tmode)
   constexpr unsigned mcs          = 8;
   constexpr unsigned tbs          = 1224;
 
-  dl_harq_proc dl_proc{pid};
-  prb_grant    prbgrant{prb_interval{0, 60}};
-  slot_point   sl_tx{0, tx_gnb_delay};
-  auto         sl_rx = [&sl_tx]() { return sl_tx - tx_gnb_delay; };
+  dl_harq_process dl_proc{pid};
+  prb_grant       prbgrant{prb_interval{0, 60}};
+  slot_point      sl_tx{0, tx_gnb_delay};
+  auto            sl_rx = [&sl_tx]() { return sl_tx - tx_gnb_delay; };
 
   // Test: Empty HARQ
   TESTASSERT(dl_proc.empty());
@@ -240,8 +239,8 @@ void test_dl_harq_proc(test_mode tmode)
   TESTASSERT(dl_proc.set_tbs(tbs));
   TESTASSERT(not dl_proc.empty());
   TESTASSERT(not dl_proc.has_pending_retx());
-  TESTASSERT_EQ(mcs, dl_proc.mcs());
-  TESTASSERT_EQ(tbs, dl_proc.tbs());
+  TESTASSERT_EQ(mcs, dl_proc.mcs(0));
+  TESTASSERT_EQ(tbs, dl_proc.tbs(0));
   TESTASSERT_EQ(0, dl_proc.nof_retx());
   TESTASSERT_EQ(max_retx, dl_proc.max_nof_retx());
   TESTASSERT_EQ(sl_tx + harq_delay, dl_proc.harq_slot_ack());
@@ -255,7 +254,7 @@ void test_dl_harq_proc(test_mode tmode)
     // If no Pending ReTx, allocation of retxs or newtxs should fail
     TESTASSERT(not dl_proc.new_retx(sl_tx, sl_tx + harq_delay, prbgrant));
     TESTASSERT(not dl_proc.new_tx(sl_tx, sl_tx + harq_delay, prbgrant, mcs, max_retx));
-    dl_proc.new_slot(sl_rx());
+    dl_proc.slot_indication(sl_rx());
   }
 
   // Test: HARQ has pending reTx
@@ -280,14 +279,14 @@ void test_dl_harq_proc(test_mode tmode)
 
   for (unsigned count = 0; count < tx_gnb_delay + harq_delay - 1; ++count) {
     sl_tx++;
-    dl_proc.new_slot(sl_rx());
+    dl_proc.slot_indication(sl_rx());
   }
 
   if (tmode == max_retx_reached) {
     // Test: max reTx reached
     // The HARQ should be automatically cleared
     sl_tx++;
-    dl_proc.new_slot(sl_rx());
+    dl_proc.slot_indication(sl_rx());
     TESTASSERT(dl_proc.empty());
     return;
   }
@@ -319,7 +318,7 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   prb_grant grant_dl(rbg_btmp);
 
   // Create DL_HARQ object
-  dl_harq_proc dl_test = dl_harq_proc(pid);
+  dl_harq_process dl_test = dl_harq_process(pid);
   TESTASSERT_EQ(dl_test.pid, pid);
 
   // Create HARQ entity
@@ -338,7 +337,7 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
   harq_proc_vars         dl_h_var_0{};
 
   // Retrive the DL HARQ pointers from the h_entity
-  dl_harq_proc* dl_proc = h_entity.find_empty_dl_harq();
+  dl_harq_process* dl_proc = h_entity.find_empty_dl_harq();
 
   // Verify that allocating a RETX without allocating a TX first leads to the function returning false
   TESTASSERT_EQ(dl_proc->new_retx(bench.slot_tx(), bench.dl_slot_ack(), grant_dl), false);
@@ -392,7 +391,7 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   prb_grant grant_ul(rbg_btmp);
 
   // Create UL_HARQ object
-  ul_harq_proc ul_test = ul_harq_proc(pid);
+  ul_harq_process ul_test = ul_harq_process(pid);
   TESTASSERT_EQ(ul_test.pid, pid);
 
   // Create HARQ entity
@@ -407,14 +406,14 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
   TESTASSERT(h_entity.find_empty_ul_harq() != nullptr);
 
   // Increment slot
-  h_entity.new_slot(t);
+  h_entity.slot_indication(t);
 
   // Define UL HARQ PID 0
   const harq_proc_params ul_h_par_0{.arq_slot_delay = ul_tx_delay, .max_n_rtx = max_n_rtx, .mcs = 12, .tbs = 3152};
   harq_proc_vars         ul_h_var_0{};
 
   // Retrive the UL HARQ pointers from the h_entity
-  ul_harq_proc* ul_proc = h_entity.find_empty_ul_harq();
+  ul_harq_process* ul_proc = h_entity.find_empty_ul_harq();
 
   // Verify that allocating a RETX without allocating a TX first leads to the function returning false
   TESTASSERT_EQ(ul_proc->new_retx(t, grant_ul), false);
@@ -424,8 +423,8 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
 
   // Report ACK and advance slots number
   h_entity_report_ack(common_param, ul_h_par_0, ul_h_par_0, t, ul_h_var_0, ul_h_var_0, h_entity);
-  h_entity.new_slot(++t);
-  h_entity.new_slot(++t);
+  h_entity.slot_indication(++t);
+  h_entity.slot_indication(++t);
 
   // Verify that there should be a pending TX
   TESTASSERT(h_entity.find_pending_ul_retx() == ul_proc);
@@ -438,7 +437,7 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
 
   // Increase ACK report delay and schedule a transmission (expect SUCCESS)
   TESTASSERT_EQ(ul_proc->new_tx(t, grant_ul, ul_h_par_1.mcs, ul_h_par_1.max_n_rtx), true);
-  h_entity.new_slot(++t);
+  h_entity.slot_indication(++t);
   // Schedule a transmission for the same PID before the ACK is received (expect FAIL)
   TESTASSERT_EQ(ul_proc->new_tx(t, grant_ul, ul_h_par_1.mcs, ul_h_par_1.max_n_rtx), false);
 }

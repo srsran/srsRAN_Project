@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DATA_SCHED_INPUT_H
-#define SRSGNB_DATA_SCHED_INPUT_H
+#ifndef SRSGNB_DATA_SCHEDULER_INPUT_H
+#define SRSGNB_DATA_SCHEDULER_INPUT_H
 
 #include "../ue/ue.h"
 
@@ -33,10 +33,10 @@ private:
 using ue_candidate_map_t = circular_map<uint16_t, ue_candidate, MAX_NOF_DU_UES>;
 
 /// Input parameters relative to a {slot, cell} which the scheduling strategy uses to allocate UEs
-class data_sched_input
+class data_scheduler_input
 {
 public:
-  data_sched_input(slot_point sl_tx_, du_cell_index_t cell_index_) : sl_tx(sl_tx_), cell_index(cell_index_) {}
+  data_scheduler_input(slot_point sl_tx_, du_cell_index_t cell_index_) : sl_tx(sl_tx_), cell_index(cell_index_) {}
 
   const slot_point      sl_tx;
   const du_cell_index_t cell_index;
@@ -45,7 +45,7 @@ public:
 };
 
 /// Fill list of eligible UEs for data scheduling
-inline void fill_ue_candidate_map(du_cell_index_t cell_index, const ue_map_t& ue_db, data_sched_input& sched_input)
+inline void fill_ue_candidate_map(du_cell_index_t cell_index, const ue_list& ue_db, data_scheduler_input& sched_input)
 {
   for (const std::unique_ptr<ue>& ueptr : ue_db) {
     ue_carrier* ue_cc = ueptr->find_cc(cell_index);
@@ -58,4 +58,4 @@ inline void fill_ue_candidate_map(du_cell_index_t cell_index, const ue_map_t& ue
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DATA_SCHED_INPUT_H
+#endif // SRSGNB_DATA_SCHEDULER_INPUT_H

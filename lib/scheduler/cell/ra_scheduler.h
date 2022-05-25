@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RA_SCHEDULER_H
 #define SRSGNB_RA_SCHEDULER_H
 
-#include "../sched_harq.h"
+#include "../ue/harq_process.h"
 #include "pdcch_scheduler.h"
 #include "resource_grid.h"
 #include <deque>
@@ -56,7 +56,7 @@ private:
   struct pending_msg3 {
     rach_indication_message ind_msg{};
     /// UL Harq used to schedule Msg3.
-    ul_harq_proc harq{0};
+    ul_harq_process harq{0};
   };
   struct msg3_alloc_candidate {
     unsigned     pusch_td_res_index;

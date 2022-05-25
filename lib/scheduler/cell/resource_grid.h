@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RESOURCE_GRID_H
 #define SRSGNB_RESOURCE_GRID_H
 
-#include "../sched_prb.h"
+#include "../scheduler_prb.h"
 #include "cell_configuration.h"
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/ran/slot_point.h"

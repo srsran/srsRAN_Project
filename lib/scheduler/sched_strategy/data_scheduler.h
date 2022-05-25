@@ -11,8 +11,8 @@
 #ifndef SRSGNB_DATA_SCHEDULER_H
 #define SRSGNB_DATA_SCHEDULER_H
 
-#include "data_sched_input.h"
-#include "data_sched_output.h"
+#include "data_scheduler_input.h"
+#include "data_scheduler_output.h"
 
 namespace srsgnb {
 
@@ -27,13 +27,13 @@ public:
   /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
   ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
   /// \param out scheduler output for the given {slot, cell}.
-  virtual void dl_sched(const data_sched_input& in, dl_data_sched_output& out) = 0;
+  virtual void dl_sched(const data_scheduler_input& in, dl_data_scheduler_output& out) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
   /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
   ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
   /// \param out scheduler output for the given {slot, cell}.
-  virtual void ul_sched(const data_sched_input& in, ul_data_sched_output& out) = 0;
+  virtual void ul_sched(const data_scheduler_input& in, ul_data_scheduler_output& out) = 0;
 };
 
 } // namespace srsgnb

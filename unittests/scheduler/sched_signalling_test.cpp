@@ -10,7 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/cell/resource_grid.h"
-#include "lib/scheduler/sched_ssb.h"
+#include "lib/scheduler/scheduler_ssb.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
@@ -299,14 +299,14 @@ void test_ssb_time_allocation(uint16_t         ssb_periodicity,
     }
 
     // Schedule the SSB.
-    sched_ssb(bench.get_slot_allocator(),
-              bench.slot_tx(),
-              ssb_periodicity,
-              offset_to_point_A,
-              freq_arfcn,
-              in_burst_bitmap,
-              ssb_case,
-              paired_spectrum);
+    schedule_ssb(bench.get_slot_allocator(),
+                 bench.slot_tx(),
+                 ssb_periodicity,
+                 offset_to_point_A,
+                 freq_arfcn,
+                 in_burst_bitmap,
+                 ssb_case,
+                 paired_spectrum);
 
     // Use ssb_bitmap with 8 bits, to simplify the code (L_max 64 is not used at the moment).
     uint8_t ssb_burst_bitmap = static_cast<uint8_t>(in_burst_bitmap >> 56U);

@@ -51,7 +51,7 @@ private:
   srslog::basic_logger&         logger;
 
   /// Repository of created UEs.
-  ue_map_t ue_db;
+  ue_list ue_db;
 
   // Data UE scheduler
   std::unique_ptr<data_scheduler> data_sched;
