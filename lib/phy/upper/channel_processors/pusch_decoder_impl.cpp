@@ -161,7 +161,7 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
 
     // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
     // bits - may contain zero-padding).
-    unsigned cb_length, msg_length, nof_data_bits;
+    unsigned cb_length = 0, msg_length = 0, nof_data_bits = 0;
     std::tie(cb_length, msg_length, nof_data_bits) = get_cblk_bit_breakdown(cb_meta);
 
     // Get data bits from previous transmissions, if any.
