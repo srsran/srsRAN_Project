@@ -74,7 +74,7 @@ public:
 /// - No collision in UL RBs between MSG3 grants.
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
-  prb_bitmap                 total_ul_prbs{cfg.nof_ul_prbs};
+  prb_bitmap                 total_ul_prbs(cfg.nof_ul_prbs);
   std::set<rnti_t>           temp_crntis, ra_rntis;
   const bwp_configuration&   ul_bwp_cfg = cfg.ul_cfg_common.init_ul_bwp.generic_params;
   const pusch_config_common& pusch_cfg  = *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common;

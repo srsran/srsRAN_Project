@@ -49,7 +49,7 @@ void test_bit_operations()
 void test_zero_bitset()
 {
   bounded_bitset<25> mask;
-  bounded_bitset<25> mask2{23};
+  bounded_bitset<25> mask2(23);
 
   TESTASSERT(mask.max_size() == 25);
   TESTASSERT(mask.size() == 0);
@@ -86,9 +86,29 @@ void test_ones_bitset()
   TESTASSERT(not mask.none() and mask.all() and mask.any());
 }
 
+void test_bitset_constructors()
+{
+  // Test initializer list.
+  bounded_bitset<25> mask1 = {1, 1, 1, 1, 0};
+  TESTASSERT(mask1.size() == 5);
+  TESTASSERT(mask1.test(0));
+  TESTASSERT(mask1.test(1));
+  TESTASSERT(mask1.test(3));
+  TESTASSERT(not mask1.test(4));
+
+  // Test iterator.
+  std::array<bool, 5> data = {1, 1, 1, 1, 0};
+  bounded_bitset<25>  mask2(data.begin(), data.end());
+  TESTASSERT(mask2.size() == 5);
+  TESTASSERT(mask2.test(0));
+  TESTASSERT(mask2.test(1));
+  TESTASSERT(mask2.test(3));
+  TESTASSERT(not mask2.test(4));
+}
+
 void test_bitset_set()
 {
-  bounded_bitset<25> mask{23};
+  bounded_bitset<25> mask(23);
   mask.set(10);
 
   TESTASSERT(mask.any());
@@ -102,8 +122,8 @@ void test_bitset_set()
 
 void test_bitset_bitwise_oper()
 {
-  bounded_bitset<25> mask{23};
-  bounded_bitset<25> mask2{23};
+  bounded_bitset<25> mask(23);
+  bounded_bitset<25> mask2(23);
 
   mask.set(10);
   TESTASSERT(mask != mask2);
@@ -255,6 +275,74 @@ void test_bitset_find()
     TESTASSERT(bitset.find_lowest(0, bitset.size()) == 0);
     TESTASSERT(bitset.find_lowest(5, bitset.size()) == 5);
   }
+  {
+    bounded_bitset<100, reversed> bitset(95);
+
+    // 0b0...0
+    TESTASSERT(bitset.find_lowest() == -1);
+
+    // 0b1000...
+    bitset.set(94);
+    TESTASSERT(bitset.find_lowest() == 94);
+
+    // 0b1000...010
+    bitset.set(1);
+    TESTASSERT(bitset.find_lowest() == 1);
+
+    // 0b11..11
+    bitset.fill(0, bitset.size());
+    TESTASSERT(bitset.find_lowest() == 0);
+  }
+  {
+    bounded_bitset<100, reversed> bitset(95);
+
+    // 0b0...0
+    TESTASSERT(bitset.find_highest() == -1);
+
+    // 0b1000...
+    bitset.set(94);
+    TESTASSERT_EQ(bitset.find_highest(), 94);
+
+    // 0b1000...010
+    bitset.set(1);
+    TESTASSERT(bitset.find_highest() == 94);
+
+    // 0b11..11
+    bitset.fill(0, bitset.size());
+    TESTASSERT(bitset.find_highest() == 94);
+  }
+}
+
+void test_bitset_contiguous()
+{
+  // Test contiguous condition 1. No bit set.
+  {
+    TESTASSERT(bounded_bitset<10>({0, 0, 0, 0}).is_contiguous());
+  }
+  // Test contiguous condition 2. One bit set.
+  {
+    TESTASSERT(bounded_bitset<10>({1, 0, 0, 0}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 0, 1, 0}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 1, 0, 0}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 0, 0, 1}).is_contiguous());
+  }
+  // Test contiguous condition 3. All set bits are contiguous.
+  {
+    TESTASSERT(bounded_bitset<10>({1, 1, 0, 0}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({1, 1, 1, 0}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({1, 1, 1, 1}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 1, 1, 1}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 0, 1, 1}).is_contiguous());
+    TESTASSERT(bounded_bitset<10>({0, 1, 1, 0}).is_contiguous());
+  }
+  // Not contiguous.
+  {
+    TESTASSERT(not bounded_bitset<10>({1, 0, 1, 1}).is_contiguous());
+    TESTASSERT(not bounded_bitset<10>({1, 1, 0, 1}).is_contiguous());
+    TESTASSERT(not bounded_bitset<10>({1, 0, 1, 1}).is_contiguous());
+    TESTASSERT(not bounded_bitset<10>({1, 1, 0, 1}).is_contiguous());
+    TESTASSERT(not bounded_bitset<10>({1, 0, 0, 1}).is_contiguous());
+  }
 }
 
 int main()
@@ -262,12 +350,14 @@ int main()
   test_bit_operations();
   test_zero_bitset();
   test_ones_bitset();
+  test_bitset_constructors();
   test_bitset_set();
   test_bitset_bitwise_oper();
   test_bitset_print();
   test_bitset_resize();
   test_bitset_find<false>();
   test_bitset_find<true>();
+  test_bitset_contiguous();
   printf("Success\n");
   return 0;
 }

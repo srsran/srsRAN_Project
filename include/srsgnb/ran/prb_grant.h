@@ -109,7 +109,7 @@ struct prb_grant {
   prb_grant& operator&=(const prb_interval interv)
   {
     if (is_alloc_type0()) {
-      alloc.rbgs &= rbg_bitmap{alloc.rbgs.size()}.fill(interv.start(), interv.stop());
+      alloc.rbgs &= rbg_bitmap(alloc.rbgs.size()).fill(interv.start(), interv.stop());
     } else {
       alloc.interv.intersect(interv);
     }

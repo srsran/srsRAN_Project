@@ -201,6 +201,34 @@ public:
 
   constexpr explicit bounded_bitset(size_t cur_size_) : cur_size(cur_size_) {}
 
+  /// \brief Constructs a bitset using iterators.
+  ///
+  /// The constructed bitset size is equal to <tt> end - begin </tt> size. The values in the list are mapped one to one
+  /// starting from begin.
+  ///
+  /// \tparam Iterator Boolean iterator type.
+  /// \param[in] begin Begin iterator.
+  /// \param[in] end End iterator.
+  template <typename Iterator,
+            typename std::enable_if<std::is_same<typename std::iterator_traits<Iterator>::value_type, bool>::value,
+                                    bool>::type = 0>
+  constexpr bounded_bitset(Iterator begin, Iterator end)
+  {
+    resize(end - begin);
+    std::for_each(begin, end, [this, n = 0](bool value) mutable { set(n++, value); });
+  }
+
+  /// \brief Constructs a bitset from an initializer list.
+  ///
+  /// The constructed bitset size is equal to \c values size. The values in the list are mapped one to one.
+  ///
+  /// \param[in] values Boolean initializer list.
+  constexpr bounded_bitset(std::initializer_list<const bool> values)
+  {
+    resize(values.size());
+    std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable { set(n++, value); });
+  }
+
   constexpr size_t max_size() const noexcept { return N; }
 
   /// Current size of the bounded_bitset.
@@ -298,6 +326,11 @@ public:
     return *this;
   }
 
+  /// \brief Finds the lowest bit with value set to the value passed as argument.
+  /// \param[in] value The bit value to find, either true (1) or false (0).
+  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  int find_lowest(bool value = true) const noexcept { return find_lowest(0, size(), value); }
+
   /// \brief Finds, within a range of bit indexes, the lowest bit with value set to the value passed as argument.
   /// \param[in] startpos Starting bit index for the search.
   /// \param[in] endpos End bit index for the search.
@@ -333,6 +366,30 @@ public:
     return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
   }
 
+  /// \brief Finds the highest bit with value set to the value passed as argument.
+  /// \param[in] value The bit value to find, either true (1) or false (0).
+  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  int find_highest(bool value = true) const noexcept { return find_highest(0, size(), value); }
+
+  /// \brief Finds, within a range of bit indexes, the highest bit with value set to the value passed as argument.
+  /// \param[in] startpos Starting bit index for the search.
+  /// \param[in] endpos End bit index for the search.
+  /// \param[in] value The bit value to find, either true (1) or false (0).
+  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  int find_highest(size_t startpos, size_t endpos, bool value = true) const noexcept
+  {
+    assert_range_bounds_(startpos, endpos);
+
+    if (reversed) {
+      int ret = find_first_(startpos, endpos, value);
+      if (ret == -1) {
+        return ret;
+      }
+      return size() - 1 - ret;
+    }
+    return find_last_(startpos, endpos, value);
+  }
+
   /// \brief Checks if at least one bit in the bitset is set to 1.
   /// \return Returns true if at least one bit is 1.
   bool any() const noexcept
@@ -363,6 +420,45 @@ public:
   /// \brief Checks if at no bit in the bitset is set to 1.
   /// \return Returns true if no bit equal to 1 was found.
   bool none() const noexcept { return !any(); }
+
+  /// \brief Determines whether all bits with value set to \c value are contiguous.
+  ///
+  /// Bits with the same value are contiguous if:
+  /// 1. one bit with \c value is found,
+  /// 2. no bit with \c value is found, and
+  /// 3. all bits with \c value are consecutive.
+  ///
+  /// \param[in] startpos Starting bit index for the search.
+  /// \param[in] endpos End bit index for the search.
+  /// \param[in] value The bit value to find, either true (1) or false (0).
+  /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
+  bool is_contiguous(bool value = true) const noexcept
+  {
+    // Find the lowest value.
+    int startpos = find_lowest(0, size(), value);
+
+    // Condition 1. No value is found.
+    if (startpos == -1) {
+      return true;
+    }
+
+    // Find the highest value.
+    int endpos = find_highest(startpos + 1, size(), value);
+
+    // Condition 2. There is only one bit with the value (in startpos).
+    if (endpos == -1) {
+      return true;
+    }
+
+    // Count the number of elements set to value.
+    size_t value_count = count();
+    if (not value) {
+      value_count = size() - value_count;
+    }
+
+    // Condition 3. The number of elements must match with the star to end number of elements.
+    return (value_count == static_cast<size_t>((endpos + 1) - startpos));
+  }
 
   /// \brief Counts the number of bits set to 1.
   /// \return Returns the number of bits set to 1.
@@ -563,7 +659,7 @@ private:
     size_t startword = startpos / bits_per_word;
     size_t lastword  = (endpos - 1) / bits_per_word;
 
-    for (size_t i = lastword; i != startpos - 1; --i) {
+    for (size_t i = lastword; i != startword - 1; --i) {
       word_t w = buffer[i];
       if (not value) {
         w = ~w;
