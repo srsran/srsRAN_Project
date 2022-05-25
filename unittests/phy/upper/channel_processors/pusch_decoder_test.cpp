@@ -81,8 +81,9 @@ int main()
     pusch_decoder::statistics    dec_stats = {};
     pusch_decoder::configuration dec_cfg   = {};
 
-    std::size_t cw_offset = 0;
-    dec_cfg.new_data      = true;
+    std::size_t cw_offset  = 0;
+    dec_cfg.new_data       = true;
+    dec_cfg.use_early_stop = true;
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
@@ -98,6 +99,32 @@ int main()
       TESTASSERT_EQ(
           dec_stats.nof_codeblocks_decoded, dec_stats.nof_codeblocks_total, "Error reporting decoded codeblocks.");
       TESTASSERT(dec_stats.nof_ldpc_iterations < 2.2, "Too many decoder iterations.");
+
+      // Force all CRCs to false to test LLR combining.
+      softbuffer->reset_codeblocks_crc();
+    }
+
+    cw_offset              = 0;
+    dec_cfg.new_data       = true;
+    dec_cfg.use_early_stop = false;
+    for (auto rv : rv_sequence) {
+      cfg.rv = rv;
+      std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
+
+      dec_cfg.segmenter_cfg = cfg;
+
+      decoder->decode(rx_tb, dec_stats, softbuffer, span<const int8_t>(llrs_all).subspan(cw_offset, cws), dec_cfg);
+      cw_offset += cws;
+      dec_cfg.new_data = false;
+
+      TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed (no early stop).");
+      TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly (no early stop).");
+      TESTASSERT_EQ(dec_stats.nof_codeblocks_decoded,
+                    dec_stats.nof_codeblocks_total,
+                    "Error reporting decoded codeblocks (no early stop).");
+      TESTASSERT_EQ(dec_cfg.nof_ldpc_iterations,
+                    dec_stats.nof_ldpc_iterations,
+                    "Something wrong with iteration counting (no early stop).");
 
       // Force all CRCs to false to test LLR combining.
       softbuffer->reset_codeblocks_crc();

@@ -58,8 +58,8 @@ crc_calculator* select_crc(pusch_decoder_impl::sch_crc& crcs, unsigned tbs, unsi
 static unsigned get_tb_and_crc_size(unsigned tb_size, unsigned nof_cbs)
 {
   unsigned tb_and_crc_size = tb_size;
-  // If only one codeblock is transmitted, the CRC is removed by the decoder. If more than one codeblock is transmitted,
-  // there is an extra CRC of length 24 bits.
+  // If only one codeblock is transmitted, the CRC is taken into account by the decoder. If more than one codeblock is
+  // transmitted, there is an extra CRC of length 24 bits.
   if (nof_cbs > 1) {
     tb_and_crc_size += LONG_CRC_LENGTH;
   }
@@ -87,6 +87,33 @@ static std::tuple<unsigned, unsigned, unsigned> get_cblk_bit_breakdown(const cod
   unsigned nof_data_bits = msg_length - cb_meta.cb_specific.nof_crc_bits - cb_meta.cb_specific.nof_filler_bits;
 
   return {cb_length, msg_length, nof_data_bits};
+}
+
+static optional<unsigned> decode_cblk(span<uint8_t>                       output,
+                                      span<const int8_t>                  input,
+                                      ldpc_decoder*                       dec,
+                                      crc_calculator*                     crc,
+                                      const codeblock_metadata&           cb_meta,
+                                      const pusch_decoder::configuration& cfg)
+{
+  ldpc_decoder::configuration::algorithm_details alg_details = {};
+  alg_details.max_iterations                                 = cfg.nof_ldpc_iterations;
+  // As for the other alg_details, we use the default values.
+
+  if (cfg.use_early_stop) {
+    return dec->decode(output, input, crc, {cb_meta, alg_details});
+  }
+
+  // Without early stop, first decode and then check the CRC.
+  dec->decode(output, input, nullptr, {cb_meta, alg_details});
+
+  // Discard filler bits.
+  unsigned nof_significant_bits = output.size() - cb_meta.cb_specific.nof_filler_bits;
+  if (crc->calculate_bit(output.first(nof_significant_bits)) == 0) {
+    return cfg.nof_ldpc_iterations;
+  }
+
+  return {};
 }
 
 // Checks the TB CRC (multiple codeblocks case).
@@ -157,11 +184,7 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
       dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
 
       // Try to decode
-      ldpc_decoder::configuration::algorithm_details alg_details = {};
-      alg_details.max_iterations                                 = cfg.nof_ldpc_iterations;
-      // As for the other alg_details, we use the default values.
-
-      optional<unsigned> nof_iters = decoder->decode(message, codeblock, block_crc, {cb_meta, alg_details});
+      optional<unsigned> nof_iters = decode_cblk(message, codeblock, decoder.get(), block_crc, cb_meta, cfg);
 
       if (nof_iters.has_value()) {
         // If successful decoding, flag the CRC, record number of iterations and copy bits to the TB buffer.
