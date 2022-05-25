@@ -161,6 +161,13 @@ void test_du_ue_create()
 
   du_obj.start();
 
+  // Push F1c setup response to DU, signaling that the CU accepted the f1c connection.
+  asn1::f1ap::f1_ap_pdu_c f1c_pdu;
+  f1c_pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  f1c_pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
+  f1c_pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
+  du_obj.get_f1c_message_handler().handle_message(f1c_pdu);
+
   // Add UE
   mac_rx_pdu_list lst;
   lst.push_back(mac_rx_pdu{to_rnti(0x4601), 0, 0, {0x34, 0x1e, 0x4f, 0xc0, 0x4f, 0xa6, 0x06, 0x3f, 0x00, 0x00, 0x00}});

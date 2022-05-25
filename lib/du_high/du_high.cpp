@@ -47,6 +47,11 @@ void du_high::start() {}
 
 void du_high::stop() {}
 
+f1c_message_handler& du_high::get_f1c_message_handler()
+{
+  return *f1ap;
+}
+
 mac_pdu_handler& du_high::get_pdu_handler(du_cell_index_t cell_idx)
 {
   return mac->get_pdu_handler(cell_idx);
