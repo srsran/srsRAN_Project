@@ -25,7 +25,8 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::unique_ptr<ldpc_segmenter> segmenter = create_ldpc_segmenter();
+  std::unique_ptr<ldpc_segmenter_tx> segmenter_tx = create_ldpc_segmenter_tx();
+  std::unique_ptr<ldpc_segmenter_rx> segmenter_rx = create_ldpc_segmenter_rx();
 
   segmenter_config seg_cfg{};
 
@@ -40,7 +41,7 @@ int main()
     const std::vector<uint8_t> segments_check = test_data.segments.read();
 
     static_vector<described_segment, MAX_NOF_SEGMENTS> segments;
-    segmenter->segment_tx(segments, trans_block, seg_cfg);
+    segmenter_tx->segment(segments, trans_block, seg_cfg);
 
     TESTASSERT_EQ(segments.size(), test_data.nof_segments, "Wrong number of segments.");
 
@@ -55,7 +56,7 @@ int main()
     std::vector<int8_t> cw_llrs(segments[0].second.tb_common.cw_length);
     std::iota(cw_llrs.begin(), cw_llrs.end(), -127);
     static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblocks;
-    segmenter->segment_rx(codeblocks, cw_llrs, test_data.tbs, seg_cfg);
+    segmenter_rx->segment(codeblocks, cw_llrs, test_data.tbs, seg_cfg);
 
     for (const auto& cb : codeblocks) {
       TESTASSERT_EQ(cb.first.size(), cb.second.cb_specific.rm_length, "Wrong codeblock length.");

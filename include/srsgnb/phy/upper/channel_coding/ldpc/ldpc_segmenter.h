@@ -21,11 +21,11 @@
 namespace srsgnb {
 
 /// Carries out the segmentation of a transport block into a number of codeblocks.
-class ldpc_segmenter
+class ldpc_segmenter_tx
 {
 public:
   /// Default destructor.
-  virtual ~ldpc_segmenter() = default;
+  virtual ~ldpc_segmenter_tx() = default;
 
   /// \brief Adds the CRC to the a transport block, carries out segmentation and computes all codeblock metadata for
   /// later use (encoder and rate matching).
@@ -38,9 +38,17 @@ public:
   /// \param[out] described_segments    Segments (unpacked, one bit per entry) and corresponding metadata.
   /// \param[in]  transport_block       The transport block to segment_tx (packed, one byte per entry).
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
-  virtual void segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
-                          span<const uint8_t>                                 transport_block,
-                          const segmenter_config&                             cfg) = 0;
+  virtual void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+                       span<const uint8_t>                                 transport_block,
+                       const segmenter_config&                             cfg) = 0;
+};
+
+/// Carries out the segmentation of a codeword into a number of codeblocks.
+class ldpc_segmenter_rx
+{
+public:
+  /// Default destructor.
+  virtual ~ldpc_segmenter_rx() = default;
 
   /// \brief Splits a codeword into codeblocks and computes the metadata of all codeblocks.
   ///
@@ -52,13 +60,14 @@ public:
   /// \param[in]  cfg                   Parameters affecting splitting and codeblock metadata.
   /// \remark The output codeblocks are just views (not copies) of the proper block of codeword log-likelihood ratios in
   /// \c codeword_llrs.
-  virtual void segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
-                          span<const int8_t>                                       codeword_llrs,
-                          unsigned                                                 tbs,
-                          const segmenter_config&                                  cfg) = 0;
+  virtual void segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
+                       span<const int8_t>                                       codeword_llrs,
+                       unsigned                                                 tbs,
+                       const segmenter_config&                                  cfg) = 0;
 };
 
-std::unique_ptr<ldpc_segmenter> create_ldpc_segmenter();
+std::unique_ptr<ldpc_segmenter_tx> create_ldpc_segmenter_tx();
+std::unique_ptr<ldpc_segmenter_rx> create_ldpc_segmenter_rx();
 
 } // namespace srsgnb
 

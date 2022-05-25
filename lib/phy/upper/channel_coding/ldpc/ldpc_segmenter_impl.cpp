@@ -127,9 +127,10 @@ static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGME
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
-void ldpc_segmenter_impl::segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
-                                     span<const uint8_t>                                 transport_block,
-                                     const segmenter_config&                             cfg)
+// For the Tx-chain segmenter.
+void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+                                  span<const uint8_t>                                 transport_block,
+                                  const segmenter_config&                             cfg)
 {
   check_inputs_tx(described_segments, transport_block, cfg);
 
@@ -218,10 +219,11 @@ static void check_inputs_rx(span<const int8_t> codeword_llrs, const segmenter_co
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
-void ldpc_segmenter_impl::segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
-                                     span<const int8_t>                                       codeword_llrs,
-                                     unsigned                                                 tbs,
-                                     const segmenter_config&                                  cfg)
+// For the Rx-chain segmenter.
+void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
+                                  span<const int8_t>                                       codeword_llrs,
+                                  unsigned                                                 tbs,
+                                  const segmenter_config&                                  cfg)
 {
   check_inputs_rx(codeword_llrs, cfg);
 
@@ -300,7 +302,15 @@ codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_inter
   return tmp_description;
 }
 
-std::unique_ptr<ldpc_segmenter> srsgnb::create_ldpc_segmenter()
+std::unique_ptr<ldpc_segmenter_tx> srsgnb::create_ldpc_segmenter_tx()
+{
+  ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
+                                       create_crc_calculator(crc_generator_poly::CRC24A),
+                                       create_crc_calculator(crc_generator_poly::CRC24B)};
+  return std::make_unique<ldpc_segmenter_impl>(crcs);
+}
+
+std::unique_ptr<ldpc_segmenter_rx> srsgnb::create_ldpc_segmenter_rx()
 {
   ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                        create_crc_calculator(crc_generator_poly::CRC24A),

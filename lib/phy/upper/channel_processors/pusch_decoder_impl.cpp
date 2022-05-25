@@ -21,7 +21,7 @@ static constexpr unsigned MAX_TBS = 1277992;
 
 std::unique_ptr<pusch_decoder> srsgnb::create_pusch_decoder()
 {
-  std::unique_ptr<ldpc_segmenter>      seg  = create_ldpc_segmenter();
+  std::unique_ptr<ldpc_segmenter_rx>   seg  = create_ldpc_segmenter_rx();
   std::unique_ptr<ldpc_rate_dematcher> rdem = create_ldpc_rate_dematcher();
   std::unique_ptr<ldpc_decoder>        dec  = create_ldpc_decoder("generic");
   pusch_decoder_impl::sch_crc          crcs = {create_crc_calculator(crc_generator_poly::CRC16),
@@ -55,7 +55,7 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs = {};
   // Recall that the TB is in packed format.
   unsigned tb_size = transport_block.size() * BITS_PER_BYTE;
-  segmenter->segment_rx(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
+  segmenter->segment(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
 
   unsigned nof_cbs = codeblock_llrs.size();
   srsran_assert(nof_cbs == soft_codeword->get_nof_codeblocks(), "Wrong number of codeblocks.");

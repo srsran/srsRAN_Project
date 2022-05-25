@@ -19,7 +19,7 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
   // Clear the buffer.
   d_segments.clear();
   // Segmentation (it includes CRC attachment for the entire transport block and each individual segment).
-  segmenter->segment_tx(d_segments, transport_block, cfg);
+  segmenter->segment(d_segments, transport_block, cfg);
 
   // Resize internal buffer to match data from the encoder to the rate matcher (all segments have the same length).
   span<uint8_t> tmp = span<uint8_t>(buffer_cb).first(d_segments[0].second.cb_specific.full_length);
@@ -40,7 +40,7 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
 
 std::unique_ptr<pdsch_encoder> srsgnb::create_pdsch_encoder()
 {
-  std::unique_ptr<ldpc_segmenter>    seg = create_ldpc_segmenter();
+  std::unique_ptr<ldpc_segmenter_tx> seg = create_ldpc_segmenter_tx();
   std::unique_ptr<ldpc_encoder>      enc = create_ldpc_encoder("generic");
   std::unique_ptr<ldpc_rate_matcher> rm  = create_ldpc_rate_matcher();
   return std::make_unique<pdsch_encoder_impl>(seg, enc, rm);

@@ -24,7 +24,7 @@ namespace srsgnb {
 static constexpr unsigned MAX_TBS = 1277992;
 
 /// Generic implementation of LDPC segmentation.
-class ldpc_segmenter_impl : public ldpc_segmenter
+class ldpc_segmenter_impl : public ldpc_segmenter_tx, public ldpc_segmenter_rx
 {
 public:
   /// CRC calculators used in shared channels.
@@ -42,16 +42,18 @@ public:
   /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
   explicit ldpc_segmenter_impl(sch_crc& c);
 
+  // Tx-chain segmentation.
   // See interface for the documentation.
-  void segment_tx(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
-                  span<const uint8_t>                                 transport_block,
-                  const segmenter_config&                             cfg) override;
+  void segment(static_vector<described_segment, MAX_NOF_SEGMENTS>& described_segments,
+               span<const uint8_t>                                 transport_block,
+               const segmenter_config&                             cfg) override;
 
+  // Rx-chain segmentation.
   // See interface for the documentation.
-  void segment_rx(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
-                  span<const int8_t>                                       codeword_llrs,
-                  unsigned                                                 tbs,
-                  const segmenter_config&                                  cfg) override;
+  void segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
+               span<const int8_t>                                       codeword_llrs,
+               unsigned                                                 tbs,
+               const segmenter_config&                                  cfg) override;
 
 private:
   /// Computes the lifting size used to encode/decode the current transport block, as per TS38.212 Section 5.2.2.
