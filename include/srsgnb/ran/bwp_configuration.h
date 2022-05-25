@@ -21,6 +21,7 @@ const size_t CORESET_FREQ_DOMAIN_RESOURCE_SIZE = 45;
 const size_t MAX_CORESET_DURATION = 3;
 
 /// Max number of CORESETs per BWP per cell (including UE-specific and common CORESETs).
+/// \remark See TS 38.331, "PDCCH-Config".
 const size_t MAX_NOF_CORESETS_PER_BWP = 3;
 
 /// \brief CORESET identifier. This value is UE-specific, which means that a UE can have up to
@@ -56,7 +57,7 @@ struct coreset_configuration {
 
 /// \brief Search Space identifier. This value is UE-specific, which means that a UE can have up to
 /// "maxNrofSearchSpaces=40" Search Spaces configured. The ID space is used across BWPs of a serving cell.
-enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE = 39, MAX_NOF_SEARCH_SPACES = 40 };
+enum search_space_id : uint8_t { MIN_SEARCH_SPACE_ID = 0, MAX_SEARCH_SPACE_ID = 39, MAX_NOF_SEARCH_SPACES = 40 };
 
 /// \remark See TS 38.331, "SearchSpaceId" - The number of Search Spaces per BWP is limited to 10 including the common
 /// and UE specific Search Spaces.
@@ -105,7 +106,8 @@ struct pdcch_configuration_common {
   search_space_id ra_search_space_id;
 };
 
-/// \remark See TS 38.331, "BWP-Id".
+/// BWP-Id used to identify a BWP from the perspective of a UE.
+/// \remark See TS 38.331, "BWP-Id" and "maxNrofBWPs".
 enum bwp_id_t : uint8_t { MIN_BWP_ID = 0, MAX_BWP_ID = 3, MAX_NOF_BWPS = 4 };
 
 /// Converts integer value to BWP-Id".

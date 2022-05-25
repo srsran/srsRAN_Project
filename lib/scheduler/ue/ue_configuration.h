@@ -20,14 +20,14 @@ public:
 
   const cell_configuration& cell_cfg_common;
 
-  /// Map of BWP-id to DL BWPs.
+  /// This array maps BWP-Ids (the array indexes) to DL BWP configurations (the array values).
   std::array<const bwp_configuration*, MAX_NOF_BWPS> dl_bwps = {};
 
-  /// List of UE CORESETs.
+  /// This array maps Coreset-Ids (the array indexes) to CORESET configurations (the array values).
   /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
   std::array<const coreset_configuration*, MAX_NOF_CORESETS> dl_coresets = {};
 
-  /// List of UE SearchSpaces.
+  /// This array maps SearchSpace-Ids (the array indexes) to SearchSpace configurations (the array values).
   /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
   std::array<const search_space_configuration*, MAX_NOF_SEARCH_SPACES> dl_search_spaces = {};
 
