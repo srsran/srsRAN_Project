@@ -30,9 +30,9 @@ public:
   /// \param[in] seg Unique pointer to an LDPC segmenter.
   /// \param[in] enc Unique pointer to an LDPC encoder.
   /// \param[in] rm  Unique pointer to an LDPC rate matcher.
-  pdsch_encoder_impl(std::unique_ptr<ldpc_segmenter_tx>& seg,
-                     std::unique_ptr<ldpc_encoder>&      enc,
-                     std::unique_ptr<ldpc_rate_matcher>& rm) :
+  pdsch_encoder_impl(std::unique_ptr<ldpc_segmenter_tx> seg,
+                     std::unique_ptr<ldpc_encoder>      enc,
+                     std::unique_ptr<ldpc_rate_matcher> rm) :
     segmenter(std::move(seg)), encoder(std::move(enc)), rate_matcher(std::move(rm))
   {
     srsran_assert(segmenter, "Invalid LDPC segmenter.");

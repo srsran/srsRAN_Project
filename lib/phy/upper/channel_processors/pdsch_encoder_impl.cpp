@@ -43,5 +43,5 @@ std::unique_ptr<pdsch_encoder> srsgnb::create_pdsch_encoder()
   std::unique_ptr<ldpc_segmenter_tx> seg = create_ldpc_segmenter_tx();
   std::unique_ptr<ldpc_encoder>      enc = create_ldpc_encoder("generic");
   std::unique_ptr<ldpc_rate_matcher> rm  = create_ldpc_rate_matcher();
-  return std::make_unique<pdsch_encoder_impl>(seg, enc, rm);
+  return std::make_unique<pdsch_encoder_impl>(std::move(seg), std::move(enc), std::move(rm));
 }

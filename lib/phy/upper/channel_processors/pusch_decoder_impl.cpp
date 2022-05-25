@@ -27,7 +27,8 @@ std::unique_ptr<pusch_decoder> srsgnb::create_pusch_decoder()
   pusch_decoder_impl::sch_crc          crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                                create_crc_calculator(crc_generator_poly::CRC24A),
                                                create_crc_calculator(crc_generator_poly::CRC24B)};
-  return std::make_unique<pusch_decoder_impl>(seg, rdem, dec, crcs);
+  return std::make_unique<pusch_decoder_impl>(std::move(seg), std::move(rdem), std::move(dec), std::move(crcs));
+  // return std::make_unique<pusch_decoder_impl>(seg, rdem, dec, crcs);
 }
 
 // Select the CRC for the decoder based on the TBS and the number of codeblocks.

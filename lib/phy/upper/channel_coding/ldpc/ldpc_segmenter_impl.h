@@ -40,7 +40,7 @@ public:
   /// \brief Creates an LDPC segmentation object that aggregates a crc_calculator.
   ///
   /// \param[in] c The CRC calculator to aggregate. The generation polynomial must be CRC24B.
-  explicit ldpc_segmenter_impl(sch_crc& c);
+  explicit ldpc_segmenter_impl(sch_crc c);
 
   // Tx-chain segmentation.
   // See interface for the documentation.

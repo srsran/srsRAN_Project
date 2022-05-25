@@ -42,10 +42,10 @@ public:
   /// \param[in] dec   Pointer to an LDPC decoder object.
   /// \param[in] crcs  Structure with pointers to three CRC calculator objects, with generator polynomials of type \c
   ///                  CRC16, \c CRC24A and \c CRC24B.
-  pusch_decoder_impl(std::unique_ptr<ldpc_segmenter_rx>&   seg,
-                     std::unique_ptr<ldpc_rate_dematcher>& rdem,
-                     std::unique_ptr<ldpc_decoder>&        dec,
-                     sch_crc&                              crcs) :
+  pusch_decoder_impl(std::unique_ptr<ldpc_segmenter_rx>   seg,
+                     std::unique_ptr<ldpc_rate_dematcher> rdem,
+                     std::unique_ptr<ldpc_decoder>        dec,
+                     sch_crc                              crcs) :
     segmenter(std::move(seg)),
     dematcher(std::move(rdem)),
     decoder(std::move(dec)),

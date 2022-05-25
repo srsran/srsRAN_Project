@@ -23,7 +23,7 @@ static constexpr unsigned SEG_CRC_LENGTH = 24;
 // Number of bits in one byte.
 static constexpr unsigned BITS_PER_BYTE = 8;
 
-ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc& c)
+ldpc_segmenter_impl::ldpc_segmenter_impl(ldpc_segmenter_impl::sch_crc c)
 {
   srsran_assert(c.crc16, "Invalid CRC16 calculator.");
   srsran_assert(c.crc24A, "Invalid CRC24A calculator.");
@@ -307,7 +307,7 @@ std::unique_ptr<ldpc_segmenter_tx> srsgnb::create_ldpc_segmenter_tx()
   ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                        create_crc_calculator(crc_generator_poly::CRC24A),
                                        create_crc_calculator(crc_generator_poly::CRC24B)};
-  return std::make_unique<ldpc_segmenter_impl>(crcs);
+  return std::make_unique<ldpc_segmenter_impl>(std::move(crcs));
 }
 
 std::unique_ptr<ldpc_segmenter_rx> srsgnb::create_ldpc_segmenter_rx()
@@ -315,5 +315,5 @@ std::unique_ptr<ldpc_segmenter_rx> srsgnb::create_ldpc_segmenter_rx()
   ldpc_segmenter_impl::sch_crc crcs = {create_crc_calculator(crc_generator_poly::CRC16),
                                        create_crc_calculator(crc_generator_poly::CRC24A),
                                        create_crc_calculator(crc_generator_poly::CRC24B)};
-  return std::make_unique<ldpc_segmenter_impl>(crcs);
+  return std::make_unique<ldpc_segmenter_impl>(std::move(crcs));
 }
