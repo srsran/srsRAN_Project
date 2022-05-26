@@ -9,119 +9,145 @@
  */
 
 #include "srsgnb/phy/upper/rb_allocation.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
 
-void rb_allocation::generate_vrb_to_prb_indexes(span<unsigned>          prb_indices,
-                                                vrb_to_prb_mapping_type vrb_to_prb_mapping,
-                                                unsigned                bwp_start_rb)
+bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  // Deduce the BWP size from the rb_indices size.
-  unsigned bwp_size_rb = prb_indices.size();
+  unsigned offset = vrb_to_prb_map.get_coreset_start();
 
-  // Setup interleaver parameters.
-  unsigned L        = (vrb_to_prb_mapping == vrb_to_prb_mapping_type::INTERLEAVED_L_2) ? 2 : 4;
-  unsigned N_bundle = divide_ceil(bwp_size_rb, L);
-  unsigned R        = 2;
-  unsigned C        = N_bundle / R;
+  // Make sure the VRB-to-PRB allocation does not exceed the BWP region.
+  srsran_assert(offset + vrb_mask.count() <= bwp_size_rb,
+                "The contiguous VRB allocation {}:{} with CORESET start {} does not fit in BWP of size {}.",
+                vrb_mask.find_lowest(0, vrb_mask.size()),
+                vrb_mask.find_highest(0, vrb_mask.size()),
+                offset,
+                bwp_size_rb);
 
-  // Calculate the first bundle size in RB.
-  unsigned first_bundle_size = L - (bwp_start_rb % L);
+  bounded_bitset<MAX_RB> prb_mask(bwp_start_rb + bwp_size_rb);
 
-  // Calculate the last bundle size in RB.
-  unsigned last_bundle_size = (bwp_start_rb + bwp_size_rb) % L;
-  if (last_bundle_size == 0) {
-    last_bundle_size = L;
+  int lowest_vrb_index = vrb_mask.find_lowest();
+  if (lowest_vrb_index == -1) {
+    return prb_mask;
   }
 
-  // Set the last bundle indices.
-  for (unsigned l = 0; l != last_bundle_size; ++l) {
-    prb_indices[(N_bundle - 1) * L + l] = (N_bundle - 1) * L + l;
-  }
+  // Calculate PRB boundaries.
+  unsigned startpos = bwp_start_rb + offset + static_cast<unsigned>(lowest_vrb_index);
+  unsigned endpos   = startpos + vrb_mask.count();
 
-  // Allocation for interleaved mapping.
-  for (unsigned c = 0; c != C; ++c) {
-    for (unsigned r = 0; r != R; ++r) {
-      // Calculate VRB bundle.
-      unsigned j = c * R + r;
+  // Fill consecutive PRB.
+  prb_mask.fill(startpos, endpos);
 
-      unsigned bundle_size = L;
-      if (j == 0) {
-        bundle_size = first_bundle_size;
-      }
-
-      // Calculate PRB bundle index.
-      unsigned i = r * C + c;
-
-      // Set indices.
-      for (unsigned l = 0; l != bundle_size; ++l) {
-        prb_indices[(j * L) + l] = (i * L) + l;
-      }
-    }
-  }
+  return prb_mask;
 }
+
+bounded_bitset<MAX_RB> rb_allocation::get_other_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
+{
+  bounded_bitset<MAX_RB>          result(bwp_start_rb + bwp_size_rb);
+  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
+
+  for (unsigned vrb_index = 0; vrb_index != vrb_mask.size(); ++vrb_index) {
+    // Skip if VRB is not used.
+    if (!vrb_mask.test(vrb_index)) {
+      continue;
+    }
+
+    unsigned prb_index = vrb_to_prb_indices[vrb_index];
+    result.set(prb_index, true);
+  }
+
+  return result;
+}
+
+rb_allocation srsgnb::rb_allocation::make_type0(const bounded_bitset<MAX_RB>&      vrb_bitmap,
+                                                const optional<vrb_to_prb_mapper>& vrb_to_prb_map_)
+{
+  rb_allocation result;
+
+  result.vrb_mask = vrb_bitmap;
+
+  if (vrb_to_prb_map_.has_value()) {
+    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+  }
+
+  return result;
+}
+
+rb_allocation srsgnb::rb_allocation::make_type1(unsigned                           rb_start,
+                                                unsigned                           rb_count,
+                                                const optional<vrb_to_prb_mapper>& vrb_to_prb_map_)
+{
+  rb_allocation result;
+
+  result.vrb_mask = bounded_bitset<MAX_RB>(rb_start + rb_count);
+  result.vrb_mask.fill(rb_start, rb_start + rb_count);
+
+  if (vrb_to_prb_map_.has_value()) {
+    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+  }
+
+  return result;
+}
+
+rb_allocation srsgnb::rb_allocation::make_custom(std::initializer_list<const unsigned> vrb_indexes,
+                                                 const optional<vrb_to_prb_mapper>&    vrb_to_prb_map_)
+{
+  rb_allocation result;
+
+  // Find the maximum VRB index.
+  unsigned rb_end = *std::max_element(vrb_indexes.begin(), vrb_indexes.end());
+
+  // Allocate the VRB mask so the maximum index fits.
+  result.vrb_mask = bounded_bitset<MAX_RB>(rb_end + 1);
+  for (unsigned vrb_index : vrb_indexes) {
+    result.vrb_mask.set(vrb_index, true);
+  }
+
+  if (vrb_to_prb_map_.has_value()) {
+    result.vrb_to_prb_map = vrb_to_prb_map_.value();
+  }
+
+  return result;
+}
+
 bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  bounded_bitset<MAX_RB> result(bwp_start_rb + bwp_size_rb);
+  srsran_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
+                "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
+                bwp_start_rb,
+                bwp_size_rb,
+                bwp_start_rb + bwp_size_rb,
+                MAX_RB);
+  srsran_assert(
+      vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
 
-  // Non-interleaved case, copy VRB mask.
-  if (vrb_mask.is_contiguous()) {
-    int vrb_begin = vrb_mask.find_lowest();
-    int vrb_end   = vrb_mask.find_highest();
-
-    // No PDSCH found.
-    if ((vrb_begin == -1) || (vrb_end == -1)) {
-      return result;
-    }
-
-    unsigned prb_begin = bwp_start_rb + vrb_begin;
-    unsigned prb_end   = bwp_start_rb + vrb_end + 1;
-    result.fill(prb_begin, prb_end);
-
-    return result;
+  if (vrb_mask.is_contiguous() && !vrb_to_prb_map.is_interleaved()) {
+    return get_contiguous_prb_mask(bwp_start_rb, bwp_size_rb);
   }
 
-  // Get interleaver of the BWP size.
-  static_vector<unsigned, MAX_RB> interleaver(bwp_size_rb);
-  generate_vrb_to_prb_indexes(interleaver, mapping_type, bwp_start_rb);
-
-  // For each VRB mask.
-  for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-    if (vrb_mask.test(vrb_idx)) {
-      unsigned prb_idx = interleaver[vrb_idx];
-      result.set(bwp_start_rb + prb_idx, true);
-    }
-  }
-  return result;
+  return get_other_prb_mask(bwp_start_rb, bwp_size_rb);
 }
 
 static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
+  srsran_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
+                "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
+                bwp_start_rb,
+                bwp_size_rb,
+                bwp_start_rb + bwp_size_rb,
+                MAX_RB);
+  srsran_assert(
+      vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
+
   static_vector<uint16_t, MAX_RB> result;
+  static_vector<uint16_t, MAX_RB> vrb_to_prb_indices = vrb_to_prb_map.get_allocation_indices(bwp_size_rb);
 
-  // Non-interleaved case, set the PRB indexes as VRB index plus the BWP start.
-  if (mapping_type == vrb_to_prb_mapping_type::NON_INTERLEAVED) {
-    for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-      if (vrb_mask.test(vrb_idx)) {
-        result.push_back(vrb_idx + bwp_start_rb);
-      }
-    }
-    return result;
-  }
-
-  // Get interleaver of the BWP size.
-  static_vector<unsigned, MAX_RB> interleaver(bwp_size_rb);
-  generate_vrb_to_prb_indexes(interleaver, mapping_type, bwp_start_rb);
-
-  // For each VRB mask.
-  for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-    if (vrb_mask.test(vrb_idx)) {
-      unsigned prb_idx = interleaver[vrb_idx];
-      result.push_back(prb_idx + bwp_start_rb);
+  for (unsigned vrb_index = 0; vrb_index != vrb_mask.size(); ++vrb_index) {
+    // Skip unused VRB
+    if (vrb_mask.test(vrb_index)) {
+      result.push_back(vrb_to_prb_indices[vrb_index]);
     }
   }
+
   return result;
 }

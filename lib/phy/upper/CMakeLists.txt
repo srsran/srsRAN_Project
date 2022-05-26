@@ -17,4 +17,5 @@ add_library(srsgnb_upper_phy_support
         rb_allocation.cpp
         rx_softbuffer_pool_impl.cpp
         log_likelihood_ratio.cpp
+        vrb_to_prb_mapper.cpp
 )

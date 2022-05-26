@@ -73,7 +73,7 @@ int main()
         pdu.scrambling_id               = dist_u16(rgen);
         pdu.n_scid                      = static_cast<bool>(dist_bool(rgen));
         pdu.nof_cdm_groups_without_data = 1;
-        pdu.freq_alloc                  = rb_allocation({1, 2, 3, 4}, vrb_to_prb_mapping_type::NON_INTERLEAVED);
+        pdu.freq_alloc                  = rb_allocation::make_custom({1, 2, 3, 4});
         pdu.start_symbol_index          = dist_start_symb(rgen);
         pdu.nof_symbols                 = get_nsymb_per_slot(cp) - pdu.start_symbol_index;
         pdu.ldpc_base_graph             = static_cast<ldpc::base_graph_t>(dist_bool(rgen));
