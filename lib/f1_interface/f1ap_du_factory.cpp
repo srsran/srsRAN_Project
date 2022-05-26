@@ -17,8 +17,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<f1_du_interface> srsgnb::create_f1ap_du(f1c_message_handler& f1c_handler)
+std::unique_ptr<f1_du_interface> srsgnb::create_f1ap_du(timer_manager& timer_db, f1c_message_handler& f1c_handler)
 {
-  auto f1ap_du = std::make_unique<f1ap_du_impl>(f1c_handler);
+  auto f1ap_du = std::make_unique<f1ap_du_impl>(timer_db, f1c_handler);
   return f1ap_du;
 }

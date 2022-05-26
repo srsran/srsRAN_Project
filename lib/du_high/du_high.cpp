@@ -24,13 +24,32 @@ void assert_du_high_configuration_valid(const du_high_configuration& cfg)
   srsran_assert(cfg.ul_executors != nullptr, "Invalid UL executor mapper");
 }
 
+/// Cell slot handler that additionally increments the DU high timers.
+class du_high_slot_handler final : public mac_cell_slot_handler
+{
+public:
+  du_high_slot_handler(timer_manager& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
+  void handle_slot_indication(slot_point sl_tx) override
+  {
+    // Step timers by one slot.
+    timers.tick_all();
+
+    // Handle slot indication in MAC & Scheduler.
+    mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
+  }
+
+private:
+  timer_manager& timers;
+  mac_interface& mac;
+};
+
 du_high::du_high(const du_high_configuration& config_) : cfg(config_), timer_db(128)
 {
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap_du(*cfg.f1c_msg_hdl);
+  f1ap = create_f1ap_du(timer_db, *cfg.f1c_msg_hdl);
   du_manager = create_du_manager(timer_db,
                                  mac->get_ue_configurator(),
                                  mac->get_cell_manager(),
@@ -41,6 +60,9 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timer_db(
 
   // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);
+
+  // Cell slot handler.
+  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timer_db, *mac);
 }
 
 du_high::~du_high()
@@ -64,6 +86,9 @@ mac_pdu_handler& du_high::get_pdu_handler(du_cell_index_t cell_idx)
 
 mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
 {
+  if (cell_idx == 0) {
+    return *main_cell_slot_handler;
+  }
   return mac->get_slot_handler(cell_idx);
 }
 

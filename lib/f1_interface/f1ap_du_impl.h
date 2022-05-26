@@ -16,6 +16,7 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/support/async/async_queue.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
@@ -23,7 +24,7 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1_du_interface
 {
 public:
-  f1ap_du_impl(f1c_message_handler& f1c_handler);
+  f1ap_du_impl(timer_manager& timer_db, f1c_message_handler& f1c_handler);
 
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
@@ -42,7 +43,10 @@ public:
 
 private:
   srslog::basic_logger& logger;
+  timer_manager&        timer_db;
   f1c_message_handler&  f1c;
+
+  unique_timer f1c_setup_timer;
 
   f1ap_du_context ctxt;
 

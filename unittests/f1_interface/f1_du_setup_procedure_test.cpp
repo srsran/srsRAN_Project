@@ -28,9 +28,10 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
                                 initial_outcome == test_outcome::success ? "Success" : "Failure",
                                 retry_outcome == test_outcome::success ? "Success" : "Failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  timer_manager timers;
 
   f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap_du(*msg_handler);
+  auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
@@ -110,9 +111,10 @@ void test_f1_setup_retry_limit()
 {
   test_delimit_logger   delimiter{"Test F1 setup procedure retry limit."};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+  timer_manager timers;
 
   f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap_du(*msg_handler);
+  auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};

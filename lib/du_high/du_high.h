@@ -48,6 +48,8 @@ private:
   std::unique_ptr<f1_du_interface>      f1ap;
   std::unique_ptr<mac_interface>        mac;
 
+  std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
+
   rlc_ul_sdu_adapter rlc_sdu_notifier;
 
   du_manager_mac_event_indicator mac_ev_notifier;
