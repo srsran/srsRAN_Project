@@ -16,39 +16,41 @@
 namespace srsgnb {
 namespace pdcch_constants {
 
-/// Defines the number if resource blocks per frequency resource in a CORESET.
+/// Defines the number if resource blocks per frequency resource in a CORESET as per TS38.331 in ControlResourceSet
+/// information element.
 static constexpr unsigned NOF_RB_PER_FREQ_RESOURCE = 6;
 
-/// Defines the maximum number of frequency resources in a CORESET.
+/// Defines the maximum number of frequency resources in a CORESET as per TS38.331 in ControlResourceSet
+/// information element.
 static constexpr unsigned MAX_NOF_FREQ_RESOUCES = MAX_RB / NOF_RB_PER_FREQ_RESOURCE;
 
-/// Defines the maximum number of DCI in a PDCCH transmission.
+/// Maximum number of DCIs in a single transmission (it is not specified by the TS).
 static constexpr unsigned MAX_NOF_DCI = 1;
 
-/// Defines the maximum payload size in bits.
+/// Maximum payload size in bits (it is not specified by the TS).
 static constexpr unsigned MAX_DCI_PAYLOAD_SIZE = 128;
 
-/// Defines the number of RE used for PDCCH in a RB.
+/// Number of REs used for data in per RB and symbol as per TS38.211 section 7.3.2.5.
 static constexpr unsigned NOF_RE_PDCCH_PER_RB = NRE - 3;
 
-/// Defines the number of REG per CCE.
+/// Number of REGs per CCE as per TS38.211 Section 7.3.2.2.
 static constexpr unsigned NOF_REG_PER_CCE = 6;
 
-/// Define the maximum CORESET duration.
+/// Maximum CORESET duration in symbols as per TS38.211 Section 7.3.2.2.
 static constexpr unsigned MAX_CORESET_DURATION = 3;
 
-/// Define the maximum aggregation level. Maximum number of CCE.
+/// Maximum aggregation level as per TS38.211 Table 7.3.2.1-1.
 static constexpr unsigned MAX_AGGREGATION_LEVEL = 16;
 
-/// \brief Define the maximum number of RBs that can be used for a single PDCCH transmission.
+/// \brief Maximum number of RBs that can be used for a single PDCCH transmission.
 ///
-/// It coincides with the maximum number of REG that can be used for a single PDSHC transmission.
+/// It coincides with the maximum number of REG that can be used for a single transmission.
 static constexpr unsigned MAX_NOF_RB_PDCCH = MAX_AGGREGATION_LEVEL * NOF_REG_PER_CCE;
 
-/// Define the maximum number of RE used by PDCCH.
+/// Maximum number of REs for data in a single transmission.
 static constexpr unsigned MAX_NOF_RE_PDCCH = MAX_NOF_RB_PDCCH * NOF_RE_PDCCH_PER_RB;
 
-/// Define the maximum number of encoded bits in a PDCCH transmission.
+/// Define the maximum number of encoded data bits in a transmission.
 static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 
 } // namespace pdcch_constants
