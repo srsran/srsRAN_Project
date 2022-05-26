@@ -47,11 +47,11 @@ prb_index_list cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
 /// \param[in] aggregation_level Number of CCE used for the PDCCH transmission.
 /// \param[in] cce_index         Initial CCE index for the PDCCH transmision.
 /// \return A list of the resource blocks used by the PDCCH transmission.
-prb_index_list cce_to_prb_mapping_non_interleaved(unsigned             N_bwp_start,
-                                                  freq_resource_bitmap freq_resources,
-                                                  unsigned             N_symb_coreset,
-                                                  unsigned             aggregation_level,
-                                                  unsigned             cce_index);
+prb_index_list cce_to_prb_mapping_non_interleaved(unsigned                    N_bwp_start,
+                                                  const freq_resource_bitmap& freq_resources,
+                                                  unsigned                    N_symb_coreset,
+                                                  unsigned                    aggregation_level,
+                                                  unsigned                    cce_index);
 
 /// \brief Calculates the PDCCH CCE to PRB mapping for an interleaved PDCCH transmission.
 ///
@@ -64,14 +64,14 @@ prb_index_list cce_to_prb_mapping_non_interleaved(unsigned             N_bwp_sta
 /// \param[in] aggregation_level Number of CCE used for the PDCCH transmission.
 /// \param[in] cce_index         Initial CCE index for the PDCCH transmision.
 /// \return A list of the resource blocks used by the PDCCH transmission.
-prb_index_list cce_to_prb_mapping_interleaved(unsigned             N_bwp_start,
-                                              freq_resource_bitmap freq_resources,
-                                              unsigned             N_symb_coreset,
-                                              unsigned             reg_bundle_size,
-                                              unsigned             interleaver_size,
-                                              unsigned             shift_index,
-                                              unsigned             aggregation_level,
-                                              unsigned             cce_index);
+prb_index_list cce_to_prb_mapping_interleaved(unsigned                    N_bwp_start,
+                                              const freq_resource_bitmap& freq_resources,
+                                              unsigned                    N_symb_coreset,
+                                              unsigned                    reg_bundle_size,
+                                              unsigned                    interleaver_size,
+                                              unsigned                    shift_index,
+                                              unsigned                    aggregation_level,
+                                              unsigned                    cce_index);
 
 } // namespace srsgnb
 
