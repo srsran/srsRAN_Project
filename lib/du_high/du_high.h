@@ -19,6 +19,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_worker.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
@@ -40,6 +41,8 @@ public:
 
 private:
   du_high_configuration cfg;
+
+  timer_manager timer_db;
 
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_du_interface>      f1ap;

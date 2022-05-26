@@ -7,12 +7,14 @@
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_executor.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
 
 /// Creates an instance of a DU manager.
-std::unique_ptr<du_manager_interface> create_du_manager(mac_ue_configurator&  mac_ue_mng,
+std::unique_ptr<du_manager_interface> create_du_manager(timer_manager&        timers,
+                                                        mac_ue_configurator&  mac_ue_mng,
                                                         mac_cell_manager&     mac_cell_mng,
                                                         f1ap_du_configurator& f1ap,
                                                         f1ap_du_ul_interface& f1ap_ul,

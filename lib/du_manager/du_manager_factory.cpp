@@ -10,10 +10,12 @@
 
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "du_manager_impl.h"
+#include "srsgnb/support/timers.h"
 
 using namespace srsgnb;
 
-std::unique_ptr<du_manager_interface> srsgnb::create_du_manager(mac_ue_configurator&  mac_ue_mng,
+std::unique_ptr<du_manager_interface> srsgnb::create_du_manager(timer_manager&        timers,
+                                                                mac_ue_configurator&  mac_ue_mng,
                                                                 mac_cell_manager&     mac_cell_mng,
                                                                 f1ap_du_configurator& f1ap,
                                                                 f1ap_du_ul_interface& f1ap_ul,
@@ -21,6 +23,7 @@ std::unique_ptr<du_manager_interface> srsgnb::create_du_manager(mac_ue_configura
                                                                 task_executor&        du_mng_exec)
 {
   du_manager_config_t cfg{};
+  cfg.timer_db        = &timers;
   cfg.mac_ue_mng      = &mac_ue_mng;
   cfg.mac_cell_mng    = &mac_cell_mng;
   cfg.f1ap            = &f1ap;
