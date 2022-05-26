@@ -34,10 +34,6 @@ int main()
   TESTASSERT_EQ(log_likelihood_ratio(-2), llr0 - llr1, "Difference not working.");
   TESTASSERT_EQ(log_likelihood_ratio(2), log_likelihood_ratio::promotion_sum(llr0, llr1), "Promotion sum not working.");
   TESTASSERT_EQ(LLR_MAX, llr1 + 119, "Saturation not working.");
-  TESTASSERT(typeid(int) == typeid(llr0 * 3), "Product does not propagate type.");
-  TESTASSERT_EQ(6, llr1 * 3, "Product not working.");
-  TESTASSERT(typeid(float) == typeid(llr1 * 3.1F), "Product does not propagate type.");
-  TESTASSERT_EQ(6.2F, llr1 * 3.1F, "Product not working.");
 
   llr0 += llr1;
   TESTASSERT_EQ(log_likelihood_ratio(2), llr0, "Addition assignment not working.");
@@ -51,17 +47,19 @@ int main()
   TESTASSERT_EQ(LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_MAX, LLR_MAX), "Promotion sum not working.");
 
   std::array<log_likelihood_ratio, 4> llr_sequence = {2, -2, 2, -2};
-  TESTASSERT(typeid(int) == typeid(srsvec::norm_sqr_llr(llr_sequence)), "norm_sqr_llr does not propagate type.");
-  TESTASSERT(typeid(int) == typeid(srsvec::norm_sqr_llr(span<const log_likelihood_ratio>(llr_sequence))),
+  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(llr_sequence)),
+             "norm_sqr_llr does not propagate type.");
+  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(span<const log_likelihood_ratio>(llr_sequence))),
              "norm_sqr_llr does not propagate type.");
 
   constexpr std::array<log_likelihood_ratio, 4> llr_sequence_const = {2, -2, 2, -2};
-  TESTASSERT(typeid(int) == typeid(srsvec::norm_sqr_llr(llr_sequence_const)),
+  TESTASSERT(typeid(int) == typeid(log_likelihood_ratio::norm_squared(llr_sequence_const)),
              "norm_sqr_llr does not propagate type with const values.");
 
-  TESTASSERT_EQ(16, srsvec::norm_sqr_llr(llr_sequence), "norm_sqr_llr not working.");
+  TESTASSERT_EQ(16, log_likelihood_ratio::norm_squared(llr_sequence), "norm_sqr_llr not working.");
   std::array<int, 4> rhs = {1, 1, 1, 1};
-  TESTASSERT(typeid(float) == typeid(srsvec::dot_prod_llr(llr_sequence, rhs, 1.1F)),
+  TESTASSERT(typeid(float) == typeid(log_likelihood_ratio::dot_prod(llr_sequence, rhs, 1.1F)),
              "dot_prod_llr does not propagate type.");
-  TESTASSERT(std::abs(1.1F - srsvec::dot_prod_llr(llr_sequence, rhs, 1.1F)) < .00001, "dot_prod_llr not working.");
+  TESTASSERT(std::abs(1.1F - log_likelihood_ratio::dot_prod(llr_sequence, rhs, 1.1F)) < .00001,
+             "dot_prod_llr not working.");
 }

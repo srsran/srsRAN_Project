@@ -114,7 +114,7 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const l
   uint8_t  bit0       = 0U;
   // Brute-force ML detector: correlate all codewords with the LLRs and pick the best one.
   for (unsigned cdwd_idx = 0; cdwd_idx != nof_codewords; ++cdwd_idx) {
-    int metric     = srsvec::dot_prod_llr(input, DETECT_TABLE[cdwd_idx], 0);
+    int metric     = log_likelihood_ratio::dot_prod(input, DETECT_TABLE[cdwd_idx], 0);
     int metric_abs = std::abs(metric);
     if (metric_abs > max_metric) {
       max_metric = metric_abs;
@@ -130,7 +130,7 @@ double short_block_detector_impl::detect_3_11(span<uint8_t> output, span<const l
 
   // GLRT detector metric.
   max_metric *= max_metric;
-  int in_norm_sqr = srsvec::norm_sqr_llr(input);
+  int in_norm_sqr = log_likelihood_ratio::norm_squared(input);
   return (MAX_BLOCK_LENGTH - 1) * max_metric / (MAX_BLOCK_LENGTH * in_norm_sqr - max_metric);
 }
 

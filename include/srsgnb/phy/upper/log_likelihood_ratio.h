@@ -100,14 +100,6 @@ public:
     return *this;
   }
 
-  /// \brief Multiplication by an arithmetic type.
-  template <typename T>
-  T operator*(T rhs) const
-  {
-    static_assert(std::is_arithmetic<T>::value, "LLRs can only be multiplied by arithmetic types.");
-    return rhs * value;
-  }
-
   /// \name Comparison operators.
   ///@{
 
@@ -147,6 +139,14 @@ public:
   /// \return The promotion sum of \c a and \c b.
   static log_likelihood_ratio promotion_sum(log_likelihood_ratio a, log_likelihood_ratio b);
 
+  // Documentation at definition (see below).
+  template <typename T>
+  static int norm_squared(const T& x);
+
+  // Documentation at definition (see below).
+  template <typename T, typename U, typename V>
+  static V dot_prod(const T& x, const U& y, V init);
+
 private:
   /// Actual LLR value.
   value_type value = 0;
@@ -176,62 +176,68 @@ constexpr log_likelihood_ratio LLR_MIN = log_likelihood_ratio::min();
 constexpr log_likelihood_ratio LLR_INFINITY = log_likelihood_ratio::infinity();
 ///@}
 
-namespace srsvec {
 namespace detail {
 
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T, typename = void>
-struct is_llr_span_compatible : std::false_type {};
+struct is_llr_span_compatible : std::false_type {
+};
 
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T>
 struct is_llr_span_compatible<T,
                               std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio> >::value ||
                                                std::is_convertible<T, span<const log_likelihood_ratio> >::value> >
-  : std::true_type {};
+  : std::true_type {
+};
 
 } // namespace detail
 
-/// \brief Dot product of a span of LLRs and a span of an arithmetic type.
+/// \brief Dot product of a sequence of LLRs and a sequence of values of an arithmetic type.
 ///
 /// Computes the dot product (a.k.a. inner product or scalar product) of the two sequences represented by the input
-/// spans, adding an initial offset.
-/// \tparam T         A span of a log-likelihood ratios (either constant or volatile).
-/// \tparam U         A span of an arithmetic type.
+/// sequences, adding an initial offset.
+/// \tparam T         A span (or any container convertible to a span) of a log-likelihood ratios (either constant or
+///                   volatile).
+/// \tparam U         A span (or any container convertible to a span) of an arithmetic type.
 /// \tparam V         Output type (must be compatible with the product of object of type \c T and \c U).
-/// \param[in] x      Span of (possibly constant) log-likelihood ratios.
-/// \param[in] y      Second span.
+/// \param[in] x      A sequence of (possibly constant) log-likelihood ratios.
+/// \param[in] y      A second sequence of values.
 /// \param[in] init   Initialization value.
 /// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot y + \mathrm{init} = \sum_i x_i y_i +
 /// \mathrm{init}\f$.
 /// \remark The two input spans must have the same length.
+/// \remark This function treats the LLRs as real values, thus neither saturation nor promotion apply.
 template <typename T, typename U, typename V>
-inline V dot_prod_llr(const T& x, const U& y, V init)
+V log_likelihood_ratio::dot_prod(const T& x, const U& y, V init)
 {
   static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
-  static_assert(detail::is_arithmetic_span_compatible<U>::value,
+  static_assert(srsvec::detail::is_arithmetic_span_compatible<U>::value,
                 "Template type is not compatible with a span of arithmetics");
   assert(x.size() == y.size());
-  return std::inner_product(x.begin(), x.end(), y.begin(), init);
+  return std::inner_product(
+      x.begin(), x.end(), y.begin(), init, std::plus<V>(), [](log_likelihood_ratio a, log_likelihood_ratio b) {
+        return a.to_int() * b.to_int();
+      });
 }
 
-/// \brief Squared Euclidean norm of a span of LLRs.
+/// \brief Squared Euclidean norm of a sequence of LLRs.
 ///
 /// Computes the squared Euclidean norm (sum of the squares of the elements) of the sequence represented by the input
 /// span.
 ///
-/// \tparam T     A span of a log-likelihood ratios (either constant or volatile).
-/// \param[in] x  Span of (possibly constant) log-likelihood ratios.
+/// \tparam T     A span (or any container convertible to a span) of a log-likelihood ratios (either constant or
+///               volatile).
+/// \param[in] x  A sequence of (possibly constant) log-likelihood ratios.
 /// \return The squared Euclidean norm of \c x as an integer.
+/// \remark This function treats the LLRs as real values, thus neither saturation nor promotion apply.
 template <typename T>
-inline int norm_sqr_llr(const T& x)
+inline int log_likelihood_ratio::norm_squared(const T& x)
 {
   static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
   return std::accumulate(
       x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int() * b.to_int(); });
 }
-
-} // namespace srsvec
 } // namespace srsgnb
 
 namespace fmt {
