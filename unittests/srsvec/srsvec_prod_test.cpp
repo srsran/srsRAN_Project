@@ -53,7 +53,7 @@ void test_prod_fff(std::size_t N)
   }
 
   srsvec::aligned_vec<float> y(N);
-  for (float& v : x) {
+  for (float& v : y) {
     v = dist(rgen);
   }
 
