@@ -34,6 +34,9 @@ namespace srsgnb {
 class log_likelihood_ratio
 {
 public:
+  /// Alias for the underlying data type used for representing the LLR value.
+  using value_type = int8_t;
+
   /// Default constructor.
   constexpr log_likelihood_ratio() = default;
 
@@ -49,7 +52,7 @@ public:
   {
     static_assert(std::is_integral<T>::value, "LLRs must be initialized with integer values.");
     if (((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY)) {
-      value = static_cast<int8_t>(val);
+      value = static_cast<value_type>(val);
       return;
     }
     srsran_terminate("Invalid LLR value.");
@@ -127,7 +130,7 @@ public:
 
   /// \brief Promotion sum.
   ///
-  /// As opposed to the saturated sum (i.e., log_likelihood_ratio::operator+), results larger (in absolut value) than
+  /// As opposed to the saturated sum (i.e., log_likelihood_ratio::operator+), results larger (in absolute value) than
   /// \c LLR_MAX are set to <tt>&plusmn;LLR_INFTY</tt>.
   /// \param[in] a First summand.
   /// \param[in] b Second summand.
@@ -136,18 +139,18 @@ public:
 
 private:
   /// Actual LLR value.
-  int8_t value = 0;
+  value_type value = 0;
 
   /// \brief Represents a log-likelihood ratio set to infinity.
   ///
   /// An LLR takes the value \c LLR_INFTY when the corresponding bit is certainly zero. Similarly, an LLR takes the
   /// value <tt>-LLR_INFTY</tt> when the corresponding bit is certainly one.
-  static constexpr int8_t LLR_INFTY = 127;
+  static constexpr value_type LLR_INFTY = 127;
 
   /// \brief Maximum (finite) value of a log-likelihood ratio.
   ///
   /// Finite LLRs take values between <tt>-LLR_MAX</tt> and \c LLR_MAX (both included).
-  static constexpr int8_t LLR_MAX = 120;
+  static constexpr value_type LLR_MAX = 120;
 };
 
 /// \name Common numerical constants.
@@ -239,7 +242,7 @@ struct formatter<srsgnb::log_likelihood_ratio> {
   template <typename FormatContext>
   auto format(srsgnb::log_likelihood_ratio llr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "LLR({})", static_cast<int8_t>(llr));
+    return format_to(ctx.out(), "LLR({})", static_cast<srsgnb::log_likelihood_ratio::value_type>(llr));
   }
 };
 
