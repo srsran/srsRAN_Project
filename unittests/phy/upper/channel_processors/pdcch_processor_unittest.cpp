@@ -13,7 +13,6 @@
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
-#include "srsgnb/srsvec/compare.h"
 #include <random>
 
 static std::mt19937 rgen(0);
@@ -29,9 +28,8 @@ std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t
 class pdcch_processor_impl
 {
 public:
-  static void compute_rb_mask(span<bool>                                  mask,
-                              const pdcch_processor::coreset_description& coreset,
-                              const pdcch_processor::dci_description&     dci);
+  static bounded_bitset<MAX_RB> compute_rb_mask(const pdcch_processor::coreset_description& coreset,
+                                                const pdcch_processor::dci_description&     dci);
 };
 
 } // namespace srsgnb
@@ -72,98 +70,100 @@ int main()
         for (unsigned duration : {1, 2, 3}) {
           for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
             for (unsigned aggregation_level : {1, 2, 4, 8, 16}) {
-              // Skip if the
+              for (auto cce_to_reg_mapping_type : {pdcch_processor::coreset_description::CORESET0,
+                                                   pdcch_processor::coreset_description::NON_INTERLEAVED,
+                                                   pdcch_processor::coreset_description::INTERLEAVED}) {
+                // Skip if it cannot fit a candidate.
+                if (duration * (bwp_size_rb / 6) < aggregation_level) {
+                  continue;
+                }
 
-              // Skip if it cannot fit a candidate.
-              if (duration * (bwp_size_rb / 6) < aggregation_level) {
-                continue;
+                unsigned numerology  = dist_numerology(rgen);
+                bool     is_coreset0 = (cce_to_reg_mapping_type == pdcch_processor::coreset_description::CORESET0);
+                unsigned E =
+                    aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
+
+                bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources(
+                    pdcch_constants::MAX_NOF_FREQ_RESOUCES);
+                frequency_resources.fill(0, (12 * (bwp_size_rb / 12)) / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE);
+
+                pdcch_processor::pdu_t pdu = {};
+                pdu.slot = {numerology, dist_sfn(rgen), dist_subframe(rgen), dist_slot(rgen) % (1 << numerology)};
+                pdu.cp   = cp;
+
+                pdcch_processor::coreset_description& coreset = pdu.coreset;
+                coreset.bwp_size_rb                           = is_coreset0 ? (12 * (bwp_size_rb / 12)) : bwp_size_rb;
+                coreset.bwp_start_rb                          = bwp_start_rb;
+                coreset.start_symbol_index                    = start_symbol_index;
+                coreset.duration                              = duration;
+                coreset.frequency_resources                   = frequency_resources;
+                coreset.cce_to_reg_mapping_type               = cce_to_reg_mapping_type;
+                coreset.reg_bundle_size                       = 6;
+                coreset.interleaver_size                      = 2;
+                coreset.shift_index                           = 0;
+                coreset.precoder_granularity = pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE;
+
+                pdu.dci_list.resize(1);
+                pdcch_processor::dci_description& dci = pdu.dci_list[0];
+                dci.n_id_pdcch_dmrs                   = dist_n_id(rgen);
+                dci.n_id_pdcch_data                   = dist_n_id(rgen);
+                dci.n_rnti                            = dist_n_id(rgen);
+                dci.cce_index                         = 0;
+                dci.aggregation_level                 = aggregation_level;
+                dci.dmrs_power_offset_dB              = dist_power_offset(rgen);
+                dci.data_power_offset_dB              = dist_power_offset(rgen);
+                dci.payload.resize(dist_payload_sz(rgen));
+                for (uint8_t& bit : dci.payload) {
+                  bit = dist_payload(rgen);
+                }
+                dci.payload.resize(dist_payload_sz(rgen));
+                dci.ports.emplace_back(dist_port_idx(rgen));
+
+                // Reset spy classes.
+                encoder->reset();
+                modulator->reset();
+                dmrs->reset();
+
+                // Process PDU.
+                pdcch->process(grid, pdu);
+
+                // Calculate ideal allocation mask.
+                bounded_bitset<MAX_RB> rb_mask = pdcch_processor_impl::compute_rb_mask(pdu.coreset, pdu.dci_list[0]);
+
+                // Check PDCCH encoder inputs.
+                TESTASSERT_EQ(encoder->get_nof_entries(), 1);
+                const auto& encoder_entry = encoder->get_entries().front();
+                TESTASSERT_EQ(encoder_entry.config.rnti, dci.rnti);
+                TESTASSERT_EQ(encoder_entry.config.E, E);
+                TESTASSERT_EQ(const_span<uint8_t>(encoder_entry.data), const_span<uint8_t>(pdu.dci_list[0].payload));
+
+                // Check PDCCH modulator inputs.
+                TESTASSERT_EQ(modulator->get_nof_entries(), 1);
+                const auto& modulator_entry = modulator->get_entries().front();
+                TESTASSERT_EQ(rb_mask, modulator_entry.config.rb_mask);
+                TESTASSERT_EQ(modulator_entry.config.start_symbol_index, start_symbol_index);
+                TESTASSERT_EQ(modulator_entry.config.duration, duration);
+                TESTASSERT_EQ(modulator_entry.config.n_id, dci.n_id_pdcch_data);
+                TESTASSERT_EQ(modulator_entry.config.n_rnti, dci.n_rnti);
+                TESTASSERT_EQ(modulator_entry.config.scaling, convert_dB_to_amplitude(dci.data_power_offset_dB));
+                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci_list[0].ports),
+                              const_span<uint8_t>(modulator_entry.config.ports));
+                TESTASSERT_EQ(const_span<uint8_t>(modulator_entry.bits), const_span<uint8_t>(encoder_entry.encoded));
+                TESTASSERT_EQ((void*)modulator_entry.grid_ptr, (void*)&grid);
+
+                // Check PDCCH DMRS inputs.
+                TESTASSERT_EQ(dmrs->get_nof_entries(), 1);
+                const auto& dmrs_entry = dmrs->get_entries().front();
+                TESTASSERT_EQ(dmrs_entry.config.slot, pdu.slot);
+                TESTASSERT_EQ(dmrs_entry.config.cp, cp);
+                TESTASSERT_EQ(dmrs_entry.config.reference_point_k_rb, is_coreset0 ? coreset.bwp_start_rb : 0);
+                TESTASSERT_EQ(dmrs_entry.config.rb_mask, rb_mask);
+                TESTASSERT_EQ(dmrs_entry.config.start_symbol_index, coreset.start_symbol_index);
+                TESTASSERT_EQ(dmrs_entry.config.duration, coreset.duration);
+                TESTASSERT_EQ(dmrs_entry.config.n_id, dci.n_id_pdcch_dmrs);
+                TESTASSERT_EQ(dmrs_entry.config.amplitude, convert_dB_to_amplitude(dci.dmrs_power_offset_dB));
+                TESTASSERT_EQ(const_span<uint8_t>(pdu.dci_list[0].ports), const_span<uint8_t>(dmrs_entry.config.ports));
               }
-
-              unsigned numerology = dist_numerology(rgen);
-
-              pdcch_processor::pdu_t pdu = {};
-              pdu.slot = {numerology, dist_sfn(rgen), dist_subframe(rgen), dist_slot(rgen) % (1 << numerology)};
-              pdu.cp   = cp;
-
-              pdcch_processor::coreset_description& coreset = pdu.coreset;
-              coreset.bwp_size_rb                           = bwp_size_rb;
-              coreset.bwp_start_rb                          = bwp_start_rb;
-              coreset.start_symbol_index                    = start_symbol_index;
-              coreset.duration                              = duration;
-              std::fill(coreset.frequency_resources.begin() + bwp_start_rb / 6,
-                        coreset.frequency_resources.begin() + (bwp_start_rb + bwp_size_rb) / 6,
-                        true);
-              coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::NON_INTERLEAVED;
-
-              pdu.dci_list.resize(1);
-              pdcch_processor::dci_description& dci = pdu.dci_list[0];
-              dci.n_id_pdcch_dmrs                   = dist_n_id(rgen);
-              dci.n_id_pdcch_data                   = dist_n_id(rgen);
-              dci.n_rnti                            = dist_n_id(rgen);
-              dci.cce_index                         = 0;
-              dci.aggregation_level                 = aggregation_level;
-              dci.dmrs_power_offset_dB              = dist_power_offset(rgen);
-              dci.data_power_offset_dB              = dist_power_offset(rgen);
-              dci.payload.resize(dist_payload_sz(rgen));
-              for (uint8_t& bit : dci.payload) {
-                bit = dist_payload(rgen);
-              }
-              dci.payload.resize(dist_payload_sz(rgen));
-              dci.ports.emplace_back(dist_port_idx(rgen));
-
-              // Set untested parameters.
-              coreset.reg_bundle_size         = 0;
-              coreset.interleaver_size        = 0;
-              coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::INTERLEAVED;
-              coreset.shift_index             = 0;
-              coreset.precoder_granularity    = pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE;
-
-              // Reset spy classes.
-              encoder->reset();
-              modulator->reset();
-              dmrs->reset();
-
-              // Process PDU.
-              pdcch->process(grid, pdu);
-
-              // Calculate ideal allocation mask.
-              std::array<bool, MAX_RB> rb_mask;
-              pdcch_processor_impl::compute_rb_mask(rb_mask, pdu.coreset, pdu.dci_list[0]);
-
-              // Check PDCCH encoder inputs.
-              TESTASSERT(encoder->get_nof_entries() == 1, "Invalid number of entries.");
-              const auto& encoder_entry = encoder->get_entries().front();
-              TESTASSERT(srsvec::equal(encoder_entry.data, pdu.dci_list[0].payload));
-
-              // Check PDCCH modulator inputs.
-              TESTASSERT(modulator->get_nof_entries() == 1, "Invalid number of entries.");
-              const auto& modulator_entry = modulator->get_entries().front();
-              TESTASSERT(srsvec::equal(rb_mask, modulator_entry.config.rb_mask));
-              TESTASSERT(modulator_entry.config.start_symbol_index == start_symbol_index);
-              TESTASSERT(modulator_entry.config.duration == duration);
-              TESTASSERT(modulator_entry.config.n_id == dci.n_id_pdcch_data);
-              TESTASSERT(modulator_entry.config.n_rnti == dci.n_rnti);
-              TESTASSERT(modulator_entry.config.scaling == convert_dB_to_amplitude(dci.data_power_offset_dB),
-                         "Detected mismatch.");
-              TESTASSERT(srsvec::equal(pdu.dci_list[0].ports, modulator_entry.config.ports));
-              TESTASSERT(srsvec::equal(modulator_entry.bits, encoder_entry.encoded));
-              TESTASSERT(modulator_entry.grid_ptr == &grid);
-
-              // Check PDCCH DMRS inputs.
-              TESTASSERT(dmrs->get_nof_entries() == 1, "Invalid number of entries.");
-              const auto& dmrs_entry = dmrs->get_entries().front();
-              TESTASSERT(dmrs_entry.config.slot == pdu.slot);
-              TESTASSERT(dmrs_entry.config.cp == cp);
-              TESTASSERT(dmrs_entry.config.reference_point_k_rb == 0);
-              TESTASSERT_EQ(dmrs_entry.config.rb_mask,
-                            bounded_bitset<MAX_RB>(rb_mask.begin(),
-                                                   rb_mask.begin() + coreset.bwp_start_rb + coreset.bwp_size_rb));
-              TESTASSERT(dmrs_entry.config.start_symbol_index == coreset.start_symbol_index);
-              TESTASSERT(dmrs_entry.config.duration == coreset.duration);
-              TESTASSERT(dmrs_entry.config.n_id == dci.n_id_pdcch_dmrs);
-              TESTASSERT(dmrs_entry.config.amplitude == convert_dB_to_amplitude(dci.dmrs_power_offset_dB),
-                         "Detected mismatch.");
-              TESTASSERT(srsvec::equal(pdu.dci_list[0].ports, dmrs_entry.config.ports));
             }
           }
         }

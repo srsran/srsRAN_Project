@@ -11,15 +11,10 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_H
 
-#include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/adt/slot_array.h"
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/phy/upper/dmrs_mapping.h"
-#include "srsgnb/phy/upper/rb_allocation.h"
-#include "srsgnb/phy/upper/re_pattern.h"
 
 namespace srsgnb {
 
@@ -33,7 +28,7 @@ public:
   /// Describes the necessary parameters to modulate a PDCCH transmission.
   struct config_t {
     /// Indicates the RBs used for the PDCCH transmission.
-    std::array<bool, MAX_RB> rb_mask;
+    bounded_bitset<MAX_RB> rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.

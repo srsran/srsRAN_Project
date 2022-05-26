@@ -54,8 +54,7 @@ static reg_index_list cce_to_reg_mapping_interleaved(unsigned N_rb_coreset,
 
   // Calculate the REG bundle boundaries for the PDCCH transmission.
   unsigned reg_bundle_index_begin = cce_index * nof_reg_bundle_in_cce;
-  unsigned reg_bundle_index_end =
-      (cce_index + pdcch_constants::NOF_REG_PER_CCE * aggregation_level) * nof_reg_bundle_in_cce;
+  unsigned reg_bundle_index_end   = (cce_index + aggregation_level) * nof_reg_bundle_in_cce;
 
   // For each REG bundle index in the CCE...
   for (unsigned reg_bundle_index = reg_bundle_index_begin; reg_bundle_index != reg_bundle_index_end;

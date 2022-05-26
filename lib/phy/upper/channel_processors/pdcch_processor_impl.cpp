@@ -19,18 +19,20 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
                                                              const dci_description&     dci)
 {
   prb_index_list prb_indexes;
-  if (coreset.cce_to_reg_mapping_type == coreset_description::CORESET0) {
-    prb_indexes = cce_to_prb_mapping_coreset0(coreset.bwp_start_rb,
-                                              coreset.bwp_size_rb,
-                                              coreset.duration,
-                                              coreset.shift_index,
-                                              dci.aggregation_level,
-                                              dci.cce_index);
-  } else {
-    if (coreset.cce_to_reg_mapping_type != coreset_description::INTERLEAVED) {
+  switch (coreset.cce_to_reg_mapping_type) {
+    case coreset_description::CORESET0:
+      prb_indexes = cce_to_prb_mapping_coreset0(coreset.bwp_start_rb,
+                                                coreset.bwp_size_rb,
+                                                coreset.duration,
+                                                coreset.shift_index,
+                                                dci.aggregation_level,
+                                                dci.cce_index);
+      break;
+    case coreset_description::NON_INTERLEAVED:
       prb_indexes = cce_to_prb_mapping_non_interleaved(
           coreset.bwp_start_rb, coreset.frequency_resources, coreset.duration, dci.aggregation_level, dci.cce_index);
-    } else {
+      break;
+    case coreset_description::INTERLEAVED:
       prb_indexes = cce_to_prb_mapping_interleaved(coreset.bwp_start_rb,
                                                    coreset.frequency_resources,
                                                    coreset.duration,
@@ -39,7 +41,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
                                                    coreset.shift_index,
                                                    dci.aggregation_level,
                                                    dci.cce_index);
-    }
+      break;
   }
 
   bounded_bitset<MAX_RB> result(coreset.bwp_start_rb + coreset.bwp_size_rb);
@@ -61,14 +63,15 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
   // For each DCI described in the PDU...
   for (const dci_description& dci : pdu.dci_list) {
     // Generate RB mask.
-    static_vector<bool, MAX_RB> rb_mask(coreset.bwp_start_rb + coreset.bwp_size_rb);
-    compute_rb_mask(rb_mask, coreset, dci);
+    bounded_bitset<MAX_RB> rb_mask = compute_rb_mask(coreset, dci);
 
     // Extract payload.
     const static_vector<uint8_t, MAX_DCI_PAYLOAD_SIZE>& payload = dci.payload;
 
     // Populate PDCCH encoder configuration.
     pdcch_encoder::config_t encoder_config = {};
+    encoder_config.E    = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
+    encoder_config.rnti = dci.rnti;
 
     // Encode.
     static_vector<uint8_t, MAX_NOF_BITS> encoded(nof_encoded_bits(dci.aggregation_level));
@@ -76,29 +79,31 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
 
     // Populate PDCCH modulator configuration.
     pdcch_modulator::config_t modulator_config = {};
-    std::copy(rb_mask.begin(), rb_mask.end(), modulator_config.rb_mask.begin());
-    modulator_config.start_symbol_index = coreset.start_symbol_index;
-    modulator_config.duration           = coreset.duration;
-    modulator_config.n_id               = dci.n_id_pdcch_data;
-    modulator_config.n_rnti             = dci.n_rnti;
-    modulator_config.scaling            = convert_dB_to_amplitude(dci.data_power_offset_dB);
-    modulator_config.ports              = dci.ports;
+    modulator_config.rb_mask                   = rb_mask;
+    modulator_config.start_symbol_index        = coreset.start_symbol_index;
+    modulator_config.duration                  = coreset.duration;
+    modulator_config.n_id                      = dci.n_id_pdcch_data;
+    modulator_config.n_rnti                    = dci.n_rnti;
+    modulator_config.scaling                   = convert_dB_to_amplitude(dci.data_power_offset_dB);
+    modulator_config.ports                     = dci.ports;
 
     // Modulate.
     modulator->modulate(grid, encoded, modulator_config);
+
+    unsigned reference_point_k_rb =
+        coreset.cce_to_reg_mapping_type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
 
     // Populate DMRS for PDCCH configuration.
     dmrs_pdcch_processor::config_t dmrs_pdcch_config = {};
     dmrs_pdcch_config.slot                           = pdu.slot;
     dmrs_pdcch_config.cp                             = pdu.cp;
-    dmrs_pdcch_config.reference_point_k_rb =
-        coreset.cce_to_reg_mapping_type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
-    std::copy(rb_mask.begin(), rb_mask.end(), dmrs_pdcch_config.rb_mask.begin());
-    dmrs_pdcch_config.start_symbol_index = coreset.start_symbol_index;
-    dmrs_pdcch_config.duration           = coreset.duration;
-    dmrs_pdcch_config.n_id               = dci.n_id_pdcch_dmrs;
-    dmrs_pdcch_config.amplitude          = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
-    dmrs_pdcch_config.ports              = dci.ports;
+    dmrs_pdcch_config.reference_point_k_rb           = reference_point_k_rb;
+    dmrs_pdcch_config.rb_mask                        = rb_mask;
+    dmrs_pdcch_config.start_symbol_index             = coreset.start_symbol_index;
+    dmrs_pdcch_config.duration                       = coreset.duration;
+    dmrs_pdcch_config.n_id                           = dci.n_id_pdcch_dmrs;
+    dmrs_pdcch_config.amplitude                      = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
+    dmrs_pdcch_config.ports                          = dci.ports;
 
     // Generate DMRS.
     dmrs->map(grid, dmrs_pdcch_config);
