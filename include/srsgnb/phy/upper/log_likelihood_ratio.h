@@ -63,10 +63,13 @@ public:
 
   /// Converts the LLR to a plain \c value_type value.
   explicit constexpr operator value_type() const { return value; };
+  /// Converts the LLR to a plain \c value_type value.
+  value_type constexpr to_value_type() const { return value; };
 
   /// Converts the LLR to a plain \c int value.
-  explicit constexpr   operator int() const { return value; };
-  value_type constexpr to_int() const { return value; };
+  explicit constexpr operator int() const { return value; };
+  /// Converts the LLR to a plain \c int value.
+  int constexpr to_int() const { return value; };
   ///@}
 
   /// Default assignment operator.
@@ -112,7 +115,7 @@ public:
   constexpr bool operator<=(log_likelihood_ratio rhs) const { return value <= rhs.value; }
   ///@}
 
-  /// Returns the special value "positive infinity."
+  /// Returns the special value "positive infinity".
   static constexpr log_likelihood_ratio infinity() { return LLR_INFTY; }
 
   /// Returns the maximum finite LLR value.
@@ -195,12 +198,12 @@ struct is_llr_span_compatible<T,
 
 /// \brief Dot product of a sequence of LLRs and a sequence of values of an arithmetic type.
 ///
-/// Computes the dot product (a.k.a. inner product or scalar product) of the two sequences represented by the input
-/// sequences, adding an initial offset.
-/// \tparam T         A span (or any container convertible to a span) of a log-likelihood ratios (either constant or
+/// Computes the dot product (a.k.a. inner product or scalar product) of the two input sequences, adding an initial
+/// offset.
+/// \tparam T         A span (or any container convertible to a span) of log-likelihood ratios (either constant or
 ///                   volatile).
 /// \tparam U         A span (or any container convertible to a span) of an arithmetic type.
-/// \tparam V         Output type (must be compatible with the product of object of type \c T and \c U).
+/// \tparam V         Output type (must be compatible with the product of objects of type \c T and \c U).
 /// \param[in] x      A sequence of (possibly constant) log-likelihood ratios.
 /// \param[in] y      A second sequence of values.
 /// \param[in] init   Initialization value.
@@ -223,8 +226,7 @@ V log_likelihood_ratio::dot_prod(const T& x, const U& y, V init)
 
 /// \brief Squared Euclidean norm of a sequence of LLRs.
 ///
-/// Computes the squared Euclidean norm (sum of the squares of the elements) of the sequence represented by the input
-/// span.
+/// Computes the squared Euclidean norm (sum of the squares of the elements) of the input sequence of LLRs.
 ///
 /// \tparam T     A span (or any container convertible to a span) of a log-likelihood ratios (either constant or
 ///               volatile).
