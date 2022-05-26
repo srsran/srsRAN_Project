@@ -61,9 +61,12 @@ public:
   /// \name Conversion operators.
   ///@{
 
-  /// Converts the LLR to a plain \c int8_t value.
-  explicit constexpr operator int8_t() const { return value; };
-  int8_t constexpr   to_int8_t() const { return value; };
+  /// Converts the LLR to a plain \c value_type value.
+  explicit constexpr operator value_type() const { return value; };
+
+  /// Converts the LLR to a plain \c int value.
+  explicit constexpr   operator int() const { return value; };
+  value_type constexpr to_int() const { return value; };
   ///@}
 
   /// Default assignment operator.
@@ -76,19 +79,26 @@ public:
   ///
   /// The result is clipped if larger (in absolute value) than log_likelihood_ratio::LLR_MAX. Then, for instance,
   /// <tt>LLR_MAX + 2 = LLR_MAX</tt> and <tt>-LLR_MAX - 2 = -LLR_MAX</tt>.
-  log_likelihood_ratio operator+(log_likelihood_ratio rhs) const;
+  log_likelihood_ratio operator+(log_likelihood_ratio rhs) const
+  {
+    rhs += *this;
+    return rhs;
+  }
 
   /// \brief Addition assignment with saturated sum.
-  log_likelihood_ratio operator+=(log_likelihood_ratio rhs)
-  {
-    *this = *this + rhs;
-    return *this;
-  }
+  log_likelihood_ratio operator+=(log_likelihood_ratio rhs);
 
   /// \brief Saturated difference.
   ///
   /// Follows naturally from the saturated sum: <tt>a - b = a + (-b)</tt>.
   log_likelihood_ratio operator-(log_likelihood_ratio rhs) const { return *this + (-rhs); }
+
+  /// \brief Subtraction assignment with saturated sum.
+  log_likelihood_ratio operator-=(log_likelihood_ratio rhs)
+  {
+    *this += (-rhs);
+    return *this;
+  }
 
   /// \brief Multiplication by an arithmetic type.
   template <typename T>
@@ -218,7 +228,7 @@ inline int norm_sqr_llr(const T& x)
 {
   static_assert(detail::is_llr_span_compatible<T>::value, "Template type is not compatible with a span of LLRs");
   return std::accumulate(
-      x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int8_t() * b.to_int8_t(); });
+      x.begin(), x.end(), 0, [](int a, log_likelihood_ratio b) { return a + b.to_int() * b.to_int(); });
 }
 
 } // namespace srsvec

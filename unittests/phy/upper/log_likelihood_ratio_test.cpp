@@ -33,7 +33,7 @@ int main()
   TESTASSERT_EQ(log_likelihood_ratio(2), llr0 + llr1, "Sum not working.");
   TESTASSERT_EQ(log_likelihood_ratio(-2), llr0 - llr1, "Difference not working.");
   TESTASSERT_EQ(log_likelihood_ratio(2), log_likelihood_ratio::promotion_sum(llr0, llr1), "Promotion sum not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(LLR_MAX), llr1 + 119, "Saturation not working.");
+  TESTASSERT_EQ(LLR_MAX, llr1 + 119, "Saturation not working.");
   TESTASSERT(typeid(int) == typeid(llr0 * 3), "Product does not propagate type.");
   TESTASSERT_EQ(6, llr1 * 3, "Product not working.");
   TESTASSERT(typeid(float) == typeid(llr1 * 3.1F), "Product does not propagate type.");
@@ -42,12 +42,13 @@ int main()
   llr0 += llr1;
   TESTASSERT_EQ(log_likelihood_ratio(2), llr0, "Addition assignment not working.");
 
+  TESTASSERT_EQ(static_cast<int>(llr0), 2, "Static casting not working.");
+  TESTASSERT_EQ(llr0.to_int(), 2, "Static casting not working.");
+
   llr0 = -100;
   llr1 = 100;
-  TESTASSERT_EQ(log_likelihood_ratio(-LLR_MAX), llr0 - llr1, "Saturation of negative values not working.");
-  TESTASSERT_EQ(log_likelihood_ratio(LLR_INFINITY),
-                log_likelihood_ratio::promotion_sum(LLR_MAX, LLR_MAX),
-                "Promotion sum not working.");
+  TESTASSERT_EQ(-LLR_MAX, llr0 - llr1, "Saturation of negative values not working.");
+  TESTASSERT_EQ(LLR_INFINITY, log_likelihood_ratio::promotion_sum(LLR_MAX, LLR_MAX), "Promotion sum not working.");
 
   std::array<log_likelihood_ratio, 4> llr_sequence = {2, -2, 2, -2};
   TESTASSERT(typeid(int) == typeid(srsvec::norm_sqr_llr(llr_sequence)), "norm_sqr_llr does not propagate type.");

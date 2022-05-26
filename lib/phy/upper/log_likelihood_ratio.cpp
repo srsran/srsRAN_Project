@@ -23,18 +23,21 @@ static optional<log_likelihood_ratio> tackle_special_sums(log_likelihood_ratio v
   return {};
 }
 
-log_likelihood_ratio log_likelihood_ratio::operator+(log_likelihood_ratio rhs) const
+log_likelihood_ratio log_likelihood_ratio::operator+=(log_likelihood_ratio rhs)
 {
   if (auto special = tackle_special_sums(*this, rhs)) {
-    return special.value();
+    *this = special.value();
+    return *this;
   }
 
   // When not dealing with special cases, classic saturated sum.
   int tmp = value + static_cast<int>(rhs.value);
   if (std::abs(tmp) > LLR_MAX) {
-    return ((tmp > 0) ? LLR_MAX : -LLR_MAX);
+    *this = ((tmp > 0) ? LLR_MAX : -LLR_MAX);
+    return *this;
   }
-  return tmp;
+  *this = tmp;
+  return *this;
 }
 
 log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a, log_likelihood_ratio b)

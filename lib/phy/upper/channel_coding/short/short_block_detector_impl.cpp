@@ -71,14 +71,13 @@ static double detect_2(span<uint8_t> output, span<const log_likelihood_ratio> in
 
   unsigned in_size = input.size();
   if (in_size == NOF_BITS) {
-    std::transform(
-        input.begin(), input.end(), llr_as_int.begin(), [](log_likelihood_ratio a) { return a.to_int8_t(); });
+    std::transform(input.begin(), input.end(), llr_as_int.begin(), [](log_likelihood_ratio a) { return a.to_int(); });
   } else {
     // in_size > NOF_BITS is equivalent to modulation of order higher than 1: combine repeated symbols.
     unsigned step = in_size / 3 - 2;
-    llr_as_int[0] = input[0].to_int8_t() + input[step + 3].to_int8_t();
-    llr_as_int[1] = input[1].to_int8_t() + input[2 * step + 4].to_int8_t();
-    llr_as_int[2] = input[step + 2].to_int8_t() + input[2 * step + 5].to_int8_t();
+    llr_as_int[0] = input[0].to_int() + input[step + 3].to_int();
+    llr_as_int[1] = input[1].to_int() + input[2 * step + 4].to_int();
+    llr_as_int[2] = input[step + 2].to_int() + input[2 * step + 5].to_int();
   }
 
   // All possible 2-bit codewords (including redundancy bit).
