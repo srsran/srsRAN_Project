@@ -15,12 +15,11 @@
 using namespace srsgnb;
 using namespace pdcch_constants;
 
-void pdcch_processor_impl::compute_rb_mask(span<bool>                 mask,
-                                           const coreset_description& coreset,
-                                           const dci_description&     dci)
+bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_description& coreset,
+                                                             const dci_description&     dci)
 {
   prb_index_list prb_indexes;
-  if (coreset.type == coreset_description::CORESET0) {
+  if (coreset.cce_to_reg_mapping_type == coreset_description::CORESET0) {
     prb_indexes = cce_to_prb_mapping_coreset0(coreset.bwp_start_rb,
                                               coreset.bwp_size_rb,
                                               coreset.duration,
@@ -28,19 +27,12 @@ void pdcch_processor_impl::compute_rb_mask(span<bool>                 mask,
                                               dci.aggregation_level,
                                               dci.cce_index);
   } else {
-    bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
-    for (unsigned i = 0; i != pdcch_constants::MAX_NOF_FREQ_RESOUCES; ++i) {
-      if (coreset.frequency_resources[i]) {
-        frequency_resources.set(i);
-      }
-    }
-
     if (coreset.cce_to_reg_mapping_type != coreset_description::INTERLEAVED) {
       prb_indexes = cce_to_prb_mapping_non_interleaved(
-          coreset.bwp_start_rb, frequency_resources, coreset.duration, dci.aggregation_level, dci.cce_index);
+          coreset.bwp_start_rb, coreset.frequency_resources, coreset.duration, dci.aggregation_level, dci.cce_index);
     } else {
       prb_indexes = cce_to_prb_mapping_interleaved(coreset.bwp_start_rb,
-                                                   frequency_resources,
+                                                   coreset.frequency_resources,
                                                    coreset.duration,
                                                    coreset.reg_bundle_size,
                                                    coreset.interleaver_size,
@@ -50,10 +42,11 @@ void pdcch_processor_impl::compute_rb_mask(span<bool>                 mask,
     }
   }
 
-  std::fill(mask.begin(), mask.end(), false);
+  bounded_bitset<MAX_RB> result(coreset.bwp_start_rb + coreset.bwp_size_rb);
   for (uint16_t prb_index : prb_indexes) {
-    mask[prb_index] = true;
+    result.set(prb_index, true);
   }
+  return result;
 }
 
 void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::pdcch_processor::pdu_t& pdu)
@@ -98,13 +91,14 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
     dmrs_pdcch_processor::config_t dmrs_pdcch_config = {};
     dmrs_pdcch_config.slot                           = pdu.slot;
     dmrs_pdcch_config.cp                             = pdu.cp;
-    dmrs_pdcch_config.reference_point_k_rb = coreset.type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
-    dmrs_pdcch_config.rb_mask              = bounded_bitset<MAX_RB>(rb_mask.begin(), rb_mask.end());
-    dmrs_pdcch_config.start_symbol_index   = coreset.start_symbol_index;
-    dmrs_pdcch_config.duration             = coreset.duration;
-    dmrs_pdcch_config.n_id                 = dci.n_id_pdcch_dmrs;
-    dmrs_pdcch_config.amplitude            = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
-    dmrs_pdcch_config.ports                = dci.ports;
+    dmrs_pdcch_config.reference_point_k_rb =
+        coreset.cce_to_reg_mapping_type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
+    std::copy(rb_mask.begin(), rb_mask.end(), dmrs_pdcch_config.rb_mask.begin());
+    dmrs_pdcch_config.start_symbol_index = coreset.start_symbol_index;
+    dmrs_pdcch_config.duration           = coreset.duration;
+    dmrs_pdcch_config.n_id               = dci.n_id_pdcch_dmrs;
+    dmrs_pdcch_config.amplitude          = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
+    dmrs_pdcch_config.ports              = dci.ports;
 
     // Generate DMRS.
     dmrs->map(grid, dmrs_pdcch_config);

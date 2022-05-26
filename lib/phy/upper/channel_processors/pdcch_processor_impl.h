@@ -47,31 +47,11 @@ private:
     return aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
   }
 
-  /// \brief Maps a CORESET REG mask to a RB mask.
-  /// \param[out] rb_mask Destination resource block mask.
-  /// \param[in] reg_mask Resource block mask relative to the CORESET.
-  /// \param[in] coreset Provides CORESET parameters.
-  static void map_reg_to_prb(span<bool> rb_mask, span<const bool> reg_mask, const coreset_description& coreset);
-
-  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2 for non-interleaved mapping.
-  /// \param[out] mask Allocation mask destination.
+  /// \brief Computes the allocation mask as per TS38.211 Section 7.3.2.2.
   /// \param[in] coreset Provides CORESET parameters.
   /// \param[in] dci Provides DCI parameters.
-  static void
-  compute_rb_mask_non_interleaved(span<bool> mask, const coreset_description& coreset, const dci_description& dci);
-
-  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2 for interleaved mapping.
-  /// \param[out] mask Allocation mask destination.
-  /// \param[in] coreset Provides CORESET parameters.
-  /// \param[in] dci Provides DCI parameters.
-  static void
-  compute_rb_mask_interleaved(span<bool> mask, const coreset_description& coreset, const dci_description& dci);
-
-  /// \brief Computes the allocation mask according to TS 38.211 Section 7.3.2.2.
-  /// \param[out] mask Allocation mask destination.
-  /// \param[in] coreset Provides CORESET parameters.
-  /// \param[in] dci Provides DCI parameters.
-  static void compute_rb_mask(span<bool> mask, const coreset_description& coreset, const dci_description& dci);
+  /// \return Return the PRB allocation mask for the PDCCH transmission.
+  static bounded_bitset<MAX_RB> compute_rb_mask(const coreset_description& coreset, const dci_description& dci);
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.

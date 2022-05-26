@@ -11,6 +11,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_H
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
@@ -35,6 +36,8 @@ class pdcch_processor
 public:
   /// Describes a DCI transmission.
   struct dci_description {
+    /// Parameter \f$x_{rnti, k}\f$ as per TS 38.211 section 7.3.2 {0...65535}.
+    unsigned rnti;
     /// Parameter \f$n_{ID}\f$ used for DMRS scrambling as per TS 38.211 Section 7.4.1.3.1 {0...65535}.
     unsigned n_id_pdcch_dmrs;
     /// Parameter \f$n_{ID}\f$ used in data scrambling as per TS 38.211 Section 7.3.2.3 {0...65535}.
@@ -78,22 +81,22 @@ public:
     /// \f$N^{CORESET}_{symb}\f$ as per RS 38.211 Section 7.3.2.2.
     unsigned duration;
     /// Frequency domain resources. This is a bitmap defining non-overlapping groups of 6 PRBs in ascending order.
-    std::array<bool, pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources;
-    /// CORESET-CCE-to-REG-mapping-type as per TS 38.211 Section 7.3.2.2.
-    enum { NON_INTERLEAVED = 0, INTERLEAVED } cce_to_reg_mapping_type;
+    bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources;
+    /// Indicates the CCE-to-REG mapping type as per TS 38.211 Section 7.3.2.2.
+    enum {
+      /// CORESET is configured by the PBCH or SIB1, (subcarrier 0 of the CORESET)
+      CORESET0 = 0,
+      /// Not configured by PBCH or SIB 1, and non-interleaved.
+      NON_INTERLEAVED,
+      /// Not configured by PBCH or SIB 1, and interleaved.
+      INTERLEAVED
+    } cce_to_reg_mapping_type;
     /// The number of REGs in a bundle. Ignored if \c cce_to_reg_mapping_type is set to \c NON_INTERLEAVED. Otherwise,
     /// it must be {2,6} for duration of 1 or 2 symbols and {3,6} for duration of 3 symbols.
     unsigned reg_bundle_size;
     /// The interleaver size. For interleaved mapping belongs to {2,3,6} and for non-interleaved mapping is ignored.
     /// Corresponds to parameter \f$R\f$ in TS 38.211 7.3.2.2.
     unsigned interleaver_size;
-    /// CORESET type defines the reference point for k in TS 38.211 Section 7.4.1.3.2.
-    enum {
-      /// CORESET is configured by the PBCH or SIB1, (subcarrier 0 of the CORESET)
-      CORESET0 = 0,
-      /// otherwise (subcarrier 0 of CRB0 for DMRS mapping)
-      OTHER
-    } type;
     /// Shift index \f$n_{shift}\f$ in TS 38.211 Section 7.3.2.2. It should be set to {0,275}, except for CORESET 0.
     unsigned shift_index;
     /// Granularity of precoding as per TS 38.211 Section 7.3.2.2.

@@ -114,4 +114,22 @@ static constexpr unsigned MAX_NSYMB_PER_SLOT =
 
 } // namespace srsgnb
 
+namespace fmt {
+
+/// FMT formatter of slot_point type.
+template <>
+struct formatter<srsgnb::cyclic_prefix> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(srsgnb::cyclic_prefix cp, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", cp.to_string());
+  }
+};
+} // namespace fmt
+
 #endif // SRSGNB_PHY_CYCLIC_PREFIX_H

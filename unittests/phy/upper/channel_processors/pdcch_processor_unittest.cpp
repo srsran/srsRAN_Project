@@ -112,11 +112,11 @@ int main()
               dci.ports.emplace_back(dist_port_idx(rgen));
 
               // Set untested parameters.
-              coreset.reg_bundle_size      = 0;
-              coreset.interleaver_size     = 0;
-              coreset.type                 = pdcch_processor::coreset_description::OTHER;
-              coreset.shift_index          = 0;
-              coreset.precoder_granularity = pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE;
+              coreset.reg_bundle_size         = 0;
+              coreset.interleaver_size        = 0;
+              coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::INTERLEAVED;
+              coreset.shift_index             = 0;
+              coreset.precoder_granularity    = pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE;
 
               // Reset spy classes.
               encoder->reset();
