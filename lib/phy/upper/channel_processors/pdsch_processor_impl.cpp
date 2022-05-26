@@ -12,14 +12,13 @@ unsigned int pdsch_processor_impl::compute_nof_re(const pdu_t& pdu)
       pdu.bwp_start_rb, pdu.bwp_size_rb, pdu.nof_cdm_groups_without_data, pdu.dmrs_symbol_mask));
 
   // Generate allocation mask.
-  std::array<bool, MAX_RB> rb_mask;
-  pdu.freq_alloc.get_allocation_mask(rb_mask, pdu.bwp_start_rb, pdu.bwp_size_rb);
+  bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   // Calculate the number of resource elements to map.
   unsigned Nre = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
 
   // Calculate the number of reserved resource elements.
-  unsigned Nre_reserved = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, rb_mask);
+  unsigned Nre_reserved = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
 
   // Subtract the number of reserved RE to the number of allocated RE.
   srsran_assert(
@@ -84,9 +83,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer&            grid,
 
 void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu)
 {
-  // Generate allocation mask.
-  std::array<bool, MAX_RB> rb_mask;
-  pdu.freq_alloc.get_allocation_mask(rb_mask, pdu.bwp_start_rb, pdu.bwp_size_rb);
+  bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
   dmrs_pdsch_processor::config_t dmrs_config;
   dmrs_config.slot                 = pdu.slot;
@@ -96,7 +93,7 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
   dmrs_config.n_scid               = pdu.n_scid;
   dmrs_config.amplitude            = convert_dB_to_amplitude(pdu.ratio_pdsch_dmrs_to_sss_dB);
   dmrs_config.symbols_mask         = pdu.dmrs_symbol_mask;
-  dmrs_config.rb_mask              = rb_mask;
+  dmrs_config.rb_mask              = rb_mask_bitset;
   dmrs_config.ports.resize(pdu.ports.size());
   srsvec::copy(dmrs_config.ports, pdu.ports);
 

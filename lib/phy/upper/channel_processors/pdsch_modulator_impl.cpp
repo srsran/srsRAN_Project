@@ -84,9 +84,9 @@ void pdsch_modulator_impl::layer_map(static_vector<span<cf_t>, MAX_PORTS>&      
   }
 }
 
-void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer&                grid,
-                                                            static_vector<span<cf_t>, MAX_PORTS> x_pdsch,
-                                                            const config_t&                      config)
+void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&                grid,
+                                                 static_vector<span<cf_t>, MAX_PORTS> x_pdsch,
+                                                 const config_t&                      config)
 {
   // Stores the resource grid allocation mask, common for all ports.
   std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask;
@@ -102,10 +102,8 @@ void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer
                 end_symbol_index);
 
   // Get the contiguous allocation parameters in the overall grid.
-  std::pair<unsigned, unsigned> contiguous_alloc =
-      config.freq_allocation.get_allocation_type_1_non_interleaved(config.bwp_start_rb, config.bwp_size_rb);
-  unsigned rb_start_index = contiguous_alloc.first;
-  unsigned nof_rb         = contiguous_alloc.second;
+  unsigned re_index_begin = config.freq_allocation.get_prb_begin(config.bwp_start_rb) * NRE;
+  unsigned re_index_end   = config.freq_allocation.get_prb_end(config.bwp_start_rb) * NRE;
 
   // Get DMRS RE pattern.
   re_pattern dmrs_pattern = config.dmrs_config_type.get_dmrs_pattern(
@@ -117,11 +115,11 @@ void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer
     span<bool> symbol_mask = allocation_mask[symbol_idx];
 
     // Populate unused region.
-    std::fill(symbol_mask.begin(), symbol_mask.begin() + rb_start_index * NRE, false);
-    std::fill(symbol_mask.begin() + (rb_start_index + nof_rb) * NRE, symbol_mask.end(), false);
+    std::fill(symbol_mask.begin(), symbol_mask.begin() + re_index_begin, false);
+    std::fill(symbol_mask.begin() + re_index_end, symbol_mask.end(), false);
 
     // Populate allocated mask.
-    std::fill(symbol_mask.begin() + rb_start_index * NRE, symbol_mask.begin() + (rb_start_index + nof_rb) * NRE, true);
+    std::fill(symbol_mask.begin() + re_index_begin, symbol_mask.begin() + re_index_end, true);
 
     // Exclude DMRS.
     dmrs_pattern.get_exclusion_mask(symbol_mask, symbol_idx);
@@ -148,7 +146,7 @@ void pdsch_modulator_impl::map_to_prb_type1_non_interleaved(resource_grid_writer
     }
 
     // Verify all the resource elements for the layer have been mapped.
-    srsran_assert(x_buffer.empty(), "%d elements are not mapped in layer %d", x_buffer.size(), layer_idx);
+    srsran_assert(x_buffer.empty(), "{} elements are not mapped in layer {}.", x_buffer.size(), layer_idx);
   }
 }
 
@@ -157,11 +155,11 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
                                             const config_t&                      config)
 {
   // Get PRB mapping indices including VRB-to-PRB mapping.
-  static_vector<unsigned, NRE * MAX_RB> prb_indices(config.freq_allocation.get_nof_rb());
-  config.freq_allocation.get_allocation_indices(prb_indices, config.bwp_start_rb, config.bwp_size_rb);
+  static_vector<uint16_t, MAX_RB> prb_indices =
+      config.freq_allocation.get_prb_indices(config.bwp_start_rb, config.bwp_size_rb);
 
   // Stores the resource grid allocation mask, common for all ports.
-  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask;
+  std::array<std::array<bool, NRE * MAX_RB>, MAX_NSYMB_PER_SLOT> allocation_mask = {};
 
   // First symbol used in this transmission.
   unsigned start_symbol_index = config.start_symbol_index;
@@ -186,8 +184,8 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
     std::fill(symbol_mask.begin(), symbol_mask.end(), false);
 
     // Iterate all the PRB used in this transmission.
-    for (const unsigned& prb_idx : prb_indices) {
-      // Set all the PRB subcarriers as used.
+    for (unsigned prb_idx : prb_indices) {
+      // Set all the RE in the PRB to active.
       std::fill(symbol_mask.begin() + prb_idx * NRE, symbol_mask.begin() + (prb_idx + 1) * NRE, true);
     }
 
@@ -215,7 +213,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
       span<const bool> rb_mask_symbol = allocation_mask[symbol_idx];
 
       // Perform 7.3.1.5 Mapping to VRB and 7.3.1.6 Mapping VRB-to-PRB.
-      for (const unsigned& prb_idx : prb_indices) {
+      for (unsigned prb_idx : prb_indices) {
         // Select RB mask for the PRB.
         span<const bool> rb_mask = rb_mask_symbol.subspan(prb_idx * NRE, NRE);
 
@@ -273,8 +271,8 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
   layer_map(x_pdsch, d_pdsch);
 
   // Map resource elements.
-  if (config.freq_allocation.is_type1_non_interleaved()) {
-    map_to_prb_type1_non_interleaved(grid, x_pdsch, config);
+  if (config.freq_allocation.is_contiguous()) {
+    map_to_contiguous_prb(grid, x_pdsch, config);
   } else {
     map_to_prb_other(grid, x_pdsch, config);
   }

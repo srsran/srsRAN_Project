@@ -155,7 +155,9 @@ int main()
               TESTASSERT(dmrs_entry.config.slot == pdu.slot);
               TESTASSERT(dmrs_entry.config.cp == cp);
               TESTASSERT(dmrs_entry.config.reference_point_k_rb == 0);
-              TESTASSERT(srsvec::equal(dmrs_entry.config.rb_mask, rb_mask));
+              TESTASSERT_EQ(dmrs_entry.config.rb_mask,
+                            bounded_bitset<MAX_RB>(rb_mask.begin(),
+                                                   rb_mask.begin() + coreset.bwp_start_rb + coreset.bwp_size_rb));
               TESTASSERT(dmrs_entry.config.start_symbol_index == coreset.start_symbol_index);
               TESTASSERT(dmrs_entry.config.duration == coreset.duration);
               TESTASSERT(dmrs_entry.config.n_id == dci.n_id_pdcch_dmrs);

@@ -59,9 +59,9 @@ add_custom_command(
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pdcch_modulator_test_data.tar.gz
     VERBATIM)
 
-add_executable(pdcch_processor_test pdcch_processor_test.cpp)
-target_link_libraries(pdcch_processor_test pdcch_processor srslog)
-add_test(pdcch_processor_test pdcch_processor_test)
+add_executable(pdcch_processor_unittest pdcch_processor_unittest.cpp)
+target_link_libraries(pdcch_processor_unittest pdcch_processor srslog)
+add_test(pdcch_processor_unittest pdcch_processor_unittest)
 
 add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
 target_link_libraries(pdsch_encoder_test srsgnb_pdsch_encoder srslog)

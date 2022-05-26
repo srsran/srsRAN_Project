@@ -141,8 +141,9 @@ void re_pattern_list::get_inclusion_mask(span<bool> mask, unsigned symbol) const
   }
 }
 
-unsigned
-re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, span<const bool> rb_mask) const
+unsigned re_pattern_list::get_inclusion_count(unsigned                      start_symbol,
+                                              unsigned                      nof_symbols,
+                                              const bounded_bitset<MAX_RB>& rb_mask) const
 {
   unsigned count = 0;
 
@@ -157,7 +158,7 @@ re_pattern_list::get_inclusion_count(unsigned start_symbol, unsigned nof_symbols
     // Count all the included elements.
     for (unsigned rb_idx = 0; rb_idx != rb_mask.size(); ++rb_idx) {
       // Skip RB if it is not selected.
-      if (!rb_mask[rb_idx]) {
+      if (!rb_mask.test(rb_idx)) {
         continue;
       }
 

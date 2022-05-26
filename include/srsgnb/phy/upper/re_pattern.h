@@ -11,6 +11,7 @@
 #ifndef SRSGNB_PHY_UPPER_RE_PATTERN_H
 #define SRSGNB_PHY_UPPER_RE_PATTERN_H
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
@@ -166,14 +167,14 @@ public:
 
   /// \brief Counts the number of elements included in the described pattern.
   ///
-  /// This method counts the included elements in the described pattern for a symbol range and a selection of resource
-  /// blocks.
+  /// This method counts the included elements in the described pattern for a symbol range and a selection of PRB.
   ///
   /// \param[in] start_symbol Indicates the start symbol index within the slot.
   /// \param[in] nof_symbols  Indicates the number of symbols within the slot.
-  /// \param[in] prb_mask     Selection of physical resource blocks to count.
+  /// \param[in] prb_mask     Selection of PRB to count.
   /// \return The number of included elements.
-  unsigned get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, span<const bool> prb_mask) const;
+  unsigned
+  get_inclusion_count(unsigned start_symbol, unsigned nof_symbols, const bounded_bitset<MAX_RB>& prb_mask) const;
 
   /// \brief Excludes the described resource element pattern list in a resource grid symbol mask.
   ///

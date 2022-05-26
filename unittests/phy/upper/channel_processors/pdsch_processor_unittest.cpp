@@ -91,8 +91,7 @@ int main()
         reserved.merge(dmrs_reserved_pattern);
 
         // Get physical RB allocation mask.
-        std::array<bool, MAX_RB> rb_mask;
-        pdu.freq_alloc.get_allocation_mask(rb_mask, pdu.bwp_start_rb, pdu.bwp_size_rb);
+        bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
         // Count number of resource elements.
         unsigned Nre = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols -

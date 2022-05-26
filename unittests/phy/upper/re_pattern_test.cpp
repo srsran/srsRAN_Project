@@ -221,13 +221,13 @@ void test_inclusion_count()
   list.merge(pattern);
 
   // Validate the inclusion count with an RB mask that matches.
-  std::array<bool, MAX_RB* NRE> rb_mask_match = {};
-  rb_mask_match[pattern.rb_begin]             = true;
+  bounded_bitset<MAX_RB> rb_mask_match(2);
+  rb_mask_match.set(pattern.rb_begin, true);
   TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_match), 1);
 
   // Validate the inclusion count with an RB mask that does not match.
-  std::array<bool, MAX_RB* NRE> rb_mask_unmatch = {};
-  rb_mask_match[pattern.rb_end]                 = true;
+  bounded_bitset<MAX_RB> rb_mask_unmatch(2);
+  rb_mask_unmatch.set(pattern.rb_end, true);
   TESTASSERT_EQ(list.get_inclusion_count(0, MAX_NSYMB_PER_SLOT, rb_mask_unmatch), 0);
 }
 

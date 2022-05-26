@@ -52,17 +52,31 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
   // Count number of DMRS.
   unsigned count_dmrs = 0;
 
+  unsigned prb_index_begin;
+  {
+    int ret = config.rb_mask.find_lowest();
+    srsran_assert(ret != -1, "No RB found to transmit");
+    prb_index_begin = static_cast<unsigned>(ret);
+  }
+
+  unsigned prb_index_end;
+  {
+    int ret = config.rb_mask.find_highest();
+    srsran_assert(ret != -1, "No RB found to transmit");
+    prb_index_end = static_cast<unsigned>(ret + 1);
+  }
+
   // Generate allocation mask, common for all symbol.
   std::array<bool, MAX_RB* NRE> mask = {};
-  for (unsigned prb_idx = 0; prb_idx != MAX_RB; ++prb_idx) {
+  for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
     // Skip if the RB is not used.
-    if (!config.rb_mask[prb_idx]) {
+    if (!config.rb_mask.test(prb_index)) {
       continue;
     }
 
     // Set the DMRS positions to true.
     for (unsigned re_idx = 1; re_idx < NRE; re_idx += STRIDE) {
-      mask[NRE * prb_idx + re_idx] = true;
+      mask[NRE * prb_index + re_idx] = true;
     }
     count_dmrs += NOF_DMRS_PER_RB;
   }

@@ -11,6 +11,7 @@
 #ifndef SRSGNB_LIB_PHY_UPPER_DMRS_SEQUENCE_HELPER_H
 #define SRSGNB_LIB_PHY_UPPER_DMRS_SEQUENCE_HELPER_H
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/complex.h"
 
 namespace srsgnb {
@@ -29,12 +30,12 @@ namespace srsgnb {
 /// \param[in] rb_mask Indicates the active resource blocks.
 /// \note It assumes that the pseudo-random generator is initialized.
 /// \note The sequence size must be consistent with the number of active RBs and the number of DMRS per RB.
-inline void dmrs_sequence_generate(span<cf_t>               sequence,
-                                   pseudo_random_generator& prg,
-                                   float                    amplitude,
-                                   unsigned                 reference_point_k_rb,
-                                   unsigned                 nof_dmrs_per_rb,
-                                   span<const bool>         rb_mask)
+inline void dmrs_sequence_generate(span<cf_t>                    sequence,
+                                   pseudo_random_generator&      prg,
+                                   float                         amplitude,
+                                   unsigned                      reference_point_k_rb,
+                                   unsigned                      nof_dmrs_per_rb,
+                                   const bounded_bitset<MAX_RB>& rb_mask)
 {
   // Counts consecutive used PRB.
   unsigned prb_count = 0;
@@ -45,7 +46,7 @@ inline void dmrs_sequence_generate(span<cf_t>               sequence,
   // Iterate over all PRBs, starting at reference point for k.
   for (unsigned prb_idx = reference_point_k_rb; prb_idx != rb_mask.size(); ++prb_idx) {
     // If the PRB is used for PDSCH transmission count
-    if (rb_mask[prb_idx]) {
+    if (rb_mask.test(prb_idx)) {
       // If it is the first PRB...
       if (prb_count == 0) {
         // ... discard unused pilots.

@@ -11,7 +11,6 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
 
-#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -52,9 +51,9 @@ public:
     modulation_scheme modulation2;
     /// Frequency domain allocation.
     rb_allocation freq_allocation;
-    /// Time domain allocation start symbol index (0...12).
+    /// Time domain allocation start symbol index within the slot (0...12).
     unsigned start_symbol_index;
-    /// Time domain allocation number of symbols (1...14).
+    /// Time domain allocation number of symbols within the slot(1...14).
     unsigned nof_symbols;
     /// DMRS symbol positions as a mask.
     std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symb_pos;

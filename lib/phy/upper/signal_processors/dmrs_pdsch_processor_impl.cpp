@@ -128,28 +128,38 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
 void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Count number of RB
-  unsigned rb_count = 0;
-  for (unsigned rb = 0; rb < MAX_RB; ++rb) {
-    rb_count += config.rb_mask[rb] ? 1 : 0;
+  unsigned dmrs_re_count = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
+
+  unsigned prb_index_begin;
+  {
+    int ret = config.rb_mask.find_lowest();
+    srsran_assert(ret != -1, "No RB found to transmit");
+    prb_index_begin = static_cast<unsigned>(ret);
   }
-  unsigned dmrs_re_count = config.type.nof_dmrs_per_rb() * rb_count;
+
+  unsigned prb_index_end;
+  {
+    int ret = config.rb_mask.find_highest();
+    srsran_assert(ret != -1, "No RB found to transmit");
+    prb_index_end = static_cast<unsigned>(ret + 1);
+  }
 
   // Generate DMRS mask, with NRE padding at the first samples
   std::array<bool, (MAX_RB + 1)* NRE> base_mask = {};
   if (config.type == dmrs_type::TYPE1) {
     // Generate type 1: {1,0,1,0,1,0,1,0,1,0,1,0}
-    for (unsigned rb = 0; rb < MAX_RB; rb++) {
-      if (config.rb_mask[rb]) {
-        for (unsigned k = rb * NRE; k < (rb + 1) * NRE; k += 2) {
+    for (unsigned prb_index = prb_index_begin; prb_index < prb_index_end; prb_index++) {
+      if (config.rb_mask.test(prb_index)) {
+        for (unsigned k = prb_index * NRE; k < (prb_index + 1) * NRE; k += 2) {
           base_mask[NRE + k] = true;
         }
       }
     }
   } else {
     // Generate type 2: {1,1,0,0,0,0,1,1,0,0,0,0,}
-    for (unsigned rb = 0; rb < MAX_RB; rb++) {
-      if (config.rb_mask[rb]) {
-        for (unsigned k = rb * NRE; k < (rb + 1) * NRE; k += 6) {
+    for (unsigned prb_index = prb_index_begin; prb_index < prb_index_end; prb_index++) {
+      if (config.rb_mask.test(prb_index)) {
+        for (unsigned k = prb_index * NRE; k < (prb_index + 1) * NRE; k += 6) {
           base_mask[NRE + k]     = true;
           base_mask[NRE + k + 1] = true;
         }

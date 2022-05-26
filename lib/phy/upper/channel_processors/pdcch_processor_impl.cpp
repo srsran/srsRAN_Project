@@ -68,7 +68,7 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
   // For each DCI described in the PDU...
   for (const dci_description& dci : pdu.dci_list) {
     // Generate RB mask.
-    static_vector<bool, MAX_RB> rb_mask(coreset.bwp_size_rb);
+    static_vector<bool, MAX_RB> rb_mask(coreset.bwp_start_rb + coreset.bwp_size_rb);
     compute_rb_mask(rb_mask, coreset, dci);
 
     // Extract payload.
@@ -99,12 +99,12 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::p
     dmrs_pdcch_config.slot                           = pdu.slot;
     dmrs_pdcch_config.cp                             = pdu.cp;
     dmrs_pdcch_config.reference_point_k_rb = coreset.type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
-    std::copy(rb_mask.begin(), rb_mask.end(), dmrs_pdcch_config.rb_mask.begin());
-    dmrs_pdcch_config.start_symbol_index = coreset.start_symbol_index;
-    dmrs_pdcch_config.duration           = coreset.duration;
-    dmrs_pdcch_config.n_id               = dci.n_id_pdcch_dmrs;
-    dmrs_pdcch_config.amplitude          = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
-    dmrs_pdcch_config.ports              = dci.ports;
+    dmrs_pdcch_config.rb_mask              = bounded_bitset<MAX_RB>(rb_mask.begin(), rb_mask.end());
+    dmrs_pdcch_config.start_symbol_index   = coreset.start_symbol_index;
+    dmrs_pdcch_config.duration             = coreset.duration;
+    dmrs_pdcch_config.n_id                 = dci.n_id_pdcch_dmrs;
+    dmrs_pdcch_config.amplitude            = convert_dB_to_amplitude(dci.dmrs_power_offset_dB);
+    dmrs_pdcch_config.ports                = dci.ports;
 
     // Generate DMRS.
     dmrs->map(grid, dmrs_pdcch_config);

@@ -55,8 +55,7 @@ private:
   /// \note The number of layers and codewords is deduced from the parameters.
   void layer_map(static_vector<span<cf_t>, MAX_PORTS>& x_pdsch, static_vector<span<cf_t>, MAX_NOF_CODEWORDS> d_pdsch);
 
-  /// \brief Map resource elements from the layer index \c layer into the physical resource grid for non-interleaved
-  /// Type1 allocation.
+  /// \brief Map contiguous resource elements from the layer index \c layer into the physical resource grid.
   ///
   /// Implements TS 38.211 sections 7.3.1.4 Antenna port mapping, 7.3.1.5 Layer mapping, 7.3.1.5 Mapping to virtual
   /// resource blocks and 7.3.1.6 Mapping from virtual to physical resource blocks.
@@ -64,12 +63,11 @@ private:
   /// \param[out] grid Provides the destination resource grid.
   /// \param[in] x_pdsch PDSCH resource elements that have been already mapped to layers.
   /// \note The number of layers and codewords is deduced from the parameters.
-  void map_to_prb_type1_non_interleaved(resource_grid_writer&                grid,
-                                        static_vector<span<cf_t>, MAX_PORTS> x_pdsch,
-                                        const config_t&                      config);
+  void map_to_contiguous_prb(resource_grid_writer&                grid,
+                             static_vector<span<cf_t>, MAX_PORTS> x_pdsch,
+                             const config_t&                      config);
 
-  /// \brief Map resource elements into the physical resource grid of the given antenna ports for Type0 allocation and
-  /// interleaved Type1 allocation.
+  /// \brief Map non-contiguous resource elements into the physical resource grid of the given antenna ports.
   ///
   /// Implements TS 38.211 sections 7.3.1.4 Antenna port mapping, 7.3.1.5 Layer mapping, 7.3.1.5 Mapping to virtual
   /// resource blocks and 7.3.1.6 Mapping from virtual to physical resource blocks

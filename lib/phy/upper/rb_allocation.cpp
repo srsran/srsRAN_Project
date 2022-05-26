@@ -63,65 +63,53 @@ void rb_allocation::generate_vrb_to_prb_indexes(span<unsigned>          prb_indi
     }
   }
 }
-
-void rb_allocation::get_allocation_mask(span<bool> mask, unsigned bwp_start_rb, unsigned bwp_size_rb) const
+bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsran_assert(mask.size() >= bwp_start_rb + bwp_size_rb,
-                "The mask with size {} cannot fit the BWP {}:{}",
-                mask.size(),
-                bwp_start_rb,
-                bwp_start_rb + bwp_size_rb);
+  bounded_bitset<MAX_RB> result(bwp_start_rb + bwp_size_rb);
 
   // Non-interleaved case, copy VRB mask.
-  if (mapping_type == vrb_to_prb_mapping_type::NON_INTERLEAVED) {
-    // Fill from the beginning of the grid to the beginning of the BWP with false entries.
-    std::fill_n(mask.begin(), bwp_start_rb, false);
+  if (vrb_mask.is_contiguous()) {
+    int vrb_begin = vrb_mask.find_lowest();
+    int vrb_end   = vrb_mask.find_highest();
 
-    // Copy the VRB mask into the RB mask.
-    std::copy_n(vrb_mask.begin(), bwp_size_rb, mask.begin() + bwp_start_rb);
+    // No PDSCH found.
+    if ((vrb_begin == -1) || (vrb_end == -1)) {
+      return result;
+    }
 
-    // Fill from the end of the BWP to the end of the BWP with false entries.
-    std::fill(mask.begin() + bwp_start_rb + bwp_size_rb, mask.end(), false);
+    unsigned prb_begin = bwp_start_rb + vrb_begin;
+    unsigned prb_end   = bwp_start_rb + vrb_end + 1;
+    result.fill(prb_begin, prb_end);
 
-    return;
+    return result;
   }
 
   // Get interleaver of the BWP size.
   static_vector<unsigned, MAX_RB> interleaver(bwp_size_rb);
   generate_vrb_to_prb_indexes(interleaver, mapping_type, bwp_start_rb);
 
-  // Set all entries to false.
-  std::fill(mask.begin(), mask.end(), false);
-
   // For each VRB mask.
   for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-    if (vrb_mask[vrb_idx]) {
-      unsigned prb_idx             = interleaver[vrb_idx];
-      mask[bwp_start_rb + prb_idx] = true;
+    if (vrb_mask.test(vrb_idx)) {
+      unsigned prb_idx = interleaver[vrb_idx];
+      result.set(bwp_start_rb + prb_idx, true);
     }
   }
+  return result;
 }
 
-void rb_allocation::get_allocation_indices(span<unsigned> prb_indices,
-                                           unsigned       bwp_start_rb,
-                                           unsigned       bwp_size_rb) const
+static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsran_assert(prb_indices.size() == rb_count,
-                "The number of PRB indices (%d) does not match the number of allocated VRB (%d)",
-                prb_indices.size(),
-                rb_count);
-
-  unsigned count = 0;
+  static_vector<uint16_t, MAX_RB> result;
 
   // Non-interleaved case, set the PRB indexes as VRB index plus the BWP start.
   if (mapping_type == vrb_to_prb_mapping_type::NON_INTERLEAVED) {
     for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-      if (vrb_mask[vrb_idx]) {
-        prb_indices[count] = vrb_idx + bwp_start_rb;
-        ++count;
+      if (vrb_mask.test(vrb_idx)) {
+        result.push_back(vrb_idx + bwp_start_rb);
       }
     }
-    return;
+    return result;
   }
 
   // Get interleaver of the BWP size.
@@ -130,9 +118,10 @@ void rb_allocation::get_allocation_indices(span<unsigned> prb_indices,
 
   // For each VRB mask.
   for (unsigned vrb_idx = 0; vrb_idx != bwp_size_rb; ++vrb_idx) {
-    if (vrb_mask[vrb_idx]) {
-      unsigned prb_idx   = interleaver[vrb_idx];
-      prb_indices[count] = prb_idx + bwp_start_rb;
+    if (vrb_mask.test(vrb_idx)) {
+      unsigned prb_idx = interleaver[vrb_idx];
+      result.push_back(prb_idx + bwp_start_rb);
     }
   }
+  return result;
 }

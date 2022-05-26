@@ -11,6 +11,7 @@
 #ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H
 #define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H
 
+#include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
@@ -31,8 +32,8 @@ public:
     cyclic_prefix cp;
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
-    /// Indicates the RBs used for the PDCCH transmission.
-    std::array<bool, MAX_RB> rb_mask;
+    /// Indicates the PRB used for the PDCCH transmission. The lowest bit corresponds to CRB0.
+    bounded_bitset<MAX_RB> rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;
     /// CORESET duration in symbols.
@@ -55,7 +56,7 @@ public:
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-/// Creates a generic DMRS for PDCCH instance
+/// Creates a generic DMRS for PDCCH instance.
 std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
 
 } // namespace srsgnb
