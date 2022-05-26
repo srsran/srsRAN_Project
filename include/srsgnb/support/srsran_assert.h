@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSRAN_ASSERT_H
-#define SRSRAN_ASSERT_H
+#ifndef SRSGNB_SUPPORT_SRSRAN_ASSERT_H
+#define SRSGNB_SUPPORT_SRSRAN_ASSERT_H
 
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
@@ -47,7 +47,10 @@ namespace detail {
   if (not msg.empty()) {
     fmt::format_to(fmtbuf, " - {}", msg);
   }
-  fmt::format_to(fmtbuf, ".\n");
+  if (msg.back() != '.') {
+    fmt::format_to(fmtbuf, ".");
+  }
+  fmt::format_to(fmtbuf, "\n");
   fmtbuf.push_back('\0'); // make it a c-string
 
   srslog::flush();
@@ -98,4 +101,4 @@ template <typename... Args>
 #define srsran_sanity_check(condition, fmt, ...)                                                                       \
   srsran_assert_ifdef(SANITY_CHECKS_ENABLED, condition, fmt, ##__VA_ARGS__)
 
-#endif // SRSRAN_ASSERT_H
+#endif // SRSGNB_SUPPORT_SRSRAN_ASSERT_H
