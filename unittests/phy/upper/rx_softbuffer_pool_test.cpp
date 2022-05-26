@@ -121,7 +121,7 @@ static void test_softbuffer_free()
 
   // Reserve softbuffer with a different identifier. It shall fail.
   rx_softbuffer_identifier softbuffer_id1;
-  softbuffer_id1.harq_ack_id = softbuffer_id1.harq_ack_id + 1;
+  softbuffer_id1.harq_ack_id = softbuffer_id0.harq_ack_id + 1;
   softbuffer_id1.rnti        = 0x1234;
   TESTASSERT(pool->reserve_softbuffer(slot, softbuffer_id1, pool_config.max_nof_codeblocks) == nullptr);
 
