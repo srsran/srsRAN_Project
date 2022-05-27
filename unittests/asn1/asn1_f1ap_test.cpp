@@ -49,14 +49,14 @@ void f1_setup_test()
     served_cells_item_container.set_item(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
 
     auto& served_cells_item = served_cells_item_container.value().gnb_du_served_cells_item();
-    served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("20899");
+    served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("208991");
     served_cells_item.served_cell_info.nrcgi.nrcell_id.from_number(12345678);
     served_cells_item.served_cell_info.nrpci               = 0;
     served_cells_item.served_cell_info.five_gs_tac_present = true;
     served_cells_item.served_cell_info.five_gs_tac.from_number(1);
 
     asn1::f1ap::served_plmns_item_s served_plmn;
-    served_plmn.plmn_id.from_string("20899");
+    served_plmn.plmn_id.from_string("208991");
     asn1::protocol_ext_field_s<asn1::f1ap::served_plmns_item_ext_ies_o> plmn_ext_container = {};
     plmn_ext_container.set_item(ASN1_F1AP_ID_TAI_SLICE_SUPPORT_LIST);
     auto&                            tai_slice_support_list = plmn_ext_container.value().tai_slice_support_list();
@@ -89,8 +89,8 @@ void f1_setup_test()
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
-#if JSON_OUTPUT
     std::vector<uint8_t> bytes{tx_buffer.begin(), tx_buffer.end()};
+#if JSON_OUTPUT
     asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
     logger.info(
@@ -118,8 +118,8 @@ void f1_setup_test()
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
-#if JSON_OUTPUT
     std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
+#if JSON_OUTPUT
     asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
     logger.info(tx_buffer.data(),
@@ -153,8 +153,8 @@ void f1_setup_test()
 
     TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
 
-#if JSON_OUTPUT
     std::vector<uint8_t> tx_buffer{tx_pdu.begin(), tx_pdu.end()};
+#if JSON_OUTPUT
     asn1::json_writer    json_writer1;
     pdu.to_json(json_writer1);
     logger.info(tx_buffer.data(),
