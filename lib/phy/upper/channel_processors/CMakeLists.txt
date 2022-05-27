@@ -32,6 +32,8 @@ target_link_libraries(srsgnb_pdsch_modulator modulation_mapper sequence_generato
 add_library(srsgnb_pdsch_processor STATIC pdsch_processor_impl.cpp)
 target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 
+add_library(srsgnb_prach_detector STATIC prach_detector_impl.cpp)
+
 add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)
 
