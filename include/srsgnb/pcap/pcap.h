@@ -13,7 +13,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
-#include <stdio.h>
+#include <fstream>
 #include <string>
 
 #define PCAP_CONTEXT_HEADER_MAX 256
@@ -62,7 +62,7 @@ protected:
 private:
   srslog::basic_logger& logger;
   bool                  write_enabled = false;
-  FILE*                 pcap_fd       = nullptr;
+  std::ofstream         pcap_fstream;
   std::string           filename;
   uint32_t              dlt = 0;
 };

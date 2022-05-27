@@ -15,7 +15,7 @@
 
 bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
 {
-  if (pcap_fd != nullptr) {
+  if (pcap_fstream.is_open()) {
     logger.error("PCAP {} already open", filename);
     return false;
   }
@@ -33,13 +33,13 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
       dlt    /// Data Link Type (DLT).  Set as unused value 147 for now
   };
 
-  pcap_fd = fopen(filename.c_str(), "w");
-  if (pcap_fd == NULL) {
+  pcap_fstream.open(filename.c_str(), std::ios::out | std::ios::binary);
+  if (!pcap_fstream.is_open()) {
     logger.error("Failed to open file {} for writing\n", filename);
     return false;
   }
 
-  fwrite(&file_header, sizeof(pcap_hdr_t), 1, pcap_fd);
+  pcap_fstream.write((char*)&file_header, sizeof(file_header));
 
   write_enabled = true;
 
@@ -48,11 +48,10 @@ bool pcap_file_base::dlt_pcap_open(uint32_t dlt_, const char* filename_)
 
 void pcap_file_base::dlt_pcap_close()
 {
-  if (pcap_fd) {
+  if (pcap_fstream.is_open()) {
     logger.info("Saving PCAP file (DLT={}) to {}", dlt, filename.c_str());
     write_enabled = false;
-    fclose(pcap_fd);
-    pcap_fd = nullptr;
+    pcap_fstream.close();
   }
 }
 
@@ -68,13 +67,13 @@ void pcap_file_base::write_pcap_header(uint32_t length)
   packet_header.incl_len = length;
   packet_header.orig_len = length;
 
-  fwrite(&packet_header, sizeof(pcaprec_hdr_t), 1, pcap_fd);
+  pcap_fstream.write((char*)&packet_header, sizeof(packet_header));
 }
 
 void pcap_file_base::write_pcap_pdu(srsgnb::const_span<uint8_t> pdu)
 {
   if (write_enabled) {
-    fwrite(pdu.data(), 1, pdu.size_bytes(), pcap_fd);
+    pcap_fstream.write((char*)pdu.data(), pdu.size_bytes());
   }
 }
 
