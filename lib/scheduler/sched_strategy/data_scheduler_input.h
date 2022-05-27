@@ -19,14 +19,14 @@ namespace srsgnb {
 class ue_candidate
 {
 public:
-  ue_candidate(ue_carrier& u_) : ue(&u_)
+  ue_candidate(const ue_carrier& u_) : ue(&u_)
   {
     // :TODO: remove this when ue var is used.
     (void)(ue);
   }
 
 private:
-  ue_carrier* ue;
+  const ue_carrier* ue;
 };
 
 /// Container of eligible UEs for scheduling
@@ -47,11 +47,11 @@ public:
 /// Fill list of eligible UEs for data scheduling
 inline void fill_ue_candidate_map(du_cell_index_t cell_index, const ue_list& ue_db, data_scheduler_input& sched_input)
 {
-  for (const std::unique_ptr<ue>& ueptr : ue_db) {
-    ue_carrier* ue_cc = ueptr->find_cc(cell_index);
-    if (ue_cc != nullptr and ue_cc->is_active() and ueptr->has_pending_txs()) {
+  for (const ue& u : ue_db) {
+    const ue_carrier* ue_cc = u.find_cc(cell_index);
+    if (ue_cc != nullptr and ue_cc->is_active() and u.has_pending_txs()) {
       // TODO: Check measGaps and other factors
-      sched_input.eligible_ues.insert(ueptr->ue_index, ue_candidate{*ue_cc});
+      sched_input.eligible_ues.insert(u.ue_index, ue_candidate{*ue_cc});
     }
   }
 }

@@ -156,7 +156,7 @@ void event_manager::run(slot_point sl_tx, du_cell_index_t cell_index)
         log_invalid_ue_index(ev);
         continue;
       }
-      ue&         ue    = *ue_db[ev.ue_index];
+      ue&         ue    = ue_db[ev.ue_index];
       ue_carrier* ue_cc = ue.find_cc(cell_index);
       if (ue_cc == nullptr) {
         log_invalid_cc(ev);
@@ -183,7 +183,7 @@ bool event_manager::event_requires_sync(const event_t& ev, bool verbose) const
     }
     return false;
   }
-  return ue_db[ev.ue_index]->is_ca_enabled();
+  return ue_db[ev.ue_index].is_ca_enabled();
 }
 
 void event_manager::log_invalid_ue_index(const event_t& ev) const

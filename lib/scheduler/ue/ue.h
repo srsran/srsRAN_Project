@@ -12,8 +12,8 @@
 #define SRSGNB_UE_H
 
 #include "srsgnb/adt/circular_map.h"
+#include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/du_ue_list.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
 #include "ue_configuration.h"
 
@@ -35,7 +35,7 @@ public:
 
   rnti_t rnti() const { return crnti_; }
 
-  unsigned active_bwp_id() const { return 0; }
+  bwp_id_t active_bwp_id() const { return to_bwp_id(0); }
   bool     is_active() const { return true; }
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
@@ -65,6 +65,12 @@ public:
     return cells[cell_index].get();
   }
 
+  const ue_carrier* find_cc(du_cell_index_t cell_index) const
+  {
+    srsran_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
+    return cells[cell_index].get();
+  }
+
   bool has_pending_txs() const { return true; }
 
   bool is_ca_enabled() const { return false; }
@@ -85,7 +91,8 @@ private:
   sr_indication_message last_sr;
 };
 
-using ue_list = du_ue_list<std::unique_ptr<ue> >;
+/// Container that stores all scheduler UEs.
+using ue_list = stable_id_map<du_ue_index_t, ue, MAX_NOF_DU_UES>;
 
 } // namespace srsgnb
 
