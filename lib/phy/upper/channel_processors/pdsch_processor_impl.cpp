@@ -4,7 +4,7 @@
 
 using namespace srsgnb;
 
-unsigned int pdsch_processor_impl::compute_nof_re(const pdu_t& pdu)
+unsigned int pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
 {
   // Copy reserved RE and merge DMRS pattern.
   re_pattern_list reserved_re = pdu.reserved;
@@ -14,16 +14,18 @@ unsigned int pdsch_processor_impl::compute_nof_re(const pdu_t& pdu)
   // Generate allocation mask.
   bounded_bitset<MAX_RB> prb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Calculate the number of resource elements to map.
-  unsigned Nre = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
+  // Calculate the number of RE allocated in the grid.
+  unsigned nof_grid_re = pdu.freq_alloc.get_nof_rb() * NRE * pdu.nof_symbols;
 
   // Calculate the number of reserved resource elements.
-  unsigned Nre_reserved = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
+  unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
 
   // Subtract the number of reserved RE to the number of allocated RE.
-  srsran_assert(
-      Nre > Nre_reserved, "The number of reserved RE ({}) exceeds the number of PDSCH RE ({})", Nre, Nre_reserved);
-  return Nre - Nre_reserved;
+  srsran_assert(nof_grid_re > nof_reserved_re,
+                "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
+                nof_grid_re,
+                nof_reserved_re);
+  return nof_grid_re - nof_reserved_re;
 }
 
 span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
@@ -137,7 +139,7 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned nof_layers_cw1 = nof_layers - nof_layers_cw0;
 
   // Calculate the number of resource elements to map. Common for all codewords.
-  unsigned Nre = compute_nof_re(pdu);
+  unsigned Nre = compute_nof_data_re(pdu);
 
   // Prepare encoded codewords.
   static_vector<span<const uint8_t>, pdsch_modulator::MAX_NOF_CODEWORDS> temp_codewords;

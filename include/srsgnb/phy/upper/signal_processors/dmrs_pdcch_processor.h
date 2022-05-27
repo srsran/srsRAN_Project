@@ -32,7 +32,7 @@ public:
     cyclic_prefix cp;
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;
-    /// Indicates the PRB used for the PDCCH transmission. The lowest bit corresponds to CRB0.
+    /// Indicates the PRB used for the PDCCH transmission. The bit at position zero corresponds to CRB0.
     bounded_bitset<MAX_RB> rb_mask;
     /// CORESET start symbol index.
     unsigned start_symbol_index;

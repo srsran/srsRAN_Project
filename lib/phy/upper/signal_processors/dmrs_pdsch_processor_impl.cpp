@@ -148,18 +148,18 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
   std::array<bool, (MAX_RB + 1)* NRE> base_mask = {};
   if (config.type == dmrs_type::TYPE1) {
     // Generate type 1: {1,0,1,0,1,0,1,0,1,0,1,0}
-    for (unsigned prb_index = prb_index_begin; prb_index < prb_index_end; prb_index++) {
+    for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
       if (config.rb_mask.test(prb_index)) {
-        for (unsigned k = prb_index * NRE; k < (prb_index + 1) * NRE; k += 2) {
+        for (unsigned k = prb_index * NRE, k_end = (prb_index + 1) * NRE; k != k_end; k += 2) {
           base_mask[NRE + k] = true;
         }
       }
     }
   } else {
     // Generate type 2: {1,1,0,0,0,0,1,1,0,0,0,0,}
-    for (unsigned prb_index = prb_index_begin; prb_index < prb_index_end; prb_index++) {
+    for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
       if (config.rb_mask.test(prb_index)) {
-        for (unsigned k = prb_index * NRE; k < (prb_index + 1) * NRE; k += 6) {
+        for (unsigned k = prb_index * NRE, k_end = (prb_index + 1) * NRE; k != k_end; k += 6) {
           base_mask[NRE + k]     = true;
           base_mask[NRE + k + 1] = true;
         }

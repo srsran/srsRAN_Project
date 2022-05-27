@@ -75,8 +75,8 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
     }
 
     // Set the DMRS positions to true.
-    for (unsigned re_idx = 1; re_idx < NRE; re_idx += STRIDE) {
-      mask[NRE * prb_index + re_idx] = true;
+    for (unsigned re_index = 1; re_index < NRE; re_index += STRIDE) {
+      mask[NRE * prb_index + re_index] = true;
     }
     count_dmrs += NOF_DMRS_PER_RB;
   }

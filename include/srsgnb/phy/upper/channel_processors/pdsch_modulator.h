@@ -24,7 +24,7 @@ namespace srsgnb {
 
 /// \brief Describes a PDSCH modulator interface.
 ///
-/// The PDSCH modulator shall modulate PDSCH according to TS 38.211 section 7.3.1 Physical downlink shared channel. It
+/// The PDSCH modulator shall modulate PDSCH according to TS38.211 section 7.3.1 Physical downlink shared channel. It
 /// provides two possible modulation granularities:
 /// - Codeword: it modulates a codeword and maps it.
 /// - Codeblock: it modulates a single codeblock from a codeword.
@@ -39,7 +39,7 @@ public:
 
   /// Describes the necessary parameters to modulate a PDSCH transmission.
   struct config_t {
-    /// Provides \f$n_{RNTI}\f$ from TS 38.211 section 7.3.1.1 Scrambling.
+    /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.
     uint16_t rnti;
     /// Number of contiguous PRBs allocated to the BWP.
     unsigned bwp_size_rb;
@@ -51,9 +51,9 @@ public:
     modulation_scheme modulation2;
     /// Frequency domain allocation.
     rb_allocation freq_allocation;
-    /// Time domain allocation start symbol index within the slot (0...12).
+    /// Time domain allocation within a slot: start symbol index (0...12).
     unsigned start_symbol_index;
-    /// Time domain allocation number of symbols within the slot(1...14).
+    /// Time domain allocation within a slot: number of symbols (1...14).
     unsigned nof_symbols;
     /// DMRS symbol positions as a mask.
     std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symb_pos;
@@ -61,9 +61,9 @@ public:
     dmrs_type dmrs_config_type;
     /// Number of DMRS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
-    /// Provides \f$n_{ID}\f$ from TS 38.211 section 7.3.1.1 Scrambling. Range is (0...1023).
+    /// Provides \f$n_{ID}\f$ from TS38.211 section 7.3.1.1 Scrambling. Range is (0...1023).
     unsigned n_id;
-    /// Scaling factor to apply to the resource elements according to PDSCH power allocation in TS 38.214.
+    /// Scaling factor to apply to the resource elements according to PDSCH power allocation in TS38.214.
     float scaling;
     /// Reserved RE pattern where PDSCH is not mapped.
     re_pattern_list reserved;
@@ -76,7 +76,7 @@ public:
   /// Default destructor.
   virtual ~pdsch_modulator() = default;
 
-  /// \brief Modulates a PDSCH codeword according to TS 38.211 section 7.3.1 Physical downlink shared channel.
+  /// \brief Modulates a PDSCH codeword according to TS38.211 section 7.3.1 Physical downlink shared channel.
   ///
   /// \param[out] grid Provides the destination resource grid.
   /// \param[in] codewords Provides the encoded codewords to modulate.

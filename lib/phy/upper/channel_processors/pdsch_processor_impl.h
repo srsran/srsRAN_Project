@@ -28,13 +28,13 @@ private:
   std::unique_ptr<dmrs_pdsch_processor>                                           dmrs;
   std::array<static_vector<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> codewords;
 
-  /// \brief Computes the number of RE used by a PDSCH transmission.
+  /// \brief Computes the number of RE used for mapping PDSCH data.
   ///
-  /// The number of RE excludes the elements described by \c pdu.reserved and the DMRS.
+  /// The number of RE excludes the elements described by \c pdu reserved and the RE used for DMRS.
   ///
   /// \param[in] pdu Describes a PDSCH transmission.
-  /// \return The number of resource elements used by the PDSCH transmission described by \c pdu.
-  static unsigned compute_nof_re(const pdu_t& pdu);
+  /// \return The number of resource elements.
+  static unsigned compute_nof_data_re(const pdu_t& pdu);
 
   /// \brief Encodes a codeword as per TS 38.212 section 7.2.
   ///
