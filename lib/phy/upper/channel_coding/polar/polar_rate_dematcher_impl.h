@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Polar code rate dematcher declaration.
+
 #ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_IMPL_H
 
@@ -15,17 +18,26 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
 
 namespace srsgnb {
+
+/// \brief Polar code rate dematching implementation.
+///
+/// It reverts the rate matching procedure described in TS38.212 Section 5.4.1.
 class polar_rate_dematcher_impl : public polar_rate_dematcher
 {
 private:
+  /// Internal buffer that contains both codeblock and rate-matched codeblock.
   std::array<int8_t, polar_code::NMAX + polar_code::EMAX> y_e;
-  int8_t*                                                 e = &y_e[polar_code::NMAX];
+  /// Pointer to the rate-matched part of the buffer.
+  int8_t* e = &y_e[polar_code::NMAX];
 
 public:
-  polar_rate_dematcher_impl()           = default;
+  /// Default constructor.
+  polar_rate_dematcher_impl() = default;
+  /// Default destructor.
   ~polar_rate_dematcher_impl() override = default;
 
-  void rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code) override;
+  // See interface for the documentation.
+  void rate_dematch(span<int8_t> output, span<const int8_t> input, const polar_code& code) override;
 };
 } // namespace srsgnb
 

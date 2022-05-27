@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Polar code rate dematching.
+
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
 
@@ -17,23 +20,22 @@
 
 namespace srsgnb {
 
+/// Polar code rate dematching interface. It reverts the operations of polar_rate_matcher.
 class polar_rate_dematcher
 {
 public:
+  /// Default virtual destructor.
   virtual ~polar_rate_dematcher() = default;
 
-  /*!
-   * Carries out the actual rate-dematching (int8_t inputs).
-   * \param[in] input      The LLRs obtained from the channel samples that correspond to
-   *                       the codeword to be first, rate-dematched and then decoded.
-   * \param[out] output    The rate-dematched codeword resulting from the rate-dematching
-   *                       operation.
-   * \param[in] E          Rate-matched codeword length.
-   * \param[in] n          \f$log_2\f$ of the codeword length.
-   * \param[in] K          Message size (including CRC).
-   * \return An integer: 0 if the function executes correctly, -1 otherwise.
-   */
-  virtual void rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code) = 0;
+  /// \brief Carries out the actual rate-dematching (int8_t inputs).
+  /// \param[out] output    The rate-dematched codeword resulting from the rate-dematching
+  ///                       operation.
+  /// \param[in] input      The LLRs obtained from the channel samples that correspond to
+  ///                       the codeword to be, first, rate-dematched and, second, decoded.
+  /// \param[in] E          Rate-matched codeword length.
+  /// \param[in] n          \f$log_2\f$ of the codeword length.
+  /// \param[in] K          Message size (including CRC).
+  virtual void rate_dematch(span<int8_t> output, span<const int8_t> input, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_rate_dematcher> create_polar_rate_dematcher();

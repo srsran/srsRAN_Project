@@ -13,9 +13,7 @@
 
 using namespace srsgnb;
 
-/*!
- * generic deinterleaver (int8_t).
- */
+// Generic deinterleaver (int8_t).
 static void interleaver_rm_rx_c(const int8_t* input, int8_t* output, const uint16_t* indices, const uint16_t len)
 {
   for (uint32_t j = 0; j < len; j++) {
@@ -23,11 +21,10 @@ static void interleaver_rm_rx_c(const int8_t* input, int8_t* output, const uint1
   }
 }
 
-/*!
- * Undoes bit selection for the rate-dematching block (int8_t).
- * The output has the codeword length N. It inserts 0 to punctured bits (completely unknown bit)
- * and 127 (to indicate very reliable 0 bit). Repeated symbols are added.
- */
+// Undoes bit selection for the rate-dematching block (int8_t).
+// The output has the codeword length N. It inserts 0 to punctured bits (completely unknown bit)
+// and 127 (to indicate very reliable 0 bit). Repeated symbols are added.
+
 static int8_t* bit_selection_rm_rx_c(int8_t* e, const uint32_t E, const uint32_t N, const uint32_t K)
 {
   int8_t*  y   = nullptr;
@@ -65,9 +62,7 @@ static int8_t* bit_selection_rm_rx_c(int8_t* e, const uint32_t E, const uint32_t
   return y;
 }
 
-/*!
- * Channel deinterleaver (int8_t).
- */
+// Channel deinterleaver (int8_t).
 static void ch_interleaver_rm_rx_c(const int8_t* f, int8_t* e, const uint32_t E)
 {
   // compute T - Smaller integer such that T(T+1)/2 >= E. Use the fact that 1+2+,..,+T = T(T+1)/2
@@ -94,7 +89,7 @@ static void ch_interleaver_rm_rx_c(const int8_t* f, int8_t* e, const uint32_t E)
   }
 }
 
-void polar_rate_dematcher_impl::rate_dematch(span<const int8_t> input, span<int8_t> output, const polar_code& code)
+void polar_rate_dematcher_impl::rate_dematch(span<int8_t> output, span<const int8_t> input, const polar_code& code)
 {
   unsigned N = code.get_N();
   unsigned E = code.get_E();

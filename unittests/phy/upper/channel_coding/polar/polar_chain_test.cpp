@@ -180,7 +180,7 @@ int main(int argc, char** argv)
 
   // Undo rate matching
   srsvec::aligned_vec<int8_t> encoded_rx(code->get_N());
-  rate_dematcher->rate_dematch(rate_matched_rx, encoded_rx, *code);
+  rate_dematcher->rate_dematch(encoded_rx, rate_matched_rx, *code);
 
   // Decode Rx data
   srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());
