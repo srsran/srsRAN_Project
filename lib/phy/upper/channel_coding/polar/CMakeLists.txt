@@ -18,4 +18,4 @@ add_library(polar STATIC
         polar_rate_dematcher_impl.cpp
         polar_rate_matcher_impl.cpp
 )
-target_link_libraries(polar srslog)
+target_link_libraries(polar log_likelihood_ratio srslog)
