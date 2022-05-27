@@ -47,3 +47,7 @@ add_test(static_vector_test static_vector_test)
 add_executable(unique_function_test unique_function_test.cpp)
 target_link_libraries(unique_function_test srslog)
 add_test(unique_function_test unique_function_test)
+
+add_executable(filter_view_test filter_view_test.cpp)
+target_link_libraries(filter_view_test srslog)
+add_test(filter_view_test filter_view_test)
