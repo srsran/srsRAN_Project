@@ -18,6 +18,7 @@
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
+#include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 
@@ -83,8 +84,10 @@ private:
   std::vector<baseband_gateway_buffer_dynamic> radio_buffers;
   /// Stores radio receive metadata for each stream. The number of entries indicates the number of streams.
   std::vector<baseband_gateway_receiver::metadata> receive_metadata;
-  /// Stores OFDM modulator. Each entry belongs to a different sector.
+  /// Stores OFDM modulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
+  /// Stores OFDM demodulators. Each entry belongs to a different sector.
+  std::vector<std::unique_ptr<ofdm_symbol_demodulator> > demodulators;
   /// Indicates the receive to transmit delay in clock ticks.
   const baseband_gateway_timestamp rx_to_tx_delay;
   /// Indicates the maximum allowed processing delay in slots.

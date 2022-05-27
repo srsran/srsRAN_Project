@@ -79,7 +79,7 @@ public:
 
   // See interface for documentation.
   void
-  demodulate(resource_grid_writer& grid, const span<cf_t> input, unsigned port_index, unsigned symbol_index) override;
+  demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned symbol_index) override;
 };
 
 /// Describes a generic OFDM slot demodulator.

@@ -31,22 +31,37 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
   baseband_gateway_timestamp aligned_receive_ts = receive_metadata[0].ts;
   // ...
 
-  // Select resource grid from the UL pool.
-  resource_grid_context ul_rg_context = {};
-  ul_rg_context.sector                = 0;
-  ul_rg_context.slot                  = ul_slot_context;
-  resource_grid& ul_rg                = ul_rg_pool.get_resource_grid(ul_rg_context);
+  // Demodulate signal for each sector.
+  for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+    // Select sector configuration.
+    const lower_phy_sector_description& sector = sectors[sector_id];
 
-  // Demodulate signal.
-  // ...
-  ul_rg.set_all_zero();
+    // Select resource grid from the UL pool.
+    resource_grid_context ul_rg_context = {};
+    ul_rg_context.sector                = sector_id;
+    ul_rg_context.slot                  = ul_slot_context;
+    resource_grid& ul_rg                = ul_rg_pool.get_resource_grid(ul_rg_context);
 
-  // Notify the received symbols.
-  lower_phy_rx_symbol_context ul_symbol_context = {};
-  ul_symbol_context.sector                      = 0;
-  ul_symbol_context.slot                        = ul_slot_context;
-  ul_symbol_context.nof_symbols                 = symbol_id;
-  rx_symbol_notifier.on_rx_symbol(ul_symbol_context, ul_rg);
+    // For each port of the sector.
+    for (unsigned port_id = 0; port_id != sector.port_mapping.size(); ++port_id) {
+      // Select port mapping.
+      const lower_phy_sector_port_mapping& port_mapping = sector.port_mapping[port_id];
+
+      // Get buffer for the given port mapping.
+      span<const radio_sample_type> buffer =
+          radio_buffers[port_mapping.stream_id].get_channel_buffer(port_mapping.channel_id);
+
+      //  Actual signal demodulation.
+      demodulators[sector_id]->demodulate(ul_rg, buffer, port_id, symbol_id);
+    }
+
+    // Notify the received symbols.
+    lower_phy_rx_symbol_context ul_symbol_context = {};
+    ul_symbol_context.sector                      = sector_id;
+    ul_symbol_context.slot                        = ul_slot_context;
+    ul_symbol_context.nof_symbols                 = symbol_id;
+    rx_symbol_notifier.on_rx_symbol(ul_symbol_context, ul_rg);
+  }
 
   return aligned_receive_ts;
 }
@@ -213,15 +228,15 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
   // Assert parameters.
-  srsran_always_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
-  srsran_always_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
-  srsran_always_assert((ul_slot_context.nof_slots_per_system_frame() % config.nof_dl_rg_buffers == 0) &&
-                           (config.nof_dl_rg_buffers > config.max_processing_delay_slots),
-                       "The number of DL resource grids ({}) must be divisor of the number of slots per system frame "
-                       "({}) and greater than the maximum processing delay in slots ({}).",
-                       config.nof_dl_rg_buffers,
-                       ul_slot_context.nof_slots_per_system_frame(),
-                       config.max_processing_delay_slots);
+  srsran_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
+  srsran_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
+  srsran_assert((ul_slot_context.nof_slots_per_system_frame() % config.nof_dl_rg_buffers == 0) &&
+                    (config.nof_dl_rg_buffers > config.max_processing_delay_slots),
+                "The number of DL resource grids ({}) must be divisor of the number of slots per system frame "
+                "({}) and greater than the maximum processing delay in slots ({}).",
+                config.nof_dl_rg_buffers,
+                ul_slot_context.nof_slots_per_system_frame(),
+                config.max_processing_delay_slots);
 
   logger.info(
       "Initialized with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
@@ -231,11 +246,12 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
       config.max_processing_delay_slots);
 
   // Make sure sub-modules are valid.
-  srsran_always_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
-  srsran_always_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
-  srsran_always_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsran_always_assert(config.modulator_factory != nullptr, "Invalid modulation factory pointer.");
-  srsran_always_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
+  srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
+  srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
+  srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
+  srsran_assert(config.modulator_factory != nullptr, "Invalid modulation factory pointer.");
+  srsran_assert(config.demodulator_factory != nullptr, "Invalid demodulation factory pointer.");
+  srsran_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
 
   // Create radio buffers and receive metadata.
   for (unsigned nof_channels : config.nof_channels_per_stream) {
@@ -252,12 +268,31 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
     configuration.dft_size                     = config.dft_size_15kHz / pow2(config.numerology);
     configuration.cp                           = config.cp;
     configuration.scale                        = config.tx_scale;
+    configuration.center_freq_hz               = sector.dl_freq_hz;
 
     // Create modulator.
     modulators.emplace_back(config.modulator_factory->create_ofdm_symbol_modulator(configuration));
 
     // Make sure the modulator creation is successful.
-    srsran_always_assert(modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
+    srsran_assert(modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
+  }
+
+  // For each sector, create demodulator.
+  for (const lower_phy_sector_description& sector : config.sectors) {
+    // Prepare sector modulator.
+    ofdm_demodulator_configuration configuration = {};
+    configuration.numerology                     = config.numerology;
+    configuration.bw_rb                          = sector.bandwidth_rb;
+    configuration.dft_size                       = config.dft_size_15kHz / pow2(config.numerology);
+    configuration.cp                             = config.cp;
+    configuration.scale                          = config.tx_scale;
+    configuration.center_freq_hz                 = sector.ul_freq_hz;
+
+    // Create modulator.
+    demodulators.emplace_back(config.demodulator_factory->create_ofdm_symbol_demodulator(configuration));
+
+    // Make sure the demodulator creation is successful.
+    srsran_assert(demodulators.back() != nullptr, "Error: failed to create OFDM modulator.");
   }
 
   // Create pool of transmit resource grids.

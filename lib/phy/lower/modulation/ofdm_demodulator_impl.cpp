@@ -77,10 +77,10 @@ unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsi
   return cp_offset;
 }
 
-void ofdm_symbol_demodulator_impl::demodulate(srsgnb::resource_grid_writer&    grid,
-                                              const srsgnb::span<srsgnb::cf_t> input,
-                                              unsigned                         port_index,
-                                              unsigned                         symbol_index)
+void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
+                                              span<const cf_t>      input,
+                                              unsigned              port_index,
+                                              unsigned              symbol_index)
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);

@@ -6,6 +6,7 @@
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
+#include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 
@@ -59,6 +60,8 @@ struct lower_phy_configuration {
   lower_phy_timing_notifier* timing_notifier;
   /// Provides the OFDM modulator factory.
   ofdm_modulator_factory* modulator_factory;
+  /// Provides the OFDM demodulator factory.
+  ofdm_demodulator_factory* demodulator_factory;
   /// Provides the uplink resource grid pool.
   resource_grid_pool* ul_resource_grid_pool;
   /// Provides the sectors configuration.

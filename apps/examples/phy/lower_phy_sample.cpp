@@ -36,6 +36,10 @@ struct ofdm_modulator_factory_config {
   dft_processor_factory& dft_factory;
 };
 std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modulator_factory_config& config);
+struct ofdm_demodulator_factory_config {
+  dft_processor_factory& dft_factory;
+};
+std::unique_ptr<ofdm_demodulator_factory> create_ofdm_demodulator_factory(ofdm_demodulator_factory_config& config);
 
 } // namespace srsgnb
 
@@ -317,11 +321,19 @@ int main(int argc, char** argv)
   std::unique_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_fftw_config);
 
   // Create OFDM modulator factory configuration.
-  ofdm_modulator_factory_config ofdm_factory_config = {*dft_factory};
+  ofdm_modulator_factory_config modulator_factory_config = {*dft_factory};
 
   // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory(ofdm_factory_config);
-  srsran_always_assert(modulator_factory, "Failed to create OFDM modulator factory");
+  std::unique_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory(modulator_factory_config);
+  srsran_always_assert(modulator_factory, "Failed to create OFDM modulator factory.");
+
+  // Create OFDM demodulator factory configuration.
+  ofdm_demodulator_factory_config demodulator_factory_config = {*dft_factory};
+
+  // Create OFDM modulator factory.
+  std::unique_ptr<ofdm_demodulator_factory> demodulator_factory =
+      create_ofdm_demodulator_factory(demodulator_factory_config);
+  srsran_always_assert(demodulator_factory, "Failed to create OFDM demodulator factory.");
 
   // Create UL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> ul_rg_pool = nullptr;
@@ -405,6 +417,7 @@ int main(int argc, char** argv)
   phy_config.rx_symbol_notifier         = &rx_symbol_adapter;
   phy_config.timing_notifier            = &timing_adapter;
   phy_config.modulator_factory          = modulator_factory.get();
+  phy_config.demodulator_factory        = demodulator_factory.get();
   phy_config.ul_resource_grid_pool      = ul_rg_pool.get();
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;

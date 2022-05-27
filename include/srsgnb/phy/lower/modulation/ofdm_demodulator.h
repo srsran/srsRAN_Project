@@ -50,7 +50,7 @@ public:
   /// \note The input size must be equal to the the symbol size including the cyclic prefix.
   /// \note The output size must be consistent with the configured bandwidth.
   virtual void
-  demodulate(resource_grid_writer& grid, const span<cf_t> input, unsigned port_index, unsigned symbol_index) = 0;
+  demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned symbol_index) = 0;
 };
 
 /// \brief Describes an OFDM demodulator with slot granularity.
