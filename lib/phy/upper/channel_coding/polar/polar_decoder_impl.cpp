@@ -99,10 +99,10 @@ polar_decoder_impl::tmp_node_s::tmp_node_s(uint8_t nMax)
   i_even.resize(max_code_half_size);
 }
 
-void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
-                                             const uint16_t*        frozen_set,
-                                             const uint16_t         code_size_log,
-                                             const uint16_t         frozen_set_size)
+void polar_decoder_impl::tmp_node_s::compute(std::vector<node_rate*>& node_type,
+                                             const uint16_t*          frozen_set,
+                                             const uint16_t           code_size_log,
+                                             const uint16_t           frozen_set_size)
 {
   uint8_t s = 0; // stage
 
@@ -127,7 +127,7 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
 
   s = 0;
   for (uint16_t j = 0; j != code_size; ++j) {
-    node_type[s][j] = 3 * is_not_rate_0[j]; //  0 if rate-0; 2 if rate-r; 3 if rate 1
+    node_type[s][j] = static_cast<node_rate>(3 * is_not_rate_0[j]); //  0 if rate-0; 2 if rate-r; 3 if rate 1
   }
   for (s = 1; s != (uint8_t)(code_size_log + 1); ++s) {
     uint16_t code_size_log_s = code_size_log - s;
@@ -135,7 +135,8 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<uint8_t*>& node_type,
     for (uint16_t j = 0; j != code_stage_size; ++j) {
       is_not_rate_0[j] = is_not_rate_0[i_even[j]] | is_not_rate_0[i_odd[j]]; // bitor
       is_rate_1[j]     = is_rate_1[i_even[j]] & is_rate_1[i_odd[j]];         // bitand
-      node_type[s][j]  = 2 * is_not_rate_0[j] + is_rate_1[j];                //  0 if rate-0; 2 if rate-r; 3 if rate 1
+      node_type[s][j] =
+          static_cast<node_rate>(2 * is_not_rate_0[j] + is_rate_1[j]); //  0 if rate-0; 2 if rate-r; 3 if rate 1
     }
   }
 }
@@ -193,8 +194,8 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   }
 }
 
-void polar_decoder_impl::init(span<const int8_t> input_llr,
-                              span<uint8_t>      data_decoded,
+void polar_decoder_impl::init(span<uint8_t>      data_decoded,
+                              span<const int8_t> input_llr,
                               const uint8_t      code_size_log,
                               const uint16_t*    frozen_set,
                               const uint16_t     frozen_set_size)
@@ -222,9 +223,6 @@ void polar_decoder_impl::init(span<const int8_t> input_llr,
   }
   state.flag_finished = false;
 
-  // frozen_set
-  param.frozen_set_size = frozen_set_size;
-
   // computes the node types for the decoding tree
   tmp_node_type.compute(param.node_type, frozen_set, code_size_log, frozen_set_size);
 }
@@ -240,7 +238,7 @@ void polar_decoder_impl::rate_0_node()
     state.flag_finished = true;
   } else {
     // update active node at all the stages
-    for (uint8_t i = 0; i <= stage; i++) {
+    for (uint8_t i = 0; i <= stage; ++i) {
       state.active_node_per_stage[i] = state.active_node_per_stage[i] + param.code_stage_size[stage - i];
     }
   }
@@ -349,11 +347,11 @@ void polar_decoder_impl::simplified_node(span<uint8_t> message)
   state.stage++; // to parent node.
 }
 
-void polar_decoder_impl::decode(span<const int8_t> input_llr, span<uint8_t> data_decoded, const polar_code& code)
+void polar_decoder_impl::decode(span<uint8_t> data_decoded, span<const int8_t> input_llr, const polar_code& code)
 {
   span<const uint16_t> frozen_set = code.get_F_set();
 
-  init(input_llr, data_decoded, code.get_n(), frozen_set.data(), frozen_set.size());
+  init(data_decoded, input_llr, code.get_n(), frozen_set.data(), frozen_set.size());
 
   simplified_node(data_decoded);
 }

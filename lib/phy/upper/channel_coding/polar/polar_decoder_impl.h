@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Polar decoder declaration.
+
 #ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DECODER_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DECODER_IMPL_H
 
@@ -17,123 +20,139 @@
 
 namespace srsgnb {
 
+/// \brief Polar decoder implementation.
+///
+/// Generic polar decoder according to the specifications of TS38.212 Section 5.3.1.
 class polar_decoder_impl : public polar_decoder
 {
 private:
-  /*!
-   * \brief Types of node in an SSC decoder.
-   */
-  typedef enum {
-    RATE_0 = 0, /*!< \brief See function rate_0_node(). */
-    RATE_R = 2, /*!< \brief See function rate_r_node(). */
-    RATE_1 = 3, /*!< \brief See function rate_1_node(). */
-  } node_rate;
+  /// Types of node in an SSC decoder.
+  enum node_rate : uint8_t {
+    /// See function rate_0_node().
+    RATE_0 = 0,
+    /// See function rate_r_node().
+    RATE_R = 2,
+    /// See function rate_1_node().
+    RATE_1 = 3,
+  };
 
-  /*!
-   * \brief Stores constants.
-   */
+  /// Collection of SSC polar decoder parameters.
   struct params_s {
-    uint8_t code_size_log; /*!< \brief \f$log_2\f$ of code size. */
-    srsvec::aligned_vec<uint16_t>
-             code_stage_size; /*!< \brief Number of bits of the encoder input/output vector at a given stage. */
-    uint16_t frozen_set_size; /*!< \brief Number of frozen bits. */
-    std::vector<uint8_t>
-        node_type_alloc; /*!< \brief Node type indicator 1 at all stages 3 (rate-1), 2 (rate-r), 0 (rate-0). */
-    std::vector<uint8_t*>
-        node_type; /*!< \brief Node type indicator 1 at all stages 3 (rate-1), 2 (rate-r), 0 (rate-0). */
+    /// \f$log_2\f$ of the code size.
+    uint8_t code_size_log;
+    /// Number of bits of the encoder input/output vector, for all stages.
+    srsvec::aligned_vec<uint16_t> code_stage_size;
+    /// Stores the type of all nodes in stage 0.
+    std::vector<node_rate> node_type_alloc;
+    /// Stores the type of all nodes, stage by stage (e.g., <tt>node_type[0]</tt> is the same as \c node_type_alloc).
+    std::vector<node_rate*> node_type;
   };
 
-  /*!
-   * \brief Describes the state of a SSC polar decoder
-   */
+  /// Describes the SSC polar decoder inner state.
   struct state_s {
-    uint8_t                       stage; /*!< \brief Current stage [0 - code_size_log] of the decoding algorithm. */
-    bool                          flag_finished; /*!< \brief True if the last bit is decoded. False otherwise. */
-    srsvec::aligned_vec<uint16_t> active_node_per_stage; /*!< \brief Indicates the active node in each stage of the
-                                        algorithm at a given moment. */
+    /// Current stage of the decoding algorithm (0,...,code_size_log).
+    uint8_t stage;
+    /// True if the last bit is decoded. False otherwise.
+    bool flag_finished;
+    /// Indicates the active node at each stage of the algorithm at a given moment.
+    srsvec::aligned_vec<uint16_t> active_node_per_stage;
   };
 
-  /*!
-   * \brief Structure with pointers needed to obtain the node_type
-   */
+  /// Structure with pointers needed to obtain the node_type.
   struct tmp_node_s {
-    srsvec::aligned_vec<uint8_t>  is_not_rate_0; /*!< \brief Pointers to a temporary buffer. */
-    span<uint8_t>                 is_rate_1;     /*!< \brief Pointers to a temporary buffer. */
-    srsvec::aligned_vec<uint16_t> i_even;        /*!< \brief Pointers to a temporary buffer. */
-    srsvec::aligned_vec<uint16_t> i_odd;         /*!< \brief Pointers to a temporary buffer. */
+    /// \brief Denotes whether a node is of type [RATE_0](#polar_decoder_impl::node_rate) (value 0) or of another
+    /// type (value 1).
+    srsvec::aligned_vec<uint8_t> is_not_rate_0;
+    /// \brief Denotes whether a node is of type [RATE_1](#polar_decoder_impl::node_rate) (value 1) or of another type
+    /// (value 0).
+    span<uint8_t> is_rate_1;
+    /// List of even-valued node indices.
+    srsvec::aligned_vec<uint16_t> i_even;
+    /// List of odd-valued node indices.
+    srsvec::aligned_vec<uint16_t> i_odd;
 
-    /*!
-     * Allocates memory resources for the computation of the node_type.
-     * \param[in] nMax \f$log_2\f$ of the maximum number of bits in the codeword.
-     */
-    tmp_node_s(uint8_t nMax);
+    /// \brief Allocates memory resources for the computation of the node_type.
+    /// \param[in] nMax \f$log_2\f$ of the maximum number of bits in the codeword.
+    explicit tmp_node_s(uint8_t nMax);
 
-    /*!
-     * Computes node types for the decoding tree associated to the given frozen set.
-     * \param[in] p Pointer of a Tmp_node_type structure with the memory resources needed.
-     * \param[out] node_type Double pointer containing the node type at each stage of the decoding tree.
-     * \param[in] code_size_log \f$log_2\f$ of code size.
-     * \param[in] frozen_set The position of the frozen bits in the codeword.
-     * \param[in] frozen_set_size The size of the frozen set.
-     */
-    void compute(std::vector<uint8_t*>& node_type,
-                 const uint16_t*        frozen_set,
-                 const uint16_t         code_size_log,
-                 const uint16_t         frozen_set_size);
+    /// \brief Computes node types for the decoding tree associated to the given frozen set.
+    /// \param[out] node_type      Two-dimensional pointer containing the node type at each stage of the decoding tree.
+    /// \param[in] frozen_set      Position of the frozen bits in the codeword.
+    /// \param[in] code_size_log   \f$log_2\f$ of code size.
+    /// \param[in] frozen_set_size The size of the frozen set.
+    void compute(std::vector<node_rate*>& node_type,
+                 const uint16_t*          frozen_set,
+                 const uint16_t           code_size_log,
+                 const uint16_t           frozen_set_size);
   };
 
-  srsvec::aligned_vec<int8_t>    llr_alloc;
-  std::vector<int8_t*>           llr0;          /*!< \brief Pointers to the upper half of LLRs values at all stages. */
-  std::vector<int8_t*>           llr1;          /*!< \brief Pointers to the lower half of LLRs values at all stages. */
-  srsvec::aligned_vec<uint8_t>   est_bit;       /*!< \brief Pointers to the temporary estimated bits. */
-  params_s                       param;         /*!< \brief Pointer to a Params structure. */
-  state_s                        state;         /*!< \brief Pointer to a State. */
-  tmp_node_s                     tmp_node_type; /*!< \brief Pointer to a Tmp_node_type. */
-  std::unique_ptr<polar_encoder> enc;           /*!< \brief Pointer to a srsran_polar_encoder_t. */
+  /// LLR values for stage 0 (i.e., received LLRs).
+  srsvec::aligned_vec<int8_t> llr_alloc;
+  /// Pointers to the upper half of the LLR values for all stages.
+  std::vector<int8_t*> llr0;
+  /// Pointers to the lower half of LLR values for all stages.
+  std::vector<int8_t*> llr1;
+  /// Temporary estimated bits.
+  srsvec::aligned_vec<uint8_t> est_bit;
+  /// Decoder inner parameters.
+  params_s param;
+  /// Decoder state.
+  state_s state;
+  /// Node type manager.
+  tmp_node_s tmp_node_type;
+  /// A polar encoder.
+  std::unique_ptr<polar_encoder> enc;
 
-  void init(span<const int8_t> input_llr,
-            span<uint8_t>      data_decoded,
+  /// \brief Polar decoder initialization.
+  ///
+  /// Initializes internal parameters and registers.
+  /// \param[in] data_decoded     Register for writing the decoded data.
+  /// \param[in] input_llr        Input codeblock as a sequence of log-likelihood ratios.
+  /// \param[in] code_size_log    Codeblock size (binary logarithm thereof).
+  /// \param[in] frozen_set       Indices of the frozen bits.
+  /// \param[in] frozen_set_size  Size of the frozen set.
+  void init(span<uint8_t>      data_decoded,
+            span<const int8_t> input_llr,
             const uint8_t      code_size_log,
             const uint16_t*    frozen_set,
             const uint16_t     frozen_set_size);
 
-  /*!
-   * All decoded bits below a ::RATE_0 node are 0. The function updates the \a p->state->active_node_per_stage
-   * pointer to point to the next active node. It is assumed that message bits are initialized to 0.
-   *
-   */
+  /// \brief Updates a RATE_0 node.
+  ///
+  /// All decoded bits below a [RATE_0](#polar_decoder_impl::node_rate) node are 0.
+  /// The function updates the \a p->state->active_node_per_stage
+  /// pointer to point to the next active node. It is assumed that message bits are initialized to 0.
   void rate_0_node();
 
-  /*!
-   * ::RATE_1 nodes at stage \f$ s \f$ return the associated \f$2^s\f$ estimated bits by
-   * making a hard decision on them.
-   * ::RATE_1 nodes also update message bits vector.
-   *
-   */
+  /// \brief Updates a RATE_1 node.
+  ///
+  /// [RATE_1](#polar_decoder_impl::node_rate) nodes at stage \f$ s \f$ return the associated \f$2^s\f$ estimated bits
+  /// by making a hard decision on them. RATE_1 nodes also update message bits vector.
   void rate_1_node(span<uint8_t> data_decoded);
 
-  /*!
-   * ::RATE_R nodes at stage \f$ s \f$ return the associated \f$2^s\f$ decoded bit by calling
-   * the child nodes to the right and left of the decoding tree and then polar encoding (xor) their output.
-   * At stage \f$ s \f$, this function runs function srsran_vec_function_f_fff() and srsran_vec_function_g_bfff()
-   * with vector size \f$2^{ s - 1}\f$ and updates \a llr0 and \a llr1 memory space for stage \f$(s - 1)\f$.
-   * This function also runs srsran_vec_xor_bbb() with vector size \f$2^{s-1}\f$ and
-   * updates \a estbits memory space for stage \f$(s + 1)\f$.
-   *
-   */
+  /// \brief Updates a RATE_R node.
+  ///
+  /// RATE_R nodes at stage \f$ s \f$ return the associated \f$2^s\f$ decoded bit by calling
+  /// the child nodes to the right and left of the decoding tree and then polar encoding (xor) their output.
   void rate_r_node(span<uint8_t> data_decoded);
 
-  /*!
-   * Switches between the different types of node (::RATE_1, ::RATE_0, ::RATE_R) for the SSC algorithm.
-   * Nodes in the decoding tree at stage \f$ s\f$ get the \f$2^s\f$ LLRs from the parent node and
-   * return the associated \f$2^s\f$ estimated bits.
-   *
-   */
+  /// \brief Node processing.
+  ///
+  /// Switches between the different [types of node](#polar_decoder_impl::node_rate) for the SSC algorithm.
+  /// Nodes in the decoding tree at stage \f$ s\f$ get the \f$2^s\f$ LLRs from the parent node and
+  /// return the associated \f$2^s\f$ estimated bits.
   void simplified_node(span<uint8_t> data_decoded);
 
 public:
+  /// \brief Constructor.
+  ///
+  /// Sets the internal encoder and the maximum codeblock length.
+  /// \param[in] enc_ A polar encoder.
+  /// \param[in] nMax Binary logarithm of the maximum codeblock length.
   polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
-  void decode(span<const int8_t> input_llr, span<uint8_t> data_decoded, const polar_code& code) override;
+
+  // See interface for the documentation.
+  void decode(span<uint8_t> data_decoded, span<const int8_t> input_llr, const polar_code& code) override;
 };
 
 } // namespace srsgnb

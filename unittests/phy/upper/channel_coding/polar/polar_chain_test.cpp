@@ -195,7 +195,7 @@ int main(int argc, char** argv)
 
   // Decode Rx data
   srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());
-  decoder->decode(tmp_en, allocated_rx, *code);
+  decoder->decode(allocated_rx, tmp_en, *code);
 
   // Deallocate RX data
   srsvec::aligned_vec<uint8_t> data_rx(K);
