@@ -26,9 +26,9 @@ class polar_rate_dematcher_impl : public polar_rate_dematcher
 {
 private:
   /// Internal buffer that contains both codeblock and rate-matched codeblock.
-  std::array<int8_t, polar_code::NMAX + polar_code::EMAX> y_e;
+  std::array<log_likelihood_ratio, polar_code::NMAX + polar_code::EMAX> y_e;
   /// Pointer to the rate-matched part of the buffer.
-  int8_t* e = &y_e[polar_code::NMAX];
+  log_likelihood_ratio* e = &y_e[polar_code::NMAX];
 
 public:
   /// Default constructor.
@@ -37,7 +37,9 @@ public:
   ~polar_rate_dematcher_impl() override = default;
 
   // See interface for the documentation.
-  void rate_dematch(span<int8_t> output, span<const int8_t> input, const polar_code& code) override;
+  void rate_dematch(span<log_likelihood_ratio>       output,
+                    span<const log_likelihood_ratio> input,
+                    const polar_code&                code) override;
 };
 } // namespace srsgnb
 

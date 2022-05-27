@@ -15,6 +15,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 #include <memory>
 
@@ -27,7 +28,7 @@ public:
   /// Default virtual destructor.
   virtual ~polar_rate_dematcher() = default;
 
-  /// \brief Carries out the actual rate-dematching (int8_t inputs).
+  /// \brief Carries out the actual rate-dematching.
   /// \param[out] output    The rate-dematched codeword resulting from the rate-dematching
   ///                       operation.
   /// \param[in] input      The LLRs obtained from the channel samples that correspond to
@@ -35,7 +36,8 @@ public:
   /// \param[in] E          Rate-matched codeword length.
   /// \param[in] n          \f$log_2\f$ of the codeword length.
   /// \param[in] K          Message size (including CRC).
-  virtual void rate_dematch(span<int8_t> output, span<const int8_t> input, const polar_code& code) = 0;
+  virtual void
+  rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_rate_dematcher> create_polar_rate_dematcher();

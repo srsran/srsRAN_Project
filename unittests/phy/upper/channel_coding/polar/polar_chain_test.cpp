@@ -178,13 +178,24 @@ int main(int argc, char** argv)
     rate_matched_rx[i] = (rate_matched_tx[i] == 0) ? +1 : -1;
   }
 
+  // temporary!!
+  srsvec::aligned_vec<log_likelihood_ratio> tmp_rx(E);
+  std::copy(rate_matched_rx.begin(), rate_matched_rx.end(), tmp_rx.begin());
+  // end temporary
+
   // Undo rate matching
-  srsvec::aligned_vec<int8_t> encoded_rx(code->get_N());
-  rate_dematcher->rate_dematch(encoded_rx, rate_matched_rx, *code);
+  srsvec::aligned_vec<log_likelihood_ratio> encoded_rx(code->get_N());
+  rate_dematcher->rate_dematch(encoded_rx, tmp_rx, *code);
+
+  // temporary!!
+  srsvec::aligned_vec<int8_t> tmp_en(encoded_rx.size());
+  std::transform(
+      encoded_rx.begin(), encoded_rx.end(), tmp_en.begin(), [](log_likelihood_ratio a) { return a.to_value_type(); });
+  // end temporary
 
   // Decode Rx data
   srsvec::aligned_vec<uint8_t> allocated_rx(code->get_N());
-  decoder->decode(encoded_rx, allocated_rx, *code);
+  decoder->decode(tmp_en, allocated_rx, *code);
 
   // Deallocate RX data
   srsvec::aligned_vec<uint8_t> data_rx(K);
