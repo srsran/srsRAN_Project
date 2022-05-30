@@ -215,7 +215,7 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
 
   if (stage != 0) {
     span<uint8_t> message_stage = message.subspan(bit_pos, code_stage_size);
-    enc->encode(codeword, stage, message_stage);
+    enc->encode(message_stage, codeword, stage);
   } else {
     message[bit_pos] = codeword[0];
   }

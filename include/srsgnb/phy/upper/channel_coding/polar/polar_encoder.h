@@ -30,7 +30,7 @@ public:
    *     the srsran_polar_encoder_t structure.
    * \param[out] output The encoder output vector.
    */
-  virtual void encode(span<const uint8_t> input, unsigned code_size_log, span<uint8_t> output) = 0;
+  virtual void encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log) = 0;
 };
 
 std::unique_ptr<polar_encoder> create_polar_encoder_pipelined(unsigned code_size_log);

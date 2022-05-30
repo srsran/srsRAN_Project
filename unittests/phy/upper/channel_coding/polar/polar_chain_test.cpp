@@ -166,7 +166,7 @@ int main(int argc, char** argv)
 
   // Encoder TX data
   srsvec::aligned_vec<uint8_t> encoded_tx(code->get_N());
-  encoder->encode(allocated_tx, code->get_n(), encoded_tx);
+  encoder->encode(encoded_tx, allocated_tx, code->get_n());
 
   // Rate matching
   srsvec::aligned_vec<uint8_t> rate_matched_tx(E);

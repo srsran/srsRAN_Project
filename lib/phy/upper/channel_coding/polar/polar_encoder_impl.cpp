@@ -26,7 +26,7 @@ polar_encoder_impl::polar_encoder_impl(unsigned code_size_log_) :
   }
 }
 
-void polar_encoder_impl::encode(span<const uint8_t> input, unsigned code_size_log, span<uint8_t> output)
+void polar_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input, unsigned code_size_log)
 {
   // first stage also initializes output vector
   uint16_t code_half_size = 1U << (code_size_log - 1U);

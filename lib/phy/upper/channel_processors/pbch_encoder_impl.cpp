@@ -150,7 +150,7 @@ void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
   alloc->allocate(allocated, c_prime, *code);
 
   // Polar encoding.
-  encoder->encode(allocated, code->get_n(), d);
+  encoder->encode(d, allocated, code->get_n());
 }
 
 void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
