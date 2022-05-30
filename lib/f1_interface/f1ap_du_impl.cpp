@@ -17,10 +17,10 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(timer_manager& timer_db_, f1c_message_handler& f1c_pdu_handler_) :
-  logger(srslog::fetch_basic_logger("F1AP")), timer_db(timer_db_), f1c(f1c_pdu_handler_)
+f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_handler_) :
+  logger(srslog::fetch_basic_logger("F1AP")), timers(timers_), f1c(f1c_pdu_handler_)
 {
-  f1c_setup_timer = timer_db.create_unique_timer();
+  f1c_setup_timer = timers.create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
     // TODO
   });

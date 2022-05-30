@@ -59,6 +59,12 @@ constexpr inline unsigned to_numerology_value(subcarrier_spacing scs)
   return static_cast<unsigned>(scs);
 }
 
+/// Convert numerology index (mu) to SCS.
+constexpr inline subcarrier_spacing to_subcarrier_spacing(unsigned numerology)
+{
+  return static_cast<subcarrier_spacing>(numerology);
+}
+
 /// Calculates number of slots per subframe.
 constexpr inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
 {

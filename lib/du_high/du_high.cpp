@@ -31,8 +31,10 @@ public:
   du_high_slot_handler(timer_manager& timers_, mac_interface& mac_) : timers(timers_), mac(mac_) {}
   void handle_slot_indication(slot_point sl_tx) override
   {
-    // Step timers by one slot.
-    timers.tick_all();
+    // Step timers by one millisecond.
+    if (sl_tx.to_uint() % get_nof_slots_per_subframe(to_subcarrier_spacing(sl_tx.numerology())) == 0) {
+      timers.tick_all();
+    }
 
     // Handle slot indication in MAC & Scheduler.
     mac.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx);
@@ -43,14 +45,14 @@ private:
   mac_interface& mac;
 };
 
-du_high::du_high(const du_high_configuration& config_) : cfg(config_), timer_db(128)
+du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(128)
 {
   assert_du_high_configuration_valid(cfg);
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap_du(timer_db, *cfg.f1c_msg_hdl);
-  du_manager = create_du_manager(timer_db,
+  f1ap = create_f1ap_du(timers, *cfg.f1c_msg_hdl);
+  du_manager = create_du_manager(timers,
                                  mac->get_ue_configurator(),
                                  mac->get_cell_manager(),
                                  *f1ap,
@@ -62,7 +64,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timer_db(
   mac_ev_notifier.connect(*du_manager);
 
   // Cell slot handler.
-  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timer_db, *mac);
+  main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);
 }
 
 du_high::~du_high()

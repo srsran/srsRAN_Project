@@ -23,7 +23,7 @@ std::unique_ptr<du_manager_interface> srsgnb::create_du_manager(timer_manager&  
                                                                 task_executor&        du_mng_exec)
 {
   du_manager_config_t cfg{};
-  cfg.timer_db        = &timers;
+  cfg.timers        = &timers;
   cfg.mac_ue_mng      = &mac_ue_mng;
   cfg.mac_cell_mng    = &mac_cell_mng;
   cfg.f1ap            = &f1ap;

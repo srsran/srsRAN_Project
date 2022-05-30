@@ -22,7 +22,7 @@ namespace srsgnb {
 class timer_manager;
 
 struct du_manager_config_t {
-  timer_manager*        timer_db;
+  timer_manager*        timers;
   rlc_sdu_rx_notifier*  rlc_ul_notifier;
   mac_ue_configurator*  mac_ue_mng;
   mac_cell_manager*     mac_cell_mng;

@@ -42,7 +42,7 @@ public:
 private:
   du_high_configuration cfg;
 
-  timer_manager timer_db;
+  timer_manager timers;
 
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_du_interface>      f1ap;

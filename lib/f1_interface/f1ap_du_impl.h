@@ -24,7 +24,7 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1_du_interface
 {
 public:
-  f1ap_du_impl(timer_manager& timer_db, f1c_message_handler& f1c_handler);
+  f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_handler);
 
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
@@ -43,7 +43,7 @@ public:
 
 private:
   srslog::basic_logger& logger;
-  timer_manager&        timer_db;
+  timer_manager&        timers;
   f1c_message_handler&  f1c;
 
   unique_timer f1c_setup_timer;
