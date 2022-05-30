@@ -51,3 +51,11 @@ add_test(uci_indication_builder_test uci_indication_builder_test)
 add_executable(ul_dci_request_builder_test ul_dci_request_test.cpp)
 target_link_libraries(ul_dci_request_builder_test srsgnb_support srslog)
 add_test(ul_dci_request_builder_test ul_dci_request_builder_test)
+
+add_executable(ul_prach_builder_test ul_prach_test.cpp)
+target_link_libraries(ul_prach_builder_test srsgnb_support srslog)
+add_test(ul_prach_builder_test ul_prach_builder_test)
+
+add_executable(ul_tti_request_builder_test ul_tti_request_test.cpp)
+target_link_libraries(ul_tti_request_builder_test srsgnb_support srslog)
+add_test(ul_tti_request_builder_test ul_tti_request_builder_test)

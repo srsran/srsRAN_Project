@@ -421,16 +421,33 @@ struct ul_prach_maintenance_v3 {
   uint8_t  num_preamble_indices;
 };
 
+enum class prach_format_type : uint8_t {
+  zero,
+  one,
+  two,
+  three,
+  A1,
+  A2,
+  A3,
+  B1,
+  B4,
+  C0,
+  C2,
+  A1_B1,
+  A2_B2,
+  A3_B3,
+};
+
 /// Uplink PRACH PDU information.
 struct ul_prach_pdu {
-  uint16_t phys_cell_id;
-  uint8_t  num_prach_ocas;
-  uint8_t  prach_format;
-  uint8_t  index_fd_ra;
-  uint8_t  prach_start_symbol;
-  uint16_t num_cs;
-  uint8_t  is_msg_a_prach;
-  uint8_t  has_msg_a_pusch_beamforming;
+  pci_t             phys_cell_id;
+  uint8_t           num_prach_ocas;
+  prach_format_type prach_format;
+  uint8_t           index_fd_ra;
+  uint8_t           prach_start_symbol;
+  uint16_t          num_cs;
+  uint8_t           is_msg_a_prach;
+  bool              has_msg_a_pusch_beamforming;
   //: TODO: beamforming struct
   ul_prach_maintenance_v3 maintenance_v3;
   //: TODO: uplink spatial assignment struct
@@ -702,29 +719,29 @@ struct ul_srs_pdu {
 struct ul_tti_request_pdu {
   ul_pdu_type pdu_type;
   uint16_t    pdu_size;
-  union {
-    ul_prach_pdu       prach_pdu;
-    ul_pusch_pdu       pusch_pdu;
-    ul_pucch_pdu       pucch_pdu;
-    ul_msg_a_pusch_pdu msg_a_pusch_pdu;
-    ul_srs_pdu         srs_pdu;
-  };
+
+  // :TODO: add variant for the PDUs below.
+  ul_prach_pdu       prach_pdu;
+  ul_pusch_pdu       pusch_pdu;
+  ul_pucch_pdu       pucch_pdu;
+  ul_msg_a_pusch_pdu msg_a_pusch_pdu;
+  ul_srs_pdu         srs_pdu;
 };
 
 /// Uplink TTI request message.
 struct ul_tti_request_message : public base_message {
+  enum class pdu_type : uint8_t { PRACH, PUSCH, PUCCH_format01, PUCCH_format234, SRS, msga_PUSCH };
+
   /// Maximum number of supported UL PDU types in this release.
   static constexpr unsigned MAX_NUM_UL_TYPES = 6;
   /// Maximum number of supported UL PDUs in this message.
   static constexpr unsigned MAX_NUM_UL_PDUS = 128;
 
-  uint16_t                                        sfn;
-  uint16_t                                        slot;
-  uint16_t                                        num_pdus;
-  uint8_t                                         num_ul_types;
-  std::array<uint16_t, MAX_NUM_UL_TYPES>          num_pdus_of_each_type;
-  uint16_t                                        num_groups;
-  std::array<ul_tti_request_pdu, MAX_NUM_UL_PDUS> pdus;
+  uint16_t                                           sfn;
+  uint16_t                                           slot;
+  std::array<uint16_t, MAX_NUM_UL_TYPES>             num_pdus_of_each_type;
+  uint16_t                                           num_groups;
+  static_vector<ul_tti_request_pdu, MAX_NUM_UL_PDUS> pdus;
   //: TODO: groups array
 };
 
