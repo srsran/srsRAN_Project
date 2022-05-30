@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-void polar_allocator_impl::allocate(span<const uint8_t> message, span<uint8_t> input_encoder, const polar_code& code)
+void polar_allocator_impl::allocate(span<uint8_t> input_encoder, span<const uint8_t> message, const polar_code& code)
 {
   uint16_t             N      = code.get_N();
   uint16_t             K      = code.get_K();

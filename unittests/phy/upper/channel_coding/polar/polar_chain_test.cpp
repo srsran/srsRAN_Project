@@ -162,7 +162,7 @@ int main(int argc, char** argv)
 
   // Allocate TX data
   srsvec::aligned_vec<uint8_t> allocated_tx(code->get_N());
-  allocator->allocate(data_tx, allocated_tx, *code);
+  allocator->allocate(allocated_tx, data_tx, *code);
 
   // Encoder TX data
   srsvec::aligned_vec<uint8_t> encoded_tx(code->get_N());

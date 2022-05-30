@@ -20,7 +20,7 @@ class polar_allocator
 public:
   virtual ~polar_allocator() = default;
 
-  virtual void allocate(span<const uint8_t> message, span<uint8_t> input_encoder, const polar_code& code) = 0;
+  virtual void allocate(span<uint8_t> input_encoder, span<const uint8_t> message, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_allocator> create_polar_allocator();

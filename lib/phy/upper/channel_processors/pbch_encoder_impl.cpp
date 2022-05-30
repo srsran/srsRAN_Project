@@ -147,7 +147,7 @@ void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
   // Channel allocation.
   std::array<uint8_t, POLAR_N_MAX> allocated;
-  alloc->allocate(c_prime, allocated, *code);
+  alloc->allocate(allocated, c_prime, *code);
 
   // Polar encoding.
   encoder->encode(allocated, code->get_n(), d);

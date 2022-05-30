@@ -25,7 +25,8 @@ pdcch_encoder_impl::pdcch_encoder_impl() :
   code(create_polar_code()),
   encoder(create_polar_encoder_pipelined(polar_code::NMAX_LOG)),
   rm(create_polar_rate_matcher())
-{}
+{
+}
 
 void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)
 {
@@ -63,7 +64,7 @@ void pdcch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
   // Channel allocation
   static_vector<uint8_t, polar_code::NMAX> allocated(code->get_N());
-  alloc->allocate(c_prime, allocated, *code);
+  alloc->allocate(allocated, c_prime, *code);
 
   // Polar encoding
   encoder->encode(allocated, code->get_n(), d);
