@@ -123,14 +123,28 @@ static void pdcch_conversion_test()
                   TESTASSERT_EQ(bwp_start, proc_pdu.coreset.bwp_start_rb);
                   TESTASSERT_EQ(start_symbol_index, proc_pdu.coreset.start_symbol_index);
                   TESTASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
-                  TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
-                  TESTASSERT_EQ(static_cast<unsigned>(cce_reg_mapping),
-                                static_cast<unsigned>(proc_pdu.coreset.cce_to_reg_mapping_type));
-                  TESTASSERT_EQ(reg_bundle, proc_pdu.coreset.reg_bundle_size);
-                  TESTASSERT_EQ(interleaver_size, proc_pdu.coreset.interleaver_size);
-                  TESTASSERT_EQ(static_cast<unsigned>(type), static_cast<unsigned>(proc_pdu.coreset.type));
-                  TESTASSERT_EQ(static_cast<unsigned>(precoder),
-                                static_cast<unsigned>(proc_pdu.coreset.precoder_granularity));
+
+                  if (type == pdcch_coreset_type::pbch_or_sib1) {
+                    TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
+                               pdcch_processor::coreset_description::CORESET0);
+                    TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
+                    TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
+                    TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
+                  } else {
+                    if (cce_reg_mapping == cce_to_reg_mapping_type::non_interleaved) {
+                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
+                                 pdcch_processor::coreset_description::NON_INTERLEAVED);
+                      TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
+                      TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
+                      TESTASSERT_EQ(0, proc_pdu.coreset.shift_index);
+                    } else {
+                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
+                                 pdcch_processor::coreset_description::INTERLEAVED);
+                      TESTASSERT_EQ(reg_bundle, proc_pdu.coreset.reg_bundle_size);
+                      TESTASSERT_EQ(interleaver_size, proc_pdu.coreset.interleaver_size);
+                      TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
+                    }
+                  }
 
                   // Test DCIs.
                   TESTASSERT_EQ(1, proc_pdu.dci_list.size());
@@ -156,7 +170,7 @@ static void pdcch_conversion_test()
                     unsigned byte = i / 8;
                     unsigned pos  = i % 8;
                     TESTASSERT_EQ((static_cast<unsigned>(freq_domain[byte] >> pos) & 1U) == 1U,
-                                  proc_pdu.coreset.frequency_resources[i]);
+                                  proc_pdu.coreset.frequency_resources.test(i));
                   }
                 }
               }

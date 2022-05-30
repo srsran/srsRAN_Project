@@ -52,31 +52,52 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
 /// Fills the coreset parameters of the PDCCH processor pdu.
 static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl_pdcch_pdu& fapi_pdu)
 {
-  coreset.bwp_size_rb             = fapi_pdu.coreset_bwp_size;
-  coreset.bwp_start_rb            = fapi_pdu.coreset_bwp_start;
-  coreset.start_symbol_index      = fapi_pdu.start_symbol_index;
-  coreset.duration                = fapi_pdu.duration_symbols;
-  coreset.cce_to_reg_mapping_type = (fapi_pdu.cce_reg_mapping_type == cce_to_reg_mapping_type::non_interleaved)
-                                        ? pdcch_processor::coreset_description::NON_INTERLEAVED
-                                        : pdcch_processor::coreset_description::INTERLEAVED;
+  coreset.bwp_size_rb        = fapi_pdu.coreset_bwp_size;
+  coreset.bwp_start_rb       = fapi_pdu.coreset_bwp_start;
+  coreset.start_symbol_index = fapi_pdu.start_symbol_index;
+  coreset.duration           = fapi_pdu.duration_symbols;
 
-  coreset.reg_bundle_size      = fapi_pdu.reg_bundle_size;
-  coreset.interleaver_size     = fapi_pdu.interleaver_size;
-  coreset.type                 = (fapi_pdu.coreset_type == pdcch_coreset_type::pbch_or_sib1)
-                                     ? pdcch_processor::coreset_description::CORESET0
-                                     : pdcch_processor::coreset_description::OTHER;
-  coreset.shift_index          = fapi_pdu.shift_index;
-  coreset.precoder_granularity = (fapi_pdu.precoder_granularity == precoder_granularity_type::same_as_reg_bundle)
-                                     ? pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE
-                                     : pdcch_processor::coreset_description::ALL_CONTIGUOUS_RBS;
+  // Configure CCE-to-REG mapping depending on PDCCH CORESET.
+  if (fapi_pdu.coreset_type == pdcch_coreset_type::pbch_or_sib1) {
+    // The PDCCH is located in CORESET0.
+    coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::CORESET0;
 
-  // :TODO: frequency_resources. Verify how this field is codified to do the transformation correctly, and how the phy
-  // expects the order.
-  for (unsigned i = 0, e = 45; i != e; ++i) {
-    unsigned byte = i / 8;
-    unsigned pos  = i % 8;
+    // The REG bundle size and interleaver size are ignored.
+    coreset.reg_bundle_size  = 0;
+    coreset.interleaver_size = 0;
+    coreset.shift_index      = fapi_pdu.shift_index;
+  } else {
+    // The PDCCH is NOt located in CORESET0.
+    if (fapi_pdu.cce_reg_mapping_type == cce_to_reg_mapping_type::non_interleaved) {
+      // Non-interleaved case.
+      coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::NON_INTERLEAVED;
 
-    coreset.frequency_resources[i] = (static_cast<unsigned>(fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U;
+      // The REG bundle size and interleaver size are ignored.
+      coreset.reg_bundle_size  = 0;
+      coreset.interleaver_size = 0;
+      coreset.shift_index      = 0;
+    } else {
+      // Interleaved case.
+      coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::INTERLEAVED;
+
+      // The REG bundle size and interleaver size are ignored.
+      coreset.reg_bundle_size  = fapi_pdu.reg_bundle_size;
+      coreset.interleaver_size = fapi_pdu.interleaver_size;
+      coreset.shift_index      = fapi_pdu.shift_index;
+    }
+  }
+
+  // According to FAPI FreqDomainResource[0] designates LSByte of RRC parameter frequencyDomainResources, and the LSBit
+  // of FreqDomainResource[0] carries frequencyDomainResources[0].
+  coreset.frequency_resources.reset();
+  coreset.frequency_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
+  for (unsigned freq_res_index = 0, e = pdcch_constants::MAX_NOF_FREQ_RESOUCES; freq_res_index != e; ++freq_res_index) {
+    unsigned byte = freq_res_index / 8;
+    unsigned pos  = freq_res_index % 8;
+
+    if (((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U) {
+      coreset.frequency_resources.set(freq_res_index, ((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U);
+    }
   }
 }
 

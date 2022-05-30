@@ -43,16 +43,29 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
       true, false, true, true, true, false, true, true, true, false, true, true};
 
   // Generate empty allocation mask for the all symbols.
-  std::array<bool, MAX_RB * NRE> mask;
+  std::array<bool, MAX_RB* NRE> mask = {};
+
+  unsigned prb_begin_index;
+  {
+    int ret = config.rb_mask.find_lowest();
+    srsran_assert(ret != -1, "No RB allocated for the transmission");
+    prb_begin_index = static_cast<unsigned>(ret);
+  }
+
+  unsigned prb_begin_end;
+  {
+    int ret = config.rb_mask.find_highest();
+    srsran_assert(ret != -1, "No RB allocated for the transmission");
+    prb_begin_end = static_cast<unsigned>(ret + 1);
+  }
 
   // Generate mapping mask for each .
-  for (unsigned rb_idx = 0; rb_idx < MAX_RB; ++rb_idx) {
+  for (unsigned prb_index = prb_begin_index; prb_index != prb_begin_end; ++prb_index) {
     // Select RE mask for the given RB index.
-    span<bool> re_mask_rb = {mask.begin() + rb_idx * NRE, NRE};
+    span<bool> re_mask_rb = span<bool>(mask).subspan(prb_index * NRE, NRE);
 
     // If the resource block is not used, set mask to false and skip.
-    if (!config.rb_mask[rb_idx]) {
-      std::fill(re_mask_rb.begin(), re_mask_rb.end(), false);
+    if (!config.rb_mask.test(prb_index)) {
       continue;
     }
 

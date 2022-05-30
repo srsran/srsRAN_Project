@@ -101,7 +101,6 @@ int main()
                 coreset.reg_bundle_size                       = 6;
                 coreset.interleaver_size                      = 2;
                 coreset.shift_index                           = 0;
-                coreset.precoder_granularity = pdcch_processor::coreset_description::SAME_AS_REG_BUNDLE;
 
                 pdu.dci_list.resize(1);
                 pdcch_processor::dci_description& dci = pdu.dci_list[0];
