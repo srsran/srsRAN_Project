@@ -33,7 +33,7 @@ public:
    * \param[in] K            Message size (including CRC).
    * \return An integer: 0 if the function executes correctly, -1 otherwise.
    */
-  virtual void rate_match(span<const uint8_t> input, span<uint8_t> output, const polar_code& code) = 0;
+  virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) = 0;
 };
 
 std::unique_ptr<polar_rate_matcher> create_polar_rate_matcher();

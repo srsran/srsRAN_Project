@@ -170,7 +170,7 @@ int main(int argc, char** argv)
 
   // Rate matching
   srsvec::aligned_vec<uint8_t> rate_matched_tx(E);
-  rate_matcher->rate_match(encoded_tx, rate_matched_tx, *code);
+  rate_matcher->rate_match(rate_matched_tx, encoded_tx, *code);
 
   // Modulate
   srsvec::aligned_vec<log_likelihood_ratio> rate_matched_rx(E);

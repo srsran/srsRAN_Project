@@ -24,7 +24,7 @@ public:
   polar_rate_matcher_impl()           = default;
   ~polar_rate_matcher_impl() override = default;
 
-  void rate_match(span<const uint8_t> input, span<uint8_t> output, const polar_code& code) override;
+  void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) override;
 };
 } // namespace srsgnb
 

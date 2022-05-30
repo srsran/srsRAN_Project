@@ -158,7 +158,7 @@ void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
   assert(d.size() == POLAR_N_MAX);
   assert(f.size() == E);
 
-  rm->rate_match(d, f, *code);
+  rm->rate_match(f, d, *code);
 }
 
 void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg)

@@ -72,7 +72,7 @@ void pdcch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
 void pdcch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 {
-  rm->rate_match(d, f, *code);
+  rm->rate_match(f, d, *code);
 }
 
 void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config)
