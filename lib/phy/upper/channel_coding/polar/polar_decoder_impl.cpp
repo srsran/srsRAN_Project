@@ -14,75 +14,35 @@
 
 using namespace srsgnb;
 
-template <typename T>
-static inline int sgn(T v)
+void vec_function_f(const log_likelihood_ratio* x, const log_likelihood_ratio* y, log_likelihood_ratio* z, unsigned len)
 {
-  return (v > 0) - (v < 0);
-}
-
-template <typename T>
-void vec_function_f(const T* x, const T* y, T* z, unsigned len)
-{
-  T L0      = 0;
-  T L1      = 0;
-  T absL0   = 0;
-  T absL1   = 0;
-  T sgnL0L1 = 0;
-
-  for (unsigned i = 0; i != len; i++) {
-    L0      = x[i];
-    L1      = y[i];
-    absL0   = abs(L0);
-    absL1   = abs(L1);
-    sgnL0L1 = sgn(L0) * sgn(L1);
-    if (absL0 >= absL1) {
-      L0 = sgnL0L1 * absL1;
-    } else {
-      L0 = sgnL0L1 * absL0;
-    }
-    z[i] = L0;
+  for (unsigned i = 0; i != len; ++i) {
+    z[i] = log_likelihood_ratio::soft_xor(x[i], y[i]);
   }
 }
 
-void vec_function_g(const uint8_t* b, const int8_t* x, const int8_t* y, int8_t* z, const uint16_t len)
+// Combines two log-likelihood ratio: constructively (sum) if b = 0, destructively (difference) if b = 1.
+log_likelihood_ratio switch_combine(log_likelihood_ratio x, log_likelihood_ratio y, uint8_t b)
 {
-  int8_t L0 = 0;
-  int8_t L1 = 0;
-  int8_t V  = 0;
+  return ((b == 0) ? x + y : x - y);
+}
 
-  long tmp = 0;
-
-  for (int i = 0; i < len; i++) {
-    L0 = x[i];
-    L1 = y[i];
-    V  = -2 * b[i] + 1; // (warning!) changes size from uint8_t to int8_t
-
-    tmp = (long)L1 + V * L0;
-    if (tmp > 127) {
-      tmp = 127;
-    }
-    if (tmp < -127) {
-      tmp = -127;
-    }
-    L0 = (int8_t)tmp;
-
-    z[i] = L0;
+void vec_function_g(const uint8_t*              b,
+                    const log_likelihood_ratio* x,
+                    const log_likelihood_ratio* y,
+                    log_likelihood_ratio*       z,
+                    const uint16_t              len)
+{
+  for (int i = 0; i != len; ++i) {
+    z[i] = switch_combine(y[i], x[i], b[i]);
   }
 }
 
-template <typename T>
-static inline void vec_hard_bit(span<T> x, span<uint8_t> z, unsigned len)
+static inline void vec_hard_bit(span<log_likelihood_ratio> x, span<uint8_t> z)
 {
   assert(x.size() == z.size());
 
-  for (unsigned i = 0; i != len; ++i) {
-    int s = sgn(x[i]);
-    if (s == 0) {
-      z[i] = 0;
-    } else {
-      z[i] = static_cast<char>((1 - s) / 2);
-    }
-  }
+  std::transform(x.begin(), x.end(), z.begin(), [](log_likelihood_ratio a) { return a.to_hard_bit(); });
 }
 
 polar_decoder_impl::tmp_node_s::tmp_node_s(uint8_t nMax)
@@ -194,11 +154,11 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   }
 }
 
-void polar_decoder_impl::init(span<uint8_t>      data_decoded,
-                              span<const int8_t> input_llr,
-                              const uint8_t      code_size_log,
-                              const uint16_t*    frozen_set,
-                              const uint16_t     frozen_set_size)
+void polar_decoder_impl::init(span<uint8_t>                    data_decoded,
+                              span<const log_likelihood_ratio> input_llr,
+                              const uint8_t                    code_size_log,
+                              const uint16_t*                  frozen_set,
+                              const uint16_t                   frozen_set_size)
 {
   param.code_size_log     = code_size_log;
   uint16_t code_size      = param.code_stage_size[code_size_log];
@@ -252,10 +212,10 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
   uint16_t code_size       = param.code_stage_size[param.code_size_log];
   uint16_t code_stage_size = param.code_stage_size[stage];
 
-  span<uint8_t> codeword = est_bit.subspan(bit_pos, code_stage_size);
-  span<int8_t>  LLR      = span<int8_t>(llr0[stage], code_stage_size);
+  span<uint8_t>              codeword = est_bit.subspan(bit_pos, code_stage_size);
+  span<log_likelihood_ratio> LLR      = span<log_likelihood_ratio>(llr0[stage], code_stage_size);
 
-  vec_hard_bit(LLR, codeword, code_stage_size);
+  vec_hard_bit(LLR, codeword);
 
   if (stage != 0) {
     span<uint8_t> message_stage = message.subspan(bit_pos, code_stage_size);
@@ -347,7 +307,9 @@ void polar_decoder_impl::simplified_node(span<uint8_t> message)
   state.stage++; // to parent node.
 }
 
-void polar_decoder_impl::decode(span<uint8_t> data_decoded, span<const int8_t> input_llr, const polar_code& code)
+void polar_decoder_impl::decode(span<uint8_t>                    data_decoded,
+                                span<const log_likelihood_ratio> input_llr,
+                                const polar_code&                code)
 {
   span<const uint16_t> frozen_set = code.get_F_set();
 

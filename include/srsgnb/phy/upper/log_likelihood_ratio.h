@@ -62,12 +62,16 @@ public:
   /// Converts the LLR to a plain \c value_type value.
   explicit constexpr operator value_type() const { return value; };
   /// Converts the LLR to a plain \c value_type value.
-  value_type constexpr to_value_type() const { return value; };
+  constexpr value_type to_value_type() const { return value; };
 
   /// Converts the LLR to a plain \c int value.
   explicit constexpr operator int() const { return value; };
   /// Converts the LLR to a plain \c int value.
-  int constexpr to_int() const { return value; };
+  constexpr int to_int() const { return value; };
+
+  /// \brief Converts the LLR to a hard bit.
+  /// \note By convention, the null LLR indeterminate case returns a 0 bit.
+  constexpr uint8_t to_hard_bit() const { return static_cast<uint8_t>(value < 0); }
   ///@}
 
   /// Default assignment operator.
@@ -139,6 +143,41 @@ public:
   /// \param[in] b Second summand.
   /// \return The promotion sum of \c a and \c b.
   static log_likelihood_ratio promotion_sum(log_likelihood_ratio a, log_likelihood_ratio b);
+
+  /// \brief Copy sign from a number.
+  ///
+  /// \tparam T An arithmetic type.
+  /// \param[in] a A log-likelihood ratio.
+  /// \param[in] b A real number.
+  /// \return A log-likelihood ratio with the magnitude of \c a and the sign of \c b.
+  /// \remark A zero in the second argument is considered as a positive number, following the convention of \c
+  /// std::copysign.
+  template <typename T>
+  static constexpr log_likelihood_ratio copysign(log_likelihood_ratio a, T b)
+  {
+    static_assert(std::is_arithmetic<T>::value, "Template type is not an arithmetic type.");
+    if (b < 0) {
+      return -std::abs(a.value);
+    }
+    return std::abs(a.value);
+  }
+
+  /// Absolute value.
+  static constexpr value_type abs(log_likelihood_ratio a) { return static_cast<value_type>(std::abs(a.to_int())); }
+
+  /// \brief Soft XOR operation.
+  ///
+  /// The soft XOR between two LLRs \c x and \c y is the log-likelihood ratio corresponding to the logical XOR operation
+  /// \f$a \oplus b\f$, where \f$a\f$ and \f$b\f$ are the bits whose soft representation is \c x and \c y, respectively.
+  static constexpr log_likelihood_ratio soft_xor(log_likelihood_ratio x, log_likelihood_ratio y)
+  {
+    int abs_x = std::abs(x.value);
+    int abs_y = std::abs(y.value);
+    if (x.value * y.value < 0) {
+      return -std::min(abs_x, abs_y);
+    }
+    return std::min(abs_x, abs_y);
+  }
 
   // Documentation at definition (see below).
   template <typename T>

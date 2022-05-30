@@ -87,11 +87,11 @@ private:
   };
 
   /// LLR values for stage 0 (i.e., received LLRs).
-  srsvec::aligned_vec<int8_t> llr_alloc;
+  srsvec::aligned_vec<log_likelihood_ratio> llr_alloc;
   /// Pointers to the upper half of the LLR values for all stages.
-  std::vector<int8_t*> llr0;
+  std::vector<log_likelihood_ratio*> llr0;
   /// Pointers to the lower half of LLR values for all stages.
-  std::vector<int8_t*> llr1;
+  std::vector<log_likelihood_ratio*> llr1;
   /// Temporary estimated bits.
   srsvec::aligned_vec<uint8_t> est_bit;
   /// Decoder inner parameters.
@@ -111,11 +111,11 @@ private:
   /// \param[in] code_size_log    Codeblock size (binary logarithm thereof).
   /// \param[in] frozen_set       Indices of the frozen bits.
   /// \param[in] frozen_set_size  Size of the frozen set.
-  void init(span<uint8_t>      data_decoded,
-            span<const int8_t> input_llr,
-            const uint8_t      code_size_log,
-            const uint16_t*    frozen_set,
-            const uint16_t     frozen_set_size);
+  void init(span<uint8_t>                    data_decoded,
+            span<const log_likelihood_ratio> input_llr,
+            const uint8_t                    code_size_log,
+            const uint16_t*                  frozen_set,
+            const uint16_t                   frozen_set_size);
 
   /// \brief Updates a RATE_0 node.
   ///
@@ -152,7 +152,7 @@ public:
   polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
 
   // See interface for the documentation.
-  void decode(span<uint8_t> data_decoded, span<const int8_t> input_llr, const polar_code& code) override;
+  void decode(span<uint8_t> data_decoded, span<const log_likelihood_ratio> input_llr, const polar_code& code) override;
 };
 
 } // namespace srsgnb

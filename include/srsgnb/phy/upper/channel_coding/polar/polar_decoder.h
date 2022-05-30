@@ -17,6 +17,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 #include <memory>
 
@@ -29,11 +30,12 @@ public:
   /// Default destructor.
   virtual ~polar_decoder() = default;
 
-  /// \brief Decodes the input (int8_t) codeword with the specified polar decoder.
+  /// \brief Decodes the input (LLR) codeword with the specified polar decoder.
   /// \param[out] data_decoded The decoder output vector.
   /// \param[in]  input_llr    The decoder LLR input vector.
   /// \param[in]  code         Polar code descriptor.
-  virtual void decode(span<uint8_t> data_decoded, span<const int8_t> input_llr, const polar_code& code) = 0;
+  virtual void
+  decode(span<uint8_t> data_decoded, span<const log_likelihood_ratio> input_llr, const polar_code& code) = 0;
 };
 
 /// \brief Polar decoder initialization.
