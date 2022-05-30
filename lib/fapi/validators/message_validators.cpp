@@ -149,17 +149,19 @@ error_type<validator_report> srsgnb::fapi::validate_tx_data_request(const tx_dat
   return {};
 }
 
-/// Validates the RNTI property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
-static bool validate_rnti(unsigned value, validator_report& report)
+/// Validates the RNTI property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
+///// and 3.4.7.
+static bool validate_rnti(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 1;
   static constexpr unsigned MAX_VALUE = 65535;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", message_type_id::crc_indication, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RNTI", msg_id, report);
 }
 
-/// Validates the RAPID property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
-static bool validate_rapid(unsigned value, validator_report& report)
+/// Validates the RAPID property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
+/// and 3.4.7.
+static bool validate_rapid(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned OTHERWISE = 255;
   static constexpr unsigned MIN_VALUE = 0;
@@ -169,16 +171,17 @@ static bool validate_rapid(unsigned value, validator_report& report)
     return true;
   }
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "RAPID", message_type_id::crc_indication, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "RAPID", msg_id, report);
 }
 
-/// Validates the HARQ ID property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
-static bool validate_harq_id(unsigned value, validator_report& report)
+/// Validates the HARQ ID property of a CRC.indication PDU or Rx_Data.indication PDU, as per  SCF-222 v4.0 section 3.4.8
+///// and 3.4.7.
+static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
   static constexpr unsigned MAX_VALUE = 15;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", message_type_id::crc_indication, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", msg_id, report);
 }
 
 /// Validates the TB CRC status property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
@@ -274,9 +277,9 @@ error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_ind
   // Validate each PDU.
   for (const auto& pdu : msg.pdus) {
     // NOTE: Handle property will no be validated as the values are not specified in the document.
-    success &= validate_rnti(pdu.rnti, report);
-    success &= validate_rapid(pdu.rapid, report);
-    success &= validate_harq_id(pdu.harq_id, report);
+    success &= validate_rnti(pdu.rnti, message_type_id::crc_indication, report);
+    success &= validate_rapid(pdu.rapid, message_type_id::crc_indication, report);
+    success &= validate_harq_id(pdu.harq_id, message_type_id::crc_indication, report);
     success &= validate_tb_crc_status(pdu.tb_crc_status, report);
     // NOTE: CB CRC status bitmap property will not be validated.
     success &= validate_ul_sinr_metric(pdu.ul_sinr_metric, report);
@@ -470,6 +473,180 @@ error_type<validator_report> srsgnb::fapi::validate_uci_indication(const uci_ind
         break;
     }
   }
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+/// Validates the message id property of the ERROR.indication PDU, as per SCF-222 v4.0 section 3.3.6.1 in table
+/// ERROR.indication message body.
+static bool validate_message_id(unsigned value, validator_report& report)
+{
+  // Check first range.
+  static constexpr unsigned MIN_VALUE_FIRST_RANGE = 0U;
+  static constexpr unsigned MAX_VALUE_FIRST_RANGE = 7U;
+
+  if (MIN_VALUE_FIRST_RANGE <= value && value <= MAX_VALUE_FIRST_RANGE) {
+    return true;
+  }
+
+  // Check second range.
+  static constexpr unsigned MIN_VALUE_SECOND_RANGE = 0x80U;
+  static constexpr unsigned MAX_VALUE_SECOND_RANGE = 0x8AU;
+
+  if (MIN_VALUE_SECOND_RANGE <= value && value <= MAX_VALUE_SECOND_RANGE) {
+    return true;
+  }
+
+  report.append(value, "Message ID", message_type_id::error_indication);
+
+  return false;
+}
+
+/// Validates the error code property of the ERROR.indication PDU, as per SCF-222 v4.0 section 3.3.6.1 in table
+/// ERROR.indication message body.
+static bool validate_error_code(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0U;
+  static constexpr unsigned MAX_VALUE = 12U;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Error code", message_type_id::error_indication, report);
+}
+
+/// Validates the expected SFN property of the ERROR.indication PDU, as per SCF-222 v4.0 section 3.3.6.1 in table
+/// ERROR.indication message body.
+static bool validate_expected_sfn(unsigned value, error_code_id error_id, validator_report& report)
+{
+  static constexpr unsigned MAX_VALUE = 1023U;
+  static constexpr unsigned UNUSED    = std::numeric_limits<uint16_t>::max();
+
+  if (error_id == error_code_id::out_of_sync && value <= MAX_VALUE) {
+    return true;
+  }
+
+  if (error_id != error_code_id::out_of_sync && value == UNUSED) {
+    return true;
+  }
+
+  report.append(value, "Expected SFN", message_type_id::error_indication);
+
+  return false;
+}
+
+/// Validates the expected SFN property of the ERROR.indication PDU, as per SCF-222 v4.0 section 3.3.6.1 in table
+/// ERROR.indication message body.
+static bool validate_expected_slot(unsigned value, error_code_id error_id, validator_report& report)
+{
+  static constexpr unsigned MAX_VALUE = 159U;
+  static constexpr unsigned UNUSED    = std::numeric_limits<uint16_t>::max();
+
+  if (error_id == error_code_id::out_of_sync && value <= MAX_VALUE) {
+    return true;
+  }
+
+  if (error_id != error_code_id::out_of_sync && value == UNUSED) {
+    return true;
+  }
+
+  report.append(value, "Expected slot", message_type_id::error_indication);
+
+  return false;
+}
+
+error_type<validator_report> srsgnb::fapi::validate_error_indication(const error_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  static constexpr message_type_id msg_id = message_type_id::error_indication;
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, msg_id, report);
+  success &= validate_slot(msg.slot, msg_id, report);
+  success &= validate_message_id(static_cast<unsigned>(msg.message_id), report);
+  success &= validate_error_code(static_cast<unsigned>(msg.error_code), report);
+  success &= validate_expected_sfn(msg.expected_sfn, msg.error_code, report);
+  success &= validate_expected_slot(msg.expected_slot, msg.error_code, report);
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+/// Validates the PDU tag property of the Rx_Data.indication PDU, as per SCF-222 v4.0 section 3.4.7 in table
+/// Rx_Data.indication message body.
+/// \note This validator only accepts the custom tag.
+static bool validate_pdu_tag(rx_data_indication_pdu::pdu_tag_type value, validator_report& report)
+{
+  if (value == rx_data_indication_pdu::pdu_tag_type::custom) {
+    return true;
+  }
+
+  report.append(static_cast<unsigned>(value), "PDU tag", message_type_id::rx_data_indication);
+
+  return false;
+}
+
+/// Validates the PDU value property of the Rx_Data.indication PDU, as per SCF-222 v4.0 section 3.4.7 in table
+/// Rx_Data.indication message body.
+static bool validate_pdu_value(const uint8_t* value, validator_report& report)
+{
+  if (value != nullptr) {
+    return true;
+  }
+
+  report.append(0, "PDU tag", message_type_id::rx_data_indication);
+
+  return false;
+}
+
+error_type<validator_report> srsgnb::fapi::validate_rx_data_indication(const rx_data_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  static constexpr message_type_id msg_id = message_type_id::rx_data_indication;
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, msg_id, report);
+  success &= validate_slot(msg.slot, msg_id, report);
+  // NOTE: Control length property will not be validated.
+
+  for (const auto& pdu : msg.pdus) {
+    // NOTE: Handle property will not be validated.
+    success &= validate_rnti(pdu.rnti, msg_id, report);
+    success &= validate_rapid(pdu.rapid, msg_id, report);
+    success &= validate_harq_id(pdu.harq_id, msg_id, report);
+    // NOTE: PDU length property will not be validated.
+    success &= validate_pdu_tag(pdu.pdu_tag, report);
+    success &= validate_pdu_value(pdu.data, report);
+  }
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_indication_message& msg)
+{
+  validator_report report(msg.sfn, msg.slot);
+
+  static constexpr message_type_id msg_id = message_type_id::slot_indication;
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, msg_id, report);
+  success &= validate_slot(msg.slot, msg_id, report);
 
   // Build the result.
   if (!success) {

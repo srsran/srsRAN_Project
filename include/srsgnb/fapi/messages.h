@@ -792,14 +792,16 @@ struct tx_data_request_message : public base_message {
 
 /// Reception data indication PDU information.
 struct rx_data_indication_pdu {
-  uint32_t handle;
-  uint16_t rnti;
-  uint8_t  RAPID;
-  uint8_t  harq_id;
-  uint32_t pdu_length;
-  uint8_t  pdu_tag;
+  enum class pdu_tag_type : uint8_t { MAC_PDU, offset, custom = 100 };
+
+  uint32_t     handle;
+  rnti_t       rnti;
+  uint8_t      rapid;
+  uint8_t      harq_id;
+  uint32_t     pdu_length;
+  pdu_tag_type pdu_tag;
   //: TODO: non-conformant, revise
-  void* data;
+  const uint8_t* data;
 };
 
 /// Reception data indication message.
@@ -807,11 +809,10 @@ struct rx_data_indication_message : public base_message {
   /// Maximum number of supported UCI PDUs in this message.
   static constexpr unsigned MAX_NUM_ULSCH_PDUS_PER_SLOT = 64;
 
-  uint16_t                                                        sfn;
-  uint16_t                                                        slot;
-  uint16_t                                                        control_length;
-  uint16_t                                                        number_of_pdus;
-  std::array<rx_data_indication_pdu, MAX_NUM_ULSCH_PDUS_PER_SLOT> pdus;
+  uint16_t                                                           sfn;
+  uint16_t                                                           slot;
+  uint16_t                                                           control_length;
+  static_vector<rx_data_indication_pdu, MAX_NUM_ULSCH_PDUS_PER_SLOT> pdus;
 };
 
 /// Reception data indication PDU information.
@@ -1877,12 +1878,12 @@ struct stop_indication : public base_message {};
 
 /// Encodes the error indication message.
 struct error_indication_message : public base_message {
-  uint16_t      sfn;
-  uint16_t      slot;
-  uint8_t       message_id;
-  error_code_id error_code;
-  uint16_t      expected_sfn;
-  uint16_t      expected_slot;
+  uint16_t        sfn;
+  uint16_t        slot;
+  message_type_id message_id;
+  error_code_id   error_code;
+  uint16_t        expected_sfn;
+  uint16_t        expected_slot;
 };
 
 /// \note not adding numOfRateMAtchPatternLTECrsPerSlot, numOfRateMatchPatternLTEInPhy,
