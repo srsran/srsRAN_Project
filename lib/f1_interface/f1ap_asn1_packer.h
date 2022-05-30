@@ -19,19 +19,19 @@
 
 namespace srsgnb {
 
-class f1ap_asn1_packer : public f1c_pdu_handler
+class f1ap_asn1_packer : public f1c_message_handler
 {
 public:
-  explicit f1ap_asn1_packer(network_gateway_data_handler& gw, f1c_pdu_handler& f1c);
+  explicit f1ap_asn1_packer(network_gateway_data_handler& gw, f1c_message_handler& f1c);
 
   void handle_packed_pdu(const byte_buffer& pdu);
 
-  void handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override;
+  void handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu) override;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::basic_logger&         logger;
   network_gateway_data_handler& gw;
-  f1c_pdu_handler&              f1c;
+  f1c_message_handler&          f1c;
 };
 
 } // namespace srsgnb

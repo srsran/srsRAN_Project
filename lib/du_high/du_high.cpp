@@ -30,7 +30,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_)
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap_du(*cfg.f1c_pdu_hdl);
+  f1ap = create_f1ap_du(*cfg.f1c_msg_hdl);
   du_manager = create_du_manager(
       mac->get_ue_configurator(), mac->get_cell_manager(), *f1ap, *f1ap, rlc_sdu_notifier, *cfg.du_mng_executor);
 

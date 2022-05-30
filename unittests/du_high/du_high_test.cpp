@@ -47,40 +47,40 @@ void test_f1_setup_local()
 {
   test_delimit_logger delim{"Test F1 Setup Local"};
 
-  class dummy_f1c_pdu_handler : public f1c_pdu_handler
+  class dummy_f1c_message_handler : public f1c_message_handler
   {
   public:
-    dummy_f1c_pdu_handler(f1c_pdu_notifier& listener_) : listener(listener_) {}
+    dummy_f1c_message_handler(f1c_message_notifier& listener) : listener(listener) {}
 
-    f1c_pdu_notifier&       listener;
-    asn1::f1ap::f1_ap_pdu_c last_pdu;
-    void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override
+    f1c_message_notifier&   listener;
+    asn1::f1ap::f1_ap_pdu_c last_msg;
+    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
     {
       // store and loop PDU back to sender
-      last_pdu = pdu;
-      listener.on_new_pdu(pdu);
+      last_msg = msg;
+      listener.on_new_message(msg);
     }
   };
 
-  class dummy_f1c_to_du_relay : public srsgnb::f1c_pdu_notifier
+  class dummy_f1c_to_du_relay : public f1c_message_notifier
   {
   public:
-    void on_new_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override
+    void on_new_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
     {
-      std::printf("[F1C-TO_DU-RELAY] Received a F1AP PDU of type %s\n", pdu.type().to_string());
+      std::printf("[F1C-TO_DU-RELAY] Received a F1AP PDU of type %s\n", msg.type().to_string());
     }
   };
 
-  du_high_worker_manager workers;
-  dummy_f1c_to_du_relay  relay;
-  dummy_f1c_pdu_handler  pdu_handler(relay);
-  phy_dummy              phy;
+  du_high_worker_manager    workers;
+  dummy_f1c_to_du_relay     relay;
+  dummy_f1c_message_handler msg_handler(relay);
+  phy_dummy                 phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.f1c_msg_hdl     = &msg_handler;
   cfg.phy_adapter     = &phy;
 
   du_high du_obj(cfg);
@@ -96,28 +96,28 @@ void test_f1_setup_network()
 {
   test_delimit_logger delim{"Test F1 Setup Network"};
 
-  class dummy_f1c_pdu_handler : public f1c_pdu_handler
+  class dummy_f1c_message_handler : public f1c_message_handler
   {
   public:
-    dummy_f1c_pdu_handler() : packer(gw, *this) {}
+    dummy_f1c_message_handler() : packer(gw, *this) {}
 
     /// We require a network gateway and a packer
     sctp_network_gateway gw;
     f1ap_asn1_packer     packer;
 
     asn1::f1ap::f1_ap_pdu_c last_pdu;
-    void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
+    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
   };
 
-  du_high_worker_manager workers;
-  dummy_f1c_pdu_handler  pdu_handler;
-  phy_dummy              phy;
+  du_high_worker_manager    workers;
+  dummy_f1c_message_handler msg_handler;
+  phy_dummy                 phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.f1c_msg_hdl     = &msg_handler;
   cfg.phy_adapter     = &phy;
 
   du_high du_obj(cfg);
@@ -131,12 +131,12 @@ void test_du_ue_create()
 {
   test_delimit_logger delim{"Test DU UE Create"};
 
-  class dummy_f1c_pdu_handler : public f1c_pdu_handler
+  class dummy_f1c_pdu_handler : public f1c_message_handler
   {
   public:
     asn1::f1ap::f1_ap_pdu_c last_pdu;
     task_executor*          ctrl_exec;
-    void                    handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override
+    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu) override
     {
       ctrl_exec->execute([this, pdu]() { last_pdu = pdu; });
     }
@@ -154,7 +154,7 @@ void test_du_ue_create()
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_pdu_hdl     = &pdu_handler;
+  cfg.f1c_msg_hdl     = &pdu_handler;
   cfg.phy_adapter     = &phy;
 
   du_high du_obj(cfg);

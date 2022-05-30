@@ -22,7 +22,7 @@ namespace srsgnb {
 class f1ap_du_impl final : public f1_du_interface
 {
 public:
-  f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_);
+  f1ap_du_impl(f1c_message_handler& f1c_handler);
 
   async_task<du_setup_result> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
@@ -32,13 +32,13 @@ public:
 
   void handle_pdu(f1_rx_pdu pdu) override;
 
-  void handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu) override;
+  void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
   void handle_connection_loss() override {}
 
 private:
   srslog::basic_logger& logger;
-  f1c_pdu_handler&      f1c;
+  f1c_message_handler&  f1c;
 
   f1ap_du_context ctxt;
 };

@@ -14,7 +14,7 @@ struct du_high_configuration {
   task_executor*            du_mng_executor = nullptr;
   du_l2_ul_executor_mapper* ul_executors    = nullptr;
   du_l2_dl_executor_mapper* dl_executors    = nullptr;
-  f1c_pdu_handler*          f1c_pdu_hdl     = nullptr;
+  f1c_message_handler*      f1c_msg_hdl     = nullptr;
   mac_result_notifier*      phy_adapter     = nullptr;
 };
 

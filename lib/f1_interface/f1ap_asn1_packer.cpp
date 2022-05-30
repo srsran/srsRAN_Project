@@ -13,8 +13,8 @@
 
 namespace srsgnb {
 
-f1ap_asn1_packer::f1ap_asn1_packer(network_gateway_data_handler& gw_, f1c_pdu_handler& f1c_) :
-  logger(srslog::fetch_basic_logger("F1C-ASN1-PCK")), gw(gw_), f1c(f1c_)
+f1ap_asn1_packer::f1ap_asn1_packer(network_gateway_data_handler& gw_, f1c_message_handler& f1c_handler) :
+  logger(srslog::fetch_basic_logger("F1C-ASN1-PCK")), gw(gw_), f1c(f1c_handler)
 {}
 
 // Received packed F1AP PDU that needs to be unpacked and forwarded.
@@ -30,11 +30,11 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
   }
 
   // call packet handler
-  f1c.handle_unpacked_pdu(pdu);
+  f1c.handle_message(pdu);
 }
 
 // Receive populated ASN1 struct that needs to be packed and forwarded.
-void f1ap_asn1_packer::handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu)
+void f1ap_asn1_packer::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;

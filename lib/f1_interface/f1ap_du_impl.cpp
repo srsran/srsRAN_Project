@@ -17,7 +17,7 @@
 
 namespace srsgnb {
 
-f1ap_du_impl::f1ap_du_impl(f1c_pdu_handler& f1c_pdu_handler_) :
+f1ap_du_impl::f1ap_du_impl(f1c_message_handler& f1c_pdu_handler_) :
   logger(srslog::fetch_basic_logger("F1AP")), f1c(f1c_pdu_handler_)
 {}
 
@@ -66,10 +66,10 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
   f1ap_pdu.set_init_msg();
 
   // send to handler
-  f1c.handle_unpacked_pdu(f1ap_pdu);
+  f1c.handle_message(f1ap_pdu);
 }
 
-void f1ap_du_impl::handle_unpacked_pdu(const asn1::f1ap::f1_ap_pdu_c& pdu)
+void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
 }

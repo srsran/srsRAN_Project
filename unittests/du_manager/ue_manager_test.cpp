@@ -45,7 +45,7 @@ public:
   }
 };
 
-class f1_test_dummy : public f1ap_du_configurer
+class f1_test_dummy : public f1ap_du_configurator
 {
 public:
   optional<f1_setup_request_message>                   last_f1_setup{};
