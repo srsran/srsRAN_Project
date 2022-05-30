@@ -25,11 +25,11 @@ namespace srsgnb {
 /// Types 0 and 1 are described in TS38.214 Section 5.1.2.2 for PDSCH and Section 6.1.2.2 for PUSCH.
 ///
 /// The VRB allocation is made using one of the maker methods:
-/// - make_type0() for making a type0,
-/// - make_type1() for making a type1, or
+/// - make_type0() for making a type0 allocation,
+/// - make_type1() for making a type1 allocation, or
 /// - make_custom() for making a custom allocation.
 ///
-/// Each of the makers take optionally a VRB-to-PRB mapper for PDSCH transmissions. If the
+/// Each of the makers optionally take a VRB-to-PRB mapper for PDSCH transmissions. If the
 /// VRB-to-PRB mapper is not provided, the VRB-to-PRB is defaulted. The default VRB-to-PRB mapper corresponds to
 /// non-interleaved and to a PDSCH transmission is not scheduled in a common SS.
 ///
@@ -46,7 +46,7 @@ namespace srsgnb {
 class rb_allocation
 {
 private:
-  /// Indicates with a mask the VRBs selected for the transmission.
+  /// Indicates the VRBs selected for the transmission with a mask.
   bounded_bitset<MAX_RB> vrb_mask;
   /// VRB-to-PRB mapper.
   vrb_to_prb_mapper vrb_to_prb_map;
@@ -57,7 +57,7 @@ private:
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB units.
   bounded_bitset<MAX_RB> get_contiguous_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
-  /// \brief Computes the PRB allocation mask for other case not covered by get_contiguous_prb_mask().
+  /// \brief Computes the PRB allocation mask for the cases not covered by get_contiguous_prb_mask().
   ///
   /// \param[in] bwp_start_rb Indicates the BWP start PRB index relative to CRB0 (PointA).
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB units.
@@ -69,9 +69,9 @@ public:
   /// It constructs an empty allocation with default VRB-to-PRB mapping.
   rb_allocation() = default;
 
-  /// \brief Makes a type 0 RB allocation object.
+  /// \brief Creates a Type 0 RB allocation object.
   ///
-  /// Type 0 allocation is described in TS 38.214 Section 5.1.2.2.1 for PDSCH and Section 6.1.2.2.1 for PUSCH.
+  /// Type 0 allocation is described in TS38.214 Section 5.1.2.2.1 for PDSCH and Section 6.1.2.2.1 for PUSCH.
   ///
   /// \param[in] vrb_bitmap VRB allocation bitmap in which each entry represents an active RB.
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
@@ -79,9 +79,9 @@ public:
   static rb_allocation make_type0(const bounded_bitset<MAX_RB>&      vrb_bitmap,
                                   const optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
-  /// \brief Makes a type 1 RB allocation object.
+  /// \brief Creates a Type 1 RB allocation object.
   ///
-  /// Type 1 allocation is described in TS 38.214 Section 5.1.2.2.2 for PDSCH and Section 6.1.2.2.2 for PUSCH.
+  /// Type 1 allocation is described in TS38.214 Section 5.1.2.2.2 for PDSCH and Section 6.1.2.2.2 for PUSCH.
   ///
   /// \param[in] rb_start Indicates the lowest VRB used for this transmission as \f$RB_{start}\f$.
   /// \param[in] rb_count Indicates the number of consecutive active VRB for this transmission as \f$L_{RB_s}\f$.
@@ -90,27 +90,24 @@ public:
   static rb_allocation
   make_type1(unsigned rb_start, unsigned rb_count, const optional<vrb_to_prb_mapper>& vrb_to_prb_map_ = {});
 
-  /// \brief Makes a custom allocation object using a list of VRB indexes.
+  /// \brief Creates a custom allocation object using a list of VRB indexes.
   ///
-  /// The custom allocation is described by an integer initializer list that indicates the VRBs used for the PDSCH or
-  /// PUSCH transmission.
+  /// The custom allocation is indexed for testing and it is not described in the TS. The VRB mask is constructed from
+  /// an integer initializer list that indicates the VRBs used for the PDSCH or PUSCH transmission.
   ///
-  /// The indexes must be 0-based which zero index is mapped to VRB0.
+  /// The index list order is irrelevant and the index zero represents VRB0.
   ///
-  /// \param[in] vrb_indexes Provides the VRB indexes ,
+  /// \param[in] vrb_indexes Provides the VRB indexes.
   /// \param[in] vrb_to_prb_map_ Optional VRB-to-PRB mapping (for PDSCH only).
   /// \return An RB allocation instance.
   static rb_allocation make_custom(std::initializer_list<const unsigned> vrb_indexes,
                                    const optional<vrb_to_prb_mapper>&    vrb_to_prb_map_ = {});
 
-  /// \brief Compares the allocation with other.
+  /// \brief Compares two frequency domain allocations.
   ///
   /// Two allocations are considered equal if:
   /// - their VRB masks are equal, and
   /// - the VRB-to-PRB mapping is equal.
-  ///
-  /// \param[in] other Another RB allocation.
-  /// \return True if both allocations are equal. Otherwise, false.
   bool operator==(const rb_allocation& other) const
   {
     return (vrb_mask == other.vrb_mask) && (vrb_to_prb_map == other.vrb_to_prb_map);
@@ -154,22 +151,22 @@ public:
   /// Gets the number of allocated VRB.
   unsigned get_nof_rb() const { return vrb_mask.count(); }
 
-  /// \brief Gets resultant the PRB allocation mask after the VRB-to-PRB mapping.
+  /// \brief Generates the PRB allocation mask for the frequency domain allocation.
   ///
-  /// Calculates the PRB allocation mask considering the BWP frequency allocation, VRB mask and the VRB-to-PRB
+  /// Calculates the PRB allocation mask considering the BWP frequency allocation, the VRB mask and the VRB-to-PRB
   /// mapping.
   ///
   /// The resultant mask is represented in a \c bounded_bitset<MAX_RB> of size \f$N_{BWP,i}^{start}+N_{BWP,i}^{size}\f$
-  /// in which every set bit represents a active PRB. The first bit of the mask belongs to CRB0 (PointA).
+  /// in which every set bit represents an active PRB. The first bit of the mask belongs to CRB0 (PointA).
   ///
   /// \param[in] bwp_start_rb Indicates the BWP lowest PRB index relative to CRB0 (PointA) as \f$N_{BWP,i}^{start}\f$.
   /// \param[in] bwp_size_rb Indicates the BWP size in PRB as \f$N_{BWP,i}^{size}\f$.
   /// \return The PRB allocation mask represented as a bounded bitset.
   bounded_bitset<MAX_RB> get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const;
 
-  /// \brief Gets resultant the PRB allocation indexes after the VRB-to-PRB mapping.
+  /// \brief Generates the PRB allocation indexes for the frequency domain allocation.
   ///
-  /// Calculates the PRB allocation indexes considering the BWP frequency allocation, VRB mask and the VRB-to-PRB
+  /// Calculates the PRB allocation indexes considering the BWP frequency allocation, the VRB mask and the VRB-to-PRB
   /// mapping.
   ///
   /// The resultant indices are represented in a \c static_vector<uint16_t,MAX_RB> of size

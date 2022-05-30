@@ -38,9 +38,9 @@ public:
   /// Default constructor, it is equivalent to make_non_interleaved_other().
   vrb_to_prb_mapper() = default;
 
-  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI format 1_0 in common SS.
+  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI Format 1_0 in common SS.
   ///
-  /// Implemented as per TS 38.211 section 7.3.1.6 case 1:
+  /// Implemented as per TS38.211 section 7.3.1.6 Case 1:
   /// - A virtual resouce \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
   ///
   /// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
@@ -51,16 +51,16 @@ public:
   /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI other than format 1_0 in
   /// common SS.
   ///
-  /// Implemented as per TS 38.211 section 7.3.1.6 case 2:
+  /// Implemented as per TS38.211 section 7.3.1.6 Case 2:
   /// - A virtual resouce \f$n\f$ is mapped to the physical block \f$n\f$.
   ///
   /// \return A VRB-to-PRB mapper instance.
   static vrb_to_prb_mapper make_non_interleaved_other();
 
-  /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled with DCI format 1_0 with the CRC scrambled
+  /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled with DCI Format 1_0 with the CRC scrambled
   /// by SI-RNTI in Type0-PDCCH common SS in CORESET0.
   ///
-  /// Implemented as per TS 38.211 section 7.3.1.6 case 3:
+  /// Implemented as per TS38.211 section 7.3.1.6 Case 3:
   /// - The number of bundles is calculated as \f$N_{bundle}=\left \lceil N_{BWP,init}^{size}/L \right \rceil\f$,
   /// - the last RB bundle consist of \f$N_{BWP,init}^{size} \bmod L\f$ if \f$N_{BWP,init}^{size} \bmod L > 0\f$,
   /// - all other resource block bundles consists of \f$L\f$ RBs, and
@@ -76,7 +76,7 @@ public:
   /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI format 1_0 in any common SS except
   /// Type0-PDCCH common SS in CORESET0.
   ///
-  /// Implemented as per TS 38.211 section 7.3.1.6 case 4:
+  /// Implemented as per TS38.211 section 7.3.1.6 Case 4:
   /// - the set of \f$N_{BWP,init}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided in
   /// \f$N_{bundle}=\left \lceil (N_{BWP,init}^{size} + ((N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L))/L \right
   /// \rceil\f$,
@@ -97,7 +97,7 @@ public:
 
   /// \brief Makes a VRB-to-PRB mapper for all other PDSCH transmissions with interleaved mapping.
   ///
-  /// Implemented as per TS 38.211 section 7.3.1.6 case 5:
+  /// Implemented as per TS38.211 section 7.3.1.6 Case 5:
   /// - the set of \f$N_{BWP,i}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided in
   /// \f$N_{bundle}=\left \lceil (N_{BWP,i}^{size} + (N_{BWP,i}^{start} \bmod L_i))/L_i \right \rceil\f$,
   /// - the first RB bundle consist of \f$L_i - N_{BWP,i}^{size} \bmod L_i\f$,
@@ -111,7 +111,11 @@ public:
   /// \return A VRB-to-PRB mapper instance.
   static vrb_to_prb_mapper make_interleaved_other(unsigned N_bwp_i_start, unsigned N_bwp_i_size, unsigned L_i);
 
-  /// Gets if the resource allocation is interleaved.
+  /// \brief Checks whether the resource allocation is interleaved.
+  ///
+  /// The resource allocation is interleaved if the number of bundles is set to zero.
+  ///
+  /// \return True if the resoruce allocation is interleaved. Otherwise, False.
   bool is_interleaved() const { return nof_bundles != 0; }
 
   /// \brief Gets the CORESET start VRB index.
@@ -127,7 +131,9 @@ public:
   /// \return Return the PRB indices relative to the lowest PRB of the BWP.
   static_vector<uint16_t, MAX_RB> get_allocation_indices(unsigned bwp_size) const;
 
-  /// Equal comparison between two VRB-to-PRB mappers.
+  /// \brief Equal comparison between two VRB-to-PRB mappers.
+  ///
+  /// Two mappers are considered equal if  their CORESET start, number of bundles and RB bundle sizes are equal.
   bool operator==(const vrb_to_prb_mapper& other) const
   {
     return (coreset_start == other.coreset_start) && (nof_bundles == other.nof_bundles) &&
