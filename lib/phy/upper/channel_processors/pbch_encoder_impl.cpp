@@ -143,7 +143,7 @@ void pbch_encoder_impl::channel_coding(span<uint8_t> d, span<const uint8_t> c)
 
   // 5.3.1.1 Interleaving.
   std::array<uint8_t, B> c_prime;
-  interleaver->interleave(c, c_prime, polar_interleaver_direction::tx);
+  interleaver->interleave(c_prime, c, polar_interleaver_direction::tx);
 
   // Channel allocation.
   std::array<uint8_t, POLAR_N_MAX> allocated;

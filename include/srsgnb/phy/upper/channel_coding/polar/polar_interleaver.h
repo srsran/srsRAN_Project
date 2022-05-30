@@ -33,7 +33,7 @@ public:
    * @param[out] out bit Output data
    * @param[in] dir Set to TX or RX for encoder or decoder
    */
-  virtual void interleave(span<const uint8_t> in, span<uint8_t> out, polar_interleaver_direction direction) = 0;
+  virtual void interleave(span<uint8_t> out, span<const uint8_t> in, polar_interleaver_direction direction) = 0;
 };
 
 std::unique_ptr<polar_interleaver> create_polar_interleaver();
