@@ -22,7 +22,7 @@ private:
 
 public:
   ~polar_interleaver_impl() override = default;
-  void interleave(span<uint8_t> out, const span<const uint8_t> in, polar_interleaver_direction direction) override;
+  void interleave(span<uint8_t> out, span<const uint8_t> in, polar_interleaver_direction direction) override;
 };
 } // namespace srsgnb
 #endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_IMPL_H

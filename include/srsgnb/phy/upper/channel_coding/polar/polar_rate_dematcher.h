@@ -15,6 +15,7 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
 #include <memory>

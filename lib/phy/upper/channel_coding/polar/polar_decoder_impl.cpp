@@ -38,7 +38,7 @@ void vec_function_g(log_likelihood_ratio*       z,
   }
 }
 
-static inline void vec_hard_bit(span<log_likelihood_ratio> x, span<uint8_t> z)
+static void vec_hard_bit(span<log_likelihood_ratio> x, span<uint8_t> z)
 {
   assert(x.size() == z.size());
 

@@ -163,13 +163,13 @@ public:
   }
 
   /// Absolute value.
-  static constexpr value_type abs(log_likelihood_ratio a) { return static_cast<value_type>(std::abs(a.to_int())); }
+  static value_type abs(log_likelihood_ratio a) { return static_cast<value_type>(std::abs(a.to_int())); }
 
   /// \brief Soft XOR operation.
   ///
   /// The soft XOR between two LLRs \c x and \c y is the log-likelihood ratio corresponding to the logical XOR operation
   /// \f$a \oplus b\f$, where \f$a\f$ and \f$b\f$ are the bits whose soft representation is \c x and \c y, respectively.
-  static constexpr log_likelihood_ratio soft_xor(log_likelihood_ratio x, log_likelihood_ratio y)
+  static log_likelihood_ratio soft_xor(log_likelihood_ratio x, log_likelihood_ratio y)
   {
     int abs_x = std::abs(x.value);
     int abs_y = std::abs(y.value);
