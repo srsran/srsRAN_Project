@@ -21,20 +21,99 @@ using namespace fapi_adaptor;
 
 static std::mt19937 gen(0);
 
-static float ss_profile_nr_to_float(pdsch_ss_profile_nr_type type)
+static float
+calculate_ratio_pdsch_data_to_sss_dB(int profile_nr, nzp_csi_rs_epre_to_ssb profile_ss_nr, float power_data_profile_sss)
 {
-  switch (type) {
-    case pdsch_ss_profile_nr_type::dB_minus_3:
-      return -3.F;
-    case pdsch_ss_profile_nr_type::dB0:
-      return 0.F;
-    case pdsch_ss_profile_nr_type::dB3:
-      return 3.F;
-    case pdsch_ss_profile_nr_type::dB6:
-      return 6.F;
-    default:
-      return 12.F;
+  if (profile_ss_nr != nzp_csi_rs_epre_to_ssb::L1_use_profile_sss) {
+    float power_control_offset_ss_dB = 0.0F;
+    switch (profile_ss_nr) {
+      case nzp_csi_rs_epre_to_ssb::dB_minus_3:
+        power_control_offset_ss_dB = -3.F;
+        break;
+      case nzp_csi_rs_epre_to_ssb::dB0:
+        power_control_offset_ss_dB = .0F;
+        break;
+      case nzp_csi_rs_epre_to_ssb::dB3:
+        power_control_offset_ss_dB = 3.F;
+        break;
+      case nzp_csi_rs_epre_to_ssb::dB6:
+      default:
+        power_control_offset_ss_dB = 6.F;
+        break;
+    }
+
+    return static_cast<float>(profile_nr) + power_control_offset_ss_dB;
   }
+
+  return power_data_profile_sss;
+}
+
+static float calculate_ratio_pdsch_dmrs_to_sss_dB(int      dmrs_power_profile_sss,
+                                                  float    ratio_pdsch_data_to_sss_dB,
+                                                  unsigned num_dmrs_cdm_grps_no_data)
+{
+  if (dmrs_power_profile_sss == -33) {
+    static const std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
+
+    return ratio_pdsch_data_to_sss_dB + beta_dmrs_values[num_dmrs_cdm_grps_no_data];
+  }
+
+  return static_cast<float>(dmrs_power_profile_sss);
+}
+
+static rb_allocation make_freq_allocation(pdsch_trans_type               trasn_type,
+                                          unsigned                       bwp_start,
+                                          unsigned                       bwp_size,
+                                          unsigned                       coreset_start,
+                                          unsigned                       initial_bwp_size,
+                                          pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping,
+                                          pdsch_resource_allocation_type resource_alloc,
+                                          std::array<uint8_t, 36>        rb_bitmap,
+                                          unsigned                       rb_start,
+                                          unsigned                       rb_size)
+{
+  // Make VRB-to-PRB mapping.
+  vrb_to_prb_mapper mapper;
+  switch (trasn_type) {
+    case pdsch_trans_type::non_interleaved_common_ss:
+      mapper = vrb_to_prb_mapper::make_non_interleaved_common_ss(coreset_start);
+      break;
+    case pdsch_trans_type::non_interleaved_other:
+      mapper = vrb_to_prb_mapper::make_non_interleaved_other();
+      break;
+    case pdsch_trans_type::interleaved_common_type0_coreset0:
+      mapper = vrb_to_prb_mapper::make_coreset0(coreset_start, initial_bwp_size);
+      break;
+    case pdsch_trans_type::interleaved_common_any_coreset0_present:
+      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start, bwp_start, initial_bwp_size);
+      break;
+    case pdsch_trans_type::interleaved_common_any_coreset0_not_present:
+      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start, bwp_start, bwp_size);
+      break;
+    case pdsch_trans_type::interleaved_other:
+      mapper = vrb_to_prb_mapper::make_interleaved_other(
+          bwp_start, bwp_size, vrb_prb_mapping == pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
+      break;
+  }
+
+  rb_allocation result;
+  if (resource_alloc == pdsch_resource_allocation_type::type_0) {
+    // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
+    bounded_bitset<MAX_RB> vrb_bitmap(bwp_size);
+    for (unsigned vrb_index = 0, vrb_index_end = bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
+      unsigned byte = vrb_index / 8;
+      unsigned bit  = vrb_index % 8;
+      if (((rb_bitmap[byte] >> bit) & 1U) == 1U) {
+        vrb_bitmap.set(vrb_index);
+      }
+    }
+
+    result = rb_allocation::make_type0(vrb_bitmap, mapper);
+  } else {
+    result = rb_allocation::make_type1(rb_start, rb_size, mapper);
+  }
+
+  return result;
 }
 
 static void pdsch_conversion_test()
@@ -62,16 +141,22 @@ static void pdsch_conversion_test()
                {pdsch_low_papr_dmrs_type::independent_cdm_group, pdsch_low_papr_dmrs_type::dependent_cdm_group}) {
             for (auto resource_alloc :
                  {pdsch_resource_allocation_type::type_0, pdsch_resource_allocation_type::type_1}) {
-              for (auto vrb_prb_mapping : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                                           pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4,
+              // Iterate possible VRB-to PRB mapping. As transmission type is enabled
+              // pdsch_vrb_to_prb_mapping_type::non_interleaved value is irrelevant.
+              for (auto vrb_prb_mapping : {pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4,
                                            pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2}) {
-                for (auto power_ss_profile_nr : {pdsch_ss_profile_nr_type::dB_minus_3,
-                                                 pdsch_ss_profile_nr_type::dB0,
-                                                 pdsch_ss_profile_nr_type::dB3,
-                                                 pdsch_ss_profile_nr_type::dB6,
-                                                 pdsch_ss_profile_nr_type::dB6}) {
-                  for (int power_nr = -9; power_nr != -7; ++power_nr) {
-                    for (int power = -33; power != -30; ++power) {
+                // Iterate all possible NZP-CSI-RS to SSS ratios. L1_use_profile_sss means SSS profile mode.
+                for (auto power_ss_profile_nr : {nzp_csi_rs_epre_to_ssb::dB_minus_3,
+                                                 nzp_csi_rs_epre_to_ssb::dB0,
+                                                 nzp_csi_rs_epre_to_ssb::dB3,
+                                                 nzp_csi_rs_epre_to_ssb::dB6,
+                                                 nzp_csi_rs_epre_to_ssb::dB6,
+                                                 nzp_csi_rs_epre_to_ssb::L1_use_profile_sss}) {
+                  // Iterate possible PDSCH data to NZP-CSI-RS ratios for Profile NR. It is ignored when
+                  // power_ss_profile_nr is L1_use_profile_sss.
+                  for (int power_profile_nr = -8; power_profile_nr != -7; ++power_profile_nr) {
+                    // Iterate possible PDSCH DMRS to SSS ratios. -33 for Profile NR.
+                    for (int dmrs_power_profile_sss = -33; dmrs_power_profile_sss != -30; ++dmrs_power_profile_sss) {
                       for (auto trasn_type : {pdsch_trans_type::non_interleaved_other,
                                               pdsch_trans_type::non_interleaved_common_ss,
                                               pdsch_trans_type::interleaved_other,
@@ -97,7 +182,7 @@ static void pdsch_conversion_test()
                           unsigned dl_dmrs_symbol           = rnti_dist(gen);
                           unsigned rb_size                  = nr_of_symbols_dist(gen);
                           unsigned rb_start                 = start_symbol_index_dist(gen);
-                          float    profile_sss              = power_dist(gen);
+                          float    power_data_profile_sss   = 1000.0F * std::round(power_dist(gen) / 1000.0F);
 
                           std::array<uint8_t, 36> rb_bitmap = {};
 
@@ -138,11 +223,15 @@ static void pdsch_conversion_test()
                           builder.set_pdsch_allocation_in_time_parameters(start_symbol_index, nr_of_symbols);
 
                           optional<int>   profile_nr;
-                          optional<float> dmrs_profile;
-                          if (power_nr != -9) {
-                            profile_nr.emplace(power_nr);
+                          optional<float> data_profile_sss;
+                          optional<float> dmrs_profile_sss;
+                          if (power_ss_profile_nr != nzp_csi_rs_epre_to_ssb::L1_use_profile_sss) {
+                            profile_nr.emplace(power_profile_nr);
                           } else {
-                            dmrs_profile.emplace(profile_sss);
+                            data_profile_sss.emplace(power_data_profile_sss);
+                          }
+                          if (dmrs_power_profile_sss != -33) {
+                            dmrs_profile_sss.emplace(dmrs_power_profile_sss);
                           }
 
                           builder.set_tx_power_info_parameters(profile_nr, power_ss_profile_nr);
@@ -153,12 +242,7 @@ static void pdsch_conversion_test()
                           builder.set_maintenance_v3_codeword_parameters(
                               ldpc_graph, tb_size_lbrm_bytes, pdu_bitmap & 1U, (pdu_bitmap >> 1) & 1U);
 
-                          optional<float> data_profile;
-                          if (power != -33) {
-                            data_profile.emplace(power);
-                          }
-
-                          builder.set_maintenance_v3_tx_power_info_parameters(dmrs_profile, data_profile);
+                          builder.set_maintenance_v3_tx_power_info_parameters(dmrs_profile_sss, data_profile_sss);
 
                           pdsch_processor::pdu_t proc_pdu;
                           convert_pdsch_fapi_to_phy(proc_pdu, pdu, sfn, slot);
@@ -173,10 +257,7 @@ static void pdsch_conversion_test()
                           TESTASSERT_EQ(bwp_start, proc_pdu.bwp_start_rb);
 
                           // Codeword.
-                          TESTASSERT_EQ(float(target_code), proc_pdu.codewords[0].target_code_rate);
                           TESTASSERT_EQ(static_cast<modulation_scheme>(qam_mod), proc_pdu.codewords[0].modulation);
-                          TESTASSERT_EQ(mcs, proc_pdu.codewords[0].mcs);
-                          TESTASSERT_EQ(mcs_table, static_cast<unsigned>(proc_pdu.codewords[0].mcs_table));
                           TESTASSERT_EQ(rv_index, proc_pdu.codewords[0].rv);
 
                           TESTASSERT_EQ(nid_pdsch, proc_pdu.n_id);
@@ -195,26 +276,36 @@ static void pdsch_conversion_test()
                           TESTASSERT_EQ(start_symbol_index, proc_pdu.start_symbol_index);
                           TESTASSERT_EQ(nr_of_symbols, proc_pdu.nof_symbols);
 
-                          // :TODO: rb_allocation
-
                           // Powers.
-                          float value = profile_nr ? profile_nr.value() : dmrs_profile.value();
-                          TESTASSERT(std::fabs(value - proc_pdu.ratio_pdsch_to_ssb_dB) < 0.001F);
+                          float ratio_pdsch_data_to_sss_dB = calculate_ratio_pdsch_data_to_sss_dB(
+                              power_profile_nr, power_ss_profile_nr, power_data_profile_sss);
+                          float ratio_pdsch_dmrs_to_sss_dB = calculate_ratio_pdsch_dmrs_to_sss_dB(
+                              dmrs_power_profile_sss, ratio_pdsch_data_to_sss_dB, dmrs_cdm_grps_no_data);
 
-                          TESTASSERT(std::fabs(value - proc_pdu.ratio_pdsch_dmrs_to_sss_dB) < 0.001F);
-                          TESTASSERT(std::fabs((data_profile ? data_profile.value() : value) -
-                                               proc_pdu.ratio_pdsch_data_to_sss_dB) < 0.001F);
+                          TESTASSERT(std::fabs(ratio_pdsch_dmrs_to_sss_dB - proc_pdu.ratio_pdsch_dmrs_to_sss_dB) <
+                                         0.001F,
+                                     "PDSCH DMRS to SSS power ratio {} is too far from expected {}.",
+                                     proc_pdu.ratio_pdsch_dmrs_to_sss_dB,
+                                     ratio_pdsch_dmrs_to_sss_dB);
+                          TESTASSERT(std::fabs(ratio_pdsch_data_to_sss_dB - proc_pdu.ratio_pdsch_data_to_sss_dB) <
+                                         0.001F,
+                                     "PDSCH Data to SSS power ratio {} is too far from expected {}.",
+                                     proc_pdu.ratio_pdsch_data_to_sss_dB,
+                                     ratio_pdsch_data_to_sss_dB);
 
-                          TESTASSERT(std::fabs(((power_ss_profile_nr == pdsch_ss_profile_nr_type::L1_use_profile_sss)
-                                                    ? value
-                                                    : ss_profile_nr_to_float(power_ss_profile_nr)) -
-                                               proc_pdu.ratio_nzp_csi_rs_to_ssb_dB) < 0.001F);
+                          // Frequency domain allocation.
+                          rb_allocation freq_allocation = make_freq_allocation(trasn_type,
+                                                                               bwp_start,
+                                                                               bwp_size,
+                                                                               coreset_start,
+                                                                               initial_bwp_size,
+                                                                               vrb_prb_mapping,
+                                                                               resource_alloc,
+                                                                               rb_bitmap,
+                                                                               rb_start,
+                                                                               rb_size);
+                          TESTASSERT(freq_allocation == proc_pdu.freq_alloc);
 
-                          TESTASSERT_EQ(static_cast<unsigned>(trasn_type),
-                                        static_cast<unsigned>(proc_pdu.transmission_type));
-
-                          TESTASSERT_EQ(initial_bwp_size, proc_pdu.initial_dl_bwp_size);
-                          TESTASSERT_EQ(coreset_start, proc_pdu.coreset_start_rb);
                           TESTASSERT_EQ((ldpc_graph == ldpc_base_graph_type::bg_1) ? ldpc::base_graph_t::BG1
                                                                                    : ldpc::base_graph_t::BG2,
                                         proc_pdu.ldpc_base_graph);
