@@ -187,7 +187,7 @@ int main(int argc, char** argv)
 
   // Deallocate RX data
   srsvec::aligned_vec<uint8_t> data_rx(K);
-  deallocator->deallocate(allocated_rx, data_rx, *code);
+  deallocator->deallocate(data_rx, allocated_rx, *code);
 
   // Assert decoded message
   TESTASSERT(std::equal(data_tx.begin(), data_tx.end(), data_rx.begin()));
