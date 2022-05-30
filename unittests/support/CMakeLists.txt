@@ -39,3 +39,7 @@ add_executable(unique_thread_test unique_thread_test.cpp)
 target_link_libraries(unique_thread_test srslog srsgnb_support)
 add_test(unique_thread_test unique_thread_test)
 set_tests_properties(unique_thread_test PROPERTIES LABELS "tsan")
+
+add_executable(stats_test stats_test.cpp)
+target_link_libraries(stats_test srslog)
+add_test(stats_test stats_test)
