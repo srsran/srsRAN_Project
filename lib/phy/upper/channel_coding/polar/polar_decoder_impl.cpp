@@ -14,7 +14,7 @@
 
 using namespace srsgnb;
 
-void vec_function_f(const log_likelihood_ratio* x, const log_likelihood_ratio* y, log_likelihood_ratio* z, unsigned len)
+void vec_function_f(log_likelihood_ratio* z, const log_likelihood_ratio* x, const log_likelihood_ratio* y, unsigned len)
 {
   for (unsigned i = 0; i != len; ++i) {
     z[i] = log_likelihood_ratio::soft_xor(x[i], y[i]);
@@ -27,10 +27,10 @@ log_likelihood_ratio switch_combine(log_likelihood_ratio x, log_likelihood_ratio
   return ((b == 0) ? x + y : x - y);
 }
 
-void vec_function_g(const uint8_t*              b,
+void vec_function_g(log_likelihood_ratio*       z,
                     const log_likelihood_ratio* x,
                     const log_likelihood_ratio* y,
-                    log_likelihood_ratio*       z,
+                    const uint8_t*              b,
                     const uint16_t              len)
 {
   for (int i = 0; i != len; ++i) {
@@ -60,9 +60,8 @@ polar_decoder_impl::tmp_node_s::tmp_node_s(uint8_t nMax)
 }
 
 void polar_decoder_impl::tmp_node_s::compute(std::vector<node_rate*>& node_type,
-                                             const uint16_t*          frozen_set,
-                                             const uint16_t           code_size_log,
-                                             const uint16_t           frozen_set_size)
+                                             span<const uint16_t>     frozen_set,
+                                             const uint16_t           code_size_log)
 {
   uint8_t s = 0; // stage
 
@@ -80,9 +79,9 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<node_rate*>& node_type,
   // node_type = is_not_rate_0_node: 0 if rate 0, 1 if not rate 0.
   std::fill(is_not_rate_0.begin(), is_not_rate_0.begin() + code_size, 1);
   std::fill(is_rate_1.begin(), is_rate_1.begin() + code_size, 1);
-  for (uint16_t i = 0; i < frozen_set_size; i++) {
-    is_not_rate_0[frozen_set[i]] = 0;
-    is_rate_1[frozen_set[i]]     = 0;
+  for (const uint16_t fs : frozen_set) {
+    is_not_rate_0[fs] = 0;
+    is_rate_1[fs]     = 0;
   }
 
   s = 0;
@@ -107,7 +106,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   param.code_stage_size.resize(nMax + 1);
 
   param.code_stage_size[0] = 1;
-  for (uint8_t i = 1; i < nMax + 1; i++) {
+  for (uint8_t i = 1; i != nMax + 1; ++i) {
     param.code_stage_size[i] = 2 * param.code_stage_size[i - 1];
   }
 
@@ -149,7 +148,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   param.node_type[0] = param.node_type_alloc.data();
 
   // initialize all node type pointers. (stage 0 is the first, opposite to LLRs)
-  for (uint8_t s = 1; s < nMax + 1; s++) {
+  for (uint8_t s = 1; s != nMax + 1; ++s) {
     param.node_type[s] = param.node_type[s - 1] + param.code_stage_size[nMax - s + 1];
   }
 }
@@ -157,8 +156,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
 void polar_decoder_impl::init(span<uint8_t>                    data_decoded,
                               span<const log_likelihood_ratio> input_llr,
                               const uint8_t                    code_size_log,
-                              const uint16_t*                  frozen_set,
-                              const uint16_t                   frozen_set_size)
+                              span<const uint16_t>             frozen_set)
 {
   param.code_size_log     = code_size_log;
   uint16_t code_size      = param.code_stage_size[code_size_log];
@@ -178,13 +176,11 @@ void polar_decoder_impl::init(span<uint8_t>                    data_decoded,
 
   // Initializes the state of the decoding tree
   state.stage = code_size_log + 1; // start from the only one node at the last stage + 1.
-  for (uint16_t i = 0; i != code_size_log + 1; ++i) {
-    state.active_node_per_stage[i] = 0;
-  }
+  srsvec::zero(state.active_node_per_stage.first(code_size_log + 1));
   state.flag_finished = false;
 
   // computes the node types for the decoding tree
-  tmp_node_type.compute(param.node_type, frozen_set, code_size_log, frozen_set_size);
+  tmp_node_type.compute(param.node_type, frozen_set, code_size_log);
 }
 
 void polar_decoder_impl::rate_0_node()
@@ -199,7 +195,7 @@ void polar_decoder_impl::rate_0_node()
   } else {
     // update active node at all the stages
     for (uint8_t i = 0; i <= stage; ++i) {
-      state.active_node_per_stage[i] = state.active_node_per_stage[i] + param.code_stage_size[stage - i];
+      state.active_node_per_stage[i] += param.code_stage_size[stage - i];
     }
   }
 }
@@ -226,7 +222,7 @@ void polar_decoder_impl::rate_1_node(span<uint8_t> message)
 
   // update active node at all the stages
   for (uint8_t i = 0; i <= stage; ++i) {
-    state.active_node_per_stage[i] = state.active_node_per_stage[i] + param.code_stage_size[stage - i];
+    state.active_node_per_stage[i] += param.code_stage_size[stage - i];
   }
 
   // check if this is the last bit
@@ -246,11 +242,11 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   uint16_t stage_size      = param.code_stage_size[stage];
   uint16_t stage_half_size = param.code_stage_size[stage - 1];
 
-  vec_function_f(llr0[stage], llr1[stage], llr0[stage - 1], stage_half_size);
+  vec_function_f(llr0[stage - 1], llr0[stage], llr1[stage], stage_half_size);
 
   // move to the child node to the left (up) of the tree.
   simplified_node(message);
-  if (state.flag_finished == true) { // (just in case). However for 5G frozen sets, the code can never end here.
+  if (state.flag_finished) { // (just in case). However for 5G frozen sets, the code can never end here.
     return;
   }
 
@@ -258,11 +254,11 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   offset0  = bit_pos - stage_half_size;
   estbits0 = est_bit.data() + offset0;
 
-  vec_function_g(estbits0, llr0[stage], llr1[stage], llr0[stage - 1], stage_half_size);
+  vec_function_g(llr0[stage - 1], llr0[stage], llr1[stage], estbits0, stage_half_size);
 
   // move to the child node to the right (down) of the tree.
   simplified_node(message);
-  if (state.flag_finished == true) {
+  if (state.flag_finished) {
     return;
   }
 
@@ -278,12 +274,12 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
                      span<uint8_t>(estbits0, stage_half_size));
 
   // update this node index
-  state.active_node_per_stage[stage] = state.active_node_per_stage[stage] + 1; // return to the father node
+  ++state.active_node_per_stage[stage]; // return to the father node
 }
 
 void polar_decoder_impl::simplified_node(span<uint8_t> message)
 {
-  state.stage--; // to child node.
+  --state.stage; // to child node.
 
   uint8_t  stage   = state.stage;
   uint16_t bit_pos = state.active_node_per_stage[stage];
@@ -299,12 +295,10 @@ void polar_decoder_impl::simplified_node(span<uint8_t> message)
       rate_r_node(message);
       break;
     default:
-      printf("ERROR: wrong node type %d\n", param.node_type[stage][bit_pos]);
-      exit(-1);
-      break;
+      srsran_assertion_failure("ERROR: wrong node type {}.", param.node_type[stage][bit_pos]);
   }
 
-  state.stage++; // to parent node.
+  ++state.stage; // to parent node.
 }
 
 void polar_decoder_impl::decode(span<uint8_t>                    data_decoded,
@@ -313,7 +307,7 @@ void polar_decoder_impl::decode(span<uint8_t>                    data_decoded,
 {
   span<const uint16_t> frozen_set = code.get_F_set();
 
-  init(data_decoded, input_llr, code.get_n(), frozen_set.data(), frozen_set.size());
+  init(data_decoded, input_llr, code.get_n(), frozen_set);
 
   simplified_node(data_decoded);
 }

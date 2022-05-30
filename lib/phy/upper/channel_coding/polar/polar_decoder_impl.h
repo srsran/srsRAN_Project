@@ -79,11 +79,7 @@ private:
     /// \param[out] node_type      Two-dimensional pointer containing the node type at each stage of the decoding tree.
     /// \param[in] frozen_set      Position of the frozen bits in the codeword.
     /// \param[in] code_size_log   \f$log_2\f$ of code size.
-    /// \param[in] frozen_set_size The size of the frozen set.
-    void compute(std::vector<node_rate*>& node_type,
-                 const uint16_t*          frozen_set,
-                 const uint16_t           code_size_log,
-                 const uint16_t           frozen_set_size);
+    void compute(std::vector<node_rate*>& node_type, span<const uint16_t> frozen_set, uint16_t code_size_log);
   };
 
   /// LLR values for stage 0 (i.e., received LLRs).
@@ -110,12 +106,10 @@ private:
   /// \param[in] input_llr        Input codeblock as a sequence of log-likelihood ratios.
   /// \param[in] code_size_log    Codeblock size (binary logarithm thereof).
   /// \param[in] frozen_set       Indices of the frozen bits.
-  /// \param[in] frozen_set_size  Size of the frozen set.
   void init(span<uint8_t>                    data_decoded,
             span<const log_likelihood_ratio> input_llr,
-            const uint8_t                    code_size_log,
-            const uint16_t*                  frozen_set,
-            const uint16_t                   frozen_set_size);
+            uint8_t                          code_size_log,
+            span<const uint16_t>             frozen_set);
 
   /// \brief Updates a RATE_0 node.
   ///
