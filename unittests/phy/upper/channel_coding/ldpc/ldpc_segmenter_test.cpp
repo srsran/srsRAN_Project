@@ -16,7 +16,8 @@
 
 #include "ldpc_segmenter_test_data.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <numeric>
 

@@ -183,7 +183,7 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
       // Dematch the new LLRs and combine them with the ones from previous transmissions.
       dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);
 
-      // Try to decode
+      // Try to decode.
       optional<unsigned> nof_iters = decode_cblk(message, codeblock, decoder.get(), block_crc, cb_meta, cfg);
 
       if (nof_iters.has_value()) {
