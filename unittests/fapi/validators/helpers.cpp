@@ -73,6 +73,13 @@ static std::tuple<ssb_pattern_case, subcarrier_spacing, unsigned> generate_rando
           lmax[lmax_dist(gen)]};
 }
 
+static pci_t generate_pci()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1007);
+
+  return dist(gen);
+}
+
 dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
 {
   dl_ssb_pdu                              pdu;
@@ -427,4 +434,90 @@ rx_data_indication_message unittest::build_valid_rx_data_indication()
   pdu.harq_id = generate_harq();
 
   return msg;
+}
+
+static uint8_t generate_num_prach_ocas()
+{
+  std::uniform_int_distribution<unsigned> dist(1, 7);
+
+  return dist(gen);
+}
+
+static uint8_t generate_index_fd_ra()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 7);
+
+  return dist(gen);
+}
+
+static uint8_t generate_prach_start_symbol()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 13);
+
+  return dist(gen);
+}
+
+static uint8_t generate_num_cs()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 419);
+
+  return dist(gen);
+}
+
+static uint8_t generate_is_msga_prach()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 2);
+
+  return dist(gen);
+}
+
+static prach_format_type generate_prach_format()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 13);
+
+  return static_cast<prach_format_type>(dist(gen));
+}
+
+static prach_config_scope_type generate_prach_config_scope()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+
+  return static_cast<prach_config_scope_type>(dist(gen));
+}
+
+static uint8_t generate_start_preamble()
+{
+  unsigned value = generate_num_cs();
+
+  return (value < 64U) ? value : 255U;
+}
+
+static uint8_t generate_num_preambles_indices()
+{
+  std::uniform_int_distribution<unsigned> dist(1, 64);
+
+  return dist(gen);
+}
+
+ul_prach_pdu unittest::build_valid_ul_prach_pdu()
+{
+  ul_prach_pdu pdu;
+
+  pdu.phys_cell_id                = generate_pci();
+  pdu.num_prach_ocas              = generate_num_prach_ocas();
+  pdu.prach_format                = generate_prach_format();
+  pdu.index_fd_ra                 = generate_index_fd_ra();
+  pdu.prach_start_symbol          = generate_prach_start_symbol();
+  pdu.num_cs                      = generate_num_cs();
+  pdu.is_msg_a_prach              = generate_is_msga_prach();
+  pdu.has_msg_a_pusch_beamforming = generate_is_msga_prach();
+
+  // Maintenance v3 parameters.
+  auto& v3                = pdu.maintenance_v3;
+  v3.prach_config_scope   = generate_prach_config_scope();
+  v3.num_fd_ra            = generate_index_fd_ra() + 1U;
+  v3.start_preamble_index = generate_start_preamble();
+  v3.num_preamble_indices = generate_num_preambles_indices();
+
+  return pdu;
 }

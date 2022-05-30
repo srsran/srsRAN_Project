@@ -15,6 +15,44 @@
 
 namespace unittest {
 
+/// Class that defines the vector test for the validators.
+template <typename T>
+class test_group
+{
+public:
+  // Auxiliary struct.
+  struct data {
+    unsigned value;
+    bool     result;
+  };
+
+  // Aliases for the iterators.
+  using iterator       = data*;
+  using const_iterator = const data*;
+
+  // Iterators.
+  iterator       begin() { return &*values.begin(); }
+  iterator       end() { return &*values.end(); }
+  const_iterator begin() const { return &*values.cbegin(); }
+  const_iterator end() const { return &*values.cend(); }
+
+  test_group(std::function<void(T& pdu, int value)> f, const char* prop, std::vector<data> values) :
+    f(std::move(f)), prop(prop), values(std::move(values))
+  {
+  }
+
+  /// Configure the Next case of the test case. Returns the test result.
+  void update_msg(T& pdu, int value) const { f(pdu, value); }
+
+  /// Returns the property name.
+  const char* property() const { return prop; }
+
+private:
+  std::function<void(T& pdu, int value)> f;
+  const char*                            prop = "";
+  std::vector<data>                      values;
+};
+
 /// Builds and returns a valid DL CSI-RS pdu. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.2.3.
 srsgnb::fapi::dl_csi_rs_pdu build_valid_dl_csi_pdu();
@@ -54,6 +92,10 @@ srsgnb::fapi::slot_indication_message build_valid_slot_indication();
 /// Builds and returns a valid UL_DCI.request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.4.
 srsgnb::fapi::ul_dci_request_message build_valid_ul_dci_request();
+
+/// Builds and returns a valid UL PRACH PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.1.
+srsgnb::fapi::ul_prach_pdu build_valid_ul_prach_pdu();
 
 } // namespace unittest
 

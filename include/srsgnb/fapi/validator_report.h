@@ -21,7 +21,7 @@ namespace fapi {
 /// A validator report holds the context of the fields and values that caused a FAPI message validation to fail.
 struct validator_report {
   /// Maximum number of supported reports.
-  static constexpr unsigned MAX_NUM_REPORTS = 4u;
+  static constexpr unsigned MAX_NUM_REPORTS = 4U;
 
   /// Error report information structure. Contains the information that helps to identify the source of the failure.
   struct error_report {
@@ -36,7 +36,11 @@ struct validator_report {
                  const char*                 name,
                  message_type_id             message_type,
                  unsigned                    pdu_type) :
-      value(value), expected_value_range(range), property_name(name), message_type(message_type), pdu_type(pdu_type)
+      value(value),
+      expected_value_range(std::move(range)),
+      property_name(name),
+      message_type(message_type),
+      pdu_type(pdu_type)
     {
     }
 
@@ -46,7 +50,7 @@ struct validator_report {
     }
 
     error_report(int32_t value, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type) :
-      value(value), expected_value_range(range), property_name(name), message_type(message_type)
+      value(value), expected_value_range(std::move(range)), property_name(name), message_type(message_type)
     {
     }
 
@@ -65,30 +69,43 @@ struct validator_report {
               message_type_id             message_type,
               unsigned                    pdu_type)
   {
-    reports.emplace_back(value, range, name, message_type, pdu_type);
+    ++nof_errors;
+    if (reports.size() < MAX_NUM_REPORTS) {
+      reports.emplace_back(value, range, name, message_type, pdu_type);
+    }
   }
 
   /// Appends an error report.
   void append(int32_t value, const char* name, message_type_id message_type, unsigned pdu_type)
   {
-    reports.emplace_back(value, name, message_type, pdu_type);
+    ++nof_errors;
+    if (reports.size() < MAX_NUM_REPORTS) {
+      reports.emplace_back(value, name, message_type, pdu_type);
+    }
   }
 
   /// Appends an error report.
   void append(int32_t value, std::pair<int32_t, int32_t> range, const char* name, message_type_id message_type)
   {
-    reports.emplace_back(value, range, name, message_type);
+    ++nof_errors;
+    if (reports.size() < MAX_NUM_REPORTS) {
+      reports.emplace_back(value, range, name, message_type);
+    }
   }
 
   /// Appends an error report.
   void append(int32_t value, const char* name, message_type_id message_type)
   {
-    reports.emplace_back(value, name, message_type);
+    ++nof_errors;
+    if (reports.size() < MAX_NUM_REPORTS) {
+      reports.emplace_back(value, name, message_type);
+    }
   }
 
   uint16_t                                     sfn;
   uint16_t                                     slot;
   static_vector<error_report, MAX_NUM_REPORTS> reports;
+  unsigned                                     nof_errors = 0;
 };
 
 } // namespace fapi

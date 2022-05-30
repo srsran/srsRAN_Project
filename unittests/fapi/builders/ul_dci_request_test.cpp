@@ -29,6 +29,7 @@ static void test_ul_dci_builder_ok()
   unsigned nof_dcis = 0;
 
   builder.set_basic_parameters(sfn, slot);
+
   for (unsigned i = 0, e = 10; i != e; ++i) {
     unsigned dci = sfn_dist(gen);
     nof_dcis += dci;

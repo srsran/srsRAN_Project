@@ -38,23 +38,14 @@ static void test_add_prach_pdu()
   TESTASSERT(msg.pdus.empty());
   TESTASSERT_EQ(0, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PRACH)]);
 
-  pci_t             pci                        = 3;
-  uint8_t           num_occasions              = 4;
-  prach_format_type format_type                = prach_format_type::one;
-  uint8_t           index_fd_ra                = 5;
-  uint8_t           prach_start_symbol         = 5;
-  uint16_t          num_cs                     = 15;
-  uint8_t           is_msga_prach              = 1;
-  bool              has_msga_pusch_beamforming = true;
-  
-  builder.add_prach_pdu(pci,
-                        num_occasions,
-                        format_type,
-                        index_fd_ra,
-                        prach_start_symbol,
-                        num_cs,
-                        is_msga_prach,
-                        has_msga_pusch_beamforming);
+  pci_t             pci                = 3;
+  uint8_t           num_occasions      = 4;
+  prach_format_type format_type        = prach_format_type::one;
+  uint8_t           index_fd_ra        = 5;
+  uint8_t           prach_start_symbol = 5;
+  uint16_t          num_cs             = 15;
+
+  builder.add_prach_pdu(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
 
   TESTASSERT_EQ(1U, msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PRACH)]);
   TESTASSERT_EQ(1U, msg.pdus.size());
@@ -67,8 +58,8 @@ static void test_add_prach_pdu()
   TESTASSERT_EQ(index_fd_ra, pdu.index_fd_ra);
   TESTASSERT_EQ(prach_start_symbol, pdu.prach_start_symbol);
   TESTASSERT_EQ(num_cs, pdu.num_cs);
-  TESTASSERT_EQ(is_msga_prach, pdu.is_msg_a_prach);
-  TESTASSERT_EQ(has_msga_pusch_beamforming, pdu.has_msg_a_pusch_beamforming);
+  TESTASSERT_EQ(0, pdu.is_msg_a_prach);
+  TESTASSERT(!pdu.has_msg_a_pusch_beamforming);
 }
 
 static void test_ul_tti_request_builder_ok()

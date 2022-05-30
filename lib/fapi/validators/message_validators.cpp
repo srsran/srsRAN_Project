@@ -15,6 +15,7 @@
 #include "dl_ssb_pdu.h"
 #include "helpers.h"
 #include "uci_pdus.h"
+#include "ul_prach_pdu.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -37,6 +38,16 @@ static bool validate_slot(unsigned value, message_type_id msg_type, validator_re
   return validate_field(MIN_VALUE, MAX_VALUE, value, "slot", msg_type, report);
 }
 
+/// Validates the number of PDU Groups property of a DL_TTI.request or UL_TTI.request, as per SCF-222 v4.0 section 3.4.2
+/// and 3.4.3.
+static bool validate_num_groups(unsigned value, message_type_id msg_type, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 3822;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Number of PDU groups", msg_type, report);
+}
+
 error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_request_message& msg)
 {
   validator_report report(msg.sfn, msg.slot);
@@ -45,6 +56,7 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
   bool success = true;
   success &= validate_sfn(msg.sfn, message_type_id::dl_tti_request, report);
   success &= validate_slot(msg.slot, message_type_id::dl_tti_request, report);
+  success &= validate_num_groups(msg.num_groups, message_type_id::dl_tti_request, report);
 
   // Validate each PDU.
   for (const auto& pdu : msg.pdus) {
@@ -184,7 +196,7 @@ static bool validate_harq_id(unsigned value, message_type_id msg_id, validator_r
   return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ ID", msg_id, report);
 }
 
-/// Validates the TB CRC status property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+/// Validates the TB CRC status property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_tb_crc_status(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
@@ -193,7 +205,7 @@ static bool validate_tb_crc_status(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "TB CRC status", message_type_id::crc_indication, report);
 }
 
-/// Validates the UL SINR metric property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+/// Validates the UL SINR metric property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_ul_sinr_metric(int value, validator_report& report)
 {
   static constexpr int INVALID   = -32768;
@@ -207,7 +219,7 @@ static bool validate_ul_sinr_metric(int value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "UL SINR metric", message_type_id::crc_indication, report);
 }
 
-/// Validates the timing advance offset property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+/// Validates the timing advance offset property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_timing_advance_offset(unsigned value, validator_report& report)
 {
   static constexpr unsigned INVALID   = 65535;
@@ -221,7 +233,7 @@ static bool validate_timing_advance_offset(unsigned value, validator_report& rep
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Timing advance offset", message_type_id::crc_indication, report);
 }
 
-/// Validates the timing advance offset in nanoseconds property of a CRC.indication PDU, as per  SCF-222 v4.0
+/// Validates the timing advance offset in nanoseconds property of a CRC.indication PDU, as per SCF-222 v4.0
 /// section 3.4.8.
 static bool validate_timing_advance_offset_ns(int value, validator_report& report)
 {
@@ -237,7 +249,7 @@ static bool validate_timing_advance_offset_ns(int value, validator_report& repor
       MIN_VALUE, MAX_VALUE, value, "Timing advance offset in nanoseconds", message_type_id::crc_indication, report);
 }
 
-/// Validates the RSSI property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+/// Validates the RSSI property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_rssi(unsigned value, validator_report& report)
 {
   static constexpr unsigned INVALID   = 65535;
@@ -251,7 +263,7 @@ static bool validate_rssi(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "RSSI", message_type_id::crc_indication, report);
 }
 
-/// Validates the RSRP property of a CRC.indication PDU, as per  SCF-222 v4.0 section 3.4.8.
+/// Validates the RSRP property of a CRC.indication PDU, as per SCF-222 v4.0 section 3.4.8.
 static bool validate_rsrp(unsigned value, validator_report& report)
 {
   static constexpr unsigned INVALID   = 65535;
@@ -647,6 +659,39 @@ error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_i
   bool success = true;
   success &= validate_sfn(msg.sfn, msg_id, report);
   success &= validate_slot(msg.slot, msg_id, report);
+
+  // Build the result.
+  if (!success) {
+    return error_type<validator_report>(std::move(report));
+  }
+
+  return {};
+}
+
+
+error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_request_message& msg)
+{
+  validator_report                 report(msg.sfn, msg.slot);
+  static constexpr message_type_id msg_type = message_type_id::ul_tti_request;
+
+  // Validate the SFN and slot.
+  bool success = true;
+  success &= validate_sfn(msg.sfn, msg_type, report);
+  success &= validate_slot(msg.slot, msg_type, report);
+  success &= validate_num_groups(msg.num_groups, msg_type, report);
+
+  // Validate each PDU.
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case ul_pdu_type::PRACH:
+        success &= validate_ul_prach_pdu(pdu.prach_pdu, report);
+        break;
+      default:
+        srsran_assert(0, "Invalid pdu_type");
+        report.append(static_cast<unsigned>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
+        break;
+    }
+  }
 
   // Build the result.
   if (!success) {

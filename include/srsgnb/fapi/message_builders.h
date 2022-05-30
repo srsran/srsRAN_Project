@@ -394,6 +394,9 @@ public:
     pdu.pdu_bitmap                           = 0U;
     pdu.is_last_cb_present                   = 0U;
     pdu.pdsch_maintenance_v3.tb_crc_required = 0U;
+    pdu.rb_bitmap.fill(0);
+    pdu.dl_tb_crc_cw.fill(0);
+    pdu.pdsch_maintenance_v3.ssb_pdus_for_rate_matching.fill(0);
   }
 
   /// Sets the basic parameters for the fields of the PDSCH PDU.
@@ -824,7 +827,11 @@ class dl_tti_request_message_builder
 
 public:
   /// Constructs a builder that will help to fill the given DL TTI request message.
-  explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg) { msg.num_dl_types = NUM_DL_TYPES; }
+  explicit dl_tti_request_message_builder(dl_tti_request_message& msg) : msg(msg)
+  {
+    msg.num_dl_types = NUM_DL_TYPES;
+    msg.num_pdus_of_each_type.fill(0);
+  }
 
   /// Sets the DL_TTI.request basic parameters and returns a reference to the builder.
   /// \note nPDUs and nPDUsOfEachType properties are filled by the add_*_pdu() functions.
@@ -966,6 +973,7 @@ public:
   explicit ul_dci_request_message_builder(ul_dci_request_message& msg) : msg(msg)
   {
     msg.num_dl_types = ul_dci_request_message::MAX_NUM_DL_TYPES;
+    msg.num_pdus_of_each_type.fill(0);
   }
 
   /// Sets the UL_DCI.request basic parameters and returns a reference to the builder.
@@ -1822,9 +1830,7 @@ public:
                                              prach_format_type format_type,
                                              uint8_t           index_fd_ra,
                                              uint8_t           prach_start_symbol,
-                                             uint16_t          num_cs,
-                                             uint8_t           is_msga_prach,
-                                             bool              has_msga_pusch_beamforming)
+                                             uint16_t          num_cs)
   {
     pdu.phys_cell_id                = pci;
     pdu.num_prach_ocas              = num_occasions;
@@ -1832,28 +1838,29 @@ public:
     pdu.index_fd_ra                 = index_fd_ra;
     pdu.prach_start_symbol          = prach_start_symbol;
     pdu.num_cs                      = num_cs;
-    pdu.is_msg_a_prach              = is_msga_prach;
-    pdu.has_msg_a_pusch_beamforming = has_msga_pusch_beamforming;
+    pdu.is_msg_a_prach              = 0;
+    pdu.has_msg_a_pusch_beamforming = false;
 
     return *this;
   }
 
   /// Sets the PRACH PDU maintenance v3 basic parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.1 in table PRACH maintenance FAPIv3.
-  ul_prach_pdu_builder& set_maintenance_v3_basic_parameters(uint32_t handle,
-                                                            uint8_t  prach_config_scope,
-                                                            uint16_t prach_res_config_index,
-                                                            uint8_t  num_fd_ra,
-                                                            uint8_t  start_preamble_index,
-                                                            uint8_t  num_preambles_indices)
+  ul_prach_pdu_builder& set_maintenance_v3_basic_parameters(uint32_t                handle,
+                                                            prach_config_scope_type prach_config_scope,
+                                                            uint16_t                prach_res_config_index,
+                                                            uint8_t                 num_fd_ra,
+                                                            optional<uint8_t>       start_preamble_index,
+                                                            uint8_t                 num_preambles_indices)
   {
     auto& v3                  = pdu.maintenance_v3;
     v3.handle                 = handle;
     v3.prach_config_scope     = prach_config_scope;
     v3.prach_res_config_index = prach_res_config_index;
     v3.num_fd_ra              = num_fd_ra;
-    v3.start_preamble_index   = start_preamble_index;
-    v3.num_preamble_indices   = num_preambles_indices;
+    v3.start_preamble_index =
+        (start_preamble_index) ? start_preamble_index.value() : std::numeric_limits<uint8_t>::max();
+    v3.num_preamble_indices = num_preambles_indices;
 
     return *this;
   }
@@ -1893,9 +1900,7 @@ public:
                                      prach_format_type format_type,
                                      uint8_t           index_fd_ra,
                                      uint8_t           prach_start_symbol,
-                                     uint16_t          num_cs,
-                                     uint8_t           is_msga_prach,
-                                     bool              has_msga_pusch_beamforming)
+                                     uint16_t          num_cs)
   {
     msg.pdus.emplace_back();
     auto& pdu    = msg.pdus.back();
@@ -1904,14 +1909,7 @@ public:
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PRACH)];
 
     ul_prach_pdu_builder builder(pdu.prach_pdu);
-    builder.set_basic_parameters(pci,
-                                 num_occasions,
-                                 format_type,
-                                 index_fd_ra,
-                                 prach_start_symbol,
-                                 num_cs,
-                                 is_msga_prach,
-                                 has_msga_pusch_beamforming);
+    builder.set_basic_parameters(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
 
     return builder;
   }

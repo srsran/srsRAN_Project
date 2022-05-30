@@ -411,14 +411,16 @@ struct dl_tti_response_message : public base_message {
 /// Uplink PDU type ID.
 enum class ul_pdu_type : uint16_t { PRACH, PUSCH, PUCCH, SRS, msg_a_PUSCH };
 
+enum class prach_config_scope_type : uint8_t { common_context, phy_context };
+
 /// PRACH maintenance parameters added in FAPIv3.
 struct ul_prach_maintenance_v3 {
-  uint32_t handle;
-  uint8_t  prach_config_scope;
-  uint16_t prach_res_config_index;
-  uint8_t  num_fd_ra;
-  uint8_t  start_preamble_index;
-  uint8_t  num_preamble_indices;
+  uint32_t                handle;
+  prach_config_scope_type prach_config_scope;
+  uint16_t                prach_res_config_index;
+  uint8_t                 num_fd_ra;
+  uint8_t                 start_preamble_index;
+  uint8_t                 num_preamble_indices;
 };
 
 enum class prach_format_type : uint8_t {
