@@ -29,7 +29,7 @@ struct rlc_um_pdu_header {
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 version 15.3.0 Section 6.2.2.3
  ***************************************************************************/
-bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn_size, rlc_um_pdu_header* header)
+inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn_size, rlc_um_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.empty()) {
@@ -42,7 +42,7 @@ bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn
   // Fixed part
   if (sn_size == rlc_um_sn_size::size6bits) {
     header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
-    header->sn = *pdu_reader & 0x3F;                          // 6 bits SN
+    header->sn = *pdu_reader & 0x3FU;                         // 6 bits SN
     // sanity check
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
       fprintf(stderr, "Malformed PDU, reserved bits are set.\n");
@@ -50,8 +50,8 @@ bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn
     }
     ++pdu_reader;
   } else if (sn_size == rlc_um_sn_size::size12bits) {
-    header->si = (rlc_si_field)((*pdu_reader >> 6) & 0x03); // 2 bits SI
-    header->sn = (*pdu_reader & 0x0F) << 8;                 // 4 bits SN
+    header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
+    header->sn = (*pdu_reader & 0x0FU) << 8U;                 // 4 bits SN
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
       fprintf(stderr, "Malformed PDU, reserved bits are set.\n");
       return false;
@@ -60,7 +60,7 @@ bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn
     // sanity check
     if (header->si == rlc_si_field::first_segment) {
       // make sure two reserved bits are not set
-      if (((*pdu_reader >> 4) & 0x03) != 0) {
+      if (((*pdu_reader >> 4U) & 0x03U) != 0) {
         fprintf(stderr, "Malformed PDU, reserved bits are set.");
         return false;
       }
@@ -69,7 +69,7 @@ bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn
     if (header->si != rlc_si_field::full_sdu) {
       // continue unpacking remaining SN
       ++pdu_reader;
-      header->sn |= (*pdu_reader & 0xFF); // 8 bits SN
+      header->sn |= (*pdu_reader & 0xFFU); // 8 bits SN
     }
 
     ++pdu_reader;
@@ -113,7 +113,7 @@ uint32_t rlc_um_packed_length(const rlc_um_pdu_header& header)
   return len;
 }
 
-bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
+inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
 {
   // Make room for the header
   uint32_t len = rlc_um_packed_length(header);
@@ -121,27 +121,27 @@ bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& 
 
   byte_buffer::iterator pdu_it = pdu.begin();
   // write SI field
-  (*pdu_it) = ((to_number(header.si) & 0x03) << 6); // 2 bits SI
+  (*pdu_it) = ((to_number(header.si) & 0x03U) << 6U); // 2 bits SI
 
   if (header.si == rlc_si_field::full_sdu) {
     // that's all
   } else {
     if (header.sn_size == rlc_um_sn_size::size6bits) {
       // write SN
-      (*pdu_it) |= (header.sn & 0x3f); // 6 bit SN
+      (*pdu_it) |= (header.sn & 0x3FU); // 6 bit SN
       ++pdu_it;
     } else {
       // 12bit SN
-      (*pdu_it) |= (header.sn >> 8) & 0xf; // high part of SN (4 bit)
+      (*pdu_it) |= (header.sn >> 8U) & 0xFU; // high part of SN (4 bit)
       ++pdu_it;
-      (*pdu_it) = (header.sn & 0xFF); // remaining 8 bit SN
+      (*pdu_it) = (header.sn & 0xFFU); // remaining 8 bit SN
       ++pdu_it;
     }
-    if (header.so) {
+    if (header.so != 0) {
       // write SO
-      (*pdu_it) = (header.so) >> 8; // first part of SO
+      (*pdu_it) = (header.so) >> 8U; // first part of SO
       ++pdu_it;
-      (*pdu_it) = (header.so & 0xFF); // second part of SO
+      (*pdu_it) = (header.so & 0xFFU); // second part of SO
       ++pdu_it;
     }
   }
