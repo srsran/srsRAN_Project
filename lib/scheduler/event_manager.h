@@ -39,7 +39,6 @@ public:
   void handle_cell_configuration_request(const sched_cell_configuration_request_message& msg);
   void handle_sr_indication(const sr_indication_message& sr_ind);
   void handle_ul_bsr(const ul_bsr_indication_message& bsr_ind);
-  void handle_rach_indication(const rach_indication_message& rach_ind);
 
   /// Process events for a given slot and cell index.
   void run(slot_point sl_tx, du_cell_index_t cell_index);

@@ -17,7 +17,10 @@
 
 namespace srsgnb {
 
-class mac_scheduler : public scheduler_configurator, public scheduler_feedback_handler, public scheduler_slot_handler
+class mac_scheduler : public scheduler_configurator,
+                      public scheduler_ue_configurator,
+                      public scheduler_feedback_handler,
+                      public scheduler_slot_handler
 {
 public:
   virtual ~mac_scheduler() = default;

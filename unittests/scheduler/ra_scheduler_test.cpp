@@ -178,7 +178,7 @@ void static enqueue_rach_indications(const std::list<rach_indication_message>& r
   // Process all RACH indications received at sl_rx_prach
   for (auto& rach_ind_item : rach_ind_list) {
     if (rach_ind_item.slot_rx == slot_rx_prach) {
-      TESTASSERT(rach_sched.handle_rach_indication(rach_ind_item));
+      rach_sched.handle_rach_indication(rach_ind_item);
     }
   }
 }
@@ -523,7 +523,7 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 
     if (sl_rx == prach_sl_rx) {
       // Enqueue PRACH
-      TESTASSERT(ra_sch.handle_rach_indication(rach_ind));
+      ra_sch.handle_rach_indication(rach_ind);
     }
 
     unsigned msg3_delay = get_msg3_delay(bench.cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0],
@@ -581,7 +581,7 @@ void test_ra_sched_tdd_single_rach()
   // Enqueue RACH.
   slot_point              prach_sl_rx{0, 7};
   rach_indication_message rach_ind = generate_rach_ind_msg(prach_sl_rx, to_rnti(0x4601));
-  TESTASSERT(ra_sch.handle_rach_indication(rach_ind));
+  ra_sch.handle_rach_indication(rach_ind);
 
   slot_point rar_sl;
   slot_point sl_rx = prach_sl_rx;

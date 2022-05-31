@@ -11,6 +11,7 @@
 #ifndef SRSGNB_RA_SCHEDULER_H
 #define SRSGNB_RA_SCHEDULER_H
 
+#include "../slot_event_list.h"
 #include "../ue/harq_process.h"
 #include "pdcch_scheduler.h"
 #include "resource_grid.h"
@@ -40,8 +41,8 @@ public:
   explicit ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sched_);
 
   /// Enqueue RACH indication
-  /// See TS 38.321, 5.1.3 - RAP transmission
-  bool handle_rach_indication(const rach_indication_message& msg);
+  /// \remark See TS 38.321, 5.1.3 - RAP transmission.
+  void handle_rach_indication(const rach_indication_message& msg);
 
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
@@ -66,6 +67,8 @@ private:
   const bwp_configuration&   get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
   const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
+
+  bool handle_rach_indication_impl(const rach_indication_message& msg);
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
   void log_rars(const cell_resource_allocator& res_alloc) const;
@@ -94,8 +97,9 @@ private:
   const unsigned        ra_win_nof_slots;
 
   // variables
-  std::deque<pending_rar_t> pending_rars;
-  std::vector<pending_msg3> pending_msg3s;
+  slot_event_list<rach_indication_message> pending_rachs;
+  std::deque<pending_rar_t>                pending_rars;
+  std::vector<pending_msg3>                pending_msg3s;
 };
 
 } // namespace srsgnb

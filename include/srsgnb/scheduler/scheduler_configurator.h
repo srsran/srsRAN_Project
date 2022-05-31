@@ -124,9 +124,15 @@ public:
   virtual ~scheduler_configurator()                                                                   = default;
   virtual bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) = 0;
   virtual void handle_rach_indication(const rach_indication_message& msg)                             = 0;
-  virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)             = 0;
-  virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)  = 0;
-  virtual void handle_ue_delete_request(du_ue_index_t ue_index)                                       = 0;
+};
+
+class scheduler_ue_configurator
+{
+public:
+  virtual ~scheduler_ue_configurator()                                                               = default;
+  virtual void handle_add_ue_request(const sched_ue_creation_request_message& ue_request)            = 0;
+  virtual void handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request) = 0;
+  virtual void handle_ue_delete_request(du_ue_index_t ue_index)                                      = 0;
 };
 
 /// Interface used by scheduler to notify MAC that a configuration is complete.

@@ -91,18 +91,6 @@ void event_manager::handle_ul_bsr(const ul_bsr_indication_message& bsr_ind)
       bsr_ind.ue_index, [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("sr_ind(ueId={})", bsr_ind.ue_index); });
 }
 
-void event_manager::handle_rach_indication(const rach_indication_message& rach_ind)
-{
-  srsran_sanity_check(cell_exists(rach_ind.cell_index), "Invalid cell index");
-  auto& cell = *events_per_cell_list[rach_ind.cell_index];
-
-  std::lock_guard<std::mutex> lock(cell.mutex);
-  cell.next_events.emplace_back(MAX_NOF_DU_UES, [this, rach_ind](event_logger& ev_logger) {
-    cells[rach_ind.cell_index].ra_sch.handle_rach_indication(rach_ind);
-    ev_logger.enqueue("rach_ind(tc-rnti={:#x})", rach_ind.crnti);
-  });
-}
-
 void event_manager::process_common(slot_point sl_tx)
 {
   event_logger ev_logger{MAX_NOF_DU_CELLS, logger};

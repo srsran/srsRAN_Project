@@ -64,7 +64,13 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
   pending_msg3s(MAX_NOF_MSG3)
 {}
 
-bool ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
+void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
+{
+  // Buffer detected RACHs to be handled in next slot.
+  pending_rachs.push(msg);
+}
+
+bool ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
 {
   const static unsigned prach_duration = 1; // TODO: Take from config
 
@@ -132,6 +138,13 @@ bool ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   slot_point pdcch_slot = res_alloc.slot_tx();
+
+  // Pop pending RACHs and process them.
+  pending_rachs.slot_indication();
+  span<const rach_indication_message> new_rachs = pending_rachs.get_events();
+  for (const rach_indication_message& rach : new_rachs) {
+    handle_rach_indication_impl(rach);
+  }
 
   // Ensure slot for RAR PDCCH+PDSCH has DL enabled.
   if (not cfg.is_dl_enabled(pdcch_slot)) {

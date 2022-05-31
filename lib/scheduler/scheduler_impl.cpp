@@ -37,7 +37,8 @@ void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfigur
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
-  pending_events.handle_rach_indication(msg);
+  srsran_assert(cells.has_cell(msg.cell_index), "Invalid cell_index={}", msg.cell_index);
+  cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
 }
 
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
