@@ -171,7 +171,6 @@ void test_rlc_um_12bit_complete_sdu()
     TESTASSERT(hdr.so == 0);
     TESTASSERT(hdr.sn == 0);
   }
-  TESTASSERT(rlc_um_packed_length(hdr) == header_len);
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
@@ -210,7 +209,6 @@ void test_rlc_um_12bit_middle_segment()
     TESTASSERT(hdr.so == 360);
     TESTASSERT(hdr.sn == 5);
   }
-  TESTASSERT(rlc_um_packed_length(hdr) == header_len);
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
@@ -249,7 +247,6 @@ void test_rlc_um_12bit_first_segment()
     TESTASSERT(hdr.so == 0);
     TESTASSERT(hdr.sn == 5);
   }
-  TESTASSERT(rlc_um_packed_length(hdr) == header_len);
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);
@@ -282,7 +279,6 @@ void test_rlc_um_12bit_last_segment()
     TESTASSERT(hdr.so == 972);
     TESTASSERT(hdr.sn == 1542);
   }
-  TESTASSERT(rlc_um_packed_length(hdr) == header_len);
   {
     // Pack
     byte_buffer buf = make_pdu_and_log(tv_sdu);

@@ -91,60 +91,31 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
   return true;
 }
 
-uint32_t rlc_um_packed_length(const rlc_um_pdu_header& header)
-{
-  uint32_t len = 0;
-  if (header.si == rlc_si_field::full_sdu) {
-    // that's all ..
-    len++;
-  } else {
-    if (header.sn_size == rlc_um_sn_size::size6bits) {
-      // Only 1B for SN
-      len++;
-    } else {
-      // 2 B for 12bit SN
-      len += 2;
-    }
-    if (header.so) {
-      // Two bytes always for segment information
-      len += 2;
-    }
-  }
-  return len;
-}
-
 inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
 {
-  // Make room for the header
-  uint32_t len = rlc_um_packed_length(header);
-  pdu.prepend(std::vector<uint8_t>(len)); // Dirty hack to prepend bytes to byte buffer (TODO)
-
-  byte_buffer::iterator pdu_it = pdu.begin();
+  byte_buffer        hdr_buf;
+  byte_buffer_writer hdr_writer = hdr_buf;
   // write SI field
-  (*pdu_it) = ((to_number(header.si) & 0x03U) << 6U); // 2 bits SI
+  hdr_writer.append((to_number(header.si) & 0x03U) << 6U); // 2 bits SI
 
   if (header.si == rlc_si_field::full_sdu) {
     // that's all
   } else {
     if (header.sn_size == rlc_um_sn_size::size6bits) {
       // write SN
-      (*pdu_it) |= (header.sn & 0x3FU); // 6 bit SN
-      ++pdu_it;
+      hdr_writer.back() |= (header.sn & 0x3FU); // 6 bit SN
     } else {
       // 12bit SN
-      (*pdu_it) |= (header.sn >> 8U) & 0xFU; // high part of SN (4 bit)
-      ++pdu_it;
-      (*pdu_it) = (header.sn & 0xFFU); // remaining 8 bit SN
-      ++pdu_it;
+      hdr_writer.back() |= (header.sn >> 8U) & 0xFU; // high part of SN (4 bit)
+      hdr_writer.append(header.sn & 0xFFU);          // remaining 8 bit SN
     }
     if (header.so != 0) {
       // write SO
-      (*pdu_it) = (header.so) >> 8U; // first part of SO
-      ++pdu_it;
-      (*pdu_it) = (header.so & 0xFFU); // second part of SO
-      ++pdu_it;
+      hdr_writer.append((header.so) >> 8U); // first part of SO
+      hdr_writer.append(header.so & 0xFFU); // second part of SO
     }
   }
+  pdu.chain_before(std::move(hdr_buf));
   return true;
 }
 } // namespace srsgnb
