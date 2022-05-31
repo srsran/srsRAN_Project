@@ -39,6 +39,13 @@ constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 }
 
 ///< RLC AM NR segmentation info
+enum class rlc_dc_field : unsigned { control = 0b00, data = 0b01 };
+constexpr unsigned to_number(const rlc_dc_field& dc)
+{
+  return static_cast<unsigned>(dc);
+}
+
+///< RLC AM NR segmentation info
 enum class rlc_si_field : unsigned {
   full_sdu                       = 0b00,
   first_segment                  = 0b01,
