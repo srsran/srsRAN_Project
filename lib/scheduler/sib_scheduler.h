@@ -1,0 +1,75 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#ifndef SRSGNB_SIB_SCHEDULER_H
+
+#include "cell/pdcch_scheduler.h"
+#include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/slot_point.h"
+#include "srsgnb/scheduler/sched_consts.h"
+
+namespace srsgnb {
+
+struct cell_slot_resource_allocator;
+enum class ssb_pattern_case;
+
+/// This class schedules the SIB1 and fills the grant for the .
+class sib1_scheduler
+{
+public:
+  sib1_scheduler() = delete;
+  sib1_scheduler(pdcch_scheduler& pdcch_sch, uint8_t pdcch_config_sib1, unsigned numerology);
+
+  /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
+  ///
+  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
+  /// \param[in] sl_point Slot for which the SIB1 scheduler is called.
+  /// \param[in] ssb_periodicity SSB periodicity, which affects SIB1 retransmissions period.
+  /// \param[in] ssb_in_burst_bitmap SSB bitmap, used to determine in which beam the SIB1 needs to scheduled.
+  void schedule_sib1(cell_slot_resource_allocator& res_grid,
+                     const slot_point              sl_point,
+                     uint8_t                       ssb_periodicity,
+                     uint64_t                      ssb_in_burst_bitmap);
+
+  /// \brief Computes the SIB1 n0 slot, at which each beam's SIB1 is allocated [TS 38.213, Section 13].
+  ///
+  /// These slots are computed and saved in the body of the constructor.
+  /// \param[in] pdcch_config_sib1 It is the parameter included in MIB and sent to the UE.
+  /// \param[in] numerology Numerology corresponding to subCarrierSpacingCommon, which much coincide with SCS if initial
+  /// DL BWP.
+  void precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned numerology);
+
+private:
+  /// \brief Searches in PDSCH and PDCCH for space to allocate SIB1 and SIB1's DCI, respectively.
+  ///
+  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
+  /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
+  bool allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx);
+
+  /// \brief Fills  the SIB1 n0 slots, at which each beam's SIB1 is allocated.
+  ///
+  /// These slots are computed and saved in the body of the constructor.
+  /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
+  /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
+  /// \param[in] sib1_crbs_grant CRBs interval in the PDSCH allocated for SIB1.
+  void fill_sib1_grant(cell_slot_resource_allocator& res_grid, unsigned beam_idx, crb_interval sib1_crbs_grant);
+
+  pdcch_scheduler&      pdcch_sched;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+
+  /// Vector of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
+  static_vector<slot_point, MAX_NUM_BEAMS> sib1_n0_slots;
+};
+
+} // end of namespace srsgnb
+
+#define SRSGNB_SIB_SCHEDULER_H
+
+#endif // SRSGNB_SIB_SCHEDULER_H

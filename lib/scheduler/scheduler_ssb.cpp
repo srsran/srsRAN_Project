@@ -15,11 +15,6 @@
 
 using namespace srsgnb;
 
-/// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1).
-#define CUTOFF_FREQ_ARFCN_CASE_A_B_C 600000
-/// The cutoff frequency for case C unpaired is 1.88GHz, corresponding to 376000 ARFCN (TS 38.213, Section 4.1).
-#define CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED 376000
-
 subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
 {
   switch (ssb_case) {

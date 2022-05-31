@@ -21,10 +21,10 @@ const size_t MAX_NOF_LAYERS = 2;
 
 const size_t MAX_NOF_RBGS = 18;
 
-/// SSB constants
-/// This is the max num of SSB in a list of SSB to be passed from SCHED to MAC
+/// SSB constants.
+/// This is the max num of SSB in a list of SSB to be passed from SCHED to MAC.
 const size_t DEFAULT_SSB_PERIODICITY = 5;
-/// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000
+/// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000.
 const unsigned FR1_MAX_FREQUENCY_ARFCN = 875000;
 /// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1).
 const unsigned CUTOFF_FREQ_ARFCN_CASE_A_B_C = 600000;
@@ -32,6 +32,15 @@ const unsigned CUTOFF_FREQ_ARFCN_CASE_A_B_C = 600000;
 const unsigned CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED = 376000;
 const unsigned NOF_SSB_OFDM_SYMBOLS              = 4;
 const unsigned NOF_SSB_PRBS                      = 20;
+
+/// SIB1 constants.
+/// SIB1 periodicity, see TS 38.331, Section 5.2.1.
+const unsigned SIB1_PERIODICITY = 160;
+/// SIB1 Retransmissions periodicity for FR1 (which uses multiplexing pattern 1), see TS 38.331, Section 5.2.1.
+const unsigned SIB1_RETX_PERIODICITY_FR1 = 20;
+/// [Implementation defined] Max numbers of beams, to be used for SIB1 scheduler.
+/// NOTE: This is temporary, and valid only for FR1.
+const unsigned MAX_NUM_BEAMS = 8;
 
 } // namespace srsgnb
 

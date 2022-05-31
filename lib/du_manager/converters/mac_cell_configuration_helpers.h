@@ -164,6 +164,8 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_cfg_common = make_default_dl_config_common();
   msg.ul_cfg_common = make_default_ul_config_common();
 
+  msg.pdcch_config_sib1 = 0b00000110U;
+
   // TODO: Remaining fields.
 
   return msg;

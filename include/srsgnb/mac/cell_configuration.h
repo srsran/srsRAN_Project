@@ -45,6 +45,12 @@ struct mac_cell_creation_request {
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;
 
+  /// This is included in MIB message and defines the CORESET 0 and SearchSpaceSet 0. It will be passed to the
+  /// scheduler.
+  /// NOTE: Although not present in O-RAN WG8, this value must be passed from the DU.
+  // TODO: import this value from somewhere (RRC?)
+  uint8_t pdcch_config_sib1;
+
   // TODO: Fill remaining fields
 };
 

@@ -11,6 +11,8 @@
 #ifndef SRSGNB_CELL_SCHED_H
 #define SRSGNB_CELL_SCHED_H
 
+#include "../sched_strategy/data_scheduler.h"
+#include "../sib_scheduler.h"
 #include "cell_configuration.h"
 #include "pdcch_scheduler_impl.h"
 #include "ra_scheduler.h"
@@ -22,7 +24,11 @@ class cell_sched
 {
 public:
   cell_sched(const sched_cell_configuration_request_message& msg) :
-    cell_cfg(msg), res_grid(cell_cfg), pdcch_sch(cell_cfg), ra_sch(cell_cfg, pdcch_sch)
+    cell_cfg(msg),
+    res_grid(cell_cfg),
+    pdcch_sch(cell_cfg),
+    ra_sch(cell_cfg, pdcch_sch),
+    sib1_sch(pdcch_sch, msg.pdcch_config_sib1, to_numerology_value(msg.scs_common))
   {}
 
   void slot_indication(slot_point sl_tx)
@@ -36,6 +42,7 @@ public:
 
   pdcch_scheduler_impl pdcch_sch;
   ra_scheduler         ra_sch;
+  sib1_scheduler       sib1_sch;
 };
 
 class cell_sched_manager

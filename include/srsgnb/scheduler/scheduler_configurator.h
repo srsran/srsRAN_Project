@@ -44,6 +44,8 @@ struct sched_cell_configuration_request_message {
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;
   ssb_configuration     ssb_config;
+  /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
+  uint8_t pdcch_config_sib1;
 };
 
 /// \remark See TS 38.331, "PDCCH-Config"
