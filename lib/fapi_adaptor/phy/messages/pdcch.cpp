@@ -95,7 +95,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
     unsigned byte = freq_res_index / 8;
     unsigned pos  = freq_res_index % 8;
 
-    if (((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U) {
+    if ((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) {
       coreset.frequency_resources.set(freq_res_index, ((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U);
     }
   }

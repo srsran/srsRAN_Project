@@ -46,7 +46,7 @@ public:
     unsigned n_rnti;
     /// CCE start index used to send the DCI {0, 135}.
     unsigned cce_index;
-    /// Indicates the number of CCE used by the PDCCH transmission as per TS38.211 Section 7.3.2.1 {1,2,4,8,16}.
+    /// Indicates the number of CCE used by the PDCCH transmission as per TS38.211 Section 7.3.2.1 {1, 2, 4, 8, 16}.
     unsigned aggregation_level;
     // Ignore precoding and beamforming.
     // ...
