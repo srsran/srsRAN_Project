@@ -46,7 +46,7 @@ namespace srsgnb {
 class rb_allocation
 {
 private:
-  /// Indicates the VRBs selected for the transmission with a mask.
+  /// Indicates, with a mask, the VRBs selected for the transmission.
   bounded_bitset<MAX_RB> vrb_mask;
   /// VRB-to-PRB mapper.
   vrb_to_prb_mapper vrb_to_prb_map;

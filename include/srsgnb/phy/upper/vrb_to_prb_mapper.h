@@ -25,7 +25,7 @@ class vrb_to_prb_mapper
 private:
   /// Indicates VRB index of the lowest VRB in the CORESET used for the DCI transmission.
   unsigned coreset_start = 0;
-  /// Indicates the number of RB bundles \f$N_{bundle}\f$.
+  /// Indicates the number of RB bundles \f$N_{bundle}\f$. It is set to zero for non-interleaved mapping.
   unsigned nof_bundles = 0;
   /// Indicates the first RB bundle size.
   unsigned first_bundle_size = 0;
@@ -113,9 +113,9 @@ public:
 
   /// \brief Checks whether the resource allocation is interleaved.
   ///
-  /// The resource allocation is interleaved if the number of bundles is set to zero.
+  /// The resource allocation is interleaved if the number of bundles is not zero.
   ///
-  /// \return True if the resoruce allocation is interleaved. Otherwise, False.
+  /// \return True if the resource allocation is interleaved. Otherwise, False.
   bool is_interleaved() const { return nof_bundles != 0; }
 
   /// \brief Gets the CORESET start VRB index.
