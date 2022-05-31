@@ -114,6 +114,13 @@ public:
     std::copy(bytes.begin(), bytes.end(), begin());
   }
 
+  /// Prepends segment with provided span of bytes.
+  void reserve_prepend(size_t nof_bytes)
+  {
+    srsran_assert(headroom() >= nof_bytes, "There is not enough headroom space.");
+    payload_data_ -= nof_bytes;
+  }
+
   /// Removes "nof_bytes" from the head of the segment.
   void trim_head(size_t nof_bytes)
   {
@@ -395,6 +402,11 @@ public:
     len += bytes.size();
   }
 
+  /// Prepends space in byte_buffer. This function may allocate new segments.
+  /// \param nof_bytes Number of bytes to reserve at header.
+  /// \return range of bytes that were reserved.
+  byte_buffer_view reserve_prepend(size_t nof_bytes);
+
   /// Clear byte buffer.
   void clear()
   {
@@ -610,8 +622,9 @@ public:
     return {{begin(), it_split}, {it_split, end()}};
   }
 
-  /// Compare two byte_buffer views.
-  bool operator==(const byte_buffer_view& other) const
+  /// Compare byte_buffer_view with Range.
+  template<typename Range>
+  bool operator==(const Range& other) const
   {
     return std::equal(begin(), end(), other.begin(), other.end());
   }
@@ -713,6 +726,24 @@ public:
 private:
   byte_buffer* buffer;
 };
+
+inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
+{
+  if (empty()) {
+    prepend_segment();
+  }
+  size_t count  = nof_bytes;
+  while (count > 0) {
+    if (head->headroom() == 0) {
+      prepend_segment();
+    }
+    size_t to_reserve = std::min(head->headroom(), count);
+    head->reserve_prepend(to_reserve);
+    count -= to_reserve;
+  }
+  len += nof_bytes;
+  return byte_buffer_view{begin(), begin() + nof_bytes};
+}
 
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
 inline byte_buffer make_byte_buffer(std::string hex_str)

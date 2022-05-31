@@ -507,6 +507,30 @@ void test_byte_buffer_writer()
   TESTASSERT_EQ(10, writer.back());
 }
 
+void test_byte_buffer_reserve_prepend()
+{
+  byte_buffer pdu;
+
+  // Prepend small vector
+  auto             small_vec = make_small_vec();
+  byte_buffer_view view      = pdu.reserve_prepend(small_vec.size());
+  TESTASSERT_EQ(small_vec.size(), pdu.length());
+  TESTASSERT_EQ(small_vec.size(), view.length());
+
+  std::copy(small_vec.begin(), small_vec.end(), view.begin());
+  TESTASSERT(pdu == small_vec);
+  TESTASSERT(view == small_vec);
+
+  // Prepend big vector
+  auto             big_vec = make_big_vec();
+  byte_buffer_view view2   = pdu.reserve_prepend(big_vec.size());
+  TESTASSERT_EQ(small_vec.size() + big_vec.size(), pdu.length());
+  TESTASSERT_EQ(big_vec.size(), view2.length());
+
+  std::copy(big_vec.begin(), big_vec.end(), view2.begin());
+  TESTASSERT(view2 == big_vec);
+}
+
 int main()
 {
   test_buffer_segment();
@@ -526,4 +550,5 @@ int main()
   test_byte_buffer_iterator_plus_equal_op();
   test_byte_buffer_reader_split_advance();
   test_byte_buffer_writer();
+  test_byte_buffer_reserve_prepend();
 }
