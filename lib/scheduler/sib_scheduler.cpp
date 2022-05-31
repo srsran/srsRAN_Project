@@ -118,6 +118,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid,
   }
 }
 
+//  ------   Private methods   ------ .
 
 void sib1_scheduler::precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned numerology)
 {
@@ -130,11 +131,10 @@ void sib1_scheduler::precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned nume
   get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, pdcch_config_sib1);
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots[i_ssb] = get_sib1_n0(sib1_offset, sib1_M, numerology, pdcch_config_sib1);
+    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, numerology, pdcch_config_sib1));
   }
 }
 
-//  ------   Private methods   ------ .
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
 {
@@ -188,16 +188,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   res_grid.result.dl.dl_pdcchs.emplace_back();
   auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
 
-  // Fill PDCCH context info.
-  sib1_pdcch.ctx.bwp_cfg = &cfg.dl_cfg_common.init_dl_bwp.generic_params;
-  // TODO: verify CORESET CONFIG is actually filled in.
-  sib1_pdcch.ctx.coreset_cfg = &cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
-  sib1_pdcch.ctx.rnti        = SI_RNTI;
-  // TODO: import CCEs values from somewhere
-  sib1_pdcch.ctx.cces.ncce     = 4;
-  sib1_pdcch.ctx.cces.aggr_lvl = aggregation_level::n8;
-
-  // Fill RAR DCI.
+  // Fill SIB1 DCI.
   // TODO: compute DCI all these values for actual allocation.
   sib1_pdcch.dci.format_type                = dci_dl_format::f1_0;
   sib1_pdcch.dci.f1_0.freq_domain_assigment = 0;

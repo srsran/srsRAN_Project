@@ -20,7 +20,7 @@ namespace srsgnb {
 struct cell_slot_resource_allocator;
 enum class ssb_pattern_case;
 
-/// This class schedules the SIB1 and fills the grant for the .
+/// This class schedules the SIB1 and fills the grant to be passed to passed to lower layers.
 class sib1_scheduler
 {
 public:
@@ -38,6 +38,7 @@ public:
                      uint8_t                       ssb_periodicity,
                      uint64_t                      ssb_in_burst_bitmap);
 
+private:
   /// \brief Computes the SIB1 n0 slot, at which each beam's SIB1 is allocated [TS 38.213, Section 13].
   ///
   /// These slots are computed and saved in the body of the constructor.
@@ -46,7 +47,6 @@ public:
   /// DL BWP.
   void precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned numerology);
 
-private:
   /// \brief Searches in PDSCH and PDCCH for space to allocate SIB1 and SIB1's DCI, respectively.
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
