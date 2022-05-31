@@ -73,7 +73,7 @@ void f1_setup_test()
     served_cells_item.served_cell_info.nr_mode_info.tdd().nrfreq_info.freq_band_list_nr.push_back(freq_band_nr_item);
     served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrscs.value = asn1::f1ap::nrscs_opts::scs30;
     served_cells_item.served_cell_info.nr_mode_info.tdd().tx_bw.nrnrb.value = asn1::f1ap::nrnrb_opts::nrb51;
-    served_cells_item.served_cell_info.meas_timing_cfg.from_number(0);
+    served_cells_item.served_cell_info.meas_timing_cfg.from_string("30");
 
     served_cells_item.gnb_du_sys_info_present = true;
     served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
