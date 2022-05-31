@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-// Generic deinterleaver.
+/// Generic deinterleaver.
 static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,
                                 span<const log_likelihood_ratio> input,
                                 span<const uint16_t>             indices)
@@ -26,43 +26,45 @@ static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,
   }
 }
 
-// Undoes bit selection for the rate-dematching block.
-// The output has the codeword length N. It inserts 0 to punctured bits (completely unknown bit)
-// and LLR_INFINITY (to indicate very reliable 0 bit). Repeated symbols are added.
-
+/// Undoes bit selection for the rate-dematching block.
+/// The output has the codeword length N. It inserts 0 to punctured bits (completely unknown bit)
+/// and LLR_INFINITY (to indicate very reliable 0 bit). Repeated symbols are added.
 static log_likelihood_ratio*
 bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t N, const uint32_t K)
 {
   log_likelihood_ratio* y   = e;
   uint32_t              k_N = 0;
 
-  if (E >= N) { // add repetitions
+  if (E >= N) {
+    // Add repetitions.
     for (uint32_t k = N; k != E; ++k) {
       k_N    = k % N;
       y[k_N] = log_likelihood_ratio::promotion_sum(y[k_N], e[k]);
     }
   } else {
-    if (16 * K <= 7 * E) { // puncturing bits are completely unknown, i.e. llr = 0;
+    if (16 * K <= 7 * E) {
+      // Punctured bits are completely unknown, i.e. llr = 0;
       y = e - (N - E);
       for (uint32_t k = 0; k != N - E; ++k) {
         y[k] = 0;
       }
 
-    } else { // shortening, bits are known to be 0. i.e., very high llrs
+    } else {
+      // Shortened bits are known to be 0, set them to LLR_INFINITY.
       for (uint32_t k = E; k != N; ++k) {
-        y[k] = LLR_INFINITY; /* max value */
+        y[k] = LLR_INFINITY;
       }
     }
   }
   return y;
 }
 
-// Channel deinterleaver.
+/// Channel deinterleaver.
 static void ch_interleaver_rm_rx_c(span<log_likelihood_ratio> e, span<const log_likelihood_ratio> f)
 {
   srsran_assert(e.size() == f.size(), "Input and output span must have the same size.");
   unsigned E = e.size();
-  // compute T - Smaller integer such that T(T+1)/2 >= E. Use the fact that 1+2+,..,+T = T(T+1)/2
+  // Compute T, i.e., th smallest integer such that T(T+1)/2 >= E. Use the fact that 1+2+,..,+T = T(T+1)/2.
   unsigned S = 1;
   unsigned T = 1;
   while (S < E) {

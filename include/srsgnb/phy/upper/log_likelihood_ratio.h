@@ -169,6 +169,17 @@ public:
   ///
   /// The soft XOR between two LLRs \c x and \c y is the log-likelihood ratio corresponding to the logical XOR operation
   /// \f$a \oplus b\f$, where \f$a\f$ and \f$b\f$ are the bits whose soft representation is \c x and \c y, respectively.
+  ///
+  /// \remark For complexity reasons, the true soft xor function
+  /// \f[
+  /// \text{soft_xor}(x, y) = \sign(x y) \cdot \Phi\Bigl(\Phi(\abs{x}) +
+  /// \Phi(\abs{y})\Bigr) \qquad\text{with }
+  /// \Phi: \mathbb{R}_+ \to \mathbb{R}_+; u \mapsto \Phi(u) = -\ln\Bigl(\tanh\Bigl(\frac{u}{2}\Bigr)\Bigr)
+  /// \f]
+  /// is replaced by the common approximation
+  /// \f[
+  /// \text{soft_xor}(x, y) \approx \sign(x y) \cdot \min\bigl\{\abs{x}, \abs{y}\bigr\}.
+  /// \f]
   static log_likelihood_ratio soft_xor(log_likelihood_ratio x, log_likelihood_ratio y)
   {
     int abs_x = std::abs(x.value);
