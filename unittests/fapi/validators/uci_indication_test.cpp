@@ -9,9 +9,9 @@
  */
 
 #include "../../../lib/fapi/validators/uci_pdus.h"
+#include "helpers.h"
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/support/test_utils.h"
-#include "uci_helper.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -19,7 +19,7 @@ using namespace unittest;
 
 static void validate_pusch_pdu_ok()
 {
-  auto pdu = build_valid_uci_push_pdu();
+  auto pdu = build_valid_uci_pusch_pdu();
 
   validator_report report(0, 0);
   TESTASSERT(validate_uci_pusch_pdu(pdu, report));
@@ -29,7 +29,7 @@ static void validate_pusch_pdu_ok()
 
 static void validate_pusch_pdu_error()
 {
-  auto pdu = build_valid_uci_push_pdu();
+  auto pdu = build_valid_uci_pusch_pdu();
 
   // Add 4 errors.
   pdu.timing_advance_offset_ns = std::numeric_limits<int16_t>::max();

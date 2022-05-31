@@ -13,6 +13,7 @@ set(SOURCES
         dl_ssb_pdu.cpp
         message_validators.cpp
         uci_pdus.cpp
+        ul_pucch_pdu.cpp
         ul_prach_pdu.cpp)
 
 add_library(fapi_validators STATIC ${SOURCES})

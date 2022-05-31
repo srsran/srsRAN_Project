@@ -89,6 +89,22 @@ srsgnb::fapi::rx_data_indication_message build_valid_rx_data_indication();
 /// Section 3.4.1.
 srsgnb::fapi::slot_indication_message build_valid_slot_indication();
 
+/// Builds and returns a valid UCI.indication message. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.9.
+srsgnb::fapi::uci_indication_message build_valid_uci_indication();
+
+/// Builds and returns a valid UCI PUSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.9.1.
+srsgnb::fapi::uci_pusch_pdu build_valid_uci_pusch_pdu();
+
+/// Builds and returns a valid UCI PUCCH format 0/1 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.9.2.
+srsgnb::fapi::uci_pucch_pdu_format_0_1 build_valid_uci_pucch_format01_pdu();
+
+/// Builds and returns a valid UCI PUCCH format 2/3/4 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.9.3.
+srsgnb::fapi::uci_pucch_pdu_format_2_3_4 build_valid_uci_pucch_format234_pdu();
+
 /// Builds and returns a valid UL_DCI.request message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.4.
 srsgnb::fapi::ul_dci_request_message build_valid_ul_dci_request();
@@ -96,6 +112,26 @@ srsgnb::fapi::ul_dci_request_message build_valid_ul_dci_request();
 /// Builds and returns a valid UL PRACH PDU. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.3.1.
 srsgnb::fapi::ul_prach_pdu build_valid_ul_prach_pdu();
+
+/// Builds and returns a valid UL PUCCH format 0 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f0_pdu();
+
+/// Builds and returns a valid UL PUCCH format 1 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f1_pdu();
+
+/// Builds and returns a valid UL PUCCH format 2 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f2_pdu();
+
+/// Builds and returns a valid UL PUCCH format 3 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f3_pdu();
+
+/// Builds and returns a valid UL PUCCH format 4 PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.3.
+srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f4_pdu();
 
 } // namespace unittest
 

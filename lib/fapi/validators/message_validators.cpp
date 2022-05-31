@@ -16,6 +16,7 @@
 #include "helpers.h"
 #include "uci_pdus.h"
 #include "ul_prach_pdu.h"
+#include "ul_pucch_pdu.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -668,7 +669,6 @@ error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_i
   return {};
 }
 
-
 error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_request_message& msg)
 {
   validator_report                 report(msg.sfn, msg.slot);
@@ -685,6 +685,9 @@ error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_
     switch (pdu.pdu_type) {
       case ul_pdu_type::PRACH:
         success &= validate_ul_prach_pdu(pdu.prach_pdu, report);
+        break;
+      case ul_pdu_type::PUCCH:
+        success &= validate_ul_pucch_pdu(pdu.pucch_pdu, report);
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");

@@ -55,7 +55,7 @@ static bool validate_cp(message_type_id msg_type, unsigned value, validator_repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Cyclic prefix", msg_type, pdu_type, report);
 }
 
-/// Validates the duration symbols property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
+/// Validates the start symbol index property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
 static bool validate_start_symbol_index(message_type_id msg_type, unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;

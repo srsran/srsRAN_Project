@@ -54,10 +54,8 @@ add_executable(tx_data_request_validator_test tx_data_request_test.cpp)
 target_link_libraries(tx_data_request_validator_test srsgnb_support srslog fapi_validators helpers)
 add_test(tx_data_request_validator_test tx_data_request_validator_test)
 
-add_library(uci_helper STATIC uci_helper.cpp)
-
 add_executable(uci_indication_validator_test uci_indication_test.cpp)
-target_link_libraries(uci_indication_validator_test srsgnb_support srslog fapi_validators uci_helper)
+target_link_libraries(uci_indication_validator_test srsgnb_support srslog fapi_validators helpers)
 add_test(uci_indication_validator_test uci_indication_validator_test)
 
 add_executable(ul_dci_request_validator_test ul_dci_request_test.cpp)
@@ -67,3 +65,7 @@ add_test(ul_dci_request_validator_test ul_dci_request_validator_test)
 add_executable(ul_prach_pdu_validator_test ul_prach_pdu_test.cpp)
 target_link_libraries(ul_prach_pdu_validator_test srsgnb_support srslog fapi_validators helpers)
 add_test(ul_prach_pdu_validator_test ul_prach_pdu_validator_test)
+
+add_executable(ul_pucch_pdu_validator_test ul_pucch_pdu_test.cpp)
+target_link_libraries(ul_pucch_pdu_validator_test srsgnb_support srslog fapi_validators helpers)
+add_test(ul_pucch_pdu_validator_test ul_pucch_pdu_validator_test)

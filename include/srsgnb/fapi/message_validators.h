@@ -33,10 +33,6 @@ error_type<validator_report> validate_error_indication(const error_indication_me
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.11.
 error_type<validator_report> validate_rach_indication(const rach_indication_message& msg);
 
-/// Validates the given UCI.indication message and returns a report for the result of the validation. The validation
-/// checks every property of the message, as per SCF-222 v4.0 Section 3.4.9.
-error_type<validator_report> validate_uci_indication(const uci_indication_message& msg);
-
 /// Validates the given Rx_Data.indication message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.7.
 error_type<validator_report> validate_rx_data_indication(const rx_data_indication_message& msg);
@@ -47,6 +43,10 @@ error_type<validator_report> validate_slot_indication(const slot_indication_mess
 /// Validates the given Tx_Data.request message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.6.
 error_type<validator_report> validate_tx_data_request(const tx_data_request_message& msg);
+
+/// Validates the given UCI.indication message and returns a report for the result of the validation. The validation
+/// checks every property of the message, as per SCF-222 v4.0 Section 3.4.9.
+error_type<validator_report> validate_uci_indication(const uci_indication_message& msg);
 
 /// Validates the given UL_DCI.request message and returns a report for the result of the validation. The validation
 /// checks every property of the message, as per SCF-222 v4.0 Section 3.4.4.
