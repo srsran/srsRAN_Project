@@ -1871,6 +1871,159 @@ public:
   //: TODO: msgA pusch beamforming
 };
 
+/// PUCCH PDU builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.3.
+class ul_pucch_pdu_builder
+{
+  ul_pucch_pdu& pdu;
+
+public:
+  explicit ul_pucch_pdu_builder(ul_pucch_pdu& pdu) : pdu(pdu) {}
+
+  /// Sets the PUCCH PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_basic_parameters(rnti_t                       rnti,
+                                             uint32_t                     handle,
+                                             pucch_format_type            format_type,
+                                             multi_slot_tx_indicator_type multi_slot_tx_type,
+                                             bool                         pi2_bpsk)
+  {
+    pdu.rnti                    = rnti;
+    pdu.handle                  = handle;
+    pdu.format_type             = format_type;
+    pdu.multi_slot_tx_indicator = multi_slot_tx_type;
+    pdu.pi2_bpsk                = pi2_bpsk;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder&
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type cp)
+  {
+    pdu.bwp_size      = bwp_size;
+    pdu.bwp_start     = bwp_start;
+    pdu.scs           = scs;
+    pdu.cyclic_prefix = cp;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU allocation in frequency parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_allocation_in_frequency_parameters(uint16_t prb_start, uint16_t prb_size)
+  {
+    pdu.prb_start = prb_start;
+    pdu.prb_size  = prb_size;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU allocation in time parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_allocation_in_time_parameters(uint8_t start_symbol_index, uint8_t nof_symbols)
+  {
+    pdu.start_symbol_index = start_symbol_index;
+    pdu.nr_of_symbols      = nof_symbols;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU hopping information parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_hopping_information_parameters(bool                     intra_slot_frequency_hopping,
+                                                           uint16_t                 second_hop_prb,
+                                                           pucch_group_hopping_type pucch_group_hopping,
+                                                           uint16_t                 nid_pucch_hopping,
+                                                           uint16_t                 initial_cyclic_shift,
+                                                           uint16_t                 nid_pucch_scrambling,
+                                                           uint8_t                  time_domain_occ_idx,
+                                                           uint8_t                  pre_dft_occ_idx,
+                                                           uint8_t                  pre_dft_occ_len)
+  {
+    pdu.intra_slot_frequency_hopping = intra_slot_frequency_hopping;
+    pdu.second_hop_prb               = second_hop_prb;
+    pdu.pucch_group_hopping          = pucch_group_hopping;
+    pdu.nid_pucch_hopping            = nid_pucch_hopping;
+    pdu.initial_cyclic_shift         = initial_cyclic_shift;
+    pdu.nid_pucch_scrambling         = nid_pucch_scrambling;
+    pdu.time_domain_occ_index        = time_domain_occ_idx;
+    pdu.pre_dft_occ_idx              = pre_dft_occ_idx;
+    pdu.pre_dft_occ_len              = pre_dft_occ_len;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU DMRS parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_dmrs_parameters(bool     add_dmrs_flag,
+                                            uint16_t nid0_pucch_dmrs_scrambling,
+                                            uint8_t  m0_pucch_dmrs_cyclic_shift,
+                                            uint8_t  sr_bit_len,
+                                            uint16_t bit_len_harq,
+                                            uint16_t csi_part1_bit_length)
+  {
+    pdu.add_dmrs_flag              = add_dmrs_flag;
+    pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
+    pdu.m0_pucch_dmrs_cyclic_shift = m0_pucch_dmrs_cyclic_shift;
+    pdu.sr_bit_len                 = sr_bit_len;
+    pdu.bit_len_harq               = bit_len_harq;
+    pdu.csi_part1_bit_length       = csi_part1_bit_length;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU maintenance v3 basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH basic extension for FAPIv3.
+  ul_pucch_pdu_builder& set_maintenance_v3_basic_parameters(optional<unsigned> max_code_rate,
+                                                            optional<unsigned> ul_bwp_id)
+  {
+    pdu.pucch_maintenance_v3.max_code_rate =
+        (max_code_rate) ? static_cast<unsigned>(max_code_rate.value()) : std::numeric_limits<uint8_t>::max();
+    pdu.pucch_maintenance_v3.ul_bwp_id =
+        (ul_bwp_id) ? static_cast<unsigned>(ul_bwp_id.value()) : std::numeric_limits<uint8_t>::max();
+
+    return *this;
+  }
+
+  /// Adds a UCI part1 to part2 correspondence v3 to the PUCCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table UCI information for determining UCI
+  /// Part1 to PArt2 correspondence, added in FAPIv3.
+  ul_pucch_pdu_builder&
+  add_uci_part1_part2_corresnpondence_v3(uint16_t                                             priority,
+                                         span<const uint16_t>                                 param_offset,
+                                         span<const uint8_t>                                  param_sizes,
+                                         uint16_t                                             part2_size_map_index,
+                                         uci_part1_to_part2_correspondence_v3::map_scope_type part2_size_map_scope)
+  {
+    srsran_assert(param_offset.size() == param_sizes.size(),
+                  "Mismatching span sizes for param offset ({}) and param sizes ({})",
+                  param_offset.size(),
+                  param_sizes.size());
+
+    pdu.uci_correspondence.part2.emplace_back();
+    auto& correspondence                = pdu.uci_correspondence.part2.back();
+    correspondence.priority             = priority;
+    correspondence.part2_size_map_index = part2_size_map_index;
+    correspondence.part2_size_map_scope = part2_size_map_scope;
+
+    correspondence.param_offsets.assign(param_offset.begin(), param_offset.end());
+    correspondence.param_sizes.assign(param_sizes.begin(), param_sizes.end());
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU UCI part1 to part2 correspondence v3 basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH basic extension for FAPIv3.
+  ul_pucch_pdu_builder& set_uci_part1_part2_corresnpondence_v3_basic_parameters(
+      span<const uci_part1_to_part2_correspondence_v3::part2_info> correspondence)
+  {
+    pdu.uci_correspondence.part2.assign(correspondence.begin(), correspondence.end());
+
+    return *this;
+  }
+};
+
 /// UL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.
 class ul_tti_request_message_builder
 {
@@ -1910,6 +2063,30 @@ public:
 
     ul_prach_pdu_builder builder(pdu.prach_pdu);
     builder.set_basic_parameters(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
+
+    return builder;
+  }
+
+  /// Adds a PUCCH format 0/1 PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder add_pucch_format_01_pdu(rnti_t                       rnti,
+                                               uint32_t                     handle,
+                                               pucch_format_type            format_type,
+                                               multi_slot_tx_indicator_type multi_slot_tx_type,
+                                               bool                         pi2_bpsk)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu    = msg.pdus.back();
+    pdu.pdu_type = ul_pdu_type::PUCCH;
+
+    if (format_type == pucch_format_type::f0 || format_type == pucch_format_type::f1) {
+      ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format01)];
+    } else {
+      ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUCCH_format234)];
+    }
+
+    ul_pucch_pdu_builder builder(pdu.pucch_pdu);
+    builder.set_basic_parameters(rnti, handle, format_type, multi_slot_tx_type, pi2_bpsk);
 
     return builder;
   }

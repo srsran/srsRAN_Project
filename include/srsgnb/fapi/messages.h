@@ -531,17 +531,17 @@ struct uci_part1_to_part2_correspondence_v3 {
   /// Maximum number of part2 info.
   static constexpr unsigned MAX_NUM_PART2_INFO = 100;
 
+  enum class map_scope_type : uint8_t { common_context, phy_context };
+
   struct part2_info {
-    uint16_t                priority;
-    uint8_t                 num_part1_params;
-    std::array<uint16_t, 4> param_offsets;
-    std::array<uint8_t, 4>  param_sizes;
-    uint16_t                part2_size_map_index;
-    uint8_t                 part2_size_map_scope;
+    uint16_t                   priority;
+    static_vector<uint16_t, 4> param_offsets;
+    static_vector<uint8_t, 4>  param_sizes;
+    uint16_t                   part2_size_map_index;
+    map_scope_type             part2_size_map_scope;
   };
 
-  uint16_t                                   num_parts2s;
-  std::array<part2_info, MAX_NUM_PART2_INFO> part2;
+  static_vector<part2_info, MAX_NUM_PART2_INFO> part2;
 };
 
 /// Uplink PUSCH PDU information.
@@ -595,37 +595,46 @@ struct ul_pucch_maintenance_v3 {
   uint8_t ul_bwp_id;
 };
 
+enum class pucch_format_type : uint8_t { f0, f1, f2, f3, f4 };
+enum class pucch_group_hopping_type : uint8_t { neither, enabled, disabled };
+enum class multi_slot_tx_indicator_type : uint8_t {
+  no_multi_slot_transmission,
+  multi_slot_transmission_starts,
+  multi_slot_transmission_continues,
+  multi_slot_transmission_ends
+};
+
 /// Encodes PUCCH pdu.
 struct ul_pucch_pdu {
-  uint16_t           rnti;
-  uint32_t           handle;
-  uint16_t           bwp_size;
-  uint16_t           bwp_start;
-  subcarrier_spacing scs;
-  cyclic_prefix_type cyclic_prefix;
-  uint8_t            format_type;
-  uint8_t            multi_slot_tx_indicator;
-  uint8_t            pi2_bpsk;
-  uint16_t           prb_start;
-  uint16_t           prb_size;
-  uint8_t            start_symbol_index;
-  uint8_t            nr_of_symbols;
-  uint8_t            intra_slot_frequency_hopping;
-  uint16_t           second_hop_prb;
-  uint8_t            pucch_group_hopping;
-  uint8_t            reserved;
-  uint16_t           nid_pucch_hopping;
-  uint16_t           initial_cyclic_shift;
-  uint16_t           nid_pucch_scrambling;
-  uint8_t            time_domain_occ_index;
-  uint8_t            pre_dft_occ_idx;
-  uint8_t            pre_dft_occ_len;
-  uint8_t            add_dmrs_flag;
-  uint16_t           nid0_pucch_dmrs_scrambling;
-  uint8_t            m0_pucch_dmrs_cyclic_shift;
-  uint8_t            sr_bit_len;
-  uint16_t           bit_len_harq;
-  uint16_t           csi_part1_bit_length;
+  rnti_t                       rnti;
+  uint32_t                     handle;
+  uint16_t                     bwp_size;
+  uint16_t                     bwp_start;
+  subcarrier_spacing           scs;
+  cyclic_prefix_type           cyclic_prefix;
+  pucch_format_type            format_type;
+  multi_slot_tx_indicator_type multi_slot_tx_indicator;
+  bool                         pi2_bpsk;
+  uint16_t                     prb_start;
+  uint16_t                     prb_size;
+  uint8_t                      start_symbol_index;
+  uint8_t                      nr_of_symbols;
+  bool                         intra_slot_frequency_hopping;
+  uint16_t                     second_hop_prb;
+  pucch_group_hopping_type     pucch_group_hopping;
+  uint8_t                      reserved;
+  uint16_t                     nid_pucch_hopping;
+  uint16_t                     initial_cyclic_shift;
+  uint16_t                     nid_pucch_scrambling;
+  uint8_t                      time_domain_occ_index;
+  uint8_t                      pre_dft_occ_idx;
+  uint8_t                      pre_dft_occ_len;
+  bool                         add_dmrs_flag;
+  uint16_t                     nid0_pucch_dmrs_scrambling;
+  uint8_t                      m0_pucch_dmrs_cyclic_shift;
+  uint8_t                      sr_bit_len;
+  uint16_t                     bit_len_harq;
+  uint16_t                     csi_part1_bit_length;
   //: TODO: beamforming struct
   ul_pucch_maintenance_v3              pucch_maintenance_v3;
   uci_part1_to_part2_correspondence_v3 uci_correspondence;
