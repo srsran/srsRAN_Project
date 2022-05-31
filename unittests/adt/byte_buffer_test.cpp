@@ -531,6 +531,40 @@ void test_byte_buffer_reserve_prepend()
   TESTASSERT(view2 == big_vec);
 }
 
+void test_byte_buffer_chain()
+{
+  byte_buffer pdu;
+  TESTASSERT(pdu.empty());
+  auto big_vec      = make_big_vec();
+  auto small_vec    = make_small_vec();
+  auto bytes_concat = big_vec;
+  bytes_concat.insert(bytes_concat.end(), small_vec.begin(), small_vec.end());
+  auto bytes_concat2 = bytes_concat;
+  bytes_concat2.insert(bytes_concat2.end(), big_vec.begin(), big_vec.end());
+
+  // Chain big vector to empty buffer
+  byte_buffer pdu2(small_vec);
+  TESTASSERT(pdu2 == small_vec);
+  pdu.chain_before(std::move(pdu2));
+  TESTASSERT(not pdu.empty());
+  TESTASSERT(pdu == small_vec);
+  TESTASSERT(pdu2.empty());
+
+  // Chain byte_buffer before another non-empty byte_buffer.
+  pdu2.append(big_vec);
+  pdu.chain_before(std::move(pdu2));
+  TESTASSERT(pdu2.empty());
+  TESTASSERT_EQ(big_vec.size() + small_vec.size(), pdu.length());
+  TESTASSERT(pdu == bytes_concat);
+
+  // Chain byte_buffer after another non-empty byte_buffer.
+  pdu2.append(big_vec);
+  pdu.chain_after(std::move(pdu2));
+  TESTASSERT(pdu2.empty());
+  TESTASSERT_EQ(big_vec.size() * 2 + small_vec.size(), pdu.length());
+  TESTASSERT(pdu == bytes_concat2);
+}
+
 int main()
 {
   test_buffer_segment();
@@ -551,4 +585,5 @@ int main()
   test_byte_buffer_reader_split_advance();
   test_byte_buffer_writer();
   test_byte_buffer_reserve_prepend();
+  test_byte_buffer_chain();
 }

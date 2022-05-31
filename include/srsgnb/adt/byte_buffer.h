@@ -407,6 +407,36 @@ public:
   /// \return range of bytes that were reserved.
   byte_buffer_view reserve_prepend(size_t nof_bytes);
 
+  /// Chains two byte buffers. The after byte buffer becomes empty.
+  byte_buffer& chain_after(byte_buffer after)
+  {
+    if (empty()) {
+      *this = std::move(after);
+    } else {
+      tail->metadata().next = std::move(after.head);
+      tail                  = after.tail;
+      len += after.len;
+      after.len  = 0;
+      after.tail = nullptr;
+    }
+    return *this;
+  }
+
+  /// Chains two byte buffers. The before byte buffer becomes empty.
+  byte_buffer& chain_before(byte_buffer before)
+  {
+    if (empty()) {
+      *this = std::move(before);
+    } else {
+      before.tail->metadata().next = std::move(head);
+      head                         = std::move(before.head);
+      len += before.len;
+      before.len  = 0;
+      before.tail = nullptr;
+    }
+    return *this;
+  }
+
   /// Clear byte buffer.
   void clear()
   {
@@ -623,7 +653,7 @@ public:
   }
 
   /// Compare byte_buffer_view with Range.
-  template<typename Range>
+  template <typename Range>
   bool operator==(const Range& other) const
   {
     return std::equal(begin(), end(), other.begin(), other.end());
@@ -732,7 +762,7 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
   if (empty()) {
     prepend_segment();
   }
-  size_t count  = nof_bytes;
+  size_t count = nof_bytes;
   while (count > 0) {
     if (head->headroom() == 0) {
       prepend_segment();
