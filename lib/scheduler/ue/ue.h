@@ -53,6 +53,10 @@ public:
   {
     cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
   }
+  ue(const ue&) = delete;
+  ue(ue&&)      = delete;
+  ue& operator=(const ue&) = delete;
+  ue& operator=(ue&&) = delete;
 
   const du_ue_index_t ue_index;
   const rnti_t        crnti;
@@ -80,6 +84,12 @@ public:
   void handle_sr_indication(const sr_indication_message& msg);
 
   void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
+
+  span<const du_cell_index_t> ue_cell_indexes() const
+  {
+    const static static_vector<du_cell_index_t, 1> cells{0};
+    return cells;
+  }
 
 private:
   static const size_t MAX_CELLS = 4;

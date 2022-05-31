@@ -12,9 +12,8 @@
 #define SRSGNB_SCHEDULER_IMPL_H
 
 #include "cell/cell_sched.h"
-#include "event_manager.h"
-#include "sched_strategy/data_scheduler.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
+#include "ue/ue_scheduler.h"
 
 namespace srsgnb {
 
@@ -41,25 +40,22 @@ public:
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   /// UE Scheduling Request.
-  void ul_sr_info(const sr_indication_message& sr) override { pending_events.handle_sr_indication(sr); }
+  void ul_sr_info(const sr_indication_message& sr) override { feedback_handler.ul_sr_info(sr); }
 
   /// UE UL Buffer Status Report.
-  void ul_bsr(const ul_bsr_indication_message& bsr) override { pending_events.handle_ul_bsr(bsr); }
+  void ul_bsr(const ul_bsr_indication_message& bsr) override { feedback_handler.ul_bsr(bsr); }
 
 private:
   sched_configuration_notifier& mac_notifier;
   srslog::basic_logger&         logger;
 
-  /// Repository of created UEs.
-  ue_list ue_db;
-
-  // Data UE scheduler
-  std::unique_ptr<data_scheduler> data_sched;
+  /// Scheduler for UEs.
+  std::unique_ptr<ue_scheduler> ue_sched;
+  scheduler_ue_configurator&    ue_cfg_handler;
+  scheduler_feedback_handler&   feedback_handler;
 
   /// Cell-specific resources and schedulers.
   cell_sched_manager cells;
-
-  event_manager pending_events;
 };
 
 } // namespace srsgnb

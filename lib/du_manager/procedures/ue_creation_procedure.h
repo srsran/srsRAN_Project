@@ -12,6 +12,7 @@
 #define SRSGNB_UE_CREATION_PROCEDURE_H
 
 #include "../../ran/gnb_format.h"
+#include "../converters/mac_cell_configuration_helpers.h"
 #include "du_manager_config.h"
 #include "du_manager_context.h"
 #include "du_manager_interfaces.h"
@@ -148,10 +149,10 @@ private:
 
   async_task<mac_ue_create_response_message> make_mac_ue_create_req()
   {
-    mac_ue_create_request_message mac_ue_create_msg{};
-    mac_ue_create_msg.ue_index   = ue_ctx.ue_index;
-    mac_ue_create_msg.crnti      = msg.crnti;
-    mac_ue_create_msg.cell_index = msg.cell_index;
+    mac_ue_create_request_message mac_ue_create_msg = test_helpers::make_default_ue_creation_request(); // TODO: TEMP.
+    mac_ue_create_msg.ue_index                      = ue_ctx.ue_index;
+    mac_ue_create_msg.crnti                         = msg.crnti;
+    mac_ue_create_msg.cell_index                    = msg.cell_index;
     for (du_logical_channel_context& bearer : ue_ctx.bearers) {
       mac_ue_create_msg.bearers.emplace_back();
       auto& lc     = mac_ue_create_msg.bearers.back();

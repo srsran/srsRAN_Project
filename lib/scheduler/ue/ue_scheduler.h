@@ -27,16 +27,20 @@ struct ue_scheduler_cell_params {
 
 /// Interface of data scheduler that is used to allocate UE DL and UL grants in a given slot
 /// The data_scheduler object will be common to all cells and slots.
-class ue_scheduler : public scheduler_ue_configurator
+class ue_scheduler
 {
 public:
+  virtual ~ue_scheduler() = default;
+
   virtual void add_cell(const ue_scheduler_cell_params& params) = 0;
 
   /// Schedule UE DL grants for a given {slot, cell}.
   virtual void run_slot(slot_point slot_tx, du_cell_index_t cell_index) = 0;
 
-  /// TEMP
-  virtual ue_list& get_ue_list() = 0;
+  /// Return UE configurator.
+  virtual scheduler_ue_configurator& get_ue_configurator() = 0;
+
+  virtual scheduler_feedback_handler& get_feedback_handler() = 0;
 };
 
 } // namespace srsgnb

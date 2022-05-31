@@ -28,24 +28,32 @@ public:
     pending_events.swap(current_events);
   }
 
-  void push(const Event& ev)
+  template <typename Ev>
+  void push(Ev&& ev)
   {
+    static_assert(std::is_convertible<Ev, Event>::value, "Invalid type");
     std::lock_guard<std::mutex> lock(mutex);
-    pending_events.push_back(ev);
+    pending_events.push_back(std::forward<Ev>(ev));
   }
 
-  void push(Event&& ev)
+  template <typename... Args>
+  void emplace(Args&&... args)
   {
     std::lock_guard<std::mutex> lock(mutex);
-    pending_events.push_back(std::move(ev));
+    pending_events.template emplace_back(std::forward<Args>(args)...);
   }
 
-  span<const Event> get_events() const { return current_events; }
+  span<Event> get_events() { return current_events; }
 
 private:
+  /// Stores all enqueued events that are going to be processed in the next slot_indication.
   std::vector<Event> pending_events;
+
+  /// Contains the events being processed in the current slot.
+  /// Note: the transfer of next_events to current_events is done via a std::swap, which for std::vector is very fast.
   std::vector<Event> current_events;
-  std::mutex         mutex;
+
+  std::mutex mutex;
 };
 
 } // namespace srsgnb

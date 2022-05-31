@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RA_SCHEDULER_H
 #define SRSGNB_RA_SCHEDULER_H
 
-#include "../slot_event_list.h"
+#include "../support/slot_event_list.h"
 #include "../ue/harq_process.h"
 #include "pdcch_scheduler.h"
 #include "resource_grid.h"

@@ -10,29 +10,38 @@
 
 #include "scheduler_impl.h"
 #include "scheduler_ssb.h"
+#include "ue/ue_scheduler_impl.h"
 
 using namespace srsgnb;
 
 scheduler_impl::scheduler_impl(sched_configuration_notifier& notifier) :
-  mac_notifier(notifier), logger(srslog::fetch_basic_logger("MAC")), pending_events(ue_db, cells, notifier)
+  mac_notifier(notifier),
+  logger(srslog::fetch_basic_logger("MAC")),
+  ue_sched(std::make_unique<ue_scheduler_impl>(notifier)),
+  ue_cfg_handler(ue_sched->get_ue_configurator()),
+  feedback_handler(ue_sched->get_feedback_handler())
 {}
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  pending_events.handle_cell_configuration_request(msg);
+  srsran_assert(not cells.cell_exists(msg.cell_index), "Invalid cell index");
+  srsran_sanity_check(is_cell_configuration_request_valid(msg), "Invalid cell configuration");
+
+  cells.add_cell(msg.cell_index, msg);
+  ue_sched->add_cell(
+      ue_scheduler_cell_params{msg.cell_index, &cells[msg.cell_index].pdcch_sch, &cells[msg.cell_index].res_grid});
+  logger.info("SCHED: Cell with cell_index={} was configured.", msg.cell_index);
   return true;
 }
 
 void scheduler_impl::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
-  log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "started.");
-  mac_notifier.on_ue_config_complete(ue_request.ue_index);
-  log_ue_proc_event(logger.info, ue_event_prefix{} | ue_request.ue_index, "Sched UE Configuration", "completed.");
+  ue_cfg_handler.handle_add_ue_request(ue_request);
 }
 
 void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfiguration_message& ue_request)
 {
-  mac_notifier.on_ue_config_complete(ue_request.ue_index);
+  ue_cfg_handler.handle_ue_reconfiguration_request(ue_request);
 }
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
@@ -48,9 +57,6 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 
   // 1. Reset cell resource grid state.
   cell.slot_indication(sl_tx);
-
-  // 2. Process pending events.
-  pending_events.run(sl_tx, cell_index);
 
   //  3. SSB scheduling.
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
@@ -70,7 +76,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.ra_sch.run_slot(cell.res_grid);
 
   // 5. Schedule UE DL and UL data.
-  // TODO
+  ue_sched->run_slot(sl_tx, cell_index);
 
   // Return result for the slot.
   return &cell.res_grid[0].result;
