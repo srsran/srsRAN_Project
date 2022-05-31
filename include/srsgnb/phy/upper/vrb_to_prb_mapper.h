@@ -20,6 +20,8 @@ namespace srsgnb {
 /// \brief Describes a VRB-to-PRB mapping.
 ///
 /// This class abstracts the virtual to physical resource mapping for PDSCH.
+///
+/// The default constructor is equivalent to use make_non_interleaved_other().
 class vrb_to_prb_mapper
 {
 private:
@@ -35,9 +37,6 @@ private:
   unsigned other_bundle_size = 0;
 
 public:
-  /// Default constructor, it is equivalent to make_non_interleaved_other().
-  vrb_to_prb_mapper() = default;
-
   /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI Format 1_0 in common SS.
   ///
   /// Implemented as per TS38.211 section 7.3.1.6 Case 1:
@@ -48,7 +47,7 @@ public:
   /// \return A VRB-to-PRB mapper instance.
   static vrb_to_prb_mapper make_non_interleaved_common_ss(unsigned N_start_coreset);
 
-  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI other than format 1_0 in
+  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI other than Format 1_0 in
   /// common SS.
   ///
   /// Implemented as per TS38.211 section 7.3.1.6 Case 2:

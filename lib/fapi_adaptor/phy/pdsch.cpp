@@ -29,6 +29,22 @@ static void fill_codewords(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu&
   }
 }
 
+static float get_power_control_offset_ss_dB(nzp_csi_rs_epre_to_ssb power_control_offset_ss_profile_nr)
+{
+  switch (power_control_offset_ss_profile_nr) {
+    case nzp_csi_rs_epre_to_ssb::dB_minus_3:
+      return -3.0F;
+    case nzp_csi_rs_epre_to_ssb::dB0:
+      return +0.0F;
+    case nzp_csi_rs_epre_to_ssb::dB3:
+      return +3.0F;
+    case nzp_csi_rs_epre_to_ssb::dB6:
+    default:
+      break;
+  }
+  return +6.0F;
+}
+
 /// Fills the power related parameters in the PDSCH PDU.
 static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_pdu& fapi_pdu)
 {
@@ -45,22 +61,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
     float power_control_offset_dB = static_cast<float>(fapi_pdu.power_control_offset_profile_nr - 8);
 
     // Calculate the power offset between NZP-CSI-RS to SSS.
-    float power_control_offset_ss_dB = 0.0;
-    switch (fapi_pdu.power_control_offset_ss_profile_nr) {
-      case nzp_csi_rs_epre_to_ssb::dB_minus_3:
-        power_control_offset_ss_dB = -3.0F;
-        break;
-      case nzp_csi_rs_epre_to_ssb::dB0:
-        power_control_offset_ss_dB = +0.0F;
-        break;
-      case nzp_csi_rs_epre_to_ssb::dB3:
-        power_control_offset_ss_dB = +3.0F;
-        break;
-      case nzp_csi_rs_epre_to_ssb::dB6:
-      default:
-        power_control_offset_ss_dB = +6.0F;
-        break;
-    }
+    float power_control_offset_ss_dB = get_power_control_offset_ss_dB(fapi_pdu.power_control_offset_ss_profile_nr);
 
     proc_pdu.ratio_pdsch_data_to_sss_dB = power_control_offset_dB + power_control_offset_ss_dB;
   } else {
@@ -91,6 +92,19 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
   }
 }
 
+static unsigned get_interleaver_size(pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+{
+  switch (vrb_to_prb_mapping) {
+    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2:
+      return 2;
+    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4:
+      return 4;
+    case pdsch_vrb_to_prb_mapping_type::non_interleaved:
+      break;
+  }
+  return 0;
+}
+
 /// Constructs the VRB-to-PRB mapper in function of the transmission type parameter of the PDSCH PDU.
 static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
 {
@@ -103,41 +117,24 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
   // Initial BWP size.
   unsigned N_bwp_init_size = fapi_pdu.pdsch_maintenance_v3.initial_dl_bwp_size;
   // Bundle i size.
-  unsigned L_i = 0;
-  switch (fapi_pdu.vrb_to_prb_mapping) {
-    case pdsch_vrb_to_prb_mapping_type::non_interleaved:
-      L_i = 0;
-      break;
-    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2:
-      L_i = 2;
-      break;
-    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4:
-      L_i = 4;
-      break;
-  }
+  unsigned L_i = get_interleaver_size(fapi_pdu.vrb_to_prb_mapping);
 
-  vrb_to_prb_mapper mapper = vrb_to_prb_mapper::make_non_interleaved_other();
   switch (fapi_pdu.pdsch_maintenance_v3.trans_type) {
     case pdsch_trans_type::non_interleaved_common_ss:
-      mapper = vrb_to_prb_mapper::make_non_interleaved_common_ss(N_start_coreset);
-      break;
-    case pdsch_trans_type::non_interleaved_other:
-      mapper = vrb_to_prb_mapper::make_non_interleaved_other();
-      break;
+      return vrb_to_prb_mapper::make_non_interleaved_common_ss(N_start_coreset);
     case pdsch_trans_type::interleaved_common_type0_coreset0:
-      mapper = vrb_to_prb_mapper::make_coreset0(N_start_coreset, N_bwp_init_size);
-      break;
+      return vrb_to_prb_mapper::make_coreset0(N_start_coreset, N_bwp_init_size);
     case pdsch_trans_type::interleaved_common_any_coreset0_present:
-      mapper = vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
-      break;
+      return vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
     case pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      mapper = vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
-      break;
+      return vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
     case pdsch_trans_type::interleaved_other:
-      mapper = vrb_to_prb_mapper::make_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
+      return vrb_to_prb_mapper::make_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
+    default:
+    case pdsch_trans_type::non_interleaved_other:
       break;
   }
-  return mapper;
+  return vrb_to_prb_mapper::make_non_interleaved_other();
 }
 
 /// Fills the rb_allocation parameter of the PDSCH PDU.
@@ -155,7 +152,7 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_
   for (unsigned vrb_index = 0, vrb_index_end = fapi_pdu.bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
     unsigned byte = vrb_index / 8;
     unsigned bit  = vrb_index % 8;
-    if (((fapi_pdu.rb_bitmap[byte] >> bit) & 1U) == 1U) {
+    if ((fapi_pdu.rb_bitmap[byte] >> bit) & 1U) {
       vrb_bitmap.set(vrb_index);
     }
   }
