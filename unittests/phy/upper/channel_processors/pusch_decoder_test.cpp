@@ -18,7 +18,7 @@
 /// few LDPC iterations.
 
 #include "pusch_decoder_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -39,7 +39,8 @@ using namespace srsgnb;
 
 int main()
 {
-  std::unique_ptr<pusch_decoder> decoder = create_pusch_decoder();
+  pusch_decoder_configuration    decoder_config = {};
+  std::unique_ptr<pusch_decoder> decoder        = create_pusch_decoder(decoder_config);
 
   rx_softbuffer_pool_description pool_config = {};
 

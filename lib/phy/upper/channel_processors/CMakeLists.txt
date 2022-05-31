@@ -8,6 +8,9 @@
 
 include_directories(../../../../include/srsgnb/phy/upper/channel_processors)
 
+add_library(srsgnb_channel_processors STATIC channel_processor_factories.cpp)
+target_link_libraries(srsgnb_channel_processors pusch_decoder srsgnb_pusch_processor)
+
 add_library(pbch_encoder STATIC pbch_encoder_impl.cpp)
 target_link_libraries(pbch_encoder polar sequence_generators crc_calculator srsvec)
 
@@ -34,8 +37,12 @@ target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 
 add_library(srsgnb_prach_detector STATIC prach_detector_impl.cpp)
 
+add_library(pusch_decoder STATIC pusch_decoder_impl.cpp)
+target_link_libraries(pusch_decoder ldpc crc_calculator srsvec)
+
+add_library(srsgnb_pusch_processor STATIC pusch_processor_impl.cpp)
+target_link_libraries(srsgnb_pusch_processor srsgnb_upper_phy_support)
+
 add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)
 
-add_library(pusch_decoder STATIC pusch_decoder_impl.cpp)
-target_link_libraries(pusch_decoder ldpc crc_calculator srsvec)

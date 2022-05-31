@@ -89,6 +89,21 @@ add_custom_command(
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
 target_link_libraries(pdsch_processor_unittest srsgnb_pdsch_processor srslog)
 
+add_executable(pusch_decoder_test pusch_decoder_test.cpp)
+target_link_libraries(pusch_decoder_test srsgnb_channel_processors srslog srsgnb_upper_phy_support)
+add_test(pusch_decoder_test pusch_decoder_test)
+
+add_custom_command(
+  TARGET pusch_decoder_test
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
+  VERBATIM)
+
+add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
+target_link_libraries(pusch_processor_unittest srsgnb_channel_processors srslog)
+
 add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
 target_link_libraries(ssb_processor_unittest ssb_processor srslog)
 add_test(ssb_processor_unittest ssb_processor_unittest)
@@ -104,15 +119,3 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ssb_processor_test_data.tar.gz
         VERBATIM)
-
-add_executable(pusch_decoder_test pusch_decoder_test.cpp)
-target_link_libraries(pusch_decoder_test pusch_decoder srslog srsgnb_upper_phy_support)
-add_test(pusch_decoder_test pusch_decoder_test)
-
-add_custom_command(
-  TARGET pusch_decoder_test
-  POST_BUILD
-  WORKING_DIRECTORY ${TEST_DATA_DIR}
-  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pusch_decoder_test_data.tar.gz
-  VERBATIM)

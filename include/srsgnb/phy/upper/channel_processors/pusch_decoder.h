@@ -18,8 +18,6 @@
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 
-#include <memory>
-
 namespace srsgnb {
 
 /// \brief PUSCH decoder interface.
@@ -77,8 +75,6 @@ public:
                       span<const int8_t>   llrs,
                       const configuration& cfg) = 0;
 };
-
-std::unique_ptr<pusch_decoder> create_pusch_decoder();
 
 } // namespace srsgnb
 

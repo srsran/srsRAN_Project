@@ -40,7 +40,7 @@ public:
   /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI Format 1_0 in common SS.
   ///
   /// Implemented as per TS38.211 section 7.3.1.6 Case 1:
-  /// - A virtual resouce \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
+  /// - A virtual resource \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
   ///
   /// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
   /// \f$n + N_{start}^{CORESET}\f$.
