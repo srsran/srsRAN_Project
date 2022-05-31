@@ -14,12 +14,14 @@
 using namespace srsgnb;
 
 // Generic deinterleaver.
-static void interleaver_rm_rx_c(const log_likelihood_ratio* input,
-                                log_likelihood_ratio*       output,
-                                const uint16_t*             indices,
-                                const uint16_t              len)
+static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,
+                                span<const log_likelihood_ratio> input,
+                                span<const uint16_t>             indices)
 {
-  for (uint32_t j = 0; j != len; ++j) {
+  srsran_assert(input.size() == indices.size(), "Input spans must have the same size.");
+  srsran_assert(input.size() == output.size(), "Input and output spans must have the same size.");
+
+  for (uint32_t j = 0, len = output.size(); j != len; ++j) {
     output[indices[j]] = input[j];
   }
 }
@@ -31,12 +33,10 @@ static void interleaver_rm_rx_c(const log_likelihood_ratio* input,
 static log_likelihood_ratio*
 bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t N, const uint32_t K)
 {
-  log_likelihood_ratio* y   = nullptr;
+  log_likelihood_ratio* y   = e;
   uint32_t              k_N = 0;
 
-  y = e;
   if (E >= N) { // add repetitions
-    y = e;
     for (uint32_t k = N; k != E; ++k) {
       k_N    = k % N;
       y[k_N] = log_likelihood_ratio::promotion_sum(y[k_N], e[k]);
@@ -48,7 +48,7 @@ bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t 
         y[k] = 0;
       }
 
-    } else { // shortening, bits are know to be 0. i.e., very high llrs
+    } else { // shortening, bits are known to be 0. i.e., very high llrs
       for (uint32_t k = E; k != N; ++k) {
         y[k] = LLR_INFINITY; /* max value */
       }
@@ -58,21 +58,22 @@ bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t 
 }
 
 // Channel deinterleaver.
-static void ch_interleaver_rm_rx_c(const log_likelihood_ratio* f, log_likelihood_ratio* e, const uint32_t E)
+static void ch_interleaver_rm_rx_c(span<log_likelihood_ratio> e, span<const log_likelihood_ratio> f)
 {
+  srsran_assert(e.size() == f.size(), "Input and output span must have the same size.");
+  unsigned E = e.size();
   // compute T - Smaller integer such that T(T+1)/2 >= E. Use the fact that 1+2+,..,+T = T(T+1)/2
-  uint32_t S = 1;
-  uint32_t T = 1;
+  unsigned S = 1;
+  unsigned T = 1;
   while (S < E) {
-    ++T;
-    S = S + T;
+    S += ++T;
   }
 
-  uint32_t i_out = 0;
-  uint32_t i_in  = 0;
-  for (uint32_t r = 0; r != T; ++r) {
+  unsigned i_out = 0;
+  unsigned i_in  = 0;
+  for (unsigned r = 0; r != T; ++r) {
     i_in = r;
-    for (uint32_t c = 0, c_max = T - r; c != c_max; ++c) {
+    for (unsigned c = 0, c_max = T - r; c != c_max; ++c) {
       if (i_in < E) {
         e[i_in] = f[i_out];
         ++i_out;
@@ -97,11 +98,11 @@ void polar_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       ou
   if (code.get_ibil() == polar_code_ibil::not_present) {
     srsvec::copy(span<log_likelihood_ratio>(e, input.size()), input);
   } else {
-    ch_interleaver_rm_rx_c(input.data(), e, E);
+    ch_interleaver_rm_rx_c({e, E}, input.first(E));
   }
 
   log_likelihood_ratio* y = bit_selection_rm_rx_c(e, E, N, K);
-  interleaver_rm_rx_c(y, output.data(), blk_interleaver, N);
+  interleaver_rm_rx_c(output, {y, N}, {blk_interleaver, N});
 }
 
 std::unique_ptr<polar_rate_dematcher> srsgnb::create_polar_rate_dematcher()

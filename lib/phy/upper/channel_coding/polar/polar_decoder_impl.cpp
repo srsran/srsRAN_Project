@@ -14,26 +14,30 @@
 
 using namespace srsgnb;
 
-void vec_function_f(log_likelihood_ratio* z, const log_likelihood_ratio* x, const log_likelihood_ratio* y, unsigned len)
+static void
+vec_function_f(span<log_likelihood_ratio> z, span<const log_likelihood_ratio> x, span<const log_likelihood_ratio> y)
 {
-  for (unsigned i = 0; i != len; ++i) {
-    z[i] = log_likelihood_ratio::soft_xor(x[i], y[i]);
-  }
+  srsran_assert(y.size() == x.size(), "Input spans must have the same size.");
+  srsran_assert(z.size() == x.size(), "Input and output spans must have the same size.");
+
+  std::transform(x.begin(), x.end(), y.begin(), z.begin(), log_likelihood_ratio::soft_xor);
 }
 
 // Combines two log-likelihood ratio: constructively (sum) if b = 0, destructively (difference) if b = 1.
-log_likelihood_ratio switch_combine(log_likelihood_ratio x, log_likelihood_ratio y, uint8_t b)
+static log_likelihood_ratio switch_combine(log_likelihood_ratio x, log_likelihood_ratio y, uint8_t b)
 {
-  return ((b == 0) ? x + y : x - y);
+  return ((b == 0) ? (x + y) : (x - y));
 }
 
-void vec_function_g(log_likelihood_ratio*       z,
-                    const log_likelihood_ratio* x,
-                    const log_likelihood_ratio* y,
-                    const uint8_t*              b,
-                    const uint16_t              len)
+static void vec_function_g(span<log_likelihood_ratio>       z,
+                           span<const log_likelihood_ratio> x,
+                           span<const log_likelihood_ratio> y,
+                           span<const uint8_t>              b)
 {
-  for (int i = 0; i != len; ++i) {
+  srsran_assert((y.size() == x.size()) && (b.size() == x.size()), "Input spans must have the same size.");
+  srsran_assert(z.size() == x.size(), "Input and output spans must have the same size.");
+
+  for (unsigned i = 0, len = x.size(); i != len; ++i) {
     z[i] = switch_combine(y[i], x[i], b[i]);
   }
 }
@@ -77,8 +81,8 @@ void polar_decoder_impl::tmp_node_s::compute(std::vector<node_rate*>& node_type,
   }
 
   // node_type = is_not_rate_0_node: 0 if rate 0, 1 if not rate 0.
-  std::fill(is_not_rate_0.begin(), is_not_rate_0.begin() + code_size, 1);
-  std::fill(is_rate_1.begin(), is_rate_1.begin() + code_size, 1);
+  std::fill_n(is_not_rate_0.begin(), code_size, 1);
+  std::fill_n(is_rate_1.begin(), code_size, 1);
   for (const uint16_t fs : frozen_set) {
     is_not_rate_0[fs] = 0;
     is_rate_1[fs]     = 0;
@@ -129,8 +133,8 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
   // i.e. in a SIMD instruction we can load 2^(n_simd_llr) LLR values
   // then the memory for stages s >= n_simd_llr - 1 is aligned.
   // but only the operations at stages s > n_simd_llr have all the inputs aligned.
-  uint8_t  n_llr_all_stages = nMax + 1; // there are 2^(n_llr_all_stages) - 1 LLR values summing up all stages.
-  uint16_t llr_all_stages   = 1U << n_llr_all_stages;
+  uint8_t  n_llr_all_stages = nMax + 1;
+  uint16_t llr_all_stages   = (1U << n_llr_all_stages) - 1;
 
   llr_alloc.resize(llr_all_stages);
 
@@ -138,7 +142,7 @@ polar_decoder_impl::polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint
 
   // initialize all LLR pointers
   llr1[0] = llr0[0] + 1;
-  for (uint8_t s = 1; s != nMax + 1; ++s) {
+  for (uint8_t s = 1; s != n_llr_all_stages; ++s) {
     llr0[s] = llr0[0] + param.code_stage_size[s];
     llr1[s] = llr0[0] + param.code_stage_size[s] + param.code_stage_size[s - 1];
   }
@@ -242,7 +246,7 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   uint16_t stage_size      = param.code_stage_size[stage];
   uint16_t stage_half_size = param.code_stage_size[stage - 1];
 
-  vec_function_f(llr0[stage - 1], llr0[stage], llr1[stage], stage_half_size);
+  vec_function_f({llr0[stage - 1], stage_half_size}, {llr0[stage], stage_half_size}, {llr1[stage], stage_half_size});
 
   // move to the child node to the left (up) of the tree.
   simplified_node(message);
@@ -254,7 +258,10 @@ void polar_decoder_impl::rate_r_node(span<uint8_t> message)
   offset0  = bit_pos - stage_half_size;
   estbits0 = est_bit.data() + offset0;
 
-  vec_function_g(llr0[stage - 1], llr0[stage], llr1[stage], estbits0, stage_half_size);
+  vec_function_g({llr0[stage - 1], stage_half_size},
+                 {llr0[stage], stage_half_size},
+                 {llr1[stage], stage_half_size},
+                 {estbits0, stage_half_size});
 
   // move to the child node to the right (down) of the tree.
   simplified_node(message);
