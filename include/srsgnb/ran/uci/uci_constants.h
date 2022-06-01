@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RAN_UCI_CONSTANTS_H
-#define SRSGNB_RAN_UCI_CONSTANTS_H
+#ifndef SRSGNB_RAN_UCI_UCI_CONSTANTS_H
+#define SRSGNB_RAN_UCI_UCI_CONSTANTS_H
 
 namespace srsgnb {
 namespace uci_constants {
@@ -29,4 +29,4 @@ static constexpr unsigned MAX_NOF_CSI_PART1_BITS = 1706;
 } // namespace uci_constants
 } // namespace srsgnb
 
-#endif // SRSGNB_RAN_UCI_CONSTANTS_H
+#endif // SRSGNB_RAN_UCI_UCI_CONSTANTS_H

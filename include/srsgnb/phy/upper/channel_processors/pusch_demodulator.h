@@ -15,22 +15,25 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/upper/channel_estimate.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/ran/pusch/pusch_constants.h"
+#include "srsgnb/ran/uci/uci_constants.h"
 
 namespace srsgnb {
 
 /// \brief Describes a PUSCH demodulator interface.
 ///
-/// The PUSCH demodulator must:
-/// - extract the RE for a PUSCH transmission,
-/// - equalize the extracted symbols,
-/// - perform soft demodulation,
-/// - undo scrambling sequences, and
-/// - undo data and control multiplexing.
+/// The PUSCH demodulation process:
+/// - extracts the RE from the resource grid,
+/// - equalizes of the extracted RE,
+/// - soft-demodulates the complex data,
+/// - undoes the scrambling sequences, and
+/// - demultiplexes data and control.
 class pusch_demodulator
 {
 public:
@@ -38,16 +41,34 @@ public:
   static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS / 2;
 
   /// Maximum number of LLR per codeword in a single transmission.
-  static constexpr unsigned MAX_NOF_DATA_LLR = MAX_CODEWORD_SIZE * 8;
+  static constexpr unsigned MAX_NOF_DATA_LLR = MAX_CODEWORD_SIZE * pusch_constants::MAX_MODULATION_ORDER;
 
-  /// Maximum number of LLR for HARQ-ACK in a single transmission.
-  static constexpr unsigned MAX_NOF_HARQ_ACK_LLR = 1024;
+  /// Maximum UCI scaling \f$\alpha\f$ as per TS38.331 UCI-OnPUSCH.
+  static constexpr unsigned UCI_ON_PUSCH_MAX_ALPHA = 1;
 
-  /// Maximum number of LLR for CSI Part1 in a single transmission.
-  static constexpr unsigned MAX_NOF_CSI_PART1_LLR = 1024;
+  /// \brief Maximum number of LLR for HARQ-ACK in a single transmission.
+  ///
+  /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{ACK}'\f$ formula. Ceiling the value of \f$\sum
+  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
+  /// transmission.
+  static constexpr unsigned MAX_NOF_HARQ_ACK_LLR =
+      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
-  /// Maximum number of LLR for CSI Part2 in a single transmission.
-  static constexpr unsigned MAX_NOF_CSI_PART2_LLR = 1024;
+  /// \brief Maximum number of LLR for CSI Part1 in a single transmission.
+  ///
+  /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-1}'\f$ formula. Ceiling the value of \f$\sum
+  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
+  /// transmission.
+  static constexpr unsigned MAX_NOF_CSI_PART1_LLR =
+      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
+
+  /// \brief Maximum number of LLR for CSI Part2 in a single transmission.
+  ///
+  /// As per TS38.212 Section 6.3.2.4.1.1 in \f$Q_{CSI-2}'\f$ formula. Ceiling the value of \f$\sum
+  /// ^{N_{symb,all}^{PUSCH}-1}_{l=l_0}M_{sc}^{UCI}(l)\f$ to the maximum number of resource elements in a PUSCH
+  /// transmission.
+  static constexpr unsigned MAX_NOF_CSI_PART2_LLR =
+      MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
   /// Data LLR buffer type.
   using data_llr_buffer = static_vector<log_likelihood_ratio, MAX_NOF_DATA_LLR>;
@@ -98,21 +119,29 @@ public:
   /// Default destructor.
   virtual ~pusch_demodulator() = default;
 
-  /// \brief Modulates a PUSCH codeword according to TS38.211 section 7.3.1 Physical downlink shared channel.
+  /// \brief Demodulates a PUSCH transmission described in TS38.211 Section 7.3.1.
   ///
-  /// \param[out] grid Provides the source resource grid.
-  /// \param[in] grid Provides the source resource grid.
-  /// \param[in] codewords Provides the encoded codewords to modulate.
-  /// \param[in] config Provides the configuration reference.
-  /// \note The number of codewords shall be consistent with the number of layers.
-  /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
-  /// elements.
-  virtual void modulate(data_llr_buffer&            data,
-                        harq_ack_llr_buffer&        harq_ack,
-                        csi_part1_llr&              csi_part1,
-                        csi_part2_llr&              csi_part2,
-                        const resource_grid_reader& grid,
-                        const config_t&             config) = 0;
+  /// \remarks
+  /// - The size of \c data determines the codeword size in LLR.
+  /// - The size of \c harq_ack determines the number of LLR for HARQ-ACK.
+  /// - The size of \c csi_part1 determines the number of LLR for CSI Part1.
+  /// - The size of \c csi_part2 determines the number of LLR for CSI Part2.
+  /// - The total number of LLR must be consistent with the number of RE allocated in the transmission.
+  ///
+  /// \param[out] data      Codeword LLR destination buffer.
+  /// \param[out] harq_ack  HARQ-ACK LLR destination buffer.
+  /// \param[out] csi_part1 CSI Part1 LLR destination buffer.
+  /// \param[out] csi_part2 CSI Part2 LLR destination buffer.
+  /// \param[in] grid       Provides the source resource grid.
+  /// \param[in] estimates  Provides the channel estimates.
+  /// \param[in] config     Provides the configuration parameters.
+  virtual void demodulate(data_llr_buffer&            data,
+                          harq_ack_llr_buffer&        harq_ack,
+                          csi_part1_llr&              csi_part1,
+                          csi_part2_llr&              csi_part2,
+                          const resource_grid_reader& grid,
+                          const channel_estimate&     estimates,
+                          const config_t&             config) = 0;
 };
 
 } // namespace srsgnb
