@@ -11,11 +11,11 @@
 #include "cu_cp.h"
 #include "srsgnb/f1_interface/f1ap_cu_factory.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
-  srsran_assert(cfg.cu_executor != nullptr, "Invalid CU executor");
+  srsran_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
@@ -41,5 +41,3 @@ f1c_message_handler& cu_cp::get_f1c_message_handler()
 {
   return *f1ap;
 }
-
-} // namespace srsgnb
