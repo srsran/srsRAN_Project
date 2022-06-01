@@ -92,14 +92,14 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
   }
 }
 
-static unsigned get_interleaver_size(pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+static unsigned get_interleaver_size(vrb_to_prb_mapping_type vrb_to_prb_mapping)
 {
   switch (vrb_to_prb_mapping) {
-    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2:
+    case vrb_to_prb_mapping_type::interleaved_rb_size2:
       return 2;
-    case pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4:
+    case vrb_to_prb_mapping_type::interleaved_rb_size4:
       return 4;
-    case pdsch_vrb_to_prb_mapping_type::non_interleaved:
+    case vrb_to_prb_mapping_type::non_interleaved:
       break;
   }
   return 0;
@@ -142,7 +142,7 @@ static void fill_rb_allocation(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_
 {
   vrb_to_prb_mapper mapper = make_vrb_to_prb_mapper(fapi_pdu);
 
-  if (fapi_pdu.resource_alloc == pdsch_resource_allocation_type::type_1) {
+  if (fapi_pdu.resource_alloc == resource_allocation_type::type_1) {
     proc_pdu.freq_alloc = rb_allocation::make_type1(fapi_pdu.rb_start, fapi_pdu.rb_size, mapper);
     return;
   }
@@ -202,7 +202,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t& pro
   proc_pdu.ldpc_base_graph = (fapi_pdu.pdsch_maintenance_v3.ldpc_base_graph == ldpc_base_graph_type::bg_1)
                                  ? ldpc::base_graph_t::BG1
                                  : ldpc::base_graph_t::BG2;
-  proc_pdu.tbs_lbrm_bytes = fapi_pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes;
+  proc_pdu.tbs_lbrm_bytes  = fapi_pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes;
 
   fill_reserved_re_pattern(proc_pdu, fapi_pdu);
 

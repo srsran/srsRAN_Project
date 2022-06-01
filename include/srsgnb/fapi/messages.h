@@ -211,9 +211,9 @@ struct dl_pdsch_codeword {
   uint32_t tb_size;
 };
 
-enum class pdsch_low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
-enum class pdsch_resource_allocation_type : uint8_t { type_0, type_1 };
-enum class pdsch_vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
+enum class low_papr_dmrs_type : uint8_t { independent_cdm_group, dependent_cdm_group };
+enum class resource_allocation_type : uint8_t { type_0, type_1 };
+enum class vrb_to_prb_mapping_type : uint8_t { non_interleaved, interleaved_rb_size2, interleaved_rb_size4 };
 enum class nzp_csi_rs_epre_to_ssb : uint8_t { dB_minus_3, dB0, dB3, dB6, L1_use_profile_sss };
 enum class inline_tb_crc_type : uint8_t { data_payload, control_message };
 enum class pdsch_ref_point_type : uint8_t { point_a, subcarrier_0 };
@@ -253,15 +253,15 @@ struct dl_pdsch_pdu {
   uint16_t                                             pdsch_dmrs_scrambling_id;
   dmrs_config_type                                     dmrs_type;
   uint16_t                                             pdsch_dmrs_scrambling_id_compl;
-  pdsch_low_papr_dmrs_type                             low_papr_dmrs;
+  low_papr_dmrs_type                                   low_papr_dmrs;
   uint8_t                                              nscid;
   uint8_t                                              num_dmrs_cdm_grps_no_data;
   uint16_t                                             dmrs_ports;
-  pdsch_resource_allocation_type                       resource_alloc;
+  resource_allocation_type                             resource_alloc;
   std::array<uint8_t, MAX_SIZE_RB_BITMAP>              rb_bitmap;
   uint16_t                                             rb_start;
   uint16_t                                             rb_size;
-  pdsch_vrb_to_prb_mapping_type                        vrb_to_prb_mapping;
+  vrb_to_prb_mapping_type                              vrb_to_prb_mapping;
   uint8_t                                              start_symbol_index;
   uint8_t                                              nr_of_symbols;
   // :TODO: PTRS
@@ -459,13 +459,16 @@ struct ul_prach_pdu {
 
 /// Uplink PUSCH data information.
 struct ul_pusch_data {
-  uint8_t  rv_index;
-  uint8_t  harq_process_id;
-  uint8_t  new_data;
-  uint32_t tb_size;
-  uint16_t num_cb;
+  /// Maximum number of CB.
   //: TODO: determine size of this array
-  std::array<uint8_t, 2> cb_present_and_position;
+  static constexpr unsigned MAX_NUM_CB = 128;
+
+  uint8_t                            rv_index;
+  uint8_t                            harq_process_id;
+  uint8_t                            new_data;
+  uint32_t                           tb_size;
+  uint16_t                           num_cb;
+  static_vector<uint8_t, MAX_NUM_CB> cb_present_and_position;
 };
 
 /// Uplink PUSCH UCI information.
@@ -479,6 +482,8 @@ struct ul_pusch_uci {
   uint8_t  beta_offset_csi2;
 };
 
+enum class ul_ptrs_power_type : uint8_t { dB0, dB3, dB4_77, dB6 };
+
 /// Uplink PUSCH PTRS information.
 struct ul_pusch_ptrs {
   /// Per-port specific information.
@@ -488,11 +493,10 @@ struct ul_pusch_ptrs {
     uint8_t  ptrs_re_offset;
   };
 
-  uint8_t                       num_ptrs_ports;
-  std::array<ptrs_port_info, 2> port_info;
-  uint8_t                       ptrs_time_density;
-  uint8_t                       ptrs_freq_density;
-  uint8_t                       ul_ptrs_power;
+  static_vector<ptrs_port_info, 2> port_info;
+  uint8_t                          ptrs_time_density;
+  uint8_t                          ptrs_freq_density;
+  ul_ptrs_power_type               ul_ptrs_power;
 };
 
 /// Uplink PUSCH DFTs-OFDM information.
@@ -505,13 +509,13 @@ struct ul_pusch_dfts_ofdm {
 
 /// PUSCH PDU maintenance information added in FAPIv3.
 struct ul_pusch_maintenance_v3 {
-  uint8_t  pusch_trans_type;
-  uint16_t delta_bwp0_start_from_active_bwp;
-  uint16_t initial_ul_bwp_size;
-  uint8_t  group_or_sequence_hopping;
-  uint16_t pusch_second_hop_prb;
-  uint8_t  ldpc_base_graph;
-  uint32_t tb_size_lbrm_bytes;
+  uint8_t              pusch_trans_type;
+  uint16_t             delta_bwp0_start_from_active_bwp;
+  uint16_t             initial_ul_bwp_size;
+  uint8_t              group_or_sequence_hopping;
+  uint16_t             pusch_second_hop_prb;
+  ldpc_base_graph_type ldpc_base_graph;
+  uint32_t             tb_size_lbrm_bytes;
 };
 
 /// PUSCH PDU parameters added in FAPIv4.
@@ -519,7 +523,7 @@ struct ul_pusch_params_v4 {
   /// Maximum number of spatial streams.
   static constexpr unsigned MAX_NUM_SPATIAL_STREAMS = 64;
 
-  uint8_t                                      cb_crc_status_request;
+  bool                                         cb_crc_status_request;
   uint32_t                                     srs_tx_ports;
   uint8_t                                      ul_tpmi_index;
   uint8_t                                      num_ul_spatial_streams_ports;
@@ -544,45 +548,59 @@ struct uci_part1_to_part2_correspondence_v3 {
   static_vector<part2_info, MAX_NUM_PART2_INFO> part2;
 };
 
+enum class pusch_mcs_table_type : uint8_t {
+  not_qam256,
+  qam256,
+  qam64_low_se,
+  not_qam256_with_tp,
+  qam64_low_se_with_tp
+};
+
 /// Uplink PUSCH PDU information.
 struct ul_pusch_pdu {
-  uint16_t                pdu_bitmap;
-  uint16_t                rnti;
-  uint32_t                handle;
-  uint16_t                bwp_size;
-  uint16_t                bwp_start;
-  subcarrier_spacing      scs;
-  cyclic_prefix_type      cyclic_prefix;
-  uint16_t                target_code_rate;
-  uint8_t                 qam_mod_order;
-  uint8_t                 mcs_index;
-  uint8_t                 mcs_table;
-  uint8_t                 transform_precoding;
-  uint16_t                nid_pusch;
-  uint8_t                 num_layers;
-  uint16_t                ul_dmrs_symb_pos;
-  uint8_t                 dmrs_config_type;
-  uint16_t                pusch_dmrs_scrambling_id;
-  uint16_t                pusch_dmrs_scramblig_id_complement;
-  uint8_t                 low_papr_dmrs;
-  uint16_t                pusch_dmrs_identity;
-  uint8_t                 nscid;
-  uint8_t                 num_dmrs_cdm_grps_no_data;
-  uint16_t                dmrs_ports;
-  uint8_t                 resource_alloc;
-  std::array<uint8_t, 36> rb_bitmap;
-  uint16_t                rb_start;
-  uint16_t                rb_size;
-  uint8_t                 vrb_to_prb_mapping;
-  uint8_t                 intra_slot_frequency_hopping;
-  uint16_t                tx_direct_current_location;
-  uint8_t                 uplink_frequency_shift_7p5kHz;
-  uint8_t                 start_symbol_index;
-  uint8_t                 nr_of_symbols;
-  ul_pusch_data           pusch_data;
-  ul_pusch_uci            pusch_uci;
-  ul_pusch_ptrs           pusch_ptrs;
-  ul_pusch_dfts_ofdm      pusch_ofdm;
+  /// Bit position of the pdu_bitmap property.
+  static constexpr unsigned PUSCH_DATA_BIT = 0U;
+  static constexpr unsigned PUSCH_UCI_BIT  = 1U;
+  static constexpr unsigned PUSCH_PTRS_BIT = 2U;
+  static constexpr unsigned DFTS_OFDM_BIT  = 3U;
+
+  uint16_t                 pdu_bitmap;
+  rnti_t                   rnti;
+  uint32_t                 handle;
+  uint16_t                 bwp_size;
+  uint16_t                 bwp_start;
+  subcarrier_spacing       scs;
+  cyclic_prefix_type       cyclic_prefix;
+  uint16_t                 target_code_rate;
+  uint8_t                  qam_mod_order;
+  uint8_t                  mcs_index;
+  pusch_mcs_table_type     mcs_table;
+  bool                     transform_precoding;
+  uint16_t                 nid_pusch;
+  uint8_t                  num_layers;
+  uint16_t                 ul_dmrs_symb_pos;
+  dmrs_config_type         dmrs_type;
+  uint16_t                 pusch_dmrs_scrambling_id;
+  uint16_t                 pusch_dmrs_scramblig_id_complement;
+  low_papr_dmrs_type       low_papr_dmrs;
+  uint16_t                 pusch_dmrs_identity;
+  uint8_t                  nscid;
+  uint8_t                  num_dmrs_cdm_grps_no_data;
+  uint16_t                 dmrs_ports;
+  resource_allocation_type resource_alloc;
+  std::array<uint8_t, 36>  rb_bitmap;
+  uint16_t                 rb_start;
+  uint16_t                 rb_size;
+  vrb_to_prb_mapping_type  vrb_to_prb_mapping;
+  bool                     intra_slot_frequency_hopping;
+  uint16_t                 tx_direct_current_location;
+  bool                     uplink_frequency_shift_7p5kHz;
+  uint8_t                  start_symbol_index;
+  uint8_t                  nr_of_symbols;
+  ul_pusch_data            pusch_data;
+  ul_pusch_uci             pusch_uci;
+  ul_pusch_ptrs            pusch_ptrs;
+  ul_pusch_dfts_ofdm       pusch_ofdm;
   //: TODO: beamforming struct
   ul_pusch_maintenance_v3              pusch_maintenance_v3;
   ul_pusch_params_v4                   pusch_params_v4;

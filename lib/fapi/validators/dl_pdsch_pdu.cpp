@@ -394,7 +394,7 @@ bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_resource_allocation(static_cast<unsigned>(pdu.resource_alloc), report);
   // NOTE: RB bitmap will not be validated.
 
-  if (pdu.resource_alloc == pdsch_resource_allocation_type::type_1) {
+  if (pdu.resource_alloc == resource_allocation_type::type_1) {
     result &= validate_rb_start(pdu.rb_start, report);
     result &= validate_rb_size(pdu.rb_size, report);
   }

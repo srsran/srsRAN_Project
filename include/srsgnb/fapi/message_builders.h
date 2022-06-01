@@ -453,14 +453,14 @@ public:
 
   /// Sets the DMRS parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_dmrs_parameters(uint16_t                 dl_dmrs_symb_pos,
-                                            dmrs_config_type         dmrs_type,
-                                            uint16_t                 pdsch_dmrs_scrambling_id,
-                                            uint16_t                 pdsch_dmrs_scrambling_id_complement,
-                                            pdsch_low_papr_dmrs_type low_parp_dmrs,
-                                            uint8_t                  nscid,
-                                            uint8_t                  num_dmrs_cdm_groups_no_data,
-                                            uint16_t                 dmrs_ports)
+  dl_pdsch_pdu_builder& set_dmrs_parameters(uint16_t           dl_dmrs_symb_pos,
+                                            dmrs_config_type   dmrs_type,
+                                            uint16_t           pdsch_dmrs_scrambling_id,
+                                            uint16_t           pdsch_dmrs_scrambling_id_complement,
+                                            low_papr_dmrs_type low_parp_dmrs,
+                                            uint8_t            nscid,
+                                            uint8_t            num_dmrs_cdm_groups_no_data,
+                                            uint16_t           dmrs_ports)
   {
     pdu.dl_dmrs_symb_pos               = dl_dmrs_symb_pos;
     pdu.dmrs_type                      = dmrs_type;
@@ -476,10 +476,10 @@ public:
 
   /// Sets the PDSCH allocation in frequency type 0 parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_0(span<const uint8_t>           rb_map,
-                                                                 pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_0(span<const uint8_t>     rb_map,
+                                                                 vrb_to_prb_mapping_type vrb_to_prb_mapping)
   {
-    pdu.resource_alloc     = pdsch_resource_allocation_type::type_0;
+    pdu.resource_alloc     = resource_allocation_type::type_0;
     pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
 
     srsran_assert(rb_map.size() <= dl_pdsch_pdu::MAX_SIZE_RB_BITMAP,
@@ -498,11 +498,11 @@ public:
 
   /// Sets the PDSCH allocation in frequency type 1 parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_1(uint16_t                      rb_start,
-                                                                 uint16_t                      rb_size,
-                                                                 pdsch_vrb_to_prb_mapping_type vrb_to_prb_mapping)
+  dl_pdsch_pdu_builder& set_pdsch_allocation_in_frequency_type_1(uint16_t                rb_start,
+                                                                 uint16_t                rb_size,
+                                                                 vrb_to_prb_mapping_type vrb_to_prb_mapping)
   {
-    pdu.resource_alloc     = pdsch_resource_allocation_type::type_1;
+    pdu.resource_alloc     = resource_allocation_type::type_1;
     pdu.rb_start           = rb_start;
     pdu.rb_size            = rb_size;
     pdu.vrb_to_prb_mapping = vrb_to_prb_mapping;
@@ -2049,6 +2049,321 @@ public:
   }
 };
 
+/// PUSCH PDU builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.2.
+class ul_pusch_pdu_builder
+{
+  ul_pusch_pdu& pdu;
+
+  /// Convert alpha scaling property from float to FAPI unsigned.
+  unsigned convert_alpha_scaling(float alpha_scaling)
+  {
+    if (std::fabs(alpha_scaling - 0.5F) < 0.001)
+      return 0U;
+
+    if (std::fabs(alpha_scaling - 0.65F) < 0.001)
+      return 1U;
+
+    if (std::fabs(alpha_scaling - 0.8F) < 0.001)
+      return 2U;
+
+    if (std::fabs(alpha_scaling - 1.F) < 0.001)
+      return 3U;
+
+    srsran_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
+    return 0U;
+  }
+
+public:
+  explicit ul_pusch_pdu_builder(ul_pusch_pdu& pdu) : pdu(pdu)
+  {
+    pdu.pdu_bitmap       = 0U;
+    pdu.ul_dmrs_symb_pos = 0U;
+    pdu.rb_bitmap.fill(0);
+  }
+
+  /// Sets the PUSCH PDU basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_basic_parameters(rnti_t rnti, uint32_t handle)
+  {
+    pdu.rnti   = rnti;
+    pdu.handle = handle;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU BWP parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder&
+  set_bwp_parameters(uint16_t bwp_size, uint16_t bwp_start, subcarrier_spacing scs, cyclic_prefix_type cyclic_prefix)
+  {
+    pdu.bwp_size      = bwp_size;
+    pdu.bwp_start     = bwp_start;
+    pdu.scs           = scs;
+    pdu.cyclic_prefix = cyclic_prefix;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU information parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_information_parameters(float                target_code_rate,
+                                                   uint8_t              qam_mod_order,
+                                                   uint8_t              mcs_index,
+                                                   pusch_mcs_table_type mcs_table,
+                                                   bool                 transform_precoding,
+                                                   uint16_t             nid_pusch,
+                                                   uint8_t              num_layers)
+  {
+    pdu.target_code_rate    = static_cast<uint16_t>(target_code_rate * 10.F);
+    pdu.qam_mod_order       = qam_mod_order;
+    pdu.mcs_index           = mcs_index;
+    pdu.mcs_table           = mcs_table;
+    pdu.transform_precoding = transform_precoding;
+    pdu.nid_pusch           = nid_pusch;
+    pdu.num_layers          = num_layers;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU DMRS parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_dmrs_parameters(uint16_t           ul_dmrs_symb_pos,
+                                            dmrs_config_type   dmrs_type,
+                                            uint16_t           pusch_dmrs_scrambling_id,
+                                            uint16_t           pusch_dmrs_scrambling_id_complement,
+                                            low_papr_dmrs_type low_papr_dmrs,
+                                            uint16_t           pusch_dmrs_identity,
+                                            uint8_t            nscid,
+                                            uint8_t            num_dmrs_cdm_grps_no_data,
+                                            uint16_t           dmrs_ports)
+  {
+    pdu.ul_dmrs_symb_pos                   = ul_dmrs_symb_pos;
+    pdu.dmrs_type                          = dmrs_type;
+    pdu.pusch_dmrs_scrambling_id           = pusch_dmrs_scrambling_id;
+    pdu.pusch_dmrs_scramblig_id_complement = pusch_dmrs_scrambling_id_complement;
+    pdu.low_papr_dmrs                      = low_papr_dmrs;
+    pdu.pusch_dmrs_identity                = pusch_dmrs_identity;
+    pdu.nscid                              = nscid;
+    pdu.num_dmrs_cdm_grps_no_data          = num_dmrs_cdm_grps_no_data;
+    pdu.dmrs_ports                         = dmrs_ports;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU allocation in frequency domain type 0 parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_allocation_in_frequency_type_0_parameters(span<const uint8_t> rb_bitmap,
+                                                                      uint16_t            tx_direct_current_location,
+                                                                      bool                uplink_frequency_shift_7p5hHz)
+  {
+    pdu.resource_alloc = resource_allocation_type::type_0;
+    srsran_assert(pdu.rb_bitmap.size() == rb_bitmap.size(), "RB bitmap size doesn't match");
+    std::copy(rb_bitmap.begin(), rb_bitmap.end(), pdu.rb_bitmap.begin());
+    pdu.vrb_to_prb_mapping            = vrb_to_prb_mapping_type::non_interleaved;
+    pdu.tx_direct_current_location    = tx_direct_current_location;
+    pdu.uplink_frequency_shift_7p5kHz = uplink_frequency_shift_7p5hHz;
+
+    // Set the parameters for type 1 to a value.
+    pdu.rb_start                     = 0;
+    pdu.rb_size                      = 0;
+    pdu.intra_slot_frequency_hopping = false;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU allocation in frequency domain type 1 parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_allocation_in_frequency_type_1_parameters(uint16_t rb_start,
+                                                                      uint16_t rb_size,
+                                                                      bool     intra_slot_frequency_hopping,
+                                                                      uint16_t tx_direct_current_location,
+                                                                      bool     uplink_frequency_shift_7p5hHz)
+  {
+    pdu.resource_alloc                = resource_allocation_type::type_1;
+    pdu.rb_start                      = rb_start;
+    pdu.rb_size                       = rb_size;
+    pdu.intra_slot_frequency_hopping  = intra_slot_frequency_hopping;
+    pdu.vrb_to_prb_mapping            = vrb_to_prb_mapping_type::non_interleaved;
+    pdu.tx_direct_current_location    = tx_direct_current_location;
+    pdu.uplink_frequency_shift_7p5kHz = uplink_frequency_shift_7p5hHz;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU allocation in time domain type 0 parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder& set_allocation_in_time_parameters(uint8_t start_symbol_index, uint8_t num_symbols)
+  {
+    pdu.start_symbol_index = start_symbol_index;
+    pdu.nr_of_symbols      = num_symbols;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU maintenance v3 BWP parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH maintenance FAPIv3.
+  ul_pusch_pdu_builder& set_maintenance_v3_bwp_parameters(uint8_t  pusch_trans_type,
+                                                          uint16_t delta_bwp0_start_from_active_bwp,
+                                                          uint16_t initial_ul_bwp_size)
+  {
+    auto& v3                            = pdu.pusch_maintenance_v3;
+    v3.pusch_trans_type                 = pusch_trans_type;
+    v3.delta_bwp0_start_from_active_bwp = delta_bwp0_start_from_active_bwp;
+    v3.initial_ul_bwp_size              = initial_ul_bwp_size;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU maintenance v3 DMRS parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH maintenance FAPIv3.
+  ul_pusch_pdu_builder& set_maintenance_v3_dmrs_parameters(uint8_t group_or_sequence_hopping)
+  {
+    pdu.pusch_maintenance_v3.group_or_sequence_hopping = group_or_sequence_hopping;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU maintenance v3 frequency domain allocation parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH maintenance FAPIv3.
+  ul_pusch_pdu_builder& set_maintenance_v3_frequency_allocation_parameters(uint16_t             pusch_second_hop_prb,
+                                                                           ldpc_base_graph_type ldpc_graph,
+                                                                           uint32_t             tb_size_lbrm_bytes)
+  {
+    auto& v3                = pdu.pusch_maintenance_v3;
+    v3.pusch_second_hop_prb = pusch_second_hop_prb;
+    v3.ldpc_base_graph      = ldpc_graph;
+    v3.tb_size_lbrm_bytes   = tb_size_lbrm_bytes;
+
+    return *this;
+  }
+
+  /// Sets the PUSCH PDU parameters v4 basic parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH parameters v4.
+  ul_pusch_pdu_builder& set_parameters_v4_basic_parameters(bool cb_crc_status_request)
+  {
+    pdu.pusch_params_v4.cb_crc_status_request = cb_crc_status_request;
+
+    return *this;
+  }
+
+  /// Adds a UCI part1 to part2 correspondence v3 to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table UCI information for determining UCI
+  /// Part1 to PArt2 correspondence, added in FAPIv3.
+  ul_pusch_pdu_builder&
+  add_uci_part1_part2_corresnpondence_v3(uint16_t                                             priority,
+                                         span<const uint16_t>                                 param_offset,
+                                         span<const uint8_t>                                  param_sizes,
+                                         uint16_t                                             part2_size_map_index,
+                                         uci_part1_to_part2_correspondence_v3::map_scope_type part2_size_map_scope)
+  {
+    srsran_assert(param_offset.size() == param_sizes.size(),
+                  "Mismatching span sizes for param offset ({}) and param sizes ({})",
+                  param_offset.size(),
+                  param_sizes.size());
+
+    pdu.uci_correspondence.part2.emplace_back();
+    auto& correspondence                = pdu.uci_correspondence.part2.back();
+    correspondence.priority             = priority;
+    correspondence.part2_size_map_index = part2_size_map_index;
+    correspondence.part2_size_map_scope = part2_size_map_scope;
+
+    correspondence.param_offsets.assign(param_offset.begin(), param_offset.end());
+    correspondence.param_sizes.assign(param_sizes.begin(), param_sizes.end());
+
+    return *this;
+  }
+
+  // :TODO: UL MIMO parameters in FAPIv4.
+
+  /// Adds optional PUSCH data information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH data information.
+  // :TODO: analyze in the future this function. I'd suggest to change the last 2 arguments with a bounded_bitset or a
+  // vector of bool.
+  ul_pusch_pdu_builder& add_optional_pusch_data(uint8_t             rv_index,
+                                                uint8_t             harq_process_id,
+                                                uint8_t             new_data,
+                                                uint32_t            tb_size,
+                                                uint16_t            num_cb,
+                                                span<const uint8_t> cb_present_and_position)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_DATA_BIT, true);
+
+    auto& data           = pdu.pusch_data;
+    data.rv_index        = rv_index;
+    data.harq_process_id = harq_process_id;
+    data.new_data        = new_data;
+    data.tb_size         = tb_size;
+    data.num_cb          = num_cb;
+    data.cb_present_and_position.assign(cb_present_and_position.begin(), cb_present_and_position.end());
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH UCI information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH UCI information.
+  ul_pusch_pdu_builder& add_optional_pusch_uci(uint16_t harq_ack_bit_len,
+                                               uint16_t csi_part1_bit_len,
+                                               uint16_t flag_csi_part2_bit_len,
+                                               float    alpha_scaling,
+                                               uint8_t  beta_offset_harq_ack,
+                                               uint8_t  beta_offset_csi_1,
+                                               uint8_t  beta_offset_csi_2)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_UCI_BIT, true);
+
+    auto& uci = pdu.pusch_uci;
+
+    uci.harq_ack_bit_length  = harq_ack_bit_len;
+    uci.csi_part1_bit_length = csi_part1_bit_len;
+    uci.flags_csi_part2      = flag_csi_part2_bit_len;
+    uci.alpha_scaling        = convert_alpha_scaling(alpha_scaling);
+    uci.beta_offset_harq_ack = beta_offset_harq_ack;
+    uci.beta_offset_csi1     = beta_offset_csi_1;
+    uci.beta_offset_csi2     = beta_offset_csi_2;
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH PTRS information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH PTRS information.
+  ul_pusch_pdu_builder& add_optional_pusch_ptrs(span<const ul_pusch_ptrs::ptrs_port_info> port_info,
+                                                unsigned                                  ptrs_time_density,
+                                                unsigned                                  ptrs_freq_density,
+                                                ul_ptrs_power_type                        ul_ptrs_power)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_PTRS_BIT, true);
+
+    auto& ptrs = pdu.pusch_ptrs;
+
+    ptrs.port_info.assign(port_info.begin(), port_info.end());
+    ptrs.ul_ptrs_power     = ul_ptrs_power;
+    ptrs.ptrs_time_density = ptrs_time_density / 2U;
+    ptrs.ptrs_freq_density = ptrs_freq_density / 4U;
+
+    return *this;
+  }
+
+  /// Adds optional PUSCH DFTS OFDM information to the PUSCH PDU and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH DFTS OFDM
+  /// information.
+  ul_pusch_pdu_builder& add_optional_dfts_ofdm(uint8_t  low_papr_group_number,
+                                               uint16_t low_papr_sequence_number,
+                                               uint8_t  ul_ptrs_sample_density,
+                                               uint8_t  ul_ptrs_time_density_transform_precoding)
+  {
+    set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::DFTS_OFDM_BIT, true);
+
+    auto& ofdm = pdu.pusch_ofdm;
+
+    ofdm.low_papr_group_number                    = low_papr_group_number;
+    ofdm.low_papr_sequence_number                 = low_papr_sequence_number;
+    ofdm.ul_ptrs_sample_density                   = ul_ptrs_sample_density;
+    ofdm.ul_ptrs_time_density_transform_precoding = ul_ptrs_time_density_transform_precoding;
+
+    return *this;
+  }
+};
+
 /// UL_TTI.request message builder that helps to fill in the parameters specified in SCF-222 v4.0 section 3.4.3.
 class ul_tti_request_message_builder
 {
@@ -2094,11 +2409,11 @@ public:
 
   /// Adds a PUCCH format 0/1 PDU to the message and returns a builder that helps to fill the parameters.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder add_pucch_format_01_pdu(rnti_t                       rnti,
-                                               uint32_t                     handle,
-                                               pucch_format_type            format_type,
-                                               multi_slot_tx_indicator_type multi_slot_tx_type,
-                                               bool                         pi2_bpsk)
+  ul_pucch_pdu_builder add_pucch_pdu(rnti_t                       rnti,
+                                     uint32_t                     handle,
+                                     pucch_format_type            format_type,
+                                     multi_slot_tx_indicator_type multi_slot_tx_type,
+                                     bool                         pi2_bpsk)
   {
     msg.pdus.emplace_back();
     auto& pdu    = msg.pdus.back();
@@ -2112,6 +2427,22 @@ public:
 
     ul_pucch_pdu_builder builder(pdu.pucch_pdu);
     builder.set_basic_parameters(rnti, handle, format_type, multi_slot_tx_type, pi2_bpsk);
+
+    return builder;
+  }
+
+  /// Adds a PUSCH PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table PUSCH PDU.
+  ul_pusch_pdu_builder add_pusch_pdu(rnti_t rnti, uint32_t handle)
+  {
+    msg.pdus.emplace_back();
+    auto& pdu    = msg.pdus.back();
+    pdu.pdu_type = ul_pdu_type::PUSCH;
+
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PUSCH)];
+
+    ul_pusch_pdu_builder builder(pdu.pusch_pdu);
+    builder.set_basic_parameters(rnti, handle);
 
     return builder;
   }

@@ -61,16 +61,16 @@ static float calculate_ratio_pdsch_dmrs_to_sss_dB(int      dmrs_power_profile_ss
   return static_cast<float>(dmrs_power_profile_sss);
 }
 
-static rb_allocation make_freq_allocation(pdsch_trans_type               trasn_type,
-                                          unsigned                       bwp_start,
-                                          unsigned                       bwp_size,
-                                          unsigned                       coreset_start,
-                                          unsigned                       initial_bwp_size,
-                                          pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping,
-                                          pdsch_resource_allocation_type resource_alloc,
-                                          std::array<uint8_t, 36>        rb_bitmap,
-                                          unsigned                       rb_start,
-                                          unsigned                       rb_size)
+static rb_allocation make_freq_allocation(pdsch_trans_type         trasn_type,
+                                          unsigned                 bwp_start,
+                                          unsigned                 bwp_size,
+                                          unsigned                 coreset_start,
+                                          unsigned                 initial_bwp_size,
+                                          vrb_to_prb_mapping_type  vrb_prb_mapping,
+                                          resource_allocation_type resource_alloc,
+                                          std::array<uint8_t, 36>  rb_bitmap,
+                                          unsigned                 rb_start,
+                                          unsigned                 rb_size)
 {
   // Make VRB-to-PRB mapping.
   vrb_to_prb_mapper mapper;
@@ -92,12 +92,12 @@ static rb_allocation make_freq_allocation(pdsch_trans_type               trasn_t
       break;
     case pdsch_trans_type::interleaved_other:
       mapper = vrb_to_prb_mapper::make_interleaved_other(
-          bwp_start, bwp_size, vrb_prb_mapping == pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
+          bwp_start, bwp_size, vrb_prb_mapping == vrb_to_prb_mapping_type::interleaved_rb_size2 ? 2 : 4);
       break;
   }
 
   rb_allocation result;
-  if (resource_alloc == pdsch_resource_allocation_type::type_0) {
+  if (resource_alloc == resource_allocation_type::type_0) {
     // Unpack the VRB bitmap. LSB of byte 0 of the bitmap represents the VRB 0.
     bounded_bitset<MAX_RB> vrb_bitmap(bwp_size);
     for (unsigned vrb_index = 0, vrb_index_end = bwp_size; vrb_index != vrb_index_end; ++vrb_index) {
@@ -137,14 +137,12 @@ static void pdsch_conversion_test()
     for (auto cyclic_p : {cyclic_prefix_type::normal, cyclic_prefix_type::extended}) {
       for (auto ref_point : {pdsch_ref_point_type::point_a, pdsch_ref_point_type::subcarrier_0}) {
         for (auto config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
-          for (auto low_papr :
-               {pdsch_low_papr_dmrs_type::independent_cdm_group, pdsch_low_papr_dmrs_type::dependent_cdm_group}) {
-            for (auto resource_alloc :
-                 {pdsch_resource_allocation_type::type_0, pdsch_resource_allocation_type::type_1}) {
+          for (auto low_papr : {low_papr_dmrs_type::independent_cdm_group, low_papr_dmrs_type::dependent_cdm_group}) {
+            for (auto resource_alloc : {resource_allocation_type::type_0, resource_allocation_type::type_1}) {
               // Iterate possible VRB-to PRB mapping. As transmission type is enabled
-              // pdsch_vrb_to_prb_mapping_type::non_interleaved value is irrelevant.
-              for (auto vrb_prb_mapping : {pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4,
-                                           pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2}) {
+              // vrb_to_prb_mapping_type::non_interleaved value is irrelevant.
+              for (auto vrb_prb_mapping :
+                   {vrb_to_prb_mapping_type::interleaved_rb_size4, vrb_to_prb_mapping_type::interleaved_rb_size2}) {
                 // Iterate all possible NZP-CSI-RS to SSS ratios. L1_use_profile_sss means SSS profile mode.
                 for (auto power_ss_profile_nr : {nzp_csi_rs_epre_to_ssb::dB_minus_3,
                                                  nzp_csi_rs_epre_to_ssb::dB0,
@@ -214,7 +212,7 @@ static void pdsch_conversion_test()
 
                           builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
 
-                          if (resource_alloc == pdsch_resource_allocation_type::type_0) {
+                          if (resource_alloc == resource_allocation_type::type_0) {
                             builder.set_pdsch_allocation_in_frequency_type_0({rb_bitmap}, vrb_prb_mapping);
                           } else {
                             builder.set_pdsch_allocation_in_frequency_type_1(rb_start, rb_size, vrb_prb_mapping);

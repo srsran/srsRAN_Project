@@ -60,6 +60,10 @@ add_executable(ul_pucch_builder_test ul_pucch_test.cpp)
 target_link_libraries(ul_pucch_builder_test srsgnb_support srslog)
 add_test(ul_pucch_builder_test ul_pucch_builder_test)
 
+add_executable(ul_pusch_builder_test ul_pusch_test.cpp)
+target_link_libraries(ul_pusch_builder_test srsgnb_support srslog)
+add_test(ul_pusch_builder_test ul_pusch_builder_test)
+
 add_executable(ul_tti_request_builder_test ul_tti_request_test.cpp)
 target_link_libraries(ul_tti_request_builder_test srsgnb_support srslog)
 add_test(ul_tti_request_builder_test ul_tti_request_builder_test)

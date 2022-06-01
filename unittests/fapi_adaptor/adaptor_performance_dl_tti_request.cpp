@@ -221,9 +221,9 @@ static void pdsch_conversion_benchmark()
   cyclic_prefix_type             cyclic_p            = cyclic_prefix_type::normal;
   pdsch_ref_point_type           ref_point           = pdsch_ref_point_type::point_a;
   dmrs_config_type               config_type         = dmrs_config_type::type_1;
-  pdsch_low_papr_dmrs_type       low_papr            = pdsch_low_papr_dmrs_type::independent_cdm_group;
-  pdsch_resource_allocation_type resource_alloc      = pdsch_resource_allocation_type::type_0;
-  pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping     = pdsch_vrb_to_prb_mapping_type::non_interleaved;
+  low_papr_dmrs_type       low_papr            = low_papr_dmrs_type::independent_cdm_group;
+  resource_allocation_type resource_alloc      = resource_allocation_type::type_0;
+  vrb_to_prb_mapping_type  vrb_prb_mapping     = vrb_to_prb_mapping_type::non_interleaved;
   pdsch_ss_profile_nr_type       power_ss_profile_nr = pdsch_ss_profile_nr_type::dB_minus_3;
   int                            power_nr            = -7;
   int                            power               = -30;
@@ -282,7 +282,7 @@ static void pdsch_conversion_benchmark()
 
     builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
 
-    if (resource_alloc == pdsch_resource_allocation_type::type_0) {
+    if (resource_alloc == resource_allocation_type::type_0) {
       builder_pdsch.set_pdsch_allocation_in_frequency_type_0({rb_bitmap}, vrb_prb_mapping);
     } else {
       builder_pdsch.set_pdsch_allocation_in_frequency_type_1(rb_start, rb_size, vrb_prb_mapping);

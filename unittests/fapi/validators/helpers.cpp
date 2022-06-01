@@ -223,18 +223,18 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
   std::uniform_real_distribution<float>   power_dist(-32, 32.0);
 
-  unsigned                       pdu_bitmap          = 0;
-  cyclic_prefix_type             cyclic_p            = cyclic_prefix_type::normal;
-  pdsch_ref_point_type           ref_point           = pdsch_ref_point_type::point_a;
-  dmrs_config_type               config_type         = dmrs_config_type::type_1;
-  pdsch_low_papr_dmrs_type       low_papr            = pdsch_low_papr_dmrs_type::independent_cdm_group;
-  pdsch_resource_allocation_type resource_alloc      = pdsch_resource_allocation_type::type_0;
-  pdsch_vrb_to_prb_mapping_type  vrb_prb_mapping     = pdsch_vrb_to_prb_mapping_type::non_interleaved;
-  nzp_csi_rs_epre_to_ssb         power_ss_profile_nr = nzp_csi_rs_epre_to_ssb::dB_minus_3;
-  int                            power_nr            = -7;
-  int                            power               = -30;
-  pdsch_trans_type               trasn_type          = pdsch_trans_type::non_interleaved_other;
-  ldpc_base_graph_type           ldpc_graph          = ldpc_base_graph_type::bg_1;
+  unsigned                 pdu_bitmap          = 0;
+  cyclic_prefix_type       cyclic_p            = cyclic_prefix_type::normal;
+  pdsch_ref_point_type     ref_point           = pdsch_ref_point_type::point_a;
+  dmrs_config_type         config_type         = dmrs_config_type::type_1;
+  low_papr_dmrs_type       low_papr            = low_papr_dmrs_type::independent_cdm_group;
+  resource_allocation_type resource_alloc      = resource_allocation_type::type_0;
+  vrb_to_prb_mapping_type  vrb_prb_mapping     = vrb_to_prb_mapping_type::non_interleaved;
+  nzp_csi_rs_epre_to_ssb   power_ss_profile_nr = nzp_csi_rs_epre_to_ssb::dB_minus_3;
+  int                      power_nr            = -7;
+  int                      power               = -30;
+  pdsch_trans_type         trasn_type          = pdsch_trans_type::non_interleaved_other;
+  ldpc_base_graph_type     ldpc_graph          = ldpc_base_graph_type::bg_1;
 
   rnti_t   rnti                     = to_rnti(rnti_dist(gen));
   unsigned bwp_size                 = bwp_size_dist(gen);
@@ -278,7 +278,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 
   builder_cw.set_basic_parameters(target_code, qam_mod, mcs, mcs_table, rv_index, tb_size);
 
-  if (resource_alloc == pdsch_resource_allocation_type::type_0) {
+  if (resource_alloc == resource_allocation_type::type_0) {
     builder_pdsch.set_pdsch_allocation_in_frequency_type_0({rb_bitmap}, vrb_prb_mapping);
   } else {
     builder_pdsch.set_pdsch_allocation_in_frequency_type_1(rb_start, rb_size, vrb_prb_mapping);

@@ -128,8 +128,7 @@ static void test_dmrs_parameters()
   std::uniform_int_distribution<unsigned> dmrs_scrambling_id_complement_dist(0, 65535);
 
   for (auto config_type : {dmrs_config_type::type_1, dmrs_config_type::type_2}) {
-    for (auto low_papr :
-         {pdsch_low_papr_dmrs_type::dependent_cdm_group, pdsch_low_papr_dmrs_type::independent_cdm_group}) {
+    for (auto low_papr : {low_papr_dmrs_type::dependent_cdm_group, low_papr_dmrs_type::independent_cdm_group}) {
       for (auto nscid : {0U, 1U}) {
         for (unsigned num_dmrs_cdm_grp_no_data = 0; num_dmrs_cdm_grp_no_data != 4; ++num_dmrs_cdm_grp_no_data) {
           dl_pdsch_pdu         pdu;
@@ -164,9 +163,9 @@ static void test_dmrs_parameters()
 static void test_allocation_in_freq_parameters()
 {
   // Type 0.
-  for (auto vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
-                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
+  for (auto vrb_to_prb : {vrb_to_prb_mapping_type::non_interleaved,
+                          vrb_to_prb_mapping_type::interleaved_rb_size2,
+                          vrb_to_prb_mapping_type::interleaved_rb_size4}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
@@ -182,9 +181,9 @@ static void test_allocation_in_freq_parameters()
   std::uniform_int_distribution<unsigned> rb_start_dist(0, 274);
   std::uniform_int_distribution<unsigned> rb_size_dist(1, 275);
 
-  for (auto vrb_to_prb : {pdsch_vrb_to_prb_mapping_type::non_interleaved,
-                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size2,
-                          pdsch_vrb_to_prb_mapping_type::interleaved_rb_size4}) {
+  for (auto vrb_to_prb : {vrb_to_prb_mapping_type::non_interleaved,
+                          vrb_to_prb_mapping_type::interleaved_rb_size2,
+                          vrb_to_prb_mapping_type::interleaved_rb_size4}) {
     dl_pdsch_pdu         pdu;
     dl_pdsch_pdu_builder builder(pdu);
 
