@@ -20,9 +20,10 @@ namespace srsgnb {
 inline sched_ue_creation_request_message make_ue_creation_request(const mac_ue_create_request_message& in)
 {
   sched_ue_creation_request_message out{};
-  out.ue_index    = in.ue_index;
-  out.pcell_index = in.cell_index;
-  out.crnti       = in.crnti;
+  out.ue_index      = in.ue_index;
+  out.pcell_index   = in.cell_index;
+  out.crnti         = in.crnti;
+  out.serv_cell_cfg = in.serv_cell_cfg;
   return out;
 }
 

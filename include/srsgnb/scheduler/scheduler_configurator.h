@@ -82,10 +82,10 @@ struct serving_cell_ue_configuration_request {
 
 /// UE Creation Request.
 struct sched_ue_creation_request_message {
-  du_ue_index_t                                   ue_index;
-  rnti_t                                          crnti;
-  du_cell_index_t                                 pcell_index;
-  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
+  du_ue_index_t                         ue_index;
+  rnti_t                                crnti;
+  du_cell_index_t                       pcell_index;
+  serving_cell_ue_configuration_request serv_cell_cfg;
 };
 
 /// UE Reconfiguration Request.

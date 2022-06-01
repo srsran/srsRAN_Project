@@ -162,10 +162,9 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   msg.ue_index   = to_du_ue_index(0);
   msg.crnti      = to_rnti(0x4601);
   msg.cell_index = to_du_cell_index(0);
-  msg.serv_cell_cfg.emplace();
 
-  msg.serv_cell_cfg->init_dl_bwp.emplace();
-  bwp_downlink_dedicated& dl_bwp = *msg.serv_cell_cfg->init_dl_bwp;
+  msg.serv_cell_cfg.init_dl_bwp.emplace();
+  bwp_downlink_dedicated& dl_bwp = *msg.serv_cell_cfg.init_dl_bwp;
   dl_bwp.pdcch_cfg.emplace();
   dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back();
   coreset_configuration& cs_cfg = dl_bwp.pdcch_cfg->coreset_to_addmod_list.back();

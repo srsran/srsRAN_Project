@@ -51,7 +51,7 @@ public:
   ue(const cell_configuration& cell_cfg_common_, const sched_ue_creation_request_message& req) :
     ue_index(req.ue_index), crnti(req.crnti), cell_cfg_common(cell_cfg_common_)
   {
-    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, *req.serv_cell_cfg);
+    cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
   }
 
   const du_ue_index_t ue_index;

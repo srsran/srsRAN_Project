@@ -69,6 +69,8 @@ public:
 
   size_t nof_cells() const { return nof_cells_; }
 
+  bool has_cell(du_cell_index_t cell_index) const { return cells[cell_index] != nullptr; }
+
 private:
   size_t                                                    nof_cells_ = 0;
   std::array<std::unique_ptr<cell_sched>, MAX_NOF_DU_CELLS> cells;

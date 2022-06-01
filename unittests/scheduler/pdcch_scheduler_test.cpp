@@ -90,7 +90,7 @@ void test_pdcch_sched_ue()
   cell_configuration      cfg{msg};
   cell_resource_allocator res_grid{cfg};
 
-  ue_cell_configuration ue_cfg{cfg, *ue_creation_msg.serv_cell_cfg};
+  ue_cell_configuration ue_cfg{cfg, ue_creation_msg.serv_cell_cfg};
   bwp_id_t              bwpid = to_bwp_id(0);
 
   pdcch_scheduler_impl pdcch_sch(cfg);

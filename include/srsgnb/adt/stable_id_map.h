@@ -127,11 +127,15 @@ public:
   }
 
   size_t size() const { return nof_elems; }
+  bool   empty() const { return nof_elems == 0; }
 
   iterator       begin() { return {elems.begin(), elems.end()}; }
   iterator       end() { return {elems.end(), elems.end()}; }
   const_iterator begin() const { return {elems.begin(), elems.end()}; }
   const_iterator end() const { return {elems.end(), elems.end()}; }
+
+  iterator lower_bound(IdType id) { return {elems.begin() + id, elems.end()}; }
+  const_iterator lower_bound(IdType id) const { return {elems.begin() + id, elems.end()}; }
 
 private:
   size_t                                   nof_elems = 0;

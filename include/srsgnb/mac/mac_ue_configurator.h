@@ -24,7 +24,7 @@ struct mac_ue_create_request_message {
   std::vector<mac_logical_channel_addmod> bearers;
   const byte_buffer*                      ul_ccch_msg;
   // Scheduler-only params
-  optional<serving_cell_ue_configuration_request> serv_cell_cfg;
+  serving_cell_ue_configuration_request serv_cell_cfg;
 };
 
 /// Outcome of a MAC UE creation request procedure.
