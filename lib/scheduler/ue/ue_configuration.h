@@ -31,6 +31,15 @@ public:
   /// Note: The ID space of SearchSpaceIds is common across all the BWPs of a Serving Cell.
   std::array<const search_space_configuration*, MAX_NOF_SEARCH_SPACES> dl_search_spaces = {};
 
+  /// This array maps BWP-Ids (the array indexes) to UL BWP configurations (the array values).
+  std::array<const bwp_configuration*, MAX_NOF_BWPS> ul_bwps = {};
+
+  /// Get Search Space List for a given BWP-Id.
+  span<const search_space_configuration> get_dl_search_spaces(bwp_id_t bwpid) const
+  {
+    return dl_bwps_cfg[bwpid].bwp_dl_ded.pdcch_cfg->ss_to_addmod_list;
+  }
+
 private:
   void addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded);
   void rel_bwp_ded_cfg(bwp_id_t bwpid);

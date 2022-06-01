@@ -47,8 +47,8 @@ public:
   }
 
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
-  void                ul_sr_info(const sr_indication_message& sr) override {}
-  void                ul_bsr(const ul_bsr_indication_message& bsr) override {}
+  void                handle_sr_indication(const sr_indication_message& sr) override {}
+  void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
 };
 
 /// Enum used to track the progress of the test task

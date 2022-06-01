@@ -17,7 +17,7 @@
 namespace srsgnb {
 
 class pdcch_scheduler;
-class cell_resource_allocator;
+struct cell_resource_allocator;
 
 struct ue_scheduler_cell_params {
   du_cell_index_t          cell_index;

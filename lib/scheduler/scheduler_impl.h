@@ -40,10 +40,10 @@ public:
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override;
 
   /// UE Scheduling Request.
-  void ul_sr_info(const sr_indication_message& sr) override { feedback_handler.ul_sr_info(sr); }
+  void handle_sr_indication(const sr_indication_message& sr) override { feedback_handler.handle_sr_indication(sr); }
 
   /// UE UL Buffer Status Report.
-  void ul_bsr(const ul_bsr_indication_message& bsr) override { feedback_handler.ul_bsr(bsr); }
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override { feedback_handler.handle_ul_bsr_indication(bsr); }
 
 private:
   sched_configuration_notifier& mac_notifier;

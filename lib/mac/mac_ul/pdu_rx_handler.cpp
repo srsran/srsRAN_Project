@@ -149,7 +149,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       } else {
         ul_bsr_ind.reported_lcgs.push_back(sched_bsr);
       }
-      sched.ul_bsr(ul_bsr_ind);
+      sched.handle_ul_bsr_indication(ul_bsr_ind);
     } break;
     case lcid_ul_sch_t::LONG_BSR:
     case lcid_ul_sch_t::LONG_TRUNC_BSR: {
@@ -166,7 +166,7 @@ bool pdu_rx_handler::handle_mac_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_sub
       for (const lcg_bsr_report& lb : lbsr_ce.list) {
         ul_bsr_ind.reported_lcgs.push_back(make_sched_lcg_report(lb, bsr_fmt));
       }
-      sched.ul_bsr(ul_bsr_ind);
+      sched.handle_ul_bsr_indication(ul_bsr_ind);
     } break;
     case lcid_ul_sch_t::CRNTI:
       // The MAC CE C-RNTI is handled separately and, among all the MAC CEs, it should be the first one being processed.
@@ -216,7 +216,7 @@ bool pdu_rx_handler::handle_crnti_ce(decoded_mac_rx_pdu& ctx, const mac_ul_sch_s
     sr.crnti      = ctx.pdu_rx.rnti;
     sr.sr_payload.resize(1);
     sr.sr_payload.set(0);
-    sched.ul_sr_info(sr);
+    sched.handle_sr_indication(sr);
   });
 
   return true;

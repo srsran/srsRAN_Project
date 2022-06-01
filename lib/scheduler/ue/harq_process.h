@@ -143,7 +143,15 @@ public:
   {
     return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
   }
+  const dl_harq_process* find_pending_dl_retx() const
+  {
+    return find_dl([](const dl_harq_process& h) { return h.has_pending_retx(); });
+  }
   ul_harq_process* find_pending_ul_retx()
+  {
+    return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
+  }
+  const ul_harq_process* find_pending_ul_retx() const
   {
     return find_ul([](const ul_harq_process& h) { return h.has_pending_retx(); });
   }
@@ -151,7 +159,15 @@ public:
   {
     return find_dl([](const dl_harq_process& h) { return h.empty(); });
   }
+  const dl_harq_process* find_empty_dl_harq() const
+  {
+    return find_dl([](const dl_harq_process& h) { return h.empty(); });
+  }
   ul_harq_process* find_empty_ul_harq()
+  {
+    return find_ul([](const ul_harq_process& h) { return h.empty(); });
+  }
+  const ul_harq_process* find_empty_ul_harq() const
   {
     return find_ul([](const ul_harq_process& h) { return h.empty(); });
   }
@@ -164,7 +180,19 @@ private:
     return (it == dl_harqs.end()) ? nullptr : &(*it);
   }
   template <typename Predicate>
+  const dl_harq_process* find_dl(Predicate p) const
+  {
+    auto it = std::find_if(dl_harqs.begin(), dl_harqs.end(), p);
+    return (it == dl_harqs.end()) ? nullptr : &(*it);
+  }
+  template <typename Predicate>
   ul_harq_process* find_ul(Predicate p)
+  {
+    auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
+    return (it == ul_harqs.end()) ? nullptr : &(*it);
+  }
+  template <typename Predicate>
+  const ul_harq_process* find_ul(Predicate p) const
   {
     auto it = std::find_if(ul_harqs.begin(), ul_harqs.end(), p);
     return (it == ul_harqs.end()) ? nullptr : &(*it);

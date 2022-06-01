@@ -133,6 +133,9 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tbs) {
       for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
+        // TODO: TEMP. RLC still not in place.
+        break;
+
         // Fetch RLC Bearer.
         mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");

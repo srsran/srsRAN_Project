@@ -10,21 +10,10 @@
 
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
+#include "../support/config_helpers.h"
 #include "pdcch_scheduler_impl.h"
 
 using namespace srsgnb;
-
-/// Retrieves the time resource allocation table for PUSCH.
-/// \remark See TS 38.214, Section 6.1.2.1.1 - Determination of the resource allocation table to be used for PUSCH.
-span<const pusch_time_domain_resource_allocation>
-get_pusch_time_domain_resource_table(const pusch_config_common& pusch_cfg)
-{
-  if (pusch_cfg.pusch_td_alloc_list.empty()) {
-    // Use default tables 6.1.2.1.1-2/3.
-    // TODO: PHY helper.
-  }
-  return pusch_cfg.pusch_td_alloc_list;
-}
 
 unsigned srsgnb::get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_res_alloc,
                                 subcarrier_spacing                           pusch_scs)

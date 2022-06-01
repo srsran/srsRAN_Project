@@ -11,11 +11,12 @@
 #ifndef SRSGNB_UE_SCHEDULER_IMPL_H
 #define SRSGNB_UE_SCHEDULER_IMPL_H
 
-#include "../sched_strategy/data_scheduler.h"
+#include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
 #include "../support/slot_sync_point.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/adt/unique_function.h"
+#include "ue_cell_grid_allocator.h"
 #include "ue_event_manager.h"
 #include "ue_scheduler.h"
 
@@ -38,7 +39,7 @@ public:
   scheduler_feedback_handler& get_feedback_handler() override { return event_mng; }
 
 private:
-  void run_sched_strategy();
+  void run_sched_strategy(slot_point sl_tx);
 
   /// Repository of created UEs.
   ue_list ue_db;
@@ -46,8 +47,11 @@ private:
   /// Processor of UE input events.
   ue_event_manager event_mng;
 
-  /// Currently added cells.
-  slot_array<ue_scheduler_cell_params, MAX_NOF_DU_CELLS> cells;
+  /// Allocator of grants in the resource grid.
+  ue_cell_grid_allocator ue_alloc;
+
+  /// Scheduling Strategy
+  std::unique_ptr<scheduler_policy> sched_strategy;
 
   /// Mutex used to lock carriers for joint carrier scheduling.
   slot_sync_point sync_point;

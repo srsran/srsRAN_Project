@@ -11,7 +11,7 @@
 #ifndef SRSGNB_UE_H
 #define SRSGNB_UE_H
 
-#include "srsgnb/adt/circular_map.h"
+#include "harq_process.h"
 #include "srsgnb/adt/stable_id_map.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
@@ -27,7 +27,11 @@ public:
              du_cell_index_t                              cell_index,
              const cell_configuration&                    cell_cfg_common_,
              const serving_cell_ue_configuration_request& ue_serv_cell) :
-    ue_index(ue_index), cell_index(cell_index), crnti_(crnti_val), ue_cfg(cell_cfg_common_, ue_serv_cell)
+    ue_index(ue_index),
+    cell_index(cell_index),
+    harqs(crnti_val, 52, 16, srslog::fetch_basic_logger("MAC")),
+    crnti_(crnti_val),
+    ue_cfg(cell_cfg_common_, ue_serv_cell)
   {}
 
   const du_ue_index_t   ue_index;
@@ -39,6 +43,8 @@ public:
   bool     is_active() const { return true; }
 
   const ue_cell_configuration& cfg() const { return ue_cfg; }
+
+  harq_entity harqs;
 
 private:
   rnti_t                crnti_;
@@ -52,6 +58,7 @@ public:
     ue_index(req.ue_index), crnti(req.crnti), cell_cfg_common(cell_cfg_common_)
   {
     cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
+    ue_cells.push_back(cells[0].get());
   }
   ue(const ue&) = delete;
   ue(ue&&)      = delete;
@@ -75,6 +82,10 @@ public:
     return cells[cell_index].get();
   }
 
+  span<ue_carrier*> ue_carriers() { return ue_cells; }
+
+  span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cells.data(), ue_cells.size()); }
+
   bool has_pending_txs() const { return true; }
 
   bool is_ca_enabled() const { return false; }
@@ -97,6 +108,8 @@ private:
   const cell_configuration& cell_cfg_common;
 
   std::array<std::unique_ptr<ue_carrier>, MAX_CELLS> cells;
+
+  static_vector<ue_carrier*, MAX_CELLS> ue_cells;
 
   sr_indication_message last_sr;
 };

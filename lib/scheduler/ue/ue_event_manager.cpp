@@ -111,7 +111,7 @@ void ue_event_manager::handle_ue_delete_request(du_ue_index_t ue_index)
   });
 }
 
-void ue_event_manager::ul_sr_info(const sr_indication_message& sr_ind)
+void ue_event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
 {
   srsran_sanity_check(cell_exists(sr_ind.cell_index), "Invalid cell index");
 
@@ -121,12 +121,12 @@ void ue_event_manager::ul_sr_info(const sr_indication_message& sr_ind)
   });
 }
 
-void ue_event_manager::ul_bsr(const ul_bsr_indication_message& bsr_ind)
+void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index,
-                        [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("ul_bsr(ueId={})", bsr_ind.ue_index); });
+                        [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("handle_ul_bsr_indication(ueId={})", bsr_ind.ue_index); });
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

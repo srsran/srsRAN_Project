@@ -36,8 +36,8 @@ public:
   void handle_ue_delete_request(du_ue_index_t ue_index) override;
 
   /// Scheduler feedback handler interface.
-  void ul_sr_info(const sr_indication_message& sr) override;
-  void ul_bsr(const ul_bsr_indication_message& bsr) override;
+  void handle_sr_indication(const sr_indication_message& sr) override;
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
 
   /// Process events for a given slot and cell index.
   void run(slot_point sl, du_cell_index_t cell_index);

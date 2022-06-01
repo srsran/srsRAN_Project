@@ -11,7 +11,6 @@
 #ifndef SRSGNB_CELL_SCHED_H
 #define SRSGNB_CELL_SCHED_H
 
-#include "../sched_strategy/data_scheduler.h"
 #include "cell_configuration.h"
 #include "pdcch_scheduler_impl.h"
 #include "ra_scheduler.h"

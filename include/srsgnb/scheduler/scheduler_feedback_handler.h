@@ -49,9 +49,9 @@ struct ul_bsr_indication_message {
 class scheduler_feedback_handler
 {
 public:
-  virtual ~scheduler_feedback_handler()                     = default;
-  virtual void ul_sr_info(const sr_indication_message& sr)  = 0;
-  virtual void ul_bsr(const ul_bsr_indication_message& bsr) = 0;
+  virtual ~scheduler_feedback_handler()                                       = default;
+  virtual void handle_sr_indication(const sr_indication_message& sr)          = 0;
+  virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
 };
 
 } // namespace srsgnb
