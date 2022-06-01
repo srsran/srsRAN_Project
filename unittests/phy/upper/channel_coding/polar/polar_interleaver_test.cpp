@@ -8,13 +8,16 @@
  *
  */
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsgnb/support/srsgnb_test.h"
+#include <numeric>
 
 using namespace srsgnb;
 
 struct polar_interleaver_gold_t {
-  int K;
-  int indexes[164];
+  int                         K;
+  static_vector<uint8_t, 164> indexes;
 };
 
 static const std::vector<polar_interleaver_gold_t> polar_interleaver_gold = {
@@ -1050,27 +1053,22 @@ int main(int argc, char** argv)
     uint32_t K = e.K;
 
     // Create indexes in order
-    std::vector<uint8_t> indexes_in(K);
-    for (uint8_t i = 0; i != (uint8_t)K; ++i) {
-      indexes_in[i] = i;
-    }
+    std::vector<uint8_t> input(K);
+    std::iota(input.begin(), input.end(), 0);
 
     // Run interleaver forward
-    std::vector<uint8_t> indexes_out(K);
-    interleaver->interleave(indexes_in, indexes_out, polar_interleaver_direction::tx);
+    std::vector<uint8_t> interleaved(K);
+    interleaver->interleave(interleaved, input, polar_interleaver_direction::tx);
 
     // Check indexes
-    for (unsigned i = 0; i != K; i++) {
-      assert(e.indexes[i] == indexes_out[i]);
-    }
+    TESTASSERT_EQ(span<const uint8_t>(e.indexes), span<const uint8_t>(interleaved));
 
     // Run interleaver backwards
-    interleaver->interleave(indexes_out, indexes_in, polar_interleaver_direction::rx);
+    std::vector<uint8_t> deinterleaved(K);
+    interleaver->interleave(deinterleaved, interleaved, polar_interleaver_direction::rx);
 
     // Check indexes
-    for (uint16_t i = 0; i < (uint16_t)K; i++) {
-      assert(indexes_in[i] == i);
-    }
+    TESTASSERT_EQ(span<const uint8_t>(input), span<const uint8_t>(deinterleaved));
   }
 
   return 0;
