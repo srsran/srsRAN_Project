@@ -12,13 +12,24 @@
 #include "../ran/gnb_format.h"
 #include "f1_procedure_asn1_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/support/async/event_signal.h"
 
-namespace srsgnb {
+using namespace srsgnb;
+using namespace asn1::f1ap;
+
+class srsgnb::f1ap_du_impl::f1ap_du_event_manager
+{
+public:
+  /// F1 Setup Procedure Outcome.
+  using f1ap_setup_outcome_t = expected<const f1_setup_resp_s*, const f1_setup_fail_s*>;
+  event_signal<f1ap_setup_outcome_t> f1ap_setup_response;
+};
 
 f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_handler_) :
-  logger(srslog::fetch_basic_logger("F1AP")), timers(timers_), f1c(f1c_pdu_handler_)
+  logger(srslog::fetch_basic_logger("F1AP")),
+  timers(timers_),
+  f1c(f1c_pdu_handler_),
+  events(std::make_unique<f1ap_du_event_manager>())
 {
   f1c_setup_timer = timers.create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
@@ -26,28 +37,31 @@ f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_
   });
 }
 
+// Note: For fwd declaration of member types, dtor cannot be trivial.
+f1ap_du_impl::~f1ap_du_impl() {}
+
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
   asn1::f1ap::f1_setup_request_s request_asn1;
   fill_asn1_f1_setup_request(request_asn1, request);
 
+  f1ap_du_event_manager::f1ap_setup_outcome_t f1_resp;
+
   // TODO: add procedure implementation
-  return launch_async([this, res_pdu = asn1::f1ap::f1_ap_pdu_c{}, res = f1_setup_response_message{}, request](
+  return launch_async([this, f1_resp, res = f1_setup_response_message{}, request](
                           coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
-    CORO_AWAIT_VALUE(res_pdu, pdu_queue);
+    CORO_AWAIT_VALUE(f1_resp, events->f1ap_setup_response);
 
-    if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome) {
+    if (f1_resp.has_value()) {
       logger.info("Received F1AP PDU with successful outcome.");
-      res.msg     = res_pdu.successful_outcome().value.f1_setup_resp();
+      res.msg     = *f1_resp.value();
       res.success = true;
-    }
-
-    if (res_pdu.type() == asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome) {
+    } else {
       logger.info("Received F1AP PDU with unsuccessful outcome.");
       if (f1_setup_retry_no < request.setup_params.max_setup_retries) {
-        CORO_AWAIT_VALUE(res, handle_f1_setup_failure(request, res_pdu.unsuccessful_outcome().value.f1_setup_fail()));
+        CORO_AWAIT_VALUE(res, handle_f1_setup_failure(request, *f1_resp.error()));
       } else {
         logger.error("Reached maximum number of F1 Setup connection retries ({}).",
                      request.setup_params.max_setup_retries);
@@ -116,7 +130,7 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(cons
           break;
       }
 
-      logger.error("Received F1SetupFailure with {} error: {}", failure->cause.value.type().to_string(), cause_str);
+      logger.error("Received F1SetupFailure with \"{}\" error: {}", failure->cause.value.type().to_string(), cause_str);
     }
 
     CORO_RETURN(res);
@@ -139,8 +153,50 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 
 void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
-  logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
-  pdu_queue.try_push(pdu);
+  logger.info("Handling F1AP PDU of type \"{}\"", pdu.type().to_string());
+
+  switch (pdu.type().value) {
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
+      handle_initiating_message(pdu.init_msg());
+      break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
+      handle_successful_outcome(pdu.successful_outcome());
+      break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+      handle_unsuccessful_outcome(pdu.unsuccessful_outcome());
+      break;
+    default:
+      logger.error("Invalid PDU type");
+      break;
+  }
 }
 
-} // namespace srsgnb
+void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
+{
+  switch (msg.value.type().value) {
+    default:
+      logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
+  }
+}
+
+void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
+{
+  switch (outcome.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp:
+      events->f1ap_setup_response.set(&outcome.value.f1_setup_resp());
+      break;
+    default:
+      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  }
+}
+
+void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
+{
+  switch (outcome.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail:
+      events->f1ap_setup_response.set(&outcome.value.f1_setup_fail());
+      break;
+    default:
+      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  }
+}

@@ -96,6 +96,28 @@ public:
     val = std::move(other);
     return *this;
   }
+  expected& operator=(const E& other) noexcept
+  {
+    if (has_value()) {
+      val.~T();
+      has_val = false;
+      new (&unexpected) E(other);
+    } else {
+      unexpected = other;
+    }
+    return *this;
+  }
+  expected& operator=(E&& other) noexcept
+  {
+    if (has_value()) {
+      val.~T();
+      has_val = false;
+      new (&unexpected) E(std::move(other));
+    } else {
+      unexpected = std::move(other);
+    }
+    return *this;
+  }
   ~expected() { destroy(); }
 
   void set_error()

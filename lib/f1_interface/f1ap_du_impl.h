@@ -15,7 +15,6 @@
 #include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
-#include "srsgnb/support/async/async_queue.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -25,6 +24,7 @@ class f1ap_du_impl final : public f1_du_interface
 {
 public:
   f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_handler);
+  ~f1ap_du_impl();
 
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
@@ -42,6 +42,12 @@ public:
                                                                 const asn1::f1ap::f1_setup_fail_s& failure);
 
 private:
+  class f1ap_du_event_manager;
+
+  void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
+  void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
+  void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
+
   srslog::basic_logger& logger;
   timer_manager&        timers;
   f1c_message_handler&  f1c;
@@ -50,7 +56,7 @@ private:
 
   f1ap_du_context ctxt;
 
-  async_queue<asn1::f1ap::f1_ap_pdu_c> pdu_queue{64};
+  std::unique_ptr<f1ap_du_event_manager> events;
 
   int f1_setup_retry_no = 0;
 };
