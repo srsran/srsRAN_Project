@@ -93,6 +93,12 @@ static void test_validate_more_that_one_error_simultaneously()
   TESTASSERT(!validate_ul_prach_pdu(pdu, report));
   TESTASSERT_EQ(4U, report.reports.size());
   TESTASSERT_EQ(6U, report.nof_errors);
+  // Check that the properties that caused the error are different.
+  for (unsigned i = 0, e = report.reports.size(); i != e; ++i) {
+    for (unsigned j = i + 1; j != e; ++j) {
+      TESTASSERT(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
+    }
+  }
 }
 
 static void test_validate_prach_pdu_ok()

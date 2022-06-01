@@ -343,12 +343,12 @@ static void test_validate_each_field_error()
   validate_f4();
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_scs = {
+static std::vector<test_group<ul_pucch_pdu> > vector_test_pucch_format = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.format_type = static_cast<pucch_format_type>(value); },
      "Format type",
-     {{0, true}, {2, true}, {4, true}, {5, false}}}};
+     {{5, false}}}};
 
-static void test_validate_subcarrier_spacing_error()
+static void test_validate_pucch_format_error()
 {
   std::vector<std::function<ul_pucch_pdu()> > builders = {build_valid_ul_pucch_f0_pdu,
                                                           build_valid_ul_pucch_f1_pdu,
@@ -356,22 +356,20 @@ static void test_validate_subcarrier_spacing_error()
                                                           build_valid_ul_pucch_f3_pdu,
                                                           build_valid_ul_pucch_f4_pdu};
 
-  for (auto& group : vector_test_scs) {
-    for (const auto& test_case : group) {
-      validator_report report(0, 0);
-      auto             pdu = (test_case.value < 5) ? builders[test_case.value]() : builders[0]();
-      group.update_msg(pdu, test_case.value);
-      bool result = validate_ul_pucch_pdu(pdu, report);
+  for (auto builder : builders) {
+    for (auto& group : vector_test_pucch_format) {
+      for (const auto& test_case : group) {
+        validator_report report(0, 0);
+        auto             pdu = builder();
+        group.update_msg(pdu, test_case.value);
+        bool result = validate_ul_pucch_pdu(pdu, report);
 
-      TESTASSERT_EQ(result, test_case.result);
-      if (!result) {
+        TESTASSERT_EQ(result, test_case.result);
         // Check that the first error is format type.
         const auto& rep = report.reports.front();
         TESTASSERT_EQ(std::strcmp(group.property(), rep.property_name), 0);
         TESTASSERT_EQ(message_type_id::ul_tti_request, rep.message_type);
         TESTASSERT_EQ(ul_pdu_type::PUCCH, static_cast<ul_pdu_type>(rep.pdu_type.value()));
-      } else {
-        TESTASSERT(report.reports.empty());
       }
     }
   }
@@ -397,6 +395,12 @@ static void test_validate_more_that_one_error_simultaneously()
 
     TESTASSERT(!validate_ul_pucch_pdu(pdu, report));
     TESTASSERT_EQ(4U, report.reports.size());
+    // Check that the properties that caused the error are different.
+    for (unsigned i = 0, e = report.reports.size(); i != e; ++i) {
+      for (unsigned j = i + 1; j != e; ++j) {
+        TESTASSERT(std::strcmp(report.reports[i].property_name, report.reports[j].property_name) != 0);
+      }
+    }
   }
 }
 
@@ -420,7 +424,7 @@ int main()
 {
   test_validate_pucch_pdu_ok();
   test_validate_each_field_error();
-  test_validate_subcarrier_spacing_error();
+  test_validate_pucch_format_error();
   test_validate_more_that_one_error_simultaneously();
   fmt::print("UL PUCCH validator -> OK\n");
 }

@@ -87,31 +87,52 @@ static void test_hopping_information_params()
   pucch_group_hopping_type pucch_group_hopping  = pucch_group_hopping_type::neither;
   unsigned                 nid_pucch_hopping    = 200;
   unsigned                 inicial_cyclic_shift = 7;
-  unsigned                 nid_scrambling       = 500;
-  unsigned                 time_domain_occ      = 3;
-  unsigned                 pre_dft_idx          = 1;
-  unsigned                 pre_dft_len          = 2;
 
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
-  builder.set_hopping_information_parameters(intra_slot_freq,
-                                             second_hop_prb,
-                                             pucch_group_hopping,
-                                             nid_pucch_hopping,
-                                             inicial_cyclic_shift,
-                                             nid_scrambling,
-                                             time_domain_occ,
-                                             pre_dft_idx,
-                                             pre_dft_len);
+  builder.set_hopping_information_parameters(
+      intra_slot_freq, second_hop_prb, pucch_group_hopping, nid_pucch_hopping, inicial_cyclic_shift);
 
   TESTASSERT_EQ(intra_slot_freq, pdu.intra_slot_frequency_hopping);
   TESTASSERT_EQ(second_hop_prb, pdu.second_hop_prb);
   TESTASSERT_EQ(pucch_group_hopping, pdu.pucch_group_hopping);
   TESTASSERT_EQ(nid_pucch_hopping, pdu.nid_pucch_hopping);
   TESTASSERT_EQ(inicial_cyclic_shift, pdu.initial_cyclic_shift);
+}
+
+static void test_scrambling_params()
+{
+  unsigned nid_scrambling = 500;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+  builder.set_scrambling_parameters(nid_scrambling);
+
   TESTASSERT_EQ(nid_scrambling, pdu.nid_pucch_scrambling);
+}
+
+static void test_format1_params()
+{
+  unsigned time_domain_occ = 3;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+  builder.set_format1_parameters(time_domain_occ);
+
   TESTASSERT_EQ(time_domain_occ, pdu.time_domain_occ_index);
+}
+
+static void test_format4_params()
+{
+  unsigned pre_dft_idx = 1;
+  unsigned pre_dft_len = 2;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+
+  builder.set_format4_parameters(pre_dft_idx, pre_dft_len);
+
   TESTASSERT_EQ(pre_dft_idx, pdu.pre_dft_occ_idx);
   TESTASSERT_EQ(pre_dft_len, pdu.pre_dft_occ_len);
 }
@@ -121,19 +142,28 @@ static void test_dmrs_params()
   bool     dmrs_flag            = false;
   unsigned nid0_dmrs_scrambling = 34567;
   unsigned m0_cyclic_shift      = 8;
-  unsigned sr_bit_len           = 3;
-  unsigned harq_bit_len         = 190;
-  unsigned csi_part1_bit_len    = 1024;
 
   ul_pucch_pdu         pdu;
   ul_pucch_pdu_builder builder(pdu);
 
-  builder.set_dmrs_parameters(
-      dmrs_flag, nid0_dmrs_scrambling, m0_cyclic_shift, sr_bit_len, harq_bit_len, csi_part1_bit_len);
+  builder.set_dmrs_parameters(dmrs_flag, nid0_dmrs_scrambling, m0_cyclic_shift);
 
   TESTASSERT_EQ(dmrs_flag, pdu.add_dmrs_flag);
   TESTASSERT_EQ(nid0_dmrs_scrambling, pdu.nid0_pucch_dmrs_scrambling);
   TESTASSERT_EQ(m0_cyclic_shift, pdu.m0_pucch_dmrs_cyclic_shift);
+}
+
+static void test_bit_lenght_params()
+{
+  unsigned sr_bit_len        = 3;
+  unsigned harq_bit_len      = 190;
+  unsigned csi_part1_bit_len = 1024;
+
+  ul_pucch_pdu         pdu;
+  ul_pucch_pdu_builder builder(pdu);
+
+  builder.set_bit_length_parameters(sr_bit_len, harq_bit_len, csi_part1_bit_len);
+
   TESTASSERT_EQ(sr_bit_len, pdu.sr_bit_len);
   TESTASSERT_EQ(harq_bit_len, pdu.bit_len_harq);
   TESTASSERT_EQ(csi_part1_bit_len, pdu.csi_part1_bit_length);
@@ -201,7 +231,11 @@ int main()
   test_allocation_in_freq_params();
   test_allocation_in_time_params();
   test_hopping_information_params();
+  test_scrambling_params();
+  test_format1_params();
+  test_format4_params();
   test_dmrs_params();
+  test_bit_lenght_params();
   test_maintenance_v3_basic_params();
   test_uci_part1_part2_params();
   fmt::print("UL PUCCH PDU builder -> OK\n");

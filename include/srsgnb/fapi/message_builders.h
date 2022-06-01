@@ -1935,40 +1935,65 @@ public:
                                                            uint16_t                 second_hop_prb,
                                                            pucch_group_hopping_type pucch_group_hopping,
                                                            uint16_t                 nid_pucch_hopping,
-                                                           uint16_t                 initial_cyclic_shift,
-                                                           uint16_t                 nid_pucch_scrambling,
-                                                           uint8_t                  time_domain_occ_idx,
-                                                           uint8_t                  pre_dft_occ_idx,
-                                                           uint8_t                  pre_dft_occ_len)
+                                                           uint16_t                 initial_cyclic_shift)
   {
     pdu.intra_slot_frequency_hopping = intra_slot_frequency_hopping;
     pdu.second_hop_prb               = second_hop_prb;
     pdu.pucch_group_hopping          = pucch_group_hopping;
     pdu.nid_pucch_hopping            = nid_pucch_hopping;
     pdu.initial_cyclic_shift         = initial_cyclic_shift;
-    pdu.nid_pucch_scrambling         = nid_pucch_scrambling;
-    pdu.time_domain_occ_index        = time_domain_occ_idx;
-    pdu.pre_dft_occ_idx              = pre_dft_occ_idx;
-    pdu.pre_dft_occ_len              = pre_dft_occ_len;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU scrambling parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_scrambling_parameters(uint16_t nid_pucch_scrambling)
+  {
+    pdu.nid_pucch_scrambling = nid_pucch_scrambling;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU format 1 specific parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_format1_parameters(uint8_t time_domain_occ_idx)
+  {
+    pdu.time_domain_occ_index = time_domain_occ_idx;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU format 4 specific parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder& set_format4_parameters(uint8_t pre_dft_occ_idx, uint8_t pre_dft_occ_len)
+  {
+    pdu.pre_dft_occ_idx = pre_dft_occ_idx;
+    pdu.pre_dft_occ_len = pre_dft_occ_len;
 
     return *this;
   }
 
   /// Sets the PUCCH PDU DMRS parameters and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
-  ul_pucch_pdu_builder& set_dmrs_parameters(bool     add_dmrs_flag,
-                                            uint16_t nid0_pucch_dmrs_scrambling,
-                                            uint8_t  m0_pucch_dmrs_cyclic_shift,
-                                            uint8_t  sr_bit_len,
-                                            uint16_t bit_len_harq,
-                                            uint16_t csi_part1_bit_length)
+  ul_pucch_pdu_builder&
+  set_dmrs_parameters(bool add_dmrs_flag, uint16_t nid0_pucch_dmrs_scrambling, uint8_t m0_pucch_dmrs_cyclic_shift)
   {
     pdu.add_dmrs_flag              = add_dmrs_flag;
     pdu.nid0_pucch_dmrs_scrambling = nid0_pucch_dmrs_scrambling;
     pdu.m0_pucch_dmrs_cyclic_shift = m0_pucch_dmrs_cyclic_shift;
-    pdu.sr_bit_len                 = sr_bit_len;
-    pdu.bit_len_harq               = bit_len_harq;
-    pdu.csi_part1_bit_length       = csi_part1_bit_length;
+
+    return *this;
+  }
+
+  /// Sets the PUCCH PDU bit length for SR, HARQ and CSI part1 parameters and returns a reference to the builder.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.3 in table PUCCH PDU.
+  ul_pucch_pdu_builder&
+  set_bit_length_parameters(uint8_t sr_bit_len, uint16_t bit_len_harq, uint16_t csi_part1_bit_length)
+  {
+    pdu.sr_bit_len           = sr_bit_len;
+    pdu.bit_len_harq         = bit_len_harq;
+    pdu.csi_part1_bit_length = csi_part1_bit_length;
 
     return *this;
   }
