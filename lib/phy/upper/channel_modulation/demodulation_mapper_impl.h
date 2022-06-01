@@ -32,10 +32,10 @@ class demodulation_mapper_impl : public demodulation_mapper
 {
 public:
   // See interface for the documentation.
-  void demodulate_soft(span<int8_t>      llrs,
-                       span<const cf_t>  symbols,
-                       span<const float> noise_vars,
-                       modulation_scheme mod) override;
+  void demodulate_soft(span<log_likelihood_ratio> llrs,
+                       span<const cf_t>           symbols,
+                       span<const float>          noise_vars,
+                       modulation_scheme          mod) override;
 };
 
 } // namespace srsgnb

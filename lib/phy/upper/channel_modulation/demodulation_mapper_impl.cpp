@@ -26,7 +26,8 @@ static int8_t demod_BPSK_symbol(cf_t z, float noise_var, float range_limit)
   return clip_and_quantize(l_value, range_limit, RANGE_LIMIT_INT);
 };
 
-static void demodulate_soft_BPSK(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
+static void
+demodulate_soft_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
   constexpr float RANGE_LIMIT_FLOAT = 200;
@@ -41,7 +42,8 @@ static int8_t demod_QPSK_symbol(float x, float noise_var, float range_limit)
   return clip_and_quantize(l_value, range_limit, RANGE_LIMIT_INT);
 };
 
-static void demodulate_soft_QPSK(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
+static void
+demodulate_soft_QPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
   constexpr float RANGE_LIMIT_FLOAT = 200;
@@ -70,7 +72,8 @@ static int8_t demod_16QAM_symbol_23(float x, float noise_var, float range_limit)
   return clip_and_quantize(l_value, range_limit, RANGE_LIMIT_INT);
 };
 
-static void demodulate_soft_QAM16(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars)
+static void
+demodulate_soft_QAM16(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
 {
   // Maximum (absolute) value considered for quantization. Larger values will be clipped.
   constexpr float RANGE_LIMIT_FLOAT = 100;
@@ -86,10 +89,10 @@ static void demodulate_soft_QAM16(span<int8_t> llrs, span<const cf_t> symbols, s
   }
 }
 
-void demodulation_mapper_impl::demodulate_soft(span<int8_t>      llrs,
-                                               span<const cf_t>  symbols,
-                                               span<const float> noise_vars,
-                                               modulation_scheme mod)
+void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
+                                               span<const cf_t>           symbols,
+                                               span<const float>          noise_vars,
+                                               modulation_scheme          mod)
 {
   srsran_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
   srsran_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");

@@ -17,6 +17,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <memory>
 
 namespace srsgnb {
@@ -49,8 +50,10 @@ public:
   ///         contains the (estimated) noise variance after equalization corresponding to the symbol with the same
   ///         index.
   /// \remark The length of \c llrs is given by the number of symbols multiplied by the modulation order of \c mod.
-  virtual void
-  demodulate_soft(span<int8_t> llrs, span<const cf_t> symbols, span<const float> noise_vars, modulation_scheme mod) = 0;
+  virtual void demodulate_soft(span<log_likelihood_ratio> llrs,
+                               span<const cf_t>           symbols,
+                               span<const float>          noise_vars,
+                               modulation_scheme          mod) = 0;
 };
 
 std::unique_ptr<demodulation_mapper> create_demodulation_mapper();

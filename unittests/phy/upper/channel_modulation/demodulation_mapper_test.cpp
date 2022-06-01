@@ -44,20 +44,23 @@ int main()
     TESTASSERT(std::all_of(noise_var.cbegin(), noise_var.cend(), [](float f) { return f > 0; }),
                "Noise variances should take positive values.");
 
-    const unsigned      nof_bits = nof_symbols * get_bits_per_symbol(mod);
-    std::vector<int8_t> soft_bits(nof_bits);
+    const unsigned                    nof_bits = nof_symbols * get_bits_per_symbol(mod);
+    std::vector<log_likelihood_ratio> soft_bits(nof_bits);
     demodulator->demodulate_soft(soft_bits, symbols, noise_var, mod);
 
-    const std::vector<int8_t> soft_bits_true = test_case.soft_bits.read();
+    const std::vector<log_likelihood_ratio> soft_bits_true = test_case.soft_bits.read();
     TESTASSERT_EQ(soft_bits_true.size(), nof_bits, "Error reading soft bits.");
 
-    TESTASSERT(
-        std::equal(
-            soft_bits.cbegin(), soft_bits.cend(), soft_bits_true.cbegin(), [](int8_t a, int8_t b) { return a == b; }),
-        "Soft bits are not sufficiently precise.");
+    TESTASSERT(std::equal(soft_bits.cbegin(),
+                          soft_bits.cend(),
+                          soft_bits_true.cbegin(),
+                          [](log_likelihood_ratio a, log_likelihood_ratio b) { return a == b; }),
+               "Soft bits are not sufficiently precise.");
 
     std::vector<uint8_t> hard_bits(nof_bits);
-    std::transform(soft_bits.cbegin(), soft_bits.cend(), hard_bits.begin(), [](int8_t a) { return (a > 0) ? 0U : 1U; });
+    std::transform(soft_bits.cbegin(), soft_bits.cend(), hard_bits.begin(), [](log_likelihood_ratio a) {
+      return (a > 0) ? 0U : 1U;
+    });
     const std::vector<uint8_t> hard_bits_true = test_case.hard_bits.read();
     TESTASSERT_EQ(hard_bits_true.size(), nof_bits, "Error reading hard bits.");
     TESTASSERT(std::equal(hard_bits.cbegin(), hard_bits.cend(), hard_bits_true.cbegin()), "Hard bits do not match.");

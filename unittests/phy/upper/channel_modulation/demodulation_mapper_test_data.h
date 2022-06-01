@@ -20,12 +20,12 @@
 namespace srsgnb {
 
 struct test_case_t {
-  std::size_t          nsymbols;
-  modulation_scheme    scheme;
-  file_vector<cf_t>    symbols;
-  file_vector<float>   noise_var;
-  file_vector<int8_t>  soft_bits;
-  file_vector<uint8_t> hard_bits;
+  std::size_t                       nsymbols;
+  modulation_scheme                 scheme;
+  file_vector<cf_t>                 symbols;
+  file_vector<float>                noise_var;
+  file_vector<log_likelihood_ratio> soft_bits;
+  file_vector<uint8_t>              hard_bits;
 };
 
 static const std::vector<test_case_t> demodulation_mapper_test_data = {
