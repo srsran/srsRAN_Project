@@ -58,8 +58,8 @@ dft_processor_fftw_impl::fftw_wisdom_filename::fftw_wisdom_filename()
   }
 }
 
-dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_factory_fftw_config& fftw_config,
-                                                 const configuration&                     dft_config) :
+dft_processor_fftw_impl::dft_processor_fftw_impl(const dft_processor_fftw_configuration& fftw_config,
+                                                 const configuration&                    dft_config) :
   dir(dft_config.dir), input(dft_config.size), output(dft_config.size)
 {
   // Avoid that two or more plan creations are called at same time.
@@ -134,15 +134,4 @@ span<const cf_t> dft_processor_fftw_impl::run()
 
   // Return the view of the output data.
   return output;
-}
-
-std::unique_ptr<dft_processor> dft_processor_factory_fftw_impl::create(const dft_processor::configuration& dft_config)
-{
-  return std::make_unique<dft_processor_fftw_impl>(config, dft_config);
-}
-
-std::unique_ptr<dft_processor_factory>
-srsgnb::create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config)
-{
-  return std::make_unique<dft_processor_factory_fftw_impl>(factory_config);
 }

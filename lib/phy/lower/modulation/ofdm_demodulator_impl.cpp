@@ -12,19 +12,19 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
-#include <complex>
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
-ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(const ofdm_demodulator_factory_config& factory_config,
-                                                           const ofdm_demodulator_configuration&  ofdm_config) :
+ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
+                                                           const ofdm_demodulator_configuration&   ofdm_config) :
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
   center_freq_hz(ofdm_config.center_freq_hz),
-  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::DIRECT}))
+  dft(std::move(factory_config.dft))
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(
@@ -133,7 +133,7 @@ unsigned ofdm_slot_demodulator_impl::get_slot_size(unsigned slot_index) const
 }
 
 void ofdm_slot_demodulator_impl::demodulate(resource_grid_writer& grid,
-                                            const span<cf_t>      input,
+                                            span<const cf_t>      input,
                                             unsigned              port_index,
                                             unsigned              slot_index)
 {
@@ -150,10 +150,4 @@ void ofdm_slot_demodulator_impl::demodulate(resource_grid_writer& grid,
     // Demodulate symbol.
     symbol_demodulator.demodulate(grid, input.subspan(offset, symbol_sz), port_index, nsymb * slot_index + symbol_idx);
   }
-}
-
-std::unique_ptr<ofdm_demodulator_factory>
-srsgnb::create_ofdm_demodulator_factory(ofdm_demodulator_factory_config& config)
-{
-  return std::make_unique<ofdm_demodulator_factory_impl>(config);
 }

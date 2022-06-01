@@ -211,13 +211,15 @@ void lower_phy_impl::send(const resource_grid_context& context, const resource_g
   dl_rg_buffers[slot_idx].set_grid(grid, context.sector);
 }
 
-lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
+lower_phy_impl::lower_phy_impl(lower_phy_factory_configuration& factory_config, const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
   transmitter(config.bb_gateway->get_transmitter()),
   receiver(config.bb_gateway->get_receiver()),
   rx_symbol_notifier(*config.rx_symbol_notifier),
   timing_notifier(*config.timing_notifier),
   ul_rg_pool(*config.ul_resource_grid_pool),
+  modulators(std::move(factory_config.modulators)),
+  demodulators(std::move(factory_config.demodulators)),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
@@ -249,8 +251,6 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
   srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsran_assert(config.modulator_factory != nullptr, "Invalid modulation factory pointer.");
-  srsran_assert(config.demodulator_factory != nullptr, "Invalid demodulation factory pointer.");
   srsran_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
 
   // Create radio buffers and receive metadata.
@@ -258,42 +258,6 @@ lower_phy_impl::lower_phy_impl(const lower_phy_configuration& config) :
     radio_buffers.emplace_back(nof_channels, 2 * config.dft_size_15kHz);
   }
   receive_metadata.resize(config.nof_channels_per_stream.size());
-
-  // For each sector, create modulator.
-  for (const lower_phy_sector_description& sector : config.sectors) {
-    // Prepare sector modulator.
-    ofdm_modulator_configuration configuration = {};
-    configuration.numerology                   = config.numerology;
-    configuration.bw_rb                        = sector.bandwidth_rb;
-    configuration.dft_size                     = config.dft_size_15kHz / pow2(config.numerology);
-    configuration.cp                           = config.cp;
-    configuration.scale                        = config.tx_scale;
-    configuration.center_freq_hz               = sector.dl_freq_hz;
-
-    // Create modulator.
-    modulators.emplace_back(config.modulator_factory->create_ofdm_symbol_modulator(configuration));
-
-    // Make sure the modulator creation is successful.
-    srsran_assert(modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
-  }
-
-  // For each sector, create demodulator.
-  for (const lower_phy_sector_description& sector : config.sectors) {
-    // Prepare sector modulator.
-    ofdm_demodulator_configuration configuration = {};
-    configuration.numerology                     = config.numerology;
-    configuration.bw_rb                          = sector.bandwidth_rb;
-    configuration.dft_size                       = config.dft_size_15kHz / pow2(config.numerology);
-    configuration.cp                             = config.cp;
-    configuration.scale                          = config.tx_scale;
-    configuration.center_freq_hz                 = sector.ul_freq_hz;
-
-    // Create modulator.
-    demodulators.emplace_back(config.demodulator_factory->create_ofdm_symbol_demodulator(configuration));
-
-    // Make sure the demodulator creation is successful.
-    srsran_assert(demodulators.back() != nullptr, "Error: failed to create OFDM modulator.");
-  }
 
   // Create pool of transmit resource grids.
   for (unsigned slot_count = 0; slot_count != config.nof_dl_rg_buffers; ++slot_count) {

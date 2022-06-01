@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H
 #define SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H
@@ -6,7 +15,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -77,28 +85,9 @@ public:
   /// \note The input size must be must be equal to the slot size including the cyclic prefixes.
   /// \note The output size consistent with the configured bandwidth.
   virtual void
-  demodulate(resource_grid_writer& grid, const span<cf_t> input, unsigned port_index, unsigned slot_index) = 0;
+  demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned slot_index) = 0;
 };
 
-/// Describes an OFDM demodulator factory.
-class ofdm_demodulator_factory
-{
-public:
-  /// Default destructor.
-  virtual ~ofdm_demodulator_factory() = default;
-
-  /// \brief Creates an OFDM demodulator that demodulates with symbol granularity.
-  /// \param[in] config Provides the configuration parameters.
-  /// \return A unique pointer to an OFDM symbol demodulator if the provided parameters are valid, \c nullptr otherwise.
-  virtual std::unique_ptr<ofdm_symbol_demodulator>
-  create_ofdm_symbol_demodulator(const ofdm_demodulator_configuration& config) = 0;
-
-  /// \brief Creates an OFDM demodulator that modulates with slot granularity.
-  /// \param[in] config Provides the configuration parameters.
-  /// \return A unique pointer to an OFDM slot demodulator if the provided parameters are valid, \c nullptr otherwise.
-  virtual std::unique_ptr<ofdm_slot_demodulator>
-  create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& config) = 0;
-};
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H

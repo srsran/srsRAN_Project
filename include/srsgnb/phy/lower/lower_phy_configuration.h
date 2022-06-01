@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
-#define SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
+#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H
+#define SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -58,10 +58,6 @@ struct lower_phy_configuration {
   lower_phy_rx_symbol_notifier* rx_symbol_notifier;
   /// Provides the timing handler to notify the timing boundaries.
   lower_phy_timing_notifier* timing_notifier;
-  /// Provides the OFDM modulator factory.
-  ofdm_modulator_factory* modulator_factory;
-  /// Provides the OFDM demodulator factory.
-  ofdm_demodulator_factory* demodulator_factory;
   /// Provides the uplink resource grid pool.
   resource_grid_pool* ul_resource_grid_pool;
   /// Provides the sectors configuration.
@@ -74,4 +70,4 @@ struct lower_phy_configuration {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_INCLUDE_SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H_
+#endif // SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H

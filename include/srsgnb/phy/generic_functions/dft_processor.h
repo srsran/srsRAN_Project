@@ -1,10 +1,18 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef SRSGNB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_H
 #define SRSGNB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -51,19 +59,6 @@ public:
   /// \brief Executes the DFT from the internal input data.
   /// \return A view of the internal output DFT buffer.
   virtual span<const cf_t> run() = 0;
-};
-
-/// Describes a Discrete Fourier Transform (DFT) processor factory.
-class dft_processor_factory
-{
-public:
-  /// Default destructor.
-  virtual ~dft_processor_factory() = default;
-
-  /// \brief Creates a DFT processor.
-  /// \param[in] config Provides the DFT processor parameters.
-  /// \return A unique pointer of a DFT processor if the configuration is valid. Otherwise, \c nullptr.
-  virtual std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) = 0;
 };
 
 } // namespace srsgnb

@@ -13,14 +13,14 @@
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
-#include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/srsvec/zero.h"
+#include <memory>
 
 namespace srsgnb {
 
-/// OFDM factory configuration. Provides the necessary parameters
-struct ofdm_demodulator_factory_config {
-  dft_processor_factory& dft_factory;
+/// OFDM demodulator factory configuration. Provides the necessary dependency instances.
+struct ofdm_demodulator_factory_configuration {
+  /// DFT instance. The ownership is transferred to the demodulator.
+  std::unique_ptr<dft_processor> dft;
 };
 
 /// Describes a generic OFDM symbol demodulator.
@@ -58,8 +58,8 @@ public:
   /// \brief Constructs an OFDM symbol demodulator.
   /// \param[in] factory_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_symbol_demodulator_impl(const ofdm_demodulator_factory_config& factory_config,
-                               const ofdm_demodulator_configuration&  ofdm_config);
+  ofdm_symbol_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
+                               const ofdm_demodulator_configuration&   ofdm_config);
 
   /// \brief Gets the resource grid bandwidth in resource elements.
   /// \return The number of resource elements in the grid.
@@ -95,8 +95,8 @@ public:
   /// \brief Constructs an OFDM slot demodulator.
   /// \param[in] factory_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_slot_demodulator_impl(const ofdm_demodulator_factory_config& factory_config,
-                             const ofdm_demodulator_configuration&  ofdm_config) :
+  ofdm_slot_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
+                             const ofdm_demodulator_configuration&   ofdm_config) :
     cp(ofdm_config.cp), symbol_demodulator(factory_config, ofdm_config)
   {
     // Do nothing.
@@ -107,41 +107,8 @@ public:
 
   // See interface for documentation;
   void
-  demodulate(resource_grid_writer& grid, const span<cf_t> input, unsigned port_index, unsigned slot_index) override;
+  demodulate(resource_grid_writer& grid, span<const cf_t> input, unsigned port_index, unsigned slot_index) override;
 };
-
-/// Describes a generic OFDM demodulator factory.
-class ofdm_demodulator_factory_impl : public ofdm_demodulator_factory
-{
-private:
-  /// Keep a copy of the DFT factory reference.
-  dft_processor_factory& dft_factory;
-
-public:
-  /// Constructs the OFDM demodulator factory.
-  ofdm_demodulator_factory_impl(const ofdm_demodulator_factory_config& config) : dft_factory(config.dft_factory)
-  {
-    // Do nothing.
-  }
-
-  // See interface for documentation.
-  std::unique_ptr<ofdm_symbol_demodulator>
-  create_ofdm_symbol_demodulator(const ofdm_demodulator_configuration& dft_config) override
-  {
-    ofdm_demodulator_factory_config factory_config = {dft_factory};
-    return std::make_unique<ofdm_symbol_demodulator_impl>(factory_config, dft_config);
-  }
-
-  // See interface for documentation.
-  std::unique_ptr<ofdm_slot_demodulator>
-  create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& dft_config) override
-  {
-    ofdm_demodulator_factory_config factory_config = {dft_factory};
-    return std::make_unique<ofdm_slot_demodulator_impl>(factory_config, dft_config);
-  }
-};
-
-std::unique_ptr<ofdm_demodulator_factory> create_ofdm_demodulator_factory(ofdm_demodulator_factory_config& config);
 
 } // namespace srsgnb
 

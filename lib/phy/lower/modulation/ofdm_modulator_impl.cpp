@@ -9,22 +9,23 @@
  */
 
 #include "ofdm_modulator_impl.h"
+#include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
-#include <complex>
+#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
-ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(const ofdm_modulator_factory_config& factory_config,
-                                                       const ofdm_modulator_configuration&  ofdm_config) :
+ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_factory_configuration& factory_config,
+                                                       const ofdm_modulator_configuration&   ofdm_config) :
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
   center_freq_hz(ofdm_config.center_freq_hz),
-  dft(factory_config.dft_factory.create({dft_size, dft_processor::direction::INVERSE}))
+  dft(std::move(factory_config.dft))
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(
@@ -60,10 +61,10 @@ cf_t ofdm_symbol_modulator_impl::get_phase_compensation(unsigned symbol_index) c
   return (cf_t)std::conj(std::exp(i * phase_rad));
 }
 
-void ofdm_symbol_modulator_impl::modulate(srsgnb::span<srsgnb::cf_t>          output,
-                                          const srsgnb::resource_grid_reader& grid,
-                                          unsigned                            port_index,
-                                          unsigned                            symbol_index)
+void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
+                                          const resource_grid_reader& grid,
+                                          unsigned                    port_index,
+                                          unsigned                    symbol_index)
 {
   // Calculate number of symbols per slot.
   unsigned nsymb = get_nsymb_per_slot(cp);
@@ -131,9 +132,4 @@ void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
     // Advance output buffer.
     output = output.last(output.size() - symbol_sz);
   }
-}
-
-std::unique_ptr<ofdm_modulator_factory> srsgnb::create_ofdm_modulator_factory(ofdm_modulator_factory_config& config)
-{
-  return std::make_unique<ofdm_modulator_factory_impl>(config);
 }

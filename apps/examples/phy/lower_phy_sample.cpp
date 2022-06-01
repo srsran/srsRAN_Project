@@ -9,12 +9,11 @@
  */
 
 #include "../radio/radio_notifier_sample.h"
+#include "lower_phy_sample_factory.h"
 #include "rx_symbol_handler_sample.h"
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsgnb/phy/adapters/phy_timing_adapter.h"
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/radio/radio_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/math_utils.h"
@@ -24,24 +23,6 @@
 #include <getopt.h>
 #include <random>
 #include <string>
-
-namespace srsgnb {
-struct dft_processor_factory_fftw_config {
-  bool        avoid_wisdom;
-  std::string wisdom_filename;
-};
-std::unique_ptr<dft_processor_factory>
-create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config);
-struct ofdm_modulator_factory_config {
-  dft_processor_factory& dft_factory;
-};
-std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modulator_factory_config& config);
-struct ofdm_demodulator_factory_config {
-  dft_processor_factory& dft_factory;
-};
-std::unique_ptr<ofdm_demodulator_factory> create_ofdm_demodulator_factory(ofdm_demodulator_factory_config& config);
-
-} // namespace srsgnb
 
 /// Describes a benchmark configuration profile.
 struct benchmark_configuration_profile {
@@ -312,29 +293,6 @@ int main(int argc, char** argv)
   rx_symbol_handler_sample rx_symbol_handler(log_level);
   timing_handler.set_log_level(log_level);
 
-  // Create DFT processor factory configuration with default values.
-  dft_processor_factory_fftw_config dft_factory_fftw_config;
-  dft_factory_fftw_config.avoid_wisdom    = false;
-  dft_factory_fftw_config.wisdom_filename = "";
-
-  // Create DFT factory.
-  std::unique_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_fftw_config);
-
-  // Create OFDM modulator factory configuration.
-  ofdm_modulator_factory_config modulator_factory_config = {*dft_factory};
-
-  // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory(modulator_factory_config);
-  srsran_always_assert(modulator_factory, "Failed to create OFDM modulator factory.");
-
-  // Create OFDM demodulator factory configuration.
-  ofdm_demodulator_factory_config demodulator_factory_config = {*dft_factory};
-
-  // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_demodulator_factory> demodulator_factory =
-      create_ofdm_demodulator_factory(demodulator_factory_config);
-  srsran_always_assert(demodulator_factory, "Failed to create OFDM demodulator factory.");
-
   // Create UL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> ul_rg_pool = nullptr;
   {
@@ -416,8 +374,6 @@ int main(int argc, char** argv)
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
   phy_config.rx_symbol_notifier         = &rx_symbol_adapter;
   phy_config.timing_notifier            = &timing_adapter;
-  phy_config.modulator_factory          = modulator_factory.get();
-  phy_config.demodulator_factory        = demodulator_factory.get();
   phy_config.ul_resource_grid_pool      = ul_rg_pool.get();
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;
@@ -436,7 +392,7 @@ int main(int argc, char** argv)
   phy_config.log_level = log_level;
 
   // Create lower physical layer.
-  phy = lower_phy_factory().create(phy_config);
+  phy = create_lower_phy(phy_config);
   srsran_always_assert(phy, "Failed to create lower physical layer.");
 
   // Set signal handler.

@@ -10,21 +10,12 @@
 
 #include "../../generic_functions/dft_processor_test_doubles.h"
 #include "../../resource_grid_test_doubles.h"
-#include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
+#include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
-
-namespace srsgnb {
-struct ofdm_modulator_factory_config {
-  dft_processor_factory& dft_factory;
-};
-
-std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modulator_factory_config& config);
-
-} // namespace srsgnb
 
 /// Defines the maximum allowed error at the OFDM modulator output.
 static constexpr float ASSERT_MAX_ERROR = 1e-6;
@@ -41,10 +32,12 @@ int main()
   dft_processor_factory_spy dft_factory;
 
   // Prepare OFDM modulator factory configuration.
-  ofdm_modulator_factory_config ofdm_factory_config = {dft_factory};
+  ofdm_factory_generic_configuration ofdm_factory_config;
+  ofdm_factory_config.dft_factory = &dft_factory;
 
   // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory(ofdm_factory_config);
+  std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory_generic(ofdm_factory_config);
+  TESTASSERT(ofdm_factory);
 
   // Iterate all possible numerologies.
   for (unsigned numerology : {0, 1, 2, 3, 4}) {

@@ -10,30 +10,9 @@
 
 #include "../../resource_grid_test_doubles.h"
 #include "ofdm_modulator_test_data.h"
-#include "srsgnb/phy/generic_functions/dft_processor.h"
-#include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
-#include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/sc_prod.h"
+#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
+#include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/support/test_utils.h"
-
-// Necessary prototipes to create the DFT processor instance.
-namespace srsgnb {
-struct dft_processor_factory_fftw_config {
-  bool        avoid_wisdom;
-  std::string wisdom_filename;
-};
-
-std::unique_ptr<dft_processor_factory>
-create_dft_processor_factory_fftw(const dft_processor_factory_fftw_config& factory_config);
-
-struct ofdm_modulator_factory_config {
-  dft_processor_factory& dft_factory;
-};
-
-std::unique_ptr<ofdm_modulator_factory> create_ofdm_modulator_factory(ofdm_modulator_factory_config& config);
-
-} // namespace srsgnb
 
 /// Defines the maximum allowed error at the OFDM modulator output.
 static constexpr float ASSERT_MAX_ERROR = 1e-5;
@@ -43,14 +22,18 @@ using namespace srsgnb;
 int main()
 {
   // Create a DFT factory.
-  dft_processor_factory_fftw_config      factory_config = {};
-  std::unique_ptr<dft_processor_factory> dft_factory    = create_dft_processor_factory_fftw(factory_config);
+  dft_processor_factory_fftw_configuration dft_factory_config;
+  dft_factory_config.avoid_wisdom                    = false;
+  dft_factory_config.wisdom_filename                 = "";
+  std::unique_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_config);
+  TESTASSERT(dft_factory);
 
   // Prepare OFDM modulator factory configuration.
-  ofdm_modulator_factory_config ofdm_factory_config = {*dft_factory};
+  ofdm_factory_generic_configuration ofdm_factory_config;
+  ofdm_factory_config.dft_factory = dft_factory.get();
 
   // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory(ofdm_factory_config);
+  std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory_generic(ofdm_factory_config);
 
   // Run all defined tests
   for (const test_case_t& test_case : ofdm_modulator_test_data) {

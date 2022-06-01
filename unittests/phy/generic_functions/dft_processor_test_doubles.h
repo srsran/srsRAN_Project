@@ -11,7 +11,7 @@
 #ifndef UNITTEST_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
 #define UNITTEST_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
 
-#include "srsgnb/phy/generic_functions/dft_processor.h"
+#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include <random>
 
 namespace srsgnb {

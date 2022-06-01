@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_H
 #define SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_H
@@ -6,7 +15,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -80,25 +88,6 @@ public:
   modulate(span<cf_t> output, const resource_grid_reader& grid, unsigned port_index, unsigned slot_index) = 0;
 };
 
-/// Describes an OFDM modulator factory.
-class ofdm_modulator_factory
-{
-public:
-  /// Default destructor.
-  virtual ~ofdm_modulator_factory() = default;
-
-  /// \brief Creates an OFDM modulator that modulates with symbol granularity.
-  /// \param[in] config Provides the configuration parameters.
-  /// \return A unique pointer to an OFDM symbol modulator if the provided parameters are valid, \c nullptr otherwise.
-  virtual std::unique_ptr<ofdm_symbol_modulator>
-  create_ofdm_symbol_modulator(const ofdm_modulator_configuration& config) = 0;
-
-  /// \brief Creates an OFDM modulator that modulates with slot granularity.
-  /// \param[in] config Provides the configuration parameters.
-  /// \return A unique pointer to an OFDM slot modulator if the provided parameters are valid, \c nullptr otherwise.
-  virtual std::unique_ptr<ofdm_slot_modulator>
-  create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) = 0;
-};
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_H

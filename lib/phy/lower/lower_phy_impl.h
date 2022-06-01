@@ -24,6 +24,14 @@
 
 namespace srsgnb {
 
+/// Describes the factory configuration.
+struct lower_phy_factory_configuration {
+  /// Provides OFDM modulators. Each entry belongs to a different sector.
+  std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
+  /// Provides OFDM demodulators. Each entry belongs to a different sector.
+  std::vector<std::unique_ptr<ofdm_symbol_demodulator> > demodulators;
+};
+
 class lower_phy_dl_rg_buffer
 {
 private:
@@ -124,8 +132,10 @@ private:
 
 public:
   /// \brief Constructs a generic lower physical layer.
-  /// \param[in] config Provides the necessary parameters to construct the lower physical layer.
-  explicit lower_phy_impl(const lower_phy_configuration& config);
+  /// \param[in] factory_config Provides the factory specific necessary parameters to construct the lower physical
+  /// layer.
+  /// \param[in] config Provides the common lower PHY parameters to construct the lower physical layer.
+  explicit lower_phy_impl(lower_phy_factory_configuration& factory_config, const lower_phy_configuration& config);
 
   // See interface for documentation.
   void start(task_executor& realtime_task_executor) override;
