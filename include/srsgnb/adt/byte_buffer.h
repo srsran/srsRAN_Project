@@ -114,7 +114,8 @@ public:
     std::copy(bytes.begin(), bytes.end(), begin());
   }
 
-  /// Prepends segment with provided span of bytes.
+  /// Reserves headroom space in segment.
+  /// \param nof_bytes Number of bytes to reserve.
   void reserve_prepend(size_t nof_bytes)
   {
     srsran_assert(headroom() >= nof_bytes, "There is not enough headroom space.");

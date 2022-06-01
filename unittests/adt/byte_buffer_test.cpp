@@ -512,8 +512,8 @@ void test_byte_buffer_reserve_prepend()
   byte_buffer pdu;
 
   // Prepend small vector
-  auto             small_vec = make_small_vec();
-  byte_buffer_view view      = pdu.reserve_prepend(small_vec.size());
+  std::vector<uint8_t> small_vec = make_small_vec();
+  byte_buffer_view     view      = pdu.reserve_prepend(small_vec.size());
   TESTASSERT_EQ(small_vec.size(), pdu.length());
   TESTASSERT_EQ(small_vec.size(), view.length());
 
@@ -522,8 +522,8 @@ void test_byte_buffer_reserve_prepend()
   TESTASSERT(view == small_vec);
 
   // Prepend big vector
-  auto             big_vec = make_big_vec();
-  byte_buffer_view view2   = pdu.reserve_prepend(big_vec.size());
+  std::vector<uint8_t> big_vec = make_big_vec();
+  byte_buffer_view     view2   = pdu.reserve_prepend(big_vec.size());
   TESTASSERT_EQ(small_vec.size() + big_vec.size(), pdu.length());
   TESTASSERT_EQ(big_vec.size(), view2.length());
 
@@ -535,11 +535,11 @@ void test_byte_buffer_chain()
 {
   byte_buffer pdu;
   TESTASSERT(pdu.empty());
-  auto big_vec      = make_big_vec();
-  auto small_vec    = make_small_vec();
-  auto bytes_concat = big_vec;
+  std::vector<uint8_t> big_vec      = make_big_vec();
+  std::vector<uint8_t> small_vec    = make_small_vec();
+  std::vector<uint8_t> bytes_concat = big_vec;
   bytes_concat.insert(bytes_concat.end(), small_vec.begin(), small_vec.end());
-  auto bytes_concat2 = bytes_concat;
+  std::vector<uint8_t> bytes_concat2 = bytes_concat;
   bytes_concat2.insert(bytes_concat2.end(), big_vec.begin(), big_vec.end());
 
   // Chain big vector to empty buffer
