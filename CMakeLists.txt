@@ -156,6 +156,28 @@ include(CTest)
 
 include_directories(include)
 
+########################################################################
+# Add headers to cmake project (useful for IDEs)
+########################################################################
+
+# List of directories that contain header files
+set(ALL_HEADER_DIRS
+  apps
+  lib
+  include
+  unittests
+)
+set(ALL_HEADER_FILES "")
+foreach(TMP_DIR ${ALL_HEADER_DIRS})
+  file(GLOB_RECURSE TMP_HEADERS "${TMP_DIR}/*.h")
+  list(APPEND ALL_HEADER_FILES ${TMP_HEADERS})
+endforeach()
+add_custom_target(all_srsgnb_headers SOURCES ${ALL_HEADER_FILES})
+
+########################################################################
+# Add the subdirectories
+########################################################################
+
 add_subdirectory(apps)
 add_subdirectory(docs)
 add_subdirectory(lib)
