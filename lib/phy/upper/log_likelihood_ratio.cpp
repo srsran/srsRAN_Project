@@ -1,3 +1,13 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/adt/optional.h"
 #include <cmath>
@@ -53,4 +63,15 @@ log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a,
     return ((tmp > 0) ? log_likelihood_ratio::LLR_INFTY : -log_likelihood_ratio::LLR_INFTY);
   }
   return tmp;
+}
+
+log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_limit)
+{
+  srsran_assert(range_limit > 0, "Second input must be positive.");
+
+  float clipped = value;
+  if (std::abs(value) > range_limit) {
+    clipped = std::copysign(range_limit, value);
+  }
+  return static_cast<value_type>(std::round(clipped / range_limit * LLR_MAX));
 }

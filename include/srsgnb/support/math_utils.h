@@ -101,19 +101,6 @@ unsigned prime_greater_than(unsigned n);
 /// \remark Only works for prime numbers not larger than 3299.
 unsigned prime_lower_than(unsigned n);
 
-/// \brief Float to integer conversion with saturation.
-///
-/// Converts a \c float value into an \c int8_t one, after clipping if necessary.
-/// \param[in] value              The floating point value to quantize.
-/// \param[in] range_limit_float  Clipping absolute value, as a floating point number.
-/// \param[in] range_limit_int    The integer value corresponding to the previous limit.
-/// \return An integer in the interval <tt>[-range_limit_int, +range_limit_int]</tt>, fixed point representation of
-/// \c value.
-/// \remark \c range_limit_int must be not larger than 127.
-/// \remark All values of \c value larger (in absolute sense) than \c range_limit_float, are clipped and mapped to \c
-/// range_limit_int, preserving the sign.
-int8_t clip_and_quantize(float value, float range_limit_float, float range_limit_int);
-
 } // namespace srsgnb
 
 #endif // SRSGNB_SUPPORT_MATH_UTILS_H

@@ -66,16 +66,3 @@ unsigned srsgnb::prime_lower_than(unsigned n)
 
   return 2;
 }
-
-int8_t srsgnb::clip_and_quantize(float value, float range_limit_float, float range_limit_int)
-{
-  srsran_assert(range_limit_float > 0, "Second input must be positive.");
-  srsran_assert(range_limit_int > 0, "Third input must be positive.");
-  srsran_assert(range_limit_int <= INT8_MAX, "Third input must be not larger than %d.", INT8_MAX);
-
-  float clipped = value;
-  if (std::abs(value) > range_limit_float) {
-    clipped = std::copysign(range_limit_float, value);
-  }
-  return static_cast<int8_t>(std::round(clipped * range_limit_int / range_limit_float));
-}

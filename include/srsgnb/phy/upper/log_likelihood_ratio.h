@@ -117,6 +117,19 @@ public:
   constexpr bool operator<=(log_likelihood_ratio rhs) const { return value <= rhs.value; }
   ///@}
 
+  /// \brief Clips and quantizes a real-valued (\c float), continuous log-likelihood ratio to the discrete
+  /// representation of type \c log_likelihood_ratio.
+  ///
+  /// \param[in] value        The real-valued log-likelihood ratio to quantize.
+  /// \param[in] range_limit  The input value mapped to \c LLR_MAX.
+  /// \return A quantized representation of \c value as a \c log_likelihood_ratio quantity.
+  /// \note The quantization in the range <tt>(-range_limit, range_limit)</tt> is [mid-tread
+  /// uniform](https://en.wikipedia.org/wiki/Quantization_(signal_processing)#Mid-riser_and_mid-tread_uniform_quantizers),
+  /// with quantization step <tt> range_limit / LLR_MAX </tt>.
+  /// \note All values larger (in magnitude) than \c range_limit, will be clipped and mapped to
+  /// <tt>&plusmn;LLR_MAX</tt>, depending on their sign.
+  static log_likelihood_ratio quantize(float value, float range_limit);
+
   /// Returns the special value "positive infinity".
   static constexpr log_likelihood_ratio infinity() { return LLR_INFTY; }
 
