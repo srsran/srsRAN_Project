@@ -33,7 +33,7 @@ enum class dci_ul_format { f0_0, f0_1 };
 /// It can be scrambled by C-RNTI, RA-RNTI, TC-RNTI, SI-RNTI and P-RNTI.
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
 struct dci_format1_0_info {
-  /// BWP PRBs used for the PDSCH grant.
+  /// PRBs used for the PDSCH grant.
   prb_interval prbs;
   /// Time domain resource assignment. \remark See TS 38.214, 5.1.2.
   uint8_t time_domain_assignment;

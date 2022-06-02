@@ -41,9 +41,6 @@ constexpr rnti_t to_rnti(std::underlying_type_t<rnti_t> number)
   return static_cast<rnti_t>(number);
 }
 
-/// Type of RNTI.
-enum class rnti_type { c_rnti, tc_rnti, ra_rnti, p_rnti, si_rnti, cs_rnti, mcs_c_rnti };
-
 } // namespace srsgnb
 
 #endif // SRSGNB_RAN_RNTI_H

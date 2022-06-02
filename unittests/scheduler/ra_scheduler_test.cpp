@@ -73,6 +73,8 @@ public:
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
 /// - No repeated RA-RNTIs across RAR grants and no repeated C-RNTIs across Msg3 grants.
 /// - No collision in UL RBs between MSG3 grants.
+/// - No collision in DL RBs between RARs.
+/// - Consistent content in DCI of RARs (e.g. has to be 1_0, PRBs fall within CORESET#0 RB limits).
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
   prb_bitmap                 total_ul_prbs(cfg.nof_ul_prbs);
@@ -81,6 +83,8 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
   const pdsch_config_common& pdsch_cfg     = cfg.dl_cfg_common.init_dl_bwp.pdsch_common;
   const pusch_config_common& pusch_cfg     = *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common;
   crb_interval               coreset0_lims = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  bwp_configuration          bwp_cfg       = cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  bwp_cfg.crbs                             = coreset0_lims;
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdcch_cfg->ctx.rnti;
@@ -93,12 +97,12 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
     TESTASSERT_EQ(dci_dl_format::f1_0, rar.pdcch_cfg->dci.format_type);
     const dci_format1_0_info& f1_0 = rar.pdcch_cfg->dci.f1_0;
     TESTASSERT(f1_0.time_domain_assignment < pdsch_cfg.pdsch_td_alloc_list.size());
-    prb_interval rar_prbs = f1_0.prbs;
-    TESTASSERT(coreset0_lims.contains(rar_prbs), "RAR outside of initial active DL BWP RB limits");
+    crb_interval rar_crbs = prb_to_crb(bwp_cfg, f1_0.prbs);
+    TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
     // Verify no collisions in PDSCH.
-    TESTASSERT(not total_dl_prbs.any(rar_prbs.start(), rar_prbs.stop()), "Collision between RAR RBs detected.");
-    total_dl_prbs.fill(rar_prbs.start(), rar_prbs.stop());
+    TESTASSERT(not total_dl_prbs.any(rar_crbs.start(), rar_crbs.stop()), "Collision between RAR RBs detected.");
+    total_dl_prbs.fill(rar_crbs.start(), rar_crbs.stop());
 
     for (const rar_ul_grant& msg3 : rar.grants) {
       TESTASSERT(not msg3.prbs.empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3.temp_crnti);

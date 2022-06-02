@@ -311,7 +311,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   static const unsigned         msg3_mcs             = 0;
   static const unsigned         pdsch_time_res_index = 0;
   cell_slot_resource_allocator& rar_alloc = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
-  prb_interval                  rar_prbs  = crb_to_prb(get_dl_bwp_cfg(), rar_crbs);
+  prb_interval                  rar_prbs  = crb_to_prb(initial_active_dl_bwp, rar_crbs);
 
   // Allocate RBs and space for RAR.
   rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch,
