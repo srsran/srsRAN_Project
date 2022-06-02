@@ -83,11 +83,26 @@ struct bwp_configuration {
   crb_interval crbs;
 };
 
+struct pdsch_time_domain_resource_allocation {
+  enum class mapping_type { typeA, typeB };
+
+  /// Values: (0..32).
+  unsigned          k0;
+  mapping_type      map_type;
+  ofdm_symbol_range symbols;
+};
+
+struct pdsch_configuration_common {
+  /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
+  std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
+};
+
 /// Used to configure the common, cell-specific parameters of a DL BWP.
 /// \remark See TS 38.331, BWP-DownlinkCommon.
 struct bwp_downlink_common {
-  bwp_configuration   generic_params;
-  pdcch_config_common pdcch_common;
+  bwp_configuration          generic_params;
+  pdcch_config_common        pdcch_common;
+  pdsch_configuration_common pdsch_common;
 };
 
 /// \remark See TS 38.331, RACH-ConfigGeneric.

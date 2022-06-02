@@ -33,9 +33,9 @@ enum class dci_ul_format { f0_0, f0_1 };
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
 struct dci_format1_0_info {
   /// Frequency domain resource assignment.
-  uint32_t freq_domain_assigment;
+  uint8_t freq_domain_assignment;
   /// Time domain resource assignment. \remark See TS 38.214, 5.1.2.
-  uint32_t time_domain_assigment;
+  uint8_t time_domain_assignment;
   /// Values: (0..31).
   uint8_t mcs;
   /// New data indicator.

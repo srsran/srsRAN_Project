@@ -11,6 +11,7 @@
 #include "config_generators.h"
 #include "lib/scheduler/cell/pdcch_scheduler.h"
 #include "lib/scheduler/cell/ra_scheduler.h"
+#include "lib/scheduler/support/dci_helpers.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
@@ -69,6 +70,13 @@ public:
   }
 };
 
+static prb_interval get_msg3_prbs(const bwp_configuration& ul_bwp, uint8_t freq_resource_assignment)
+{
+  unsigned rb_start, L_crb;
+  sliv_to_s_and_l(ul_bwp.crbs.length(), freq_resource_assignment, rb_start, L_crb);
+  return {rb_start, rb_start + L_crb};
+}
+
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
 /// - No repeated RA-RNTIs across RAR grants and no repeated C-RNTIs across Msg3 grants.
 /// - No collision in UL RBs between MSG3 grants.
@@ -85,7 +93,7 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
     TESTASSERT(ra_rntis.count(ra_rnti) == 0);
     ra_rntis.insert(ra_rnti);
     for (const rar_ul_grant& msg3 : rar.grants) {
-      prb_interval msg3_prbs = sliv_to_prbs(ul_bwp_cfg.crbs.length(), msg3.freq_resource_assignment);
+      prb_interval msg3_prbs = get_msg3_prbs(ul_bwp_cfg, msg3.freq_resource_assignment);
 
       TESTASSERT(not msg3_prbs.empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3.temp_crnti);
       TESTASSERT(not total_ul_prbs.any(msg3_prbs.start(), msg3_prbs.stop()), "Msg3 UL PRB collision");
@@ -211,6 +219,9 @@ static unsigned test_expected_nof_allocation(const cell_configuration&          
   // Compute the available resources to allocate RAR and MSG3 grants
   unsigned nof_available_grants =
       std::min(cell_cfg.nof_ul_prbs / nof_prbs_per_msg3, cell_cfg.nof_dl_prbs / nof_prbs_per_rar);
+  nof_available_grants =
+      std::min(nof_available_grants,
+               coreset_nof_prbs(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0) / nof_prbs_per_rar);
 
   // If there are more available grants than eligible RACH indications, then we expect the scheduler allocate exactly as
   // many MSG3 grants as RACH indications
@@ -551,8 +562,9 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      prb_interval prbs = sliv_to_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                       rar.grants[0].freq_resource_assignment);
+      prb_interval prbs = get_msg3_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                                        rar.grants[0].freq_resource_assignment);
+
       TESTASSERT_EQ(
           prbs.length(),
           msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
@@ -632,8 +644,8 @@ void test_ra_sched_tdd_single_rach()
     // Msg3
     test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
     TESTASSERT_EQ(1, rar.grants.size());
-    prb_interval prbs = sliv_to_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
-                                     rar.grants[0].freq_resource_assignment);
+    prb_interval prbs = get_msg3_prbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params,
+                                      rar.grants[0].freq_resource_assignment);
     TESTASSERT_EQ(prbs.length(),
                   msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
     TESTASSERT_EQ(1, msg3_sl_res.result.ul.puschs.size());

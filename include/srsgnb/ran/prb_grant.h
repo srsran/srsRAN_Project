@@ -142,26 +142,6 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
   return prb_bitmap;
 }
 
-/// \brief Converts SLIV to PRBs start S and length L.
-/// \param[in] Nprb Number of PRBs of the BWP.
-/// \param[in] sliv An index giving a combination (jointly encoded) of start PRB and length indicator (SLIV).
-/// \return PRB interval as [S, S+L).
-inline prb_interval sliv_to_prbs(unsigned Nprb, uint32_t sliv)
-{
-  unsigned PRBstart, PRBlength;
-  sliv_to_s_and_l(Nprb, sliv, PRBstart, PRBlength);
-  return {PRBstart, PRBstart + PRBlength};
-}
-
-/// \brief Converts PRB start S and length L into SLIV.
-/// \param[in] Nprb Number of PRBs of the BWP.
-/// \param[in] prbs PRB interval as [S, S+L).
-/// \return sliv An index giving a combination (jointly encoded) of start PRB and length indicator (SLIV).
-inline unsigned sliv_from_prbs(unsigned Nprb, prb_interval prbs)
-{
-  return sliv_from_s_and_l(Nprb, prbs.start(), prbs.length());
-}
-
 } // namespace srsgnb
 
 namespace fmt {

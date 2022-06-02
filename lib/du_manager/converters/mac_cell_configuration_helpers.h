@@ -107,6 +107,11 @@ inline dl_config_common make_default_dl_config_common()
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id = to_search_space_id(1);
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.emplace_back();
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().k0 = 0;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type =
+      pdsch_time_domain_resource_allocation::mapping_type::typeA;
+  cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols = {2, 14};
 
   return cfg;
 }
