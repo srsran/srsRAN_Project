@@ -17,12 +17,6 @@
 
 namespace srsgnb {
 
-/// Describes the necessary parameters for creating generic OFDM modulator and demodulator factories.
-struct ofdm_factory_generic_configuration {
-  /// Provides a DFT factory.
-  dft_processor_factory* dft_factory;
-};
-
 /// Describes an OFDM modulator factory.
 class ofdm_modulator_factory
 {
@@ -42,10 +36,6 @@ public:
   virtual std::unique_ptr<ofdm_slot_modulator>
   create_ofdm_slot_modulator(const ofdm_modulator_configuration& config) = 0;
 };
-
-/// Creates a generic OFDM modulator factory.
-std::unique_ptr<ofdm_modulator_factory>
-create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config);
 
 /// Describes an OFDM demodulator factory.
 class ofdm_demodulator_factory
@@ -67,8 +57,18 @@ public:
   create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& config) = 0;
 };
 
+/// Describes the necessary parameters for creating generic OFDM modulator and demodulator factories.
+struct ofdm_factory_generic_configuration {
+  /// Provides a DFT factory.
+  std::shared_ptr<dft_processor_factory> dft_factory;
+};
+
+/// Creates a generic OFDM modulator factory.
+std::shared_ptr<ofdm_modulator_factory>
+create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config);
+
 /// Creates a generic OFDM demodulator factory.
-std::unique_ptr<ofdm_demodulator_factory>
+std::shared_ptr<ofdm_demodulator_factory>
 create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config);
 
 } // namespace srsgnb

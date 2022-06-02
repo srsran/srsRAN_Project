@@ -24,18 +24,18 @@ using namespace srsgnb;
 int main()
 {
   // Create a DFT factory.
-  dft_processor_factory_fftw_configuration dft_factory_config;
-  dft_factory_config.avoid_wisdom                    = false;
-  dft_factory_config.wisdom_filename                 = "";
-  std::unique_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_config);
+  dft_processor_factory_fftw_configuration dft_common_config;
+  dft_common_config.avoid_wisdom                     = false;
+  dft_common_config.wisdom_filename                  = "";
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_common_config);
   TESTASSERT(dft_factory);
 
   // Prepare OFDM demodulator factory configuration.
-  ofdm_factory_generic_configuration ofdm_factory_config;
-  ofdm_factory_config.dft_factory = dft_factory.get();
+  ofdm_factory_generic_configuration ofdm_common_config;
+  ofdm_common_config.dft_factory = dft_factory;
 
   // Create OFDM demodulator factory.
-  std::unique_ptr<ofdm_demodulator_factory> ofdm_factory = create_ofdm_demodulator_factory_generic(ofdm_factory_config);
+  std::shared_ptr<ofdm_demodulator_factory> ofdm_factory = create_ofdm_demodulator_factory_generic(ofdm_common_config);
   TESTASSERT(ofdm_factory);
 
   // Run all defined tests

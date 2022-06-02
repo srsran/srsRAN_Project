@@ -20,7 +20,7 @@
 namespace srsgnb {
 
 /// OFDM modulator factory configuration. Provides the necessary dependency instances.
-struct ofdm_modulator_factory_configuration {
+struct ofdm_modulator_common_configuration {
   /// DFT instance. The ownership is transferred to the modulator.
   std::unique_ptr<dft_processor> dft;
 };
@@ -56,10 +56,10 @@ private:
 
 public:
   /// \brief Constructs an OFDM symbol modulator.
-  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] common_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_symbol_modulator_impl(ofdm_modulator_factory_configuration& factory_config,
-                             const ofdm_modulator_configuration&   ofdm_config);
+  ofdm_symbol_modulator_impl(ofdm_modulator_common_configuration& common_config,
+                             const ofdm_modulator_configuration&  ofdm_config);
 
   // See interface for documentation.
   unsigned get_symbol_size(unsigned symbol_index) const override
@@ -83,11 +83,11 @@ private:
 
 public:
   /// \brief Constructs an OFDM slot modulator.
-  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] common_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_slot_modulator_impl(ofdm_modulator_factory_configuration& factory_config,
-                           const ofdm_modulator_configuration&   ofdm_config) :
-    cp(ofdm_config.cp), symbol_modulator(factory_config, ofdm_config)
+  ofdm_slot_modulator_impl(ofdm_modulator_common_configuration& common_config,
+                           const ofdm_modulator_configuration&  ofdm_config) :
+    cp(ofdm_config.cp), symbol_modulator(common_config, ofdm_config)
   {
     // Do nothing.
   }

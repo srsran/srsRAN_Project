@@ -36,7 +36,7 @@ struct dft_processor_factory_fftw_configuration {
   std::string wisdom_filename;
 };
 
-std::unique_ptr<dft_processor_factory>
+std::shared_ptr<dft_processor_factory>
 create_dft_processor_factory_fftw(const dft_processor_factory_fftw_configuration& config);
 
 } // namespace srsgnb

@@ -16,15 +16,15 @@
 
 using namespace srsgnb;
 
-ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
-                                                           const ofdm_demodulator_configuration&   ofdm_config) :
+ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
+                                                           const ofdm_demodulator_configuration&  ofdm_config) :
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
   center_freq_hz(ofdm_config.center_freq_hz),
-  dft(std::move(factory_config.dft))
+  dft(std::move(common_config.dft))
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(

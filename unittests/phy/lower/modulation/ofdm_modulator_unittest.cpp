@@ -29,14 +29,15 @@ int main()
   std::uniform_int_distribution<unsigned> dist_port(0, MAX_PORTS - 1);
 
   // Create DFT factory spy.
-  dft_processor_factory_spy dft_factory;
+  std::shared_ptr<dft_processor_factory_spy> dft_factory = std::make_shared<dft_processor_factory_spy>();
+  TESTASSERT(dft_factory);
 
   // Prepare OFDM modulator factory configuration.
-  ofdm_factory_generic_configuration ofdm_factory_config;
-  ofdm_factory_config.dft_factory = &dft_factory;
+  ofdm_factory_generic_configuration ofdm_common_config;
+  ofdm_common_config.dft_factory = dft_factory;
 
   // Create OFDM modulator factory.
-  std::unique_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory_generic(ofdm_factory_config);
+  std::shared_ptr<ofdm_modulator_factory> ofdm_factory = create_ofdm_modulator_factory_generic(ofdm_common_config);
   TESTASSERT(ofdm_factory);
 
   // Iterate all possible numerologies.
@@ -60,7 +61,7 @@ int main()
         }
 
         // Reset spies.
-        dft_factory.reset();
+        dft_factory->clear_entries();
 
         // Create OFDM modulator configuration. Use minimum number of RB.
         ofdm_modulator_configuration ofdm_config = {};
@@ -77,7 +78,7 @@ int main()
         TESTASSERT(ofdm != nullptr);
 
         // Check is a DFT processor is created and not used.
-        auto& dft_processor_factory_entry = dft_factory.get_entries();
+        auto& dft_processor_factory_entry = dft_factory->get_entries();
         TESTASSERT(dft_processor_factory_entry.size() == 1);
         dft_processor_spy& dft = *dft_processor_factory_entry[0].dft;
         TESTASSERT(dft.get_entries().empty());

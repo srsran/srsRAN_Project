@@ -19,26 +19,25 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
   dft_processor_factory_fftw_configuration dft_factory_fftw_config;
   dft_factory_fftw_config.avoid_wisdom               = false;
   dft_factory_fftw_config.wisdom_filename            = "";
-  std::unique_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_fftw_config);
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_fftw_config);
   srsran_assert(dft_factory, "Failed to create DFT factory.");
 
   // Create OFDM modulator factory.
-  ofdm_factory_generic_configuration ofdm_factory_config;
-  ofdm_factory_config.dft_factory = dft_factory.get();
-  std::unique_ptr<ofdm_modulator_factory> modulator_factory =
-      create_ofdm_modulator_factory_generic(ofdm_factory_config);
+  ofdm_factory_generic_configuration ofdm_common_config;
+  ofdm_common_config.dft_factory                            = dft_factory;
+  std::shared_ptr<ofdm_modulator_factory> modulator_factory = create_ofdm_modulator_factory_generic(ofdm_common_config);
   srsran_always_assert(modulator_factory, "Failed to create OFDM modulator factory.");
 
   // Create OFDM demodulator factory.
-  std::unique_ptr<ofdm_demodulator_factory> demodulator_factory =
-      create_ofdm_demodulator_factory_generic(ofdm_factory_config);
+  std::shared_ptr<ofdm_demodulator_factory> demodulator_factory =
+      create_ofdm_demodulator_factory_generic(ofdm_common_config);
   srsran_always_assert(demodulator_factory, "Failed to create OFDM demodulator factory.");
 
   // Create Lower PHY factory.
-  lower_phy_factory_generic_configuration lower_phy_factory_config;
-  lower_phy_factory_config.modulator_factory      = modulator_factory.get();
-  lower_phy_factory_config.demodulator_factory    = demodulator_factory.get();
-  std::unique_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_generic(lower_phy_factory_config);
+  lower_phy_factory_generic_configuration lower_phy_common_config;
+  lower_phy_common_config.modulator_factory       = modulator_factory;
+  lower_phy_common_config.demodulator_factory     = demodulator_factory;
+  std::shared_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_generic(lower_phy_common_config);
   srsran_always_assert(lphy_factory, "Failed to create lower PHY factory.");
 
   return lphy_factory->create(config);

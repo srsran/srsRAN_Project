@@ -18,7 +18,7 @@
 namespace srsgnb {
 
 /// OFDM demodulator factory configuration. Provides the necessary dependency instances.
-struct ofdm_demodulator_factory_configuration {
+struct ofdm_demodulator_common_configuration {
   /// DFT instance. The ownership is transferred to the demodulator.
   std::unique_ptr<dft_processor> dft;
 };
@@ -56,10 +56,10 @@ private:
 
 public:
   /// \brief Constructs an OFDM symbol demodulator.
-  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] common_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_symbol_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
-                               const ofdm_demodulator_configuration&   ofdm_config);
+  ofdm_symbol_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
+                               const ofdm_demodulator_configuration&  ofdm_config);
 
   /// \brief Gets the resource grid bandwidth in resource elements.
   /// \return The number of resource elements in the grid.
@@ -93,11 +93,11 @@ private:
 
 public:
   /// \brief Constructs an OFDM slot demodulator.
-  /// \param[in] factory_config Provides specific configuration parameters from the factory.
+  /// \param[in] common_config Provides specific configuration parameters from the factory.
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
-  ofdm_slot_demodulator_impl(ofdm_demodulator_factory_configuration& factory_config,
-                             const ofdm_demodulator_configuration&   ofdm_config) :
-    cp(ofdm_config.cp), symbol_demodulator(factory_config, ofdm_config)
+  ofdm_slot_demodulator_impl(ofdm_demodulator_common_configuration& common_config,
+                             const ofdm_demodulator_configuration&  ofdm_config) :
+    cp(ofdm_config.cp), symbol_demodulator(common_config, ofdm_config)
   {
     // Do nothing.
   }

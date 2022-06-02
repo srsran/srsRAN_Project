@@ -24,9 +24,9 @@ public:
 /// Describes the necessary parameters to create a generic lower PHY factory.
 struct lower_phy_factory_generic_configuration {
   /// Provides the OFDM modulation factory.
-  ofdm_modulator_factory* modulator_factory;
+  std::shared_ptr<ofdm_modulator_factory> modulator_factory;
   /// Provides the OFDM demodulation factory.
-  ofdm_demodulator_factory* demodulator_factory;
+  std::shared_ptr<ofdm_demodulator_factory> demodulator_factory;
 };
 
 std::unique_ptr<lower_phy_factory> create_lower_phy_factory_generic(lower_phy_factory_generic_configuration& config);

@@ -14,7 +14,7 @@
 #include "lower_phy_state_fsm.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/lower/lower_phy.h"
-#include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
@@ -25,7 +25,7 @@
 namespace srsgnb {
 
 /// Describes the factory configuration.
-struct lower_phy_factory_configuration {
+struct lower_phy_common_configuration {
   /// Provides OFDM modulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
   /// Provides OFDM demodulators. Each entry belongs to a different sector.
@@ -132,10 +132,10 @@ private:
 
 public:
   /// \brief Constructs a generic lower physical layer.
-  /// \param[in] factory_config Provides the factory specific necessary parameters to construct the lower physical
+  /// \param[in] common_config Provides the factory specific necessary parameters to construct the lower physical
   /// layer.
   /// \param[in] config Provides the common lower PHY parameters to construct the lower physical layer.
-  explicit lower_phy_impl(lower_phy_factory_configuration& factory_config, const lower_phy_configuration& config);
+  explicit lower_phy_impl(lower_phy_common_configuration& common_config, const lower_phy_configuration& config);
 
   // See interface for documentation.
   void start(task_executor& realtime_task_executor) override;

@@ -86,7 +86,7 @@ public:
     return std::unique_ptr<dft_processor_spy>(e.dft);
   }
 
-  void reset() { entries.clear(); }
+  void clear_entries() { entries.clear(); }
 
   const std::vector<entry>& get_entries() const { return entries; }
 };

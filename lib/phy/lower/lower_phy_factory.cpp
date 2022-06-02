@@ -30,11 +30,11 @@ public:
 
   std::unique_ptr<srsgnb::lower_phy> create(lower_phy_configuration& config) override
   {
-    lower_phy_factory_configuration factory_config;
-    factory_config.modulators.reserve(config.sectors.size());
-    factory_config.demodulators.reserve(config.sectors.size());
+    lower_phy_common_configuration common_config;
+    common_config.modulators.reserve(config.sectors.size());
+    common_config.demodulators.reserve(config.sectors.size());
 
-    // For each sector, create modulator.
+    // For each sector, create a modulator.
     for (const lower_phy_sector_description& sector : config.sectors) {
       // Prepare sector modulator.
       ofdm_modulator_configuration configuration = {};
@@ -46,15 +46,15 @@ public:
       configuration.center_freq_hz               = sector.dl_freq_hz;
 
       // Create modulator.
-      factory_config.modulators.emplace_back(modulator_factory.create_ofdm_symbol_modulator(configuration));
+      common_config.modulators.emplace_back(modulator_factory.create_ofdm_symbol_modulator(configuration));
 
       // Make sure the modulator creation is successful.
-      srsran_assert(factory_config.modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
+      srsran_assert(common_config.modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
     }
 
-    // For each sector, create demodulator.
+    // For each sector, create a demodulator.
     for (const lower_phy_sector_description& sector : config.sectors) {
-      // Prepare sector modulator.
+      // Prepare sector demodulator.
       ofdm_demodulator_configuration configuration = {};
       configuration.numerology                     = config.numerology;
       configuration.bw_rb                          = sector.bandwidth_rb;
@@ -63,14 +63,14 @@ public:
       configuration.scale                          = config.tx_scale;
       configuration.center_freq_hz                 = sector.ul_freq_hz;
 
-      // Create modulator.
-      factory_config.demodulators.emplace_back(demodulator_factory.create_ofdm_symbol_demodulator(configuration));
+      // Create demodulator.
+      common_config.demodulators.emplace_back(demodulator_factory.create_ofdm_symbol_demodulator(configuration));
 
-      // Make sure the modulator creation is successful.
-      srsran_assert(factory_config.modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
+      // Make sure the demodulator creation is successful.
+      srsran_assert(common_config.demodulators.back() != nullptr, "Error: failed to create OFDM demodulator.");
     }
 
-    return std::make_unique<lower_phy_impl>(factory_config, config);
+    return std::make_unique<lower_phy_impl>(common_config, config);
   }
 };
 

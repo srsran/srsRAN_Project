@@ -211,15 +211,15 @@ void lower_phy_impl::send(const resource_grid_context& context, const resource_g
   dl_rg_buffers[slot_idx].set_grid(grid, context.sector);
 }
 
-lower_phy_impl::lower_phy_impl(lower_phy_factory_configuration& factory_config, const lower_phy_configuration& config) :
+lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
   transmitter(config.bb_gateway->get_transmitter()),
   receiver(config.bb_gateway->get_receiver()),
   rx_symbol_notifier(*config.rx_symbol_notifier),
   timing_notifier(*config.timing_notifier),
   ul_rg_pool(*config.ul_resource_grid_pool),
-  modulators(std::move(factory_config.modulators)),
-  demodulators(std::move(factory_config.demodulators)),
+  modulators(std::move(common_config.modulators)),
+  demodulators(std::move(common_config.demodulators)),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
@@ -247,11 +247,25 @@ lower_phy_impl::lower_phy_impl(lower_phy_factory_configuration& factory_config, 
       config.ul_to_dl_slot_offset,
       config.max_processing_delay_slots);
 
-  // Make sure sub-modules are valid.
+  // Make sure dependencies are valid.
   srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
   srsran_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
+  srsran_assert(modulators.size() == config.sectors.size(),
+                "The number of sectors ({}) and modulators ({}) do not match.",
+                config.sectors.size(),
+                modulators.size());
+  srsran_assert(demodulators.size() == config.sectors.size(),
+                "The number of sectors ({}) and demodulators ({}) do not match.",
+                config.sectors.size(),
+                demodulators.size());
+  for (auto& modulator : common_config.modulators) {
+    srsran_assert(modulator, "Invalid modulator.");
+  }
+  for (auto& demodulator : common_config.demodulators) {
+    srsran_assert(demodulator, "Invalid demodulator.");
+  }
 
   // Create radio buffers and receive metadata.
   for (unsigned nof_channels : config.nof_channels_per_stream) {
