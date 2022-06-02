@@ -28,6 +28,14 @@ public:
   slot_sync_point& operator=(const slot_sync_point&) = delete;
   slot_sync_point& operator=(slot_sync_point&&) = delete;
 
+  /// \brief Called when thread enters synchronization point. Steps:
+  /// 1. If the current thread is the first to call wait(), the count is set to the number of workers.
+  /// 2. The count is decremented.
+  ///    - If count > 0, the current thread blocks waiting for count to reach zero.
+  ///    - If count==0, the current thread invokes completion callback, and notifies remaining threads to unlock.
+  /// \param sl current slot.
+  /// \param nof_workers number of workers currently passing through synchronization point.
+  /// \param func Completion callback invoked when count reaches zero.
   template <typename CompletionFunction>
   void wait(slot_point sl, size_t nof_workers, const CompletionFunction& func)
   {

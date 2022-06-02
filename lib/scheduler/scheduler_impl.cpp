@@ -58,7 +58,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   // 1. Reset cell resource grid state.
   cell.slot_indication(sl_tx);
 
-  //  3. SSB scheduling.
+  // 2. SSB scheduling.
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
   schedule_ssb(cell.res_grid[0],
                sl_tx,

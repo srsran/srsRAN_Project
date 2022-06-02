@@ -16,6 +16,8 @@
 
 namespace srsgnb {
 
+/// This class implements the ue_pdsch_allocator and ue_pusch_allocator interfaces, namely the methods to allocate
+/// PDSCH and PUSCH grants in different cells, and the methods to fetch the current gNB resource grid DL and UL states.
 class ue_cell_grid_allocator : public ue_pdsch_allocator, public ue_pusch_allocator
 {
 public:

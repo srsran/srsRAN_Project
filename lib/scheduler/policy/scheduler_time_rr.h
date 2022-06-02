@@ -17,9 +17,9 @@ namespace srsgnb {
 class scheduler_time_rr : public scheduler_policy
 {
 public:
-  void dl_sched(const ue_list& ues, ue_pdsch_allocator& pdsch_alloc) override;
+  void dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues) override;
 
-  void ul_sched(const ue_list& ues, ue_pusch_allocator& pusch_alloc) override;
+  void ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues) override;
 
 private:
   unsigned rr_count = 0;

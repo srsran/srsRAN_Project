@@ -22,17 +22,17 @@ class scheduler_policy
 public:
   virtual ~scheduler_policy() = default;
 
-  /// Schedule UE DL grants for a given {slot, cell}.
-  /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
-  ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
-  /// \param out scheduler output for the given {slot, cell}.
-  virtual void dl_sched(const ue_list& ues, ue_pdsch_allocator& pdsch_alloc) = 0;
+  /// Schedule UE DL grants for a given slot and one or more cells.
+  /// \param[in/out] pdsch_alloc PDSCH grant allocator. This object provides a handle to allocate PDSCH grants in the
+  ///                            gNB resource grid and observe the current DL gNB resource grid occupancy state.
+  /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
+  virtual void dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues) = 0;
 
   /// Schedule UE UL grants for a given {slot, cell}.
-  /// \param in input parameters for the given {slot, cell}. This includes list of eligible UEs. For a UE to be eligible
-  ///           it has to have an active BWP in the current {slot, cell} and pending bytes.
-  /// \param out scheduler output for the given {slot, cell}.
-  virtual void ul_sched(const ue_list& ues, ue_pusch_allocator& pusch_alloc) = 0;
+  /// \param[in/out] pusch_alloc PUSCH grant allocator. This object provides a handle to allocate PUSCH grants in the
+  ///                            gNB resource grid and observe the current UL gNB resource grid occupancy state.
+  /// \param[in] ues List of eligible UEs to be scheduled in the given slot.
+  virtual void ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues) = 0;
 };
 
 } // namespace srsgnb

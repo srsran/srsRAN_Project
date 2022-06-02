@@ -17,6 +17,11 @@
 
 namespace srsgnb {
 
+/// This class stores incoming events in a thread-safe queue, and pops all enqueued events in a single batch, when
+/// a new slot indication is notified.
+/// The advantage of this class over a mutexed queue is the lower contention caused when popping elements from the
+/// queue. This is particularly relevant because the events need to be processed during the scheduler slot handling.
+/// \tparam Event type of event pushed/popped from the list.
 template <typename Event>
 class slot_event_list
 {

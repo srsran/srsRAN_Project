@@ -27,14 +27,16 @@ void ue_scheduler_impl::add_cell(const ue_scheduler_cell_params& params)
 
 void ue_scheduler_impl::run_sched_strategy(slot_point slot_tx)
 {
+  // Perform round-robin prioritization of UL and DL scheduling. This avoids that we give unfair preference to DL over
+  // UL scheduling or vice-versa, when allocating PDCCHs.
   if (slot_tx.to_uint() % 2 == 0) {
     // Start with DL
-    sched_strategy->dl_sched(ue_db, ue_alloc);
-    sched_strategy->ul_sched(ue_db, ue_alloc);
+    sched_strategy->dl_sched(ue_alloc, ue_db);
+    sched_strategy->ul_sched(ue_alloc, ue_db);
   } else {
     // Start with UL
-    sched_strategy->ul_sched(ue_db, ue_alloc);
-    sched_strategy->dl_sched(ue_db, ue_alloc);
+    sched_strategy->ul_sched(ue_alloc, ue_db);
+    sched_strategy->dl_sched(ue_alloc, ue_db);
   }
 }
 

@@ -98,7 +98,7 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void scheduler_time_rr::dl_sched(const ue_list& ues, ue_pdsch_allocator& pdsch_alloc)
+void scheduler_time_rr::dl_sched(ue_pdsch_allocator& pdsch_alloc, const ue_list& ues)
 {
   // Increment Round-robin counter to prioritize different UEs.
   rr_count++;
@@ -116,7 +116,7 @@ void scheduler_time_rr::dl_sched(const ue_list& ues, ue_pdsch_allocator& pdsch_a
   }
 }
 
-void scheduler_time_rr::ul_sched(const ue_list& ues, ue_pusch_allocator& pusch_alloc)
+void scheduler_time_rr::ul_sched(ue_pusch_allocator& pusch_alloc, const ue_list& ues)
 {
   // Increment Round-robin counter to prioritize different UEs.
   rr_count++;
