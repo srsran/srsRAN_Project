@@ -15,6 +15,7 @@
 //   + "srsDemodulationMapperUnittest.m"
 
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/file_vector.h"
 
 namespace srsgnb {

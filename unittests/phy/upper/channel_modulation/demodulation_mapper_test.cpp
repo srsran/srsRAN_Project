@@ -30,11 +30,6 @@ int main()
   for (const auto& test_case : demodulation_mapper_test_data) {
     const modulation_scheme mod = test_case.scheme;
 
-    // For now, we can only demodulate up to 16QAM
-    if (mod > modulation_scheme::QAM16) {
-      continue;
-    }
-
     const unsigned          nof_symbols = test_case.nsymbols;
     const std::vector<cf_t> symbols     = test_case.symbols.read();
     TESTASSERT_EQ(symbols.size(), nof_symbols, "Error reading modulated symbols.");
@@ -54,12 +49,12 @@ int main()
     TESTASSERT(std::equal(soft_bits.cbegin(),
                           soft_bits.cend(),
                           soft_bits_true.cbegin(),
-                          [](log_likelihood_ratio a, log_likelihood_ratio b) { return a == b; }),
+                          [](log_likelihood_ratio a, log_likelihood_ratio b) { return (a == b); }),
                "Soft bits are not sufficiently precise.");
 
     std::vector<uint8_t> hard_bits(nof_bits);
     std::transform(soft_bits.cbegin(), soft_bits.cend(), hard_bits.begin(), [](log_likelihood_ratio a) {
-      return (a > 0) ? 0U : 1U;
+      return a.to_hard_bit();
     });
     const std::vector<uint8_t> hard_bits_true = test_case.hard_bits.read();
     TESTASSERT_EQ(hard_bits_true.size(), nof_bits, "Error reading hard bits.");
