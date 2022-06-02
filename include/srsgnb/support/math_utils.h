@@ -44,6 +44,21 @@ inline constexpr unsigned pow2(unsigned power)
   return 1U << power;
 }
 
+/// \brief Calculates \f$\left \lceil log_2(n) \right \rceil\f$.
+///
+/// \tparam Integer Any unsigned integer type.
+/// \param[in] value Parameter \f$n\f$.
+/// \return The result of the calculation if \c value is not zero. Otherwise 0.
+template <typename Integer, typename std::enable_if<std::is_unsigned<Integer>::value, bool>::type = true>
+inline constexpr Integer log2_ceil(Integer value)
+{
+  // Avoid unbounded results.
+  if (value == 0) {
+    return 0;
+  }
+  return static_cast<Integer>(std::ceil(std::log2(static_cast<float>(value))));
+}
+
 /// \brief Converts a value in decibels to linear amplitude ratio
 /// \param [in] value is in decibels
 /// \return the resultant amplitude ratio
