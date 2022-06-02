@@ -90,13 +90,13 @@ struct rar_ul_grant {
   uint16_t ta;
   rnti_t   temp_crnti;
 
-  // RAR Payload
-  bool    freq_hop_flag;
-  uint8_t freq_resource_assignment;
-  uint8_t time_resource_assignment;
-  int8_t  mcs;
-  int8_t  tpc;
-  bool    csi_req;
+  // RAR Payload.
+  bool         freq_hop_flag;
+  uint8_t      time_resource_assignment;
+  prb_interval prbs;
+  int8_t       mcs;
+  int8_t       tpc;
+  bool         csi_req;
 };
 
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.

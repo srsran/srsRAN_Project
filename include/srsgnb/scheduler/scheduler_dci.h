@@ -12,6 +12,7 @@
 #define SRSGNB_SCHEDULER_DCI_H
 
 #include "srsgnb/ran/pdcch/aggregation_level.h"
+#include "srsgnb/ran/prb_grant.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
@@ -32,8 +33,8 @@ enum class dci_ul_format { f0_0, f0_1 };
 /// It can be scrambled by C-RNTI, RA-RNTI, TC-RNTI, SI-RNTI and P-RNTI.
 /// \remark See TS 38.212, 7.3.1.2.1 - "Format 1_0".
 struct dci_format1_0_info {
-  /// Frequency domain resource assignment.
-  uint8_t freq_domain_assignment;
+  /// BWP PRBs used for the PDSCH grant.
+  prb_interval prbs;
   /// Time domain resource assignment. \remark See TS 38.214, 5.1.2.
   uint8_t time_domain_assignment;
   /// Values: (0..31).
@@ -55,6 +56,8 @@ struct dci_dl_info {
   union {
     dci_format1_0_info f1_0;
   };
+
+  dci_dl_info() : format_type(dci_dl_format::f1_0), f1_0() {}
 };
 
 /// \remark See TS 38.212, 7.3.1.1.1 - "Format 0_0".

@@ -156,10 +156,20 @@ struct bitset_builtin_helper<unsigned long long> {
 
 } // namespace detail
 
+/// \brief Counts the number of contiguous bits set to zero, starting from the MSB.
+/// \tparam Integer Integer type of received bitmap.
+/// \param[in] value Integer bitmap
+/// \return count of bits set to zero.
+template <typename Integer>
+Integer zero_msb_count(Integer value)
+{
+  return (~value) ? detail::bitset_builtin_helper<Integer>::zero_msb_count(value) : 0;
+}
+
 /// \brief Finds the position of the first bit set to one, starting from the MSB.
 /// \tparam Integer Integer type of received bitmap.
 /// \param[in] value Integer bitmap
-/// \return MSB position with the bit set to one. The MSB has position zero.
+/// \return MSB position with the bit set to one. The MSB has position sizeof(Integer) * 8 - 1.
 template <typename Integer>
 Integer find_first_msb_one(Integer value)
 {

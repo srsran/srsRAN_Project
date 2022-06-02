@@ -50,8 +50,17 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
   cfg(cfg_),
   pdcch_sch(pdcch_sch_),
   ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
+  initial_active_dl_bwp(cfg.dl_cfg_common.init_dl_bwp.generic_params),
   pending_msg3s(MAX_NOF_MSG3)
-{}
+{
+  if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
+    // See 38.213 - If a UE is not provided initialDownlinkBWP, an initial active DL BWP is defined by a location
+    // and number of contiguous PRBs, starting from a PRB with the lowest index and ending at a PRB with the highest
+    // index among PRBs of a CORESET for Type0-PDCCH CSS set, and a SCS and a cyclic prefix for PDCCH reception in the
+    // CORESET for Type0-PDCCH CSS set.
+    initial_active_dl_bwp.crbs = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  }
+}
 
 void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
 {
@@ -226,12 +235,9 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   crb_interval rar_crbs;
   {
     unsigned   nof_rar_rbs = nof_prbs_per_rar * max_nof_allocs;
-    prb_bitmap used_crbs   = rar_alloc.dl_res_grid.sch_crbs(get_dl_bwp_cfg());
-    if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
-      used_crbs.fill(coreset_nof_prbs(*cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0), used_crbs.size());
-    }
-    rar_crbs       = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
-    max_nof_allocs = rar_crbs.length() / nof_prbs_per_rar;
+    prb_bitmap used_crbs   = rar_alloc.dl_res_grid.sch_crbs(initial_active_dl_bwp);
+    rar_crbs               = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
+    max_nof_allocs         = rar_crbs.length() / nof_prbs_per_rar;
     if (max_nof_allocs == 0) {
       // early exit
       log_postponed_rar(rar, "Not enough PRBs for RAR.");
@@ -304,8 +310,6 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   static const unsigned         max_msg3_retxs       = 4;
   static const unsigned         msg3_mcs             = 0;
   static const unsigned         pdsch_time_res_index = 0;
-  const auto&                   pdcch_common         = cfg.dl_cfg_common.init_dl_bwp.pdcch_common;
-  const auto&                   ss_cfg               = pdcch_common.search_spaces[pdcch_common.ra_search_space_id];
   cell_slot_resource_allocator& rar_alloc = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
   prb_interval                  rar_prbs  = crb_to_prb(get_dl_bwp_cfg(), rar_crbs);
 
@@ -320,9 +324,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   // Fill RAR DCI.
   rar.pdcch_cfg                                  = &rar_alloc.result.dl.dl_pdcchs.back();
   rar.pdcch_cfg->dci.f1_0.time_domain_assignment = pdsch_time_res_index;
-  rar.pdcch_cfg->dci.f1_0.freq_domain_assignment =
-      get_dci_f1_0_freq_domain_assignment(cfg.dl_cfg_common.init_dl_bwp, ss_cfg, rnti_type::ra_rnti, rar_prbs);
-  rar.pdcch_cfg->dci.f1_0.mcs = 0;
+  rar.pdcch_cfg->dci.f1_0.prbs                   = rar_prbs;
+  rar.pdcch_cfg->dci.f1_0.mcs                    = 0;
   // TODO
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
@@ -342,7 +345,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.ta                       = pending_msg3.ind_msg.timing_advance;
     msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
-    msg3_info.freq_resource_assignment = get_dci_f0_0_freq_domain_assignment(cfg.ul_cfg_common.init_ul_bwp, prbs);
+    msg3_info.prbs                     = prbs;
     // TODO
 
     // Allocate and fill PUSCH for Msg3.

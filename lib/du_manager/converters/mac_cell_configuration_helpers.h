@@ -45,13 +45,21 @@ inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common()
 inline coreset_configuration make_default_coreset_config()
 {
   coreset_configuration cfg{};
-  cfg.id = to_coreset_id(0);
+  cfg.id = to_coreset_id(1);
   cfg.freq_domain_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
   for (size_t i = 0; i < 6; ++i) {
     cfg.freq_domain_resources.set(i);
   }
   cfg.duration             = 1;
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
+  return cfg;
+}
+
+inline coreset_configuration make_default_coreset0_config()
+{
+  coreset_configuration cfg = make_default_coreset_config();
+  cfg.id                    = to_coreset_id(0);
+  cfg.coreset0_rb_start     = 1;
   return cfg;
 }
 
@@ -102,8 +110,8 @@ inline dl_config_common make_default_dl_config_common()
   cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = 52;
 
   // Configure initial DL BWP.
-  cfg.init_dl_bwp.generic_params        = make_default_init_bwp();
-  cfg.init_dl_bwp.pdcch_common.coreset0 = make_default_coreset_config();
+  cfg.init_dl_bwp.generic_params = make_default_init_bwp();
+  cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config());
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
   cfg.init_dl_bwp.pdcch_common.ra_search_space_id = to_search_space_id(1);
