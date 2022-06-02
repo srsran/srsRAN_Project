@@ -2137,15 +2137,15 @@ public:
                                             uint8_t            num_dmrs_cdm_grps_no_data,
                                             uint16_t           dmrs_ports)
   {
-    pdu.ul_dmrs_symb_pos                   = ul_dmrs_symb_pos;
-    pdu.dmrs_type                          = dmrs_type;
-    pdu.pusch_dmrs_scrambling_id           = pusch_dmrs_scrambling_id;
-    pdu.pusch_dmrs_scramblig_id_complement = pusch_dmrs_scrambling_id_complement;
-    pdu.low_papr_dmrs                      = low_papr_dmrs;
-    pdu.pusch_dmrs_identity                = pusch_dmrs_identity;
-    pdu.nscid                              = nscid;
-    pdu.num_dmrs_cdm_grps_no_data          = num_dmrs_cdm_grps_no_data;
-    pdu.dmrs_ports                         = dmrs_ports;
+    pdu.ul_dmrs_symb_pos                    = ul_dmrs_symb_pos;
+    pdu.dmrs_type                           = dmrs_type;
+    pdu.pusch_dmrs_scrambling_id            = pusch_dmrs_scrambling_id;
+    pdu.pusch_dmrs_scrambling_id_complement = pusch_dmrs_scrambling_id_complement;
+    pdu.low_papr_dmrs                       = low_papr_dmrs;
+    pdu.pusch_dmrs_identity                 = pusch_dmrs_identity;
+    pdu.nscid                               = nscid;
+    pdu.num_dmrs_cdm_grps_no_data           = num_dmrs_cdm_grps_no_data;
+    pdu.dmrs_ports                          = dmrs_ports;
 
     return *this;
   }

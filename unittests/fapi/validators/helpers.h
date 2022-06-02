@@ -133,6 +133,14 @@ srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f3_pdu();
 /// Section 3.4.3.3.
 srsgnb::fapi::ul_pucch_pdu build_valid_ul_pucch_f4_pdu();
 
+/// Builds and returns a valid UL PUSCH PDU. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.2.
+srsgnb::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
+
+/// Builds and returns a valid UL_TTI.request. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.3.
+srsgnb::fapi::ul_tti_request_message build_valid_ul_tti_request();
+
 } // namespace unittest
 
 #endif // SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H

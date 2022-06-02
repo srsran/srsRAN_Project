@@ -581,7 +581,7 @@ struct ul_pusch_pdu {
   uint16_t                 ul_dmrs_symb_pos;
   dmrs_config_type         dmrs_type;
   uint16_t                 pusch_dmrs_scrambling_id;
-  uint16_t                 pusch_dmrs_scramblig_id_complement;
+  uint16_t                 pusch_dmrs_scrambling_id_complement;
   low_papr_dmrs_type       low_papr_dmrs;
   uint16_t                 pusch_dmrs_identity;
   uint8_t                  nscid;

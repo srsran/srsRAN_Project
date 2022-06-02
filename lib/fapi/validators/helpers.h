@@ -18,9 +18,10 @@ namespace fapi {
 
 /// Helper validation function. If the values are within the [min,max] range, returns true, otherwise returns false. If
 /// the validation fails, given report is filled.
-inline bool validate_field(int32_t           min,
-                           int32_t           max,
-                           int32_t           value,
+template <typename Integer>
+inline bool validate_field(Integer           min,
+                           Integer           max,
+                           Integer           value,
                            const char*       property,
                            message_type_id   msg_type,
                            unsigned          pdu_type,
@@ -36,9 +37,10 @@ inline bool validate_field(int32_t           min,
 
 /// Helper validation function. If the values are within [min,max] range, returns true, otherwise returns false. If the
 /// validation fails, given report is filled.
-inline bool validate_field(int32_t           min,
-                           int32_t           max,
-                           int32_t           value,
+template <typename Integer>
+inline bool validate_field(Integer           min,
+                           Integer           max,
+                           Integer           value,
                            const char*       property,
                            message_type_id   msg_type,
                            validator_report& report)

@@ -120,12 +120,12 @@ static bool validate_duration_symbols(unsigned value, pucch_format_type format_t
     static constexpr unsigned MAX_VALUE = 2;
 
     return validate_field(MIN_VALUE, MAX_VALUE, value, "Duration in symbols", msg_type, pdu_type, report);
-  } else {
-    static constexpr unsigned MIN_VALUE = 4;
-    static constexpr unsigned MAX_VALUE = 14;
-
-    return validate_field(MIN_VALUE, MAX_VALUE, value, "Duration in symbols", msg_type, pdu_type, report);
   }
+
+  static constexpr unsigned MIN_VALUE = 4;
+  static constexpr unsigned MAX_VALUE = 14;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Duration in symbols", msg_type, pdu_type, report);
 }
 
 /// Validates the second hop PRB property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
@@ -194,7 +194,7 @@ static bool validate_pre_dft_occ_index(unsigned value, validator_report& report)
 /// Validates the Pre DFT occ len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
 static bool validate_pre_dft_occ_len(unsigned value, validator_report& report)
 {
-  if (value == 2 || value == 4) {
+  if (value == 2U || value == 4U) {
     return true;
   }
 
@@ -219,12 +219,12 @@ static bool validate_sr_bit_len(unsigned value, pucch_format_type format_type, v
     static constexpr unsigned MAX_VALUE = 1;
 
     return validate_field(MIN_VALUE, MAX_VALUE, value, "SR bit len", msg_type, pdu_type, report);
-  } else {
-    static constexpr unsigned MIN_VALUE = 0;
-    static constexpr unsigned MAX_VALUE = 4;
-
-    return validate_field(MIN_VALUE, MAX_VALUE, value, "SR bit len", msg_type, pdu_type, report);
   }
+
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 4;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "SR bit len", msg_type, pdu_type, report);
 }
 
 /// Validates the HARQ bit len property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
@@ -239,12 +239,12 @@ static bool validate_harq_bit_len(unsigned value, pucch_format_type format_type,
     static constexpr unsigned MAX_VALUE = 2;
 
     return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
-  } else {
-    static constexpr unsigned MIN_VALUE = 2;
-    static constexpr unsigned MAX_VALUE = 1706;
-
-    return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
   }
+
+  static constexpr unsigned MIN_VALUE = 2;
+  static constexpr unsigned MAX_VALUE = 1706;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "HARQ bit len", msg_type, pdu_type, report);
 }
 
 /// Validates the CSI part1 bit length property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.
@@ -269,12 +269,12 @@ static bool validate_max_code_rate(unsigned value, pucch_format_type format_type
     report.append(value, "Max code rate", msg_type, pdu_type);
 
     return false;
-  } else {
-    static constexpr unsigned MIN_VALUE = 0;
-    static constexpr unsigned MAX_VALUE = 7;
-
-    return validate_field(MIN_VALUE, MAX_VALUE, value, "Max code rate", msg_type, pdu_type, report);
   }
+
+  static constexpr unsigned MIN_VALUE = 0;
+  static constexpr unsigned MAX_VALUE = 7;
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Max code rate", msg_type, pdu_type, report);
 }
 
 /// Validates the part2 size map scope property of the PUCCH PDU, as per SCF-222 v4.0 section 3.4.3.3.

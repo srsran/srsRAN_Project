@@ -9,6 +9,7 @@
  */
 
 #include "helpers.h"
+#include "srsgnb/adt/bitmap_utils.h"
 #include "srsgnb/fapi/message_builders.h"
 #include <random>
 
@@ -978,4 +979,213 @@ ul_pucch_pdu unittest::build_valid_ul_pucch_f4_pdu()
   pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
 
   return pdu;
+}
+
+static bool generate_bool()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+  return dist(gen);
+}
+
+static unsigned generate_qam_mod_order(bool transform_precoding)
+{
+  static constexpr std::array<unsigned, 5> values = {1, 2, 4, 6, 8};
+
+  std::uniform_int_distribution<unsigned> dist(0, 4);
+  unsigned                                index = dist(gen);
+
+  if (!transform_precoding && index == 0) {
+    ++index;
+  }
+
+  return values[index];
+}
+
+static unsigned generate_mcs_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 31);
+  return dist(gen);
+}
+
+static pusch_mcs_table_type generate_mcs_table()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 4);
+  return static_cast<pusch_mcs_table_type>(dist(gen));
+}
+
+static unsigned generate_num_layers()
+{
+  std::uniform_int_distribution<unsigned> dist(1, 4);
+  return dist(gen);
+}
+
+static dmrs_config_type generate_dmrs_type()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+  return static_cast<dmrs_config_type>(dist(gen));
+}
+
+static low_papr_dmrs_type generate_low_papr_dmrs()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+  return static_cast<low_papr_dmrs_type>(dist(gen));
+}
+
+static unsigned generate_pusch_dmrs_identity()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1007);
+  return dist(gen);
+}
+
+static unsigned generate_num_dmrs_cdm_no_data()
+{
+  std::uniform_int_distribution<unsigned> dist(1, 3);
+  return dist(gen);
+}
+
+static resource_allocation_type generate_resource_allocation()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+  return static_cast<resource_allocation_type>(dist(gen));
+}
+
+static unsigned generate_tx_direct_current_location()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 4095);
+  return dist(gen);
+}
+
+static ldpc_base_graph_type generate_ldpc_graph_type()
+{
+  std::uniform_int_distribution<unsigned> dist(1, 2);
+  return static_cast<ldpc_base_graph_type>(dist(gen));
+}
+
+ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
+{
+  ul_pusch_pdu pdu;
+
+  pdu.rnti                                = generate_rnti();
+  pdu.handle                              = generate_handle();
+  pdu.bwp_size                            = generate_bwp_size();
+  pdu.bwp_start                           = generate_bwp_start();
+  pdu.scs                                 = generate_scs();
+  pdu.cyclic_prefix                       = generate_cyclic_prefix();
+  pdu.target_code_rate                    = 1982U;
+  pdu.transform_precoding                 = generate_bool();
+  pdu.qam_mod_order                       = generate_qam_mod_order(pdu.transform_precoding);
+  pdu.mcs_index                           = generate_mcs_index();
+  pdu.mcs_table                           = generate_mcs_table();
+  pdu.nid_pusch                           = generate_nid_pucch_hopping();
+  pdu.num_layers                          = generate_num_layers();
+  pdu.ul_dmrs_symb_pos                    = 3U;
+  pdu.dmrs_type                           = generate_dmrs_type();
+  pdu.pusch_dmrs_scrambling_id            = 32421;
+  pdu.pusch_dmrs_scrambling_id_complement = 3213;
+  pdu.low_papr_dmrs                       = generate_low_papr_dmrs();
+  pdu.pusch_dmrs_identity                 = generate_pusch_dmrs_identity();
+  pdu.nscid                               = generate_bool();
+  pdu.num_dmrs_cdm_grps_no_data           = generate_num_dmrs_cdm_no_data();
+  pdu.dmrs_ports                          = 4;
+  pdu.resource_alloc                      = generate_resource_allocation();
+  if (pdu.resource_alloc == resource_allocation_type::type_1) {
+    pdu.rb_start = generate_bwp_start();
+    pdu.rb_size  = generate_bwp_size();
+  }
+  pdu.vrb_to_prb_mapping            = vrb_to_prb_mapping_type::non_interleaved;
+  pdu.intra_slot_frequency_hopping  = generate_bool();
+  pdu.tx_direct_current_location    = generate_tx_direct_current_location();
+  pdu.uplink_frequency_shift_7p5kHz = generate_bool();
+  pdu.start_symbol_index            = generate_start_symbol_index();
+  pdu.nr_of_symbols                 = 3U;
+
+  auto& data = pdu.pusch_data;
+  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_DATA_BIT, true);
+  data.rv_index        = 2;
+  data.harq_process_id = 2;
+  data.new_data        = 0;
+  data.tb_size         = 213131;
+  data.num_cb          = 3414;
+
+  auto& uci = pdu.pusch_uci;
+  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_UCI_BIT, true);
+  uci.harq_ack_bit_length  = 3;
+  uci.csi_part1_bit_length = 4;
+  uci.flags_csi_part2      = 65535;
+  uci.alpha_scaling        = 3;
+  uci.beta_offset_harq_ack = 12;
+  uci.beta_offset_csi1     = 16;
+  uci.beta_offset_csi2     = 17;
+
+  // Add 1 part1 to part2 correspondence.
+  pdu.uci_correspondence.part2.emplace_back();
+  auto& corr                = pdu.uci_correspondence.part2.back();
+  corr.priority             = 3;
+  corr.param_offsets        = {1, 2, 3};
+  corr.param_sizes          = {1, 2, 3};
+  corr.part2_size_map_index = 43;
+  corr.part2_size_map_scope = uci_part1_to_part2_correspondence_v3::map_scope_type::common_context;
+
+  auto& ptrs = pdu.pusch_ptrs;
+  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_PTRS_BIT, true);
+  ptrs.ul_ptrs_power     = ul_ptrs_power_type::dB4_77;
+  ptrs.ptrs_freq_density = 1;
+  ptrs.ptrs_time_density = 2;
+  ptrs.port_info.push_back({3, 4, 5});
+
+  auto& ofdm = pdu.pusch_ofdm;
+  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::DFTS_OFDM_BIT, true);
+  ofdm.low_papr_group_number                    = 25;
+  ofdm.low_papr_sequence_number                 = 3232;
+  ofdm.ul_ptrs_sample_density                   = 3;
+  ofdm.ul_ptrs_time_density_transform_precoding = 4;
+
+  auto& v3                            = pdu.pusch_maintenance_v3;
+  v3.pusch_trans_type                 = 2;
+  v3.delta_bwp0_start_from_active_bwp = generate_bwp_start();
+  v3.initial_ul_bwp_size              = generate_bwp_start();
+  v3.group_or_sequence_hopping        = 2;
+  v3.pusch_second_hop_prb             = generate_bwp_start();
+  v3.ldpc_base_graph                  = generate_ldpc_graph_type();
+  v3.tb_size_lbrm_bytes               = 32323242;
+
+  pdu.pusch_params_v4.cb_crc_status_request = generate_bool();
+
+  return pdu;
+}
+ul_tti_request_message unittest::build_valid_ul_tti_request()
+{
+  ul_tti_request_message msg;
+
+  msg.slot       = generate_slot();
+  msg.sfn        = generate_sfn();
+  msg.num_groups = 2000;
+
+  {
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(ul_tti_request_message::pdu_type::PRACH)];
+    msg.pdus.push_back({ul_pdu_type::PRACH, 0, build_valid_ul_prach_pdu()});
+  }
+  {
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(ul_tti_request_message::pdu_type::PUCCH_format01)];
+    ul_tti_request_pdu pdu;
+    pdu.pdu_type  = ul_pdu_type::PUCCH;
+    pdu.pucch_pdu = build_valid_ul_pucch_f0_pdu();
+    msg.pdus.push_back(pdu);
+  }
+  {
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(ul_tti_request_message::pdu_type::PUCCH_format234)];
+    ul_tti_request_pdu pdu;
+    pdu.pdu_type  = ul_pdu_type::PUCCH;
+    pdu.pucch_pdu = build_valid_ul_pucch_f3_pdu();
+    msg.pdus.push_back(pdu);
+  }
+  {
+    ++msg.num_pdus_of_each_type[static_cast<unsigned>(ul_tti_request_message::pdu_type::PUSCH)];
+    ul_tti_request_pdu pdu;
+    pdu.pdu_type  = ul_pdu_type::PUSCH;
+    pdu.pusch_pdu = build_valid_ul_pusch_pdu();
+    msg.pdus.push_back(pdu);
+  }
+
+  return msg;
 }

@@ -17,6 +17,7 @@
 #include "uci_pdus.h"
 #include "ul_prach_pdu.h"
 #include "ul_pucch_pdu.h"
+#include "ul_pusch_pdu.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -76,14 +77,14 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<unsigned>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);
+        report.append(static_cast<int>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);
         break;
     }
   }
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -107,14 +108,14 @@ error_type<validator_report> srsgnb::fapi::validate_ul_dci_request(const ul_dci_
         // :TODO: Implement the rest of the PDUs when their validators exist.
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<unsigned>(pdu.pdu_type), "UL_DCI.request PDU type", message_type_id::ul_dci_request);
+        report.append(static_cast<int>(pdu.pdu_type), "UL_DCI.request PDU type", message_type_id::ul_dci_request);
         break;
     }
   }
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -156,7 +157,7 @@ error_type<validator_report> srsgnb::fapi::validate_tx_data_request(const tx_dat
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -304,7 +305,7 @@ error_type<validator_report> srsgnb::fapi::validate_crc_indication(const crc_ind
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -453,7 +454,7 @@ error_type<validator_report> srsgnb::fapi::validate_rach_indication(const rach_i
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -482,14 +483,14 @@ error_type<validator_report> srsgnb::fapi::validate_uci_indication(const uci_ind
         break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<unsigned>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
+        report.append(static_cast<int>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
         break;
     }
   }
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -515,7 +516,7 @@ static bool validate_message_id(unsigned value, validator_report& report)
     return true;
   }
 
-  report.append(value, "Message ID", message_type_id::error_indication);
+  report.append(static_cast<int>(value), "Message ID", message_type_id::error_indication);
 
   return false;
 }
@@ -545,7 +546,7 @@ static bool validate_expected_sfn(unsigned value, error_code_id error_id, valida
     return true;
   }
 
-  report.append(value, "Expected SFN", message_type_id::error_indication);
+  report.append(static_cast<int>(value), "Expected SFN", message_type_id::error_indication);
 
   return false;
 }
@@ -565,7 +566,7 @@ static bool validate_expected_slot(unsigned value, error_code_id error_id, valid
     return true;
   }
 
-  report.append(value, "Expected slot", message_type_id::error_indication);
+  report.append(static_cast<int>(value), "Expected slot", message_type_id::error_indication);
 
   return false;
 }
@@ -587,7 +588,7 @@ error_type<validator_report> srsgnb::fapi::validate_error_indication(const error
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -602,7 +603,7 @@ static bool validate_pdu_tag(rx_data_indication_pdu::pdu_tag_type value, validat
     return true;
   }
 
-  report.append(static_cast<unsigned>(value), "PDU tag", message_type_id::rx_data_indication);
+  report.append(static_cast<int>(value), "PDU tag", message_type_id::rx_data_indication);
 
   return false;
 }
@@ -644,7 +645,7 @@ error_type<validator_report> srsgnb::fapi::validate_rx_data_indication(const rx_
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -663,7 +664,7 @@ error_type<validator_report> srsgnb::fapi::validate_slot_indication(const slot_i
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};
@@ -689,16 +690,19 @@ error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_
       case ul_pdu_type::PUCCH:
         success &= validate_ul_pucch_pdu(pdu.pucch_pdu, report);
         break;
+      case ul_pdu_type::PUSCH:
+        success &= validate_ul_pusch_pdu(pdu.pusch_pdu, report);
+        break;
       default:
         srsran_assert(0, "Invalid pdu_type");
-        report.append(static_cast<unsigned>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
+        report.append(static_cast<int>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
         break;
     }
   }
 
   // Build the result.
   if (!success) {
-    return error_type<validator_report>(std::move(report));
+    return {std::move(report)};
   }
 
   return {};

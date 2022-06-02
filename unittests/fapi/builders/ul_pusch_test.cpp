@@ -99,7 +99,7 @@ static void test_dmrs_params()
   TESTASSERT_EQ(ul_dmrs_sym_pos, pdu.ul_dmrs_symb_pos);
   TESTASSERT_EQ(dmrs_type, pdu.dmrs_type);
   TESTASSERT_EQ(pusch_dmrs_scrambling_id, pdu.pusch_dmrs_scrambling_id);
-  TESTASSERT_EQ(pusch_dmrs_scrambling_id_complement, pdu.pusch_dmrs_scramblig_id_complement);
+  TESTASSERT_EQ(pusch_dmrs_scrambling_id_complement, pdu.pusch_dmrs_scrambling_id_complement);
   TESTASSERT_EQ(low_papr, pdu.low_papr_dmrs);
   TESTASSERT_EQ(pusch_dmrs_identity, pdu.pusch_dmrs_identity);
   TESTASSERT_EQ(nscid, pdu.nscid);
