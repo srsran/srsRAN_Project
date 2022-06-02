@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(srsgnb_ran band_helper.cpp ssb_mapping.cpp pdcch/cce_to_prb_mapping.cpp)
+add_library(srsgnb_ran band_helper.cpp ssb_mapping.cpp pdcch/cce_to_prb_mapping.cpp pdcch/dci_packing.cpp)
 target_link_libraries(srsgnb_ran)
