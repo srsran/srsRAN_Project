@@ -36,11 +36,12 @@ const unsigned NOF_SSB_PRBS                      = 20;
 /// SIB1 constants.
 /// SIB1 periodicity, see TS 38.331, Section 5.2.1.
 const unsigned SIB1_PERIODICITY = 160;
-/// SIB1 Retransmissions periodicity for FR1 (which uses multiplexing pattern 1), see TS 38.331, Section 5.2.1.
-const unsigned SIB1_RETX_PERIODICITY_FR1 = 20;
 /// [Implementation defined] Max numbers of beams, to be used for SIB1 scheduler.
 /// NOTE: This is temporary, and valid only for FR1.
 const unsigned MAX_NUM_BEAMS = 8;
+/// NOTE: This is temporary, and valid only for FR1.
+const unsigned SIB1_MCS = 5;
+const unsigned SIB1_RV  = 0;
 
 } // namespace srsgnb
 

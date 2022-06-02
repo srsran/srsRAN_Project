@@ -9,7 +9,7 @@
  */
 
 #include "sib_scheduler.h"
-#include "cell/resource_grid.h"
+#include "resource_grid.h"
 
 using namespace srsgnb;
 
@@ -36,7 +36,7 @@ static unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t 
 }
 
 // Helper function that returns slot n0 (where UE should monitor Type0-PDCCH CSS) for a given SSB (beam) index.
-static slot_point get_sib1_n0(unsigned sib1_offset, unsigned sib1_M, uint8_t numerology_mu, unsigned ssb_index)
+static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
 {
   // Initialize n0 to a slot_point = 0.
   slot_point sib_1_n0{numerology_mu, 0};
@@ -61,10 +61,50 @@ get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern m
   srsran_sanity_check(mplex_pattern == ssb_coreset0_mplex_pattern::mplx_pattern1,
                       "Only SSB/Coreset0 multiplexing pattern 1 is currently supported");
   switch (mplex_pattern) {
-    case ssb_coreset0_mplex_pattern::mplx_pattern1:
-      offset = 5;
-      sib1_M = 2;
+    case ssb_coreset0_mplex_pattern::mplx_pattern1: {
+      uint8_t search_space_zero = (pdcch_config_sib1 & 0b00001111);
+      if (search_space_zero == 0U) {
+        offset = 0;
+        sib1_M = 1;
+      } else if (search_space_zero == 1U) {
+        offset = 0;
+        sib1_M = 0.5;
+      } else if (search_space_zero == 2U) {
+        offset = 2;
+        sib1_M = 1;
+      } else if (search_space_zero == 3U) {
+        offset = 2;
+        sib1_M = 0.5;
+      } else if (search_space_zero == 4U) {
+        offset = 5;
+        sib1_M = 1;
+      } else if (search_space_zero == 5U) {
+        offset = 5;
+        sib1_M = 0.5;
+      } else if (search_space_zero == 6U) {
+        offset = 7;
+        sib1_M = 1;
+      } else if (search_space_zero == 7U) {
+        offset = 7;
+        sib1_M = 0.5;
+      } else if (search_space_zero == 8U) {
+        offset = 0;
+        sib1_M = 2;
+      } else if (search_space_zero == 9U) {
+        offset = 5;
+        sib1_M = 2;
+      } else if (search_space_zero == 10U or search_space_zero == 11U) {
+        offset = 0;
+        sib1_M = 1;
+      } else if (search_space_zero == 12U or search_space_zero == 13U) {
+        offset = 2;
+        sib1_M = 1;
+      } else if (search_space_zero == 14U or search_space_zero == 15U) {
+        offset = 5;
+        sib1_M = 1;
+      }
       break;
+    }
     default:
       // Only ssb_coreset0_mplex_pattern::mplx_pattern1 is currently supported.
       return;
@@ -73,16 +113,18 @@ get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern m
 
 //  ------   Public methods   ------ .
 
-sib1_scheduler::sib1_scheduler(pdcch_scheduler& pdcch_sch, uint8_t pdcch_config_sib1, unsigned numerology) :
+sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch, unsigned numerology) :
+  cfg{cfg_},
   pdcch_sched{pdcch_sch}
 {
-  precompute_sib1_n0(pdcch_config_sib1, numerology);
+  // Compute derived SIB1 parameters.
+  sib1_periodicity = cfg_.sib1_rxtx_periodicity == 0
+                         ? SIB1_PERIODICITY
+                         : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), cfg_.sib1_rxtx_periodicity);
+  precompute_sib1_n0(numerology);
 };
 
-void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid,
-                                   const slot_point              sl_point,
-                                   uint8_t                       ssb_periodicity,
-                                   uint64_t                      ssb_in_burst_bitmap)
+void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point)
 {
   // NOTE:
   // - [Implementation defined] The UE monitors the SearchSpaceSet 0 for SIB1 in 2 consecutive slots, starting from n0.
@@ -91,11 +133,9 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid,
   // - [Implementation defined] We assume the SIB1 is (re)transmitted every 20ms if the SSB periodicity <= 20ms.
   //   Else, we set the (re)transmission periodicity as the SSB's.
 
-  // The sib1_period is expressed in slots.
-  // NOTE: As ssb_periodicity and SIB1_RETX_PERIODICITY_FR1 are expressed in nof_slots_per_subframe or
-  // nof_slots_per_millisecond, we need to convert these into slots.
-  unsigned sib1_period =
-      std::max(static_cast<unsigned>(ssb_periodicity), SIB1_RETX_PERIODICITY_FR1) * sl_point.nof_slots_per_subframe();
+  // The sib1_period_slots is expressed in unit of slots.
+  // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
+  unsigned sib1_period_slots = sib1_periodicity * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
 
   // Helper function that determines from SSB bitmap whether n-th beam is used.
   auto is_nth_ssb_beam_active = [](uint64_t ssb_bitmap, unsigned ssb_index) {
@@ -108,11 +148,11 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid,
   // For each beam, check if the SIB1 needs to be allocated in this slot .
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
     // Do not schedule the SIB1 for the SSB indices that are not used.
-    if (not is_nth_ssb_beam_active(ssb_in_burst_bitmap, ssb_idx)) {
+    if (not is_nth_ssb_beam_active(cfg.ssb_cfg.ssb_bitmap, ssb_idx)) {
       continue;
     }
 
-    if (sl_point.to_uint() % sib1_period == sib1_n0_slots[ssb_idx].to_uint()) {
+    if (sl_point.to_uint() % sib1_period_slots == sib1_n0_slots[ssb_idx].to_uint()) {
       allocate_sib1(res_grid, ssb_idx);
     }
   }
@@ -120,7 +160,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid,
 
 //  ------   Private methods   ------ .
 
-void sib1_scheduler::precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned numerology)
+void sib1_scheduler::precompute_sib1_n0(unsigned numerology)
 {
   // This corresponds to parameter O in TS 38.213, Section 13.
   unsigned sib1_offset;
@@ -128,20 +168,17 @@ void sib1_scheduler::precompute_sib1_n0(uint8_t pdcch_config_sib1, unsigned nume
   double sib1_M;
 
   // TODO: Extend function to all multiplexing patterns
-  get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, pdcch_config_sib1);
+  get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, cfg.pdcch_config_sib1);
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, numerology, pdcch_config_sib1));
+    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, numerology, i_ssb));
   }
 }
-
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
 {
   // TODO: PBRs for SIB1 should be derived from the SIB1 size.
   const unsigned nof_prbs_per_sib1 = 4;
-
-  const cell_configuration& cfg = res_grid.cfg;
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
@@ -158,23 +195,26 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   }
 
   // 2. Allocate DCI_1_0 for SIB1 on PDCCH.
-  const static aggregation_level aggr_lvl = aggregation_level::n8;
-  search_space_id                ss_id    = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id;
-  pdcch_dl_information*          pdcch    = pdcch_sched.alloc_pdcch_common(res_grid, rnti_t::SI_RNTI, ss_id, aggr_lvl);
+  pdcch_dl_information* pdcch =
+      pdcch_sched.alloc_pdcch_common(res_grid,
+                                     rnti_t::SI_RNTI,
+                                     cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
+                                     cfg.sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.error("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
   }
 
   // 3. Now that we are sure there is space in both PDCCH and PDSCH, set SIB1 CRBs as used.
-  // NOTEs:
+  // NOTE:
   // - ofdm_symbol_range{2, 14} is a temporary hack. The OFDM symbols should be derived from the SIB1 size and
   //   frequency allocation.
   res_grid.dl_res_grid.fill(grant_info{
       grant_info::channel::sch, cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ofdm_symbol_range{2, 14}, sib1_crbs});
 
-  // 4. Delegate filling SIB1 grands to helper function.
+  // 4. Delegate filling SIB1 grants to helper function.
   fill_sib1_grant(res_grid, beam_idx, sib1_crbs);
+  logger.info("SCHED: Allocated SIB1 at slot {} for SSB beam idx: {}", res_grid.slot.to_uint(), beam_idx);
   return true;
 }
 
@@ -182,19 +222,18 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
                                      unsigned                      beam_idx,
                                      crb_interval                  sib1_crbs_grant)
 {
-  const cell_configuration& cfg = res_grid.cfg;
-
   // Add DCI to list to dl_pdcch.
-  res_grid.result.dl.dl_pdcchs.emplace_back();
+  srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
   auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
 
   // Fill SIB1 DCI.
-  // TODO: compute DCI all these values for actual allocation.
-  sib1_pdcch.dci.format_type                = dci_dl_format::f1_0;
+  sib1_pdcch.dci.format_type = dci_dl_format::f1_0;
+  // TODO: compute freq_domain_assigment from CRBS allocation (WIP).
   sib1_pdcch.dci.f1_0.freq_domain_assigment = 0;
+  // TODO: compute time_domain_assigment from OFDM symbols (WIP).
   sib1_pdcch.dci.f1_0.time_domain_assigment = 0;
-  sib1_pdcch.dci.f1_0.mcs                   = 1;
-  sib1_pdcch.dci.f1_0.rv                    = 0;
+  sib1_pdcch.dci.f1_0.mcs                   = cfg.sib1_mcs;
+  sib1_pdcch.dci.f1_0.rv                    = cfg.sib1_rv;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();

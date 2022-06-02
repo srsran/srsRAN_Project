@@ -66,7 +66,12 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),
-  L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn))
+  L_max(ssb_get_L_max(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
+  pdcch_config_sib1(msg.pdcch_config_sib1),
+  sib1_rxtx_periodicity(msg.sib1_retx_periodicity),
+  sib1_mcs(msg.sib1_mcs),
+  sib1_rv(msg.sib1_rv),
+  sib1_dci_aggr_lev(msg.sib1_dci_aggr_lev)
 {
   if (tdd_cfg_common.has_value()) {
     // Cache list of DL and UL slots in case of TDD

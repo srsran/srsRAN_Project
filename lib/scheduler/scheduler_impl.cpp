@@ -70,7 +70,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
                cell.cell_cfg.paired_spectrum);
 
   // 3. Schedule DL signalling.
-  cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx, ssb_cfg.ssb_period, ssb_cfg.ssb_bitmap);
+  cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);
 
   // 4. Schedule RARs and Msg3.
   cell.ra_sch.run_slot(cell.res_grid);

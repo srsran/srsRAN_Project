@@ -54,6 +54,14 @@ public:
   bool             paired_spectrum;
   uint8_t          L_max;
 
+  /// [Implementation-defined] SIB1 parameters.
+  /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
+  uint8_t           pdcch_config_sib1;
+  unsigned          sib1_rxtx_periodicity;
+  uint8_t           sib1_mcs;
+  uint8_t           sib1_rv;
+  aggregation_level sib1_dci_aggr_lev;
+
   bool is_tdd() const { return tdd_cfg_common.has_value(); }
 
   /// Checks if DL/UL is active for current slot

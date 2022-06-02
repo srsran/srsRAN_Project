@@ -45,3 +45,7 @@ add_test(pdcch_scheduler_test pdcch_scheduler_test)
 add_executable(ue_configuration_test ue_configuration_test.cpp)
 target_link_libraries(ue_configuration_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(ue_configuration_test ue_configuration_test)
+
+add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
+target_link_libraries(sib1_scheduler_test srsgnb_sched srslog rrc_nr_asn1 mac_configuration_helpers)
+add_test(sib1_scheduler_test sib1_scheduler_test)

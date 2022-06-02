@@ -144,6 +144,7 @@ inline ssb_configuration make_default_ssb_config()
   ssb_configuration cfg{};
   cfg.scs        = subcarrier_spacing::kHz15;
   cfg.ssb_period = 10;
+  cfg.ssb_bitmap = static_cast<uint64_t>(0b10101010) << static_cast<uint64_t>(56U);
   // TODO: Add remaining.
   return cfg;
 }
@@ -164,7 +165,11 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.dl_cfg_common = make_default_dl_config_common();
   msg.ul_cfg_common = make_default_ul_config_common();
 
-  msg.pdcch_config_sib1 = 0b00000110U;
+  /// SIB1 parameters.
+  msg.pdcch_config_sib1 = 0b10000000U;
+  msg.sib1_mcs          = 5;
+  msg.sib1_rv           = 0;
+  msg.sib1_dci_aggr_lev = aggregation_level::n8;
 
   // TODO: Remaining fields.
 

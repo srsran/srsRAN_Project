@@ -33,6 +33,9 @@ srsgnb::make_scheduler_cell_configuration_request(const mac_cell_creation_reques
   ret.ul_cfg_common = request.ul_cfg_common;
 
   ret.pdcch_config_sib1 = request.pdcch_config_sib1;
+  ret.sib1_mcs          = request.sib1_mcs;
+  ret.sib1_rv           = request.sib1_rv;
+  ret.sib1_dci_aggr_lev = request.sib1_dci_aggr_lev;
 
   return ret;
 }

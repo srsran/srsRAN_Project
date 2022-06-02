@@ -21,6 +21,7 @@
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
+#include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
 
@@ -44,8 +45,14 @@ struct sched_cell_configuration_request_message {
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;
   ssb_configuration     ssb_config;
+
+  /// [Implementation-defined] SIB1 parameters.
   /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
-  uint8_t pdcch_config_sib1;
+  uint8_t           pdcch_config_sib1;
+  unsigned          sib1_retx_periodicity;
+  uint8_t           sib1_mcs;
+  uint8_t           sib1_rv;
+  aggregation_level sib1_dci_aggr_lev;
 };
 
 /// \remark See TS 38.331, "PDCCH-Config"

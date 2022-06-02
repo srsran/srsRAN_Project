@@ -12,11 +12,11 @@
 #define SRSGNB_CELL_SCHED_H
 
 #include "../sched_strategy/data_scheduler.h"
-#include "../sib_scheduler.h"
 #include "cell_configuration.h"
 #include "pdcch_scheduler_impl.h"
 #include "ra_scheduler.h"
 #include "resource_grid.h"
+#include "sib_scheduler.h"
 
 namespace srsgnb {
 
@@ -28,7 +28,7 @@ public:
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
     ra_sch(cell_cfg, pdcch_sch),
-    sib1_sch(pdcch_sch, msg.pdcch_config_sib1, to_numerology_value(msg.scs_common))
+    sib1_sch(cell_cfg, pdcch_sch, to_numerology_value(msg.scs_common))
   {}
 
   void slot_indication(slot_point sl_tx)
