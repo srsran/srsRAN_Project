@@ -209,9 +209,10 @@ public:
   /// \tparam Iterator Boolean iterator type.
   /// \param[in] begin Begin iterator.
   /// \param[in] end End iterator.
-  template <typename Iterator,
-            typename std::enable_if<std::is_same<typename std::iterator_traits<Iterator>::value_type, bool>::value,
-                                    bool>::type = 0>
+  template <
+      typename Iterator,
+      typename std::enable_if<std::is_convertible<typename std::iterator_traits<Iterator>::value_type, bool>::value,
+                              bool>::type = 0>
   constexpr bounded_bitset(Iterator begin, Iterator end)
   {
     resize(end - begin);
@@ -282,6 +283,32 @@ public:
   {
     for (size_t i = 0; i < nof_words_(); ++i) {
       buffer[i] = static_cast<word_t>(0);
+    }
+  }
+
+  /// \brief Appends a bit with value \c val to the set.
+  ///
+  /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.
+  void push_back(bool val)
+  {
+    unsigned bitpos = size();
+    resize(size() + 1);
+    set(bitpos, val);
+  }
+
+  /// \brief Appends \c nof_bits bits to the set.
+  ///
+  /// The least \c nof_bits significant bits of \c val are appended to the set, starting from the most significant bit
+  /// and finishing with the least significant bit.
+  ///
+  /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.
+  template <typename Integer, typename std::enable_if<std::is_unsigned<Integer>::value, bool>::type = true>
+  void push_back(Integer val, unsigned nof_bits)
+  {
+    unsigned bitpos = size();
+    resize(size() + nof_bits);
+    for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {
+      set(bitpos + bit_index, (val >> (nof_bits - 1 - bit_index)) & 1U);
     }
   }
 

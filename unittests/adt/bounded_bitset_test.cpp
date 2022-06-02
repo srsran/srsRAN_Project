@@ -345,6 +345,23 @@ void test_bitset_contiguous()
   }
 }
 
+void test_bitset_push_back()
+{
+  {
+    bounded_bitset<10> bitset;
+    bitset.push_back(1);
+    bitset.push_back(0);
+    bitset.push_back(1);
+    bitset.push_back(1);
+    TESTASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+  }
+  {
+    bounded_bitset<10> bitset;
+    bitset.push_back(0xBU, 4);
+    TESTASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
+  }
+}
+
 int main()
 {
   test_bit_operations();
@@ -358,6 +375,7 @@ int main()
   test_bitset_find<false>();
   test_bitset_find<true>();
   test_bitset_contiguous();
+  test_bitset_push_back();
   printf("Success\n");
   return 0;
 }
