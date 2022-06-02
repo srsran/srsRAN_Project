@@ -14,8 +14,7 @@
 
 using namespace srsgnb;
 
-enum class ssb_coreset0_mplex_pattern { mplx_pattern1 = 0, mplx_pattern2, mplx_pattern3, mplex_invalid };
-
+// Dummy PDCCH scheduler required to instantiate the SIB1 scheduler.
 class dummy_pdcch_scheduler : public pdcch_scheduler
 {
 public:
@@ -54,98 +53,6 @@ public:
     return nullptr;
   }
 };
-
-//  ------   Helper functions   ------ .
-
-// Helper function that returns whether slot n0 (where UE should monitor Type0-PDCCH CSS) is in an even/odd frame:
-// - 0 if slot n0 is located in an even frame.
-// - 1 if slot n0 (where UE should monitor Type0-PDCCH CSS) is located in an odd frame.
-static unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
-{
-  // This is only used to retrieve the nof_slots_per_frame.
-  slot_point sl_point{numerology_mu, 0};
-
-  // Compute floor( ( O * 2^mu + floor(i*M) ) / nof_slots_per_frame  ) mod 2, as per TS 38.213, Section 13.
-  unsigned is_even = static_cast<unsigned>(floor(static_cast<double>(sib1_offset << numerology_mu) +
-                                                 floor(static_cast<double>(ssb_index) * sib1_M)) /
-                                           sl_point.nof_slots_per_frame()) %
-                     2;
-  return is_even;
-}
-
-// Helper function that returns slot n0 (where UE should monitor Type0-PDCCH CSS) for a given SSB (beam) index.
-static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
-{
-  // Initialize n0 to a slot_point = 0.
-  slot_point sib_1_n0{numerology_mu, 0};
-
-  // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
-  double tmp1 = static_cast<double>(sib1_offset << numerology_mu);
-  double tmp2 = static_cast<double>(ssb_index) * sib1_M;
-  sib_1_n0 += static_cast<unsigned>(tmp1 + floor(tmp2)) % sib_1_n0.nof_slots_per_frame();
-
-  // We want to express n0 as a value from 0 to max_nof_slots. Since the mod operation above cap n0 to
-  // (nof_slots_per_frame - 1), we need to add nof_slots_per_frame to n0 if this falls into an odd frame.
-  sib_1_n0 += sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, ssb_index) * sib_1_n0.nof_slots_per_frame();
-
-  return sib_1_n0;
-}
-
-#if 0
-// Dummy function that returns O and M values given pdcch_config_sib1 from Table 13-11, TS 38.213.
-// TODO: replace this with proper function from PHY team.
-static void
-get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern mplex_pattern, uint8_t pdcch_config_sib1)
-{
-  srsran_sanity_check(mplex_pattern == ssb_coreset0_mplex_pattern::mplx_pattern1,
-                      "Only SSB/Coreset0 multiplexing pattern 1 is currently supported");
-  switch (mplex_pattern) {
-    case ssb_coreset0_mplex_pattern::mplx_pattern1:
-      offset = 5;
-      sib1_M = 2;
-      break;
-    default:
-      // Only ssb_coreset0_mplex_pattern::mplx_pattern1 is currently supported.
-      return;
-  }
-}
-#endif
-
-void test_sib1_is_even_frame()
-{
-  // unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
-  unsigned sib1_offset   = 5;
-  double   sib1_M        = 0.5;
-  uint8_t  numerology_mu = 0;
-
-  unsigned test_results[] = {0, 0, 0, 0, 0, 0, 0, 0};
-  TESTASSERT_EQ(test_results[0], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 0));
-  TESTASSERT_EQ(test_results[1], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 1));
-  TESTASSERT_EQ(test_results[2], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 2));
-  TESTASSERT_EQ(test_results[3], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 3));
-  TESTASSERT_EQ(test_results[4], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 4));
-  TESTASSERT_EQ(test_results[5], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 5));
-  TESTASSERT_EQ(test_results[6], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 6));
-  TESTASSERT_EQ(test_results[7], sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, 7));
-}
-
-void test_get_sib1_n0()
-{
-  // unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
-  unsigned sib1_offset   = 7;
-  double   sib1_M        = 0.5;
-  uint8_t  numerology_mu = 0;
-
-  unsigned test_results[] = {7, 7, 8, 8, 9, 9, 10, 10};
-  TESTASSERT(slot_point(numerology_mu, test_results[0]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 0));
-  TESTASSERT(slot_point(numerology_mu, test_results[1]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 1));
-  TESTASSERT(slot_point(numerology_mu, test_results[2]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 2));
-  TESTASSERT(slot_point(numerology_mu, test_results[3]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 3));
-  TESTASSERT(slot_point(numerology_mu, test_results[4]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 4));
-  TESTASSERT(slot_point(numerology_mu, test_results[5]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 5));
-  TESTASSERT(slot_point(numerology_mu, test_results[6]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 6));
-  TESTASSERT(slot_point(numerology_mu, test_results[7]) == get_sib1_n0(sib1_offset, sib1_M, numerology_mu, 7));
-}
 
 /// Helper class to initialize and store relevant objects for the test and provide helper methods.
 struct test_bench {
@@ -187,6 +94,7 @@ struct test_bench {
   }
 };
 
+/// Helper that tests if the PDCCH and DCI grants in the scheduled results have been filled properly.
 void assess_filled_grants(const cell_slot_resource_allocator& test_res_grid)
 {
   // Test SIB_information message
@@ -194,7 +102,7 @@ void assess_filled_grants(const cell_slot_resource_allocator& test_res_grid)
   TESTASSERT_EQ(sib_information::si_indicator_type::sib1, test_sib1.si_indicator);
 
   // Test PDCCH_grant and DCI
-  // TESTASSERT_NEQ(nullptr, test_sib1.pdcch_cfg);
+  TESTASSERT(test_sib1.pdcch_cfg != nullptr);
   const pdcch_dl_information test_pdcch = *test_sib1.pdcch_cfg;
 
   const cell_configuration& cfg = test_res_grid.cfg;
@@ -205,64 +113,61 @@ void assess_filled_grants(const cell_slot_resource_allocator& test_res_grid)
   TESTASSERT_EQ(cfg.sib1_rv, test_pdcch.dci.f1_0.rv);
 }
 
+/// Tests if PRBs have been set as used in the resource grid for the current slot.
 void verify_prbs_allocation(const cell_slot_resource_allocator& test_res_grid, bool got_allocated = true)
 {
   const cell_configuration& cfg = test_res_grid.cfg;
+  // Tests if PRBs have been allocated.
   if (got_allocated) {
     TESTASSERT(test_res_grid.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
   } else {
+    // Tests if PRBs are still unused.
     TESTASSERT(not test_res_grid.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
   }
 }
 
-void test_sib1_scheduler()
+/// \brief Tests if the SIB1 scheduler schedules the SIB1s at the right slot n0.
+/// \param[in] sib1_n0_slots array of n0 slots; the n-th array's value is the n0 corresponding to the n-th SSB beam.
+/// \param[in] pdcch_config_sib1 is the parameter (in the MIB) determining the n0 for each beam.
+/// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurs in the TS 38.311, with L_max = 8.
+void test_sib1_scheduler(std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
+                         uint8_t                              pdcch_config_sib1,
+                         uint8_t                              ssb_beam_bitmap)
 {
-  test_bench t_bench{9U, 0b10101010};
-  size_t     test_length_slots = 10000;
-
+  // Instantiate the test_bench and the SIB1 scheduler.
+  test_bench     t_bench{pdcch_config_sib1, ssb_beam_bitmap};
   sib1_scheduler sib1_sched{
       t_bench.cfg, t_bench.pdcch_sch, to_numerology_value(t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
 
-  // unsigned sib1_slots[] = {7, 7, 8, 8, 9, 9, 10, 10};
-
-  /*
-  auto nth_ssb_beam_active = [](uint64_t ssb_bitmap, unsigned ssb_index) {
+  // Define helper lambda to determine from ssb_beam_bitmap if the n-th SSB beam is used.
+  uint64_t ssb_bitmap          = t_bench.cfg.ssb_cfg.ssb_bitmap;
+  auto     nth_ssb_beam_active = [ssb_bitmap](unsigned ssb_index) {
     return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
   };
-   */
 
+  // Run the test for 10000 slots and
+  size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
-    // Test scheduled results.
-    if (sl_idx % SIB1_PERIODICITY == 5) {
-      TESTASSERT(res_slot_grid.result.dl.bc.sibs.size() == 1);
-      assess_filled_grants(res_slot_grid);
-      verify_prbs_allocation(res_slot_grid);
-    } else if (sl_idx % SIB1_PERIODICITY == 9) {
-      TESTASSERT(res_slot_grid.result.dl.bc.sibs.size() == 1);
-      assess_filled_grants(res_slot_grid);
-      verify_prbs_allocation(res_slot_grid);
-    } else if (sl_idx % SIB1_PERIODICITY == 13) {
-      TESTASSERT(res_slot_grid.result.dl.bc.sibs.size() == 1);
-      assess_filled_grants(res_slot_grid);
-      verify_prbs_allocation(res_slot_grid);
-    } else if (sl_idx % SIB1_PERIODICITY == 17) {
-      TESTASSERT(res_slot_grid.result.dl.bc.sibs.size() == 1);
-      assess_filled_grants(res_slot_grid);
-      verify_prbs_allocation(res_slot_grid);
-    } else {
-      TESTASSERT(res_slot_grid.result.dl.bc.sibs.size() == 0);
-      verify_prbs_allocation(res_slot_grid, false);
+
+    // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
+    for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
+      // Only check for the active slots.
+      if (nth_ssb_beam_active(ssb_idx) && (sl_idx % SIB1_PERIODICITY == sib1_n0_slots[ssb_idx])) {
+        // Verify that the scheduler results contain the SIB1 information.
+        TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
+        // Verify the PDCCH grants and DCI have been filled correctly.
+        assess_filled_grants(res_slot_grid);
+        // Verify the PRBs in the res_grid are set as used.
+        verify_prbs_allocation(res_slot_grid);
+      }
     }
 
     // Update SLOT.
     t_bench.slot_indication();
-    if (sl_idx == 4) {
-      printf("Stop here");
-    }
   }
 }
 
@@ -272,9 +177,20 @@ int main()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 
-  test_sib1_is_even_frame();
-  test_get_sib1_n0();
-  test_sib1_scheduler();
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots{5, 7, 9, 11, 13, 15, 17, 19};
+  test_sib1_scheduler(sib1_slots, 9U, 0b10101010);
+  test_sib1_scheduler(sib1_slots, 9U, 0b01010101);
+  test_sib1_scheduler(sib1_slots, 9U, 0b11111111);
+
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_1{2, 3, 4, 5, 6, 7, 8, 9};
+  test_sib1_scheduler(sib1_slots_1, 2U, 0b10101010);
+  test_sib1_scheduler(sib1_slots_1, 2U, 0b01010101);
+  test_sib1_scheduler(sib1_slots_1, 2U, 0b11111111);
+
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_2{7, 8, 9, 10, 11, 12, 13, 14};
+  test_sib1_scheduler(sib1_slots_2, 6U, 0b10101010);
+  test_sib1_scheduler(sib1_slots_2, 6U, 0b01010101);
+  test_sib1_scheduler(sib1_slots_2, 6U, 0b11111111);
 
   return 0;
 }
