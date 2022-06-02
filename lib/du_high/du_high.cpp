@@ -15,7 +15,7 @@
 #include "srsgnb/f1_interface/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 {
@@ -97,5 +97,3 @@ mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
   }
   return mac->get_slot_handler(cell_idx);
 }
-
-} // namespace srsgnb

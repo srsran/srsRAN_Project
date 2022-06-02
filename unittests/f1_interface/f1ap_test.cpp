@@ -12,10 +12,12 @@
 
 using namespace srsgnb;
 
-void test_f1ap_du() {
+void test_f1ap_du()
+{
   f1ap_du f1ap();
 }
 
-int main() {
+int main()
+{
   test_f1ap_du();
 }

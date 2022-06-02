@@ -40,7 +40,8 @@ f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_du_impl::~f1ap_du_impl() {}
 
-async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
+async_task<f1_du_setup_response_message>
+f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
   asn1::f1ap::f1_setup_request_s request_asn1;
   fill_asn1_f1_setup_request(request_asn1, request);
@@ -48,8 +49,8 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
   f1ap_du_event_manager::f1ap_setup_outcome_t f1_resp;
 
   // TODO: add procedure implementation
-  return launch_async([this, f1_resp, res = f1_setup_response_message{}, request](
-                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
+  return launch_async([this, f1_resp, res = f1_du_setup_response_message{}, request](
+                          coro_context<async_task<f1_du_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(f1_resp, events->f1ap_setup_response);
@@ -93,11 +94,12 @@ async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(
   });
 }
 
-async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                            const asn1::f1ap::f1_setup_fail_s& failure)
+async_task<f1_du_setup_response_message>
+f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                      const asn1::f1ap::f1_setup_fail_s& failure)
 {
-  return launch_async([this, res = f1_setup_response_message{}, request, failure](
-                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
+  return launch_async([this, res = f1_du_setup_response_message{}, request, failure](
+                          coro_context<async_task<f1_du_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
     if (failure->time_to_wait_present) {

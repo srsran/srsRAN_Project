@@ -23,7 +23,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  f1ap = create_f1ap_cu(*cfg.f1c_msg_hdl);
+  f1ap = create_f1ap_cu(f1ap_ev_notifier);
 
   // TODO: connect layers to notifiers.
 }

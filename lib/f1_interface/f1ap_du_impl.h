@@ -26,7 +26,7 @@ public:
   f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_handler);
   ~f1ap_du_impl();
 
-  async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
+  async_task<f1_du_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
   async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override;
 
@@ -38,8 +38,8 @@ public:
 
   void handle_connection_loss() override {}
 
-  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                const asn1::f1ap::f1_setup_fail_s& failure);
+  async_task<f1_du_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                   const asn1::f1ap::f1_setup_fail_s& failure);
 
 private:
   class f1ap_du_event_manager;

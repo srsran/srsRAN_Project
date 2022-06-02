@@ -11,6 +11,7 @@
 #ifndef SRSGNB_CU_CP_H
 #define SRSGNB_CU_CP_H
 
+#include "adapters.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -33,6 +34,8 @@ private:
   cu_cp_configuration cfg;
 
   std::unique_ptr<f1_cu_interface> f1ap;
+
+  cu_manager_f1ap_event_indicator f1ap_ev_notifier;
 };
 
 } // namespace srsgnb

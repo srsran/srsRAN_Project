@@ -32,8 +32,8 @@ private:
   const du_manager_config_t& cfg;
   du_cell_manager&           cell_mng;
 
-  f1_setup_request_message  request_msg  = {};
-  f1_setup_response_message response_msg = {};
+  f1_setup_request_message     request_msg  = {};
+  f1_du_setup_response_message response_msg = {};
 };
 
 } // namespace srsgnb

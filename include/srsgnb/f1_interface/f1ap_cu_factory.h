@@ -17,7 +17,7 @@
 namespace srsgnb {
 
 /// Creates an instance of an F1AP interface, notifying outgoing packets on the specified listener object.
-std::unique_ptr<f1_cu_interface> create_f1ap_cu(f1c_message_handler& f1c_handler);
+std::unique_ptr<f1_cu_interface> create_f1ap_cu(f1ap_cu_message_notifier& event_notifier);
 
 } // namespace srsgnb
 

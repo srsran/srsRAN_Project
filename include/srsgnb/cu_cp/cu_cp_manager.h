@@ -18,6 +18,8 @@ namespace srsgnb {
 
 struct ul_rrc_message_transfer_message;
 
+struct f1_cu_setup_request_message;
+
 struct cu_cp_ue_delete_message {
   cu_cp_ue_index_t ue_index;
 };
@@ -28,6 +30,13 @@ class cu_cp_manager_ccch_handler
 public:
   virtual ~cu_cp_manager_ccch_handler()                                                   = default;
   virtual void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) = 0;
+};
+
+class cu_cp_manager_f1ap_setup_handler
+{
+public:
+  virtual ~cu_cp_manager_f1ap_setup_handler()                                  = default;
+  virtual void handle_f1_setup_request(const f1_cu_setup_request_message& msg) = 0;
 };
 
 class cu_cp_manager_interface_query

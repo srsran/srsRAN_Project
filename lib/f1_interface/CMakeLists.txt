@@ -7,8 +7,10 @@
 #
 
 set(SOURCES
+    f1ap_cu_factory.cpp
     f1ap_du_factory.cpp
     f1ap_du_impl.cpp
+    f1ap_cu_impl.cpp
     f1ap_asn1_packer.cpp
     handlers/f1c_du_packet_handler.cpp
     )

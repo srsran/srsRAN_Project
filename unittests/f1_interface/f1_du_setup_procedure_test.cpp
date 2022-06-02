@@ -25,7 +25,7 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
                                 initial_outcome == test_outcome::success ? "Success" : "Failure",
                                 retry_outcome == test_outcome::success ? "Success" : "Failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  timer_manager timers;
+  timer_manager         timers;
 
   f1c_message_handler* msg_handler = {};
   auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
@@ -36,8 +36,8 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
-  async_task<f1_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
-  lazy_task_launcher<f1_setup_response_message> t_launcher(t);
+  async_task<f1_du_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
+  lazy_task_launcher<f1_du_setup_response_message> t_launcher(t);
 
   // Status
   TESTASSERT(not t.ready());
@@ -108,7 +108,7 @@ void test_f1_setup_retry_limit()
 {
   test_delimit_logger   delimiter{"Test F1 setup procedure retry limit."};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-  timer_manager timers;
+  timer_manager         timers;
 
   f1c_message_handler* msg_handler = {};
   auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
@@ -119,8 +119,8 @@ void test_f1_setup_retry_limit()
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
-  async_task<f1_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
-  lazy_task_launcher<f1_setup_response_message> t_launcher(t);
+  async_task<f1_du_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
+  lazy_task_launcher<f1_du_setup_response_message> t_launcher(t);
 
   // Status
   TESTASSERT(not t.ready());
