@@ -1,6 +1,4 @@
-/**
- *
- * \section COPYRIGHT
+/*
  *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
@@ -9,8 +7,8 @@
  * the distribution.
  *
  */
-#ifndef SRSRAN_RLC_UM_PDU_H
-#define SRSRAN_RLC_UM_PDU_H
+#ifndef SRSGNB_RLC_UM_PDU_H
+#define SRSGNB_RLC_UM_PDU_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_types.h"
@@ -19,10 +17,10 @@
 namespace srsgnb {
 
 struct rlc_um_pdu_header {
-  rlc_si_field   si;      // Segmentation info
-  rlc_um_sn_size sn_size; // Sequence number size (6 or 12 bits)
-  uint16_t       sn;      // Sequence number
-  uint16_t       so;      // Segment offset
+  rlc_si_field   si;      ///< Segmentation info
+  rlc_um_sn_size sn_size; ///< Sequence number size (6 or 12 bits)
+  uint16_t       sn;      ///< Sequence number
+  uint16_t       so;      ///< Segment offset
 };
 
 /****************************************************************************
@@ -45,7 +43,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
     header->sn = *pdu_reader & 0x3FU;                         // 6 bits SN
     // sanity check
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
-      fprintf(stderr, "Malformed PDU, reserved bits are set.\n");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
       return false;
     }
     ++pdu_reader;
@@ -53,7 +51,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
     header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
     header->sn = (*pdu_reader & 0x0FU) << 8U;                 // 4 bits SN
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
-      fprintf(stderr, "Malformed PDU, reserved bits are set.\n");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
       return false;
     }
 
@@ -61,7 +59,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
     if (header->si == rlc_si_field::first_segment) {
       // make sure two reserved bits are not set
       if (((*pdu_reader >> 4U) & 0x03U) != 0) {
-        fprintf(stderr, "Malformed PDU, reserved bits are set.");
+        srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
         return false;
       }
     }
@@ -74,20 +72,19 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
 
     ++pdu_reader;
   } else {
-    fprintf(stderr, "Unsupported SN length\n");
+    srslog::fetch_basic_logger("RLC").error("Unsupported SN length\n");
     return false;
   }
 
   // Read optional part
   if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::neither_first_nor_last_segment) {
     // read SO
-    header->so = (*pdu_reader & 0xFF) << 8;
+    header->so = (*pdu_reader & 0xFFU) << 8U;
     ++pdu_reader;
-    header->so |= (*pdu_reader & 0xFF);
+    header->so |= (*pdu_reader & 0xFFU);
     ++pdu_reader;
   }
 
-  // return consumed bytes
   return true;
 }
 
@@ -118,5 +115,6 @@ inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
   pdu.chain_before(std::move(hdr_buf));
   return true;
 }
+
 } // namespace srsgnb
 #endif

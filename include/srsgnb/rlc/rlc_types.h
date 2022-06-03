@@ -1,6 +1,4 @@
-/**
- *
- * \section COPYRIGHT
+/*
  *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
@@ -10,8 +8,8 @@
  *
  */
 
-#ifndef SRSRAN_RLC_CONFIG_H
-#define SRSRAN_RLC_CONFIG_H
+#ifndef SRSGNB_RLC_TYPES_H
+#define SRSGNB_RLC_TYPES_H
 
 #include <cstdint>
 #include <string>
@@ -47,14 +45,17 @@ enum class rlc_si_field : unsigned {
   last_segment                   = 0b10,
   neither_first_nor_last_segment = 0b11
 };
+
 constexpr uint16_t to_number(const rlc_si_field& si_field)
 {
   return static_cast<uint16_t>(si_field);
 }
+
 inline std::string to_string(const rlc_si_field& si)
 {
   constexpr static const char* options[] = {"full", "first", "last", "middle"};
   return options[to_number(si)];
 }
+
 } // namespace srsgnb
 #endif
