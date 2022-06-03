@@ -177,6 +177,21 @@ void test_bitset_print()
     TESTASSERT(fmt::format("{:x}", bitset) == "1000011");
     TESTASSERT(fmt::format("{:b}", bitset) == "1000000000000000000010001");
   }
+
+  {
+    bounded_bitset<100, true> bitset(100);
+    bitset.set(0);
+    bitset.set(5);
+
+    TESTASSERT(fmt::format("{:x}", bitset) == "8400000000000000000000000");
+    TESTASSERT(fmt::format("{:b}", bitset) ==
+               "1000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
+
+    bitset.set(99);
+    TESTASSERT(fmt::format("{:x}", bitset) == "8400000000000000000000001");
+    TESTASSERT(fmt::format("{:b}", bitset) ==
+               "1000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001");
+  }
 }
 
 void test_bitset_resize()
