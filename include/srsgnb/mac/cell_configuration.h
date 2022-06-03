@@ -51,10 +51,11 @@ struct mac_cell_creation_request {
   /// scheduler.
   /// NOTE: Although not present in O-RAN WG8, this value must be passed from the DU.
   // TODO: import this value from somewhere (RRC?)
-  uint8_t pdcch_config_sib1;
+  uint8_t           pdcch_config_sib1;
   uint8_t           sib1_mcs;
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
+  unsigned          sib1_rxtx_periodicity;
 
   // TODO: Fill remaining fields
 };

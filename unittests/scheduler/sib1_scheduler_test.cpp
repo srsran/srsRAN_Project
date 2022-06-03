@@ -60,13 +60,15 @@ struct test_bench {
   srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  cell_configuration      cfg;
-  cell_resource_allocator res_grid;
-  dummy_pdcch_scheduler   pdcch_sch;
-  slot_point              sl_tx;
+  sched_cell_configuration_request_message cfg_msg;
+  cell_configuration                       cfg;
+  cell_resource_allocator                  res_grid;
+  dummy_pdcch_scheduler                    pdcch_sch;
+  slot_point                               sl_tx;
 
   test_bench(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap) :
-    cfg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap)},
+    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap)},
+    cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
@@ -105,39 +107,36 @@ struct test_bench {
     test_logger.info("Starting new slot {}", sl_tx);
     res_grid.slot_indication(sl_tx);
   }
-};
 
-/// Helper that tests if the PDCCH and DCI grants in the scheduled results have been filled properly.
-void assess_filled_grants(const cell_slot_resource_allocator& test_res_grid)
-{
-  // Test SIB_information message
-  const sib_information& test_sib1 = test_res_grid.result.dl.bc.sibs.back();
-  TESTASSERT_EQ(sib_information::si_indicator_type::sib1, test_sib1.si_indicator);
+  /// Helper that tests if the PDCCH and DCI grants in the scheduled results have been filled properly.
+  void assess_filled_grants()
+  {
+    // Test SIB_information message
+    const sib_information& test_sib1 = res_grid[0].result.dl.bc.sibs.back();
+    TESTASSERT_EQ(sib_information::si_indicator_type::sib1, test_sib1.si_indicator);
 
-  // Test PDCCH_grant and DCI
-  TESTASSERT(test_sib1.pdcch_cfg != nullptr);
-  const pdcch_dl_information test_pdcch = *test_sib1.pdcch_cfg;
+    // Test PDCCH_grant and DCI
+    TESTASSERT(test_sib1.pdcch_cfg != nullptr);
+    const pdcch_dl_information test_pdcch = *test_sib1.pdcch_cfg;
 
-  const cell_configuration& cfg = test_res_grid.cfg;
-
-  TESTASSERT_EQ(SI_RNTI, test_pdcch.ctx.rnti);
-  TESTASSERT_EQ(dci_dl_format::f1_0, test_pdcch.dci.format_type);
-  TESTASSERT_EQ(cfg.sib1_mcs, test_pdcch.dci.f1_0.mcs);
-  TESTASSERT_EQ(cfg.sib1_rv, test_pdcch.dci.f1_0.rv);
-}
-
-/// Tests if PRBs have been set as used in the resource grid for the current slot.
-void verify_prbs_allocation(const cell_slot_resource_allocator& test_res_grid, bool got_allocated = true)
-{
-  const cell_configuration& cfg = test_res_grid.cfg;
-  // Tests if PRBs have been allocated.
-  if (got_allocated) {
-    TESTASSERT(test_res_grid.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
-  } else {
-    // Tests if PRBs are still unused.
-    TESTASSERT(not test_res_grid.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    TESTASSERT_EQ(SI_RNTI, test_pdcch.ctx.rnti);
+    TESTASSERT_EQ(dci_dl_format::f1_0, test_pdcch.dci.format_type);
+    TESTASSERT_EQ(cfg_msg.sib1_mcs, test_pdcch.dci.f1_0.mcs);
+    TESTASSERT_EQ(cfg_msg.sib1_rv, test_pdcch.dci.f1_0.rv);
   }
-}
+
+  /// Tests if PRBs have been set as used in the resource grid for the current slot.
+  void verify_prbs_allocation(bool got_allocated = true)
+  {
+    // Tests if PRBs have been allocated.
+    if (got_allocated) {
+      TESTASSERT(res_grid[0].dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    } else {
+      // Tests if PRBs are still unused.
+      TESTASSERT(not res_grid[0].dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    }
+  }
+};
 
 /// \brief Tests if the SIB1 scheduler schedules the SIB1s at the right slot n0.
 /// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon.
@@ -151,7 +150,14 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 {
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
-  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs};
+  sib1_scheduler sib1_sched{t_bench.cfg,
+                            t_bench.pdcch_sch,
+                            t_bench.cfg_msg.pdcch_config_sib1,
+                            t_bench.cfg_msg.sib1_mcs,
+                            t_bench.cfg_msg.sib1_rv,
+                            t_bench.cfg_msg.sib1_dci_aggr_lev,
+                            t_bench.cfg_msg.sib1_retx_periodicity,
+                            t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs};
 
   // SIB1 periodicity in slots.
   unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
@@ -165,6 +171,10 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    if (sl_idx == 165) {
+      printf("Hello");
+    }
+
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
@@ -177,9 +187,9 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
         // Verify that the scheduler results list contain 1 element with the SIB1 information.
         TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
         // Verify the PDCCH grants and DCI have been filled correctly.
-        assess_filled_grants(res_slot_grid);
+        t_bench.assess_filled_grants();
         // Verify the PRBs in the res_grid are set as used.
-        verify_prbs_allocation(res_slot_grid);
+        t_bench.verify_prbs_allocation();
       }
     }
 

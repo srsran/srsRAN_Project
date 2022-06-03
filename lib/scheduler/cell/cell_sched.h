@@ -27,7 +27,14 @@ public:
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
     ra_sch(cell_cfg, pdcch_sch),
-    sib1_sch(cell_cfg, pdcch_sch, msg.scs_common)
+    sib1_sch(cell_cfg,
+             pdcch_sch,
+             msg.pdcch_config_sib1,
+             msg.sib1_mcs,
+             msg.sib1_rv,
+             msg.sib1_dci_aggr_lev,
+             msg.sib1_retx_periodicity,
+             msg.scs_common)
   {}
 
   void slot_indication(slot_point sl_tx)

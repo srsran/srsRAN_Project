@@ -108,6 +108,7 @@ get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern m
     }
     default:
       // Only ssb_coreset0_mplex_pattern::mplx_pattern1 is currently supported.
+      srsran_terminate("Only SSB/Coreset0 multiplexing pattern 1 is currently supported");
       return;
   }
 }
@@ -116,14 +117,23 @@ get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern m
 
 sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                                pdcch_scheduler&          pdcch_sch,
+                               uint8_t                   pdcch_config_sib1_,
+                               uint8_t                   sib1_mcs_,
+                               uint8_t                   sib1_rv_,
+                               aggregation_level         sib1_dci_aggr_lev_,
+                               unsigned                  sib1_rxtx_periodicity_,
                                subcarrier_spacing        scs_common) :
   cfg{cfg_},
-  pdcch_sched{pdcch_sch}
+  pdcch_sched{pdcch_sch},
+  pdcch_config_sib1{pdcch_config_sib1_},
+  sib1_mcs{sib1_mcs_},
+  sib1_rv{sib1_rv_},
+  sib1_dci_aggr_lev{sib1_dci_aggr_lev_}
 {
   // Compute derived SIB1 parameters.
-  sib1_periodicity = cfg_.sib1_rxtx_periodicity == 0
+  sib1_periodicity = sib1_rxtx_periodicity_ == 0
                          ? SIB1_PERIODICITY
-                         : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), cfg_.sib1_rxtx_periodicity);
+                         : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), sib1_rxtx_periodicity_);
   precompute_sib1_n0(scs_common);
 };
 
@@ -177,7 +187,7 @@ void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
   double sib1_M;
 
   // TODO: Extend function to all multiplexing patterns
-  get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, cfg.pdcch_config_sib1);
+  get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, pdcch_config_sib1);
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
     sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, scs_common, i_ssb));
@@ -204,11 +214,8 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   }
 
   // 2. Allocate DCI_1_0 for SIB1 on PDCCH.
-  pdcch_dl_information* pdcch =
-      pdcch_sched.alloc_pdcch_common(res_grid,
-                                     rnti_t::SI_RNTI,
-                                     cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
-                                     cfg.sib1_dci_aggr_lev);
+  pdcch_dl_information* pdcch = pdcch_sched.alloc_pdcch_common(
+      res_grid, rnti_t::SI_RNTI, cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id, sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.error("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
@@ -241,8 +248,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   sib1_pdcch.dci.f1_0.freq_domain_assigment = 0;
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
   sib1_pdcch.dci.f1_0.time_domain_assigment = 0;
-  sib1_pdcch.dci.f1_0.mcs                   = cfg.sib1_mcs;
-  sib1_pdcch.dci.f1_0.rv                    = cfg.sib1_rv;
+  sib1_pdcch.dci.f1_0.mcs                   = sib1_mcs;
+  sib1_pdcch.dci.f1_0.rv                    = sib1_rv;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();

@@ -166,10 +166,11 @@ inline mac_cell_creation_request make_default_mac_cell_creation_request()
   msg.ul_cfg_common = make_default_ul_config_common();
 
   /// SIB1 parameters.
-  msg.pdcch_config_sib1 = 0b10000000U;
-  msg.sib1_mcs          = 5;
-  msg.sib1_rv           = 0;
-  msg.sib1_dci_aggr_lev = aggregation_level::n4;
+  msg.pdcch_config_sib1     = 0b10000000U;
+  msg.sib1_mcs              = 5;
+  msg.sib1_rv               = 0;
+  msg.sib1_dci_aggr_lev     = aggregation_level::n4;
+  msg.sib1_rxtx_periodicity = 0;
 
   // TODO: Remaining fields.
 
