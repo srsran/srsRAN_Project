@@ -24,7 +24,6 @@ static void test_dci_1_0_si_rnti_packing()
   std::uniform_int_distribution<unsigned> modulation_coding_scheme_dist(0, pow2(5) - 1);
   std::uniform_int_distribution<unsigned> redundancy_version_dist(0, pow2(2) - 1);
   std::uniform_int_distribution<unsigned> system_information_indicator_dist(0, pow2(1) - 1);
-  std::uniform_int_distribution<unsigned> reserved_dist(0, pow2(15) - 1);
 
   for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
     for (unsigned N_rb_dl_bwp : {24, 48, 96}) {
@@ -39,7 +38,6 @@ static void test_dci_1_0_si_rnti_packing()
       config.modulation_coding_scheme      = modulation_coding_scheme_dist(rgen);
       config.redundancy_version            = redundancy_version_dist(rgen);
       config.system_information_indicator  = system_information_indicator_dist(rgen);
-      config.reserved                      = reserved_dist(rgen);
 
       dci_payload payload = dci_1_0_si_rnti_pack(config);
 
@@ -75,21 +73,7 @@ static void test_dci_1_0_si_rnti_packing()
       expected.push_back((config.system_information_indicator >> 0U) & 1U);
 
       // Reserved bits - 15 bit.
-      expected.push_back((config.reserved >> 14U) & 1U);
-      expected.push_back((config.reserved >> 13U) & 1U);
-      expected.push_back((config.reserved >> 12U) & 1U);
-      expected.push_back((config.reserved >> 11U) & 1U);
-      expected.push_back((config.reserved >> 10U) & 1U);
-      expected.push_back((config.reserved >> 9U) & 1U);
-      expected.push_back((config.reserved >> 8U) & 1U);
-      expected.push_back((config.reserved >> 7U) & 1U);
-      expected.push_back((config.reserved >> 6U) & 1U);
-      expected.push_back((config.reserved >> 5U) & 1U);
-      expected.push_back((config.reserved >> 4U) & 1U);
-      expected.push_back((config.reserved >> 3U) & 1U);
-      expected.push_back((config.reserved >> 2U) & 1U);
-      expected.push_back((config.reserved >> 1U) & 1U);
-      expected.push_back((config.reserved >> 0U) & 1U);
+      std::fill_n(std::back_inserter(expected), 15, 0);
 
       // Assert expected payload.
       TESTASSERT_EQ(bounded_bitset<pdcch_constants::MAX_DCI_PAYLOAD_SIZE>(expected.begin(), expected.end()), payload);

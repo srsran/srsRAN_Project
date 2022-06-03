@@ -39,8 +39,7 @@ struct dci_1_0_si_rnti_configuration {
   unsigned redundancy_version;
   /// System information indicator - 1 bit as per TS38.212 Table 7.3.1.2.1-2.
   unsigned system_information_indicator;
-  /// Reserved bits - 15 bits.
-  unsigned reserved;
+  // Reserved bits - 15 bits.
 };
 
 /// Packs a DCI format 1_0 scrambled by SI-RNTI.

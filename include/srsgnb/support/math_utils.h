@@ -49,9 +49,11 @@ inline constexpr unsigned pow2(unsigned power)
 /// \tparam Integer Any unsigned integer type.
 /// \param[in] value Parameter \f$n\f$.
 /// \return The result of the calculation if \c value is not zero. Otherwise 0.
-template <typename Integer, typename std::enable_if<std::is_unsigned<Integer>::value, bool>::type = true>
+template <typename Integer>
 inline constexpr Integer log2_ceil(Integer value)
 {
+  static_assert(std::is_unsigned<Integer>::value, "log2_ceil only works for unsigned integers");
+
   // Avoid unbounded results.
   if (value == 0) {
     return 0;

@@ -302,9 +302,10 @@ public:
   /// and finishing with the least significant bit.
   ///
   /// Assertion is triggered if the resultant size exceeds the maximum size of the bitset.
-  template <typename Integer, typename std::enable_if<std::is_unsigned<Integer>::value, bool>::type = true>
+  template <typename Integer>
   void push_back(Integer val, unsigned nof_bits)
   {
+    static_assert(std::is_unsigned<Integer>::value, "push_back only works for unsigned integers");
     unsigned bitpos = size();
     resize(size() + nof_bits);
     for (unsigned bit_index = 0; bit_index != nof_bits; ++bit_index) {

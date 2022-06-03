@@ -37,7 +37,7 @@ dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& co
   payload.push_back(config.system_information_indicator, 1);
 
   // Reserved bits - 15 bit.
-  payload.push_back(config.reserved, 15);
+  payload.push_back(0x00U, 15);
 
   return payload;
 }
