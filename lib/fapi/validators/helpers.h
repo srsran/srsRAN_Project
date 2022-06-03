@@ -27,6 +27,8 @@ inline bool validate_field(Integer           min,
                            unsigned          pdu_type,
                            validator_report& report)
 {
+  static_assert(std::is_integral<Integer>::value, "Integral required");
+
   if (min <= value && value <= max) {
     return true;
   }
@@ -45,6 +47,8 @@ inline bool validate_field(Integer           min,
                            message_type_id   msg_type,
                            validator_report& report)
 {
+  static_assert(std::is_integral<Integer>::value, "Integral required");
+  
   if (min <= value && value <= max) {
     return true;
   }

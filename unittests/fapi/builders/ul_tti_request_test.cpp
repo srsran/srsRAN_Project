@@ -11,7 +11,6 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/support/srsgnb_test.h"
 
-static void test_add_pucch_f0_pdu();
 using namespace srsgnb;
 using namespace fapi;
 using pdu_type = ul_tti_request_message::pdu_type;

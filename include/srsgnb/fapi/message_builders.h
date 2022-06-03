@@ -2055,18 +2055,18 @@ class ul_pusch_pdu_builder
   ul_pusch_pdu& pdu;
 
   /// Convert alpha scaling property from float to FAPI unsigned.
-  unsigned convert_alpha_scaling(float alpha_scaling)
+  static unsigned convert_alpha_scaling(float alpha_scaling)
   {
-    if (std::fabs(alpha_scaling - 0.5F) < 0.001)
+    if (std::fabs(alpha_scaling - 0.5F) < 0.001F)
       return 0U;
 
-    if (std::fabs(alpha_scaling - 0.65F) < 0.001)
+    if (std::fabs(alpha_scaling - 0.65F) < 0.001F)
       return 1U;
 
-    if (std::fabs(alpha_scaling - 0.8F) < 0.001)
+    if (std::fabs(alpha_scaling - 0.8F) < 0.001F)
       return 2U;
 
-    if (std::fabs(alpha_scaling - 1.F) < 0.001)
+    if (std::fabs(alpha_scaling - 1.F) < 0.001F)
       return 3U;
 
     srsran_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
@@ -2327,8 +2327,8 @@ public:
   /// Adds optional PUSCH PTRS information to the PUSCH PDU and returns a reference to the builder.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.2 in table optional PUSCH PTRS information.
   ul_pusch_pdu_builder& add_optional_pusch_ptrs(span<const ul_pusch_ptrs::ptrs_port_info> port_info,
-                                                unsigned                                  ptrs_time_density,
-                                                unsigned                                  ptrs_freq_density,
+                                                uint8_t                                   ptrs_time_density,
+                                                uint8_t                                   ptrs_freq_density,
                                                 ul_ptrs_power_type                        ul_ptrs_power)
   {
     set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_PTRS_BIT, true);
