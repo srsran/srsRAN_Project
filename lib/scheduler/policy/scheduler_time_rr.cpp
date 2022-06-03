@@ -43,7 +43,7 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
     const dl_harq_process* h = nullptr;
     if (is_retx) {
       h = ue_cc->harqs.find_pending_dl_retx();
-    } else {
+    } else if (u.has_pending_txs()) {
       h = ue_cc->harqs.find_empty_dl_harq();
     }
     if (h == nullptr) {

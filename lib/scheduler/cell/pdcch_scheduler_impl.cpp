@@ -10,6 +10,8 @@
 
 #include "pdcch_scheduler_impl.h"
 #include "../phy_helpers.h"
+#include "../support/config_helpers.h"
+#include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 
 using namespace srsgnb;
 
@@ -25,10 +27,9 @@ public:
 
   /// DFS decision tree node.
   struct tree_node {
-    unsigned   dci_iter_index;
-    unsigned   ncce;
-    unsigned   record_index;
-    grant_info grant;
+    unsigned dci_iter_index;
+    unsigned ncce;
+    unsigned record_index;
   };
 
   explicit pdcch_slot_allocator(const cell_configuration& cell_cfg_, unsigned slot_index);
@@ -45,6 +46,9 @@ private:
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
 
   span<const unsigned> get_cce_loc_table(const alloc_record& record) const;
+
+  /// Allocate CCEs of a given PDCCH.
+  bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
 
   const cell_configuration& cell_cfg;
   unsigned                  slot_index;
@@ -116,40 +120,17 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_dfs_node(cell_slot_resour
   tree_node node{};
   node.dci_iter_index = dci_iter_index;
   node.record_index   = dfs_tree.size();
-  node.grant.ch       = grant_info::channel::cch;
-  node.grant.scs      = record.pdcch_ctx->bwp_cfg->scs;
 
   // Find in the list of possible CCEs, a CCE that does not cause PDCCH collisions.
   for (; node.dci_iter_index < cce_locs.size(); ++node.dci_iter_index) {
     node.ncce = cce_locs[node.dci_iter_index];
 
-    // Check the current CCE position collides with an existing one.
-    // TODO: Optimize.
-    pdcch_reg_position_list regs =
-        get_pdcch_regs(*record.pdcch_ctx->coreset_cfg, *record.ss_cfg, node.ncce, record.pdcch_ctx->cces.aggr_lvl);
-    bool collision_detected = false;
-    for (pdcch_reg_position& reg : regs) {
-      unsigned crb       = prb_to_crb(*record.pdcch_ctx->bwp_cfg, reg.prb);
-      node.grant.crbs    = {crb, crb + 1};
-      node.grant.symbols = {reg.symbol, (uint8_t)(reg.symbol + 1)};
-      if (slot_alloc.dl_res_grid.collides(node.grant)) {
-        // Collision detected. Try another CCE position.
-        collision_detected = true;
-        break;
-      }
-    }
-    if (collision_detected) {
+    // Attempt to allocate PDCCH with provided CCE position.
+    if (not allocate_cce(slot_alloc, node.ncce, record)) {
       continue;
     }
 
-    // Allocation successful.
-    // TODO: Optimize.
-    for (pdcch_reg_position& reg : regs) {
-      unsigned crb       = prb_to_crb(*record.pdcch_ctx->bwp_cfg, reg.prb);
-      node.grant.crbs    = {crb, crb + 1};
-      node.grant.symbols = {reg.symbol, (uint8_t)(reg.symbol + 1)};
-      slot_alloc.dl_res_grid.fill(node.grant);
-    }
+    // Allocation successful. Add node to tree.
     dfs_tree.push_back(node);
     return true;
   }
@@ -180,6 +161,73 @@ span<const unsigned> pdcch_scheduler_impl::pdcch_slot_allocator::get_cce_loc_tab
   // TODO
   static const static_vector<unsigned, 1> cces = {0};
   return cces;
+}
+
+static prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
+                                         const coreset_configuration& cs_cfg,
+                                         pci_t                        pci,
+                                         aggregation_level            aggr_lvl,
+                                         unsigned                     ncce)
+{
+  if (cs_cfg.id == 0) {
+    return cce_to_prb_mapping_coreset0(
+        get_coreset_start_crb(cs_cfg), get_coreset_nof_prbs(cs_cfg), cs_cfg.duration, pci, to_nof_cces(aggr_lvl), ncce);
+  }
+  if (cs_cfg.interleaved.has_value()) {
+    unsigned shift_index;
+    if (cs_cfg.interleaved->shift_index.has_value()) {
+      shift_index = cs_cfg.interleaved->shift_index.value();
+    } else {
+      // [TS 38.331, "ControlResourceSet"] When the field is absent the UE applies the value of the physCellId
+      // configured for this serving cell.
+      shift_index = pci;
+    }
+    return cce_to_prb_mapping_interleaved(bwp_cfg.crbs.start(),
+                                          cs_cfg.freq_domain_resources,
+                                          cs_cfg.duration,
+                                          cs_cfg.interleaved->reg_bundle_sz,
+                                          cs_cfg.interleaved->interleaver_sz,
+                                          shift_index,
+                                          to_nof_cces(aggr_lvl),
+                                          ncce);
+  }
+  return cce_to_prb_mapping_non_interleaved(
+      bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources, cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
+}
+
+bool pdcch_scheduler_impl::pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc,
+                                                              unsigned                      ncce,
+                                                              const alloc_record&           record)
+{
+  const bwp_configuration&     bwp_cfg = *record.pdcch_ctx->bwp_cfg;
+  const coreset_configuration& cs_cfg  = *record.pdcch_ctx->coreset_cfg;
+  prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, record.pdcch_ctx->cces.aggr_lvl, ncce);
+  grant_info     grant;
+  grant.ch  = grant_info::channel::cch;
+  grant.scs = bwp_cfg.scs;
+
+  // Check the current CCE position collides with an existing one.
+  // TODO: Optimize.
+  for (uint16_t prb : pdcch_prbs) {
+    unsigned crb  = prb_to_crb(*record.pdcch_ctx->bwp_cfg, prb);
+    grant.crbs    = {crb, crb + 1};
+    grant.symbols = {0, (uint8_t)cs_cfg.duration};
+    if (slot_alloc.dl_res_grid.collides(grant)) {
+      // Collision detected. Try another CCE position.
+      return false;
+    }
+  }
+
+  // Allocation successful.
+  // TODO: Optimize.
+  for (uint16_t prb : pdcch_prbs) {
+    unsigned crb  = prb_to_crb(*record.pdcch_ctx->bwp_cfg, prb);
+    grant.crbs    = {crb, crb + 1};
+    grant.symbols = {0, (uint8_t)cs_cfg.duration};
+    slot_alloc.dl_res_grid.fill(grant);
+  }
+
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -218,7 +266,7 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resourc
       cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[(size_t)ss_id];
   const coreset_configuration* cs_cfg = nullptr;
   if (ss_cfg.cs_id == to_coreset_id(0)) {
-    cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+    cs_cfg = &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   } else {
     cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
     srsran_sanity_check(cs_cfg->id == ss_cfg.cs_id, "Invalid SearchSpace CoresetId={}", ss_cfg.cs_id);
@@ -236,8 +284,11 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
                                                               dci_dl_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
+  srsran_sanity_check(user.dl_bwps[bwpid] != nullptr, "Invalid BWP-Id");
   const bwp_configuration&          bwp_cfg = *user.dl_bwps[bwpid];
+  srsran_sanity_check(user.dl_search_spaces[ss_id] != nullptr, "Invalid SearchSpaceId");
   const search_space_configuration& ss_cfg  = *user.dl_search_spaces[ss_id];
+  srsran_sanity_check(user.dl_coresets[ss_cfg.cs_id] != nullptr, "Invalid CoresetId");
   const coreset_configuration&      cs_cfg  = *user.dl_coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);

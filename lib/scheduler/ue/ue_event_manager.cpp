@@ -125,8 +125,10 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
 {
   srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
-  common_events.emplace(bsr_ind.ue_index,
-                        [bsr_ind](event_logger& ev_logger) { ev_logger.enqueue("handle_ul_bsr_indication(ueId={})", bsr_ind.ue_index); });
+  common_events.emplace(bsr_ind.ue_index, [this, bsr_ind](event_logger& ev_logger) {
+    ev_logger.enqueue("handle_ul_bsr_indication(ueId={})", bsr_ind.ue_index);
+    ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
+  });
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

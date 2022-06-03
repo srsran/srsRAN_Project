@@ -36,7 +36,7 @@ static constexpr unsigned NOF_RE_PDCCH_PER_RB = NRE - 3;
 /// Number of REGs per CCE as per TS38.211 Section 7.3.2.2.
 static constexpr unsigned NOF_REG_PER_CCE = 6;
 
-/// Maximum CORESET duration in symbols as per TS38.211 Section 7.3.2.2.
+/// Maximum CORESET duration in symbols as per TS38.211 Section 7.3.2.2. and TS 38.331 "maxCoReSetDuration".
 static constexpr unsigned MAX_CORESET_DURATION = 3;
 
 /// Maximum aggregation level as per TS38.211 Table 7.3.2.1-1.

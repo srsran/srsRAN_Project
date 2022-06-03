@@ -13,15 +13,13 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 
 namespace srsgnb {
 
 /// Describes a PRB index list of unsigned 16 bit indicating the PRB index.
 using prb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH>;
-
-/// Describes a frequency resource bitmap for CORESET allocation.
-using freq_resource_bitmap = bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES>;
 
 /// \brief Calculates the PDCCH CCE to PRB mapping for a PDCCH transmission in CORESET0.
 ///

@@ -33,7 +33,7 @@ void test_pdcch_sched_sib1()
   TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
   TESTASSERT(pdcch->ctx.bwp_cfg == &cfg.dl_cfg_common.init_dl_bwp.generic_params);
-  TESTASSERT(pdcch->ctx.coreset_cfg == &cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
+  TESTASSERT(pdcch->ctx.coreset_cfg == &*cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(SI_RNTI, pdcch->ctx.rnti);
   TESTASSERT_EQ(dci_dl_format::f1_0, pdcch->dci.format_type);
@@ -65,7 +65,7 @@ void test_pdcch_sched_rar()
   TESTASSERT_EQ(1, res_grid[0].result.dl.dl_pdcchs.size());
   TESTASSERT(pdcch == &res_grid[0].result.dl.dl_pdcchs[0]);
   TESTASSERT(pdcch->ctx.bwp_cfg == &cfg.dl_cfg_common.init_dl_bwp.generic_params);
-  TESTASSERT(pdcch->ctx.coreset_cfg == &cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
+  TESTASSERT(pdcch->ctx.coreset_cfg == &*cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(ra_rnti, pdcch->ctx.rnti);
   TESTASSERT_EQ(dci_dl_format::f1_0, pdcch->dci.format_type);

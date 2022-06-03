@@ -86,13 +86,17 @@ public:
 
   span<ue_carrier* const> ue_carriers() const { return span<ue_carrier* const>(ue_cells.data(), ue_cells.size()); }
 
-  bool has_pending_txs() const { return true; }
+  bool has_pending_txs() const
+  {
+    return not last_bsr.reported_lcgs.empty() and last_bsr.reported_lcgs[0].nof_bytes > 0;
+  }
 
   bool is_ca_enabled() const { return false; }
 
   void activate_cells(bounded_bitset<MAX_NOF_DU_CELLS> activ_bitmap) {}
 
   void handle_sr_indication(const sr_indication_message& msg);
+  void handle_bsr_indication(const ul_bsr_indication_message& msg);
 
   void handle_reconfiguration_request(const sched_ue_reconfiguration_message& msg) {}
 
@@ -111,7 +115,8 @@ private:
 
   static_vector<ue_carrier*, MAX_CELLS> ue_cells;
 
-  sr_indication_message last_sr;
+  sr_indication_message     last_sr;
+  ul_bsr_indication_message last_bsr;
 };
 
 /// Container that stores all scheduler UEs.

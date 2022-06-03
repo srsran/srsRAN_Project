@@ -16,3 +16,8 @@ void ue::handle_sr_indication(const sr_indication_message& msg)
 {
   last_sr = msg;
 }
+
+void ue::handle_bsr_indication(const ul_bsr_indication_message& msg)
+{
+  last_bsr = msg;
+}

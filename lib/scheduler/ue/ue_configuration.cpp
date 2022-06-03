@@ -17,7 +17,7 @@ ue_cell_configuration::ue_cell_configuration(const cell_configuration&          
   dl_bwps_cfg[0].bwp_dl_ded    = *cell_cfg_ded_req.init_dl_bwp;
   dl_bwps[0]                   = &cell_cfg_common.dl_cfg_common.init_dl_bwp.generic_params;
   const auto& pdcch_cfg        = cell_cfg_common.dl_cfg_common.init_dl_bwp.pdcch_common;
-  dl_coresets[0]               = &pdcch_cfg.coreset0;
+  dl_coresets[0]               = &(*pdcch_cfg.coreset0);
   if (pdcch_cfg.common_coreset.has_value()) {
     dl_coresets[pdcch_cfg.common_coreset->id] = &pdcch_cfg.common_coreset.value();
   }

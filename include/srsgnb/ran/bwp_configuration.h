@@ -7,53 +7,11 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/frame_types.h"
+#include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/prb_grant.h"
 #include <bitset>
 
 namespace srsgnb {
-
-/// Max number of frequency domain resources for the CORESET. Each resource corresponds to a group of 6 PRBs.
-/// \remark See TS 38.331, "ControlResourceSet"
-const size_t CORESET_FREQ_DOMAIN_RESOURCE_SIZE = 45;
-
-/// Max number of OFDM symbols in a control resource set.
-/// \remark See TS 38.331, "maxCoReSetDuration".
-const size_t MAX_CORESET_DURATION = 3;
-
-/// Max number of CORESETs per BWP per cell (including UE-specific and common CORESETs).
-/// \remark See TS 38.331, "PDCCH-Config".
-const size_t MAX_NOF_CORESETS_PER_BWP = 3;
-
-/// \brief CORESET identifier. This value is UE-specific, which means that a UE can have up to
-/// "maxNrofControlResourceSets" CORESETS configured.
-/// \remark See TS 38.331, "maxNrofControlResourceSets".
-enum coreset_id : uint8_t { MIN_CORESET_ID = 0, MAX_CORESET_ID = 11, MAX_NOF_CORESETS = 12 };
-
-constexpr inline coreset_id to_coreset_id(unsigned cs_id)
-{
-  return static_cast<coreset_id>(cs_id);
-}
-
-/// CORESET configuration.
-/// \remark See TS 38.331, "ControlResourceSet".
-struct coreset_configuration {
-  struct interleaved_mapping_type {
-    /// Values: (2, 3, 6).
-    unsigned reg_bundle_sz;
-    /// Values: (2, 3, 6).
-    unsigned interleaver_sz;
-    /// Values: (0..MAX_NOF_PRBS-1).
-    optional<unsigned> shift_index;
-  };
-  enum class precoder_granularity_type { same_as_reg_bundle, all_contiguous_rbs };
-
-  coreset_id                                     id;
-  std::bitset<CORESET_FREQ_DOMAIN_RESOURCE_SIZE> freq_domain_resources;
-  /// Duration in number of symbols. Values: (1..maxCORESETDuration).
-  unsigned                           duration;
-  optional<interleaved_mapping_type> interleaved;
-  precoder_granularity_type          precoder_granurality;
-};
 
 /// \brief Search Space identifier. This value is UE-specific, which means that a UE can have up to
 /// "maxNrofSearchSpaces=40" Search Spaces configured. The ID space is used across BWPs of a serving cell.
@@ -92,9 +50,9 @@ struct search_space_configuration {
 };
 
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"
-struct pdcch_configuration_common {
+struct pdcch_config_common {
   /// Contains Coreset#0.
-  coreset_configuration coreset0;
+  optional<coreset_configuration> coreset0;
   /// Contains common Coreset.
   optional<coreset_configuration> common_coreset;
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
@@ -128,8 +86,8 @@ struct bwp_configuration {
 /// Used to configure the common, cell-specific parameters of a DL BWP.
 /// \remark See TS 38.331, BWP-DownlinkCommon.
 struct bwp_downlink_common {
-  bwp_configuration          generic_params;
-  pdcch_configuration_common pdcch_common;
+  bwp_configuration   generic_params;
+  pdcch_config_common pdcch_common;
 };
 
 /// \remark See TS 38.331, RACH-ConfigGeneric.

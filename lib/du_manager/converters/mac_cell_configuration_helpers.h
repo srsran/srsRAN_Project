@@ -46,6 +46,7 @@ inline coreset_configuration make_default_coreset_config()
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(0);
+  cfg.freq_domain_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
   for (size_t i = 0; i < 6; ++i) {
     cfg.freq_domain_resources.set(i);
   }
@@ -166,7 +167,7 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   msg.serv_cell_cfg.init_dl_bwp.emplace();
   bwp_downlink_dedicated& dl_bwp = *msg.serv_cell_cfg.init_dl_bwp;
   dl_bwp.pdcch_cfg.emplace();
-  dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back();
+  dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back(make_default_coreset_config());
   coreset_configuration& cs_cfg = dl_bwp.pdcch_cfg->coreset_to_addmod_list.back();
   cs_cfg.id                     = to_coreset_id(1);
 

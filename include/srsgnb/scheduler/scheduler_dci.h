@@ -11,19 +11,12 @@
 #ifndef SRSGNB_SCHEDULER_DCI_H
 #define SRSGNB_SCHEDULER_DCI_H
 
+#include "srsgnb/ran/pdcch/aggregation_level.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
 namespace srsgnb {
-
-/// Aggregation Level of PDCCH allocation.
-enum class aggregation_level : uint8_t { n1 = 0, n2, n4, n8 };
-
-inline unsigned to_nof_cces(aggregation_level lvl)
-{
-  return 1U << static_cast<uint8_t>(lvl);
-}
 
 struct cce_position {
   /// CCE start index. Values: (0..135).
