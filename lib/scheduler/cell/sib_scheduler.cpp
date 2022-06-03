@@ -244,12 +244,11 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Fill SIB1 DCI.
   sib1_pdcch.dci.format_type = dci_dl_format::f1_0;
-  // TODO: compute freq_domain_assigment from CRBS allocation (WIP).
-  sib1_pdcch.dci.f1_0.freq_domain_assigment = 0;
+  sib1_pdcch.dci.f1_0.prbs   = crb_to_prb(cfg.dl_cfg_common.init_dl_bwp.generic_params, sib1_crbs_grant);
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
-  sib1_pdcch.dci.f1_0.time_domain_assigment = 0;
-  sib1_pdcch.dci.f1_0.mcs                   = sib1_mcs;
-  sib1_pdcch.dci.f1_0.rv                    = sib1_rv;
+  sib1_pdcch.dci.f1_0.time_domain_assignment = 0;
+  sib1_pdcch.dci.f1_0.mcs                    = sib1_mcs;
+  sib1_pdcch.dci.f1_0.rv                     = sib1_rv;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();
