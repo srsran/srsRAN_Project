@@ -70,5 +70,6 @@ int main()
   srslog::init();
 
   test_no_ues();
-  test_rach_indication();
+  // TODO: enable this when CCE tables are enabled in the PDCCH scheduler.
+  // test_rach_indication();
 }

@@ -83,11 +83,13 @@ struct test_bench {
         make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
     msg.ssb_config.scs                               = init_bwp_scs;
+    // Change Carrier parameters when SCS is 30kHz.
     if (init_bwp_scs == subcarrier_spacing::kHz30) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
           scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+      // Random ARFCN that must be in FR1 and > 3GHz.
       msg.dl_carrier.arfcn          = 700000;
-      msg.dl_carrier.carrier_bw_mhz = 50;
+      msg.dl_carrier.carrier_bw_mhz = 20;
       msg.dl_carrier.nof_ant        = 1;
     }
     msg.pdcch_config_sib1     = pdcch_config_sib1;
@@ -138,6 +140,7 @@ void verify_prbs_allocation(const cell_slot_resource_allocator& test_res_grid, b
 }
 
 /// \brief Tests if the SIB1 scheduler schedules the SIB1s at the right slot n0.
+/// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon.
 /// \param[in] sib1_n0_slots array of n0 slots; the n-th array's value is the n0 corresponding to the n-th SSB beam.
 /// \param[in] pdcch_config_sib1 is the parameter (in the MIB) determining the n0 for each beam.
 /// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurs in the TS 38.311, with L_max = 8.
@@ -148,8 +151,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 {
   // Instantiate the test_bench and the SIB1 scheduler.
   test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
-  sib1_scheduler sib1_sched{
-      t_bench.cfg, t_bench.pdcch_sch, to_numerology_value(t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs};
 
   // SIB1 periodicity in slots.
   unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
@@ -160,7 +162,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
     return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
   };
 
-  // Run the test for 10000 slots and
+  // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
@@ -172,7 +174,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
       // Only check for the active slots.
       if (nth_ssb_beam_active(ssb_idx) && (sl_idx % sib1_period_slots == sib1_n0_slots[ssb_idx])) {
-        // Verify that the scheduler results contain the SIB1 information.
+        // Verify that the scheduler results list contain 1 element with the SIB1 information.
         TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
         // Verify the PDCCH grants and DCI have been filled correctly.
         assess_filled_grants(res_slot_grid);

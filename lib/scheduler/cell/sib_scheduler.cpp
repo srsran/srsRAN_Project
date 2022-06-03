@@ -36,9 +36,10 @@ static unsigned sib1_is_even_frame(unsigned sib1_offset, double sib1_M, uint8_t 
 }
 
 // Helper function that returns slot n0 (where UE should monitor Type0-PDCCH CSS) for a given SSB (beam) index.
-static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, uint8_t numerology_mu, unsigned ssb_index)
+static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_spacing scs_common, unsigned ssb_index)
 {
   // Initialize n0 to a slot_point = 0.
+  uint8_t    numerology_mu = to_numerology_value(scs_common);
   slot_point sib_1_n0{numerology_mu, 0};
 
   // Compute n0 = ( O * 2^mu + floor(i*M)  )  % nof_slots_per_frame, as per TS 38.213, Section 13.
@@ -113,7 +114,9 @@ get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern m
 
 //  ------   Public methods   ------ .
 
-sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch, unsigned numerology) :
+sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
+                               pdcch_scheduler&          pdcch_sch,
+                               subcarrier_spacing        scs_common) :
   cfg{cfg_},
   pdcch_sched{pdcch_sch}
 {
@@ -121,7 +124,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_, pdcch_scheduler& 
   sib1_periodicity = cfg_.sib1_rxtx_periodicity == 0
                          ? SIB1_PERIODICITY
                          : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), cfg_.sib1_rxtx_periodicity);
-  precompute_sib1_n0(numerology);
+  precompute_sib1_n0(scs_common);
 };
 
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point)
@@ -153,6 +156,12 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const
     }
 
     if (sl_point.to_uint() % sib1_period_slots == sib1_n0_slots[ssb_idx].to_uint()) {
+      // Ensure slot for SIB1 has DL enabled.
+      if (not cfg.is_dl_enabled(sl_point)) {
+        logger.error("SCHED: Could not allocated SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
+        return;
+      }
+
       allocate_sib1(res_grid, ssb_idx);
     }
   }
@@ -160,7 +169,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const
 
 //  ------   Private methods   ------ .
 
-void sib1_scheduler::precompute_sib1_n0(unsigned numerology)
+void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 {
   // This corresponds to parameter O in TS 38.213, Section 13.
   unsigned sib1_offset;
@@ -171,7 +180,7 @@ void sib1_scheduler::precompute_sib1_n0(unsigned numerology)
   get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, cfg.pdcch_config_sib1);
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, numerology, i_ssb));
+    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, scs_common, i_ssb));
   }
 }
 

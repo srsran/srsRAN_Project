@@ -25,7 +25,7 @@ class sib1_scheduler
 {
 public:
   sib1_scheduler() = delete;
-  sib1_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch, unsigned numerology);
+  sib1_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcch_sch, subcarrier_spacing scs_common);
 
   /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
   ///
@@ -37,10 +37,9 @@ private:
   /// \brief Computes the SIB1 n0 slot, at which each beam's SIB1 is allocated [TS 38.213, Section 13].
   ///
   /// These slots are computed and saved in the body of the constructor.
-  /// \param[in] pdcch_config_sib1 It is the parameter included in MIB and sent to the UE.
-  /// \param[in] numerology Numerology corresponding to subCarrierSpacingCommon, which much coincide with SCS if initial
+  /// \param[in] scs_common SCS corresponding to subCarrierSpacingCommon, which must coincide with SCS if initial
   /// DL BWP.
-  void precompute_sib1_n0(unsigned numerology);
+  void precompute_sib1_n0(subcarrier_spacing scs_common);
 
   /// \brief Searches in PDSCH and PDCCH for space to allocate SIB1 and SIB1's DCI, respectively.
   ///
@@ -56,12 +55,13 @@ private:
   /// \param[in] sib1_crbs_grant CRBs interval in the PDSCH allocated for SIB1.
   void fill_sib1_grant(cell_slot_resource_allocator& res_grid, unsigned beam_idx, crb_interval sib1_crbs_grant);
 
-  /// Logger.
+  /// SIB1 Logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
 
   /// Parameters for SIB1 scheduling.
   const cell_configuration& cfg;
   pdcch_scheduler&          pdcch_sched;
+  /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned                  sib1_periodicity;
 
   /// Vector of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
