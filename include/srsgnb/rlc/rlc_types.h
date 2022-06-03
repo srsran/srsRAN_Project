@@ -16,7 +16,7 @@
 
 namespace srsgnb {
 
-///< RLC NR modes
+/// RLC NR modes
 enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
 inline const char* to_string(const rlc_mode& mode)
 {
@@ -24,28 +24,28 @@ inline const char* to_string(const rlc_mode& mode)
   return options[static_cast<unsigned>(mode)];
 }
 
-///< RLC UM NR sequence number field
+/// RLC UM NR sequence number field
 enum class rlc_um_sn_size : uint16_t { size6bits = 6, size12bits = 12 };
 constexpr uint16_t to_number(const rlc_um_sn_size& sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
 
-///< RLC AM NR sequence number field
+/// RLC AM NR sequence number field
 enum class rlc_am_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
 constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
 
-///< RLC AM NR segmentation info
+/// RLC AM NR segmentation info
 enum class rlc_dc_field : unsigned { control = 0b00, data = 0b01 };
 constexpr unsigned to_number(const rlc_dc_field& dc)
 {
   return static_cast<unsigned>(dc);
 }
 
-///< RLC AM NR segmentation info
+/// RLC AM NR segmentation info
 enum class rlc_si_field : unsigned {
   full_sdu                       = 0b00,
   first_segment                  = 0b01,

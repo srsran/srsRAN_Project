@@ -1,6 +1,4 @@
-/**
- *
- * \section COPYRIGHT
+/*
  *
  * Copyright 2013-2022 Software Radio Systems Limited
  *
@@ -9,8 +7,8 @@
  * the distribution.
  *
  */
-#ifndef SRSRAN_RLC_AM_PDU_H
-#define SRSRAN_RLC_AM_PDU_H
+#ifndef SRSGNB_RLC_AM_PDU_H
+#define SRSGNB_RLC_AM_PDU_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_types.h"
@@ -19,12 +17,12 @@
 namespace srsgnb {
 
 struct rlc_am_pdu_header {
-  rlc_dc_field   dc;      // Data/Control (D/C) field
-  uint8_t        p;       // Polling bit
-  rlc_si_field   si;      // Segmentation info
-  rlc_am_sn_size sn_size; // Sequence number size (12 or 18 bits)
-  uint32_t       sn;      // Sequence number
-  uint16_t       so;      // Sequence offset
+  rlc_dc_field   dc;      ///< Data/Control (D/C) field
+  uint8_t        p;       ///< Polling bit
+  rlc_si_field   si;      ///< Segmentation info
+  rlc_am_sn_size sn_size; ///< Sequence number size (12 or 18 bits)
+  uint32_t       sn;      ///< Sequence number
+  uint16_t       so;      ///< Sequence offset
 };
 
 /****************************************************************************
@@ -55,7 +53,7 @@ inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_
   } else if (sn_size == rlc_am_sn_size::size18bits) {
     // sanity check
     if ((*pdu_reader & 0x0CU) != 0) {
-      fprintf(stderr, "Malformed PDU, reserved bits are set.\n");
+      srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
       return false;
     }
     header->sn = (*pdu_reader & 0x03U) << 16U; // first 4 bits SN
@@ -65,7 +63,7 @@ inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_
     header->sn |= (*pdu_reader & 0xFFU); // last 8 bits SN
     ++pdu_reader;
   } else {
-    fprintf(stderr, "Unsupported SN length\n");
+    srslog::fetch_basic_logger("RLC").error("Unsupported SN length");
     return false;
   }
 
@@ -86,9 +84,9 @@ inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
   byte_buffer_writer hdr_writer = hdr_buf;
 
   // fixed header part
-  hdr_writer.append((to_number(header.dc) & 0x01U) << 7U);   ///< 1 bit D/C field
-  hdr_writer.back() |= (header.p & 0x01U) << 6U;             ///< 1 bit P flag
-  hdr_writer.back() |= (to_number(header.si) & 0x03U) << 4U; ///< 2 bits SI
+  hdr_writer.append((to_number(header.dc) & 0x01U) << 7U);   // 1 bit D/C field
+  hdr_writer.back() |= (header.p & 0x01U) << 6U;             // 1 bit P flag
+  hdr_writer.back() |= (to_number(header.si) & 0x03U) << 4U; // 2 bits SI
 
   if (header.sn_size == rlc_am_sn_size::size12bits) {
     // write first 4 bit of SN
