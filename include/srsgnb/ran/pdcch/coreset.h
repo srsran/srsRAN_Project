@@ -21,14 +21,14 @@ namespace srsgnb {
 /// \remark See TS 38.331, "PDCCH-Config".
 const size_t MAX_NOF_CORESETS_PER_BWP = 3;
 
-/// Describes a frequency resource bitmap for CORESET allocation. Each resource represents to a group of 6 PRBs.
+/// Describes a frequency resource bitmap for CORESET allocation. Each resource represents a group of 6 PRBs.
 /// \remark See TS 38.331, "ControlResourceSet"
 using freq_resource_bitmap = bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES>;
 
 /// \brief CORESET identifier. This value is UE-specific, which means that a UE can have up to
 /// "maxNrofControlResourceSets" CORESETS configured.
 /// \remark See TS 38.331, "maxNrofControlResourceSets".
-enum coreset_id : uint8_t { MIN_CORESET_ID = 0, MAX_CORESET_ID = 11, MAX_NOF_CORESETS = 12 };
+enum coreset_id : uint8_t { MAX_CORESET_ID = 11, MAX_NOF_CORESETS = 12 };
 
 constexpr inline coreset_id to_coreset_id(unsigned cs_id)
 {
