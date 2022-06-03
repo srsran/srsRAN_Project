@@ -66,3 +66,15 @@ add_test(pss_processor_test pss_processor_test)
 add_executable(sss_processor_test sss_processor_test.cpp)
 target_link_libraries(sss_processor_test signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
+
+add_executable(csi_rs_processor_test csi_rs_processor_test.cpp)
+target_link_libraries(csi_rs_processor_test signal_processors srsvec sequence_generators srslog srsgnb_upper_phy_support)
+add_test(csi_rs_processor_test csi_rs_processor_test)
+
+add_custom_command(
+        TARGET csi_rs_processor_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/csi_rs_processor_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/csi_rs_processor_test_data.tar.gz
+        VERBATIM)

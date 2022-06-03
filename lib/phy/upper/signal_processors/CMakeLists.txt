@@ -15,6 +15,7 @@ set(SOURCES
         pucch/dmrs_pucch_processor_impl.cpp
         pss_processor_impl.cpp
         sss_processor_impl.cpp
+        csi_rs_processor_impl.cpp
         )
 
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
