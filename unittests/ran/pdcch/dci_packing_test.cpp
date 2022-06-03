@@ -27,7 +27,7 @@ static void test_dci_1_0_si_rnti_packing()
 
   for (unsigned rep = 0; rep != nof_repetitions; ++rep) {
     for (unsigned N_rb_dl_bwp : {24, 48, 96}) {
-      unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp - 1) / 2);
+      unsigned frequency_resource_nof_bits = log2_ceil(N_rb_dl_bwp * (N_rb_dl_bwp + 1) / 2);
       std::uniform_int_distribution<unsigned> frequency_resource_dist(0, pow2(frequency_resource_nof_bits) - 1);
 
       dci_1_0_si_rnti_configuration config = {};

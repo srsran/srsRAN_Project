@@ -15,7 +15,7 @@ using namespace srsgnb;
 
 dci_payload srsgnb::dci_1_0_si_rnti_pack(const dci_1_0_si_rnti_configuration& config)
 {
-  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp - 1) / 2);
+  unsigned    frequency_resource_nof_bits = log2_ceil(config.N_rb_dl_bwp * (config.N_rb_dl_bwp + 1) / 2);
   dci_payload payload;
 
   // Frequency domain resource assignment - frequency_resource_nof_bits bits.
