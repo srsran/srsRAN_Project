@@ -21,6 +21,8 @@
 
 namespace srsgnb {
 
+namespace cu_cp {
+
 class cu_cp_ue_manager : public cu_cp_ue_manager_ctrl_configurer
 {
 public:
@@ -28,11 +30,11 @@ public:
 
   const slot_array<cu_cp_ue_context, MAX_NOF_CU_CP_UES>& get_ues() const { return ue_db; }
 
-private:
   cu_cp_ue_context* add_ue(cu_cp_ue_context u) override;
   void              remove_ue(cu_cp_ue_index_t ue_index) override;
   cu_cp_ue_context* find_ue(cu_cp_ue_index_t ue_index) override;
 
+private:
   cu_cp_manager_config_t& cfg;
   srslog::basic_logger&   logger;
 
@@ -41,6 +43,8 @@ private:
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_CU_CP_UES> ue_ctrl_loop;
 };
+
+} // namespace cu_cp
 
 } // namespace srsgnb
 

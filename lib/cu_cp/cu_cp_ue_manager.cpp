@@ -11,6 +11,7 @@
 #include "cu_cp_ue_manager.h"
 
 using namespace srsgnb;
+using namespace cu_cp;
 
 cu_cp_ue_manager::cu_cp_ue_manager(cu_cp_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
 {

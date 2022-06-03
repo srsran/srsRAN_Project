@@ -11,7 +11,7 @@
 #ifndef SRSGNB_CU_CP_MANAGER_H
 #define SRSGNB_CU_CP_MANAGER_H
 
-#include "srsgnb/ran/cu_cp_types.h"
+#include "cu_cp_types.h"
 #include <string>
 
 namespace srsgnb {

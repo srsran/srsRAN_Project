@@ -10,9 +10,11 @@
 
 #include "cu_cp_manager_impl.h"
 
-namespace srsgnb {
+using namespace srsgnb;
+using namespace cu_cp;
 
-cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg), main_ctrl_loop(128)
+cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
+  cfg(cfg_), ue_mng(cfg), du_mng(cfg), main_ctrl_loop(128)
 {
   // nothing to start straigt away on the CU
   cu_cp_ctx = {}; // make it compile
@@ -42,5 +44,3 @@ size_t cu_cp_manager_impl::nof_ues()
   }
   return result;
 }
-
-} // namespace srsgnb

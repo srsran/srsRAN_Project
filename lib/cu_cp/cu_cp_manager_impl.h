@@ -11,17 +11,18 @@
 #ifndef SRSGNB_CU_MANAGER_IMPL_H
 #define SRSGNB_CU_MANAGER_IMPL_H
 
+#include "cu_cp_du_manager.h"
 #include "cu_cp_manager_context.h"
 #include "cu_cp_ue_manager.h"
 #include "srsgnb/cu_cp/cu_cp_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
-#include "srsgnb/mac/mac.h"
-#include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include <memory>
 
 namespace srsgnb {
+
+namespace cu_cp {
 
 class cu_cp_manager_impl final : public cu_cp_manager_interface
 {
@@ -42,10 +43,13 @@ private:
 
   // Components
   cu_cp_ue_manager ue_mng;
+  cu_cp_du_manager du_mng;
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;
 };
+
+} // namespace cu_cp
 
 } // namespace srsgnb
 

@@ -12,13 +12,14 @@
 #define SRSGNB_CU_CP_UE_CONTEXT_H
 
 #include "srsgnb/adt/slot_array.h"
-#include "srsgnb/ran/cu_cp_types.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 
 namespace srsgnb {
 
 struct cu_cp_ue_context {
   cu_cp_ue_index_t ue_index;
-  cu_cp_cell_index_t pcell_index;
+  cu_cp_du_index_t      du_index;
+  cu_cp_du_cell_index_t pcell_index;
 };
 
 } // namespace srsgnb
