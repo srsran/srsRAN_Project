@@ -6,6 +6,6 @@
 # the distribution.
 #
 
-set(SOURCES du_cell_config_factory.cpp)
+set(SOURCES du_cell_config_helpers.cpp)
 
 add_library(srsgnb_du_config STATIC ${SOURCES})

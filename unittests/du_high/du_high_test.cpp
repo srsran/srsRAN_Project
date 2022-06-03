@@ -3,7 +3,7 @@
 #include "../../lib/du_high/du_high_executor_strategies.h"
 #include "../../lib/f1_interface/f1ap_asn1_packer.h"
 #include "../../lib/gateway/sctp_network_gateway.h"
-#include "srsgnb/du/du_cell_config_factory.h"
+#include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -83,7 +83,7 @@ void test_f1_setup_local()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_msg_hdl     = &msg_handler;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {make_default_du_cell_config()};
+  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 
@@ -121,7 +121,7 @@ void test_f1_setup_network()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_msg_hdl     = &msg_handler;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {make_default_du_cell_config()};
+  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 
@@ -159,7 +159,7 @@ void test_du_ue_create()
   cfg.ul_executors    = &workers.ul_exec_mapper;
   cfg.f1c_msg_hdl     = &pdu_handler;
   cfg.phy_adapter     = &phy;
-  cfg.cells           = {make_default_du_cell_config()};
+  cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
   du_high du_obj(cfg);
 

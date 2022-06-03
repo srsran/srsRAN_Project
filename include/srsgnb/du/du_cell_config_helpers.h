@@ -8,16 +8,20 @@
  *
  */
 
-#ifndef SRSGNB_DU_CELL_CONFIG_FACTORY_H
-#define SRSGNB_DU_CELL_CONFIG_FACTORY_H
+#ifndef SRSGNB_DU_CELL_CONFIG_HELPERS_H
+#define SRSGNB_DU_CELL_CONFIG_HELPERS_H
 
 #include "du_cell_config.h"
 
 namespace srsgnb {
 
+namespace du_config_helpers {
+
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
 du_cell_config make_default_du_cell_config();
 
+} // namespace du_config_helpers
+
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_CELL_CONFIG_FACTORY_H
+#endif // SRSGNB_DU_CELL_CONFIG_HELPERS_H

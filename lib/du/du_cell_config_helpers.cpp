@@ -8,11 +8,11 @@
  *
  */
 
-#include "srsgnb/du/du_cell_config_factory.h"
+#include "srsgnb/du/du_cell_config_helpers.h"
 
 using namespace srsgnb;
 
-du_cell_config srsgnb::make_default_du_cell_config()
+du_cell_config srsgnb::du_config_helpers::make_default_du_cell_config()
 {
   du_cell_config cfg{};
   cfg.pci = 1;

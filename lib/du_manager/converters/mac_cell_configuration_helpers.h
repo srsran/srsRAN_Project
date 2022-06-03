@@ -12,7 +12,7 @@
 #define SRSGNB_MAC_CELL_CONFIGURATION_HELPERS_H
 
 #include "../du_manager_config.h"
-#include "srsgnb/du/du_cell_config_factory.h"
+#include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
