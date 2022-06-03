@@ -30,19 +30,19 @@ public:
       if (cell_index < MAX_NOF_DU_CELLS) {
         logger.info("SCHED: Processed events, cell_index={}: [{}]", cell_index, to_c_str(fmtbuf));
       } else {
-        logger.info("SCHED: Processed events: [{}]", cell_index, to_c_str(fmtbuf));
+        logger.info("SCHED: Processed events: [{}]", to_c_str(fmtbuf));
       }
     }
   }
 
   template <typename... Args>
-  void enqueue(const char* fmt, Args&&... args)
+  void enqueue(const char* fmtstr, Args&&... args)
   {
     if (enabled) {
       if (fmtbuf.size() > 0) {
         fmt::format_to(fmtbuf, ", ");
       }
-      fmt::format_to(fmtbuf, fmt, std::forward<Args>(args)...);
+      fmt::format_to(fmtbuf, fmtstr, std::forward<Args>(args)...);
     }
   }
 
