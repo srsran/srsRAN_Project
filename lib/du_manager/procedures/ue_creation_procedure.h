@@ -14,7 +14,6 @@
 #include "../../ran/gnb_format.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "du_manager_config.h"
-#include "du_manager_context.h"
 #include "du_manager_interfaces.h"
 #include "du_ue_context.h"
 #include "srsgnb/mac/mac.h"

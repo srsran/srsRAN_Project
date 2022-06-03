@@ -12,7 +12,6 @@
 #define SRSGNB_DU_MANAGER_IMPL_H
 
 #include "du_cell_manager.h"
-#include "du_manager_context.h"
 #include "du_ue_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
@@ -40,9 +39,6 @@ public:
 private:
   // DU manager configuration that will be visible to all running procedures
   du_manager_config_t cfg;
-
-  // DU context.
-  du_manager_context du_ctx;
 
   // Components
   du_cell_manager cell_mng;

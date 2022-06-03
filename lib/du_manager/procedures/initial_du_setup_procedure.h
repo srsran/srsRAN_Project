@@ -17,7 +17,7 @@
 namespace srsgnb {
 
 class du_cell_manager;
-class du_manager_config_t;
+struct du_manager_config_t;
 
 class initial_du_setup_procedure
 {

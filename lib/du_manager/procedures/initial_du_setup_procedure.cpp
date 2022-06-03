@@ -9,10 +9,9 @@
  */
 
 #include "initial_du_setup_procedure.h"
-#include "../converters/f1_procedure_helpers.h"
+#include "../../f1_interface/converters/f1_procedure_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "../du_cell_manager.h"
-#include "../du_manager_context.h"
 #include "srsgnb/asn1/f1ap.h"
 
 using namespace srsgnb;
