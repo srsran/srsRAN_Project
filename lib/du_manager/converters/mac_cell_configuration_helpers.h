@@ -11,6 +11,8 @@
 #ifndef SRSGNB_MAC_CELL_CONFIGURATION_HELPERS_H
 #define SRSGNB_MAC_CELL_CONFIGURATION_HELPERS_H
 
+#include "../du_manager_config.h"
+#include "srsgnb/du/du_cell_config_factory.h"
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
@@ -197,6 +199,14 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
 }
 
 } // namespace test_helpers
+
+inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg)
+{
+  mac_cell_creation_request mac_cfg = test_helpers::make_default_mac_cell_creation_request();
+  mac_cfg.cell_index                = cell_index;
+  mac_cfg.pci                       = du_cfg.pci;
+  return mac_cfg;
+}
 
 } // namespace srsgnb
 

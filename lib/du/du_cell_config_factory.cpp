@@ -1,0 +1,20 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "srsgnb/du/du_cell_config_factory.h"
+
+using namespace srsgnb;
+
+du_cell_config srsgnb::make_default_du_cell_config()
+{
+  du_cell_config cfg{};
+  cfg.pci = 1;
+  return cfg;
+}

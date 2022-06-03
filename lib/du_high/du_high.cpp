@@ -58,7 +58,8 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
                                  *f1ap,
                                  *f1ap,
                                  rlc_sdu_notifier,
-                                 *cfg.du_mng_executor);
+                                 *cfg.du_mng_executor,
+                                 cfg.cells);
 
   // Connect Layer->DU manager notifiers.
   mac_ev_notifier.connect(*du_manager);
@@ -72,7 +73,10 @@ du_high::~du_high()
   stop();
 }
 
-void du_high::start() {}
+void du_high::start()
+{
+  du_manager->start();
+}
 
 void du_high::stop() {}
 

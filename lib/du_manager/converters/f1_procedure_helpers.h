@@ -19,7 +19,7 @@ namespace f1ap {
 /// \brief Fills f1_setup_request_message.
 /// \param[out] request_msg The f1_setup_request_message struct to fill.
 /// \param[in] du_params DU setup parameters to fill the f1 setup request message with.
-void fill_f1_setup_request_message(f1_setup_request_message& request_msg, const du_setup_params& du_params)
+inline void fill_f1_setup_request_message(f1_setup_request_message& request_msg, const du_setup_params& du_params)
 {
   // TODO: Add other inputs and set values accordingly
   request_msg.setup_params = du_params;

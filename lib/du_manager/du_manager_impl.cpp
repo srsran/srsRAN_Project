@@ -13,10 +13,19 @@
 
 namespace srsgnb {
 
-du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) : cfg(cfg_), ue_mng(cfg), main_ctrl_loop(128)
+du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) :
+  cfg(cfg_), cell_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
+{}
+
+void du_manager_impl::start()
 {
-  // start F1 setup procedure
-  main_ctrl_loop.schedule<initial_du_setup_procedure>(cfg, du_ctx);
+  // start F1 setup procedure.
+  main_ctrl_loop.schedule<initial_du_setup_procedure>(cfg, cell_mng);
+}
+
+void du_manager_impl::stop()
+{
+  // TODO.
 }
 
 void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message& msg)

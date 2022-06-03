@@ -11,6 +11,7 @@
 #ifndef SRSGNB_DU_MANAGER_IMPL_H
 #define SRSGNB_DU_MANAGER_IMPL_H
 
+#include "du_cell_manager.h"
 #include "du_manager_context.h"
 #include "du_ue_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
@@ -27,6 +28,10 @@ class du_manager_impl final : public du_manager_interface
 public:
   du_manager_impl(const du_manager_config_t& cfg);
 
+  // Controller interface.
+  void start() override;
+  void stop() override;
+
   // MAC interface
   void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
 
@@ -40,7 +45,8 @@ private:
   du_manager_context du_ctx;
 
   // Components
-  du_ue_manager ue_mng;
+  du_cell_manager cell_mng;
+  du_ue_manager   ue_mng;
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;

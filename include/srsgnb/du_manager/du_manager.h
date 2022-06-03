@@ -32,7 +32,17 @@ public:
   virtual size_t nof_ues()              = 0;
 };
 
-class du_manager_interface : public du_manager_interface_query, public du_manager_ccch_handler
+class du_manager_controller
+{
+public:
+  virtual ~du_manager_controller() = default;
+  virtual void start()             = 0;
+  virtual void stop()              = 0;
+};
+
+class du_manager_interface : public du_manager_interface_query,
+                             public du_manager_ccch_handler,
+                             public du_manager_controller
 {
 public:
   virtual ~du_manager_interface() = default;
