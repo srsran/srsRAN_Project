@@ -63,22 +63,33 @@ struct test_bench {
   cell_configuration      cfg;
   cell_resource_allocator res_grid;
   dummy_pdcch_scheduler   pdcch_sch;
-  slot_point              sl_tx{0, 0};
+  slot_point              sl_tx;
 
-  test_bench(uint8_t pdcch_config_sib1, uint8_t ssb_bitmap) :
-    cfg{make_cell_cfg_req_for_sib_sched(pdcch_config_sib1, ssb_bitmap)},
-    res_grid{cfg}
+  test_bench(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap) :
+    cfg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap)},
+    res_grid{cfg},
+    sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
   {
     res_grid.slot_indication(sl_tx);
   };
 
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
 
-  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(uint8_t pdcch_config_sib1,
-                                                                           uint8_t ssb_bitmap)
+  // Create default configuration and change specific parameters based on input args.
+  sched_cell_configuration_request_message
+  make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap)
   {
     sched_cell_configuration_request_message msg =
         make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
+    msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
+    msg.ssb_config.scs                               = init_bwp_scs;
+    if (init_bwp_scs == subcarrier_spacing::kHz30) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
+          scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+      msg.dl_carrier.arfcn          = 700000;
+      msg.dl_carrier.carrier_bw_mhz = 50;
+      msg.dl_carrier.nof_ant        = 1;
+    }
     msg.pdcch_config_sib1     = pdcch_config_sib1;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     return msg;
@@ -130,14 +141,18 @@ void verify_prbs_allocation(const cell_slot_resource_allocator& test_res_grid, b
 /// \param[in] sib1_n0_slots array of n0 slots; the n-th array's value is the n0 corresponding to the n-th SSB beam.
 /// \param[in] pdcch_config_sib1 is the parameter (in the MIB) determining the n0 for each beam.
 /// \param[in] ssb_beam_bitmap corresponds to the ssb-PositionsInBurs in the TS 38.311, with L_max = 8.
-void test_sib1_scheduler(std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
+void test_sib1_scheduler(subcarrier_spacing                   scs_common,
+                         std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
                          uint8_t                              pdcch_config_sib1,
                          uint8_t                              ssb_beam_bitmap)
 {
   // Instantiate the test_bench and the SIB1 scheduler.
-  test_bench     t_bench{pdcch_config_sib1, ssb_beam_bitmap};
+  test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
   sib1_scheduler sib1_sched{
       t_bench.cfg, t_bench.pdcch_sch, to_numerology_value(t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs)};
+
+  // SIB1 periodicity in slots.
+  unsigned sib1_period_slots = SIB1_PERIODICITY * t_bench.sl_tx.nof_slots_per_subframe();
 
   // Define helper lambda to determine from ssb_beam_bitmap if the n-th SSB beam is used.
   uint64_t ssb_bitmap          = t_bench.cfg.ssb_cfg.ssb_bitmap;
@@ -156,7 +171,7 @@ void test_sib1_scheduler(std::array<unsigned, MAX_NUM_BEAMS>& sib1_n0_slots,
     // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
       // Only check for the active slots.
-      if (nth_ssb_beam_active(ssb_idx) && (sl_idx % SIB1_PERIODICITY == sib1_n0_slots[ssb_idx])) {
+      if (nth_ssb_beam_active(ssb_idx) && (sl_idx % sib1_period_slots == sib1_n0_slots[ssb_idx])) {
         // Verify that the scheduler results contain the SIB1 information.
         TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
         // Verify the PDCCH grants and DCI have been filled correctly.
@@ -177,20 +192,45 @@ int main()
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 
+  // SCS Common: 15kHz
+  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
+  // SSB_bitmaps.
+  // The array sib1_slots contains the expected slots n0, at which the SIB1 is scheduled. The i-th element of the array
+  // refers to the n0 for the i-th SSB's beam. The slots n0 have been pre-computed based on TS 38.213, Section 13.
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots{5, 7, 9, 11, 13, 15, 17, 19};
-  test_sib1_scheduler(sib1_slots, 9U, 0b10101010);
-  test_sib1_scheduler(sib1_slots, 9U, 0b01010101);
-  test_sib1_scheduler(sib1_slots, 9U, 0b11111111);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b11111111);
 
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_1{2, 3, 4, 5, 6, 7, 8, 9};
-  test_sib1_scheduler(sib1_slots_1, 2U, 0b10101010);
-  test_sib1_scheduler(sib1_slots_1, 2U, 0b01010101);
-  test_sib1_scheduler(sib1_slots_1, 2U, 0b11111111);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b11111111);
 
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_2{7, 8, 9, 10, 11, 12, 13, 14};
-  test_sib1_scheduler(sib1_slots_2, 6U, 0b10101010);
-  test_sib1_scheduler(sib1_slots_2, 6U, 0b01010101);
-  test_sib1_scheduler(sib1_slots_2, 6U, 0b11111111);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_2, 6U, 0b11111111);
+
+  // SCS Common: 30kHz
+  // Test SIB1 scheduler for different values of searchSpaceZero (4 LSBs of pdcch_config_sib1) and for different
+  // SSB_bitmaps.
+  // The array sib1_slots contains the expected slots n0, at which the SIB1 is scheduled. The i-th element of the array
+  // refers to the n0 for the i-th SSB's beam. The slots n0 have been pre-computed based on TS 38.213, Section 13.
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_3{10, 12, 14, 16, 18, 20, 22, 24};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b11111111);
+
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_4{10, 11, 12, 13, 14, 15, 16, 17};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b11111111);
+
+  std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_5{4, 5, 6, 7, 8, 9, 10, 11};
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b10101010);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b01010101);
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b11111111);
 
   return 0;
 }
