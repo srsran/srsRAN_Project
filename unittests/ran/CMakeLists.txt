@@ -12,6 +12,10 @@ add_executable(dci_packing_test pdcch/dci_packing_test.cpp)
 target_link_libraries(dci_packing_test srsgnb_support srsgnb_ran)
 add_test(dci_packing_test dci_packing_test)
 
+add_executable(pdcch_candidates pdcch/pdcch_candidates_common_test.cpp)
+target_link_libraries(pdcch_candidates srsgnb_support srsgnb_ran)
+add_test(pdcch_candidates pdcch_candidates)
+
 add_executable(resource_allocation_frequency_test resource_allocation/resource_allocation_frequency_test.cpp)
 target_link_libraries(resource_allocation_frequency_test srsgnb_support srsgnb_ran)
 add_test(resource_allocation_frequency_test resource_allocation_frequency_test)
