@@ -1100,7 +1100,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   pdu.nr_of_symbols                 = 3U;
 
   auto& data = pdu.pusch_data;
-  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT);
   data.rv_index        = 2;
   data.harq_process_id = 2;
   data.new_data        = 0;
@@ -1108,7 +1108,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   data.num_cb          = 3414;
 
   auto& uci = pdu.pusch_uci;
-  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
   uci.harq_ack_bit_length  = 3;
   uci.csi_part1_bit_length = 4;
   uci.flags_csi_part2      = 65535;
@@ -1127,14 +1127,14 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   corr.part2_size_map_scope = uci_part1_to_part2_correspondence_v3::map_scope_type::common_context;
 
   auto& ptrs = pdu.pusch_ptrs;
-  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT);
   ptrs.ul_ptrs_power     = ul_ptrs_power_type::dB4_77;
   ptrs.ptrs_freq_density = 1;
   ptrs.ptrs_time_density = 2;
   ptrs.port_info.push_back({3, 4, 5});
 
   auto& ofdm = pdu.pusch_ofdm;
-  pdu.pdu_bitmap.set(ul_pusch_pdu::DFTS_OFDM_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::DFTS_OFDM_BIT);
   ofdm.low_papr_group_number                    = 25;
   ofdm.low_papr_sequence_number                 = 3232;
   ofdm.ul_ptrs_sample_density                   = 3;

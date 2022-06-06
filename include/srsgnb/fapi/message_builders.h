@@ -1340,7 +1340,7 @@ public:
   uci_pusch_pdu_builder&
   set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT, true);
+    pdu.pdu_bitmap.set(uci_pusch_pdu::HARQ_BIT);
 
     auto& harq            = pdu.harq;
     harq.detection_status = detection;
@@ -1356,7 +1356,7 @@ public:
   uci_pusch_pdu_builder&
   set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT, true);
+    pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART1_BIT);
 
     auto& csi            = pdu.csi_part1;
     csi.detection_status = detection;
@@ -1371,7 +1371,7 @@ public:
   uci_pusch_pdu_builder&
   set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT, true);
+    pdu.pdu_bitmap.set(uci_pusch_pdu::CSI_PART2_BIT);
 
     auto& csi            = pdu.csi_part2;
     csi.detection_status = detection;
@@ -1461,7 +1461,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 0 or 1 PDU.
   uci_pucch_pdu_format_0_1_builder& set_sr_parameters(bool detected, optional<unsigned> confidence_level)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::SR_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::SR_BIT);
 
     auto& sr_pdu = pdu.sr;
 
@@ -1476,7 +1476,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.2 in table HARQ PDU for format 0 or 1 PDU.
   uci_pucch_pdu_format_0_1_builder& set_harq_parameters(optional<unsigned> confidence_level, span<const uint8_t> value)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_0_1::HARQ_BIT);
 
     auto& harq                 = pdu.harq;
     harq.harq_confidence_level = (confidence_level) ? confidence_level.value() : std::numeric_limits<uint8_t>::max();
@@ -1565,7 +1565,7 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.9.4 in table SR PDU for format 2,3 or 4 PDU.
   uci_pucch_pdu_format_2_3_4_builder& set_sr_parameters(uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::SR_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::SR_BIT);
 
     auto& sr_pdu = pdu.sr;
 
@@ -1581,7 +1581,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder&
   set_harq_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::HARQ_BIT);
 
     auto& harq            = pdu.harq;
     harq.detection_status = detection;
@@ -1597,7 +1597,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder&
   set_csi_part1_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT);
 
     auto& csi            = pdu.csi_part1;
     csi.detection_status = detection;
@@ -1612,7 +1612,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder&
   set_csi_part2_parameters(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT, true);
+    pdu.pdu_bitmap.set(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT);
 
     auto& csi            = pdu.csi_part2;
     csi.detection_status = detection;
@@ -1628,7 +1628,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder&
   set_uci_part1_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    srsran_assert(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT),
+    srsran_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT],
                   "Expected the UCI Part 1 payload to be enabled");
 
     auto& uci                     = pdu.uci_part1;
@@ -1645,7 +1645,7 @@ public:
   uci_pucch_pdu_format_2_3_4_builder&
   set_uci_part2_payload(uci_detection_status detection, uint16_t bit_length, span<const uint8_t> payload)
   {
-    srsran_assert(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT),
+    srsran_assert(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT],
                   "Expected the UCI Part 2 payload to be enabled");
 
     auto& uci                     = pdu.uci_part2;
@@ -2075,7 +2075,6 @@ class ul_pusch_pdu_builder
 public:
   explicit ul_pusch_pdu_builder(ul_pusch_pdu& pdu) : pdu(pdu)
   {
-    pdu.pdu_bitmap.reset();
     pdu.ul_dmrs_symb_pos = 0U;
     pdu.rb_bitmap.fill(0);
   }
@@ -2285,7 +2284,7 @@ public:
                                                 uint16_t            num_cb,
                                                 span<const uint8_t> cb_present_and_position)
   {
-    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT, true);
+    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT);
 
     auto& data           = pdu.pusch_data;
     data.rv_index        = rv_index;
@@ -2308,7 +2307,7 @@ public:
                                                uint8_t  beta_offset_csi_1,
                                                uint8_t  beta_offset_csi_2)
   {
-    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT, true);
+    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT);
 
     auto& uci = pdu.pusch_uci;
 
@@ -2330,7 +2329,7 @@ public:
                                                 uint8_t                                   ptrs_freq_density,
                                                 ul_ptrs_power_type                        ul_ptrs_power)
   {
-    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT, true);
+    pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT);
 
     auto& ptrs = pdu.pusch_ptrs;
 
@@ -2350,7 +2349,7 @@ public:
                                                uint8_t  ul_ptrs_sample_density,
                                                uint8_t  ul_ptrs_time_density_transform_precoding)
   {
-    pdu.pdu_bitmap.set(ul_pusch_pdu::DFTS_OFDM_BIT, true);
+    pdu.pdu_bitmap.set(ul_pusch_pdu::DFTS_OFDM_BIT);
 
     auto& ofdm = pdu.pusch_ofdm;
 

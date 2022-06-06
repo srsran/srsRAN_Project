@@ -175,14 +175,14 @@ bool srsgnb::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_re
   result &= validate_rsrp(pdu_type, pdu.rsrp, report);
 
   // Validate HARQ when it is present.
-  if (pdu.pdu_bitmap.test(uci_pusch_pdu::HARQ_BIT)) {
+  if (pdu.pdu_bitmap[uci_pusch_pdu::HARQ_BIT]) {
     result &= validate_harq_detection_status(pdu_type, static_cast<unsigned>(pdu.harq.detection_status), report);
     result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.bit_length, report);
     // NOTE: HARQ payload property will not be checked.
   }
 
   // Validate CSI part 1 when it is present.
-  if (pdu.pdu_bitmap.test(uci_pusch_pdu::CSI_PART1_BIT)) {
+  if (pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART1_BIT]) {
     result &=
         validate_csi_part1_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part1.detection_status), report);
     result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.bit_length, report);
@@ -190,7 +190,7 @@ bool srsgnb::fapi::validate_uci_pusch_pdu(const uci_pusch_pdu& pdu, validator_re
   }
 
   // Validate CSI part 2 when it is present.
-  if (pdu.pdu_bitmap.test(uci_pusch_pdu::CSI_PART2_BIT)) {
+  if (pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART2_BIT]) {
     result &=
         validate_csi_part2_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part2.detection_status), report);
     result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.bit_length, report);
@@ -317,13 +317,13 @@ bool srsgnb::fapi::validate_uci_pucch_format01_pdu(const uci_pucch_pdu_format_0_
   result &= validate_rsrp(pdu_type, pdu.rsrp, report);
 
   // Validate SR information when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_0_1::SR_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_0_1::SR_BIT]) {
     result &= validate_sr_indication(pdu.sr.sr_indication, report);
     result &= validate_sr_confidence_level(pdu.sr.sr_confidence_level, report);
   }
 
   // Validate HARQ information when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_0_1::HARQ_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_0_1::HARQ_BIT]) {
     result &= validate_harq_format01_nof_harq(pdu.harq.harq_values.size(), report);
     result &= validate_harq_format01_confidence_level(pdu.harq.harq_confidence_level, report);
     for (const auto& harq : pdu.harq.harq_values) {
@@ -413,19 +413,19 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
   result &= validate_rsrp(pdu_type, pdu.rsrp, report);
 
   // Validate SR information when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::SR_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::SR_BIT]) {
     result &= validate_sr_format234_bit_length(pdu.sr.sr_bitlen, report);
   }
 
   // Validate HARQ when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::HARQ_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::HARQ_BIT]) {
     result &= validate_harq_detection_status(pdu_type, static_cast<unsigned>(pdu.harq.detection_status), report);
     result &= validate_harq_expected_bit_length(pdu_type, pdu.harq.bit_length, report);
     // NOTE: HARQ payload property will not be checked.
   }
 
   // Validate CSI part 1 when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT]) {
     result &=
         validate_csi_part1_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part1.detection_status), report);
     result &= validate_csi_part1_expected_bit_length(pdu_type, pdu.csi_part1.bit_length, report);
@@ -437,7 +437,7 @@ bool srsgnb::fapi::validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2
   }
 
   // Validate CSI part 2 when it is present.
-  if (pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT)) {
+  if (pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT]) {
     result &=
         validate_csi_part2_detection_status(pdu_type, static_cast<unsigned>(pdu.csi_part2.detection_status), report);
     result &= validate_csi_part2_expected_bit_length(pdu_type, pdu.csi_part2.bit_length, report);

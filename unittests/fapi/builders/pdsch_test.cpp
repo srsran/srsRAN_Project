@@ -30,8 +30,8 @@ static void test_basic_parameters()
       builder.set_basic_parameters(ptrs, cbg, rnti);
 
       TESTASSERT_EQ(rnti, pdu.rnti);
-      TESTASSERT_EQ(cbg, pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT));
-      TESTASSERT_EQ(ptrs, pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT));
+      TESTASSERT_EQ(cbg, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]);
+      TESTASSERT_EQ(ptrs, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT]);
     }
   }
 }

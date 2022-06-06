@@ -67,7 +67,7 @@ static void test_uci_pusch_pdu_harq()
   builder.set_harq_parameters(status, bit_length, {payload});
 
   const auto& harq = pdu.harq;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pusch_pdu::HARQ_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pusch_pdu::HARQ_BIT]);
   TESTASSERT_EQ(status, harq.detection_status);
   TESTASSERT_EQ(bit_length, harq.bit_length);
   TESTASSERT(payload == harq.payload);
@@ -88,7 +88,7 @@ static void test_uci_pusch_pdu_csi_part1()
   builder.set_csi_part1_parameters(status, bit_length, {payload});
 
   const auto& csi = pdu.csi_part1;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pusch_pdu::CSI_PART1_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART1_BIT]);
   TESTASSERT_EQ(status, csi.detection_status);
   TESTASSERT_EQ(bit_length, csi.bit_length);
   TESTASSERT(payload == csi.payload);
@@ -109,7 +109,7 @@ static void test_uci_pusch_pdu_csi_part2()
   builder.set_csi_part2_parameters(status, bit_length, {payload});
 
   const auto& csi = pdu.csi_part2;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pusch_pdu::CSI_PART2_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pusch_pdu::CSI_PART2_BIT]);
   TESTASSERT_EQ(status, csi.detection_status);
   TESTASSERT_EQ(bit_length, csi.bit_length);
   TESTASSERT(payload == csi.payload);
@@ -176,7 +176,7 @@ static void test_uci_pucch_format01_pdu_sr()
     builder.set_sr_parameters(i, confidence);
 
     const auto& sr_pdu = pdu.sr;
-    TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_0_1::SR_BIT));
+    TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_0_1::SR_BIT]);
     TESTASSERT_EQ((confidence) ? confidence.value() : 255U, sr_pdu.sr_confidence_level);
     TESTASSERT_EQ(i, sr_pdu.sr_indication);
   }
@@ -198,7 +198,7 @@ static void test_uci_pucch_format01_pdu_harq()
     builder.set_harq_parameters(confidence, {payload});
 
     const auto& harq = pdu.harq;
-    TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_0_1::HARQ_BIT));
+    TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_0_1::HARQ_BIT]);
     TESTASSERT_EQ((confidence) ? confidence.value() : 255U, harq.harq_confidence_level);
     TESTASSERT(payload == harq.harq_values);
   }
@@ -258,7 +258,7 @@ static void test_uci_pucch_format234_pdu_sr()
   builder.set_sr_parameters(bit_len, {payload});
 
   const auto& sr_pdu = pdu.sr;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::SR_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::SR_BIT]);
   TESTASSERT_EQ(bit_len, sr_pdu.sr_bitlen);
   TESTASSERT(payload == sr_pdu.sr_payload);
 }
@@ -278,7 +278,7 @@ static void test_uci_pucch_format234_pdu_harq()
   builder.set_harq_parameters(status, bit_length, {payload});
 
   const auto& harq = pdu.harq;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::HARQ_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::HARQ_BIT]);
   TESTASSERT_EQ(status, harq.detection_status);
   TESTASSERT_EQ(bit_length, harq.bit_length);
   TESTASSERT(payload == harq.payload);
@@ -299,7 +299,7 @@ static void test_uci_pucch_format234_pdu_csi_part1()
   builder.set_csi_part1_parameters(status, bit_length, {payload});
 
   const auto& csi = pdu.csi_part1;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT]);
   TESTASSERT_EQ(status, csi.detection_status);
   TESTASSERT_EQ(bit_length, csi.bit_length);
   TESTASSERT(payload == csi.payload);
@@ -320,7 +320,7 @@ static void test_uci_pucch_format234_pdu_csi_part2()
   builder.set_csi_part2_parameters(status, bit_length, {payload});
 
   const auto& csi = pdu.csi_part2;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT]);
   TESTASSERT_EQ(status, csi.detection_status);
   TESTASSERT_EQ(bit_length, csi.bit_length);
   TESTASSERT(payload == csi.payload);
@@ -343,7 +343,7 @@ static void test_uci_pucch_format234_pdu_uci_payload_part1()
   builder.set_uci_part1_payload(status, bit_length, {payload});
 
   const auto& uci = pdu.uci_part1;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART1_BIT]);
   TESTASSERT_EQ(status, uci.detection_status);
   TESTASSERT_EQ(bit_length, uci.expected_uci_payload_size);
   TESTASSERT(payload == uci.payload);
@@ -366,7 +366,7 @@ static void test_uci_pucch_format234_pdu_uci_payload_part2()
   builder.set_uci_part2_payload(status, bit_length, {payload});
 
   const auto& uci = pdu.uci_part2;
-  TESTASSERT(pdu.pdu_bitmap.test(uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT));
+  TESTASSERT(pdu.pdu_bitmap[uci_pucch_pdu_format_2_3_4::CSI_PART2_BIT]);
   TESTASSERT_EQ(status, uci.detection_status);
   TESTASSERT_EQ(bit_length, uci.expected_uci_payload_size);
   TESTASSERT(payload == uci.payload);

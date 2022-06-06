@@ -521,7 +521,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
   result &= validate_start_symbol_index(pdu.start_symbol_index, report);
   result &= validate_num_symbols(pdu.nr_of_symbols, report);
 
-  if (pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_DATA_BIT)) {
+  if (pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_DATA_BIT]) {
     const auto& data = pdu.pusch_data;
     result &= validate_rv_index(data.rv_index, report);
     result &= validate_harq_process_id(data.harq_process_id, report);
@@ -531,7 +531,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     // NOTE: CB present and position bitmap property will not be validated.
   }
 
-  if (pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_UCI_BIT)) {
+  if (pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_UCI_BIT]) {
     const auto& uci = pdu.pusch_uci;
     result &= validate_harq_ack_bit_len(uci.harq_ack_bit_length, report);
     result &= validate_csi_part1_bit_len(uci.csi_part1_bit_length, report);
@@ -555,7 +555,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     }
   }
 
-  if (pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_PTRS_BIT)) {
+  if (pdu.pdu_bitmap[ul_pusch_pdu::PUSCH_PTRS_BIT]) {
     const auto& ptrs = pdu.pusch_ptrs;
 
     for (const auto& ptrs_port : ptrs.port_info) {
@@ -569,7 +569,7 @@ bool srsgnb::fapi::validate_ul_pusch_pdu(const ul_pusch_pdu& pdu, validator_repo
     result &= validate_ul_ptrs_power(static_cast<unsigned>(ptrs.ul_ptrs_power), report);
   }
 
-  if (pdu.pdu_bitmap.test(ul_pusch_pdu::DFTS_OFDM_BIT)) {
+  if (pdu.pdu_bitmap[ul_pusch_pdu::DFTS_OFDM_BIT]) {
     const auto& ofdm = pdu.pusch_ofdm;
 
     result &= validate_low_papr_group_number(ofdm.low_papr_group_number, report);

@@ -226,6 +226,8 @@ enum class dmrs_config_type : uint8_t { type_1, type_2 };
 
 /// Downlink PDSCH PDU information.
 struct dl_pdsch_pdu {
+  static constexpr unsigned BITMAP_SIZE = 2U;
+
   /// Bit position of PTRS in the PDU bitmap.
   static constexpr unsigned PDU_BITMAP_PTRS_BIT = 0U;
   /// Bit position of CBG retransmission control in the PDU bitmap.
@@ -242,7 +244,7 @@ struct dl_pdsch_pdu {
   /// Maximum size of DL TB CRC.
   static constexpr unsigned MAX_SIZE_DL_TB_CRC = 2;
 
-  std::bitset<2>                                       pdu_bitmap;
+  std::bitset<BITMAP_SIZE>                             pdu_bitmap;
   rnti_t                                               rnti;
   uint16_t                                             pdu_index;
   uint16_t                                             bwp_size;
@@ -562,13 +564,14 @@ enum class pusch_mcs_table_type : uint8_t {
 
 /// Uplink PUSCH PDU information.
 struct ul_pusch_pdu {
+  static constexpr unsigned BITMAP_SIZE = 4U;
   /// Bit position of the pdu_bitmap property.
   static constexpr unsigned PUSCH_DATA_BIT = 0U;
   static constexpr unsigned PUSCH_UCI_BIT  = 1U;
   static constexpr unsigned PUSCH_PTRS_BIT = 2U;
   static constexpr unsigned DFTS_OFDM_BIT  = 3U;
 
-  std::bitset<4>           pdu_bitmap;
+  std::bitset<BITMAP_SIZE> pdu_bitmap;
   rnti_t                   rnti;
   uint32_t                 handle;
   uint16_t                 bwp_size;
@@ -927,21 +930,22 @@ struct uci_harq_pdu {
 
 /// PUSCH UCI PDU information.
 struct uci_pusch_pdu {
+  static constexpr unsigned BITMAP_SIZE   = 4U;
   static constexpr unsigned HARQ_BIT      = 1U;
   static constexpr unsigned CSI_PART1_BIT = 2U;
   static constexpr unsigned CSI_PART2_BIT = 3U;
 
-  std::bitset<4> pdu_bitmap;
-  uint32_t       handle;
-  uint16_t       rnti;
-  int16_t        ul_sinr_metric;
-  uint16_t       timing_advance_offset;
-  int16_t        timing_advance_offset_ns;
-  uint16_t       rssi;
-  uint16_t       rsrp;
-  uci_harq_pdu   harq;
-  uci_csi_part1  csi_part1;
-  uci_csi_part2  csi_part2;
+  std::bitset<BITMAP_SIZE> pdu_bitmap;
+  uint32_t                 handle;
+  uint16_t                 rnti;
+  int16_t                  ul_sinr_metric;
+  uint16_t                 timing_advance_offset;
+  int16_t                  timing_advance_offset_ns;
+  uint16_t                 rssi;
+  uint16_t                 rsrp;
+  uci_harq_pdu             harq;
+  uci_csi_part1            csi_part1;
+  uci_csi_part2            csi_part2;
 };
 
 /// SR PDU for format 0 or 1.
@@ -961,22 +965,24 @@ struct uci_harq_format_0_1 {
 
 /// UCI PUCCH for format 0 or 1.
 struct uci_pucch_pdu_format_0_1 {
+  static constexpr unsigned BITMAP_SIZE = 2U;
+
   static constexpr unsigned SR_BIT   = 0U;
   static constexpr unsigned HARQ_BIT = 1U;
 
   enum class format_type : uint8_t { format_0, format_1 };
 
-  std::bitset<2>      pdu_bitmap;
-  uint32_t            handle;
-  uint16_t            rnti;
-  format_type         pucch_format;
-  int16_t             ul_sinr_metric;
-  uint16_t            timing_advance_offset;
-  int16_t             timing_advance_offset_ns;
-  uint16_t            rssi;
-  uint16_t            rsrp;
-  sr_pdu_format_0_1   sr;
-  uci_harq_format_0_1 harq;
+  std::bitset<BITMAP_SIZE> pdu_bitmap;
+  uint32_t                 handle;
+  uint16_t                 rnti;
+  format_type              pucch_format;
+  int16_t                  ul_sinr_metric;
+  uint16_t                 timing_advance_offset;
+  int16_t                  timing_advance_offset_ns;
+  uint16_t                 rssi;
+  uint16_t                 rsrp;
+  sr_pdu_format_0_1        sr;
+  uci_harq_format_0_1      harq;
 };
 
 /// SR PDU for format 2, 3, or 4.
@@ -1000,6 +1006,7 @@ struct uci_payload_pusch_pucch {
 
 /// UCI PUCCH for format 2, 3, or 4.
 struct uci_pucch_pdu_format_2_3_4 {
+  static constexpr unsigned BITMAP_SIZE   = 4U;
   static constexpr unsigned SR_BIT        = 0U;
   static constexpr unsigned HARQ_BIT      = 1U;
   static constexpr unsigned CSI_PART1_BIT = 2U;
@@ -1007,21 +1014,21 @@ struct uci_pucch_pdu_format_2_3_4 {
 
   enum class format_type : uint8_t { format_2, format_3, format_4 };
 
-  std::bitset<4>          pdu_bitmap;
-  uint32_t                handle;
-  uint16_t                rnti;
-  format_type             pucch_format;
-  int16_t                 ul_sinr_metric;
-  uint16_t                timing_advance_offset;
-  int16_t                 timing_advance_offset_ns;
-  uint16_t                rssi;
-  uint16_t                rsrp;
-  sr_pdu_format_2_3_4     sr;
-  uci_harq_pdu            harq;
-  uci_csi_part1           csi_part1;
-  uci_csi_part2           csi_part2;
-  uci_payload_pusch_pucch uci_part1;
-  uci_payload_pusch_pucch uci_part2;
+  std::bitset<BITMAP_SIZE> pdu_bitmap;
+  uint32_t                 handle;
+  uint16_t                 rnti;
+  format_type              pucch_format;
+  int16_t                  ul_sinr_metric;
+  uint16_t                 timing_advance_offset;
+  int16_t                  timing_advance_offset_ns;
+  uint16_t                 rssi;
+  uint16_t                 rsrp;
+  sr_pdu_format_2_3_4      sr;
+  uci_harq_pdu             harq;
+  uci_csi_part1            csi_part1;
+  uci_csi_part2            csi_part2;
+  uci_payload_pusch_pucch  uci_part1;
+  uci_payload_pusch_pucch  uci_part2;
 };
 
 enum class uci_pdu_type : uint16_t { PUSCH, PUCCH_format_0_1, PUCCH_format_2_3_4 };
