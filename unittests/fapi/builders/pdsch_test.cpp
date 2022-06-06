@@ -30,8 +30,8 @@ static void test_basic_parameters()
       builder.set_basic_parameters(ptrs, cbg, rnti);
 
       TESTASSERT_EQ(rnti, pdu.rnti);
-      TESTASSERT_EQ(cbg, (pdu.pdu_bitmap >> dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT) & 1U);
-      TESTASSERT_EQ(ptrs, (pdu.pdu_bitmap >> dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT) & 1U);
+      TESTASSERT_EQ(cbg, pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT));
+      TESTASSERT_EQ(ptrs, pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT));
     }
   }
 }
@@ -321,18 +321,17 @@ static void test_maintenance_v3_rm_references_parameters()
     uint16_t ssb_config = pdu_index_dist(gen);
     uint16_t pdcch      = pdu_index_dist(gen);
     uint16_t dci        = pdu_index_dist(gen);
+    unsigned prb_size   = 54;
+    unsigned lte_size   = 3;
 
-    builder.set_maintenance_v3_rm_references_parameters(span<const uint16_t>(ssb_pdus),
-                                                        ssb_config,
-                                                        span<const uint8_t>(prb_pdus),
-                                                        pdcch,
-                                                        dci,
-                                                        span<const uint8_t>(lte_pdus),
-                                                        span<const uint16_t>(csi));
+    builder.set_maintenance_v3_rm_references_parameters(
+        {ssb_pdus}, ssb_config, prb_size, {prb_pdus}, pdcch, dci, lte_size, {lte_pdus}, {csi});
 
     TESTASSERT_EQ(ssb_config, pdu.pdsch_maintenance_v3.ssb_config_for_rate_matching);
     TESTASSERT_EQ(pdcch, pdu.pdsch_maintenance_v3.pdcch_pdu_index);
     TESTASSERT_EQ(dci, pdu.pdsch_maintenance_v3.dci_index);
+    TESTASSERT_EQ(prb_size, pdu.pdsch_maintenance_v3.prb_sym_rm_pattern_bitmap_size_byref);
+    TESTASSERT_EQ(lte_size, pdu.pdsch_maintenance_v3.lte_crs_rm_pattern_bitmap_size);
   }
 }
 
@@ -415,12 +414,13 @@ static void test_maintenance_v4_basic_parameters()
     dl_pdsch_pdu_builder builder(pdu);
 
     // :TODO: Modify the test to check the vector structures when they're defined.
-    static_vector<uint8_t, 16> coreset_rm = {1, 2, 3};
-    static_vector<uint8_t, 16> lte_crs    = {1, 2, 3, 4};
+    static_vector<uint8_t, 16> coreset_rm   = {1, 2, 3};
+    static_vector<uint8_t, 16> lte_crs      = {1, 2, 3, 4};
+    unsigned                   coreset_size = 43;
 
-    builder.set_maintenance_v4_basic_parameters(
-        span<const uint8_t>(coreset_rm), derivation_method, span<const uint8_t>(lte_crs));
+    builder.set_maintenance_v4_basic_parameters(coreset_size, {coreset_rm}, derivation_method, {lte_crs});
 
+    TESTASSERT_EQ(coreset_size, pdu.pdsch_parameters_v4.coreset_rm_pattern_bitmap_size_by_ref);
     TESTASSERT_EQ(derivation_method, pdu.pdsch_parameters_v4.lte_crs_mbsfn_derivation_method);
     TESTASSERT(coreset_rm == pdu.pdsch_parameters_v4.coreset_rm_pattern_bmp_by_ref);
     TESTASSERT(lte_crs == pdu.pdsch_parameters_v4.lte_crs_mbsfn_pattern);

@@ -176,7 +176,7 @@ static void test_optional_pusch_data_params()
 
   builder.add_optional_pusch_data(rv_index, harq_process_id, new_data, tb_size, num_cb, {cb_present});
 
-  TESTASSERT((pdu.pdu_bitmap >> ul_pusch_pdu::PUSCH_DATA_BIT) & 1U);
+  TESTASSERT(pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_DATA_BIT));
   const auto& data = pdu.pusch_data;
   TESTASSERT_EQ(rv_index, data.rv_index);
   TESTASSERT_EQ(harq_process_id, data.harq_process_id);
@@ -226,7 +226,7 @@ static void test_optional_pusch_uci_params()
                                    beta_offset_csi1,
                                    beta_offset_csi2);
 
-    TESTASSERT((pdu.pdu_bitmap >> ul_pusch_pdu::PUSCH_UCI_BIT) & 1U);
+    TESTASSERT(pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_UCI_BIT));
     const auto& uci = pdu.pusch_uci;
     TESTASSERT_EQ(beta_offset_harq_ack, uci.beta_offset_harq_ack);
     TESTASSERT_EQ(beta_offset_csi1, uci.beta_offset_csi1);
@@ -253,7 +253,7 @@ static void test_optional_pusch_ptrs_params()
 
         builder.add_optional_pusch_ptrs({ptr_ports}, ptrs_time, ptrs_freq, ptrs_power);
 
-        TESTASSERT((pdu.pdu_bitmap >> ul_pusch_pdu::PUSCH_PTRS_BIT) & 1U);
+        TESTASSERT(pdu.pdu_bitmap.test(ul_pusch_pdu::PUSCH_PTRS_BIT));
         const auto& ptrs = pdu.pusch_ptrs;
         TESTASSERT_EQ(ptrs_power, ptrs.ul_ptrs_power);
         TESTASSERT_EQ(ptrs_freq / 4, ptrs.ptrs_freq_density);
@@ -279,7 +279,7 @@ static void test_optional_dfts_ofdm_params()
 
   builder.add_optional_dfts_ofdm(low_papr_group_num, low_papr_sequ_num, ul_ptrs_sample_density, ul_ptrs_time_density);
 
-  TESTASSERT((pdu.pdu_bitmap >> ul_pusch_pdu::DFTS_OFDM_BIT) & 1U);
+  TESTASSERT(pdu.pdu_bitmap.test(ul_pusch_pdu::DFTS_OFDM_BIT));
   const auto& ofdm = pdu.pusch_ofdm;
   TESTASSERT_EQ(ul_ptrs_sample_density, ofdm.ul_ptrs_sample_density);
   TESTASSERT_EQ(ul_ptrs_time_density, ofdm.ul_ptrs_time_density_transform_precoding);

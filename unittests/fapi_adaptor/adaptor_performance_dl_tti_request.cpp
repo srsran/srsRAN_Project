@@ -162,7 +162,7 @@ static void pdcch_conversion_benchmark()
     packed_payload.resize(std::ceil(payload.size() / 8.F));
     srsvec::bit_pack({packed_payload}, {payload});
 
-    builder_dci.set_payload({packed_payload});
+    builder_dci.set_payload(12, {packed_payload});
 
     optional<float> profile_data;
     optional<float> profile_dmrs;

@@ -32,6 +32,7 @@ static void test_crc_indication_validator_ok()
     uint8_t                                                       harq_id       = 0;
     uint8_t                                                       tb_crc_status = 0;
     static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
+    uint16_t                                                      num_cb = 13;
 
     optional<float>    ul_sinr_dB;
     optional<unsigned> timing_advance_offset;
@@ -52,6 +53,7 @@ static void test_crc_indication_validator_ok()
                     rapid,
                     harq_id,
                     tb_crc_status,
+                    num_cb,
                     {cb_crc_status},
                     ul_sinr_dB,
                     timing_advance_offset,
@@ -83,6 +85,7 @@ static void test_crc_indication_validator_error()
   uint8_t                                                       harq_id       = 128;
   uint8_t                                                       tb_crc_status = 180;
   static_vector<uint8_t, crc_ind_pdu::MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
+  uint16_t                                                      num_cb = 14;
 
   optional<float>    ul_sinr_dB;
   optional<unsigned> timing_advance_offset;
@@ -96,6 +99,7 @@ static void test_crc_indication_validator_error()
                   rapid,
                   harq_id,
                   tb_crc_status,
+                  num_cb,
                   {cb_crc_status},
                   ul_sinr_dB,
                   timing_advance_offset,

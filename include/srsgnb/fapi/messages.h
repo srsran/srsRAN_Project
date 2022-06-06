@@ -17,6 +17,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
+#include <bitset>
 #include <cstdint>
 
 namespace srsgnb {
@@ -114,6 +115,7 @@ struct dl_dci_pdu {
   //: TODO: beamforming info
   uint8_t                                       beta_pdcch_1_0;
   int8_t                                        power_control_offset_ss_profile_nr;
+  uint16_t                                      payload_size_bits;
   static_vector<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
 };
 
@@ -170,12 +172,14 @@ struct dl_pdsch_maintenance_parameters_v3 {
   uint8_t                                       tb_crc_required;
   std::array<uint16_t, MAX_SIZE_SSB_PDU_FOR_RM> ssb_pdus_for_rate_matching;
   uint16_t                                      ssb_config_for_rate_matching;
+  uint8_t                                       prb_sym_rm_pattern_bitmap_size_byref;
   //: TODO: determine max size of this array
   static_vector<uint8_t, 16> prb_sym_rm_patt_bmp_byref;
   uint8_t                    num_prb_sym_rm_patts_by_value;
   uint8_t                    num_coreset_rm_patterns;
   uint16_t                   pdcch_pdu_index;
   uint16_t                   dci_index;
+  uint8_t                    lte_crs_rm_pattern_bitmap_size;
   //: TODO: determine max size of this array
   static_vector<uint8_t, 16>  lte_crs_rm_pattern;
   static_vector<uint16_t, 16> csi_for_rm;
@@ -192,6 +196,7 @@ struct dl_pdsch_ptrs_maintenance_v3 {
 };
 
 struct dl_pdsch_parameters_v4 {
+  uint8_t coreset_rm_pattern_bitmap_size_by_ref;
   //: TODO: determine max size of this array
   static_vector<uint8_t, 16> coreset_rm_pattern_bmp_by_ref;
   uint8_t                    lte_crs_mbsfn_derivation_method;
@@ -237,7 +242,7 @@ struct dl_pdsch_pdu {
   /// Maximum size of DL TB CRC.
   static constexpr unsigned MAX_SIZE_DL_TB_CRC = 2;
 
-  uint16_t                                             pdu_bitmap;
+  std::bitset<2>                                       pdu_bitmap;
   rnti_t                                               rnti;
   uint16_t                                             pdu_index;
   uint16_t                                             bwp_size;
@@ -312,8 +317,8 @@ struct dl_csi_rs_pdu {
 struct dl_ssb_phy_mib_pdu {
   uint8_t dmrs_typeA_position;
   uint8_t pdcch_config_sib1;
-  uint8_t cell_barred;
-  uint8_t intrafreq_reselection;
+  bool    cell_barred;
+  bool    intrafreq_reselection;
 };
 
 /// BCH payload information.
@@ -381,7 +386,6 @@ struct dl_tti_request_message : public base_message {
 
   uint16_t                                        sfn;
   uint16_t                                        slot;
-  uint8_t                                         num_dl_types;
   std::array<uint16_t, MAX_NUM_DL_TYPES>          num_pdus_of_each_type;
   uint16_t                                        num_groups;
   static_vector<dl_tti_request_pdu, MAX_NUM_PDUS> pdus;
@@ -564,7 +568,7 @@ struct ul_pusch_pdu {
   static constexpr unsigned PUSCH_PTRS_BIT = 2U;
   static constexpr unsigned DFTS_OFDM_BIT  = 3U;
 
-  uint16_t                 pdu_bitmap;
+  std::bitset<4>           pdu_bitmap;
   rnti_t                   rnti;
   uint32_t                 handle;
   uint16_t                 bwp_size;
@@ -794,7 +798,6 @@ struct ul_dci_request_message : public base_message {
 
   uint16_t                                    sfn;
   uint16_t                                    slot;
-  uint8_t                                     num_dl_types;
   std::array<uint16_t, MAX_NUM_DL_TYPES>      num_pdus_of_each_type;
   static_vector<ul_dci_pdu, MAX_NUM_UCI_PDUS> pdus;
 };
@@ -871,6 +874,7 @@ struct crc_ind_pdu {
   uint8_t                                          rapid;
   uint8_t                                          harq_id;
   uint8_t                                          tb_crc_status;
+  uint16_t                                         num_cb;
   static_vector<uint8_t, MAX_NUM_CB_PER_TTI_BYTES> cb_crc_status;
   int16_t                                          ul_sinr_metric;
   uint16_t                                         timing_advance_offset;
@@ -927,17 +931,17 @@ struct uci_pusch_pdu {
   static constexpr unsigned CSI_PART1_BIT = 2U;
   static constexpr unsigned CSI_PART2_BIT = 3U;
 
-  uint8_t       pdu_bitmap;
-  uint32_t      handle;
-  uint16_t      rnti;
-  int16_t       ul_sinr_metric;
-  uint16_t      timing_advance_offset;
-  int16_t       timing_advance_offset_ns;
-  uint16_t      rssi;
-  uint16_t      rsrp;
-  uci_harq_pdu  harq;
-  uci_csi_part1 csi_part1;
-  uci_csi_part2 csi_part2;
+  std::bitset<4> pdu_bitmap;
+  uint32_t       handle;
+  uint16_t       rnti;
+  int16_t        ul_sinr_metric;
+  uint16_t       timing_advance_offset;
+  int16_t        timing_advance_offset_ns;
+  uint16_t       rssi;
+  uint16_t       rsrp;
+  uci_harq_pdu   harq;
+  uci_csi_part1  csi_part1;
+  uci_csi_part2  csi_part2;
 };
 
 /// SR PDU for format 0 or 1.
@@ -962,7 +966,7 @@ struct uci_pucch_pdu_format_0_1 {
 
   enum class format_type : uint8_t { format_0, format_1 };
 
-  uint8_t             pdu_bitmap;
+  std::bitset<2>      pdu_bitmap;
   uint32_t            handle;
   uint16_t            rnti;
   format_type         pucch_format;
@@ -1003,7 +1007,7 @@ struct uci_pucch_pdu_format_2_3_4 {
 
   enum class format_type : uint8_t { format_2, format_3, format_4 };
 
-  uint8_t                 pdu_bitmap;
+  std::bitset<4>          pdu_bitmap;
   uint32_t                handle;
   uint16_t                rnti;
   format_type             pucch_format;

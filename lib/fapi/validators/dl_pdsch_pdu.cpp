@@ -10,7 +10,6 @@
 
 #include "dl_pdsch_pdu.h"
 #include "helpers.h"
-#include "srsgnb/adt/bitmap_utils.h"
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/validator_report.h"
 
@@ -404,7 +403,7 @@ bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
   result &= validate_start_symbol_index(pdu.start_symbol_index, report);
   result &= validate_nr_of_symbols(pdu.nr_of_symbols, report);
 
-  if (check_bitmap_bit(pdu.pdu_bitmap, dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT)) {
+  if (pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT)) {
     // :TODO: PTRS.
     ;
   }
@@ -417,7 +416,7 @@ bool srsgnb::fapi::validate_dl_pdsch_pdu(const dl_pdsch_pdu& pdu, validator_repo
                                                         pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss,
                                                         report);
 
-  if (check_bitmap_bit(pdu.pdu_bitmap, dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT)) {
+  if (pdu.pdu_bitmap.test(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT)) {
     // NOTE: Is last CB present bitmap property will not be validated.
     result &= validate_is_inline_tb_crc(static_cast<unsigned>(pdu.is_inline_tb_crc), report);
     // NOTE: DL TB CRC CW property will not be validated.

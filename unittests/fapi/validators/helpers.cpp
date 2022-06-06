@@ -193,7 +193,7 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   // Payload.
   static_vector<uint8_t, 128> payload(32, 1);
 
-  builder_dci.set_payload({payload});
+  builder_dci.set_payload(2, {payload});
 
   optional<float> profile_data;
   optional<float> profile_dmrs;
@@ -312,7 +312,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
 
   std::vector<uint8_t> rm_vector;
 
-  builder_pdsch.set_maintenance_v4_basic_parameters({rm_vector}, binary_dist(gen), {rm_vector});
+  builder_pdsch.set_maintenance_v4_basic_parameters(3, {rm_vector}, binary_dist(gen), {rm_vector});
 
   return pdu;
 }
@@ -1100,7 +1100,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   pdu.nr_of_symbols                 = 3U;
 
   auto& data = pdu.pusch_data;
-  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_DATA_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_DATA_BIT, true);
   data.rv_index        = 2;
   data.harq_process_id = 2;
   data.new_data        = 0;
@@ -1108,7 +1108,7 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   data.num_cb          = 3414;
 
   auto& uci = pdu.pusch_uci;
-  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_UCI_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_UCI_BIT, true);
   uci.harq_ack_bit_length  = 3;
   uci.csi_part1_bit_length = 4;
   uci.flags_csi_part2      = 65535;
@@ -1127,14 +1127,14 @@ ul_pusch_pdu unittest::build_valid_ul_pusch_pdu()
   corr.part2_size_map_scope = uci_part1_to_part2_correspondence_v3::map_scope_type::common_context;
 
   auto& ptrs = pdu.pusch_ptrs;
-  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::PUSCH_PTRS_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::PUSCH_PTRS_BIT, true);
   ptrs.ul_ptrs_power     = ul_ptrs_power_type::dB4_77;
   ptrs.ptrs_freq_density = 1;
   ptrs.ptrs_time_density = 2;
   ptrs.port_info.push_back({3, 4, 5});
 
   auto& ofdm = pdu.pusch_ofdm;
-  set_bitmap_bit(pdu.pdu_bitmap, ul_pusch_pdu::DFTS_OFDM_BIT, true);
+  pdu.pdu_bitmap.set(ul_pusch_pdu::DFTS_OFDM_BIT, true);
   ofdm.low_papr_group_number                    = 25;
   ofdm.low_papr_sequence_number                 = 3232;
   ofdm.ul_ptrs_sample_density                   = 3;

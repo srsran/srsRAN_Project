@@ -69,10 +69,10 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
   payload |= ((mib.pdcch_config_sib1 & 0xFF) << 11u);
 
   // Barred - 1 bit.
-  payload |= ((mib.cell_barred & 0x1) << 10u);
+  payload |= ((mib.cell_barred ? 0U : 1U) << 10u);
 
   // intraFreqReselection - 1 bit.
-  payload |= ((mib.intrafreq_reselection & 0x1) << 9u);
+  payload |= ((mib.intrafreq_reselection ? 0U : 1U) << 9u);
 
   // Spare - 1 bit.
   // Leave to zero.

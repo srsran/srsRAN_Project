@@ -100,7 +100,7 @@ static void pdcch_conversion_test()
                   packed_payload.resize(std::ceil(payload.size() / 8.F));
                   srsvec::bit_pack({packed_payload}, {payload});
 
-                  builder_dci.set_payload({packed_payload});
+                  builder_dci.set_payload(16, {packed_payload});
 
                   optional<float> profile_data;
                   if (power != -33) {
