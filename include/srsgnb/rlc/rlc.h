@@ -67,10 +67,10 @@ public:
 /// This interface represents the control-plane upper layer that the
 /// TX RLC bearer must notify in case of protocol errors,
 /// or, in the case of AM bearers, maximum retransmissions reached.
-class rlc_tx_upper_control_plane
+class rlc_tx_upper_layer_control_plane
 {
 public:
-  virtual ~rlc_tx_upper_control_plane() = default;
+  virtual ~rlc_tx_upper_layer_control_plane() = default;
 
   virtual void notify_protocol_failure() = 0;
   virtual void notify_max_retx()         = 0;
