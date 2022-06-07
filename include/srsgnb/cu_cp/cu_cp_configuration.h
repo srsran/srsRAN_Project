@@ -15,6 +15,7 @@
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
 /// Configuration passed to CU CP.
 struct cu_cp_configuration {
@@ -22,6 +23,7 @@ struct cu_cp_configuration {
   f1c_message_handler* f1c_msg_hdl = nullptr;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_CU_CP_CONFIGURATION_H

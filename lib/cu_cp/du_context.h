@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_DU_CONTEXT_H
-#define SRSGNB_CU_CP_DU_CONTEXT_H
+#ifndef SRSGNB_DU_CONTEXT_H
+#define SRSGNB_DU_CONTEXT_H
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
@@ -17,8 +17,7 @@
 #include <string>
 
 namespace srsgnb {
-
-namespace cu_cp {
+namespace srs_cu_cp {
 
 /// 36-bit identifying an NR Cell Id as specified in subclause 9.3.1.7 of 3GPP TS 38.413
 struct nr_cell_identity {
@@ -52,16 +51,15 @@ struct du_cell_context {
   du_sys_info             sys_info; /// System information provided by DU
 };
 
-struct cu_cp_du_context {
-  cu_cp_du_index_t du_index; /// Index assisgned by CU-CP
-  uint64_t         id;       /// the gNB-DU-ID
-  std::string      name = "none"; /// gNB-DU-Name
-  slot_array<du_cell_context, MAX_NOF_CU_CP_DU_CELLS>
-      cell_db; /// flattened version of served cells list provided by DU/F1AP
+struct du_context {
+  du_index_t                                    du_index;      /// Index assisgned by CU-CP
+  uint64_t                                      id;            /// the gNB-DU-ID
+  std::string                                   name = "none"; /// gNB-DU-Name
+  slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1AP
 };
 
-} // namespace cu_cp
+} // namespace srs_cu_cp
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_DU_CONTEXT_H
+#endif // SRSGNB_DU_CONTEXT_H

@@ -8,28 +8,33 @@
  *
  */
 
-#include "../../lib/cu_cp/cu_cp_manager_config.h"
-#include "../../lib/cu_cp/cu_cp_manager_context.h"
+#include "lib/cu_cp/cu_cp_manager_config.h"
+#include "lib/cu_cp/cu_cp_manager_context.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
 #include "srsgnb/f1_interface/f1ap_cu_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
+using namespace srs_cu_cp;
 
 enum class test_outcome { success, failure };
 
-class dummy_f1ap_cu_message_notifier : public f1ap_cu_message_notifier
+namespace srsgnb {
+namespace srs_cu_cp {
+class dummy_f1ap_message_notifier : public srsgnb::srs_cu_cp::f1ap_message_notifier
 {
 public:
-  f1_cu_setup_request_message last_f1_cu_setup_request_message;
-  void                        on_f1_setup_request_received(const f1_cu_setup_request_message& msg) override
+  f1_setup_request_message last_f1_setup_request_message;
+  void                     on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("CU MNG");
     test_logger.info("Received F1SetupRequest message.");
-    last_f1_cu_setup_request_message = msg;
+    last_f1_setup_request_message = msg;
   }
 };
+} // namespace srs_cu_cp
+} // namespace srsgnb
 
 /// Test the f1 setup procedure
 void test_f1_setup(test_outcome outcome)
@@ -38,8 +43,8 @@ void test_f1_setup(test_outcome outcome)
                                 outcome == test_outcome::success ? "Success" : "Failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  dummy_f1ap_cu_message_notifier f1ap_ev_notifier;
-  auto                           f1ap_cu = create_f1ap_cu(f1ap_ev_notifier);
+  dummy_f1ap_message_notifier f1ap_ev_notifier;
+  auto                        f1ap_cu = create_f1ap(f1ap_ev_notifier);
 
   // Action 1: Receive F1SetupRequest message
   test_logger.info("TEST: Receive F1SetupRequest message...");
@@ -103,12 +108,12 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_message(pdu);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
-    TESTASSERT(f1ap_ev_notifier.last_f1_cu_setup_request_message.request->gnb_du_id.value = 0x11);
+    TESTASSERT(f1ap_ev_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
 
     // Action 3: Transmit F1SetupResponse message
     test_logger.info("TEST: Transmit F1SetupResponse message...");
-    f1_cu_setup_response_message msg = {};
-    msg.success                      = true;
+    f1_setup_response_message msg = {};
+    msg.success                   = true;
     f1ap_cu->handle_f1ap_setup_response(msg);
 
   } else {
@@ -131,12 +136,12 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_message(pdu);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
-    TESTASSERT(f1ap_ev_notifier.last_f1_cu_setup_request_message.request->gnb_du_id.value = 0x11);
+    TESTASSERT(f1ap_ev_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
 
     // Action 3: Transmit F1SetupFailure message
     test_logger.info("TEST: Transmit F1SetupFailure message...");
-    f1_cu_setup_response_message msg = {};
-    msg.success                      = false;
+    f1_setup_response_message msg = {};
+    msg.success                   = false;
     f1ap_cu->handle_f1ap_setup_response(msg);
   }
 }

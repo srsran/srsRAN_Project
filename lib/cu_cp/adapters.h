@@ -16,19 +16,21 @@
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
-class cu_manager_f1ap_event_indicator : public f1ap_cu_message_notifier
+class cu_cp_manager_f1ap_event_indicator : public f1ap_message_notifier
 {
 public:
-  void on_f1_setup_request_received(const f1_cu_setup_request_message& msg) override
+  void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    cu_cp_f1ap_setup_handler->handle_f1_setup_request(msg);
+    f1ap_setup_handler->handle_f1_setup_request(msg);
   }
 
 private:
-  cu_cp_manager_f1ap_setup_handler* cu_cp_f1ap_setup_handler;
+  cu_cp_manager_f1ap_setup_handler* f1ap_setup_handler;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_ADAPTERS_H

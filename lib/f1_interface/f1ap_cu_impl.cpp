@@ -15,22 +15,23 @@
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
+using namespace srs_cu_cp;
 
-class srsgnb::f1ap_cu_impl::f1ap_cu_event_manager
+class srsgnb::srs_cu_cp::f1ap_cu_impl::f1ap_event_manager
 {
 public:
   /// F1SetupRequest receive.
   event_signal<asn1::f1ap::f1_setup_request_s> f1ap_setup_request;
 };
 
-f1ap_cu_impl::f1ap_cu_impl(f1ap_cu_message_notifier& event_notifier_) :
+f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier& event_notifier_) :
   logger(srslog::fetch_basic_logger("F1AP")), event_notifier(event_notifier_)
 {}
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
 
-void f1ap_cu_impl::handle_f1ap_setup_response(const f1_cu_setup_response_message& msg)
+void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
 {
   if (msg.success) {
     // TODO send response
@@ -57,7 +58,7 @@ void f1ap_cu_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
-  srsgnb::f1_cu_setup_request_message req_msg = {};
+  f1_setup_request_message req_msg = {};
   switch (msg.value.type().value) {
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request:
       req_msg.request = msg.value.f1_setup_request();

@@ -12,16 +12,16 @@
 #include "srsgnb/f1_interface/f1ap_cu.h"
 
 using namespace srsgnb;
-using namespace cu_cp;
+using namespace srs_cu_cp;
 
 cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
   cfg(cfg_), ue_mng(cfg), du_mng(cfg), main_ctrl_loop(128)
 {
   // nothing to start straigt away on the CU
-  cu_cp_ctx = {}; // make it compile
+  ctx = {}; // make it compile
 }
 
-void cu_cp_manager_impl::handle_f1_setup_request(const f1_cu_setup_request_message& msg)
+void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
 {
   // TODO: add handling
   cfg.logger.debug("Received F1 setup request");
@@ -34,8 +34,8 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_cu_setup_request_messa
   }
 
   // Create new DU context
-  cu_cp_du_context du_ctxt{};
-  du_ctxt.du_index = MIN_CU_CP_DU_INDEX; // TODO: get unique next index
+  du_context du_ctxt{};
+  du_ctxt.du_index = MIN_DU_INDEX; // TODO: get unique next index
   du_ctxt.id       = msg.request->gnb_du_id.value;
   if (msg.request->gnb_du_name_present) {
     du_ctxt.name = msg.request->gnb_du_name.value.to_string();
@@ -78,7 +78,7 @@ size_t cu_cp_manager_impl::nof_ues()
   // TODO: This is temporary code.
   static std::mutex              mutex;
   static std::condition_variable cvar;
-  size_t                         result = MAX_NOF_CU_CP_UES;
+  size_t                         result = MAX_NOF_UES;
   cfg.cu_cp_mng_exec->execute([this, &result]() {
     std::unique_lock<std::mutex> lock(mutex);
     result = ue_mng.get_ues().size();

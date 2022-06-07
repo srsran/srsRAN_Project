@@ -15,37 +15,35 @@
 #include <type_traits>
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
-enum cu_cp_ue_index_t : uint16_t { MIN_CU_CP_UE_INDEX = 0, MAX_CU_CP_UE_INDEX = 1023, MAX_NOF_CU_CP_UES = 1024 };
+enum ue_index_t : uint16_t { MIN_UE_INDEX = 0, MAX_UE_INDEX = 1023, MAX_NOF_UES = 1024 };
 
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
-enum cu_cp_du_index_t : uint16_t { MIN_CU_CP_DU_INDEX = 0, MAX_CU_CP_DU_INDEX = 1, MAX_NOF_CU_CP_DUS = 2 };
+enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2 };
 
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-enum cu_cp_du_cell_index_t : uint16_t {
-  MIN_CU_CP_DU_CELL_INDEX = 0,
-  MAX_CU_CP_DU_CELL_INDEX = 15,
-  MAX_NOF_CU_CP_DU_CELLS  = 16
-};
+enum du_cell_index_t : uint16_t { MIN_DU_CELL_INDEX = 0, MAX_DU_CELL_INDEX = 15, MAX_NOF_DU_CELLS = 16 };
 
 /// Convert integer to CU UE index type.
-constexpr inline cu_cp_ue_index_t to_cu_ue_index(std::underlying_type_t<cu_cp_ue_index_t> idx)
+constexpr inline ue_index_t to_cu_ue_index(std::underlying_type_t<ue_index_t> idx)
 {
-  return static_cast<cu_cp_ue_index_t>(idx);
+  return static_cast<ue_index_t>(idx);
 }
 
-constexpr inline bool is_cu_ue_index_valid(cu_cp_ue_index_t ue_idx)
+constexpr inline bool is_cu_ue_index_valid(ue_index_t ue_idx)
 {
-  return ue_idx < MAX_NOF_CU_CP_UES;
+  return ue_idx < MAX_NOF_UES;
 }
 
 /// Convert integer to CU cell index type.
-inline cu_cp_du_cell_index_t to_cu_cp_du_cell_index(std::underlying_type_t<cu_cp_du_cell_index_t> idx)
+inline du_cell_index_t to_du_cell_index(std::underlying_type_t<du_cell_index_t> idx)
 {
-  return static_cast<cu_cp_du_cell_index_t>(idx);
+  return static_cast<du_cell_index_t>(idx);
 }
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_RAN_CU_CP_TYPES_H

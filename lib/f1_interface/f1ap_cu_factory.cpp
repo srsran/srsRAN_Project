@@ -15,8 +15,9 @@
 /// Notice this would be the only place were we include concrete class implementation files.
 
 using namespace srsgnb;
+using namespace srs_cu_cp;
 
-std::unique_ptr<f1_cu_interface> srsgnb::create_f1ap_cu(f1ap_cu_message_notifier& event_notifier)
+std::unique_ptr<f1_interface> srsgnb::srs_cu_cp::create_f1ap(f1ap_message_notifier& event_notifier)
 {
   auto f1ap_cu = std::make_unique<f1ap_cu_impl>(event_notifier);
   return f1ap_cu;

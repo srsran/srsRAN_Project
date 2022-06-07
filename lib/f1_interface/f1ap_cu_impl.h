@@ -17,28 +17,30 @@
 #include <memory>
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
-class f1ap_cu_impl final : public f1_cu_interface
+class f1ap_cu_impl final : public f1_interface
 {
 public:
-  f1ap_cu_impl(f1ap_cu_message_notifier& event_notifier_);
+  f1ap_cu_impl(f1ap_message_notifier& event_notifier_);
   ~f1ap_cu_impl();
 
-  void handle_f1ap_setup_response(const f1_cu_setup_response_message& msg) override;
+  void handle_f1ap_setup_response(const f1_setup_response_message& msg) override;
 
   void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
   void handle_connection_loss() override {}
 
 private:
-  class f1ap_cu_event_manager;
+  class f1ap_event_manager;
 
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  srslog::basic_logger&     logger;
-  f1ap_cu_message_notifier& event_notifier;
+  srslog::basic_logger&  logger;
+  f1ap_message_notifier& event_notifier;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_F1AP_CU_IMPL_H

@@ -8,28 +8,28 @@
  *
  */
 
-#include "cu_cp_du_manager.h"
+#include "du_manager.h"
 
 using namespace srsgnb;
-using namespace cu_cp;
+using namespace srs_cu_cp;
 
-cu_cp_du_manager::cu_cp_du_manager(cu_cp_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
+du_manager::du_manager(cu_cp_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
 {
   const size_t number_of_pending_procedures = 16;
-  for (size_t i = 0; i < MAX_NOF_CU_CP_DUS; ++i) {
+  for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
     du_ctrl_loop.emplace(i, number_of_pending_procedures);
   }
 }
 
-cu_cp_du_context* cu_cp_du_manager::find_du(cu_cp_du_index_t du_index)
+du_context* du_manager::find_du(du_index_t du_index)
 {
-  srsran_assert(du_index < MAX_NOF_CU_CP_DUS, "Invalid du_index={}", du_index);
+  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
   return du_db.contains(du_index) ? &du_db[du_index] : nullptr;
 }
 
-cu_cp_du_context* cu_cp_du_manager::add_du(cu_cp_du_context du_ctx)
+du_context* du_manager::add_du(du_context du_ctx)
 {
-  srsran_assert(du_ctx.du_index < MAX_NOF_CU_CP_DUS, "Invalid du_index={}", du_ctx.du_index);
+  srsran_assert(du_ctx.du_index < MAX_NOF_DUS, "Invalid du_index={}", du_ctx.du_index);
 
   if (du_db.contains(du_ctx.du_index)) {
     // DU already existed with same du_index
@@ -37,19 +37,19 @@ cu_cp_du_context* cu_cp_du_manager::add_du(cu_cp_du_context du_ctx)
   }
 
   // Create DU object
-  cu_cp_du_index_t du_index = du_ctx.du_index;
+  du_index_t du_index = du_ctx.du_index;
   du_db.emplace(du_index, std::move(du_ctx));
   auto& u = du_db[du_index];
 
   return &u;
 }
 
-void cu_cp_du_manager::remove_du(cu_cp_du_index_t du_index)
+void du_manager::remove_du(du_index_t du_index)
 {
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the DU. This is achieved via a scheduled async task
 
-  srsran_assert(du_index < MAX_NOF_CU_CP_DUS, "Invalid du_index={}", du_index);
+  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task

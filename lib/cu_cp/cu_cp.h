@@ -18,6 +18,7 @@
 #include <memory>
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
 class cu_cp
 {
@@ -33,11 +34,12 @@ public:
 private:
   cu_cp_configuration cfg;
 
-  std::unique_ptr<f1_cu_interface> f1ap;
+  std::unique_ptr<f1_interface> f1ap;
 
-  cu_manager_f1ap_event_indicator f1ap_ev_notifier;
+  cu_cp_manager_f1ap_event_indicator f1ap_ev_notifier;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_CU_CP_H

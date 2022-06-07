@@ -8,20 +8,22 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_UE_CONTEXT_H
-#define SRSGNB_CU_CP_UE_CONTEXT_H
+#ifndef SRSGNB_UE_CONTEXT_H
+#define SRSGNB_UE_CONTEXT_H
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
-struct cu_cp_ue_context {
-  cu_cp_ue_index_t ue_index;
-  cu_cp_du_index_t      du_index;
-  cu_cp_du_cell_index_t pcell_index;
+struct ue_context {
+  ue_index_t      ue_index;
+  du_index_t      du_index;
+  du_cell_index_t pcell_index;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_UE_CONTEXT_H
+#endif // SRSGNB_UE_CONTEXT_H

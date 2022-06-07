@@ -15,13 +15,14 @@
 #include <string>
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
 struct ul_rrc_message_transfer_message;
 
-struct f1_cu_setup_request_message;
+struct f1_setup_request_message;
 
-struct cu_cp_ue_delete_message {
-  cu_cp_ue_index_t ue_index;
+struct ue_delete_message {
+  ue_index_t ue_index;
 };
 
 /// Interface used to handle external events (e.g. UL RRC Message Transfer).
@@ -35,8 +36,8 @@ public:
 class cu_cp_manager_f1ap_setup_handler
 {
 public:
-  virtual ~cu_cp_manager_f1ap_setup_handler()                                  = default;
-  virtual void handle_f1_setup_request(const f1_cu_setup_request_message& msg) = 0;
+  virtual ~cu_cp_manager_f1ap_setup_handler()                               = default;
+  virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
 };
 
 class cu_cp_manager_interface_query
@@ -60,6 +61,7 @@ public:
   virtual ~cu_cp_manager_interface() = default;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_CU_CP_MANAGER_H

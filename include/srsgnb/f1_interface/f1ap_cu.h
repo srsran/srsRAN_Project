@@ -18,44 +18,46 @@
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
+namespace srs_cu_cp {
 
-struct f1_cu_setup_response_message {
+struct f1_setup_response_message {
   asn1::f1ap::f1_setup_resp_s response;
   asn1::f1ap::f1_setup_fail_s failure;
   bool                        success;
 };
 
-struct f1_cu_setup_request_message {
+struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
-class f1ap_cu_du_connection_manager
+class f1ap_connection_manager
 {
 public:
-  virtual ~f1ap_cu_du_connection_manager() = default;
+  virtual ~f1ap_connection_manager() = default;
 
   /// \brief Creates and transmits the F1 Setup outcome to the DU.
-  /// \param[in] msg The f1_cu_setup_response_message to transmit.
+  /// \param[in] msg The f1_setup_response_message to transmit.
   /// \remark The CU transmits the F1SetupResponse/F1SetupFailure as per TS 38.473 section 8.2.3.
-  virtual void handle_f1ap_setup_response(const f1_cu_setup_response_message& msg) = 0;
+  virtual void handle_f1ap_setup_response(const f1_setup_response_message& msg) = 0;
 };
 
 /// Methods used by F1AP to notify events.
-class f1ap_cu_message_notifier
+class f1ap_message_notifier
 {
 public:
-  virtual ~f1ap_cu_message_notifier()                                               = default;
-  virtual void on_f1_setup_request_received(const f1_cu_setup_request_message& msg) = 0;
+  virtual ~f1ap_message_notifier()                                               = default;
+  virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 };
 
 /// Combined entry point for F1C/U handling.
-class f1_cu_interface : public f1c_message_handler, public f1c_event_handler, public f1ap_cu_du_connection_manager
+class f1_interface : public f1c_message_handler, public f1c_event_handler, public f1ap_connection_manager
 {
 public:
-  virtual ~f1_cu_interface() = default;
+  virtual ~f1_interface() = default;
 };
 
+} // namespace srs_cu_cp
 } // namespace srsgnb
 
 #endif // SRSGNB_F1AP_CU_H
