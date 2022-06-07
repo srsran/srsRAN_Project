@@ -21,6 +21,7 @@
 #include <memory>
 
 namespace srsgnb {
+namespace srs_du {
 
 class du_manager_impl final : public du_manager_interface
 {
@@ -48,6 +49,7 @@ private:
   async_task_sequencer main_ctrl_loop;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_MANAGER_IMPL_H

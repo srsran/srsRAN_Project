@@ -16,8 +16,9 @@
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
+using namespace srs_du;
 
-class srsgnb::f1ap_du_impl::f1ap_du_event_manager
+class srsgnb::srs_du::f1ap_du_impl::f1ap_du_event_manager
 {
 public:
   /// F1 Setup Procedure Outcome.
@@ -40,8 +41,7 @@ f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_du_impl::~f1ap_du_impl() {}
 
-async_task<f1_du_setup_response_message>
-f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
+async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
   asn1::f1ap::f1_setup_request_s request_asn1;
   fill_asn1_f1_setup_request(request_asn1, request);
@@ -49,8 +49,8 @@ f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
   f1ap_du_event_manager::f1ap_setup_outcome_t f1_resp;
 
   // TODO: add procedure implementation
-  return launch_async([this, f1_resp, res = f1_du_setup_response_message{}, request](
-                          coro_context<async_task<f1_du_setup_response_message> >& ctx) mutable {
+  return launch_async([this, f1_resp, res = f1_setup_response_message{}, request](
+                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(f1_resp, events->f1ap_setup_response);
@@ -74,32 +74,31 @@ f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
   });
 }
 
-async_task<f1ap_du_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_du_ue_create_request& msg)
+async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
 {
   // TODO: add UE create procedure
   // TODO: Change execution context.
-  return launch_async([this, msg, resp = f1ap_du_ue_create_response{}](
-                          coro_context<async_task<f1ap_du_ue_create_response> >& ctx) mutable {
-    CORO_BEGIN(ctx);
-    resp.result = false;
-    if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {
-      ctxt.ue_ctxt_manager.emplace(msg.ue_index);
-      ctxt.ue_ctxt_manager[msg.ue_index].crnti             = INVALID_RNTI; // Needed?
-      ctxt.ue_ctxt_manager[msg.ue_index].gnb_du_f1ap_ue_id = msg.ue_index;
-      ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = (du_ue_index_t)-1; // TODO
+  return launch_async(
+      [this, msg, resp = f1ap_ue_create_response{}](coro_context<async_task<f1ap_ue_create_response> >& ctx) mutable {
+        CORO_BEGIN(ctx);
+        resp.result = false;
+        if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {
+          ctxt.ue_ctxt_manager.emplace(msg.ue_index);
+          ctxt.ue_ctxt_manager[msg.ue_index].crnti             = INVALID_RNTI; // Needed?
+          ctxt.ue_ctxt_manager[msg.ue_index].gnb_du_f1ap_ue_id = msg.ue_index;
+          ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = (du_ue_index_t)-1; // TODO
 
-      resp.result = true;
-    }
-    CORO_RETURN(resp);
-  });
+          resp.result = true;
+        }
+        CORO_RETURN(resp);
+      });
 }
 
-async_task<f1_du_setup_response_message>
-f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                      const asn1::f1ap::f1_setup_fail_s& failure)
+async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                            const asn1::f1ap::f1_setup_fail_s& failure)
 {
-  return launch_async([this, res = f1_du_setup_response_message{}, request, failure](
-                          coro_context<async_task<f1_du_setup_response_message> >& ctx) mutable {
+  return launch_async([this, res = f1_setup_response_message{}, request, failure](
+                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
     CORO_BEGIN(ctx);
 
     if (failure->time_to_wait_present) {

@@ -13,6 +13,8 @@ namespace srsgnb {
 
 struct ul_ccch_indication_message;
 
+namespace srs_du {
+
 struct du_ue_delete_message {
   du_ue_index_t ue_index;
 };
@@ -48,6 +50,7 @@ public:
   virtual ~du_manager_interface() = default;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_MANAGER_H

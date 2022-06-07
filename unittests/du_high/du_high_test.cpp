@@ -8,6 +8,7 @@
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
 struct phy_cell_dummy : public mac_cell_result_notifier {
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override {}

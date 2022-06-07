@@ -13,6 +13,7 @@
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
 class mac_test_dummy : public mac_ue_configurator
 {
@@ -45,14 +46,14 @@ public:
   }
 };
 
-class f1_ue_context_manager_dummy : public f1ap_du_ue_context_manager
+class f1_ue_context_manager_dummy : public f1ap_ue_context_manager
 {
 public:
-  optional<f1ap_du_ue_create_request>                  last_ue_create{};
-  wait_manual_event_tester<f1ap_du_ue_create_response> wait_ue_create;
+  optional<f1ap_ue_create_request>                  last_ue_create{};
+  wait_manual_event_tester<f1ap_ue_create_response> wait_ue_create;
 
   /// Initiates creation of UE context in F1.
-  async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override
+  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override
   {
     last_ue_create = msg;
     return wait_ue_create.launch();

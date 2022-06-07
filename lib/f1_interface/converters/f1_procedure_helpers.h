@@ -14,7 +14,7 @@
 #include "srsgnb/f1_interface/f1ap_du.h"
 
 namespace srsgnb {
-namespace f1ap {
+namespace srs_du {
 
 /// \brief Fills f1_setup_request_message.
 /// \param[out] request_msg The f1_setup_request_message struct to fill.
@@ -25,7 +25,7 @@ inline void fill_f1_setup_request_message(f1_setup_request_message& request_msg,
   request_msg.setup_params = du_params;
 }
 
-} // namespace f1ap
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_F1_PROCEDURE_HELPERS_H

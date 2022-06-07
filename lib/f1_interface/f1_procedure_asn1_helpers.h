@@ -19,7 +19,8 @@ namespace srsgnb {
 /// \brief Fills ASN.1 F1SetupRequest struct.
 /// \param[out] request The F1SetupRequest ASN.1  struct to fill.
 /// \param[in] du_params DU setup parameters to add to the F1SetupRequest.
-void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request, const f1_setup_request_message& request_msg)
+void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s&         request,
+                                const srs_du::f1_setup_request_message& request_msg)
 {
   // TODO: Add other inputs and set values accordingly
 

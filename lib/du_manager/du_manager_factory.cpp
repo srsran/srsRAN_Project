@@ -13,16 +13,17 @@
 #include "srsgnb/support/timers.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
-std::unique_ptr<du_manager_interface> srsgnb::create_du_manager(timer_manager&                     timers,
-                                                                mac_ue_configurator&               mac_ue_mng,
-                                                                mac_cell_manager&                  mac_cell_mng,
-                                                                f1ap_connection_manager&           f1ap_conn_mng,
-                                                                f1ap_du_ue_context_manager&        f1ap_ue_ctx_mng,
-                                                                f1ap_du_ul_interface&              f1ap_ul,
-                                                                rlc_sdu_rx_notifier&               rlc_ul_notifier,
-                                                                task_executor&                     du_mng_exec,
-                                                                const std::vector<du_cell_config>& cells)
+std::unique_ptr<du_manager_interface> srsgnb::srs_du::create_du_manager(timer_manager&           timers,
+                                                                        mac_ue_configurator&     mac_ue_mng,
+                                                                        mac_cell_manager&        mac_cell_mng,
+                                                                        f1ap_connection_manager& f1ap_conn_mng,
+                                                                        f1ap_ue_context_manager& f1ap_ue_ctx_mng,
+                                                                        f1ap_ul_interface&       f1ap_ul,
+                                                                        rlc_sdu_rx_notifier&     rlc_ul_notifier,
+                                                                        task_executor&           du_mng_exec,
+                                                                        const std::vector<du_cell_config>& cells)
 {
   du_manager_config_t cfg{};
   cfg.timers          = &timers;

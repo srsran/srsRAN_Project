@@ -15,6 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
 enum class test_outcome { success, failure };
 
@@ -28,16 +29,16 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
   timer_manager         timers;
 
   f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
+  auto                 f1ap_du     = create_f1ap(timers, *msg_handler);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
-  f1ap::fill_f1_setup_request_message(request_msg, setup_params);
+  fill_f1_setup_request_message(request_msg, setup_params);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
-  async_task<f1_du_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
-  lazy_task_launcher<f1_du_setup_response_message> t_launcher(t);
+  async_task<f1_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
+  lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status
   TESTASSERT(not t.ready());
@@ -111,16 +112,16 @@ void test_f1_setup_retry_limit()
   timer_manager         timers;
 
   f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap_du(timers, *msg_handler);
+  auto                 f1ap_du     = create_f1ap(timers, *msg_handler);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
-  f1ap::fill_f1_setup_request_message(request_msg, setup_params);
+  fill_f1_setup_request_message(request_msg, setup_params);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
-  async_task<f1_du_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
-  lazy_task_launcher<f1_du_setup_response_message> t_launcher(t);
+  async_task<f1_setup_response_message>         t = f1ap_du->handle_f1ap_setup_request(request_msg);
+  lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status
   TESTASSERT(not t.ready());

@@ -16,6 +16,7 @@
 #include "srsgnb/ran/du_types.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 class du_cell_manager
 {
@@ -62,6 +63,7 @@ private:
   std::vector<std::unique_ptr<cell_t> > cells;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_CELL_MANAGER_H

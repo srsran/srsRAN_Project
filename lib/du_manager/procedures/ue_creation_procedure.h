@@ -22,11 +22,12 @@
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 class mac_ul_ccch_adapter : public mac_sdu_rx_notifier
 {
 public:
-  mac_ul_ccch_adapter(du_ue_index_t ue_index_, f1ap_du_ul_interface& f1ap_) : ue_index(ue_index_), f1ap(f1ap_) {}
+  mac_ul_ccch_adapter(du_ue_index_t ue_index_, f1ap_ul_interface& f1ap_) : ue_index(ue_index_), f1ap(f1ap_) {}
   void on_new_sdu(mac_rx_sdu sdu) override
   {
     f1_rx_pdu msg{};
@@ -37,8 +38,8 @@ public:
   }
 
 private:
-  du_ue_index_t         ue_index;
-  f1ap_du_ul_interface& f1ap;
+  du_ue_index_t      ue_index;
+  f1ap_ul_interface& f1ap;
 };
 
 class mac_ul_dcch_adapter : public mac_sdu_rx_notifier
@@ -163,9 +164,9 @@ private:
     return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);
   }
 
-  async_task<f1ap_du_ue_create_response> make_f1_ue_create_req()
+  async_task<f1ap_ue_create_response> make_f1_ue_create_req()
   {
-    f1ap_du_ue_create_request f1_msg{};
+    f1ap_ue_create_request f1_msg{};
     f1_msg.ue_index = ue_ctx.ue_index;
     return cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
   }
@@ -177,9 +178,10 @@ private:
 
   du_ue_context                  ue_ctx{};
   mac_ue_create_response_message mac_resp{};
-  f1ap_du_ue_create_response     f1_resp{};
+  f1ap_ue_create_response        f1_resp{};
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_UE_CREATION_PROCEDURE_H

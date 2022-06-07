@@ -19,6 +19,7 @@
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 class ue_deletion_procedure
 {
@@ -77,6 +78,7 @@ private:
   du_ue_context* ue = nullptr;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_UE_DELECTION_PROCEDURE_H

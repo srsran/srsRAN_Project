@@ -13,6 +13,7 @@
 #include "procedures/ue_deletion_procedure.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
 du_ue_manager::du_ue_manager(du_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
 {

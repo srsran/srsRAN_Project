@@ -18,6 +18,7 @@
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 // class du_ccch_pdu_handler : public ul_ccch_pdu_notifier
 //{
@@ -50,7 +51,7 @@ private:
 class rlc_ul_sdu_adapter : public rlc_sdu_rx_notifier
 {
 public:
-  void connect(f1ap_du_ul_interface& f1) { f1_ptr = &f1; }
+  void connect(f1ap_ul_interface& f1) { f1_ptr = &f1; }
 
   void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) override
   {
@@ -62,9 +63,10 @@ public:
   }
 
 private:
-  f1ap_du_ul_interface* f1_ptr = nullptr;
+  f1ap_ul_interface* f1_ptr = nullptr;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_ADAPTERS_H

@@ -11,7 +11,8 @@
 #include "du_manager_impl.h"
 #include "procedures/initial_du_setup_procedure.h"
 
-namespace srsgnb {
+using namespace srsgnb;
+using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) :
   cfg(cfg_), cell_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
@@ -56,5 +57,3 @@ size_t du_manager_impl::nof_ues()
   }
   return result;
 }
-
-} // namespace srsgnb

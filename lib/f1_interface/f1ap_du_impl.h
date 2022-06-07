@@ -19,16 +19,17 @@
 #include <memory>
 
 namespace srsgnb {
+namespace srs_du {
 
-class f1ap_du_impl final : public f1_du_interface
+class f1ap_du_impl final : public f1_interface
 {
 public:
   f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_handler);
   ~f1ap_du_impl();
 
-  async_task<f1_du_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
+  async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
-  async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) override;
+  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
 
   void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
 
@@ -38,8 +39,8 @@ public:
 
   void handle_connection_loss() override {}
 
-  async_task<f1_du_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                   const asn1::f1ap::f1_setup_fail_s& failure);
+  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                const asn1::f1ap::f1_setup_fail_s& failure);
 
 private:
   class f1ap_du_event_manager;
@@ -61,6 +62,7 @@ private:
   int f1_setup_retry_no = 0;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_F1AP_DU_IMPL_H

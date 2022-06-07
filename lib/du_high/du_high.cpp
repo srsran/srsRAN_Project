@@ -16,6 +16,7 @@
 #include "srsgnb/mac/mac_factory.h"
 
 using namespace srsgnb;
+using namespace srs_du;
 
 void assert_du_high_configuration_valid(const du_high_configuration& cfg)
 {
@@ -51,7 +52,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap = create_f1ap_du(timers, *cfg.f1c_msg_hdl);
+  f1ap = create_f1ap(timers, *cfg.f1c_msg_hdl);
   du_manager = create_du_manager(timers,
                                  mac->get_ue_configurator(),
                                  mac->get_cell_manager(),

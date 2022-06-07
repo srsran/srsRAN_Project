@@ -9,6 +9,7 @@
 #include "srsgnb/mac/mac_cell_result.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 /// Configuration passed to DU-High.
 struct du_high_configuration {
@@ -20,6 +21,7 @@ struct du_high_configuration {
   std::vector<du_cell_config> cells;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_HIGH_CONFIGURATION_H

@@ -20,6 +20,7 @@
 #include "srsgnb/support/async/async_task_loop.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 class du_ue_manager : public ue_manager_ctrl_configurer
 {
@@ -47,6 +48,7 @@ private:
   slot_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_UE_MANAGER_H

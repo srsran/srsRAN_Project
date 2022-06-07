@@ -23,6 +23,7 @@
 #include <memory>
 
 namespace srsgnb {
+namespace srs_du {
 
 class du_high
 {
@@ -45,7 +46,7 @@ private:
   timer_manager timers;
 
   std::unique_ptr<du_manager_interface> du_manager;
-  std::unique_ptr<f1_du_interface>      f1ap;
+  std::unique_ptr<f1_interface>         f1ap;
   std::unique_ptr<mac_interface>        mac;
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
@@ -55,6 +56,7 @@ private:
   du_manager_mac_event_indicator mac_ev_notifier;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_HIGH_H
