@@ -36,10 +36,10 @@ public:
     BIASED
   };
 
-  /// Constructor: checks that the sample type is arithmetic.
-  sample_statistics() { static_assert(std::is_arithmetic<T>::value, "Invalid type."); }
+  /// Default constructor.
+  sample_statistics() = default;
 
-  /// Defalut destructor.
+  /// Default destructor.
   ~sample_statistics() = default;
 
   /// Clears the content of the internal registers.
@@ -48,14 +48,14 @@ public:
     max = std::numeric_limits<T>::min();
     min = std::numeric_limits<T>::max();
 
-    nof_samples               = 0;
+    nof_observations          = 0;
     cumulative_sum            = 0;
     cumulative_sum_of_squares = 0;
     cumulative_sum_of_cubes   = 0;
     cumulative_sum_of_fourths = 0;
   }
 
-  /// Adds a new value to the observed sample.
+  /// Updates the statistics by adding an observation to the sample.
   void update(T value)
   {
     float value_float = static_cast<float>(value);
@@ -66,7 +66,7 @@ public:
     cumulative_sum_of_fourths += value_float_sqrd * value_float_sqrd;
     max = std::max(max, value);
     min = std::min(min, value);
-    ++nof_samples;
+    ++nof_observations;
   }
 
   /// Returns the maximum sample value.
@@ -76,7 +76,7 @@ public:
   T get_min() const { return min; }
 
   /// Returns the sample size, i.e. the number of observations.
-  unsigned get_nof_samples() const { return nof_samples; }
+  unsigned get_nof_observations() const { return nof_observations; }
 
   /// \brief Returns the sample mean.
   ///
@@ -84,7 +84,7 @@ public:
   /// \f[
   /// \mu = \frac{1}{n} \sum_{i=0}^{n-1} x_i.
   /// \f]
-  float get_mean() const { return cumulative_sum / nof_samples; }
+  float get_mean() const { return cumulative_sum / nof_observations; }
 
   /// \brief Returns the sample variance.
   ///
@@ -99,9 +99,9 @@ public:
   float get_variance(bias biased = bias::UNBIASED) const
   {
     if (biased == bias::UNBIASED) {
-      return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / (nof_samples - 1);
+      return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / (nof_observations - 1);
     }
-    return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / nof_samples;
+    return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / nof_observations;
   }
 
   /// \brief Returns the sample standard deviation.
@@ -122,7 +122,7 @@ public:
   /// The \c biased flag simply denotes how the sample covariance is computed.
   /// \note It is implicitly assumed that the observations are statistically independent.
   /// \remark The behavior is undefined when the sample consists of less than two observations.
-  float get_sem(bias biased = bias::UNBIASED) const { return get_std(biased) / std::sqrt(nof_samples); }
+  float get_sem(bias biased = bias::UNBIASED) const { return get_std(biased) / std::sqrt(nof_observations); }
 
   /// \brief Returns the sample skewness.
   ///
@@ -153,9 +153,9 @@ public:
     // For the numerator, we need to compute the third sample centered moment "sum((x - mean)^3) / n". Denoting Sn the
     // cumulative sum of samples raised to the nth power, this is equivalent to computing
     // (S3 - 3 S1 S2 / n + 2 S1^3 / n^2) / n = (((2 S1^3) / n - 3 S1 S2) / n + S3) / n.
-    float num = (2 * cum_sum3) / nof_samples;
-    num       = (num - 3 * cumulative_sum * cumulative_sum_of_squares) / nof_samples;
-    num       = (num + cumulative_sum_of_cubes) / nof_samples;
+    float num = (2 * cum_sum3) / nof_observations;
+    num       = (num - 3 * cumulative_sum * cumulative_sum_of_squares) / nof_observations;
+    num       = (num + cumulative_sum_of_cubes) / nof_observations;
 
     // The denominator is just the biased standard deviation to the third power.
     float den = get_std(bias::BIASED);
@@ -164,7 +164,7 @@ public:
     float result = num / den;
 
     if (biased == bias::UNBIASED) {
-      result *= std::sqrt(nof_samples * (nof_samples - 1)) / (nof_samples - 2);
+      result *= std::sqrt(nof_observations * (nof_observations - 1)) / (nof_observations - 2);
     }
     return result;
   }
@@ -201,10 +201,10 @@ public:
     // cumulative sum of samples raised to the nth power, this is equivalent to computing
     // (S4 - 4 S1 S3 / n + 6 S1^2 S2 / n^2 - 3 S1^4 / n^3) / n
     //            = ((((-3 S1^4) / n + 6 S1^2 S2) / n - 4 S1 S3) / n + S4) / n.
-    float num = (-3 * cum_sum4) / nof_samples;
-    num       = (num + 6 * cum_sum2 * cumulative_sum_of_squares) / nof_samples;
-    num       = (num - 4 * cumulative_sum * cumulative_sum_of_cubes) / nof_samples;
-    num       = (num + cumulative_sum_of_fourths) / nof_samples;
+    float num = (-3 * cum_sum4) / nof_observations;
+    num       = (num + 6 * cum_sum2 * cumulative_sum_of_squares) / nof_observations;
+    num       = (num - 4 * cumulative_sum * cumulative_sum_of_cubes) / nof_observations;
+    num       = (num + cumulative_sum_of_fourths) / nof_observations;
 
     // The denominator is just the biased variance squared.
     float den = get_variance(bias::BIASED);
@@ -213,19 +213,21 @@ public:
     float result = num / den;
 
     if (biased == bias::UNBIASED) {
-      result = result * (nof_samples + 1) - 3 * (nof_samples - 1);
-      result = result * (nof_samples - 1) / ((nof_samples - 2) * (nof_samples - 3)) + 3;
+      result = result * (nof_observations + 1) - 3 * (nof_observations - 1);
+      result = result * (nof_observations - 1) / ((nof_observations - 2) * (nof_observations - 3)) + 3;
     }
     return result;
   }
 
 private:
+  /// Ensure the sample type is arithmetic.
+  static_assert(std::is_arithmetic<T>::value, "Invalid type.");
   /// Records the maximum observed value.
   T max = std::numeric_limits<T>::min();
   /// Records the minimum observed value.
   T min = std::numeric_limits<T>::max();
   /// Records the sample size.
-  unsigned nof_samples = 0;
+  size_t nof_observations = 0;
   /// Records the sum of all observed values.
   float cumulative_sum = 0;
   /// Records the sum of the squares of all observed values.

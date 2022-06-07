@@ -30,8 +30,8 @@ int main()
 {
   using bias = srsgnb::sample_statistics<float>::bias;
 
-  constexpr unsigned NOF_SAMPLES                   = 100;
-  constexpr std::array<float, NOF_SAMPLES> SAMPLES = {
+  constexpr unsigned NOF_OBSERVATIONS                   = 100;
+  constexpr std::array<float, NOF_OBSERVATIONS> SAMPLES = {
       -9.70239867e-01, -1.16246488e+00, -6.15919117e-01, -2.68661833e-01, 3.63608129e-01,  -1.27996396e+00,
       -1.07055465e+00, 9.69757419e-01,  2.69440768e-01,  9.82452599e-02,  1.04926594e+00,  -2.81540376e-01,
       -3.52506821e-02, -1.06468427e+00, -1.11925195e-01, -1.64412925e+00, 3.46079357e-01,  -8.77805820e-01,
@@ -95,11 +95,11 @@ int main()
                   2.6217413025654213};
 
   srsgnb::sample_statistics<float> stats    = {};
-  unsigned                         i_sample = 0, stop_sample = NOF_SAMPLES / 2;
+  unsigned                         i_sample = 0, stop_sample = NOF_OBSERVATIONS / 2;
   for (; i_sample != stop_sample; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_samples(), stop_sample);
+  compare_tolerance(stats.get_nof_observations(), stop_sample);
   compare_tolerance(stats.get_max(), half.max);
   compare_tolerance(stats.get_min(), half.min);
   compare_tolerance(stats.get_mean(), half.mean);
@@ -114,10 +114,10 @@ int main()
   compare_tolerance(stats.get_kurtosis(), half.kurtosis);
   compare_tolerance(stats.get_kurtosis(bias::BIASED), half.kurtosis_biased);
 
-  for (; i_sample != NOF_SAMPLES; ++i_sample) {
+  for (; i_sample != NOF_OBSERVATIONS; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_samples(), NOF_SAMPLES);
+  compare_tolerance(stats.get_nof_observations(), NOF_OBSERVATIONS);
   compare_tolerance(stats.get_max(), full.max);
   compare_tolerance(stats.get_min(), full.min);
   compare_tolerance(stats.get_mean(), full.mean);
@@ -134,10 +134,10 @@ int main()
 
   stats.reset();
   // Recompute the statistics to ensure reset worked properly.
-  for (i_sample = 0; i_sample != NOF_SAMPLES; ++i_sample) {
+  for (i_sample = 0; i_sample != NOF_OBSERVATIONS; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_samples(), NOF_SAMPLES);
+  compare_tolerance(stats.get_nof_observations(), NOF_OBSERVATIONS);
   compare_tolerance(stats.get_max(), full.max);
   compare_tolerance(stats.get_min(), full.min);
   compare_tolerance(stats.get_mean(), full.mean);

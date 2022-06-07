@@ -120,7 +120,7 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed.");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
-      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_samples(),
+      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_observations(),
                     dec_stats.nof_codeblocks_total,
                     "Error reporting decoded codeblocks.");
       TESTASSERT(dec_stats.ldpc_decoder_stats.get_max() <= 2, "Too many decoder iterations.");
@@ -145,7 +145,7 @@ int main()
 
       TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed (no early stop).");
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly (no early stop).");
-      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_samples(),
+      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_observations(),
                     dec_stats.nof_codeblocks_total,
                     "Error reporting decoded codeblocks (no early stop).");
       TESTASSERT_EQ(dec_cfg.nof_ldpc_iterations,
