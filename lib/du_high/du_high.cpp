@@ -59,7 +59,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
                                  *f1ap,
                                  *f1ap,
                                  *f1ap,
-                                 rlc_sdu_notifier,
+                                 rlc_rx_upper_dp,
                                  *cfg.du_mng_executor,
                                  cfg.cells);
 

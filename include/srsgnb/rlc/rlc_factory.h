@@ -17,8 +17,8 @@
 namespace srsgnb {
 
 /// Creates an instance of a RLC UL bearer
-std::unique_ptr<rlc_pdu_handler>
-create_rlc_ul_bearer(du_ue_index_t ue_index, lcid_t lcid, rlc_sdu_rx_notifier& notifier);
+std::unique_ptr<rlc_rx_pdu_handler>
+create_rlc_ul_bearer(du_ue_index_t ue_index, lcid_t lcid, rlc_rx_upper_layer_data_plane& notifier);
 
 } // namespace srsgnb
 

@@ -9,13 +9,13 @@
  */
 
 #include "srsgnb/rlc/rlc_factory.h"
-#include "rlc_impl.h"
+#include "rlc_rx_um_bearer.h"
 
 using namespace srsgnb;
 
-std::unique_ptr<rlc_pdu_handler>
-srsgnb::create_rlc_ul_bearer(du_ue_index_t ue_index, lcid_t lcid, rlc_sdu_rx_notifier& notifier)
+std::unique_ptr<rlc_rx_pdu_handler>
+srsgnb::create_rlc_ul_bearer(du_ue_index_t ue_index, lcid_t lcid, rlc_rx_upper_layer_data_plane& upper_dp)
 {
-  std::unique_ptr<rlc_pdu_handler> instance = std::make_unique<rlc_ul_um_bearer>(ue_index, lcid, notifier);
+  std::unique_ptr<rlc_rx_pdu_handler> instance = std::make_unique<rlc_rx_um_bearer>(ue_index, lcid, upper_dp);
   return instance;
 }

@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES rlc_factory.cpp rlc_impl.cpp)
+set(SOURCES rlc_factory.cpp rlc_rx_um_bearer.cpp)
 
 add_library(srsgnb_rlc STATIC ${SOURCES})
 target_link_libraries(srsgnb_rlc)
