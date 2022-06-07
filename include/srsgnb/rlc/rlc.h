@@ -18,24 +18,62 @@
 
 namespace srsgnb {
 
-/// This interface represents the entry point of the receiving side of a RLC entity.
-class rlc_pdu_handler
+/// This interface represents the data-plane entry point of the receiving side of a RLC entity.
+/// The lower-layers will use this class to pass PDUs into the RLC.
+class rlc_rx_pdu_handler
 {
 public:
-  virtual ~rlc_pdu_handler() = default;
+  virtual ~rlc_rx_pdu_handler() = default;
 
   /// Handle the incoming PDU.
   virtual void handle_pdu(byte_buffer pdu) = 0;
 };
 
-/// This interface notifies to upper layers the reception of new SDUs in the receiving side of a RLC entity.
-class rlc_sdu_rx_notifier
+/// This interface represents the data-plane exit point of the receiving side of a RLC entity.
+/// The RLC will use this class to pass SDUs to the upper-layers.
+class rlc_rx_upper_layer_data_plane
 {
 public:
-  virtual ~rlc_sdu_rx_notifier() = default;
+  virtual ~rlc_rx_upper_layer_data_plane() = default;
 
-  /// This callback is invoked on each generated SDU.
-  virtual void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) = 0;
+  /// This method is called to pass the SDU to the upper layers
+  virtual void pass_sdu(byte_buffer pdu) = 0;
+  virtual void notify_ack_received()     = 0;
+};
+
+/// This interface represents the data-plane entry point of the receiving side of a RLC entity.
+/// The upper-layers will use this call to pass RLC SDUs into the TX entity.
+class rlc_tx_sdu_handler
+{
+public:
+  virtual ~rlc_tx_sdu_handler() = default;
+
+  /// Handle the incoming PDU.
+  virtual void handle_sdu(byte_buffer pdu) = 0;
+};
+
+/// This interface represents the data-plane exit point of the receiving side of a RLC entity.
+/// The lower layers will use this interface to get request a PDU from the RLC, or to
+/// query the current buffer state of the RLC bearer.
+class rlc_tx_pdu_transmitter
+{
+public:
+  virtual ~rlc_tx_pdu_transmitter() = default;
+
+  virtual bool read_pdu(byte_buffer& pdu, uint32_t nof_bytes) = 0;
+  virtual void get_buffer_state(uint32_t& bytes)              = 0;
+};
+
+/// This interface represents the control-plane upper layer that the
+/// TX RLC bearer must notify in case of protocol errors,
+/// or, in the case of AM bearers, maximum retransmissions reached.
+class rlc_tx_upper_control_plane
+{
+public:
+  virtual ~rlc_tx_upper_control_plane() = default;
+
+  virtual void notify_protocol_failure() = 0;
+  virtual void notify_max_retx()         = 0;
 };
 
 } // namespace srsgnb
