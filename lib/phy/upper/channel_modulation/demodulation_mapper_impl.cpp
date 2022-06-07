@@ -9,6 +9,7 @@
  */
 
 #include "demodulation_mapper_impl.h"
+#include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
 
 using namespace srsgnb;
@@ -95,9 +96,8 @@ unsigned compute_interval_idx(float x, float interval_width, unsigned nof_interv
 {
   int nof_intervals_int = static_cast<int>(nof_intervals);
   int idx               = static_cast<int>(std::floor(x / interval_width)) + nof_intervals_int / 2;
-  idx                   = (idx > 0) ? idx : 0;
-  idx                   = (idx < nof_intervals_int) ? idx : nof_intervals_int - 1;
-  return idx;
+
+  return clamp(idx, 0, nof_intervals_int - 1);
 }
 
 static log_likelihood_ratio demod_64QAM_symbol_01(float x, float noise_var, float range_limit)
