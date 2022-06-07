@@ -12,26 +12,29 @@
 
 using namespace srsgnb;
 
-pdcch_candidate_list srsgnb::pdcch_candidates_common_ss_get(const pdcch_candidates_common_ss_configuration& config)
+pdcch_candidate_list
+srsgnb::pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config)
 {
+  unsigned Y_p  = 0;
+  unsigned n_ci = 0;
+  unsigned L    = to_nof_cces(config.L);
+  
   srsran_assert(config.nof_cce_coreset, "The number of CCE in the CORESET must not be zero.");
-  srsran_assert(config.aggregation_level, "Invalid aggregation level.");
-  srsran_assert(config.nof_candidates * config.aggregation_level <= config.nof_cce_coreset,
+  srsran_assert(config.nof_candidates <= PDCCH_MAX_NOF_CANDIDATES_SS,
+                "The number of candidates ({}) exceeds the maximum ({}).",
+                config.nof_candidates,
+                PDCCH_MAX_NOF_CANDIDATES_SS);
+  srsran_assert(config.nof_candidates * L <= config.nof_cce_coreset,
                 "The number of candidates ({}) for aggregation level ({}) exceeds the number of available CCE ({})",
                 config.nof_candidates,
-                config.aggregation_level,
+                L,
                 config.nof_cce_coreset);
 
   pdcch_candidate_list candidates;
 
-  unsigned Y_p  = 0;
-  unsigned n_ci = 0;
-
   for (unsigned candidate = 0; candidate != config.nof_candidates; ++candidate) {
-    unsigned n_cce =
-        config.aggregation_level *
-        ((Y_p + (candidate * config.nof_cce_coreset) / (config.aggregation_level * config.nof_candidates) + n_ci) %
-         (config.nof_cce_coreset / config.aggregation_level));
+    unsigned n_cce = L * ((Y_p + (candidate * config.nof_cce_coreset) / (L * config.nof_candidates) + n_ci) %
+                          (config.nof_cce_coreset / L));
     candidates.push_back(n_cce);
   }
 

@@ -8,10 +8,11 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CANDIDATES_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CANDIDATES_H
+#ifndef SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H
+#define SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/pdcch/aggregation_level.h"
 
 namespace srsgnb {
 
@@ -37,7 +38,7 @@ using pdcch_candidate_list = static_vector<uint8_t, PDCCH_MAX_NOF_CANDIDATES_SS>
 /// - \f$m_{s,n_{CI}}\epsilon \{0,...,M_{s,n_{CI}}^{(L)}\}\f$,
 struct pdcch_candidates_common_ss_configuration {
   /// Aggregation level \f$L\epsilon\{1,2,4,8,16\}\f$.
-  unsigned aggregation_level;
+  aggregation_level L;
   /// \brief Number of PDCCH candidates \f$M_{s,max}^{(L)}\f$ the UE is configured to monitor for aggregation level
   /// \f$L\f$ of a search space set \f$s\f$ for a serving cell corresponding to \f$n_{CI}\f$.
   unsigned nof_candidates;
@@ -48,13 +49,13 @@ struct pdcch_candidates_common_ss_configuration {
 /// \brief Generates a PDCCH candidate list for Common SS as per TS38.213 Section 10.1.
 ///
 /// Assertion is triggered if:
-/// - the aggregation level is zero,
+/// - the aggregation level is invalid (\see srsgnb::aggregation_level::is_valid for more information),
 /// - the number of CCE in the CORESET is zero, or
 /// - the number of candidates times the aggregation level exceeds the number of CCE in the CORESET.
 ///
-/// The number of the resultant candidates is equal to \c config.nof_candidates.
-pdcch_candidate_list pdcch_candidates_common_ss_get(const pdcch_candidates_common_ss_configuration& config);
+/// The resultant list contains the lowest CCE index of the \c config.nof_candidates.
+pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CANDIDATES_H
+#endif // SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H
