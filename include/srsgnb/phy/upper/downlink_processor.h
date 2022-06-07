@@ -8,28 +8,61 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_DL_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_DL_PROCESSOR_H
+#ifndef SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H
+#define SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H
 
-#include "srsgnb/adt/byte_buffer.h"
-#include <complex>
+#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
+#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
+#include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 
 namespace srsgnb {
 
-// IMPORTANT: this struct is defined at this level, not in the MAC.
-struct dl_sched {
-  //: TODO:
-  byte_buffer pdu;
-};
+class resource_grid_context;
 
-/// Low level UC.
+/// Downlink processor class that groups and process all the downlink channels within a slot.
 class downlink_processor
 {
 public:
-  // Receives the dl sched struct, dispatches it to each channel encoder+modulation_mapper, then sends it to the output gateway.
-  virtual bool process(const dl_sched& sched) = 0;
+  virtual ~downlink_processor() = default;
+
+  /// \brief Process the given PDCCH pdu.
+  ///
+  /// \param[in] pdu PDCCH PDU to process.
+  virtual void process_pdcch(pdcch_processor::pdu_t& pdu) = 0;
+
+  /// \brief Process the given PDSCH pdu and its related data, which it is given in data parameter.
+  ///
+  /// \param[in] data Contains the data of the PDSCH.
+  /// \param[in] pdu PDSCH PDU to process.
+  virtual void process_pdsch(static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
+                             const pdsch_processor::pdu_t&                                                 pdu) = 0;
+
+  /// \brief Process the given SSB pdu.
+  ///
+  /// \param pdu SSB PDU to process.
+  virtual void process_ssb(const ssb_processor::pdu_t& pdu) = 0;
+
+  /// \brief Configures the resource grid of the downlink_processor.
+  ///
+  /// \param context Resource grid context that contains the information of the processing slot.
+  /// \param grid Resource grid that will contain the data of the processed downlink channels.
+  virtual void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) = 0;
+
+  /// \brief Sends the resource grid.
+  virtual void send_resource_grid() = 0;
+};
+
+/// Pool to access a downlink processor.
+class downlink_processor_pool
+{
+public:
+  virtual ~downlink_processor_pool() = default;
+
+  /// \brief Returns a downlink processor with the given slot and sector.
+  virtual downlink_processor&       get_processor(const slot_point& slot, unsigned sector)       = 0;
+  virtual const downlink_processor& get_processor(const slot_point& slot, unsigned sector) const = 0;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_DL_PROCESSOR_H
+#endif // SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H
