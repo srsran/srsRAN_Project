@@ -55,7 +55,7 @@ struct du_cell_context {
 struct cu_cp_du_context {
   cu_cp_du_index_t du_index; /// Index assisgned by CU-CP
   uint64_t         id;       /// the gNB-DU-ID
-  std::string      name;     /// gNB-DU-Name
+  std::string      name = "none"; /// gNB-DU-Name
   slot_array<du_cell_context, MAX_NOF_CU_CP_DU_CELLS>
       cell_db; /// flattened version of served cells list provided by DU/F1AP
 };

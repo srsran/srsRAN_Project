@@ -29,7 +29,8 @@ class cu_cp_manager_impl final : public cu_cp_manager_interface
 public:
   cu_cp_manager_impl(const cu_cp_manager_config_t& cfg);
 
-  // MAC interface
+  // cu_cp_manager_f1c_interface
+  void handle_f1_setup_request(const f1_cu_setup_request_message& msg) override;
   void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) override;
 
   size_t nof_ues() override;
