@@ -46,11 +46,9 @@ int main()
     const std::vector<log_likelihood_ratio> soft_bits_true = test_case.soft_bits.read();
     TESTASSERT_EQ(soft_bits_true.size(), nof_bits, "Error reading soft bits.");
 
-    TESTASSERT(std::equal(soft_bits.cbegin(),
-                          soft_bits.cend(),
-                          soft_bits_true.cbegin(),
-                          [](log_likelihood_ratio a, log_likelihood_ratio b) { return (a == b); }),
-               "Soft bits are not sufficiently precise.");
+    TESTASSERT_EQ(span<const log_likelihood_ratio>(soft_bits),
+                  span<const log_likelihood_ratio>(soft_bits_true),
+                  "Soft bits are not sufficiently precise.");
 
     std::vector<uint8_t> hard_bits(nof_bits);
     std::transform(soft_bits.cbegin(), soft_bits.cend(), hard_bits.begin(), [](log_likelihood_ratio a) {
@@ -58,6 +56,6 @@ int main()
     });
     const std::vector<uint8_t> hard_bits_true = test_case.hard_bits.read();
     TESTASSERT_EQ(hard_bits_true.size(), nof_bits, "Error reading hard bits.");
-    TESTASSERT(std::equal(hard_bits.cbegin(), hard_bits.cend(), hard_bits_true.cbegin()), "Hard bits do not match.");
+    TESTASSERT_EQ(span<const uint8_t>(hard_bits), span<const uint8_t>(hard_bits_true), "Hard bits do not match.");
   }
 }
