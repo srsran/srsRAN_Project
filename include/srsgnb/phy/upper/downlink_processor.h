@@ -34,8 +34,8 @@ public:
   ///
   /// \param[in] data Contains the data of the PDSCH.
   /// \param[in] pdu PDSCH PDU to process.
-  virtual void process_pdsch(static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data,
-                             const pdsch_processor::pdu_t&                                                 pdu) = 0;
+  virtual void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+                             const pdsch_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given SSB pdu.
   ///
@@ -59,8 +59,7 @@ public:
   virtual ~downlink_processor_pool() = default;
 
   /// \brief Returns a downlink processor with the given slot and sector.
-  virtual downlink_processor&       get_processor(const slot_point& slot, unsigned sector)       = 0;
-  virtual const downlink_processor& get_processor(const slot_point& slot, unsigned sector) const = 0;
+  virtual downlink_processor& get_processor(const slot_point& slot, unsigned sector) = 0;
 };
 
 } // namespace srsgnb

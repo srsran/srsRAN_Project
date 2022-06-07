@@ -12,6 +12,9 @@ add_subdirectory(channel_processors)
 add_subdirectory(sequence_generators)
 add_subdirectory(signal_processors)
 
+add_library(downlink_processor downlink_processor_impl.cpp)
+add_library(downlink_processor_factory downlink_processor_factory_impl.cpp)
+
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
 add_library(srsgnb_upper_phy_support
@@ -19,4 +22,5 @@ add_library(srsgnb_upper_phy_support
         rb_allocation.cpp
         rx_softbuffer_pool_impl.cpp
         vrb_to_prb_mapper.cpp
-)
+        )
+

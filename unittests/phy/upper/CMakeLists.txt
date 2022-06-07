@@ -28,6 +28,14 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dl_processor_test_data.tar.gz
         VERBATIM)
 
+add_executable(downlink_processor_test downlink_processor_test.cpp)
+target_link_libraries(downlink_processor_test downlink_processor downlink_processor_factory srslog srsgnb_support)
+add_test(downlink_processor_test downlink_processor_test)
+
+add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
+target_link_libraries(downlink_processor_pool_test downlink_processor_factory srslog)
+add_test(downlink_processor_pool_test downlink_processor_pool_test)
+
 add_executable(re_pattern_test re_pattern_test.cpp)
 target_link_libraries(re_pattern_test srsgnb_upper_phy_support srslog)
 add_test(re_pattern_test re_pattern_test)
@@ -43,3 +51,4 @@ add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
 add_executable(vrb_to_prb_mapper_test vrb_to_prb_mapper_test.cpp)
 target_link_libraries(vrb_to_prb_mapper_test srsgnb_upper_phy_support srslog)
 add_test(vrb_to_prb_mapper_test vrb_to_prb_mapper_test)
+
