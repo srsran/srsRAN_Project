@@ -12,7 +12,9 @@
 #include "ofdm_demodulator_impl.h"
 #include "ofdm_modulator_impl.h"
 
-namespace srsgnb {
+using namespace srsgnb;
+
+namespace {
 class ofdm_modulator_factory_generic : public ofdm_modulator_factory
 {
 private:
@@ -68,9 +70,7 @@ public:
   }
 };
 
-} // namespace srsgnb
-
-using namespace srsgnb;
+} // namespace
 
 std::shared_ptr<ofdm_modulator_factory>
 srsgnb::create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config)

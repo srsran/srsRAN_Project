@@ -11,7 +11,9 @@
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "dft_processor_fftw_impl.h"
 
-namespace srsgnb {
+using namespace srsgnb;
+
+namespace {
 
 class dft_processor_factory_fftw : public dft_processor_factory
 {
@@ -31,9 +33,7 @@ private:
   }
 };
 
-} // namespace srsgnb
-
-using namespace srsgnb;
+} // namespace
 
 std::shared_ptr<dft_processor_factory>
 srsgnb::create_dft_processor_factory_fftw(const dft_processor_factory_fftw_configuration& common_config)
