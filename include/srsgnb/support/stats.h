@@ -39,44 +39,46 @@ public:
   /// Default constructor.
   sample_statistics() = default;
 
-  /// Default destructor.
-  ~sample_statistics() = default;
-
   /// Clears the content of the internal registers.
-  void reset()
-  {
-    max = std::numeric_limits<T>::min();
-    min = std::numeric_limits<T>::max();
-
-    nof_observations          = 0;
-    cumulative_sum            = 0;
-    cumulative_sum_of_squares = 0;
-    cumulative_sum_of_cubes   = 0;
-    cumulative_sum_of_fourths = 0;
-  }
+  void reset() { *this = sample_statistics(); }
 
   /// Updates the statistics by adding an observation to the sample.
   void update(T value)
   {
-    float value_float = static_cast<float>(value);
-    cumulative_sum += value_float;
-    float value_float_sqrd = value_float * value_float;
-    cumulative_sum_of_squares += value_float_sqrd;
-    cumulative_sum_of_cubes += value_float_sqrd * value_float;
-    cumulative_sum_of_fourths += value_float_sqrd * value_float_sqrd;
+    float delta = value - mean;
+    ++nof_observations;
+    mean += delta / nof_observations;
+
+    // The following update formulas are inspired by
+    // Philippe Pebay, "Formulas for Robust, One-Pass Parallel Computation of Covariances and Arbitrary-Order
+    // Statistical Moments," SANDIA REPORT SAND2008-6212 (2008).
+    // [Online]. Available: https://www.osti.gov/servlets/purl/1028931
+    float nof_obs_sqrd = static_cast<float>(nof_observations) * static_cast<float>(nof_observations);
+    float delta_sqrd   = delta * delta;
+    centered_power_sum_ord4 += -4 * centered_power_sum_ord3 / nof_observations * delta +
+                               6 * centered_power_sum_ord2 / nof_obs_sqrd * delta_sqrd +
+                               (nof_observations - 1.0F) * (nof_obs_sqrd - 3.0F * nof_observations + 3.0F) /
+                                   (nof_obs_sqrd * nof_observations) * delta_sqrd * delta_sqrd;
+
+    centered_power_sum_ord3 += -3 * centered_power_sum_ord2 / nof_observations * delta +
+                               (nof_obs_sqrd - 3.0F * nof_observations + 2.0F) / nof_obs_sqrd * delta_sqrd * delta;
+
+    centered_power_sum_ord2 += (nof_observations - 1.0F) / nof_observations * delta_sqrd;
+
     max = std::max(max, value);
     min = std::min(min, value);
-    ++nof_observations;
   }
 
-  /// Returns the maximum sample value.
+  /// \brief Returns the maximum sample value.
+  /// \remark The function returns std::numeric_limits<T>::min() when the sample is empty.
   T get_max() const { return max; }
 
-  /// Returns the minimum sample value.
+  /// \brief Returns the minimum sample value.
+  /// \remark The function returns std::numeric_limits<T>::max() when the sample is empty.
   T get_min() const { return min; }
 
   /// Returns the sample size, i.e. the number of observations.
-  unsigned get_nof_observations() const { return nof_observations; }
+  size_t get_nof_observations() const { return nof_observations; }
 
   /// \brief Returns the sample mean.
   ///
@@ -84,7 +86,14 @@ public:
   /// \f[
   /// \mu = \frac{1}{n} \sum_{i=0}^{n-1} x_i.
   /// \f]
-  float get_mean() const { return cumulative_sum / nof_observations; }
+  /// \remark The function returns NAN when the sample is empty.
+  float get_mean() const
+  {
+    if (nof_observations < 1) {
+      return NAN;
+    }
+    return mean;
+  }
 
   /// \brief Returns the sample variance.
   ///
@@ -95,21 +104,31 @@ public:
   /// where \f$\mu\f$ is the [sample mean](#sample_statistics::get_mean) and where \f$m = n\f$ or \f$m = n-1\f$ for the
   /// biased and unbiased estimators, respectively, of the statistical variance
   /// \f$\EV\Bigl[\bigl(X - \EV[X]\bigr)^2\Bigr]\f$.
-  /// \remark The behavior is undefined when the sample consists of less than two observations.
+  /// \remark The function returns NAN when the sample consists of less than two observations.
   float get_variance(bias biased = bias::UNBIASED) const
   {
-    if (biased == bias::UNBIASED) {
-      return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / (nof_observations - 1);
+    if (nof_observations < 2) {
+      return NAN;
     }
-    return (cumulative_sum_of_squares - cumulative_sum * get_mean()) / nof_observations;
+
+    if (biased == bias::UNBIASED) {
+      return centered_power_sum_ord2 / (nof_observations - 1);
+    }
+    return centered_power_sum_ord2 / nof_observations;
   }
 
   /// \brief Returns the sample standard deviation.
   ///
   /// This is simply the squared root of the [sample covariance](#sample_statistics::get_variance). The \c biased flag
   /// simply denotes how the sample covariance is computed.
-  /// \remark The behavior is undefined when the sample consists of less than two observations.
-  float get_std(bias biased = bias::UNBIASED) const { return std::sqrt(get_variance(biased)); }
+  /// \remark The function returns NAN when the sample consists of less than two observations.
+  float get_std(bias biased = bias::UNBIASED) const
+  {
+    if (nof_observations < 2) {
+      return NAN;
+    }
+    return std::sqrt(get_variance(biased));
+  }
 
   /// \brief Returns the standard error of the sample mean.
   ///
@@ -121,8 +140,14 @@ public:
   /// where \f$n\f$ is the sample size and \f$\sigma\f$ is the [sample covariance](#sample_statistics::get_variance).
   /// The \c biased flag simply denotes how the sample covariance is computed.
   /// \note It is implicitly assumed that the observations are statistically independent.
-  /// \remark The behavior is undefined when the sample consists of less than two observations.
-  float get_sem(bias biased = bias::UNBIASED) const { return get_std(biased) / std::sqrt(nof_observations); }
+  /// \remark The function returns NAN when the sample consists of less than two observations.
+  float get_sem(bias biased = bias::UNBIASED) const
+  {
+    if (nof_observations < 2) {
+      return NAN;
+    }
+    return get_std(biased) / std::sqrt(nof_observations);
+  }
 
   /// \brief Returns the sample skewness.
   ///
@@ -139,7 +164,7 @@ public:
   /// \f[
   /// G_1 = \frac{\sqrt{n(n-1)}}{n-2}g_1.
   /// \f]
-  /// \remark The behavior is undefined when the sample consists of less than three observations.
+  /// \remark The function returns NAN when the sample consists of less than three observations.
   /// \note The skewness provides a rough indication of the symmetry of the distribution of the sample around its mean.
   /// More specifically, for unimodal distributions, a negative-valued skewness means that the left tail of the
   /// distribution is longer than the right one and most of the mass is concentrated to the right of the mean. In other
@@ -148,23 +173,17 @@ public:
   /// compensate each other and give skewness equal to zero.
   float get_skewness(bias biased = bias::UNBIASED) const
   {
-    float cum_sum3 = cumulative_sum * cumulative_sum * cumulative_sum;
-
-    // For the numerator, we need to compute the third sample centered moment "sum((x - mean)^3) / n". Denoting Sn the
-    // cumulative sum of samples raised to the nth power, this is equivalent to computing
-    // (S3 - 3 S1 S2 / n + 2 S1^3 / n^2) / n = (((2 S1^3) / n - 3 S1 S2) / n + S3) / n.
-    float num = (2 * cum_sum3) / nof_observations;
-    num       = (num - 3 * cumulative_sum * cumulative_sum_of_squares) / nof_observations;
-    num       = (num + cumulative_sum_of_cubes) / nof_observations;
-
-    // The denominator is just the biased standard deviation to the third power.
-    float den = get_std(bias::BIASED);
-    den       = den * den * den;
+    if (nof_observations < 3) {
+      return NAN;
+    }
+    float num     = centered_power_sum_ord3 / nof_observations;
+    float den_tmp = std::sqrt(centered_power_sum_ord2 / nof_observations);
+    float den     = den_tmp * den_tmp * den_tmp;
 
     float result = num / den;
 
     if (biased == bias::UNBIASED) {
-      result *= std::sqrt(nof_observations * (nof_observations - 1)) / (nof_observations - 2);
+      result *= std::sqrt(nof_observations * (nof_observations - 1.0F)) / (nof_observations - 2.0F);
     }
     return result;
   }
@@ -184,7 +203,7 @@ public:
   /// \f[
   /// G_2 = \frac{n-1}{(n-2)(n-3)}\bigl[(n+1)g_1 - 3(n-1)\bigr] + 3.
   /// \f]
-  /// \remark The behavior is undefined when the sample consists of less than four observations.
+  /// \remark The returns NAN when the sample consists of less than four observations.
   /// \note The normal distribution has kurtosis equal to 3 (for this reason, sometimes the kurtosis is defined as
   /// \f$g_2 - 3\f$ to get a value of zero with the normal distribution).
   /// \note Distributions with tails that decrease slower
@@ -194,27 +213,18 @@ public:
   /// \sigma\f$.
   float get_kurtosis(bias biased = bias::UNBIASED) const
   {
-    float cum_sum2 = cumulative_sum * cumulative_sum;
-    float cum_sum4 = cum_sum2 * cum_sum2;
-
-    // For the numerator, we need to compute the fourth sample centered moment "sum((x - mean)^4) / n". Denoting Sn the
-    // cumulative sum of samples raised to the nth power, this is equivalent to computing
-    // (S4 - 4 S1 S3 / n + 6 S1^2 S2 / n^2 - 3 S1^4 / n^3) / n
-    //            = ((((-3 S1^4) / n + 6 S1^2 S2) / n - 4 S1 S3) / n + S4) / n.
-    float num = (-3 * cum_sum4) / nof_observations;
-    num       = (num + 6 * cum_sum2 * cumulative_sum_of_squares) / nof_observations;
-    num       = (num - 4 * cumulative_sum * cumulative_sum_of_cubes) / nof_observations;
-    num       = (num + cumulative_sum_of_fourths) / nof_observations;
-
-    // The denominator is just the biased variance squared.
-    float den = get_variance(bias::BIASED);
-    den *= den;
+    if (nof_observations < 4) {
+      return NAN;
+    }
+    float num     = centered_power_sum_ord4 / nof_observations;
+    float den_tmp = centered_power_sum_ord2 / nof_observations;
+    float den     = den_tmp * den_tmp;
 
     float result = num / den;
 
     if (biased == bias::UNBIASED) {
-      result = result * (nof_observations + 1) - 3 * (nof_observations - 1);
-      result = result * (nof_observations - 1) / ((nof_observations - 2) * (nof_observations - 3)) + 3;
+      result = result * (nof_observations + 1) - 3.0F * (nof_observations - 1);
+      result = result * (nof_observations - 1) / ((nof_observations - 2.0F) * (nof_observations - 3.0F)) + 3.0F;
     }
     return result;
   }
@@ -228,14 +238,14 @@ private:
   T min = std::numeric_limits<T>::max();
   /// Records the sample size.
   size_t nof_observations = 0;
-  /// Records the sum of all observed values.
-  float cumulative_sum = 0;
-  /// Records the sum of the squares of all observed values.
-  float cumulative_sum_of_squares = 0;
-  /// Records the sum of the cubes of all observed values.
-  float cumulative_sum_of_cubes = 0;
-  /// Records the sum of the fourth powers of all observed values.
-  float cumulative_sum_of_fourths = 0;
+  /// Records the mean of the sample.
+  float mean = 0;
+  /// Records the centered power sum of order 2 of all observations, i.e. \f$\sum_n (X_n - \bar{X})^2\f$.
+  float centered_power_sum_ord2 = 0;
+  /// Records the centered power sum of order 3 of all observations, i.e. \f$\sum_n (X_n - \bar{X})^3\f$.
+  float centered_power_sum_ord3 = 0;
+  /// Records the centered power sum of order 4 of all observations, i.e. \f$\sum_n (X_n - \bar{X})^4\f$.
+  float centered_power_sum_ord4 = 0;
 };
 
 } // namespace srsgnb
