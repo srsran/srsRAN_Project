@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Mathematical utility functions.
+
 #ifndef SRSGNB_SUPPORT_MATH_UTILS_H
 #define SRSGNB_SUPPORT_MATH_UTILS_H
 
@@ -100,6 +103,34 @@ unsigned prime_greater_than(unsigned n);
 /// \brief Finds the biggest prime number lesser than \c n.
 /// \remark Only works for prime numbers not larger than 3299.
 unsigned prime_lower_than(unsigned n);
+
+/// \brief Ensures a value is between the given bounds, according to a specified order relation.
+///
+/// \tparam T            Class of the value to clamp. A strict order relation (less than) should be definable between
+///                      elements of class \c T.
+/// \tparam CompareLess  Class of the comparison object (see below).
+/// \param value         The value to clamp.
+/// \param lower_bound   Minimum value after clamping.
+/// \param upper_bound   Maximum value after clamping.
+/// \param comp          Comparison function object implementing an order relation between elements of \c T. The
+///                      signature should be equivalent to `bool comp(const T& a, const T& b)` and should return \c true
+///                      if <tt>a < b</tt> (according to any order relation in \c T), \c false otherwise.
+/// \return A reference to \c lower_bound if <tt>value < lower_bound</tt>; a reference to \c upper_bound if
+///         <tt>upper_bound < value</tt>; a reference to \c value itself otherwise.
+template <class T, class CompareLess>
+constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bound, CompareLess comp)
+{
+  return comp(value, lower_bound) ? lower_bound : (comp(upper_bound, value) ? upper_bound : value);
+}
+
+/// \brief Ensures a value is between the given bounds, according to the default order relation.
+///
+/// See the documentation for the extended form for more information.
+template <class T>
+constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bound)
+{
+  return clamp(value, lower_bound, upper_bound, std::less<T>());
+}
 
 } // namespace srsgnb
 
