@@ -19,11 +19,11 @@
 #include <array>
 
 /// \cond
-void compare_tolerance(float a, float b)
+bool is_within_tolerance(float a, float b)
 {
   float rr = std::abs((a - b) / b);
   // Relative difference less than 0.1%.
-  TESTASSERT(rr < 0.001);
+  return rr < 0.001;
 }
 
 int main()
@@ -99,57 +99,57 @@ int main()
   for (; i_sample != stop_sample; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_observations(), stop_sample);
-  compare_tolerance(stats.get_max(), half.max);
-  compare_tolerance(stats.get_min(), half.min);
-  compare_tolerance(stats.get_mean(), half.mean);
-  compare_tolerance(stats.get_variance(), half.var);
-  compare_tolerance(stats.get_variance(bias::BIASED), half.var_biased);
-  compare_tolerance(stats.get_std(), half.std);
-  compare_tolerance(stats.get_std(bias::BIASED), half.std_biased);
-  compare_tolerance(stats.get_sem(), half.sem);
-  compare_tolerance(stats.get_sem(bias::BIASED), half.sem_biased);
-  compare_tolerance(stats.get_skewness(), half.skew);
-  compare_tolerance(stats.get_skewness(bias::BIASED), half.skew_biased);
-  compare_tolerance(stats.get_kurtosis(), half.kurtosis);
-  compare_tolerance(stats.get_kurtosis(bias::BIASED), half.kurtosis_biased);
+  TESTASSERT_EQ(stats.get_nof_observations(), stop_sample, "Number of observations.");
+  TESTASSERT(is_within_tolerance(stats.get_max(), half.max), "Maximum value.");
+  TESTASSERT(is_within_tolerance(stats.get_min(), half.min), "Minimum value.");
+  TESTASSERT(is_within_tolerance(stats.get_mean(), half.mean), "Mean.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(), half.var), "Variance.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(bias::BIASED), half.var_biased), "Biased variance.");
+  TESTASSERT(is_within_tolerance(stats.get_std(), half.std), "Standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_std(bias::BIASED), half.std_biased), "Biased standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(), half.sem), "Standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(bias::BIASED), half.sem_biased), "Biased standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(), half.skew), "Skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(bias::BIASED), half.skew_biased), "Biased skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(), half.kurtosis), "Kurtosis.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(bias::BIASED), half.kurtosis_biased), "Biased kurtosis.");
 
   for (; i_sample != NOF_OBSERVATIONS; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_observations(), NOF_OBSERVATIONS);
-  compare_tolerance(stats.get_max(), full.max);
-  compare_tolerance(stats.get_min(), full.min);
-  compare_tolerance(stats.get_mean(), full.mean);
-  compare_tolerance(stats.get_variance(), full.var);
-  compare_tolerance(stats.get_variance(bias::BIASED), full.var_biased);
-  compare_tolerance(stats.get_std(), full.std);
-  compare_tolerance(stats.get_std(bias::BIASED), full.std_biased);
-  compare_tolerance(stats.get_sem(), full.sem);
-  compare_tolerance(stats.get_sem(bias::BIASED), full.sem_biased);
-  compare_tolerance(stats.get_skewness(), full.skew);
-  compare_tolerance(stats.get_skewness(bias::BIASED), full.skew_biased);
-  compare_tolerance(stats.get_kurtosis(), full.kurtosis);
-  compare_tolerance(stats.get_kurtosis(bias::BIASED), full.kurtosis_biased);
+  TESTASSERT_EQ(stats.get_nof_observations(), NOF_OBSERVATIONS, "Number of observations.");
+  TESTASSERT(is_within_tolerance(stats.get_max(), full.max), "Maximum value.");
+  TESTASSERT(is_within_tolerance(stats.get_min(), full.min), "Minimum value.");
+  TESTASSERT(is_within_tolerance(stats.get_mean(), full.mean), "Mean.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(), full.var), "Variance.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(bias::BIASED), full.var_biased), "Biased variance.");
+  TESTASSERT(is_within_tolerance(stats.get_std(), full.std), "Standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_std(bias::BIASED), full.std_biased), "Biased standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(), full.sem), "Standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(bias::BIASED), full.sem_biased), "Biased standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(), full.skew), "Skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(bias::BIASED), full.skew_biased), "Biased skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(), full.kurtosis), "Kurtosis.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(bias::BIASED), full.kurtosis_biased), "Biased kurtosis.");
 
   stats.reset();
   // Recompute the statistics to ensure reset worked properly.
   for (i_sample = 0; i_sample != NOF_OBSERVATIONS; ++i_sample) {
     stats.update(SAMPLES[i_sample]);
   }
-  compare_tolerance(stats.get_nof_observations(), NOF_OBSERVATIONS);
-  compare_tolerance(stats.get_max(), full.max);
-  compare_tolerance(stats.get_min(), full.min);
-  compare_tolerance(stats.get_mean(), full.mean);
-  compare_tolerance(stats.get_variance(), full.var);
-  compare_tolerance(stats.get_variance(bias::BIASED), full.var_biased);
-  compare_tolerance(stats.get_std(), full.std);
-  compare_tolerance(stats.get_std(bias::BIASED), full.std_biased);
-  compare_tolerance(stats.get_sem(), full.sem);
-  compare_tolerance(stats.get_sem(bias::BIASED), full.sem_biased);
-  compare_tolerance(stats.get_skewness(), full.skew);
-  compare_tolerance(stats.get_skewness(bias::BIASED), full.skew_biased);
-  compare_tolerance(stats.get_kurtosis(), full.kurtosis);
-  compare_tolerance(stats.get_kurtosis(bias::BIASED), full.kurtosis_biased);
+  TESTASSERT_EQ(stats.get_nof_observations(), NOF_OBSERVATIONS, "Number of observations.");
+  TESTASSERT(is_within_tolerance(stats.get_max(), full.max), "Maximum value.");
+  TESTASSERT(is_within_tolerance(stats.get_min(), full.min), "Minimum value.");
+  TESTASSERT(is_within_tolerance(stats.get_mean(), full.mean), "Mean.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(), full.var), "Variance.");
+  TESTASSERT(is_within_tolerance(stats.get_variance(bias::BIASED), full.var_biased), "Biased variance.");
+  TESTASSERT(is_within_tolerance(stats.get_std(), full.std), "Standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_std(bias::BIASED), full.std_biased), "Biased standard deviation.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(), full.sem), "Standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_sem(bias::BIASED), full.sem_biased), "Biased standard mean error.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(), full.skew), "Skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_skewness(bias::BIASED), full.skew_biased), "Biased skewness.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(), full.kurtosis), "Kurtosis.");
+  TESTASSERT(is_within_tolerance(stats.get_kurtosis(bias::BIASED), full.kurtosis_biased), "Biased kurtosis.");
 }
 /// \endcond
