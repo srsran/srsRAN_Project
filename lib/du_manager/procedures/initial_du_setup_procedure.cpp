@@ -27,7 +27,7 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void> >& ctx
   f1ap::fill_f1_setup_request_message(request_msg, cfg.setup_params);
 
   // Initiate F1 Setup.
-  CORO_AWAIT_VALUE(response_msg, cfg.f1ap->handle_f1ap_setup_request(request_msg));
+  CORO_AWAIT_VALUE(response_msg, cfg.f1ap_conn_mng->handle_f1ap_setup_request(request_msg));
 
   // Handle F1 setup result.
   if (response_msg.success) {

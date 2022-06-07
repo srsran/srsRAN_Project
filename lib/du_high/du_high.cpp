@@ -57,6 +57,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
                                  mac->get_cell_manager(),
                                  *f1ap,
                                  *f1ap,
+                                 *f1ap,
                                  rlc_sdu_notifier,
                                  *cfg.du_mng_executor,
                                  cfg.cells);

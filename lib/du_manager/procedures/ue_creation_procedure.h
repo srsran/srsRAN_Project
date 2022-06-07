@@ -167,7 +167,7 @@ private:
   {
     f1ap_du_ue_create_request f1_msg{};
     f1_msg.ue_index = ue_ctx.ue_index;
-    return cfg.f1ap->handle_ue_creation_request(f1_msg);
+    return cfg.f1ap_ue_ctx_mng->handle_ue_creation_request(f1_msg);
   }
 
   ul_ccch_indication_message  msg;

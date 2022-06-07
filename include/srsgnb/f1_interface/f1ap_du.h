@@ -63,10 +63,11 @@ struct f1_du_setup_response_message {
   bool                        success;
 };
 
-class f1ap_du_configurator
+/// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
+class f1ap_connection_manager
 {
 public:
-  virtual ~f1ap_du_configurator() = default;
+  virtual ~f1ap_connection_manager() = default;
 
   /// \brief Initiates the F1 Setup procedure.
   /// \param[in] request The F1SetupRequest message to transmit.
@@ -75,6 +76,13 @@ public:
   /// and awaits the response. If a F1SetupFailure is received the F1AP will handle the failure.
   virtual async_task<f1_du_setup_response_message>
   handle_f1ap_setup_request(const f1_setup_request_message& request) = 0;
+};
+
+/// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
+class f1ap_du_ue_context_manager
+{
+public:
+  virtual ~f1ap_du_ue_context_manager() = default;
 
   /// Initiates creation of UE context in F1.
   virtual async_task<f1ap_du_ue_create_response> handle_ue_creation_request(const f1ap_du_ue_create_request& msg) = 0;
@@ -84,7 +92,8 @@ public:
 class f1_du_interface : public f1c_message_handler,
                         public f1c_event_handler,
                         public f1ap_du_ul_interface,
-                        public f1ap_du_configurator
+                        public f1ap_connection_manager,
+                        public f1ap_du_ue_context_manager
 {
 public:
   virtual ~f1_du_interface() = default;
