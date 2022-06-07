@@ -19,7 +19,7 @@ unsigned int srsgnb::ra_frequency_type1_get_riv(const ra_frequency_type1_configu
   srsran_assert(config.length_vrb >= 1,
                 "The number of contiguous allocated blocks must be greater than or equal to 1.");
   srsran_assert(config.length_vrb <= (config.N_bwp_size - config.start_vrb),
-                "he number of contiguous allocated blocks exceeds the maximum ({}).",
+                "The number of contiguous allocated blocks exceeds the maximum ({}).",
                 config.N_bwp_size - config.start_vrb);
 
   return sliv_from_s_and_l(config.N_bwp_size, config.start_vrb, config.length_vrb);

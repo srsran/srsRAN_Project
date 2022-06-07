@@ -88,8 +88,8 @@ struct ra_frequency_type1_special_configuration {
 /// Otherwise, <br>
 ///   \f$RIV = N_{BWP}^{initial}(N_{BWP}^{initial}-L'_{RBs}+1)+(N_{BWP}^{initial}-1-RB'_{start})\f$. <br>
 /// Where \f$L'_{RB}=L_{RB}/K\f$, \f$RB'_{start}=RB_{start}/K\f$. <br>
-/// if \f$N_{BWP}^{active}>N_{BWP}^{initial}\f$ then \f$K\f$ is the maximum  value from set {1,2,4,8} which satisfies
-/// \f$K \leq \left \lfloor N_{BWP}^{active}/ N_{BWP}^{initial}\right \rfloor\f$; othewise \f$K=1\f$.
+/// if \f$N_{BWP}^{active}>N_{BWP}^{initial}\f$ then \f$K\f$ is the maximum value from set {1,2,4,8} which satisfies
+/// \f$K \leq \left \lfloor N_{BWP}^{active}/ N_{BWP}^{initial}\right \rfloor\f$; otherwise \f$K=1\f$.
 unsigned ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config);
 
 } // namespace srsgnb
