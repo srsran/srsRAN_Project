@@ -12,6 +12,7 @@
 #define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_H
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
 

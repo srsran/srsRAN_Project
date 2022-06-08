@@ -148,8 +148,7 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<const log_likelihood_r
                                                      span<const log_likelihood_ratio> c2v,
                                                      span<log_likelihood_ratio>       v2c)
 {
-  unsigned nof_messages = v2c.size();
-  assert((soft.size() == nof_messages) && (c2v.size() == nof_messages));
+  assert((soft.size() == v2c.size()) && (c2v.size() == v2c.size()));
 
   // By definition, the difference between two LLRs saturates at +/- LLR_MAX. Moreover, if either term is infinite, so
   // is the result, with proper sign.
