@@ -8,8 +8,15 @@
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding)
 
-add_library(crc_calculator STATIC crc_calculator_impl.cpp)
+add_library(srsgnb_crc_calculator STATIC crc_calculator_impl.cpp)
 
 add_subdirectory(polar)
 add_subdirectory(ldpc)
 add_subdirectory(short)
+
+add_library(srsgnb_channel_coding STATIC channel_coding_factories.cpp)
+target_link_libraries(srsgnb_channel_coding
+        srsgnb_crc_calculator
+        srsgnb_polar
+        srsgnb_ldpc
+        srsgnb_short_block)

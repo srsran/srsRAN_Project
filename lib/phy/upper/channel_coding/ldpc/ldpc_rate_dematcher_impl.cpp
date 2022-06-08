@@ -134,8 +134,3 @@ void ldpc_rate_dematcher_impl::deinterleave_llrs(span<int8_t> out, span<const in
     out[out_index]      = in[in_index];
   }
 }
-
-std::unique_ptr<ldpc_rate_dematcher> srsgnb::create_ldpc_rate_dematcher()
-{
-  return std::make_unique<ldpc_rate_dematcher_impl>();
-}

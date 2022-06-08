@@ -36,8 +36,6 @@ public:
   rate_match(span<uint8_t> output, span<const uint8_t> input, const codeblock_metadata::tb_common_metadata& cfg) = 0;
 };
 
-std::unique_ptr<ldpc_rate_matcher> create_ldpc_rate_matcher();
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_MATCHER_H

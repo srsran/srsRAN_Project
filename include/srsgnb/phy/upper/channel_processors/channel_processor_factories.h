@@ -11,31 +11,77 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include <memory>
 
 namespace srsgnb {
 
-struct pusch_decoder_configuration {
+class pdsch_encoder_factory
+{
+public:
+  virtual ~pdsch_encoder_factory()                = default;
+  virtual std::unique_ptr<pdsch_encoder> create() = 0;
+};
+
+/// Describes the software PDSCH encoder factory configuration.
+struct pdsch_encoder_factory_sw_configuration {
+  /// LDPC encoder factory.
+  std::shared_ptr<ldpc_encoder_factory> encoder_factory;
+  /// LDPC rate matcher factory.
+  std::shared_ptr<ldpc_rate_matcher_factory> rate_matcher_factory;
+  /// LDPC Transmit segmenter factory.
+  std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory;
+};
+
+std::shared_ptr<pdsch_encoder_factory> create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config);
+
+class pusch_decoder_factory
+{
+public:
+  virtual ~pusch_decoder_factory()                = default;
+  virtual std::unique_ptr<pusch_decoder> create() = 0;
+};
+
+/// Describes the software PUSCH decoder factory configuration.
+struct pusch_decoder_factory_sw_configuration {
+  /// CRC calculator factory.
+  std::shared_ptr<crc_calculator_factory> crc_factory;
+  /// LDPC decoder factory.
+  std::shared_ptr<ldpc_decoder_factory> decoder_factory;
+  /// LDPC rate dematcher factory.
+  std::shared_ptr<ldpc_rate_dematcher_factory> dematcher_factory;
+  /// LDPC Receive segmenter factory.
+  std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_factory;
+};
+
+std::shared_ptr<pusch_decoder_factory> create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config);
+
+class pusch_demodulator_factory
+{
+public:
+  virtual ~pusch_demodulator_factory()                = default;
+  virtual std::unique_ptr<pusch_demodulator> create() = 0;
+};
+
+class pusch_processor_factory
+{
+public:
+  virtual ~pusch_processor_factory()                = default;
+  virtual std::unique_ptr<pusch_processor> create() = 0;
+};
+
+/// Describes the software PUSCH processor factory configuration.
+struct pusch_processor_factory_sw_configuration {
   // TBD.
 };
 
-std::unique_ptr<pusch_decoder> create_pusch_decoder(pusch_decoder_configuration& config);
-
-/// Describes the necessary parameters for creating a PUSCH processor.
-struct pusch_processor_configuration {
-  /// Channel estimator instance. Ownership is transferred to the processor.
-  std::unique_ptr<dmrs_pusch_estimator> estimator;
-  /// Demodulator instance. Ownership is transferred to the processor.
-  std::unique_ptr<pusch_demodulator> demodulator;
-  /// Decoder instance. Ownership is transferred to the processor.
-  std::unique_ptr<pusch_decoder> decoder;
-};
-
-/// Creates a generic PUSCH processor.
-std::unique_ptr<pusch_processor> create_pusch_processor(pusch_processor_configuration& config);
+std::shared_ptr<pusch_processor_factory>
+create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config);
 
 } // namespace srsgnb
 

@@ -39,8 +39,29 @@ using namespace srsgnb;
 
 int main()
 {
-  pusch_decoder_configuration    decoder_config = {};
-  std::unique_ptr<pusch_decoder> decoder        = create_pusch_decoder(decoder_config);
+  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_calculator_factory);
+
+  std::shared_ptr<ldpc_decoder_factory> ldpc_decoder_factory = create_ldpc_decoder_factory_sw("generic");
+  TESTASSERT(ldpc_decoder_factory);
+
+  std::shared_ptr<ldpc_rate_dematcher_factory> ldpc_rate_dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
+  TESTASSERT(ldpc_rate_dematcher_factory);
+
+  std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+  TESTASSERT(segmenter_rx_factory);
+
+  pusch_decoder_factory_sw_configuration pusch_decoder_factory_sw_config;
+  pusch_decoder_factory_sw_config.crc_factory       = crc_calculator_factory;
+  pusch_decoder_factory_sw_config.decoder_factory   = ldpc_decoder_factory;
+  pusch_decoder_factory_sw_config.dematcher_factory = ldpc_rate_dematcher_factory;
+  pusch_decoder_factory_sw_config.segmenter_factory = segmenter_rx_factory;
+  std::shared_ptr<pusch_decoder_factory> pusch_decoder_factory =
+      create_pusch_decoder_factory_sw(pusch_decoder_factory_sw_config);
+  TESTASSERT(pusch_decoder_factory);
+
+  std::unique_ptr<pusch_decoder> decoder = pusch_decoder_factory->create();
+  TESTASSERT(decoder);
 
   rx_softbuffer_pool_description pool_config = {};
 

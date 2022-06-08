@@ -64,7 +64,7 @@ target_link_libraries(pdcch_processor_unittest pdcch_processor srslog)
 add_test(pdcch_processor_unittest pdcch_processor_unittest)
 
 add_executable(pdsch_encoder_test pdsch_encoder_test.cpp)
-target_link_libraries(pdsch_encoder_test srsgnb_pdsch_encoder srslog)
+target_link_libraries(pdsch_encoder_test srsgnb_channel_processors srslog)
 
 add_custom_command(
         TARGET pdsch_encoder_test

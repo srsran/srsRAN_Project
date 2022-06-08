@@ -19,20 +19,20 @@
 
 namespace srsgnb {
 
+/// Describes the necessary parameters for creating a PUSCH processor.
+struct pusch_processor_configuration {
+  /// Channel estimator instance. Ownership is transferred to the processor.
+  std::unique_ptr<dmrs_pusch_estimator> estimator;
+  /// Demodulator instance. Ownership is transferred to the processor.
+  std::unique_ptr<pusch_demodulator> demodulator;
+  /// Decoder instance. Ownership is transferred to the processor.
+  std::unique_ptr<pusch_decoder> decoder;
+};
+
 class pusch_processor_impl : public pusch_processor
 {
 public:
-  /// Describes the necessary parameters for creating a PUSCH processor.
-  struct configuration {
-    /// Channel estimator instance. Ownership is transferred to the processor.
-    std::unique_ptr<dmrs_pusch_estimator> estimator;
-    /// Demodulator instance. Ownership is transferred to the processor.
-    std::unique_ptr<pusch_demodulator> demodulator;
-    /// Decoder instance. Ownership is transferred to the processor.
-    std::unique_ptr<pusch_decoder> decoder;
-  };
-
-  pusch_processor_impl(configuration& config);
+  pusch_processor_impl(pusch_processor_configuration& config);
 
   void
   process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) override;

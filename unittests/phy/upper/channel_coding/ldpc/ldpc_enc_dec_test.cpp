@@ -17,6 +17,7 @@
 
 #include "ldpc_encoder_test_data.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -40,8 +41,14 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::unique_ptr<srsgnb::ldpc_encoder> enc_generic = srsgnb::create_ldpc_encoder("generic");
-  std::unique_ptr<srsgnb::ldpc_decoder> dec_generic = srsgnb::create_ldpc_decoder("generic");
+  std::shared_ptr<ldpc_encoder_factory> enc_factory_generic = create_ldpc_encoder_factory_sw("generic");
+  TESTASSERT(enc_factory_generic);
+  std::unique_ptr<ldpc_encoder> enc_generic = enc_factory_generic->create();
+  TESTASSERT(enc_generic);
+  std::shared_ptr<ldpc_decoder_factory> dec_factory_generic = create_ldpc_decoder_factory_sw("generic");
+  TESTASSERT(dec_factory_generic);
+  std::unique_ptr<srsgnb::ldpc_decoder> dec_generic = dec_factory_generic->create();
+  TESTASSERT(dec_generic);
 
   for (const auto& test_data : ldpc_encoder_test_data) {
     base_graph_t   bg = static_cast<base_graph_t>(test_data.bg - 1);

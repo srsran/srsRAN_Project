@@ -254,15 +254,3 @@ void ldpc_decoder_generic::get_hard_bits(span<uint8_t> out)
   unsigned out_length = out.size();
   std::transform(soft_bits.cbegin(), soft_bits.cbegin() + out_length, out.begin(), [](int8_t sb) { return (sb < 0); });
 }
-
-std::unique_ptr<ldpc_decoder> srsgnb::create_ldpc_decoder(const std::string& dec_type)
-{
-  if (dec_type == "generic") {
-    return std::make_unique<ldpc_decoder_generic>();
-  }
-  if (dec_type == "avx2") {
-    return std::make_unique<ldpc_decoder_avx2>();
-  }
-  srsran_assert(false, "Invalid decoder type '{}'. Valid types are: generic and avx2", dec_type.c_str());
-  return {};
-}

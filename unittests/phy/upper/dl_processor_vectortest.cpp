@@ -9,7 +9,7 @@
  */
 
 #include "dl_processor_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
@@ -69,6 +69,29 @@ void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsc
 
 int main()
 {
+  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_calculator_factory);
+
+  std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("generic");
+  TESTASSERT(ldpc_encoder_factory);
+
+  std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
+  TESTASSERT(ldpc_rate_matcher_factory);
+
+  ldpc_segmenter_tx_factory_sw_configuration ldpc_segmenter_tx_factory_config = {};
+  ldpc_segmenter_tx_factory_config.crc_factory                                = crc_calculator_factory;
+  std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segmenter_tx_factory =
+      create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_config);
+  TESTASSERT(ldpc_segmenter_tx_factory);
+
+  pdsch_encoder_factory_sw_configuration pdsch_encoder_factory_config = {};
+  pdsch_encoder_factory_config.encoder_factory                        = ldpc_encoder_factory;
+  pdsch_encoder_factory_config.rate_matcher_factory                   = ldpc_rate_matcher_factory;
+  pdsch_encoder_factory_config.segmenter_factory                      = ldpc_segmenter_tx_factory;
+  std::shared_ptr<pdsch_encoder_factory> pdsch_encoder_factory =
+      create_pdsch_encoder_factory_sw(pdsch_encoder_factory_config);
+  TESTASSERT(ldpc_encoder_factory);
+
   // Create PDSCH processor.
   std::unique_ptr<pdsch_processor> pdsch = nullptr;
   {
@@ -77,7 +100,7 @@ int main()
     modulator_config.scrambler = create_pseudo_random();
 
     pdsch_processor_configuration processor_config;
-    processor_config.encoder   = create_pdsch_encoder();
+    processor_config.encoder   = pdsch_encoder_factory->create();
     processor_config.modulator = create_pdsch_modulator(modulator_config);
     processor_config.dmrs      = create_dmrs_pdsch_processor();
 

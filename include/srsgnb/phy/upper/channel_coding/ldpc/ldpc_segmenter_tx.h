@@ -43,8 +43,6 @@ public:
                        const segmenter_config&                             cfg) = 0;
 };
 
-std::unique_ptr<ldpc_segmenter_tx> create_ldpc_segmenter_tx();
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_TX_H

@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(ldpc_enc_dec_test ldpc_enc_dec_test.cpp)
-target_link_libraries(ldpc_enc_dec_test ldpc srslog)
+target_link_libraries(ldpc_enc_dec_test srsgnb_channel_coding srslog)
 add_custom_command(
     TARGET ldpc_enc_dec_test
     POST_BUILD
@@ -24,7 +24,7 @@ add_custom_command(
 add_test(ldpc_enc_dec_test ldpc_enc_dec_test)
 
 add_executable(ldpc_rm_test ldpc_rm_test.cpp)
-target_link_libraries(ldpc_rm_test ldpc srslog)
+target_link_libraries(ldpc_rm_test srsgnb_channel_coding srslog)
 add_custom_command(
     TARGET ldpc_rm_test
     POST_BUILD
@@ -36,7 +36,7 @@ add_custom_command(
 add_test(ldpc_rm_test ldpc_rm_test)
 
 add_executable(ldpc_segmenter_test ldpc_segmenter_test.cpp)
-target_link_libraries(ldpc_segmenter_test ldpc srslog)
+target_link_libraries(ldpc_segmenter_test srsgnb_channel_coding srslog)
 add_custom_command(
     TARGET ldpc_segmenter_test
     POST_BUILD

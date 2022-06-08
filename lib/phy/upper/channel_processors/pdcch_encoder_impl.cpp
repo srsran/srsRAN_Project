@@ -10,6 +10,7 @@
 
 #include "pdcch_encoder_impl.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/binary.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
@@ -19,14 +20,13 @@ using namespace srsgnb;
 using namespace pdcch_constants;
 
 pdcch_encoder_impl::pdcch_encoder_impl() :
-  crc24c(create_crc_calculator(crc_generator_poly::CRC24C)),
+  crc24c(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C)),
   interleaver(create_polar_interleaver()),
   alloc(create_polar_allocator()),
   code(create_polar_code()),
   encoder(create_polar_encoder_pipelined(polar_code::NMAX_LOG)),
   rm(create_polar_rate_matcher())
-{
-}
+{}
 
 void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)
 {

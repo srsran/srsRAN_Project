@@ -15,9 +15,7 @@
 /// graphs. Test vectors provide the transport blocks and the resulting segmented blocks for comparison.
 
 #include "ldpc_segmenter_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <numeric>
 
@@ -26,8 +24,22 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::unique_ptr<ldpc_segmenter_tx> segmenter_tx = create_ldpc_segmenter_tx();
-  std::unique_ptr<ldpc_segmenter_rx> segmenter_rx = create_ldpc_segmenter_rx();
+  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_calculator_factory);
+
+  ldpc_segmenter_tx_factory_sw_configuration segmenter_tx_factory_config;
+  segmenter_tx_factory_config.crc_factory = crc_calculator_factory;
+  std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_tx_factory =
+      create_ldpc_segmenter_tx_factory_sw(segmenter_tx_factory_config);
+  TESTASSERT(segmenter_tx_factory);
+
+  std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();
+  TESTASSERT(segmenter_rx_factory);
+
+  std::unique_ptr<ldpc_segmenter_tx> segmenter_tx = segmenter_tx_factory->create();
+  TESTASSERT(segmenter_tx);
+  std::unique_ptr<ldpc_segmenter_rx> segmenter_rx = segmenter_rx_factory->create();
+  TESTASSERT(segmenter_rx);
 
   segmenter_config seg_cfg{};
 

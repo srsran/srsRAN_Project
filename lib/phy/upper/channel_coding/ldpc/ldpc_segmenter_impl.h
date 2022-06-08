@@ -42,7 +42,7 @@ public:
   };
 
   /// \brief Wraps the constructor of the Tx version of the LDPC segmenter.
-  static std::unique_ptr<ldpc_segmenter_tx> create_ldpc_segmenter_impl_tx(sch_crc);
+  static std::unique_ptr<ldpc_segmenter_tx> create_ldpc_segmenter_impl_tx(sch_crc&);
 
   /// \brief Wraps the constructor of the Rx version of the LDPC segmenter.
   /// \remark The receive-chain version of the segmenter does not need CRC calculators.

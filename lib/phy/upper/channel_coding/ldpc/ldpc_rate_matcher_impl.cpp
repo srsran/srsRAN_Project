@@ -93,8 +93,3 @@ void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8
     out[out_index]      = in[in_index];
   }
 }
-
-std::unique_ptr<srsgnb::ldpc_rate_matcher> srsgnb::create_ldpc_rate_matcher()
-{
-  return std::make_unique<ldpc_rate_matcher_impl>();
-}

@@ -18,7 +18,6 @@
 
 #include "srsgnb/support/math_utils.h"
 #include <array>
-#include <memory>
 
 namespace srsgnb {
 

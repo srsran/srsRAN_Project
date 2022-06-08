@@ -12,7 +12,6 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_CRC_CALCULATOR_H
 
 #include "srsgnb/adt/span.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -49,8 +48,6 @@ public:
   ///\brief Returns the identifier of the generator polynomial.
   virtual crc_generator_poly get_generator_poly() const = 0;
 };
-
-std::unique_ptr<crc_calculator> create_crc_calculator(crc_generator_poly poly);
 
 } // namespace srsgnb
 

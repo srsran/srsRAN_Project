@@ -255,15 +255,3 @@ void ldpc_encoder_generic::high_rate_bg2_other()
     codeblock[skip3 + k] = aux[3][k] ^ codeblock[skip0 + k];
   }
 }
-
-std::unique_ptr<ldpc_encoder> srsgnb::create_ldpc_encoder(const std::string& enc_type)
-{
-  if (enc_type == "generic") {
-    return std::make_unique<ldpc_encoder_generic>();
-  }
-  if (enc_type == "avx2") {
-    return std::make_unique<ldpc_encoder_avx2>();
-  }
-  assert(false);
-  return {};
-}

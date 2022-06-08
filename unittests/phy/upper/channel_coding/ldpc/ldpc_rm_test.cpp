@@ -17,9 +17,7 @@
 /// configuration parameters.
 
 #include "ldpc_rate_matcher_test_data.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
@@ -27,10 +25,19 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
+  std::shared_ptr<ldpc_rate_dematcher_factory> rate_dematcher_factory = create_ldpc_rate_dematcher_factory_sw();
+  TESTASSERT(rate_dematcher_factory);
+
+  std::shared_ptr<ldpc_rate_matcher_factory> rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
+  TESTASSERT(rate_matcher_factory);
+
   // The LDPC rate matcher object used throughout the test.
-  const std::unique_ptr<ldpc_rate_matcher> matcher = create_ldpc_rate_matcher();
+  const std::unique_ptr<ldpc_rate_matcher> matcher = rate_matcher_factory->create();
+  TESTASSERT(matcher);
+
   // The LDPC rate dematcher object used throughout the test.
-  const std::unique_ptr<ldpc_rate_dematcher> dematcher = create_ldpc_rate_dematcher();
+  const std::unique_ptr<ldpc_rate_dematcher> dematcher = rate_dematcher_factory->create();
+  TESTASSERT(dematcher);
 
   for (const auto& test_data : ldpc_rate_matcher_test_data) {
     modulation_scheme    mod       = test_data.mod_scheme;

@@ -7,7 +7,7 @@
 #
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_coding/ldpc)
-add_library(ldpc STATIC
+add_library(srsgnb_ldpc STATIC
         ldpc_graph_impl.cpp
         ldpc_luts_impl.cpp
         ldpc_encoder_impl.cpp
@@ -16,5 +16,3 @@ add_library(ldpc STATIC
         ldpc_rate_dematcher_impl.cpp
         ldpc_segmenter_impl.cpp
 )
-
-target_link_libraries(ldpc crc_calculator srsvec)

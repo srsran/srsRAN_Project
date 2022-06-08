@@ -41,8 +41,6 @@ public:
   rate_dematch(span<int8_t> output, span<const int8_t> input, bool new_data, const codeblock_metadata& cfg) = 0;
 };
 
-std::unique_ptr<ldpc_rate_dematcher> create_ldpc_rate_dematcher();
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_DEMATCHER_H

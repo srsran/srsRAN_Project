@@ -59,8 +59,6 @@ public:
   decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) = 0;
 };
 
-std::unique_ptr<ldpc_decoder> create_ldpc_decoder(const std::string& dec_type);
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_DECODER_H

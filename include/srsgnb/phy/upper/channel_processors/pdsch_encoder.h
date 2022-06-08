@@ -43,8 +43,6 @@ public:
   virtual void encode(span<uint8_t> codeword, span<const uint8_t> transport_block, const segmenter_config& cfg) = 0;
 };
 
-std::unique_ptr<pdsch_encoder> create_pdsch_encoder();
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_H

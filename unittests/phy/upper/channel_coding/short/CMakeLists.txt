@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(short_block_encoder_test short_block_encoder_test.cpp)
-target_link_libraries(short_block_encoder_test short_block srslog)
+target_link_libraries(short_block_encoder_test srsgnb_channel_coding srslog)
 add_custom_command(
         TARGET short_block_encoder_test
         POST_BUILD
@@ -24,7 +24,7 @@ add_custom_command(
 add_test(short_block_encoder_test short_block_encoder_test)
 
 add_executable(short_block_detector_test short_block_detector_test.cpp)
-target_link_libraries(short_block_detector_test short_block srsgnb_upper_phy_support srslog)
+target_link_libraries(short_block_detector_test srsgnb_channel_coding srsgnb_upper_phy_support srslog)
 add_custom_command(
         TARGET short_block_detector_test
         POST_BUILD

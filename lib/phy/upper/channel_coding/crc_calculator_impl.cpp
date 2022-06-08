@@ -145,8 +145,3 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
 
   return get_checksum();
 }
-
-std::unique_ptr<crc_calculator> srsgnb::create_crc_calculator(crc_generator_poly poly)
-{
-  return std::make_unique<crc_calculator_impl>(poly);
-}

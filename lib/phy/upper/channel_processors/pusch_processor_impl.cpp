@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-pusch_processor_impl::pusch_processor_impl(configuration& config)
+pusch_processor_impl::pusch_processor_impl(pusch_processor_configuration& config)
 {
   // TBD.
 }

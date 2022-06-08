@@ -9,6 +9,7 @@
  */
 
 #include "pusch_decoder_impl.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;

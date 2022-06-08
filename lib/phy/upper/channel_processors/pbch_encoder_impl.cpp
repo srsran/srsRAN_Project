@@ -9,13 +9,14 @@
  */
 
 #include "pbch_encoder_impl.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
 
 pbch_encoder_impl::pbch_encoder_impl() :
-  crc24c(create_crc_calculator(crc_generator_poly::CRC24C)),
+  crc24c(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C)),
   scrambler(create_pseudo_random()),
   interleaver(create_polar_interleaver()),
   alloc(create_polar_allocator()),

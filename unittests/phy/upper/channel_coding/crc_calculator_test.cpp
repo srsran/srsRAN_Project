@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
@@ -68,7 +68,11 @@ crc_calculator_checksum_t crc_generic_calculator_bit(const srsgnb::span<uint8_t>
   return static_cast<crc_calculator_checksum_t>(remainder & (highbit - 1));
 }
 
-void test_crc_byte(std::size_t nbytes, crc_generator_poly poly, unsigned polynom, unsigned order)
+void test_crc_byte(crc_calculator_factory& factory,
+                   std::size_t             nbytes,
+                   crc_generator_poly      poly,
+                   unsigned                polynom,
+                   unsigned                order)
 {
   std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
 
@@ -80,8 +84,11 @@ void test_crc_byte(std::size_t nbytes, crc_generator_poly poly, unsigned polynom
     v = dist(rgen);
   }
 
+  std::unique_ptr<crc_calculator> crc_calculator = factory.create(poly);
+  TESTASSERT(crc_calculator);
+
   // Calculate checksum in library
-  crc_calculator_checksum_t checksum = create_crc_calculator(poly)->calculate_byte(data);
+  crc_calculator_checksum_t checksum = crc_calculator->calculate_byte(data);
 
   // Calculate ideal CRC24A
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator_byte(data, polynom, order);
@@ -89,7 +96,11 @@ void test_crc_byte(std::size_t nbytes, crc_generator_poly poly, unsigned polynom
   TESTASSERT_EQ(checksum, checksum_gold, "Byte CRC checksum failed.");
 }
 
-void test_crc_bit(std::size_t nbits, crc_generator_poly poly, unsigned polynom, unsigned order)
+void test_crc_bit(crc_calculator_factory& factory,
+                  std::size_t             nbits,
+                  crc_generator_poly      poly,
+                  unsigned                polynom,
+                  unsigned                order)
 {
   std::uniform_int_distribution<unsigned char> dist(0, 1);
 
@@ -101,8 +112,11 @@ void test_crc_bit(std::size_t nbits, crc_generator_poly poly, unsigned polynom, 
     v = dist(rgen);
   }
 
+  std::unique_ptr<crc_calculator> crc_calculator = factory.create(poly);
+  TESTASSERT(crc_calculator);
+
   // Calculate checksum in library
-  crc_calculator_checksum_t checksum = create_crc_calculator(poly)->calculate_bit(data);
+  crc_calculator_checksum_t checksum = crc_calculator->calculate_bit(data);
 
   // Calculate ideal CRC24A
   crc_calculator_checksum_t checksum_gold = crc_generic_calculator_bit(data, polynom, order);
@@ -112,20 +126,22 @@ void test_crc_bit(std::size_t nbits, crc_generator_poly poly, unsigned polynom, 
 
 int main()
 {
+  std::shared_ptr<crc_calculator_factory> factory = create_crc_calculator_factory_sw();
+  TESTASSERT(factory);
+
   std::vector<std::size_t> sizes = {257, 997};
 
   for (std::size_t N : sizes) {
-    test_crc_byte(N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
-    test_crc_byte(N, crc_generator_poly::CRC24B, 0X1800063, 24);
-    test_crc_byte(N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
-    test_crc_byte(N, crc_generator_poly::CRC16, 0x11021, 16);
-    test_crc_byte(N, crc_generator_poly::CRC11, 0xE21, 11);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC11, 0xE21, 11);
 
-    test_crc_bit(N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
-    test_crc_bit(N, crc_generator_poly::CRC24B, 0X1800063, 24);
-    test_crc_bit(N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
-    test_crc_bit(N, crc_generator_poly::CRC16, 0x11021, 16);
-    test_crc_bit(N, crc_generator_poly::CRC11, 0xE21, 11);
-    //    test_crc_bit(N, crc_generator_poly::CRC6, 0x61, 6);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC11, 0xE21, 11);
   }
 }

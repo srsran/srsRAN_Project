@@ -10,7 +10,7 @@
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(crc_calculator_test crc_calculator_test.cpp)
-target_link_libraries(crc_calculator_test crc_calculator srsvec srslog)
+target_link_libraries(crc_calculator_test srsgnb_channel_coding)
 add_test(crc_calculator_test crc_calculator_test)
 
 add_subdirectory(polar)
