@@ -208,7 +208,7 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   assert(cw_length == cw_offset);
 }
 
-static void check_inputs_rx(span<const int8_t> codeword_llrs, const segmenter_config& cfg)
+static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
   srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
   srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod), "Wrong number of LLRs.");
@@ -223,7 +223,7 @@ static void check_inputs_rx(span<const int8_t> codeword_llrs, const segmenter_co
 
 // For the Rx-chain segmenter.
 void ldpc_segmenter_impl::segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
-                                  span<const int8_t>                                       codeword_llrs,
+                                  span<const log_likelihood_ratio>                         codeword_llrs,
                                   unsigned                                                 tbs,
                                   const segmenter_config&                                  cfg)
 {

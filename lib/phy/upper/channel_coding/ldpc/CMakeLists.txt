@@ -16,3 +16,5 @@ add_library(srsgnb_ldpc STATIC
         ldpc_rate_dematcher_impl.cpp
         ldpc_segmenter_impl.cpp
 )
+
+target_link_libraries(srsgnb_ldpc log_likelihood_ratio)

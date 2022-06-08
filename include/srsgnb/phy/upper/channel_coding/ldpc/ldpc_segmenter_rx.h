@@ -17,6 +17,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
 
@@ -38,7 +39,7 @@ public:
   /// \remark The output codeblocks are just views (not copies) of the proper block of codeword log-likelihood ratios in
   /// \c codeword_llrs.
   virtual void segment(static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS>& described_codeblocks,
-                       span<const int8_t>                                       codeword_llrs,
+                       span<const log_likelihood_ratio>                         codeword_llrs,
                        unsigned                                                 tbs,
                        const segmenter_config&                                  cfg) = 0;
 };

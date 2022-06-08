@@ -66,8 +66,12 @@ int main()
       seg_offset += test_data.segment_length;
     }
 
-    std::vector<int8_t> cw_llrs(segments[0].second.tb_common.cw_length);
-    std::iota(cw_llrs.begin(), cw_llrs.end(), -127);
+    std::vector<log_likelihood_ratio> cw_llrs(segments[0].second.tb_common.cw_length);
+    std::generate(cw_llrs.begin(), cw_llrs.end(), [n = static_cast<int8_t>(-127)]() mutable {
+      int8_t r = clamp(n, LLR_MIN.to_value_type(), LLR_MAX.to_value_type());
+      ++n;
+      return log_likelihood_ratio(r);
+    });
     static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblocks;
     segmenter_rx->segment(codeblocks, cw_llrs, test_data.tbs, seg_cfg);
 

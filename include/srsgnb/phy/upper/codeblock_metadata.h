@@ -13,6 +13,7 @@
 #ifndef SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 #define SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
 
+#include "log_likelihood_ratio.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/modulation_scheme.h"
@@ -90,7 +91,7 @@ using described_segment = std::pair<segment_data, codeblock_metadata>;
 ///   - \c described_rx_codeblock.first()   Contains a view to the LLRs corresponding to one codeblock.
 ///   - \c described_rx_codeblock.second()  Contains the codeblock metadata, useful for processing the corresponding
 ///                                      codeblock (e.g., decoding, rate-dematching).
-using described_rx_codeblock = std::pair<span<const int8_t>, codeblock_metadata>;
+using described_rx_codeblock = std::pair<span<const log_likelihood_ratio>, codeblock_metadata>;
 
 /// Gathers all segmentation configuration parameters.
 struct segmenter_config {
