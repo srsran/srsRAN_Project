@@ -16,6 +16,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 
 namespace srsgnb {
@@ -69,11 +70,11 @@ public:
   ///                                transport blocks).
   /// \param[in]     blk_cfg         Transport block configuration.
   /// \param[in]     alg_cfg         LDPC decoding algorithm configuration.
-  virtual void decode(span<uint8_t>        transport_block,
-                      statistics&          info,
-                      rx_softbuffer*       soft_codeword,
-                      span<const int8_t>   llrs,
-                      const configuration& cfg) = 0;
+  virtual void decode(span<uint8_t>                    transport_block,
+                      statistics&                      info,
+                      rx_softbuffer*                   soft_codeword,
+                      span<const log_likelihood_ratio> llrs,
+                      const configuration&             cfg) = 0;
 };
 
 } // namespace srsgnb

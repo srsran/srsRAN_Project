@@ -60,11 +60,11 @@ public:
   };
 
   // See interface for the documentation.
-  void decode(span<uint8_t>        transport_block,
-              statistics&          info,
-              rx_softbuffer*       soft_codeword,
-              span<const int8_t>   llrs,
-              const configuration& cfg) override;
+  void decode(span<uint8_t>                    transport_block,
+              statistics&                      info,
+              rx_softbuffer*                   soft_codeword,
+              span<const log_likelihood_ratio> llrs,
+              const configuration&             cfg) override;
 
 private:
   /// Pointer to an LDPC segmenter.

@@ -79,7 +79,7 @@ static std::tuple<unsigned, unsigned, unsigned> get_cblk_bit_breakdown(const cod
 }
 
 static optional<unsigned> decode_cblk(span<uint8_t>                       output,
-                                      span<const int8_t>                  input,
+                                      span<const log_likelihood_ratio>    input,
                                       ldpc_decoder*                       dec,
                                       crc_calculator*                     crc,
                                       const codeblock_metadata&           cb_meta,
@@ -115,11 +115,11 @@ static bool is_tb_crc_ok(span<const uint8_t>              transport_block_bytes,
   return (checksum_cmp == checksum_tbs);
 }
 
-void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
-                                statistics&          info,
-                                rx_softbuffer*       soft_codeword,
-                                span<const int8_t>   llrs,
-                                const configuration& cfg)
+void pusch_decoder_impl::decode(span<uint8_t>                    transport_block,
+                                statistics&                      info,
+                                rx_softbuffer*                   soft_codeword,
+                                span<const log_likelihood_ratio> llrs,
+                                const configuration&             cfg)
 {
   // Temporary buffer to store the rate-matched codeblocks (represented by LLRs) and their metadata.
   static_vector<described_rx_codeblock, MAX_NOF_SEGMENTS> codeblock_llrs = {};
@@ -167,7 +167,7 @@ void pusch_decoder_impl::decode(span<uint8_t>        transport_block,
 
     if (!cb_crcs[cb_id]) {
       // Get the LLRs from previous transmissions, if any, or a clean buffer.
-      span<int8_t> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
+      span<log_likelihood_ratio> codeblock = soft_codeword->get_codeblock_soft_bits(cb_id, cb_length);
 
       // Dematch the new LLRs and combine them with the ones from previous transmissions.
       dematcher->rate_dematch(codeblock, cb_llrs, cfg.new_data, cb_meta);

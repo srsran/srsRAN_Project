@@ -66,9 +66,9 @@ int main()
   rx_softbuffer_pool_description pool_config = {};
 
   for (const auto& test_data : pusch_decoder_test_data) {
-    segmenter_config      cfg         = test_data.config;
-    std::vector<unsigned> rv_sequence = test_data.rv_sequence;
-    std::vector<int8_t>   llrs_all    = test_data.llrs.read();
+    segmenter_config                  cfg         = test_data.config;
+    std::vector<unsigned>             rv_sequence = test_data.rv_sequence;
+    std::vector<log_likelihood_ratio> llrs_all    = test_data.llrs.read();
     TESTASSERT(!llrs_all.empty());
     std::vector<uint8_t> ref_tb = test_data.transport_block.read();
     TESTASSERT(!ref_tb.empty());
@@ -112,7 +112,8 @@ int main()
 
       dec_cfg.segmenter_cfg = cfg;
 
-      decoder->decode(rx_tb, dec_stats, softbuffer, span<const int8_t>(llrs_all).subspan(cw_offset, cws), dec_cfg);
+      decoder->decode(
+          rx_tb, dec_stats, softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
       cw_offset += cws;
       dec_cfg.new_data = false;
 
@@ -135,7 +136,8 @@ int main()
 
       dec_cfg.segmenter_cfg = cfg;
 
-      decoder->decode(rx_tb, dec_stats, softbuffer, span<const int8_t>(llrs_all).subspan(cw_offset, cws), dec_cfg);
+      decoder->decode(
+          rx_tb, dec_stats, softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
       cw_offset += cws;
       dec_cfg.new_data = false;
 

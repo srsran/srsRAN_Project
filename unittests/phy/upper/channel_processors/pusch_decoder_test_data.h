@@ -20,10 +20,10 @@
 namespace srsgnb {
 
 struct test_case_t {
-  segmenter_config      config;
-  std::vector<unsigned> rv_sequence;
-  file_vector<int8_t>   llrs;
-  file_vector<uint8_t>  transport_block;
+  segmenter_config                  config;
+  std::vector<unsigned>             rv_sequence;
+  file_vector<log_likelihood_ratio> llrs;
+  file_vector<uint8_t>              transport_block;
 };
 
 static const std::vector<test_case_t> pusch_decoder_test_data = {
