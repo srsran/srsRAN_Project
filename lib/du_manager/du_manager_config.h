@@ -25,17 +25,18 @@ class timer_manager;
 namespace srs_du {
 
 struct du_manager_config_t {
-  timer_manager*              timers;
-  rlc_sdu_rx_notifier*        rlc_ul_notifier;
-  mac_ue_configurator*        mac_ue_mng;
-  mac_cell_manager*           mac_cell_mng;
-  f1ap_connection_manager*    f1ap_conn_mng;
-  f1ap_ue_context_manager*    f1ap_ue_ctx_mng;
-  f1ap_ul_interface*          f1ap_ul;
-  srslog::basic_logger&       logger = srslog::fetch_basic_logger("DU-MNG");
-  task_executor*              du_mng_exec;
-  du_setup_params             setup_params; /// Will be merged with top-level config struct
-  std::vector<du_cell_config> du_cells;
+  timer_manager*                               timers;
+  rlc_sdu_rx_notifier*                         rlc_ul_notifier;
+  mac_ue_configurator*                         mac_ue_mng;
+  mac_cell_manager*                            mac_cell_mng;
+  f1ap_connection_manager*                     f1ap_conn_mng;
+  f1ap_ue_context_manager*                     f1ap_ue_ctx_mng;
+  f1ap_rrc_message_transfer_procedure_handler* f1ap_rrc;
+  f1c_message_handler*                         f1c_msg_handler;
+  srslog::basic_logger&                        logger = srslog::fetch_basic_logger("DU-MNG");
+  task_executor*                               du_mng_exec;
+  du_setup_params                              setup_params; /// Will be merged with top-level config struct
+  std::vector<du_cell_config>                  du_cells;
 };
 
 } // namespace srs_du

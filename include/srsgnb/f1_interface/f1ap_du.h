@@ -27,19 +27,28 @@ struct f1_rx_pdu {
   byte_buffer   pdu;
 };
 
-struct ul_rrc_message_delivery_status {
+struct f1ap_initial_ul_rrc_msg {
+  asn1::f1ap::init_ulrrc_msg_transfer_s init_msg;
+};
+
+struct f1ap_ul_rrc_msg {
+  asn1::f1ap::ulrrc_msg_transfer_s ul_msg;
+};
+
+struct f1ap_rrc_delivery_report_msg {
   du_cell_index_t cell_index;
   du_ue_index_t   ue_index;
   lcid_t          lcid;
   bool            rrc_delivery_status;
 };
 
-/// TODO: Rename/change type of Rx PDU
-class f1ap_ul_interface
+class f1ap_rrc_message_transfer_procedure_handler
 {
 public:
-  virtual ~f1ap_ul_interface()                                                              = default;
-  virtual void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) = 0;
+  virtual ~f1ap_rrc_message_transfer_procedure_handler()                               = default;
+  virtual void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report)  = 0;
+  virtual void handle_init_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
+  virtual void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)              = 0;
   //: TODO: remove this in favour of f1c_message_handler
   virtual void handle_pdu(f1_rx_pdu pdu) = 0;
 };
@@ -91,7 +100,7 @@ public:
 /// Combined entry point for F1C/U handling.
 class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
-                     public f1ap_ul_interface,
+                     public f1ap_rrc_message_transfer_procedure_handler,
                      public f1ap_connection_manager,
                      public f1ap_ue_context_manager
 {

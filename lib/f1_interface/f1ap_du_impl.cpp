@@ -138,6 +138,13 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(cons
   });
 }
 
+void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
+{
+  logger.info("Received F1AP DL RRC msg.");
+
+  // TODO: handle dl rrc message
+}
+
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 {
   log_ue_event(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
@@ -175,6 +182,9 @@ void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
   switch (msg.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
+      handle_dl_rrc_message_transfer(msg.value.dlrrc_msg_transfer());
+      break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }

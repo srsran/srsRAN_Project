@@ -31,9 +31,13 @@ public:
 
   async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
 
-  void ul_rrc_message_delivery_report(const ul_rrc_message_delivery_status& report) override {}
+  void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 
   void handle_pdu(f1_rx_pdu pdu) override;
+
+  void handle_init_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) override {}
+
+  void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override {}
 
   void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
@@ -48,6 +52,8 @@ private:
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
+
+  void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
   srslog::basic_logger& logger;
   timer_manager&        timers;

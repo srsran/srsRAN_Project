@@ -51,7 +51,7 @@ private:
 class rlc_ul_sdu_adapter : public rlc_sdu_rx_notifier
 {
 public:
-  void connect(f1ap_ul_interface& f1) { f1_ptr = &f1; }
+  void connect(f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) { f1ap_rrc = &f1ap_rrc_; }
 
   void on_new_sdu(du_ue_index_t ue_index, lcid_t lcid, byte_buffer pdu) override
   {
@@ -59,11 +59,11 @@ public:
     msg.ue_index = ue_index;
     msg.lcid     = lcid;
     msg.pdu      = std::move(pdu);
-    f1_ptr->handle_pdu(std::move(msg));
+    f1ap_rrc->handle_pdu(std::move(msg));
   }
 
 private:
-  f1ap_ul_interface* f1_ptr = nullptr;
+  f1ap_rrc_message_transfer_procedure_handler* f1ap_rrc = nullptr;
 };
 
 } // namespace srs_du

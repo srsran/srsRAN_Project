@@ -27,19 +27,22 @@ namespace srs_du {
 class mac_ul_ccch_adapter : public mac_sdu_rx_notifier
 {
 public:
-  mac_ul_ccch_adapter(du_ue_index_t ue_index_, f1ap_ul_interface& f1ap_) : ue_index(ue_index_), f1ap(f1ap_) {}
+  mac_ul_ccch_adapter(du_ue_index_t ue_index_, f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) :
+    ue_index(ue_index_), f1ap_rrc(f1ap_rrc_)
+  {
+  }
   void on_new_sdu(mac_rx_sdu sdu) override
   {
     f1_rx_pdu msg{};
     msg.ue_index = ue_index;
     msg.lcid     = LCID_SRB0;
     msg.pdu      = std::move(sdu.pdu);
-    f1ap.handle_pdu(std::move(msg));
+    f1ap_rrc.handle_pdu(std::move(msg));
   }
 
 private:
-  du_ue_index_t      ue_index;
-  f1ap_ul_interface& f1ap;
+  du_ue_index_t                                ue_index;
+  f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc;
 };
 
 class mac_ul_dcch_adapter : public mac_sdu_rx_notifier
@@ -110,7 +113,7 @@ public:
     // 3. Create UE RLC bearers.
     ue_ctx.bearers.emplace(0);
     ue_ctx.bearers[0].lcid            = LCID_SRB0;
-    ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_ul);
+    ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_rrc);
 
     // 4. Initiate MAC UE creation and await result.
     CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
