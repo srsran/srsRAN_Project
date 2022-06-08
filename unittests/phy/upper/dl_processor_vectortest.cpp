@@ -10,14 +10,32 @@
 
 #include "dl_processor_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
 
 namespace srsgnb {
+
+struct pdcch_modulator_config_t {
+  std::unique_ptr<modulation_mapper>       modulator;
+  std::unique_ptr<pseudo_random_generator> scrambler;
+};
+
+std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t& config);
+
+struct pdcch_processor_config_t {
+  std::unique_ptr<pdcch_encoder>        encoder;
+  std::unique_ptr<pdcch_modulator>      modulator;
+  std::unique_ptr<dmrs_pdcch_processor> dmrs;
+};
+std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
 
 struct pdsch_modulator_config_t {
   std::unique_ptr<modulation_mapper>       modulator;
@@ -34,7 +52,7 @@ std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configur
 
 } // namespace srsgnb
 
-void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsch)
+static void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsch)
 {
   for (const pdsch_transmission& pdsch_data : test_case.pdsch) {
     // Prepare PDSCH resource grid entries.
@@ -67,6 +85,29 @@ void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsc
   }
 }
 
+static void process_test_case_pdcch(const test_case_t& test_case, pdcch_processor& pdcch)
+{
+  for (const pdcch_transmission& pdcch_data : test_case.pdcch) {
+    // Prepare PDSCH resource grid entries.
+    std::vector<rg_entry> pdsch_rg_entries;
+    {
+      std::vector<rg_entry> pdcch_data_symbols = pdcch_data.data_symbols.read();
+      std::vector<rg_entry> pdcch_dmrs_symbols = pdcch_data.dmrs_symbols.read();
+      pdsch_rg_entries.insert(pdsch_rg_entries.end(), pdcch_dmrs_symbols.begin(), pdcch_dmrs_symbols.end());
+      pdsch_rg_entries.insert(pdsch_rg_entries.end(), pdcch_data_symbols.begin(), pdcch_data_symbols.end());
+    }
+
+    // Create fresh resource grid spy.
+    resource_grid_writer_spy pdcch_rg("warning");
+
+    // Process PDSCH.
+    pdcch.process(pdcch_rg, pdcch_data.pdu);
+
+    // Validate PDSCH.
+    pdcch_rg.assert_entries(pdsch_rg_entries);
+  }
+}
+
 int main()
 {
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
@@ -91,6 +132,21 @@ int main()
   std::shared_ptr<pdsch_encoder_factory> pdsch_encoder_factory =
       create_pdsch_encoder_factory_sw(pdsch_encoder_factory_config);
   TESTASSERT(ldpc_encoder_factory);
+
+  // Create PDCCH processor
+  std::unique_ptr<pdcch_processor> pdcch = nullptr;
+  {
+    pdcch_modulator_config_t pdcch_modulator_config;
+    pdcch_modulator_config.modulator = create_modulation_mapper();
+    pdcch_modulator_config.scrambler = create_pseudo_random();
+
+    pdcch_processor_config_t pdcch_processor_config;
+    pdcch_processor_config.dmrs      = create_dmrs_pdcch_processor();
+    pdcch_processor_config.encoder   = create_pdcch_encoder();
+    pdcch_processor_config.modulator = create_pdcch_modulator(pdcch_modulator_config);
+    pdcch                            = create_pdcch_processor(pdcch_processor_config);
+    TESTASSERT(pdcch);
+  }
 
   // Create PDSCH processor.
   std::unique_ptr<pdsch_processor> pdsch = nullptr;
@@ -119,6 +175,9 @@ int main()
                test_case.test_model.duplex_mode,
                test_case.test_model.description);
 #endif
+
+    // Process PDCCH PDUs.
+    process_test_case_pdcch(test_case, *pdcch);
 
     // Process PDSCH PDUs.
     process_test_case_pdsch(test_case, *pdsch);

@@ -48,14 +48,14 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
   unsigned prb_begin_index;
   {
     int ret = config.rb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB allocated for the transmission");
+    srsran_assert(ret != -1, "No RB allocated for the transmission rb_mask={}", config.rb_mask);
     prb_begin_index = static_cast<unsigned>(ret);
   }
 
   unsigned prb_begin_end;
   {
     int ret = config.rb_mask.find_highest();
-    srsran_assert(ret != -1, "No RB allocated for the transmission");
+    srsran_assert(ret != -1, "No RB allocated for the transmission rb_mask={}", config.rb_mask);
     prb_begin_end = static_cast<unsigned>(ret + 1);
   }
 

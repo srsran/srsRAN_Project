@@ -51,7 +51,7 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
   return result;
 }
 
-void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, srsgnb::pdcch_processor::pdu_t& pdu)
+void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdcch_processor::pdu_t& pdu)
 {
   const coreset_description& coreset = pdu.coreset;
 

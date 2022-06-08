@@ -14,14 +14,14 @@ target_link_libraries(pbch_encoder srsgnb_channel_coding sequence_generators srs
 add_library(pbch_modulator STATIC pbch_modulator_impl.cpp)
 target_link_libraries(pbch_modulator modulation_mapper sequence_generators srsvec)
 
-add_library(pdcch_modulator STATIC pdcch_modulator_impl.cpp)
-target_link_libraries(pdcch_modulator srsvec)
+add_library(srsgnb_pdcch_encoder STATIC pdcch_encoder_impl.cpp)
+target_link_libraries(srsgnb_pdcch_encoder srsgnb_channel_coding srsvec)
 
-add_library(pdcch_processor STATIC pdcch_processor_impl.cpp)
-target_link_libraries(pdcch_processor srsgnb_ran)
+add_library(srsgnb_pdcch_modulator STATIC pdcch_modulator_impl.cpp)
+target_link_libraries(srsgnb_pdcch_modulator srsvec)
 
-add_library(pdcch_encoder STATIC pdcch_encoder_impl.cpp)
-target_link_libraries(pdcch_encoder srsgnb_channel_coding srsvec)
+add_library(srsgnb_pdcch_processor STATIC pdcch_processor_impl.cpp)
+target_link_libraries(srsgnb_pdcch_processor srsgnb_ran)
 
 add_library(srsgnb_pdsch_encoder STATIC pdsch_encoder_impl.cpp)
 target_link_libraries(srsgnb_pdsch_encoder srsgnb_channel_coding)
@@ -44,4 +44,12 @@ add_library(ssb_processor STATIC ssb_processor_impl.cpp)
 target_link_libraries(ssb_processor pbch_encoder pbch_modulator signal_processors)
 
 add_library(srsgnb_channel_processors STATIC channel_processor_factories.cpp)
-target_link_libraries(srsgnb_channel_processors srsgnb_pdsch_processor srsgnb_pdsch_encoder srsgnb_pdsch_modulator srsgnb_pusch_decoder srsgnb_pusch_processor)
+target_link_libraries(srsgnb_channel_processors
+        srsgnb_pdcch_encoder
+        srsgnb_pdcch_modulator
+        srsgnb_pdcch_processor
+        srsgnb_pdsch_encoder
+        srsgnb_pdsch_modulator
+        srsgnb_pdsch_processor
+        srsgnb_pusch_decoder
+        srsgnb_pusch_processor)

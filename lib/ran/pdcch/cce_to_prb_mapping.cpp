@@ -19,8 +19,8 @@ static reg_index_list cce_to_reg_mapping_non_interleaved(unsigned aggregation_le
 {
   reg_index_list result;
 
-  unsigned reg_index_begin = cce_index;
-  unsigned reg_index_end   = cce_index + pdcch_constants::NOF_REG_PER_CCE * aggregation_level;
+  unsigned reg_index_begin = pdcch_constants::NOF_REG_PER_CCE * cce_index;
+  unsigned reg_index_end   = reg_index_begin + pdcch_constants::NOF_REG_PER_CCE * aggregation_level;
   for (unsigned reg_index = reg_index_begin; reg_index != reg_index_end; ++reg_index) {
     result.push_back(reg_index);
   }
@@ -108,7 +108,7 @@ static prb_index_list reg_to_prb_mapping_other(unsigned              N_bwp_start
   int freq_resource_index = freq_resources.find_lowest(0, freq_resources.size());
   while (freq_resource_index != -1) {
     // Calculate PRB ranges for the frequency resource
-    unsigned prb_index_begin = freq_resource_index;
+    unsigned prb_index_begin = freq_resource_index * 6 + N_bwp_start;
     unsigned prb_index_end   = prb_index_begin + 6;
 
     // Iterate all the resource blocks in the resource.
@@ -127,7 +127,7 @@ static prb_index_list reg_to_prb_mapping_other(unsigned              N_bwp_start
       }
     }
 
-    return result;
+    freq_resource_index = freq_resources.find_lowest(freq_resource_index + 1, freq_resources.size());
   }
 
   return result;

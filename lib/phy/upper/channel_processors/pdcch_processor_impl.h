@@ -64,7 +64,7 @@ public:
   }
 
   // See interface for documentation.
-  void process(resource_grid_writer& grid, pdu_t& pdu) override;
+  void process(resource_grid_writer& grid, const pdu_t& pdu) override;
 };
 
 /// Creates a generic PDCCH processor.

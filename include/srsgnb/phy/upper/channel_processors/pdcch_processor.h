@@ -132,7 +132,7 @@ public:
   ///
   /// \param[out] grid Provides the destination resource grid.
   /// \param[in] pdu Provides the necessary parameters to process the PDCCH transmission.
-  virtual void process(resource_grid_writer& grid, pdu_t& pdu) = 0;
+  virtual void process(resource_grid_writer& grid, const pdu_t& pdu) = 0;
 };
 
 } // namespace srsgnb
