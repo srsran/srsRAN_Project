@@ -59,12 +59,12 @@ int main()
     TESTASSERT(std::equal(matched.cbegin(), matched.cend(), matched_bm.cbegin()), "Wrong rate matching.");
 
     // Transform rate-matched bits into log-likelihood ratios.
-    std::vector<int8_t> llrs(rm_length);
-    auto                bit_to_llrs = [](const uint8_t& b) { return 1 - 2 * b; };
+    std::vector<log_likelihood_ratio> llrs(rm_length);
+    auto                              bit_to_llrs = [](const uint8_t& b) { return 1 - 2 * b; };
     std::transform(matched_bm.cbegin(), matched_bm.cend(), llrs.begin(), bit_to_llrs);
 
-    std::vector<int8_t> dematched(codeblock.size());
-    unsigned            nof_filler_bits = test_data.nof_filler;
+    std::vector<log_likelihood_ratio> dematched(codeblock.size());
+    unsigned                          nof_filler_bits = test_data.nof_filler;
 
     codeblock_metadata rdm_cfg          = {rm_cfg, {}};
     rdm_cfg.cb_specific.nof_filler_bits = nof_filler_bits;
@@ -73,11 +73,11 @@ int main()
     // To check the dematcher output, we need to apply the rate matcher to it and compare with the output
     // obtained in the first part of the test. First, transform LLRs into hard bits.
     std::vector<uint8_t> hard(dematched.size());
-    auto                 llrs_to_bit = [](const int8_t& b) {
-      if (b == INT8_MAX) {
+    auto                 llrs_to_bit = [](const log_likelihood_ratio& b) {
+      if (b == LLR_INFINITY) {
         return FILLER_BIT;
       }
-      return static_cast<uint8_t>((b >= 0) ? 0 : 1);
+      return b.to_hard_bit();
     };
     std::transform(dematched.cbegin(), dematched.cend(), hard.begin(), llrs_to_bit);
 

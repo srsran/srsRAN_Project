@@ -16,6 +16,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
 
@@ -37,8 +38,10 @@ public:
   /// \param[in]     input           Rate-matched codeblock (log-likelihood ratios).
   /// \param[in]     cfg             Configuration parameters.
   /// \remark The sizes of \c input and \c output determine the behavior of the rate recovering algorithm.
-  virtual void
-  rate_dematch(span<int8_t> output, span<const int8_t> input, bool new_data, const codeblock_metadata& cfg) = 0;
+  virtual void rate_dematch(span<log_likelihood_ratio>       output,
+                            span<const log_likelihood_ratio> input,
+                            bool                             new_data,
+                            const codeblock_metadata&        cfg) = 0;
 };
 
 } // namespace srsgnb

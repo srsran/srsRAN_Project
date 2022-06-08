@@ -26,10 +26,10 @@ void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_
   is_new_data = new_data;
 }
 
-void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>              output,
-                                            span<const int8_t>        input,
-                                            const bool                new_data,
-                                            const codeblock_metadata& cfg)
+void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       output,
+                                            span<const log_likelihood_ratio> input,
+                                            const bool                       new_data,
+                                            const codeblock_metadata&        cfg)
 {
   init(new_data, cfg.tb_common);
 
@@ -78,26 +78,13 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<int8_t>              output,
   if (modulation_order == 1) {
     allot_llrs(output, input);
   } else {
-    span<int8_t> aux = span<int8_t>(auxiliary_buffer).first(input.size());
+    span<log_likelihood_ratio> aux = span<log_likelihood_ratio>(auxiliary_buffer).first(input.size());
     deinterleave_llrs(aux, input);
     allot_llrs(output, aux);
   }
 };
 
-static int8_t combine_llrs(int8_t llrs1, int8_t llrs2)
-{
-  // LLRs are quantized over 7 bits and take values from -63 to 63, with INT8_MAX corresponding to infinity.
-  constexpr int MAX_RANGE = 63;
-
-  int tmp = llrs1 + llrs2;
-
-  if (std::abs(tmp) > MAX_RANGE) {
-    tmp = (tmp > 0) ? MAX_RANGE : -MAX_RANGE;
-  }
-  return static_cast<int8_t>(tmp);
-};
-
-void ldpc_rate_dematcher_impl::allot_llrs(span<int8_t> out, span<const int8_t> in) const
+void ldpc_rate_dematcher_impl::allot_llrs(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) const
 {
   // When we are not combining the current codeblock with previous ones, ensure we start from clean LLRs.
   if (is_new_data) {
@@ -110,21 +97,23 @@ void ldpc_rate_dematcher_impl::allot_llrs(span<int8_t> out, span<const int8_t> i
     unsigned tmp_idx = (shift_k0 + j) % buffer_length;
 
     if ((tmp_idx < nof_info_bits) || (tmp_idx >= nof_systematic_bits)) {
-      // Not a filler bit, copy value.
-      out[tmp_idx] = combine_llrs(out[tmp_idx], in[k]);
+      // Not a filler bit, combine value with the previous LLR value relative to the same bit (if any).
+      // Reminder: this is a sum between LLRs, therefore it is saturated.
+      out[tmp_idx] += in[k];
       ++k;
     } else {
       // This is a filler bit: the corresponding LLR should be either 0 or INT8_MAX.
       assert((is_new_data && (out[tmp_idx] == 0)) || (!is_new_data && (out[tmp_idx] == INT8_MAX)));
 
       // Filler bits are counted as fixed, logical zeros by the decoder. Set the corresponding
-      // LLR to +inf (i.e., INT8_MAX in our fixed-point representation).
-      out[tmp_idx] = INT8_MAX;
+      // LLR to +inf.
+      out[tmp_idx] = LLR_INFINITY;
     }
   }
 }
 
-void ldpc_rate_dematcher_impl::deinterleave_llrs(span<int8_t> out, span<const int8_t> in) const
+void ldpc_rate_dematcher_impl::deinterleave_llrs(span<log_likelihood_ratio>       out,
+                                                 span<const log_likelihood_ratio> in) const
 {
   unsigned E = in.size();
 
