@@ -17,6 +17,34 @@
 
 namespace srsgnb {
 
+/// Base class used for transmitting RLC bearers.
+/// It provides interfaces for the RLC bearers, for both higher layers and lower layers
+/// It also stores interfaces for the higher layers, both for the user-plane
+/// and the control plane.
+class rlc_tx_common_bearer : public rlc_tx_sdu_handler, public rlc_tx_pdu_transmitter
+{
+protected:
+  rlc_tx_common_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_plane& upper_cp) :
+    logger(du_index, lcid), upper_cp(upper_cp)
+  {}
+
+  rlc_logger                        logger;
+  rlc_tx_upper_layer_control_plane& upper_cp;
+};
+
+/// Base class used for receiving RLC bearers.
+/// It provides interfaces for the RLC bearers, for the lower layers
+class rlc_rx_common_bearer : public rlc_rx_pdu_handler
+{
+protected:
+  rlc_rx_common_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_plane& upper_dp) :
+    logger(du_index, lcid), upper_dp(upper_dp)
+  {}
+
+  rlc_logger                     logger;
+  rlc_rx_upper_layer_data_plane& upper_dp;
+};
+
 /// Class used to store common parameters for all RLC bearer types.
 /// It will contain the base class for TX and RX entities and getters
 /// for them.
@@ -26,12 +54,17 @@ namespace srsgnb {
 class rlc_common_bearer
 {
 public:
-  rlc_common_bearer(du_ue_index_t du_index, lcid_t lcid) : du_index(du_index), lcid(lcid), logger(du_index, lcid) {}
+  rlc_common_bearer(du_ue_index_t du_index, lcid_t lcid) : logger(du_index, lcid) {}
+
+  rlc_tx_sdu_handler*     get_tx_sdu_handler() { return tx.get(); };
+  rlc_tx_pdu_transmitter* get_tx_pdu_transmitter() { return tx.get(); };
+  rlc_rx_pdu_handler*     get_rx_pdu_handler() { return rx.get(); };
 
 protected:
-  const du_ue_index_t du_index;
-  const lcid_t        lcid;
-  rlc_logger          logger;
+  rlc_logger logger;
+
+  std::unique_ptr<rlc_tx_common_bearer> tx = {};
+  std::unique_ptr<rlc_rx_common_bearer> rx = {};
 };
 
 } // namespace srsgnb

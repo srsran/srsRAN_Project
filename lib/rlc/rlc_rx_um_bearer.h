@@ -17,17 +17,14 @@
 
 namespace srsgnb {
 
-class rlc_rx_um_bearer : public rlc_common_bearer, public rlc_rx_pdu_handler
+class rlc_rx_um_bearer : public rlc_rx_common_bearer
 {
 public:
   rlc_rx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_plane& upper_dp) :
-    rlc_common_bearer(du_index, lcid), upper_dp(upper_dp)
+    rlc_rx_common_bearer(du_index, lcid, upper_dp)
   {}
 
   void handle_pdu(byte_buffer pdu) override { upper_dp.pass_sdu(std::move(pdu)); }
-
-private:
-  rlc_rx_upper_layer_data_plane& upper_dp;
 };
 
 } // namespace srsgnb
