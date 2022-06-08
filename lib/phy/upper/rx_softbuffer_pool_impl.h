@@ -40,7 +40,7 @@ private:
     /// Indicates if the entry is reserved.
     bool reserved;
     /// Contains the codeblock soft bits.
-    std::vector<int8_t> soft_bits;
+    std::vector<log_likelihood_ratio> soft_bits;
     /// Contains the codeblock data bits.
     std::vector<uint8_t> data_bits;
   };
@@ -98,7 +98,7 @@ public:
   /// \brief Gets a codeblock soft-bit buffer.
   /// \param[in] cb_id Indicates the codeblock identifier.
   /// \return A view to the codeblock soft-bit buffer.
-  span<int8_t> get_soft_bits(unsigned cb_id)
+  span<log_likelihood_ratio> get_soft_bits(unsigned cb_id)
   {
     srsran_always_assert(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
     srsran_always_assert(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
@@ -238,7 +238,7 @@ public:
   }
 
   // See interface for documentation.
-  span<int8_t> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
+  span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
     srsran_always_assert(is_reserved(), "Softbuffer is not reserved.");
     srsran_always_assert(codeblock_id < codeblock_ids.size(),

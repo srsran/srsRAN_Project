@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -214,8 +215,8 @@ static void test_softbuffer_contents()
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft and data bits.
-    span<int8_t>  buffer      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    span<uint8_t> data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+    span<log_likelihood_ratio> buffer      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
+    span<uint8_t>              data_buffer = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure size matches.
     TESTASSERT(buffer.size() == cb_size);
@@ -238,10 +239,10 @@ static void test_softbuffer_contents()
   // For each codeblock...
   for (unsigned cb_id = 0; cb_id != nof_cb_x_buffer; ++cb_id) {
     // Get codeblock soft bits.
-    span<int8_t>  buffer0      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
-    span<int8_t>  buffer1      = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
-    span<uint8_t> data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
-    span<uint8_t> data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
+    span<log_likelihood_ratio> buffer0      = softbuffer0->get_codeblock_soft_bits(cb_id, cb_size);
+    span<log_likelihood_ratio> buffer1      = softbuffer1->get_codeblock_soft_bits(cb_id, cb_size);
+    span<uint8_t>              data_buffer0 = softbuffer0->get_codeblock_data_bits(cb_id, data_size);
+    span<uint8_t>              data_buffer1 = softbuffer1->get_codeblock_data_bits(cb_id, data_size);
 
     // Make sure the data pointers match.
     TESTASSERT(buffer0.data() == buffer1.data());
@@ -249,7 +250,7 @@ static void test_softbuffer_contents()
 
     // Validate data persists in the codeblock.
     for (unsigned bit_idx = 0; bit_idx != cb_size; ++bit_idx) {
-      int8_t data = (cb_id << 4) | bit_idx;
+      log_likelihood_ratio data = static_cast<int>((cb_id << 4) | bit_idx);
       TESTASSERT_EQ(buffer0[bit_idx], data);
       if (bit_idx < data_size) {
         TESTASSERT_EQ(data_buffer0[bit_idx], bit_idx & 1U);

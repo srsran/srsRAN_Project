@@ -46,7 +46,7 @@ public:
   /// \param[in] codeblock_size Indicates the codeblock size.
   /// \return A view of the codeblock soft bits.
   /// \remark The codeblock identifier must not exceed get_max_nof_codeblocks()-1.
-  virtual span<int8_t> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) = 0;
+  virtual span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) = 0;
 
   /// \brief Gets a codeblock data-bit buffer.
   /// \param[in] codeblock_id Indicates the codeblock identifier.
