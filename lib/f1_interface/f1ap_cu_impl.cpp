@@ -42,6 +42,20 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
   }
 }
 
+void f1ap_cu_impl::handle_init_ul_rrc_message_transfer(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg)
+{
+  logger.info("Received F1AP initial UL RRC msg.");
+
+  // TODO: handle init ul rrc message
+}
+
+void f1ap_cu_impl::handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_transfer_s& msg)
+{
+  logger.info("Received F1AP UL RRC msg.");
+
+  // TODO: handle ul rrc message
+}
+
 void f1ap_cu_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
@@ -63,6 +77,12 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request:
       req_msg.request = msg.value.f1_setup_request();
       event_notifier.on_f1_setup_request_received(req_msg);
+      break;
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer:
+      handle_init_ul_rrc_message_transfer(msg.value.init_ulrrc_msg_transfer());
+      break;
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer:
+      handle_ul_rrc_message_transfer(msg.value.ulrrc_msg_transfer());
       break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());

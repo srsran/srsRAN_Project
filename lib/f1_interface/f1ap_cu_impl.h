@@ -27,6 +27,8 @@ public:
 
   void handle_f1ap_setup_response(const f1_setup_response_message& msg) override;
 
+  void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) override {}
+
   void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
   void handle_connection_loss() override {}
@@ -35,6 +37,9 @@ private:
   class f1ap_event_manager;
 
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
+
+  void handle_init_ul_rrc_message_transfer(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg);
+  void handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
 
   srslog::basic_logger&  logger;
   f1ap_message_notifier& event_notifier;

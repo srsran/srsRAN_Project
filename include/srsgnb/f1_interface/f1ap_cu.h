@@ -20,6 +20,17 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+struct f1ap_dl_rrc_msg {
+  asn1::f1ap::dlrrc_msg_transfer_s dl_msg;
+};
+
+class f1ap_rrc_message_transfer_procedure_handler
+{
+public:
+  virtual ~f1ap_rrc_message_transfer_procedure_handler()                  = default;
+  virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) = 0;
+};
+
 struct f1_setup_response_message {
   asn1::f1ap::f1_setup_resp_s response;
   asn1::f1ap::f1_setup_fail_s failure;
@@ -51,7 +62,10 @@ public:
 };
 
 /// Combined entry point for F1C/U handling.
-class f1_interface : public f1c_message_handler, public f1c_event_handler, public f1ap_connection_manager
+class f1_interface : public f1c_message_handler,
+                     public f1c_event_handler,
+                     public f1ap_rrc_message_transfer_procedure_handler,
+                     public f1ap_connection_manager
 {
 public:
   virtual ~f1_interface() = default;
