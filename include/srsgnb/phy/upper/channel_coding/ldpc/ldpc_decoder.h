@@ -18,6 +18,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
 
@@ -55,8 +56,10 @@ public:
   /// \param[in]  cfg     Decoder configuration.
   /// \return If the decoding is successful, returns the number of LDPC iterations needed by the decoder. Otherwise, no
   ///         value is returned.
-  virtual optional<unsigned>
-  decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) = 0;
+  virtual optional<unsigned> decode(span<uint8_t>                    output,
+                                    span<const log_likelihood_ratio> input,
+                                    crc_calculator*                  crc,
+                                    const configuration&             cfg) = 0;
 };
 
 } // namespace srsgnb

@@ -32,8 +32,10 @@ public:
   ldpc_decoder_impl() = default;
 
   // See interface for the documentation.
-  optional<unsigned>
-  decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg) override;
+  optional<unsigned> decode(span<uint8_t>                    output,
+                            span<const log_likelihood_ratio> input,
+                            crc_calculator*                  crc,
+                            const configuration&             cfg) override;
 
 private:
   /// Initializes the decoder inner variables.
@@ -43,7 +45,7 @@ private:
   virtual void select_strategy() = 0;
 
   /// Loads the input log-likelihood ratios into the soft-bit, variable-node register.
-  virtual void load_soft_bits(span<const int8_t> llrs) = 0;
+  virtual void load_soft_bits(span<const log_likelihood_ratio> llrs) = 0;
 
   /// \brief Updates the messages going from variable nodes to check nodes.
   /// \param[in] check_node The check node (in the base graph) the messages are directed to.
@@ -96,7 +98,7 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
 {
   // see above for the documentation
   void select_strategy() override { nof_hrr_nodes = bg_N_high_rate * lifting_size; }
-  void load_soft_bits(span<const int8_t> llrs) override;
+  void load_soft_bits(span<const log_likelihood_ratio> llrs) override;
   void update_variable_to_check_messages(unsigned check_node) override;
   void update_check_to_variable_messages(unsigned check_node) override;
   void update_soft_bits(unsigned check_node) override;
@@ -109,36 +111,41 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
   /// \param[in]  c2v  Check-to-variable messages at the given nodes.
   /// \param[out] v2c  Resulting variable-to-check messages.
   /// \note The three spans refer to the same set of nodes and, in turn, have the same dimension.
-  static void compute_var_to_check_msgs(span<const int8_t> soft, span<const int8_t> c2v, span<int8_t> v2c);
+  static void compute_var_to_check_msgs(span<const log_likelihood_ratio> soft,
+                                        span<const log_likelihood_ratio> c2v,
+                                        span<log_likelihood_ratio>       v2c);
 
   /// Number of nodes in the (lifted) high-rate region.
   unsigned nof_hrr_nodes = 8;
 
   /// Register to store the current value of the soft bits.
-  std::array<int8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits = {};
+  std::array<log_likelihood_ratio, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> soft_bits = {};
 
   /// \brief Register to store the current value of the check-to-variable messages.
   ///
   /// In the base graph, each check node is connected, at most, to all variable nodes in the high-rate region
   /// (of max length max_BG_K + 4) and an extra variable node in the extension region. Then, the graph is lifted.
-  std::array<std::array<int8_t, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)>, ldpc::MAX_BG_M>
+  std::array<std::array<log_likelihood_ratio, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)>,
+             ldpc::MAX_BG_M>
       check_to_var = {};
 
   /// \brief Register to store the current value of the variable-to-check messages.
   ///
   /// Implementing a layered-based algorithm, we only need to store the variable-to-check messages corresponding
   /// to the current (base graph) check node.
-  std::array<int8_t, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)> var_to_check = {};
+  std::array<log_likelihood_ratio, static_cast<size_t>((ldpc::MAX_BG_K + 5) * ldpc::MAX_LIFTING_SIZE)> var_to_check =
+      {};
 
   /// \name Helper registers
   /// The following registers refer to a base graph check node (that is, a block of
   /// lifting_size nodes in the lifted graph).
 
   ///@{
-  /// \brief Register to store the minimum variable-to-check message.
-  std::array<int8_t, ldpc::MAX_LIFTING_SIZE> min_var_to_check = {};
-  /// \brief Register to store the second minimum variable-to-check message for each base graph check node.
-  std::array<int8_t, ldpc::MAX_LIFTING_SIZE> second_min_var_to_check = {};
+  /// \brief Register to store the minimum (in absolute value) variable-to-check message.
+  std::array<log_likelihood_ratio, ldpc::MAX_LIFTING_SIZE> min_var_to_check = {};
+  /// \brief Register to store the second minimum (in absolute value) variable-to-check message for each base graph
+  /// check node.
+  std::array<log_likelihood_ratio, ldpc::MAX_LIFTING_SIZE> second_min_var_to_check = {};
   /// \brief Index of the minimum-valued variable-to-check message.
   std::array<unsigned, ldpc::MAX_LIFTING_SIZE> min_var_to_check_index = {};
   /// \brief Sign product of all variable-to-check messages.
@@ -150,7 +157,7 @@ class ldpc_decoder_generic : public ldpc_decoder_impl
 class ldpc_decoder_avx2 : public ldpc_decoder_impl
 {
   void        select_strategy() override { not_implemented(__func__); }
-  void        load_soft_bits(span<const int8_t> /*nn*/) override { not_implemented(__func__); }
+  void        load_soft_bits(span<const log_likelihood_ratio> /*nn*/) override { not_implemented(__func__); }
   void        update_variable_to_check_messages(unsigned /*nn*/) override { not_implemented(__func__); }
   void        update_check_to_variable_messages(unsigned /*nn*/) override { not_implemented(__func__); }
   void        update_soft_bits(unsigned /*nn*/) override { not_implemented(__func__); }

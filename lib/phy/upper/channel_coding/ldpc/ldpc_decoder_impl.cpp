@@ -16,11 +16,6 @@
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
 
-// We use this value to represent infinity, that is perfectly known bit.
-static constexpr int8_t LOCAL_INF = INT8_MAX;
-// Messages depending on uncertain bits are quantized over 7 bits (from -63 to 63).
-constexpr int8_t LOCAL_MAX_RANGE = 63;
-
 void ldpc_decoder_impl::init(const configuration& cfg)
 {
   uint8_t  pos   = get_lifting_size_position(cfg.block_conf.tb_common.lifting_size);
@@ -38,7 +33,7 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   assert(max_iterations > 0);
 
   scaling_factor = cfg.algorithm_conf.scaling_factor;
-  assert((scaling_factor > 0) && (scaling_factor < 2));
+  assert((scaling_factor > 0) && (scaling_factor < 1));
 
   unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
   srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
@@ -48,8 +43,10 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   select_strategy();
 }
 
-optional<unsigned>
-ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_calculator* crc, const configuration& cfg)
+optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    output,
+                                             span<const log_likelihood_ratio> input,
+                                             crc_calculator*                  crc,
+                                             const configuration&             cfg)
 {
   init(cfg);
 
@@ -112,7 +109,7 @@ ldpc_decoder_impl::decode(span<uint8_t> output, span<const int8_t> input, crc_ca
   return {};
 }
 
-void ldpc_decoder_generic::load_soft_bits(span<const int8_t> llrs)
+void ldpc_decoder_generic::load_soft_bits(span<const log_likelihood_ratio> llrs)
 {
   // Erase registers.
   std::fill(soft_bits.begin(), soft_bits.end(), 0);
@@ -129,9 +126,9 @@ void ldpc_decoder_generic::load_soft_bits(span<const int8_t> llrs)
 void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node)
 {
   // First, update the messages corresponding to the high-rate region. All layers contribute.
-  span<const int8_t> this_soft_bits(soft_bits);
-  span<const int8_t> this_check_to_var(check_to_var[check_node]);
-  span<int8_t>       this_var_to_check(var_to_check);
+  span<const log_likelihood_ratio> this_soft_bits(soft_bits);
+  span<const log_likelihood_ratio> this_check_to_var(check_to_var[check_node]);
+  span<log_likelihood_ratio>       this_var_to_check(var_to_check);
 
   compute_var_to_check_msgs(this_soft_bits.first(nof_hrr_nodes),
                             this_check_to_var.first(nof_hrr_nodes),
@@ -147,30 +144,38 @@ void ldpc_decoder_generic::update_variable_to_check_messages(unsigned check_node
   }
 }
 
-void ldpc_decoder_generic::compute_var_to_check_msgs(span<const int8_t> soft, span<const int8_t> c2v, span<int8_t> v2c)
+void ldpc_decoder_generic::compute_var_to_check_msgs(span<const log_likelihood_ratio> soft,
+                                                     span<const log_likelihood_ratio> c2v,
+                                                     span<log_likelihood_ratio>       v2c)
 {
   unsigned nof_messages = v2c.size();
   assert((soft.size() == nof_messages) && (c2v.size() == nof_messages));
 
-  for (unsigned i = 0; i != nof_messages; ++i) {
-    if (std::abs(soft[i]) >= LOCAL_INF) {
-      v2c[i] = (soft[i] > 0) ? LOCAL_INF : -LOCAL_INF;
-      continue;
-    }
-    int tmp = static_cast<int>(soft[i]) - c2v[i];
-    if (std::abs(tmp) > LOCAL_MAX_RANGE) {
-      tmp = (tmp > 0) ? LOCAL_MAX_RANGE : -LOCAL_MAX_RANGE;
-    }
-    v2c[i] = static_cast<int8_t>(tmp);
+  // By definition, the difference between two LLRs saturates at +/- LLR_MAX. Moreover, if either term is infinite, so
+  // is the result, with proper sign.
+  std::transform(
+      soft.begin(), soft.end(), c2v.begin(), v2c.begin(), [](log_likelihood_ratio a, log_likelihood_ratio b) {
+        return a - b;
+      });
+}
+
+static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_factor)
+{
+  srsran_assert((scaling_factor > 0) && (scaling_factor < 1), "Scaling factor should be in the interval (0, 1).");
+  if (log_likelihood_ratio::isinf(llr)) {
+    return llr;
   }
+  // Since scaling_factor belongs to (0, 1), there is no risk of overflow.
+  return static_cast<log_likelihood_ratio::value_type>(
+      std::round(static_cast<float>(llr.to_value_type()) * scaling_factor));
 }
 
 void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node)
 {
   // Prepare helper registers
   std::fill(sign_prod_var_to_check.begin(), sign_prod_var_to_check.end(), 1);
-  std::fill(min_var_to_check.begin(), min_var_to_check.end(), LOCAL_INF);
-  std::fill(second_min_var_to_check.begin(), second_min_var_to_check.end(), LOCAL_INF);
+  std::fill(min_var_to_check.begin(), min_var_to_check.end(), LLR_MAX);
+  std::fill(second_min_var_to_check.begin(), second_min_var_to_check.end(), LLR_MAX);
 
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
   const auto*               this_var_index      = current_var_indices.cbegin();
@@ -183,21 +188,21 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node
     // Look for the two var_to_check messages with minimum absolute value and compute the sign product of all
     // var_to_check messages.
     for (unsigned j = 0; j != lifting_size; ++j) {
-      unsigned v2c_index                 = v2c_base_index + j;
-      int8_t   this_var_to_check         = static_cast<int8_t>(std::abs(var_to_check[v2c_index]));
-      unsigned tmp_index                 = (j + lifting_size - shift) % lifting_size;
-      bool     is_min                    = (this_var_to_check < min_var_to_check[tmp_index]);
-      int8_t   new_second_min            = is_min ? min_var_to_check[tmp_index] : this_var_to_check;
-      bool     is_best_two               = (this_var_to_check < second_min_var_to_check[tmp_index]);
-      second_min_var_to_check[tmp_index] = is_best_two ? new_second_min : second_min_var_to_check[tmp_index];
-      min_var_to_check[tmp_index]        = is_min ? this_var_to_check : min_var_to_check[tmp_index];
-      min_var_to_check_index[tmp_index]  = is_min ? v2c_index : min_var_to_check_index[tmp_index];
+      unsigned             v2c_index         = v2c_base_index + j;
+      log_likelihood_ratio this_var_to_check = log_likelihood_ratio::abs(var_to_check[v2c_index]);
+      unsigned             tmp_index         = (j + lifting_size - shift) % lifting_size;
+      bool                 is_min            = (this_var_to_check < min_var_to_check[tmp_index]);
+      log_likelihood_ratio new_second_min    = is_min ? min_var_to_check[tmp_index] : this_var_to_check;
+      bool                 is_best_two       = (this_var_to_check < second_min_var_to_check[tmp_index]);
+      second_min_var_to_check[tmp_index]     = is_best_two ? new_second_min : second_min_var_to_check[tmp_index];
+      min_var_to_check[tmp_index]            = is_min ? this_var_to_check : min_var_to_check[tmp_index];
+      min_var_to_check_index[tmp_index]      = is_min ? v2c_index : min_var_to_check_index[tmp_index];
 
       sign_prod_var_to_check[tmp_index] *= (var_to_check[v2c_index] >= 0) ? 1 : -1;
     }
   }
 
-  // Recall: check_to_var is an array of arrays of int8_t.
+  // Recall: check_to_var is an array of arrays of log_likelihood_ratio.
   auto& this_check_to_var = check_to_var[check_node];
 
   for (this_var_index = current_var_indices.cbegin();
@@ -214,18 +219,17 @@ void ldpc_decoder_generic::update_check_to_variable_messages(unsigned check_node
                                          ? min_var_to_check[tmp_index]
                                          : second_min_var_to_check[tmp_index];
 
-      this_check_to_var[c2v_index] =
-          static_cast<int8_t>(std::round(static_cast<float>(this_check_to_var[c2v_index]) * scaling_factor));
+      this_check_to_var[c2v_index] = scale_llr(this_check_to_var[c2v_index], scaling_factor);
 
-      this_check_to_var[c2v_index] = static_cast<int8_t>(
-          this_check_to_var[c2v_index] * sign_prod_var_to_check[tmp_index] * ((var_to_check[c2v_index] >= 0) ? 1 : -1));
+      int final_sign               = sign_prod_var_to_check[tmp_index] * ((var_to_check[c2v_index] >= 0) ? 1 : -1);
+      this_check_to_var[c2v_index] = log_likelihood_ratio::copysign(this_check_to_var[c2v_index], final_sign);
     }
   }
 }
 
 void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
 {
-  // Recall: check_to_var is an array of arrays of int8_t.
+  // Recall: check_to_var is an array of arrays of log_likelihood_ratio.
   auto& this_check_to_var = check_to_var[check_node];
 
   const BG_adjacency_row_t& current_var_indices = current_graph->get_adjacency_row(check_node);
@@ -236,15 +240,11 @@ void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
     for (int j = 0; j != lifting_size; ++j) {
       unsigned bit_index     = var_index_lifted + j;
       unsigned bit_index_tmp = (var_index_lifted <= nof_hrr_nodes) ? bit_index : nof_hrr_nodes + j;
-      int      tmp           = this_check_to_var[bit_index_tmp] + var_to_check[bit_index_tmp];
 
       // Soft bits absolutely larger than LOCAL_MAX_RANGE are set to infinity (LOCAL_INF). As a result, they become
       // fixed bits, that is they won't change their value from now on.
-      if (std::abs(tmp) > LOCAL_MAX_RANGE) {
-        tmp = (tmp > 0) ? LOCAL_INF : -LOCAL_INF;
-      }
-
-      soft_bits[bit_index] = static_cast<int8_t>(tmp);
+      soft_bits[bit_index] =
+          log_likelihood_ratio::promotion_sum(this_check_to_var[bit_index_tmp], var_to_check[bit_index_tmp]);
     }
   }
 }
@@ -252,5 +252,7 @@ void ldpc_decoder_generic::update_soft_bits(unsigned check_node)
 void ldpc_decoder_generic::get_hard_bits(span<uint8_t> out)
 {
   unsigned out_length = out.size();
-  std::transform(soft_bits.cbegin(), soft_bits.cbegin() + out_length, out.begin(), [](int8_t sb) { return (sb < 0); });
+  std::transform(soft_bits.cbegin(), soft_bits.cbegin() + out_length, out.begin(), [](log_likelihood_ratio sb) {
+    return sb.to_hard_bit();
+  });
 }

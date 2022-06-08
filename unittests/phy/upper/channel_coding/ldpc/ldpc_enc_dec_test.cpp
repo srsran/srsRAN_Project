@@ -24,20 +24,18 @@
 #include <random>
 #include <string>
 
+using namespace srsgnb;
+using namespace srsgnb::ldpc;
+
 /// Fixed log-likelihood ratio amplitude.
-constexpr int8_t LLRS_AMPL = 10;
+constexpr log_likelihood_ratio LLRS_AMPL = 10;
 /// Transforms hard bits into log-likelihood ratios (with fixed amplitude).
 const auto compute_llrs = [](uint8_t b) {
-  return ((b == srsgnb::ldpc::FILLER_BIT) ? LLRS_AMPL : LLRS_AMPL * (1 - 2 * b));
+  return ((b == ldpc::FILLER_BIT) ? LLRS_AMPL : log_likelihood_ratio::copysign(LLRS_AMPL, 1 - 2 * b));
 };
 
 /// Checks whether two messages are equal: filler bits are counted as logical zeros.
-const auto is_msg_equal = [](uint8_t a, uint8_t b) {
-  return ((a == b) || ((a == 0) && (b == srsgnb::ldpc::FILLER_BIT)));
-};
-
-using namespace srsgnb;
-using namespace srsgnb::ldpc;
+const auto is_msg_equal = [](uint8_t a, uint8_t b) { return ((a == b) || ((a == 0) && (b == FILLER_BIT))); };
 
 int main()
 {
@@ -96,8 +94,8 @@ int main()
         enc_generic->encode(encoded, msg_i, cfg_enc);
         TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
-        std::vector<uint8_t> decoded(msg_length);
-        std::vector<int8_t>  llrs(length);
+        std::vector<uint8_t>              decoded(msg_length);
+        std::vector<log_likelihood_ratio> llrs(length);
         std::transform(cblock_i.begin(), cblock_i.begin() + length, llrs.begin(), compute_llrs);
         dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
         TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
@@ -107,8 +105,8 @@ int main()
       enc_generic->encode(encoded, msg_i, cfg_enc);
       TESTASSERT(std::equal(encoded.begin(), encoded.end(), cblock_i.begin()), "Wrong codeblock.");
 
-      std::vector<uint8_t> decoded(msg_length);
-      std::vector<int8_t>  llrs(max_cb_length);
+      std::vector<uint8_t>              decoded(msg_length);
+      std::vector<log_likelihood_ratio> llrs(max_cb_length);
       std::transform(cblock_i.begin(), cblock_i.end(), llrs.begin(), compute_llrs);
       dec_generic->decode(decoded, llrs, nullptr, cfg_dec);
       TESTASSERT(std::equal(decoded.begin(), decoded.end(), msg_i.begin(), is_msg_equal), "Wrong recovered message.");
