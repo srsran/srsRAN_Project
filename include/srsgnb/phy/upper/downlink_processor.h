@@ -14,42 +14,57 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
+#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
 
 namespace srsgnb {
 
-class resource_grid_context;
+struct resource_grid_context;
 
 /// Downlink processor class that groups and process all the downlink channels within a slot.
+///
+/// \note: The downlink processor must be configured before starting to process downlink PDUs by calling
+/// configure_resource_grid() method. After all the PDUs are processed by the process_* methods, tx_resource_grid should
+/// be called to transmit the resource grid. If this order is not respected, using the interface will result in
+/// undefined behaviour.
 class downlink_processor
 {
 public:
   virtual ~downlink_processor() = default;
 
-  /// \brief Process the given PDCCH pdu.
+  /// \brief Process the given PDCCH PDU.
   ///
   /// \param[in] pdu PDCCH PDU to process.
   virtual void process_pdcch(pdcch_processor::pdu_t& pdu) = 0;
 
-  /// \brief Process the given PDSCH pdu and its related data, which it is given in data parameter.
+  /// \brief Process the given PDSCH PDU and its related data, which it is given in data parameter.
   ///
   /// \param[in] data Contains the data of the PDSCH.
   /// \param[in] pdu PDSCH PDU to process.
   virtual void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
                              const pdsch_processor::pdu_t& pdu) = 0;
 
-  /// \brief Process the given SSB pdu.
+  /// \brief Process the given SSB PDU.
   ///
-  /// \param pdu SSB PDU to process.
+  /// \param[in] pdu SSB PDU to process.
   virtual void process_ssb(const ssb_processor::pdu_t& pdu) = 0;
+
+  /// \brief Process the given CSI-RS configuration.
+  ///
+  /// \param[in] config CSI-RS configuration to process.
+  virtual void process_csi_rs(const csi_rs_processor::config_t& config) = 0;
 
   /// \brief Configures the resource grid of the downlink_processor.
   ///
-  /// \param context Resource grid context that contains the information of the processing slot.
-  /// \param grid Resource grid that will contain the data of the processed downlink channels.
+  /// \param[in] context Resource grid context that contains the information of the processing slot.
+  /// \param[in] grid Resource grid that will contain the data of the processed downlink channels.
+  /// \note Calling this method is mandatory before processing any PDU.
+  // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
   virtual void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) = 0;
 
-  /// \brief Sends the resource grid.
-  virtual void send_resource_grid() = 0;
+  /// \brief Stops accepting PDUs. When this method is called, the interface will not expect to process more PDUs, so
+  /// once it finishes to process all the previous accepted PDUs, the resource grid will be sent.
+  // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
+  virtual void finish_processing_pdus() = 0;
 };
 
 /// Pool to access a downlink processor.

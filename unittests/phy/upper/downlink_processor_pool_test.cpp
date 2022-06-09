@@ -8,136 +8,176 @@
  *
  */
 
-#include "srsgnb/phy/upper/downlink_processor.h"
+#include "downlink_processor_test_doubles.h"
 #include "srsgnb/phy/upper/downlink_processor_factory.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
 
-namespace {
-
-class dummy_downlink_processor : public downlink_processor
-{
-public:
-  unsigned id;
-
-  explicit dummy_downlink_processor(unsigned id) : id(id) {}
-
-  void process_pdcch(pdcch_processor::pdu_t& pdu) override {}
-
-  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
-                     const pdsch_processor::pdu_t&                                                        pdu) override
-  {
-  }
-
-  void process_ssb(const ssb_processor::pdu_t& pdu) override {}
-
-  void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
-
-  void send_resource_grid() override {}
-};
-
-} // namespace
-
 static void test_dl_processor_ok()
 {
   downlink_processor_pool_config dl_procs;
   dl_procs.num_sectors = 1;
-  downlink_processor_pool_config::info info{0, 1, {}};
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(0));
+  unsigned sector      = 0;
+  unsigned numerology  = 1;
+  unsigned id          = 0;
+
+  downlink_processor_pool_config::info info{sector, numerology, {}};
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(id));
   dl_procs.dl_processors.push_back(std::move(info));
 
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  auto& proc = dl_proc_pool->get_processor({1, 0, 0}, 0);
+  slot_point          slot(numerology, 0, 0);
+  downlink_processor& dl_processor = dl_proc_pool->get_processor(slot, id);
 
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor).id, id);
 }
 
 void test_pass_same_slot_gets_same_processor()
 {
   downlink_processor_pool_config dl_procs;
   dl_procs.num_sectors = 1;
-  downlink_processor_pool_config::info info{0, 1, {}};
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(0));
+  unsigned sector      = 0;
+  unsigned numerology  = 1;
+  unsigned id          = 0;
+
+  downlink_processor_pool_config::info info{sector, numerology, {}};
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(id));
   dl_procs.dl_processors.push_back(std::move(info));
 
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  auto& proc  = dl_proc_pool->get_processor({1, 0, 0}, 0);
-  auto& proc1 = dl_proc_pool->get_processor({1, 0, 0}, 0);
+  slot_point          slot(numerology, 0, 0);
+  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(slot, sector);
+  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(slot, sector);
 
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc).id, 0);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc1).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_0).id, id);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_1).id, id);
+  TESTASSERT(&dl_processor_0 == &dl_processor_1);
 }
 
 static void test_consecutive_dl_processor_ok()
 {
   downlink_processor_pool_config dl_procs;
-  dl_procs.num_sectors = 1;
-  downlink_processor_pool_config::info info{0, 1, {}};
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(0));
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(1));
+  dl_procs.num_sectors                            = 1;
+  unsigned                             numerology = 1;
+  unsigned                             sector     = 0;
+  downlink_processor_pool_config::info info{sector, numerology, {}};
+
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(0));
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(1));
   dl_procs.dl_processors.push_back(std::move(info));
 
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  auto& proc  = dl_proc_pool->get_processor({1, 0, 0}, 0);
-  auto& proc1 = dl_proc_pool->get_processor({1, 0, 1}, 0);
+  slot_point          first(numerology, 0, 0);
+  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(first, sector);
+  slot_point          second(numerology, 0, 1);
+  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(second, sector);
 
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc).id, 0);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc1).id, 1);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_0).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_1).id, 1);
 }
 
 static void test_2sectors_2dl_processor_ok()
 {
   downlink_processor_pool_config dl_procs;
   dl_procs.num_sectors = 2;
-  for (unsigned i = 0, e = 2; i != e; ++i) {
-    downlink_processor_pool_config::info info{i, 1, {}};
-    info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(i * 10 + 0));
-    info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(i * 10 + 1));
+  unsigned numerology  = 1;
+  for (unsigned i = 0, e = dl_procs.num_sectors; i != e; ++i) {
+    downlink_processor_pool_config::info info{i, numerology, {}};
+    info.procs.emplace_back(std::make_unique<downlink_processor_fto>(i * 10 + 0));
+    info.procs.emplace_back(std::make_unique<downlink_processor_fto>(i * 10 + 1));
     dl_procs.dl_processors.push_back(std::move(info));
   }
 
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  auto& proc00 = dl_proc_pool->get_processor({1, 0, 0}, 0);
-  auto& proc01 = dl_proc_pool->get_processor({1, 0, 1}, 0);
-  auto& proc10 = dl_proc_pool->get_processor({1, 0, 0}, 1);
-  auto& proc11 = dl_proc_pool->get_processor({1, 0, 1}, 1);
+  slot_point          first(numerology, 0, 0);
+  downlink_processor& dl_processor_00 = dl_proc_pool->get_processor(first, 0);
+  slot_point          second(numerology, 0, 1);
+  downlink_processor& dl_processor_01 = dl_proc_pool->get_processor(second, 0);
+  slot_point          third(numerology, 0, 0);
+  downlink_processor& dl_processor_10 = dl_proc_pool->get_processor(third, 1);
+  slot_point          fourth(numerology, 0, 1);
+  downlink_processor& dl_processor_11 = dl_proc_pool->get_processor(fourth, 1);
 
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc00).id, 0);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc01).id, 1);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc10).id, 10);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc11).id, 11);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_00).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_01).id, 1);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_10).id, 10);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_11).id, 11);
 }
 
 static void test_circular_buffer_ok()
 {
   downlink_processor_pool_config dl_procs;
-  dl_procs.num_sectors = 1;
-  downlink_processor_pool_config::info info{0, 0, {}};
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(0));
-  info.procs.emplace_back(std::make_unique<dummy_downlink_processor>(1));
+  dl_procs.num_sectors                            = 1;
+  unsigned                             numerology = 0;
+  unsigned                             sector     = 0;
+  downlink_processor_pool_config::info info{sector, numerology, {}};
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(0));
+  info.procs.emplace_back(std::make_unique<downlink_processor_fto>(1));
   dl_procs.dl_processors.push_back(std::move(info));
 
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
 
-  auto& proc0 = dl_proc_pool->get_processor({0, 0, 0}, 0);
-  auto& proc1 = dl_proc_pool->get_processor({0, 0, 1}, 0);
-  auto& proc2 = dl_proc_pool->get_processor({0, 0, 2}, 0);
+  slot_point          first(numerology, 0, 0);
+  downlink_processor& dl_processor_0 = dl_proc_pool->get_processor(first, sector);
+  slot_point          second(numerology, 0, 1);
+  downlink_processor& dl_processor_1 = dl_proc_pool->get_processor(second, sector);
+  slot_point          third(numerology, 0, 2);
+  downlink_processor& dl_processor_2 = dl_proc_pool->get_processor(third, sector);
 
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc0).id, 0);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc1).id, 1);
-  TESTASSERT_EQ(static_cast<dummy_downlink_processor&>(proc2).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_0).id, 0);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_1).id, 1);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_2).id, 0);
 }
+
+static void test_2sectors_2numerologies_2dl_processor_ok()
+{
+  downlink_processor_pool_config dl_procs;
+  dl_procs.num_sectors = 2;
+  for (unsigned i = 0, e = dl_procs.num_sectors; i != e; ++i) {
+    for (auto numerology : {1U, 3U}) {
+      downlink_processor_pool_config::info info{i, numerology, {}};
+      info.procs.emplace_back(std::make_unique<downlink_processor_fto>(i * 100 + numerology * 10 + 0));
+      info.procs.emplace_back(std::make_unique<downlink_processor_fto>(i * 100 + numerology * 10 + 1));
+      dl_procs.dl_processors.push_back(std::move(info));
+    }
+  }
+
+  std::unique_ptr<downlink_processor_pool> dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+
+  slot_point          first(1, 0, 0);
+  downlink_processor& dl_processor_010 = dl_proc_pool->get_processor(first, 0);
+  slot_point          second(1, 0, 1);
+  downlink_processor& dl_processor_011 = dl_proc_pool->get_processor(second, 0);
+  slot_point          third(3, 0, 0);
+  downlink_processor& dl_processor_030 = dl_proc_pool->get_processor(third, 0);
+  slot_point          fourth(3, 0, 1);
+  downlink_processor& dl_processor_031 = dl_proc_pool->get_processor(fourth, 0);
+  downlink_processor& dl_processor_110 = dl_proc_pool->get_processor(first, 1);
+  downlink_processor& dl_processor_111 = dl_proc_pool->get_processor(second, 1);
+  downlink_processor& dl_processor_130 = dl_proc_pool->get_processor(third, 1);
+  downlink_processor& dl_processor_131 = dl_proc_pool->get_processor(fourth, 1);
+
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_010).id, 10);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_011).id, 11);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_030).id, 30);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_031).id, 31);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_110).id, 110);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_111).id, 111);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_130).id, 130);
+  TESTASSERT_EQ(static_cast<downlink_processor_fto&>(dl_processor_131).id, 131);
+}
+
 int main()
 {
   test_dl_processor_ok();
   test_pass_same_slot_gets_same_processor();
   test_consecutive_dl_processor_ok();
   test_2sectors_2dl_processor_ok();
+  test_2sectors_2numerologies_2dl_processor_ok();
   test_circular_buffer_ok();
-  fmt::print("Downlink processor pool -> OK\n");
 }

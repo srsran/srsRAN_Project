@@ -9,13 +9,16 @@
  */
 
 #include "downlink_processor_factory_impl.h"
-#include "downlink_processor_impl.h"
+#include "downlink_processor_pool_impl.h"
+#include "downlink_processor_single_executor_impl.h"
 
 using namespace srsgnb;
 
 std::unique_ptr<downlink_processor> downlink_processor_factory_impl::create(const downlink_processor_config& config)
 {
   // :TODO: Implement me!!
+  (void)gateway;
+  (void)executor;
   return {nullptr};
 }
 

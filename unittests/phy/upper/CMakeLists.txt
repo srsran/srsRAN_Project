@@ -29,11 +29,11 @@ add_custom_command(
         VERBATIM)
 
 add_executable(downlink_processor_test downlink_processor_test.cpp)
-target_link_libraries(downlink_processor_test downlink_processor downlink_processor_factory srslog srsgnb_support)
+target_link_libraries(downlink_processor_test srsgnb_downlink_processor srslog srsgnb_support)
 add_test(downlink_processor_test downlink_processor_test)
 
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
-target_link_libraries(downlink_processor_pool_test downlink_processor_factory srslog)
+target_link_libraries(downlink_processor_pool_test srsgnb_downlink_processor srslog)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
 
 add_executable(re_pattern_test re_pattern_test.cpp)

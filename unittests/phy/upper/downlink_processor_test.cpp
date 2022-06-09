@@ -8,275 +8,396 @@
  *
  */
 
-#include "../../../lib/phy/upper/downlink_processor_impl.h"
-#include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/downlink_processor_factory.h"
-#include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
-#include "srsgnb/support/executors/task_worker.h"
+#include "../../../lib/phy/upper/downlink_processor_single_executor_impl.h"
+#include "../resource_grid_test_doubles.h"
+#include "channel_processors/pdcch_processor_test_doubles.h"
+#include "channel_processors/pdsch_processor_test_doubles.h"
+#include "channel_processors/ssb_processor_test_doubles.h"
+#include "downlink_processor_test_doubles.h"
+#include "signal_processors/csi_rs_processor_test_doubles.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include "upper_phy_rg_gateway_test_doubles.h"
 
 using namespace srsgnb;
 
 namespace {
 
-class dummy_resource_grid : public resource_grid
+/// \brief Task worker that implements the executor interface and requires manual calls to run pending deferred tasks.
+/// Useful for unit testing. This implementation always queues the tasks, either by calling execute or defer.
+class manual_task_worker_always_enqueue_tasks : public task_executor
 {
 public:
-  void set_all_zero() override {}
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
-  span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
+  manual_task_worker_always_enqueue_tasks(size_t q_size) : t_id(std::this_thread::get_id()), pending_tasks(q_size) {}
+
+  std::thread::id get_thread_id() const { return t_id; }
+
+  void execute(unique_task task) override { defer(std::move(task)); }
+
+  void defer(unique_task task) override { pending_tasks.push_blocking(std::move(task)); }
+
+  bool has_pending_tasks() const { return not pending_tasks.empty(); }
+
+  bool is_stopped() const { return pending_tasks.is_stopped(); }
+
+  void stop()
   {
-    return {};
+    if (not is_stopped()) {
+      pending_tasks.stop();
+    }
   }
 
-  void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override {}
-
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  void request_stop()
   {
-    return {};
+    defer([this]() { stop(); });
   }
 
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
-};
-
-class dummy_upper_rg_gateway : public upper_phy_rg_gateway
-{
-public:
-  bool sent = false;
-  void send(const resource_grid_context& context, const resource_grid_reader& grid) override
+  /// Run all pending tasks until queue is emptied.
+  bool run_pending_tasks()
   {
-    sent = true;
-    fmt::print("[Upper RG Gateway] - Sending resource grid\n");
-  }
-};
-
-class dummy_pdsch_proc : public pdsch_processor
-{
-public:
-  void process(resource_grid_writer&                                        grid,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override
-  {
-    fmt::print("[PDSCH Processor] - Processing PDU\n");
-  }
-};
-
-class dummy_pdcch_proc : public pdcch_processor
-{
-public:
-  void process(resource_grid_writer& grid, pdu_t& pdu) override { fmt::print("[PDCCH Processor] - Processing PDU\n"); }
-};
-
-class dummy_ssb_proc : public ssb_processor
-{
-public:
-  void process(const pdu_t& pdu, resource_grid_writer& grid) override
-  {
-    fmt::print("[SSB Processor] - Processing PDU\n");
-  }
-};
-
-class dummy_pdsch_proc_slow : public pdsch_processor
-{
-public:
-  void process(resource_grid_writer&                                        grid,
-               static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
-               const pdu_t&                                                 pdu) override
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    fmt::print("[PDSCH Processor] - Processing PDU\n");
-  }
-};
-
-class dummy_pdcch_proc_slow : public pdcch_processor
-{
-public:
-  void process(resource_grid_writer& grid, pdu_t& pdu) override
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    fmt::print("[PDCCH Processor] - Processing PDU\n");
-  }
-};
-
-class dummy_ssb_proc_slow : public ssb_processor
-{
-public:
-  void process(const pdu_t& pdu, resource_grid_writer& grid) override
-  {
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    fmt::print("[SSB Processor] - Processing PDU\n");
-  }
-};
-
-class dummy_dl_processor_factory : public downlink_processor_factory
-{
-  dummy_upper_rg_gateway& gw;
-  task_executor&          executor;
-  bool                    slow;
-
-public:
-  dummy_dl_processor_factory(dummy_upper_rg_gateway& gw, task_executor& executor, bool slow) :
-    gw(gw), executor(executor), slow(slow)
-  {
+    assert_thread_id();
+    bool ret = false, success = false;
+    do {
+      unique_task t;
+      success = pending_tasks.try_pop(t);
+      if (success) {
+        t();
+        ret = true;
+      }
+    } while (success);
+    return ret;
   }
 
-  std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) override
+  /// Run next pending task if it is enqueued.
+  bool try_run_next()
   {
-    if (!slow)
-      return std::make_unique<downlink_processor_impl>(gw,
-                                                       std::make_unique<dummy_pdcch_proc>(),
-                                                       std::make_unique<dummy_pdsch_proc>(),
-                                                       std::make_unique<dummy_ssb_proc>(),
-                                                       executor);
-
-    return std::make_unique<downlink_processor_impl>(gw,
-                                                     std::make_unique<dummy_pdcch_proc_slow>(),
-                                                     std::make_unique<dummy_pdsch_proc_slow>(),
-                                                     std::make_unique<dummy_ssb_proc_slow>(),
-                                                     executor);
+    assert_thread_id();
+    unique_task t;
+    bool        success = pending_tasks.try_pop(t);
+    if (not success) {
+      return false;
+    }
+    t();
+    return true;
   }
+
+  /// Run next pending task once it is enqueued.
+  bool run_next_blocking()
+  {
+    assert_thread_id();
+    bool        success = false;
+    unique_task t       = pending_tasks.pop_blocking(&success);
+    if (not success) {
+      return false;
+    }
+    t();
+    return true;
+  }
+
+private:
+  bool has_thread_id() const { return t_id != std::thread::id{}; }
+
+  void assert_thread_id()
+  {
+    srsran_assert(t_id == std::this_thread::get_id(), "run() caller thread should not change.");
+  }
+
+  std::thread::id                 t_id;
+  dyn_blocking_queue<unique_task> pending_tasks;
 };
 
 } // namespace
 
-static downlink_processor_pool_config
-create_dl_processors(dummy_upper_rg_gateway& gw, task_executor& executor, bool slow = false)
+static void test_works_in_order()
 {
-  dummy_dl_processor_factory     factory(gw, executor, slow);
-  downlink_processor_pool_config procs;
-  procs.num_sectors = 3;
-  // Create 3 cells.
-  for (unsigned i = 0, e = 3; i != e; ++i) {
-    // Create for every numerology.
-    for (unsigned y = 0, z = 5; y != z; ++y) {
-      downlink_processor_pool_config::info info;
-      info.sector     = i;
-      info.numerology = y;
-      // Create 10 processors/cell.
-      for (unsigned j = 0, k = (y + 1) * 10; j != k; ++j) {
-        info.procs.emplace_back(factory.create({i * 10000 + y * 1000 + j}));
-      }
-      procs.dl_processors.push_back(std::move(info));
-    }
-  }
+  upper_phy_rg_gateway_fto gw;
+  manual_task_worker       executor(10);
 
-  return procs;
-}
+  auto pdcch_processor  = std::make_unique<pdcch_processor_fto>();
+  auto pdsch_processor  = std::make_unique<pdsch_processor_fto>();
+  auto ssb_processor    = std::make_unique<ssb_processor_fto>();
+  auto csi_rs_processor = std::make_unique<csi_rs_processor_fto>();
 
-static void test_works_in_random_order()
-{
-  fmt::print("Testing downlink processor works in random order\n");
-  dummy_upper_rg_gateway gw;
-  task_worker            worker("", 10);
-  task_worker_executor   executor(worker);
+  pdcch_processor_fto&  pdcch_ref  = *pdcch_processor;
+  pdsch_processor_fto&  pdsch_ref  = *pdsch_processor;
+  ssb_processor_fto&    ssb_ref    = *ssb_processor;
+  csi_rs_processor_fto& csi_rs_ref = *csi_rs_processor;
 
-  auto dl_procs = create_dl_processors(gw, executor);
-
-  // Create downlink processor pool.
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
-
+  auto       dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                                std::move(pdcch_processor),
+                                                                                std::move(pdsch_processor),
+                                                                                std::move(ssb_processor),
+                                                                                std::move(csi_rs_processor),
+                                                                                executor);
   slot_point slot(1, 2, 1);
-  unsigned   sector  = 0;
-  auto&      dl_proc = dl_proc_pool->get_processor(slot, sector);
+  unsigned   sector = 0;
 
-  dummy_resource_grid grid;
-  dl_proc.configure_resource_grid({slot, sector}, grid);
+  resource_grid_dummy grid;
+  dl_processor->configure_resource_grid({slot, sector}, grid);
 
-  dl_proc.process_ssb({});
+  TESTASSERT(!pdcch_ref.process_method_called);
+  TESTASSERT(!pdsch_ref.process_method_called);
+  TESTASSERT(!ssb_ref.process_method_called);
+  TESTASSERT(!csi_rs_ref.process_method_called);
+  TESTASSERT(!gw.sent);
+
+  dl_processor->process_ssb({});
+  TESTASSERT(ssb_ref.process_method_called);
+
   pdcch_processor::pdu_t pdu;
-  dl_proc.process_pdcch(pdu);
-  std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_proc.process_pdsch({data}, {});
-  dl_proc.send_resource_grid();
+  dl_processor->process_pdcch(pdu);
+  TESTASSERT(pdcch_ref.process_method_called);
 
-  while (worker.nof_pending_tasks()) {
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
-  }
-  worker.stop();
+  std::vector<uint8_t> data = {1, 2, 3, 4};
+  dl_processor->process_pdsch({data}, {});
+  TESTASSERT(pdsch_ref.process_method_called);
+
+  dl_processor->process_csi_rs({});
+  TESTASSERT(csi_rs_ref.process_method_called);
+
+  TESTASSERT(!gw.sent);
+
+  dl_processor->finish_processing_pdus();
 
   TESTASSERT(gw.sent);
 }
 
-static void test_works_send_after_finish()
+static void test_finish_is_called_before_processing_pdus()
 {
-  fmt::print("Testing downlink processor works if send_resource_grid() is called after finishing processing\n");
-  dummy_upper_rg_gateway gw;
-  task_worker            worker("", 10);
-  task_worker_executor   executor(worker);
+  upper_phy_rg_gateway_fto                gw;
+  manual_task_worker_always_enqueue_tasks executor(10);
 
-  auto dl_procs = create_dl_processors(gw, executor);
+  auto pdcch_processor  = std::make_unique<pdcch_processor_fto>();
+  auto pdsch_processor  = std::make_unique<pdsch_processor_fto>();
+  auto ssb_processor    = std::make_unique<ssb_processor_fto>();
+  auto csi_rs_processor = std::make_unique<csi_rs_processor_fto>();
 
-  // Create downlink processor pool.
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  pdcch_processor_fto&  pdcch_ref  = *pdcch_processor;
+  pdsch_processor_fto&  pdsch_ref  = *pdsch_processor;
+  ssb_processor_fto&    ssb_ref    = *ssb_processor;
+  csi_rs_processor_fto& csi_rs_ref = *csi_rs_processor;
+
+  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                                std::move(pdcch_processor),
+                                                                                std::move(pdsch_processor),
+                                                                                std::move(ssb_processor),
+                                                                                std::move(csi_rs_processor),
+                                                                                executor);
 
   slot_point slot(1, 2, 1);
-  unsigned   sector  = 0;
-  auto&      dl_proc = dl_proc_pool->get_processor(slot, sector);
+  unsigned   sector = 0;
 
-  dummy_resource_grid grid;
-  dl_proc.configure_resource_grid({slot, sector}, grid);
+  resource_grid_dummy grid;
+  dl_processor->configure_resource_grid({slot, sector}, grid);
 
-  dl_proc.process_ssb({});
+  dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  dl_proc.process_pdcch(pdu);
+  dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_proc.process_pdsch({data}, {});
+  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_csi_rs({});
+
+  TESTASSERT(!pdcch_ref.process_method_called);
+  TESTASSERT(!pdsch_ref.process_method_called);
+  TESTASSERT(!ssb_ref.process_method_called);
+  TESTASSERT(!csi_rs_ref.process_method_called);
   TESTASSERT(!gw.sent);
-  while (worker.nof_pending_tasks()) {
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
-  }
 
-  worker.stop();
+  dl_processor->finish_processing_pdus();
+  TESTASSERT(!gw.sent);
 
-  dl_proc.send_resource_grid();
+  // Run all the queued tasks.
+  executor.run_pending_tasks();
+
+  TESTASSERT(pdcch_ref.process_method_called);
+  TESTASSERT(pdsch_ref.process_method_called);
+  TESTASSERT(ssb_ref.process_method_called);
+  TESTASSERT(csi_rs_ref.process_method_called);
+
+  TESTASSERT(gw.sent);
 
   TESTASSERT(gw.sent);
 }
 
-static void test_send_is_called_before_processing_pdus()
+static void test_process_pdu_after_finish_processing_pdus_does_nothing()
 {
-  fmt::print("Testing downlink processor works if send_resource_grid() is called before finishing processing\n");
-  dummy_upper_rg_gateway gw;
-  task_worker            worker("", 10);
-  task_worker_executor   executor(worker);
+  upper_phy_rg_gateway_fto gw;
+  manual_task_worker       executor(10);
 
-  auto dl_procs = create_dl_processors(gw, executor, true);
+  auto pdcch_processor  = std::make_unique<pdcch_processor_fto>();
+  auto pdsch_processor  = std::make_unique<pdsch_processor_fto>();
+  auto ssb_processor    = std::make_unique<ssb_processor_fto>();
+  auto csi_rs_processor = std::make_unique<csi_rs_processor_fto>();
 
-  // Create downlink processor pool.
-  auto dl_proc_pool = create_dl_processor_pool({std::move(dl_procs)});
+  pdcch_processor_fto&  pdcch_ref  = *pdcch_processor;
+  pdsch_processor_fto&  pdsch_ref  = *pdsch_processor;
+  ssb_processor_fto&    ssb_ref    = *ssb_processor;
+  csi_rs_processor_fto& csi_rs_ref = *csi_rs_processor;
+
+  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                                std::move(pdcch_processor),
+                                                                                std::move(pdsch_processor),
+                                                                                std::move(ssb_processor),
+                                                                                std::move(csi_rs_processor),
+                                                                                executor);
 
   slot_point slot(1, 2, 1);
-  unsigned   sector  = 0;
-  auto&      dl_proc = dl_proc_pool->get_processor(slot, sector);
+  unsigned   sector = 0;
 
-  dummy_resource_grid grid;
-  dl_proc.configure_resource_grid({slot, sector}, grid);
+  resource_grid_dummy grid;
+  dl_processor->configure_resource_grid({slot, sector}, grid);
 
-  dl_proc.process_ssb({});
+  dl_processor->process_ssb({});
   pdcch_processor::pdu_t pdu;
-  dl_proc.process_pdcch(pdu);
+  dl_processor->process_pdcch(pdu);
   std::vector<uint8_t> data = {1, 2, 3, 4};
-  dl_proc.process_pdsch({data}, {});
+  dl_processor->process_pdsch({data}, {});
+  dl_processor->finish_processing_pdus();
+
+  TESTASSERT(pdcch_ref.process_method_called);
+  TESTASSERT(pdsch_ref.process_method_called);
+  TESTASSERT(ssb_ref.process_method_called);
+  TESTASSERT(gw.sent);
+
+  // Process a PDU after finish_processing_pdus() method has been called.
+  dl_processor->process_csi_rs({});
+  TESTASSERT(!csi_rs_ref.process_method_called);
+}
+
+static void test_process_pdu_before_configure_does_nothing()
+{
+  upper_phy_rg_gateway_fto gw;
+  manual_task_worker       executor(10);
+
+  auto pdcch_processor  = std::make_unique<pdcch_processor_fto>();
+  auto pdsch_processor  = std::make_unique<pdsch_processor_fto>();
+  auto ssb_processor    = std::make_unique<ssb_processor_fto>();
+  auto csi_rs_processor = std::make_unique<csi_rs_processor_fto>();
+
+  pdcch_processor_fto&  pdcch_ref  = *pdcch_processor;
+  pdsch_processor_fto&  pdsch_ref  = *pdsch_processor;
+  ssb_processor_fto&    ssb_ref    = *ssb_processor;
+  csi_rs_processor_fto& csi_rs_ref = *csi_rs_processor;
+
+  auto dl_processor = std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                                std::move(pdcch_processor),
+                                                                                std::move(pdsch_processor),
+                                                                                std::move(ssb_processor),
+                                                                                std::move(csi_rs_processor),
+                                                                                executor);
+
+  dl_processor->process_ssb({});
+  pdcch_processor::pdu_t pdu;
+  dl_processor->process_pdcch(pdu);
+  std::vector<uint8_t> data = {1, 2, 3, 4};
+  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_csi_rs({});
+
+  TESTASSERT(!pdcch_ref.process_method_called);
+  TESTASSERT(!pdsch_ref.process_method_called);
+  TESTASSERT(!ssb_ref.process_method_called);
+  TESTASSERT(!csi_rs_ref.process_method_called);
   TESTASSERT(!gw.sent);
-  dl_proc.send_resource_grid();
+}
+
+static void test_finish_processing_before_configure_does_nothing()
+{
+  upper_phy_rg_gateway_fto gw;
+  manual_task_worker       executor(10);
+
+  auto dl_processor =
+      std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                std::make_unique<pdcch_processor_fto>(),
+                                                                std::make_unique<pdsch_processor_fto>(),
+                                                                std::make_unique<ssb_processor_fto>(),
+                                                                std::make_unique<csi_rs_processor_fto>(),
+                                                                executor);
+
   TESTASSERT(!gw.sent);
 
-  while (worker.nof_pending_tasks()) {
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
-  }
+  dl_processor->finish_processing_pdus();
 
-  worker.stop();
+  TESTASSERT(!gw.sent);
+}
+
+static void test_2consecutive_slots()
+{
+  upper_phy_rg_gateway_fto gw;
+  manual_task_worker       executor(10);
+
+  auto dl_processor =
+      std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                std::make_unique<pdcch_processor_fto>(),
+                                                                std::make_unique<pdsch_processor_fto>(),
+                                                                std::make_unique<ssb_processor_fto>(),
+                                                                std::make_unique<csi_rs_processor_fto>(),
+                                                                executor);
+  slot_point slot(1, 2, 1);
+  unsigned   sector = 0;
+
+  resource_grid_dummy grid;
+  dl_processor->configure_resource_grid({slot, sector}, grid);
+
+  dl_processor->process_ssb({});
+  pdcch_processor::pdu_t pdu;
+  dl_processor->process_pdcch(pdu);
+  std::vector<uint8_t> data = {1, 2, 3, 4};
+  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_csi_rs({});
+  TESTASSERT(!gw.sent);
+
+  dl_processor->finish_processing_pdus();
+
+  TESTASSERT(gw.sent);
+
+  slot_point slot2(1, 2, 2);
+  gw.clear_sent();
+  resource_grid_dummy grid2;
+  dl_processor->configure_resource_grid({slot2, sector}, grid2);
+
+  dl_processor->process_ssb({});
+  dl_processor->process_pdcch(pdu);
+  dl_processor->process_pdsch({data}, {});
+  dl_processor->process_csi_rs({});
+  TESTASSERT(!gw.sent);
+
+  dl_processor->finish_processing_pdus();
+
+  TESTASSERT(gw.sent);
+}
+
+static void test_finish_without_processing_pdus_sends_the_grid()
+{
+  upper_phy_rg_gateway_fto                gw;
+  manual_task_worker_always_enqueue_tasks executor(10);
+
+  auto dl_processor =
+      std::make_unique<downlink_processor_single_executor_impl>(gw,
+                                                                std::make_unique<pdcch_processor_fto>(),
+                                                                std::make_unique<pdsch_processor_fto>(),
+                                                                std::make_unique<ssb_processor_fto>(),
+                                                                std::make_unique<csi_rs_processor_fto>(),
+                                                                executor);
+  slot_point slot(1, 2, 1);
+  unsigned   sector = 0;
+
+  resource_grid_dummy grid;
+  dl_processor->configure_resource_grid({slot, sector}, grid);
+
+  TESTASSERT(!gw.sent);
+
+  dl_processor->finish_processing_pdus();
 
   TESTASSERT(gw.sent);
 }
 
 int main()
 {
-  test_works_in_random_order();
-  test_works_send_after_finish();
-  test_send_is_called_before_processing_pdus();
-  fmt::print("Downlink processor test -> OK\n");
+  test_works_in_order();
+  test_finish_is_called_before_processing_pdus();
+  test_process_pdu_after_finish_processing_pdus_does_nothing();
+  test_process_pdu_before_configure_does_nothing();
+  test_finish_without_processing_pdus_sends_the_grid();
+  test_finish_processing_before_configure_does_nothing();
+  test_2consecutive_slots();
 }

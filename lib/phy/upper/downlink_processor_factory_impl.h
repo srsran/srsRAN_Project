@@ -25,23 +25,24 @@ class task_executor;
 class downlink_processor_factory_impl : public downlink_processor_factory
 {
 public:
-  downlink_processor_factory_impl(upper_phy_rg_gateway&    gateway,
-                                  pdcch_processor_factory& pdcch_proc,
-                                  pdsch_processor_factory& pdsch_proc,
-                                  ssb_processor_factory&   ssb_proc,
-                                  task_executor&           executor) :
+  downlink_processor_factory_impl(upper_phy_rg_gateway&                    gateway,
+                                  std::shared_ptr<pdcch_processor_factory> pdcch_proc,
+                                  std::shared_ptr<pdsch_processor_factory> pdsch_proc,
+                                  std::shared_ptr<ssb_processor_factory>   ssb_proc,
+                                  task_executor&                           executor) :
     gateway(gateway), pdcch_proc(pdcch_proc), pdsch_proc(pdsch_proc), ssb_proc(ssb_proc), executor(executor)
   {
   }
 
+  // See interface for documentation.
   std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) override;
 
 private:
-  upper_phy_rg_gateway&    gateway;
-  pdcch_processor_factory& pdcch_proc;
-  pdsch_processor_factory& pdsch_proc;
-  ssb_processor_factory&   ssb_proc;
-  task_executor&           executor;
+  upper_phy_rg_gateway&                    gateway;
+  std::shared_ptr<pdcch_processor_factory> pdcch_proc;
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc;
+  std::shared_ptr<ssb_processor_factory>   ssb_proc;
+  task_executor&                           executor;
 };
 
 } // namespace srsgnb
