@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(dmrs_pbch_processor_test dmrs_pbch_processor_test.cpp)
-target_link_libraries(dmrs_pbch_processor_test signal_processors srsvec sequence_generators srslog)
+target_link_libraries(dmrs_pbch_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog)
 add_test(dmrs_pbch_processor_test dmrs_pbch_processor_test)
 
 add_custom_command(
@@ -24,7 +24,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(dmrs_pdcch_processor_test dmrs_pdcch_processor_test.cpp)
-target_link_libraries(dmrs_pdcch_processor_test signal_processors srsvec sequence_generators srslog)
+target_link_libraries(dmrs_pdcch_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog)
 add_test(dmrs_pdcch_processor_test dmrs_pdcch_processor_test)
 
 add_custom_command(
@@ -36,7 +36,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(dmrs_pdsch_processor_test dmrs_pdsch_processor_test.cpp)
-target_link_libraries(dmrs_pdsch_processor_test signal_processors srsvec sequence_generators srslog)
+target_link_libraries(dmrs_pdsch_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog)
 add_test(dmrs_pdsch_processor_test dmrs_pdsch_processor_test)
 
 add_custom_command(
@@ -48,7 +48,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(dmrs_pucch_processor_test dmrs_pucch_processor_test.cpp)
-target_link_libraries(dmrs_pucch_processor_test signal_processors srsvec sequence_generators srslog srsgnb_support)
+target_link_libraries(dmrs_pucch_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog srsgnb_support)
 add_test(dmrs_pucch_processor_test dmrs_pucch_processor_test)
 
 add_custom_command(
@@ -60,15 +60,15 @@ add_custom_command(
         VERBATIM)
 
 add_executable(pss_processor_test pss_processor_test.cpp)
-target_link_libraries(pss_processor_test signal_processors srsvec srslog)
+target_link_libraries(pss_processor_test  srsgnb_signal_processors srsvec srslog)
 add_test(pss_processor_test pss_processor_test)
 
 add_executable(sss_processor_test sss_processor_test.cpp)
-target_link_libraries(sss_processor_test signal_processors srsvec srslog)
+target_link_libraries(sss_processor_test  srsgnb_signal_processors srsvec srslog)
 add_test(sss_processor_test sss_processor_test)
 
 add_executable(csi_rs_processor_test csi_rs_processor_test.cpp)
-target_link_libraries(csi_rs_processor_test signal_processors srsvec sequence_generators srslog srsgnb_upper_phy_support)
+target_link_libraries(csi_rs_processor_test  srsgnb_signal_processors srsvec srsgnb_sequence_generators srslog srsgnb_upper_phy_support)
 add_test(csi_rs_processor_test csi_rs_processor_test)
 
 add_custom_command(

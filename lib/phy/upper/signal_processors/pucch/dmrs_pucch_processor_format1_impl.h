@@ -11,6 +11,7 @@
 #ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
 #define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
 
+#include "pucch_helper.h"
 #include "pucch_orthogonal_sequence.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
@@ -21,6 +22,8 @@ namespace srsgnb {
 class dmrs_pucch_processor_format1_impl : public dmrs_pucch_processor
 {
 private:
+  pucch_helper helper;
+
   /// Format 1 implementation expects pre-generated sequence collection on instantiation.
   const low_papr_sequence_collection* sequence_collection;
 
@@ -59,12 +62,13 @@ private:
   void mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned symbol) const;
 
 public:
-  dmrs_pucch_processor_format1_impl(const low_papr_sequence_collection* c, const pucch_orthogonal_sequence* occ) :
-    sequence_collection(c),
-    occ(occ)
+  dmrs_pucch_processor_format1_impl(std::unique_ptr<pseudo_random_generator> prg,
+                                    const low_papr_sequence_collection*      c,
+                                    const pucch_orthogonal_sequence*         occ) :
+    helper(std::move(prg)), sequence_collection(c), occ(occ)
   {}
 
-  void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) override;
+  void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
 
 } // namespace srsgnb

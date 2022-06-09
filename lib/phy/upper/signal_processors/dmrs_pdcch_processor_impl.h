@@ -13,6 +13,7 @@
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
+#include <memory>
 
 namespace srsgnb {
 
@@ -33,7 +34,7 @@ private:
   static constexpr unsigned MAX_NOF_DMRS_PER_SYMBOL = MAX_RB * NOF_DMRS_PER_RB;
 
   /// Pseudo-random sequence generator instance.
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
   /// \brief Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
@@ -68,6 +69,11 @@ private:
                const config_t&       config);
 
 public:
+  dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  {
+    srsran_assert(prg, "Invalid PRG.");
+  }
+
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 

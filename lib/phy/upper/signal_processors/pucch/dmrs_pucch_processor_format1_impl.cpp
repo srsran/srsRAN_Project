@@ -92,9 +92,6 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
                                                             const sequence_generation_config&     cfg,
                                                             unsigned                              symbol) const
 {
-  // Get an instance of pucch_helper.
-  pucch_helper helper;
-
   // Compute alpha index.
   unsigned alpha_idx = helper.get_alpha_index(
       pucch_config.slot, pucch_config.cp, pucch_config.n_id, symbol, pucch_config.initial_cyclic_shift, 0);
@@ -122,9 +119,6 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
                                                  const resource_grid_reader&           grid,
                                                  const dmrs_pucch_processor::config_t& config)
 {
-  // Get an instance of pucch_helper
-  pucch_helper helper;
-
   unsigned u, v;
   // Compute group sequence.
   helper.compute_group_sequence(config.group_hopping, config.n_id, u, v);

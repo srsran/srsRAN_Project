@@ -31,7 +31,7 @@ private:
   static constexpr unsigned MAX_NOF_DMRS_PER_SYMBOL = PUCCH_FORMAT2_MAX_NPRB * NOF_DMRS_PER_RB;
 
   /// Pseudo-random sequence generator instance.
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
   /// \brief     Computes the initial pseudo-random state.
   /// \param[in] symbol Denotes the symbol index.
@@ -60,6 +60,11 @@ private:
   mapping(span<cf_t> ce, const resource_grid_reader& grid, unsigned start_prb, unsigned nof_prb, unsigned symbol) const;
 
 public:
+  dmrs_pucch_processor_format2_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  {
+    srsran_assert(prg, "Invalid pseudo random generator.");
+  }
+
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;
 };
 

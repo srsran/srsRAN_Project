@@ -9,6 +9,7 @@
  */
 
 #include "modulation_mapper_test_data.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/srsgnb_test.h"
 
@@ -28,7 +29,11 @@ static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, spa
 
 int main()
 {
-  std::unique_ptr<modulation_mapper> modulator = create_modulation_mapper();
+  std::shared_ptr<modulation_mapper_factory> factory = create_modulation_mapper_sw_factory();
+  TESTASSERT(factory);
+
+  std::unique_ptr<modulation_mapper> modulator = factory->create();
+  TESTASSERT(modulator);
 
   for (const test_case_t& test_case : modulation_mapper_test_data) {
     // Load input data

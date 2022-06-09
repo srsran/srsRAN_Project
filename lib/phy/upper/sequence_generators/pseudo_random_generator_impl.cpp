@@ -384,8 +384,3 @@ pseudo_random_generator::state_s pseudo_random_generator_impl::get_state() const
 {
   return {x1, x2};
 }
-
-std::unique_ptr<pseudo_random_generator> srsgnb::create_pseudo_random()
-{
-  return std::make_unique<pseudo_random_generator_impl>();
-}

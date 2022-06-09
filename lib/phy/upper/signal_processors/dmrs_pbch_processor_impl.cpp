@@ -9,6 +9,7 @@
  */
 
 #include "dmrs_pbch_processor_impl.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -26,7 +27,7 @@ unsigned dmrs_pbch_processor_impl::c_init(const config_t& config)
          (config.phys_cell_id % 4);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const config_t& config) const
+void dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequence, const config_t& config) const
 {
   // Calculate initial state
   prg->init(c_init(config));
@@ -35,9 +36,9 @@ void srsgnb::dmrs_pbch_processor_impl::generation(std::array<cf_t, NOF_RE>& sequ
   prg->generate({(float*)sequence.data(), 2 * NOF_RE}, M_SQRT1_2);
 }
 
-void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
-                                               resource_grid_writer&           grid,
-                                               const config_t&                 args) const
+void dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r,
+                                       resource_grid_writer&           grid,
+                                       const config_t&                 args) const
 {
   // Calculate index shift
   uint32_t v = args.phys_cell_id % 4;
@@ -78,7 +79,7 @@ void srsgnb::dmrs_pbch_processor_impl::mapping(const std::array<cf_t, NOF_RE>& r
   }
 }
 
-void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
+void dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
   // Generate sequence
   std::array<cf_t, NOF_RE> sequence;
@@ -90,5 +91,5 @@ void srsgnb::dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const con
 
 std::unique_ptr<dmrs_pbch_processor> srsgnb::create_dmrs_pbch_processor()
 {
-  return std::make_unique<dmrs_pbch_processor_impl>();
+  return std::make_unique<dmrs_pbch_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
 }

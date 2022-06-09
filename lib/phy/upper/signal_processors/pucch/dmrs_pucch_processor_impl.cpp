@@ -10,6 +10,7 @@
 
 #include "dmrs_pucch_processor_format1_impl.h"
 #include "dmrs_pucch_processor_format2_impl.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 
 using namespace srsgnb;
 
@@ -21,11 +22,12 @@ static const std::array<make_function, static_cast<std::size_t>(pucch_format::NO
     nullptr,
     // Format 1
     [](const low_papr_sequence_collection* c, const pucch_orthogonal_sequence* occ) {
-      return std::make_unique<dmrs_pucch_processor_format1_impl>(c, occ);
+      return std::make_unique<dmrs_pucch_processor_format1_impl>(
+          create_pseudo_random_generator_sw_factory()->create(), c, occ);
     },
     // Format 2
     [](const low_papr_sequence_collection* c, const pucch_orthogonal_sequence* occ) {
-      return std::make_unique<dmrs_pucch_processor_format2_impl>();
+      return std::make_unique<dmrs_pucch_processor_format2_impl>(create_pseudo_random_generator_sw_factory()->create());
     },
     // Formats 3 and 4 are not implemented
     nullptr,

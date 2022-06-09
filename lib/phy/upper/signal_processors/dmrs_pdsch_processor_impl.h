@@ -44,7 +44,7 @@ private:
   static const std::array<params_t, 12> params_type2;
 
   /// Pseudo-random sequence generator instance.
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
   /// \brief Implements TS 38.211 section 7.4.1.1.1 Sequence generation.
   ///
@@ -77,6 +77,13 @@ private:
   static_vector<static_vector<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> temp_re;
 
 public:
+  dmrs_pdsch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :
+    prg(std::move(pseudo_random_generator))
+  {
+    srsran_assert(prg, "Invalid PRG.");
+  }
+
+  // See interface for documentation.
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 

@@ -10,22 +10,11 @@
 
 #include "pbch_encoder_impl.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
 
 using namespace srsgnb;
-
-pbch_encoder_impl::pbch_encoder_impl() :
-  crc24c(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C)),
-  scrambler(create_pseudo_random()),
-  interleaver(create_polar_interleaver()),
-  alloc(create_polar_allocator()),
-  code(create_polar_code()),
-  encoder(create_polar_encoder_pipelined(POLAR_N_MAX_LOG)),
-  rm(create_polar_rate_matcher())
-{
-  code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
-}
 
 // Implements TS 38.212 Table 7.1.1-1: Value of PBCH payload interleaver pattern G (j).
 static const std::array<uint32_t, pbch_encoder::A> G = {16, 23, 18, 17, 8,  30, 10, 6,  24, 7,  0,  5,  3,  2,  1,  4,
@@ -189,5 +178,6 @@ void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder
 
 std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()
 {
-  return std::make_unique<pbch_encoder_impl>();
+  return std::make_unique<pbch_encoder_impl>(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C),
+                                             create_pseudo_random_generator_sw_factory()->create());
 }

@@ -16,7 +16,6 @@
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/ran/slot_point.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -54,9 +53,6 @@ public:
   /// \param [in] config Provides the required configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic DMRS for PDSCH instance.
-std::unique_ptr<dmrs_pdsch_processor> create_dmrs_pdsch_processor();
 
 } // namespace srsgnb
 

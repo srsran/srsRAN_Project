@@ -185,8 +185,3 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
     mapping(grid, sequence, base_mask, symbol, config);
   }
 }
-
-std::unique_ptr<dmrs_pdsch_processor> srsgnb::create_dmrs_pdsch_processor()
-{
-  return std::make_unique<dmrs_pdsch_processor_impl>();
-}

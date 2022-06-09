@@ -9,6 +9,7 @@
  */
 
 #include "csi_rs_processor_impl.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsgnb;
 
@@ -763,5 +764,5 @@ void csi_rs_processor_impl::apply_cdm(span<cf_t>            seq_out,
 
 std::unique_ptr<srsgnb::csi_rs_processor> srsgnb::create_csi_rs_processor()
 {
-  return std::make_unique<csi_rs_processor_impl>();
+  return std::make_unique<csi_rs_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
 }

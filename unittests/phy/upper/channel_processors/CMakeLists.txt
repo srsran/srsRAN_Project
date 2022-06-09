@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(pbch_encoder_test pbch_encoder_test.cpp)
-target_link_libraries(pbch_encoder_test pbch_encoder srslog)
+target_link_libraries(pbch_encoder_test srsgnb_channel_processors srslog)
 add_test(pbch_encoder_test pbch_encoder_test)
 
 add_custom_command(
@@ -24,7 +24,7 @@ add_custom_command(
   VERBATIM)
 
 add_executable(pbch_modulator_test pbch_modulator_test.cpp)
-target_link_libraries(pbch_modulator_test pbch_modulator srslog)
+target_link_libraries(pbch_modulator_test srsgnb_channel_processors srslog)
 add_test(pbch_modulator_test pbch_modulator_test)
 
 add_custom_command(
@@ -48,7 +48,7 @@ add_custom_command(
         VERBATIM)
 
 add_executable(pdcch_modulator_test pdcch_modulator_test.cpp)
-target_link_libraries(pdcch_modulator_test srsgnb_channel_processors srslog modulation_mapper sequence_generators)
+target_link_libraries(pdcch_modulator_test srsgnb_channel_processors srslog srsgnb_channel_modulation srsgnb_sequence_generators)
 add_test(pdcch_modulator_test pdcch_modulator_test)
 
 add_custom_command(
@@ -105,11 +105,11 @@ add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
 target_link_libraries(pusch_processor_unittest srsgnb_channel_processors srslog)
 
 add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
-target_link_libraries(ssb_processor_unittest ssb_processor srslog)
+target_link_libraries(ssb_processor_unittest srsgnb_channel_processors srslog)
 add_test(ssb_processor_unittest ssb_processor_unittest)
 
 add_executable(ssb_processor_vectortest ssb_processor_vectortest.cpp)
-target_link_libraries(ssb_processor_vectortest ssb_processor srsgnb_lower_phy_modulation srslog)
+target_link_libraries(ssb_processor_vectortest srsgnb_channel_processors srsgnb_lower_phy_modulation srslog)
 add_test(ssb_processor_vectortest ssb_processor_vectortest)
 
 add_custom_command(

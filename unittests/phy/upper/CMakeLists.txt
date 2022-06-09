@@ -17,7 +17,7 @@ add_subdirectory(signal_processors)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(dl_processor_vectortest dl_processor_vectortest.cpp)
-target_link_libraries(dl_processor_vectortest sequence_generators srsgnb_channel_processors signal_processors srslog)
+target_link_libraries(dl_processor_vectortest srsgnb_sequence_generators srsgnb_channel_processors srsgnb_signal_processors srslog)
 add_test(dl_processor_vectortest dl_processor_vectortest)
 
 add_custom_command(

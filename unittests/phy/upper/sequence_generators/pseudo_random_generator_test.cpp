@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
@@ -84,7 +84,10 @@ static void generate_gold(unsigned c_init, unsigned length, unsigned offset)
   pack_vector(c_unpacked.data(), c_packed.data(), length);
 }
 
-void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
+void test_apply_xor_byte(std::shared_ptr<pseudo_random_generator_factory> factory,
+                         unsigned                                         c_init,
+                         unsigned                                         N,
+                         unsigned                                         offset)
 {
   std::uniform_int_distribution<unsigned char> dist(0, UINT8_MAX);
 
@@ -97,7 +100,8 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   }
 
   // Create sequence generator
-  std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> generator = factory->create();
+  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -116,7 +120,10 @@ void test_apply_xor_byte(unsigned c_init, unsigned N, unsigned offset)
   }
 }
 
-void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
+void test_apply_xor_bit(std::shared_ptr<pseudo_random_generator_factory> factory,
+                        unsigned                                         c_init,
+                        unsigned                                         N,
+                        unsigned                                         offset)
 {
   std::uniform_int_distribution<unsigned char> dist(0, 1);
 
@@ -129,7 +136,8 @@ void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
   }
 
   // Create sequence generator
-  std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> generator = factory->create();
+  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -148,7 +156,10 @@ void test_apply_xor_bit(unsigned c_init, unsigned N, unsigned offset)
   }
 }
 
-void test_apply_xor_i8(unsigned c_init, unsigned N, unsigned offset)
+void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> factory,
+                       unsigned                                         c_init,
+                       unsigned                                         N,
+                       unsigned                                         offset)
 {
   std::uniform_int_distribution<int8_t> dist(INT8_MIN, INT8_MAX);
 
@@ -161,7 +172,8 @@ void test_apply_xor_i8(unsigned c_init, unsigned N, unsigned offset)
   }
 
   // Create sequence generator
-  std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> generator = factory->create();
+  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -180,13 +192,17 @@ void test_apply_xor_i8(unsigned c_init, unsigned N, unsigned offset)
   }
 }
 
-void test_generate_float(unsigned c_init, unsigned N, unsigned offset)
+void test_generate_float(std::shared_ptr<pseudo_random_generator_factory> factory,
+                         unsigned                                         c_init,
+                         unsigned                                         N,
+                         unsigned                                         offset)
 {
   // Create data buffer
   srsvec::aligned_vec<float> sequence(N);
 
   // Create sequence generator
-  std::unique_ptr<pseudo_random_generator> generator = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> generator = factory->create();
+  TESTASSERT(generator);
 
   // Initialize sequence generator.
   generator->init(c_init);
@@ -207,6 +223,9 @@ void test_generate_float(unsigned c_init, unsigned N, unsigned offset)
 
 int main()
 {
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
   std::vector<unsigned>                   offsets = {0, 2, 3, 5, 7};
   std::vector<unsigned>                   sizes   = {256, 512, 768};
   std::uniform_int_distribution<unsigned> dist(0, INT32_MAX);
@@ -219,16 +238,16 @@ int main()
       generate_gold(c_init, N, offset);
 
       // Test sequence XOR with byte buffer
-      test_apply_xor_byte(c_init, N, offset);
+      test_apply_xor_byte(prg_factory, c_init, N, offset);
 
       // Test sequence XOR with bit buffer
-      test_apply_xor_bit(c_init, N, offset);
+      test_apply_xor_bit(prg_factory, c_init, N, offset);
 
       // Test sequence XOR with 8-bit signed buffer
-      test_apply_xor_i8(c_init, N, offset);
+      test_apply_xor_i8(prg_factory, c_init, N, offset);
 
       // Test sequence generation in float
-      test_generate_float(c_init, N, offset);
+      test_generate_float(prg_factory, c_init, N, offset);
     }
   }
 }

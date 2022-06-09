@@ -14,8 +14,6 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
-#include <complex>
-#include <memory>
 
 namespace srsgnb {
 
@@ -36,9 +34,6 @@ public:
   /// the number of bits per modulated symbol).
   virtual void modulate(span<const uint8_t> input, span<cf_t> symbols, modulation_scheme scheme) = 0;
 };
-
-/// Creates a modulation mapper.
-std::unique_ptr<modulation_mapper> create_modulation_mapper();
 
 } // namespace srsgnb
 

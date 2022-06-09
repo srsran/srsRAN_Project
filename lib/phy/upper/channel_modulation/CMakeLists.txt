@@ -7,11 +7,12 @@
 #
 
 set(SOURCES
+        channel_modulation_factories.cpp
         modulation_mapper_impl.cpp
         demodulation_mapper_impl.cpp
         )
 
 include_directories(../../../../include/srsgnb/phy/upper/channel_modulation)
 
-add_library(modulation_mapper STATIC ${SOURCES})
-target_link_libraries(modulation_mapper srsgnb_support log_likelihood_ratio)
+add_library(srsgnb_channel_modulation STATIC ${SOURCES})
+target_link_libraries(srsgnb_channel_modulation srsgnb_support log_likelihood_ratio)

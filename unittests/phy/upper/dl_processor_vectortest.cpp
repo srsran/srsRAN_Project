@@ -9,6 +9,7 @@
  */
 
 #include "dl_processor_test_data.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -133,12 +134,22 @@ int main()
       create_pdsch_encoder_factory_sw(pdsch_encoder_factory_config);
   TESTASSERT(ldpc_encoder_factory);
 
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  TESTASSERT(modulator_factory);
+
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_pdsch_factory =
+      create_dmrs_pdsch_processor_factory_sw(prg_factory);
+  TESTASSERT(dmrs_pdsch_factory);
+
   // Create PDCCH processor
   std::unique_ptr<pdcch_processor> pdcch = nullptr;
   {
     pdcch_modulator_config_t pdcch_modulator_config;
-    pdcch_modulator_config.modulator = create_modulation_mapper();
-    pdcch_modulator_config.scrambler = create_pseudo_random();
+    pdcch_modulator_config.modulator = modulator_factory->create();
+    pdcch_modulator_config.scrambler = prg_factory->create();
 
     pdcch_processor_config_t pdcch_processor_config;
     pdcch_processor_config.dmrs      = create_dmrs_pdcch_processor();
@@ -152,13 +163,13 @@ int main()
   std::unique_ptr<pdsch_processor> pdsch = nullptr;
   {
     pdsch_modulator_config_t modulator_config;
-    modulator_config.modulator = create_modulation_mapper();
-    modulator_config.scrambler = create_pseudo_random();
+    modulator_config.modulator = modulator_factory->create();
+    modulator_config.scrambler = prg_factory->create();
 
     pdsch_processor_configuration processor_config;
     processor_config.encoder   = pdsch_encoder_factory->create();
     processor_config.modulator = create_pdsch_modulator(modulator_config);
-    processor_config.dmrs      = create_dmrs_pdsch_processor();
+    processor_config.dmrs      = dmrs_pdsch_factory->create();
 
     pdsch = create_pdsch_processor(processor_config);
     TESTASSERT(pdsch);

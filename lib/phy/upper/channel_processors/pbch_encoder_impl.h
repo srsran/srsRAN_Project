@@ -61,7 +61,19 @@ private:
 
 public:
   /// Constructs a generic PBCH encoder.
-  pbch_encoder_impl();
+  pbch_encoder_impl(std::unique_ptr<crc_calculator> crc24c_, std::unique_ptr<pseudo_random_generator> scrambler_) :
+    crc24c(std::move(crc24c_)),
+    scrambler(std::move(scrambler_)),
+    interleaver(create_polar_interleaver()),
+    alloc(create_polar_allocator()),
+    code(create_polar_code()),
+    encoder(create_polar_encoder_pipelined(POLAR_N_MAX_LOG)),
+    rm(create_polar_rate_matcher())
+  {
+    srsran_assert(crc24c, "Invalid CRC24C.");
+    srsran_assert(scrambler, "Invalid scrambler.");
+    code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
+  }
 
   // See interface for documentation.
   void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) override;

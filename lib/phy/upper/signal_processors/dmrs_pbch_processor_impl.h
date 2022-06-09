@@ -17,13 +17,14 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
 
 namespace srsgnb {
+
 class dmrs_pbch_processor_impl : public dmrs_pbch_processor
 {
 private:
   /// DMRS PBCH Sequence length in the SSB
   static const unsigned NOF_RE = 144;
 
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
   /// \brief Computes the initial pseudo-random state
   /// \param [in] config provides the required parameters to calculate the value
@@ -42,6 +43,13 @@ private:
   void mapping(const std::array<cf_t, NOF_RE>& sequence, resource_grid_writer& grid, const config_t& config) const;
 
 public:
+  dmrs_pbch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :
+    prg(std::move(pseudo_random_generator))
+  {
+    srsran_assert(prg, "Invalid PRG.");
+  }
+
+  // See interface for documentation.
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 

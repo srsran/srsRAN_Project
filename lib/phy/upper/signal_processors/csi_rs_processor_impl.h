@@ -46,7 +46,7 @@ private:
   static const std::array<const cdm_sequence, 8> cdm8_fd2_td4_table;
 
   /// Pseudo-random sequece generator for the NZP-CSI-RS signal.
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
   /// \brief Generates the NZP-CSI-RS sequence.
   ///
@@ -87,6 +87,11 @@ private:
                  const unsigned        l_idx);
 
 public:
+  csi_rs_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  {
+    srsran_assert(prg, "Invalid PRG.");
+  }
+
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 

@@ -11,9 +11,12 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUCCH_HELPER_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUCCH_HELPER_H
 
+#include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
-#include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/frame_types.h"
+#include "srsgnb/ran/pucch_mapping.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
@@ -21,9 +24,14 @@ class pucch_helper
 {
 private:
   // Pseudo-random sequence generator instance
-  std::unique_ptr<pseudo_random_generator> prg = create_pseudo_random();
+  std::unique_ptr<pseudo_random_generator> prg;
 
 public:
+  pucch_helper(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
+  {
+    srsran_assert(prg, "Invalid PRG.");
+  }
+
   /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).
   void compute_group_sequence(pucch_group_hopping group_hopping, unsigned n_id, unsigned& u, unsigned& v)
   {
@@ -60,7 +68,7 @@ public:
                            unsigned             n_id,
                            unsigned             symbol,
                            unsigned             m0,
-                           unsigned             m_cs)
+                           unsigned             m_cs) const
   {
     // Initialize pseudo-random sequence with the seed set to nid
     unsigned cinit = n_id;

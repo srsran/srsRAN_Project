@@ -12,7 +12,7 @@ set(TEST_DATA_DIR ${CMAKE_CURRENT_BINARY_DIR}/test_data)
 set_directory_properties(PROPERTIES LABELS "phy")
 
 add_executable(modulation_mapper_test modulation_mapper_test.cpp)
-target_link_libraries(modulation_mapper_test modulation_mapper srsvec srslog)
+target_link_libraries(modulation_mapper_test srsgnb_channel_modulation srsvec srslog)
 add_test(modulation_mapper_test modulation_mapper_test)
 
 add_custom_command(
@@ -24,7 +24,7 @@ add_custom_command(
         VERBATIM)
 
 add_executable(demodulation_mapper_test demodulation_mapper_test.cpp)
-target_link_libraries(demodulation_mapper_test modulation_mapper srsvec srslog)
+target_link_libraries(demodulation_mapper_test srsgnb_channel_modulation srsvec srslog)
 
 add_custom_command(
         TARGET demodulation_mapper_test

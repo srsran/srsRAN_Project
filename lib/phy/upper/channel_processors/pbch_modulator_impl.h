@@ -41,9 +41,12 @@ private:
   void map(span<const cf_t> d_pbch, resource_grid_writer& grid, const config_t& config);
 
 public:
-  explicit pbch_modulator_impl() : modulator(create_modulation_mapper()), scrambler(create_pseudo_random()) {}
-
-  ~pbch_modulator_impl() = default;
+  pbch_modulator_impl(std::unique_ptr<modulation_mapper> modulator_, std::unique_ptr<pseudo_random_generator> prg_) :
+    modulator(std::move(modulator_)), scrambler(std::move(prg_))
+  {
+    srsran_assert(modulator, "Invalid modulator.");
+    srsran_assert(scrambler, "Invalid scrambler.");
+  }
 
   void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) override;
 };

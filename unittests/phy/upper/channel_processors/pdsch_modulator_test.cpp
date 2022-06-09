@@ -9,7 +9,8 @@
  */
 
 #include "pdsch_modulator_test_data.h"
-#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 
 namespace srsgnb {
 struct pdsch_modulator_config_t {
@@ -25,8 +26,14 @@ using namespace srsgnb;
 
 int main()
 {
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  TESTASSERT(modulator_factory);
+
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
   // Create PDSCH modulator configuration.
-  pdsch_modulator_config_t config = {create_modulation_mapper(), create_pseudo_random()};
+  pdsch_modulator_config_t config = {modulator_factory->create(), prg_factory->create()};
 
   // Create PDSCH modulator.
   std::unique_ptr<pdsch_modulator> pdsch = create_pdsch_modulator(config);

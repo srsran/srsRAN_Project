@@ -14,7 +14,6 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -89,9 +88,6 @@ public:
   /// \param [in] value Provides the sequence amplitude.
   virtual void generate(span<cf_t> buffer, float value) { generate({(float*)buffer.data(), 2 * buffer.size()}, value); }
 };
-
-/// Creates a generic pseudo-random sequence generator
-std::unique_ptr<pseudo_random_generator> create_pseudo_random();
 
 } // namespace srsgnb
 
