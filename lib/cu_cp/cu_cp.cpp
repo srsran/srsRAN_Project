@@ -26,7 +26,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
 
   // Create layers
   f1ap = create_f1ap(f1ap_ev_notifier);
-  manager = srs_cu_cp::create_cu_cp_manager(timers, *cfg.cu_executor);
+  manager = srs_cu_cp::create_cu_cp_manager(timers, *f1ap, *cfg.cu_executor);
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect(*manager);

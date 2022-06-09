@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_manager_impl.h"
+#include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
 
 using namespace srsgnb;
@@ -29,7 +30,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
   // Reject request without served cells
   if (not msg.request->gnb_du_served_cells_list_present) {
     cfg.logger.error("Not handling F1 setup without served cells");
-    // TODO: send reject
+    send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
     return;
   }
 
@@ -51,7 +52,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
     if (not cell_item.gnb_du_sys_info_present) {
       cfg.logger.error("Not handling served cells without system information");
-      // TODO: send reject
+      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
       return;
     }
 
@@ -68,6 +69,8 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
     du_ctxt.cell_db.emplace(cell_index, std::move(du_cell));
   }
 
+  send_f1_setup_response(du_ctxt);
+
   // add DU
   du_mng.add_du(du_ctxt);
 }
@@ -75,6 +78,23 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg)
 {
   // TODO: add handling and start procedure if needed
+}
+
+/// Sender for F1AP messages
+void cu_cp_manager_impl::send_f1_setup_response(const du_context& du_ctxt)
+{
+  f1_setup_response_message response;
+  response.success = true;
+  fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, du_ctxt.cell_db);
+  cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
+}
+
+void cu_cp_manager_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
+{
+  f1_setup_response_message response;
+  response.success = false;
+  response.failure->cause->set(cause);
+  cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
 }
 
 size_t cu_cp_manager_impl::get_nof_dus() const

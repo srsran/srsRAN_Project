@@ -36,6 +36,10 @@ public:
   size_t get_nof_ues() const override;
 
 private:
+  // F1AP senders
+  void send_f1_setup_response(const du_context& du_ctxt);
+  void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
+
   // DU manager configuration that will be visible to all running procedures
   cu_cp_manager_config_t cfg;
 

@@ -32,6 +32,7 @@ void test_f1_setup()
   cu_cp cu_cp_obj(cfg);
   cu_cp_obj.start();
 
+  // Handling of F1SetupRequest
   {
     asn1::f1ap::f1_ap_pdu_c pdu;
 
@@ -94,6 +95,8 @@ void test_f1_setup()
     // check that DU has been added
     TESTASSERT_EQ(1, cu_cp_obj.get_nof_dus());
   }
+
+  // TODO: Check contents of F1SetupResponse
 
   return;
 }
