@@ -14,7 +14,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/rlc/rlc_oran.h"
+#include "srsgnb/rlc/rlc_config_messages.h"
 
 namespace srsgnb {
 
