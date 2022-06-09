@@ -53,7 +53,7 @@ public:
 };
 
 /// This interface represents the data-plane exit point of the receiving side of a RLC entity.
-/// The lower layers will use this interface to get request a PDU from the RLC, or to
+/// The lower layers will use this interface to pull a PDU from the RLC, or to
 /// query the current buffer state of the RLC bearer.
 class rlc_tx_pdu_transmitter
 {
