@@ -32,7 +32,8 @@ public:
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
   void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) override;
 
-  size_t nof_ues() override;
+  size_t get_nof_dus() const override;
+  size_t get_nof_ues() const override;
 
 private:
   // DU manager configuration that will be visible to all running procedures
@@ -42,8 +43,8 @@ private:
   cu_cp_manager_context ctx;
 
   // Components
-  ue_manager ue_mng;
   du_manager du_mng;
+  ue_manager ue_mng;
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;

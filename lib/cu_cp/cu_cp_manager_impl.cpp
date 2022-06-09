@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 
 cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
-  cfg(cfg_), ue_mng(cfg), du_mng(cfg), main_ctrl_loop(128)
+  cfg(cfg_), du_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
 {
   // nothing to start straigt away on the CU
   ctx = {}; // make it compile
@@ -44,6 +44,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
   for (const auto& served_cell : msg.request->gnb_du_served_cells_list.value) {
     const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
     du_cell_context du_cell;
+    du_cell.cell_index = MIN_DU_CELL_INDEX; // TODO: get unique next idx
     du_cell.pci = cell_item.served_cell_info.nrpci;
     // TODO: implement converter for NR-CGI type
     // du_cell.cgi = cell_item.served_cell_info.nrcgi;
@@ -62,10 +63,13 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
     // TODO: add unpacking
 
-    // TODO: add cell to DU context
+    // add cell to DU context
+    du_cell_index_t cell_index = du_cell.cell_index;
+    du_ctxt.cell_db.emplace(cell_index, std::move(du_cell));
   }
 
-  // TODO: add DU to DB
+  // add DU
+  du_mng.add_du(du_ctxt);
 }
 
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg)
@@ -73,7 +77,13 @@ void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_tra
   // TODO: add handling and start procedure if needed
 }
 
-size_t cu_cp_manager_impl::nof_ues()
+size_t cu_cp_manager_impl::get_nof_dus() const
+{
+  // TODO: this probably needs to be protected. It's hard to say when this is needed.
+  return du_mng.get_nof_dus();
+}
+
+size_t cu_cp_manager_impl::get_nof_ues() const
 {
   // TODO: This is temporary code.
   static std::mutex              mutex;

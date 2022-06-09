@@ -9,6 +9,7 @@
 add_subdirectory(adt)
 add_subdirectory(support)
 add_subdirectory(asn1)
+add_subdirectory(cu_cp)
 add_subdirectory(du_high)
 add_subdirectory(du_manager)
 add_subdirectory(f1_interface)

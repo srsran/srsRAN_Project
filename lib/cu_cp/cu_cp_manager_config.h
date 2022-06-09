@@ -12,11 +12,11 @@
 #define SRSGNB_CU_CP_MANAGER_CONFIG_H
 
 #include "srsgnb/support/executors/task_executor.h"
-
+#include "srsgnb/support/timers.h"
 namespace srsgnb {
-
 struct cu_cp_manager_config_t {
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP-MNG");
+  timer_manager*        timers;
   task_executor*        cu_cp_mng_exec;
 };
 

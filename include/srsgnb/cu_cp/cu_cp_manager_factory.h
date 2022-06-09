@@ -8,21 +8,24 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_CONFIGURATION_H
-#define SRSGNB_CU_CP_CONFIGURATION_H
+#ifndef SRSGNB_CU_CP_MANAGER_FACTORY_H
+#define SRSGNB_CU_CP_MANAGER_FACTORY_H
 
+#include "cu_cp_manager.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
+
 #include "srsgnb/support/executors/task_executor.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
+
 namespace srs_cu_cp {
 
-/// Configuration passed to CU CP.
-struct cu_cp_configuration {
-  task_executor*       cu_executor = nullptr;
-};
+/// Creates an instance of a CU-CP manager.
+std::unique_ptr<cu_cp_manager_interface> create_cu_cp_manager(timer_manager& timers, task_executor& cu_cp_mng_exec);
 
 } // namespace srs_cu_cp
+
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_CONFIGURATION_H
+#endif // SRSGNB_CU_CP_MANAGER_FACTORY_H

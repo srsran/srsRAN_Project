@@ -30,6 +30,7 @@ public:
   du_context* add_du(du_context du) override;
   void        remove_du(du_index_t du_index) override;
   du_context* find_du(du_index_t de_index) override;
+  size_t      get_nof_dus() const override;
 
 private:
   cu_cp_manager_config_t& cfg;

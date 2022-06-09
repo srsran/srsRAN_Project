@@ -46,9 +46,10 @@ struct du_sys_info {
 };
 
 struct du_cell_context {
-  nr_cell_global_identity cgi;      /// global cell ID
-  uint16_t                pci;      /// Physical cell ID
-  du_sys_info             sys_info; /// System information provided by DU
+  du_cell_index_t         cell_index; /// CU internal cell ID
+  nr_cell_global_identity cgi;        /// global cell ID
+  uint16_t                pci;        /// Physical cell ID
+  du_sys_info             sys_info;   /// System information provided by DU
 };
 
 struct du_context {

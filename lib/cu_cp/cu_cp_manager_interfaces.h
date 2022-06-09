@@ -34,6 +34,7 @@ public:
   virtual du_context* add_du(du_context du)          = 0;
   virtual void        remove_du(du_index_t du_index) = 0;
   virtual du_context* find_du(du_index_t du_index)   = 0;
+  virtual size_t      get_nof_dus() const            = 0;
 };
 
 } // namespace srs_cu_cp

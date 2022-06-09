@@ -61,3 +61,8 @@ void du_manager::remove_du(du_index_t du_index)
     CORO_RETURN();
   });
 }
+
+size_t du_manager::get_nof_dus() const
+{
+  return du_db.size();
+}

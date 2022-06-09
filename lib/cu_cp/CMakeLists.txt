@@ -6,5 +6,14 @@
 # the distribution.
 #
 
-add_library(srsgnb_cu_cp cu_cp.cpp cu_cp_manager_impl.cpp ue_manager.cpp du_manager.cpp)
-target_link_libraries(srsgnb_cu_cp srslog srsgnb_support srsgnb_f1)
+set(SOURCES
+      cu_cp.cpp      
+      cu_cp_manager_impl.cpp
+      cu_cp_manager_factory.cpp
+      du_manager.cpp
+      ue_manager.cpp
+      )
+
+add_library(srsgnb_cu_cp STATIC ${SOURCES})
+
+target_link_libraries(srsgnb_cu_cp srslog srsgnb_support srsgnb_f1 rrc_nr_asn1)

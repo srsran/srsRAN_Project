@@ -15,6 +15,7 @@
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
 #include "srsgnb/support/executors/task_worker.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
@@ -31,10 +32,15 @@ public:
 
   f1c_message_handler& get_f1c_message_handler();
 
+  // CU-CP statistics
+  size_t get_nof_dus();
+
 private:
+  timer_manager       timers;
   cu_cp_configuration cfg;
 
-  std::unique_ptr<f1_interface> f1ap;
+  std::unique_ptr<f1_interface>            f1ap;
+  std::unique_ptr<cu_cp_manager_interface> manager;
 
   cu_cp_manager_f1ap_event_indicator f1ap_ev_notifier;
 };

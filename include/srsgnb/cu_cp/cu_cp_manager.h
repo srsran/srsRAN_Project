@@ -44,7 +44,8 @@ class cu_cp_manager_interface_query
 {
 public:
   virtual ~cu_cp_manager_interface_query() = default;
-  virtual size_t nof_ues()                 = 0;
+  virtual size_t get_nof_dus() const       = 0;
+  virtual size_t get_nof_ues() const       = 0;
 };
 
 /// Combined interface for all F1C handlers
@@ -55,7 +56,6 @@ public:
 };
 
 class cu_cp_manager_interface : public cu_cp_manager_interface_query, public cu_cp_manager_f1c_interface
-
 {
 public:
   virtual ~cu_cp_manager_interface() = default;

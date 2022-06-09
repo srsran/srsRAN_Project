@@ -21,13 +21,14 @@ namespace srs_cu_cp {
 class cu_cp_manager_f1ap_event_indicator : public f1ap_message_notifier
 {
 public:
+  void connect(cu_cp_manager_f1c_interface& cu_cp_mng_) { cu_cp_f1c_handler = &cu_cp_mng_; }
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    f1ap_setup_handler->handle_f1_setup_request(msg);
+    cu_cp_f1c_handler->handle_f1_setup_request(msg);
   }
 
 private:
-  cu_cp_manager_f1ap_setup_handler* f1ap_setup_handler;
+  cu_cp_manager_f1c_interface* cu_cp_f1c_handler;
 };
 
 } // namespace srs_cu_cp
