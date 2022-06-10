@@ -13,8 +13,8 @@
 
 #include "lower_phy_state_fsm.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
-#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
+#include "srsgnb/phy/lower/lower_phy_control.h"
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
@@ -70,7 +70,7 @@ public:
 };
 
 /// Describes a generic lower physical layer.
-class lower_phy_impl : public lower_phy
+class lower_phy_impl : public lower_phy_control
 {
 private:
   /// Logger.

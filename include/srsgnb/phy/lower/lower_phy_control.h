@@ -1,5 +1,5 @@
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_H
+#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONTROL_H
+#define SRSGNB_PHY_LOWER_LOWER_PHY_CONTROL_H
 
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
@@ -8,7 +8,7 @@
 
 namespace srsgnb {
 /// Describes the lower physical layer control interface.
-class lower_phy : public lower_phy_input_gateway
+class lower_phy_control : public lower_phy_input_gateway
 {
 public:
   /// \brief Starts the lower physical layer operation.
@@ -21,4 +21,4 @@ public:
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_H
+#endif // SRSGNB_PHY_LOWER_LOWER_PHY_CONTROL_H

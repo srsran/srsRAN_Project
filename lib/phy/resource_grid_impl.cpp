@@ -27,16 +27,20 @@ resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, 
 
 void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
 {
-  assert(coordinates.size() == symbols.size());
+  srsran_assert(coordinates.size() == symbols.size(),
+                "The number of coordinates {} is not equal to the number of symbols {}.",
+                coordinates.size(),
+                symbols.size());
 
   // Select buffer from the port index
-  assert(port < nof_ports);
+  srsran_assert(port < nof_ports, "The port index {} is out-of-range {}.", port, nof_ports - 1);
   span<cf_t> buffer = port_buffers[port];
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
-    assert(coordinate.symbol < nof_symb);
-    assert(coordinate.subcarrier < nof_subc);
+    srsran_assert(coordinate.symbol < nof_symb, "Symbol index {} is out-of-range {}.", coordinate.symbol, nof_symb);
+    srsran_assert(
+        coordinate.subcarrier < nof_subc, "Subcarrier index {} is out-of-range {}.", coordinate.subcarrier, nof_subc);
     buffer[coordinate.symbol * nof_subc + coordinate.subcarrier] = symbols[count++];
   }
 }

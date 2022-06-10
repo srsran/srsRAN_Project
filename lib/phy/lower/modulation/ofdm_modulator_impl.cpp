@@ -27,9 +27,9 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
   center_freq_hz(ofdm_config.center_freq_hz),
   dft(std::move(common_config.dft))
 {
-  srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
+  srsran_always_assert(std::isnormal(scale), "Invalid scaling factor {}", scale);
   srsran_always_assert(
-      dft_size > rg_size, "The DFT size (%d) must be greater than the resource grid size (%d)", dft_size, rg_size);
+      dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({})", dft_size, rg_size);
 
   // Fill DFT input with zeros.
   srsvec::zero(dft->get_input());

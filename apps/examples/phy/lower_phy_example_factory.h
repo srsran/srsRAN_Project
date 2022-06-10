@@ -8,18 +8,18 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_SAMPLE_FACTORY_H
-#define SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_SAMPLE_FACTORY_H
+#ifndef SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H
+#define SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H
 
-#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
+#include "srsgnb/phy/lower/lower_phy_control.h"
 #include <memory>
 
 namespace srsgnb {
 
 /// Creates a generic lower PHY.
-std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config);
+std::unique_ptr<lower_phy_control> create_lower_phy(lower_phy_configuration& config);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_SAMPLE_FACTORY_H
+#endif // SRSGNB_APPS_EXAMPLES_RADIO_SSB_FACTORIES_H

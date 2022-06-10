@@ -13,6 +13,8 @@
 
 namespace srsgnb {
 
+class slot_point;
+
 /// Describes the context of the current timing boundary.
 struct upper_phy_timing_context {
   /// Indicates the current slot.

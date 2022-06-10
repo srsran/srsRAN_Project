@@ -27,7 +27,7 @@ public:
 
   /// Get a resource grid for the given context
   /// \param [in] context Provides the given context
-  virtual resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) = 0;
+  virtual resource_grid& get_resource_grid(const resource_grid_context& context) = 0;
 };
 
 /// Describes a resource grid pool configuration

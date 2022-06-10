@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_SAMPLE_H
-#define SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_SAMPLE_H
+#ifndef SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_EXAMPLE_H
+#define SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_EXAMPLE_H
 
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -17,14 +17,14 @@
 
 namespace srsgnb {
 
-class rx_symbol_handler_sample : public upper_phy_rx_symbol_handler
+class rx_symbol_handler_example : public upper_phy_rx_symbol_handler
 {
 private:
   srslog::basic_logger& logger;
   std::mutex            mutex;
 
 public:
-  rx_symbol_handler_sample(std::string log_level) : logger(srslog::fetch_basic_logger("RxSyHan"))
+  rx_symbol_handler_example(std::string log_level) : logger(srslog::fetch_basic_logger("RxSyHan"))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
