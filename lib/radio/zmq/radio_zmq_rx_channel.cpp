@@ -44,7 +44,7 @@ radio_zmq_rx_channel::radio_zmq_rx_channel(void*                       zmq_conte
   }
 
   // Bind socket.
-  logger.debug("Connecting to address {}.", config.address);
+  logger.info("Connecting to address {}.", config.address);
   if (zmq_connect(sock, config.address.c_str()) == -1) {
     logger.error("Failed to bind transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;

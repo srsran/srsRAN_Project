@@ -45,7 +45,7 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
   }
 
   // Bind socket.
-  logger.debug("Binding to address {}.", config.address);
+  logger.info("Binding to address {}.", config.address);
   bool     bind_success     = false;
   unsigned bind_trial_count = 0;
   while (!bind_success && bind_trial_count != BIND_MAX_TRIALS) {
