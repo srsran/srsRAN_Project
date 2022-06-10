@@ -49,8 +49,9 @@ public:
 class f1_ue_context_manager_dummy : public f1ap_ue_context_manager
 {
 public:
-  optional<f1ap_ue_create_request>                  last_ue_create{};
-  wait_manual_event_tester<f1ap_ue_create_response> wait_ue_create;
+  optional<f1ap_ue_create_request>                                        last_ue_create{};
+  wait_manual_event_tester<f1ap_ue_create_response>                       wait_ue_create;
+  wait_manual_event_tester<f1ap_ue_context_modification_response_message> wait_ue_mod;
 
   /// Initiates creation of UE context in F1.
   async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override
@@ -58,6 +59,18 @@ public:
     last_ue_create = msg;
     return wait_ue_create.launch();
   }
+
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
+
+  async_task<f1ap_ue_context_modification_response_message>
+  handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) override
+  {
+    return wait_ue_mod.launch();
+  }
+
+  void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
+
+  void handle_notify(const f1ap_notify_message& msg) override {}
 };
 
 enum class test_outcome { success, ue_create_failure };

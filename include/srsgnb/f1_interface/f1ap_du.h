@@ -86,6 +86,28 @@ public:
   virtual async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) = 0;
 };
 
+struct f1ap_ue_context_release_request_message {
+  asn1::f1ap::ue_context_release_request_s msg;
+};
+
+struct f1ap_ue_context_modification_required_message {
+  asn1::f1ap::ue_context_mod_required_s msg;
+};
+
+struct f1ap_ue_context_modification_response_message {
+  asn1::f1ap::ue_context_mod_confirm_s confirm;
+  asn1::f1ap::ue_context_mod_refuse_s  refuse;
+  bool                                 success;
+};
+
+struct f1ap_ue_inactivity_notification_message {
+  asn1::f1ap::ue_inactivity_notif_s msg;
+};
+
+struct f1ap_notify_message {
+  asn1::f1ap::notify_s msg;
+};
+
 /// Handle F1AP UE context management procedures as defined in TS 38.473 section 8.3.
 class f1ap_ue_context_manager
 {
@@ -94,6 +116,25 @@ public:
 
   /// Initiates creation of UE context in F1.
   virtual async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) = 0;
+
+  /// \brief Initiates UE context release request procedure as per TS 38.473 section 8.3.2.
+  /// \param[in] request The UE Context Release Request message to transmit.
+  virtual void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) = 0;
+
+  /// \brief Initiates the UE Context Modification Required procedure as per TS 38.473 section 8.3.5.
+  /// \param[in] msg The UE Context Modification Required message to transmit.
+  /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in
+  /// case of a successful outcome, 'false' otherwise.
+  virtual async_task<f1ap_ue_context_modification_response_message>
+  handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) = 0;
+
+  /// \brief Indicate an UE activity event as per TS 38.473 section 8.3.6
+  /// \param[in] msg The UE Inactivity Nofication message to transmit.
+  virtual void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) = 0;
+
+  /// \brief Initiate the Notify procedure as per TS 38.473 section 8.3.7
+  /// \param[in] msg The Notify message to transmit.
+  virtual void handle_notify(const f1ap_notify_message& msg) = 0;
 };
 
 /// Combined entry point for F1C/U handling.

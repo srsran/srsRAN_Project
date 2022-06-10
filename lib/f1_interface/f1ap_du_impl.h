@@ -27,9 +27,13 @@ public:
   f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_handler);
   ~f1ap_du_impl();
 
+  // f1ap connection manager functions
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
 
-  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
+  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
+                                                                const asn1::f1ap::f1_setup_fail_s& failure);
+
+  // f1ap rrc message transfer procedure functions
 
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
 
@@ -39,15 +43,27 @@ public:
 
   void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override {}
 
+  // f1c message handler functions
+
   void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
   void handle_connection_loss() override {}
 
-  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                const asn1::f1ap::f1_setup_fail_s& failure);
+  // f1ap ue context manager functions
+
+  async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
+
+  void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
+
+  async_task<f1ap_ue_context_modification_response_message>
+  handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) override;
+
+  void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
+
+  void handle_notify(const f1ap_notify_message& msg) override {}
 
 private:
-  class f1ap_du_event_manager;
+  class f1ap_event_manager;
 
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
@@ -63,7 +79,7 @@ private:
 
   f1ap_du_context ctxt;
 
-  std::unique_ptr<f1ap_du_event_manager> events;
+  std::unique_ptr<f1ap_event_manager> events;
 
   unsigned f1_setup_retry_no = 0;
 };

@@ -17,19 +17,24 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-class srsgnb::srs_du::f1ap_du_impl::f1ap_du_event_manager
+class srsgnb::srs_du::f1ap_du_impl::f1ap_event_manager
 {
 public:
   /// F1 Setup Procedure Outcome.
   using f1ap_setup_outcome_t = expected<const f1_setup_resp_s*, const f1_setup_fail_s*>;
   event_signal<f1ap_setup_outcome_t> f1ap_setup_response;
+
+  /// F1 UE Context Modification Outcome
+  using f1ap_ue_context_modification_outcome_t =
+      expected<const asn1::f1ap::ue_context_mod_confirm_s*, const asn1::f1ap::ue_context_mod_refuse_s*>;
+  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response;
 };
 
 f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_handler_) :
   logger(srslog::fetch_basic_logger("F1AP")),
   timers(timers_),
   f1c(f1c_pdu_handler_),
-  events(std::make_unique<f1ap_du_event_manager>())
+  events(std::make_unique<f1ap_event_manager>())
 {
   f1c_setup_timer = timers.create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
@@ -44,7 +49,7 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
 {
   // TODO send msg
 
-  f1ap_du_event_manager::f1ap_setup_outcome_t f1_resp;
+  f1ap_event_manager::f1ap_setup_outcome_t f1_resp;
 
   // TODO: add procedure implementation
   return launch_async([this, f1_resp, res = f1_setup_response_message{}, request](
@@ -138,8 +143,34 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(cons
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
 {
   logger.info("Received F1AP DL RRC msg.");
-
   // TODO: handle dl rrc message
+}
+
+async_task<f1ap_ue_context_modification_response_message>
+f1ap_du_impl::handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg)
+{
+  // TODO: add procedure implementation
+
+  f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_resp;
+
+  return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_response_message{}, msg](
+                          coro_context<async_task<f1ap_ue_context_modification_response_message> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
+
+    if (ue_ctxt_mod_resp.has_value()) {
+      logger.info("Received F1AP PDU with successful outcome.");
+      res.confirm = *ue_ctxt_mod_resp.value();
+      res.success = true;
+    } else {
+      logger.info("Received F1AP PDU with unsuccessful outcome.");
+      res.refuse  = *ue_ctxt_mod_resp.error();
+      res.success = false;
+    }
+
+    CORO_RETURN(res);
+  });
 }
 
 void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
