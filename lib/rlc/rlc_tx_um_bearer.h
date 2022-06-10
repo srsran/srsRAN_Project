@@ -18,8 +18,8 @@ namespace srsgnb {
 class rlc_tx_um_bearer : public rlc_tx_common_bearer
 {
 public:
-  rlc_tx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_plane& upper_cp) :
-    rlc_tx_common_bearer(du_index, lcid, upper_cp)
+  rlc_tx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
+    rlc_tx_common_bearer(du_index, lcid, upper_cn)
   {}
 
   /*

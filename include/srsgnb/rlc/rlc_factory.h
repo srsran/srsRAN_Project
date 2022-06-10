@@ -18,10 +18,10 @@
 namespace srsgnb {
 
 /// Creates an instance of a RLC bearer
-std::unique_ptr<rlc_common_bearer> create_rlc_bearer(du_ue_index_t                     ue_index,
-                                                     lcid_t                            lcid,
-                                                     rlc_rx_upper_layer_data_plane&    upper_dp,
-                                                     rlc_tx_upper_layer_control_plane& upper_cp);
+std::unique_ptr<rlc_common_bearer> create_rlc_bearer(du_ue_index_t                        ue_index,
+                                                     lcid_t                               lcid,
+                                                     rlc_rx_upper_layer_data_notifier&    upper_dn,
+                                                     rlc_tx_upper_layer_control_notifier& upper_cn);
 } // namespace srsgnb
 
 #endif // SRSGNB_RLC_MANAGER_FACTORY_H

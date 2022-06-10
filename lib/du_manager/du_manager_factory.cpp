@@ -22,7 +22,7 @@ srsgnb::srs_du::create_du_manager(timer_manager&                               t
                                   f1ap_connection_manager&                     f1ap_conn_mng,
                                   f1ap_ue_context_manager&                     f1ap_ue_ctx_mng,
                                   f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc,
-                                  rlc_rx_upper_layer_data_plane&               rlc_rx_upper_dp,
+                                  rlc_rx_upper_layer_data_notifier&            rlc_rx_upper_dn,
                                   task_executor&                               du_mng_exec,
                                   const std::vector<du_cell_config>&           cells)
 {
@@ -33,7 +33,7 @@ srsgnb::srs_du::create_du_manager(timer_manager&                               t
   cfg.f1ap_conn_mng      = &f1ap_conn_mng;
   cfg.f1ap_ue_ctx_mng    = &f1ap_ue_ctx_mng;
   cfg.f1ap_rrc           = &f1ap_rrc;
-  cfg.rlc_ul_upper_layer = &rlc_rx_upper_dp;
+  cfg.rlc_ul_upper_layer = &rlc_rx_upper_dn;
   cfg.du_mng_exec        = &du_mng_exec;
   cfg.du_cells           = cells;
   auto du_manager        = std::make_unique<du_manager_impl>(std::move(cfg));

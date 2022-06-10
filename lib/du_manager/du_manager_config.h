@@ -26,7 +26,7 @@ namespace srs_du {
 
 struct du_manager_config_t {
   timer_manager*                               timers;
-  rlc_rx_upper_layer_data_plane*               rlc_ul_upper_layer;
+  rlc_rx_upper_layer_data_notifier*            rlc_ul_upper_layer;
   mac_ue_configurator*                         mac_ue_mng;
   mac_cell_manager*                            mac_cell_mng;
   f1ap_connection_manager*                     f1ap_conn_mng;

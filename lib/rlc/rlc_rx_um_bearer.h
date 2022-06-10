@@ -18,11 +18,11 @@ namespace srsgnb {
 class rlc_rx_um_bearer : public rlc_rx_common_bearer
 {
 public:
-  rlc_rx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_plane& upper_dp) :
-    rlc_rx_common_bearer(du_index, lcid, upper_dp)
+  rlc_rx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
+    rlc_rx_common_bearer(du_index, lcid, upper_dn)
   {}
 
-  void handle_pdu(byte_buffer pdu) override { upper_dp.pass_sdu(std::move(pdu)); }
+  void handle_pdu(byte_buffer pdu) override { upper_dn.pass_sdu(std::move(pdu)); }
 };
 
 } // namespace srsgnb

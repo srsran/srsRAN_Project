@@ -48,7 +48,7 @@ private:
   du_manager_ccch_handler* du_mng;
 };
 
-class rlc_ul_sdu_adapter : public rlc_rx_upper_layer_data_plane
+class rlc_ul_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 {
 public:
   void connect(f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) { f1ap_rrc = &f1ap_rrc_; }
