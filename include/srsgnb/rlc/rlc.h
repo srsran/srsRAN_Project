@@ -60,8 +60,8 @@ class rlc_tx_pdu_transmitter
 public:
   virtual ~rlc_tx_pdu_transmitter() = default;
 
-  virtual bool get_pdu(byte_buffer& pdu, uint32_t nof_bytes) = 0;
-  virtual void get_buffer_state(uint32_t& bytes)             = 0;
+  virtual bool pull_pdu(byte_buffer& pdu, uint32_t nof_bytes) = 0;
+  virtual void get_buffer_state(uint32_t& bytes)              = 0;
 };
 
 /// This interface represents the control-plane upper layer that the
