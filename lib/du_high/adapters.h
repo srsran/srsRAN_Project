@@ -53,14 +53,14 @@ class rlc_ul_sdu_adapter : public rlc_rx_upper_layer_data_notifier
 public:
   void connect(f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) { f1ap_rrc = &f1ap_rrc_; }
 
-  void pass_sdu(byte_buffer pdu) override
+  void on_new_sdu(byte_buffer pdu) override
   {
     f1_rx_pdu msg{};
     msg.pdu = std::move(pdu);
     f1ap_rrc->handle_pdu(std::move(msg));
   }
 
-  void notify_ack_received() override
+  void on_ack_received() override
   {
     // TODO
   }

@@ -37,8 +37,8 @@ public:
   virtual ~rlc_rx_upper_layer_data_notifier() = default;
 
   /// This method is called to pass the SDU to the upper layers
-  virtual void pass_sdu(byte_buffer pdu) = 0;
-  virtual void notify_ack_received()     = 0;
+  virtual void on_new_sdu(byte_buffer pdu) = 0;
+  virtual void on_ack_received()           = 0;
 };
 
 /// This interface represents the data-plane entry point of the receiving side of a RLC entity.
@@ -72,8 +72,8 @@ class rlc_tx_upper_layer_control_notifier
 public:
   virtual ~rlc_tx_upper_layer_control_notifier() = default;
 
-  virtual void notify_protocol_failure() = 0;
-  virtual void notify_max_retx()         = 0;
+  virtual void on_protocol_failure() = 0;
+  virtual void on_max_retx()         = 0;
 };
 
 } // namespace srsgnb

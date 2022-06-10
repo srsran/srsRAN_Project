@@ -22,7 +22,7 @@ public:
     rlc_rx_common_bearer(du_index, lcid, upper_dn)
   {}
 
-  void handle_pdu(byte_buffer pdu) override { upper_dn.pass_sdu(std::move(pdu)); }
+  void handle_pdu(byte_buffer buf) override { upper_dn.on_new_sdu(std::move(buf)); }
 };
 
 } // namespace srsgnb
