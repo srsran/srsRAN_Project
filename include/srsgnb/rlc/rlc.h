@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-/// This interface represents the data-plane entry point of the receiving side of a RLC entity.
+/// This interface represents the data entry point of the receiving side of a RLC entity.
 /// The lower-layers will use this class to pass PDUs into the RLC.
 class rlc_rx_pdu_handler
 {
@@ -31,6 +31,8 @@ public:
 
 /// This interface represents the data exit point of the receiving side of a RLC entity.
 /// The RLC will use this class to pass SDUs to the upper-layers.
+/// For the case of RLC AM we will use this class also to notify the upper-layers.
+/// that an SDU was fully acknowledged.
 class rlc_rx_upper_layer_data_notifier
 {
 public:
@@ -41,7 +43,7 @@ public:
   virtual void on_ack_received()           = 0;
 };
 
-/// This interface represents the data-plane entry point of the receiving side of a RLC entity.
+/// This interface represents the data entry point of the transmitting side of a RLC entity.
 /// The upper-layers will use this call to pass RLC SDUs into the TX entity.
 class rlc_tx_sdu_handler
 {
@@ -52,7 +54,7 @@ public:
   virtual void handle_sdu(byte_buffer pdu) = 0;
 };
 
-/// This interface represents the data-plane exit point of the receiving side of a RLC entity.
+/// This interface represents the data exit point of the transmitting side of a RLC entity.
 /// The lower layers will use this interface to pull a PDU from the RLC, or to
 /// query the current buffer state of the RLC bearer.
 class rlc_tx_pdu_transmitter
