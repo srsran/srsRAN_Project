@@ -15,12 +15,16 @@
 
 namespace srsgnb {
 
-/// Implementation of a CSI-RS processor for test only. It sets a variable to true when the process method is called.
-class csi_rs_processor_fto : public csi_rs_processor
+/// Spy implementation of a CSI-RS processor.
+class csi_rs_processor_spy : public csi_rs_processor
 {
+  bool map_method_called = false;
+
 public:
-  bool process_method_called = false;
-  void map(resource_grid_writer& grid, const config_t& config) override { process_method_called = true; }
+  void map(resource_grid_writer& grid, const config_t& config) override { map_method_called = true; }
+
+  /// Returns true if the map method has been called, false otherwise.
+  bool is_map_called() const { return map_method_called; }
 };
 
 } // namespace srsgnb

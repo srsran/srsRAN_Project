@@ -15,17 +15,20 @@
 
 namespace srsgnb {
 
-/// Implementation of a PDSCH processor for test only. It sets a variable to true when the process method is called.
-class pdsch_processor_fto : public pdsch_processor
+/// Spy implementation of a PDSCH processor.
+class pdsch_processor_spy : public pdsch_processor
 {
-public:
   bool process_method_called = false;
+public:
   void process(resource_grid_writer&                                        grid,
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override
   {
     process_method_called = true;
   }
+
+  /// Returns true if the process method has been called, false otherwise.
+  bool is_process_called() const {return process_method_called;}
 };
 
 } // namespace srsgnb

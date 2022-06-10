@@ -20,12 +20,17 @@ namespace srsgnb {
 
 struct resource_grid_context;
 
-/// Downlink processor class that groups and process all the downlink channels within a slot.
+/// \brief Downlink processor class that groups and process all the downlink channels within a slot.
 ///
-/// \note: The downlink processor must be configured before starting to process downlink PDUs by calling
-/// configure_resource_grid() method. After all the PDUs are processed by the process_* methods, tx_resource_grid should
-/// be called to transmit the resource grid. If this order is not respected, using the interface will result in
-/// undefined behaviour.
+/// The downlink processor process all the given downlink PDUs and sends the configured resource grid through a gateway
+/// when every PDU has finished processing and the finish_processing_pdus() has been called. Prior to start processing
+/// PDUs, configure_resource_grid() must be called in order to configure the resource grid and the context for the
+/// downlink processor.
+///
+/// \note
+/// Undefined behavior can be caused by:
+/// - Calling any process method prior to configure_resource_grid().
+/// - Calling finish_processing_pdus() without calling configure_resource_grid() in a slot context.
 class downlink_processor
 {
 public:
@@ -50,19 +55,25 @@ public:
 
   /// \brief Process the given CSI-RS configuration.
   ///
-  /// \param[in] config CSI-RS configuration to process.
-  virtual void process_csi_rs(const csi_rs_processor::config_t& config) = 0;
+  /// \param[in] config NZP-CSI-RS configuration to process.
+  virtual void process_nzp_csi_rs(const csi_rs_processor::config_t& config) = 0;
 
   /// \brief Configures the resource grid of the downlink_processor.
   ///
   /// \param[in] context Resource grid context that contains the information of the processing slot.
   /// \param[in] grid Resource grid that will contain the data of the processed downlink channels.
-  /// \note Calling this method is mandatory before processing any PDU.
+  ///
+  /// \note
+  /// - Calling this method is mandatory before processing any PDU.
+  /// - The resource grid number of ports and bandwidth must be sufficient to accommodate all the PDUs.
   // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
   virtual void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) = 0;
 
-  /// \brief Stops accepting PDUs. When this method is called, the interface will not expect to process more PDUs, so
-  /// once it finishes to process all the previous accepted PDUs, the resource grid will be sent.
+  /// \brief Stops accepting PDUs.
+  ///
+  /// When this method is called, the interface will not expect to process more PDUs, so once it finishes to process all
+  /// the enqueued PDUs, the resource grid will be sent to the lower bound gateway using the \c context from
+  /// configure_resource_grid() to provide the processing context of the resource grid in the lower physical layer.
   // :TODO: move this method to other interface to avoid controlling the order of the methods execution.
   virtual void finish_processing_pdus() = 0;
 };
@@ -74,7 +85,11 @@ public:
   virtual ~downlink_processor_pool() = default;
 
   /// \brief Returns a downlink processor with the given slot and sector.
-  virtual downlink_processor& get_processor(const slot_point& slot, unsigned sector) = 0;
+  ///
+  /// \param slot Slot point.
+  /// \param sector_id Sector ID.
+  /// \return A downlink processor.
+  virtual downlink_processor& get_processor(const slot_point& slot, unsigned sector_id) = 0;
 };
 
 } // namespace srsgnb

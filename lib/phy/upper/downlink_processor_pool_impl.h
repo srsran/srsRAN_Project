@@ -59,7 +59,7 @@ class downlink_processor_pool_impl : public downlink_processor_pool
     processor_pool& operator[](unsigned numerology)
     {
       auto iter = numerologies.find(numerology);
-      srsran_assert(iter != numerologies.end(), "Invalid numerology ({}) in sector ({})", numerology, sector_id);
+      srsran_assert(iter != numerologies.end(), "Invalid numerology ({}) in sector ({}).", numerology, sector_id);
 
       return iter->second;
     }
@@ -78,7 +78,7 @@ public:
   explicit downlink_processor_pool_impl(downlink_processor_pool_config_impl dl_processors);
 
   // See interface for documentation.
-  downlink_processor& get_processor(const slot_point& slot, unsigned sector) override;
+  downlink_processor& get_processor(const slot_point& slot, unsigned sector_id) override;
 
 private:
   std::vector<sector> processors;

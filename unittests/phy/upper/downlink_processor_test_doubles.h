@@ -15,14 +15,16 @@
 
 namespace srsgnb {
 
-/// Implementation of a downlink processor for test only (FTO). It behaves as a dummy implementation but stores the
-/// given id in construction.
-class downlink_processor_fto : public downlink_processor
+/// Spy implementation of a downlink processor
+class downlink_processor_spy : public downlink_processor
 {
-public:
   unsigned id;
 
-  explicit downlink_processor_fto(unsigned id) : id(id) {}
+public:
+  explicit downlink_processor_spy(unsigned id) : id(id) {}
+
+  /// Returns the identifier of downlink processor.
+  unsigned get_id() const { return id; }
 
   void process_pdcch(pdcch_processor::pdu_t& pdu) override {}
 
@@ -33,7 +35,7 @@ public:
 
   void process_ssb(const ssb_processor::pdu_t& pdu) override {}
 
-  void process_csi_rs(const csi_rs_processor::config_t& config) override {}
+  void process_nzp_csi_rs(const csi_rs_processor::config_t& config) override {}
 
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
 

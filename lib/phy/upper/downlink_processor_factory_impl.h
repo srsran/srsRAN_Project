@@ -15,21 +15,21 @@
 
 namespace srsgnb {
 
-class upper_phy_rg_gateway;
 class pdcch_processor_factory;
 class pdsch_processor_factory;
 class ssb_processor_factory;
 class task_executor;
+class upper_phy_rg_gateway;
 
-/// Factory that allows to create downlink processors.
-class downlink_processor_factory_impl : public downlink_processor_factory
+/// \brief Factory to create single executor downlink processors.
+class downlink_processor_single_executor_factory : public downlink_processor_factory
 {
 public:
-  downlink_processor_factory_impl(upper_phy_rg_gateway&                    gateway,
-                                  std::shared_ptr<pdcch_processor_factory> pdcch_proc,
-                                  std::shared_ptr<pdsch_processor_factory> pdsch_proc,
-                                  std::shared_ptr<ssb_processor_factory>   ssb_proc,
-                                  task_executor&                           executor) :
+  downlink_processor_single_executor_factory(upper_phy_rg_gateway&                    gateway,
+                                             std::shared_ptr<pdcch_processor_factory> pdcch_proc,
+                                             std::shared_ptr<pdsch_processor_factory> pdsch_proc,
+                                             std::shared_ptr<ssb_processor_factory>   ssb_proc,
+                                             task_executor&                           executor) :
     gateway(gateway), pdcch_proc(pdcch_proc), pdsch_proc(pdsch_proc), ssb_proc(ssb_proc), executor(executor)
   {
   }

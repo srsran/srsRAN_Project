@@ -20,17 +20,20 @@ namespace srsgnb {
 class upper_phy_rg_gateway;
 class task_executor;
 
-/// Implementation of a downlink processor. This implementation process the PDUs and config using one executor, which
+/// \brief Implementation of a downlink processor.
+///
+/// This implementation process the PDUs and config using one executor, which
 /// hides the execution threading model. The implementation ensures that all the PDUs and configs will be processed
-/// before transmitting the resource grid through the gateway, even if tx_resource_grid method is called before
-/// everything is processed.
-/// \note: This implementation follows the same method order that the interface. Not following this order will result in
+/// before transmitting the resource grid through the gateway, even if finish_processing_pdus() method is called before
+/// every PDU is processed.
+/// \note This implementation follows the same method order that the interface. Not following this order will result in
 /// undefined behaviour. As a reminder, the order is the following: first configure the downlink processor by calling
-/// configure_resource_grid(). After it is configured it can start to process PDUs. Finally, when all the PDUs are
-/// processed, send_resource_grid can be called so the grid can be send through the gateway. Note that
-/// send_resource_grid() can be called before the PDUs finished processing, but it cannot be sent until every PDU has
-/// been processed. This is controlled counting the PDUs that are processed and finished processing.
-///  \note: Thread safe class.
+/// configure_resource_grid(). After it is configured it can start to process PDUs. Finally, when no more PDUs need to
+/// be processed, finish_processing_pdus() can be called so the grid can be send through the gateway. Note that
+/// finish_processing_pdus() can be called before the PDUs finished processing, but the resource grid is sent through
+/// the gateway as soon as every enqueued PDU before finish_processing_pdus() is processed . This is controlled counting
+/// the PDUs that are processed and finished processing.
+///  \note Thread safe class.
 class downlink_processor_single_executor_impl : public downlink_processor
 {
 public:
@@ -60,7 +63,7 @@ public:
   void process_ssb(const ssb_processor::pdu_t& pdu) override;
 
   // See interface for documentation.
-  void process_csi_rs(const csi_rs_processor::config_t& config) override;
+  void process_nzp_csi_rs(const csi_rs_processor::config_t& config) override;
 
   // See interface for documentation.
   void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override;

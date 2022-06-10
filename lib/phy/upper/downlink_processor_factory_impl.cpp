@@ -14,7 +14,8 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<downlink_processor> downlink_processor_factory_impl::create(const downlink_processor_config& config)
+std::unique_ptr<downlink_processor>
+downlink_processor_single_executor_factory::create(const downlink_processor_config& config)
 {
   // :TODO: Implement me!!
   (void)gateway;
