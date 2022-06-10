@@ -11,7 +11,6 @@
 #ifndef SRSGNB_RLC_UM_BEARER_H
 #define SRSGNB_RLC_UM_BEARER_H
 
-#include "rlc_common_bearer.h"
 #include "rlc_rx_um_bearer.h"
 #include "rlc_tx_um_bearer.h"
 #include "srsgnb/rlc/rlc.h"

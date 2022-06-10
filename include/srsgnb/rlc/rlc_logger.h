@@ -11,7 +11,6 @@
 #ifndef SRSGNB_RLC_LOGGER_H
 #define SRSGNB_RLC_LOGGER_H
 
-#include "../ran/gnb_format.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/srslog/srslog.h"
 
@@ -62,7 +61,7 @@ private:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel("UE={}, LCID={}: {}", du_index, lcid, to_c_str(buffer));
+    channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
   }
 };
 
