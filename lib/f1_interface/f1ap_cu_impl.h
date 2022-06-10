@@ -25,9 +25,26 @@ public:
   f1ap_cu_impl(f1ap_message_notifier& event_notifier_);
   ~f1ap_cu_impl();
 
+  // f1ap connection manager functions
+
   void handle_f1ap_setup_response(const f1_setup_response_message& msg) override;
 
+  // f1ap rrc message transfer procedure functions
+
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) override {}
+
+  // f1ap ue context manager functions
+
+  async_task<f1ap_ue_context_setup_response_message>
+  handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
+
+  async_task<f1ap_ue_context_release_complete_message>
+  handle_ue_context_release(const f1ap_ue_context_release_command_message& msg) override;
+
+  async_task<f1ap_ue_context_modification_response_message>
+  handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) override;
+
+  // f1c message handler functions
 
   void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
 
@@ -43,6 +60,8 @@ private:
 
   srslog::basic_logger&  logger;
   f1ap_message_notifier& event_notifier;
+
+  std::unique_ptr<f1ap_event_manager> events;
 };
 
 } // namespace srs_cu_cp

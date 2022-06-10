@@ -20,13 +20,25 @@ using namespace srs_cu_cp;
 class srsgnb::srs_cu_cp::f1ap_cu_impl::f1ap_event_manager
 {
 public:
-  /// F1SetupRequest receive.
-  event_signal<asn1::f1ap::f1_setup_request_s> f1ap_setup_request;
+  /// F1 Context Release Complete
+  // FIXME handle static return value (only returns f1ap_ue_context_release_complete)
+  using f1ap_ue_context_release_outcome_t =
+      expected<const ue_context_release_complete_s*, const ue_context_setup_fail_s*>;
+  event_signal<f1ap_ue_context_release_outcome_t> f1ap_ue_context_release_complete;
+
+  /// F1 UE context setup procedure outcome.
+  using f1ap_ue_context_setup_outcome_t = expected<const ue_context_setup_resp_s*, const ue_context_setup_fail_s*>;
+  event_signal<f1ap_ue_context_setup_outcome_t> f1ap_ue_context_setup_response;
+
+  /// F1 UE Context Modification procedure outcome.
+  using f1ap_ue_context_modification_outcome_t = expected<const ue_context_mod_resp_s*, const ue_context_mod_fail_s*>;
+  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response_message;
 };
 
 f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier& event_notifier_) :
   logger(srslog::fetch_basic_logger("F1AP")), event_notifier(event_notifier_)
-{}
+{
+}
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
@@ -54,6 +66,77 @@ void f1ap_cu_impl::handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_tr
   logger.info("Received F1AP UL RRC msg.");
 
   // TODO: handle ul rrc message
+}
+
+async_task<f1ap_ue_context_setup_response_message>
+f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request)
+{
+  f1ap_event_manager::f1ap_ue_context_setup_outcome_t f1_ue_ctx_setup_resp;
+
+  // TODO: send msg
+
+  return launch_async([this, f1_ue_ctx_setup_resp, res = f1ap_ue_context_setup_response_message{}, request](
+                          coro_context<async_task<f1ap_ue_context_setup_response_message> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT_VALUE(f1_ue_ctx_setup_resp, events->f1ap_ue_context_setup_response);
+
+    if (f1_ue_ctx_setup_resp.has_value()) {
+      logger.info("Received F1AP PDU with successful outcome.");
+      res.msg     = *f1_ue_ctx_setup_resp.value();
+      res.success = true;
+    } else {
+      logger.info("Received F1AP PDU with unsuccessful outcome.");
+      res.success = false;
+    }
+
+    CORO_RETURN(res);
+  });
+}
+
+async_task<f1ap_ue_context_release_complete_message>
+f1ap_cu_impl::handle_ue_context_release(const f1ap_ue_context_release_command_message& msg)
+{
+  // TODO: send msg
+
+  f1ap_event_manager::f1ap_ue_context_release_outcome_t f1ap_ue_ctxt_rel_complete;
+
+  return launch_async([this, f1ap_ue_ctxt_rel_complete, res = f1ap_ue_context_release_complete_message{}, msg](
+                          coro_context<async_task<f1ap_ue_context_release_complete_message> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT_VALUE(f1ap_ue_ctxt_rel_complete, events->f1ap_ue_context_release_complete);
+    res.msg = *f1ap_ue_ctxt_rel_complete.value();
+
+    CORO_RETURN(res);
+  });
+}
+
+async_task<f1ap_ue_context_modification_response_message>
+f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request)
+{
+  f1ap_event_manager::f1ap_ue_context_modification_outcome_t f1ap_ue_ctx_mod_resp;
+
+  // TODO: send msg
+
+  return launch_async([this, f1ap_ue_ctx_mod_resp, res = f1ap_ue_context_modification_response_message{}, request](
+                          coro_context<async_task<f1ap_ue_context_modification_response_message> >& ctx) mutable {
+    CORO_BEGIN(ctx);
+
+    CORO_AWAIT_VALUE(f1ap_ue_ctx_mod_resp, events->f1ap_ue_context_modification_response_message);
+
+    if (f1ap_ue_ctx_mod_resp.has_value()) {
+      logger.info("Received F1AP PDU with successful outcome.");
+      res.response = *f1ap_ue_ctx_mod_resp.value();
+      res.success  = true;
+    } else {
+      logger.info("Received F1AP PDU with unsuccessful outcome.");
+      res.failure = *f1ap_ue_ctx_mod_resp.error();
+      res.success = false;
+    }
+
+    CORO_RETURN(res);
+  });
 }
 
 void f1ap_cu_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
