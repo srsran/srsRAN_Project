@@ -10,8 +10,6 @@
 
 #include "pbch_modulator_impl.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
-#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsgnb;
 
@@ -95,10 +93,4 @@ void pbch_modulator_impl::put(span<const uint8_t>             bits,
 
   // Map
   map(d_pbch, grid, args);
-}
-
-std::unique_ptr<pbch_modulator> srsgnb::create_pbch_modulator()
-{
-  return std::make_unique<pbch_modulator_impl>(create_modulation_mapper_sw_factory()->create(),
-                                               create_pseudo_random_generator_sw_factory()->create());
 }

@@ -9,7 +9,6 @@
  */
 
 #include "dmrs_pbch_processor_impl.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -87,9 +86,4 @@ void dmrs_pbch_processor_impl::map(resource_grid_writer& grid, const config_t& c
 
   // Mapping to physical resources
   mapping(sequence, grid, config);
-}
-
-std::unique_ptr<dmrs_pbch_processor> srsgnb::create_dmrs_pbch_processor()
-{
-  return std::make_unique<dmrs_pbch_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
 }

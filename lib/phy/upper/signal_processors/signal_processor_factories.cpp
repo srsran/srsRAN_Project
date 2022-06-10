@@ -9,6 +9,8 @@
  */
 
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "dmrs_pbch_processor_impl.h"
+#include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_pdsch_processor_impl.h"
 
 using namespace srsgnb;
@@ -34,6 +36,16 @@ public:
 };
 
 } // namespace
+
+std::unique_ptr<dmrs_pbch_processor> srsgnb::create_dmrs_pbch_processor()
+{
+  return std::make_unique<dmrs_pbch_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
+}
+
+std::unique_ptr<dmrs_pdcch_processor> srsgnb::create_dmrs_pdcch_processor()
+{
+  return std::make_unique<dmrs_pdcch_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
+}
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
 srsgnb::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)

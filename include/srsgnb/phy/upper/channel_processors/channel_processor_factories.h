@@ -12,6 +12,8 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
+#include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
@@ -20,6 +22,10 @@
 #include <memory>
 
 namespace srsgnb {
+
+std::unique_ptr<pbch_encoder> create_pbch_encoder();
+
+std::unique_ptr<pbch_modulator> create_pbch_modulator();
 
 class pdsch_encoder_factory
 {

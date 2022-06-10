@@ -8,10 +8,9 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
-#include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 #include "ssb_processor_test_data.h"
 

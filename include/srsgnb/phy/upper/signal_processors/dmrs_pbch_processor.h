@@ -13,7 +13,6 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -49,9 +48,6 @@ public:
   /// \param [in] config Provides the required configuration to generate and map the signal
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic DMRS for PBCH instance
-std::unique_ptr<dmrs_pbch_processor> create_dmrs_pbch_processor();
 
 } // namespace srsgnb
 

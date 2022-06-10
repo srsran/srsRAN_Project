@@ -9,7 +9,7 @@
  */
 
 #include "dmrs_pbch_processor_test_data.h"
-#include "srsgnb/phy/upper/signal_processors/dmrs_pbch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsgnb;
 

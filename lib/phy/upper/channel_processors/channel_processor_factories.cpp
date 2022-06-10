@@ -9,10 +9,13 @@
  */
 
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
+#include "pbch_encoder_impl.h"
+#include "pbch_modulator_impl.h"
 #include "pdsch_encoder_impl.h"
 #include "pusch_decoder_impl.h"
 #include "pusch_processor_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 
 using namespace srsgnb;
 
@@ -98,6 +101,18 @@ public:
 };
 
 } // namespace
+
+std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()
+{
+  return std::make_unique<pbch_encoder_impl>(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C),
+                                             create_pseudo_random_generator_sw_factory()->create());
+}
+
+std::unique_ptr<pbch_modulator> srsgnb::create_pbch_modulator()
+{
+  return std::make_unique<pbch_modulator_impl>(create_modulation_mapper_sw_factory()->create(),
+                                               create_pseudo_random_generator_sw_factory()->create());
+}
 
 std::shared_ptr<pdsch_encoder_factory>
 srsgnb::create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config)

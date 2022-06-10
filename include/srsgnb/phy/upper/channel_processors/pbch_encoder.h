@@ -63,9 +63,6 @@ public:
   virtual void encode(span<uint8_t> encoded, const pbch_msg_t& pbch_msg) = 0;
 };
 
-/// Creates a generic PBCH encoder instance
-std::unique_ptr<pbch_encoder> create_pbch_encoder();
-
 } // namespace srsgnb
 
 #endif // SRSGNB_PHY_UPPER_PBCH_ENCODER_H

@@ -1,16 +1,16 @@
 /*
-*
-* Copyright 2013-2022 Software Radio Systems Limited
-*
-* By using this file, you agree to the terms and conditions set
-* forth in the LICENSE file which can be found at the top level of
-* the distribution.
-*
-*/
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #include "../../resource_grid_test_doubles.h"
 #include "csi_rs_processor_test_data.h"
-#include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 using namespace srsgnb;
 

@@ -15,7 +15,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -53,9 +52,6 @@ public:
   /// \param[out] grid is the destination resource grid
   virtual void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic PBCH modulator instance
-std::unique_ptr<pbch_modulator> create_pbch_modulator();
 
 } // namespace srsgnb
 

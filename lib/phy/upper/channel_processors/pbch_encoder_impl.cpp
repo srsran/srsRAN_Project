@@ -175,9 +175,3 @@ void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder
   // Rate matching.
   rate_matching(encoded, d);
 }
-
-std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()
-{
-  return std::make_unique<pbch_encoder_impl>(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C),
-                                             create_pseudo_random_generator_sw_factory()->create());
-}

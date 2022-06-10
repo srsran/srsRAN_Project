@@ -10,7 +10,6 @@
 
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_helper.h"
-#include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -93,9 +92,4 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
     // Map sequence in symbols.
     mapping(grid, sequence, mask, symbol, config);
   }
-}
-
-std::unique_ptr<dmrs_pdcch_processor> srsgnb::create_dmrs_pdcch_processor()
-{
-  return std::make_unique<dmrs_pdcch_processor_impl>(create_pseudo_random_generator_sw_factory()->create());
 }

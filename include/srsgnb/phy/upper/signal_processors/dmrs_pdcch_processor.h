@@ -16,7 +16,6 @@
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -55,9 +54,6 @@ public:
   /// \param[in] config Provides the required configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic DMRS for PDCCH instance.
-std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
 
 } // namespace srsgnb
 

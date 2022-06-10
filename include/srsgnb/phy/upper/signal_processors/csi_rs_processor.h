@@ -1,12 +1,12 @@
 /*
-*
-* Copyright 2013-2022 Software Radio Systems Limited
-*
-* By using this file, you agree to the terms and conditions set
-* forth in the LICENSE file which can be found at the top level of
-* the distribution.
-*
-*/
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_H
 #define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_H
@@ -16,7 +16,6 @@
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -41,9 +40,11 @@ enum class csi_rs_freq_density {
   /// One RE occupied in every PRB.
   ONE,
   /// Three RE occupied in every PRB.
-  THREE };
+  THREE
+};
 
-/// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211 Section 7.4.1.5.
+/// Describes a Non-Zero-Power CSI Reference Signal (NZP-CSI-RS) processor interface, in compliance with TS 38.211
+/// Section 7.4.1.5.
 class csi_rs_processor
 {
 public:
@@ -100,9 +101,6 @@ public:
   /// \param [in] config Provides the required configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
-
-/// Creates a generic CSI-RS processor instance.
-std::unique_ptr<csi_rs_processor> create_csi_rs_processor();
 
 } // namespace srsgnb
 
