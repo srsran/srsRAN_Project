@@ -8,8 +8,15 @@
 
 set_directory_properties(PROPERTIES LABELS "phy")
 
-add_executable(lower_phy_sample lower_phy_sample.cpp lower_phy_sample_factory.cpp)
-target_link_libraries(lower_phy_sample srsgnb_radio srslog srsgnb_support resource_grid_pool srsgnb_lower_phy)
+add_executable(lower_phy_sample lower_phy_sample.cpp lower_phy_sample_factory.cpp upper_phy_sample.cpp)
+target_link_libraries(lower_phy_sample
+        srsgnb_radio
+        srslog
+        srsgnb_support
+        resource_grid_pool
+        srsgnb_lower_phy
+        srsgnb_signal_processors
+        srsgnb_channel_processors)
 
 # Add lower PHY sample loopback test with ZeroMQ only if ZeroMQ is available.
 if (ZEROMQ_FOUND)

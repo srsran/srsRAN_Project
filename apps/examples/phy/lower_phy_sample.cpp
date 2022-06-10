@@ -322,30 +322,6 @@ int main(int argc, char** argv)
       for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
         rg_pool_config.grids.push_back(create_resource_grid(nof_ports, get_nsymb_per_slot(cp), bw_rb * NRE));
         srsran_always_assert(rg_pool_config.grids.back(), "Failed to create resource grid.");
-
-        unsigned nsymbols = get_nsymb_per_slot(cp);
-        for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
-          for (unsigned symbol_id = 0; symbol_id != nsymbols; ++symbol_id) {
-            unsigned nsteps      = rg_pool_config.nof_slots;
-            unsigned step        = slot_id;
-            unsigned cylon_id    = (step <= nsteps / 2) ? step : nsteps - step;
-            unsigned subc_bundle = divide_ceil(bw_rb * NRE, nsteps / 2 + 1);
-            unsigned subc_start  = subc_bundle * cylon_id;
-            unsigned subc_end    = std::min(subc_bundle * (cylon_id + 1), bw_rb * NRE);
-
-            // Generate symbol data.
-            for (unsigned subc_id = 0; subc_id != rg_data.size(); ++subc_id) {
-              if (subc_id >= subc_start && subc_id < subc_end) {
-                rg_data[subc_id] = {dist(rgen), dist(rgen)};
-              } else {
-                rg_data[subc_id] = 0;
-              }
-            }
-
-            // Put random generated data in grid.
-            rg_pool_config.grids.back()->put(port_id, symbol_id, 0, rg_data);
-          }
-        }
       }
     }
 

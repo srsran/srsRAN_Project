@@ -50,10 +50,12 @@ public:
     tti_boundary_slot = context.slot;
     cvar_tti_boundary.notify_all();
   }
+
   void handle_ul_half_slot_boundary(const upper_phy_timing_context& context) override
   {
     logger.debug("UL half slot boundary.");
   }
+
   void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) override
   {
     logger.debug("UL full slot boundary.");
