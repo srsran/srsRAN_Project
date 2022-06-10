@@ -37,7 +37,7 @@ downlink_processor_single_executor_impl::downlink_processor_single_executor_impl
   srsran_assert(csi_rs_proc, "Invalid CSI-RS processor received.");
 }
 
-void downlink_processor_single_executor_impl::process_pdcch(pdcch_processor::pdu_t& pdu)
+void downlink_processor_single_executor_impl::process_pdcch(const pdcch_processor::pdu_t& pdu)
 {
   if (current_grid == nullptr) {
     return;
@@ -45,7 +45,7 @@ void downlink_processor_single_executor_impl::process_pdcch(pdcch_processor::pdu
 
   increase_pending_pdus();
 
-  executor.execute([this, pdu]() mutable {
+  executor.execute([this, pdu]() {
     pdcch_proc->process(*current_grid, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();

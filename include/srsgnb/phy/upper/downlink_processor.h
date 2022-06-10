@@ -39,7 +39,7 @@ public:
   /// \brief Process the given PDCCH PDU.
   ///
   /// \param[in] pdu PDCCH PDU to process.
-  virtual void process_pdcch(pdcch_processor::pdu_t& pdu) = 0;
+  virtual void process_pdcch(const pdcch_processor::pdu_t& pdu) = 0;
 
   /// \brief Process the given PDSCH PDU and its related data, which it is given in data parameter.
   ///
