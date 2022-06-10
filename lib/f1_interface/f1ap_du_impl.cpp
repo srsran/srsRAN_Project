@@ -10,7 +10,6 @@
 
 #include "f1ap_du_impl.h"
 #include "../ran/gnb_format.h"
-#include "f1_procedure_asn1_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -43,8 +42,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  asn1::f1ap::f1_setup_request_s request_asn1;
-  fill_asn1_f1_setup_request(request_asn1, request);
+  // TODO send msg
 
   f1ap_du_event_manager::f1ap_setup_outcome_t f1_resp;
 
@@ -61,11 +59,10 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
       res.success = true;
     } else {
       logger.info("Received F1AP PDU with unsuccessful outcome.");
-      if (f1_setup_retry_no < request.setup_params.max_setup_retries) {
+      if (f1_setup_retry_no < request.max_setup_retries) {
         CORO_AWAIT_VALUE(res, handle_f1_setup_failure(request, *f1_resp.error()));
       } else {
-        logger.error("Reached maximum number of F1 Setup connection retries ({}).",
-                     request.setup_params.max_setup_retries);
+        logger.error("Reached maximum number of F1 Setup connection retries ({}).", request.max_setup_retries);
         res.success = false;
       }
     }
@@ -106,7 +103,7 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(cons
       logger.info("Received F1SetupFailure with Time to Wait IE. Reinitiating F1 setup in {}s (retry={}/{}).",
                   failure->time_to_wait.value.to_number(),
                   f1_setup_retry_no,
-                  request.setup_params.max_setup_retries);
+                  request.max_setup_retries);
 
       // TODO add timer
 

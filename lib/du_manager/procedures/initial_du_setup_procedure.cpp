@@ -9,7 +9,7 @@
  */
 
 #include "initial_du_setup_procedure.h"
-#include "../../f1_interface/converters/f1_procedure_helpers.h"
+#include "../converters/f1c_asn1_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "../du_cell_manager.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -19,13 +19,14 @@ using namespace srs_du;
 
 initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_config_t& cfg_, du_cell_manager& cell_mng_) :
   cfg(cfg_), cell_mng(cell_mng_)
-{}
+{
+}
 
 void initial_du_setup_procedure::operator()(coro_context<async_task<void> >& ctx)
 {
   CORO_BEGIN(ctx);
 
-  fill_f1_setup_request_message(request_msg, cfg.setup_params);
+  fill_asn1_f1_setup_request(request_msg.msg, cfg.setup_params);
 
   // Initiate F1 Setup.
   CORO_AWAIT_VALUE(response_msg, cfg.f1ap_conn_mng->handle_f1ap_setup_request(request_msg));

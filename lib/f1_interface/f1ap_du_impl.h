@@ -65,7 +65,7 @@ private:
 
   std::unique_ptr<f1ap_du_event_manager> events;
 
-  int f1_setup_retry_no = 0;
+  unsigned f1_setup_retry_no = 0;
 };
 
 } // namespace srs_du

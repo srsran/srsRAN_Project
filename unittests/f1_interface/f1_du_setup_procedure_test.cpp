@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/f1_interface/converters/f1_procedure_helpers.h"
+#include "lib/du_manager/converters/f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/f1_interface/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
@@ -33,7 +33,7 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
-  fill_f1_setup_request_message(request_msg, setup_params);
+  fill_asn1_f1_setup_request(request_msg.msg, setup_params);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
@@ -116,7 +116,7 @@ void test_f1_setup_retry_limit()
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
-  fill_f1_setup_request_message(request_msg, setup_params);
+  fill_asn1_f1_setup_request(request_msg.msg, setup_params);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
@@ -141,7 +141,7 @@ void test_f1_setup_retry_limit()
   setup_fail->crit_diagnostics_present = false;
   // add critical diagnostics
 
-  for (int i = 0; i < request_msg.setup_params.max_setup_retries + 1; i++) {
+  for (unsigned i = 0; i < request_msg.max_setup_retries + 1; i++) {
     f1ap_du->handle_message(pdu);
   }
 

@@ -60,12 +60,11 @@ struct du_setup_params {
 
   // optional
   std::string gnb_du_name;
-
-  int max_setup_retries = 5;
 };
 
 struct f1_setup_request_message {
-  du_setup_params setup_params;
+  asn1::f1ap::f1_setup_request_s msg;
+  unsigned                       max_setup_retries = 5;
 };
 
 struct f1_setup_response_message {
