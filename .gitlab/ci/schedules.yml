@@ -1,0 +1,5 @@
+Nightly:
+  cron: "30 2 * * 0-4"
+  cron_timezone: "Europe/Madrid"
+  ref: main
+  active: true

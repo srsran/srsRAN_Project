@@ -1,0 +1,95 @@
+include:
+  - project: softwareradiosystems/testing-tools
+    ref: "1.0.0"
+    file: .gitlab/ci-shared/workflow.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "1.0.0"
+    file: .gitlab/ci-shared/srs_tools.yml
+
+variables:
+  # Input variables
+  os_type: ""
+  os_version: ""
+  docker_version: ""
+  compiler: ""
+  build_cache_mode: "" # pull, push, none
+  run_unit_tests: ""
+  report_failed_job: ""
+
+image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
+
+stages:
+  - building
+  - testing
+
+.report_if_failed:
+  after_script:
+    - !reference [.srs_tools_setup_job, before_script]
+    - |
+      if [[ $CI_JOB_STATUS = "failed" && $report_failed_job = "true" ]]; then
+        srs_tools_setup 1.3.0
+        TITLE="$CI_JOB_NAME [$os_type $os_version $compiler] failed"
+        MSG="<${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}. Check the <${CI_JOB_URL}|log>."
+        notifier --title "${TITLE}" --msg "${MSG}" --level fail --channel "##ci_gnb" --token "${SLACK_TOKEN}"
+      fi
+
+.build:
+  stage: building
+  extends: .report_if_failed
+  script:
+    - builder.sh -c $compiler .
+  cache: &build_cache
+    key: ${os_type}-${os_version}-${docker_version}-${compiler}
+    paths:
+      - ccache
+  artifacts: &build_artifacts
+    paths:
+      - build/CTestTestfile.cmake
+      - build/unittests
+      - build/apps/cu-up/cu-up
+
+clean build:
+  # Fresh build with no interacton with the cache
+  extends: .build
+  rules:
+    - if: $build_cache_mode == "none"
+  cache: []
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 7 days
+
+clean build and update cache:
+  # A clean build will be done and the job will push a new fresh cache
+  extends: .build
+  rules:
+    - if: $build_cache_mode == "push"
+  cache:
+    <<: *build_cache
+    policy: push
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 6 hours
+
+cached build:
+  # The job will use the cache for latest compilation
+  extends: .build
+  rules:
+    - if: $build_cache_mode == "pull"
+  cache:
+    <<: *build_cache
+    policy: pull
+  artifacts:
+    <<: *build_artifacts
+    expire_in: 10 minutes
+
+unit test:
+  stage: testing
+  extends: .report_if_failed
+  rules:
+    - if: $run_unit_tests
+  script:
+    - cd build
+    - ctest -j "$(nproc --all)" --schedule-random --output-junit xunit.xml
+  artifacts:
+    reports:
+      junit: build/xunit.xml
