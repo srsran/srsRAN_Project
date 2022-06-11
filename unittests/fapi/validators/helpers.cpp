@@ -397,12 +397,12 @@ dl_tti_request_message unittest::build_valid_dl_tti_request()
 
 ul_dci_request_message unittest::build_valid_ul_dci_request()
 {
-  ul_dci_request_message         msg;
-  ul_dci_request_message_builder builder(msg);
+  ul_dci_request_message msg;
 
-  builder.set_basic_parameters(generate_sfn(), generate_slot());
+  msg.slot = generate_slot();
+  msg.sfn  = generate_sfn();
 
-  // Manually add the PDCCH PDU to reuse the functions above.ul
+  // Manually add the PDCCH PDU to reuse the functions above.
   msg.pdus.emplace_back();
   msg.pdus.back().pdu_type = ul_dci_pdu_type::PDCCH;
   msg.pdus.back().pdu      = build_valid_dl_pdcch_pdu();
