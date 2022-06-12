@@ -81,6 +81,10 @@ srsgnb::fapi::error_indication_message build_valid_error_indication();
 /// SCF-222 v4.0 Section 3.3.6.1.
 srsgnb::fapi::error_indication_message build_valid_out_of_sync_error_indication();
 
+/// Builds and returns a RACH.indication message. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.11.
+srsgnb::fapi::rach_indication_message build_valid_rach_indication();
+
 /// Builds and returns a valid Rx_Data.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.7.
 srsgnb::fapi::rx_data_indication_message build_valid_rx_data_indication();

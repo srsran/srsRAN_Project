@@ -1189,3 +1189,50 @@ ul_tti_request_message unittest::build_valid_ul_tti_request()
 
   return msg;
 }
+
+static unsigned generate_slot_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 79);
+  return dist(gen);
+}
+
+static unsigned generate_ra_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 7);
+  return dist(gen);
+}
+
+static unsigned generate_preamble_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 63);
+  return dist(gen);
+}
+
+rach_indication_message unittest::build_valid_rach_indication()
+{
+  rach_indication_message msg;
+
+  msg.slot = generate_slot();
+  msg.sfn  = generate_sfn();
+
+  msg.pdus.emplace_back();
+  rach_indication_pdu& pdu = msg.pdus.back();
+
+  pdu.symbol_index = generate_start_symbol_index();
+  pdu.slot_index   = generate_slot_index();
+  pdu.ra_index     = generate_ra_index();
+  pdu.avg_rssi     = std::numeric_limits<uint32_t>::max();
+  pdu.rsrp         = std::numeric_limits<uint16_t>::max();
+  pdu.avg_snr      = std::numeric_limits<uint8_t>::max();
+
+  pdu.preambles.emplace_back();
+  rach_indication_pdu_preamble& preamble = pdu.preambles.back();
+
+  preamble.preamble_index           = generate_preamble_index();
+  preamble.timing_advance_offset    = std::numeric_limits<uint16_t>::max();
+  preamble.timing_advance_offset_ns = std::numeric_limits<uint32_t>::max();
+  preamble.preamble_pwr             = std::numeric_limits<uint32_t>::max();
+  preamble.preamble_snr             = std::numeric_limits<uint8_t>::max();
+
+  return msg;
+}
