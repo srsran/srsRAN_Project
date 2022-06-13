@@ -12,6 +12,7 @@ variables:
 stages:
   - static
   - launch build and test
+  - build and publish doc
 
 code-format:
   stage: static
@@ -64,3 +65,18 @@ build & test:
       - os_type: archlinux
         os_version: latest
         compiler: [gcc, clang]
+
+pages:
+  stage: build and publish doc
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+  variables:
+    docker_version: "1.0.0"
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$docker_version
+  script:
+    - doxygen_generator.sh
+    - mv build/public .
+  artifacts:
+    paths:
+    - public
+
