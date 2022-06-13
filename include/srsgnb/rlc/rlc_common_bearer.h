@@ -26,7 +26,8 @@ class rlc_tx_common_bearer : public rlc_tx_sdu_handler, public rlc_tx_pdu_transm
 protected:
   rlc_tx_common_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     logger(du_index, lcid), upper_cn(upper_cn)
-  {}
+  {
+  }
 
   rlc_logger                           logger;
   rlc_tx_upper_layer_control_notifier& upper_cn;
@@ -39,7 +40,8 @@ class rlc_rx_common_bearer : public rlc_rx_pdu_handler
 protected:
   rlc_rx_common_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
     logger(du_index, lcid), upper_dn(upper_dn)
-  {}
+  {
+  }
 
   rlc_logger                        logger;
   rlc_rx_upper_layer_data_notifier& upper_dn;
@@ -69,4 +71,3 @@ protected:
 
 } // namespace srsgnb
 #endif
-
