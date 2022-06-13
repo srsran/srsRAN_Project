@@ -19,7 +19,7 @@ using namespace unittest;
 
 static std::mt19937 gen(0);
 
-static std::vector<test_group<rach_indication_message> > vector_test = {
+static const std::vector<test_group<rach_indication_message> > vector_test = {
     {[](rach_indication_message& msg, int value) { msg.sfn = value; },
      "sfn",
      {{0, true}, {511, true}, {1023, true}, {1024, false}}},
@@ -81,7 +81,7 @@ static std::vector<test_group<rach_indication_message> > vector_test = {
 
 static void test_validate_each_field_error()
 {
-  for (auto& group : vector_test) {
+  for (const auto& group : vector_test) {
     for (const auto& test_case : group) {
       auto msg = build_valid_rach_indication();
       group.update_msg(msg, test_case.value);

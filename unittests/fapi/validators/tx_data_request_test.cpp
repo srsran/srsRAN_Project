@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static std::vector<test_group<tx_data_request_message> > vector_test = {
+static const std::vector<test_group<tx_data_request_message> > vector_test = {
     {[](tx_data_request_message& msg, int value) { msg.sfn = value; },
      "sfn",
      {{0, true}, {511, true}, {1023, true}, {1024, false}}},
@@ -35,7 +35,7 @@ static std::vector<test_group<tx_data_request_message> > vector_test = {
 
 static void test_validate_each_field_error()
 {
-  for (auto& group : vector_test) {
+  for (const auto& group : vector_test) {
     for (const auto& test_case : group) {
       auto    msg = build_valid_tx_data_request();
       uint8_t payload;

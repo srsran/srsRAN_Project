@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static std::vector<test_group<ul_prach_pdu> > vector_test = {
+static const std::vector<test_group<ul_prach_pdu> > vector_test = {
     {[](ul_prach_pdu& pdu, int value) { pdu.phys_cell_id = value; },
      "Physical cell ID",
      {{0, true}, {1007, true}, {100, true}, {1008, false}}},
@@ -56,7 +56,7 @@ static std::vector<test_group<ul_prach_pdu> > vector_test = {
 
 static void test_validate_each_field_error()
 {
-  for (auto& group : vector_test) {
+  for (const auto& group : vector_test) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_prach_pdu();

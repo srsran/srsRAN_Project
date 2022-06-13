@@ -17,7 +17,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace unittest;
 
-static std::vector<test_group<ul_pusch_pdu> > vector_test = {
+static const std::vector<test_group<ul_pusch_pdu> > vector_test = {
     {[](ul_pusch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); },
      "RNTI",
      {{0, false}, {1, true}, {32768, true}, {65535, true}}},
@@ -189,7 +189,7 @@ static std::vector<test_group<ul_pusch_pdu> > vector_test = {
 
 static void test_validate_each_field_error()
 {
-  for (auto& group : vector_test) {
+  for (const auto& group : vector_test) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_pusch_pdu();

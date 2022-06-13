@@ -18,7 +18,7 @@ using namespace fapi;
 using namespace unittest;
 
 // Vector test for the properties valid for all the PUCCH formats.
-static std::vector<test_group<ul_pucch_pdu> > vector_test_common_fields = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_common_fields = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.rnti = to_rnti(value); },
      "RNTI",
      {{0, false}, {1, true}, {32768, true}, {65535, true}}},
@@ -67,7 +67,7 @@ static void validate_common()
                                                           build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
-    for (auto& group : vector_test_common_fields) {
+    for (const auto& group : vector_test_common_fields) {
       for (const auto& test_case : group) {
         validator_report report(0, 0);
         auto             pdu = builder();
@@ -89,7 +89,7 @@ static void validate_common()
   }
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_f0 = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_f0 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{0, false}, {1, true}, {2, true}, {3, false}}},
@@ -112,7 +112,7 @@ static std::vector<test_group<ul_pucch_pdu> > vector_test_f0 = {
 
 static void validate_f0()
 {
-  for (auto& group : vector_test_f0) {
+  for (const auto& group : vector_test_f0) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_pucch_f0_pdu();
@@ -133,7 +133,7 @@ static void validate_f0()
   }
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_f1 = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_f1 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
@@ -159,7 +159,7 @@ static std::vector<test_group<ul_pucch_pdu> > vector_test_f1 = {
 
 static void validate_f1()
 {
-  for (auto& group : vector_test_f1) {
+  for (const auto& group : vector_test_f1) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_pucch_f1_pdu();
@@ -180,7 +180,7 @@ static void validate_f1()
   }
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_f2 = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_f2 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{0, false}, {1, true}, {2, true}, {3, false}}},
@@ -200,7 +200,7 @@ static std::vector<test_group<ul_pucch_pdu> > vector_test_f2 = {
 
 static void validate_f2()
 {
-  for (auto& group : vector_test_f2) {
+  for (const auto& group : vector_test_f2) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_pucch_f2_pdu();
@@ -221,7 +221,7 @@ static void validate_f2()
   }
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_f3 = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_f3 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
@@ -251,7 +251,7 @@ static std::vector<test_group<ul_pucch_pdu> > vector_test_f3 = {
      "Max code rate",
      {{0, true}, {3, true}, {7, true}, {8, false}}}};
 
-static void validate_f3()
+static const void validate_f3()
 {
   for (auto& group : vector_test_f3) {
     for (const auto& test_case : group) {
@@ -274,7 +274,7 @@ static void validate_f3()
   }
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_f4 = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_f4 = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.nr_of_symbols = value; },
      "Duration in symbols",
      {{3, false}, {4, true}, {14, true}, {15, false}}},
@@ -312,7 +312,7 @@ static std::vector<test_group<ul_pucch_pdu> > vector_test_f4 = {
 
 static void validate_f4()
 {
-  for (auto& group : vector_test_f4) {
+  for (const auto& group : vector_test_f4) {
     for (const auto& test_case : group) {
       validator_report report(0, 0);
       auto             pdu = build_valid_ul_pucch_f4_pdu();
@@ -343,7 +343,7 @@ static void test_validate_each_field_error()
   validate_f4();
 }
 
-static std::vector<test_group<ul_pucch_pdu> > vector_test_pucch_format = {
+static const std::vector<test_group<ul_pucch_pdu> > vector_test_pucch_format = {
     {[](ul_pucch_pdu& pdu, int value) { pdu.format_type = static_cast<pucch_format_type>(value); },
      "Format type",
      {{5, false}}}};
@@ -357,7 +357,7 @@ static void test_validate_pucch_format_error()
                                                           build_valid_ul_pucch_f4_pdu};
 
   for (auto builder : builders) {
-    for (auto& group : vector_test_pucch_format) {
+    for (const auto& group : vector_test_pucch_format) {
       for (const auto& test_case : group) {
         validator_report report(0, 0);
         auto             pdu = builder();
