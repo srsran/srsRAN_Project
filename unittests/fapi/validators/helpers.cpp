@@ -1236,3 +1236,21 @@ rach_indication_message unittest::build_valid_rach_indication()
 
   return msg;
 }
+
+tx_data_request_message unittest::build_valid_tx_data_request()
+{
+  tx_data_request_message msg;
+
+  msg.sfn  = generate_sfn();
+  msg.slot = generate_slot();
+
+  msg.pdus.emplace_back();
+  tx_data_req_pdu& pdu = msg.pdus.back();
+
+  pdu.cw_index           = generate_bool();
+  pdu.pdu_index          = 4231;
+  pdu.tlv_custom.length  = 12;
+  pdu.tlv_custom.payload = nullptr;
+
+  return msg;
+}

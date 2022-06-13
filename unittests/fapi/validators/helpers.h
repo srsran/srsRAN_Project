@@ -93,6 +93,11 @@ srsgnb::fapi::rx_data_indication_message build_valid_rx_data_indication();
 /// Section 3.4.1.
 srsgnb::fapi::slot_indication_message build_valid_slot_indication();
 
+/// Builds and returns a valid Tx_Data.request message. Every parameter is within the range defined in SCF-222 v4.0
+/// Section 3.4.6.
+/// \note Payload pointer is net to \c nullptr.
+srsgnb::fapi::tx_data_request_message build_valid_tx_data_request();
+
 /// Builds and returns a valid UCI.indication message. Every parameter is within the range defined in SCF-222 v4.0
 /// Section 3.4.9.
 srsgnb::fapi::uci_indication_message build_valid_uci_indication();
