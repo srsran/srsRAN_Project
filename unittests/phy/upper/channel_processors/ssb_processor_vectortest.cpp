@@ -30,9 +30,19 @@ using namespace srsgnb;
 
 int main()
 {
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  TESTASSERT(modulator_factory);
+
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<pbch_modulator_factory> pbch_modulator_factory =
+      create_pbch_modulator_factory_sw(modulator_factory, prg_factory);
+  TESTASSERT(modulator_factory);
+
   ssb_processor_config config = {};
   config.encoder              = create_pbch_encoder();
-  config.modulator            = create_pbch_modulator();
+  config.modulator            = pbch_modulator_factory->create();
   config.dmrs                 = create_dmrs_pbch_processor();
   config.pss                  = create_pss_processor();
   config.sss                  = create_sss_processor();

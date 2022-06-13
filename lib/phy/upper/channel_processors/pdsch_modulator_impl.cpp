@@ -277,8 +277,3 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
     map_to_prb_other(grid, x_pdsch, config);
   }
 }
-
-std::unique_ptr<pdsch_modulator> srsgnb::create_pdsch_modulator(pdsch_modulator_config_t& config)
-{
-  return std::make_unique<pdsch_modulator_impl>(config);
-}

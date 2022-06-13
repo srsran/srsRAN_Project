@@ -97,12 +97,6 @@ public:
   modulate(resource_grid_writer& grid, span<const span<const uint8_t> > codewords, const config_t& config) override;
 };
 
-/// \brief Creates a generic PDSCH modulator.
-///
-/// \param[in] config Provides the internal dependencies instances.
-/// \return A unique pointer with the modulator.
-std::unique_ptr<pdsch_modulator> create_pdsch_modulator(pdsch_modulator_config_t& config);
-
 } // namespace srsgnb
 
 #endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_IMPL_H

@@ -15,7 +15,18 @@ using namespace srsgnb;
 
 int main()
 {
-  std::unique_ptr<pbch_modulator> modulator = create_pbch_modulator();
+  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  TESTASSERT(modulator_factory);
+
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<pbch_modulator_factory> pbch_factory =
+      create_pbch_modulator_factory_sw(modulator_factory, prg_factory);
+  TESTASSERT(modulator_factory);
+
+  std::unique_ptr<pbch_modulator> modulator = pbch_factory->create();
+  TESTASSERT(modulator);
 
   for (const test_case_t& test_case : pbch_modulator_test_data) {
     resource_grid_writer_spy grid;

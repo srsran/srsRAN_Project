@@ -10,17 +10,8 @@
 
 #include "pdsch_modulator_test_data.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
-
-namespace srsgnb {
-struct pdsch_modulator_config_t {
-  std::unique_ptr<modulation_mapper>       modulator;
-  std::unique_ptr<pseudo_random_generator> scrambler;
-};
-
-std::unique_ptr<pdsch_modulator> create_pdsch_modulator(pdsch_modulator_config_t& config);
-
-} // namespace srsgnb
 
 using namespace srsgnb;
 
@@ -32,11 +23,12 @@ int main()
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
 
-  // Create PDSCH modulator configuration.
-  pdsch_modulator_config_t config = {modulator_factory->create(), prg_factory->create()};
+  std::shared_ptr<pdsch_modulator_factory> pdsch_factory =
+      create_pdsch_modulator_factory_sw(modulator_factory, prg_factory);
+  TESTASSERT(modulator_factory);
 
-  // Create PDSCH modulator.
-  std::unique_ptr<pdsch_modulator> pdsch = create_pdsch_modulator(config);
+  std::unique_ptr<pdsch_modulator> pdsch = pdsch_factory->create();
+  TESTASSERT(pdsch);
 
   for (const test_case_t& test_case : pdsch_modulator_test_data) {
     // Create resource grid spy.

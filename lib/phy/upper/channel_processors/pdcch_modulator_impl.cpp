@@ -103,8 +103,3 @@ void pdcch_modulator_impl::modulate(srsgnb::resource_grid_writer&            gri
   // Map to resource elements.
   map(grid, d_pdcch, config);
 }
-
-std::unique_ptr<pdcch_modulator> srsgnb::create_pdcch_modulator(pdcch_modulator_config_t& config)
-{
-  return std::make_unique<pdcch_modulator_impl>(config);
-}

@@ -12,9 +12,12 @@
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
+#include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
@@ -25,7 +28,27 @@ namespace srsgnb {
 
 std::unique_ptr<pbch_encoder> create_pbch_encoder();
 
-std::unique_ptr<pbch_modulator> create_pbch_modulator();
+class pbch_modulator_factory
+{
+public:
+  virtual ~pbch_modulator_factory()                = default;
+  virtual std::unique_ptr<pbch_modulator> create() = 0;
+};
+
+std::shared_ptr<pbch_modulator_factory>
+    create_pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+                                     std::shared_ptr<pseudo_random_generator_factory>);
+
+class pdcch_modulator_factory
+{
+public:
+  virtual ~pdcch_modulator_factory()                = default;
+  virtual std::unique_ptr<pdcch_modulator> create() = 0;
+};
+
+std::shared_ptr<pdcch_modulator_factory>
+    create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+                                      std::shared_ptr<pseudo_random_generator_factory>);
 
 class pdsch_encoder_factory
 {
@@ -33,6 +56,17 @@ public:
   virtual ~pdsch_encoder_factory()                = default;
   virtual std::unique_ptr<pdsch_encoder> create() = 0;
 };
+
+class pdsch_modulator_factory
+{
+public:
+  virtual ~pdsch_modulator_factory()                = default;
+  virtual std::unique_ptr<pdsch_modulator> create() = 0;
+};
+
+std::shared_ptr<pdsch_modulator_factory>
+    create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+                                      std::shared_ptr<pseudo_random_generator_factory>);
 
 /// Describes the software PDSCH encoder factory configuration.
 struct pdsch_encoder_factory_sw_configuration {

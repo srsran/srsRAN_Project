@@ -75,7 +75,7 @@ add_custom_command(
         VERBATIM)
 
 add_executable(pdsch_modulator_test pdsch_modulator_test.cpp)
-target_link_libraries(pdsch_modulator_test srsgnb_pdsch_modulator srslog)
+target_link_libraries(pdsch_modulator_test srsgnb_channel_processors srslog)
 add_test(pdsch_modulator_test pdsch_modulator_test)
 
 add_custom_command(

@@ -24,25 +24,12 @@ using namespace srsgnb;
 
 namespace srsgnb {
 
-struct pdcch_modulator_config_t {
-  std::unique_ptr<modulation_mapper>       modulator;
-  std::unique_ptr<pseudo_random_generator> scrambler;
-};
-
-std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t& config);
-
 struct pdcch_processor_config_t {
   std::unique_ptr<pdcch_encoder>        encoder;
   std::unique_ptr<pdcch_modulator>      modulator;
   std::unique_ptr<dmrs_pdcch_processor> dmrs;
 };
 std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
-
-struct pdsch_modulator_config_t {
-  std::unique_ptr<modulation_mapper>       modulator;
-  std::unique_ptr<pseudo_random_generator> scrambler;
-};
-std::unique_ptr<pdsch_modulator> create_pdsch_modulator(pdsch_modulator_config_t& config);
 
 struct pdsch_processor_configuration {
   std::unique_ptr<pdsch_encoder>        encoder;
@@ -144,17 +131,21 @@ int main()
       create_dmrs_pdsch_processor_factory_sw(prg_factory);
   TESTASSERT(dmrs_pdsch_factory);
 
+  std::shared_ptr<pdcch_modulator_factory> pdcch_modulator_factory =
+      create_pdcch_modulator_factory_sw(modulator_factory, prg_factory);
+  TESTASSERT(pdcch_modulator_factory);
+
+  std::shared_ptr<pdsch_modulator_factory> pdsch_modulator_factory =
+      create_pdsch_modulator_factory_sw(modulator_factory, prg_factory);
+  TESTASSERT(pdsch_modulator_factory);
+
   // Create PDCCH processor
   std::unique_ptr<pdcch_processor> pdcch = nullptr;
   {
-    pdcch_modulator_config_t pdcch_modulator_config;
-    pdcch_modulator_config.modulator = modulator_factory->create();
-    pdcch_modulator_config.scrambler = prg_factory->create();
-
     pdcch_processor_config_t pdcch_processor_config;
     pdcch_processor_config.dmrs      = create_dmrs_pdcch_processor();
     pdcch_processor_config.encoder   = create_pdcch_encoder();
-    pdcch_processor_config.modulator = create_pdcch_modulator(pdcch_modulator_config);
+    pdcch_processor_config.modulator = pdcch_modulator_factory->create();
     pdcch                            = create_pdcch_processor(pdcch_processor_config);
     TESTASSERT(pdcch);
   }
@@ -162,13 +153,9 @@ int main()
   // Create PDSCH processor.
   std::unique_ptr<pdsch_processor> pdsch = nullptr;
   {
-    pdsch_modulator_config_t modulator_config;
-    modulator_config.modulator = modulator_factory->create();
-    modulator_config.scrambler = prg_factory->create();
-
     pdsch_processor_configuration processor_config;
     processor_config.encoder   = pdsch_encoder_factory->create();
-    processor_config.modulator = create_pdsch_modulator(modulator_config);
+    processor_config.modulator = pdsch_modulator_factory->create();
     processor_config.dmrs      = dmrs_pdsch_factory->create();
 
     pdsch = create_pdsch_processor(processor_config);
