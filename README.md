@@ -13,7 +13,7 @@ for the fronthaul connection.
 License
 -------
 
-For license details, see LICENSE file.
+For license details, see [LICENSE](LICENSE) file.
 
 Build Instructions
 ------------------
