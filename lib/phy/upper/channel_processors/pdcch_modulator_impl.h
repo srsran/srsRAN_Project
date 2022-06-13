@@ -17,14 +17,6 @@
 
 namespace srsgnb {
 
-/// Describes the PDCCH modulator generic implementation constructor configuration.
-struct pdcch_modulator_config_t {
-  /// Provides the modulation mapper. Ownership is transferred to the PDCCH modulator.
-  std::unique_ptr<modulation_mapper> modulator;
-  /// Provides the pseudo-random sequence generator. Ownership is transferred to the PDCCH modulator.
-  std::unique_ptr<pseudo_random_generator> scrambler;
-};
-
 class pdcch_modulator_impl : public pdcch_modulator
 {
 private:
@@ -41,11 +33,11 @@ private:
   /// Defines the maximum number of bits that can be utilised for a PDCCH transmission.
   static constexpr unsigned MAX_BITS = MAX_RE * get_bits_per_symbol(modulation_scheme::QPSK);
 
-  /// Provides an implementation of the the pseudo-random generator.
-  std::unique_ptr<pseudo_random_generator> scrambler;
-
   /// Provides an implementation of the modulator.
   std::unique_ptr<modulation_mapper> modulator;
+
+  /// Provides an implementation of the the pseudo-random generator.
+  std::unique_ptr<pseudo_random_generator> scrambler;
 
   /// \brief Scrambles a codeword. Implements TS 38.211 section 7.3.2.3 Scrambling.
   ///
@@ -73,21 +65,15 @@ public:
   // See interface for the documentation.
   void modulate(resource_grid_writer& grid, span<const uint8_t> data, const config_t& config) override;
 
-  /// \brief Generic PDCCH modulator instance constructor.
-  ///
-  /// \param[in] args Provides the internal dependencies instances.
-  pdcch_modulator_impl(pdcch_modulator_config_t& config) :
-    scrambler(std::move(config.scrambler)), modulator(std::move(config.modulator))
+  /// Generic PDCCH modulator instance constructor.
+  pdcch_modulator_impl(std::unique_ptr<modulation_mapper>       modulator_,
+                       std::unique_ptr<pseudo_random_generator> scrambler_) :
+    modulator(std::move(modulator_)), scrambler(std::move(scrambler_))
   {
-    // Do nothing.
+    srsran_assert(modulator, "Invalid modulator");
+    srsran_assert(scrambler, "Invalid scrambler");
   }
 };
-
-/// \brief Creates a generic PDCCH modulator.
-///
-/// \param[in] config Provides the internal dependencies instances.
-/// \return A unique pointer with the modulator.
-std::unique_ptr<pdcch_modulator> create_pdcch_modulator(pdcch_modulator_config_t& config);
 
 } // namespace srsgnb
 

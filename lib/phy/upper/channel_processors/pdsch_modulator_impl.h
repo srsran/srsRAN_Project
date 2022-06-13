@@ -17,14 +17,6 @@
 
 namespace srsgnb {
 
-/// Describes the PDSCH modulator generic implementation constructor configuration.
-struct pdsch_modulator_config_t {
-  /// Provides the modulation mapper. Ownership is transferred to the PDSCH modulator.
-  std::unique_ptr<modulation_mapper> modulator;
-  /// Provides the pseudo-random sequence generator. Ownership is transferred to the PDSCH modulator.
-  std::unique_ptr<pseudo_random_generator> scrambler;
-};
-
 /// Describes a generic implementation of a PDSCH modulator, defined by TS 38.211 section 7.3.1
 class pdsch_modulator_impl : public pdsch_modulator
 {
@@ -84,12 +76,12 @@ private:
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.
-  ///
-  /// \param[in] args Provides the internal dependencies instances.
-  pdsch_modulator_impl(pdsch_modulator_config_t& args) :
-    modulator(std::move(args.modulator)), scrambler(std::move(args.scrambler))
+  pdsch_modulator_impl(std::unique_ptr<modulation_mapper>       modulator_,
+                       std::unique_ptr<pseudo_random_generator> scrambler_) :
+    modulator(std::move(modulator_)), scrambler(std::move(scrambler_))
   {
-    // Do nothing.
+    srsran_assert(modulator, "Invalid modulator");
+    srsran_assert(scrambler, "Invalid scrambler");
   }
 
   // See interface for the documentation.

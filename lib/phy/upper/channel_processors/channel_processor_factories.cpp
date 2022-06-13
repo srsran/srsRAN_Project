@@ -16,7 +16,6 @@
 #include "pdsch_modulator_impl.h"
 #include "pusch_decoder_impl.h"
 #include "pusch_processor_impl.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 
 using namespace srsgnb;
@@ -61,10 +60,7 @@ public:
 
   std::unique_ptr<pdcch_modulator> create() override
   {
-    pdcch_modulator_config_t config;
-    config.modulator = modulator_factory->create();
-    config.scrambler = prg_factory->create();
-    return std::make_unique<pdcch_modulator_impl>(config);
+    return std::make_unique<pdcch_modulator_impl>(modulator_factory->create(), prg_factory->create());
   }
 };
 
@@ -88,9 +84,8 @@ public:
 
   std::unique_ptr<pdsch_encoder> create() override
   {
-    std::unique_ptr<ldpc_segmenter_tx> segmenter_tx = segmenter_factory->create();
     return std::make_unique<pdsch_encoder_impl>(
-        std::move(segmenter_tx), encoder_factory->create(), rate_matcher_factory->create());
+        segmenter_factory->create(), encoder_factory->create(), rate_matcher_factory->create());
   }
 };
 
@@ -111,10 +106,7 @@ public:
 
   std::unique_ptr<pdsch_modulator> create() override
   {
-    pdsch_modulator_config_t config;
-    config.modulator = modulator_factory->create();
-    config.scrambler = prg_factory->create();
-    return std::make_unique<pdsch_modulator_impl>(config);
+    return std::make_unique<pdsch_modulator_impl>(modulator_factory->create(), prg_factory->create());
   }
 };
 
