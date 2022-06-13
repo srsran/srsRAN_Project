@@ -20,12 +20,13 @@ Build Instructions
 
 * Mandatory requirements:
   * cmake:               https://cmake.org/
-  * libfftw:             http://www.fftw.org/
-
+  * libfftw:             https://www.fftw.org/
+  * git-lfs:             https://git-lfs.github.com/
 
 For example, on Ubuntu 22.04, one can install the required libraries with:
 ```
-sudo apt-get install cmake libfftw3-dev
+sudo apt-get install cmake libfftw3-dev git-lfs
+git lfs install
 ```
 
 * Optional requirements
