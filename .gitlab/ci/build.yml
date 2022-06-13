@@ -18,25 +18,14 @@ stages:
   - build
   - unit tests
 
-.report_if_failed:
+.build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
-  variables:
-    slack_notifier_version: "1.3.0"
-  after_script:
-    - !reference [.srs_tools_setup_job, before_script]
-    - |
-      if [[ $CI_JOB_STATUS = "failed" && $report_failed_job = "true" ]]; then
-        srs_tools_setup $slack_notifier_version
-        TITLE="$CI_JOB_NAME [$os_type $os_version $compiler] failed"
-        MSG="<${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}. Check the <${CI_JOB_URL}|log>."
-        notifier --title "${TITLE}" --msg "${MSG}" --level fail --channel "##ci_gnb" --token "${SLACK_TOKEN}"
-      fi
 
 # Build
 
 .build:
   stage: build
-  extends: .report_if_failed
+  extends: .build_and_unit
   needs: []
   script:
     - |
@@ -61,8 +50,6 @@ build [cached]:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
     - if: $ON_MR == "true"
-  variables:
-    report_failed_job: "false"
   cache:
     <<: *build_cache
     policy: pull
@@ -75,8 +62,6 @@ build [clean and update cache]:
   extends: .build
   rules:
     - if: $ON_DEFAULT_BRANCH
-  variables:
-    report_failed_job: "true"
   cache:
     <<: *build_cache
     policy: push
@@ -90,8 +75,6 @@ build [clean]:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
     - if: $ON_SCHEDULE
-  variables:
-    report_failed_job: "true"
   cache: []
   artifacts:
     <<: *build_artifacts
@@ -101,7 +84,7 @@ build [clean]:
 
 unit test:
   stage: unit tests
-  extends: .report_if_failed
+  extends: .build_and_unit
   rules:
     - if: $run_unit_tests == "true"
   script:

@@ -13,6 +13,7 @@ stages:
   - unit tests
   - scheduler
   - build and publish doc
+  - notify status
 
 ## Static
 
@@ -95,3 +96,32 @@ pages:
   artifacts:
     paths:
       - public
+
+# Slack notification
+
+.notifier:
+  stage: notify status
+  extends: .srs_tools_setup_job
+  variables:
+    slack_notifier_version: "1.3.0"
+  before_script:
+    - !reference [.srs_tools_setup_job, before_script]
+    - srs_tools_setup $slack_notifier_version
+    - MSG="Pipeline <${CI_PIPELINE_URL}|#${CI_PIPELINE_IID}> for commit <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}."
+
+success ci:
+  extends: .notifier
+  rules:
+    - if: $ON_SCHEDULE
+  script:
+    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "##ci_gnb" --token "${SLACK_TOKEN}"
+
+failed ci:
+  extends: .notifier
+  rules:
+    - if: $ON_SCHEDULE
+      when: on_failure
+    - if: $ON_DEFAULT_BRANCH
+      when: on_failure
+  script:
+    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "##ci_gnb" --token "${SLACK_TOKEN}"
