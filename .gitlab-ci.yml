@@ -11,6 +11,7 @@ stages:
   - static
   - build
   - unit tests
+  - scheduler
   - build and publish doc
 
 ## Static
@@ -56,6 +57,29 @@ alternative builds:
         os_version: latest
         compiler: [gcc, clang]
 
+## Scheduler
+
+.gnb-scheduler:
+  stage: scheduler
+  variables:
+    SCHEDULER_VERSION: "1.3.0"
+
+scheduler-planer:
+  extends:
+    - .scheduler-planer
+    - .gnb-scheduler
+  rules:
+    - if: $ON_MR
+      changes:
+        - .gitlab/ci/schedules.yml
+
+scheduler:
+  extends:
+    - .scheduler
+    - .gnb-scheduler
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+
 # Doc generation
 
 pages:
@@ -70,4 +94,4 @@ pages:
     - mv build/public .
   artifacts:
     paths:
-    - public
+      - public
