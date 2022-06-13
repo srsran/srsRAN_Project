@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(mac)
-add_subdirectory(phy)
+add_library(ssb_mac_adaptor STATIC ssb.cpp)
+target_link_libraries(ssb_mac_adaptor srsvec)
