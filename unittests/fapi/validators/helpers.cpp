@@ -88,20 +88,6 @@ static cyclic_prefix_type generate_cyclic_prefix()
   return static_cast<cyclic_prefix_type>(dist(gen));
 }
 
-/// Returns random values for the maintenance v3 basic parameters. Every parameter is within the range defined in
-/// SCF-222 v4.0 Section 3.4.2.4.
-static std::tuple<ssb_pattern_case, subcarrier_spacing, unsigned> generate_random_maintenance_v3_basic_params()
-{
-  std::uniform_int_distribution<unsigned> enum_dist(0, 4);
-
-  static constexpr std::array<unsigned, 3> lmax{4U, 8U, 64U};
-  std::uniform_int_distribution<unsigned>  lmax_dist(0, 2);
-
-  return {static_cast<ssb_pattern_case>(enum_dist(gen)),
-          static_cast<subcarrier_spacing>(enum_dist(gen)),
-          lmax[lmax_dist(gen)]};
-}
-
 static pci_t generate_pci()
 {
   std::uniform_int_distribution<unsigned> dist(0, 1007);
@@ -109,30 +95,60 @@ static pci_t generate_pci()
   return dist(gen);
 }
 
+static unsigned generate_block_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 63);
+
+  return dist(gen);
+}
+
+static unsigned generate_subcarrier_offset()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 31);
+
+  return dist(gen);
+}
+
+static unsigned generate_offset_point_A()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 2199);
+
+  return dist(gen);
+}
+
+static ssb_pattern_case generate_case_pattern()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 4);
+
+  return static_cast<ssb_pattern_case>(dist(gen));
+}
+
+static bool generate_bool()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 1);
+  return dist(gen);
+}
+
 dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
 {
-  dl_ssb_pdu                              pdu;
-  dl_ssb_pdu_builder                      builder(pdu);
-  std::uniform_int_distribution<unsigned> pci_dist(0, 1007);
-  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<unsigned> block_index_dist(0, 63);
-  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 31);
-  std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 2199);
-  std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
-  std::uniform_real_distribution<>        power_dist(-30.8, 69.5);
-  auto                                    pss_profile = static_cast<beta_pss_profile_type>(binary_dist(gen));
-  builder.set_basic_parameters(
-      pci_dist(gen), pss_profile, block_index_dist(gen), subcarrier_offset_dist(gen), offset_pointA_dist(gen));
-  builder.set_bch_payload_phy_full(binary_dist(gen), sib1_dist(gen), binary_dist(gen), binary_dist(gen));
-  const auto& v3 = generate_random_maintenance_v3_basic_params();
-  builder.set_maintenance_v3_basic_parameters(std::get<0>(v3), std::get<1>(v3), std::get<2>(v3));
-  // When the PSS to SSS NR profile is configured to use the field beta PSS Profile SSS then generate a random number,
-  // otherwise leave it unset, as per SCF-222 Section 3.4.2.4.
-  optional<float> beta_pss;
-  if (pss_profile == beta_pss_profile_type::beta_pss_profile_sss) {
-    beta_pss = power_dist(gen);
-  }
-  builder.set_maintenance_v3_tx_power_info(power_dist(gen), beta_pss);
+  dl_ssb_pdu pdu;
+
+  pdu.phys_cell_id                                   = generate_pci();
+  pdu.beta_pss_profile_nr                            = beta_pss_profile_type::dB_0;
+  pdu.ssb_block_index                                = generate_block_index();
+  pdu.ssb_subcarrier_offset                          = generate_subcarrier_offset();
+  pdu.ssb_offset_pointA                              = generate_offset_point_A();
+  pdu.bch_payload_flag                               = bch_payload_type::phy_full;
+  pdu.bch_payload.phy_mib_pdu.cell_barred            = generate_bool();
+  pdu.bch_payload.phy_mib_pdu.intrafreq_reselection  = generate_bool();
+  pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position    = generate_bool();
+  pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1      = 43;
+  pdu.ssb_maintenance_v3.ssb_pdu_index               = 0;
+  pdu.ssb_maintenance_v3.case_type                   = generate_case_pattern();
+  pdu.ssb_maintenance_v3.scs                         = subcarrier_spacing::kHz30;
+  pdu.ssb_maintenance_v3.lmax                        = 4;
+  pdu.ssb_maintenance_v3.beta_pss_profile_sss        = std::numeric_limits<int16_t>::min();
+  pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = std::numeric_limits<int16_t>::min();
 
   return pdu;
 }
@@ -979,12 +995,6 @@ ul_pucch_pdu unittest::build_valid_ul_pucch_f4_pdu()
   pdu.pucch_maintenance_v3.max_code_rate    = generate_max_code_rate(format);
 
   return pdu;
-}
-
-static bool generate_bool()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 1);
-  return dist(gen);
 }
 
 static unsigned generate_qam_mod_order(bool transform_precoding)

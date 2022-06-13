@@ -31,6 +31,20 @@ static bool validate_phy_cell_id(unsigned value, validator_report& report)
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Physical cell ID", msg_type, pdu_type, report);
 }
 
+/// Validates the Beta PSS profine NR property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
+static bool validate_beta_pss_profile_nr(unsigned value, validator_report& report)
+{
+  static constexpr unsigned MIN_VALUE       = 0;
+  static constexpr unsigned MAX_VALUE       = 1;
+  static constexpr unsigned USE_PROFILE_SSS = 255;
+
+  if (value == USE_PROFILE_SSS) {
+    return true;
+  }
+
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Beta PSS profile NR", msg_type, pdu_type, report);
+}
+
 /// Validates the block index property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4.
 static bool validate_block_index(unsigned value, validator_report& report)
 {
@@ -68,28 +82,28 @@ static bool validate_dmrs_type_a_position(unsigned value, validator_report& repo
   return validate_field(MIN_VALUE, MAX_VALUE, value, "Dmrs type A position", msg_type, pdu_type, report);
 }
 
-/// Validates the cell barred property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table PHY
-/// MIB.
-static bool validate_cell_barred(unsigned value, validator_report& report)
+/// Validates the case property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH PDU maintenance
+/// FAPIv3.
+static bool validate_case(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 1;
+  static constexpr unsigned MAX_VALUE = 4;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Cell barred", msg_type, pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "SSB Case type", msg_type, pdu_type, report);
 }
 
-/// Validates the intra freq reselection property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table
-/// PHY MIB.
-static bool validate_intra_freq_reselection(unsigned value, validator_report& report)
+/// Validates the subcarrier spacing property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH
+/// PDU maintenance FAPIv3.
+static bool validate_subcarrier_spacing(unsigned value, validator_report& report)
 {
   static constexpr unsigned MIN_VALUE = 0;
-  static constexpr unsigned MAX_VALUE = 1;
+  static constexpr unsigned MAX_VALUE = 4;
 
-  return validate_field(MIN_VALUE, MAX_VALUE, value, "Intra frequency reselection", msg_type, pdu_type, report);
+  return validate_field(MIN_VALUE, MAX_VALUE, value, "Subcarrier spacing", msg_type, pdu_type, report);
 }
 
 /// Validates the baseband power scaling for SS-PBCH property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4
-/// in table maintenance v3.
+/// in table SSB/PBCH PDU maintenance FAPIv3.
 static bool validate_ss_pbch_power_scaling(int value, validator_report& report)
 {
   static constexpr int L1_DEFINES_PSS_POWER = -32768;
@@ -105,7 +119,7 @@ static bool validate_ss_pbch_power_scaling(int value, validator_report& report)
 }
 
 /// Validates the beta PSS profile SSS property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4
-/// in table maintenance v3.
+/// in table SSB/PBCH PDU maintenance FAPIv3.
 static bool validate_beta_pss_profile_sss(const dl_ssb_pdu& pdu, validator_report& report)
 {
   static constexpr int BETA_PSS_PROFILE_NR_DEFINES_PSS_POWER = -32768;
@@ -127,7 +141,8 @@ static bool validate_beta_pss_profile_sss(const dl_ssb_pdu& pdu, validator_repor
   return false;
 }
 
-/// Validates the LMax property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table maintenance v3.
+/// Validates the LMax property of the SSB PDU, as per SCF-222 v4.0 section 3.4.2.4 in table SSB/PBCH PDU  maintenance
+/// FAPIv3.
 static bool validate_lmax(unsigned value, validator_report& report)
 {
   if (value == 4 || value == 8 || value == 64) {
@@ -143,12 +158,21 @@ bool srsgnb::fapi::validate_dl_ssb_pdu(const dl_ssb_pdu& pdu, validator_report& 
   bool result = true;
 
   result &= validate_phy_cell_id(pdu.phys_cell_id, report);
+  result &= validate_beta_pss_profile_nr(static_cast<unsigned>(pdu.beta_pss_profile_nr), report);
   result &= validate_block_index(pdu.ssb_block_index, report);
   result &= validate_subcarrier_offset(pdu.ssb_subcarrier_offset, report);
   result &= validate_offset_point_a(pdu.ssb_offset_pointA, report);
-  result &= validate_dmrs_type_a_position(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position, report);
-  result &= validate_cell_barred(pdu.bch_payload.phy_mib_pdu.cell_barred, report);
-  result &= validate_intra_freq_reselection(pdu.bch_payload.phy_mib_pdu.intrafreq_reselection, report);
+  // NOTE: BCH payload property will not be validated.
+  if (pdu.bch_payload_flag == bch_payload_type::phy_full) {
+    result &= validate_dmrs_type_a_position(pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position, report);
+    // NOTE:  PDCCH config SIB1 property uses the whole range and will not be validated.
+    // NOTE:  Cell barred property uses the whole range and will not be validated.
+    // NOTE:  Intra freq reselection property uses the whole range and will not be validated.
+  }
+
+  // NOTE: SSB PDU index property will not be validated, as its range is not defined.
+  result &= validate_case(static_cast<unsigned>(pdu.ssb_maintenance_v3.case_type), report);
+  result &= validate_subcarrier_spacing(static_cast<unsigned>(pdu.ssb_maintenance_v3.scs), report);
   result &= validate_lmax(pdu.ssb_maintenance_v3.lmax, report);
   result &= validate_ss_pbch_power_scaling(pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling, report);
   result &= validate_beta_pss_profile_sss(pdu, report);
