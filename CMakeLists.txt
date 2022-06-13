@@ -39,6 +39,7 @@ option(ASSERTS_ENABLED       "Enable srsRAN asserts"                    ON)
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
+option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 
@@ -97,6 +98,11 @@ endif (ENABLE_ASAN)
 if (ENABLE_TSAN)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=thread")
 endif (ENABLE_TSAN)
+
+if (ENABLE_GCOV)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+endif (ENABLE_GCOV)
 
 ########################################################################
 # Find dependencies

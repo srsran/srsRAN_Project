@@ -5,14 +5,15 @@ include:
   - project: softwareradiosystems/testing-tools
     ref: "1.0.0"
     file: .gitlab/ci-shared/scheduler.yml
-
-variables:
-  SCHEDULER_VERSION: "1.3.0"
+  - local: .gitlab/ci/build.yml
 
 stages:
   - static
-  - launch build and test
+  - build
+  - unit tests
   - build and publish doc
+
+## Static
 
 code-format:
   stage: static
@@ -27,44 +28,35 @@ code-format:
   script:
     - run-clang-format-diff.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
 
-build & test:
-  stage: launch build and test
+## Build + Unit Tests
+
+alternative builds:
+  stage: build
   rules:
-    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-      variables:
-        build_cache_mode: none    
     - if: $ON_MR
-      variables:
-        build_cache_mode: pull
     - if: $ON_DEFAULT_BRANCH
-      variables:
-        build_cache_mode: push
-        report_failed_job: "true"
     - if: $ON_SCHEDULE
       variables:
-        build_cache_mode: none
-        report_failed_job: "true"
+        run_unit_tests: "true"
   needs: []
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
   variables:
-    docker_version: "1.0.0"
+    run_unit_tests: "false"
   parallel:
     matrix:
-      - os_type: ubuntu
-        os_version: "20.04"
-        compiler: [gcc, clang]
       - os_type: ubuntu
         os_version: "22.04"
         compiler: clang
       - os_type: ubuntu
-        os_version: "22.04"
-        compiler: gcc
-        run_unit_tests: "true"
+        os_version: "20.04"
+        compiler: [gcc, clang]
       - os_type: archlinux
         os_version: latest
         compiler: [gcc, clang]
+
+# Doc generation
 
 pages:
   stage: build and publish doc
@@ -79,4 +71,3 @@ pages:
   artifacts:
     paths:
     - public
-
