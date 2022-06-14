@@ -42,6 +42,7 @@ stages:
       - build/CTestTestfile.cmake
       - build/unittests
       - build/apps/cu-up/cu-up
+    expire_in: 10 minutes
 
 build [cached]:
   # The job will use the cache for latest compilation
@@ -53,32 +54,25 @@ build [cached]:
   cache:
     <<: *build_cache
     policy: pull
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 10 minutes
 
 build [clean and update cache]:
   # A clean build will be done and the job will push a new fresh cache
   extends: .build
   rules:
-    - if: $ON_DEFAULT_BRANCH
+    - if: $ON_SCHEDULE
   cache:
     <<: *build_cache
     policy: push
   artifacts:
     <<: *build_artifacts
-    expire_in: 6 hours
+    expire_in: 7 days
 
 build [clean]:
   # Fresh build with no interacton with the cache
   extends: .build
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
-    - if: $ON_SCHEDULE
   cache: []
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 7 days
 
 # Unit tests
 
@@ -86,7 +80,19 @@ unit test:
   stage: unit tests
   extends: .build_and_unit
   rules:
+    - if: $ON_DEFAULT_BRANCH
+      when: never
     - if: $run_unit_tests == "true"
+  needs:
+    - job: build [cached]
+      artifacts: true
+      optional: true
+    - job: build [clean and update cache]
+      artifacts: true
+      optional: true
+    - job: build [clean]
+      artifacts: true
+      optional: true
   script:
     # Tests
     - cd build

@@ -53,7 +53,8 @@ alternative builds:
   stage: build
   rules:
     - if: $ON_MR
-    - if: $ON_DEFAULT_BRANCH
+      variables:
+        run_unit_tests: "false"
     - if: $ON_SCHEDULE
       variables:
         run_unit_tests: "true"
@@ -61,8 +62,6 @@ alternative builds:
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
-  variables:
-    run_unit_tests: "false"
   parallel:
     matrix:
       - os_type: ubuntu
