@@ -8,6 +8,16 @@
  *
  */
 
+/// \file
+/// \brief Example application of SSB transmitted through radio.
+///
+/// This example application instantiates a radio (ZMQ, UHD or other), a lower PHY and an upper PHY with SSB
+/// transmission.
+///
+/// It is a proof-of-concept of the integration of the lower physical layer working in real-time using a radio.
+///
+/// The application supports different working profiles, run <tt> radio_ssb -h </tt> for usage details.
+
 #include "../radio/radio_notifier_sample.h"
 #include "lower_phy_example_factory.h"
 #include "rx_symbol_handler_example.h"
@@ -24,7 +34,7 @@
 #include <string>
 
 /// Describes a channel configuration profile.
-struct benchmark_configuration_profile {
+struct configuration_profile {
   std::string           name;
   std::string           description;
   std::function<void()> function;
@@ -58,7 +68,7 @@ static bool                                      zmq_loopback   = true;
 static ssb_pattern_case                          ssb_pattern    = ssb_pattern_case::A;
 
 /// Defines a set of configuration profiles.
-static const std::vector<benchmark_configuration_profile> profiles = {
+static const std::vector<configuration_profile> profiles = {
     {"b200_20MHz",
      "Single channel B200 USRP 20MHz bandwidth.",
      []() {
@@ -192,7 +202,7 @@ static void usage(std::string prog)
 {
   fmt::print("Usage: {} [-P profile] [-D duration] [-v level] [-o file name]\n", prog);
   fmt::print("\t-P Profile. [Default {}]\n", profiles.front().name);
-  for (benchmark_configuration_profile profile : profiles) {
+  for (const configuration_profile& profile : profiles) {
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-D Duration in slots. [Default {}]\n", duration_slots);
@@ -236,7 +246,7 @@ static void parse_args(int argc, char** argv)
   // Search profile if set.
   if (!profile_name.empty()) {
     bool found = false;
-    for (const benchmark_configuration_profile& profile : profiles) {
+    for (const configuration_profile& profile : profiles) {
       if (strcmp(profile_name.c_str(), profile.name.c_str()) == 0) {
         profile.function();
         found = true;
