@@ -12,6 +12,7 @@
 #include "../../ran/gnb_format.h"
 #include "../support/config_helpers.h"
 #include "pdcch_scheduler_impl.h"
+#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
 
@@ -322,11 +323,17 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
   // Fill RAR DCI.
-  rar.pdcch_cfg                                  = &rar_alloc.result.dl.dl_pdcchs.back();
-  rar.pdcch_cfg->dci.f1_0.time_domain_assignment = pdsch_time_res_index;
-  rar.pdcch_cfg->dci.f1_0.prbs                   = rar_prbs;
-  rar.pdcch_cfg->dci.f1_0.mcs                    = 0;
-  // TODO
+  rar.pdcch_cfg                      = &rar_alloc.result.dl.dl_pdcchs.back();
+  rar.pdcch_cfg->dci.type            = dci_dl_rnti_config_type::ra_f1_0;
+  rar.pdcch_cfg->dci.ra_f1_0         = {};
+  dci_1_0_ra_rnti_configuration& dci = rar.pdcch_cfg->dci.ra_f1_0;
+  dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
+  dci.frequency_resource             = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_prbs.start(), rar_prbs.length()});
+  dci.time_resource            = pdsch_time_res_index;
+  dci.vrb_to_prb_mapping       = 0; // TODO.
+  dci.modulation_coding_scheme = 0;
+  dci.tb_scaling               = 0; // TODO.
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];
@@ -346,7 +353,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
     msg3_info.prbs                     = prbs;
-    // TODO
+    msg3_info.mcs                      = 0;
+    msg3_info.tpc                      = 0;
+    msg3_info.csi_req                  = false;
 
     // Allocate and fill PUSCH for Msg3.
     const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;

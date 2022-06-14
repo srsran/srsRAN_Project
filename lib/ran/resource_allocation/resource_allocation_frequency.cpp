@@ -25,6 +25,14 @@ unsigned int srsgnb::ra_frequency_type1_get_riv(const ra_frequency_type1_configu
   return sliv_from_s_and_l(config.N_bwp_size, config.start_vrb, config.length_vrb);
 }
 
+ra_frequency_type1_configuration srsgnb::ra_frequency_type1_from_riv(unsigned N_bwp_size, unsigned riv)
+{
+  ra_frequency_type1_configuration out;
+  out.N_bwp_size = N_bwp_size;
+  sliv_to_s_and_l(N_bwp_size, riv, out.start_vrb, out.length_vrb);
+  return out;
+}
+
 unsigned srsgnb::ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config)
 {
   // Determine K.

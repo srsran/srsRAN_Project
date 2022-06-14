@@ -36,7 +36,6 @@ void test_pdcch_sched_sib1()
   TESTASSERT(pdcch->ctx.coreset_cfg == &*cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(SI_RNTI, pdcch->ctx.rnti);
-  TESTASSERT_EQ(dci_dl_format::f1_0, pdcch->dci.format_type);
   // TODO: Check CCE position is valid.
 }
 
@@ -68,7 +67,6 @@ void test_pdcch_sched_rar()
   TESTASSERT(pdcch->ctx.coreset_cfg == &*cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   TESTASSERT_EQ(aggregation_level::n4, pdcch->ctx.cces.aggr_lvl);
   TESTASSERT_EQ(ra_rnti, pdcch->ctx.rnti);
-  TESTASSERT_EQ(dci_dl_format::f1_0, pdcch->dci.format_type);
 
   // Action: Try allocate another RAR that fails due to lack of PDCCH resources.
   ra_rnti = to_rnti(2);

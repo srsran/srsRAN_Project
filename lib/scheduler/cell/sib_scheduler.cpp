@@ -9,7 +9,9 @@
  */
 
 #include "sib_scheduler.h"
+#include "../support/config_helpers.h"
 #include "resource_grid.h"
+#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
 
@@ -125,6 +127,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                                subcarrier_spacing        scs_common) :
   cfg{cfg_},
   pdcch_sched{pdcch_sch},
+  coreset0_bwp_dims(get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common)),
   pdcch_config_sib1{pdcch_config_sib1_},
   sib1_mcs{sib1_mcs_},
   sib1_rv{sib1_rv_},
@@ -243,12 +246,18 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
 
   // Fill SIB1 DCI.
-  sib1_pdcch.dci.format_type = dci_dl_format::f1_0;
-  sib1_pdcch.dci.f1_0.prbs   = crb_to_prb(cfg.dl_cfg_common.init_dl_bwp.generic_params, sib1_crbs_grant);
+  sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
+  sib1_pdcch.dci.si_f1_0             = {};
+  dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
+  dci.N_rb_dl_bwp                    = coreset0_bwp_dims.length();
+  dci.frequency_resource             = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_crbs_grant.start(), sib1_crbs_grant.length()});
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
-  sib1_pdcch.dci.f1_0.time_domain_assignment = 0;
-  sib1_pdcch.dci.f1_0.mcs                    = sib1_mcs;
-  sib1_pdcch.dci.f1_0.rv                     = sib1_rv;
+  dci.time_resource                = 0;
+  dci.vrb_to_prb_mapping           = 0; // TODO.
+  dci.modulation_coding_scheme     = sib1_mcs;
+  dci.redundancy_version           = sib1_rv;
+  dci.system_information_indicator = 0;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();

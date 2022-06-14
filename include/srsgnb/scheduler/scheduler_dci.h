@@ -12,6 +12,7 @@
 #define SRSGNB_SCHEDULER_DCI_H
 
 #include "srsgnb/ran/pdcch/aggregation_level.h"
+#include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/ran/prb_grant.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
@@ -48,16 +49,17 @@ struct dci_format1_0_info {
   uint8_t dai;
 };
 
+/// Defines which fields are stored in the DCI payload, based on the chosen DCI format and RNTI type.
+enum class dci_dl_rnti_config_type { si_f1_0, ra_f1_0, ue_f1_0 };
+
 /// \brief Describes an unpacked DL DCI message.
 /// \remark See FAPI DCI PDU and ORAN WG8 DL-DCI Configuration.
 struct dci_dl_info {
-  /// DCI format type used.
-  dci_dl_format format_type;
+  dci_dl_rnti_config_type type;
   union {
-    dci_format1_0_info f1_0;
+    dci_1_0_si_rnti_configuration si_f1_0;
+    dci_1_0_ra_rnti_configuration ra_f1_0;
   };
-
-  dci_dl_info() : format_type(dci_dl_format::f1_0), f1_0() {}
 };
 
 /// \remark See TS 38.212, 7.3.1.1.1 - "Format 0_0".

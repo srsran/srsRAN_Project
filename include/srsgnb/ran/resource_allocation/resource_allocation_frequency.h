@@ -52,6 +52,10 @@ struct ra_frequency_type1_configuration {
 ///   \f$RIV = N_{BWP}^{size}(N_{BWP}^{size}-L_{RBs}+1)+(N_{BWP}^{size}-1-RB_{start})\f$.
 unsigned ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config);
 
+/// \brief Calculates the PRBs from \f$RIV\f$ as per TS 38.214 Section 5.1.2.2.2 for Downlink and
+/// Section 6.1.2.2 for Uplink.
+ra_frequency_type1_configuration ra_frequency_type1_from_riv(unsigned N_bwp_size, unsigned riv);
+
 /// \brief Describes the resource allocation in frequency domain for Type1 special case as per TS38.214
 /// Section 5.1.2.2.2 for Downlink and Section 6.1.2.2 for Uplink.
 ///

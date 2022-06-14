@@ -344,7 +344,6 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
-  pdcch.dci.format_type       = dci_fmt;
 
   // Allocate a position for DL PDCCH in CORESET.
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {

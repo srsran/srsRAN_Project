@@ -12,6 +12,7 @@
 #include "lib/scheduler/cell/pdcch_scheduler.h"
 #include "lib/scheduler/cell/ra_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
+#include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
 #include <list>
@@ -94,10 +95,12 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
     ra_rntis.insert(ra_rnti);
 
     // Test DCI content.
-    TESTASSERT_EQ(dci_dl_format::f1_0, rar.pdcch_cfg->dci.format_type);
-    const dci_format1_0_info& f1_0 = rar.pdcch_cfg->dci.f1_0;
-    TESTASSERT(f1_0.time_domain_assignment < pdsch_cfg.pdsch_td_alloc_list.size());
-    crb_interval rar_crbs = prb_to_crb(bwp_cfg, f1_0.prbs);
+    TESTASSERT_EQ(dci_dl_rnti_config_type::ra_f1_0, rar.pdcch_cfg->dci.type);
+    const dci_1_0_ra_rnti_configuration& f1_0 = rar.pdcch_cfg->dci.ra_f1_0;
+    TESTASSERT(f1_0.time_resource < pdsch_cfg.pdsch_td_alloc_list.size());
+    ra_frequency_type1_configuration ra_s_l   = ra_frequency_type1_from_riv(f1_0.N_rb_dl_bwp, f1_0.frequency_resource);
+    prb_interval                     prbs     = {ra_s_l.start_vrb, ra_s_l.start_vrb + ra_s_l.length_vrb};
+    crb_interval                     rar_crbs = prb_to_crb(bwp_cfg, prbs);
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
     // Verify no collisions in PDSCH.

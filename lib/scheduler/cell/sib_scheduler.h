@@ -24,7 +24,6 @@ enum class ssb_pattern_case;
 class sib1_scheduler
 {
 public:
-  sib1_scheduler() = delete;
   sib1_scheduler(const cell_configuration& cfg_,
                  pdcch_scheduler&          pdcch_sch,
                  uint8_t                   pdcch_config_sib1_,
@@ -71,6 +70,7 @@ private:
 
   /// [Implementation-defined] SIB1 parameters.
   /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
+  crb_interval      coreset0_bwp_dims;
   uint8_t           pdcch_config_sib1;
   uint8_t           sib1_mcs;
   uint8_t           sib1_rv;

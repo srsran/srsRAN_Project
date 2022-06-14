@@ -120,9 +120,9 @@ struct test_bench {
     const pdcch_dl_information test_pdcch = *test_sib1.pdcch_cfg;
 
     TESTASSERT_EQ(SI_RNTI, test_pdcch.ctx.rnti);
-    TESTASSERT_EQ(dci_dl_format::f1_0, test_pdcch.dci.format_type);
-    TESTASSERT_EQ(cfg_msg.sib1_mcs, test_pdcch.dci.f1_0.mcs);
-    TESTASSERT_EQ(cfg_msg.sib1_rv, test_pdcch.dci.f1_0.rv);
+    TESTASSERT_EQ(dci_dl_rnti_config_type::si_f1_0, test_pdcch.dci.type);
+    TESTASSERT_EQ(cfg_msg.sib1_mcs, test_pdcch.dci.si_f1_0.modulation_coding_scheme);
+    TESTASSERT_EQ(cfg_msg.sib1_rv, test_pdcch.dci.si_f1_0.redundancy_version);
   }
 
   /// Tests if PRBs have been set as used in the resource grid for the current slot.
@@ -171,7 +171,6 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
   // Run the test for 10000 slots.
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
-
     // Run SIB1 scheduler.
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
