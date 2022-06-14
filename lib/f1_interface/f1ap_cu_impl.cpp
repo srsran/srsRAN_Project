@@ -35,8 +35,11 @@ public:
   event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response_message;
 };
 
-f1ap_cu_impl::f1ap_cu_impl(f1ap_message_notifier& event_notifier_) :
-  logger(srslog::fetch_basic_logger("F1AP")), event_notifier(event_notifier_)
+f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&            f1c_pdu_notifier_,
+                           f1c_initiating_message_notifier& f1c_init_message_notifier_) :
+  logger(srslog::fetch_basic_logger("CU-F1AP")),
+  pdu_notifier(f1c_pdu_notifier_),
+  init_message_notifier(f1c_init_message_notifier_)
 {
 }
 
@@ -45,13 +48,33 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
 {
+  // Pack message into PDU
+  asn1::f1ap::f1_ap_pdu_c pdu;
   if (msg.success) {
     // TODO send response
     logger.info("Transmitting F1SetupResponse message");
+
+    pdu.set_successful_outcome();
+    pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    pdu.successful_outcome().value.f1_setup_resp() = msg.response;
+
+    // set values handled by F1
+    pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = 99;
   } else {
-    // TODO send failure
     logger.info("Transmitting F1SetupFailure message");
+    pdu.set_unsuccessful_outcome();
+    pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
+    auto& setup_fail                                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
+
+    // set values handled by F1
+    setup_fail->transaction_id.value = 99;
+    setup_fail->cause.value.set_radio_network();
+    setup_fail->cause.value.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
   }
+
+  // send response
+  pdu_notifier.on_new_message(pdu);
 }
 
 void f1ap_cu_impl::handle_init_ul_rrc_message_transfer(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg)
@@ -159,7 +182,7 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
   switch (msg.value.type().value) {
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request:
       req_msg.request = msg.value.f1_setup_request();
-      event_notifier.on_f1_setup_request_received(req_msg);
+      init_message_notifier.on_f1_setup_request_received(req_msg);
       break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer:
       handle_init_ul_rrc_message_transfer(msg.value.init_ulrrc_msg_transfer());

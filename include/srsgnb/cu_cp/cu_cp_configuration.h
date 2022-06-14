@@ -20,6 +20,7 @@ namespace srs_cu_cp {
 /// Configuration passed to CU CP.
 struct cu_cp_configuration {
   task_executor*       cu_executor = nullptr;
+  f1c_message_notifier* f1c_notifier = nullptr; /// Callback for outgoing messeges.
 };
 
 } // namespace srs_cu_cp

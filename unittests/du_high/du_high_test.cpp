@@ -3,6 +3,7 @@
 #include "../../lib/du_high/du_high_executor_strategies.h"
 #include "../../lib/f1_interface/f1ap_asn1_packer.h"
 #include "../../lib/gateway/sctp_network_gateway.h"
+#include "lib/f1_interface/test_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
@@ -49,40 +50,17 @@ void test_f1_setup_local()
 {
   test_delimit_logger delim{"Test F1 Setup Local"};
 
-  class dummy_f1c_message_handler : public f1c_message_handler
-  {
-  public:
-    dummy_f1c_message_handler(f1c_message_notifier& listener) : listener(listener) {}
-
-    f1c_message_notifier&   listener;
-    asn1::f1ap::f1_ap_pdu_c last_msg;
-    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
-    {
-      // store and loop PDU back to sender
-      last_msg = msg;
-      listener.on_new_message(msg);
-    }
-  };
-
-  class dummy_f1c_to_du_relay : public f1c_message_notifier
-  {
-  public:
-    void on_new_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
-    {
-      std::printf("[F1C-TO_DU-RELAY] Received a F1AP PDU of type %s\n", msg.type().to_string());
-    }
-  };
-
   du_high_worker_manager    workers;
-  dummy_f1c_to_du_relay     relay;
-  dummy_f1c_message_handler msg_handler(relay);
+  dummy_f1c_message_handler msg_handler;
+  dummy_f1c_pdu_notifier    notifier(&msg_handler);
+
   phy_dummy                 phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_msg_hdl     = &msg_handler;
+  cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
@@ -99,10 +77,11 @@ void test_f1_setup_network()
 {
   test_delimit_logger delim{"Test F1 Setup Network"};
 
-  class dummy_f1c_message_handler : public f1c_message_handler
+  //
+  class f1c_network_adapter : public f1c_message_handler
   {
   public:
-    dummy_f1c_message_handler() : packer(gw, *this) {}
+    f1c_network_adapter() : packer(gw, *this) {}
 
     /// We require a network gateway and a packer
     sctp_network_gateway gw;
@@ -113,14 +92,15 @@ void test_f1_setup_network()
   };
 
   du_high_worker_manager    workers;
-  dummy_f1c_message_handler msg_handler;
+  f1c_network_adapter       pdu_handler;
+  dummy_f1c_pdu_notifier    notifier(&pdu_handler);
   phy_dummy                 phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_msg_hdl     = &msg_handler;
+  cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
@@ -154,11 +134,13 @@ void test_du_ue_create()
   pdu_handler.ctrl_exec = &workers.ctrl_worker;
   phy_dummy phy;
 
+  dummy_f1c_pdu_notifier notifier(&pdu_handler);
+
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
   cfg.dl_executors    = &workers.dl_exec_mapper;
   cfg.ul_executors    = &workers.ul_exec_mapper;
-  cfg.f1c_msg_hdl     = &pdu_handler;
+  cfg.f1c_notifier    = &notifier;
   cfg.phy_adapter     = &phy;
   cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 

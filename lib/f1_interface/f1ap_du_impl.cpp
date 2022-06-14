@@ -30,10 +30,10 @@ public:
   event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response;
 };
 
-f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_handler& f1c_pdu_handler_) :
-  logger(srslog::fetch_basic_logger("F1AP")),
+f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_notifier& message_notifier_) :
+  logger(srslog::fetch_basic_logger("DU-F1AP")),
   timers(timers_),
-  f1c(f1c_pdu_handler_),
+  f1c_notifier(message_notifier_),
   events(std::make_unique<f1ap_event_manager>())
 {
   f1c_setup_timer = timers.create_unique_timer();
@@ -47,8 +47,20 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  // TODO send msg
+  // set F1AP PDU contents
+  asn1::f1ap::f1_ap_pdu_c pdu;
+  pdu.set_init_msg();
+  pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  pdu.init_msg().value.f1_setup_request() = request.msg;
 
+  // set values handled by F1
+  auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
+  setup_req->transaction_id.value = 99;
+
+  // send request
+  f1c_notifier.on_new_message(pdu);
+
+  // Await response
   f1ap_event_manager::f1ap_setup_outcome_t f1_resp;
 
   // TODO: add procedure implementation
@@ -184,7 +196,7 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
   f1ap_pdu.set_init_msg();
 
   // send to handler
-  f1c.handle_message(f1ap_pdu);
+  f1c_notifier.on_new_message(f1ap_pdu);
 }
 
 void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)

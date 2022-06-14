@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 class f1ap_cu_impl final : public f1_interface
 {
 public:
-  f1ap_cu_impl(f1ap_message_notifier& event_notifier_);
+  f1ap_cu_impl(f1c_message_notifier& f1c_pdu_notifier_, f1c_initiating_message_notifier& f1c_init_message_notifier_);
   ~f1ap_cu_impl();
 
   // f1ap connection manager functions
@@ -59,7 +59,8 @@ private:
   void handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
 
   srslog::basic_logger&  logger;
-  f1ap_message_notifier& event_notifier;
+  f1c_message_notifier&            pdu_notifier;
+  f1c_initiating_message_notifier& init_message_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;
 };

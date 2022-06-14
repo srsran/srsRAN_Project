@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_ADAPTERS_H
-#define SRSGNB_ADAPTERS_H
+#ifndef SRSGNB_DU_ADAPTERS_H
+#define SRSGNB_DU_ADAPTERS_H
 
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
@@ -72,4 +72,4 @@ private:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_ADAPTERS_H
+#endif // SRSGNB_DU_ADAPTERS_H

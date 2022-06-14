@@ -6,6 +6,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {

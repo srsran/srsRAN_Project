@@ -9,6 +9,7 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
+#include "lib/f1_interface/test_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -24,9 +25,12 @@ void test_f1_setup()
   task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
   std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
+  dummy_f1c_pdu_notifier f1c_pdu_notifier(nullptr);
+
   // create CU-CP config
   cu_cp_configuration cfg;
   cfg.cu_executor = task_executor.get();
+  cfg.f1c_notifier = &f1c_pdu_notifier;
 
   // create and start DUT
   cu_cp cu_cp_obj(cfg);
@@ -96,7 +100,10 @@ void test_f1_setup()
     TESTASSERT_EQ(1, cu_cp_obj.get_nof_dus());
   }
 
-  // TODO: Check contents of F1SetupResponse
+  // Check response is F1SetupResponse
+  TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome, f1c_pdu_notifier.last_pdu.type());
+  TESTASSERT_EQ(asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp,
+                f1c_pdu_notifier.last_pdu.successful_outcome().value.type());
 
   return;
 }

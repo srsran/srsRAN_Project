@@ -16,7 +16,7 @@ struct du_high_configuration {
   task_executor*              du_mng_executor = nullptr;
   du_l2_ul_executor_mapper*   ul_executors    = nullptr;
   du_l2_dl_executor_mapper*   dl_executors    = nullptr;
-  f1c_message_handler*        f1c_msg_hdl     = nullptr;
+  f1c_message_notifier*       f1c_notifier    = nullptr;
   mac_result_notifier*        phy_adapter     = nullptr;
   std::vector<du_cell_config> cells;
 };

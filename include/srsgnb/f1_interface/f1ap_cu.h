@@ -105,11 +105,11 @@ public:
   handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) = 0;
 };
 
-/// Methods used by F1AP to notify events.
-class f1ap_message_notifier
+/// Methods used by F1AP to notify reception of initiating messages.
+class f1c_initiating_message_notifier
 {
 public:
-  virtual ~f1ap_message_notifier()                                               = default;
+  virtual ~f1c_initiating_message_notifier()                                     = default;
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 };
 

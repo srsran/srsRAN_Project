@@ -9,6 +9,7 @@
  */
 
 #include "lib/du_manager/converters/f1c_asn1_helpers.h"
+#include "lib/f1_interface/test_helpers.h"
 #include "srsgnb/f1_interface/f1ap_du.h"
 #include "srsgnb/f1_interface/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
@@ -28,8 +29,8 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
   timer_manager         timers;
 
-  f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap(timers, *msg_handler);
+  f1c_null_notifier msg_notifier = {};
+  auto              f1ap_du      = create_f1ap(timers, msg_notifier);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};
@@ -60,9 +61,8 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
     TESTASSERT(t.ready());
     TESTASSERT(t.get().success);
     TESTASSERT(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number() == 2);
-
-    // Unsuccessful initial outcome
   } else {
+    // Unsuccessful initial outcome
     pdu.set_unsuccessful_outcome();
     pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
     auto& setup_fail                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
@@ -111,8 +111,8 @@ void test_f1_setup_retry_limit()
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
   timer_manager         timers;
 
-  f1c_message_handler* msg_handler = {};
-  auto                 f1ap_du     = create_f1ap(timers, *msg_handler);
+  f1c_null_notifier msg_notifier = {};
+  auto              f1ap_du      = create_f1ap(timers, msg_notifier);
 
   f1_setup_request_message request_msg  = {};
   du_setup_params          setup_params = {};

@@ -18,6 +18,7 @@ using namespace srs_cu_cp;
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
   srsran_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
+  srsran_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
@@ -25,7 +26,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  f1ap = create_f1ap(f1ap_ev_notifier);
+  f1ap    = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier);
   manager = srs_cu_cp::create_cu_cp_manager(timers, *f1ap, *cfg.cu_executor);
 
   // connect event notifier to layers
