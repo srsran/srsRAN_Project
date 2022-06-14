@@ -72,7 +72,7 @@ inline search_space_configuration make_default_search_space_zero_config()
   cfg.cs_id          = to_coreset_id(0);
   cfg.duration       = 1;
   cfg.type           = search_space_configuration::common;
-  cfg.nof_candidates = {0, 0, 0, 0, 0};
+  cfg.nof_candidates = {1, 1, 1, 0, 0}; // TODO.
   return cfg;
 }
 

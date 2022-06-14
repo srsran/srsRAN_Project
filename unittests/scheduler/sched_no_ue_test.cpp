@@ -48,10 +48,10 @@ void test_rach_indication()
   sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
   sch.handle_cell_configuration_request(make_cell_cfg_req());
 
-  const unsigned tx_delay = 2;
-  slot_point     sl_rx{0, 0}, sl_tx = sl_rx + tx_delay;
-
   // Action 2: Add RACH indication.
+  // Note: RACH is added in a slot different than the SIB1 to avoid PDCCH conflicts.
+  const unsigned tx_delay = 2;
+  slot_point     sl_rx{0, 1}, sl_tx = sl_rx + tx_delay;
   sch.handle_rach_indication(generate_rach_ind_msg(sl_rx, to_rnti(0x4601)));
 
   // Action 3: Run slot 0.
@@ -70,6 +70,5 @@ int main()
   srslog::init();
 
   test_no_ues();
-  // TODO: enable this when CCE tables are enabled in the PDCCH scheduler.
-  // test_rach_indication();
+  test_rach_indication();
 }

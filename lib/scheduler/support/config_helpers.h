@@ -53,6 +53,13 @@ inline crb_interval get_coreset0_crbs(const pdcch_config_common& pdcch_cfg)
   return {rb_start, rb_start + get_coreset_nof_prbs(*pdcch_cfg.coreset0)};
 }
 
+/// Calculates number of CCEs in CORESET.
+inline unsigned get_coreset_nof_cces(const coreset_configuration& cs_cfg)
+{
+  unsigned nof_rbs = get_coreset_nof_prbs(cs_cfg);
+  return nof_rbs / pdcch_constants::NOF_REG_PER_CCE;
+}
+
 } // namespace srsgnb
 
 #endif // SRSGNB_CONFIG_HELPERS_H

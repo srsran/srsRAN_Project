@@ -12,6 +12,7 @@
 #include "../phy_helpers.h"
 #include "../support/config_helpers.h"
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
 using namespace srsgnb;
 
@@ -45,7 +46,7 @@ private:
   bool alloc_dfs_node(cell_slot_resource_allocator& slot_alloc, const alloc_record& record, unsigned dci_iter_index);
   bool get_next_dfs(cell_slot_resource_allocator& slot_alloc);
 
-  span<const unsigned> get_cce_loc_table(const alloc_record& record) const;
+  pdcch_candidate_list get_cce_loc_table(const alloc_record& record) const;
 
   /// Allocate CCEs of a given PDCCH.
   bool allocate_cce(cell_slot_resource_allocator& slot_alloc, unsigned ncce, const alloc_record& record);
@@ -156,11 +157,14 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::get_next_dfs(cell_slot_resource
   return true;
 }
 
-span<const unsigned> pdcch_scheduler_impl::pdcch_slot_allocator::get_cce_loc_table(const alloc_record& record) const
+pdcch_candidate_list pdcch_scheduler_impl::pdcch_slot_allocator::get_cce_loc_table(const alloc_record& record) const
 {
-  // TODO
-  static const static_vector<unsigned, 1> cces = {0};
-  return cces;
+  // TODO: Cache result list.
+  aggregation_level l = record.pdcch_ctx->cces.aggr_lvl;
+  return pdcch_candidates_common_ss_get_lowest_cce(
+      pdcch_candidates_common_ss_configuration{l,
+                                               record.ss_cfg->nof_candidates[static_cast<unsigned>(l)],
+                                               get_coreset_nof_cces(*record.pdcch_ctx->coreset_cfg)});
 }
 
 static prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
