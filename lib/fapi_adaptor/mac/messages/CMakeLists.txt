@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_library(ssb_mac_adaptor STATIC ssb.cpp)
-target_link_libraries(ssb_mac_adaptor srsvec)
+add_library(srsgnb_mac_fapi_adaptors STATIC ssb.cpp)
+target_link_libraries(srsgnb_mac_fapi_adaptors srsvec)

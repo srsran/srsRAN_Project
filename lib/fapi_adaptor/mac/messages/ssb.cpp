@@ -9,17 +9,23 @@
  */
 
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
-#include "srsgnb/fapi/message_builders.h"
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-/// Converts the given value into a beta_pss_profile_type.
-static beta_pss_profile_type convert_beta_pss_profile_nr(uint8_t value)
+/// Converts the given beta_pss_profile_nr_type value into a beta_pss_profile_type.
+static beta_pss_profile_type convert_beta_pss_profile_nr(beta_pss_profile_nr_type value)
 {
-  // :TODO: check this with Xico.
-  return static_cast<beta_pss_profile_type>(value);
+  switch (value) {
+    case beta_pss_profile_nr_type::dB_0:
+      return beta_pss_profile_type::dB_0;
+    case beta_pss_profile_nr_type::dB_3:
+      return beta_pss_profile_type::dB_3;
+    default:
+      break;
+  }
+  return beta_pss_profile_type::beta_pss_profile_sss;
 }
 
 void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu& fapi_pdu, const srsgnb::dl_ssb_pdu& mac_pdu)
@@ -37,15 +43,13 @@ void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& bui
                                mac_pdu.ssb_subcarrier_offset,
                                mac_pdu.offset_to_point_A);
 
-  builder.set_maintenance_v3_basic_parameters(
-      mac_pdu.ssb_case, static_cast<subcarrier_spacing>(mac_pdu.scs), mac_pdu.L_max);
+  builder.set_maintenance_v3_basic_parameters(mac_pdu.ssb_case, mac_pdu.scs, mac_pdu.L_max);
 
-  // :TODO: check this with Xico.
   optional<float> beta_pss_profile_sss;
-  if (mac_pdu.beta_pss_profile_sss != -32.768F) {
-    beta_pss_profile_sss.emplace(mac_pdu.beta_pss_profile_sss);
+  if (mac_pdu.beta_pss_profile_nr == beta_pss_profile_nr_type::use_profile_sss) {
+    beta_pss_profile_sss.emplace(mac_pdu.beta_pss_profile_sss_in_dB);
   }
-  
+
   builder.set_maintenance_v3_tx_power_info({}, beta_pss_profile_sss);
 
   const ssb_mib_data_pdu& mib_pdu = mac_pdu.mib_data;

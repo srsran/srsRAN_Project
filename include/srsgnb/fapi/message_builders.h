@@ -1722,7 +1722,7 @@ public:
 
 /// Builds and returns a slot.indication message with the given parameters, as per SCF-222 v4.0 section 3.4.1 in table
 /// Slot indication message body.
-slot_indication_message build_slot_indication_message(unsigned sfn, unsigned slot)
+inline slot_indication_message build_slot_indication_message(unsigned sfn, unsigned slot)
 {
   slot_indication_message msg;
 
@@ -1735,7 +1735,7 @@ slot_indication_message build_slot_indication_message(unsigned sfn, unsigned slo
 /// \brief Builds and returns an ERROR.indication message with the given parameters, as per SCF-222 v4.0 section 3.3.6.1
 /// in table ERROR.indication message body
 /// \note This builder is used to build any error code id but OUT_OF_SYNC error.
-error_indication_message
+inline error_indication_message
 build_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id, error_code_id error_id)
 {
   srsran_assert(error_id != error_code_id::out_of_sync, "OUT OF SYNC error is not allowed in this builder");
@@ -1755,11 +1755,11 @@ build_error_indication(uint16_t sfn, uint16_t slot, message_type_id msg_id, erro
 /// \brief Builds and returns an ERROR.indication message with the given parameters, as per SCF-222 v4.0 section 3.3.6.1
 /// in table ERROR.indication message body
 /// \note This builder is used to build only an OUT_OF_SYNC error code.
-error_indication_message build_out_of_sync_error_indication(uint16_t        sfn,
-                                                            uint16_t        slot,
-                                                            message_type_id msg_id,
-                                                            uint16_t        expected_sfn,
-                                                            uint16_t        expected_slot)
+inline error_indication_message build_out_of_sync_error_indication(uint16_t        sfn,
+                                                                   uint16_t        slot,
+                                                                   message_type_id msg_id,
+                                                                   uint16_t        expected_sfn,
+                                                                   uint16_t        expected_slot)
 {
   error_indication_message msg;
 

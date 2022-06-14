@@ -8,12 +8,14 @@
 
 set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
 
+add_subdirectory(mac)
+
 add_executable(fapi_adaptor_test fapi_adaptor_test.cpp)
 target_link_libraries(fapi_adaptor_test ssb_fapi_adaptor srslog)
 add_test(fapi_adaptor_test fapi_adaptor_test)
 
 add_executable(fapi_adaptor_performance_dl_tti_request adaptor_performance_dl_tti_request.cpp)
-target_link_libraries(fapi_adaptor_performance_dl_tti_request ssb_fapi_adaptor srslog pdcch_fapi_adaptor)
+target_link_libraries(fapi_adaptor_performance_dl_tti_request ssb_fapi_adaptor srsgnb_mac_fapi_adaptors srslog pdcch_fapi_adaptor)
 add_test(fapi_adaptor_performance_dl_tti_request fapi_adaptor_performance_dl_tti_request)
 
 add_executable(pdcch_adaptor_test pdcch_adaptor_test.cpp)
