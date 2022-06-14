@@ -7,6 +7,9 @@ include:
     file: .gitlab/ci-shared/scheduler.yml
   - local: .gitlab/ci/build.yml
 
+variables:
+  STATIC_DOCKER: "registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.1"
+
 stages:
   - static
   - build
@@ -23,12 +26,26 @@ code-format:
     - if: $ON_MR
   variables:
     GIT_DEPTH: 0
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.0
+  image: $STATIC_DOCKER
   before_script:
     - git remote set-branches --add origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     - git fetch
   script:
     - run-clang-format-diff.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+
+no-binaries-added:
+  stage: static
+  rules:
+    - if: $ON_MR
+  variables:
+    GIT_DEPTH: 0
+  image: $STATIC_DOCKER
+  before_script:
+    - git remote set-branches --add origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - git fetch
+  script:
+    - check-for-added-binaries.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+  allow_failure: true
 
 ## Build + Unit Tests
 
