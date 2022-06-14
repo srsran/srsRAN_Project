@@ -11,8 +11,8 @@
 #ifndef SRSGNB_CELL_SCHED_H
 #define SRSGNB_CELL_SCHED_H
 
+#include "../pdcch_scheduler/pdcch_scheduler_impl.h"
 #include "cell_configuration.h"
-#include "pdcch_scheduler_impl.h"
 #include "ra_scheduler.h"
 #include "resource_grid.h"
 #include "sib_scheduler.h"

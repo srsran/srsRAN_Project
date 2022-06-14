@@ -10,8 +10,8 @@
 #ifndef SRSGNB_UE_GRID_ALLOCATOR_H
 #define SRSGNB_UE_GRID_ALLOCATOR_H
 
-#include "../cell/pdcch_scheduler.h"
 #include "../cell/resource_grid.h"
+#include "../pdcch_scheduler/pdcch_scheduler.h"
 #include "../policy/ue_allocator.h"
 
 namespace srsgnb {

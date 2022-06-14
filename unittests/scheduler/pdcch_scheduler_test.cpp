@@ -1,6 +1,6 @@
 
-#include "../../lib/scheduler/cell/pdcch_scheduler_impl.h"
 #include "config_generators.h"
+#include "lib/scheduler/pdcch_scheduler/pdcch_scheduler_impl.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
 #include "srsgnb/support/test_utils.h"
 

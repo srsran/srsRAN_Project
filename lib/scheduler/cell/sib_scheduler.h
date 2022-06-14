@@ -10,7 +10,7 @@
 
 #ifndef SRSGNB_SIB_SCHEDULER_H
 
-#include "pdcch_scheduler.h"
+#include "../pdcch_scheduler/pdcch_scheduler.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/sched_consts.h"

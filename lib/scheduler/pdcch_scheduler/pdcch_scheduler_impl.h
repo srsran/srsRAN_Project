@@ -11,9 +11,9 @@
 #ifndef SRSGNB_PDCCH_SCHEDULER_IMPL_H
 #define SRSGNB_PDCCH_SCHEDULER_IMPL_H
 
+#include "../cell/resource_grid.h"
 #include "../ue/ue_configuration.h"
 #include "pdcch_scheduler.h"
-#include "resource_grid.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {

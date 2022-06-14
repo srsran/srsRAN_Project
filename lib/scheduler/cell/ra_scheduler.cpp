@@ -10,8 +10,8 @@
 
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
+#include "../pdcch_scheduler/pdcch_scheduler_impl.h"
 #include "../support/config_helpers.h"
-#include "pdcch_scheduler_impl.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
