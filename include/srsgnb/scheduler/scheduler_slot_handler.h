@@ -35,19 +35,39 @@ const size_t MAX_LC_GRANTS = 4;
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
 
-struct pdcch_context_information {
+struct beamforming_info {
+  // TODO
+};
+
+struct tx_power_pdcch_information {
+  // TODO
+};
+
+struct dci_dl_context_information {
   const bwp_configuration*     bwp_cfg;
   const coreset_configuration* coreset_cfg;
-  /// CCE position of the allocated PDCCH.
-  cce_position cces;
   /// RNTI used to identify the destination of this DCI (e.g. UE, RA-RNTI, SI, Paging).
   rnti_t rnti;
+  /// Parameter \f$n_{ID}\f$ used for PDCCH Data scrambling as per 3GPP TS 38.211 [2], sec 7.3.2.3. Values: (0..65535).
+  /// For a UE-specific search space it equals the higherlayer parameter PDCCH-DMRS-Scrambling-ID if configured,
+  /// otherwise it should be set to the phy cell ID.
+  unsigned n_id_pdcch_data;
+  /// Parameter \f$n_{RNTI}\f$ used for PDCCH data scrambling, as per 3GPP TS 38.211 [2], sec 7.3.2.3.
+  /// Values: (0..65535). For a UE-specific search space where PDCCH-DMRSScrambling-ID is configured, this param
+  /// equals the CRNTI. Otherwise, it should be set to 0.
+  unsigned n_rnti_pdcch_data;
+  /// CCE position of the allocated PDCCH.
+  cce_position cces;
+  /// Precoding and beamforming info used for this DCI.
+  beamforming_info bf;
+  /// Transmission power information used for this DCI.
+  tx_power_pdcch_information tx_pwr;
 };
 
 /// PDCCH DL allocation.
 struct pdcch_dl_information {
   /// Context associated with PDCCH allocation.
-  pdcch_context_information ctx;
+  dci_dl_context_information ctx;
   /// DL DCI unpacked content.
   dci_dl_info dci;
 };
@@ -55,7 +75,7 @@ struct pdcch_dl_information {
 /// PDCCH UL allocation.
 struct pdcch_ul_information {
   /// Context associated with PDCCH allocation.
-  pdcch_context_information ctx;
+  dci_dl_context_information ctx;
   /// UL DCI unpacked content.
   dci_ul_info dci;
 };

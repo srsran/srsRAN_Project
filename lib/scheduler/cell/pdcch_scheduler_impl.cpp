@@ -21,7 +21,7 @@ public:
   /// PDCCH grant allocation in a given slot.
   struct alloc_record {
     bool                              is_dl;
-    pdcch_context_information*        pdcch_ctx;
+    dci_dl_context_information*       pdcch_ctx;
     const search_space_configuration* ss_cfg;
   };
 
@@ -37,7 +37,7 @@ public:
 
   void clear();
 
-  bool alloc_pdcch(pdcch_context_information&        pdcch_ctx,
+  bool alloc_pdcch(dci_dl_context_information&       pdcch_ctx,
                    cell_slot_resource_allocator&     slot_alloc,
                    const search_space_configuration& ss_cfg);
 
@@ -75,7 +75,7 @@ void pdcch_scheduler_impl::pdcch_slot_allocator::clear()
   saved_dfs_tree.clear();
 }
 
-bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_pdcch(pdcch_context_information&        pdcch_ctx,
+bool pdcch_scheduler_impl::pdcch_slot_allocator::alloc_pdcch(dci_dl_context_information&       pdcch_ctx,
                                                              cell_slot_resource_allocator&     slot_alloc,
                                                              const search_space_configuration& ss_cfg)
 {
@@ -285,11 +285,11 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   srsran_sanity_check(user.dl_bwps[bwpid] != nullptr, "Invalid BWP-Id");
-  const bwp_configuration&          bwp_cfg = *user.dl_bwps[bwpid];
+  const bwp_configuration& bwp_cfg = *user.dl_bwps[bwpid];
   srsran_sanity_check(user.dl_search_spaces[ss_id] != nullptr, "Invalid SearchSpaceId");
-  const search_space_configuration& ss_cfg  = *user.dl_search_spaces[ss_id];
+  const search_space_configuration& ss_cfg = *user.dl_search_spaces[ss_id];
   srsran_sanity_check(user.dl_coresets[ss_cfg.cs_id] != nullptr, "Invalid CoresetId");
-  const coreset_configuration&      cs_cfg  = *user.dl_coresets[ss_cfg.cs_id];
+  const coreset_configuration& cs_cfg = *user.dl_coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);
 }
@@ -344,6 +344,12 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
   pdcch.ctx.rnti              = rnti;
   pdcch.ctx.cces.ncce         = 0;
   pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
+  // See TS 38.331, 7.3.2.3 - Scrambling.
+  pdcch.ctx.n_id_pdcch_data = cell_cfg.pci;
+  if (ss_cfg.type == search_space_configuration::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+    pdcch.ctx.n_id_pdcch_data   = cs_cfg.pdcch_dmrs_scrambling_id.value();
+    pdcch.ctx.n_rnti_pdcch_data = rnti;
+  }
 
   // Allocate a position for DL PDCCH in CORESET.
   if (not pdcch_alloc.alloc_pdcch(pdcch.ctx, slot_alloc, ss_cfg)) {
