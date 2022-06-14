@@ -8,20 +8,19 @@
  *
  */
 
-#ifndef SRSGNB_RLC_TX_UM_BEARER_H
-#define SRSGNB_RLC_TX_UM_BEARER_H
+#ifndef SRSGNB_RLC_TX_UM_ENTITY_H
+#define SRSGNB_RLC_TX_UM_ENTITY_H
 
-#include "srsgnb/rlc/rlc_common_bearer.h"
+#include "rlc_tx_entity.h"
 
 namespace srsgnb {
 
-class rlc_tx_um_bearer : public rlc_tx_common_bearer
+class rlc_tx_um_entity : public rlc_tx_entity
 {
 public:
-  rlc_tx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
-    rlc_tx_common_bearer(du_index, lcid, upper_cn)
-  {
-  }
+  rlc_tx_um_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
+    rlc_tx_entity(du_index, lcid, upper_cn)
+  {}
 
   /*
    * Interfaces for higher layers
@@ -49,4 +48,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RLC_IMPL_H
+#endif

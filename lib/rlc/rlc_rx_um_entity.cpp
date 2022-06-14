@@ -8,6 +8,6 @@
  *
  */
 
-#include "rlc_rx_um_bearer.h"
+#include "rlc_rx_um_entity.h"
 
 using namespace srsgnb;

@@ -11,17 +11,16 @@
 #ifndef SRSGNB_RLC_RX_UM_BEARER_H
 #define SRSGNB_RLC_RX_UM_BEARER_H
 
-#include "srsgnb/rlc/rlc_common_bearer.h"
+#include "rlc_rx_entity.h"
 
 namespace srsgnb {
 
-class rlc_rx_um_bearer : public rlc_rx_common_bearer
+class rlc_rx_um_entity : public rlc_rx_entity
 {
 public:
-  rlc_rx_um_bearer(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
-    rlc_rx_common_bearer(du_index, lcid, upper_dn)
-  {
-  }
+  rlc_rx_um_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
+    rlc_rx_entity(du_index, lcid, upper_dn)
+  {}
 
   void handle_pdu(byte_buffer buf) override { upper_dn.on_new_sdu(std::move(buf)); }
 };
