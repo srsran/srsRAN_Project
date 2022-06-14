@@ -9,7 +9,6 @@
  */
 
 #include "mac_cell_processor.h"
-#include "dci_encoder.h"
 #include "pdu_encoder.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
@@ -82,6 +81,20 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 }
 
+/// Encodes DL DCI.
+static dci_payload encode_dci(const pdcch_dl_information& pdcch)
+{
+  switch (pdcch.dci.type) {
+    case dci_dl_rnti_config_type::si_f1_0:
+      return dci_1_0_si_rnti_pack(pdcch.dci.si_f1_0);
+    case dci_dl_rnti_config_type::ra_f1_0:
+      return dci_1_0_ra_rnti_pack(pdcch.dci.ra_f1_0);
+    case dci_dl_rnti_config_type::ue_f1_0:
+    default:
+      srsran_terminate("Invalid DCI format");
+  }
+}
+
 void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_res,
                                                    slot_point             sl_tx,
                                                    du_cell_index_t        cell_index,
@@ -97,17 +110,8 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
   }
 
   // Encode PDCCH DCI payloads.
-  for (const auto& sib : dl_res.bc.sibs) {
-    mac_res.pdcch_pdus.emplace_back();
-    encode_dci(cell_cfg, sib, mac_res.pdcch_pdus.back().dci_payload);
-  }
-  for (const rar_information& rar : dl_res.rar_grants) {
-    mac_res.pdcch_pdus.emplace_back();
-    encode_dci(cell_cfg, rar, mac_res.pdcch_pdus.back().dci_payload);
-  }
-  for (const dl_msg_alloc& data : dl_res.ue_grants) {
-    mac_res.pdcch_pdus.emplace_back();
-    encode_dci(cell_cfg, data, mac_res.pdcch_pdus.back().dci_payload);
+  for (const pdcch_dl_information& pdcch : dl_res.dl_pdcchs) {
+    mac_res.pdcch_pdus.push_back(encode_dci(pdcch));
   }
 }
 
