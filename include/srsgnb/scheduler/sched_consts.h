@@ -19,8 +19,6 @@ namespace srsgnb {
 /// Maximum number of layers (implementation-defined)
 const size_t MAX_NOF_LAYERS = 2;
 
-const size_t MAX_NOF_RBGS = 18;
-
 /// SSB constants.
 /// This is the max num of SSB in a list of SSB to be passed from SCHED to MAC.
 const size_t DEFAULT_SSB_PERIODICITY = 5;

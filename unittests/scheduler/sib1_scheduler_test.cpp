@@ -10,6 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/cell/sib_scheduler.h"
+#include "scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -175,6 +176,8 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();
+
+    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
 
     // Verify if for any active beam, the SIB1 got allocated within the proper n0 slots.
     for (size_t ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {

@@ -11,27 +11,16 @@
 #ifndef SRSGNB_PRB_GRANT_H
 #define SRSGNB_PRB_GRANT_H
 
+#include "rb_interval.h"
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/ran/resource_allocation/resource_block_group.h"
+#include "srsgnb/ran/resource_block.h"
 #include "srsgnb/ran/sliv.h"
-#include "srsgnb/scheduler/sched_consts.h"
 
 namespace srsgnb {
 
 /// Bitset of PRBs with size up to 275.
 using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
-
-/// Bitset of RBGs with size up to 18.
-using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
-
-/// Struct to express a {min,...,max} range of CRBs within a carrier.
-struct crb_interval : public interval<unsigned> {
-  using interval::interval;
-};
-
-/// Struct to express a {min,...,max} range of PRBs within a BWP.
-struct prb_interval : public interval<unsigned> {
-  using interval::interval;
-};
 
 /// PRB grant that can be of allocation type 0 (RBGs) or 1 (PRB interval).
 struct prb_grant {
@@ -142,18 +131,9 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
   return prb_bitmap;
 }
 
+/// Converts RBGs to PRBs given a BWP number of PRBs.
+prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
+
 } // namespace srsgnb
-
-namespace fmt {
-
-/// FMT formatter for prb_intervals.
-template <>
-struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
-
-/// FMT formatter for crb_intervals.
-template <>
-struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
-
-} // namespace fmt
 
 #endif // SRSGNB_PRB_GRANT_H

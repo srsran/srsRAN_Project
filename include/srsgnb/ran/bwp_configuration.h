@@ -17,7 +17,7 @@
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/pdcch/coreset.h"
-#include "srsgnb/ran/prb_grant.h"
+#include "srsgnb/ran/resource_allocation/prb_grant.h"
 #include <bitset>
 
 namespace srsgnb {

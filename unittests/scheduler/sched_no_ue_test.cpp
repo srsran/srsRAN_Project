@@ -10,6 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/scheduler_impl.h"
+#include "scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -28,6 +29,7 @@ void test_no_ues()
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  cell_configuration                       cell_cfg{cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
   slot_point sl_tx{0, 0};
@@ -35,6 +37,7 @@ void test_no_ues()
   // Action 2: Run slot 0.
   const sched_result* res = sch.slot_indication(sl_tx, to_du_cell_index(0));
   TESTASSERT(res != nullptr);
+  test_scheduler_result_consistency(cell_cfg, *res);
   TESTASSERT(res->dl.ue_grants.empty());
   TESTASSERT(res->ul.puschs.empty());
 }
@@ -46,6 +49,7 @@ void test_rach_indication()
 
   // Action 1: Add Cell.
   sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  cell_configuration                       cell_cfg{cell_cfg_msg};
   sch.handle_cell_configuration_request(make_cell_cfg_req());
 
   // Action 2: Add RACH indication.
@@ -59,6 +63,7 @@ void test_rach_indication()
 
   // TEST: Result exists. No Data allocated. A RAR has been allocated.
   TESTASSERT(res != nullptr);
+  test_scheduler_result_consistency(cell_cfg, *res);
   TESTASSERT(res->dl.ue_grants.empty());
   TESTASSERT(not res->dl.rar_grants.empty());
 }

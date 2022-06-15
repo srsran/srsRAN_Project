@@ -10,6 +10,9 @@ set_directory_properties(PROPERTIES LABELS "sched")
 
 include_directories(../..)
 
+add_library(scheduler_test_suite scheduler_test_suite.cpp)
+target_link_libraries(scheduler_test_suite srsgnb_sched srslog)
+
 add_executable(pdsch_dmrs_symbol_mask_test support/pdsch/pdsch_dmrs_symbol_mask_test.cpp)
 target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
@@ -27,7 +30,7 @@ target_link_libraries(sched_harq_test srsgnb_sched srslog)
 add_test(sched_harq_test sched_prb_test)
 
 add_executable(sched_no_ue_test sched_no_ue_test.cpp)
-target_link_libraries(sched_no_ue_test srsgnb_sched srslog mac_configuration_helpers)
+target_link_libraries(sched_no_ue_test srsgnb_sched srslog mac_configuration_helpers scheduler_test_suite)
 add_test(sched_no_ue_test sched_no_ue_test)
 
 add_executable(sched_signalling_test sched_signalling_test.cpp)
@@ -55,5 +58,5 @@ target_link_libraries(ue_configuration_test srsgnb_sched srslog mac_configuratio
 add_test(ue_configuration_test ue_configuration_test)
 
 add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
-target_link_libraries(sib1_scheduler_test srsgnb_sched srslog rrc_nr_asn1 mac_configuration_helpers)
+target_link_libraries(sib1_scheduler_test srsgnb_sched srslog mac_configuration_helpers scheduler_test_suite)
 add_test(sib1_scheduler_test sib1_scheduler_test)

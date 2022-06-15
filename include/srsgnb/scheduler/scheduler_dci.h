@@ -13,7 +13,7 @@
 
 #include "srsgnb/ran/pdcch/aggregation_level.h"
 #include "srsgnb/ran/pdcch/dci_packing.h"
-#include "srsgnb/ran/prb_grant.h"
+#include "srsgnb/ran/resource_allocation/prb_grant.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>

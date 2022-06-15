@@ -11,5 +11,7 @@ add_library(srsgnb_ran band_helper.cpp
         pdcch/cce_to_prb_mapping.cpp
         pdcch/dci_packing.cpp
         pdcch/pdcch_candidates.cpp
-        resource_allocation/resource_allocation_frequency.cpp)
+        resource_allocation/resource_allocation_frequency.cpp
+        resource_allocation/resource_block_group.cpp
+        resource_allocation/prb_grant.cpp)
 target_link_libraries(srsgnb_ran)

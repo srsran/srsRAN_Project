@@ -13,15 +13,9 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
-#include "srsgnb/ran/prb_grant.h"
+#include "srsgnb/ran/resource_allocation/prb_grant.h"
 
 namespace srsgnb {
-
-/// TS 38.214, Table 6.1.2.2.1-1 - Nominal RBG size P
-uint32_t get_P(uint32_t bwp_nof_prb, bool config_1_or_2);
-
-/// TS 38.214 - total number of RBGs for a uplink bandwidth part of size "bwp_nof_prb" PRBs
-uint32_t get_nof_rbgs(uint32_t bwp_nof_prb, uint32_t bwp_start, bool config1_or_2);
 
 struct bwp_rb_bitmap {
 public:
@@ -103,11 +97,11 @@ public:
   }
 
 private:
-  prb_bitmap prbs_;
-  rbg_bitmap rbgs_;
-  uint32_t   P_             = 0;
-  uint32_t   Pnofbits       = 0;
-  uint32_t   first_rbg_size = 0;
+  prb_bitmap       prbs_;
+  rbg_bitmap       rbgs_;
+  nominal_rbg_size P_;
+  uint32_t         Pnofbits       = 0;
+  uint32_t         first_rbg_size = 0;
 
   void add_prbs_to_rbgs(const prb_bitmap& grant);
   void add_prbs_to_rbgs(const prb_interval& grant);

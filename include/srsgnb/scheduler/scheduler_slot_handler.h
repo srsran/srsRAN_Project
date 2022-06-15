@@ -20,7 +20,7 @@
 #include "srsgnb/ran/modulation.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
-#include "srsgnb/ran/prb_grant.h"
+#include "srsgnb/ran/resource_allocation/prb_grant.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
