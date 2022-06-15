@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_MAC_FAPI_ADAPTOR_H
-#define SRSGNB_FAPI_ADAPTOR_MAC_FAPI_ADAPTOR_H
+#ifndef SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_H
+#define SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_H
 
 #include "srsgnb/fapi/config_message_notifier.h"
 #include "srsgnb/fapi/slot_message_notifier.h"
@@ -25,7 +25,7 @@ namespace fapi_adaptor {
 /// This interface will give access to the interfaces needed to interconnect the adaptor with the MAC, listen FAPI
 /// events and access to interfaces to configure and control FAPI.
 ///
-/// \note:This object has the ownership of all the components of the adaptor.
+/// \note This object has the ownership of all the components of the adaptor.
 class mac_fapi_adaptor
 {
 public:
@@ -50,4 +50,4 @@ public:
 } // namespace fapi_adaptor
 } // namespace srsgnb
 
-#endif // SRSGNB_FAPI_ADAPTOR_MAC_FAPI_ADAPTOR_H
+#endif // SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_H

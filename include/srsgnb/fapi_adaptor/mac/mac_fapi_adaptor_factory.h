@@ -8,28 +8,13 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_FAPI_ADAPTOR_FACTORY_H
-#define SRSGNB_FAPI_ADAPTOR_FAPI_ADAPTOR_FACTORY_H
+#ifndef SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
+#define SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
 
-#include "srsgnb/fapi_adaptor/mac_fapi_adaptor.h"
-#include "srsgnb/fapi_adaptor/phy_fapi_adaptor.h"
+#include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
 
 namespace srsgnb {
 namespace fapi_adaptor {
-
-struct phy_fapi_adaptor_factory_config {
-  unsigned sector_id;
-};
-
-/// Factory that creates phy_fapi adaptors.
-class phy_fapi_adaptor_factory
-{
-public:
-  virtual ~phy_fapi_adaptor_factory() = default;
-
-  /// Creates and returns a phy_fapi_adaptor using the given configuration.
-  std::unique_ptr<phy_fapi_adaptor> create(phy_fapi_adaptor_factory_config config) = 0;
-};
 
 struct mac_fapi_adaptor_factory_config {
   unsigned sector_id;
@@ -48,4 +33,4 @@ public:
 } // namespace fapi_adaptor
 } // namespace srsgnb
 
-#endif // SRSGNB_FAPI_ADAPTOR_FAPI_ADAPTOR_FACTORY_H
+#endif // SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
