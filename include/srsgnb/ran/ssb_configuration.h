@@ -46,7 +46,7 @@ struct ssb_configuration {
   /// if n-th bit of ssb_bitmap is 1.
   std::array<uint8_t, NOF_BEAMS> beam_ids;
   /// Values: 0 = 0dB, 1 = 3dB.
-  uint8_t beta_pss;
+  float beta_pss;
 };
 
 } // namespace srsgnb

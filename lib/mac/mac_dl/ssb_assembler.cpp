@@ -29,7 +29,7 @@ void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb
   // TODO: ORAN only allows 2 values, 0 or 1. FAPI allows 3 values (0, 1, or 255)
   ssb_pdu.beta_pss_profile_nr = beta_pss_profile_nr_type::dB_0;
   // TODO: because of ORAN to FAPI mismatch above, this will not be filled with meaningful values
-  ssb_pdu.beta_pss_profile_sss_in_dB = static_cast<float>(ssb_cfg.beta_pss);
+  ssb_pdu.beta_pss_profile_sss_in_dB = ssb_cfg.beta_pss;
   ssb_pdu.ssb_index                  = ssb_info.ssb_index;
   // TODO: Verify whether this is the correct SCS
   ssb_pdu.scs                   = ssb_cfg.scs;

@@ -16,7 +16,7 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-void test_conversion_ok()
+static void test_conversion_ok()
 {
   srsgnb::dl_ssb_pdu pdu;
   pdu.pci                             = 123;

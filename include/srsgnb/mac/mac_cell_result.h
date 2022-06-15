@@ -30,7 +30,7 @@ struct dl_ssb_pdu {
 
   ssb_pattern_case ssb_case;
   uint8_t          L_max;
-  // TODO Determine which SCS this refers to (i.e., SSB SCS or SCS Common for MIB generation)
+  //  SSB SCS.
   subcarrier_spacing scs;
   float              beta_pss_profile_sss_in_dB;
 
