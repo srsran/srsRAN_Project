@@ -3,6 +3,7 @@
 #define SRSGNB_MAC_CELL_CONFIGURATION_H
 
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
@@ -56,6 +57,7 @@ struct mac_cell_creation_request {
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
   unsigned          sib1_rxtx_periodicity;
+  byte_buffer       sib1_payload;
 
   // TODO: Fill remaining fields
 };

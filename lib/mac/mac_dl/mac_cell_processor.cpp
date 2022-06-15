@@ -121,16 +121,17 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
                                                   const dl_sched_result& dl_res)
 {
   // Assemble scheduled SIBs' payload.
-  for (const sib_information& sib : dl_res.bc.sibs) {
-    data_res.pdus.emplace_back();
-    encode_sib_pdu(cell_cfg, sib, data_res.pdus.back());
+  for (size_t sib1_idx = 0; sib1_idx < dl_res.bc.sibs.size(); sib1_idx++) {
+    srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
+    data_res.sib1_pdus.emplace_back();
+    encode_sib_pdu(cell_cfg, data_res.sib1_pdus.back());
   }
 
   // Assemble scheduled RARs' payload.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.pdus.emplace_back();
+    data_res.ue_pdus.emplace_back();
     // call MAC encoder.
-    encode_rar_pdu(cell_cfg, rar, data_res.pdus.back());
+    encode_rar_pdu(cell_cfg, rar, data_res.ue_pdus.back());
   }
 
   // Assemble data grants.
@@ -145,8 +146,8 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Assemble MAC SDU.
-        data_res.pdus.emplace_back();
-        byte_buffer& sdu = data_res.pdus.back();
+        data_res.ue_pdus.emplace_back();
+        byte_buffer& sdu = data_res.ue_pdus.back();
         sdu.resize(bearer_alloc.sched_bytes);
         bearer->on_new_tx_sdu(sdu);
       }

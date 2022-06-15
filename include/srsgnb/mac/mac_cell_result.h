@@ -50,8 +50,9 @@ struct mac_dl_sched_result {
 
 /// List of DL PDUs produced by MAC in a given slot and cell.
 struct mac_dl_data_result {
-  slot_point                                       slot;
-  static_vector<byte_buffer, MAX_DL_PDUS_PER_SLOT> pdus;
+  slot_point                                         slot;
+  static_vector<byte_buffer, MAX_SIB1_PDUS_PER_SLOT> sib1_pdus;
+  static_vector<byte_buffer, MAX_DL_PDUS_PER_SLOT>   ue_pdus;
 };
 
 struct mac_ul_sched_result {
@@ -76,7 +77,8 @@ public:
 class mac_result_notifier
 {
 public:
-  virtual ~mac_result_notifier()                                         = default;
+  virtual ~mac_result_notifier() = default;
+
   virtual mac_cell_result_notifier& get_cell(du_cell_index_t cell_index) = 0;
 };
 

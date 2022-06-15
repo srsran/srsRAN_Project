@@ -35,6 +35,8 @@ const size_t MAX_LC_GRANTS = 4;
 /// Maximum SSB opportunity per slot. This can be derived from the candidate ODFM symbols indices within the ranges
 /// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
 const size_t MAX_SSB_PER_SLOT = 2;
+/// [Implementation defined] This corresponds to "Number of search space sets per slot" in Table 13-11, TS 38.213.
+constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
 
 struct beamforming_info {
   // TODO
@@ -170,8 +172,8 @@ struct sib_information {
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.
 struct dl_broadcast_allocation {
-  static_vector<ssb_information, MAX_SSB_PER_SLOT> ssb_info;
-  static_vector<sib_information, 1>                sibs;
+  static_vector<ssb_information, MAX_SSB_PER_SLOT>       ssb_info;
+  static_vector<sib_information, MAX_SIB1_PDUS_PER_SLOT> sibs;
 };
 
 struct dl_sched_result {
