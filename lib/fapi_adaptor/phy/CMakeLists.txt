@@ -8,6 +8,13 @@
 
 add_subdirectory(messages)
 
+set(SOURCES
+        phy_to_fapi_translator.cpp
+        slot_event_dispatcher.cpp)
+
+add_library(phy_to_fapi_translator STATIC ${SOURCES})
+target_link_libraries(phy_to_fapi_translator srslog)
+
 add_library(pdsch_fapi_adaptor STATIC pdsch.cpp)
 target_link_libraries(pdsch_fapi_adaptor)
 

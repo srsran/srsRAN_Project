@@ -11,9 +11,9 @@
 #ifndef SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_NOTIFIER_H
 #define SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_NOTIFIER_H
 
-namespace srsgnb {
+#include "srsgnb/ran/slot_point.h"
 
-class slot_point;
+namespace srsgnb {
 
 /// Upper physical layer's timing notifier.
 class upper_phy_timing_notifier
@@ -24,7 +24,7 @@ public:
   /// \brief Notifies a new TTI boundary event.
   ///
   /// \param [in] slot Provides the notification context.
-  virtual void on_tti_boundary(const slot_point& slot) = 0;
+  virtual void on_tti_boundary(slot_point slot) = 0;
 };
 } // namespace srsgnb
 
