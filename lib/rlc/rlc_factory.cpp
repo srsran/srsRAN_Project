@@ -21,4 +21,3 @@ std::unique_ptr<rlc_entity> create_rlc_bearer(du_ue_index_t                     
   std::unique_ptr<rlc_entity> instance = std::make_unique<rlc_um_entity>(ue_index, lcid, upper_dn, upper_cn);
   return instance;
 }
-

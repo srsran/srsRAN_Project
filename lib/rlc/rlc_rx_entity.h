@@ -23,7 +23,8 @@ class rlc_rx_entity : public rlc_rx_pdu_handler
 protected:
   rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
     logger(du_index, lcid), upper_dn(upper_dn)
-  {}
+  {
+  }
 
   rlc_logger                        logger;
   rlc_rx_upper_layer_data_notifier& upper_dn;

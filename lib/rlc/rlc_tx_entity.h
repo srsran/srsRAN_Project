@@ -25,7 +25,8 @@ class rlc_tx_entity : public rlc_tx_sdu_handler, public rlc_tx_pdu_transmitter
 protected:
   rlc_tx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     logger(du_index, lcid), upper_cn(upper_cn)
-  {}
+  {
+  }
 
   rlc_logger                           logger;
   rlc_tx_upper_layer_control_notifier& upper_cn;
