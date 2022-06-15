@@ -55,9 +55,11 @@ alternative builds:
     - if: $ON_MR
       variables:
         run_unit_tests: "false"
+        enable_coverage: "false"
     - if: $ON_SCHEDULE
       variables:
         run_unit_tests: "true"
+        enable_coverage: "false"
   needs: []
   trigger:
     include: .gitlab/ci/build.yml

@@ -13,6 +13,7 @@ variables:
   compiler: gcc
   docker_version: "1.1.0"
   run_unit_tests: "true"
+  enable_coverage: "true"
 
 stages:
   - build
@@ -29,7 +30,7 @@ stages:
   needs: []
   script:
     - |
-      if [ $run_unit_tests = "true" ]; then
+      if [ $enable_coverage = "true" ]; then
         EXTRA_BUILD_ARGS="-DENABLE_GCOV=True"
       fi
     - builder.sh -c $compiler $EXTRA_BUILD_ARGS .
