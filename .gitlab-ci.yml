@@ -71,11 +71,9 @@ alternative builds:
     - if: $ON_MR
       variables:
         run_tests: "false"
-        enable_coverage: "false"
     - if: $ON_SCHEDULE
       variables:
         run_tests: "true"
-        enable_coverage: "false"
   needs: []
   trigger:
     include: .gitlab/ci/build.yml
@@ -88,6 +86,7 @@ alternative builds:
       - os_type: ubuntu
         os_version: "20.04"
         compiler: [gcc, clang]
+        enable_coverage: "false" # Ignore old warnings
       - os_type: archlinux
         os_version: latest
         compiler: [gcc, clang]
