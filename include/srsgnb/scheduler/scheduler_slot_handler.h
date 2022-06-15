@@ -17,6 +17,7 @@
 #include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
+#include "srsgnb/ran/modulation.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/prb_grant.h"
@@ -80,7 +81,27 @@ struct pdcch_ul_information {
   dci_ul_info dci;
 };
 
-struct pdsch_configuration {};
+enum class mcs_pdsch_table { notqam256 = 0, qam256 = 1, qam64LowSE = 2, invalid };
+
+struct pdsch_codeword {
+  uint16_t       target_code_rate;
+  qam_modulation qam_mod;
+  /// MCS index [3GPP TS 38.214, sec 5.1.3.1], should match value sent in DCI. Values (0..31).
+  uint8_t         mcs_index;
+  mcs_pdsch_table mcs_table;
+  /// Redundancy version index [TS 38.212, Table 5.4.2.1-2 and TS 38.214, Table 5.1.2.1-2].
+  uint8_t rv_index;
+  /// Transport block size (in bytes) [TS 38.214, sec 5.1.3.2].
+  uint32_t tb_size_bytes;
+};
+
+struct pdsch_configuration {
+  rnti_t                           rnti;
+  const bwp_configuration*         bwp_cfg;
+  prb_grant                        prbs;
+  ofdm_symbol_range                symbols;
+  static_vector<pdsch_codeword, 2> codewords;
+};
 
 struct dl_msg_lc_info {
   /// LCID {0..32}
@@ -122,6 +143,7 @@ struct rar_ul_grant {
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.
 struct rar_information {
   pdcch_dl_information*                   pdcch_cfg;
+  pdsch_configuration                     pdsch_cfg;
   static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };
 

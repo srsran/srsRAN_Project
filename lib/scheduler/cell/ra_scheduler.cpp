@@ -311,6 +311,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   static const unsigned         max_msg3_retxs       = 4;
   static const unsigned         msg3_mcs             = 0;
   static const unsigned         pdsch_time_res_index = 0;
+  cell_slot_resource_allocator& pdcch_alloc          = res_alloc[0];
   cell_slot_resource_allocator& rar_alloc = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
   prb_interval                  rar_prbs  = crb_to_prb(initial_active_dl_bwp, rar_crbs);
 
@@ -323,7 +324,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar_information& rar = rar_alloc.result.dl.rar_grants.back();
 
   // Fill RAR DCI.
-  rar.pdcch_cfg                      = &rar_alloc.result.dl.dl_pdcchs.back();
+  rar.pdcch_cfg                      = &pdcch_alloc.result.dl.dl_pdcchs.back();
   rar.pdcch_cfg->dci.type            = dci_dl_rnti_config_type::ra_f1_0;
   rar.pdcch_cfg->dci.ra_f1_0         = {};
   dci_1_0_ra_rnti_configuration& dci = rar.pdcch_cfg->dci.ra_f1_0;
@@ -334,6 +335,20 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   dci.vrb_to_prb_mapping       = 0; // TODO.
   dci.modulation_coding_scheme = 0;
   dci.tb_scaling               = 0; // TODO.
+
+  // Fill RAR PDSCH.
+  rar.pdsch_cfg.rnti    = rar.pdcch_cfg->ctx.rnti;
+  rar.pdsch_cfg.bwp_cfg = rar.pdcch_cfg->ctx.bwp_cfg;
+  rar.pdsch_cfg.prbs    = rar_prbs;
+  rar.pdsch_cfg.symbols = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
+  rar.pdsch_cfg.codewords.emplace_back();
+  pdsch_codeword& cw  = rar.pdsch_cfg.codewords.back();
+  cw.mcs_table        = mcs_pdsch_table::notqam256;
+  cw.qam_mod          = qam4;
+  cw.mcs_index        = dci.modulation_coding_scheme;
+  cw.rv_index         = 0;
+  cw.target_code_rate = 0; // TODO
+  cw.tb_size_bytes    = 0; // TODO
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];

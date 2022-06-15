@@ -70,13 +70,15 @@ private:
 
   /// [Implementation-defined] SIB1 parameters.
   /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
-  crb_interval      coreset0_bwp_dims;
   uint8_t           pdcch_config_sib1;
   uint8_t           sib1_mcs;
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned sib1_periodicity;
+
+  /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
+  bwp_configuration coreset0_bwp_cfg;
 
   /// Vector of slots n0 (1 per beam) that will be used for SIB1 scheduling [TS 38.213, Section 13].
   static_vector<slot_point, MAX_NUM_BEAMS> sib1_n0_slots;

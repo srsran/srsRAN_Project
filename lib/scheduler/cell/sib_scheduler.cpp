@@ -127,7 +127,6 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                                subcarrier_spacing        scs_common) :
   cfg{cfg_},
   pdcch_sched{pdcch_sch},
-  coreset0_bwp_dims(get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common)),
   pdcch_config_sib1{pdcch_config_sib1_},
   sib1_mcs{sib1_mcs_},
   sib1_rv{sib1_rv_},
@@ -138,6 +137,10 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                          ? SIB1_PERIODICITY
                          : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), sib1_rxtx_periodicity_);
   precompute_sib1_n0(scs_common);
+
+  // Define a BWP configuration limited by CORESET#0 RBs.
+  coreset0_bwp_cfg      = cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  coreset0_bwp_cfg.crbs = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 };
 
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point)
@@ -207,7 +210,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   {
     // TODO: find a better way to derive the SIB1 PRBs
     unsigned          nof_sib1_rbs = nof_prbs_per_sib1;
-    const prb_bitmap& used_crbs    = res_grid.dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params);
+    const prb_bitmap& used_crbs    = res_grid.dl_res_grid.sch_crbs(coreset0_bwp_cfg);
     sib1_crbs                      = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
@@ -243,15 +246,16 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 {
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
-  auto& sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
+  auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
+  prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
 
   // Fill SIB1 DCI.
   sib1_pdcch.dci.type                = dci_dl_rnti_config_type::si_f1_0;
   sib1_pdcch.dci.si_f1_0             = {};
   dci_1_0_si_rnti_configuration& dci = sib1_pdcch.dci.si_f1_0;
-  dci.N_rb_dl_bwp                    = coreset0_bwp_dims.length();
+  dci.N_rb_dl_bwp                    = coreset0_bwp_cfg.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_crbs_grant.start(), sib1_crbs_grant.length()});
+      ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_prbs.start(), sib1_prbs.length()});
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
   dci.time_resource                = 0;
   dci.vrb_to_prb_mapping           = 0; // TODO.
@@ -265,5 +269,18 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   sib1.pdcch_cfg        = &res_grid.result.dl.dl_pdcchs.back();
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
 
-  // TODO: add pdsch_configuration.
+  // Fill PDSCH configuration.
+  pdsch_configuration& pdsch = sib1.pdsch_cfg;
+  pdsch.rnti                 = sib1_pdcch.ctx.rnti;
+  pdsch.bwp_cfg              = sib1_pdcch.ctx.bwp_cfg;
+  pdsch.symbols = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
+  pdsch.prbs    = sib1_prbs;
+  pdsch.codewords.emplace_back();
+  pdsch_codeword& cw  = pdsch.codewords.back();
+  cw.mcs_index        = dci.modulation_coding_scheme;
+  cw.rv_index         = dci.redundancy_version;
+  cw.qam_mod          = qam4;
+  cw.mcs_table        = mcs_pdsch_table::notqam256;
+  cw.target_code_rate = 0; // TODO.
+  cw.tb_size_bytes    = 0; // TODO.
 }
