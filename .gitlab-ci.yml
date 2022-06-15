@@ -132,7 +132,7 @@ success ci:
   rules:
     - if: $ON_SCHEDULE
   script:
-    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "##ci_gnb" --token "${SLACK_TOKEN}"
+    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "#ci_gnb" --token "${SLACK_TOKEN}"
 
 failed ci:
   extends: .notifier
@@ -142,4 +142,4 @@ failed ci:
     - if: $ON_DEFAULT_BRANCH
       when: on_failure
   script:
-    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "##ci_gnb" --token "${SLACK_TOKEN}"
+    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "#ci_gnb" --token "${SLACK_TOKEN}"

@@ -38,11 +38,14 @@ stages:
     key: ${os_type}-${os_version}-${docker_version}-${compiler}
     paths:
       - ccache
-  artifacts: &build_artifacts
+  artifacts:
     paths:
+      # Binaries
+      - build/apps/cu-up/cu-up
+      # Ctest
       - build/CTestTestfile.cmake
       - build/unittests
-      - build/apps/cu-up/cu-up
+      - build/**/*.gcno
     expire_in: 10 minutes
 
 build [cached]:
@@ -64,9 +67,6 @@ build [clean and update cache]:
   cache:
     <<: *build_cache
     policy: push
-  artifacts:
-    <<: *build_artifacts
-    expire_in: 7 days
 
 build [clean]:
   # Fresh build with no interacton with the cache
@@ -95,15 +95,15 @@ unit test:
       artifacts: true
       optional: true
   script:
-    # Tests
     - cd build
     - ctest -j "$(nproc --all)" --schedule-random --output-junit xunit.xml
-    # Code coverage
-    - GCOVR_ARGS="--exclude-unreachable-branches --root ${CI_PROJECT_DIR}"
-    - gcovr --xml-pretty --print-summary $GCOVR_ARGS -o coverage.xml
-    # Generate coverage html
-    # - mkdir coverage
-    # - gcovr --html --html-details        $GCOVR_ARGS -o coverage/index.html
+    - |
+      if [ $enable_coverage = "true" ]; then
+        GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittest --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
+        gcovr --xml --print-summary $GCOVR_ARGS -o coverage.xml
+        gcovr --html                $GCOVR_ARGS -o coverage.html
+        ls -lah coverage.xml
+      fi
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     reports:
@@ -111,6 +111,6 @@ unit test:
       coverage_report:
         coverage_format: cobertura
         path: build/coverage.xml
-    # Save coverage html
-    # paths:
-    #   - build/coverage/*
+    paths:
+      - build/coverage.html
+    expire_in: 7 days
