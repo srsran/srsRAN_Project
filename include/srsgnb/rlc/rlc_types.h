@@ -33,9 +33,25 @@ constexpr uint16_t to_number(const rlc_um_sn_size& sn_size)
 
 /// RLC AM NR sequence number field
 enum class rlc_am_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
+
+///
+/// \brief Converts sequence number field to numeric its value
+/// \param sn_size sequence number size
+/// \return numeric value of the sequence number field
+///
 constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 {
   return static_cast<uint16_t>(sn_size);
+}
+
+///
+/// \brief Returns the value range of the sequence numbers
+/// \param sn_size Length of the serial number field in bits
+/// \return cardinality of sn_size
+///
+constexpr uint32_t cardinality(const uint16_t sn_size)
+{
+  return (1 << sn_size);
 }
 
 /// RLC AM NR segmentation info
@@ -62,6 +78,18 @@ inline std::string to_string(const rlc_si_field& si)
 {
   constexpr static const char* options[] = {"full", "first", "last", "middle"};
   return options[to_number(si)];
+}
+
+enum class rlc_control_pdu_type : unsigned { status_pdu = 0b000 };
+constexpr uint16_t to_number(const rlc_control_pdu_type& type)
+{
+  return static_cast<uint16_t>(type);
+}
+
+inline std::string to_string(const rlc_control_pdu_type& type)
+{
+  constexpr static const char* options[] = {"Control PDU"};
+  return options[to_number(type)];
 }
 
 } // namespace srsgnb

@@ -167,6 +167,2828 @@ void test_rlc_am_18bit_malformed()
   TESTASSERT(header.sn == 0);
 }
 
+///////////////////////////////////////////
+// Control PDU tests (12 bit SN)
+///////////////////////////////////////////
+
+/// Status PDU for 12 bit SN with ACK_SN=2065 and no further NACK_SN (E1 bit not set)
+void test_control_pdu_no_nack_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU without NACK (12 bit)");
+  const int                len = 3;
+  std::array<uint8_t, len> tv  = {0x08, 0x11, 0x00};
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 2065);
+  TESTASSERT(status_pdu.nacks.size() == 0);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+/// Status PDU for 12 bit SN with ACK_SN=2065 and NACK_SN=273 (E1 bit set)
+void test_control_pdu_with_nack_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with one NACK (12 bit)");
+  const int                len = 5;
+  std::array<uint8_t, len> tv  = {0x08, 0x11, 0x80, 0x11, 0x10};
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 2065);
+  TESTASSERT(status_pdu.nacks.size() == 1);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 273);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xFFFF
+// E1 and E2 bit set on first NACK, only E2 on second.
+void test_control_pdu_nacks_and_so_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and SO (12 bit)");
+  const int                len = 15;
+  std::array<uint8_t, len> tv  = {
+       0x08, 0x11, 0x80, 0x11, 0x1c, 0x00, 0x02, 0x00, 0x05, 0x11, 0x34, 0x00, 0x05, 0xFF, 0xFF};
+  byte_buffer pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 2065);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 273);
+  TESTASSERT(status_pdu.nacks[0].so_start == 2);
+  TESTASSERT(status_pdu.nacks[0].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 275);
+  TESTASSERT(status_pdu.nacks[1].so_start == 5);
+  TESTASSERT(status_pdu.nacks[1].so_end == 0xFFFF);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275
+// E1 and E2 bit set on first NACK, neither E1 or E2 on the second.
+void test_control_pdu_nacks_and_mixed_so_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and mixed SO (12 bit)");
+  const int                len = 11;
+  std::array<uint8_t, len> tv  = {0x08, 0x11, 0x80, 0x11, 0x1c, 0x00, 0x02, 0x00, 0x05, 0x11, 0x30};
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 2065);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 273);
+  TESTASSERT(status_pdu.nacks[0].has_so == true);
+  TESTASSERT(status_pdu.nacks[0].so_start == 2);
+  TESTASSERT(status_pdu.nacks[0].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 275);
+  TESTASSERT(status_pdu.nacks[1].has_so == false);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 12 bit SN with ACK_SN=2065,
+// NACK range0: 3 full SDUs, NACK_SN=273..275
+// NACK range1: missing segment sequence across 4 SDUs
+//              starting at NACK_SN=276, SO_START=2,
+//              ending at NACK_SN=279, SO_END=5
+// E1 and E3 bit set on first NACK, E2 and E3 bit set on the second.
+void test_control_pdu_nacks_and_range_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and range (12 bit)");
+  const int                len = 13;
+  std::array<uint8_t, len> tv  = {0x08,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0x11,  // 8ACK_SN_lower
+                                  0x80,  // E1 | 7R
+                                  0x11,  // 8NACK_SN_upper
+                                  0x1a,  // 4NACK_SN_lower | E1 | E2 | E3 | R
+                                  0x03,  // 8NACK_range
+                                  0x11,  // 8NACK_SN_upper
+                                  0x46,  // 4NACK_SN_lower | E1 | E2 | E3 | R
+                                  0x00,  // 8SO_START_upper
+                                  0x02,  // 8SO_START_lower
+                                  0x00,  // 8SO_END_upper
+                                  0x05,  // 8SO_END_lower
+                                  0x04}; // 8NACK_range
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 2065);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 273);
+  TESTASSERT(status_pdu.nacks[0].has_so == false);
+  TESTASSERT(status_pdu.nacks[0].has_nack_range == true);
+  TESTASSERT(status_pdu.nacks[0].nack_range == 3);
+
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 276);
+  TESTASSERT(status_pdu.nacks[1].has_so == true);
+  TESTASSERT(status_pdu.nacks[1].so_start == 2);
+  TESTASSERT(status_pdu.nacks[1].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].has_nack_range == true);
+  TESTASSERT(status_pdu.nacks[1].nack_range == 4);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Malformed Status PDU that is too short to be unpacked
+void test_control_pdu_invalid_too_short_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU too short for unpacking (12 bit)");
+  const int                len = 2;
+  std::array<uint8_t, len> tv  = {0x08,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0x11}; // 8ACK_SN_lower; Missing: E1 | 7R
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, with E1 still set at the end of the PDU
+// 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xFFFF, [missing NACK]
+// E1 and E2 bit set on both NACKs, but not third NACK follows - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e1_extension_cross_boundary_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E1 extension cross boundary (12 bit)");
+  const int                len = 15;
+  std::array<uint8_t, len> tv  = {0x08,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0x11,  // 8ACK_SN_lower
+                                  0x80,  // E1 | 7R
+                                  0x11,  // 8NACK_SN_upper
+                                  0x1c,  // 4NACK_SN_lower | E1 | E2 | E3 | R
+                                  0x00,  // 8SO_START_upper
+                                  0x02,  // 8SO_START_lower
+                                  0x00,  // 8SO_END_upper
+                                  0x05,  // 8SO_END_lower
+                                  0x11,  // 8NACK_SN_upper
+                                  0x3c,  // 4NACK_SN_lower | [!E1!] | E2 | E3 | R
+                                  0x00,  // 8SO_START_upper
+                                  0x05,  // 8SO_START_lower
+                                  0xFF,  // 8SO_END_upper
+                                  0xFF}; // 8SO_END_lower
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, with E2 set beyond the boundaries of the PDU
+// 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, [missing SO]
+// E1 and E2 bit set on first NACK;
+// E2 bit is set on second NACK, but SO_START and SO_END are missing - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e2_extension_cross_boundary_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E2 extension cross boundary (12 bit)");
+  const int                len = 12;
+  std::array<uint8_t, len> tv  = {0x08,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0x11,  // 8ACK_SN_lower
+                                  0x80,  // E1 | 7R
+                                  0x11,  // 8NACK_SN_upper
+                                  0x1c,  // 4NACK_SN_lower | E1 | E2 | E3 | R
+                                  0x00,  // 8SO_START_upper
+                                  0x02,  // 8SO_START_lower
+                                  0x00,  // 8SO_END_upper
+                                  0x05,  // 8SO_END_lower
+                                  0x11,  // 8NACK_SN_upper
+                                  0x34,  // 4NACK_SN_lower | E1 | [!E2!] | E3 | R
+                                  0x00}; // 8SO_START_upper; Missing: 8SO_START_lower, 8SO_END_upper, 8SO_END_lower
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, with E3 set beyond the boundaries of the PDU
+// 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, [missing range]
+// E1 and E2 bit set on first NACK;
+// E3 bit is set on second NACK, but range is missing - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e3_extension_cross_boundary_12bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E3 extension cross boundary (12 bit)");
+  const int                len = 11;
+  std::array<uint8_t, len> tv  = {0x08,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0x11,  // 8ACK_SN_lower
+                                  0x80,  // E1 | 7R
+                                  0x11,  // 8NACK_SN_upper
+                                  0x1c,  // 4NACK_SN_lower | E1 | E2 | E3 | R
+                                  0x00,  // 8SO_START_upper
+                                  0x02,  // 8SO_START_lower
+                                  0x00,  // 8SO_END_upper
+                                  0x05,  // 8SO_END_lower
+                                  0x11,  // 8NACK_SN_upper
+                                  0x32}; // 4NACK_SN_lower | E1 | E2 | [!E3!] | R; Missing: range
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size12bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+///////////////////////////////////////////
+// Control PDU tests (18 bit SN)
+///////////////////////////////////////////
+
+/// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 and no further NACK_SN (E1 bit not set)
+void test_control_pdu_no_nack_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU without NACK (18 bit)");
+  const int                len = 3;
+  std::array<uint8_t, len> tv  = {0x0E, 0x66, 0x64};
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 235929);
+  TESTASSERT(status_pdu.nacks.size() == 0);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set)
+//                          and NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110
+void test_control_pdu_with_nack_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with one NACK (18 bit)");
+  const int                len = 6;
+  std::array<uint8_t, len> tv  = {0x0E, 0x66, 0x66, 0xD9, 0x99, 0x80};
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 235929);
+  TESTASSERT(status_pdu.nacks.size() == 1);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 222822);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set),
+//                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
+//                              SO_START=2, SO_END=5,
+//                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 (E2 bit set),
+//                              SO_START=5, SO_END=0xFFFF
+void test_control_pdu_nacks_and_so_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and SO (18 bit)");
+  const int                len = 17;
+  std::array<uint8_t, len> tv  = {0b00001110, // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110, // 8ACK_SN_center
+                                  0b01100110, // 6ACK_SN_lower | E1 | R
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10011001, // 8NACK_SN_center
+                                  0b10110000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x02,       // 8SO_START_lower
+                                  0x00,       // 8SO_END_upper
+                                  0x05,       // 8SO_END_lower
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10111111, // 8NACK_SN_center
+                                  0b11010000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x05,       // 8SO_START_lower
+                                  0xFF,       // 8SO_END_upper
+                                  0xFF};      // 8SO_END_lower
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 235929);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 222822);
+  TESTASSERT(status_pdu.nacks[0].has_so == true);
+  TESTASSERT(status_pdu.nacks[0].so_start == 2);
+  TESTASSERT(status_pdu.nacks[0].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 222975);
+  TESTASSERT(status_pdu.nacks[1].has_so == true);
+  TESTASSERT(status_pdu.nacks[1].so_start == 5);
+  TESTASSERT(status_pdu.nacks[1].so_end == 0xFFFF);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set),
+//                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
+//                              SO_START=2, SO_END=5,
+//                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 (E1 and E2 bit not set),
+void test_control_pdu_nacks_and_mixed_so_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and mixed SO (18 bit)");
+  const int                len = 13;
+  std::array<uint8_t, len> tv  = {0b00001110,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110,  // 8ACK_SN_center
+                                  0b01100110,  // 6ACK_SN_lower | E1 | R
+                                  0b11011001,  // 8NACK_SN_upper
+                                  0b10011001,  // 8NACK_SN_center
+                                  0b10110000,  // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,        // 8SO_START_upper
+                                  0x02,        // 8SO_START_lower
+                                  0x00,        // 8SO_END_upper
+                                  0x05,        // 8SO_END_lower
+                                  0b11011001,  // 8NACK_SN_upper
+                                  0b10111111,  // 8NACK_SN_center
+                                  0b11000000}; // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 235929);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 222822);
+  TESTASSERT(status_pdu.nacks[0].has_so == true);
+  TESTASSERT(status_pdu.nacks[0].so_start == 2);
+  TESTASSERT(status_pdu.nacks[0].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 222975);
+  TESTASSERT(status_pdu.nacks[1].has_so == false);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Status PDU for 18 bit SN with ACK_SN=200977=0x31111=0b11 0001 0001 0001 0001,
+// NACK range0: 3 full SDUs,     NACK_SN=69905=0x11111=0b01 0001 0001 0001 0001
+// NACK range1: missing segment sequence across 4 SDUs
+//              starting at      NACK_SN=69913=0x11119=0b01 0001 0001 0001 1001, SO_START=2,
+//              ending at        NACK_SN=69916, SO_END=5
+// E1 and E3 bit set on first NACK, E2 and E3 bit set on the second.
+void test_control_pdu_nacks_and_range_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with NACKs and range (18 bit)");
+  const int                len = 15;
+  std::array<uint8_t, len> tv  = {0b00001100, // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01000100, // 8ACK_SN_center
+                                  0b01000110, // 6ACK_SN_lower | E1 | R
+                                  0b01000100, // 8NACK_SN_upper
+                                  0b01000100, // 8NACK_SN_center
+                                  0b01101000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x03,       // 8NACK_range
+                                  0b01000100, // 8NACK_SN_upper
+                                  0b01000110, // 8NACK_SN_center
+                                  0b01011000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x02,       // 8SO_START_lower
+                                  0x00,       // 8SO_END_upper
+                                  0x05,       // 8SO_END_lower
+                                  0x04};      // 8NACK_range
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == true);
+  TESTASSERT(status_pdu.ack_sn == 200977);
+  TESTASSERT(status_pdu.nacks.size() == 2);
+  TESTASSERT(status_pdu.nacks[0].nack_sn == 69905);
+  TESTASSERT(status_pdu.nacks[0].has_so == false);
+  TESTASSERT(status_pdu.nacks[0].has_nack_range == true);
+  TESTASSERT(status_pdu.nacks[0].nack_range == 3);
+
+  TESTASSERT(status_pdu.nacks[1].nack_sn == 69913);
+  TESTASSERT(status_pdu.nacks[1].has_so == true);
+  TESTASSERT(status_pdu.nacks[1].so_start == 2);
+  TESTASSERT(status_pdu.nacks[1].so_end == 5);
+  TESTASSERT(status_pdu.nacks[1].has_nack_range == true);
+  TESTASSERT(status_pdu.nacks[1].nack_range == 4);
+
+  // reset status PDU
+  pdu.clear();
+
+  // pack again
+  TESTASSERT(status_pdu.pack(pdu) == true);
+  TESTASSERT(pdu == tv);
+}
+
+// Malformed Status PDU that is too short to be unpacked
+void test_control_pdu_invalid_too_short_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU too short for unpacking (18 bit)");
+  const int                len = 2;
+  std::array<uint8_t, len> tv  = {0b00001110,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110}; // 8ACK_SN_center; Missing: 6ACK_SN_lower | E1 | R
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, similar to test3 but with E1 still set at the end of the PDU
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set),
+//                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
+//                              SO_START=2, SO_END=5,
+//                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 ([!E1!] and E2 bit set),
+//                              SO_START=5, SO_END=0xFFFF
+// E1 and E2 bit set on both NACKs, but not third NACK follows - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e1_extension_cross_boundary_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E1 extension cross boundary (18 bit)");
+  const int                len = 17;
+  std::array<uint8_t, len> tv  = {0b00001110, // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110, // 8ACK_SN_center
+                                  0b01100110, // 6ACK_SN_lower | E1 | R
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10011001, // 8NACK_SN_center
+                                  0b10110000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x02,       // 8SO_START_lower
+                                  0x00,       // 8SO_END_upper
+                                  0x05,       // 8SO_END_lower
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10111111, // 8NACK_SN_center
+                                  0b11110000, // 2NACK_SN_lower | [!E1!] | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x05,       // 8SO_START_lower
+                                  0xFF,       // 8SO_END_upper
+                                  0xFF};      // 8SO_END_lower
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, with E2 set beyond the boundaries of the PDU
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set),
+//                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
+//                              SO_START=2, SO_END=5,
+//                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 ([!E2!] bit set),
+// E2 bit is set on second NACK, but SO_START and SO_END are missing - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e2_extension_cross_boundary_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E2 extension cross boundary (18 bit)");
+  const int                len = 14;
+  std::array<uint8_t, len> tv  = {0b00001110, // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110, // 8ACK_SN_center
+                                  0b01100110, // 6ACK_SN_lower | E1 | R
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10011001, // 8NACK_SN_center
+                                  0b10110000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,       // 8SO_START_upper
+                                  0x02,       // 8SO_START_lower
+                                  0x00,       // 8SO_END_upper
+                                  0x05,       // 8SO_END_lower
+                                  0b11011001, // 8NACK_SN_upper
+                                  0b10111111, // 8NACK_SN_center
+                                  0b11010000, // 2NACK_SN_lower | E1 | [!E2!] | E3 | 3R
+                                  0x00};      // 8SO_START_upper; Missing: 8SO_START_lower, 8SO_END_upper, 8SO_END_lower
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+// Malformed Status PDU, with E3 set beyond the boundaries of the PDU
+// Status PDU for 18 bit SN with ACK_SN=235929=0x39999=0b11 1001 1001 1001 1001 (E1 bit set),
+//                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
+//                              SO_START=2, SO_END=5,
+//                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 ([!E3!] bit set),
+// E3 bit is set on second NACK, but range is missing - end of the buffer is reached prematurely
+void test_control_pdu_invalid_e3_extension_cross_boundary_18bit()
+{
+  test_delimit_logger      delimiter("Control PDU with invalid E3 extension cross boundary (18 bit)");
+  const int                len = 13;
+  std::array<uint8_t, len> tv  = {0b00001110,  // D/C | 3CPT | 4ACK_SN_upper
+                                  0b01100110,  // 8ACK_SN_center
+                                  0b01100110,  // 6ACK_SN_lower | E1 | R
+                                  0b11011001,  // 8NACK_SN_upper
+                                  0b10011001,  // 8NACK_SN_center
+                                  0b10110000,  // 2NACK_SN_lower | E1 | E2 | E3 | 3R
+                                  0x00,        // 8SO_START_upper
+                                  0x02,        // 8SO_START_lower
+                                  0x00,        // 8SO_END_upper
+                                  0x05,        // 8SO_END_lower
+                                  0b11011001,  // 8NACK_SN_upper
+                                  0b10111111,  // 8NACK_SN_center
+                                  0b11001000}; // 2NACK_SN_lower | E1 | E2 | [!E3!] | 3R; Missing: range
+  byte_buffer              pdu = make_pdu_and_log(tv);
+
+  TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
+
+  // unpack PDU
+  rlc_am_status_pdu status_pdu(rlc_am_sn_size::size18bits);
+  TESTASSERT(status_pdu.unpack(pdu) == false);
+}
+
+///////////////////////////////////////////
+// Status PDU function tests (any SN size)
+///////////////////////////////////////////
+
+// Test merge of NACKs upon status PDU creation -- previous NACK: non-range; next NACK: non-range
+void rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(rlc_am_sn_size sn_size)
+{
+  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: SDU + SDU", to_number(sn_size));
+
+  const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
+  const uint32_t mod_nr        = cardinality(to_number(sn_size));
+  const uint32_t min_size      = 3;
+  const uint32_t nack_size     = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t so_size       = 4;
+  const uint32_t range_size    = 1;
+
+  // Case: [...][NACK SDU] + [NACK SDU] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(2, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK SDU] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK SDU] + [NACK SDU] (continuous: merge with previous element) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 0;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(2, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK SDU] (non-continuous, SN gap: append as is) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK SDU] + [NACK segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(2, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK SDU] + [NACK segm] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 1;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK SDU] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(so_end_of_sdu, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(2, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK segm] + [NACK SDU] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK SDU] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(2, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK segm] + [NACK segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK segm] (non-continuous, SO gap (left): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK segm] (non-continuous, SO gap (right): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 5;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+}
+
+// Test merge of NACKs upon status PDU creation -- previous NACK: range; next NACK: non-range
+void rlc_am_nr_control_pdu_test_nack_merge_range_sdu(rlc_am_sn_size sn_size)
+{
+  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: range + SDU", to_number(sn_size));
+
+  const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
+  const uint32_t mod_nr        = cardinality(to_number(sn_size));
+  const uint32_t min_size      = 3;
+  const uint32_t nack_size     = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t so_size       = 4;
+  const uint32_t range_size    = 1;
+
+  // Case: [...][NACK range] + [NACK SDU] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + 1, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK SDU] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK range] + [NACK SDU] (continuous: merge with previous element) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 4;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + 1, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK SDU] (non-continuous, SN gap: append as is) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 5;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK range] + [NACK segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + 1, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range] + [NACK segm] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 1;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK SDU] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(so_end_of_sdu, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + 1, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK SDU] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK SDU] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK SDU]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + 1, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK segm] (non-continuous, SO gap (left): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK segm] (non-continuous, SO gap (right): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 5;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = false;
+    next_nack.nack_range     = 0;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+}
+
+// Test merge of NACKs upon status PDU creation -- previous NACK: non-range; next NACK: range
+void rlc_am_nr_control_pdu_test_nack_merge_sdu_range(rlc_am_sn_size sn_size)
+{
+  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: SDU + range", to_number(sn_size));
+
+  const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
+  const uint32_t mod_nr        = cardinality(to_number(sn_size));
+  const uint32_t min_size      = 3;
+  const uint32_t nack_size     = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t so_size       = 4;
+  const uint32_t range_size    = 1;
+
+  // Case: [...][NACK SDU] + [NACK range] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(3, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK range] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK SDU] + [NACK range] (continuous: merge with previous element) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 0;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(3, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK range] (non-continuous, SN gap: append as is) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK SDU] + [NACK range+segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(3, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK SDU] + [NACK range+segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK SDU] + [NACK range+segm] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK SDU]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 1;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK range] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(so_end_of_sdu, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(3, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK segm] + [NACK range] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK range] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK range+segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(3, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK segm] + [NACK range+segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1002;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK range+segm] (non-continuous, SO gap (left): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK segm] + [NACK range+segm] (non-continuous, SO gap (right): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = false;
+    prev_nack.nack_range     = 0;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1001;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 5;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+}
+
+// Test merge of NACKs upon status PDU creation -- previous NACK: range; next NACK: range
+void rlc_am_nr_control_pdu_test_nack_merge_range_range(rlc_am_sn_size sn_size)
+{
+  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: range + SDU", to_number(sn_size));
+
+  const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
+  const uint32_t mod_nr        = cardinality(to_number(sn_size));
+  const uint32_t min_size      = 3;
+  const uint32_t nack_size     = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t so_size       = 4;
+  const uint32_t range_size    = 1;
+
+  // Case: [...][NACK range] + [NACK range] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + next_nack.nack_range, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK range] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK range] + [NACK range] (continuous: merge with previous element) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 4;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(false, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + next_nack.nack_range, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK range] (non-continuous, SN gap: append as is) -- with SN overflow
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = mod_nr - 1;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 5;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(prev_nack == status_pdu.nacks.front());
+    TESTASSERT(next_nack == status_pdu.nacks.back());
+  }
+
+  // Case: [...][NACK range] + [NACK range+segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(0, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + next_nack.nack_range, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range] + [NACK range+segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * range_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range] + [NACK range+segm] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = false;
+    prev_nack.so_start       = 0;
+    prev_nack.so_end         = 0;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 1;
+    next_nack.so_end         = 50;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * range_size + so_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(so_end_of_sdu, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + next_nack.nack_range, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range] (non-continuous, SO gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = false;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 0;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + so_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range+segm] (continuous: merge with previous element)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+    TESTASSERT_EQ(prev_nack.nack_sn, status_pdu.nacks.back().nack_sn);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_so);
+    TESTASSERT_EQ(prev_nack.so_start, status_pdu.nacks.back().so_start);
+    TESTASSERT_EQ(next_nack.so_end, status_pdu.nacks.back().so_end);
+    TESTASSERT_EQ(true, status_pdu.nacks.back().has_nack_range);
+    TESTASSERT_EQ(prev_nack.nack_range + next_nack.nack_range, status_pdu.nacks.back().nack_range);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range+segm] (non-continuous, SN gap: append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1006;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range+segm] (non-continuous, SO gap (left): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = 99;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 0;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+
+  // Case: [...][NACK range+segm] + [NACK range+segm] (non-continuous, SO gap (right): append as is)
+  {
+    rlc_am_status_pdu status_pdu(sn_size);
+    status_pdu.ack_sn = 2000;
+    TESTASSERT_EQ(0, status_pdu.nacks.size());
+
+    // Prepare status_pdu.nacks: [...][NACK range+segm]
+    rlc_am_status_nack prev_nack;
+    prev_nack.nack_sn        = 1000;
+    prev_nack.has_so         = true;
+    prev_nack.so_start       = 7;
+    prev_nack.so_end         = so_end_of_sdu;
+    prev_nack.has_nack_range = true;
+    prev_nack.nack_range     = 5;
+    status_pdu.push_nack(prev_nack);
+    TESTASSERT_EQ(1, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + nack_size + so_size + range_size, status_pdu.packed_size);
+
+    // Add next NACK: [NACK range+segm]
+    rlc_am_status_nack next_nack;
+    next_nack.nack_sn        = 1005;
+    next_nack.has_so         = true;
+    next_nack.so_start       = 5;
+    next_nack.so_end         = 22;
+    next_nack.has_nack_range = true;
+    next_nack.nack_range     = 2;
+    status_pdu.push_nack(next_nack);
+    TESTASSERT_EQ(2, status_pdu.nacks.size());
+    TESTASSERT_EQ(min_size + 2 * nack_size + 2 * so_size + 2 * range_size, status_pdu.packed_size);
+    TESTASSERT(status_pdu.nacks.front() == prev_nack);
+    TESTASSERT(status_pdu.nacks.back() == next_nack);
+  }
+}
+
+// Test status PDU for correct trimming and estimation of packed size
+// 1) Test init, copy and reset
+// 2) Test step-wise growth and trimming of status PDU while covering several corner cases
+void rlc_am_nr_control_pdu_test_trimming(rlc_am_sn_size sn_size)
+{
+  test_delimit_logger delimiter("Control PDU ({} bit SN) test trimming", to_number(sn_size));
+
+  // status PDU with no NACKs
+  {
+    constexpr uint32_t min_size = 3;
+    byte_buffer        pdu;
+    rlc_am_status_pdu  status_pdu(sn_size);
+
+    status_pdu.ack_sn = 99;
+    TESTASSERT_EQ(status_pdu.packed_size, min_size); // minimum size
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), min_size);
+
+    // test copy assignment is deep copy
+    rlc_am_status_pdu status_pdu_copy = status_pdu;
+    TESTASSERT_EQ(status_pdu_copy.ack_sn, 99);
+    TESTASSERT_EQ(status_pdu_copy.packed_size, min_size); // minimum size
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu_copy.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), min_size);
+
+    // modify original
+    status_pdu.reset();
+    status_pdu.ack_sn = 77;
+    TESTASSERT_EQ(status_pdu.packed_size, min_size); // should still have minimum size
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), min_size);
+
+    // check the copy has not changed
+    TESTASSERT_EQ(status_pdu_copy.ack_sn, 99);            // shouldn't have changed
+    TESTASSERT_EQ(status_pdu_copy.packed_size, min_size); // minimum size
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu_copy.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), min_size);
+  }
+
+  // status PDU with multiple NACKs
+  // expect: ACK=77, NACKs=[12][14][17 50:99][17 150:199][17 250:299][19][21 333:111 r5][27 444:666 r3]
+  {
+    constexpr uint32_t min_size      = 3;
+    const uint32_t     nack_size     = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+    constexpr uint32_t so_size       = 4;
+    constexpr uint32_t range_size    = 1;
+    uint32_t           expected_size = min_size;
+    byte_buffer        pdu;
+    rlc_am_status_pdu  status_pdu(sn_size);
+
+    status_pdu.ack_sn = 77;
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn = 12;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn = 14;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn  = 17;
+      nack.has_so   = true;
+      nack.so_start = 50;
+      nack.so_end   = 99;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size + so_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn  = 17;
+      nack.has_so   = true;
+      nack.so_start = 150;
+      nack.so_end   = 199;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size + so_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn  = 17;
+      nack.has_so   = true;
+      nack.so_start = 250;
+      nack.so_end   = 299;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size + so_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn = 19;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn        = 21;
+      nack.has_so         = true;
+      nack.so_start       = 333;
+      nack.so_end         = 111;
+      nack.has_nack_range = true;
+      nack.nack_range     = 5;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size + so_size + range_size;
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+    {
+      rlc_am_status_nack nack;
+      nack.nack_sn        = 27;
+      nack.has_so         = true;
+      nack.so_start       = 444;
+      nack.so_end         = 666;
+      nack.has_nack_range = true;
+      nack.nack_range     = 3;
+      status_pdu.push_nack(nack);
+    }
+    expected_size += nack_size + so_size + range_size;
+    TESTASSERT_EQ(status_pdu.ack_sn, 77);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=77, NACKs=[12][14][17 50:99][17 150:199][17 250:299][19][21 333:111 r5][27 444:666 r3]
+
+    // create a copy, check content
+    rlc_am_status_pdu status_pdu_copy = status_pdu;
+    TESTASSERT_EQ(status_pdu_copy.ack_sn, 77);
+    TESTASSERT_EQ(status_pdu_copy.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu_copy.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=77, NACKs=[12][14][17 50:99][17 150:199][17 250:299][19][21 333:111 r5][27 444:666 r3]
+
+    // trim to much larger size: nothing should change
+    TESTASSERT_EQ(status_pdu.trim(expected_size * 2), true);
+    TESTASSERT_EQ(status_pdu.ack_sn, 77);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // trim to exact size: nothing should change
+    TESTASSERT_EQ(status_pdu.trim(expected_size), true);
+    TESTASSERT_EQ(status_pdu.ack_sn, 77);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // trim to (expected_size - 1): this should remove the last NACK and update ACK accordingly
+    TESTASSERT_EQ(status_pdu.trim(expected_size - 1), true);
+    expected_size -= nack_size + so_size + range_size;
+    TESTASSERT_EQ(status_pdu.ack_sn, 27);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=27, NACKs=[12][14][17 50:99][17 150:199][17 250:299][19][21 333:111 r5]
+
+    // trim to (expected_size - last two NACKs): this should remove the last NACK and update ACK accordingly
+    TESTASSERT_EQ(status_pdu.trim(expected_size - (2 * nack_size + so_size + range_size)), true);
+    expected_size -= 2 * nack_size + so_size + range_size;
+    TESTASSERT_EQ(status_pdu.ack_sn, 19);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=19, NACKs=[12][14][17 50:99][17 150:199][17 250:299]
+
+    // trim to (expected_size - 1): this should remove the last NACK and all other NACKs with the same SN
+    TESTASSERT_EQ(status_pdu.trim(expected_size - 1), true);
+    expected_size -= 3 * (nack_size + so_size);
+    TESTASSERT_EQ(status_pdu.ack_sn, 17);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=17, NACKs=[12][14]
+
+    // trim to impossible size = 1: this should report a failure without changes of the PDU
+    TESTASSERT_EQ(status_pdu.trim(1), false);
+    TESTASSERT_EQ(status_pdu.ack_sn, 17);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=17, NACKs=[12][14]
+
+    // trim to minimum size: this should remove all NACKs and update ACK to the SN of the first NACK
+    expected_size = min_size;
+    TESTASSERT_EQ(status_pdu.trim(expected_size), true);
+    TESTASSERT_EQ(status_pdu.ack_sn, 12);
+    TESTASSERT_EQ(status_pdu.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+
+    // current state: ACK=12, NACKs empty
+
+    // check the copy again - should be unchanged if not a shallow copy
+    TESTASSERT_EQ(status_pdu_copy.ack_sn, 77);
+    TESTASSERT_EQ(status_pdu_copy.packed_size, expected_size);
+    pdu.clear();
+    TESTASSERT_EQ(status_pdu_copy.pack(pdu), true);
+    TESTASSERT_EQ(pdu.length(), expected_size);
+  }
+}
+
 } // namespace srsgnb
 
 int main()
@@ -175,7 +2997,7 @@ int main()
   logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  logger.info("Testing UM PDU packing/unpacking");
+  logger.info("Testing AM PDU packing/unpacking");
   srslog::flush();
   srsgnb::test_rlc_am_12bit_complete_sdu();
   srsgnb::test_rlc_am_12bit_first_segment();
@@ -183,4 +3005,46 @@ int main()
   srsgnb::test_rlc_am_18bit_complete_sdu();
   srsgnb::test_rlc_am_18bit_middle_segment();
   srsgnb::test_rlc_am_18bit_malformed();
+
+  logger.info("Testing Control PDU packing/unpacking (12 bit)");
+  srslog::flush();
+  srsgnb::test_control_pdu_no_nack_12bit();
+  srsgnb::test_control_pdu_with_nack_12bit();
+  srsgnb::test_control_pdu_nacks_and_so_12bit();
+  srsgnb::test_control_pdu_nacks_and_mixed_so_12bit();
+  srsgnb::test_control_pdu_nacks_and_range_12bit();
+  srsgnb::test_control_pdu_invalid_too_short_12bit();
+  srsgnb::test_control_pdu_invalid_e1_extension_cross_boundary_12bit();
+  srsgnb::test_control_pdu_invalid_e2_extension_cross_boundary_12bit();
+  srsgnb::test_control_pdu_invalid_e3_extension_cross_boundary_12bit();
+
+  logger.info("Testing Control PDU packing/unpacking (18 bit)");
+  srslog::flush();
+  srsgnb::test_control_pdu_no_nack_18bit();
+  srsgnb::test_control_pdu_with_nack_18bit();
+  srsgnb::test_control_pdu_nacks_and_so_18bit();
+  srsgnb::test_control_pdu_nacks_and_mixed_so_18bit();
+  srsgnb::test_control_pdu_nacks_and_range_18bit();
+  srsgnb::test_control_pdu_invalid_too_short_18bit();
+  srsgnb::test_control_pdu_invalid_e1_extension_cross_boundary_18bit();
+  srsgnb::test_control_pdu_invalid_e2_extension_cross_boundary_18bit();
+  srsgnb::test_control_pdu_invalid_e3_extension_cross_boundary_18bit();
+
+  logger.info("Testing Status PDU functions (12 bit)");
+  srslog::flush();
+  srsgnb::rlc_am_sn_size sn_size = srsgnb::rlc_am_sn_size::size12bits;
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_trimming(sn_size);
+
+  logger.info("Testing Status PDU functions (18 bit)");
+  srslog::flush();
+  sn_size = srsgnb::rlc_am_sn_size::size18bits;
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_sdu(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_sdu_range(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_nack_merge_range_range(sn_size);
+  srsgnb::rlc_am_nr_control_pdu_test_trimming(sn_size);
 }

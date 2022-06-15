@@ -13,5 +13,5 @@ target_link_libraries(rlc_um_pdu_test srsgnb_support srslog)
 add_test(rlc_um_pdu_test rlc_um_pdu_test)
 
 add_executable(rlc_am_pdu_test rlc_am_pdu_test.cpp)
-target_link_libraries(rlc_am_pdu_test srsgnb_support srslog)
+target_link_libraries(rlc_am_pdu_test srsgnb_rlc srsgnb_support srslog)
 add_test(rlc_am_pdu_test rlc_am_pdu_test)
