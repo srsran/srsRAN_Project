@@ -11,8 +11,8 @@
 #ifndef SRSGNB_RLC_RX_ENTITY_H
 #define SRSGNB_RLC_RX_ENTITY_H
 
+#include "rlc_logger.h"
 #include "srsgnb/rlc/rlc.h"
-#include "srsgnb/rlc/rlc_logger.h"
 
 namespace srsgnb {
 

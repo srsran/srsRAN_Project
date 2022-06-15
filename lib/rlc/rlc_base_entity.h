@@ -11,10 +11,10 @@
 #ifndef SRSGNB_RLC_BASE_ENTITY_H
 #define SRSGNB_RLC_BASE_ENTITY_H
 
+#include "rlc_logger.h"
 #include "rlc_rx_entity.h"
 #include "rlc_tx_entity.h"
 #include "srsgnb/rlc/rlc_entity.h"
-#include "srsgnb/rlc/rlc_logger.h"
 
 namespace srsgnb {
 

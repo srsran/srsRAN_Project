@@ -12,8 +12,6 @@
 #define SRSGNB_RLC_ENTITY_H
 
 #include "srsgnb/rlc/rlc.h"
-#include "srsgnb/rlc/rlc_logger.h"
-#include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 

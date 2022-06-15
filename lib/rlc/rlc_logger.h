@@ -11,12 +11,13 @@
 #ifndef SRSGNB_RLC_LOGGER_H
 #define SRSGNB_RLC_LOGGER_H
 
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 
-/// Class used to store common logging parameters for all RLC bearer types.
+/// Class used to store common logging parameters for all types RLC entities.
 /// It provides logging helpers, so that the UE index and LCID are always logged.
 ///
 /// \param du_index UE identifier within the DU
@@ -28,7 +29,6 @@ public:
     du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger("RLC"))
   {}
 
-protected:
   template <typename... Args>
   void log_debug(const char* fmt, Args&&... args)
   {
