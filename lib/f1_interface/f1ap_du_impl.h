@@ -66,8 +66,6 @@ private:
   f1ap_du_context ctxt;
 
   std::unique_ptr<f1ap_event_manager> events;
-
-  unsigned f1_setup_retry_no = 0;
 };
 
 } // namespace srs_du
