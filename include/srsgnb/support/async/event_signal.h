@@ -13,6 +13,7 @@
 
 #include "coroutine.h"
 #include "detail/event_impl.h"
+#include <utility>
 
 namespace srsgnb {
 
