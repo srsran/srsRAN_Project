@@ -26,7 +26,7 @@ public:
   /*
    * Interfaces for higher layers
    */
-  void handle_sdu(byte_buffer sdu) override
+  void handle_sdu(std::unique_ptr<rlc_sdu> sdu) override
   {
     // TODO
   }

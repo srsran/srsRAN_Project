@@ -43,6 +43,14 @@ public:
   virtual void on_ack_received()           = 0;
 };
 
+/// Structure used to represent an RLC SDU. An RLC SDU
+/// must be accompanied with the corresponding PDCP SN
+/// so that RLC AM can notify the PDCP of ACKs
+struct rlc_sdu {
+  uint32_t    pdcp_sn = 0;
+  byte_buffer buf     = {};
+};
+
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
 /// The upper-layers will use this call to pass RLC SDUs into the TX entity.
 class rlc_tx_sdu_handler
@@ -51,7 +59,7 @@ public:
   virtual ~rlc_tx_sdu_handler() = default;
 
   /// Handle the incoming PDU.
-  virtual void handle_sdu(byte_buffer pdu) = 0;
+  virtual void handle_sdu(std::unique_ptr<rlc_sdu> sdu) = 0;
 };
 
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
