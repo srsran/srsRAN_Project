@@ -1,34 +1,22 @@
 /*
  *
- * Copyright 2013-2022 Software Radio Systems Limited
+ * copyright 2013-2022 software radio systems limited
  *
- * By using this file, you agree to the terms and conditions set
- * forth in the LICENSE file which can be found at the top level of
+ * by using this file, you agree to the terms and conditions set
+ * forth in the license file which can be found at the top level of
  * the distribution.
  *
  */
 
 #include "f1ap_du_impl.h"
 #include "../ran/gnb_format.h"
+#include "procedures/f1ap_du_setup_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_du;
-
-class srsgnb::srs_du::f1ap_du_impl::f1ap_event_manager
-{
-public:
-  /// F1 Setup Procedure Outcome.
-  using f1ap_setup_outcome_t = expected<const f1_setup_resp_s*, const f1_setup_fail_s*>;
-  event_signal<f1ap_setup_outcome_t> f1ap_setup_response;
-
-  /// F1 UE Context Modification Outcome
-  using f1ap_ue_context_modification_outcome_t =
-      expected<const asn1::f1ap::ue_context_mod_confirm_s*, const asn1::f1ap::ue_context_mod_refuse_s*>;
-  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response;
-};
 
 f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_notifier& message_notifier_) :
   logger(srslog::fetch_basic_logger("DU-F1AP")),
@@ -47,45 +35,7 @@ f1ap_du_impl::~f1ap_du_impl() {}
 
 async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(const f1_setup_request_message& request)
 {
-  // set F1AP PDU contents
-  asn1::f1ap::f1_ap_pdu_c pdu;
-  pdu.set_init_msg();
-  pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  pdu.init_msg().value.f1_setup_request() = request.msg;
-
-  // set values handled by F1
-  auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
-  setup_req->transaction_id.value = 99;
-
-  // send request
-  f1c_notifier.on_new_message(pdu);
-
-  // Await response
-  f1ap_event_manager::f1ap_setup_outcome_t f1_resp;
-
-  // TODO: add procedure implementation
-  return launch_async([this, f1_resp, res = f1_setup_response_message{}, request](
-                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    CORO_AWAIT_VALUE(f1_resp, events->f1ap_setup_response);
-
-    if (f1_resp.has_value()) {
-      logger.info("Received F1AP PDU with successful outcome.");
-      res.msg     = *f1_resp.value();
-      res.success = true;
-    } else {
-      logger.info("Received F1AP PDU with unsuccessful outcome.");
-      if (f1_setup_retry_no < request.max_setup_retries) {
-        CORO_AWAIT_VALUE(res, handle_f1_setup_failure(request, *f1_resp.error()));
-      } else {
-        logger.error("Reached maximum number of F1 Setup connection retries ({}).", request.max_setup_retries);
-        res.success = false;
-      }
-    }
-
-    CORO_RETURN(res);
-  });
+  return launch_async<f1ap_du_setup_procedure>(request, f1c_notifier, *events, logger);
 }
 
 async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
@@ -106,50 +56,6 @@ async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(con
         }
         CORO_RETURN(resp);
       });
-}
-
-async_task<f1_setup_response_message> f1ap_du_impl::handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                            const asn1::f1ap::f1_setup_fail_s& failure)
-{
-  return launch_async([this, res = f1_setup_response_message{}, request, failure](
-                          coro_context<async_task<f1_setup_response_message> >& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    if (failure->time_to_wait_present) {
-      f1_setup_retry_no++;
-      logger.info("Received F1SetupFailure with Time to Wait IE. Reinitiating F1 setup in {}s (retry={}/{}).",
-                  failure->time_to_wait.value.to_number(),
-                  f1_setup_retry_no,
-                  request.max_setup_retries);
-
-      // TODO add timer
-
-      CORO_AWAIT_VALUE(res, handle_f1ap_setup_request(request));
-    } else {
-      std::string cause_str = "";
-      switch (failure->cause.value.type()) {
-        case asn1::f1ap::cause_c::types_opts::radio_network:
-          cause_str = failure->cause.value.radio_network().to_string();
-          break;
-        case asn1::f1ap::cause_c::types_opts::transport:
-          cause_str = failure->cause.value.transport().to_string();
-          break;
-        case asn1::f1ap::cause_c::types_opts::protocol:
-          cause_str = failure->cause.value.protocol().to_string();
-          break;
-        case asn1::f1ap::cause_c::types_opts::misc:
-          cause_str = failure->cause.value.misc().to_string();
-          break;
-        default:
-          cause_str = "unknown";
-          break;
-      }
-
-      logger.error("Received F1SetupFailure with \"{}\" error: {}", failure->cause.value.type().to_string(), cause_str);
-    }
-
-    CORO_RETURN(res);
-  });
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)

@@ -21,6 +21,8 @@
 namespace srsgnb {
 namespace srs_du {
 
+class f1ap_event_manager;
+
 class f1ap_du_impl final : public f1_interface
 {
 public:
@@ -29,9 +31,6 @@ public:
 
   // f1ap connection manager functions
   async_task<f1_setup_response_message> handle_f1ap_setup_request(const f1_setup_request_message& request) override;
-
-  async_task<f1_setup_response_message> handle_f1_setup_failure(const f1_setup_request_message&    request,
-                                                                const asn1::f1ap::f1_setup_fail_s& failure);
 
   // f1ap rrc message transfer procedure functions
   void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) override {}
@@ -52,8 +51,6 @@ public:
   void handle_notify(const f1ap_notify_message& msg) override {}
 
 private:
-  class f1ap_event_manager;
-
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
