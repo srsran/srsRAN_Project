@@ -11,19 +11,17 @@
 #ifndef SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
 #define SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
 
-#include "srsgnb/fapi/config_message_notifier.h"
-#include "srsgnb/fapi/slot_message_notifier.h"
-
 namespace srsgnb {
 
+class config_message_notifier;
+class slot_message_notifier;
 class upper_phy_timing_notifier;
 
 namespace fapi_adaptor {
 
 /// \brief Interface to the PHY side of the FAPI adaptor object.
 ///
-/// This interface will give access to the interfaces needed to interconnect the adaptor with the PHY, listen and manage
-/// FAPI events.
+/// This interface gives access to the interfaces needed to interconnect the adaptor with the PHY layer.
 ///
 /// \note This object has the ownership of all the components of the adaptor.
 class phy_fapi_adaptor

@@ -35,16 +35,21 @@ public:
   void finish_processing_pdus() override {}
 };
 
-static downlink_processor_dummy dummy_dl_processor;
-
 } // namespace
 
-fapi_to_phy_translator::slot_task_processor::slot_task_processor() : dl_processor(dummy_dl_processor) {}
+/// Instance used by the initial slot based task processor.
+static downlink_processor_dummy dummy_dl_processor;
 
-fapi_to_phy_translator::slot_task_processor::slot_task_processor(downlink_processor_pool& dl_processor_pool,
-                                                                 resource_grid_pool&      rg_pool,
-                                                                 slot_point               slot,
-                                                                 unsigned                 sector_id) :
+fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller() :
+  dl_processor(dummy_dl_processor)
+{
+}
+
+fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller(
+    downlink_processor_pool& dl_processor_pool,
+    resource_grid_pool&      rg_pool,
+    slot_point               slot,
+    unsigned                 sector_id) :
   slot(slot), dl_processor(dl_processor_pool.get_processor(slot, sector_id))
 {
   resource_grid_context context = {slot, sector_id};
@@ -58,16 +63,17 @@ fapi_to_phy_translator::slot_task_processor::slot_task_processor(downlink_proces
   dl_processor.get().configure_resource_grid(context, grid);
 }
 
-fapi_to_phy_translator::slot_task_processor&
-fapi_to_phy_translator::slot_task_processor::operator=(fapi_to_phy_translator::slot_task_processor&& other)
+fapi_to_phy_translator::slot_based_upper_phy_controller&
+fapi_to_phy_translator::slot_based_upper_phy_controller::operator=(
+    fapi_to_phy_translator::slot_based_upper_phy_controller&& other)
 {
-  this->dl_processor = std::move(other.dl_processor);
-  this->slot         = std::move(other.slot);
-
+  using std::swap;
+  swap(slot, other.slot);
+  swap(dl_processor, other.dl_processor);
   return *this;
 }
 
-fapi_to_phy_translator::slot_task_processor::~slot_task_processor()
+fapi_to_phy_translator::slot_based_upper_phy_controller::~slot_based_upper_phy_controller()
 {
   dl_processor.get().finish_processing_pdus();
 }
@@ -79,7 +85,7 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
 
   std::lock_guard<std::mutex> lock(mutex);
 
-  for (const auto& pdu : msg.pdus)
+  for (const auto& pdu : msg.pdus) {
     switch (pdu.pdu_type) {
       case dl_pdu_type::CSI_RS:
         break;
@@ -90,12 +96,13 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
       case dl_pdu_type::SSB: {
         ssb_processor::pdu_t ssb_pdu;
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot);
-        current_task_processor->process_ssb(ssb_pdu);
+        current_slot_controller->process_ssb(ssb_pdu);
         break;
       }
       default:
         srsran_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
+  }
 }
 
 void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg) {}
@@ -104,8 +111,8 @@ void fapi_to_phy_translator::ul_dci_request(const ul_dci_request_message& msg) {
 
 void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg) {}
 
-void fapi_to_phy_translator::handle_new_slot(const slot_point& slot)
+void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  current_task_processor = slot_task_processor(dl_processor_pool, rg_pool, slot, sector_id);
+  current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
 }

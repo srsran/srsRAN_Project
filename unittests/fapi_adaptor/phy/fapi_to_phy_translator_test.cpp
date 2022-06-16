@@ -104,11 +104,12 @@ static void test_current_grid_is_send_on_new_slot()
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
   slot_point slot2(1, 1, 1);
-  translator.handle_new_slot(slot);
+  translator.handle_new_slot(slot2);
 
-  // Assert that the finish processing pdus method of the previous slot downlink_processor has been called.
+  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   TESTASSERT(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  TESTASSERT(!dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
+  TESTASSERT(dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());
 }
 
 static void test_dl_ssb_pdu_is_processed()
@@ -128,7 +129,7 @@ static void test_dl_ssb_pdu_is_processed()
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
 
-  // Process ssb.pdu.
+  // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();
   translator.dl_tti_request(msg);
 
@@ -136,11 +137,12 @@ static void test_dl_ssb_pdu_is_processed()
   TESTASSERT(dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
 
   slot_point slot2(1, 1, 1);
-  translator.handle_new_slot(slot);
+  translator.handle_new_slot(slot2);
 
-  // Assert that the finish processing pdus method of the previous slot downlink_processor has been called.
+  // Assert that the finish processing PDUs method of the previous slot downlink_processor has been called.
   TESTASSERT(dl_processor_pool.processor(slot).has_finish_processing_pdus_method_been_called());
-  TESTASSERT(!dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
+  TESTASSERT(dl_processor_pool.processor(slot2).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!dl_processor_pool.processor(slot2).has_finish_processing_pdus_method_been_called());
 }
 
 static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
@@ -155,7 +157,7 @@ static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
-  // Process ssb.pdu.
+  // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();
   translator.dl_tti_request(msg);
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());

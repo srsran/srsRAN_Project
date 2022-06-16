@@ -23,39 +23,43 @@ class resource_grid_pool;
 
 namespace fapi_adaptor {
 
-/// \brief This class listen to FAPI slot messages and translate them into SRS PHY messages, so they can be processed by
-/// the PHY. IT also commands the upper PHY to process them.
+/// \brief This class receives FAPI slot based messages and translates them into PHY specific data types, commanding the
+/// upper PHY to process them.
 ///
-/// Translating and processing the FAPI slot messages involves converting the data structures, checking of message
-/// validity at slot level, selecting and reserving resources in the PHY to process the messages.
+/// Translating and processing the FAPI slot based messages involves converting the data structures, checking for
+/// message validity at slot level and selecting and reserving resources in the PHY to process the messages.
 ///
-/// \note This translator assumes that the contents of the incoming FAPI slot message is valid, ie, that it has
-/// previously been validated using the provided FAPI validators.
+/// \note The translator assumes that the contents of the incoming FAPI slot message are valid, ie: it has been
+/// previously validated using the provided FAPI validators.
+/// \note This class has been designed to be thread safe to allow calling the \c set_handle() method and message
+/// handlers from different threads.
 class fapi_to_phy_translator : public fapi::slot_message_gateway
 {
-  /// Helper class that wraps the information needed by the translator for a given slot.
+  /// RAII style class which is meant to have a lifetime of a single slot. It executes the preparation and closing
+  /// procedures required by the upper PHY within a slot.
   ///
-  /// \note The scope of these objects is a slot point. When a new slot starts an object it's created while the and the
-  /// previous one gets destroyed.
-  class slot_task_processor
+  /// \note The lifetime of this object is meant to be a single slot point.
+  class slot_based_upper_phy_controller
   {
     slot_point                                 slot;
     std::reference_wrapper<downlink_processor> dl_processor;
 
   public:
-    slot_task_processor();
+    slot_based_upper_phy_controller();
 
-    slot_task_processor(downlink_processor_pool& dl_processor_pool,
-                        resource_grid_pool&      rg_pool,
-                        slot_point               slot,
-                        unsigned                 sector_id);
+    slot_based_upper_phy_controller(downlink_processor_pool& dl_processor_pool,
+                                    resource_grid_pool&      rg_pool,
+                                    slot_point               slot,
+                                    unsigned                 sector_id);
 
-    slot_task_processor& operator=(slot_task_processor&& other);
+    slot_based_upper_phy_controller(slot_based_upper_phy_controller&& other) = delete;
 
-    ~slot_task_processor();
+    slot_based_upper_phy_controller& operator=(slot_based_upper_phy_controller&& other);
 
-    /// Overloads the operator to give access to the downlink processor.
-    downlink_processor* operator->() { return &dl_processor.get(); }
+    ~slot_based_upper_phy_controller();
+
+    downlink_processor*       operator->() { return &dl_processor.get(); }
+    const downlink_processor* operator->() const { return &dl_processor.get(); }
   };
 
 public:
@@ -78,19 +82,24 @@ public:
 
   /// \brief Handles a new slot.
   ///
-  /// Handling a new slot consists of finishing processing pdus of the previous slot, updating the current slot,
-  /// grabbing a resource grid and a downlink processor and configuring the downlink processor with the resource grid.
+  /// Handling a new slot consists of the following steps:
+  /// - Finishing processing the PDUs from the previous slot.
+  /// - Updating the current slot.
+  /// - Grabbing a resource grid and a downlink processor.
+  /// - Configuring the downlink processor with the new resource grid.
   ///
   /// \param slot Identifies the new slot.
-  void handle_new_slot(const slot_point& slot);
+  /// \note This method may be called from a different thread compared to the rest of methods.
+  void handle_new_slot(slot_point slot);
 
 private:
   const unsigned           sector_id;
   downlink_processor_pool& dl_processor_pool;
   resource_grid_pool&      rg_pool;
 
-  slot_task_processor      current_task_processor;
-  // Protects current_task_processors.
+  slot_based_upper_phy_controller current_slot_controller;
+  // Protects current_slot_controller.
+  //: TODO: make this lock free.
   std::mutex mutex;
 };
 
