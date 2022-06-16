@@ -159,7 +159,7 @@ public:
   /// \param idx Position of the erased element in the array
   void erase(size_t idx) noexcept
   {
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: %zd>=%zd", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     if (this->contains(idx)) {
       this->nof_elems--;
       this->vec[idx].reset();
@@ -177,7 +177,7 @@ public:
   void insert(size_t idx, U&& u)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: %zd>=%zd", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx] = std::forward<U>(u);
   }
@@ -189,7 +189,7 @@ public:
   void emplace(size_t idx, Args&&... args)
   {
     static_assert(std::is_constructible<value_type, Args&&...>::value, "Ctor T(Args...) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: %zd>=%zd", idx, this->vec.size());
+    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx].emplace(std::forward<Args>(args)...);
   }
@@ -387,12 +387,12 @@ public:
   T&       operator[](size_t idx) { return ptr[idx]; }
   const T& at(size_t idx) const
   {
-    srsran_assert(contains(idx), "Access to inexistent element of index=%zd", idx);
+    srsran_assert(contains(idx), "Access to inexistent element of index={}", idx);
     return ptr[idx];
   }
   T& at(size_t idx)
   {
-    srsran_assert(this->contains(idx), "Access to inexistent element of index=%zd", idx);
+    srsran_assert(this->contains(idx), "Access to inexistent element of index={}", idx);
     return this->ptr[idx];
   }
 
@@ -422,13 +422,13 @@ public:
   template <typename U>
   void insert(size_t idx, U&& u)
   {
-    srsran_assert(idx < this->len, "Out-of-bounds access to array: %zd>=%zd", idx, this->len);
+    srsran_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
     this->present_ptr[idx] = true;
     this->ptr[idx]         = std::forward<U>(u);
   }
   void erase(size_t idx)
   {
-    srsran_assert(idx < this->len, "Out-of-bounds access to array: %zd>=%zd", idx, this->len);
+    srsran_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
     this->present_ptr[idx] = false;
   }
   void erase(iterator it) { erase(it.get_idx()); }
