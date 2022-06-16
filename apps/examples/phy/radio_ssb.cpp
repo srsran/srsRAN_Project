@@ -9,14 +9,15 @@
  */
 
 /// \file
-/// \brief Example application of SSB transmitted through radio.
+/// \brief Example application of SSB transmitted over a radio interface.
 ///
 /// This example application instantiates a radio (ZMQ, UHD or other), a lower PHY and an upper PHY with SSB
 /// transmission.
 ///
-/// It is a proof-of-concept of the integration of the lower physical layer working in real-time using a radio.
+/// It is a proof of concept of the integration of the lower physical layer working in real-time using a radio.
 ///
 /// The application supports different working profiles, run <tt> radio_ssb -h </tt> for usage details.
+/// \cond
 
 #include "../radio/radio_notifier_sample.h"
 #include "lower_phy_example_factory.h"
@@ -33,7 +34,6 @@
 #include <getopt.h>
 #include <string>
 
-/// Describes a channel configuration profile.
 struct configuration_profile {
   std::string           name;
   std::string           description;
@@ -161,7 +161,7 @@ static const std::vector<configuration_profile> profiles = {
 // Global instances.
 static std::mutex                             stop_execution_mutex;
 static std::atomic<bool>                      stop      = {false};
-static std::unique_ptr<lower_phy_control>     lower_phy = nullptr;
+static std::unique_ptr<lower_phy_controller>  lower_phy = nullptr;
 static std::unique_ptr<radio_session>         radio     = nullptr;
 static std::unique_ptr<upper_phy_ssb_example> upper_phy = nullptr;
 
@@ -484,3 +484,5 @@ int main(int argc, char** argv)
 
   return 0;
 }
+
+/// \endcond

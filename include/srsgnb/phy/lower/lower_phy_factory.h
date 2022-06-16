@@ -3,7 +3,7 @@
 #define SRSGNB_PHY_LOWER_LOWER_PHY_FACTORY_H
 
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
-#include "srsgnb/phy/lower/lower_phy_control.h"
+#include "srsgnb/phy/lower/lower_phy_controller.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include <memory>
 
@@ -18,7 +18,7 @@ public:
 
   /// \brief Creates a generic lower physical layer control.
   /// \param[in] config Provides the required configuration.
-  virtual std::unique_ptr<lower_phy_control> create(lower_phy_configuration& config) = 0;
+  virtual std::unique_ptr<lower_phy_controller> create(lower_phy_configuration& config) = 0;
 };
 
 /// Describes the necessary parameters to create a generic lower PHY factory.

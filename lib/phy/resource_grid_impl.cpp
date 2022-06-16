@@ -33,14 +33,17 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
                 symbols.size());
 
   // Select buffer from the port index
-  srsran_assert(port < nof_ports, "The port index {} is out-of-range {}.", port, nof_ports - 1);
+  srsran_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
   span<cf_t> buffer = port_buffers[port];
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
-    srsran_assert(coordinate.symbol < nof_symb, "Symbol index {} is out-of-range {}.", coordinate.symbol, nof_symb);
     srsran_assert(
-        coordinate.subcarrier < nof_subc, "Subcarrier index {} is out-of-range {}.", coordinate.subcarrier, nof_subc);
+        coordinate.symbol < nof_symb, "Symbol index {} is out of range (max {}).", coordinate.symbol, nof_symb);
+    srsran_assert(coordinate.subcarrier < nof_subc,
+                  "Subcarrier index {} is out of range (max {}).",
+                  coordinate.subcarrier,
+                  nof_subc);
     buffer[coordinate.symbol * nof_subc + coordinate.subcarrier] = symbols[count++];
   }
 }

@@ -28,7 +28,7 @@ public:
     srsran_assert(config.demodulator_factory, "Invalid demodulator factory.");
   }
 
-  std::unique_ptr<srsgnb::lower_phy_control> create(lower_phy_configuration& config) override
+  std::unique_ptr<srsgnb::lower_phy_controller> create(lower_phy_configuration& config) override
   {
     lower_phy_common_configuration common_config;
     common_config.modulators.reserve(config.sectors.size());

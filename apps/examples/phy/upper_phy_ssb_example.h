@@ -20,9 +20,9 @@
 
 namespace srsgnb {
 
-/// \brief Upper PHY processor application sample interface.
+/// \brief Upper PHY processor application example interface.
 ///
-/// It shows the usage of the upper PHY processor interfaces usage. It implements the upper PHY timing interface.
+/// It shows how to use the upper PHY processor interfaces. It implements the upper PHY timing interface.
 class upper_phy_ssb_example : public upper_phy_timing_handler
 {
 public:
@@ -35,7 +35,7 @@ public:
   /// Stops the upper PHY execution.
   virtual void stop() = 0;
 
-  /// Collects the necessary parameters to generate a periodic DL waveform with.
+  /// Collects the necessary parameters to generate a periodic DL waveform.
   struct ssb_configuration {
     /// Physical cell identifier.
     unsigned phys_cell_id;
@@ -43,7 +43,7 @@ public:
     cyclic_prefix cp;
     /// SSB period in milliseconds.
     unsigned period_ms;
-    /// PSS scaling in decibels relative to SSS scaling.
+    /// PSS scaling relative to SSS, in decibels.
     float beta_pss_dB;
     /// SSB candidates to transmit.
     std::vector<unsigned> ssb_idx;
