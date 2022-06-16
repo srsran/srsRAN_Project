@@ -793,19 +793,59 @@ inline byte_buffer make_byte_buffer(std::string hex_str)
 
 namespace fmt {
 
-/// \brief Custom formatter for byte_buffer
+/// \brief Custom formatter for byte_buffer_view
 template <>
-struct formatter<srsgnb::byte_buffer> {
+struct formatter<srsgnb::byte_buffer_view> {
+  enum { hexadecimal, binary } mode = hexadecimal;
+
   template <typename ParseContext>
   auto parse(ParseContext& ctx) -> decltype(ctx.begin())
   {
-    return ctx.begin();
+    auto it = ctx.begin();
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'b') {
+        mode = binary;
+      }
+      ++it;
+    }
+    return it;
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::byte_buffer_view& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    if (mode == hexadecimal) {
+      return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+    }
+    return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+/// \brief Custom formatter for byte_buffer
+template <>
+struct formatter<srsgnb::byte_buffer> {
+  enum { hexadecimal, binary } mode = hexadecimal;
+
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    auto it = ctx.begin();
+    while (it != ctx.end() and *it != '}') {
+      if (*it == 'b') {
+        mode = binary;
+      }
+      ++it;
+    }
+    return it;
   }
 
   template <typename FormatContext>
   auto format(const srsgnb::byte_buffer& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+    if (mode == hexadecimal) {
+      return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
+    }
+    return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
   }
 };
 

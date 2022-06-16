@@ -43,3 +43,7 @@ set_tests_properties(unique_thread_test PROPERTIES LABELS "tsan")
 add_executable(stats_test stats_test.cpp)
 target_link_libraries(stats_test srslog)
 add_test(stats_test stats_test)
+
+add_executable(bit_encoding_test bit_encoding_test.cpp)
+target_link_libraries(bit_encoding_test srslog srsgnb_support)
+add_test(bit_encoding_test bit_encoding_test)

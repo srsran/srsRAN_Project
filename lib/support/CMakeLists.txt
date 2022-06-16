@@ -10,7 +10,8 @@ set(SOURCES
         math_utils.cpp
         task_worker.cpp
         unique_thread.cpp
-        timers.cpp)
+        timers.cpp
+        bit_encoding.cpp)
 
 add_library(srsgnb_support STATIC ${SOURCES})
 target_link_libraries(srsgnb_support ${CMAKE_THREAD_LIBS_INIT} srslog)
