@@ -203,6 +203,7 @@ public:
     }
     node = new_head;
   }
+
   void pop(T* t)
   {
     node_t* to_rem = static_cast<node_t*>(t);
