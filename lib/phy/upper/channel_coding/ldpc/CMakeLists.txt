@@ -18,3 +18,5 @@ add_library(srsgnb_ldpc STATIC
 )
 
 target_link_libraries(srsgnb_ldpc log_likelihood_ratio)
+
+install(TARGETS srsgnb_ldpc EXPORT srsgnb_matlab)

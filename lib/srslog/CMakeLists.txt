@@ -28,3 +28,5 @@ set(SOURCES
 
 add_library(srslog STATIC ${SOURCES})
 target_link_libraries(srslog ${CMAKE_THREAD_LIBS_INIT})
+
+install(TARGETS srslog EXPORT srsgnb_matlab)

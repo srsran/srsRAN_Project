@@ -19,3 +19,5 @@ add_library(srsgnb_polar STATIC
         polar_rate_matcher_impl.cpp
 )
 target_link_libraries(srsgnb_polar log_likelihood_ratio srslog)
+
+install(TARGETS srsgnb_polar EXPORT srsgnb_matlab)

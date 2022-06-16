@@ -20,3 +20,7 @@ target_link_libraries(srsgnb_channel_coding
         srsgnb_polar
         srsgnb_ldpc
         srsgnb_short_block)
+
+install(TARGETS srsgnb_crc_calculator
+                srsgnb_channel_coding
+        EXPORT srsgnb_matlab)

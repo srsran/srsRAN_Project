@@ -21,7 +21,7 @@ project(srsgnb)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
@@ -182,3 +182,8 @@ add_subdirectory(docs)
 add_subdirectory(lib)
 add_subdirectory(unittests)
 add_subdirectory(integrationtests)
+
+########################################################################
+# Export libraries for srsgnb_matlab
+########################################################################
+export(EXPORT srsgnb_matlab NAMESPACE srsgnb:: FILE "${CMAKE_SOURCE_DIR}/cmake/srsgnb_matlab.cmake")

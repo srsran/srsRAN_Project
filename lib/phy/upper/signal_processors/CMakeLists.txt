@@ -22,3 +22,5 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
 
 add_library(srsgnb_signal_processors STATIC ${SOURCES})
+
+install(TARGETS srsgnb_signal_processors EXPORT srsgnb_matlab)

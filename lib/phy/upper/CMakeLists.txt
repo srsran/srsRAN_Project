@@ -23,3 +23,6 @@ add_library(srsgnb_upper_phy_support
         vrb_to_prb_mapper.cpp
         )
 
+install(TARGETS log_likelihood_ratio
+                srsgnb_upper_phy_support
+        EXPORT srsgnb_matlab)

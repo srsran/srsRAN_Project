@@ -59,3 +59,17 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pusch_decoder
         srsgnb_pusch_processor
         srsgnb_ssb_processor)
+
+install(TARGETS srsgnb_channel_processors
+                srsgnb_pbch_encoder
+                srsgnb_pbch_modulator
+                srsgnb_pdcch_encoder
+                srsgnb_pdcch_modulator
+                srsgnb_pdcch_processor
+                srsgnb_pdsch_encoder
+                srsgnb_pdsch_modulator
+                srsgnb_pdsch_processor
+                srsgnb_pusch_decoder
+                srsgnb_pusch_processor
+                srsgnb_ssb_processor
+        EXPORT srsgnb_matlab)
