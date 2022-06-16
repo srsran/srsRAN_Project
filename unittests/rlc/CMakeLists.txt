@@ -19,3 +19,7 @@ add_test(rlc_am_pdu_test rlc_am_pdu_test)
 add_executable(rlc_byte_buffer_test rlc_byte_buffer_test.cpp)
 target_link_libraries(rlc_byte_buffer_test srslog)
 add_test(rlc_byte_buffer_test rlc_byte_buffer_test)
+
+add_executable(rlc_sdu_queue_test rlc_sdu_queue_test.cpp)
+target_link_libraries(rlc_sdu_queue_test srsgnb_support srslog)
+add_test(rlc_sdu_queue_test rlc_sdu_queue_test)
