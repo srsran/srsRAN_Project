@@ -10,6 +10,10 @@ set_directory_properties(PROPERTIES LABELS "sched")
 
 include_directories(../..)
 
+add_executable(pdsch_dmrs_symbol_mask_test support/pdsch/pdsch_dmrs_symbol_mask_test.cpp)
+target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog)
+add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
+
 add_executable(sched_prb_test sched_prb_test.cpp)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)
 add_test(sched_prb_test sched_prb_test)
