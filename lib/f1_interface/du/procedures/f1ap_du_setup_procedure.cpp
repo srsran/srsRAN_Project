@@ -12,6 +12,7 @@
 
 using namespace srsgnb;
 using namespace srsgnb::srs_du;
+using namespace asn1::f1ap;
 
 f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message& request_,
                                                  f1c_message_notifier&           cu_notif_,
@@ -26,11 +27,13 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
   CORO_BEGIN(ctx);
 
   while (true) {
+    transaction = ev_mng.transactions.create_transaction();
+
     // Send request to CU.
     send_f1_setup_request();
 
     // Await CU response.
-    CORO_AWAIT_VALUE(f1_resp, ev_mng.f1ap_setup_response);
+    CORO_AWAIT_VALUE(cu_pdu_response, transaction);
 
     if (not retry_required()) {
       // No more attempts. Exit loop.
@@ -59,7 +62,7 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
 
   // set values handled by F1
   auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
-  setup_req->transaction_id.value = 99;
+  setup_req->transaction_id.value = transaction.id();
 
   // send request
   cu_notifier.on_new_message(pdu);
@@ -67,12 +70,17 @@ void f1ap_du_setup_procedure::send_f1_setup_request()
 
 bool f1ap_du_setup_procedure::retry_required()
 {
-  if (f1_resp.has_value()) {
+  if (cu_pdu_response.has_value()) {
     // Success case.
     return false;
   }
 
-  const asn1::f1ap::f1_setup_fail_ies_container& f1_fail = **f1_resp.error();
+  if(cu_pdu_response.error().value.type().value != f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+    // Invalid response type.
+    return false;
+  }
+
+  const asn1::f1ap::f1_setup_fail_ies_container& f1_fail = *cu_pdu_response.error().value.f1_setup_fail();
   if (not f1_fail.time_to_wait_present) {
     // CU didn't command a waiting time.
     logger.error("CU did not set any retry waiting time.");
@@ -92,13 +100,16 @@ f1_setup_response_message f1ap_du_setup_procedure::create_f1_setup_result()
 {
   f1_setup_response_message res{};
 
-  if (f1_resp.has_value()) {
+  if (cu_pdu_response.has_value() and cu_pdu_response.value().value.type().value == f1_ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp) {
     logger.info("Received F1AP PDU with successful outcome.");
-    res.msg     = *f1_resp.value();
+    res.msg     = cu_pdu_response.value().value.f1_setup_resp();
     res.success = true;
+  } else if(cu_pdu_response.has_value() or cu_pdu_response.error().value.type().value != f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail) {
+    logger.error("Received F1AP PDU with unexpected F1AP PDU type {}", cu_pdu_response.value().value.type().to_string());
+    res.success = false;
   } else {
     logger.info("Received F1AP PDU with unsuccessful outcome. Cause: {}",
-                get_cause_str((*f1_resp.error())->cause.value));
+                get_cause_str(cu_pdu_response.error().value.f1_setup_fail()->cause.value));
     res.success = false;
   }
   return res;

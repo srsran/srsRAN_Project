@@ -15,6 +15,7 @@
 #include "f1ap_du_event_manager.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/asn1/f1ap.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -44,9 +45,10 @@ private:
   f1ap_event_manager&              ev_mng;
   srslog::basic_logger&            logger;
 
-  f1ap_event_manager::f1ap_setup_outcome_t f1_resp;
-  unsigned                                 f1_setup_retry_no = 0;
-  unsigned                                 time_to_wait      = 0;
+  f1ap_transaction transaction;
+  f1ap_outcome cu_pdu_response;
+  unsigned                f1_setup_retry_no = 0;
+  unsigned                time_to_wait      = 0;
 }; // namespace srs_du
 
 } // namespace srs_du

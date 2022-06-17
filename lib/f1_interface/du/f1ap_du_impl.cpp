@@ -22,7 +22,7 @@ f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_notifier& message
   logger(srslog::fetch_basic_logger("DU-F1AP")),
   timers(timers_),
   f1c_notifier(message_notifier_),
-  events(std::make_unique<f1ap_event_manager>())
+  events(std::make_unique<f1ap_event_manager>(timers))
 {
   f1c_setup_timer = timers.create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
@@ -107,7 +107,12 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 
 void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
-  logger.info("Handling F1AP PDU of type \"{}\"", pdu.type().to_string());
+  expected<uint8_t> transaction_id = get_transaction_id(pdu);
+  if(transaction_id.has_value()) {
+    logger.info("Handling F1AP PDU of type \"{}.{}\" with transaction id={}", pdu.type().to_string(), get_message_type_str(pdu), transaction_id.value());
+  } else {
+    logger.info("Handling F1AP PDU of type \"{}.{}\"", pdu.type().to_string(), get_message_type_str(pdu));
+  }
 
   switch (pdu.type().value) {
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
@@ -138,22 +143,24 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 
 void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
 {
-  switch (outcome.value.type().value) {
-    case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp:
-      events->f1ap_setup_response.set(&outcome.value.f1_setup_resp());
-      break;
-    default:
-      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  expected<uint8_t> transaction_id = get_transaction_id(outcome);
+  if(transaction_id.is_error()) {
+    logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+    return;
   }
+
+  // Set transaction result and resume suspended procedure.
+  events->transactions.set(transaction_id.value(), outcome);
 }
 
 void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
-  switch (outcome.value.type().value) {
-    case asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail:
-      events->f1ap_setup_response.set(&outcome.value.f1_setup_fail());
-      break;
-    default:
-      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  expected<uint8_t> transaction_id = get_transaction_id(outcome);
+  if(transaction_id.is_error()) {
+    logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+    return;
   }
+
+  // Set transaction result and resume suspended procedure.
+  events->transactions.set(transaction_id.value(), outcome);
 }

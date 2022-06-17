@@ -13,22 +13,28 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/support/async/asn1_transaction_manager.h"
 #include "srsgnb/support/async/event_signal.h"
 
 namespace srsgnb {
 namespace srs_du {
 
+using f1ap_outcome = expected<asn1::f1ap::successful_outcome_s, asn1::f1ap::unsuccessful_outcome_s>;
+using f1ap_transaction = transaction<f1ap_outcome>;
+
 class f1ap_event_manager
 {
 public:
-  /// F1 Setup Procedure Outcome.
-  using f1ap_setup_outcome_t = expected<const asn1::f1ap::f1_setup_resp_s*, const asn1::f1ap::f1_setup_fail_s*>;
-  event_signal<f1ap_setup_outcome_t> f1ap_setup_response;
+  constexpr static size_t MAX_NOF_TRANSACTIONS = 256;
+  asn1_transaction_manager<f1ap_outcome, MAX_NOF_TRANSACTIONS> transactions;
 
   /// F1 UE Context Modification Outcome
   using f1ap_ue_context_modification_outcome_t =
       expected<const asn1::f1ap::ue_context_mod_confirm_s*, const asn1::f1ap::ue_context_mod_refuse_s*>;
   event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response;
+
+  explicit f1ap_event_manager(timer_manager& timers) :
+    transactions(timers, f1ap_outcome{asn1::f1ap::unsuccessful_outcome_s{}}) {}
 };
 
 } // namespace srs_du

@@ -41,11 +41,13 @@ private:
 class f1c_null_notifier : public f1c_message_notifier
 {
 public:
-  f1c_null_notifier() = default;
+  asn1::f1ap::f1_ap_pdu_c last_pdu;
+
   void on_new_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
     test_logger.info("Received F1 AP PDU");
+    last_pdu = msg;
   }
 };
 
