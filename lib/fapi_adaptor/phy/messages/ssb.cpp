@@ -23,7 +23,7 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
   uint32_t payload = fapi_pdu.bch_payload.bch_payload << 8u;
 
   // Add the sfn.
-  payload |= ((sfn & 0xF) << 4u);
+  payload |= ((sfn & 0xf) << 4u);
 
   // Half radio frame bit.
   payload |= ((hrf & 0x1) << 3u);
@@ -50,7 +50,7 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
   // Leave to zero.
 
   // systemFrameNumber - 6 bits MSB.
-  payload |= (((sfn >> 4u) & 0x3F) << 25u);
+  payload |= (((sfn >> 4u) & 0x3f) << 25u);
 
   // subCarrierSpacingCommon - 1 bit.
   uint32_t scs_flag = (fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz15 ||
@@ -60,13 +60,13 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
   payload |= ((scs_flag & 0x1) << 24u);
 
   // ssb-SubcarrierOffset - 4 bits.
-  payload |= ((fapi_pdu.ssb_subcarrier_offset & 0xF) << 20u);
+  payload |= ((fapi_pdu.ssb_subcarrier_offset & 0xf) << 20u);
 
   // dmrs-TypeA-Position - 1 bit.
   payload |= ((mib.dmrs_typeA_position & 0x1) << 19u);
 
   // pdcch-ConfigSIB1 - 8 bits.
-  payload |= ((mib.pdcch_config_sib1 & 0xFF) << 11u);
+  payload |= ((mib.pdcch_config_sib1 & 0xff) << 11u);
 
   // Barred - 1 bit.
   payload |= ((mib.cell_barred ? 0U : 1U) << 10u);
@@ -78,7 +78,7 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
   // Leave to zero.
 
   // Add the sfn. - 4 bit LSB.
-  payload |= ((sfn & 0xF) << 4u);
+  payload |= ((sfn & 0xf) << 4u);
 
   // Half radio frame bit.
   payload |= ((hrf & 0x1) << 3u);

@@ -592,7 +592,7 @@ void test_big_integers()
   bit_ref             bref(buffer);
   TESTASSERT(big_integer.pack(bref) == 0);
 
-  std::array<uint8_t, 5> bytes{0xC0, 0xBD, 0x12, 0x00, 0x3F};
+  std::array<uint8_t, 5> bytes{0xc0, 0xbd, 0x12, 0x00, 0x3f};
   TESTASSERT(std::equal(buffer.begin(), buffer.end(), bytes.begin(), bytes.end()));
 
   integer<uint64_t, 0, 4294967295, false, true> big_integer2;

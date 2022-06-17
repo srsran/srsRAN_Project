@@ -132,16 +132,16 @@ int main()
   std::vector<std::size_t> sizes = {257, 997};
 
   for (std::size_t N : sizes) {
-    test_crc_byte(*factory, N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC24A, 0x1864cfb, 24);
     test_crc_byte(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
     test_crc_byte(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
     test_crc_byte(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
-    test_crc_byte(*factory, N, crc_generator_poly::CRC11, 0xE21, 11);
+    test_crc_byte(*factory, N, crc_generator_poly::CRC11, 0xe21, 11);
 
-    test_crc_bit(*factory, N, crc_generator_poly::CRC24A, 0x1864CFB, 24);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC24A, 0x1864cfb, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC24B, 0X1800063, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC24C, 0X1B2B117, 24);
     test_crc_bit(*factory, N, crc_generator_poly::CRC16, 0x11021, 16);
-    test_crc_bit(*factory, N, crc_generator_poly::CRC11, 0xE21, 11);
+    test_crc_bit(*factory, N, crc_generator_poly::CRC11, 0xe21, 11);
   }
 }

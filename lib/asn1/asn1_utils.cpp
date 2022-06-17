@@ -906,7 +906,7 @@ void number_to_octstring(uint8_t* ptr, uint64_t number, uint32_t nbytes)
     return;
   }
   for (uint32_t i = 0; i < nbytes; ++i) {
-    ptr[nbytes - 1 - i] = (number >> (uint64_t)(i * 8u)) & 0xFFu;
+    ptr[nbytes - 1 - i] = (number >> (uint64_t)(i * 8u)) & 0xffu;
   }
 }
 
@@ -1127,7 +1127,7 @@ void from_number(uint8_t* ptr, uint64_t number, uint32_t nbits)
   }
   uint32_t nof_bytes = ceil_frac(nbits, 8u);
   for (uint32_t i = 0; i < nof_bytes; ++i) {
-    ptr[i] = (number >> (i * 8u)) & 0xFFu;
+    ptr[i] = (number >> (i * 8u)) & 0xffu;
   }
   uint32_t offset = nbits % 8; // clean up any extra set bit
   if (offset > 0) {

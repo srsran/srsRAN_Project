@@ -750,7 +750,7 @@ void test_rx_indication_processing_ce_rnti()
 
   // Create PDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
-  // { 0x3A | 0x46, 0x01 }
+  // { 0x3a | 0x46, 0x01 }
   byte_buffer pdu({0x3a, 0x46, 0x01});
 
   // Send RX data indication to MAC UL.
@@ -780,7 +780,7 @@ void test_rx_indication_processing_ce_rnti_sbsr()
 
   // Create subPDU content.
   // R/LCID MAC subheader | MAC CE C-RNTI
-  // { 0x3A | 0x46, 0x01 }
+  // { 0x3a | 0x46, 0x01 }
   byte_buffer pdu_ce_crnti({0x3a, 0x46, 0x01});
   t_bench.enqueue_pdu(pdu_ce_crnti);
 

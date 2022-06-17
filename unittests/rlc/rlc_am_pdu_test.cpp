@@ -220,14 +220,14 @@ void test_control_pdu_with_nack_12bit()
   TESTASSERT(pdu == tv);
 }
 
-// Status PDU for 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xFFFF
+// Status PDU for 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xffff
 // E1 and E2 bit set on first NACK, only E2 on second.
 void test_control_pdu_nacks_and_so_12bit()
 {
   test_delimit_logger      delimiter("Control PDU with NACKs and SO (12 bit)");
   const int                len = 15;
   std::array<uint8_t, len> tv  = {
-       0x08, 0x11, 0x80, 0x11, 0x1c, 0x00, 0x02, 0x00, 0x05, 0x11, 0x34, 0x00, 0x05, 0xFF, 0xFF};
+       0x08, 0x11, 0x80, 0x11, 0x1c, 0x00, 0x02, 0x00, 0x05, 0x11, 0x34, 0x00, 0x05, 0xff, 0xff};
   byte_buffer pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
@@ -242,7 +242,7 @@ void test_control_pdu_nacks_and_so_12bit()
   TESTASSERT(status_pdu.nacks[0].so_end == 5);
   TESTASSERT(status_pdu.nacks[1].nack_sn == 275);
   TESTASSERT(status_pdu.nacks[1].so_start == 5);
-  TESTASSERT(status_pdu.nacks[1].so_end == 0xFFFF);
+  TESTASSERT(status_pdu.nacks[1].so_end == 0xffff);
 
   // reset status PDU
   pdu.clear();
@@ -352,7 +352,7 @@ void test_control_pdu_invalid_too_short_12bit()
 }
 
 // Malformed Status PDU, with E1 still set at the end of the PDU
-// 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xFFFF, [missing NACK]
+// 12 bit SN with ACK_SN=2065, NACK_SN=273, SO_START=2, SO_END=5, NACK_SN=275, SO_START=5, SO_END=0xffff, [missing NACK]
 // E1 and E2 bit set on both NACKs, but not third NACK follows - end of the buffer is reached prematurely
 void test_control_pdu_invalid_e1_extension_cross_boundary_12bit()
 {
@@ -371,8 +371,8 @@ void test_control_pdu_invalid_e1_extension_cross_boundary_12bit()
                                   0x3c,  // 4NACK_SN_lower | [!E1!] | E2 | E3 | R
                                   0x00,  // 8SO_START_upper
                                   0x05,  // 8SO_START_lower
-                                  0xFF,  // 8SO_END_upper
-                                  0xFF}; // 8SO_END_lower
+                                  0xff,  // 8SO_END_upper
+                                  0xff}; // 8SO_END_lower
   byte_buffer              pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
@@ -448,7 +448,7 @@ void test_control_pdu_no_nack_18bit()
 {
   test_delimit_logger      delimiter("Control PDU without NACK (18 bit)");
   const int                len = 3;
-  std::array<uint8_t, len> tv  = {0x0E, 0x66, 0x64};
+  std::array<uint8_t, len> tv  = {0x0e, 0x66, 0x64};
   byte_buffer              pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
@@ -473,7 +473,7 @@ void test_control_pdu_with_nack_18bit()
 {
   test_delimit_logger      delimiter("Control PDU with one NACK (18 bit)");
   const int                len = 6;
-  std::array<uint8_t, len> tv  = {0x0E, 0x66, 0x66, 0xD9, 0x99, 0x80};
+  std::array<uint8_t, len> tv  = {0x0e, 0x66, 0x66, 0xd9, 0x99, 0x80};
   byte_buffer              pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
@@ -497,7 +497,7 @@ void test_control_pdu_with_nack_18bit()
 //                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
 //                              SO_START=2, SO_END=5,
 //                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 (E2 bit set),
-//                              SO_START=5, SO_END=0xFFFF
+//                              SO_START=5, SO_END=0xffff
 void test_control_pdu_nacks_and_so_18bit()
 {
   test_delimit_logger      delimiter("Control PDU with NACKs and SO (18 bit)");
@@ -517,8 +517,8 @@ void test_control_pdu_nacks_and_so_18bit()
                                   0b11010000, // 2NACK_SN_lower | E1 | E2 | E3 | 3R
                                   0x00,       // 8SO_START_upper
                                   0x05,       // 8SO_START_lower
-                                  0xFF,       // 8SO_END_upper
-                                  0xFF};      // 8SO_END_lower
+                                  0xff,       // 8SO_END_upper
+                                  0xff};      // 8SO_END_lower
   byte_buffer              pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);
@@ -535,7 +535,7 @@ void test_control_pdu_nacks_and_so_18bit()
   TESTASSERT(status_pdu.nacks[1].nack_sn == 222975);
   TESTASSERT(status_pdu.nacks[1].has_so == true);
   TESTASSERT(status_pdu.nacks[1].so_start == 5);
-  TESTASSERT(status_pdu.nacks[1].so_end == 0xFFFF);
+  TESTASSERT(status_pdu.nacks[1].so_end == 0xffff);
 
   // reset status PDU
   pdu.clear();
@@ -665,7 +665,7 @@ void test_control_pdu_invalid_too_short_18bit()
 //                              NACK_SN=222822=0x36666=0b11 0110 0110 0110 0110 (E1 and E2 bit set),
 //                              SO_START=2, SO_END=5,
 //                              NACK_SN=222975=0x366ff=0b11 0110 0110 1111 1111 ([!E1!] and E2 bit set),
-//                              SO_START=5, SO_END=0xFFFF
+//                              SO_START=5, SO_END=0xffff
 // E1 and E2 bit set on both NACKs, but not third NACK follows - end of the buffer is reached prematurely
 void test_control_pdu_invalid_e1_extension_cross_boundary_18bit()
 {
@@ -686,8 +686,8 @@ void test_control_pdu_invalid_e1_extension_cross_boundary_18bit()
                                   0b11110000, // 2NACK_SN_lower | [!E1!] | E2 | E3 | 3R
                                   0x00,       // 8SO_START_upper
                                   0x05,       // 8SO_START_lower
-                                  0xFF,       // 8SO_END_upper
-                                  0xFF};      // 8SO_END_lower
+                                  0xff,       // 8SO_END_upper
+                                  0xff};      // 8SO_END_lower
   byte_buffer              pdu = make_pdu_and_log(tv);
 
   TESTASSERT(rlc_am_status_pdu::is_control_pdu(pdu) == true);

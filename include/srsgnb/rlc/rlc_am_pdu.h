@@ -16,8 +16,8 @@
 
 namespace srsgnb {
 
-const uint32_t INVALID_RLC_SN         = 0xFFFFFFFF; ///< Reserved number representing an invalid RLC sequence number
-const uint32_t RETX_COUNT_NOT_STARTED = 0xFFFFFFFF; ///< Reserved number representing that RETX has not started
+const uint32_t INVALID_RLC_SN         = 0xffffffff; ///< Reserved number representing an invalid RLC sequence number
+const uint32_t RETX_COUNT_NOT_STARTED = 0xffffffff; ///< Reserved number representing that RETX has not started
 
 constexpr uint32_t rlc_am_nr_status_pdu_sizeof_header_ack_sn        = 3; ///< Header fixed part and ACK SN
 constexpr uint32_t rlc_am_nr_status_pdu_sizeof_nack_sn_ext_12bit_sn = 2; ///< NACK SN and extension fields (12 bit SN)
@@ -40,7 +40,7 @@ struct rlc_am_pdu_header {
 
 /// Status PDU NACK
 struct rlc_am_status_nack {
-  const static uint16_t so_end_of_sdu = 0xFFFF;
+  const static uint16_t so_end_of_sdu = 0xffff;
 
   uint32_t nack_sn;        ///< Sequence Number (SN) of first missing SDU
   bool     has_so;         ///< NACKs continuous sequence of bytes [so_start..so_end]
@@ -149,22 +149,22 @@ inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_
   header->si = (rlc_si_field)((*pdu_reader >> 4U) & 0x03U); // 2 bits SI
 
   if (sn_size == rlc_am_sn_size::size12bits) {
-    header->sn = (*pdu_reader & 0x0FU) << 8U; // first 4 bits SN
+    header->sn = (*pdu_reader & 0x0fU) << 8U; // first 4 bits SN
     ++pdu_reader;
 
-    header->sn |= (*pdu_reader & 0xFFU); // last 8 bits SN
+    header->sn |= (*pdu_reader & 0xffU); // last 8 bits SN
     ++pdu_reader;
   } else if (sn_size == rlc_am_sn_size::size18bits) {
     // sanity check
-    if ((*pdu_reader & 0x0CU) != 0) {
+    if ((*pdu_reader & 0x0cU) != 0) {
       srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
       return false;
     }
     header->sn = (*pdu_reader & 0x03U) << 16U; // first 4 bits SN
     ++pdu_reader;
-    header->sn |= (*pdu_reader & 0xFFU) << 8U; // bit 2-10 of SN
+    header->sn |= (*pdu_reader & 0xffU) << 8U; // bit 2-10 of SN
     ++pdu_reader;
-    header->sn |= (*pdu_reader & 0xFFU); // last 8 bits SN
+    header->sn |= (*pdu_reader & 0xffU); // last 8 bits SN
     ++pdu_reader;
   } else {
     srslog::fetch_basic_logger("RLC").error("Unsupported SN length");
@@ -174,9 +174,9 @@ inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_
   // Read optional part
   if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::neither_first_nor_last_segment) {
     // read SO
-    header->so = (*pdu_reader & 0xFFU) << 8U;
+    header->so = (*pdu_reader & 0xffU) << 8U;
     ++pdu_reader;
-    header->so |= (*pdu_reader & 0xFFU);
+    header->so |= (*pdu_reader & 0xffU);
     ++pdu_reader;
   }
   return true;

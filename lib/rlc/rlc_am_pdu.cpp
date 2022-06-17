@@ -200,10 +200,10 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer& pdu)
     return false;
   }
 
-  ack_sn = (*pdu_reader & 0x0F) << 8; // first 4 bits SN
+  ack_sn = (*pdu_reader & 0x0f) << 8; // first 4 bits SN
   ++pdu_reader;
 
-  ack_sn |= (*pdu_reader & 0xFF); // last 8 bits SN
+  ack_sn |= (*pdu_reader & 0xff); // last 8 bits SN
   ++pdu_reader;
 
   // read E1 flag
@@ -240,7 +240,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer& pdu)
       srslog::fetch_basic_logger("RLC").warning("Malformed status PDU NACK: reserved bits are set");
       return false;
     }
-    nack.nack_sn |= (*pdu_reader & 0xF0) >> 4;
+    nack.nack_sn |= (*pdu_reader & 0xf0) >> 4;
 
     ++pdu_reader;
     if (e2 != 0) {
@@ -306,13 +306,13 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer& pdu)
     return false;
   }
 
-  ack_sn = (*pdu_reader & 0x0F) << 14; // upper 4 bits of SN
+  ack_sn = (*pdu_reader & 0x0f) << 14; // upper 4 bits of SN
   ++pdu_reader;
 
-  ack_sn |= (*pdu_reader & 0xFF) << 6; // center 8 bits of SN
+  ack_sn |= (*pdu_reader & 0xff) << 6; // center 8 bits of SN
   ++pdu_reader;
 
-  ack_sn |= (*pdu_reader & 0xFC) >> 2; // lower 6 bits of SN
+  ack_sn |= (*pdu_reader & 0xfc) >> 2; // lower 6 bits of SN
 
   // read E1 flag
   uint8_t e1 = *pdu_reader & 0x02;
@@ -337,11 +337,11 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer& pdu)
     // E1 flag set, read a NACK_SN
     rlc_am_status_nack nack = {};
 
-    nack.nack_sn = (*pdu_reader & 0xFF) << 10; // upper 8 bits of SN
+    nack.nack_sn = (*pdu_reader & 0xff) << 10; // upper 8 bits of SN
     ++pdu_reader;
-    nack.nack_sn |= (*pdu_reader & 0xFF) << 2; // center 8 bits of SN
+    nack.nack_sn |= (*pdu_reader & 0xff) << 2; // center 8 bits of SN
     ++pdu_reader;
-    nack.nack_sn |= (*pdu_reader & 0xC0) >> 6; // lower 2 bits of SN
+    nack.nack_sn |= (*pdu_reader & 0xc0) >> 6; // lower 2 bits of SN
 
     e1         = *pdu_reader & 0x20; // 1 = further NACKs follow
     uint8_t e2 = *pdu_reader & 0x10; // 1 = set of {so_start, so_end} follows

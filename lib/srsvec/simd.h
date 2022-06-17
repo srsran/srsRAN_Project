@@ -31,15 +31,15 @@ namespace srsgnb {
  */
 #ifdef HAVE_AVX512
 #define SRSRAN_SIMD_BIT_ALIGN 512
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x3F) == 0)
+#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x3f) == 0)
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX
 #define SRSRAN_SIMD_BIT_ALIGN 256
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x1F) == 0)
+#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x1f) == 0)
 #else /* HAVE_AVX */
 #ifdef HAVE_SSE
 #define SRSRAN_SIMD_BIT_ALIGN 128
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x0F) == 0)
+#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x0f) == 0)
 #else /* HAVE_SSE */
 #define SRSRAN_SIMD_BIT_ALIGN 64
 #define SRSRAN_IS_ALIGNED(PTR) (1)
@@ -533,11 +533,11 @@ static inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
   __m512 in2 = _mm512_load_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
       in1,
-      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
+      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
       in2);
   ret.im = _mm512_permutex2var_ps(
       in1,
-      _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1B, 0x1D, 0x1F),
+      _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1b, 0x1d, 0x1f),
       in2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
@@ -570,11 +570,11 @@ static inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
   __m512 in2 = _mm512_loadu_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
       in1,
-      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
+      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0a, 0x0c, 0x0e, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e),
       in2);
   ret.im = _mm512_permutex2var_ps(
       in1,
-      _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1B, 0x1D, 0x1F),
+      _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0b, 0x0d, 0x0f, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1b, 0x1d, 0x1f),
       in2);
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
@@ -657,7 +657,7 @@ static inline void srsran_simd_cfi_store(cf_t* ptr, simd_cf_t simdreg)
       simdreg.im);
   __m512 s2 = _mm512_permutex2var_ps(
       simdreg.re,
-      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0A, 0x1A, 0x0B, 0x1B, 0x0C, 0x1C, 0x0D, 0x1D, 0x0E, 0x1E, 0x0F, 0x1F),
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
       simdreg.im);
   _mm512_store_ps((float*)(ptr), s1);
   _mm512_store_ps((float*)(ptr + 8), s2);
@@ -689,7 +689,7 @@ static inline void srsran_simd_cfi_storeu(cf_t* ptr, simd_cf_t simdreg)
       simdreg.im);
   __m512 s2 = _mm512_permutex2var_ps(
       simdreg.re,
-      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0A, 0x1A, 0x0B, 0x1B, 0x0C, 0x1C, 0x0D, 0x1D, 0x0E, 0x1E, 0x0F, 0x1F),
+      _mm512_setr_epi32(0x08, 0x18, 0x09, 0x19, 0x0a, 0x1a, 0x0b, 0x1b, 0x0c, 0x1c, 0x0d, 0x1d, 0x0e, 0x1e, 0x0f, 0x1f),
       simdreg.im);
   _mm512_storeu_ps((float*)(ptr), s1);
   _mm512_storeu_ps((float*)(ptr + 8), s2);
@@ -1458,9 +1458,9 @@ static inline simd_s_t srsran_simd_s_neg(simd_s_t a, simd_s_t b)
    */
   int16x8_t zero = vdupq_n_s16(0);
   // signed shift right: faster than vclt
-  // (b < 0) ? 0xFFFF : 0
+  // (b < 0) ? 0xffff : 0
   uint16x8_t ltMask = vreinterpretq_u16_s16(vshrq_n_s16(b, 15));
-  // (b == 0) ? 0xFFFF : 0
+  // (b == 0) ? 0xffff : 0
   int16x8_t zeroMask = vreinterpretq_s16_u16(vceqq_s16(b, zero));
   // -a
   int16x8_t neg = vnegq_s16(a);
@@ -1569,9 +1569,9 @@ static inline simd_c16_t srsran_simd_c16i_load(const c16_t* ptr)
   __m512i in1 = _mm512_load_si512((__m512i*)(ptr));
   __m512i in2 = _mm512_load_si512((__m512i*)(ptr + 8));
   ret.re.m512 = _mm512_mask_blend_epi16(
-      0xAAAAAAAA, in1, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in2, 0b10100000), 0b10100000));
+      0xaaaaaaaa, in1, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in2, 0b10100000), 0b10100000));
   ret.im.m512 = _mm512_mask_blend_epi16(
-      0xAAAAAAAA, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2);
+      0xaaaaaaaa, _mm512_shufflelo_epi16(_mm512_shufflehi_epi16(in1, 0b11110101), 0b11110101), in2);
 #else /* HAVE_AVX2 */
 #ifdef HAVE_AVX2
   __m256i in1 = _mm256_load_si256((__m256i*)(ptr));
@@ -1782,11 +1782,11 @@ static inline simd_s_t srsran_simd_convert_2f_s(simd_f_t a, simd_f_t b)
 #ifdef HAVE_AVX512
   __m512 aa = _mm512_permutex2var_ps(
       a,
-      _mm512_setr_epi32(0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0A, 0x0B, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1A, 0x1B),
+      _mm512_setr_epi32(0x00, 0x01, 0x02, 0x03, 0x08, 0x09, 0x0a, 0x0b, 0x10, 0x11, 0x12, 0x13, 0x18, 0x19, 0x1a, 0x1b),
       b);
   __m512 bb = _mm512_permutex2var_ps(
       a,
-      _mm512_setr_epi32(0x04, 0x05, 0x06, 0x07, 0x0C, 0x0D, 0x0E, 0x0F, 0x14, 0x15, 0x16, 0x17, 0x1C, 0x1D, 0x1E, 0x1F),
+      _mm512_setr_epi32(0x04, 0x05, 0x06, 0x07, 0x0c, 0x0d, 0x0e, 0x0f, 0x14, 0x15, 0x16, 0x17, 0x1c, 0x1d, 0x1e, 0x1f),
       b);
   __m512i ai = _mm512_cvttps_epi32(aa);
   __m512i bi = _mm512_cvttps_epi32(bb);
@@ -1990,9 +1990,9 @@ static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
    */
   int8x16_t zero = vdupq_n_s8(0);
   // signed shift right: faster than vclt
-  // (b < 0) ? 0xFF : 0
+  // (b < 0) ? 0xff : 0
   uint8x16_t ltMask = vreinterpretq_u8_s8(vshrq_n_s8(b, 7));
-  // (b == 0) ? 0xFF : 0
+  // (b == 0) ? 0xff : 0
   int8x16_t zeroMask = vreinterpretq_s8_u8(vceqq_s8(b, zero));
   // -a
   int8x16_t neg = vnegq_s8(a);

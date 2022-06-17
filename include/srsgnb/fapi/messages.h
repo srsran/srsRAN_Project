@@ -35,7 +35,7 @@ enum class message_type_id : uint16_t {
   stop_indication    = 0x06,
   error_indication   = 0x07,
   dl_tti_request     = 0x80,
-  dl_tti_response    = 0x8A,
+  dl_tti_response    = 0x8a,
   ul_tti_request     = 0x81,
   slot_indication    = 0x82,
   ul_dci_request     = 0x83,

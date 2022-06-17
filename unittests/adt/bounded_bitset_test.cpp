@@ -372,7 +372,7 @@ void test_bitset_push_back()
   }
   {
     bounded_bitset<10> bitset;
-    bitset.push_back(0xBU, 4);
+    bitset.push_back(0xbU, 4);
     TESTASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
   }
 }

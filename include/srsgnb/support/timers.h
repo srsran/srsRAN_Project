@@ -57,13 +57,13 @@ class timer_manager
   static constexpr uint64_t                STOPPED_FLAG       = 0U;
   static constexpr uint64_t                RUNNING_FLAG       = static_cast<uint64_t>(1U) << 63U;
   static constexpr uint64_t                EXPIRED_FLAG       = static_cast<uint64_t>(1U) << 62U;
-  static constexpr timer_tick_difference_t MAX_TIMER_DURATION = 0x3FFFFFFFU;
+  static constexpr timer_tick_difference_t MAX_TIMER_DURATION = 0x3fffffffU;
 
   /// Miscellaneous decoding helper functions.
   static bool                    decode_is_running_flag(uint64_t value) { return (value & RUNNING_FLAG) != 0; }
   static bool                    decode_is_expired_flag(uint64_t value) { return (value & EXPIRED_FLAG) != 0; }
   static timer_tick_difference_t decode_duration(uint64_t value) { return (value >> 32U) & MAX_TIMER_DURATION; }
-  static timer_tick_t            decode_timeout(uint64_t value) { return static_cast<uint32_t>(value & 0xFFFFFFFFU); }
+  static timer_tick_t            decode_timeout(uint64_t value) { return static_cast<uint32_t>(value & 0xffffffffU); }
   static uint64_t encode_state(uint64_t mode_flag, timer_tick_difference_t duration, timer_tick_t timeout)
   {
     return mode_flag + (static_cast<uint64_t>(duration) << 32U) + timeout;

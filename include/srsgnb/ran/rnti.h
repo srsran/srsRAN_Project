@@ -21,12 +21,12 @@ enum rnti_t : uint16_t {
   INVALID_RNTI = 0x0,
   MIN_CRNTI    = 0x1,
   // ...
-  MAX_CRNTI         = 0xFFEF,
-  MIN_RESERVED_RNTI = 0xFFF0,
+  MAX_CRNTI         = 0xffef,
+  MIN_RESERVED_RNTI = 0xfff0,
   // ...
-  MAX_RESERVED_RNTI = 0xFFFD,
-  P_RNTI            = 0xFFFE,
-  SI_RNTI           = 0xFFFF
+  MAX_RESERVED_RNTI = 0xfffd,
+  P_RNTI            = 0xfffe,
+  SI_RNTI           = 0xffff
 };
 
 /// Checks whether RNTI value corresponds to a C-RNTI value.

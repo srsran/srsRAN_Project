@@ -40,7 +40,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
   // Fixed part
   if (sn_size == rlc_um_sn_size::size6bits) {
     header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
-    header->sn = *pdu_reader & 0x3FU;                         // 6 bits SN
+    header->sn = *pdu_reader & 0x3fU;                         // 6 bits SN
     // sanity check
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
       srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
@@ -49,7 +49,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
     ++pdu_reader;
   } else if (sn_size == rlc_um_sn_size::size12bits) {
     header->si = (rlc_si_field)((*pdu_reader >> 6U) & 0x03U); // 2 bits SI
-    header->sn = (*pdu_reader & 0x0FU) << 8U;                 // 4 bits SN
+    header->sn = (*pdu_reader & 0x0fU) << 8U;                 // 4 bits SN
     if (header->si == rlc_si_field::full_sdu and header->sn != 0) {
       srslog::fetch_basic_logger("RLC").error("Malformed PDU, reserved bits are set");
       return false;
@@ -67,7 +67,7 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
     if (header->si != rlc_si_field::full_sdu) {
       // continue unpacking remaining SN
       ++pdu_reader;
-      header->sn |= (*pdu_reader & 0xFFU); // 8 bits SN
+      header->sn |= (*pdu_reader & 0xffU); // 8 bits SN
     }
 
     ++pdu_reader;
@@ -79,9 +79,9 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
   // Read optional part
   if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::neither_first_nor_last_segment) {
     // read SO
-    header->so = (*pdu_reader & 0xFFU) << 8U;
+    header->so = (*pdu_reader & 0xffU) << 8U;
     ++pdu_reader;
-    header->so |= (*pdu_reader & 0xFFU);
+    header->so |= (*pdu_reader & 0xffU);
     ++pdu_reader;
   }
 
@@ -100,16 +100,16 @@ inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
   } else {
     if (header.sn_size == rlc_um_sn_size::size6bits) {
       // write SN
-      hdr_writer.back() |= (header.sn & 0x3FU); // 6 bit SN
+      hdr_writer.back() |= (header.sn & 0x3fU); // 6 bit SN
     } else {
       // 12bit SN
-      hdr_writer.back() |= (header.sn >> 8U) & 0xFU; // high part of SN (4 bit)
-      hdr_writer.append(header.sn & 0xFFU);          // remaining 8 bit SN
+      hdr_writer.back() |= (header.sn >> 8U) & 0xfU; // high part of SN (4 bit)
+      hdr_writer.append(header.sn & 0xffU);          // remaining 8 bit SN
     }
     if (header.so != 0) {
       // write SO
       hdr_writer.append((header.so) >> 8U); // first part of SO
-      hdr_writer.append(header.so & 0xFFU); // second part of SO
+      hdr_writer.append(header.so & 0xffU); // second part of SO
     }
   }
   pdu.chain_before(std::move(hdr_buf));

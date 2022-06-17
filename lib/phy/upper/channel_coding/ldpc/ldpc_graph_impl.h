@@ -22,7 +22,7 @@ namespace ldpc {
 /// Placeholder for invalid lifting-size values.
 static constexpr uint8_t VOID_LIFTSIZE = 255;
 /// Placeholder for missing edges in the Tanner graph.
-static constexpr uint16_t NO_EDGE = 0xFFFF;
+static constexpr uint16_t NO_EDGE = 0xffff;
 
 /// Number of parity-check nodes in base graph BG1.
 static constexpr unsigned BG1_M = 46;

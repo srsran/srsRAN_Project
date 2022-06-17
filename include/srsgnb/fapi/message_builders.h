@@ -71,7 +71,7 @@ public:
   {
     pdu.bch_payload_flag = bch_payload_type::phy_timing_info;
     // Only use the 24 least significant bits.
-    pdu.bch_payload.bch_payload = (bch_payload & 0xFFFFFF);
+    pdu.bch_payload.bch_payload = (bch_payload & 0xffffff);
 
     return *this;
   }

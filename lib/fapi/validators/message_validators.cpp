@@ -510,7 +510,7 @@ static bool validate_message_id(unsigned value, validator_report& report)
 
   // Check second range.
   static constexpr unsigned MIN_VALUE_SECOND_RANGE = 0x80U;
-  static constexpr unsigned MAX_VALUE_SECOND_RANGE = 0x8AU;
+  static constexpr unsigned MAX_VALUE_SECOND_RANGE = 0x8aU;
 
   if (MIN_VALUE_SECOND_RANGE <= value && value <= MAX_VALUE_SECOND_RANGE) {
     return true;

@@ -14,11 +14,11 @@
 using namespace srsgnb;
 
 const std::map<crc_generator_poly, crc_calculator_impl::crc_table_s> crc_calculator_impl::crc_tables = {
-    {crc_generator_poly::CRC24A, crc_calculator_impl::crc_table_s(0x1864CFB, 24)},
+    {crc_generator_poly::CRC24A, crc_calculator_impl::crc_table_s(0x1864cfb, 24)},
     {crc_generator_poly::CRC24B, crc_calculator_impl::crc_table_s(0X1800063, 24)},
     {crc_generator_poly::CRC24C, crc_calculator_impl::crc_table_s(0X1B2B117, 24)},
     {crc_generator_poly::CRC16, crc_calculator_impl::crc_table_s(0x11021, 16)},
-    {crc_generator_poly::CRC11, crc_calculator_impl::crc_table_s(0xE21, 11)},
+    {crc_generator_poly::CRC11, crc_calculator_impl::crc_table_s(0xe21, 11)},
     {crc_generator_poly::CRC6, crc_calculator_impl::crc_table_s(0x61, 6)}};
 
 crc_calculator_impl::crc_table_s::crc_table_s(unsigned polynom_, unsigned order_) :
@@ -130,7 +130,7 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
       // Get mask and write
       byte = (uint8_t)_mm_movemask_pi8(mask);
 #else  /* LV_HAVE_SSE */
-      byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xFF);
+      byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
 #endif /* LV_HAVE_SSE */
     }
     put_byte(byte);
