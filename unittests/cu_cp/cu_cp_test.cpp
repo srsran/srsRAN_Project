@@ -108,6 +108,55 @@ void test_f1_setup()
   return;
 }
 
+void test_initial_ul_rrc_message_transfer()
+{
+  test_delimit_logger   delimiter{"Test F1 setup procedure in CU-CP"};
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+
+  // create worker thread and executer
+  task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+  std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
+
+  dummy_f1c_pdu_notifier f1c_pdu_notifier(nullptr);
+
+  // create CU-CP config
+  cu_cp_configuration cfg;
+  cfg.cu_executor  = task_executor.get();
+  cfg.f1c_notifier = &f1c_pdu_notifier;
+
+  // create and start DUT
+  cu_cp cu_cp_obj(cfg);
+  cu_cp_obj.start();
+
+  // Handling of Initial UL RRC message transfer
+  {
+    asn1::f1ap::f1_ap_pdu_c pdu;
+
+    pdu.set_init_msg();
+    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+
+    auto& init_ul_rrc                     = pdu.init_msg().value.init_ulrrc_msg_transfer();
+    init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
+
+    init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
+    init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
+    init_ul_rrc->c_rnti.value = 41255;
+
+    init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
+    init_ul_rrc->duto_currc_container_present = true;
+    init_ul_rrc->duto_currc_container.value.from_string(
+        "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
+        "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
+        "c400");
+
+    // Pass PDU to CU-CP
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj.get_f1c_message_handler().handle_message(pdu);
+
+    // TODO: add checks
+  }
+}
+
 int main()
 {
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -115,6 +164,7 @@ int main()
   srslog::init();
 
   test_f1_setup();
+  test_initial_ul_rrc_message_transfer();
 
   return 0;
 }
