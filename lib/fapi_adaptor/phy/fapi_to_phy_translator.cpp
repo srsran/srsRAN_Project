@@ -1,0 +1,111 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "fapi_to_phy_translator.h"
+#include "srsgnb/fapi/messages.h"
+#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
+#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/upper/downlink_processor.h"
+
+using namespace srsgnb;
+using namespace fapi;
+using namespace fapi_adaptor;
+
+namespace {
+
+/// Dummy implementation of a downlink processor.
+class downlink_processor_dummy : public downlink_processor
+{
+public:
+  void process_pdcch(const pdcch_processor::pdu_t& pdu) override {}
+  void process_pdsch(const static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS>& data,
+                     const pdsch_processor::pdu_t&                                                        pdu) override
+  {
+  }
+  void process_ssb(const ssb_processor::pdu_t& pdu) override {}
+  void process_nzp_csi_rs(const csi_rs_processor::config_t& config) override {}
+  void configure_resource_grid(const resource_grid_context& context, resource_grid& grid) override {}
+  void finish_processing_pdus() override {}
+};
+
+static downlink_processor_dummy dummy_dl_processor;
+
+} // namespace
+
+fapi_to_phy_translator::slot_task_processor::slot_task_processor() : dl_processor(dummy_dl_processor) {}
+
+fapi_to_phy_translator::slot_task_processor::slot_task_processor(downlink_processor_pool& dl_processor_pool,
+                                                                 resource_grid_pool&      rg_pool,
+                                                                 slot_point               slot,
+                                                                 unsigned                 sector_id) :
+  slot(slot), dl_processor(dl_processor_pool.get_processor(slot, sector_id))
+{
+  resource_grid_context context = {slot, sector_id};
+  // Grab the resource grid.
+  resource_grid& grid = rg_pool.get_resource_grid(context);
+
+  // Initialize the resource grid.
+  grid.set_all_zero();
+
+  // Configure the downlink processor.
+  dl_processor.get().configure_resource_grid(context, grid);
+}
+
+fapi_to_phy_translator::slot_task_processor&
+fapi_to_phy_translator::slot_task_processor::operator=(fapi_to_phy_translator::slot_task_processor&& other)
+{
+  this->dl_processor = std::move(other.dl_processor);
+  this->slot         = std::move(other.slot);
+
+  return *this;
+}
+
+fapi_to_phy_translator::slot_task_processor::~slot_task_processor()
+{
+  dl_processor.get().finish_processing_pdus();
+}
+
+void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
+{
+  // :TODO: check the current slot matches the DL_TTI.request slot. Do this in a different class.
+  // :TODO: check the messages order. Do this in a different class.
+
+  std::lock_guard<std::mutex> lock(mutex);
+
+  for (const auto& pdu : msg.pdus)
+    switch (pdu.pdu_type) {
+      case dl_pdu_type::CSI_RS:
+        break;
+      case dl_pdu_type::PDCCH:
+        break;
+      case dl_pdu_type::PDSCH:
+        break;
+      case dl_pdu_type::SSB: {
+        ssb_processor::pdu_t ssb_pdu;
+        convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot);
+        current_task_processor->process_ssb(ssb_pdu);
+        break;
+      }
+      default:
+        srsran_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+    }
+}
+
+void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg) {}
+
+void fapi_to_phy_translator::ul_dci_request(const ul_dci_request_message& msg) {}
+
+void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg) {}
+
+void fapi_to_phy_translator::handle_new_slot(const slot_point& slot)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  current_task_processor = slot_task_processor(dl_processor_pool, rg_pool, slot, sector_id);
+}

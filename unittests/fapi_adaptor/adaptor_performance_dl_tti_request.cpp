@@ -11,7 +11,8 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
-#include "srsgnb/fapi_adaptor/phy/ssb.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/srsvec/bit.h"
 #include <chrono>
 #include <random>
@@ -62,7 +63,7 @@ static void ssb_conversion_benchmark()
     // Conversion block.
     auto start = std::chrono::high_resolution_clock::now();
     convert_ssb_mac_to_fapi(fapi_pdu, mac_pdu);
-    convert_ssb_fapi_to_phy(pdu, fapi_pdu, sfn_dist(gen), slot_dist(gen), mac_pdu.scs);
+    convert_ssb_fapi_to_phy(pdu, fapi_pdu, sfn_dist(gen), slot_dist(gen));
     auto end = std::chrono::high_resolution_clock::now();
 
     // Print how much time it took.

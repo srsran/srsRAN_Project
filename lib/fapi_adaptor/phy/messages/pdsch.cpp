@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/pdsch.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;

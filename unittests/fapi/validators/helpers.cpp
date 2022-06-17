@@ -145,7 +145,7 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
   pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1      = 43;
   pdu.ssb_maintenance_v3.ssb_pdu_index               = 0;
   pdu.ssb_maintenance_v3.case_type                   = generate_case_pattern();
-  pdu.ssb_maintenance_v3.scs                         = subcarrier_spacing::kHz30;
+  pdu.ssb_maintenance_v3.scs                         = subcarrier_spacing::kHz240;
   pdu.ssb_maintenance_v3.lmax                        = 4;
   pdu.ssb_maintenance_v3.beta_pss_profile_sss        = std::numeric_limits<int16_t>::min();
   pdu.ssb_maintenance_v3.ss_pbch_block_power_scaling = std::numeric_limits<int16_t>::min();

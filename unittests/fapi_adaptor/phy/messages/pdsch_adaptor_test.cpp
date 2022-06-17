@@ -11,7 +11,7 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi_adaptor/phy/pdsch.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
 

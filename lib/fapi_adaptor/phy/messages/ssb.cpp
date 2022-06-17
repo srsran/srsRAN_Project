@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/fapi_adaptor/phy/ssb.h"
+#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/srsvec/bit.h"
 
 using namespace srsgnb;
@@ -135,10 +135,9 @@ static float get_beta_pss(const dl_ssb_pdu& fapi_pdu)
 void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pdu,
                                                    const dl_ssb_pdu&     fapi_pdu,
                                                    uint16_t              sfn,
-                                                   uint16_t              slot,
-                                                   subcarrier_spacing    numerology)
+                                                   uint16_t              slot)
 {
-  proc_pdu.slot                  = slot_point(static_cast<uint32_t>(numerology), sfn, slot);
+  proc_pdu.slot                  = slot_point(static_cast<uint32_t>(fapi_pdu.ssb_maintenance_v3.scs), sfn, slot);
   proc_pdu.phys_cell_id          = fapi_pdu.phys_cell_id;
   proc_pdu.beta_pss              = get_beta_pss(fapi_pdu);
   proc_pdu.ssb_idx               = fapi_pdu.ssb_block_index;

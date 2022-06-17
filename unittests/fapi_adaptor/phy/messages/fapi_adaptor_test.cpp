@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/fapi/message_builders.h"
-#include "srsgnb/fapi_adaptor/phy/ssb.h"
+#include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/test_utils.h"
 #include <chrono>
@@ -77,7 +77,7 @@ static void ssb_conversion_test()
             ssb_processor::pdu_t pdu;
 
             // Conversion block.
-            convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, scs);
+            convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot);
 
             // Assert contents.
             TESTASSERT_EQ(pdu.slot.sfn(), sfn);

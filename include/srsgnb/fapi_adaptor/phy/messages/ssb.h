@@ -21,8 +21,7 @@ namespace fapi_adaptor {
 void convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
                              const fapi::dl_ssb_pdu& fapi_pdu,
                              uint16_t                sfn,
-                             uint16_t                slot,
-                             subcarrier_spacing      numerology);
+                             uint16_t                slot);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb

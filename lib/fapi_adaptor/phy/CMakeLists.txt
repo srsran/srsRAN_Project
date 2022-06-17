@@ -12,11 +12,8 @@ set(SOURCES
         phy_to_fapi_translator.cpp
         slot_event_dispatcher.cpp)
 
+add_library(fapi_to_phy_translator STATIC fapi_to_phy_translator.cpp)
+target_link_libraries(fapi_to_phy_translator srsgnb_fapi_phy_message_adaptors)
+
 add_library(phy_to_fapi_translator STATIC ${SOURCES})
 target_link_libraries(phy_to_fapi_translator srslog)
-
-add_library(pdsch_fapi_adaptor STATIC pdsch.cpp)
-target_link_libraries(pdsch_fapi_adaptor)
-
-add_library(ssb_fapi_adaptor STATIC ssb.cpp)
-target_link_libraries(ssb_fapi_adaptor srsvec)
