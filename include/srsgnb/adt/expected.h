@@ -83,8 +83,10 @@ public:
     if (not has_value()) {
       unexpected.~E();
       has_val = true;
+      new (&val) T(other);
+    } else {
+      val = other;
     }
-    val = other;
     return *this;
   }
   expected& operator=(T&& other) noexcept
@@ -92,8 +94,11 @@ public:
     if (not has_value()) {
       unexpected.~E();
       has_val = true;
+      new (&val) T(std::move(other));
+    } else {
+      val = std::move(other);
+
     }
-    val = std::move(other);
     return *this;
   }
   expected& operator=(const E& other) noexcept
