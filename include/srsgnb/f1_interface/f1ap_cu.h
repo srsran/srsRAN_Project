@@ -41,6 +41,10 @@ struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
 };
 
+struct initial_ul_rrc_message_transfer_message {
+  asn1::f1ap::init_ulrrc_msg_transfer_s msg;
+};
+
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {
@@ -111,6 +115,7 @@ class f1c_initiating_message_notifier
 public:
   virtual ~f1c_initiating_message_notifier()                                     = default;
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
+  virtual void on_initial_ul_rrc_message_transfer_received(const initial_ul_rrc_message_transfer_message& msg) = 0;
 };
 
 /// Combined entry point for F1C/U handling.

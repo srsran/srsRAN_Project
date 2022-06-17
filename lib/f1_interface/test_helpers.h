@@ -20,13 +20,21 @@ namespace srsgnb {
 class dummy_f1c_init_message_notifier : public srs_cu_cp::f1c_initiating_message_notifier
 {
 public:
+  dummy_f1c_init_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
   srs_cu_cp::f1_setup_request_message last_f1_setup_request_message;
   void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
   {
-    srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-    test_logger.info("Received F1SetupRequest message.");
+    logger.info("Received F1SetupRequest message.");
     last_f1_setup_request_message = msg;
   }
+  void
+  on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::initial_ul_rrc_message_transfer_message& msg) override
+  {
+    logger.info("Received Initial UL RRC Message transfer message.");
+  }
+
+private:
+  srslog::basic_logger& logger;
 };
 
 /// Reusable class implementing the notifier interface.

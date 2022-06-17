@@ -178,15 +178,17 @@ void f1ap_cu_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 {
-  f1_setup_request_message req_msg = {};
   switch (msg.value.type().value) {
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request:
-      req_msg.request = msg.value.f1_setup_request();
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request: {
+      f1_setup_request_message req_msg = {};
+      req_msg.request                  = msg.value.f1_setup_request();
       init_message_notifier.on_f1_setup_request_received(req_msg);
-      break;
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer:
-      handle_init_ul_rrc_message_transfer(msg.value.init_ulrrc_msg_transfer());
-      break;
+    } break;
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {
+      initial_ul_rrc_message_transfer_message ul_transfer = {};
+      ul_transfer.msg                                     = msg.value.init_ulrrc_msg_transfer();
+      init_message_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
+    } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer:
       handle_ul_rrc_message_transfer(msg.value.ulrrc_msg_transfer());
       break;

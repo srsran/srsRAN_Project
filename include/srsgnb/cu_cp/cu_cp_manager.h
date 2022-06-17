@@ -17,6 +17,9 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// Forward declared messages.
+struct initial_ul_rrc_message_transfer_message;
+
 struct ul_rrc_message_transfer_message;
 
 struct f1_setup_request_message;
@@ -30,6 +33,7 @@ class cu_cp_manager_ccch_handler
 {
 public:
   virtual ~cu_cp_manager_ccch_handler()                                                   = default;
+  virtual void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message_transfer_message& msg) = 0;
   virtual void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) = 0;
 };
 

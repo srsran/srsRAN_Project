@@ -30,6 +30,7 @@ public:
 
   // cu_cp_manager_f1c_interface
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
+  void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message_transfer_message& msg) override;
   void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) override;
 
   size_t get_nof_dus() const override;

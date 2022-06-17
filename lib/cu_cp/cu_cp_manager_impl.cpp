@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_manager_impl.h"
+#include "../ran/bcd_helpers.h"
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/f1ap_cu.h"
 
@@ -47,8 +48,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
     du_cell_context du_cell;
     du_cell.cell_index = MIN_DU_CELL_INDEX; // TODO: get unique next idx
     du_cell.pci = cell_item.served_cell_info.nrpci;
-    // TODO: implement converter for NR-CGI type
-    // du_cell.cgi = cell_item.served_cell_info.nrcgi;
+    du_cell.cgi        = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
 
     if (not cell_item.gnb_du_sys_info_present) {
       cfg.logger.error("Not handling served cells without system information");
@@ -73,6 +73,28 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
   // add DU
   du_mng.add_du(du_ctxt);
+}
+
+void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message_transfer_message& msg)
+{
+  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
+
+  // Reject request without served cells
+  if (not msg.msg->duto_currc_container_present) {
+    cfg.logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
+    /// Assume the DU can't serve the UE. Ignoring the message.
+    return;
+  }
+
+  cfg.logger.info(
+      "Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
+  cfg.logger.debug("mcc={}, mnc={}", cgi.mcc, cgi.mnc);
+
+  // TODO: Look up DU and cell with NR-CGI
+
+  if (msg.msg->sul_access_ind_present) {
+    cfg.logger.debug("Ignoring SUL access indicator");
+  }
 }
 
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg)
