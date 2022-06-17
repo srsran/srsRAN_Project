@@ -31,10 +31,16 @@ public:
   /// Gets number of written bits.
   unsigned nof_bits() const { return 8U * (writer.length() - (offset == 0U ? 0U : 1U)) + offset; }
 
-  /// Get offset of the next bit to be set.
+  /// \brief Get offset of the next bit to be set. Offset 0 corresponds to the MSB of the current byte being packed,
+  /// while offset 7 corresponds to LSB.
   unsigned next_bit_offset() const { return offset; }
 
-  /// Append provided bitmap into byte_buffer held by bit_encoder.
+  /// \brief Append provided bitmap into byte_buffer held by bit_encoder.
+  /// The bitmap to pack is left aligned (i.e. MSB of bitmap will be the last bit to be packed in underlying buffer).
+  /// Example:
+  /// - Before:           [...][11______]
+  /// - pack(0b1011, 4):  [...][111011__]
+  /// - pack(0b01100, 5): [...][11101101][100_____]
   /// \param val bitmap to be packed.
   /// \param n_bits number of bits to pack.
   void pack(uint64_t val, uint32_t n_bits);
