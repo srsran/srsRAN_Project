@@ -8,6 +8,7 @@
  *
  */
 
+#include "helpers.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -15,22 +16,11 @@
 using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
+using namespace unittests;
 
 static void test_conversion_ok()
 {
-  srsgnb::dl_ssb_pdu pdu;
-  pdu.pci                             = 123;
-  pdu.beta_pss_profile_nr             = srsgnb::beta_pss_profile_nr_type::dB_0;
-  pdu.ssb_index                       = 4;
-  pdu.ssb_subcarrier_offset           = 14;
-  pdu.offset_to_point_A               = 500;
-  pdu.ssb_case                        = ssb_pattern_case::A;
-  pdu.L_max                           = 4;
-  pdu.scs                             = subcarrier_spacing::kHz30;
-  pdu.mib_data.dmrs_typeA_position    = 0;
-  pdu.mib_data.pdcch_config_sib1      = 2;
-  pdu.mib_data.cell_barred            = true;
-  pdu.mib_data.intra_freq_reselection = false;
+  srsgnb::dl_ssb_pdu pdu = build_valid_dl_ssb_pdu();
 
   fapi::dl_ssb_pdu fapi_pdu;
   convert_ssb_mac_to_fapi(fapi_pdu, pdu);

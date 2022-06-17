@@ -933,6 +933,18 @@ public:
                                  uint8_t               ssb_subcarrier_offset,
                                  uint16_t              ssb_offset_pointA)
   {
+    dl_ssb_pdu_builder builder = add_ssb_pdu();
+
+    // Fill the PDU basic parameters.
+    builder.set_basic_parameters(
+        phys_cell_id, beta_pss_profile_nr, ssb_block_index, ssb_subcarrier_offset, ssb_offset_pointA);
+
+    return builder;
+  }
+
+  /// Adds a SSB PDU to the message and returns a SSB PDU builder.
+  dl_ssb_pdu_builder add_ssb_pdu()
+  {
     // Add a new PDU.
     msg.pdus.emplace_back();
     dl_tti_request_pdu& pdu = msg.pdus.back();
@@ -948,10 +960,6 @@ public:
     pdu.pdu_type = dl_pdu_type::SSB;
 
     dl_ssb_pdu_builder builder(pdu.ssb_pdu);
-
-    // Fill the PDU basic parameters.
-    builder.set_basic_parameters(
-        phys_cell_id, beta_pss_profile_nr, ssb_block_index, ssb_subcarrier_offset, ssb_offset_pointA);
 
     return builder;
   }

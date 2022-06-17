@@ -7,6 +7,10 @@
 
 add_subdirectory(messages)
 
+add_library(srsgnb_mac_to_fapi_translator STATIC mac_to_fapi_translator.cpp)
+target_link_libraries(srsgnb_mac_to_fapi_translator srsgnb_mac_fapi_adaptors fapi_validators)
+
+
 set(SOURCES
         fapi_to_mac_translator.cpp
         slot_event_dispatcher.cpp)

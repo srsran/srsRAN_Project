@@ -6,6 +6,11 @@
 # the distribution.
 #
 
-add_executable(mac_fapi_ssb_adaptor_test dl_ssb_pdu_test.cpp)
-target_link_libraries(mac_fapi_ssb_adaptor_test srsgnb_mac_fapi_adaptors srsgnb_support srslog)
-add_test(mac_fapi_ssb_adaptor_test mac_fapi_ssb_adaptor_test)
+set_directory_properties(PROPERTIES LABELS "fapi_adaptor")
+
+add_subdirectory(messages)
+
+add_executable(mac_to_fapi_translator_test mac_to_fapi_translator_test.cpp)
+target_link_libraries(mac_to_fapi_translator_test srsgnb_mac_to_fapi_translator srslog srsgnb_mac_translator_helpers)
+add_test(mac_to_fapi_translator_test mac_to_fapi_translator_test)
+
