@@ -7,5 +7,8 @@
 
 add_subdirectory(messages)
 
+set(SOURCES
+        fapi_to_mac_translator.cpp
+        slot_event_dispatcher.cpp)
 
-
+add_library(srsgnb_mac_fapi_adaptor STATIC ${SOURCES})
