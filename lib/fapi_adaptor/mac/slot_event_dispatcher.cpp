@@ -24,7 +24,8 @@ public:
 
 } // namespace
 
-/// Instance used when the slot_event_dispatcher, until it gets configured by \c set_mac_cell_slot_handler()
+/// Instance used by the slot_event_dispatcher class until it gets configured through the \c set_mac_cell_slot_handler()
+/// method.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
 slot_event_dispatcher::slot_event_dispatcher() : mac_slot_handler(mac_dummy_handler) {}

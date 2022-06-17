@@ -19,7 +19,8 @@ namespace fapi_adaptor {
 
 class slot_event_dispatcher;
 
-/// \brief This class listens to FAPI slot messages events, converting them to MAC events and dispatching them to its registered clients.
+/// \brief This class listens to FAPI slot based messages events converting them to MAC specific events and dispatching
+/// them to the registered clients.
 class fapi_to_mac_translator : public fapi::slot_message_notifier
 {
 public:

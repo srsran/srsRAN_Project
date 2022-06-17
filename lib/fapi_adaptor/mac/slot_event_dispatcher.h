@@ -17,7 +17,7 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Dispatches handles new slot events and dispatch them to multiple clients.
+/// Handles each new slot event by dispatching them to multiple clients.
 class slot_event_dispatcher
 {
 public:
@@ -28,7 +28,7 @@ public:
   /// \param slot New slot to handle.
   void handle_new_slot(slot_point slot);
 
-  /// Sets the mac_cell_slot_handler to the given one. This handler will be notified with new slots.
+  /// Sets the mac_cell_slot_handler to the given one. This handler will be notified for each new slot.
   ///
   /// \param handler Handler to set.
   void set_mac_cell_slot_handler(mac_cell_slot_handler& handler);
