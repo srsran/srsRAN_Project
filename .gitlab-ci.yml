@@ -8,7 +8,7 @@ include:
   - local: .gitlab/ci/build.yml
 
 variables:
-  STATIC_DOCKER: "registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.1"
+  STATIC_DOCKER: "registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.3"
 
 stages:
   - static
@@ -32,6 +32,8 @@ code-format:
     - git fetch
   script:
     - run-clang-format-diff.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - hex2lowercase.sh
+    - is-pristine-repo.sh
 
 no-binaries-added:
   stage: static
