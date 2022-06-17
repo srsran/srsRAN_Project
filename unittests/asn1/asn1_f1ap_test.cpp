@@ -232,6 +232,76 @@ void ue_context_setup_request_test()
 #endif
 }
 
+void initial_ul_rrc_message_transfer_test()
+{
+  uint8_t rx_msg[] = {
+      0x00, 0x0b, 0x40, 0x80, 0xa4, 0x00, 0x00, 0x06, 0x00, 0x29, 0x00, 0x03, 0x40, 0xa1, 0x27, 0x00, 0x6f, 0x00, 0x09,
+      0x00, 0x02, 0xf8, 0x99, 0x00, 0x0b, 0xc6, 0x14, 0xe0, 0x00, 0x5f, 0x00, 0x03, 0x00, 0xa1, 0x27, 0x00, 0x32, 0x00,
+      0x07, 0x06, 0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66, 0x00, 0x80, 0x00, 0x71, 0x70, 0x5c, 0x00, 0xb0, 0x01, 0x11, 0x7a,
+      0xec, 0x70, 0x10, 0x61, 0xe0, 0x00, 0x7c, 0x20, 0x40, 0x8d, 0x07, 0x81, 0x00, 0x20, 0xa2, 0x09, 0x04, 0x80, 0xca,
+      0x80, 0x00, 0xf8, 0x00, 0x00, 0x00, 0x00, 0x00, 0x83, 0x70, 0x84, 0x20, 0x00, 0x08, 0x81, 0x65, 0x00, 0x00, 0x48,
+      0x20, 0x00, 0x02, 0x06, 0x9a, 0x06, 0xaa, 0x49, 0x88, 0x00, 0x02, 0x00, 0x20, 0x40, 0x00, 0x40, 0x0d, 0x00, 0x80,
+      0x13, 0xb6, 0x4b, 0x18, 0x14, 0x40, 0x0e, 0x46, 0x8a, 0xcf, 0x12, 0x00, 0x00, 0x09, 0x60, 0x70, 0x82, 0x0f, 0x17,
+      0x7e, 0x06, 0x08, 0x70, 0x00, 0x00, 0x00, 0xe2, 0x50, 0x38, 0x00, 0x00, 0x40, 0xbd, 0xe8, 0x02, 0x00, 0x04, 0x00,
+      0x00, 0x00, 0x00, 0x02, 0x82, 0x01, 0x95, 0x03, 0x00, 0xc4, 0x00, 0x00, 0x4e, 0x40, 0x02, 0x00, 0x00};
+  srsgnb::byte_buffer rx_pdu{rx_msg};
+
+  pcap_writer.write_pdu(rx_msg);
+
+  auto& logger = srslog::fetch_basic_logger("ASN1", false);
+  logger.set_level(srslog::basic_levels::debug);
+  logger.set_hex_dump_max_size(-1);
+
+  asn1::cbit_ref          bref{rx_pdu};
+  asn1::f1ap::f1_ap_pdu_c pdu;
+
+  TESTASSERT(pdu.unpack(bref) == SRSASN_SUCCESS);
+  TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg, pdu.type());
+
+  TESTASSERT_EQ(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER, pdu.init_msg().proc_code);
+  TESTASSERT_EQ(asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer,
+                pdu.init_msg().value.type());
+
+  TESTASSERT(test_pack_unpack_consistency(pdu) == SRSASN_SUCCESS);
+
+#if JSON_OUTPUT
+  int               unpacked_len = bref.distance_bytes();
+  asn1::json_writer json_writer1;
+  pdu.to_json(json_writer1);
+  logger.info(rx_msg, unpacked_len, "F1AP PDU unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
+#endif
+
+  // repack manually
+  {
+    asn1::f1ap::f1_ap_pdu_c tx_pdu;
+
+    tx_pdu.set_init_msg();
+    tx_pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+
+    auto& init_ul_rrc                     = tx_pdu.init_msg().value.init_ulrrc_msg_transfer();
+    init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
+
+    init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110");
+    init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
+    init_ul_rrc->c_rnti.value = 41255;
+
+    init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
+    init_ul_rrc->duto_currc_container_present = true;
+    init_ul_rrc->duto_currc_container.value.from_string(
+        "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
+        "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
+        "c400");
+
+    srsgnb::byte_buffer tx_buffer;
+    asn1::bit_ref       bref_tx(tx_buffer);
+    TESTASSERT_EQ(SRSASN_SUCCESS, tx_pdu.pack(bref_tx));
+
+    // compare against original TV
+    TESTASSERT_EQ(tx_buffer.length(), sizeof(rx_msg));
+    TESTASSERT(rx_pdu == tx_buffer);
+  }
+}
+
 int main()
 {
   auto& asn1_logger = srslog::fetch_basic_logger(log_id);
@@ -245,6 +315,7 @@ int main()
 
   f1_setup_test();
   ue_context_setup_request_test();
+  initial_ul_rrc_message_transfer_test();
 
   pcap_writer.close();
 
