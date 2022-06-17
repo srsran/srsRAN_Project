@@ -15,11 +15,12 @@ using namespace srsgnb;
 
 std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& config)
 {
-  // Create DFT factory.
-  dft_processor_factory_fftw_configuration dft_factory_fftw_config;
-  dft_factory_fftw_config.avoid_wisdom               = false;
-  dft_factory_fftw_config.wisdom_filename            = "";
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_factory_fftw_config);
+  // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
+  // based factory.
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  if (dft_factory == nullptr) {
+    dft_factory = create_dft_processor_factory_fftx();
+  }
   srsran_assert(dft_factory, "Failed to create DFT factory.");
 
   // Create OFDM modulator factory.

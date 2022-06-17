@@ -28,16 +28,19 @@ public:
   virtual std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) = 0;
 };
 
-/// Provides the necessary initialization parameters to dft_processor_fftw_impl.
-struct dft_processor_factory_fftw_configuration {
-  /// Sets to true to avoid loading the FFTW wisdom from a file.
-  bool avoid_wisdom;
-  /// Provides the FFTW wisdom filename. Leave empty for default value and ignore if wisdom is disabled.
-  std::string wisdom_filename;
-};
+/// \brief Creates a DFT processor factory based on a generic Radix-2 DFT implementation.
+std::shared_ptr<dft_processor_factory> create_dft_processor_factory_generic();
 
-std::shared_ptr<dft_processor_factory>
-create_dft_processor_factory_fftw(const dft_processor_factory_fftw_configuration& config);
+/// \brief Creates a DFT processor factory based on SPIRAL's FFTX.
+std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftx();
+
+/// \brief Creates a DFT processor factory based on FFTW library.
+/// \param[in] avoid_wisdom Set to true to avoid loading FFTW wisdom from a file.
+/// \param[in] wisdom_filename Indicates the FFTW wisdom filename. Leave empty for default value. It is ignored if the
+/// option \c avoid_wisdom is true.
+/// \return A valid pointer to a DFT processor factory if FFTW is available. Otherwise, nullptr.
+std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftw(bool               avoid_wisdom    = false,
+                                                                         const std::string& wisdom_filename = "");
 
 } // namespace srsgnb
 

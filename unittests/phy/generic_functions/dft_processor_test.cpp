@@ -13,6 +13,7 @@
 #include "srsgnb/support/srsgnb_test.h"
 #include <cmath>
 #include <complex>
+#include <getopt.h>
 #include <memory>
 #include <random>
 
@@ -22,10 +23,7 @@ using namespace srsgnb;
 static std::mt19937 rgen(0);
 
 // Maximum allowed error.
-static float ASSERT_MAX_ERROR = 2e-6;
-
-// Number of repetitions.
-static constexpr unsigned nof_repetitions = 1;
+static float ASSERT_MAX_ERROR = 4e-6;
 
 void ditfft(span<cf_t> out, span<const cf_t> in, span<const cf_t> table, unsigned N, unsigned s)
 {
@@ -75,17 +73,67 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   ditfft(output, input, exp, N, 1);
 }
 
-int main()
+static std::string dft_factory_str = "generic";
+static unsigned    nof_repetitions = 10;
+
+void usage(const char* prog)
 {
+  fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
+  fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
+  fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
+  fmt::print("\t-h Show this message\n");
+}
+
+void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "F:R:h")) != -1) {
+    switch (opt) {
+      case 'F':
+        dft_factory_str = std::string(optarg);
+        break;
+      case 'R':
+        nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(0);
+    }
+  }
+}
+
+int main(int argc, char** argv)
+{
+  parse_args(argc, argv);
   std::uniform_real_distribution<float> dist(-1.0, +1.0);
 
-  dft_processor_factory_fftw_configuration common_config = {};
-  std::shared_ptr<dft_processor_factory>   dft_factory   = create_dft_processor_factory_fftw(common_config);
-  TESTASSERT(dft_factory);
+  std::shared_ptr<dft_processor_factory> dft_factory = nullptr;
+  if (dft_factory_str == "generic") {
+    dft_factory = create_dft_processor_factory_generic();
+  } else if (dft_factory_str == "fftx") {
+    dft_factory = create_dft_processor_factory_fftx();
+  } else if (dft_factory_str == "fftw") {
+    dft_factory = create_dft_processor_factory_fftw();
+  } else {
+    fmt::print("Invalid DFT factory.");
+    return -1;
+  }
+  TESTASSERT(dft_factory, "DFT factory of type {} is not available.", dft_factory_str);
+
+  fmt::print("DFT {} implementation performance\n"
+             "All values in nanoseconds\n"
+             "Percentiles: | Size | Direction |  50th  |  75th  |  90th  |  99th  | 99.9th | Worst  |\n",
+             dft_factory_str);
 
   // Test for the most common DFT sizes
-  for (unsigned size : {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096}) {
+  for (unsigned size :
+       {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
     for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
+      // Performance measurements.
+      std::vector<unsigned> perf_results;
+      perf_results.reserve(nof_repetitions);
+
       // Create FFTW configuration;
       dft_processor::configuration config;
       config.size = size;
@@ -93,6 +141,7 @@ int main()
 
       // Create processor
       std::unique_ptr<dft_processor> dft = dft_factory->create(config);
+      TESTASSERT(dft);
 
       // Get DFT input buffer
       span<cf_t> input = dft->get_input();
@@ -110,8 +159,11 @@ int main()
           value = {dist(rgen), dist(rgen)};
         }
 
-        // Run DFT
+        // Run DFT.
+        auto             start  = std::chrono::high_resolution_clock::now();
         span<const cf_t> output = dft->run();
+        auto             end    = std::chrono::high_resolution_clock::now();
+        perf_results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
 
         // Run expected DFT
         run_expected_dft(expected_output, direction, input);
@@ -131,6 +183,17 @@ int main()
       printf(
           "size=%d; dir=%s; max_error=%f;\n", size, dft_processor::direction_to_string(direction).c_str(), max_error);
 #endif
+
+      std::sort(perf_results.begin(), perf_results.end());
+      fmt::print("             |{:6}|{:11}|{:8}|{:8}|{:8}|{:8}|{:8}|{:8}|\n",
+                 size,
+                 direction == dft_processor::direction::DIRECT ? "direct" : "inverse",
+                 perf_results[static_cast<size_t>(perf_results.size() * 0.5)],
+                 perf_results[static_cast<size_t>(perf_results.size() * 0.75)],
+                 perf_results[static_cast<size_t>(perf_results.size() * 0.9)],
+                 perf_results[static_cast<size_t>(perf_results.size() * 0.99)],
+                 perf_results[static_cast<size_t>(perf_results.size() * 0.999)],
+                 perf_results.back());
 
       // Actual assertion.
       TESTASSERT(max_error < ASSERT_MAX_ERROR);

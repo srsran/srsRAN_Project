@@ -24,10 +24,7 @@ using namespace srsgnb;
 int main()
 {
   // Create a DFT factory.
-  dft_processor_factory_fftw_configuration dft_common_config;
-  dft_common_config.avoid_wisdom                     = false;
-  dft_common_config.wisdom_filename                  = "";
-  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw(dft_common_config);
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
   TESTASSERT(dft_factory);
 
   // Prepare OFDM demodulator factory configuration.

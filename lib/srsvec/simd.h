@@ -532,9 +532,9 @@ static inline simd_cf_t srsran_simd_cfi_load(const cf_t* ptr)
   __m512 in1 = _mm512_load_ps((float*)(ptr));
   __m512 in2 = _mm512_load_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
-          in1,
-          _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
-          in2);
+      in1,
+      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
+      in2);
   ret.im = _mm512_permutex2var_ps(
       in1,
       _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1B, 0x1D, 0x1F),
@@ -569,9 +569,9 @@ static inline simd_cf_t srsran_simd_cfi_loadu(const cf_t* ptr)
   __m512 in1 = _mm512_loadu_ps((float*)(ptr));
   __m512 in2 = _mm512_loadu_ps((float*)(ptr + SRSRAN_SIMD_CF_SIZE / 2));
   ret.re     = _mm512_permutex2var_ps(
-          in1,
-          _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
-          in2);
+      in1,
+      _mm512_setr_epi32(0x00, 0x02, 0x04, 0x06, 0x08, 0x0A, 0x0C, 0x0E, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1A, 0x1C, 0x1E),
+      in2);
   ret.im = _mm512_permutex2var_ps(
       in1,
       _mm512_setr_epi32(0x01, 0x03, 0x05, 0x07, 0x09, 0x0B, 0x0D, 0x0F, 0x11, 0x13, 0x15, 0x17, 0x19, 0x1B, 0x1D, 0x1F),
@@ -796,20 +796,20 @@ static inline simd_cf_t srsran_simd_cf_set1(cf_t x)
 {
   simd_cf_t ret;
 #ifdef HAVE_AVX512
-  ret.re = _mm512_set1_ps(__real__ x);
-  ret.im = _mm512_set1_ps(__imag__ x);
+  ret.re = _mm512_set1_ps(x.real());
+  ret.im = _mm512_set1_ps(x.imag());
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX2
-  ret.re            = _mm256_set1_ps(__real__ x);
-  ret.im            = _mm256_set1_ps(__imag__ x);
+  ret.re            = _mm256_set1_ps(x.real());
+  ret.im            = _mm256_set1_ps(x.imag());
 #else
 #ifdef HAVE_SSE
   ret.re            = _mm_set1_ps(x.real());
   ret.im            = _mm_set1_ps(x.imag());
 #else /*HAVE_NEON*/
 #ifdef HAVE_NEON
-  ret.val[0]        = vdupq_n_f32(__real__ x);
-  ret.val[1]        = vdupq_n_f32(__imag__ x);
+  ret.val[0]        = vdupq_n_f32(x.real());
+  ret.val[1]        = vdupq_n_f32(x.imag());
 #endif /* HAVE_NEON */
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX2 */

@@ -42,6 +42,7 @@ option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
 option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
+option(ENABLE_FFTW           "Enable FFTW"                              ON)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -108,18 +109,10 @@ endif (ENABLE_GCOV)
 # Find dependencies
 ########################################################################
 
-# FFT
-find_package(FFTW3F REQUIRED)
-if (FFTW3F_FOUND)
-    include_directories(${FFTW3F_INCLUDE_DIRS})
-    link_directories(${FFTW3F_LIBRARY_DIRS})
-    if (BUILD_STATIC)
-        set(FFT_LIBRARIES "${FFTW3F_STATIC_LIBRARIES}")
-    else (BUILD_STATIC)
-        set(FFT_LIBRARIES "${FFTW3F_LIBRARIES}")
-    endif (BUILD_STATIC)
-    message(STATUS "FFT_LIBRARIES: " ${FFT_LIBRARIES})
-endif (FFTW3F_FOUND)
+# FFTW
+if (ENABLE_FFTW)
+    find_package(FFTW3F)
+endif (ENABLE_FFTW)
 
 # Threads
 find_package(Threads REQUIRED)
