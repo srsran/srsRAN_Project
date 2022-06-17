@@ -343,7 +343,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar.pdsch_cfg.symbols = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
   rar.pdsch_cfg.codewords.emplace_back();
   pdsch_codeword& cw  = rar.pdsch_cfg.codewords.back();
-  cw.mcs_table        = mcs_pdsch_table::notqam256;
+  cw.mcs_table        = mcs_pdsch_table::qam64;
   cw.qam_mod          = qam4;
   cw.mcs_index        = dci.modulation_coding_scheme;
   cw.rv_index         = 0;

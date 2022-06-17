@@ -131,7 +131,8 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
   return prb_bitmap;
 }
 
-/// Converts RBGs to PRBs given a BWP number of PRBs.
+/// Converts RBG bitmap to PRB bitmap given a BWP PRB dimensions and the nominal RBG-size.
+/// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
 
 } // namespace srsgnb

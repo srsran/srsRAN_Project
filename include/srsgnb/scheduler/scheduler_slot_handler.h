@@ -81,8 +81,12 @@ struct pdcch_ul_information {
   dci_ul_info dci;
 };
 
-enum class mcs_pdsch_table { notqam256 = 0, qam256 = 1, qam64LowSE = 2, invalid };
+/// MCS index table for PDSCH.
+/// \remark See TS 38.214, Section 5.1.3.1.
+enum class mcs_pdsch_table { qam64 = 0, qam256 = 1, qam64LowSE = 2 };
 
+/// PDSCH codeword.
+/// \remark See FAPI PDSCH PDU.
 struct pdsch_codeword {
   uint16_t       target_code_rate;
   qam_modulation qam_mod;
@@ -95,6 +99,8 @@ struct pdsch_codeword {
   uint32_t tb_size_bytes;
 };
 
+/// Information related to a PDSCH allocation.
+/// \remark See FAPI PDSCH PDU.
 struct pdsch_configuration {
   rnti_t                           rnti;
   const bwp_configuration*         bwp_cfg;

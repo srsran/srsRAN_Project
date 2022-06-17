@@ -277,10 +277,10 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.prbs    = sib1_prbs;
   pdsch.codewords.emplace_back();
   pdsch_codeword& cw  = pdsch.codewords.back();
-  cw.mcs_index        = dci.modulation_coding_scheme;
   cw.rv_index         = dci.redundancy_version;
-  cw.qam_mod          = qam4;
-  cw.mcs_table        = mcs_pdsch_table::notqam256;
-  cw.target_code_rate = 0; // TODO.
-  cw.tb_size_bytes    = 0; // TODO.
+  cw.mcs_index        = dci.modulation_coding_scheme;
+  cw.mcs_table        = mcs_pdsch_table::qam64;
+  cw.qam_mod          = qam4; // TODO: Derive QAM from MCS.
+  cw.target_code_rate = 0;    // TODO.
+  cw.tb_size_bytes    = 0;    // TODO.
 }
