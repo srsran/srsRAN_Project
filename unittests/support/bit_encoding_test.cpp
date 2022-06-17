@@ -42,7 +42,7 @@ void test_bit_encoder()
 
   // TEST: bit packing.
 
-  // byte_buffer:  [101-----]
+  // byte_buffer:  [101_____]
   // Written bits: [101]
   enc.pack(0b101, 3);
   TESTASSERT_EQ(1, enc.nof_bytes());
@@ -50,7 +50,7 @@ void test_bit_encoder()
   TESTASSERT_EQ(0b10100000, *bytes.begin());
   TESTASSERT_EQ(3, enc.next_bit_offset());
 
-  // byte_buffer:  [10101---]
+  // byte_buffer:  [10101___]
   // Written bits:    [01]
   enc.pack(0b1, 2);
   TESTASSERT_EQ(1, enc.nof_bytes());
@@ -60,7 +60,7 @@ void test_bit_encoder()
 
   // TEST: byte packing.
 
-  // byte_buffer:  [10101000][00001  000][00010  000][00011---]
+  // byte_buffer:  [10101000][00001  000][00010  000][00011___]
   // Written bits:      [000  00001][000  00010][000  00011]
   byte_buffer vec = {0b1, 0b10, 0b11};
   enc.pack_bytes(vec);
@@ -95,7 +95,7 @@ void test_bit_encoder()
   TESTASSERT_EQ(expected_str, s);
 
   // TEST: fmt formatting of unaligned bits
-  // byte_buffer:  [10101000][00001000][00010000][00011000][00000000][10------]
+  // byte_buffer:  [10101000][00001000][00010000][00011000][00000000][10______]
   // Written bits:                                                   [10]
   enc.pack(0b10, 2);
   fmt::print("encoded bits: {}\n", enc);
@@ -173,7 +173,7 @@ void test_bit_decoder()
   TESTASSERT_EQ(val, 0);
 
   // byte_buffer: [00000001][00000010][00000011][00000100]
-  // Read bits:              [0000010]
+  // Read bits:              [0000010  0]
   vec.resize(1);
   TESTASSERT(dec.unpack_bytes(vec));
   TESTASSERT_EQ(3, dec.nof_bytes());

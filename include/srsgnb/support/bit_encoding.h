@@ -56,8 +56,10 @@ public:
   void align_bytes_zero();
 
 private:
+  /// Interface to byte buffer where bits are going to be appended.
   srsgnb::byte_buffer_writer writer;
-  uint8_t                    offset = 0;
+  /// Offset of the next bit to be set. Values: (0..7).
+  uint8_t offset = 0;
 };
 
 /// Decoder of bits stored in a byte_buffer.
