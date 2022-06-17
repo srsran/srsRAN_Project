@@ -11,10 +11,9 @@
 /// \file
 /// \brief Example application of SSB transmitted over a radio interface.
 ///
-/// This example application instantiates a radio (ZMQ, UHD or other), a lower PHY and an upper PHY with SSB
-/// transmission.
-///
-/// It is a proof of concept of the integration of the lower physical layer working in real-time using a radio.
+/// This proof of concept illustrates the integration of the upper and lower physical layer functionalities
+/// together with a real-time radio interface (either real, e.g. UHD, or virtual, e.g. ZMQ) by generating and
+/// transmitting the Synchronization Signal Block (SSB).
 ///
 /// The application supports different working profiles, run <tt> radio_ssb -h </tt> for usage details.
 /// \cond
@@ -272,7 +271,7 @@ static radio_configuration::radio create_radio_configuration()
     radio_configuration::stream tx_stream_config;
     radio_configuration::stream rx_stream_config;
     for (unsigned port_id = 0; port_id != nof_ports; ++port_id) {
-      // Create channel configuration and append.
+      // Create channel configuration and append it to the previous ones.
       radio_configuration::channel tx_ch_config;
       tx_ch_config.freq.center_frequency_hz = dl_center_freq;
       tx_ch_config.gain_dB                  = tx_gain;

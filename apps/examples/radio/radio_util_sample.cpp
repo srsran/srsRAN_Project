@@ -262,7 +262,7 @@ int main(int argc, char** argv)
     // For each channel in the stream...
     radio_configuration::stream stream_config;
     for (unsigned channel_idx = 0; channel_idx != nof_channels_per_stream; ++channel_idx) {
-      // Create channel configuration and append.
+      // Create channel configuration and append it to the previous ones.
       radio_configuration::channel ch_config;
       ch_config.freq.center_frequency_hz = tx_freq;
       ch_config.gain_dB                  = tx_gain;
