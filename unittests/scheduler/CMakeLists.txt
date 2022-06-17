@@ -14,6 +14,10 @@ add_executable(pdsch_dmrs_symbol_mask_test support/pdsch/pdsch_dmrs_symbol_mask_
 target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
 
+add_executable(tbs_calculator_test support/tbs_calculator_test.cpp)
+target_link_libraries(tbs_calculator_test srsgnb_sched srslog)
+add_test(tbs_calculator_test tbs_calculator_test)
+
 add_executable(sched_prb_test sched_prb_test.cpp)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)
 add_test(sched_prb_test sched_prb_test)
