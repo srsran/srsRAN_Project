@@ -124,6 +124,10 @@ inline dl_config_common make_default_dl_config_common()
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().map_type =
       pdsch_time_domain_resource_allocation::mapping_type::typeA;
   cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.back().symbols = {2, 14};
+  cfg.init_dl_bwp.pdsch_common.dmrs_dl_pdsch_typeA.emplace();
+  cfg.init_dl_bwp.pdsch_common.dmrs_dl_pdsch_typeA->type                 = dmrs_type::type1;
+  cfg.init_dl_bwp.pdsch_common.dmrs_dl_pdsch_typeA->additional_positions = dmrs_additional_positions::pos2;
+  cfg.init_dl_bwp.pdsch_common.dmrs_dl_pdsch_typeA->max_length           = dmrs_max_length::len1;
 
   return cfg;
 }

@@ -65,7 +65,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
 
   /// Parameters for SIB1 scheduling.
-  const cell_configuration& cfg;
+  const cell_configuration& cell_cfg;
   pdcch_scheduler&          pdcch_sched;
 
   /// [Implementation-defined] SIB1 parameters.

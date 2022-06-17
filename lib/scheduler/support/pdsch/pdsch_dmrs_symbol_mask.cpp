@@ -8,25 +8,28 @@
  *
  */
 
-#include "srsgnb/scheduler/support/pdsch/pdsch_dmrs_symbol_mask.h"
+#include "pdsch_dmrs_symbol_mask.h"
 
 using namespace srsgnb;
 
 pdsch_dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config)
 {
-  srsran_assert(config.typeA_pos == 2 || config.typeA_pos == 3, "Invalid TypeA position {}.", config.typeA_pos);
-  srsran_assert(config.duration > 2 && config.duration <= 14, "Invalid transmission duration {}.", config.duration);
-  unsigned l0 = config.typeA_pos;
-  unsigned l1 = (config.lte_crs_match_around && (config.additional_position == 1 && l0 == 3) &&
-                 config.ue_capable_additional_dmrs_dl_alt)
-                    ? 12
-                    : 11;
+  srsran_assert(config.typeA_pos == dmrs_typeA_position::pos2 || config.typeA_pos == dmrs_typeA_position::pos3,
+                "Invalid TypeA position {}",
+                config.typeA_pos);
+  srsran_assert(config.duration > 2 && config.duration <= 14, "Invalid transmission duration {}", config.duration);
+  unsigned l0 = static_cast<unsigned>(config.typeA_pos);
+  unsigned l1 =
+      (config.lte_crs_match_around && (config.additional_position == dmrs_additional_positions::pos1 && l0 == 3) &&
+       config.ue_capable_additional_dmrs_dl_alt)
+          ? 12
+          : 11;
 
   pdsch_dmrs_symbol_mask mask(14);
   mask.set(l0);
 
-  if (config.duration < 8 || config.additional_position == 0) {
+  if (config.duration < 8 || config.additional_position == dmrs_additional_positions::pos0) {
     return mask;
   }
 
@@ -35,7 +38,7 @@ pdsch_dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     return mask;
   }
 
-  if (config.additional_position == 1) {
+  if (config.additional_position == dmrs_additional_positions::pos1) {
     if (config.duration < 13) {
       mask.set(9);
       return mask;
@@ -44,7 +47,7 @@ pdsch_dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     return mask;
   }
 
-  if (config.additional_position == 2) {
+  if (config.additional_position == dmrs_additional_positions::pos2) {
     if (config.duration < 13) {
       mask.set(6);
       mask.set(9);

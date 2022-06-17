@@ -11,13 +11,14 @@
 #ifndef SRSGNB_BWP_CONFIGURATION_H
 #define SRSGNB_BWP_CONFIGURATION_H
 
-#include "ofdm_symbol_range.h"
-#include "resource_block.h"
+#include "dmrs.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/frame_types.h"
+#include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/resource_allocation/prb_grant.h"
+#include "srsgnb/ran/resource_block.h"
 #include <bitset>
 
 namespace srsgnb {
@@ -102,6 +103,7 @@ struct pdsch_time_domain_resource_allocation {
 };
 
 struct pdsch_config_common {
+  optional<dmrs_downlink_config> dmrs_dl_pdsch_typeA;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
 };

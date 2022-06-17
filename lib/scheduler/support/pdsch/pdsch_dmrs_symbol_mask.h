@@ -11,14 +11,9 @@
 #ifndef SRSGNB_SCHEDULER_SUPPORT_PDSCH_PDSCH_DMRS_SYMBOL_MASK_H
 #define SRSGNB_SCHEDULER_SUPPORT_PDSCH_PDSCH_DMRS_SYMBOL_MASK_H
 
-#include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/scheduler/dmrs.h"
 
 namespace srsgnb {
-
-/// \brief Data type used to represent a DMRS for PDSCH symbol mask.
-///
-/// Each bit set in the bitset represents a symbol within the slot. The first bit corresponds to the first symbol.
-using pdsch_dmrs_symbol_mask = bounded_bitset<14>;
 
 /// \brief Collects the necessary parameters to calculate the DMRS symbol mask for a TypeA PDSCH mapping and single
 /// duration DMRS.
@@ -26,11 +21,11 @@ struct pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration {
   /// \brief Indicates the first OFDM symbol within the slot carrying DMRS.
   ///
   /// This value is given by higher layer parameter \c dmrs-TypeA-Position. Possible values are {2, 3}.
-  unsigned typeA_pos;
+  dmrs_typeA_position typeA_pos;
   /// \brief Indicates the number of additional DMRS positions in time domain.
   ///
   /// This value is given by higher layer parameter \c dmrs-AdditionalPosition. Possible values are {0...3}.
-  unsigned additional_position;
+  dmrs_additional_positions additional_position;
   /// \brief Indicates the PDSCH transmission duration in OFDM symbols.
   ///
   /// Possible values are {3...14}.

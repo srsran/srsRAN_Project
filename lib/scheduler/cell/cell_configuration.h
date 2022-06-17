@@ -48,6 +48,7 @@ public:
   /// For dl_carrier, only arfcn is currently used.
   carrier_configuration   dl_carrier;
   const ssb_configuration ssb_cfg;
+  dmrs_typeA_position     dmrs_typeA_pos;
 
   // Derived Parameters.
   ssb_pattern_case ssb_case;

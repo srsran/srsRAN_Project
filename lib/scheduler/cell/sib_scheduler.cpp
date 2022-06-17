@@ -10,6 +10,7 @@
 
 #include "sib_scheduler.h"
 #include "../support/config_helpers.h"
+#include "../support/dmrs_helpers.h"
 #include "resource_grid.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
@@ -125,7 +126,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                                aggregation_level         sib1_dci_aggr_lev_,
                                unsigned                  sib1_rxtx_periodicity_,
                                subcarrier_spacing        scs_common) :
-  cfg{cfg_},
+  cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
   pdcch_config_sib1{pdcch_config_sib1_},
   sib1_mcs{sib1_mcs_},
@@ -139,8 +140,8 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   precompute_sib1_n0(scs_common);
 
   // Define a BWP configuration limited by CORESET#0 RBs.
-  coreset0_bwp_cfg      = cfg.dl_cfg_common.init_dl_bwp.generic_params;
-  coreset0_bwp_cfg.crbs = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  coreset0_bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 };
 
 void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point)
@@ -167,13 +168,13 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const
   // For each beam, check if the SIB1 needs to be allocated in this slot .
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
     // Do not schedule the SIB1 for the SSB indices that are not used.
-    if (not is_nth_ssb_beam_active(cfg.ssb_cfg.ssb_bitmap, ssb_idx)) {
+    if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, ssb_idx)) {
       continue;
     }
 
     if (sl_point.to_uint() % sib1_period_slots == sib1_n0_slots[ssb_idx].to_uint()) {
       // Ensure slot for SIB1 has DL enabled.
-      if (not cfg.is_dl_enabled(sl_point)) {
+      if (not cell_cfg.is_dl_enabled(sl_point)) {
         logger.error("SCHED: Could not allocated SIB1 for beam idx {} as slot is not DL enabled.", ssb_idx);
         return;
       }
@@ -220,8 +221,11 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   }
 
   // 2. Allocate DCI_1_0 for SIB1 on PDCCH.
-  pdcch_dl_information* pdcch = pdcch_sched.alloc_pdcch_common(
-      res_grid, rnti_t::SI_RNTI, cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id, sib1_dci_aggr_lev);
+  pdcch_dl_information* pdcch =
+      pdcch_sched.alloc_pdcch_common(res_grid,
+                                     rnti_t::SI_RNTI,
+                                     cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
+                                     sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
     logger.error("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
@@ -231,8 +235,10 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // NOTE:
   // - ofdm_symbol_range{2, 14} is a temporary hack. The OFDM symbols should be derived from the SIB1 size and
   //   frequency allocation.
-  res_grid.dl_res_grid.fill(grant_info{
-      grant_info::channel::sch, cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ofdm_symbol_range{2, 14}, sib1_crbs});
+  res_grid.dl_res_grid.fill(grant_info{grant_info::channel::sch,
+                                       cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                                       ofdm_symbol_range{2, 14},
+                                       sib1_crbs});
 
   // 4. Delegate filling SIB1 grants to helper function.
   fill_sib1_grant(res_grid, beam_idx, sib1_crbs);
@@ -270,10 +276,10 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   sib1.si_indicator     = sib_information::si_indicator_type::sib1;
 
   // Fill PDSCH configuration.
-  pdsch_configuration& pdsch = sib1.pdsch_cfg;
+  pdsch_information& pdsch = sib1.pdsch_cfg;
   pdsch.rnti                 = sib1_pdcch.ctx.rnti;
   pdsch.bwp_cfg              = sib1_pdcch.ctx.bwp_cfg;
-  pdsch.symbols = cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
+  pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
   pdsch.prbs    = sib1_prbs;
   pdsch.codewords.emplace_back();
   pdsch_codeword& cw  = pdsch.codewords.back();
@@ -283,4 +289,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.qam_mod          = qam4; // TODO: Derive QAM from MCS.
   cw.target_code_rate = 0;    // TODO.
   cw.tb_size_bytes    = 0;    // TODO.
+  pdsch.dmrs          = make_default_f1_0_dmrs_info(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, cell_cfg.pci, cell_cfg.dmrs_typeA_pos, pdsch.symbols.length());
 }

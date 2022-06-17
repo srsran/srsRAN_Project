@@ -11,7 +11,7 @@
 #ifndef SRSGNB_CONFIG_HELPERS_H
 #define SRSGNB_CONFIG_HELPERS_H
 
-#include "srsgnb/ran/bwp_configuration.h"
+#include "srsgnb/scheduler/bwp_configuration.h"
 
 namespace srsgnb {
 

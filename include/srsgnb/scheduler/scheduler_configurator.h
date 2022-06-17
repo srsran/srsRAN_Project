@@ -11,8 +11,8 @@
 #ifndef SRSGNB_SCHEDULER_CONFIGURATOR_H
 #define SRSGNB_SCHEDULER_CONFIGURATOR_H
 
+#include "bwp_configuration.h"
 #include "srsgnb/adt/optional.h"
-#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
@@ -21,6 +21,7 @@
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
+#include "srsgnb/scheduler/dmrs.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
@@ -45,6 +46,7 @@ struct sched_cell_configuration_request_message {
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;
   ssb_configuration     ssb_config;
+  dmrs_typeA_position   dmrs_typeA_pos;
 
   /// [Implementation-defined] SIB1 parameters.
   /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.

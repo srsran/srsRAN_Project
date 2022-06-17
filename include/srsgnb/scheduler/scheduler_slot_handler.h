@@ -11,10 +11,10 @@
 #ifndef SRSGNB_SCHEDULER_SLOT_HANDLER_H
 #define SRSGNB_SCHEDULER_SLOT_HANDLER_H
 
+#include "bwp_configuration.h"
 #include "sched_consts.h"
 #include "scheduler_dci.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/modulation.h"
@@ -24,6 +24,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/scheduler/dmrs.h"
 #include <cstddef>
 
 namespace srsgnb {
@@ -44,6 +45,28 @@ struct beamforming_info {
 
 struct tx_power_pdcch_information {
   // TODO
+};
+
+struct dmrs_information {
+  /// Bitmap of DM-RS position symbols.
+  pdsch_dmrs_symbol_mask dmrs_symb_pos;
+  /// false for type1 and true for type2.
+  dmrs_type config_type;
+  /// \brief DMRS-Scrambling-ID (see TS 38.211 sec 7.4.1.1.1) as provided by parameter \f$N^{n_{SCID}}_{ID}\f$.
+  /// Values: (0..65535).
+  unsigned dmrs_scrambling_id;
+  /// PHY shall disregard this parameter if lowPaprDmrs=0.
+  unsigned dmrs_scrambling_id_complement;
+  /// False means that dmrs_scrambling_id == dmrs_scrambling_id_complement.
+  bool low_papr_dmrs;
+  /// \brief DMRS sequence initialization (see TS 38.221 sec 7.4.1.1.2), as provided by parameter n_{SCID}.
+  /// Values: false -> 0, true -> 1.
+  bool n_scid;
+  /// Values: (1..3).
+  uint8_t num_dmrs_cdm_grps_no_data;
+  /// \brief Bitmap of antenna ports. Bit 0 corresponds to antenna port 1000 and bit 11 to antenna port 1011, and
+  /// each bit=1 mean DM-RS port used.
+  bounded_bitset<12> dmrs_ports;
 };
 
 struct dci_dl_context_information {
@@ -103,12 +126,13 @@ struct pdsch_codeword {
 
 /// Information related to a PDSCH allocation.
 /// \remark See FAPI PDSCH PDU.
-struct pdsch_configuration {
+struct pdsch_information {
   rnti_t                           rnti;
   const bwp_configuration*         bwp_cfg;
   prb_grant                        prbs;
   ofdm_symbol_range                symbols;
   static_vector<pdsch_codeword, 2> codewords;
+  dmrs_information                 dmrs;
 };
 
 struct dl_msg_lc_info {
@@ -151,7 +175,7 @@ struct rar_ul_grant {
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.
 struct rar_information {
   pdcch_dl_information*                   pdcch_cfg;
-  pdsch_configuration                     pdsch_cfg;
+  pdsch_information                       pdsch_cfg;
   static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };
 
@@ -167,7 +191,7 @@ struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
   unsigned                    nof_txs;
   const pdcch_dl_information* pdcch_cfg;
-  pdsch_configuration         pdsch_cfg;
+  pdsch_information           pdsch_cfg;
 };
 
 /// See ORAN WG8, 9.2.3.3.12 - Downlink Broadcast Allocation.

@@ -4,8 +4,8 @@
 
 #include "../cell/cell_configuration.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/du_types.h"
+#include "srsgnb/scheduler/bwp_configuration.h"
 
 namespace srsgnb {
 

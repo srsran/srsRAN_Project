@@ -12,8 +12,8 @@
 #define SRSGNB_PHY_HELPERS_H
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/bwp_configuration.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/scheduler/bwp_configuration.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {

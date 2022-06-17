@@ -63,6 +63,7 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
   tdd_cfg_common(msg.tdd_ul_dl_cfg_common),
   dl_carrier(msg.dl_carrier),
   ssb_cfg(msg.ssb_config),
+  dmrs_typeA_pos(msg.dmrs_typeA_pos),
   // SSB derived params.
   ssb_case(ssb_get_ssb_pattern(msg.ssb_config.scs, msg.dl_carrier.arfcn)),
   paired_spectrum(band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(msg.dl_carrier.arfcn))),

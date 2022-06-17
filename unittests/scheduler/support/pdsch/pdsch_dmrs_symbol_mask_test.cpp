@@ -8,8 +8,8 @@
  *
  */
 
+#include "lib/scheduler/support/pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/scheduler/support/pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <map>
 
@@ -37,7 +37,7 @@ static const std::map<std::pair<unsigned, unsigned>, static_vector<unsigned, 4> 
 static void pdsch_dmrs_symbol_mask_mapping_type_A_single_test()
 {
   // Iterate through all possible values.
-  for (unsigned typeA_pos : {2, 3}) {
+  for (dmrs_typeA_position typeA_pos : {dmrs_typeA_position::pos2, dmrs_typeA_position::pos3}) {
     for (unsigned additional_position : {0, 1, 2, 3}) {
       for (unsigned duration = 3; duration != 15; ++duration) {
         for (bool lte_crs_match_around : {true, false}) {
@@ -45,18 +45,19 @@ static void pdsch_dmrs_symbol_mask_mapping_type_A_single_test()
             // Prepare configuration and get the mask.
             pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration config;
             config.typeA_pos                         = typeA_pos;
-            config.additional_position               = additional_position;
+            config.additional_position               = static_cast<dmrs_additional_positions>(additional_position);
             config.duration                          = duration;
             config.lte_crs_match_around              = lte_crs_match_around;
             config.ue_capable_additional_dmrs_dl_alt = ue_capable_additional_dmrs_dl_alt;
             pdsch_dmrs_symbol_mask mask              = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(config);
 
             // Calculate expected mask.
-            unsigned               l0 = typeA_pos;
-            unsigned               l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
-                           config.additional_position == 1 && l0 == 3)
-                                            ? 12
-                                            : 11;
+            dmrs_typeA_position l0 = typeA_pos;
+            unsigned            l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
+                           config.additional_position == srsgnb::dmrs_additional_positions::pos1 &&
+                           l0 == srsgnb::dmrs_typeA_position::pos3)
+                              ? 12
+                              : 11;
             pdsch_dmrs_symbol_mask expected(14);
             TESTASSERT(pdsch_dmrs_symbol_mask_mapping_type_A_single_table.count({duration, additional_position}),
                        "Missing case for duration={} and additional_position={}.",
@@ -65,7 +66,7 @@ static void pdsch_dmrs_symbol_mask_mapping_type_A_single_test()
             for (unsigned symbol_index :
                  pdsch_dmrs_symbol_mask_mapping_type_A_single_table.at({duration, additional_position})) {
               if (symbol_index == L0) {
-                symbol_index = l0;
+                symbol_index = to_symbol_index(l0);
               } else if (symbol_index == L1) {
                 symbol_index = l1;
               }
