@@ -12,7 +12,7 @@
 #define SRSGNB_CU_CP_MANAGER_FACTORY_H
 
 #include "cu_cp_manager.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"

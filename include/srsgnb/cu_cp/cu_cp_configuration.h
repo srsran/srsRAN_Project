@@ -11,7 +11,7 @@
 #ifndef SRSGNB_CU_CP_CONFIGURATION_H
 #define SRSGNB_CU_CP_CONFIGURATION_H
 
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/executors/task_executor.h"
 
 namespace srsgnb {

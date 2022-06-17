@@ -12,7 +12,7 @@
 #define SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_ASN1_HELPERS_H
 
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 
 namespace srsgnb {
 

@@ -10,7 +10,7 @@
 
 #include "cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_manager_factory.h"
-#include "srsgnb/f1_interface/f1ap_cu_factory.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

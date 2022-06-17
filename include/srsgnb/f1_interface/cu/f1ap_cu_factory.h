@@ -11,7 +11,7 @@
 #ifndef SRSGNB_F1AP_CU_FACTORY_H
 #define SRSGNB_F1AP_CU_FACTORY_H
 
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "f1ap_cu.h"
 #include <memory>
 
 namespace srsgnb {

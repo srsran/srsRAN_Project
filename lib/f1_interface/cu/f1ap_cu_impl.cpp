@@ -9,7 +9,7 @@
  */
 
 #include "f1ap_cu_impl.h"
-#include "../ran/gnb_format.h"
+#include "../../ran/gnb_format.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 

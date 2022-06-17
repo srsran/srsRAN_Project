@@ -15,7 +15,7 @@
 #include "du_manager.h"
 #include "srsgnb/cu_cp/cu_cp_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "ue_manager.h"
 #include <memory>

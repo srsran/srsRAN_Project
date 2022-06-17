@@ -12,7 +12,7 @@
 #define SRSGNB_CU_CP_ADAPTERS_H
 
 #include "srsgnb/cu_cp/cu_cp_manager.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

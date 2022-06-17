@@ -2,10 +2,10 @@
 #ifndef SRSGNB_F1AP_DU_H
 #define SRSGNB_F1AP_DU_H
 
-#include "f1c_common.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"

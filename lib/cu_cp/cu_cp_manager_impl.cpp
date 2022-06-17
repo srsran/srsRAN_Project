@@ -11,7 +11,7 @@
 #include "cu_cp_manager_impl.h"
 #include "../ran/bcd_helpers.h"
 #include "f1c_asn1_helpers.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

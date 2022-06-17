@@ -11,9 +11,9 @@
 #ifndef SRSGNB_F1AP_DU_SETUP_PROCEDURE_H
 #define SRSGNB_F1AP_DU_SETUP_PROCEDURE_H
 
-#include "f1ap_asn1_utils.h"
+#include "common/f1ap_asn1_utils.h"
 #include "f1ap_du_event_manager.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {

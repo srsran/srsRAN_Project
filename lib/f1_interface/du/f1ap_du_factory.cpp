@@ -8,9 +8,9 @@
  *
  */
 
-#include "srsgnb/f1_interface/f1ap_du_factory.h"
+#include "srsgnb/f1_interface/du/f1ap_du_factory.h"
+#include "common/f1ap_packet_procedures_impl.h"
 #include "f1ap_du_impl.h"
-#include "f1ap_packet_procedures_impl.h"
 #include "srsgnb/du_manager/du_manager.h"
 
 /// Notice this would be the only place were we include concrete class implementation files.

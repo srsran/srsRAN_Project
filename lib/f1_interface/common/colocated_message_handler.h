@@ -11,7 +11,7 @@
 #ifndef SRSGNB_LIB_F1_INTERFACE_COLOCATED_MESSAGE_HANDLER_H
 #define SRSGNB_LIB_F1_INTERFACE_COLOCATED_MESSAGE_HANDLER_H
 
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 
 namespace srsgnb {
 

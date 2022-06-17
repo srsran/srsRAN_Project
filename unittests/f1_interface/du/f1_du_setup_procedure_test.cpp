@@ -9,11 +9,11 @@
  */
 
 #include "lib/du_manager/converters/f1c_asn1_helpers.h"
-#include "lib/f1_interface/test_helpers.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
-#include "srsgnb/f1_interface/f1ap_du_factory.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/f1_interface/common/test_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_du;

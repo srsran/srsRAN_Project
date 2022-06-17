@@ -13,7 +13,7 @@
 
 #include "adapters.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
 #include <memory>

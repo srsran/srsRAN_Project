@@ -12,7 +12,7 @@
 #define SRSGNB_F1AP_CU_IMPL_H
 
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/async/async_queue.h"
 #include <memory>
 

@@ -10,11 +10,11 @@
 
 #include "lib/cu_cp/cu_cp_manager_config.h"
 #include "lib/cu_cp/cu_cp_manager_context.h"
-#include "lib/f1_interface/test_helpers.h"
-#include "srsgnb/f1_interface/f1ap_cu.h"
-#include "srsgnb/f1_interface/f1ap_cu_factory.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/f1_interface/common/test_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

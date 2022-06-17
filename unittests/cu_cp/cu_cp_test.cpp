@@ -9,8 +9,8 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
-#include "lib/f1_interface/test_helpers.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/f1_interface/common/test_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;

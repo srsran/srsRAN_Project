@@ -9,8 +9,8 @@
  */
 
 #include "f1ap_du_impl.h"
-#include "../ran/gnb_format.h"
-#include "procedures/f1ap_du_setup_procedure.h"
+#include "../../ran/gnb_format.h"
+#include "du/procedures/f1ap_du_setup_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 

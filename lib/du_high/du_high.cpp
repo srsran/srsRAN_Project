@@ -12,7 +12,7 @@
 #include "adapters.h"
 #include "du_high_executor_strategies.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
-#include "srsgnb/f1_interface/f1ap_du_factory.h"
+#include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
 
 using namespace srsgnb;

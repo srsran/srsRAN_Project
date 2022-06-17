@@ -14,7 +14,7 @@
 #include "f1ap_du_context.h"
 #include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 

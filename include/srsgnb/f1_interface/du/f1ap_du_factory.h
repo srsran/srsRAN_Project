@@ -1,7 +1,7 @@
 #ifndef SRSGNB_F1AP_DU_FACTORY_H
 #define SRSGNB_F1AP_DU_FACTORY_H
 
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "f1ap_du.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
 

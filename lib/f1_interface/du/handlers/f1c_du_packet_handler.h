@@ -13,8 +13,8 @@
 
 /// Notice that we are not using any implementation specific header files. We are decoupled.
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
-#include "srsgnb/f1_interface/f1ap_packet_procedures.h"
+#include "srsgnb/f1_interface/common/f1ap_packet_procedures.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include <cstdio>
 #include <memory>
 

@@ -12,7 +12,7 @@
 #define SRSGNB_F1AP_ASN1_PACKER_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>

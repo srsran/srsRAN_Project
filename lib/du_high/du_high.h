@@ -14,7 +14,7 @@
 #include "adapters.h"
 #include "srsgnb/du_high/du_high_configuration.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/f1ap_du.h"
+#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/rlc/rlc.h"
