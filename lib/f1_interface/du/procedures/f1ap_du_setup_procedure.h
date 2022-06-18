@@ -13,9 +13,9 @@
 
 #include "common/f1ap_asn1_utils.h"
 #include "f1ap_du_event_manager.h"
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
-#include "srsgnb/asn1/f1ap.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -40,15 +40,14 @@ private:
   /// Creates procedure result to send back to procedure caller.
   f1_setup_response_message create_f1_setup_result();
 
-  srs_du::f1_setup_request_message request;
-  f1c_message_notifier&            cu_notifier;
-  f1ap_event_manager&              ev_mng;
-  srslog::basic_logger&            logger;
+  const f1_setup_request_message request;
+  f1c_message_notifier&          cu_notifier;
+  f1ap_event_manager&            ev_mng;
+  srslog::basic_logger&          logger;
 
   f1ap_transaction transaction;
-  f1ap_outcome cu_pdu_response;
-  unsigned                f1_setup_retry_no = 0;
-  unsigned                time_to_wait      = 0;
+  unsigned         f1_setup_retry_no = 0;
+  unsigned         time_to_wait      = 0;
 }; // namespace srs_du
 
 } // namespace srs_du
