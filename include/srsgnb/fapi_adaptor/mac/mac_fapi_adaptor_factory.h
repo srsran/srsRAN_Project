@@ -11,13 +11,18 @@
 #ifndef SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
 #define SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
 
+#include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
+#include <memory>
 
 namespace srsgnb {
 namespace fapi_adaptor {
 
 struct mac_fapi_adaptor_factory_config {
-  unsigned sector_id;
+  unsigned                                           sector_id;
+  std::reference_wrapper<fapi::slot_message_gateway> gateway;
+  subcarrier_spacing                                 scs;
 };
 
 /// Factory that creates mac_fapi adaptors.
@@ -27,8 +32,11 @@ public:
   virtual ~mac_fapi_adaptor_factory() = default;
 
   /// Creates and returns a mac_fapi_adaptor using the given configuration.
-  std::unique_ptr<mac_fapi_adaptor> create(mac_fapi_adaptor_factory_config config) = 0;
+  virtual std::unique_ptr<mac_fapi_adaptor> create(mac_fapi_adaptor_factory_config config) = 0;
 };
+
+/// Creates and returns a mac_fapi_adaptor_factory.
+std::unique_ptr<mac_fapi_adaptor_factory> create_mac_fapi_adaptor_factory();
 
 } // namespace fapi_adaptor
 } // namespace srsgnb

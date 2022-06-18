@@ -26,7 +26,7 @@ namespace fapi_adaptor {
 class mac_fapi_adaptor_impl : public mac_fapi_adaptor
 {
 public:
-  mac_fapi_adaptor_impl(fapi::slot_message_gateway& gateway, subcarrier_spacing scs);
+  mac_fapi_adaptor_impl(fapi::slot_message_gateway& gateway, unsigned sector_id_, subcarrier_spacing scs);
 
   // See interface for documentation.
   fapi::slot_message_notifier& get_slot_notifier() override;
@@ -35,6 +35,7 @@ public:
   void set_mac_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override;
 
 private:
+  const unsigned         sector_id;
   slot_event_dispatcher  slot_dispatcher;
   mac_to_fapi_translator mac_translator;
   fapi_to_mac_translator fapi_translator;
