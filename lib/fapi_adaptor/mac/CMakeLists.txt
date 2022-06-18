@@ -15,4 +15,7 @@ set(SOURCES
         fapi_to_mac_translator.cpp
         slot_event_dispatcher.cpp)
 
-add_library(srsgnb_mac_fapi_adaptor STATIC ${SOURCES})
+add_library(srsgnb_fapi_to_mac_translator STATIC ${SOURCES})
+
+add_library(mac_fapi_adaptor STATIC mac_fapi_adaptor_impl.cpp)
+target_link_libraries(mac_fapi_adaptor srsgnb_mac_fapi_adaptor srsgnb_fapi_to_mac_translator)

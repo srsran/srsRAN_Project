@@ -18,18 +18,20 @@ namespace srsgnb {
 namespace fapi_adaptor {
 
 class phy_to_fapi_translator;
+class fapi_to_phy_translator;
 
 /// This class listens to the \c on_tti_boundary event and dispatches it to multiple clients.
 class slot_event_dispatcher : public upper_phy_timing_notifier
 {
 public:
-  explicit slot_event_dispatcher(phy_to_fapi_translator& phy_translator);
+  slot_event_dispatcher(phy_to_fapi_translator& phy_translator, fapi_to_phy_translator& fapi_translator);
 
   // See interface for documentation.
   void on_tti_boundary(slot_point slot) override;
 
 private:
   phy_to_fapi_translator& phy_translator;
+  fapi_to_phy_translator& fapi_translator;
 };
 
 } // namespace fapi_adaptor

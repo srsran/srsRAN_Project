@@ -11,10 +11,10 @@
 #ifndef SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
 #define SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
 
+#include "srsgnb/fapi/slot_message_notifier.h"
+
 namespace srsgnb {
 
-class config_message_notifier;
-class slot_message_notifier;
 class upper_phy_timing_notifier;
 
 namespace fapi_adaptor {
@@ -32,15 +32,10 @@ public:
   /// Returns the adaptor's upper PHY timing notifier.
   virtual upper_phy_timing_notifier& get_upper_phy_timing_notifier() = 0;
 
-  /// \brief Configures the adaptor's FAPI config message notifier to the given one.
-  ///
-  /// \param[in] fapi_config_notifier FAPI config message notifier to set in the adaptor.
-  virtual void set_config_message_notifier(config_message_notifier& fapi_config_notifier) = 0;
-
   /// \brief Configures the adaptor's FAPI slot message notifier to the given one.
   ///
   /// \param fapi_slot_notifier FAPI slot message notifier to set in the adaptor.
-  virtual void set_slot_message_notifier(slot_message_notifier& fapi_slot_notifier) = 0;
+  virtual void set_slot_message_notifier(fapi::slot_message_notifier& fapi_slot_notifier) = 0;
 };
 
 } // namespace fapi_adaptor

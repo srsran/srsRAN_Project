@@ -11,11 +11,11 @@
 #ifndef SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_H
 #define SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_H
 
+#include "srsgnb/fapi/slot_message_notifier.h"
+
 namespace srsgnb {
 
-class config_message_notifier;
 class mac_cell_slot_handler;
-class slot_message_notifier;
 
 namespace fapi_adaptor {
 
@@ -29,11 +29,8 @@ class mac_fapi_adaptor
 public:
   virtual ~mac_fapi_adaptor() = default;
 
-  /// \brief Returns the adaptor's config_message_notifier.
-  virtual config_message_notifier& get_message_notifier() = 0;
-
-  /// \brief Returns the adaptor's config_message_notifier.
-  virtual slot_message_notifier& get_slot_notifier() = 0;
+  /// \brief Returns the adaptor's slot_message_notifier.
+  virtual fapi::slot_message_notifier& get_slot_notifier() = 0;
 
   /// \brief Configures the adaptor's MAC cell slot handler to the given one.
   ///

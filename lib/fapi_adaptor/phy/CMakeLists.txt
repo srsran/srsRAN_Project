@@ -17,3 +17,6 @@ target_link_libraries(fapi_to_phy_translator srsgnb_fapi_phy_message_adaptors)
 
 add_library(phy_to_fapi_translator STATIC ${SOURCES})
 target_link_libraries(phy_to_fapi_translator srslog)
+
+add_library(phy_fapi_adaptor STATIC phy_fapi_adaptor_impl.cpp)
+target_link_libraries(phy_fapi_adaptor fapi_to_phy_translator phy_to_fapi_translator)
