@@ -31,12 +31,13 @@ using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 /// \remark See TS 38.214, Table 5.1.2.2.1-1 and 6.1.2.2.1-1.
 nominal_rbg_size get_nominal_rbg_size(unsigned bwp_nof_prb, bool config_1_or_2);
 
-/// TS 38.214 - total number of RBGs for a uplink bandwidth part of size "bwp_nof_prb" PRBs.
+/// Calculates the total number of RBGs for a bandwidth part.
+/// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 unsigned get_nof_rbgs(crb_interval bwp_rb_dims, nominal_rbg_size P);
 unsigned get_nof_rbgs(crb_interval bwp_rb_dims, bool config1_or_2);
 
 /// Calculates size of indexed RBG in number of RBs.
-/// \remark See TS 38.214, Sections 5.1.2.2.1 and Section 6.1.2.2.1.
+/// \remark See TS 38.214, Sections 5.1.2.2.1 and 6.1.2.2.1.
 uint32_t get_rbg_size(crb_interval bwp_rbs, nominal_rbg_size P, uint32_t rbg_idx);
 
 } // namespace srsgnb
