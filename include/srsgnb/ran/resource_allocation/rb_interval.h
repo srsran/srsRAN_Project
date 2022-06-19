@@ -31,11 +31,13 @@ namespace fmt {
 
 /// FMT formatter for prb_intervals.
 template <>
-struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
+struct formatter<srsgnb::prb_interval> : public formatter<srsgnb::interval<uint32_t>> {
+};
 
 /// FMT formatter for crb_intervals.
 template <>
-struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t> > {};
+struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint32_t>> {
+};
 
 } // namespace fmt
 
