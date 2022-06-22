@@ -1,15 +1,15 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "10"
+    ref: "11"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "10"
+    ref: "11"
     file: .gitlab/ci-shared/scheduler.yml
   - project: softwareradiosystems/testing-tools
-    ref: "10"
+    ref: "11"
     file: .gitlab/ci-shared/versions.yml
   - project: softwareradiosystems/testing-tools
-    ref: "10"
+    ref: "11"
     file: .gitlab/ci-shared/default.yml
   - local: .gitlab/ci/build.yml
 
@@ -63,6 +63,16 @@ code-format:
     paths:
       - clang-format.patch
     when: on_failure
+
+include-guards:
+  extends: .static
+  script:
+    - |
+      EXIT_CODE=0
+      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="include/srsgnb" INPUT_IGNORE="/bundled/" include-guards-check.sh || EXIT_CODE=$?
+      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="." INPUT_IGNORE="^include/.*" include-guards-check.sh || EXIT_CODE=$?
+      is-pristine-repo.sh || EXIT_CODE=$?
+      exit $EXIT_CODE
 
 no-binaries-added:
   extends: .static
