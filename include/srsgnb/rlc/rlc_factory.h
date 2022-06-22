@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RLC_MANAGER_FACTORY_H
 #define SRSGNB_RLC_MANAGER_FACTORY_H
 
-#include "rlc.h"
+#include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_entity.h"
 #include <memory>
 

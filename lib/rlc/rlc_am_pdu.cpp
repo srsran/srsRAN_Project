@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/rlc/rlc_am_pdu.h"
+#include "rlc_am_pdu.h"
 
 using namespace srsgnb;
 

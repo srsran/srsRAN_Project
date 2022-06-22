@@ -8,8 +8,8 @@
  *
  */
 
+#include "../../lib/rlc/rlc_um_pdu.h"
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rlc/rlc_um_pdu.h"
 #include "srsgnb/support/test_utils.h"
 
 namespace srsgnb {
