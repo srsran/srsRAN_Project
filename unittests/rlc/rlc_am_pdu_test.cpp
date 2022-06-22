@@ -74,6 +74,34 @@ void test_rlc_am_12bit_first_segment()
   }
 }
 
+// RLC AM PDU 12bit middle segment of SDU without P flag and SN 0x0404 and SO 0x0404 (1028)
+void test_rlc_am_12bit_middle_segment()
+{
+  test_delimit_logger                           delimiter("AM PDU with 12 bit and SI=middle");
+  const int                                     header_len = 4, payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xb4, 0x04, 0x04, 0x04, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu = {};
+  std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
+  rlc_am_pdu_header hdr = {};
+
+  {
+    // Unpack
+    byte_buffer buf = make_pdu_and_log(tv_pdu);
+    TESTASSERT(rlc_am_read_data_pdu_header(buf, rlc_am_sn_size::size12bits, &hdr));
+
+    TESTASSERT(hdr.si == rlc_si_field::neither_first_nor_last_segment);
+    TESTASSERT(hdr.sn == 1028);
+    TESTASSERT(hdr.p == 0);
+    TESTASSERT(hdr.so == 1028);
+  }
+  {
+    // Pack
+    byte_buffer buf = make_pdu_and_log(tv_sdu);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    TESTASSERT(buf == tv_pdu);
+  }
+}
+
 // RLC AM PDU 12bit last segment of SDU without P flag and SN 0x0404 and SO 0x0404 (1028)
 void test_rlc_am_12bit_last_segment()
 {
@@ -127,7 +155,34 @@ void test_rlc_am_18bit_complete_sdu()
   }
 }
 
-// RLC AM PDU 18bit middle part of SDU (SO 514) without P flag and SN 131327
+// RLC AM PDU 18bit first segment of SDU without P flag and SN 131327
+void test_rlc_am_18bit_first_segment()
+{
+  test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=first");
+  const int                                     header_len = 3, payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu = {0x92, 0x00, 0xff, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu = {};
+  std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
+  rlc_am_pdu_header hdr = {};
+
+  {
+    // Unpack
+    byte_buffer buf = make_pdu_and_log(tv_pdu);
+    TESTASSERT(rlc_am_read_data_pdu_header(buf, rlc_am_sn_size::size18bits, &hdr));
+    TESTASSERT(hdr.si == rlc_si_field::first_segment);
+    TESTASSERT(hdr.sn == 131327);
+    TESTASSERT(hdr.p == 0);
+    TESTASSERT(hdr.so == 0);
+  }
+  {
+    // Pack
+    byte_buffer buf = make_pdu_and_log(tv_sdu);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    TESTASSERT(buf == tv_pdu);
+  }
+}
+
+// RLC AM PDU 18bit middle segment of SDU (SO 514) without P flag and SN 131327
 void test_rlc_am_18bit_middle_segment()
 {
   test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=middle");
@@ -143,6 +198,34 @@ void test_rlc_am_18bit_middle_segment()
     TESTASSERT(rlc_am_read_data_pdu_header(buf, rlc_am_sn_size::size18bits, &hdr));
     TESTASSERT(hdr.si == rlc_si_field::neither_first_nor_last_segment);
     TESTASSERT(hdr.sn == 131327);
+    TESTASSERT(hdr.p == 0);
+    TESTASSERT(hdr.so == 514);
+  }
+  {
+    // Pack
+    byte_buffer buf = make_pdu_and_log(tv_sdu);
+    TESTASSERT(rlc_am_write_data_pdu_header(hdr, buf));
+    TESTASSERT(buf == tv_pdu);
+  }
+}
+
+// RLC AM PDU 18bit last segment of SDU (SO 514) without P flag and SN 131327
+void test_rlc_am_18bit_last_segment()
+{
+  test_delimit_logger                           delimiter("AM PDU with 18 bit and SI=last");
+  const int                                     header_len = 5, payload_len = 4;
+  std::array<uint8_t, header_len + payload_len> tv_pdu = {0xa2, 0x00, 0xff, 0x02, 0x02, 0x11, 0x22, 0x33, 0x44};
+  std::array<uint8_t, payload_len>              tv_sdu = {};
+  std::copy(tv_pdu.begin() + header_len, tv_pdu.end(), tv_sdu.begin());
+  rlc_am_pdu_header hdr = {};
+
+  {
+    // Unpack
+    byte_buffer buf = make_pdu_and_log(tv_pdu);
+    TESTASSERT(rlc_am_read_data_pdu_header(buf, rlc_am_sn_size::size18bits, &hdr));
+    TESTASSERT(hdr.si == rlc_si_field::last_segment);
+    TESTASSERT(hdr.sn == 131327);
+    TESTASSERT(hdr.p == 0);
     TESTASSERT(hdr.so == 514);
   }
   {
@@ -3001,9 +3084,12 @@ int main()
   srslog::flush();
   srsgnb::test_rlc_am_12bit_complete_sdu();
   srsgnb::test_rlc_am_12bit_first_segment();
+  srsgnb::test_rlc_am_12bit_middle_segment();
   srsgnb::test_rlc_am_12bit_last_segment();
   srsgnb::test_rlc_am_18bit_complete_sdu();
+  srsgnb::test_rlc_am_18bit_first_segment();
   srsgnb::test_rlc_am_18bit_middle_segment();
+  srsgnb::test_rlc_am_18bit_last_segment();
   srsgnb::test_rlc_am_18bit_malformed();
 
   logger.info("Testing Control PDU packing/unpacking (12 bit)");
