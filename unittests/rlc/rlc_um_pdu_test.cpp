@@ -286,6 +286,19 @@ void test_rlc_um_6bit_malformed_pdu()
   rlc_um_pdu_header hdr = {};
   TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size6bits, &hdr) == false);
 }
+
+// This should fail unpacking because the PDU has reserved bits set
+void test_rlc_um_12bit_malformed_pdu()
+{
+  test_delimit_logger    delimiter{"Malformed UM PDU with 12 Bit SN"};
+  std::array<uint8_t, 7> tv  = {0x33, 0x01, 0x02, 0x11, 0x22, 0x33, 0x44};
+  byte_buffer            buf = make_pdu_and_log(tv);
+
+  // unpack PDU
+  rlc_um_pdu_header hdr = {};
+  TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) == false);
+}
+
 } // namespace srsgnb
 
 int main()
@@ -300,9 +313,12 @@ int main()
   srsgnb::test_rlc_um_6bit_first_segment();
   srsgnb::test_rlc_um_6bit_middle_segment();
   srsgnb::test_rlc_um_6bit_last_segment();
+
   srsgnb::test_rlc_um_12bit_complete_sdu();
   srsgnb::test_rlc_um_12bit_first_segment();
   srsgnb::test_rlc_um_12bit_middle_segment();
   srsgnb::test_rlc_um_12bit_last_segment();
+
   srsgnb::test_rlc_um_6bit_malformed_pdu();
+  srsgnb::test_rlc_um_12bit_malformed_pdu();
 }
