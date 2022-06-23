@@ -14,7 +14,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsTBSCalculatorUnittest.m"
 
-#include "srsgnb/scheduler/support/tbs_calculator.h"
+#include "lib/scheduler/support/tbs_calculator.h"
 #include <vector>
 
 namespace srsgnb {

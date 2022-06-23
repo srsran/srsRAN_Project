@@ -350,8 +350,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   cw.rv_index         = 0;
   cw.target_code_rate = 0; // TODO
   cw.tb_size_bytes    = 0; // TODO
-  rar.pdsch_cfg.dmrs  = make_default_f1_0_dmrs_info(
-      cfg.dl_cfg_common.init_dl_bwp.pdsch_common, cfg.pci, cfg.dmrs_typeA_pos, rar.pdsch_cfg.symbols.length());
+  rar.pdsch_cfg.dmrs =
+      make_dmrs_info_common(cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cfg.pci, cfg.dmrs_typeA_pos);
 
   for (unsigned i = 0; i < msg3_candidates.size(); ++i) {
     const auto&                   msg3_candidate = msg3_candidates[i];

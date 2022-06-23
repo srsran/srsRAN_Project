@@ -277,8 +277,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
 
   // Fill PDSCH configuration.
   pdsch_information& pdsch = sib1.pdsch_cfg;
-  pdsch.rnti                 = sib1_pdcch.ctx.rnti;
-  pdsch.bwp_cfg              = sib1_pdcch.ctx.bwp_cfg;
+  pdsch.rnti               = sib1_pdcch.ctx.rnti;
+  pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
   pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
   pdsch.prbs    = sib1_prbs;
   pdsch.codewords.emplace_back();
@@ -289,6 +289,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.qam_mod          = qam4; // TODO: Derive QAM from MCS.
   cw.target_code_rate = 0;    // TODO.
   cw.tb_size_bytes    = 0;    // TODO.
-  pdsch.dmrs          = make_default_f1_0_dmrs_info(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, cell_cfg.pci, cell_cfg.dmrs_typeA_pos, pdsch.symbols.length());
+  pdsch.dmrs          = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 }

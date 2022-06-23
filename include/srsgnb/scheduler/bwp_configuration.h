@@ -52,7 +52,7 @@ struct search_space_configuration {
   unsigned duration;
   /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring. The most significant bit represents
   /// the first OFDM in a slot.
-  optional<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP> > monitoring_symbols_within_slot;
+  optional<std::bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP>> monitoring_symbols_within_slot;
   /// Number of PDCCH candidates per aggregation level. The aggregation level for the array element with index "x"
   /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> nof_candidates;
@@ -93,17 +93,18 @@ struct bwp_configuration {
   crb_interval crbs;
 };
 
-struct pdsch_time_domain_resource_allocation {
-  enum class mapping_type { typeA, typeB };
+/// PDSCH Mapping Type. TypeA can start only at symbol 2 or 3 within a slot.
+/// \remark see TS 38.214, clause 5.3.
+enum class pdsch_mapping_type { typeA, typeB };
 
+struct pdsch_time_domain_resource_allocation {
   /// Values: (0..32).
-  unsigned          k0;
-  mapping_type      map_type;
-  ofdm_symbol_range symbols;
+  unsigned           k0;
+  pdsch_mapping_type map_type;
+  ofdm_symbol_range  symbols;
 };
 
 struct pdsch_config_common {
-  optional<dmrs_downlink_config> dmrs_dl_pdsch_typeA;
   /// PDSCH time domain resource allocations. Size: (0..maxNrofDL-Allocations=16).
   std::vector<pdsch_time_domain_resource_allocation> pdsch_td_alloc_list;
 };

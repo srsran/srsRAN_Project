@@ -27,7 +27,7 @@ inline unsigned to_symbol_index(dmrs_typeA_position pos)
 
 /// Type of DMRS to be used in DL and UL.
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
-enum class dmrs_type { type1 = 1, type2 };
+enum class dmrs_config_type { type1 = 1, type2 };
 
 /// \brief Position for additional DM-RS in DL (see TS 38.211, Tables 7.4.1.1.2-3 and 7.4.1.1.2-4).
 /// \remark See TS 38.331, DMRS-DownlinkConfig and DMRS-UplinkConfig.
@@ -45,7 +45,7 @@ struct ptrs_downlink_config {
 /// Used to configure downlink demodulation reference signals for PDSCH.
 /// \remark See TS 38.331, DMRS-DownlinkConfig.
 struct dmrs_downlink_config {
-  dmrs_type                 type;
+  dmrs_config_type          type;
   dmrs_additional_positions additional_positions;
   dmrs_max_length           max_length;
   /// \brief DL DMRS scrambling initialization (see TS 38.211, clause 7.4.1.1.1).

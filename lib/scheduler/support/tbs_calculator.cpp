@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/scheduler/support/tbs_calculator.h"
+#include "tbs_calculator.h"
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
