@@ -23,7 +23,7 @@ void queue_unqueue_test()
   // Write 1 SDU
   byte_buffer buf       = {0x00, 0x01};
   rlc_sdu     write_sdu = {10, std::move(buf)};
-  tx_queue.write(write_sdu);
+  TESTASSERT(tx_queue.write(write_sdu));
 
   // Check basic stats
   TESTASSERT_EQ(1, tx_queue.size_sdus());
@@ -46,6 +46,31 @@ void queue_unqueue_test()
 void full_capacity_test()
 {
   test_delimit_logger delimiter{"RLC SDU capacity test"};
+  unsigned            capacity = 5;
+  rlc_sdu_queue       tx_queue(capacity);
+
+  // Write Capacity + 1 SDUs
+  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity + 1; pdcp_sn++) {
+    byte_buffer buf = {};
+    buf.append(pdcp_sn);
+    buf.append(pdcp_sn);
+    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
+    if (pdcp_sn != capacity) {
+      TESTASSERT(tx_queue.write(write_sdu) == true);
+    } else {
+      TESTASSERT(tx_queue.write(write_sdu) == false);
+    }
+  }
+  TESTASSERT_EQ(capacity, tx_queue.size_sdus());
+  TESTASSERT_EQ(2 * capacity, tx_queue.size_bytes());
+
+  // Read all SDUs
+  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity; pdcp_sn++) {
+    byte_buffer expected_buf = {};
+    expected_buf.append(pdcp_sn);
+    expected_buf.append(pdcp_sn);
+    rlc_sdu read_sdu = tx_queue.read();
+  }
 }
 
 void discard_test()
