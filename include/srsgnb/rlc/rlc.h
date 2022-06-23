@@ -49,6 +49,7 @@ public:
 struct rlc_sdu {
   uint32_t    pdcp_sn = 0;
   byte_buffer buf     = {};
+  rlc_sdu()           = default;
   rlc_sdu(uint32_t pdcp_sn, byte_buffer buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
 };
 

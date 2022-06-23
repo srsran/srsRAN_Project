@@ -21,8 +21,8 @@ void queue_unqueue_test()
   rlc_sdu_queue       tx_queue;
 
   // Write 1 SDU
-  byte_buffer              buf       = {0x00, 0x01};
-  std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(10, std::move(buf));
+  byte_buffer buf       = {0x00, 0x01};
+  rlc_sdu     write_sdu = {10, std::move(buf)};
   TESTASSERT(tx_queue.write(std::move(write_sdu)));
 
   // Check basic stats
@@ -30,7 +30,7 @@ void queue_unqueue_test()
   TESTASSERT_EQ(2, tx_queue.size_bytes());
 
   // Read one SDU
-  std::unique_ptr<rlc_sdu> read_sdu = nullptr;
+  rlc_sdu read_sdu;
   TESTASSERT(tx_queue.read(read_sdu));
 
   // Check basic stats
@@ -39,8 +39,8 @@ void queue_unqueue_test()
 
   // Check SDU
   byte_buffer expected_msg({0x00, 0x01});
-  TESTASSERT_EQ(10, read_sdu->pdcp_sn);
-  TESTASSERT(expected_msg == read_sdu->buf);
+  TESTASSERT_EQ(10, read_sdu.pdcp_sn);
+  TESTASSERT(expected_msg == read_sdu.buf);
 }
 
 void full_capacity_test()
@@ -54,7 +54,7 @@ void full_capacity_test()
     byte_buffer buf = {};
     buf.append(pdcp_sn);
     buf.append(pdcp_sn);
-    std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(pdcp_sn, std::move(buf));
+    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
     if (pdcp_sn != capacity) {
       TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
     } else {
@@ -69,10 +69,10 @@ void full_capacity_test()
     byte_buffer expected_msg = {};
     expected_msg.append(pdcp_sn);
     expected_msg.append(pdcp_sn);
-    std::unique_ptr<rlc_sdu> read_sdu = nullptr;
+    rlc_sdu read_sdu = {};
     if (pdcp_sn != capacity) {
       TESTASSERT(tx_queue.read(read_sdu));
-      TESTASSERT(expected_msg == read_sdu->buf);
+      TESTASSERT(expected_msg == read_sdu.buf);
     } else {
       TESTASSERT(false == tx_queue.read(read_sdu));
     }
@@ -85,19 +85,20 @@ void full_capacity_test()
 void discard_test()
 {
   test_delimit_logger delimiter{"RLC SDU discard test"};
-  unsigned            capacity = 5;
+  unsigned            capacity = 10;
+  unsigned            n_sdus   = 5;
   rlc_sdu_queue       tx_queue(capacity);
 
   // Fill SDU queue with SDUs
-  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity; pdcp_sn++) {
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
     byte_buffer buf = {};
     buf.append(pdcp_sn);
     buf.append(pdcp_sn);
-    std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(pdcp_sn, std::move(buf));
+    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
     TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
   }
-  TESTASSERT_EQ(capacity, tx_queue.size_sdus());
-  TESTASSERT_EQ(2 * capacity, tx_queue.size_bytes());
+  TESTASSERT_EQ(n_sdus, tx_queue.size_sdus());
+  TESTASSERT_EQ(2 * n_sdus, tx_queue.size_bytes());
 
   // Discard PDCP SN 2 and 4
   TESTASSERT(tx_queue.discard_sn(2));

@@ -12,8 +12,10 @@
 #define SRSGNB_RLC_SDU_QUEUE_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/rlc/rlc.h"
 #include <cstdint>
+#include <functional>
 #include <list>
 
 namespace srsgnb {
@@ -21,30 +23,29 @@ namespace srsgnb {
 class rlc_sdu_queue
 {
 public:
-  explicit rlc_sdu_queue(uint16_t capacity = 256) : capacity(capacity) {}
+  explicit rlc_sdu_queue(uint16_t capacity = 256) :
+    capacity(capacity), queue(capacity, push_callback(unread_bytes, n_sdus), pop_callback(unread_bytes, n_sdus))
+  {}
 
-  bool write(std::unique_ptr<rlc_sdu> sdu)
+  bool write(rlc_sdu sdu)
   {
     if (queue.size() >= capacity) {
       return false;
     }
-    unread_bytes += sdu->buf.length();
-    queue.push_back(std::move(sdu));
+    queue.push_blocking(std::move(sdu));
     return true;
   }
 
-  bool read(std::unique_ptr<rlc_sdu>& sdu)
+  bool read(rlc_sdu& sdu)
   {
     if (is_empty()) {
       return false;
     }
-    sdu = std::move(queue.front());
-    unread_bytes -= sdu->buf.length();
-    queue.pop_front();
+    sdu = queue.pop_blocking();
     return true;
   }
 
-  uint32_t size_sdus() const { return queue.size(); }
+  uint32_t size_sdus() const { return n_sdus; }
 
   uint32_t size_bytes() const { return unread_bytes; }
 
@@ -54,20 +55,52 @@ public:
 
   bool discard_sn(uint32_t pdcp_sn)
   {
-    for (std::list<std::unique_ptr<rlc_sdu>>::iterator it = queue.begin(); it != queue.end(); ++it) {
-      if (it->get()->pdcp_sn == pdcp_sn) {
-        unread_bytes -= it->get()->buf.length();
-        queue.erase(it);
+    bool discarded = queue.apply_first([&pdcp_sn, this](rlc_sdu& sdu) {
+      if (!sdu.buf.empty() && sdu.pdcp_sn == pdcp_sn) {
+        queue.pop_func(sdu);
+        sdu.buf.clear();
         return true;
       }
-    }
-    return false;
+      return false;
+    });
+    return discarded;
   }
 
 private:
-  uint32_t                            unread_bytes = 0;
-  uint16_t                            capacity     = 0;
-  std::list<std::unique_ptr<rlc_sdu>> queue;
+  struct push_callback {
+    explicit push_callback(std::atomic<uint32_t>& unread_bytes_, std::atomic<uint32_t>& n_sdus_) :
+      unread_bytes(unread_bytes_), n_sdus(n_sdus_)
+    {}
+    void operator()(const rlc_sdu& sdu)
+    {
+      unread_bytes.fetch_add(sdu.buf.length(), std::memory_order_relaxed);
+      n_sdus.fetch_add(1, std::memory_order_relaxed);
+    }
+    std::atomic<uint32_t>& unread_bytes;
+    std::atomic<uint32_t>& n_sdus;
+  };
+  struct pop_callback {
+    explicit pop_callback(std::atomic<uint32_t>& unread_bytes_, std::atomic<uint32_t>& n_sdus_) :
+      unread_bytes(unread_bytes_), n_sdus(n_sdus_)
+    {}
+    void operator()(const rlc_sdu& sdu)
+    {
+      if (sdu.buf.empty()) {
+        return;
+      }
+      // non-atomic update of both state variables
+      unread_bytes.fetch_sub(std::min((uint32_t)sdu.buf.length(), unread_bytes.load(std::memory_order_relaxed)),
+                             std::memory_order_relaxed);
+      n_sdus.store(std::max(0, (int32_t)(n_sdus.load(std::memory_order_relaxed)) - 1), std::memory_order_relaxed);
+    }
+    std::atomic<uint32_t>& unread_bytes;
+    std::atomic<uint32_t>& n_sdus;
+  };
+  uint16_t              capacity     = 256;
+  std::atomic<uint32_t> unread_bytes = {0};
+  std::atomic<uint32_t> n_sdus       = {0};
+
+  dyn_blocking_queue<rlc_sdu, push_callback, pop_callback> queue;
 };
 
 } // namespace srsgnb
