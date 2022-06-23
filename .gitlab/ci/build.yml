@@ -12,12 +12,12 @@ variables:
   os_version: "22.04"
   compiler: gcc
   docker_version: "1.1.0"
-  run_unit_tests: "true"
+  run_tests: "true"
   enable_coverage: "true"
 
 stages:
   - build
-  - unit tests
+  - tests
 
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
@@ -45,6 +45,7 @@ stages:
       # Ctest
       - build/CTestTestfile.cmake
       - build/unittests
+      - build/integrationtests
       - build/**/*.gcno
     expire_in: 10 minutes
 
@@ -77,13 +78,13 @@ build [clean]:
 
 # Unit tests
 
-unit test:
-  stage: unit tests
+.ctest:
+  stage: tests
   extends: .build_and_unit
   rules:
     - if: $ON_DEFAULT_BRANCH
       when: never
-    - if: $run_unit_tests == "true"
+    - if: $run_tests == "true"
   needs:
     - job: build [cached]
       artifacts: true
@@ -94,23 +95,49 @@ unit test:
     - job: build [clean]
       artifacts: true
       optional: true
+  variables:
+    test_folder: ""
   script:
-    - cd build
+    # Launch ctest
+    - cd build/${test_folder}
     - ctest -j "$(nproc --all)" --schedule-random --output-junit xunit.xml
+    # Launch coverage
     - |
       if [ $enable_coverage = "true" ]; then
-        GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittest --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
+        cd ${CI_PROJECT_DIR}/build
+        GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
         gcovr --xml --print-summary $GCOVR_ARGS -o coverage.xml
         gcovr --html                $GCOVR_ARGS -o coverage.html
         ls -lah coverage.xml
       fi
-  coverage: /^\s*lines:\s*\d+.\d+\%/
+  after_script:
+    # Move files to upload to root so no intermiddle folders will be created in the artifact
+    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml ${CI_PROJECT_DIR}
+    - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}
+    - mv ${CI_PROJECT_DIR}/build/coverage.html            ${CI_PROJECT_DIR}
   artifacts:
     reports:
-      junit: build/xunit.xml
+      junit: xunit.xml
       coverage_report:
         coverage_format: cobertura
-        path: build/coverage.xml
+        path: coverage.xml
     paths:
-      - build/coverage.html
+      - coverage.html
+    expire_in: 7 days
+
+unit tests:
+  extends: .ctest
+  variables:
+    test_folder: unittests
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+
+integration tests:
+  extends: .ctest
+  variables:
+    test_folder: integrationtests
+  artifacts:
+    reports:
+      junit: xunit.xml
+    paths:
+      - coverage.html
     expire_in: 7 days

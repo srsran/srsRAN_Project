@@ -10,7 +10,7 @@ include:
 stages:
   - static
   - build
-  - unit tests
+  - tests
   - scheduler
   - build and publish doc
   - notify status
@@ -41,18 +41,18 @@ no-binaries-added:
     - check-for-added-binaries.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
   allow_failure: true
 
-## Build + Unit Tests
+## Build + Unit Tests + Integration tests
 
 alternative builds:
   stage: build
   rules:
     - if: $ON_MR
       variables:
-        run_unit_tests: "false"
+        run_tests: "false"
         enable_coverage: "false"
     - if: $ON_SCHEDULE
       variables:
-        run_unit_tests: "true"
+        run_tests: "true"
         enable_coverage: "false"
   needs: []
   trigger:
