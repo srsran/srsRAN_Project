@@ -31,7 +31,7 @@ void queue_unqueue_test()
 
   // Read one SDU
   rlc_sdu read_sdu = {};
-  read_sdu         = tx_queue.read();
+  TESTASSERT(tx_queue.read(read_sdu));
 
   // Check basic stats
   TESTASSERT_EQ(0, tx_queue.size_sdus());
@@ -64,18 +64,52 @@ void full_capacity_test()
   TESTASSERT_EQ(capacity, tx_queue.size_sdus());
   TESTASSERT_EQ(2 * capacity, tx_queue.size_bytes());
 
-  // Read all SDUs
-  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity; pdcp_sn++) {
-    byte_buffer expected_buf = {};
-    expected_buf.append(pdcp_sn);
-    expected_buf.append(pdcp_sn);
-    rlc_sdu read_sdu = tx_queue.read();
+  // Read all SDUs and try to read on SDU over capacity
+  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity + 1; pdcp_sn++) {
+    byte_buffer expected_msg = {};
+    expected_msg.append(pdcp_sn);
+    expected_msg.append(pdcp_sn);
+    rlc_sdu read_sdu = {};
+    if (pdcp_sn != capacity) {
+      TESTASSERT(tx_queue.read(read_sdu));
+      TESTASSERT(expected_msg == read_sdu.buf);
+    } else {
+      TESTASSERT(false == tx_queue.read(read_sdu));
+    }
   }
+
+  TESTASSERT_EQ(0, tx_queue.size_sdus());
+  TESTASSERT_EQ(0, tx_queue.size_bytes());
 }
 
 void discard_test()
 {
   test_delimit_logger delimiter{"RLC SDU discard test"};
+  unsigned            capacity = 5;
+  rlc_sdu_queue       tx_queue(capacity);
+
+  // Fill SDU queue with SDUs
+  for (uint32_t pdcp_sn = 0; pdcp_sn < capacity; pdcp_sn++) {
+    byte_buffer buf = {};
+    buf.append(pdcp_sn);
+    buf.append(pdcp_sn);
+    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
+    TESTASSERT(tx_queue.write(write_sdu) == true);
+  }
+  TESTASSERT_EQ(capacity, tx_queue.size_sdus());
+  TESTASSERT_EQ(2 * capacity, tx_queue.size_bytes());
+
+  // Discard PDCP SN 2 and 4
+  TESTASSERT(tx_queue.discard_sn(2));
+  TESTASSERT(tx_queue.discard_sn(4));
+
+  // Try to discard non-existing SN
+  TESTASSERT(false == tx_queue.discard_sn(16));
+
+  // Double check correct number of SDUs and SDU bytes
+  unsigned leftover_sdus = 3;
+  TESTASSERT_EQ(leftover_sdus, tx_queue.size_sdus());
+  TESTASSERT_EQ(leftover_sdus * 2, tx_queue.size_bytes());
 }
 
 } // namespace srsgnb

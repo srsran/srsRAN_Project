@@ -12,19 +12,16 @@
 #define SRSGNB_RLC_SDU_QUEUE_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/rlc/rlc.h"
 #include <cstdint>
 #include <list>
 
 namespace srsgnb {
-struct rlc_sdu {
-  uint32_t    pdcp_sn;
-  byte_buffer buf;
-};
 
 class rlc_sdu_queue
 {
 public:
-  explicit rlc_sdu_queue(int capacity = 256) : capacity(capacity) {}
+  explicit rlc_sdu_queue(uint16_t capacity = 256) : capacity(capacity) {}
 
   bool write(rlc_sdu sdu)
   {
@@ -36,12 +33,15 @@ public:
     return true;
   }
 
-  rlc_sdu read()
+  bool read(rlc_sdu& sdu)
   {
-    rlc_sdu sdu = std::move(queue.front());
+    if (is_empty()) {
+      return false;
+    }
+    sdu = std::move(queue.front());
     unread_bytes -= sdu.buf.length();
     queue.pop_front();
-    return sdu;
+    return true;
   }
 
   uint32_t size_sdus() const { return queue.size(); }
@@ -52,10 +52,11 @@ public:
 
   bool is_full() { return queue.size() >= capacity; }
 
-  bool clear_sn(uint32_t pdcp_sn)
+  bool discard_sn(uint32_t pdcp_sn)
   {
-    for (std::list<rlc_sdu>::iterator it; it != queue.end(); ++it) {
+    for (std::list<rlc_sdu>::iterator it = queue.begin(); it != queue.end(); ++it) {
       if (it->pdcp_sn == pdcp_sn) {
+        unread_bytes -= it->buf.length();
         queue.erase(it);
         return true;
       }
