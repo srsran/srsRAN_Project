@@ -23,23 +23,23 @@ class rlc_sdu_queue
 public:
   explicit rlc_sdu_queue(uint16_t capacity = 256) : capacity(capacity) {}
 
-  bool write(rlc_sdu sdu)
+  bool write(std::unique_ptr<rlc_sdu> sdu)
   {
     if (queue.size() >= capacity) {
       return false;
     }
-    unread_bytes += sdu.buf.length();
+    unread_bytes += sdu->buf.length();
     queue.push_back(std::move(sdu));
     return true;
   }
 
-  bool read(rlc_sdu& sdu)
+  bool read(std::unique_ptr<rlc_sdu>& sdu)
   {
     if (is_empty()) {
       return false;
     }
     sdu = std::move(queue.front());
-    unread_bytes -= sdu.buf.length();
+    unread_bytes -= sdu->buf.length();
     queue.pop_front();
     return true;
   }
@@ -54,9 +54,9 @@ public:
 
   bool discard_sn(uint32_t pdcp_sn)
   {
-    for (std::list<rlc_sdu>::iterator it = queue.begin(); it != queue.end(); ++it) {
-      if (it->pdcp_sn == pdcp_sn) {
-        unread_bytes -= it->buf.length();
+    for (std::list<std::unique_ptr<rlc_sdu>>::iterator it = queue.begin(); it != queue.end(); ++it) {
+      if (it->get()->pdcp_sn == pdcp_sn) {
+        unread_bytes -= it->get()->buf.length();
         queue.erase(it);
         return true;
       }
@@ -65,9 +65,9 @@ public:
   }
 
 private:
-  uint32_t           unread_bytes = 0;
-  uint16_t           capacity     = 0;
-  std::list<rlc_sdu> queue;
+  uint32_t                            unread_bytes = 0;
+  uint16_t                            capacity     = 0;
+  std::list<std::unique_ptr<rlc_sdu>> queue;
 };
 
 } // namespace srsgnb

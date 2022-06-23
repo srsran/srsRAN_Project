@@ -21,16 +21,16 @@ void queue_unqueue_test()
   rlc_sdu_queue       tx_queue;
 
   // Write 1 SDU
-  byte_buffer buf       = {0x00, 0x01};
-  rlc_sdu     write_sdu = {10, std::move(buf)};
-  TESTASSERT(tx_queue.write(write_sdu));
+  byte_buffer              buf       = {0x00, 0x01};
+  std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(10, std::move(buf));
+  TESTASSERT(tx_queue.write(std::move(write_sdu)));
 
   // Check basic stats
   TESTASSERT_EQ(1, tx_queue.size_sdus());
   TESTASSERT_EQ(2, tx_queue.size_bytes());
 
   // Read one SDU
-  rlc_sdu read_sdu = {};
+  std::unique_ptr<rlc_sdu> read_sdu = nullptr;
   TESTASSERT(tx_queue.read(read_sdu));
 
   // Check basic stats
@@ -39,8 +39,8 @@ void queue_unqueue_test()
 
   // Check SDU
   byte_buffer expected_msg({0x00, 0x01});
-  TESTASSERT_EQ(10, read_sdu.pdcp_sn);
-  TESTASSERT(expected_msg == read_sdu.buf);
+  TESTASSERT_EQ(10, read_sdu->pdcp_sn);
+  TESTASSERT(expected_msg == read_sdu->buf);
 }
 
 void full_capacity_test()
@@ -54,11 +54,11 @@ void full_capacity_test()
     byte_buffer buf = {};
     buf.append(pdcp_sn);
     buf.append(pdcp_sn);
-    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
+    std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(pdcp_sn, std::move(buf));
     if (pdcp_sn != capacity) {
-      TESTASSERT(tx_queue.write(write_sdu) == true);
+      TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
     } else {
-      TESTASSERT(tx_queue.write(write_sdu) == false);
+      TESTASSERT(tx_queue.write(std::move(write_sdu)) == false);
     }
   }
   TESTASSERT_EQ(capacity, tx_queue.size_sdus());
@@ -69,10 +69,10 @@ void full_capacity_test()
     byte_buffer expected_msg = {};
     expected_msg.append(pdcp_sn);
     expected_msg.append(pdcp_sn);
-    rlc_sdu read_sdu = {};
+    std::unique_ptr<rlc_sdu> read_sdu = nullptr;
     if (pdcp_sn != capacity) {
       TESTASSERT(tx_queue.read(read_sdu));
-      TESTASSERT(expected_msg == read_sdu.buf);
+      TESTASSERT(expected_msg == read_sdu->buf);
     } else {
       TESTASSERT(false == tx_queue.read(read_sdu));
     }
@@ -93,8 +93,8 @@ void discard_test()
     byte_buffer buf = {};
     buf.append(pdcp_sn);
     buf.append(pdcp_sn);
-    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
-    TESTASSERT(tx_queue.write(write_sdu) == true);
+    std::unique_ptr<rlc_sdu> write_sdu = std::make_unique<rlc_sdu>(pdcp_sn, std::move(buf));
+    TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
   }
   TESTASSERT_EQ(capacity, tx_queue.size_sdus());
   TESTASSERT_EQ(2 * capacity, tx_queue.size_bytes());

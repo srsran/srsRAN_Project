@@ -49,6 +49,7 @@ public:
 struct rlc_sdu {
   uint32_t    pdcp_sn = 0;
   byte_buffer buf     = {};
+  rlc_sdu(uint32_t pdcp_sn, byte_buffer buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
