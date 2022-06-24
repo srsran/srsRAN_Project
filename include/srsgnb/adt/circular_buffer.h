@@ -62,7 +62,12 @@ class base_circular_buffer
   {
     using parent_type = typename std::conditional<std::is_same<DataType, T>::value,
                                                   base_circular_buffer<Container>,
-                                                  const base_circular_buffer<Container> >::type;
+                                                  const base_circular_buffer<Container>>::type;
+
+    iterator_impl(parent_type& parent_, size_t i) : parent(&parent_), idx(i)
+    {
+      srsran_assert(linearlize_index() <= parent->count, "Invalid iterator state");
+    }
 
   public:
     using value_type        = DataType;
@@ -71,30 +76,32 @@ class base_circular_buffer
     using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator_impl(parent_type& parent_, size_t i) : parent(&parent_), idx(i) {}
-
     iterator_impl<DataType>& operator++()
     {
-      idx = (idx + 1) % parent->max_size();
+      inc_();
       return *this;
     }
+
     iterator_impl<DataType> operator++(int)
     {
       iterator_impl<DataType> tmp(*this);
       ++(*this);
       return tmp;
     }
+
     iterator_impl<DataType> operator+(difference_type n)
     {
       iterator_impl<DataType> tmp(*this);
       tmp += n;
       return tmp;
     }
+
     iterator_impl<DataType>& operator+=(difference_type n)
     {
-      idx = (idx + n) % parent->max_size();
+      inc_(n);
       return *this;
     }
+
     value_type*       operator->() { return &get(); }
     const value_type* operator->() const { return &get(); }
     value_type&       operator*() { return get(); }
@@ -103,15 +110,66 @@ class base_circular_buffer
     bool operator==(const iterator_impl<DataType>& it) const { return it.parent == parent and it.idx == idx; }
     bool operator!=(const iterator_impl<DataType>& it) const { return not(*this == it); }
 
+    difference_type operator-(const iterator_impl<DataType>& it) const
+    {
+      return linearlize_index() - it.linearlize_index();
+    }
+
   private:
+    friend class base_circular_buffer<Container>;
+
     void assert_idx_within_bounds()
     {
-      srsran_assert(idx + (idx >= parent->rpos ? 0 : parent->max_size()) < parent->rpos + parent->count,
-                    "index={} is out-of-bounds [{}, {})",
-                    idx,
-                    parent->rpos,
-                    parent->count);
+      srsran_assert(
+          linearlize_index() < parent->count, "index={} is out-of-bounds [{}, {})", idx, parent->rpos, parent->count);
     }
+
+    /// Checks whether current iterator points at end().
+    bool is_virtual_end() const { return idx == parent->max_size(); }
+
+    size_t linearlize_index() const
+    {
+      if (is_virtual_end()) {
+        // Iterator pointing at end.
+        return parent->count;
+      }
+      if (idx < parent->rpos) {
+        return idx + (parent->buffer.size() - parent->rpos);
+      }
+      return idx - parent->rpos;
+    }
+
+    void inc_()
+    {
+      srsran_assert(*this != parent->end(), "Incrementing iterator beyond end()");
+      ++idx;
+      if (idx == parent->max_size()) {
+        // Reached the end of circular_buffer container. Wrapping index around.
+        idx = 0;
+      }
+      if (idx == parent->get_wpos()) {
+        // Reached the virtual end of circular_buffer. Making iterator point to end().
+        idx = parent->max_size();
+      }
+    }
+
+    void inc_(difference_type n)
+    {
+      if (n > 0) {
+        srsran_assert(parent->end() - *this >= n, "Incrementing iterator beyond end()");
+        idx += n;
+        if (idx == parent->get_wpos()) {
+          idx = parent->max_size();
+        }
+      } else if (n < 0) {
+        srsran_assert(*this - parent->begin() >= -n, "Decrementing iterator beyond begin()");
+        if (is_virtual_end()) {
+          idx = parent->get_wpos();
+        }
+        idx += n;
+      }
+    }
+
     value_type& get()
     {
       assert_idx_within_bounds();
@@ -141,7 +199,7 @@ public:
   typename std::enable_if<std::is_constructible<T, U>::value>::type push(U&& t)
   {
     srsran_assert(not full(), "Circular buffer is full.");
-    size_t wpos = (rpos + count) % max_size();
+    size_t wpos = get_wpos();
     buffer[wpos].emplace(std::forward<U>(t));
     count++;
   }
@@ -205,10 +263,10 @@ public:
     return buffer[(rpos + i) % max_size()].get();
   }
 
-  iterator       begin() { return iterator(*this, rpos); }
-  const_iterator begin() const { return const_iterator(*this, rpos); }
-  iterator       end() { return iterator(*this, (rpos + count) % max_size()); }
-  const_iterator end() const { return const_iterator(*this, (rpos + count) % max_size()); }
+  iterator       begin() { return iterator(*this, empty() ? max_size() : rpos); }
+  const_iterator begin() const { return const_iterator(*this, empty() ? max_size() : rpos); }
+  iterator       end() { return iterator(*this, max_size()); }
+  const_iterator end() const { return const_iterator(*this, max_size()); }
 
   /// Apply predicate to elements until the predicate returns true
   /// \param func Predicate functor
@@ -229,7 +287,10 @@ protected:
   template <typename... BufferArgs>
   base_circular_buffer(size_t rpos_, size_t count_, BufferArgs&&... args) :
     rpos(rpos_), count(count_), buffer(std::forward<BufferArgs>(args)...)
-  {}
+  {
+  }
+
+  size_t get_wpos() const { return (rpos + count) % max_size(); }
 
   size_t    rpos  = 0; ///< Reading position
   size_t    count = 0; ///< Number of elements in the buffer
@@ -254,11 +315,12 @@ public:
   template <typename... Args>
   base_blocking_queue(PushingFunc push_func_, PoppingFunc pop_func_, Args&&... args) :
     push_func(push_func_), pop_func(pop_func_), circ_buffer(std::forward<Args>(args)...)
-  {}
-  base_blocking_queue(const base_blocking_queue&) = delete;
-  base_blocking_queue(base_blocking_queue&&)      = delete;
+  {
+  }
+  base_blocking_queue(const base_blocking_queue&)            = delete;
+  base_blocking_queue(base_blocking_queue&&)                 = delete;
   base_blocking_queue& operator=(const base_blocking_queue&) = delete;
-  base_blocking_queue& operator=(base_blocking_queue&&) = delete;
+  base_blocking_queue& operator=(base_blocking_queue&&)      = delete;
 
   void stop()
   {
@@ -453,9 +515,9 @@ protected:
  * @tparam N size of the queue
  */
 template <typename T, size_t N>
-class static_circular_buffer : public detail::base_circular_buffer<std::array<detail::type_storage<T>, N> >
+class static_circular_buffer : public detail::base_circular_buffer<std::array<detail::type_storage<T>, N>>
 {
-  using base_t = detail::base_circular_buffer<std::array<detail::type_storage<T>, N> >;
+  using base_t = detail::base_circular_buffer<std::array<detail::type_storage<T>, N>>;
 
 public:
   static_circular_buffer() = default;
@@ -508,9 +570,9 @@ public:
  * @tparam T value type stored by buffer
  */
 template <typename T>
-class dyn_circular_buffer : public detail::base_circular_buffer<std::vector<detail::type_storage<T> > >
+class dyn_circular_buffer : public detail::base_circular_buffer<std::vector<detail::type_storage<T>>>
 {
-  using base_t = detail::base_circular_buffer<std::vector<detail::type_storage<T> > >;
+  using base_t = detail::base_circular_buffer<std::vector<detail::type_storage<T>>>;
 
 public:
   dyn_circular_buffer() = default;
@@ -573,7 +635,8 @@ class static_blocking_queue
 public:
   explicit static_blocking_queue(PushingCallback push_callback = {}, PoppingCallback pop_callback = {}) :
     base_t(push_callback, pop_callback)
-  {}
+  {
+  }
 };
 
 /**
@@ -596,7 +659,8 @@ class dyn_blocking_queue : public detail::base_blocking_queue<dyn_circular_buffe
 public:
   explicit dyn_blocking_queue(size_t size, PushingCallback push_callback = {}, PoppingCallback pop_callback = {}) :
     base_t(push_callback, pop_callback, size)
-  {}
+  {
+  }
   void set_size(size_t size) { base_t::circ_buffer.set_size(size); }
 };
 

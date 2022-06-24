@@ -11,7 +11,7 @@
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/support/test_utils.h"
 
-namespace srsgnb {
+using namespace srsgnb;
 
 void test_static_circular_buffer()
 {
@@ -188,6 +188,24 @@ void test_dyn_circular_buffer()
   TESTASSERT(D::object_count() == 0);
 }
 
+void test_circular_buffer_iterator()
+{
+  std::vector<int>         vals = {0, 1, 2, 3};
+  dyn_circular_buffer<int> q(4);
+
+  for (int v : vals) {
+    q.push(v);
+  }
+
+  // Status: Queue is full.
+  TESTASSERT(q.full());
+  unsigned count = 0;
+  for (int v : q) {
+    TESTASSERT_EQ(vals[count++], v);
+  }
+  TESTASSERT_EQ(vals.size(), count);
+}
+
 void test_queue_block_api()
 {
   dyn_blocking_queue<int> queue(100);
@@ -232,17 +250,16 @@ void test_queue_block_api_2()
   t.join();
 }
 
-} // namespace srsgnb
-
 int main()
 {
   auto& test_log = srslog::fetch_basic_logger("TEST");
   test_log.set_level(srslog::basic_levels::info);
 
-  srsgnb::test_static_circular_buffer();
-  srsgnb::test_dyn_circular_buffer();
-  srsgnb::test_queue_block_api();
-  srsgnb::test_queue_block_api_2();
+  test_static_circular_buffer();
+  test_dyn_circular_buffer();
+  test_circular_buffer_iterator();
+  test_queue_block_api();
+  test_queue_block_api_2();
   fmt::print("Success\n");
   return 0;
 }
