@@ -18,6 +18,7 @@ set(SOURCES
         policy/scheduler_time_rr.cpp
         support/pdsch/pdsch_dmrs_symbol_mask.cpp
         support/tbs_calculator.cpp
+        support/prbs_calculator.cpp
         ue_scheduling/harq_process.cpp
         ue_scheduling/ue.cpp
         ue_scheduling/ue_cell_grid_allocator.cpp
