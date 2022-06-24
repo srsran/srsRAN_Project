@@ -16,6 +16,8 @@
 
 namespace srsgnb {
 
+constexpr size_t rlc_um_pdu_header_size = 2;
+
 struct rlc_um_pdu_header {
   rlc_si_field   si;      ///< Segmentation info
   rlc_um_sn_size sn_size; ///< Sequence number size (6 or 12 bits)
@@ -86,6 +88,28 @@ inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_
   }
 
   return true;
+}
+
+inline size_t rlc_um_nr_packed_length(const rlc_um_pdu_header& header)
+{
+  size_t len = 0;
+  if (header.si == rlc_si_field::full_sdu) {
+    // that's all ..
+    len++;
+  } else {
+    if (header.sn_size == rlc_um_sn_size::size6bits) {
+      // Only 1B for SN
+      len++;
+    } else {
+      // 2 B for 12bit SN
+      len += 2;
+    }
+    if (header.so) {
+      // Two bytes always for segment information
+      len += 2;
+    }
+  }
+  return len;
 }
 
 inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_buffer& pdu)
