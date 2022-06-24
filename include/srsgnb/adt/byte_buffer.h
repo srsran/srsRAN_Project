@@ -1,3 +1,13 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #ifndef SRSGNB_ADT_BYTE_BUFFER_H
 #define SRSGNB_ADT_BYTE_BUFFER_H
 
@@ -13,7 +23,7 @@ namespace srsgnb {
 /// \brief Memory segment of fixed size specified by SEGMENT_SIZE.
 /// Each segment buffer is divided into three parts [ HEADROOM | PAYLOAD | TAILROOM ]
 /// A segment also contains a header region that is used to create an intrusive linked list.
-/// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append()
+/// Bytes can be added in the HEADROOM region via prepend_header() or in the TAILROOM via append()
 class byte_buffer_segment
 {
 public:
@@ -216,10 +226,12 @@ class byte_buffer
 
     iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
       current_segment(start_segment), offset(offset_)
-    {}
+    {
+    }
     template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
     iterator_impl(const iterator_impl<U>& other) : current_segment(other.current_segment), offset(other.offset)
-    {}
+    {
+    }
 
     reference operator*() { return *(current_segment->data() + offset); }
     reference operator*() const { return *(current_segment->data() + offset); }
@@ -308,7 +320,7 @@ public:
     other.len  = 0;
   }
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
-  byte_buffer& operator                               =(byte_buffer&& other) noexcept
+  byte_buffer& operator=(byte_buffer&& other) noexcept
   {
     head       = std::move(other.head);
     tail       = other.tail;
@@ -483,6 +495,8 @@ public:
 
   uint8_t&       back() { return tail->back(); }
   const uint8_t& back() const { return tail->back(); }
+
+  const uint8_t& operator[](size_t i) const { return *(begin() + i); }
 
   template <typename Container>
   bool operator==(const Container& container) const
@@ -675,6 +689,38 @@ inline void byte_buffer::append(const byte_buffer_view& view)
     append(b);
   }
 }
+
+class byte_buffer_owning_view : public byte_buffer_view
+{
+public:
+  using value_type     = byte_buffer_view::value_type;
+  using iterator       = byte_buffer_view::iterator;
+  using const_iterator = byte_buffer_view::const_iterator;
+
+  byte_buffer_owning_view() = default;
+  explicit byte_buffer_owning_view(const byte_buffer& buf_) :
+    byte_buffer_view(buf_.begin(), buf_.end()), buf(buf_.copy())
+  {
+  }
+  byte_buffer_owning_view(const byte_buffer& buf_, size_t offset, size_t length) :
+    byte_buffer_view(buf_, offset, length), buf(buf_.copy())
+  {
+  }
+
+  void clear()
+  {
+    buf.clear();
+    it     = {nullptr, 0};
+    it_end = {nullptr, 0};
+  }
+
+private:
+  // disabled base methods.
+  using byte_buffer_view::split;
+  using byte_buffer_view::view;
+
+  byte_buffer buf;
+};
 
 /// Used to read a range of bytes stored in a byte_buffer.
 class byte_buffer_reader : private byte_buffer_view
