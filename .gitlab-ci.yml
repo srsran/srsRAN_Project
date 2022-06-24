@@ -114,7 +114,7 @@ pages:
 
 .notifier:
   stage: notify status
-  extends: .srs_tools_setup_job
+  image: alpine:3.16.0
   variables:
     slack_notifier_version: "1.3.0"
   before_script:
