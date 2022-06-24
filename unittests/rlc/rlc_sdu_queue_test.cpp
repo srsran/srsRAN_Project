@@ -121,6 +121,40 @@ void discard_test()
   TESTASSERT_EQ(0, tx_queue.size_bytes());
 }
 
+void discard_all_test()
+{
+  test_delimit_logger delimiter{"RLC SDU discard all test"};
+  unsigned            capacity = 10;
+  unsigned            n_sdus   = capacity / 2;
+  rlc_sdu_queue       tx_queue(capacity);
+
+  // Fill SDU queue with SDUs
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
+    byte_buffer buf = {};
+    buf.append(pdcp_sn);
+    buf.append(pdcp_sn);
+    rlc_sdu write_sdu = {pdcp_sn, std::move(buf)};
+    TESTASSERT(tx_queue.write(std::move(write_sdu)) == true);
+  }
+  TESTASSERT_EQ(n_sdus, tx_queue.size_sdus());
+  TESTASSERT_EQ(2 * n_sdus, tx_queue.size_bytes());
+
+  // Discard all SDUs
+  for (uint32_t pdcp_sn = 0; pdcp_sn < n_sdus; pdcp_sn++) {
+    TESTASSERT(tx_queue.discard_sn(pdcp_sn));
+  }
+
+  TESTASSERT_EQ(0, tx_queue.size_sdus());
+  TESTASSERT_EQ(0, tx_queue.size_bytes());
+
+  // Read SDU
+  {
+    rlc_sdu read_sdu = {};
+    TESTASSERT(tx_queue.read(read_sdu) == false);
+  }
+  TESTASSERT_EQ(0, tx_queue.size_sdus());
+  TESTASSERT_EQ(0, tx_queue.size_bytes());
+}
 } // namespace srsgnb
 
 int main()
@@ -134,4 +168,5 @@ int main()
   srsgnb::queue_unqueue_test();
   srsgnb::full_capacity_test();
   srsgnb::discard_test();
+  srsgnb::discard_all_test();
 }

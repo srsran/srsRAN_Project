@@ -43,7 +43,11 @@ public:
     }
     do {
       sdu = queue.pop_blocking();
-    } while (sdu.buf.empty());
+    } while (sdu.buf.empty() and not is_empty());
+
+    if (sdu.buf.empty()) {
+      return false;
+    }
     return true;
   }
 
