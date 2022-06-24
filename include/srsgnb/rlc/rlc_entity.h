@@ -21,7 +21,7 @@ class rlc_entity
 {
 public:
   rlc_entity() = default;
-  virtual ~rlc_entity();
+  virtual ~rlc_entity(){};
 
   virtual rlc_tx_sdu_handler*     get_tx_sdu_handler()     = 0;
   virtual rlc_tx_pdu_transmitter* get_tx_pdu_transmitter() = 0;
