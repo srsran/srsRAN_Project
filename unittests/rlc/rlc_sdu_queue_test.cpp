@@ -86,7 +86,7 @@ void discard_test()
 {
   test_delimit_logger delimiter{"RLC SDU discard test"};
   unsigned            capacity = 10;
-  unsigned            n_sdus   = 5;
+  unsigned            n_sdus   = capacity;
   rlc_sdu_queue       tx_queue(capacity);
 
   // Fill SDU queue with SDUs
@@ -108,9 +108,17 @@ void discard_test()
   TESTASSERT(false == tx_queue.discard_sn(16));
 
   // Double check correct number of SDUs and SDU bytes
-  unsigned leftover_sdus = 3;
+  unsigned leftover_sdus = n_sdus - 2;
   TESTASSERT_EQ(leftover_sdus, tx_queue.size_sdus());
   TESTASSERT_EQ(leftover_sdus * 2, tx_queue.size_bytes());
+
+  // Read SDUs
+  for (uint32_t n = 0; n < leftover_sdus; n++) {
+    rlc_sdu read_sdu = {};
+    TESTASSERT(tx_queue.read(read_sdu));
+  }
+  TESTASSERT_EQ(0, tx_queue.size_sdus());
+  TESTASSERT_EQ(0, tx_queue.size_bytes());
 }
 
 } // namespace srsgnb

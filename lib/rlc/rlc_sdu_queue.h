@@ -41,7 +41,9 @@ public:
     if (is_empty()) {
       return false;
     }
-    sdu = queue.pop_blocking();
+    do {
+      sdu = queue.pop_blocking();
+    } while (sdu.buf.empty());
     return true;
   }
 
