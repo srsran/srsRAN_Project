@@ -673,6 +673,11 @@ public:
   {
     return std::equal(begin(), end(), other.begin(), other.end());
   }
+  template <typename Range>
+  bool operator!=(const Range& other) const
+  {
+    return not(*this == other);
+  }
 
 protected:
   iterator it{nullptr, 0};
@@ -690,7 +695,7 @@ inline void byte_buffer::append(const byte_buffer_view& view)
   }
 }
 
-class byte_buffer_owning_view : public byte_buffer_view
+class byte_buffer_owning_view
 {
 public:
   using value_type     = byte_buffer_view::value_type;
@@ -698,28 +703,47 @@ public:
   using const_iterator = byte_buffer_view::const_iterator;
 
   byte_buffer_owning_view() = default;
-  explicit byte_buffer_owning_view(const byte_buffer& buf_) :
-    byte_buffer_view(buf_.begin(), buf_.end()), buf(buf_.copy())
-  {
-  }
+  explicit byte_buffer_owning_view(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
   byte_buffer_owning_view(const byte_buffer& buf_, size_t offset, size_t length) :
-    byte_buffer_view(buf_, offset, length), buf(buf_.copy())
+    slice(buf_, offset, length), buf(buf_.copy())
   {
   }
 
   void clear()
   {
     buf.clear();
-    it     = {nullptr, 0};
-    it_end = {nullptr, 0};
+    slice = {};
+  }
+
+  /// Converts to non-owning byte buffer view.
+  byte_buffer_view view() const { return slice; }
+  explicit         operator byte_buffer_view() const { return slice; }
+
+  bool   empty() const { return slice.empty(); }
+  size_t length() const { return slice.length(); }
+
+  const uint8_t& operator[](size_t idx) const { return slice[idx]; }
+
+  iterator       begin() { return slice.begin(); }
+  const_iterator begin() const { return slice.begin(); }
+  iterator       end() { return slice.end(); }
+  const_iterator end() const { return slice.end(); }
+
+  template <typename Range>
+  bool operator==(const Range& r) const
+  {
+    return slice == r.slice;
+  }
+
+  template <typename Range>
+  bool operator!=(const Range& r) const
+  {
+    return slice != r.slice;
   }
 
 private:
-  // disabled base methods.
-  using byte_buffer_view::split;
-  using byte_buffer_view::view;
-
-  byte_buffer buf;
+  byte_buffer_view slice;
+  byte_buffer      buf;
 };
 
 /// Used to read a range of bytes stored in a byte_buffer.
