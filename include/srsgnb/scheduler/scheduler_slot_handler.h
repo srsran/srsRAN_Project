@@ -50,7 +50,7 @@ struct tx_power_pdcch_information {
 struct dmrs_information {
   /// Bitmap of DM-RS position symbols.
   pdsch_dmrs_symbol_mask dmrs_symb_pos;
-  dmrs_config_type config_type;
+  dmrs_config_type       config_type;
   /// \brief DMRS-Scrambling-ID (see TS 38.211 sec 7.4.1.1.1) as provided by parameter \f$N^{n_{SCID}}_{ID}\f$.
   /// Values: (0..65535).
   unsigned dmrs_scrambling_id;

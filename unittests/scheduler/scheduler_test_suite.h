@@ -21,7 +21,7 @@ namespace srsgnb {
 /// - The PDSCH symbols match chosen DCI time domain resource assignment.
 void test_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
                                          const pdcch_dl_information& pdcch,
-                                         const pdsch_information&  pdsch);
+                                         const pdsch_information&    pdsch);
 
 /// \brief Current checks:
 /// - If CORESET#0 is not defined, SIB1 cannot be scheduled.

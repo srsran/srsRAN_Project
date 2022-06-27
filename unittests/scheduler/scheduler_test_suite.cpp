@@ -17,7 +17,7 @@ using namespace srsgnb;
 
 void srsgnb::test_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
                                                  const pdcch_dl_information& pdcch,
-                                                 const pdsch_information&  pdsch)
+                                                 const pdsch_information&    pdsch)
 {
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
   TESTASSERT(pdcch.ctx.bwp_cfg == pdsch.bwp_cfg);

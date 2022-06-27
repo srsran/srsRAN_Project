@@ -18,7 +18,7 @@ using namespace srsgnb;
 #define L0 (UINT8_MAX)
 #define L1 (UINT8_MAX + 1)
 
-static const std::map<std::pair<unsigned, unsigned>, static_vector<unsigned, 4> >
+static const std::map<std::pair<unsigned, unsigned>, static_vector<unsigned, 4>>
     pdsch_dmrs_symbol_mask_mapping_type_A_single_table = {
         {{3, 0}, {L0}},  {{3, 1}, {L0}},      {{3, 2}, {L0}},         {{3, 3}, {L0}},
         {{4, 0}, {L0}},  {{4, 1}, {L0}},      {{4, 2}, {L0}},         {{4, 3}, {L0}},
@@ -52,12 +52,12 @@ static void pdsch_dmrs_symbol_mask_mapping_type_A_single_test()
             pdsch_dmrs_symbol_mask mask              = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(config);
 
             // Calculate expected mask.
-            dmrs_typeA_position l0 = typeA_pos;
-            unsigned            l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
+            dmrs_typeA_position    l0 = typeA_pos;
+            unsigned               l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
                            config.additional_position == srsgnb::dmrs_additional_positions::pos1 &&
                            l0 == srsgnb::dmrs_typeA_position::pos3)
-                              ? 12
-                              : 11;
+                                            ? 12
+                                            : 11;
             pdsch_dmrs_symbol_mask expected(14);
             TESTASSERT(pdsch_dmrs_symbol_mask_mapping_type_A_single_table.count({duration, additional_position}),
                        "Missing case for duration={} and additional_position={}.",
