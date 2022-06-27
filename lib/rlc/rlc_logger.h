@@ -26,7 +26,7 @@ class rlc_logger
 {
 public:
   rlc_logger(du_ue_index_t du_index, lcid_t lcid) :
-    du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger("RLC"))
+    du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger("RLC", false))
   {}
 
   template <typename... Args>
