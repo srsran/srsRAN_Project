@@ -91,6 +91,24 @@ void test_rlc_buffer_prepend()
   TESTASSERT_EQ(bytes.size(), count);
 }
 
+void test_rlc_buffer_header_set()
+{
+  std::vector<uint8_t> vec = {1, 2, 3};
+  rlc_byte_buffer      buf;
+  byte_buffer          buf2{vec};
+
+  // R-value header set.
+  buf.set_header(std::move(buf2));
+  TESTASSERT(buf2.empty());
+  TESTASSERT(buf == vec);
+
+  // L-value header set.
+  buf.clear();
+  buf2 = vec;
+  buf.set_header(buf2);
+  TESTASSERT(buf == vec);
+}
+
 void test_rlc_buffer_header_and_payload()
 {
   rlc_byte_buffer buf;
@@ -151,6 +169,7 @@ int main()
   test_empty_rlc_buffer();
   test_rlc_buffer_payload_assignment();
   test_rlc_buffer_prepend();
+  test_rlc_buffer_header_set();
   test_rlc_buffer_header_and_payload();
   test_rlc_buffer_payload_lifetime();
 }

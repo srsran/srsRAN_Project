@@ -329,6 +329,12 @@ public:
     other.len  = 0;
     return *this;
   }
+  byte_buffer& operator=(span<const uint8_t> bytes) noexcept
+  {
+    clear();
+    append(bytes);
+    return *this;
+  }
 
   /// Performs a deep copy (byte by bytes) of this byte_buffer.
   byte_buffer deep_copy() const
