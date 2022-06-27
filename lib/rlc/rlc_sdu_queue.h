@@ -28,7 +28,8 @@ class rlc_sdu_queue
 public:
   explicit rlc_sdu_queue(uint16_t capacity = 256) :
     capacity(capacity), queue(capacity, push_callback(unread_bytes, n_sdus), pop_callback(unread_bytes, n_sdus))
-  {}
+  {
+  }
 
   bool write(rlc_sdu sdu)
   {
@@ -83,7 +84,8 @@ private:
   struct push_callback {
     explicit push_callback(std::atomic<uint32_t>& unread_bytes_, std::atomic<uint32_t>& n_sdus_) :
       unread_bytes(unread_bytes_), n_sdus(n_sdus_)
-    {}
+    {
+    }
     void operator()(const rlc_sdu& sdu)
     {
       unread_bytes.fetch_add(sdu.buf.length(), std::memory_order_relaxed);
@@ -95,7 +97,8 @@ private:
   struct pop_callback {
     explicit pop_callback(std::atomic<uint32_t>& unread_bytes_, std::atomic<uint32_t>& n_sdus_) :
       unread_bytes(unread_bytes_), n_sdus(n_sdus_)
-    {}
+    {
+    }
     void operator()(const rlc_sdu& sdu)
     {
       if (sdu.buf.empty()) {
