@@ -17,6 +17,17 @@
 
 namespace srsgnb {
 
+#define RlcDebug(fmt, ...) logger.log_debug(fmt, ##__VA_ARGS__)
+#define RlcInfo(fmt, ...) logger.log_info(fmt, ##__VA_ARGS__)
+#define RlcWarning(fmt, ...) logger.log_warning(fmt, ##__VA_ARGS__)
+#define RlcError(fmt, ...) logger.log_error(fmt, ##__VA_ARGS__)
+
+// TODO: add hex output
+#define RlcHexDebug(msg, bytes, fmt, ...) logger.log_debug(fmt, ##__VA_ARGS__)
+#define RlcHexInfo(msg, bytes, fmt, ...) logger.log_info(fmt, ##__VA_ARGS__)
+#define RlcHexWarning(msg, bytes, fmt, ...) logger.log_warning(fmt, ##__VA_ARGS__)
+#define RlcHexError(msg, bytes, fmt, ...) logger.log_error(fmt, ##__VA_ARGS__)
+
 /// Class used to store common logging parameters for all types RLC entities.
 /// It provides logging helpers, so that the UE index and LCID are always logged.
 ///

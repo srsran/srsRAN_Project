@@ -92,9 +92,42 @@ inline std::string to_string(const rlc_control_pdu_type& type)
   return options[to_number(type)];
 }
 
+///
+/// \brief Configurable parameters for RLC AM
+///
+/// Ref: 3GPP TS 38.322 Section 7
+///
+struct rlc_am_config {
+  rlc_am_sn_size tx_sn_field_length; ///< Number of bits used for tx (UL) sequence number
+  rlc_am_sn_size rx_sn_field_length; ///< Number of bits used for rx (DL) sequence number
+
+  // Timers Ref: 3GPP TS 38.322 Section 7.3
+  int32_t t_poll_retx;       ///< Poll retx timeout (ms)
+  int32_t t_reassembly;      ///< Timer used by rx to detect PDU loss  (ms)
+  int32_t t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
+
+  // Configurable Parameters. Ref: 3GPP TS 38.322 Section 7.4
+  uint32_t max_retx_thresh; ///< Max number of retx
+  int32_t  poll_pdu;        ///< Insert poll bit after this many PDUs
+  int32_t  poll_byte;       ///< Insert poll bit after this much data (KB)
+};
+
+///
+/// \brief Configurable parameters for RLC UM
+///
+/// Ref: 3GPP TS 38.322 v15.3.0 Section 7
+///
+struct rlc_um_config {
+  rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
+  int32_t        t_reassembly_ms; ///< Timer used by rx to detect PDU loss (ms)
+  uint8_t        bearer_id;       ///< This is not in the 3GPP TS 38.322
+};
+
 /// Configuration of RLC bearer.
 struct rlc_config {
-  rlc_mode mode;
+  rlc_mode       mode;
+  rlc_am_config* am = nullptr;
+  rlc_um_config* um = nullptr;
 };
 
 } // namespace srsgnb

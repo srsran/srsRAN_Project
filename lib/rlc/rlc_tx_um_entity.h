@@ -20,6 +20,9 @@ namespace srsgnb {
 class rlc_tx_um_entity : public rlc_tx_entity
 {
 private:
+  // Config storage
+  const rlc_um_config cfg;
+
   // TX SDU buffers
   rlc_sdu_queue sdu_queue;
   rlc_sdu       sdu;
@@ -34,16 +37,19 @@ private:
                         // including the last segment of an RLC SDU to lower layers.
 
   uint32_t UM_Window_Size;
-  uint32_t mod; // Rx counter modulus
+  uint32_t mod; // Tx counter modulus
 
   uint32_t head_len_first = 0, head_len_segment = 0; // are computed during configure based on SN length
 
 public:
-  rlc_tx_um_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
-    rlc_tx_entity(du_index, lcid, upper_cn)
+  rlc_tx_um_entity(du_ue_index_t                        du_index,
+                   lcid_t                               lcid,
+                   const rlc_um_config&                 config,
+                   rlc_tx_upper_layer_control_notifier& upper_cn) :
+    rlc_tx_entity(du_index, lcid, upper_cn), cfg(config)
   {
-    mod            = (cfg.um_nr.sn_field_length == rlc_um_nr_sn_size_t::size6bits) ? 64 : 4096;
-    UM_Window_Size = (cfg.um_nr.sn_field_length == rlc_um_nr_sn_size_t::size6bits) ? 32 : 2048;
+    mod            = (cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 64 : 4096;
+    UM_Window_Size = (cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 32 : 2048;
 
     // calculate header sizes for configured SN length
     rlc_um_pdu_header header = {};
@@ -61,15 +67,15 @@ public:
   void handle_sdu(rlc_sdu sdu) override
   {
     if (sdu_queue.write(*sdu)) {
-      logger.log_info("Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
-                      sdu->buf.length(),
-                      sdu->pdcp_sn,
-                      sdu_queue.size_sdus());
+      RlcInfo("Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
+              sdu->buf.length(),
+              sdu->pdcp_sn,
+              sdu_queue.size_sdus());
     } else {
-      logger.log_warning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
-                         sdu->buf.length(),
-                         sdu->pdcp_sn,
-                         sdu_queue.size_sdus());
+      RlcWarning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
+                 sdu->buf.length(),
+                 sdu->pdcp_sn,
+                 sdu_queue.size_sdus());
     }
   }
 
@@ -78,11 +84,11 @@ public:
    */
   rlc_byte_buffer pull_pdu(uint32_t nof_bytes) override
   {
-    logger.log_debug("PDU requested with up to {} B", nof_bytes);
+    RlcDebug("PDU requested with up to {} B", nof_bytes);
 
     // Check available space -- we need at least rlc_um_pdu_header_size + 1 payload Byte
     if (nof_bytes < rlc_um_pdu_header_size + 1) {
-      logger.log_info("Cannot build a PDU with {} B", nof_bytes);
+      RlcInfo("Cannot build a PDU with {} B", nof_bytes);
       return false;
     }
 
@@ -91,11 +97,11 @@ public:
     rlc_um_pdu_header header = {};
     header.si                = rlc_si_field::full_sdu;
     header.sn                = TX_Next;
-    header.sn_size           = cfg.um_nr.sn_field_length;
+    header.sn_size           = cfg.sn_field_length;
 
     if (sdu.buf.empty()) {
       if (not sdu_queue.read(sdu)) {
-        logger.log_info("No data available to be sent");
+        RlcInfo("No data available to be sent");
         return false;
       }
       next_so = 0;
@@ -119,7 +125,7 @@ public:
     // Calculate actual header length
     size_t head_len = rlc_um_nr_packed_length(header);
     if (nof_bytes <= head_len + 1) {
-      logger.log_info("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
+      RlcInfo("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
       return 0;
     }
 
@@ -128,8 +134,9 @@ public:
     uint32_t to_move = space >= sdu.buf.length() ? sdu.buf.length() : space;
 
     // Log
-    logger.log_debug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
+    RlcDebug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
 
+#if 0
     // Move data from SDU to PDU
     uint8_t* pdu_ptr = pdu->msg;
     memcpy(pdu_ptr, tx_sdu->msg, to_move);
@@ -158,8 +165,8 @@ public:
     uint32_t ret = pdu->N_bytes;
 
     // Assert number of bytes
-    srsran_expect(
-        ret <= nof_bytes, "Error while packing MAC PDU (more bytes written (%d) than expected (%d)!", ret, nof_bytes);
+    srsran_assert(
+        ret <= nof_bytes, "Error while packing MAC PDU (more bytes written ({}) than expected ({})!", ret, nof_bytes);
 
     if (header.si == rlc_si_field::full_sdu) {
       // log without SN
@@ -171,6 +178,8 @@ public:
     debug_state();
 
     return ret;
+
+#endif
     return true;
   }
 
@@ -179,6 +188,8 @@ public:
     // TODO
     bytes = 0;
   }
+
+  void debug_state() { RlcDebug("TX_Next={}, next_so={}", TX_Next, next_so); }
 };
 
 } // namespace srsgnb
