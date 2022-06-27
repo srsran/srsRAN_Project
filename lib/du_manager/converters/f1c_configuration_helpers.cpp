@@ -64,6 +64,19 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
 {
   using namespace asn1::rrc_nr;
   dl_cfg_common_sib_s out;
+  // freq info DL
+  out.freq_info_dl.freq_band_list.resize(1);
+  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr_present = true;
+  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr         = 20;
+  out.freq_info_dl.offset_to_point_a                          = cfg.freq_info_dl.offset_to_point_a;
+  out.freq_info_dl.scs_specific_carrier_list.resize(cfg.freq_info_dl.scs_carrier_list.size());
+  for (unsigned i = 0; i < cfg.freq_info_dl.scs_carrier_list.size(); ++i) {
+    out.freq_info_dl.scs_specific_carrier_list[i].offset_to_carrier =
+        cfg.freq_info_dl.scs_carrier_list[i].offset_to_carrier;
+    out.freq_info_dl.scs_specific_carrier_list[i].subcarrier_spacing.value =
+        get_asn1_scs(cfg.freq_info_dl.scs_carrier_list[i].scs);
+    out.freq_info_dl.scs_specific_carrier_list[i].carrier_bw = cfg.freq_info_dl.scs_carrier_list[i].carrier_bandwidth;
+  }
   // generic params
   out.init_dl_bwp.generic_params.cp_present               = cfg.init_dl_bwp.generic_params.cp_extended;
   out.init_dl_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_dl_bwp.generic_params.scs);
@@ -104,6 +117,12 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
                           cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].symbols.start(),
                           cfg.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[i].symbols.length());
   }
+  // BCCH-Config
+  out.bcch_cfg.mod_period_coeff.value = bcch_cfg_s::mod_period_coeff_opts::n4;
+  // PCCH-Config
+  out.pcch_cfg.default_paging_cycle.value = paging_cycle_opts::rf128;
+  out.pcch_cfg.nand_paging_frame_offset.set_one_t();
+  out.pcch_cfg.ns.value = pcch_cfg_s::ns_opts::one;
   // TODO: Fill remaining fields.
 
   return out;
@@ -114,6 +133,11 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   using namespace asn1::rrc_nr;
   serving_cell_cfg_common_sib_s cell;
   cell.dl_cfg_common = make_asn1_rrc_dl_config_common(du_cfg.dl_cfg_common);
+  // SSB params.
+  cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
+                                                       static_cast<uint64_t>(56U));
+  asn1::number_to_enum(cell.ssb_periodicity_serving_cell, du_cfg.ssb_cfg.ssb_period);
+  cell.ss_pbch_block_pwr = -16;
   // TODO: Fill remaining fields.
   return cell;
 }
@@ -123,31 +147,50 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   using namespace asn1::rrc_nr;
 
   sib1_s sib1;
-  //  bool                          cell_sel_info_present           = false;
-  //  bool                          conn_est_fail_ctrl_present      = false;
-  //  bool                          si_sched_info_present           = false;
-  //  bool                          serving_cell_cfg_common_present = false;
-  //  bool                          ims_emergency_support_present   = false;
-  //  bool                          ecall_over_ims_support_present  = false;
-  //  bool                          ue_timers_and_consts_present    = false;
-  //  bool                          uac_barr_info_present           = false;
-  //  bool                          use_full_resume_id_present      = false;
-  //  bool                          non_crit_ext_present            = false;
-  //  cell_sel_info_s_              cell_sel_info;
-  //  cell_access_related_info_s    cell_access_related_info;
-  //  conn_est_fail_ctrl_s          conn_est_fail_ctrl;
-  //  si_sched_info_s               si_sched_info;
-  //  serving_cell_cfg_common_sib_s serving_cell_cfg_common;
-  //  ue_timers_and_consts_s        ue_timers_and_consts;
-  //  uac_barr_info_s_              uac_barr_info;
-  // TODO: Fill remaining fields.
+
+  sib1.cell_sel_info_present            = true;
+  sib1.cell_sel_info.q_rx_lev_min       = -70;
+  sib1.cell_sel_info.q_qual_min_present = true;
+  sib1.cell_sel_info.q_qual_min         = -20;
+
+  sib1.cell_access_related_info.plmn_id_list.resize(1);
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc_present = true;
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[0]      = 0;
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[1]      = 0;
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[2]      = 1;
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc.resize(2);
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc[0] = 0;
+  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc[1] = 1;
+  sib1.cell_access_related_info.plmn_id_list[0].tac_present            = true;
+  // sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(cell_cfg.tac);
+  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(/* random choice*/ 1);
+  sib1.cell_access_related_info.plmn_id_list[0].cell_reserved_for_oper.value =
+      plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
+
+  sib1.conn_est_fail_ctrl_present                   = true;
+  sib1.conn_est_fail_ctrl.conn_est_fail_count.value = asn1::rrc_nr::conn_est_fail_ctrl_s::conn_est_fail_count_opts::n1;
+  sib1.conn_est_fail_ctrl.conn_est_fail_offset_validity.value =
+      conn_est_fail_ctrl_s::conn_est_fail_offset_validity_opts::s30;
+  sib1.conn_est_fail_ctrl.conn_est_fail_offset_present = true;
+  sib1.conn_est_fail_ctrl.conn_est_fail_offset         = 1;
+
   sib1.serving_cell_cfg_common_present = true;
   sib1.serving_cell_cfg_common         = make_asn1_rrc_cell_serving_cell_common(du_cfg);
 
-  byte_buffer   buf;
-  asn1::bit_ref bref{buf};
-  //  asn1::SRSASN_CODE ret = sib1.pack(bref);
-  //  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack MIB");
+  sib1.ue_timers_and_consts_present    = true;
+  sib1.ue_timers_and_consts.t300.value = ue_timers_and_consts_s::t300_opts::ms1000;
+  sib1.ue_timers_and_consts.t301.value = ue_timers_and_consts_s::t301_opts::ms1000;
+  sib1.ue_timers_and_consts.t310.value = ue_timers_and_consts_s::t310_opts::ms1000;
+  sib1.ue_timers_and_consts.n310.value = ue_timers_and_consts_s::n310_opts::n1;
+  sib1.ue_timers_and_consts.t311.value = ue_timers_and_consts_s::t311_opts::ms30000;
+  sib1.ue_timers_and_consts.n311.value = ue_timers_and_consts_s::n311_opts::n1;
+  sib1.ue_timers_and_consts.t319.value = ue_timers_and_consts_s::t319_opts::ms1000;
+
+  byte_buffer       buf;
+  asn1::bit_ref     bref{buf};
+  asn1::SRSASN_CODE ret = sib1.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
   return buf;
 }
 
@@ -180,7 +223,7 @@ void srsgnb::srs_du::fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& 
     f1_cell.gnb_du_sys_info.mib_msg.resize(buf.length());
     std::copy(buf.begin(), buf.end(), f1_cell.gnb_du_sys_info.mib_msg.begin());
     buf = make_asn1_rrc_cell_sib1_buffer(*cell_cfg);
-    f1_cell.gnb_du_sys_info.mib_msg.resize(buf.length());
+    f1_cell.gnb_du_sys_info.sib1_msg.resize(buf.length());
     std::copy(buf.begin(), buf.end(), f1_cell.gnb_du_sys_info.sib1_msg.begin());
   }
 }
