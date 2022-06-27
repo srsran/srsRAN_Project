@@ -24,7 +24,7 @@ public:
   using result_type  = T;
   using awaiter_type = typename manual_event<result_type>::awaiter_type;
 
-  protocol_transaction() : transaction_id(std::numeric_limits<unsigned>::max()), ev(nullptr) {}
+  protocol_transaction() = default;
   protocol_transaction(unsigned transaction_id_, manual_event<result_type>& ev_) :
     transaction_id(transaction_id_), ev(&ev_)
   {
@@ -56,8 +56,8 @@ private:
     ev->set(std::forward<U>(u));
   }
 
-  unsigned                   transaction_id;
-  manual_event<result_type>* ev;
+  unsigned                   transaction_id = std::numeric_limits<unsigned>::max();
+  manual_event<result_type>* ev             = nullptr;
 };
 
 template <typename T, size_t N>
