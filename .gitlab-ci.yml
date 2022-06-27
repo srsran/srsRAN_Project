@@ -18,14 +18,13 @@ stages:
 ## Static
 
 .static:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.3
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.4
   stage: static
   rules:
     - if: $ON_MR
   variables:
     GIT_DEPTH: 0
   before_script:
-    - apt-get update && apt-get install -y --no-install-recommends git-lfs && git lfs install # FIXME Do it in docker build
     - git remote set-branches --add origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
     - git fetch
 
