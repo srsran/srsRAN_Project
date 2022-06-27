@@ -32,6 +32,8 @@ struct du_cell_config {
   subcarrier_spacing ssb_scs;
   ssb_configuration  ssb_cfg;
 
+  dmrs_typeA_position dmrs_typeA_pos;
+
   coreset_id      coreset0_id;
   search_space_id searchspace0_id;
 

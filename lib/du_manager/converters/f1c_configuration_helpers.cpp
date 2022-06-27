@@ -31,7 +31,9 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
       srsran_terminate("Invalid SCS common");
   }
   mib.ssb_subcarrier_offset            = du_cfg.ssb_cfg.ssb_subcarrier_offset;
-  mib.dmrs_type_a_position.value       = mib_s::dmrs_type_a_position_opts::pos2; // TODO.
+  mib.dmrs_type_a_position.value       = du_cfg.dmrs_typeA_pos == dmrs_typeA_position::pos2
+                                             ? mib_s::dmrs_type_a_position_opts::pos2
+                                             : mib_s::dmrs_type_a_position_opts::pos3;
   mib.pdcch_cfg_sib1.coreset_zero      = du_cfg.coreset0_id;
   mib.pdcch_cfg_sib1.search_space_zero = du_cfg.searchspace0_id;
   mib.cell_barred.value                = mib_s::cell_barred_opts::not_barred;

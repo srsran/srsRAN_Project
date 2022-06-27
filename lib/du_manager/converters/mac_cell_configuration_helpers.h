@@ -52,20 +52,19 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
                                                                            const du_cell_config& du_cfg)
 {
   sched_cell_configuration_request_message sched_req{};
-  sched_req.cell_index    = cell_index;
-  sched_req.pci           = du_cfg.pci;
-  sched_req.dl_carrier    = du_cfg.dl_carrier;
-  sched_req.ul_carrier    = du_cfg.ul_carrier;
-  sched_req.dl_cfg_common = du_cfg.dl_cfg_common;
-  sched_req.ul_cfg_common = du_cfg.ul_cfg_common;
-  sched_req.scs_common    = du_cfg.scs_common;
-  sched_req.ssb_config    = du_cfg.ssb_cfg;
+  sched_req.cell_index     = cell_index;
+  sched_req.pci            = du_cfg.pci;
+  sched_req.dl_carrier     = du_cfg.dl_carrier;
+  sched_req.ul_carrier     = du_cfg.ul_carrier;
+  sched_req.dl_cfg_common  = du_cfg.dl_cfg_common;
+  sched_req.ul_cfg_common  = du_cfg.ul_cfg_common;
+  sched_req.scs_common     = du_cfg.scs_common;
+  sched_req.ssb_config     = du_cfg.ssb_cfg;
+  sched_req.dmrs_typeA_pos = du_cfg.dmrs_typeA_pos;
 
   sched_req.nof_beams     = 1;
   sched_req.nof_ant_ports = 1;
   sched_req.nof_ant_ports = 1;
-
-  sched_req.dmrs_typeA_pos = dmrs_typeA_position::pos2;
 
   /// SIB1 parameters.
   sched_req.pdcch_config_sib1     = 0b10000000U;
