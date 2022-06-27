@@ -160,11 +160,10 @@ void discard_all_test()
 int main()
 {
   srslog::init();
-  auto& logger = srslog::fetch_basic_logger("TEST", false);
-  logger.set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
 
-  logger.info("Testing RLC SDU queue");
-  srslog::flush();
+  fprintf(stdout, "Testing RLC SDU queue\n");
   srsgnb::queue_unqueue_test();
   srsgnb::full_capacity_test();
   srsgnb::discard_test();

@@ -20,6 +20,9 @@
 
 namespace srsgnb {
 
+/// This class will hold RLC SDUs from upper layers.
+/// It provides methods for thread-safe read/writing of SDUs
+/// and discarding SDUs, if requested by the higher layers.
 class rlc_sdu_queue
 {
 public:
@@ -41,6 +44,9 @@ public:
     if (is_empty()) {
       return false;
     }
+
+    // The SDU byte_buffer might be empty, do to having been discarded.
+    // We try to read the next one if that is the case.
     do {
       sdu = queue.pop_blocking();
     } while (sdu.buf.empty() and not is_empty());
@@ -59,6 +65,7 @@ public:
 
   bool is_full() { return queue.size() >= capacity; }
 
+  // Marks a packet as discarded by calling `clear` on it.
   bool discard_sn(uint32_t pdcp_sn)
   {
     bool discarded = queue.apply_first([&pdcp_sn, this](rlc_sdu& sdu) {
