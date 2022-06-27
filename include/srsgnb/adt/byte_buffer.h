@@ -23,7 +23,7 @@ namespace srsgnb {
 /// \brief Memory segment of fixed size specified by SEGMENT_SIZE.
 /// Each segment buffer is divided into three parts [ HEADROOM | PAYLOAD | TAILROOM ]
 /// A segment also contains a header region that is used to create an intrusive linked list.
-/// Bytes can be added in the HEADROOM region via prepend_header() or in the TAILROOM via append()
+/// Bytes can be added in the HEADROOM region via prepend() or in the TAILROOM via append()
 class byte_buffer_segment
 {
 public:
