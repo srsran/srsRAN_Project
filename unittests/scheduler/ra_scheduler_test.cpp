@@ -162,7 +162,7 @@ struct test_bench {
   cell_resource_allocator res_grid;
   dummy_pdcch_scheduler   pdcch_sch;
 
-  test_bench() : cfg(make_cell_cfg_req()), res_grid(cfg) {}
+  test_bench() : cfg(make_default_sched_cell_configuration_request()), res_grid(cfg) {}
 
   test_bench(const ra_sched_param& paramters) : cfg(make_cell_cfg_request(paramters)), res_grid(cfg){};
 
@@ -176,7 +176,7 @@ struct test_bench {
 
   static sched_cell_configuration_request_message make_cell_cfg_request(const ra_sched_param& params)
   {
-    sched_cell_configuration_request_message cfg_req = make_cell_cfg_req();
+    sched_cell_configuration_request_message cfg_req = make_default_sched_cell_configuration_request();
     auto& pusch_list = cfg_req.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
     pusch_list.resize(params.k2_list.size());
     for (unsigned i = 0; i < params.k2_list.size(); ++i) {
@@ -185,7 +185,7 @@ struct test_bench {
       pusch_list[i].map_type = pusch_time_domain_resource_allocation::mapping_type::typeA;
     }
     if (params.is_tdd) {
-      cfg_req.tdd_ul_dl_cfg_common = test_helpers::make_default_tdd_ul_dl_config_common();
+      cfg_req.tdd_ul_dl_cfg_common = du_config_helpers::make_default_tdd_ul_dl_config_common();
     }
     return cfg_req;
   }
@@ -283,7 +283,7 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
   // We group the rach_indication_messages in a map organized as follows:
   // - Each map element contains a list with all the unprocessed rach_indication_messages with common RA-RNTI
   // - In a list, rach_indication_messages have the same RA-RNTI, but different RAPIDs
-  std::map<uint16_t, std::list<rach_indication_message> > rach_per_ra_rnti_map;
+  std::map<uint16_t, std::list<rach_indication_message>> rach_per_ra_rnti_map;
 
   // NOTE: We use a common counter as, for each RACH indication, under the assumptions above, 1 MAC subPDU (as part of
   // the RAR MAC PDU) and 1 MSG3 gets allocated, so the RBs occupancy of RAR and MSG3 grants scale with the number of

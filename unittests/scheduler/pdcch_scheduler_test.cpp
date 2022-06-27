@@ -10,10 +10,9 @@ void test_pdcch_sched_sib1()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation SIB1"};
 
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  cell_configuration      cfg{msg};
-  cell_resource_allocator res_grid{cfg};
+  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  cell_configuration                       cfg{msg};
+  cell_resource_allocator                  res_grid{cfg};
 
   pdcch_scheduler_impl pdcch_sch(cfg);
 
@@ -43,10 +42,9 @@ void test_pdcch_sched_rar()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation RAR"};
 
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  cell_configuration      cfg{msg};
-  cell_resource_allocator res_grid{cfg};
+  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  cell_configuration                       cfg{msg};
+  cell_resource_allocator                  res_grid{cfg};
 
   pdcch_scheduler_impl pdcch_sch(cfg);
 
@@ -81,9 +79,8 @@ void test_pdcch_sched_ue()
 {
   test_delimit_logger delimiter{"Test PDCCH Allocation UE DL"};
 
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  sched_ue_creation_request_message ue_creation_msg =
+  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  sched_ue_creation_request_message        ue_creation_msg =
       make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
   cell_configuration      cfg{msg};
   cell_resource_allocator res_grid{cfg};

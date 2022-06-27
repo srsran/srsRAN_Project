@@ -146,7 +146,7 @@ void test_cell_resource_grid()
 /// Test allocation of resources in a cell resource grid
 void test_pusch_resource_allocation()
 {
-  cell_configuration      cell_cfg{make_cell_cfg_req()};
+  cell_configuration      cell_cfg{make_default_sched_cell_configuration_request()};
   cell_resource_allocator res_grid_alloc{cell_cfg};
   bwp_configuration       bwp_cfg{};
   bwp_cfg.crbs = {0, 52};

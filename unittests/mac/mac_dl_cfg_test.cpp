@@ -11,12 +11,13 @@
 #include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "../../lib/mac/mac_dl/mac_dl_processor.h"
 #include "mac_ctrl_test_dummies.h"
+#include "mac_test_helpers.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/executors/blocking_task_worker.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/test_utils.h"
-#include "thread"
+#include <thread>
 
 using namespace srsgnb;
 
@@ -85,7 +86,7 @@ struct add_reconf_delete_ue_test_task {
     delete_msg.rnti       = to_rnti(0x4601);
   }
 
-  void operator()(coro_context<eager_async_task<void> >& ctx)
+  void operator()(coro_context<eager_async_task<void>>& ctx)
   {
     CORO_BEGIN(ctx);
     // UE creation
@@ -131,7 +132,7 @@ void test_dl_ue_procedure_execution_contexts()
   mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cell.
-  mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_creation_request();
+  mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_config();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   mac_dl.add_cell(mac_cell_cfg);
 
@@ -177,10 +178,10 @@ void test_dl_ue_procedure_tsan()
   mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cells.
-  mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_creation_request();
+  mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();
   // Set this to a valid ARFCN value (band 3, in this case, but it doesn't matter) - Required for SSB.
   mac_dl.add_cell(cell_cfg1);
-  mac_cell_creation_request cell_cfg2 = test_helpers::make_default_mac_cell_creation_request();
+  mac_cell_creation_request cell_cfg2 = test_helpers::make_default_mac_cell_config();
   cell_cfg2.cell_index                = to_du_cell_index(1);
   mac_dl.add_cell(cell_cfg2);
 

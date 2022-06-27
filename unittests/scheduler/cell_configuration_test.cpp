@@ -16,7 +16,7 @@ using namespace srsgnb;
 
 void test_cell_config_request()
 {
-  sched_cell_configuration_request_message default_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message default_msg = make_default_sched_cell_configuration_request();
   sched_cell_configuration_request_message msg         = default_msg;
 
   // Test default config

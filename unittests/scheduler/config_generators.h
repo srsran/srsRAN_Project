@@ -17,11 +17,10 @@
 
 namespace srsgnb {
 
-sched_cell_configuration_request_message make_cell_cfg_req()
+inline sched_cell_configuration_request_message make_default_sched_cell_configuration_request()
 {
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  return msg;
+  du_cell_config default_du_cell_cfg = du_config_helpers::make_default_du_cell_config();
+  return make_sched_cell_config_req(to_du_cell_index(0), default_du_cell_cfg);
 }
 
 rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)

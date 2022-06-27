@@ -32,7 +32,7 @@ public:
 
   void add_cell(const mac_cell_creation_request& msg) override
   {
-    srs_sched->handle_cell_configuration_request(make_scheduler_cell_configuration_request(msg));
+    srs_sched->handle_cell_configuration_request(msg.sched_req);
   }
 
   void remove_cell(du_cell_index_t cell_index) override
@@ -42,7 +42,7 @@ public:
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
 
       // Create UE in the Scheduler.
@@ -58,7 +58,7 @@ public:
 
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
 
       // Reconfigure UE in the scheduler.
@@ -74,7 +74,7 @@ public:
 
   async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
 
       // Remove UE from the scheduler.

@@ -28,7 +28,7 @@ void test_no_ues()
   scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{cell_cfg_msg};
   sch.handle_cell_configuration_request(cell_cfg_msg);
 
@@ -48,9 +48,9 @@ void test_rach_indication()
   scheduler_impl           sch{cfg_notif};
 
   // Action 1: Add Cell.
-  sched_cell_configuration_request_message cell_cfg_msg = make_cell_cfg_req();
+  sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
   cell_configuration                       cell_cfg{cell_cfg_msg};
-  sch.handle_cell_configuration_request(make_cell_cfg_req());
+  sch.handle_cell_configuration_request(make_default_sched_cell_configuration_request());
 
   // Action 2: Add RACH indication.
   // Note: RACH is added in a slot different than the SIB1 to avoid PDCCH conflicts.

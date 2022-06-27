@@ -82,8 +82,7 @@ struct test_bench {
   sched_cell_configuration_request_message
   make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap)
   {
-    sched_cell_configuration_request_message msg =
-        make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
+    sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
     msg.ssb_config.scs                               = init_bwp_scs;
     // Change Carrier parameters when SCS is 30kHz.

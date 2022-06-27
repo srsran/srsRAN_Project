@@ -13,6 +13,7 @@
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/scheduler/bwp_configuration.h"
 #include "srsgnb/scheduler/sched_consts.h"
+#include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 
 namespace srsgnb {
@@ -41,22 +42,11 @@ struct mac_cell_creation_request {
   carrier_configuration ul_carrier;
   ssb_configuration     ssb_cfg;
   prach_configuration   prach_cfg;
-  /// If present, the cell is in TDD duplex mode.
-  optional<tdd_configuration> tdd_cfg;
-  /// DL Configuration Common.
-  dl_config_common dl_cfg_common;
-  ul_config_common ul_cfg_common;
+
+  /// Embedded scheduler cell configuration request.
+  sched_cell_configuration_request_message sched_req;
 
   /// [Implementation-defined] SIB1 parameters.
-  /// This is included in MIB message and defines the CORESET 0 and SearchSpaceSet 0. It will be passed to the
-  /// scheduler.
-  /// NOTE: Although not present in O-RAN WG8, this value must be passed from the DU.
-  // TODO: import this value from somewhere (RRC?)
-  uint8_t           pdcch_config_sib1;
-  uint8_t           sib1_mcs;
-  uint8_t           sib1_rv;
-  aggregation_level sib1_dci_aggr_lev;
-  unsigned          sib1_rxtx_periodicity;
   byte_buffer       sib1_payload;
 
   // TODO: Fill remaining fields

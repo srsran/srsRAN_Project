@@ -8,9 +8,8 @@ using namespace srsgnb;
 
 void test_ue_cfg_creation()
 {
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  cell_configuration cell_cfg{msg};
+  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  cell_configuration                       cell_cfg{msg};
 
   auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
 
@@ -37,9 +36,8 @@ void test_ue_cfg_creation()
 
 void test_ue_cfg_reconfig()
 {
-  sched_cell_configuration_request_message msg =
-      make_scheduler_cell_configuration_request(test_helpers::make_default_mac_cell_creation_request());
-  cell_configuration cell_cfg{msg};
+  sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+  cell_configuration                       cell_cfg{msg};
   auto ue_create_msg = make_scheduler_ue_creation_request(test_helpers::make_default_ue_creation_request());
   ue_cell_configuration ue_cfg{cell_cfg, ue_create_msg.serv_cell_cfg};
 
@@ -47,7 +45,8 @@ void test_ue_cfg_reconfig()
   ue_cell_reconf.init_dl_bwp.emplace();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg.emplace();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.emplace_back();
-  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back()    = test_helpers::make_default_coreset_config();
+  ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back() =
+      du_config_helpers::make_default_coreset_config();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->coreset_to_addmod_list.back().id = to_coreset_id(2);
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list.emplace_back();
   ue_cell_reconf.init_dl_bwp->pdcch_cfg->ss_to_rel_list[0] = to_search_space_id(2);
