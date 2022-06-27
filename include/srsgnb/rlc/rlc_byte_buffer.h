@@ -102,9 +102,7 @@ public:
   explicit rlc_byte_buffer(const byte_buffer& buf_) : payload(buf_) {}
   rlc_byte_buffer(const byte_buffer& buf_, size_t start, size_t sz) : payload(buf_, start, sz) {}
 
-  void set_header(const byte_buffer& buf) { header = buf.copy(); }
-
-  void set_header(byte_buffer&& buf) { header = std::move(buf); }
+  void set_header(byte_buffer buf) { header = std::move(buf); }
 
   template <typename Iterator>
   void set_header(Iterator b, Iterator e)

@@ -97,15 +97,25 @@ void test_rlc_buffer_header_set()
   rlc_byte_buffer      buf;
   byte_buffer          buf2{vec};
 
-  // R-value header set.
+  // Set header avoiding ref-count increment and avoiding deep copy.
   buf.set_header(std::move(buf2));
-  TESTASSERT(buf2.empty());
   TESTASSERT(buf == vec);
+  TESTASSERT(buf2.empty());
 
-  // L-value header set.
+  // Set header by ref-count increment, avoiding deep copy.
   buf.clear();
   buf2 = vec;
-  buf.set_header(buf2);
+  buf.set_header(buf2.copy());
+  TESTASSERT(buf == vec);
+  *buf2.begin() = 5;
+  TESTASSERT(buf != vec);
+
+  // Set header by deep copy.
+  buf.clear();
+  buf2 = vec;
+  buf.set_header(buf2.deep_copy());
+  TESTASSERT(buf == vec);
+  *buf2.begin() = 5;
   TESTASSERT(buf == vec);
 }
 
