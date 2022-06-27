@@ -83,8 +83,8 @@ void test_tx()
 
   {
     // write SDU into upper end
-    byte_buffer              sdu = make_pdu_and_log(tv_sdu);
-    std::unique_ptr<rlc_sdu> boxed_sdu(new rlc_sdu(1000, std::move(sdu)));
+    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
+    rlc_sdu     boxed_sdu = {1000, std::move(sdu)};
     rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
   }
 
@@ -104,8 +104,8 @@ void test_tx()
 
   {
     // write another SDU into upper end
-    byte_buffer              sdu = make_pdu_and_log(tv_sdu);
-    std::unique_ptr<rlc_sdu> boxed_sdu(new rlc_sdu(1001, std::move(sdu)));
+    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
+    rlc_sdu     boxed_sdu = {1001, std::move(sdu)};
     rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
   }
 
@@ -119,8 +119,8 @@ void test_tx()
 
   {
     // write another SDU into upper end
-    byte_buffer              sdu = make_pdu_and_log(tv_sdu);
-    std::unique_ptr<rlc_sdu> boxed_sdu(new rlc_sdu(1002, std::move(sdu)));
+    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
+    rlc_sdu     boxed_sdu = {1002, std::move(sdu)};
     rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
   }
 

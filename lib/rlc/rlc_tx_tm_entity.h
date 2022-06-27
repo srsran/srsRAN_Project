@@ -24,16 +24,15 @@ private:
 public:
   rlc_tx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     rlc_tx_entity(du_index, lcid, upper_cn)
-  {
-  }
+  {}
 
   // Interfaces for higher layers
-  void handle_sdu(std::unique_ptr<rlc_sdu> sdu) override
+  void handle_sdu(rlc_sdu sdu) override
   {
-    if (sdu_queue.write(*sdu)) {
-      logger.log_info("Tx SDU (length: {} B, enqueued SDUs: {}", sdu->buf.length(), sdu_queue.size_sdus());
+    if (sdu_queue.write(sdu)) {
+      logger.log_info("Tx SDU (length: {} B, enqueued SDUs: {}", sdu.buf.length(), sdu_queue.size_sdus());
     } else {
-      logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {}", sdu->buf.length(), sdu_queue.size_sdus());
+      logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {}", sdu.buf.length(), sdu_queue.size_sdus());
     }
   }
 

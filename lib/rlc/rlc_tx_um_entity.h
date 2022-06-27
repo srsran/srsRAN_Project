@@ -20,13 +20,12 @@ class rlc_tx_um_entity : public rlc_tx_entity
 public:
   rlc_tx_um_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     rlc_tx_entity(du_index, lcid, upper_cn)
-  {
-  }
+  {}
 
   /*
    * Interfaces for higher layers
    */
-  void handle_sdu(std::unique_ptr<rlc_sdu> sdu) override
+  void handle_sdu(rlc_sdu sdu) override
   {
     // TODO
   }

@@ -61,7 +61,7 @@ public:
   virtual ~rlc_tx_sdu_handler() = default;
 
   /// Handle the incoming PDU.
-  virtual void handle_sdu(std::unique_ptr<rlc_sdu> sdu) = 0;
+  virtual void handle_sdu(rlc_sdu sdu) = 0;
 };
 
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
