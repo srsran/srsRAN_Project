@@ -34,9 +34,9 @@ public:
 
 struct downlink_processor_pool_config {
   struct info {
-    unsigned                                          sector;
-    unsigned                                          numerology;
-    std::vector<std::unique_ptr<downlink_processor> > procs;
+    unsigned                                         sector;
+    unsigned                                         numerology;
+    std::vector<std::unique_ptr<downlink_processor>> procs;
   };
 
   std::vector<info> dl_processors;

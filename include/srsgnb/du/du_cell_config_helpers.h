@@ -77,7 +77,8 @@ inline coreset_configuration make_default_coreset0_config(const du_cell_config_d
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(5, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
-  cfg.duration      = static_cast<unsigned>(desc.nof_symb_coreset);
+  cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
+
   unsigned rb_start = params.offset_to_point_a - desc.offset;
   cfg.set_coreset0_crbs({rb_start, rb_start + desc.nof_rb_coreset});
   // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.
@@ -112,7 +113,7 @@ inline search_space_configuration make_default_common_search_space_config()
   cfg.id                         = to_search_space_id(1);
   cfg.nof_candidates             = {1, 1, 1, 0, 0};
   cfg.monitoring_symbols_within_slot.emplace();
-  cfg.monitoring_symbols_within_slot->set(0, true);
+  cfg.monitoring_symbols_within_slot->set(cfg.monitoring_symbols_within_slot->size() - 1, true);
   return cfg;
 }
 

@@ -13,4 +13,3 @@ add_subdirectory(messages)
 add_executable(mac_to_fapi_translator_test mac_to_fapi_translator_test.cpp)
 target_link_libraries(mac_to_fapi_translator_test srsgnb_mac_to_fapi_translator srslog srsgnb_mac_translator_helpers)
 add_test(mac_to_fapi_translator_test mac_to_fapi_translator_test)
-

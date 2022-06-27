@@ -70,7 +70,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   static const unsigned transmision_scheme = 0;
   static const unsigned num_layers         = 1;
   // Set nid_pdsch to pci.
-  static const unsigned nid_pdsch = 1;
+  unsigned nid_pdsch = mac_pdu.pdsch_cfg.n_id;
   builder.set_codeword_information_parameters(
       nid_pdsch, num_layers, transmision_scheme, pdsch_ref_point_type::subcarrier_0);
 
@@ -94,7 +94,6 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
     builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, vrb_to_prb_mapping_type::non_interleaved);
-
   } else {
     const prb_interval& prb_int = mac_pdu.pdsch_cfg.prbs.prbs();
     builder.set_pdsch_allocation_in_frequency_type_1(

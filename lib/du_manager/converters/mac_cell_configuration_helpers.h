@@ -71,7 +71,7 @@ make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_
   sched_req.sib1_mcs          = 5;
   sched_req.sib1_rv           = 0;
   sched_req.sib1_dci_aggr_lev = aggregation_level::n4;
-  sched_req.sib1_retx_period  = sib1_rtx_periodicity::ms160;
+  sched_req.sib1_retx_period  = sib1_rtx_periodicity::ms10;
   sched_req.sib1_payload_size = sib1_payload_size;
 
   return sched_req;

@@ -6,5 +6,6 @@
 # the distribution.
 #
 
+add_subdirectory(du)
 add_subdirectory(phy)
 add_subdirectory(radio)

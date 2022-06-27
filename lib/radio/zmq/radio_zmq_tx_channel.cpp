@@ -69,7 +69,7 @@ radio_zmq_tx_channel::radio_zmq_tx_channel(void*                       zmq_conte
       bind_trial_count++;
     }
   }
-  
+
   if (!bind_success) {
     logger.error("Failed to bind transmitter socket ({}). {}.", config.address, zmq_strerror(zmq_errno()));
     return;
