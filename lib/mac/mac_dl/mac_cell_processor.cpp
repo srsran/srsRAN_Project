@@ -27,7 +27,8 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   ssb_helper(cell_cfg_req_.pci, cell_cfg_req_.ssb_cfg, cell_cfg_req_.dl_carrier.arfcn),
   sched_obj(sched_),
   ue_mng(ue_mng_)
-{}
+{
+}
 
 async_task<void> mac_cell_processor::start()
 {
@@ -102,6 +103,7 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
 {
   // Pass scheduler output directly to PHY.
   mac_res.dl_res = &dl_res;
+  mac_res.slot   = sl_tx;
 
   // Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY.
   for (auto& ssb : dl_res.bc.ssb_info) {
@@ -120,6 +122,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
                                                   du_cell_index_t        cell_index,
                                                   const dl_sched_result& dl_res)
 {
+  data_res.slot = sl_tx;
   // Assemble scheduled SIBs' payload.
   for (size_t sib1_idx = 0; sib1_idx < dl_res.bc.sibs.size(); sib1_idx++) {
     srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
