@@ -18,31 +18,31 @@ stages:
 ## Static
 
 .static:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.4
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.5
   stage: static
   rules:
     - if: $ON_MR
   variables:
     GIT_DEPTH: 0
-  before_script:
-    - git remote set-branches --add origin $CI_MERGE_REQUEST_TARGET_BRANCH_NAME
-    - git fetch
 
 code-format:
   extends: .static
   script:
-    - run-clang-format-diff.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - run-clang-format-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
     - hex2lowercase.sh
     - is-pristine-repo.sh
+  artifacts:
+    paths:
+      - clang-format.patch
+    when: on_failure
 
 no-binaries-added:
   extends: .static
   script:
-    - check-for-added-binaries.sh origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME
+    - check-for-added-binaries.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
   allow_failure: true
 
-## Build + Unit Tests + Integration tests
-
+# Build + Unit Tests
 alternative builds:
   stage: build
   rules:
