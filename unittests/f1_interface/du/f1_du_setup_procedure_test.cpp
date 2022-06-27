@@ -8,8 +8,9 @@
  *
  */
 
-#include "lib/du_manager/converters/f1c_asn1_helpers.h"
+#include "lib/du_manager/converters/f1c_configuration_helpers.h"
 #include "lib/f1_interface/common/f1ap_asn1_utils.h"
+#include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
@@ -33,9 +34,11 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
   f1c_null_notifier msg_notifier = {};
   auto              f1ap_du      = create_f1ap(timers, msg_notifier);
 
-  f1_setup_request_message request_msg  = {};
-  du_setup_params          setup_params = {};
-  fill_asn1_f1_setup_request(request_msg.msg, setup_params);
+  f1_setup_request_message           request_msg  = {};
+  du_setup_params                    setup_params = {};
+  du_cell_config                     cell         = du_config_helpers::make_default_du_cell_config();
+  std::vector<const du_cell_config*> cells        = {&cell};
+  fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");
@@ -129,9 +132,11 @@ void test_f1_setup_retry_limit()
   f1c_null_notifier msg_notifier = {};
   auto              f1ap_du      = create_f1ap(timers, msg_notifier);
 
-  f1_setup_request_message request_msg  = {};
-  du_setup_params          setup_params = {};
-  fill_asn1_f1_setup_request(request_msg.msg, setup_params);
+  f1_setup_request_message           request_msg  = {};
+  du_setup_params                    setup_params = {};
+  du_cell_config                     cell         = du_config_helpers::make_default_du_cell_config();
+  std::vector<const du_cell_config*> cells        = {&cell};
+  fill_asn1_f1_setup_request(request_msg.msg, setup_params, cells);
 
   // Action 1: Launch F1 setup procedure
   test_logger.info("TEST: Lauch f1 setup request procedure...");

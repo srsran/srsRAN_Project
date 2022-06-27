@@ -7,7 +7,7 @@
 #
 
 add_executable(f1_du_setup_procedure_test du/f1_du_setup_procedure_test.cpp)
-target_link_libraries(f1_du_setup_procedure_test srsgnb_f1 srsgnb_support srslog f1ap_asn1)
+target_link_libraries(f1_du_setup_procedure_test srsgnb_f1 srsgnb_support srslog f1ap_asn1 du_manager_converters)
 target_include_directories(f1_du_setup_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 add_test(f1_du_setup_procedure_test f1_du_setup_procedure_test)
 

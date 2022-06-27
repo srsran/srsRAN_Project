@@ -7,6 +7,7 @@
 #
 
 
-set(SOURCES ssb_configuration_asn1_helpers.cpp)
+set(SOURCES ssb_configuration_asn1_helpers.cpp f1c_configuration_helpers.cpp)
 
-add_library(du_asn1_helpers STATIC ${SOURCES})
+add_library(du_manager_converters STATIC ${SOURCES})
+target_link_libraries(du_manager_converters rrc_nr_asn1 f1ap_asn1)

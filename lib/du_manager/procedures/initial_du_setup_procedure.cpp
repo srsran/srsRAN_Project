@@ -9,7 +9,7 @@
  */
 
 #include "initial_du_setup_procedure.h"
-#include "../converters/f1c_asn1_helpers.h"
+#include "../converters/f1c_configuration_helpers.h"
 #include "../converters/mac_cell_configuration_helpers.h"
 #include "../du_cell_manager.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -22,14 +22,12 @@ initial_du_setup_procedure::initial_du_setup_procedure(const du_manager_config_t
 {
 }
 
-void initial_du_setup_procedure::operator()(coro_context<async_task<void> >& ctx)
+void initial_du_setup_procedure::operator()(coro_context<async_task<void>>& ctx)
 {
   CORO_BEGIN(ctx);
 
-  fill_asn1_f1_setup_request(request_msg.msg, cfg.setup_params);
-
   // Initiate F1 Setup.
-  CORO_AWAIT_VALUE(response_msg, cfg.f1ap_conn_mng->handle_f1ap_setup_request(request_msg));
+  CORO_AWAIT_VALUE(response_msg, start_f1_setup_request());
 
   // Handle F1 setup result.
   if (response_msg.success) {
@@ -47,6 +45,20 @@ void initial_du_setup_procedure::operator()(coro_context<async_task<void> >& ctx
   cfg.mac_cell_mng->get_cell_controller(to_du_cell_index(0)).start();
 
   CORO_RETURN();
+}
+
+async_task<f1_setup_response_message> initial_du_setup_procedure::start_f1_setup_request()
+{
+  // Prepare request to send to F1.
+  std::vector<const du_cell_config*> cells_to_add;
+  for (size_t i = 0; i < cell_mng.nof_cells(); ++i) {
+    cells_to_add.push_back(&cell_mng.get_cell_cfg(to_du_cell_index(i)));
+  }
+  f1_setup_request_message request_msg = {};
+  fill_asn1_f1_setup_request(request_msg.msg, cfg.setup_params, cells_to_add);
+
+  // Initiate F1 Setup Request.
+  return cfg.f1ap_conn_mng->handle_f1ap_setup_request(request_msg);
 }
 
 void initial_du_setup_procedure::handle_f1_setup_response(const asn1::f1ap::f1_setup_resp_s& resp)
