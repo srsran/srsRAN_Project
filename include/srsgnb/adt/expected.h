@@ -25,9 +25,11 @@ class expected;
 
 namespace detail {
 template <typename T>
-struct is_expected : std::false_type {};
+struct is_expected : std::false_type {
+};
 template <typename V, typename E>
-struct is_expected<expected<V, E> > : std::true_type {};
+struct is_expected<expected<V, E>> : std::true_type {
+};
 } // namespace detail
 
 /// Class that can either hold a value type T, in case of success, or an error type E, in case of failure.
@@ -49,7 +51,8 @@ public:
                                         not detail::is_expected<typename std::decay<U>::type>::value,
                                     int>::type = 0>
   explicit expected(U&& u) noexcept : has_val(true), val(std::forward<U>(u))
-  {}
+  {
+  }
   expected(const expected& other)
   {
     if (other.has_val) {
@@ -97,7 +100,6 @@ public:
       new (&val) T(std::move(other));
     } else {
       val = std::move(other);
-
     }
     return *this;
   }

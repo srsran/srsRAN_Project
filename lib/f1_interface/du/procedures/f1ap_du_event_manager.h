@@ -36,7 +36,8 @@ public:
 
   explicit f1ap_event_manager(timer_manager& timers) :
     transactions(timers, f1ap_outcome{asn1::f1ap::unsuccessful_outcome_s{}})
-  {}
+  {
+  }
 };
 
 } // namespace srs_du

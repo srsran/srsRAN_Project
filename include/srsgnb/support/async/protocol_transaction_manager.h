@@ -27,7 +27,8 @@ public:
   protocol_transaction() : transaction_id(std::numeric_limits<unsigned>::max()), ev(nullptr) {}
   protocol_transaction(unsigned transaction_id_, manual_event<result_type>& ev_) :
     transaction_id(transaction_id_), ev(&ev_)
-  {}
+  {
+  }
 
   /// Gets transaction id.
   unsigned id() const { return transaction_id; }
@@ -65,7 +66,8 @@ class protocol_transaction_manager
 public:
   explicit protocol_transaction_manager(timer_manager& timer_db_, const T& cancel_value_ = {}) :
     timer_db(timer_db_), cancel_value(cancel_value_)
-  {}
+  {
+  }
 
   protocol_transaction<T> create_transaction()
   {

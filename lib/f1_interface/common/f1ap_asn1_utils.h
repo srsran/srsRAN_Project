@@ -11,8 +11,8 @@
 #ifndef SRSGNB_F1AP_ASN1_UTILS_H
 #define SRSGNB_F1AP_ASN1_UTILS_H
 
-#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/adt/expected.h"
+#include "srsgnb/asn1/f1ap.h"
 
 namespace srsgnb {
 
@@ -36,7 +36,8 @@ inline const char* get_cause_str(const asn1::f1ap::cause_c& cause)
 }
 
 /// Extracts message type.
-inline const char* get_message_type_str(const asn1::f1ap::f1_ap_pdu_c& pdu) {
+inline const char* get_message_type_str(const asn1::f1ap::f1_ap_pdu_c& pdu)
+{
   switch (pdu.type().value) {
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
       return pdu.init_msg().value.type().to_string();
@@ -51,7 +52,8 @@ inline const char* get_message_type_str(const asn1::f1ap::f1_ap_pdu_c& pdu) {
 }
 
 /// Extracts transaction id of Initiating message.
-inline expected<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out) {
+inline expected<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out)
+{
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request:
@@ -70,7 +72,8 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::init_msg_s& out) {
 }
 
 /// Extracts transaction id of Successful Outcome message.
-inline expected<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome_s& out) {
+inline expected<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome_s& out)
+{
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1_ap_elem_procs_o::successful_outcome_c::types_opts::f1_setup_resp:
@@ -89,7 +92,8 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::successful_outcome
 }
 
 /// Extracts transaction id of Unsuccessful Outcome message.
-inline expected<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outcome_s& out) {
+inline expected<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outcome_s& out)
+{
   using namespace asn1::f1ap;
   switch (out.value.type().value) {
     case f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail:
@@ -108,13 +112,14 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::unsuccessful_outco
 }
 
 /// Extracts transaction id of F1AP PDU.
-inline expected<uint8_t> get_transaction_id(const asn1::f1ap::f1_ap_pdu_c& pdu) {
+inline expected<uint8_t> get_transaction_id(const asn1::f1ap::f1_ap_pdu_c& pdu)
+{
   using namespace asn1::f1ap;
   switch (pdu.type().value) {
     case f1_ap_pdu_c::types_opts::init_msg:
       return get_transaction_id(pdu.init_msg());
     case f1_ap_pdu_c::types_opts::successful_outcome:
-    return get_transaction_id(pdu.successful_outcome());
+      return get_transaction_id(pdu.successful_outcome());
     case f1_ap_pdu_c::types_opts::unsuccessful_outcome:
       return get_transaction_id(pdu.unsuccessful_outcome());
     default:

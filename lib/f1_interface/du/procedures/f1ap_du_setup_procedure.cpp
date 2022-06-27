@@ -19,9 +19,10 @@ f1ap_du_setup_procedure::f1ap_du_setup_procedure(const f1_setup_request_message&
                                                  f1ap_event_manager&             ev_mng_,
                                                  srslog::basic_logger&           logger_) :
   request(request_), cu_notifier(cu_notif_), ev_mng(ev_mng_), logger(logger_)
-{}
+{
+}
 
-void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_response_message> >& ctx)
+void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_response_message>>& ctx)
 {
   CORO_BEGIN(ctx);
 

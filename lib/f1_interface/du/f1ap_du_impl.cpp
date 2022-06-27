@@ -43,7 +43,7 @@ async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(con
   // TODO: add UE create procedure
   // TODO: Change execution context.
   return launch_async(
-      [this, msg, resp = f1ap_ue_create_response{}](coro_context<async_task<f1ap_ue_create_response> >& ctx) mutable {
+      [this, msg, resp = f1ap_ue_create_response{}](coro_context<async_task<f1ap_ue_create_response>>& ctx) mutable {
         CORO_BEGIN(ctx);
         resp.result = false;
         if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {
@@ -72,7 +72,7 @@ f1ap_du_impl::handle_ue_context_modification(const f1ap_ue_context_modification_
   f1ap_event_manager::f1ap_ue_context_modification_outcome_t ue_ctxt_mod_resp;
 
   return launch_async([this, ue_ctxt_mod_resp, res = f1ap_ue_context_modification_response_message{}, msg](
-                          coro_context<async_task<f1ap_ue_context_modification_response_message> >& ctx) mutable {
+                          coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(ue_ctxt_mod_resp, events->f1ap_ue_context_modification_response);
@@ -108,8 +108,11 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
 {
   expected<uint8_t> transaction_id = get_transaction_id(pdu);
-  if(transaction_id.has_value()) {
-    logger.info("Handling F1AP PDU of type \"{}.{}\" with transaction id={}", pdu.type().to_string(), get_message_type_str(pdu), transaction_id.value());
+  if (transaction_id.has_value()) {
+    logger.info("Handling F1AP PDU of type \"{}.{}\" with transaction id={}",
+                pdu.type().to_string(),
+                get_message_type_str(pdu),
+                transaction_id.value());
   } else {
     logger.info("Handling F1AP PDU of type \"{}.{}\"", pdu.type().to_string(), get_message_type_str(pdu));
   }
@@ -144,7 +147,7 @@ void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
 void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
 {
   expected<uint8_t> transaction_id = get_transaction_id(outcome);
-  if(transaction_id.is_error()) {
+  if (transaction_id.is_error()) {
     logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }
@@ -156,7 +159,7 @@ void f1ap_du_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 void f1ap_du_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
 {
   expected<uint8_t> transaction_id = get_transaction_id(outcome);
-  if(transaction_id.is_error()) {
+  if (transaction_id.is_error()) {
     logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
     return;
   }

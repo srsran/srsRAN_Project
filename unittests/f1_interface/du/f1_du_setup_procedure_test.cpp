@@ -9,12 +9,12 @@
  */
 
 #include "lib/du_manager/converters/f1c_asn1_helpers.h"
+#include "lib/f1_interface/common/f1ap_asn1_utils.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/test_helpers.h"
-#include "lib/f1_interface/common/f1ap_asn1_utils.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -44,14 +44,15 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
 
   // Status: CU received F1 Setup Request.
   TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value == asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
+  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
   TESTASSERT(not t.ready());
 
   // Action 2: F1 setup response received.
   asn1::f1ap::f1_ap_pdu_c pdu;
-  unsigned transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
+  unsigned                transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
   // Successful initial outcome
   if (initial_outcome == test_outcome::success) {
     pdu.set_successful_outcome();
@@ -85,7 +86,8 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
 
     // Status: CU received F1 Setup Request again.
     TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-    TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value == asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
+    TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+               asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
     unsigned transaction_id2 = get_transaction_id(msg_notifier.last_pdu).value();
     TESTASSERT_NEQ(transaction_id, transaction_id2);
 
@@ -138,14 +140,15 @@ void test_f1_setup_retry_limit()
 
   // Status: CU received F1 Setup Request.
   TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value == asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
+  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+             asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status
   TESTASSERT(not t.ready());
 
   // Action 2: F1 setup response received.
   asn1::f1ap::f1_ap_pdu_c pdu;
-  unsigned transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
+  unsigned                transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
 
   pdu.set_unsuccessful_outcome();
   pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
