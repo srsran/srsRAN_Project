@@ -46,7 +46,7 @@ public:
   {
     rlc_sdu sdu = {};
     if (not sdu_queue.read(sdu)) {
-      logger.log_info("No data available to be sent in provided space ({} B)", nof_bytes);
+      logger.log_info("No data available to be sent. Provided space ({} B)", nof_bytes);
       return false;
     }
     size_t sdu_size = sdu.buf.length();
@@ -55,9 +55,9 @@ public:
       return false;
     }
 
-    // pack SDU -- in TM there is no header, just the plain PDU
+    // In TM there is no header, just pass the plain SDU
     pdu = std::move(sdu.buf);
-    logger.log_info("Provided Tx PDU ({} B)", sdu_size);
+    logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     return true;
   }
 
