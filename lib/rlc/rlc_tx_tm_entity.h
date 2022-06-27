@@ -27,9 +27,7 @@ public:
   {
   }
 
-  /*
-   * Interfaces for higher layers
-   */
+  // Interfaces for higher layers
   void handle_sdu(std::unique_ptr<rlc_sdu> sdu) override
   {
     if (sdu_queue.write(*sdu)) {
@@ -39,9 +37,7 @@ public:
     }
   }
 
-  /*
-   * Interfaces for lower layers
-   */
+  // Interfaces for lower layers
   bool pull_pdu(byte_buffer& pdu, uint32_t nof_bytes) override
   {
     rlc_sdu sdu = {};
