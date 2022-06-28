@@ -90,8 +90,9 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
   // According to FAPI FreqDomainResource[0] designates LSByte of RRC parameter frequencyDomainResources, and the LSBit
   // of FreqDomainResource[0] carries frequencyDomainResources[0].
   coreset.frequency_resources.reset();
-  coreset.frequency_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
-  for (unsigned freq_res_index = 0, e = pdcch_constants::MAX_NOF_FREQ_RESOUCES; freq_res_index != e; ++freq_res_index) {
+  coreset.frequency_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+  for (unsigned freq_res_index = 0, e = pdcch_constants::MAX_NOF_FREQ_RESOURCES; freq_res_index != e;
+       ++freq_res_index) {
     unsigned byte = freq_res_index / 8;
     unsigned pos  = freq_res_index % 8;
 

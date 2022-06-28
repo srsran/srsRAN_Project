@@ -84,7 +84,7 @@ public:
     ///
     /// This is a bitmap defining non-overlapping groups of 6 PRBs in ascending order. Defined as \f$N_{CORESET}^RB\f$
     /// as per TS38.211 Section 7.3.2.2.
-    bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOUCES> frequency_resources;
+    bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES> frequency_resources;
     /// Indicates the CCE-to-REG mapping type as per TS38.211 Section 7.3.2.2.
     enum {
       /// CORESET is configured by the PBCH or SIB1, (subcarrier 0 of the CORESET)

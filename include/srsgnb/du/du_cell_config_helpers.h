@@ -45,7 +45,7 @@ inline coreset_configuration make_default_coreset_config()
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
-  cfg.freq_domain_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOUCES);
+  cfg.freq_domain_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
   for (size_t i = 0; i < 6; ++i) {
     cfg.freq_domain_resources.set(i);
   }
@@ -54,11 +54,17 @@ inline coreset_configuration make_default_coreset_config()
   return cfg;
 }
 
+/// Generates a default CORESET#0 configuration. The default CORESET#0 table index value used is equal to 6.
+/// \remark See TS 38.213, Table 13-1.
 inline coreset_configuration make_default_coreset0_config()
 {
   coreset_configuration cfg = make_default_coreset_config();
   cfg.id                    = to_coreset_id(0);
-  cfg.coreset0_rb_start     = 1;
+  cfg.duration              = 1;
+  cfg.coreset0_rb_start     = 0;
+  for (size_t i = 0; i < 48 / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE; ++i) {
+    cfg.freq_domain_resources.set(i);
+  }
   return cfg;
 }
 
@@ -102,7 +108,7 @@ inline dl_config_common make_default_dl_config_common()
   dl_config_common cfg{};
 
   // Configure FrequencyInfoDL.
-  cfg.freq_info_dl.offset_to_point_a = 0;
+  cfg.freq_info_dl.offset_to_point_a = 12;
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = subcarrier_spacing::kHz15;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;

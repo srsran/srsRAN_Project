@@ -22,7 +22,7 @@ static constexpr unsigned NOF_RB_PER_FREQ_RESOURCE = 6;
 
 /// Defines the maximum number of frequency resources in a CORESET as per TS38.331 in ControlResourceSet
 /// information element.
-static constexpr unsigned MAX_NOF_FREQ_RESOUCES = MAX_RB / NOF_RB_PER_FREQ_RESOURCE;
+static constexpr unsigned MAX_NOF_FREQ_RESOURCES = MAX_RB / NOF_RB_PER_FREQ_RESOURCE;
 
 /// Maximum number of DCIs in a single transmission (it is not specified by the TS).
 static constexpr unsigned MAX_NOF_DCI = 1;
