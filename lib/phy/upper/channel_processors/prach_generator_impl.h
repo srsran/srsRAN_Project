@@ -55,7 +55,7 @@ private:
   static unsigned
   get_nof_cyclic_shifts(unsigned prach_scs, restricted_set_config restricted_set, unsigned zero_correlation_zone);
 
-  ///
+  /// Determines the sequence length \f$L_{RA}\f$ as per TS38.211 Table 6.3.3.1-1.
   static unsigned get_sequence_length(preamble_format format);
 
   /// \brief Get PRACH subcarrier spacing \f$\Delta f^{RA}\f$.
@@ -73,38 +73,42 @@ private:
   /// \return Return a valid \f$N_{CP}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
   static unsigned get_N_cp_ra(preamble_format format);
 
-  /// Calculates sequence number \f$u\f$.
-  static unsigned get_sequence_number(unsigned root_sequence_index);
+  /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
+  static unsigned get_sequence_number_long(unsigned root_sequence_index);
 
   /// \brief Generates the \f$y_{u,v}\f$ sequence.
-  /// \param u Sequence number.
-  /// \param C_v
-  /// \return A view to the generated sequence.
+  /// \param[in] u   Sequence number.
+  /// \param[in] C_v Sequence shift.
+  /// \return A read-only view to the generated sequence.
   span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
 
   /// \brief Get the parameter \f$N_{RB}^{RA}\f$ as per TS38.211 Table 6.3.3.2-1.
   /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
   /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
-  /// \return
+  /// \return Return a valid \f$N_{RB}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
   unsigned get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
 
   /// \brief Get the parameter \f$\bar{k}\f$ as per TS38.211 Table 6.3.3.2-1.
   /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
   /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
-  /// \return
+  /// \return Return a valid \f$\bar{k}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
   unsigned get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
 
   /// \brief Modulates PRACH as per TS38.211 Section 5.3.2.
-  /// \param y_u_v
-  /// \param config
-  /// \return
-  span<const cf_t> modulate(span<const cf_t>y_u_v, const configuration &config);
+  /// \param[in] y_u_v  A read-only view of the frequency domain generated signal to modulate.
+  /// \param[in] config PRACH configuration.
+  /// \return A read-only view to the generated sequence.
+  span<const cf_t> modulate(span<const cf_t> y_u_v, const configuration& config);
 
 public:
   /// \brief PRACH generator constructor.
   ///
   /// The PRACH generator depends on the DFT to generate the time domain signals.
   ///
+  /// \param nof_prb_ul_grid_  Number of PRB for the UL resource grid.
+  /// \param dft_size_15kHz_   DFT size for 15kHz subcarrier spacing.
+  /// \param dft_l839_         DFT processor for generating long sequences.
+  /// \param dft_l139_         DFT processor for generating short sequences.
   /// \param dft_1_dot_25_kHz_ DFT processor for subcarrier spacing of 1.25kHz.
   /// \param dft_5_kHz_        DFT processor for subcarrier spacing of 5kHz.
   /// \param dft_short_        DFT processor for short preambles.

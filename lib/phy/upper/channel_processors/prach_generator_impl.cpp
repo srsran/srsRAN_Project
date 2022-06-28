@@ -127,7 +127,7 @@ unsigned prach_generator_impl::get_N_cp_ra(preamble_format format)
   return RESERVED;
 }
 
-unsigned prach_generator_impl::get_sequence_number(unsigned root_sequence_index)
+unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
 {
   static const std::array<uint16_t, 838> lut = {
       129, 710, 140, 699, 120, 719, 210, 629, 168, 671, 84,  755, 105, 734, 93,  746, 70,  769, 60,  779, 2,   837, 1,
@@ -349,7 +349,7 @@ span<const cf_t> prach_generator_impl::generate(const prach_generator::configura
     cyclic_shift                    = (config.preamble_index % nof_sequences_per_root) * N_cs;
   }
 
-  unsigned         sequence_number = get_sequence_number(root_sequence_index);
+  unsigned         sequence_number = get_sequence_number_long(root_sequence_index);
   span<const cf_t> y_u_v           = generate_y_u_v_long(sequence_number, cyclic_shift);
 
   return modulate(y_u_v, config);

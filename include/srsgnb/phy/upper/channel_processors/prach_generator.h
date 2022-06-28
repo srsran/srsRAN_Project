@@ -48,8 +48,8 @@ public:
   virtual ~prach_generator() = default;
 
   /// \brief Generates the PRACH time domain signal.
-  /// \param config Provides the necessary parameters to generate the time domain signal.
-  /// \return A view of the time domain generated signal.
+  /// \param[in] config Provides the necessary parameters to generate the time domain signal.
+  /// \return A read-only view of the time domain generated signal.
   virtual span<const cf_t> generate(const configuration& config) = 0;
 };
 } // namespace srsgnb
