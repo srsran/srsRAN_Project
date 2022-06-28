@@ -16,22 +16,8 @@
 
 using namespace srsgnb;
 
-static float tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
-{
-  srsran_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
-  return 1.0F / static_cast<float>(pow2(scaling));
-}
-
 static unsigned tbs_calculator_step3(float nof_info)
 {
-  // TS38.214 Table 5.1.3.2-1.
-  static const std::array<unsigned, 93> table_valid_tbs = {
-      24,   32,   40,   48,   56,   64,   72,   80,   88,   96,   104,  112,  120,  128,  136,  144,  152,  160,  168,
-      176,  184,  192,  208,  224,  240,  256,  272,  288,  304,  320,  336,  352,  368,  384,  408,  432,  456,  480,
-      504,  528,  552,  576,  608,  640,  672,  704,  736,  768,  808,  848,  888,  928,  984,  1032, 1064, 1128, 1160,
-      1192, 1224, 1256, 1288, 1320, 1352, 1416, 1480, 1544, 1608, 1672, 1736, 1800, 1864, 1928, 2024, 2088, 2152, 2216,
-      2280, 2408, 2472, 2536, 2600, 2664, 2728, 2792, 2856, 2976, 3104, 3240, 3368, 3496, 3624, 3752, 3824};
-
   unsigned n = 3;
   if (nof_info > pow2(9U)) {
     n = static_cast<unsigned>(std::floor(std::log2(nof_info))) - 6U;
@@ -42,7 +28,8 @@ static unsigned tbs_calculator_step3(float nof_info)
 
   // Find the closest TBS that is not less than nof_info_prime.
   const unsigned* it = std::upper_bound(table_valid_tbs.begin(), table_valid_tbs.end(), nof_info_prime - 1);
-  srsran_assert(it, "Number of information bits ({}) exceeds the maximum (3824).", nof_info_prime);
+  srsran_assert(
+      it != table_valid_tbs.end(), "Number of information bits ({}) exceeds the maximum (3824).", nof_info_prime);
 
   return *it;
 }
@@ -77,6 +64,12 @@ tbs_calculator_step2(float scaling, unsigned nof_re, float tcr, unsigned modulat
 
   // Step 4. Determine TBS when nof_info > 3824.
   return tbs_calculator_step4(nof_info, tcr);
+}
+
+float srsgnb::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
+{
+  srsran_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
+  return 1.0F / static_cast<float>(pow2(scaling));
 }
 
 unsigned srsgnb::tbs_calculator_pdsch_calculate(const tbs_calculator_pdsch_configuration& config)

@@ -13,6 +13,7 @@
 
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/support/math_utils.h"
+#include "tbs_calculator.h"
 
 namespace srsgnb {
 
@@ -21,11 +22,9 @@ namespace srsgnb {
 /// This function implements the inverse procedure of the TBS calculation procedure (as per TS38.214 Section 5.1.3.2) to
 /// derive the number of PRBs from the given payload in bits.
 ///
-/// \remark This function does not return the minimum number
-/// of PRBs, but a value that guarantees that the payload can fit into the corresponding TBS.
-/// \remark This function only works for payload size <= 3824 bits.
+/// \remark This function only works for payload size <= 3824 bits (478 bytes).
 ///
-/// \param[in] payload_size size of payload in bits that has to fit within the TBS.
+/// \param[in] payload_size_bytes size of payload in bytes that has to fit within the TBS.
 /// \param[in] nof_symb_sh Number of OFDM symbols of the PDSCH allocation within the slot, parameter
 /// \f$N_{symb}^{sh}\f$.
 /// \param[in] nof_dmrs_prb Number of RE for DMRS per PRB in the PDSCH transmission, parameter \f$N_{DMRS}^{PRB}\f$.
