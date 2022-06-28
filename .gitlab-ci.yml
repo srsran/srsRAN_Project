@@ -15,8 +15,9 @@ stages:
   - build and publish doc
   - notify status
 
+################################################################################
 ## Static
-
+################################################################################
 .static:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.5
   stage: static
@@ -42,7 +43,9 @@ no-binaries-added:
     - check-for-added-binaries.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
   allow_failure: true
 
-# Build + Unit Tests
+################################################################################
+## Build + Unit Tests + Integration tests
+################################################################################
 alternative builds:
   stage: build
   rules:
@@ -70,8 +73,9 @@ alternative builds:
         os_version: latest
         compiler: [gcc, clang]
 
+################################################################################
 ## Scheduler
-
+################################################################################
 .gnb-scheduler:
   stage: scheduler
   variables:
@@ -94,24 +98,54 @@ scheduler:
   rules:
     - if: $ON_DEFAULT_BRANCH
 
+################################################################################
 # Doc generation
+################################################################################
+tests-report:
+  stage: build and publish doc
+  rules:
+    - if: $ON_SCHEDULE
+  image: alpine:3.16.0
+  variables:
+    test_report_version: "1.5.0"
+  before_script:
+    - !reference [.srs_tools_setup_job, before_script]
+    - srs_tools_setup $test_report_version
+  script:
+    - test-reporter --input unittests --output ./test_report.html
+  dependencies: []
+  artifacts:
+    paths:
+      - test_report.html
 
 pages:
   stage: build and publish doc
   rules:
-    - if: $ON_DEFAULT_BRANCH
+    - if: $ON_SCHEDULE
   variables:
     docker_version: "1.0.0"
   image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$docker_version
   script:
     - doxygen_generator.sh
     - mv build/public .
+    - mv coverage.html public/
+    - mv test_report.html public/
+    - mv public/index.html public/index_doxygen.html
+    - mv docs/index.html public/index.html
+    - mv docs/*.png public/
+    - sed -i 's/commit_hash/'$(git rev-parse HEAD)'/' public/index.html
+  needs:
+    - job: unit tests
+      artifacts: true
+    - job: tests-report
+      artifacts: true
   artifacts:
     paths:
       - public
 
+################################################################################
 # Slack notification
-
+################################################################################
 .notifier:
   stage: notify status
   image: alpine:3.16.0
