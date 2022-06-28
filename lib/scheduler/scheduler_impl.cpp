@@ -50,6 +50,27 @@ void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
   cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
 }
 
+static uint8_t ssb_periodicity_to_value(ssb_periodicity value)
+{
+  switch (value) {
+    case ssb_periodicity::ms5:
+      return 5;
+    case ssb_periodicity::ms10:
+      return 10;
+    case ssb_periodicity::ms20:
+      return 20;
+    case ssb_periodicity::ms40:
+      return 40;
+    case ssb_periodicity::ms80:
+      return 80;
+    case ssb_periodicity::ms160:
+      return 160;
+    default:
+      srsran_assert(0, "Invalid periodicity={}", static_cast<unsigned>(value));
+  }
+  return 5;
+}
+
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];
@@ -61,7 +82,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
   schedule_ssb(cell.res_grid[0],
                sl_tx,
-               ssb_cfg.ssb_period,
+               ssb_periodicity_to_value(ssb_cfg.ssb_period),
                ssb_cfg.ssb_offset_to_point_A,
                cell.cell_cfg.dl_carrier.arfcn,
                ssb_cfg.ssb_bitmap,

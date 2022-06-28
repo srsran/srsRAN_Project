@@ -13,14 +13,12 @@
 
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
 #include <cassert>
 
 namespace srsgnb {
-
-/// \brief Describes the different SS/PBCH block patterns defined in 38.213 section 4.1 Cell search.
-enum class ssb_pattern_case { A, B, C, D, E, invalid };
 
 /// \brief Calculates the first OFDM symbol in a 5ms SS/PBCH block burst
 /// \param [in] pattern_case Provides the pattern
@@ -59,8 +57,8 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   // Case D - 120 kHz SCS: the first symbols of the candidate SS/PBCH blocks have indexes { 4 , 8 , 16 , 20 } + 28 ⋅ n .
   // For carrier frequencies within FR2, n = 0 , 1 , 2 , 3 , 5 , 6 , 7 , 8 , 10 , 11 , 12 , 13 , 15 , 16 , 17 , 18 .
   if (pattern_case == ssb_pattern_case::D) {
-    constexpr std::array<unsigned, 4> first_symbols = {4, 8, 16, 20};
-    constexpr std::array<unsigned, 16> n            = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
+    constexpr std::array<unsigned, 4>  first_symbols = {4, 8, 16, 20};
+    constexpr std::array<unsigned, 16> n             = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
     assert(ssb_idx < first_symbols.size() * n.size());
     return first_symbols[ssb_idx % first_symbols.size()] + 28 * n[ssb_idx / first_symbols.size()];
   }
@@ -69,8 +67,8 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   //{ 8 , 12 , 16 , 20 , 32 , 36 , 40 , 44 } + 56 ⋅ n . For carrier frequencies within FR2, n = 0 , 1 , 2 , 3 , 5 , 6 ,
   // 7 , 8 .
   if (pattern_case == ssb_pattern_case::E) {
-    constexpr std::array<unsigned, 8> first_symbols = {8, 12, 16, 20, 32, 36, 40, 44};
-    constexpr std::array<unsigned, 16> n            = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
+    constexpr std::array<unsigned, 8>  first_symbols = {8, 12, 16, 20, 32, 36, 40, 44};
+    constexpr std::array<unsigned, 16> n             = {0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12, 13, 15, 16, 17, 18};
     assert(ssb_idx < first_symbols.size() * n.size());
     return first_symbols[ssb_idx % first_symbols.size()] + 56 * n[ssb_idx / first_symbols.size()];
   }

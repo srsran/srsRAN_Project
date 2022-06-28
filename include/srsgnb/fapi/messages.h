@@ -14,7 +14,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/ran/ssb_mapping.h"
+#include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <array>
 #include <bitset>

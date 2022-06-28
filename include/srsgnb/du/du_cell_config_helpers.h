@@ -155,10 +155,11 @@ inline ul_config_common make_default_ul_config_common()
 
 inline ssb_configuration make_default_ssb_config()
 {
-  ssb_configuration cfg{};
-  cfg.scs        = subcarrier_spacing::kHz15;
-  cfg.ssb_period = 10;
-  cfg.ssb_bitmap = static_cast<uint64_t>(0b10000000) << static_cast<uint64_t>(56U);
+  ssb_configuration cfg = {};
+  cfg.scs               = subcarrier_spacing::kHz15;
+  // As per clause 4.1 in TS 38.213, the UE assumes a periodicity of 2 frames for initial cell selection.
+  cfg.ssb_period = ssb_periodicity::ms20;
+  cfg.ssb_bitmap = uint64_t(1) << 63;
   // TODO: Add remaining.
   return cfg;
 }

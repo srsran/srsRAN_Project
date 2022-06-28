@@ -6,7 +6,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/ran/ssb_mapping.h"
+#include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {
@@ -20,20 +20,17 @@ struct ssb_mib_data_pdu {
   bool    intra_freq_reselection;
 };
 
-enum class beta_pss_profile_nr_type : uint8_t { dB_0 = 0, dB_3 = 1, use_profile_sss = 255 };
-
 struct dl_ssb_pdu {
-  pci_t                    pci;
-  beta_pss_profile_nr_type beta_pss_profile_nr;
-  uint8_t                  ssb_index;
-  uint8_t                  ssb_subcarrier_offset;
-  uint16_t                 offset_to_point_A;
+  pci_t        pci;
+  ssb_beta_pss beta_pss_profile_nr;
+  uint8_t      ssb_index;
+  uint8_t      ssb_subcarrier_offset;
+  uint16_t     offset_to_point_A;
 
   ssb_pattern_case ssb_case;
   uint8_t          L_max;
-  //  SSB SCS.
+  /// SSB SCS.
   subcarrier_spacing scs;
-  float              beta_pss_profile_sss_in_dB;
 
   /// Data for MIB generation
   ssb_mib_data_pdu mib_data;

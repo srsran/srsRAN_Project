@@ -21,7 +21,7 @@ void fill_ssb_configuration_from_asn1(ssb_configuration&                        
   // Parameters taken from ServingCellConfigCommonSIB
   out.ssb_power             = sib_in.ss_pbch_block_pwr;
   out.ssb_offset_to_point_A = sib_in.dl_cfg_common.freq_info_dl.offset_to_point_a;
-  out.ssb_period            = (uint8_t)sib_in.ssb_periodicity_serving_cell;
+  out.ssb_period            = static_cast<ssb_periodicity>(sib_in.ssb_periodicity_serving_cell.to_number());
   // SSB subcarrier is taken from MIB.ssb-SubcarrierOffset.
   out.ssb_subcarrier_offset = mib_in.ssb_subcarrier_offset;
 
@@ -39,5 +39,5 @@ void fill_ssb_configuration_from_asn1(ssb_configuration&                        
 
   // This is not imported from RRC
   // TODO: define where to get this value
-  out.beta_pss = 0;
+  out.beta_pss = ssb_beta_pss::dB_0;
 }

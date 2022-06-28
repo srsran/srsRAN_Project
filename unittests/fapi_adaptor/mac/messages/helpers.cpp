@@ -89,7 +89,7 @@ dl_ssb_pdu unittests::build_valid_dl_ssb_pdu()
   dl_ssb_pdu pdu;
 
   pdu.pci                             = generate_pci();
-  pdu.beta_pss_profile_nr             = static_cast<srsgnb::beta_pss_profile_nr_type>(generate_binary());
+  pdu.beta_pss_profile_nr             = static_cast<srsgnb::ssb_beta_pss>(generate_binary());
   pdu.ssb_index                       = generate_block_index();
   pdu.ssb_subcarrier_offset           = generate_subcarrier_offset();
   pdu.offset_to_point_A               = generate_offset_point_A();

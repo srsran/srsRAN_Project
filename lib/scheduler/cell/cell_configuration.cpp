@@ -11,6 +11,7 @@
 #include "cell_configuration.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/resource_block.h"
+#include "srsgnb/ran/ssb_mapping.h"
 
 using namespace srsgnb;
 
