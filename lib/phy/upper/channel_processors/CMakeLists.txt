@@ -32,7 +32,9 @@ target_link_libraries(srsgnb_pdsch_modulator srsgnb_channel_modulation srsgnb_se
 add_library(srsgnb_pdsch_processor STATIC pdsch_processor_impl.cpp)
 target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 
-add_library(srsgnb_prach_detector STATIC prach_detector_impl.cpp)
+add_library(srsgnb_prach_detector STATIC
+        prach_detector_impl.cpp
+        prach_generator_impl.cpp)
 
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsgnb_pusch_decoder srsgnb_channel_coding srsvec)
@@ -53,6 +55,7 @@ target_link_libraries(srsgnb_channel_processors
         srsgnb_pdsch_encoder
         srsgnb_pdsch_modulator
         srsgnb_pdsch_processor
+        srsgnb_prach_detector
         srsgnb_pusch_decoder
         srsgnb_pusch_processor
         srsgnb_ssb_processor)

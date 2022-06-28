@@ -89,6 +89,18 @@ add_custom_command(
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
 target_link_libraries(pdsch_processor_unittest srsgnb_pdsch_processor srslog)
 
+add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
+target_link_libraries(prach_generator_vectortest srsgnb_channel_processors srsgnb_generic_funcs srslog)
+add_test(prach_generator_vectortest prach_generator_vectortest)
+
+add_custom_command(
+        TARGET prach_generator_vectortest
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz
+        VERBATIM)
+
 add_executable(pusch_decoder_test pusch_decoder_test.cpp)
 target_link_libraries(pusch_decoder_test srsgnb_channel_processors srslog srsgnb_upper_phy_support)
 add_test(pusch_decoder_test pusch_decoder_test)

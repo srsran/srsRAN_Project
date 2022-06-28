@@ -164,10 +164,58 @@ public:
   }
 };
 
+template <unsigned N>
+class generic_N : public generic_fft_N
+{
+private:
+  float                   sign;
+  std::array<cf_t, N * N> tables;
+
+public:
+  generic_N(float sign_) : sign(sign_)
+  {
+    for (unsigned k = 0; k != N; ++k) {
+      for (unsigned n = 0; n != N; ++n) {
+        tables[N * k + n] = std::exp(COMPLEX_I * sign * TWOPI * static_cast<float>(k * n) / static_cast<float>(N));
+      }
+    }
+  }
+
+  void run(cf_t* out, const cf_t* in) const override
+  {
+    for (unsigned k = 0; k != N; ++k) {
+      cf_t sum = 0.0F;
+
+      unsigned               n     = 0;
+      const span<const cf_t> table = {&tables[N * k], N};
+
+#if SRSRAN_SIMD_CF_SIZE
+      simd_cf_t simd_sum = srsran_simd_cf_zero();
+      for (; n != (N / SRSRAN_SIMD_CF_SIZE) * SRSRAN_SIMD_CF_SIZE; n += SRSRAN_SIMD_CF_SIZE) {
+        simd_cf_t simd_in    = srsran_simd_cfi_loadu(&in[n]);
+        simd_cf_t simd_table = srsran_simd_cfi_loadu(&table[n]);
+        simd_cf_t simd_prod  = srsran_simd_cf_prod(simd_in, simd_table);
+        simd_sum             = srsran_simd_cf_add(simd_sum, simd_prod);
+      }
+      std::array<cf_t, SRSRAN_SIMD_CF_SIZE> simd_sum_vector;
+      srsran_simd_cfi_storeu(simd_sum_vector.data(), simd_sum);
+      for (unsigned i = 0; i != SRSRAN_SIMD_CF_SIZE; ++i) {
+        sum += simd_sum_vector[i];
+      }
+#endif // SRSRAN_SIMD_CF_SIZE
+      for (; n != N; ++n) {
+        sum += in[n] * table[n];
+      }
+
+      out[k] = sum;
+    }
+  }
+};
+
 #define GENERIC_CREATE_SIZE(SIZE)                                                                                      \
   do {                                                                                                                 \
     if (input.size() == (SIZE)) {                                                                                      \
-      generic_fft = std::make_unique<generic_ditfft_N<SIZE> >(sign, 1);                                                \
+      generic_fft = std::make_unique<generic_ditfft_N<SIZE>>(sign, 1);                                                 \
       return;                                                                                                          \
     }                                                                                                                  \
   } while (false)
@@ -195,6 +243,15 @@ dft_processor_generic_impl::dft_processor_generic_impl(const configuration& dft_
   GENERIC_CREATE_SIZE(24576);
   GENERIC_CREATE_SIZE(36864);
   GENERIC_CREATE_SIZE(49152);
+
+  if (input.size() == 139) {
+    generic_fft = std::make_unique<generic_N<139>>(sign);
+    return;
+  }
+  if (input.size() == 839) {
+    generic_fft = std::make_unique<generic_N<839>>(sign);
+    return;
+  }
 }
 
 span<const cf_t> dft_processor_generic_impl::run()

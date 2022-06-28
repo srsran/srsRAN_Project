@@ -1,0 +1,150 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H
+
+#include "srsgnb/phy/generic_functions/dft_processor.h"
+#include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsgnb/srsvec/aligned_vec.h"
+#include "srsgnb/support/srsran_assert.h"
+
+namespace srsgnb {
+
+/// \brief PRACH time domain signal generator on the fly.
+///
+/// It generates PRACH time domain signals on demand instead of generating and storing. It minimizes memory footprint in
+/// expense of longer processing time.
+class prach_generator_impl : public prach_generator
+{
+private:
+  /// Indicates that a value is reserved.
+  static constexpr unsigned RESERVED = UINT32_MAX;
+  /// Maximum PRACH length in subframes.
+  static constexpr unsigned MAX_PRACH_LENGTH_SF = 4;
+
+  /// Uplink grid size in PRB.
+  unsigned nof_prb_ul_grid;
+  /// DFT size for 15kHz subcarrier spacing.
+  unsigned dft_size_15kHz;
+  /// DFT for long frequency domain sequence generation.
+  std::unique_ptr<dft_processor> dft_l839;
+  /// DFT for short frequency domain sequence generation.
+  std::unique_ptr<dft_processor> dft_l139;
+  /// DFT for preambles 0, 1 and 2.
+  std::unique_ptr<dft_processor> dft_1_dot_25_kHz;
+  /// DFT for preamble 3.
+  std::unique_ptr<dft_processor> dft_5_kHz;
+  /// DFT for short preambles (A1, A2, A3, B1, B2, B3, B4, C0 and C2).
+  std::unique_ptr<dft_processor> dft_short;
+  /// Temporal sequence storage.
+  srsvec::aligned_vec<cf_t> temp;
+
+  /// \brief Calculates the number of cyclic shifts \f$N_{CS}\f$.
+  /// \param[in] prach_scs             Parameter \f$\Delta f^{RA}\f$.
+  /// \param[in] restricted_set        Parameter \c restrictedSetConfig.
+  /// \param[in] zero_correlation_zone Parameter \c zeroCorrelationZoneConfig.
+  /// \return The number of cyclic shifts if the input parameters are valid. Otherwise, RESERVED.
+  static unsigned
+  get_nof_cyclic_shifts(unsigned prach_scs, restricted_set_config restricted_set, unsigned zero_correlation_zone);
+
+  ///
+  static unsigned get_sequence_length(preamble_format format);
+
+  /// \brief Get PRACH subcarrier spacing \f$\Delta f^{RA}\f$.
+  /// \param[in] format Preamble format.
+  /// \return Return the PRACH subcarrier spacing in Hz if the preamble is implemented. Otherwise, \c RESERVED.
+  static unsigned get_prach_scs_Hz(preamble_format format);
+
+  /// \brief Get PRACH sequence parameter \f$N_u\f$.
+  /// \param[in] format Preamble format.
+  /// \return Return a valid \f$N_u\f$ if the preamble is implemented. Otherwise, \c RESERVED.
+  static unsigned get_N_u(preamble_format format);
+
+  /// \brief Get PRACH sequence parameter \f$N_{CP}^{RA}\f$.
+  /// \param[in] format Preamble format.
+  /// \return Return a valid \f$N_{CP}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
+  static unsigned get_N_cp_ra(preamble_format format);
+
+  /// Calculates sequence number \f$u\f$.
+  static unsigned get_sequence_number(unsigned root_sequence_index);
+
+  /// \brief Generates the \f$y_{u,v}\f$ sequence.
+  /// \param u Sequence number.
+  /// \param C_v
+  /// \return A view to the generated sequence.
+  span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
+
+  /// \brief Get the parameter \f$N_{RB}^{RA}\f$ as per TS38.211 Table 6.3.3.2-1.
+  /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
+  /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
+  /// \return
+  unsigned get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
+
+  /// \brief Get the parameter \f$\bar{k}\f$ as per TS38.211 Table 6.3.3.2-1.
+  /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
+  /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
+  /// \return
+  unsigned get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
+
+  /// \brief Modulates PRACH as per TS38.211 Section 5.3.2.
+  /// \param y_u_v
+  /// \param config
+  /// \return
+  span<const cf_t> modulate(span<const cf_t>y_u_v, const configuration &config);
+
+public:
+  /// \brief PRACH generator constructor.
+  ///
+  /// The PRACH generator depends on the DFT to generate the time domain signals.
+  ///
+  /// \param dft_1_dot_25_kHz_ DFT processor for subcarrier spacing of 1.25kHz.
+  /// \param dft_5_kHz_        DFT processor for subcarrier spacing of 5kHz.
+  /// \param dft_short_        DFT processor for short preambles.
+  prach_generator_impl(unsigned                       nof_prb_ul_grid_,
+                       unsigned                       dft_size_15kHz_,
+                       std::unique_ptr<dft_processor> dft_l839_,
+                       std::unique_ptr<dft_processor> dft_l139_,
+                       std::unique_ptr<dft_processor> dft_1_dot_25_kHz_,
+                       std::unique_ptr<dft_processor> dft_5_kHz_,
+                       std::unique_ptr<dft_processor> dft_short_) :
+    nof_prb_ul_grid(nof_prb_ul_grid_),
+    dft_size_15kHz(dft_size_15kHz_),
+    dft_l839(std::move(dft_l839_)),
+    dft_l139(std::move(dft_l139_)),
+    dft_1_dot_25_kHz(std::move(dft_1_dot_25_kHz_)),
+    dft_5_kHz(std::move(dft_5_kHz_)),
+    dft_short(std::move(dft_short_)),
+    temp(MAX_PRACH_LENGTH_SF * 15 * dft_size_15kHz)
+  {
+    srsran_assert(dft_l839, "Invalid L839 DFT pointer");
+    srsran_assert(dft_l839->get_direction() == dft_processor::direction::DIRECT, "Invalid L839 DFT direction");
+    srsran_assert(dft_l839->get_size() == 839U, "Invalid L839 DFT size");
+
+    srsran_assert(dft_l139, "Invalid L139 DFT pointer");
+    srsran_assert(dft_l139->get_direction() == dft_processor::direction::DIRECT, "Invalid L139 DFT direction");
+    srsran_assert(dft_l139->get_size() == 139U, "Invalid L139 DFT size");
+
+    srsran_assert(dft_1_dot_25_kHz, "Invalid 1k25 DFT pointer");
+    srsran_assert(dft_1_dot_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
+    srsran_assert(dft_1_dot_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
+
+    srsran_assert(dft_5_kHz, "Invalid 5k DFT pointer");
+    srsran_assert(dft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 5k DFT direction");
+    srsran_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000) / 5000, "Invalid 5k DFT size");
+  }
+
+  // See interface for documentation.
+  span<const cf_t> generate(const configuration& config) override;
+};
+
+} // namespace srsgnb
+
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H

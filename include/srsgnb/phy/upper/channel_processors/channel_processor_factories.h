@@ -11,6 +11,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 #define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
 
+#include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
@@ -18,6 +19,7 @@
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
+#include "srsgnb/phy/upper/channel_processors/prach_generator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_decoder.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
 #include "srsgnb/phy/upper/channel_processors/pusch_processor.h"
@@ -79,6 +81,18 @@ struct pdsch_encoder_factory_sw_configuration {
 };
 
 std::shared_ptr<pdsch_encoder_factory> create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config);
+
+class prach_generator_factory
+{
+public:
+  virtual ~prach_generator_factory()                = default;
+  virtual std::unique_ptr<prach_generator> create() = 0;
+};
+
+std::shared_ptr<prach_generator_factory>
+create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
+                                  unsigned                               nof_prb_ul_grid,
+                                  unsigned                               dft_size_15kHz);
 
 class pusch_decoder_factory
 {
