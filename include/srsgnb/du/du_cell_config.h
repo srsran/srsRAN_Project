@@ -27,9 +27,6 @@ struct du_cell_config {
 
   /// subcarrierSpacing for common, used for initial access and broadcast message.
   subcarrier_spacing scs_common;
-  /// SSB subcarrier spacing.
-  /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
-  subcarrier_spacing ssb_scs;
   ssb_configuration  ssb_cfg;
 
   dmrs_typeA_position dmrs_typeA_pos;

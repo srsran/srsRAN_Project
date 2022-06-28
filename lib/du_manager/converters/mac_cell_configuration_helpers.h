@@ -83,7 +83,6 @@ inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index
   mac_cfg.cell_index = cell_index;
   mac_cfg.pci        = du_cfg.pci;
   mac_cfg.scs_common = du_cfg.scs_common;
-  mac_cfg.ssb_scs    = du_cfg.ssb_scs;
   mac_cfg.ssb_cfg    = du_cfg.ssb_cfg;
   mac_cfg.dl_carrier = du_cfg.dl_carrier;
   mac_cfg.ul_carrier = du_cfg.ul_carrier;

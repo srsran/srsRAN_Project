@@ -34,9 +34,6 @@ struct mac_cell_creation_request {
 
   /// subcarrierSpacing for common, used for initial access and broadcast message.
   subcarrier_spacing scs_common;
-  /// SSB subcarrier spacing.
-  /// NOTE: Although this is according to O-RAN WG8, we need to verify if this is the correct SCS.
-  subcarrier_spacing ssb_scs;
 
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;

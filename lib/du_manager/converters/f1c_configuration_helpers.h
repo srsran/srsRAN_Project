@@ -32,6 +32,7 @@ byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg);
 /// \brief Fills ASN.1 F1SetupRequest struct.
 /// \param[out] request The F1 setup request message struct to fill.
 /// \param[in] setup_params DU setup parameters to add to the F1SetupRequest.
+/// \param[in] cells_to_add Configurations of cells to add to F1SetupRequest.
 void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
                                 const du_setup_params&          setup_params,
                                 span<const du_cell_config*>     cells_to_add);
