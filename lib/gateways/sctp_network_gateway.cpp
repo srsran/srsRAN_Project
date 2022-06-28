@@ -11,9 +11,7 @@
 #include "sctp_network_gateway.h"
 #include "srsgnb/asn1/f1ap.h"
 
-namespace srsgnb {
-
-sctp_network_gateway::sctp_network_gateway() : logger(srslog::fetch_basic_logger("SCTP-NW-GW")) {}
+using namespace srsgnb;
 
 void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
 {
@@ -21,5 +19,3 @@ void sctp_network_gateway::handle_pdu(const byte_buffer& pdu)
 
   // TODO: send over SCTP socket
 }
-
-} // namespace srsgnb

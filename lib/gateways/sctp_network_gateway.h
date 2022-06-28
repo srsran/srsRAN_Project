@@ -8,20 +8,19 @@
  *
  */
 
-#ifndef SRSGNB_SCTP_NETWORK_GATEWAY_H
-#define SRSGNB_SCTP_NETWORK_GATEWAY_H
+#ifndef SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H
+#define SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H
 
-#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
-#include <cstdio>
 
 namespace srsgnb {
 
 class sctp_network_gateway : public network_gateway_data_handler
 {
 public:
-  explicit sctp_network_gateway();
+  explicit sctp_network_gateway() : logger(srslog::fetch_basic_logger("SCTP-NW-GW")) {}
+
   void handle_pdu(const byte_buffer& pdu) override;
 
 private:
@@ -30,4 +29,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCTP_NETWORK_GATEWAY_H
+#endif // SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H

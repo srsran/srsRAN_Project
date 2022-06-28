@@ -1,7 +1,7 @@
 
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
-#include "../../lib/gateway/sctp_network_gateway.h"
+#include "../../lib/gateways/sctp_network_gateway.h"
 #include "lib/f1_interface/common/f1ap_asn1_packer.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
 #include "srsgnb/support/executors/manual_task_worker.h"
