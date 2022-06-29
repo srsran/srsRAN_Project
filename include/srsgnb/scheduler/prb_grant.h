@@ -90,24 +90,24 @@ struct prb_grant {
   /// Extracts the RBG bitmap of the grant, in case it is of type0. This function fails if allocation is of type1.
   const rbg_bitmap& rbgs() const
   {
-    srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
+    srsran_assert(is_alloc_type0(), "Access to rbgs() for prb_grant with allocation type 1 is invalid");
     return alloc.rbgs;
   }
   rbg_bitmap& rbgs()
   {
-    srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
+    srsran_assert(is_alloc_type0(), "Access to rbgs() for prb_grant with allocation type 1 is invalid");
     return alloc.rbgs;
   }
 
   /// Extracts the PRB interval of the grant, in case it is of type1. This function fails if allocation is of type0.
   const prb_interval& prbs() const
   {
-    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
+    srsran_assert(is_alloc_type0(), "Access to prbs() for prb_grant with allocation type 0 is invalid");
     return alloc.interv;
   }
   prb_interval& prbs()
   {
-    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
+    srsran_assert(is_alloc_type0(), "Access to prbs() of prb_grant with allocation type 0 is invalid");
     return alloc.interv;
   }
 

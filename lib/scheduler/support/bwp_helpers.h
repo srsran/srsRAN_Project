@@ -23,7 +23,7 @@ namespace srsgnb {
 /// \return Calculated CRB.
 inline unsigned prb_to_crb(const bwp_configuration& bwp_cfg, unsigned prb)
 {
-  srsran_sanity_check(prb <= bwp_cfg.crbs.length(), "Mismatch between PRB={} and BWP lims={}", prb, bwp_cfg.crbs);
+  srsran_sanity_check(prb <= bwp_cfg.crbs.length(), "PRB={} falls outside BWP limits={}", prb, bwp_cfg.crbs);
   return prb + bwp_cfg.crbs.start();
 }
 
@@ -37,12 +37,25 @@ inline crb_interval prb_to_crb(const bwp_configuration& bwp_cfg, prb_interval pr
   return {prb_to_crb(bwp_cfg, prbs.start()), prb_to_crb(bwp_cfg, prbs.stop())};
 }
 
+/// \brief Convert CRB within a BWP into a PRB.
+/// The CRB and PRB are assumed to use the same numerology as reference.
+/// \param bwp_cfg BWP configuration of the respective CRB.
+/// \param crb CRB to be converted to PRB.
+/// \return Calculated PRB.
+inline unsigned crb_to_prb(const bwp_configuration& bwp_cfg, unsigned crb)
+{
+  srsran_sanity_check(bwp_cfg.crbs.contains(crb) or crb == bwp_cfg.crbs.stop(),
+                      "CRB={} falls outside BWP limits={}",
+                      crb,
+                      bwp_cfg.crbs);
+  return crb - bwp_cfg.crbs.start();
+}
+
 /// Convert CRBs to PRBs within a BWP. CRBs and PRBs are assumed to have the same numerology of the provided
 /// BWP configuration.
 inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval crbs)
 {
-  srsran_sanity_check(bwp_cfg.crbs.contains(crbs), "Mismatch between CRBs={} and BWP lims={}", crbs, bwp_cfg.crbs);
-  prb_interval prbs{crbs.start() - bwp_cfg.crbs.start(), crbs.stop() - bwp_cfg.crbs.start()};
+  prb_interval prbs{crb_to_prb(bwp_cfg, crbs.start()), crb_to_prb(bwp_cfg, crbs.stop())};
   return prbs;
 }
 
