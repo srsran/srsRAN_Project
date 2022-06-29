@@ -37,9 +37,6 @@ const unsigned SIB1_PERIODICITY = 160;
 /// [Implementation defined] Max numbers of beams, to be used for SIB1 scheduler.
 /// NOTE: This is temporary, and valid only for FR1.
 const unsigned MAX_NUM_BEAMS = 8;
-/// NOTE: This is temporary, and valid only for FR1.
-const unsigned SIB1_MCS = 5;
-const unsigned SIB1_RV  = 0;
 
 } // namespace srsgnb
 

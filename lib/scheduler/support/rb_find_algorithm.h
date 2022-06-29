@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RB_FIND_ALGORITHM_H
 #define SRSGNB_RB_FIND_ALGORITHM_H
 
-#include "srsgnb/ran/resource_allocation/prb_grant.h"
+#include "srsgnb/scheduler/prb_grant.h"
 
 namespace srsgnb {
 

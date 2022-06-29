@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/scheduler_prb.h"
+#include "lib/scheduler/cell/scheduler_prb.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

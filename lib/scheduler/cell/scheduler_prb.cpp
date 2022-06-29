@@ -9,7 +9,7 @@
  */
 
 #include "scheduler_prb.h"
-#include "srsgnb/ran/resource_allocation/resource_block_group.h"
+#include "srsgnb/scheduler/resource_block_group.h"
 
 using namespace srsgnb;
 
@@ -17,13 +17,14 @@ bwp_rb_bitmap::bwp_rb_bitmap(uint32_t bwp_nof_prbs, uint32_t bwp_prb_start_, boo
   prbs_(bwp_nof_prbs),
   rbgs_(get_nof_rbgs(crb_interval(bwp_prb_start_, bwp_prb_start_ + bwp_nof_prbs), config1_or_2)),
   P_(get_nominal_rbg_size(bwp_nof_prbs, config1_or_2)),
-  Pnofbits(log2(P_)),
+  Pnofbits(log2(to_nominal_rbg_size_value(P_))),
   first_rbg_size(get_rbg_size(crb_interval(bwp_prb_start_, bwp_prb_start_ + bwp_nof_prbs), P_, 0))
-{}
+{
+}
 
 uint32_t bwp_rb_bitmap::prb_to_rbg_idx(uint32_t prb_idx) const
 {
-  return ((prb_idx + P_ - first_rbg_size) >> Pnofbits);
+  return ((prb_idx + to_nominal_rbg_size_value(P_) - first_rbg_size) >> Pnofbits);
 }
 
 void bwp_rb_bitmap::add_prbs_to_rbgs(const prb_bitmap& grant)
@@ -55,8 +56,9 @@ void bwp_rb_bitmap::add_rbgs_to_prbs(const rbg_bitmap& grant)
     if (idx < 0) {
       return;
     }
-    uint32_t prb_idx = (idx - 1) * P_ + first_rbg_size;
-    uint32_t prb_end = std::min(prb_idx + ((idx == 0) ? first_rbg_size : P_), (uint32_t)prbs_.size());
+    uint32_t prb_idx = (idx - 1) * to_nominal_rbg_size_value(P_) + first_rbg_size;
+    uint32_t prb_end =
+        std::min(prb_idx + ((idx == 0) ? first_rbg_size : to_nominal_rbg_size_value(P_)), (uint32_t)prbs_.size());
     prbs_.fill(prb_idx, prb_end);
     idx++;
   } while (idx != (int)prbs_.size());

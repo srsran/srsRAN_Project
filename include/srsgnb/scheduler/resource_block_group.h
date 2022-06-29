@@ -22,12 +22,17 @@ const size_t MAX_NOF_RBGS = 18;
 
 /// Nominal RBG-size (P value).
 /// \remark See TS 38.214, Sections 5.1.2.2 and 6.1.2.2.
-enum nominal_rbg_size : unsigned { P2 = 2, P4 = 4, P8 = 8, P16 = 16 };
+enum class nominal_rbg_size : unsigned { P2 = 2, P4 = 4, P8 = 8, P16 = 16 };
+
+inline unsigned to_nominal_rbg_size_value(nominal_rbg_size sz)
+{
+  return static_cast<unsigned>(sz);
+}
 
 /// Bitset of RBGs with size up to 18.
 using rbg_bitmap = bounded_bitset<MAX_NOF_RBGS, true>;
 
-/// Nominal RBG size (P).
+/// Calculates Nominal RBG size (P) based on the BWP number of PRBs and configuration type.
 /// \remark See TS 38.214, Table 5.1.2.2.1-1 and 6.1.2.2.1-1.
 nominal_rbg_size get_nominal_rbg_size(unsigned bwp_nof_prb, bool config_1_or_2);
 

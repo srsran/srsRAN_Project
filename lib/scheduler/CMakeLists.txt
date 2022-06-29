@@ -8,6 +8,8 @@
 
 set(SOURCES
         cell/cell_configuration.cpp
+        cell/resource_block_group.cpp
+        cell/prb_grant.cpp
         common_scheduling/ra_scheduler.cpp
         cell/resource_grid.cpp
         common_scheduling/sib_scheduler.cpp
@@ -24,7 +26,7 @@ set(SOURCES
         ue_scheduling/ue_scheduler_impl.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp
-        scheduler_prb.cpp
+        cell/scheduler_prb.cpp
         common_scheduling/ssb_scheduler.cpp)
 
 add_library(srsgnb_sched STATIC ${SOURCES})

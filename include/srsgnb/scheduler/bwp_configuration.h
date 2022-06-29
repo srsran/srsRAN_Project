@@ -12,12 +12,12 @@
 #define SRSGNB_BWP_CONFIGURATION_H
 
 #include "dmrs.h"
+#include "prb_grant.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pdcch/coreset.h"
-#include "srsgnb/ran/resource_allocation/prb_grant.h"
 #include "srsgnb/ran/resource_block.h"
 #include <bitset>
 

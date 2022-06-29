@@ -11,9 +11,9 @@
 #ifndef SRSGNB_PRB_GRANT_H
 #define SRSGNB_PRB_GRANT_H
 
-#include "rb_interval.h"
+#include "resource_block_group.h"
 #include "srsgnb/adt/bounded_bitset.h"
-#include "srsgnb/ran/resource_allocation/resource_block_group.h"
+#include "srsgnb/ran/resource_allocation/rb_interval.h"
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/ran/sliv.h"
 
@@ -24,11 +24,20 @@ using prb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
 
 /// PRB grant that can be of allocation type 0 (RBGs) or 1 (PRB interval).
 struct prb_grant {
+  /// Creates an empty interval.
   prb_grant() = default;
+
+  /// \brief Creates a RB grant of allocation type1, i.e. a contiguous range of RBs.
   prb_grant(const prb_interval& other) noexcept : alloc_type_0(false), alloc(other) {}
+
+  /// \brief Creates a RB grant of allocation type0, i.e. a set of potentially non-contiguous RBGs.
   prb_grant(const rbg_bitmap& other) noexcept : alloc_type_0(true), alloc(other) {}
+
+  /// \brief Creates a copy of the RB grant.
   prb_grant(const prb_grant& other) noexcept : alloc_type_0(other.alloc_type_0), alloc(other.alloc_type_0, other.alloc)
-  {}
+  {
+  }
+
   prb_grant& operator=(const prb_grant& other) noexcept
   {
     if (this == &other) {
@@ -72,22 +81,29 @@ struct prb_grant {
     }
   }
 
-  bool              is_alloc_type0() const { return alloc_type_0; }
-  bool              is_alloc_type1() const { return not is_alloc_type0(); }
+  /// Checks whether the grant is of type0.
+  bool is_alloc_type0() const { return alloc_type_0; }
+
+  /// Checks whether the grant is of type1.
+  bool is_alloc_type1() const { return not is_alloc_type0(); }
+
+  /// Extracts the RBG bitmap of the grant, in case it is of type0. This function fails if allocation is of type1.
   const rbg_bitmap& rbgs() const
   {
     srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
     return alloc.rbgs;
   }
-  const prb_interval& prbs() const
-  {
-    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
-    return alloc.interv;
-  }
   rbg_bitmap& rbgs()
   {
     srsran_assert(is_alloc_type0(), "Invalid access to rbgs() field of grant with alloc type 1");
     return alloc.rbgs;
+  }
+
+  /// Extracts the PRB interval of the grant, in case it is of type1. This function fails if allocation is of type0.
+  const prb_interval& prbs() const
+  {
+    srsran_assert(is_alloc_type1(), "Invalid access to prbs() field of grant with alloc type 0");
+    return alloc.interv;
   }
   prb_interval& prbs()
   {
@@ -95,6 +111,7 @@ struct prb_grant {
     return alloc.interv;
   }
 
+  /// Applies to "this" the intersection of "this" with the provided interval.
   prb_grant& operator&=(const prb_interval interv)
   {
     if (is_alloc_type0()) {

@@ -11,10 +11,10 @@
 #ifndef SRSRAN_SCHED_NR_RB_H
 #define SRSRAN_SCHED_NR_RB_H
 
+#include "../support/rb_find_algorithm.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
-#include "srsgnb/ran/resource_allocation/prb_grant.h"
-#include "support/rb_find_algorithm.h"
+#include "srsgnb/scheduler/prb_grant.h"
 
 namespace srsgnb {
 
@@ -74,7 +74,7 @@ public:
 
   const prb_bitmap& prbs() const { return prbs_; }
   const rbg_bitmap& rbgs() const { return rbgs_; }
-  uint32_t          P() const { return P_; }
+  uint32_t          P() const { return to_nominal_rbg_size_value(P_); }
   uint32_t          nof_prbs() const { return prbs_.size(); }
   uint32_t          nof_rbgs() const { return rbgs_.size(); }
 
