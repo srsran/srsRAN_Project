@@ -20,7 +20,8 @@ class rlc_rx_tm_entity : public rlc_rx_entity
 public:
   rlc_rx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
     rlc_rx_entity(du_index, lcid, upper_dn)
-  {}
+  {
+  }
 
   void handle_pdu(byte_buffer buf) override
   {

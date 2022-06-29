@@ -25,7 +25,8 @@ private:
 public:
   rlc_tx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     rlc_tx_entity(du_index, lcid, upper_cn)
-  {}
+  {
+  }
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override
