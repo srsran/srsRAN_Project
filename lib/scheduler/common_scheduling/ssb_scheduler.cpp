@@ -8,8 +8,8 @@
  *
  */
 
-#include "scheduler_ssb.h"
-#include "cell/resource_grid.h"
+#include "ssb_scheduler.h"
+#include "../cell/resource_grid.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ssb_mapping.h"
 

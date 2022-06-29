@@ -14,6 +14,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/interval.h"
 #include "srsgnb/ran/resource_allocation/prb_grant.h"
+#include "support/rb_find_algorithm.h"
 
 namespace srsgnb {
 
@@ -114,37 +115,6 @@ bwp_rb_bitmap operator|(const bwp_rb_bitmap& lhs, const Other& rhs)
   return bwp_rb_bitmap(lhs) |= rhs;
 }
 
-inline crb_interval
-find_next_empty_interval(const prb_bitmap& mask, size_t start_crb_idx = 0, size_t last_crb_idx = MAX_NOF_PRBS)
-{
-  int rb_start = mask.find_lowest(start_crb_idx, std::min(mask.size(), last_crb_idx), false);
-  if (rb_start != -1) {
-    int rb_end = mask.find_lowest(rb_start + 1, std::min(mask.size(), last_crb_idx), true);
-    return {(uint32_t)rb_start, (uint32_t)(rb_end < 0 ? mask.size() : rb_end)};
-  }
-  return {};
-}
-
-inline crb_interval find_empty_interval_of_length(const prb_bitmap& mask, size_t nof_prbs, uint32_t start_prb_idx = 0)
-{
-  crb_interval max_interv;
-  do {
-    crb_interval interv = find_next_empty_interval(mask, start_prb_idx, mask.size());
-    if (interv.empty()) {
-      break;
-    }
-    if (interv.length() >= nof_prbs) {
-      max_interv.set(interv.start(), interv.start() + nof_prbs);
-      break;
-    }
-    if (interv.length() > max_interv.length()) {
-      max_interv = interv;
-    }
-    start_prb_idx = interv.stop() + 1;
-  } while (start_prb_idx < mask.size());
-  return max_interv;
-}
-
 } // namespace srsgnb
 
 namespace fmt {
@@ -155,7 +125,7 @@ struct formatter<srsgnb::prb_grant> : public formatter<srsgnb::rbg_bitmap> {
   auto format(const srsgnb::prb_grant& grant, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     if (grant.is_alloc_type1()) {
-      return formatter<srsgnb::interval<uint32_t> >{}.format(grant.prbs(), ctx);
+      return formatter<srsgnb::interval<uint32_t>>{}.format(grant.prbs(), ctx);
     }
     return formatter<srsgnb::rbg_bitmap>::format(grant.rbgs(), ctx);
   }

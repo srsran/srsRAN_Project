@@ -8,10 +8,9 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SSB_H
-#define SRSGNB_SCHEDULER_SSB_H
+#ifndef SRSGNB_SSB_SCHEDULER_H
+#define SRSGNB_SSB_SCHEDULER_H
 
-#include "scheduler_prb.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"

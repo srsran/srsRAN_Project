@@ -9,8 +9,8 @@
  */
 
 #include "config_generators.h"
-#include "lib/scheduler/cell/ra_scheduler.h"
-#include "lib/scheduler/pdcch_scheduler/pdcch_scheduler.h"
+#include "lib/scheduler/common_scheduling/ra_scheduler.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"

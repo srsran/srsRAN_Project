@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/ue/harq_process.h"
+#include "lib/scheduler/ue_scheduling/harq_process.h"
 #include "srsgnb/support/test_utils.h"
 
 #define TEST_HARQ_ASSERT_MSG(SLOT, PID) "Failed at slot: '{}', HARQ PID: '{}'", SLOT, PID

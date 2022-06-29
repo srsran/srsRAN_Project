@@ -9,9 +9,9 @@
  */
 
 #include "sib_scheduler.h"
+#include "../cell/resource_grid.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
-#include "resource_grid.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 
 using namespace srsgnb;
@@ -144,7 +144,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   coreset0_bwp_cfg.crbs = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 };
 
-void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point)
+void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_point sl_point)
 {
   // NOTE:
   // - [Implementation defined] The UE monitors the SearchSpaceSet 0 for SIB1 in 2 consecutive slots, starting from n0.

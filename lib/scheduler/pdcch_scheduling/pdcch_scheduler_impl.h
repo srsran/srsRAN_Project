@@ -12,7 +12,7 @@
 #define SRSGNB_PDCCH_SCHEDULER_IMPL_H
 
 #include "../cell/resource_grid.h"
-#include "../ue/ue_configuration.h"
+#include "../ue_scheduling/ue_configuration.h"
 #include "pdcch_scheduler.h"
 #include "srsgnb/scheduler/scheduler_dci.h"
 

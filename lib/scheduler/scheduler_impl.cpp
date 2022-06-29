@@ -9,8 +9,8 @@
  */
 
 #include "scheduler_impl.h"
-#include "scheduler_ssb.h"
-#include "ue/ue_scheduler_impl.h"
+#include "common_scheduling/ssb_scheduler.h"
+#include "ue_scheduling/ue_scheduler_impl.h"
 
 using namespace srsgnb;
 
@@ -20,17 +20,20 @@ scheduler_impl::scheduler_impl(sched_configuration_notifier& notifier) :
   ue_sched(std::make_unique<ue_scheduler_impl>(notifier)),
   ue_cfg_handler(ue_sched->get_ue_configurator()),
   feedback_handler(ue_sched->get_feedback_handler())
-{}
+{
+}
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  srsran_assert(not cells.cell_exists(msg.cell_index), "Invalid cell index");
   srsran_sanity_check(is_cell_configuration_request_valid(msg), "Invalid cell configuration");
 
   cells.add_cell(msg.cell_index, msg);
+
   ue_sched->add_cell(
       ue_scheduler_cell_params{msg.cell_index, &cells[msg.cell_index].pdcch_sch, &cells[msg.cell_index].res_grid});
+
   logger.info("SCHED: Cell with cell_index={} was configured.", msg.cell_index);
+
   return true;
 }
 
@@ -46,13 +49,11 @@ void scheduler_impl::handle_ue_reconfiguration_request(const sched_ue_reconfigur
 
 void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
 {
-  srsran_assert(cells.has_cell(msg.cell_index), "Invalid cell_index={}", msg.cell_index);
   cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
 }
 
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
-  srsran_sanity_check(cells.cell_exists(cell_index), "Invalid cell index");
   auto& cell = cells[cell_index];
 
   // 1. Reset cell resource grid state.

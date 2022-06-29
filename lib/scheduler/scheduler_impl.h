@@ -11,9 +11,9 @@
 #ifndef SRSGNB_SCHEDULER_IMPL_H
 #define SRSGNB_SCHEDULER_IMPL_H
 
-#include "cell/cell_sched.h"
+#include "cell/scheduler_cell_manager.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
-#include "ue/ue_scheduler.h"
+#include "ue_scheduling/ue_scheduler.h"
 
 namespace srsgnb {
 
@@ -55,7 +55,7 @@ private:
   scheduler_feedback_handler&   feedback_handler;
 
   /// Cell-specific resources and schedulers.
-  cell_sched_manager cells;
+  scheduler_cell_manager cells;
 };
 
 } // namespace srsgnb

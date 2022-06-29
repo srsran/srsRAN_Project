@@ -3,7 +3,7 @@
 #define SRSGNB_PDCCH_SCHEDULER_H
 
 #include "../cell/resource_grid.h"
-#include "../ue/ue_configuration.h"
+#include "../ue_scheduling/ue_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {

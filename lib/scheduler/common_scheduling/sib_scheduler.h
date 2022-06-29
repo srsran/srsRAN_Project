@@ -10,7 +10,7 @@
 
 #ifndef SRSGNB_SIB_SCHEDULER_H
 
-#include "../pdcch_scheduler/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/sched_consts.h"
@@ -37,7 +37,7 @@ public:
   ///
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] sl_point Slot for which the SIB1 scheduler is called.
-  void schedule_sib1(cell_slot_resource_allocator& res_grid, const slot_point sl_point);
+  void schedule_sib1(cell_slot_resource_allocator& res_grid, slot_point sl_point);
 
 private:
   /// \brief Computes the SIB1 n0 slot, at which each beam's SIB1 is allocated [TS 38.213, Section 13].

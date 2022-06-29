@@ -11,9 +11,9 @@
 #define SRSGNB_UE_SCH_ALLOCATOR_H
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduler/pdcch_scheduler.h"
-#include "../ue/ue.h"
-#include "../ue/ue_scheduler.h"
+#include "../pdcch_scheduling/pdcch_scheduler.h"
+#include "../ue_scheduling/ue.h"
+#include "../ue_scheduling/ue_scheduler.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {

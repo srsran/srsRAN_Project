@@ -9,7 +9,7 @@
  */
 
 #include "config_generators.h"
-#include "lib/scheduler/cell/sib_scheduler.h"
+#include "lib/scheduler/common_scheduling/sib_scheduler.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 

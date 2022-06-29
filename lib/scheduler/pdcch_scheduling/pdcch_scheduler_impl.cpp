@@ -9,7 +9,6 @@
  */
 
 #include "pdcch_scheduler_impl.h"
-#include "../phy_helpers.h"
 #include "../support/config_helpers.h"
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"

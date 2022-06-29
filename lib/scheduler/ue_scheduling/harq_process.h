@@ -11,8 +11,6 @@
 #ifndef SCHED_HARQ_H
 #define SCHED_HARQ_H
 
-#include "../scheduler_prb.h"
-#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"

@@ -11,7 +11,7 @@
 #define SRSGNB_UE_GRID_ALLOCATOR_H
 
 #include "../cell/resource_grid.h"
-#include "../pdcch_scheduler/pdcch_scheduler.h"
+#include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "../policy/ue_allocator.h"
 
 namespace srsgnb {
@@ -23,7 +23,10 @@ class ue_cell_grid_allocator : public ue_pdsch_allocator, public ue_pusch_alloca
 public:
   ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logger& logger_);
 
+  /// Adds a new cell to the UE allocator.
   void add_cell(du_cell_index_t cell_index, pdcch_scheduler& pdcch_sched, cell_resource_allocator& cell_alloc);
+
+  size_t nof_cells() const { return cells.size(); }
 
   const cell_slot_resource_grid& dl_resource_grid(du_cell_index_t cell_index, unsigned k0) const override
   {
@@ -38,8 +41,6 @@ public:
   }
 
   bool allocate_pusch(const ue_pusch_grant& grant) override;
-
-  size_t nof_cells() const { return cells.size(); }
 
 private:
   struct cell_t {

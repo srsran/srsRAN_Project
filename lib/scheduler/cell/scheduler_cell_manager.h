@@ -8,21 +8,23 @@
  *
  */
 
-#ifndef SRSGNB_CELL_SCHED_H
-#define SRSGNB_CELL_SCHED_H
+#ifndef SRSGNB_SCHEDULER_CELL_MANAGER_H
+#define SRSGNB_SCHEDULER_CELL_MANAGER_H
 
-#include "../pdcch_scheduler/pdcch_scheduler_impl.h"
+#include "../common_scheduling/ra_scheduler.h"
+#include "../common_scheduling/sib_scheduler.h"
+#include "../pdcch_scheduling/pdcch_scheduler_impl.h"
 #include "cell_configuration.h"
-#include "ra_scheduler.h"
 #include "resource_grid.h"
-#include "sib_scheduler.h"
 
 namespace srsgnb {
 
-class cell_sched
+/// \brief This class holds all the resources that are specific to a cell.
+/// This includes the SIB and RA scheduler objects, PDCCH scheduler object, the cell resource grid, etc.
+class scheduler_cell
 {
 public:
-  cell_sched(const sched_cell_configuration_request_message& msg) :
+  explicit scheduler_cell(const sched_cell_configuration_request_message& msg) :
     cell_cfg(msg),
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
@@ -35,7 +37,8 @@ public:
              msg.sib1_dci_aggr_lev,
              msg.sib1_retx_periodicity,
              msg.scs_common)
-  {}
+  {
+  }
 
   void slot_indication(slot_point sl_tx)
   {
@@ -51,29 +54,34 @@ public:
   sib1_scheduler       sib1_sch;
 };
 
-class cell_sched_manager
+class scheduler_cell_manager
 {
 public:
+  /// Verifies if cell with provided index exists in the scheduler.
   bool cell_exists(du_cell_index_t cell_index) const
   {
     return cell_index < MAX_NOF_DU_CELLS and cells[cell_index] != nullptr;
   }
 
+  /// \brief Creates new cell in the scheduler.
+  ///
+  /// \param cell_index index of cell to created.
+  /// \param msg configuration parameters of the new cell.
   void add_cell(du_cell_index_t cell_index, const sched_cell_configuration_request_message& msg)
   {
     srsran_assert(cell_index < MAX_NOF_DU_CELLS, "Cell index={} is not valid", cell_index);
     srsran_assert(not cell_exists(cell_index), "Cell={} already exists", cell_index);
-    cells[cell_index] = std::make_unique<cell_sched>(msg);
+    cells[cell_index] = std::make_unique<scheduler_cell>(msg);
     nof_cells_++;
   }
 
-  cell_sched& operator[](du_cell_index_t cell_index)
+  scheduler_cell& operator[](du_cell_index_t cell_index)
   {
     srsran_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
     return *cells[cell_index];
   }
 
-  const cell_sched& operator[](du_cell_index_t cell_index) const
+  const scheduler_cell& operator[](du_cell_index_t cell_index) const
   {
     srsran_assert(cell_exists(cell_index), "Cell={} does not exist", cell_index);
     return *cells[cell_index];
@@ -81,13 +89,11 @@ public:
 
   size_t nof_cells() const { return nof_cells_; }
 
-  bool has_cell(du_cell_index_t cell_index) const { return cells[cell_index] != nullptr; }
-
 private:
-  size_t                                                    nof_cells_ = 0;
-  std::array<std::unique_ptr<cell_sched>, MAX_NOF_DU_CELLS> cells;
+  size_t                                                        nof_cells_ = 0;
+  std::array<std::unique_ptr<scheduler_cell>, MAX_NOF_DU_CELLS> cells;
 };
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CELL_SCHED_H
+#endif // SRSGNB_SCHEDULER_CELL_MANAGER_H

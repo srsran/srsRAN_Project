@@ -11,10 +11,10 @@
 #ifndef SRSGNB_RA_SCHEDULER_H
 #define SRSGNB_RA_SCHEDULER_H
 
-#include "../pdcch_scheduler/pdcch_scheduler.h"
+#include "../cell/resource_grid.h"
+#include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "../support/slot_event_list.h"
-#include "../ue/harq_process.h"
-#include "resource_grid.h"
+#include "../ue_scheduling/harq_process.h"
 #include <deque>
 
 namespace srsgnb {
