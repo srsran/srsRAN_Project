@@ -46,7 +46,9 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
                        "{}",                                                                                           \
                        srsgnb::detail::assert_eq_format_helper(EXPECTED, ACTUAL, false, fmt::format("" __VA_ARGS__)))
 
-#define TESTASSERT(cond, ...) srsran_always_assert(cond, "" __VA_ARGS__)
+#define TESTASSERT(cond, ...)                                                                                          \
+  srsran_always_assert(                                                                                                \
+      cond, "{}", srsgnb::detail::assert_eq_format_helper(true, false, true, fmt::format("" __VA_ARGS__)))
 
 } // namespace srsgnb
 
