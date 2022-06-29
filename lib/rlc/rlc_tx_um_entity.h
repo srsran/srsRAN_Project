@@ -66,16 +66,14 @@ public:
    */
   void handle_sdu(rlc_sdu sdu) override
   {
-    if (sdu_queue.write(*sdu)) {
-      RlcInfo("Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
-              sdu->buf.length(),
-              sdu->pdcp_sn,
-              sdu_queue.size_sdus());
+    if (sdu_queue.write(sdu)) {
+      logger.log_info(
+          "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue.size_sdus());
     } else {
-      RlcWarning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
-                 sdu->buf.length(),
-                 sdu->pdcp_sn,
-                 sdu_queue.size_sdus());
+      logger.log_warning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
+                         sdu.buf.length(),
+                         sdu.pdcp_sn,
+                         sdu_queue.size_sdus());
     }
   }
 
@@ -84,12 +82,12 @@ public:
    */
   rlc_byte_buffer pull_pdu(uint32_t nof_bytes) override
   {
-    RlcDebug("PDU requested with up to {} B", nof_bytes);
+    logger.log_debug("PDU requested with up to {} B", nof_bytes);
 
     // Check available space -- we need at least rlc_um_pdu_header_size + 1 payload Byte
     if (nof_bytes < rlc_um_pdu_header_size + 1) {
-      RlcInfo("Cannot build a PDU with {} B", nof_bytes);
-      return false;
+      logger.log_info("Cannot build a PDU with {} B", nof_bytes);
+      return {};
     }
 
     std::lock_guard<std::mutex> lock(mutex);
@@ -101,8 +99,8 @@ public:
 
     if (sdu.buf.empty()) {
       if (not sdu_queue.read(sdu)) {
-        RlcInfo("No data available to be sent");
-        return false;
+        logger.log_info("No data available to be sent");
+        return {};
       }
       next_so = 0;
 
@@ -125,8 +123,8 @@ public:
     // Calculate actual header length
     size_t head_len = rlc_um_nr_packed_length(header);
     if (nof_bytes <= head_len + 1) {
-      RlcInfo("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
-      return 0;
+      logger.log_info("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
+      return {};
     }
 
     // Calculate the amount of data to move
@@ -134,7 +132,7 @@ public:
     uint32_t to_move = space >= sdu.buf.length() ? sdu.buf.length() : space;
 
     // Log
-    RlcDebug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
+    logger.log_debug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
 
 #if 0
     // Move data from SDU to PDU
@@ -180,7 +178,7 @@ public:
     return ret;
 
 #endif
-    return true;
+    return {};
   }
 
   void get_buffer_state(uint32_t& bytes) override
@@ -189,7 +187,7 @@ public:
     bytes = 0;
   }
 
-  void debug_state() { RlcDebug("TX_Next={}, next_so={}", TX_Next, next_so); }
+  void debug_state() { logger.log_debug("TX_Next={}, next_so={}", TX_Next, next_so); }
 };
 
 } // namespace srsgnb
