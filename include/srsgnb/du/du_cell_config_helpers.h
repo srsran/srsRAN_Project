@@ -62,9 +62,14 @@ inline coreset_configuration make_default_coreset0_config()
   cfg.id                    = to_coreset_id(0);
   cfg.duration              = 1;
   cfg.coreset0_rb_start     = 0;
-  for (size_t i = 0; i < 48 / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE; ++i) {
+  for (size_t i = 0; i < 48U / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE; ++i) {
     cfg.freq_domain_resources.set(i);
   }
+  // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.
+  cfg.interleaved.emplace();
+  cfg.interleaved->interleaver_sz = 2;
+  cfg.interleaved->reg_bundle_sz  = 6;
+  cfg.precoder_granurality        = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
 }
 
