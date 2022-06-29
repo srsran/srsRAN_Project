@@ -42,14 +42,31 @@ public:
   {
     srsran_assert(pdu.empty(), "MAC PDU payload provided is not empty.");
 
-    rlc_sdu sdu = {};
-    if (not sdu_queue.read(sdu)) {
+    if (sdu_queue.is_empty()) {
       logger.log_info("No data available to be sent. Provided space ({} B)", nof_bytes);
       return false;
     }
+
+    uint32_t front_size = {};
+    if (not sdu_queue.front_size_bytes(front_size)) {
+      logger.log_warning("Could not get size of front packet. Provided space ({} B)", nof_bytes);
+      return false;
+    }
+
+    if (front_size > nof_bytes) {
+      logger.log_info("Tx PDU size larger than provided space ({} > {})", front_size, nof_bytes);
+      return false;
+    }
+
+    rlc_sdu sdu = {};
+    if (not sdu_queue.read(sdu)) {
+      logger.log_warning("Could not read SDU, but queue should not be empty. Provided space ({} B)", nof_bytes);
+      return false;
+    }
+
     size_t sdu_size = sdu.buf.length();
-    if (sdu_size > nof_bytes) {
-      logger.log_info("Tx PDU size larger than provided space ({} > {})", sdu_size, nof_bytes);
+    if (sdu_size != front_size) {
+      logger.log_error("Tx PDU size different than front size ({} != {})", sdu_size, front_size);
       return false;
     }
 

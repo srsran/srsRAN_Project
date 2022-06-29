@@ -391,7 +391,7 @@ public:
     return not active;
   }
   template <typename F>
-  bool try_call_on_front(F&& f)
+  bool try_call_on_front(const F& f)
   {
     std::lock_guard<std::mutex> lock(mutex);
     if (not circ_buffer.empty()) {

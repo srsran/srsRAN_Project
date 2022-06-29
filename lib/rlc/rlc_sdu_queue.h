@@ -62,6 +62,11 @@ public:
 
   uint32_t size_bytes() const { return unread_bytes; }
 
+  bool front_size_bytes(uint32_t& size)
+  {
+    return queue.try_call_on_front([&size](const rlc_sdu& sdu) { size = sdu.buf.length(); });
+  }
+
   bool is_empty() { return queue.empty(); }
 
   bool is_full() { return queue.size() >= capacity; }
