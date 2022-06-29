@@ -95,16 +95,15 @@ void test_tx()
 
   {
     // read PDU from lower end
-    rlc_byte_buffer pdu = {};
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len) == true);
+    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    TESTASSERT(not pdu.empty());
     TESTASSERT(pdu == tv_pdu);
   }
 
   {
     // read another PDU from lower end but there is nothing to read
-    rlc_byte_buffer pdu = {};
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len) == false);
-    TESTASSERT(pdu.empty()); // make sure payload was not touched
+    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    TESTASSERT(pdu.empty());
   }
 
   {
@@ -115,31 +114,30 @@ void test_tx()
 
   {
     // read PDU from lower end with insufficient space for the whole SDU
-    rlc_byte_buffer pdu      = {};
     const int       shortage = 1;
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len - shortage) == false);
-    TESTASSERT(pdu.empty()); // make sure payload was not touched
+    rlc_byte_buffer pdu      = rlc1_tx_lower->pull_pdu(payload_len - shortage);
+    TESTASSERT(pdu.empty());
   }
 
   {
     // write another SDU into upper end
+    // there should now be two SDUs in the queue
     rlc_sdu sdu = {2, make_byte_buffer_and_log(tv_sdu)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
 
   {
     // read PDU from lower end with oversized space
-    rlc_byte_buffer pdu      = {};
     const int       oversize = 10;
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len + oversize) == true);
-    TESTASSERT(pdu.length() == payload_len);
+    rlc_byte_buffer pdu      = rlc1_tx_lower->pull_pdu(payload_len + oversize);
+    TESTASSERT_EQ(pdu.length(), payload_len);
     TESTASSERT(pdu == tv_pdu);
   }
 
   {
-    // read another PDU from lower end but there is nothing to read
-    rlc_byte_buffer pdu = {};
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len));
+    // read another PDU from lower end. There should still be one SDU in the queue
+    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    TESTASSERT_EQ(pdu.length(), payload_len);
   }
 }
 
