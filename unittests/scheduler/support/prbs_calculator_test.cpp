@@ -13,21 +13,9 @@
 
 using namespace srsgnb;
 
-// Helper struct to pass parameters to the test.
-struct prbs_calculator_test_paramters {
-  unsigned payload_size_bytes;
-  unsigned nof_symb_sh;
-  unsigned nof_dmrs_prb;
-  unsigned nof_oh_prb;
-  unsigned mod_order;
-  float    target_code_rate;
-  unsigned nof_layers;
-  unsigned tb_scaling_field;
-};
-
 // Pair of prbs_calculator_test_entry and corresponding number of prbs.
 struct prbs_calculator_test_entry {
-  prbs_calculator_test_paramters params;
+  prbs_calculator_pdsch_config   params;
   unsigned                       nof_prbs;
 };
 
@@ -60,15 +48,7 @@ int main()
   // Run the test for all the values in the table.
   for (const auto& test_entry : prbs_calculator_test_table) {
     auto& test_params = test_entry.params;
-    TESTASSERT_EQ(test_entry.nof_prbs,
-                  get_nof_prbs(test_params.payload_size_bytes,
-                               test_params.nof_symb_sh,
-                               test_params.nof_dmrs_prb,
-                               test_params.nof_oh_prb,
-                               test_params.mod_order,
-                               test_params.target_code_rate,
-                               test_params.nof_layers,
-                               test_params.tb_scaling_field));
+    TESTASSERT_EQ(test_entry.nof_prbs, get_nof_prbs(test_params));
   }
 
   return 0;
