@@ -1,12 +1,12 @@
 /*
-*
-* Copyright 2013-2022 Software Radio Systems Limited
-*
-* By using this file, you agree to the terms and conditions set
-* forth in the LICENSE file which can be found at the top level of
-* the distribution.
-*
-*/
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #ifndef SRSGNB_RAN_PRACH_PRACH_RESTRICTED_SET_CONFIG_H
 #define SRSGNB_RAN_PRACH_PRACH_RESTRICTED_SET_CONFIG_H

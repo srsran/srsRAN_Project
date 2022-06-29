@@ -98,7 +98,9 @@ private:
   unsigned                               dft_size_15kHz;
 
 public:
-  prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, unsigned nof_prb_ul_grid_, unsigned dft_size_15kHz_) :
+  prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_,
+                             unsigned                               nof_prb_ul_grid_,
+                             unsigned                               dft_size_15kHz_) :
     dft_factory(dft_factory_), nof_prb_ul_grid(nof_prb_ul_grid_), dft_size_15kHz(dft_size_15kHz_)
   {
   }
@@ -237,7 +239,9 @@ srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_fact
 }
 
 std::shared_ptr<prach_generator_factory>
-srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, unsigned nof_prb_ul_grid, unsigned dft_size_15kHz)
+srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
+                                          unsigned                               nof_prb_ul_grid,
+                                          unsigned                               dft_size_15kHz)
 {
   return std::make_shared<prach_generator_factory_sw>(dft_factory, nof_prb_ul_grid, dft_size_15kHz);
 }
