@@ -63,10 +63,8 @@ public:
     }
 
     size_t sdu_size = sdu.buf.length();
-    if (sdu_size != front_size) {
-      logger.log_error("Tx PDU size different than front size ({} != {})", sdu_size, front_size);
-      return {};
-    }
+    srsran_sanity_check(
+        sdu_size == front_size, "Tx PDU size different than front size ({} != {})", sdu_size, front_size);
 
     // In TM there is no header, just pass the plain SDU
     rlc_byte_buffer pdu = {};
