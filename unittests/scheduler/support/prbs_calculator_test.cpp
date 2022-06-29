@@ -15,8 +15,8 @@ using namespace srsgnb;
 
 // Pair of prbs_calculator_test_entry and corresponding number of prbs.
 struct prbs_calculator_test_entry {
-  prbs_calculator_pdsch_config   params;
-  unsigned                       nof_prbs;
+  prbs_calculator_pdsch_config params;
+  unsigned                     nof_prbs;
 };
 
 // NOTE: payload size is given in bytes.

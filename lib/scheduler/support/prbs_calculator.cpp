@@ -18,21 +18,17 @@ unsigned srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
   // Convert size into bits, as per TS procedures for TBS.
   unsigned payload_size = pdsch_cfg.payload_size_bytes * 8;
 
+  const unsigned max_payload_size_bits = 3824;
+
   // This function is limited to payload_size <= 3824 bits.
-  if (payload_size > table_valid_tbs.back()) {
+  if (payload_size > max_payload_size_bits) {
     return -1;
   }
-
-  auto less_than_eq_to = [](const unsigned& size, const unsigned& tbs) { return size <= tbs; };
-
-  // Get TBS greater or equal to payload_size.
-  const unsigned* it = std::upper_bound(table_valid_tbs.begin(), table_valid_tbs.end(), payload_size, less_than_eq_to);
-  srsran_assert(it != table_valid_tbs.end(), "Estimate of nof_info exceeds the maximum (3824).");
 
   // This is an estimate of the N_info (as per Section 5.1.3.2, TS 38.214), approximated as the TBS that is greater or
   // equal to the payload size. This guarantees that the estimated num. of PRBs we obtained yields a TBS that is
   // greater or equal to the payload.
-  float nof_info_estimate = static_cast<float>(*it);
+  float nof_info_estimate = static_cast<float>(tbs_calculator_table_find_smallest_not_less_than(payload_size));
 
   // Get N_re (as per Section 5.1.3.2, TS 38.214) from N_info.
   float nof_re = nof_info_estimate / (pdsch_cfg.target_code_rate * static_cast<float>(pdsch_cfg.mod_order) *

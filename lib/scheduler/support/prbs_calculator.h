@@ -36,13 +36,11 @@ struct prbs_calculator_pdsch_config {
   ///
   /// Otherwise, it must be set to the higher layer parameter \c xOverhead in \c PDSCH-ServingCellconfig.
   unsigned nof_oh_prb;
-  /// \brief  Number of bits per RE, parameter \f$Q_m\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in
-  /// TS38.214.
+  /// \brief  Number of bits per RE, parameter \f$Q_m\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in TS 38.214.
   ///
   /// Possible values are {2, 4, 6, 8}.
   unsigned mod_order;
-  /// Target Code Rate, parameter \f$R\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in
-  /// TS38.214.
+  /// Target Code Rate, parameter \f$R\f$, as per Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, in TS 38.214.
   float target_code_rate;
   /// \brief Number of layers, parameter \f$\nu\f$.
   ///
