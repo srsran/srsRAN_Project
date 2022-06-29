@@ -14,11 +14,18 @@
 namespace srsgnb {
 
 template <std::size_t N>
-byte_buffer make_pdu_and_log(const std::array<uint8_t, N>& tv)
+byte_buffer make_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
 {
-  byte_buffer pdu;
-  pdu.append(tv);
-  // write_pdu_to_pcap(4, tv.data(), tv.size()); TODO
+  byte_buffer sdu = {tv};
+  return sdu;
+}
+
+template <std::size_t N>
+rlc_byte_buffer make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
+{
+  byte_buffer     buf = {tv};
+  rlc_byte_buffer pdu;
+  pdu.set_payload(buf);
   return pdu;
 }
 
@@ -29,9 +36,9 @@ public:
   uint32_t      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(byte_buffer pdu) override
+  void on_new_sdu(byte_buffer sdu) override
   {
-    rlc_sdu boxed_sdu(sdu_counter++, std::move(pdu));
+    rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);
   }
   void on_ack_received() override {}
@@ -52,8 +59,8 @@ void test_rx()
   const int                              payload_len = 4;
   const std::array<uint8_t, payload_len> tv_sdu      = {0xc0, 0xca, 0xc0, 0x1a};
   const std::array<uint8_t, payload_len> tv_pdu      = {0xc0, 0xca, 0xc0, 0x1a};
-  byte_buffer                            sdu         = make_pdu_and_log(tv_sdu);
-  byte_buffer                            pdu         = make_pdu_and_log(tv_pdu);
+  byte_buffer                            sdu         = make_byte_buffer_and_log(tv_sdu);
+  byte_buffer                            pdu         = make_byte_buffer_and_log(tv_pdu);
 
   // write PDU into lower end
   rlc1_rx_lower->handle_pdu(std::move(pdu));
@@ -76,58 +83,54 @@ void test_tx()
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
 
-  const int                              payload_len  = 4;
-  const std::array<uint8_t, payload_len> tv_sdu       = {0xc0, 0xca, 0xc0, 0x1a};
-  const std::array<uint8_t, payload_len> tv_pdu       = {0xc0, 0xca, 0xc0, 0x1a};
-  const std::array<uint8_t, payload_len> tv_pdu_relic = {0xde, 0xad, 0xde, 0xad};
+  const int                              payload_len = 4;
+  const std::array<uint8_t, payload_len> tv_sdu      = {0xc0, 0xca, 0xc0, 0x1a};
+  const std::array<uint8_t, payload_len> tv_pdu      = {0xc0, 0xca, 0xc0, 0x1a};
 
   {
     // write SDU into upper end
-    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
-    rlc_sdu     boxed_sdu = {1000, std::move(sdu)};
-    rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
+    rlc_sdu sdu = {0, make_byte_buffer_and_log(tv_sdu)};
+    rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
 
   {
     // read PDU from lower end
-    byte_buffer pdu = make_pdu_and_log(tv_pdu_relic);
+    rlc_byte_buffer pdu = {};
     TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len) == true);
     TESTASSERT(pdu == tv_pdu);
   }
 
   {
     // read another PDU from lower end but there is nothing to read
-    byte_buffer pdu = make_pdu_and_log(tv_pdu_relic);
+    rlc_byte_buffer pdu = {};
     TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len) == false);
-    TESTASSERT(pdu == tv_pdu_relic);
+    TESTASSERT(pdu.empty()); // make sure payload was not touched
   }
 
   {
     // write another SDU into upper end
-    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
-    rlc_sdu     boxed_sdu = {1001, std::move(sdu)};
-    rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
+    rlc_sdu sdu = {1, make_byte_buffer_and_log(tv_sdu)};
+    rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
 
   {
     // read PDU from lower end with insufficient space for the whole SDU
-    byte_buffer pdu      = make_pdu_and_log(tv_pdu_relic);
-    const int   shortage = 1;
+    rlc_byte_buffer pdu      = {};
+    const int       shortage = 1;
     TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len - shortage) == false);
-    TESTASSERT(pdu == tv_pdu_relic);
+    TESTASSERT(pdu.empty()); // make sure payload was not touched
   }
 
   {
     // write another SDU into upper end
-    byte_buffer sdu       = make_pdu_and_log(tv_sdu);
-    rlc_sdu     boxed_sdu = {1002, std::move(sdu)};
-    rlc1_tx_upper->handle_sdu(std::move(boxed_sdu));
+    rlc_sdu sdu = {2, make_byte_buffer_and_log(tv_sdu)};
+    rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
 
   {
     // read PDU from lower end with oversized space
-    byte_buffer pdu      = make_pdu_and_log(tv_pdu_relic);
-    const int   oversize = 10;
+    rlc_byte_buffer pdu      = {};
+    const int       oversize = 10;
     TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len + oversize) == true);
     TESTASSERT(pdu.length() == payload_len);
     TESTASSERT(pdu == tv_pdu);
@@ -135,9 +138,8 @@ void test_tx()
 
   {
     // read another PDU from lower end but there is nothing to read
-    byte_buffer pdu = make_pdu_and_log(tv_pdu_relic);
-    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len) == false);
-    TESTASSERT(pdu == tv_pdu_relic);
+    rlc_byte_buffer pdu = {};
+    TESTASSERT(rlc1_tx_lower->pull_pdu(pdu, payload_len));
   }
 }
 
@@ -145,12 +147,10 @@ void test_tx()
 
 int main()
 {
-  auto& logger = srslog::fetch_basic_logger("TEST", false);
-  logger.set_level(srslog::basic_levels::debug);
   srslog::init();
-
-  logger.info("Testing RLC TM");
-  srslog::flush();
+  srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
+  fprintf(stdout, "Testing RLC TM\n");
 
   srsgnb::test_rx();
   srsgnb::test_tx();

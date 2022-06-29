@@ -33,7 +33,7 @@ public:
   /*
    * Interfaces for lower layers
    */
-  bool pull_pdu(byte_buffer& pdu, uint32_t nof_bytes) override
+  bool pull_pdu(rlc_byte_buffer& pdu, uint32_t nof_bytes) override
   {
     // TODO
     return true;

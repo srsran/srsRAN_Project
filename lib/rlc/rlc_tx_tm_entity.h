@@ -13,6 +13,7 @@
 
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
+#include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
 
@@ -37,8 +38,10 @@ public:
   }
 
   // Interfaces for lower layers
-  bool pull_pdu(byte_buffer& pdu, uint32_t nof_bytes) override
+  bool pull_pdu(rlc_byte_buffer& pdu, uint32_t nof_bytes) override
   {
+    srsran_assert(pdu.empty(), "MAC PDU payload provided is not empty.");
+
     rlc_sdu sdu = {};
     if (not sdu_queue.read(sdu)) {
       logger.log_info("No data available to be sent. Provided space ({} B)", nof_bytes);
@@ -51,7 +54,7 @@ public:
     }
 
     // In TM there is no header, just pass the plain SDU
-    pdu = std::move(sdu.buf);
+    pdu.set_payload(sdu.buf);
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     return true;
   }

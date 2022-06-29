@@ -162,8 +162,8 @@ int main()
   srslog::init();
   srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
-
   fprintf(stdout, "Testing RLC SDU queue\n");
+
   srsgnb::queue_unqueue_test();
   srsgnb::full_capacity_test();
   srsgnb::discard_test();
