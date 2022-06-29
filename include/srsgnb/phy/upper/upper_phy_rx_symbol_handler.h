@@ -34,10 +34,10 @@ public:
   /// \param [in] grid Provides the resource grids for each port of the given sector.
   virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
-  /// Handles the arrival of PRACH packets for given CC
-  ///
-  /// \param [in] context Provides the notification context
-  virtual void handle_rx_prach_symbol(const upper_phy_rx_symbol_context& context) = 0;
+  /// \brief Handles the arrival of PRACH buffers for given sector.
+  /// \param [in] context Provides the PRACH context.
+  /// \param [in] buffer  Read-only PRACH buffer.
+  virtual void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
 
   /// Handles the arrival of SRS packets for given CC
   ///

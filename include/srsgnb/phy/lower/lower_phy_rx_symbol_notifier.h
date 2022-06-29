@@ -2,6 +2,8 @@
 #ifndef SRSGNB_PHY_LOWER_LOWER_PHY_RX_SYMBOL_NOTIFIER_H
 #define SRSGNB_PHY_LOWER_LOWER_PHY_RX_SYMBOL_NOTIFIER_H
 
+#include "srsgnb/phy/prach_buffer.h"
+#include "srsgnb/phy/prach_buffer_context.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
 
@@ -30,10 +32,14 @@ public:
   /// \param [in] grid Provides the resource grid that belongs to the context.
   virtual void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
-  /// \brief Notifies the completion of PRACH symbols.
+  /// \brief Notifies the completion of PRACH window.
   ///
-  /// \param [in] context Provides the notification context.
-  virtual void on_rx_prach_symbol(const lower_phy_rx_symbol_context& context) = 0;
+  /// The lower PHY uses this method to notify that a PRACH window identified by \c context has been written in \c
+  /// buffer.
+  ///
+  /// \param [in] context Provides the PRACH context.
+  /// \param [in] buffer  Read-only PRACH buffer.
+  virtual void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
 
   /// \brief Notifies the completion of SRS symbols.
   ///

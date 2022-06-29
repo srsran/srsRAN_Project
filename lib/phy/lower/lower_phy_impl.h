@@ -27,9 +27,9 @@ namespace srsgnb {
 /// Describes the factory configuration.
 struct lower_phy_common_configuration {
   /// Provides OFDM modulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
+  std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
   /// Provides OFDM demodulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_demodulator> > demodulators;
+  std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
 };
 
 class lower_phy_dl_rg_buffer
@@ -93,9 +93,9 @@ private:
   /// Stores radio receive metadata for each stream. The number of entries indicates the number of streams.
   std::vector<baseband_gateway_receiver::metadata> receive_metadata;
   /// Stores OFDM modulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_modulator> > modulators;
+  std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
   /// Stores OFDM demodulators. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<ofdm_symbol_demodulator> > demodulators;
+  std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
   /// Indicates the receive to transmit delay in clock ticks.
   const baseband_gateway_timestamp rx_to_tx_delay;
   /// Indicates the maximum allowed processing delay in slots.
@@ -129,6 +129,9 @@ private:
 
   // See interface for documentation.
   void send(const resource_grid_context& context, const resource_grid_reader& grid) override;
+
+  // See interface for documentation.
+  void request_prach_window(const prach_buffer_context& context, prach_buffer* buffer) override;
 
 public:
   /// \brief Constructs a generic lower physical layer.

@@ -29,14 +29,10 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_prach_symbol(const lower_phy_rx_symbol_context& context) override
+  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) override
   {
     srsran_always_assert(rx_symbol_handler, "Adapter is not connected.");
-    upper_phy_rx_symbol_context upper_context;
-    upper_context.slot   = context.slot;
-    upper_context.sector = context.sector;
-    upper_context.symbol = context.nof_symbols;
-    rx_symbol_handler->handle_rx_prach_symbol(upper_context);
+    rx_symbol_handler->handle_rx_prach_window(context, buffer);
   }
 
   // See interface for documentation.

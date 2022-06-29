@@ -293,3 +293,8 @@ void lower_phy_impl::stop()
   state_fsm.stop_and_join();
   logger.debug("Stopped successfully.");
 }
+
+void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer* buffer)
+{
+  // Not implemented.
+}
