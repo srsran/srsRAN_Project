@@ -31,8 +31,11 @@ struct du_cell_config {
 
   dmrs_typeA_position dmrs_typeA_pos;
 
-  coreset_id      coreset0_id;
-  search_space_id searchspace0_id;
+  /// CORESET#0 index of Table 13-{1, ..., 10}, TS 38.213.
+  unsigned coreset0_idx;
+
+  /// SearcSpace#0 index of Table 13-{11, ..., 15}, TS 38.213.
+  unsigned searchspace0_idx;
 
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;

@@ -9,6 +9,7 @@
  */
 
 #include "du_cell_manager.h"
+#include "srsgnb/du/du_cell_config_validation.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -22,6 +23,12 @@ du_cell_manager::du_cell_manager(const du_manager_config_t& cfg_) : cfg(cfg_)
 
 void du_cell_manager::add_cell(const du_cell_config& cell_cfg)
 {
+  // Verify that DU cell configuration is valid. Abort application otherwise.
+  auto ret = is_du_cell_config_valid(cell_cfg);
+  if (ret.is_error()) {
+    srsran_terminate("ERROR: Invalid DU Cell Configuration. Cause: {}.", ret.error());
+  }
+
   cells.emplace_back(std::make_unique<cell_t>());
   cells.back()->cfg = cell_cfg;
 }

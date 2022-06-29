@@ -15,6 +15,7 @@ add_library(srsgnb_du_manager STATIC ${SOURCES})
 target_link_libraries(srsgnb_du_manager
                       srsgnb_du_manager_procedures
                       du_manager_converters
+                      srsgnb_du_config_validators
                       srsgnb_rlc)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
