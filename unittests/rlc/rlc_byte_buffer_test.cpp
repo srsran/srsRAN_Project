@@ -168,7 +168,7 @@ void test_rlc_buffer_payload_lifetime()
     all_bytes = header_bytes;
     all_bytes.insert(all_bytes.end(), payload.begin(), payload.end());
   }
-  // Note: header and payload went out of scope, but that shouldnt affect the rlc buffer content.
+  // Note: header and payload went out of scope, but that shouldn't affect the RLC buffer content.
 
   TESTASSERT(not buf.payload_view().empty());
   TESTASSERT(buf == all_bytes);

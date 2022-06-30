@@ -16,7 +16,11 @@
 
 namespace srsgnb {
 
-constexpr size_t rlc_um_pdu_header_size = 2;
+constexpr size_t rlc_um_pdu_header_size_complete_sdu     = 1;
+constexpr size_t rlc_um_pdu_header_size_6bit_sn_no_so    = 1;
+constexpr size_t rlc_um_pdu_header_size_12bit_sn_no_so   = 2;
+constexpr size_t rlc_um_pdu_header_size_6bit_sn_with_so  = 3;
+constexpr size_t rlc_um_pdu_header_size_12bit_sn_with_so = 4;
 
 struct rlc_um_pdu_header {
   rlc_si_field   si;      ///< Segmentation info
