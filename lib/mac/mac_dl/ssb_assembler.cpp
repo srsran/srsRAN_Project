@@ -25,10 +25,9 @@ ssb_assembler::ssb_assembler(pci_t pci_, const ssb_configuration& ssb_cfg_, unsi
 
 void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
 {
-  ssb_pdu.pci                 = pci;
-  ssb_pdu.beta_pss_profile_nr = ssb_beta_pss::dB_0;
-  ssb_pdu.ssb_index           = ssb_info.ssb_index;
-  // TODO: Verify whether this is the correct SCS
+  ssb_pdu.pci                   = pci;
+  ssb_pdu.beta_pss_profile_nr   = ssb_beta_pss::dB_0;
+  ssb_pdu.ssb_index             = ssb_info.ssb_index;
   ssb_pdu.scs                   = ssb_cfg.scs;
   ssb_pdu.ssb_subcarrier_offset = ssb_cfg.ssb_subcarrier_offset;
   ssb_pdu.offset_to_point_A     = ssb_cfg.ssb_offset_to_point_A;

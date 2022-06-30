@@ -21,8 +21,7 @@ constexpr size_t NOF_BEAMS = 64;
 
 /// SSB Configuration.
 struct ssb_configuration {
-  /// SSB subcarrier spacing as per TS38.211 Table 4.2-1.
-  // TODO: verify if which SCS this refers to.
+  /// SSB subcarrier spacing.
   subcarrier_spacing scs;
   /// Represents the offset to Point A in PRBs as per TS38.331 Section 6.3.2 IE offsetToPointA.
   /// Possible values: {0, ..., 2199}.

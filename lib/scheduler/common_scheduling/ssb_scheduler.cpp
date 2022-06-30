@@ -168,12 +168,6 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
     return;
   }
 
-  // If the periodicity is 0, it means that the parameter was not passed by the upper layers.
-  // In that case, we use default value of 5ms (see Clause 4.1, TS 38.213).
-  if (ssb_periodicity == 0) {
-    ssb_periodicity = DEFAULT_SSB_PERIODICITY;
-  }
-
   // Only FR1 are supported in this implementation
   srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
                 "Frenquencies in the range FR2 not supported");

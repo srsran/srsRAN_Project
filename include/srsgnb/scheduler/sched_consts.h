@@ -20,8 +20,6 @@ namespace srsgnb {
 const size_t MAX_NOF_LAYERS = 2;
 
 /// SSB constants.
-/// This is the max num of SSB in a list of SSB to be passed from SCHED to MAC.
-const size_t DEFAULT_SSB_PERIODICITY = 5;
 /// FR1 = [ 410 MHz – 7125 MHz] (TS 38.101, Section 5.1) and ARFCN corresponding to 7.125GHz is 875000.
 const unsigned FR1_MAX_FREQUENCY_ARFCN = 875000;
 /// The cutoff frequency for case A, B and C paired is 3GHz, corresponding to 600000 ARFCN (TS 38.213, Section 4.1).
