@@ -122,8 +122,8 @@ int main(int argc, char** argv)
   TESTASSERT(dft_factory, "DFT factory of type {} is not available.", dft_factory_str);
 
   // Test for the most common DFT sizes
-  for (unsigned size :
-       {128, 256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
+  for (unsigned size : {128,  139,  256,  384,  512,  768,   839,   1024,  1536,  2048,
+                        3072, 4096, 4608, 6144, 9216, 12288, 18432, 24576, 36864, 49152}) {
     for (dft_processor::direction direction : {dft_processor::direction::DIRECT, dft_processor::direction::INVERSE}) {
       // Create FFTW configuration;
       dft_processor::configuration config;
@@ -132,7 +132,11 @@ int main(int argc, char** argv)
 
       // Create processor
       std::unique_ptr<dft_processor> dft = dft_factory->create(config);
-      TESTASSERT(dft);
+
+      // Skip test case silently if it is not available.
+      if (dft == nullptr) {
+        continue;
+      }
 
       // Get DFT input buffer
       span<cf_t> input = dft->get_input();
@@ -173,7 +177,12 @@ int main(int argc, char** argv)
 #endif
 
       // Actual assertion.
-      TESTASSERT(max_error < ASSERT_MAX_ERROR);
+      TESTASSERT(max_error < ASSERT_MAX_ERROR,
+                 "Error {} exceeds maximum {} for {} DFT size {}.",
+                 max_error,
+                 ASSERT_MAX_ERROR,
+                 dft_processor::direction_to_string(direction),
+                 size);
     }
   }
 

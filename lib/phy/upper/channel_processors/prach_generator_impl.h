@@ -18,7 +18,7 @@
 
 namespace srsgnb {
 
-/// \brief PRACH time domain signal generator on the fly.
+/// \brief On-demand PRACH time-domain signal generator.
 ///
 /// It generates PRACH time domain signals on demand instead of generating and storing. It minimizes memory footprint in
 /// expense of longer processing time.
@@ -47,7 +47,14 @@ private:
   /// Temporal sequence storage.
   srsvec::aligned_vec<cf_t> temp;
 
-  /// \brief Calculates the number of cyclic shifts \f$N_{CS}\f$.
+  /// \brief Calculates the number of cyclic shifts \f$N_{CS}\f$ used in the sequence generation as per TS38.211
+  /// Section 6.3.3.1.
+  ///
+  /// The number of cyclic shifts \f$N_{CS}\f$ extracted from:
+  /// - TS38.211 Table 6.3.3.1-5 for preambles 0, 1 and 2
+  /// - TS38.211 Table 6.3.3.1-6 for preamble 3, and
+  /// - TS38.211 Table 6.3.3.1-7 for the remaining preambles.
+  ///
   /// \param[in] prach_scs             Parameter \f$\Delta f^{RA}\f$.
   /// \param[in] restricted_set        Parameter \c restrictedSetConfig.
   /// \param[in] zero_correlation_zone Parameter \c zeroCorrelationZoneConfig.
@@ -76,28 +83,28 @@ private:
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);
 
-  /// \brief Generates the \f$y_{u,v}\f$ sequence.
-  /// \param[in] u   Sequence number.
-  /// \param[in] C_v Sequence shift.
-  /// \return A read-only view to the generated sequence.
-  span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
-
-  /// \brief Get the parameter \f$N_{RB}^{RA}\f$ as per TS38.211 Table 6.3.3.2-1.
+  /// \brief Gets the parameter \f$N_{RB}^{RA}\f$ as per TS38.211 Table 6.3.3.2-1.
   /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
   /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
   /// \return Return a valid \f$N_{RB}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  unsigned get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
+  static unsigned get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
 
-  /// \brief Get the parameter \f$\bar{k}\f$ as per TS38.211 Table 6.3.3.2-1.
+  /// \brief Gets the parameter \f$\bar{k}\f$ as per TS38.211 Table 6.3.3.2-1.
   /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
   /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
   /// \return Return a valid \f$\bar{k}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  unsigned get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
+  static unsigned get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
+
+  /// \brief Generates the \f$y_{u,v}\f$ sequence.
+  /// \param[in] u   Sequence number.
+  /// \param[in] C_v Sequence shift.
+  /// \return View of the generated sequence.
+  span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
 
   /// \brief Modulates PRACH as per TS38.211 Section 5.3.2.
-  /// \param[in] y_u_v  A read-only view of the frequency domain generated signal to modulate.
+  /// \param[in] y_u_v  Frequency-domain signal to modulate.
   /// \param[in] config PRACH configuration.
-  /// \return A read-only view to the generated sequence.
+  /// \return View of the generated sequence.
   span<const cf_t> modulate(span<const cf_t> y_u_v, const configuration& config);
 
 public:

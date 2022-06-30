@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UPPER_PHY_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
-#define SRSGNB_UPPER_PHY_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
+#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -19,9 +19,9 @@
 
 namespace srsgnb {
 
-/// \brief Describes a PRACH generator interface.
+/// \brief PRACH generator interface.
 ///
-/// It generates the PRACH time domain signal described in TS38.211 Section 6.3.3.
+/// Generates the PRACH time domain signal as described in TS38.211 Section 6.3.3.
 ///
 class prach_generator
 {
@@ -30,9 +30,13 @@ public:
   struct configuration {
     /// Indicates the preamble format.
     preamble_format format;
-    /// Root sequence index {0...837} for long preambles and {0...137} for short preambles.
+    /// \brief Root sequence index.
+    ///
+    /// Parameter \f$i\f$ to select the PRACH sequence number from:
+    /// - TS38.211 Table 6.3.3.1-3 with range {0...837} for long preambles, and
+    /// - TS38.211 Table 6.3.3.1-4 with range {0...137} for short preambles.
     unsigned root_sequence_index;
-    /// Preamble index to generate {0...63}.
+    /// Index of the preamble to generate {0...63}.
     unsigned preamble_index;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
@@ -54,4 +58,4 @@ public:
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_UPPER_PHY_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H

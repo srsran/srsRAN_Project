@@ -7,11 +7,11 @@
 
 namespace srsgnb {
 
-/// Generic interface of FFT size N
-class generic_fft_N
+/// Generic interface for DFT of DFT size N.
+class generic_dft_N
 {
 public:
-  virtual ~generic_fft_N()                          = default;
+  virtual ~generic_dft_N()                          = default;
   virtual void run(cf_t* out, const cf_t* in) const = 0;
 };
 
@@ -26,7 +26,7 @@ private:
   /// DFT output buffer ownership.
   srsvec::aligned_vec<cf_t> output;
   /// Generic FFT.
-  std::unique_ptr<generic_fft_N> generic_fft;
+  std::unique_ptr<generic_dft_N> generic_dft;
 
 public:
   /// \brief Constructs a generic DFT processor.
@@ -34,7 +34,7 @@ public:
   dft_processor_generic_impl(const configuration& dft_config);
 
   /// Determines whether the initialization was successful.
-  bool is_valid() const { return generic_fft != nullptr; }
+  bool is_valid() const { return generic_dft != nullptr; }
 
   // See interface for documentation.
   direction get_direction() const override { return dir; }

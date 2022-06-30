@@ -35,17 +35,23 @@ unsigned prach_generator_impl::get_nof_cyclic_shifts(unsigned              prach
                                                      restricted_set_config restricted_set,
                                                      unsigned              zero_correlation_zone)
 {
+  // TS38.211 Table 6.3.3.1-5 First column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_UNRESTRICTED = {
       0, 13, 15, 18, 22, 26, 32, 38, 46, 59, 76, 93, 119, 167, 279, 419};
+  // TS38.211 Table 6.3.3.1-5 Second column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_A = {
       15, 18, 22, 26, 32, 38, 46, 55, 68, 82, 100, 128, 158, 202, 237, RESERVED};
+  // TS38.211 Table 6.3.3.1-5 Third column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_B = {
       15, 18, 22, 26, 32, 38, 46, 55, 68, 82, 100, 118, 137, RESERVED, RESERVED, RESERVED};
 
+  // TS38.211 Table 6.3.3.1-6 First column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_5_UNRESTRICTED = {
       0, 13, 26, 33, 38, 41, 49, 55, 64, 76, 93, 119, 139, 209, 279, 419};
+  // TS38.211 Table 6.3.3.1-6 Second column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_5_TYPE_A = {
       36, 57, 72, 81, 89, 94, 103, 112, 121, 132, 137, 152, 173, 195, 216, 237};
+  // TS38.211 Table 6.3.3.1-6 Third column.
   static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_5_TYPE_B = {
       36, 57, 60, 63, 65, 68, 71, 77, 81, 85, 97, 109, 122, 137, RESERVED, RESERVED};
 

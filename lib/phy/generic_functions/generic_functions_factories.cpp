@@ -35,7 +35,11 @@ class dft_processor_factory_fftx : public dft_processor_factory
 public:
   std::unique_ptr<dft_processor> create(const dft_processor::configuration& config) override
   {
-    return std::make_unique<dft_processor_fftx_impl>(config);
+    std::unique_ptr<dft_processor_fftx_impl> dft = std::make_unique<dft_processor_fftx_impl>(config);
+    if (!dft->is_valid()) {
+      return nullptr;
+    }
+    return dft;
   }
 };
 

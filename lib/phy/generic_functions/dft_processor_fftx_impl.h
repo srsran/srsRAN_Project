@@ -26,6 +26,9 @@ public:
   /// \param [in] dft_config Provides the fftx DFT processor parameters.
   dft_processor_fftx_impl(const configuration& dft_config);
 
+  /// Determines whether the instance has been initialised successfully.
+  bool is_valid() const { return function != nullptr; }
+
   // See interface for documentation.
   direction get_direction() const override { return dir; }
 
