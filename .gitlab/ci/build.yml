@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "1.0.0"
+    ref: "3"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "1.0.0"
+    ref: "3"
     file: .gitlab/ci-shared/srs_tools.yml
 
 variables:
@@ -11,7 +11,7 @@ variables:
   os_type: ubuntu
   os_version: "22.04"
   compiler: gcc
-  docker_version: "1.1.0"
+  docker_version: $DOCKER_BUILDER_VERSION
   run_tests: "true"
   enable_coverage: "true"
 
@@ -123,6 +123,7 @@ build [clean]:
         path: coverage.xml
     paths:
       - coverage.html
+      - xunit.xml
     expire_in: 7 days
 
 unit tests:

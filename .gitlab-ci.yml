@@ -1,13 +1,17 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "1.0.0"
+    ref: "3"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "1.0.0"
+    ref: "3"
     file: .gitlab/ci-shared/scheduler.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "3"
+    file: .gitlab/versions.yml
   - local: .gitlab/ci/build.yml
 
 stages:
+  - ci check
   - static
   - build
   - tests
@@ -16,10 +20,25 @@ stages:
   - notify status
 
 ################################################################################
+## CI check
+################################################################################
+check-ci-versions:
+  stage: ci check
+  image: $SRS_TOOLS_IMAGE
+  rules:
+    - if: $ON_MR
+  before_script:
+    - !reference [.srs_tools_setup_job, before_script]
+    - srs_tools_setup
+  script:
+    - ci-version-check --check-main .gitlab-ci.yml --check-directory .gitlab
+  dependencies: []
+
+################################################################################
 ## Static
 ################################################################################
 .static:
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:1.0.5
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/static_validator:$DOCKER_STATIC_VERSION
   stage: static
   rules:
     - if: $ON_MR
@@ -78,8 +97,6 @@ alternative builds:
 ################################################################################
 .gnb-scheduler:
   stage: scheduler
-  variables:
-    SCHEDULER_VERSION: "1.3.0"
   dependencies: []
 
 scheduler-planer:
@@ -105,12 +122,10 @@ tests-report:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
-  image: alpine:3.16.0
-  variables:
-    test_report_version: "1.5.0"
+  image: $SRS_TOOLS_IMAGE
   before_script:
     - !reference [.srs_tools_setup_job, before_script]
-    - srs_tools_setup $test_report_version
+    - srs_tools_setup
   script:
     - test-reporter --input unittests --output ./test_report.html
   dependencies: []
@@ -122,9 +137,7 @@ pages:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
-  variables:
-    docker_version: "1.0.0"
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$docker_version
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$DOCKER_DOXYGEN_VERSION
   script:
     - doxygen_generator.sh
     - mv build/public .
@@ -148,12 +161,10 @@ pages:
 ################################################################################
 .notifier:
   stage: notify status
-  image: alpine:3.16.0
-  variables:
-    slack_notifier_version: "1.3.0"
+  image: $SRS_TOOLS_IMAGE
   before_script:
     - !reference [.srs_tools_setup_job, before_script]
-    - srs_tools_setup $slack_notifier_version
+    - srs_tools_setup
     - MSG="Pipeline <${CI_PIPELINE_URL}|#${CI_PIPELINE_IID}> for commit <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}."
   dependencies: []
 
