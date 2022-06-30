@@ -26,6 +26,12 @@ enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
 enum du_cell_index_t : uint16_t { MIN_DU_CELL_INDEX = 0, MAX_DU_CELL_INDEX = 15, MAX_NOF_DU_CELLS = 16 };
 
+/// Convert integer to DU index type.
+constexpr inline du_index_t to_du_index(std::underlying_type_t<du_index_t> idx)
+{
+  return static_cast<du_index_t>(idx);
+}
+
 /// Convert integer to CU UE index type.
 constexpr inline ue_index_t to_cu_ue_index(std::underlying_type_t<ue_index_t> idx)
 {

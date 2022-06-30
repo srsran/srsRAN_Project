@@ -33,7 +33,9 @@ public:
   virtual ~du_manager_ctrl_configurer()              = default;
   virtual du_context* add_du(du_context du)          = 0;
   virtual void        remove_du(du_index_t du_index) = 0;
+  virtual du_index_t       get_next_du_index()                   = 0;
   virtual du_context* find_du(du_index_t du_index)   = 0;
+  virtual du_cell_context* find_cell(uint64_t packed_nr_cell_id) = 0;
   virtual size_t      get_nof_dus() const            = 0;
 };
 

@@ -38,7 +38,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
   // Create new DU context
   du_context du_ctxt{};
-  du_ctxt.du_index = MIN_DU_INDEX; // TODO: get unique next index
+  du_ctxt.du_index = du_mng.get_next_du_index();
   du_ctxt.id       = msg.request->gnb_du_id.value;
   if (msg.request->gnb_du_name_present) {
     du_ctxt.name = msg.request->gnb_du_name.value.to_string();
@@ -91,7 +91,12 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initi
       "Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
   cfg.logger.debug("plmn={}", cgi.plmn);
 
-  // TODO: Look up DU and cell with NR-CGI
+  // Retrieve cell context to handle message
+  auto cell_it = du_mng.find_cell(msg.msg->nrcgi.value.nrcell_id.to_number());
+  if (cell_it == nullptr) {
+    cfg.logger.error("Could not find cell with NR-CGI={}", cgi.nci.packed);
+    return;
+  }
 
   if (msg.msg->sul_access_ind_present) {
     cfg.logger.debug("Ignoring SUL access indicator");

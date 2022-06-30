@@ -27,6 +27,15 @@ du_context* du_manager::find_du(du_index_t du_index)
   return du_db.contains(du_index) ? &du_db[du_index] : nullptr;
 }
 
+du_cell_context* du_manager::find_cell(uint64_t packed_nr_cell_id)
+{
+  auto cell_it = cell_dict.find(packed_nr_cell_id);
+  if (cell_it != cell_dict.end()) {
+    return cell_it->second;
+  }
+  return nullptr;
+}
+
 du_context* du_manager::add_du(du_context du_ctx)
 {
   srsran_assert(du_ctx.du_index < MAX_NOF_DUS, "Invalid du_index={}", du_ctx.du_index);
@@ -40,6 +49,11 @@ du_context* du_manager::add_du(du_context du_ctx)
   du_index_t du_index = du_ctx.du_index;
   du_db.emplace(du_index, std::move(du_ctx));
   auto& u = du_db[du_index];
+
+  // Add each of the DU's cells to our cell database using packed NCI as lookup key
+  for (auto& cell : u.cell_db) {
+    cell_dict.insert(std::make_pair(cell.cgi.nci.packed, &cell));
+  }
 
   return &u;
 }
@@ -65,4 +79,13 @@ void du_manager::remove_du(du_index_t du_index)
 size_t du_manager::get_nof_dus() const
 {
   return du_db.size();
+}
+
+du_index_t du_manager::get_next_du_index()
+{
+  du_index_t new_index;
+  do {
+    new_index = to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
+  } while (du_db.contains(new_index));
+  return new_index;
 }
