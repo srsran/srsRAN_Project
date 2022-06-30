@@ -58,7 +58,27 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
   cs.coreset_id = cfg.id;
   cs.freq_domain_res.from_number(cfg.freq_domain_resources.to_uint64());
   cs.dur = cfg.duration;
-  // TODO: Remaining
+  if (cfg.interleaved.has_value()) {
+    auto& interv = cs.cce_reg_map_type.set_interleaved();
+    asn1::number_to_enum(interv.reg_bundle_size, cfg.interleaved->reg_bundle_sz);
+    asn1::number_to_enum(interv.interleaver_size, cfg.interleaved->interleaver_sz);
+    if (cfg.interleaved->shift_index.has_value()) {
+      interv.shift_idx_present = true;
+      interv.shift_idx         = *cfg.interleaved->shift_index;
+    }
+  } else {
+    cs.cce_reg_map_type.set_non_interleaved();
+  }
+  cs.precoder_granularity.value =
+      cfg.precoder_granurality == coreset_configuration::precoder_granularity_type::same_as_reg_bundle
+          ? coreset_s::precoder_granularity_opts::same_as_reg_bundle
+          : coreset_s::precoder_granularity_opts::all_contiguous_rbs;
+  // TODO: tci-StatesPDCCH-ToAddList
+  // TODO: tci-StatesPDCCH-ToReleaseList
+  if (cfg.pdcch_dmrs_scrambling_id.has_value()) {
+    cs.pdcch_dmrs_scrambling_id_present = true;
+    cs.pdcch_dmrs_scrambling_id         = *cfg.pdcch_dmrs_scrambling_id;
+  }
   return cs;
 }
 

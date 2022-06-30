@@ -219,7 +219,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
 {
   // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
-  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
+  //  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
   // TODO: Make smarter algorithm for RAR size derivation.
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
 
