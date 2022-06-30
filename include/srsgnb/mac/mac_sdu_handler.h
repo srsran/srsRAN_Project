@@ -9,12 +9,6 @@
 
 namespace srsgnb {
 
-struct mac_rx_sdu {
-  du_ue_index_t ue_index;
-  lcid_t        lcid;
-  byte_buffer   pdu;
-};
-
 /// This interface notifies to upper layers the reception of new SDUs over a logical channel.
 class mac_sdu_rx_notifier
 {
@@ -22,7 +16,7 @@ public:
   virtual ~mac_sdu_rx_notifier() = default;
 
   /// This callback is invoked on each received SDU.
-  virtual void on_new_sdu(mac_rx_sdu sdu) = 0;
+  virtual void on_new_sdu(byte_buffer sdu) = 0;
 };
 
 /// This interface represents the entry point of a logical channel in the MAC layer.

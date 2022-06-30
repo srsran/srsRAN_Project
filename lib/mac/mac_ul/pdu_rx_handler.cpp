@@ -16,12 +16,9 @@ pdu_rx_handler::pdu_rx_handler(mac_common_config_t&        cfg_,
                                scheduler_feedback_handler& sched_,
                                mac_ul_ue_manager&          ue_manager_,
                                du_rnti_table&              rnti_table_) :
-  cfg(cfg_),
-  logger(cfg.logger),
-  sched(sched_),
-  ue_manager(ue_manager_),
-  rnti_table(rnti_table_)
-{}
+  cfg(cfg_), logger(cfg.logger), sched(sched_), ue_manager(ue_manager_), rnti_table(rnti_table_)
+{
+}
 
 bool pdu_rx_handler::handle_rx_pdu(slot_point sl_rx, du_cell_index_t cell_index, mac_rx_pdu pdu)
 {
@@ -67,8 +64,8 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
 
   log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_NOF_DU_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
 
-  // Push CCCH message to upper layers
-  ue->ul_bearers[LCID_SRB0]->on_new_sdu(mac_rx_sdu{ue->ue_index, LCID_SRB0, std::move(ul_ccch_msg)});
+  // Push CCCH message to upper layers.
+  ue->ul_bearers[LCID_SRB0]->on_new_sdu(std::move(ul_ccch_msg));
   return true;
 }
 
@@ -115,8 +112,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   }
 
   // Push PDU to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(
-      mac_rx_sdu{ue->ue_index, lcid, byte_buffer{sdu.payload().begin(), sdu.payload().end()}});
+  ue->ul_bearers[lcid]->on_new_sdu(byte_buffer{sdu.payload().begin(), sdu.payload().end()});
   return true;
 }
 
