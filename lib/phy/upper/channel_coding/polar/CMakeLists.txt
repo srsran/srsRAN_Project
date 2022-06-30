@@ -20,4 +20,4 @@ add_library(srsgnb_polar STATIC
 )
 target_link_libraries(srsgnb_polar log_likelihood_ratio srslog)
 
-install(TARGETS srsgnb_polar EXPORT srsgnb_matlab)
+install(TARGETS srsgnb_polar EXPORT srsgnb_export)

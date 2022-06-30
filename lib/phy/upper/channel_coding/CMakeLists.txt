@@ -23,4 +23,4 @@ target_link_libraries(srsgnb_channel_coding
 
 install(TARGETS srsgnb_crc_calculator
                 srsgnb_channel_coding
-        EXPORT srsgnb_matlab)
+        EXPORT srsgnb_export)

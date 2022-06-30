@@ -25,4 +25,4 @@ add_library(srsgnb_upper_phy_support
 
 install(TARGETS log_likelihood_ratio
                 srsgnb_upper_phy_support
-        EXPORT srsgnb_matlab)
+        EXPORT srsgnb_export)

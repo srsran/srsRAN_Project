@@ -16,4 +16,4 @@ include_directories(../../../../include/srsgnb/phy/upper/sequence_generators)
 
 add_library(srsgnb_sequence_generators STATIC ${SOURCES})
 
-install(TARGETS srsgnb_sequence_generators EXPORT srsgnb_matlab)
+install(TARGETS srsgnb_sequence_generators EXPORT srsgnb_export)

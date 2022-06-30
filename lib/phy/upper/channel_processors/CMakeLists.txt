@@ -72,4 +72,4 @@ install(TARGETS srsgnb_channel_processors
                 srsgnb_pusch_decoder
                 srsgnb_pusch_processor
                 srsgnb_ssb_processor
-        EXPORT srsgnb_matlab)
+        EXPORT srsgnb_export)

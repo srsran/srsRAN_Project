@@ -2,4 +2,4 @@ include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/phy/upper/channel_codin
 add_library(srsgnb_short_block STATIC short_block_encoder_impl.cpp short_block_detector_impl.cpp)
 target_link_libraries(srsgnb_short_block srsgnb_support log_likelihood_ratio srsvec)
 
-install(TARGETS srsgnb_short_block EXPORT srsgnb_matlab)
+install(TARGETS srsgnb_short_block EXPORT srsgnb_export)

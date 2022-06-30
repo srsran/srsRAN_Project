@@ -14,4 +14,4 @@ add_library(srsgnb_ran band_helper.cpp
         resource_allocation/resource_allocation_frequency.cpp)
 target_link_libraries(srsgnb_ran)
 
-install(TARGETS srsgnb_ran EXPORT srsgnb_matlab)
+install(TARGETS srsgnb_ran EXPORT srsgnb_export)

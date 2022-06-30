@@ -21,7 +21,7 @@ project(srsgnb)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror -fPIC")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
 
 list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake/modules")
 
@@ -43,6 +43,7 @@ option(ENABLE_GCOV           "Enable code coverage"                     OFF)
 option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
+option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -51,6 +52,10 @@ endif()
 if (ENABLE_ASAN AND ENABLE_TSAN)
     message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
 endif ()
+
+if (ENABLE_EXPORT)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif (ENABLE_EXPORT)
 
 ########################################################################
 # Compiler specific setup
@@ -184,6 +189,11 @@ add_subdirectory(unittests)
 add_subdirectory(integrationtests)
 
 ########################################################################
-# Export libraries for srsgnb_matlab
+# Export (selected) libraries
 ########################################################################
-export(EXPORT srsgnb_matlab NAMESPACE srsgnb:: FILE "${CMAKE_SOURCE_DIR}/cmake/srsgnb_matlab.cmake")
+if(ENABLE_EXPORT)
+  export(EXPORT srsgnb_export NAMESPACE srsgnb:: FILE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+else(ENABLE_EXPORT)
+  # Remove any previous export file (if it exists), since it will become outdated.
+  file(REMOVE "${CMAKE_BINARY_DIR}/srsgnb.cmake")
+endif(ENABLE_EXPORT)

@@ -20,4 +20,4 @@ include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srsvec)
 add_library(srsvec STATIC ${SOURCES})
 INSTALL(TARGETS srsvec DESTINATION ${LIBRARY_DIR})
 
-install(TARGETS srsvec EXPORT srsgnb_matlab)
+install(TARGETS srsvec EXPORT srsgnb_export)
