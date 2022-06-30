@@ -45,10 +45,20 @@ struct f1ap_rrc_delivery_report_msg {
 class f1ap_rrc_message_transfer_procedure_handler
 {
 public:
-  virtual ~f1ap_rrc_message_transfer_procedure_handler()                               = default;
-  virtual void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report)  = 0;
+  virtual ~f1ap_rrc_message_transfer_procedure_handler() = default;
+
+  /// \brief Packs and transmits the initial UL RRC message transfer as per TS 38.473 section 8.4.1.
+  /// \param[in] msg The initial UL RRC message transfer message to transmit.
   virtual void handle_init_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
-  virtual void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)              = 0;
+
+  /// \brief Packs and transmits the UL RRC message transfer as per TS 38.473 section 8.4.3.
+  /// \param[in] msg The UL RRC message transfer message to transmit.
+  virtual void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) = 0;
+
+  /// \brief Packs and transmits the RRC delivery report as per TS 38.473 section 8.4.4.
+  /// \param[in] report The RRC delivery report message to transmit.
+  virtual void handle_rrc_delivery_report(const f1ap_rrc_delivery_report_msg& report) = 0;
+
   //: TODO: remove this in favour of f1c_message_handler
   virtual void handle_pdu(f1_rx_pdu pdu) = 0;
 };

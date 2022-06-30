@@ -31,7 +31,7 @@ public:
 
   // f1ap rrc message transfer procedure functions
 
-  void handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg) override;
+  void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) override;
 
   // f1ap ue context manager functions
 
@@ -53,6 +53,8 @@ public:
 private:
   class f1ap_event_manager;
 
+  /// \brief Notify the CU about the reception of an initiating message.
+  /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
   srslog::basic_logger&            logger;

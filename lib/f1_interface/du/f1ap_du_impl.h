@@ -51,10 +51,20 @@ public:
   void handle_notify(const f1ap_notify_message& msg) override {}
 
 private:
+  /// \brief Notify the DU about the reception of an initiating message.
+  /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
+
+  /// \brief Notify the DU about the reception of a successful outcome message.
+  /// \param[in] outcome The successful outcome message.
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
+
+  /// \brief Notify the DU about the reception of an unsuccessful outcome message.
+  /// \param[in] outcome The unsuccessful outcome message.
   void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
+  /// \brief Notify the DU about the reception of a DL RRC message transfer message.
+  /// \param[in] msg The DL RRC message transfer message.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
   srslog::basic_logger& logger;

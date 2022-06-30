@@ -27,12 +27,11 @@ public:
     logger.info("Received F1SetupRequest message.");
     last_f1_setup_request_message = msg;
   }
-  void
-  on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::initial_ul_rrc_message_transfer_message& msg) override
+  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
   {
     logger.info("Received Initial UL RRC Message transfer message.");
   }
-  void on_ul_rrc_message_transfer_received(const srs_cu_cp::ul_rrc_message_transfer_message& msg) override
+  void on_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_ul_rrc_msg& msg) override
   {
     logger.info("Received UL RRC Message transfer message.");
   }

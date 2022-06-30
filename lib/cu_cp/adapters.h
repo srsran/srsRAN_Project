@@ -28,13 +28,13 @@ public:
     cu_cp_f1c_handler->handle_f1_setup_request(msg);
   }
 
-  void on_initial_ul_rrc_message_transfer_received(const initial_ul_rrc_message_transfer_message& msg) override
+  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) override
   {
     srsran_assert(cu_cp_f1c_handler != nullptr, "F1C handler must not be nullptr");
     cu_cp_f1c_handler->handle_initial_ul_rrc_message_transfer(msg);
   }
 
-  void on_ul_rrc_message_transfer_received(const ul_rrc_message_transfer_message& msg) override
+  void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_msg& msg) override
   {
     srsran_assert(cu_cp_f1c_handler != nullptr, "F1C handler must not be nullptr");
     cu_cp_f1c_handler->handle_ul_rrc_message_transfer(msg);

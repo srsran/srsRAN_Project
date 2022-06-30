@@ -30,21 +30,27 @@ public:
 
   // cu_cp_manager_f1c_interface
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
-  void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message_transfer_message& msg) override;
-  void handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg) override;
+  void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) override;
+  void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override;
 
   size_t get_nof_dus() const override;
   size_t get_nof_ues() const override;
 
 private:
   // F1AP senders
+
+  /// \brief Create and transmit the F1 Setup response message.
+  /// \param[in] du_ctxt The context of the DU that should receive the message.
   void send_f1_setup_response(const du_context& du_ctxt);
+
+  /// \brief Create and transmit the F1 Setup failure message.
+  /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
 
   /// \brief Send RRCSetup message via DL RRC message transfer (TS 38.473 section 8.4.2), as response to an initial UL
   /// RRC message transfer.
   /// \param[in] msg The received initial UL RRC message transfer.
-  void send_rrc_setup(const initial_ul_rrc_message_transfer_message& msg);
+  void send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg);
 
   // DU manager configuration that will be visible to all running procedures
   cu_cp_manager_config_t cfg;

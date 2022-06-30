@@ -77,7 +77,7 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
   pdu_notifier.on_new_message(pdu);
 }
 
-void f1ap_cu_impl::handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg)
+void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg)
 {
   logger.info("Transmitting DL RRC message");
   // Pack message into PDU
@@ -190,13 +190,13 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       init_message_notifier.on_f1_setup_request_received(req_msg);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {
-      initial_ul_rrc_message_transfer_message ul_transfer = {};
-      ul_transfer.msg                                     = msg.value.init_ulrrc_msg_transfer();
+      f1ap_initial_ul_rrc_msg ul_transfer = {};
+      ul_transfer.msg                     = msg.value.init_ulrrc_msg_transfer();
       init_message_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
-      ul_rrc_message_transfer_message ul_transfer = {};
-      ul_transfer.msg                             = msg.value.ulrrc_msg_transfer();
+      f1ap_ul_rrc_msg ul_transfer = {};
+      ul_transfer.msg             = msg.value.ulrrc_msg_transfer();
       init_message_notifier.on_ul_rrc_message_transfer_received(ul_transfer);
     } break;
     default:

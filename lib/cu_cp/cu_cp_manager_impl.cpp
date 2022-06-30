@@ -75,7 +75,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
   du_mng.add_du(du_ctxt);
 }
 
-void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message_transfer_message& msg)
+void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
 {
   nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
 
@@ -99,7 +99,7 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const initial_ul
   send_rrc_setup(msg);
 }
 
-void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg)
+void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)
 {
   // TODO: add handling and start procedure if needed
 }
@@ -121,9 +121,9 @@ void cu_cp_manager_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::optio
   cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
 }
 
-void cu_cp_manager_impl::send_rrc_setup(const initial_ul_rrc_message_transfer_message& msg)
+void cu_cp_manager_impl::send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg)
 {
-  dl_rrc_message_transfer_message dl_rrc_msg = {};
+  f1ap_dl_rrc_msg dl_rrc_msg = {};
 
   // GNB DU UE F1AP ID
   dl_rrc_msg.msg->gnb_du_ue_f1_ap_id.value = msg.msg->gnb_du_ue_f1_ap_id.value;

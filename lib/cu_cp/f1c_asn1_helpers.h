@@ -59,8 +59,8 @@ void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                   
 /// \brief Fills ASN.1 RRC Setup struct.
 /// \param[out] rrc_setup The RRC Setup ASN.1 struct to fill.
 /// \param[in] init_ul_rrc_transfer_msg The Init_UL_RRC_Transfer message received by the CU.
-void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s&                     rrc_setup,
-                             const initial_ul_rrc_message_transfer_message& init_ul_rrc_transfer_msg)
+void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s&     rrc_setup,
+                             const f1ap_initial_ul_rrc_msg& init_ul_rrc_transfer_msg)
 {
   asn1::rrc_nr::rrc_setup_ies_s& setup_ies = rrc_setup.crit_exts.set_rrc_setup();
 

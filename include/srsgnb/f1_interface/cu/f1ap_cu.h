@@ -20,23 +20,26 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-struct initial_ul_rrc_message_transfer_message {
+struct f1ap_initial_ul_rrc_msg {
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
 
-struct ul_rrc_message_transfer_message {
+struct f1ap_ul_rrc_msg {
   asn1::f1ap::ulrrc_msg_transfer_s msg;
 };
 
-struct dl_rrc_message_transfer_message {
+struct f1ap_dl_rrc_msg {
   asn1::f1ap::dlrrc_msg_transfer_s msg;
 };
 
 class f1ap_rrc_message_transfer_procedure_handler
 {
 public:
-  virtual ~f1ap_rrc_message_transfer_procedure_handler()                                  = default;
-  virtual void handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg) = 0;
+  virtual ~f1ap_rrc_message_transfer_procedure_handler() = default;
+
+  /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
+  /// \param[in] msg The DL RRC message transfer message to transmit.
+  virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) = 0;
 };
 
 struct f1_setup_response_message {
@@ -117,10 +120,19 @@ public:
 class f1c_initiating_message_notifier
 {
 public:
-  virtual ~f1c_initiating_message_notifier()                                     = default;
+  virtual ~f1c_initiating_message_notifier() = default;
+
+  /// \brief Notifies the CU about the reception of a F1 Setup Request message.
+  /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
-  virtual void on_initial_ul_rrc_message_transfer_received(const initial_ul_rrc_message_transfer_message& msg) = 0;
-  virtual void on_ul_rrc_message_transfer_received(const ul_rrc_message_transfer_message& msg)                 = 0;
+
+  /// \brief Notifies the CU about the reception of a initial UL RRC message transfer message.
+  /// \param[in] msg The received initial UL RRC message transfer message.
+  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) = 0;
+
+  /// \brief Notifies the CU about the reception of a UL RRC message transfer message.
+  /// \param[in] msg The received UL RRC message transfer message.
+  virtual void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_msg& msg) = 0;
 };
 
 /// Combined entry point for F1C/U handling.
