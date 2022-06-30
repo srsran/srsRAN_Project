@@ -218,6 +218,8 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)
 {
+  // RAR payload size in bytes as per TS38.321, 6.1.5 and 6.2.3.
+  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
   // TODO: Make smarter algorithm for RAR size derivation.
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
 
@@ -309,12 +311,13 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
                                   crb_interval                     rar_crbs,
                                   span<const msg3_alloc_candidate> msg3_candidates)
 {
-  static const unsigned         max_msg3_retxs       = 4;
-  static const unsigned         msg3_mcs             = 0;
-  static const unsigned         pdsch_time_res_index = 0;
-  cell_slot_resource_allocator& pdcch_alloc          = res_alloc[0];
-  cell_slot_resource_allocator& rar_alloc = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
-  prb_interval                  rar_prbs  = crb_to_prb(initial_active_dl_bwp, rar_crbs);
+  static const unsigned max_msg3_retxs       = 4;
+  static const unsigned msg3_mcs             = 0;
+  static const unsigned pdsch_time_res_index = 0;
+
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  cell_slot_resource_allocator& rar_alloc   = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
+  prb_interval                  rar_prbs    = crb_to_prb(initial_active_dl_bwp, rar_crbs);
 
   // Allocate RBs and space for RAR.
   rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch,
