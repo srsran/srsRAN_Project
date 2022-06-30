@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/du/du_cell_config_validation.h"
+#include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 
 using namespace srsgnb;
 
@@ -48,6 +49,14 @@ using namespace srsgnb;
 // Helper typedef.
 using check_outcome = error_type<std::string>;
 
+/// Helper function to verify if a number belongs to the list of possible values of an ASN.1 enumerated type.
+template <typename ASN1Enumerated, typename Number>
+bool is_valid_enum_number(Number number)
+{
+  ASN1Enumerated e;
+  return asn1::number_to_enum(e, number);
+}
+
 /// Checks whether CORESET#0 table index is valid as per TS38.213, Table 13-{1,...,10}.
 static check_outcome is_coreset0_idx_valid(const du_cell_config& cell_cfg)
 {
@@ -72,6 +81,22 @@ static check_outcome is_coreset0_params_valid(const coreset_configuration& cs_cf
   return {};
 }
 
+static check_outcome is_search_space_valid(const search_space_configuration& ss_cfg)
+{
+  CHECK_EQ_OR_BELOW(ss_cfg.id, srsgnb::MAX_SEARCH_SPACE_ID, "SearchSpaceId", ss_cfg.id);
+  CHECK_EQ_OR_BELOW(ss_cfg.cs_id, srsgnb::MAX_CORESET_ID, "SearchSpace#{} CORESET ID", ss_cfg.id);
+  bool valid_period =
+      is_valid_enum_number<asn1::rrc_nr::search_space_s::monitoring_slot_periodicity_and_offset_c_::types>(
+          ss_cfg.monitoring_slot_period);
+  CHECK_TRUE(valid_period, "Invalid SearchSpace#{} slot period={}", ss_cfg.id, ss_cfg.monitoring_slot_period);
+  CHECK_BELOW(
+      ss_cfg.monitoring_slot_offset, ss_cfg.monitoring_slot_period, "SearchSpace#{} monitoring slot offset", ss_cfg.id);
+  CHECK_EQ_OR_BELOW(
+      ss_cfg.duration, ss_cfg.monitoring_slot_period, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
+  CHECK_NEQ(ss_cfg.duration, 0, "SearchSpace#{} monitoring slot duration", ss_cfg.id);
+  return {};
+}
+
 static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
 {
   const bwp_downlink_common& bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
@@ -86,7 +111,7 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
     CHECK_NEQ(bwp.pdcch_common.common_coreset->id, 0, "Common CORESET");
   }
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
-    CHECK_NEQ(ss.duration, 0, "SearchSpace#{} duration", ss.id);
+    HANDLE_RETURN(is_search_space_valid(ss));
     CHECK_EQ(ss.type, search_space_configuration::common, "common SearchSpace#{} type", ss.id);
     if (ss.cs_id == 0) {
       CHECK_TRUE(

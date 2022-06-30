@@ -76,11 +76,13 @@ inline coreset_configuration make_default_coreset0_config()
 inline search_space_configuration make_default_search_space_zero_config()
 {
   search_space_configuration cfg{};
-  cfg.id             = to_search_space_id(0);
-  cfg.cs_id          = to_coreset_id(0);
-  cfg.duration       = 1;
-  cfg.type           = search_space_configuration::common;
-  cfg.nof_candidates = {1, 1, 1, 0, 0}; // TODO.
+  cfg.id                     = to_search_space_id(0);
+  cfg.cs_id                  = to_coreset_id(0);
+  cfg.monitoring_slot_period = 1;
+  cfg.monitoring_slot_offset = 0;
+  cfg.duration               = 1;
+  cfg.nof_candidates         = {1, 1, 1, 0, 0}; // TODO.
+  cfg.type                   = search_space_configuration::common;
   return cfg;
 }
 

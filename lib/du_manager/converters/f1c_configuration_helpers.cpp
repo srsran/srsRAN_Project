@@ -82,6 +82,92 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
   return cs;
 }
 
+static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_space_configuration& cfg)
+{
+  using namespace asn1::rrc_nr;
+  search_space_s ss;
+  ss.search_space_id                                = cfg.id;
+  ss.coreset_id_present                             = true;
+  ss.coreset_id                                     = cfg.cs_id;
+  ss.monitoring_slot_periodicity_and_offset_present = true;
+  search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
+  srsran_always_assert(asn1::number_to_enum(period, cfg.monitoring_slot_period), "Invalid slot period");
+  ss.monitoring_slot_periodicity_and_offset.set(period);
+  switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2:
+      ss.monitoring_slot_periodicity_and_offset.sl2() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl4:
+      ss.monitoring_slot_periodicity_and_offset.sl4() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl5:
+      ss.monitoring_slot_periodicity_and_offset.sl5() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl8:
+      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl10:
+      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl16:
+      ss.monitoring_slot_periodicity_and_offset.sl16() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl20:
+      ss.monitoring_slot_periodicity_and_offset.sl20() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl40:
+      ss.monitoring_slot_periodicity_and_offset.sl40() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl80:
+      ss.monitoring_slot_periodicity_and_offset.sl80() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl160:
+      ss.monitoring_slot_periodicity_and_offset.sl160() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl320:
+      ss.monitoring_slot_periodicity_and_offset.sl320() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl640:
+      ss.monitoring_slot_periodicity_and_offset.sl640() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1280:
+      ss.monitoring_slot_periodicity_and_offset.sl1280() = cfg.monitoring_slot_offset;
+      break;
+    case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl2560:
+      ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset;
+      break;
+    default:
+      srsran_terminate("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
+  }
+  if (cfg.duration != 1) {
+    ss.dur_present = true;
+    ss.dur         = cfg.duration;
+  }
+  if (cfg.monitoring_symbols_within_slot.has_value()) {
+    ss.monitoring_symbols_within_slot_present = true;
+    ss.monitoring_symbols_within_slot.from_number(cfg.monitoring_symbols_within_slot->to_ulong());
+  }
+  ss.nrof_candidates_present = true;
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level1, cfg.nof_candidates[0]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level2, cfg.nof_candidates[1]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level4, cfg.nof_candidates[2]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.nof_candidates[3]);
+  asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.nof_candidates[4]);
+  ss.search_space_type_present = true;
+  // TODO: support more format types.
+  if (cfg.type == search_space_configuration::common) {
+    ss.search_space_type.set_common();
+    ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = true;
+  } else {
+    ss.search_space_type.set_ue_specific();
+    ss.search_space_type.ue_specific().dci_formats.value =
+        search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus0_and_minus1_minus0;
+  }
+  return ss;
+}
+
 static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
@@ -113,7 +199,10 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   if (pdcch.common_coreset_present) {
     pdcch.common_coreset = make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
   }
-  pdcch.search_space_zero_present           = false; // Sent by MIB.
+  pdcch.search_space_zero_present = false; // Sent by MIB.
+  for (const search_space_configuration& ss : cfg.init_dl_bwp.pdcch_common.search_spaces) {
+    pdcch.common_search_space_list.push_back(make_asn1_rrc_search_space(ss));
+  }
   pdcch.search_space_sib1_present           = true;
   pdcch.search_space_sib1                   = cfg.init_dl_bwp.pdcch_common.sib1_search_space_id;
   pdcch.search_space_other_sys_info_present = false;

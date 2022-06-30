@@ -48,6 +48,11 @@ struct search_space_configuration {
 
   search_space_id id;
   coreset_id      cs_id;
+  /// Periodicity of slots for PDCCH monitoring. Possible values: {1, 2, 4, 5, 8, 10, 16, 20, 40, 80, 160, 320, 640,
+  /// 1280, 2560}.
+  unsigned monitoring_slot_period;
+  /// Offset of slot for PDCCH monitoring. Possible values: {0, ..., monitoring_slot_period}.
+  unsigned monitoring_slot_offset;
   /// Number of consecutive slots that a SearchSpace lasts in every occasion. Values: (1..2559).
   unsigned duration;
   /// The first symbol(s) for PDCCH monitoring in the slots for PDCCH monitoring. The most significant bit represents
