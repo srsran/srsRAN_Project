@@ -25,14 +25,23 @@ using namespace srsgnb;
     return {fmt::format(__VA_ARGS__)};                                                                                 \
   }
 
-#define CHECK_EQ(val, expected_val, name)                                                                              \
-  CHECK_TRUE((val == expected_val), "Invalid {} ({} != {})", name, val, expected_val)
+#define CHECK_COMPARE_(val, expected_val, comparison, ...)                                                             \
+  CHECK_TRUE(                                                                                                          \
+      (val comparison expected_val), "Invalid {} ({} " #comparison "{})", fmt::format(__VA_ARGS__), val, expected_val)
 
-#define CHECK_NEQ(val, expected_val, name)                                                                             \
-  CHECK_TRUE((val != expected_val), "Invalid {} ({} == {})", name, val, expected_val)
+#define CHECK_EQ(val, expected_val, ...)                                                                               \
+  CHECK_TRUE((val == expected_val), "Invalid {} ({} != {})", fmt::format(__VA_ARGS__), val, expected_val)
+
+#define CHECK_NEQ(val, forbidden_val, ...)                                                                             \
+  CHECK_TRUE((val != forbidden_val), "Invalid {} ({} == {})", fmt::format(__VA_ARGS__), val, forbidden_val)
 
 /// Checks if "val" is below or equal to "max_val".
-#define CHECK_EQ_OR_BELOW(val, max_val, name) CHECK_TRUE((val <= max_val), "Invalid {} ({} > {})", name, val, max_val)
+#define CHECK_EQ_OR_BELOW(val, max_val, ...)                                                                           \
+  CHECK_TRUE((val <= max_val), "Invalid {} ({} > {})", fmt::format(__VA_ARGS__), val, max_val)
+
+/// Checks if "val" is below "max_val".
+#define CHECK_BELOW(val, max_val, ...)                                                                                 \
+  CHECK_TRUE((val < max_val), "Invalid {} ({} >= {})", fmt::format(__VA_ARGS__), val, max_val)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -42,9 +51,8 @@ using check_outcome = error_type<std::string>;
 /// Checks whether CORESET#0 table index is valid as per TS38.213, Table 13-{1,...,10}.
 static check_outcome is_coreset0_idx_valid(const du_cell_config& cell_cfg)
 {
-  CHECK_TRUE(cell_cfg.coreset0_idx < 15,
-             "Invalid CORESET#0 table index {} for chosen band.",
-             cell_cfg.coreset0_idx); // TODO: Check which table to use.
+  CHECK_BELOW(cell_cfg.coreset0_idx, 15, "CORESET#0 index table");
+  // TODO: Check which table to use.
   return {};
 }
 
@@ -76,6 +84,19 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   }
   if (bwp.pdcch_common.common_coreset.has_value()) {
     CHECK_NEQ(bwp.pdcch_common.common_coreset->id, 0, "Common CORESET");
+  }
+  for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
+    CHECK_NEQ(ss.duration, 0, "SearchSpace#{} duration", ss.id);
+    CHECK_EQ(ss.type, search_space_configuration::common, "common SearchSpace#{} type", ss.id);
+    if (ss.cs_id == 0) {
+      CHECK_TRUE(
+          bwp.pdcch_common.coreset0.has_value(), "common SearchSpace#{} points to CORESET#0 which is inactive", ss.id);
+    } else {
+      CHECK_TRUE(bwp.pdcch_common.common_coreset.has_value() and ss.cs_id == bwp.pdcch_common.common_coreset->id,
+                 "common SearchSpace#{} points to CORESET#{} which is inactive",
+                 ss.id,
+                 ss.cs_id);
+    }
   }
   // PDSCH
   CHECK_TRUE(not bwp.pdsch_common.pdsch_td_alloc_list.empty(), "Empty PDSCH-TimeDomainAllocationList");
