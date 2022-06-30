@@ -41,10 +41,6 @@ add_executable(sched_signalling_test sched_signalling_test.cpp)
 target_link_libraries(sched_signalling_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(sched_signalling_test sched_signalling_test)
 
-add_executable(cell_configuration_test cell_configuration_test.cpp)
-target_link_libraries(cell_configuration_test srsgnb_sched srslog mac_configuration_helpers)
-add_test(cell_configuration_test cell_configuration_test)
-
 add_executable(resource_allocator_test resource_allocator_test.cpp)
 target_link_libraries(resource_allocator_test srsgnb_sched srslog mac_configuration_helpers)
 add_test(resource_allocator_test resource_allocator_test)
