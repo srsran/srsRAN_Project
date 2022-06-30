@@ -13,6 +13,10 @@ include_directories(../..)
 add_library(scheduler_test_suite scheduler_test_suite.cpp)
 target_link_libraries(scheduler_test_suite srsgnb_sched srslog)
 
+add_executable(pdcch_type0_css_occassions_test support/pdcch/pdcch_type0_css_occassions_test.cpp)
+target_link_libraries(pdcch_type0_css_occassions_test srsgnb_sched srslog)
+add_test(pdcch_type0_css_occassions_test pdcch_type0_css_occassions_test)
+
 add_executable(pdsch_dmrs_symbol_mask_test support/pdsch/pdsch_dmrs_symbol_mask_test.cpp)
 target_link_libraries(pdsch_dmrs_symbol_mask_test srsgnb_sched srslog)
 add_test(pdsch_dmrs_symbol_mask_test pdsch_dmrs_symbol_mask_test)
