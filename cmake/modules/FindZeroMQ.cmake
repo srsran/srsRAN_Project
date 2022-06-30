@@ -4,7 +4,7 @@ if(NOT ZEROMQ_FOUND)
     pkg_check_modules (ZEROMQ_PKG ZeroMQ)
 
     find_path(ZEROMQ_INCLUDE_DIRS
-            NAMES zmq.hpp
+            NAMES zmq.h
             PATHS ${ZEROMQ_PKG_INCLUDE_DIRS}
             /usr/include/zmq
             /usr/local/include/zmq
