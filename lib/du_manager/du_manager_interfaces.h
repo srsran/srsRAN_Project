@@ -15,6 +15,7 @@
 #include "du_ue_context.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 class ue_manager_ctrl_configurer
 {
@@ -26,6 +27,7 @@ public:
   virtual du_ue_context* find_rnti(rnti_t rnti)            = 0;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_MANAGER_INTERFACES_H

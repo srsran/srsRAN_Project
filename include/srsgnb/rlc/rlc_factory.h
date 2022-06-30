@@ -17,11 +17,18 @@
 
 namespace srsgnb {
 
+enum class rlc_mode { TM, UM, AM };
+
+struct rlc_entity_config {
+  du_ue_index_t                        ue_index;
+  lcid_t                               lcid;
+  rlc_mode                             mode;
+  rlc_rx_upper_layer_data_notifier*    upper_dn;
+  rlc_tx_upper_layer_control_notifier* upper_cn;
+};
+
 /// Creates an instance of a RLC bearer
-std::unique_ptr<rlc_entity> create_rlc_entity(du_ue_index_t                        ue_index,
-                                              lcid_t                               lcid,
-                                              rlc_rx_upper_layer_data_notifier&    upper_dn,
-                                              rlc_tx_upper_layer_control_notifier& upper_cn);
+std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_config& config);
 } // namespace srsgnb
 
 #endif // SRSGNB_RLC_MANAGER_FACTORY_H

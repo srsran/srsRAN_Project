@@ -13,9 +13,9 @@
 
 #include "../../ran/gnb_format.h"
 #include "../converters/mac_cell_configuration_helpers.h"
-#include "du_manager_config.h"
-#include "du_manager_interfaces.h"
-#include "du_ue_context.h"
+#include "../du_manager_config.h"
+#include "../du_manager_interfaces.h"
+#include "../du_ue_context.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_factory.h"
@@ -23,27 +23,6 @@
 
 namespace srsgnb {
 namespace srs_du {
-
-class mac_ul_ccch_adapter : public mac_sdu_rx_notifier
-{
-public:
-  mac_ul_ccch_adapter(du_ue_index_t ue_index_, f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) :
-    ue_index(ue_index_), f1ap_rrc(f1ap_rrc_)
-  {
-  }
-  void on_new_sdu(mac_rx_sdu sdu) override
-  {
-    f1_rx_pdu msg{};
-    msg.ue_index = ue_index;
-    msg.lcid     = LCID_SRB0;
-    msg.pdu      = std::move(sdu.pdu);
-    f1ap_rrc.handle_pdu(std::move(msg));
-  }
-
-private:
-  du_ue_index_t                                ue_index;
-  f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc;
-};
 
 class mac_ul_dcch_adapter : public mac_sdu_rx_notifier
 {
@@ -86,7 +65,7 @@ public:
     ue_ctx.pcell_index = ccch_ind_msg.cell_index;
   }
 
-  void operator()(coro_context<async_task<void> >& ctx)
+  void operator()(coro_context<async_task<void>>& ctx)
   {
     CORO_BEGIN(ctx);
 
@@ -110,10 +89,8 @@ public:
       CORO_EARLY_RETURN();
     }
 
-    // 3. Create UE RLC bearers.
-    ue_ctx.bearers.emplace(0);
-    ue_ctx.bearers[0].lcid            = LCID_SRB0;
-    ue_ctx.bearers[0].mac_ul_notifier = std::make_unique<mac_ul_ccch_adapter>(ue_ctx.ue_index, *cfg.f1ap_rrc);
+    // 3. Create UE SRB0 bearer.
+    create_srb0();
 
     // 4. Initiate MAC UE creation and await result.
     CORO_AWAIT_VALUE(mac_resp, make_mac_ue_create_req());
@@ -150,6 +127,9 @@ private:
     // TODO: MAC RNTI needs to be cleared.
   }
 
+  /// Creates SRB0 in RLC and connects it to MAC and F1.
+  void create_srb0();
+
   async_task<mac_ue_create_response_message> make_mac_ue_create_req()
   {
     mac_ue_create_request_message mac_ue_create_msg = test_helpers::make_default_ue_creation_request(); // TODO: TEMP.
@@ -160,8 +140,8 @@ private:
       mac_ue_create_msg.bearers.emplace_back();
       auto& lc     = mac_ue_create_msg.bearers.back();
       lc.lcid      = bearer.lcid;
-      lc.ul_bearer = bearer.mac_ul_notifier.get();
-      lc.dl_bearer = nullptr; // TODO
+      lc.ul_bearer = bearer.mac_rx_notifier.get();
+      lc.dl_bearer = bearer.mac_tx_notifier.get();
     }
     mac_ue_create_msg.ul_ccch_msg = &msg.subpdu;
     return cfg.mac_ue_mng->handle_ue_create_request(mac_ue_create_msg);

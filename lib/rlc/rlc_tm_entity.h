@@ -20,14 +20,14 @@ namespace srsgnb {
 class rlc_tm_entity : public rlc_base_entity
 {
 public:
-  rlc_tm_entity(du_ue_index_t                        du_index,
+  rlc_tm_entity(du_ue_index_t                        ue_index,
                 lcid_t                               lcid,
                 rlc_rx_upper_layer_data_notifier&    upper_dn,
                 rlc_tx_upper_layer_control_notifier& upper_cn) :
-    rlc_base_entity(du_index, lcid)
+    rlc_base_entity(ue_index, lcid)
   {
-    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(du_index, lcid, upper_cn));
-    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_tm_entity(du_index, lcid, upper_dn));
+    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(ue_index, lcid, upper_cn));
+    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_tm_entity(ue_index, lcid, upper_dn));
   }
 };
 

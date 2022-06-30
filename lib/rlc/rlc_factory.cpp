@@ -9,15 +9,21 @@
  */
 
 #include "srsgnb/rlc/rlc_factory.h"
+#include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
 
 using namespace srsgnb;
 
-std::unique_ptr<rlc_entity> create_rlc_bearer(du_ue_index_t                        ue_index,
-                                              lcid_t                               lcid,
-                                              rlc_rx_upper_layer_data_notifier&    upper_dn,
-                                              rlc_tx_upper_layer_control_notifier& upper_cn)
+std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_config& config)
 {
-  std::unique_ptr<rlc_entity> instance = std::make_unique<rlc_um_entity>(ue_index, lcid, upper_dn, upper_cn);
-  return instance;
+  switch (config.mode) {
+    case rlc_mode::TM:
+      return std::make_unique<rlc_tm_entity>(config.ue_index, config.lcid, *config.upper_dn, *config.upper_cn);
+    case rlc_mode::UM:
+      return std::make_unique<rlc_um_entity>(config.ue_index, config.lcid, *config.upper_dn, *config.upper_cn);
+    case rlc_mode::AM:
+    default:
+      srsran_terminate("RLC mode not supported");
+  }
+  return nullptr;
 }

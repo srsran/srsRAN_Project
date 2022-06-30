@@ -16,14 +16,18 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_entity.h"
 
 namespace srsgnb {
+namespace srs_du {
 
 struct du_logical_channel_context {
-  lcid_t                               lcid;
-  std::unique_ptr<rlc_rx_pdu_handler>  ul_bearer;
-  std::unique_ptr<mac_sdu_rx_notifier> mac_ul_notifier;
+  lcid_t                                               lcid;
+  std::unique_ptr<rlc_rx_upper_layer_data_notifier>    rlc_ul_sdu_notif;
+  std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_ctrl_notif;
+  std::unique_ptr<rlc_entity>                          rlc_bearer;
+  std::unique_ptr<mac_sdu_rx_notifier>                 mac_rx_notifier;
+  std::unique_ptr<mac_sdu_tx_builder>                  mac_tx_notifier;
 };
 
 struct du_ue_context {
@@ -33,6 +37,7 @@ struct du_ue_context {
   slot_vector<du_logical_channel_context> bearers;
 };
 
+} // namespace srs_du
 } // namespace srsgnb
 
 #endif // SRSGNB_DU_UE_CONTEXT_H

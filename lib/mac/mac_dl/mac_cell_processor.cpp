@@ -132,27 +132,26 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
   // Assemble scheduled RARs' payload.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.ue_pdus.emplace_back();
+    data_res.rar_pdus.emplace_back();
     // call MAC encoder.
-    encode_rar_pdu(cell_cfg, rar, data_res.ue_pdus.back());
+    encode_rar_pdu(cell_cfg, rar, data_res.rar_pdus.back());
   }
 
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
     for (const dl_msg_tb_info& tb_info : grant.tbs) {
       for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
-        // TODO: TEMP. RLC still not in place.
-        break;
-
         // Fetch RLC Bearer.
         mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
-        // Assemble MAC SDU.
-        data_res.ue_pdus.emplace_back();
-        byte_buffer& sdu = data_res.ue_pdus.back();
-        sdu.resize(bearer_alloc.sched_bytes);
-        bearer->on_new_tx_sdu(sdu);
+        // Assemble MAC Tx SDU.
+        rlc_byte_buffer sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
+        if (sdu.empty()) {
+          // TODO: Handle.
+          continue;
+        }
+        data_res.ue_pdus.emplace_back(std::move(sdu));
       }
     }
   }

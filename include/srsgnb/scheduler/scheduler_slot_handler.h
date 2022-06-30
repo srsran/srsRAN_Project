@@ -38,6 +38,8 @@ const size_t MAX_LC_GRANTS = 4;
 const size_t MAX_SSB_PER_SLOT = 2;
 /// [Implementation defined] This corresponds to "Number of search space sets per slot" in Table 13-11, TS 38.213.
 constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
+/// [Implementation defined] This corresponds to maximum number of RARs that can be scheduled per slot.
+constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
 
 struct beamforming_info {
   // TODO
