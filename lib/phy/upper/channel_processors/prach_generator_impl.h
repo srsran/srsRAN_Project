@@ -20,8 +20,8 @@ namespace srsgnb {
 
 /// \brief On-demand PRACH time-domain signal generator.
 ///
-/// It generates PRACH time domain signals on demand instead of generating and storing. It minimizes memory footprint in
-/// expense of longer processing time.
+/// It generates PRACH time-domain signals on demand instead of generating and storing. It minimizes memory footprint at
+/// the cost of longer processing time.
 class prach_generator_impl : public prach_generator
 {
 private:
@@ -34,9 +34,9 @@ private:
   unsigned nof_prb_ul_grid;
   /// DFT size for 15kHz subcarrier spacing.
   unsigned dft_size_15kHz;
-  /// DFT for long frequency domain sequence generation.
+  /// DFT for long frequency-domain sequence generation.
   std::unique_ptr<dft_processor> dft_l839;
-  /// DFT for short frequency domain sequence generation.
+  /// DFT for short frequency-domain sequence generation.
   std::unique_ptr<dft_processor> dft_l139;
   /// DFT for preambles 0, 1 and 2.
   std::unique_ptr<dft_processor> dft_1_dot_25_kHz;
@@ -55,9 +55,12 @@ private:
   /// - TS38.211 Table 6.3.3.1-6 for preamble 3, and
   /// - TS38.211 Table 6.3.3.1-7 for the remaining preambles.
   ///
-  /// \param[in] prach_scs             Parameter \f$\Delta f^{RA}\f$.
-  /// \param[in] restricted_set        Parameter \c restrictedSetConfig.
-  /// \param[in] zero_correlation_zone Parameter \c zeroCorrelationZoneConfig.
+  /// \param[in] prach_scs             \brief PRACH subcarrier spacing (parameter \f$\Delta f^{RA}\f$ as defined in
+  ///                                  TS38.211 Section 6.3.3.1).
+  /// \param[in] restricted_set        \brief Restricted set (parameter \c restrictedSetConfig defined in TS38.331
+  ///                                  RACH-ConfigCommon).
+  /// \param[in] zero_correlation_zone \brief Zero correlation zone (parameter \c zeroCorrelationZoneConfig defined in
+  ///                                  TS38.331 RACH-ConfigGeneric).
   /// \return The number of cyclic shifts if the input parameters are valid. Otherwise, RESERVED.
   static unsigned
   get_nof_cyclic_shifts(unsigned prach_scs, restricted_set_config restricted_set, unsigned zero_correlation_zone);
@@ -110,7 +113,7 @@ private:
 public:
   /// \brief PRACH generator constructor.
   ///
-  /// The PRACH generator depends on the DFT to generate the time domain signals.
+  /// The PRACH generator depends on the DFT to generate the time-domain signals.
   ///
   /// \param nof_prb_ul_grid_  Number of PRB for the UL resource grid.
   /// \param dft_size_15kHz_   DFT size for 15kHz subcarrier spacing.

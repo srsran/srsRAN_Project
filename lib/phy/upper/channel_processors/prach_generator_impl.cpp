@@ -266,7 +266,7 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
                 prach_grid_size);
 
   unsigned k_bar = get_k_bar(prach_scs_Hz, pusch_scs_Hz);
-  srsran_assert(k_bar != RESERVED, "Configuration lead to a reserved value.");
+  srsran_assert(k_bar != RESERVED, "Configuration leads to a reserved value.");
 
   unsigned k_start = K * NRE * config.rb_offset + k_bar;
   srsran_assert(k_start + L_ra < prach_grid_size,
@@ -306,11 +306,11 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
   span<const cf_t> prach_symbol = dft->run();
 
   unsigned N_u = get_N_u(config.format);
-  srsran_assert(N_u != RESERVED, "Configuration lead to a reserved value.");
+  srsran_assert(N_u != RESERVED, "Configuration leads to a reserved value.");
   N_u = (N_u * dft_size_15kHz) / 2048;
 
   unsigned N_cp_ra = get_N_cp_ra(config.format);
-  srsran_assert(N_cp_ra != RESERVED, "Configuration lead to a reserved value.");
+  srsran_assert(N_cp_ra != RESERVED, "Configuration leads to a reserved value.");
   N_cp_ra = (N_cp_ra * dft_size_15kHz) / 2048;
 
   // Calculate total output sequence length. Rounds it to a subframe.
@@ -341,10 +341,10 @@ span<const cf_t> prach_generator_impl::generate(const prach_generator::configura
   unsigned L_ra         = get_sequence_length(config.format);
 
   unsigned N_cs = get_nof_cyclic_shifts(prach_scs_Hz, config.restricted_set, config.zero_correlation_zone);
-  srsran_assert(N_cs != RESERVED, "Configuration lead to a reserved number of cyclic shifts.");
+  srsran_assert(N_cs != RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
 
   unsigned N_rb_ra = get_N_rb_ra(prach_scs_Hz, pusch_scs_Hz);
-  srsran_assert(N_rb_ra != RESERVED, "Configuration lead to a reserved number of resource blocks.");
+  srsran_assert(N_rb_ra != RESERVED, "Configuration leads to a reserved number of resource blocks.");
 
   unsigned root_sequence_index = config.root_sequence_index + config.preamble_index;
   unsigned cyclic_shift        = 0;

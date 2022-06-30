@@ -33,14 +33,14 @@ public:
     /// \brief Root sequence index.
     ///
     /// Parameter \f$i\f$ to select the PRACH sequence number from:
-    /// - TS38.211 Table 6.3.3.1-3 with range {0...837} for long preambles, and
-    /// - TS38.211 Table 6.3.3.1-4 with range {0...137} for short preambles.
+    /// - TS38.211 Table 6.3.3.1-3 with range {0, ..., 837} for long preambles, and
+    /// - TS38.211 Table 6.3.3.1-4 with range {0, ..., 137} for short preambles.
     unsigned root_sequence_index;
-    /// Index of the preamble to generate {0...63}.
+    /// Index of the preamble to generate {0, ..., 63}.
     unsigned preamble_index;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
-    /// Cyclic shift configuration index {0...15}.
+    /// Cyclic shift configuration index {0, ..., 15}.
     unsigned zero_correlation_zone;
     /// Offset in PRBs between Point-A and a PRB overlapping with the lowest RE of the PRACH signal.
     unsigned rb_offset;

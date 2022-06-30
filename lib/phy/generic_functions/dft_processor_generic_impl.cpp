@@ -8,16 +8,23 @@
 
 using namespace srsgnb;
 
+// Implements a DFT of size N.
+//
+// The implementation follows a radix-2 decimation-in-time algorithm that rearranges the DFT equation into two parts: a
+// sum over the even-numbered discrete-time indices n={0,2,4,...,N−2} and a sum over the odd-numbered indices
+// n={1,3,5,...,N−1}
+//
+// It relies on templates for optimization purposes.
 template <unsigned N>
-class generic_ditfft_N : public generic_dft_N
+class generic_dft_dit : public generic_dft_N
 {
 private:
-  unsigned                stride;
-  generic_ditfft_N<N / 2> radix2;
-  std::array<cf_t, N>     table;
+  unsigned               stride;
+  generic_dft_dit<N / 2> radix2;
+  std::array<cf_t, N>    table;
 
 public:
-  generic_ditfft_N(float sign, unsigned stride_) : stride(stride_), radix2(sign, 2 * stride)
+  generic_dft_dit(float sign, unsigned stride_) : stride(stride_), radix2(sign, 2 * stride)
   {
     for (unsigned idx = 0; idx != N; ++idx) {
       table[idx] = std::exp(COMPLEX_I * sign * TWOPI * static_cast<float>(idx) / static_cast<float>(N));
@@ -52,15 +59,16 @@ public:
   }
 };
 
+// Implements a DFT of size 3.
 template <>
-class generic_ditfft_N<3> : public generic_dft_N
+class generic_dft_dit<3> : public generic_dft_N
 {
 private:
   unsigned stride;
   cf_t     cexp_pi_3;
 
 public:
-  generic_ditfft_N(float sign, unsigned stride_) : stride(stride_)
+  generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
   {
     cexp_pi_3 = std::exp(COMPLEX_I * sign * TWOPI / 3.0F);
   }
@@ -87,15 +95,16 @@ public:
   }
 };
 
+// Implements a DFT of size 4.
 template <>
-class generic_ditfft_N<4> : public generic_dft_N
+class generic_dft_dit<4> : public generic_dft_N
 {
 private:
   float    sign;
   unsigned stride;
 
 public:
-  generic_ditfft_N(float sign_, unsigned stride_) : sign(sign_), stride(stride_) {}
+  generic_dft_dit(float sign_, unsigned stride_) : sign(sign_), stride(stride_) {}
 
   void run(cf_t* out, const cf_t* in) const override
   {
@@ -117,15 +126,16 @@ public:
   }
 };
 
+// Implements a DFT of size 9.
 template <>
-class generic_ditfft_N<9> : public generic_dft_N
+class generic_dft_dit<9> : public generic_dft_N
 {
 private:
   unsigned             stride;
   std::array<cf_t, 81> tables;
 
 public:
-  generic_ditfft_N(float sign, unsigned stride_) : stride(stride_)
+  generic_dft_dit(float sign, unsigned stride_) : stride(stride_)
   {
     std::array<cf_t, 9> cexp;
     for (unsigned k = 0; k != 9; ++k) {
@@ -168,8 +178,9 @@ public:
   }
 };
 
+// Implements a DFT algorithm of size N. It is thought for N being a prime number.
 template <unsigned N>
-class generic_dft_odd : public generic_dft_N
+class generic_dft_prime : public generic_dft_N
 {
 private:
   static constexpr unsigned K = divide_ceil(N, 2);
@@ -177,7 +188,7 @@ private:
   std::array<cf_t, K * N>   tables;
 
 public:
-  generic_dft_odd(float sign_) : sign(sign_)
+  generic_dft_prime(float sign_) : sign(sign_)
   {
     std::array<cf_t, N> cexp;
     for (unsigned k = 0; k != N; ++k) {
@@ -249,7 +260,7 @@ public:
 #define GENERIC_EVEN_SIZE(SIZE)                                                                                        \
   do {                                                                                                                 \
     if (input.size() == (SIZE)) {                                                                                      \
-      generic_dft = std::make_unique<generic_ditfft_N<SIZE>>(sign, 1);                                                 \
+      generic_dft = std::make_unique<generic_dft_dit<SIZE>>(sign, 1);                                                  \
       return;                                                                                                          \
     }                                                                                                                  \
   } while (false)
@@ -257,7 +268,7 @@ public:
 #define GENERIC_ODD_SIZE(SIZE)                                                                                         \
   do {                                                                                                                 \
     if (input.size() == (SIZE)) {                                                                                      \
-      generic_dft = std::make_unique<generic_dft_odd<SIZE>>(sign);                                                     \
+      generic_dft = std::make_unique<generic_dft_prime<SIZE>>(sign);                                                   \
       return;                                                                                                          \
     }                                                                                                                  \
   } while (false)
@@ -286,7 +297,9 @@ dft_processor_generic_impl::dft_processor_generic_impl(const configuration& dft_
   GENERIC_EVEN_SIZE(36864);
   GENERIC_EVEN_SIZE(49152);
 
+  // Used for generating frequency-domain short PRACH sequence.
   GENERIC_ODD_SIZE(139);
+  // Used for generating frequency-domain long PRACH sequence.
   GENERIC_ODD_SIZE(839);
 }
 

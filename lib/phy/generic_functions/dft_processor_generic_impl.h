@@ -7,7 +7,7 @@
 
 namespace srsgnb {
 
-/// Generic interface for DFT of DFT size N.
+/// Generic interface of an N-point DFT calculator.
 class generic_dft_N
 {
 public:
