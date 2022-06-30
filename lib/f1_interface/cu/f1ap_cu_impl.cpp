@@ -77,18 +77,23 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
   pdu_notifier.on_new_message(pdu);
 }
 
-void f1ap_cu_impl::handle_init_ul_rrc_message_transfer(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg)
+void f1ap_cu_impl::handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg)
 {
-  logger.info("Received F1AP initial UL RRC msg.");
+  logger.info("Transmitting DL RRC message");
+  // Pack message into PDU
+  asn1::f1ap::f1_ap_pdu_c pdu;
+  pdu.set_init_msg();
+  pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+  pdu.init_msg().value.dlrrc_msg_transfer() = msg.msg;
 
-  // TODO: handle init ul rrc message
-}
+  if (logger.debug.enabled()) {
+    asn1::json_writer js;
+    pdu.to_json(js);
+    logger.debug("Containerized DL RRC message: {}", js.to_string());
+  }
 
-void f1ap_cu_impl::handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_transfer_s& msg)
-{
-  logger.info("Received F1AP UL RRC msg.");
-
-  // TODO: handle ul rrc message
+  // send DL RRC message
+  pdu_notifier.on_new_message(pdu);
 }
 
 async_task<f1ap_ue_context_setup_response_message>
@@ -99,7 +104,7 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
   // TODO: send msg
 
   return launch_async([this, f1_ue_ctx_setup_resp, res = f1ap_ue_context_setup_response_message{}, request](
-                          coro_context<async_task<f1ap_ue_context_setup_response_message> >& ctx) mutable {
+                          coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(f1_ue_ctx_setup_resp, events->f1ap_ue_context_setup_response);
@@ -125,7 +130,7 @@ f1ap_cu_impl::handle_ue_context_release(const f1ap_ue_context_release_command_me
   f1ap_event_manager::f1ap_ue_context_release_outcome_t f1ap_ue_ctxt_rel_complete;
 
   return launch_async([this, f1ap_ue_ctxt_rel_complete, res = f1ap_ue_context_release_complete_message{}, msg](
-                          coro_context<async_task<f1ap_ue_context_release_complete_message> >& ctx) mutable {
+                          coro_context<async_task<f1ap_ue_context_release_complete_message>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(f1ap_ue_ctxt_rel_complete, events->f1ap_ue_context_release_complete);
@@ -143,7 +148,7 @@ f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_
   // TODO: send msg
 
   return launch_async([this, f1ap_ue_ctx_mod_resp, res = f1ap_ue_context_modification_response_message{}, request](
-                          coro_context<async_task<f1ap_ue_context_modification_response_message> >& ctx) mutable {
+                          coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx) mutable {
     CORO_BEGIN(ctx);
 
     CORO_AWAIT_VALUE(f1ap_ue_ctx_mod_resp, events->f1ap_ue_context_modification_response_message);
@@ -189,9 +194,11 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       ul_transfer.msg                                     = msg.value.init_ulrrc_msg_transfer();
       init_message_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
     } break;
-    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer:
-      handle_ul_rrc_message_transfer(msg.value.ulrrc_msg_transfer());
-      break;
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
+      ul_rrc_message_transfer_message ul_transfer = {};
+      ul_transfer.msg                             = msg.value.ulrrc_msg_transfer();
+      init_message_notifier.on_ul_rrc_message_transfer_received(ul_transfer);
+    } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }

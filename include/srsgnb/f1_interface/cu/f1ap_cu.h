@@ -20,15 +20,23 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-struct f1ap_dl_rrc_msg {
-  asn1::f1ap::dlrrc_msg_transfer_s dl_msg;
+struct initial_ul_rrc_message_transfer_message {
+  asn1::f1ap::init_ulrrc_msg_transfer_s msg;
+};
+
+struct ul_rrc_message_transfer_message {
+  asn1::f1ap::ulrrc_msg_transfer_s msg;
+};
+
+struct dl_rrc_message_transfer_message {
+  asn1::f1ap::dlrrc_msg_transfer_s msg;
 };
 
 class f1ap_rrc_message_transfer_procedure_handler
 {
 public:
-  virtual ~f1ap_rrc_message_transfer_procedure_handler()                  = default;
-  virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) = 0;
+  virtual ~f1ap_rrc_message_transfer_procedure_handler()                                  = default;
+  virtual void handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg) = 0;
 };
 
 struct f1_setup_response_message {
@@ -39,10 +47,6 @@ struct f1_setup_response_message {
 
 struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
-};
-
-struct initial_ul_rrc_message_transfer_message {
-  asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
@@ -116,6 +120,7 @@ public:
   virtual ~f1c_initiating_message_notifier()                                     = default;
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
   virtual void on_initial_ul_rrc_message_transfer_received(const initial_ul_rrc_message_transfer_message& msg) = 0;
+  virtual void on_ul_rrc_message_transfer_received(const ul_rrc_message_transfer_message& msg)                 = 0;
 };
 
 /// Combined entry point for F1C/U handling.

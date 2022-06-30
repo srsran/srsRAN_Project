@@ -31,7 +31,7 @@ public:
 
   // f1ap rrc message transfer procedure functions
 
-  void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) override {}
+  void handle_dl_rrc_message_transfer(const dl_rrc_message_transfer_message& msg) override;
 
   // f1ap ue context manager functions
 
@@ -55,10 +55,7 @@ private:
 
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  void handle_init_ul_rrc_message_transfer(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg);
-  void handle_ul_rrc_message_transfer(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
-
-  srslog::basic_logger&  logger;
+  srslog::basic_logger&            logger;
   f1c_message_notifier&            pdu_notifier;
   f1c_initiating_message_notifier& init_message_notifier;
 

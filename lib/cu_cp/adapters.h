@@ -34,6 +34,12 @@ public:
     cu_cp_f1c_handler->handle_initial_ul_rrc_message_transfer(msg);
   }
 
+  void on_ul_rrc_message_transfer_received(const ul_rrc_message_transfer_message& msg) override
+  {
+    srsran_assert(cu_cp_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    cu_cp_f1c_handler->handle_ul_rrc_message_transfer(msg);
+  }
+
 private:
   cu_cp_manager_f1c_interface* cu_cp_f1c_handler = nullptr;
 };

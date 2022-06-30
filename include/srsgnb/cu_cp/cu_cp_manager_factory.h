@@ -23,7 +23,10 @@ namespace srs_cu_cp {
 
 /// Creates an instance of a CU-CP manager.
 std::unique_ptr<cu_cp_manager_interface>
-create_cu_cp_manager(timer_manager& timers, f1ap_connection_manager& f1ap_conn_mng, task_executor& cu_cp_mng_exec);
+create_cu_cp_manager(timer_manager&                               timers,
+                     f1ap_connection_manager&                     f1ap_conn_mng,
+                     f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_msg_proc_handler,
+                     task_executor&                               cu_cp_mng_exec);
 
 } // namespace srs_cu_cp
 

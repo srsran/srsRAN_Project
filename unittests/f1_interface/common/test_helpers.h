@@ -32,6 +32,10 @@ public:
   {
     logger.info("Received Initial UL RRC Message transfer message.");
   }
+  void on_ul_rrc_message_transfer_received(const srs_cu_cp::ul_rrc_message_transfer_message& msg) override
+  {
+    logger.info("Received UL RRC Message transfer message.");
+  }
 
 private:
   srslog::basic_logger& logger;

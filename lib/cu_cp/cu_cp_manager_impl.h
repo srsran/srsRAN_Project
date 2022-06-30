@@ -41,6 +41,11 @@ private:
   void send_f1_setup_response(const du_context& du_ctxt);
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
 
+  /// \brief Send RRCSetup message via DL RRC message transfer (TS 38.473 section 8.4.2), as response to an initial UL
+  /// RRC message transfer.
+  /// \param[in] msg The received initial UL RRC message transfer.
+  void send_rrc_setup(const initial_ul_rrc_message_transfer_message& msg);
+
   // DU manager configuration that will be visible to all running procedures
   cu_cp_manager_config_t cfg;
 

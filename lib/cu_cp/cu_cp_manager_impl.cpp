@@ -47,7 +47,7 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
     const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
     du_cell_context du_cell;
     du_cell.cell_index = MIN_DU_CELL_INDEX; // TODO: get unique next idx
-    du_cell.pci = cell_item.served_cell_info.nrpci;
+    du_cell.pci        = cell_item.served_cell_info.nrpci;
     du_cell.cgi        = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
 
     if (not cell_item.gnb_du_sys_info_present) {
@@ -95,6 +95,8 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const initial_ul
   if (msg.msg->sul_access_ind_present) {
     cfg.logger.debug("Ignoring SUL access indicator");
   }
+
+  send_rrc_setup(msg);
 }
 
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const ul_rrc_message_transfer_message& msg)
@@ -117,6 +119,41 @@ void cu_cp_manager_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::optio
   response.success = false;
   response.failure->cause->set(cause);
   cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
+}
+
+void cu_cp_manager_impl::send_rrc_setup(const initial_ul_rrc_message_transfer_message& msg)
+{
+  dl_rrc_message_transfer_message dl_rrc_msg = {};
+
+  // GNB DU UE F1AP ID
+  dl_rrc_msg.msg->gnb_du_ue_f1_ap_id.value = msg.msg->gnb_du_ue_f1_ap_id.value;
+
+  // GNB CU UE F1AP ID
+  // TODO: set real GNB CU UE F1AP ID
+  dl_rrc_msg.msg->gnb_cu_ue_f1_ap_id.value = 22;
+
+  // fill rrc setup
+  asn1::rrc_nr::dl_ccch_msg_s dl_ccch_msg = {};
+  dl_ccch_msg.msg.set_c1().set_rrc_setup();
+  asn1::rrc_nr::rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
+  fill_asn1_rrc_setup_msg(rrc_setup, msg);
+
+  if (cfg.logger.debug.enabled()) {
+    asn1::json_writer js;
+    rrc_setup.to_json(js);
+    cfg.logger.debug("Containerized RRCSetup: {}", js.to_string());
+  }
+
+  // pack DL CCCH msg
+  byte_buffer   byte_buf{};
+  asn1::bit_ref packed_dl_ccch_msg{byte_buf};
+  dl_ccch_msg.pack(packed_dl_ccch_msg);
+
+  dl_rrc_msg.msg->rrc_container.value.resize(byte_buf.length());
+  std::copy(byte_buf.begin(), byte_buf.end(), dl_rrc_msg.msg->rrc_container.value.begin());
+
+  // send to f1ap
+  cfg.f1ap_rrc_msg_proc_handler->handle_dl_rrc_message_transfer(dl_rrc_msg);
 }
 
 size_t cu_cp_manager_impl::get_nof_dus() const

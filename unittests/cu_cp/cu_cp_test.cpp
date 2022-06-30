@@ -29,7 +29,7 @@ void test_f1_setup()
 
   // create CU-CP config
   cu_cp_configuration cfg;
-  cfg.cu_executor = task_executor.get();
+  cfg.cu_executor  = task_executor.get();
   cfg.f1c_notifier = &f1c_pdu_notifier;
 
   // create and start DUT
@@ -108,9 +108,10 @@ void test_f1_setup()
   return;
 }
 
+/// Test the f1 initial UL RRC message transfer procedure
 void test_initial_ul_rrc_message_transfer()
 {
-  test_delimit_logger   delimiter{"Test F1 setup procedure in CU-CP"};
+  test_delimit_logger   delimiter{"Test F1 initial UL RRC message transfer procedure in CU-CP"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   // create worker thread and executer
