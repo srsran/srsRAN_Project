@@ -20,7 +20,6 @@ std::unique_ptr<du_manager_interface> create_du_manager(timer_manager&          
                                                         f1ap_connection_manager&                     f1ap_conn_mng,
                                                         f1ap_ue_context_manager&                     f1ap_ue_ctx_mng,
                                                         f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc,
-                                                        rlc_rx_upper_layer_data_notifier&            rlc_rx_upper_dn,
                                                         task_executor&                               du_mng_exec,
                                                         const std::vector<du_cell_config>&           cells);
 

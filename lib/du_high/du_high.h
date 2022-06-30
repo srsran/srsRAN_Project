@@ -51,8 +51,6 @@ private:
 
   std::unique_ptr<mac_cell_slot_handler> main_cell_slot_handler;
 
-  rlc_rx_rrc_sdu_adapter rlc_rx_upper_dp;
-
   du_manager_mac_event_indicator mac_ev_notifier;
 };
 

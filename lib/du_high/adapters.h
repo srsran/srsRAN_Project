@@ -48,27 +48,6 @@ private:
   du_manager_ccch_handler* du_mng;
 };
 
-class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
-{
-public:
-  void connect(f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) { f1ap_rrc = &f1ap_rrc_; }
-
-  void on_new_sdu(byte_buffer pdu) override
-  {
-    f1_rx_pdu msg{};
-    msg.pdu = std::move(pdu);
-    f1ap_rrc->handle_pdu(std::move(msg));
-  }
-
-  void on_ack_received() override
-  {
-    // TODO
-  }
-
-private:
-  f1ap_rrc_message_transfer_procedure_handler* f1ap_rrc = nullptr;
-};
-
 } // namespace srs_du
 } // namespace srsgnb
 
