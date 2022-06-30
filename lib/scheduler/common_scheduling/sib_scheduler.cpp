@@ -136,7 +136,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   // Compute derived SIB1 parameters.
   sib1_periodicity = sib1_rxtx_periodicity_ == 0
                          ? SIB1_PERIODICITY
-                         : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), sib1_rxtx_periodicity_);
+                         : std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rxtx_periodicity_);
   precompute_sib1_n0(scs_common);
 
   // Define a BWP configuration limited by CORESET#0 RBs.

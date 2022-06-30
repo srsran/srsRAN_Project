@@ -19,7 +19,6 @@ void fill_ssb_configuration_from_asn1(ssb_configuration&                        
                                       subcarrier_spacing                                 ssb_scs)
 {
   // Parameters taken from ServingCellConfigCommonSIB
-  out.ssb_power             = sib_in.ss_pbch_block_pwr;
   out.ssb_offset_to_point_A = sib_in.dl_cfg_common.freq_info_dl.offset_to_point_a;
   out.ssb_period            = static_cast<ssb_periodicity>(sib_in.ssb_periodicity_serving_cell.to_number());
   // SSB subcarrier is taken from MIB.ssb-SubcarrierOffset.

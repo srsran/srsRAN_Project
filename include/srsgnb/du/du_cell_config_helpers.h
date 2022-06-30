@@ -159,7 +159,7 @@ inline ssb_configuration make_default_ssb_config()
   cfg.scs               = subcarrier_spacing::kHz15;
   // As per clause 4.1 in TS 38.213, the UE assumes a periodicity of 2 frames for initial cell selection.
   cfg.ssb_period = ssb_periodicity::ms20;
-  cfg.ssb_bitmap = uint64_t(1) << 63;
+  cfg.ssb_bitmap = uint64_t(1) << 63U;
   // TODO: Add remaining.
   return cfg;
 }

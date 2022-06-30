@@ -21,18 +21,15 @@ constexpr size_t NOF_BEAMS = 64;
 
 /// SSB Configuration.
 struct ssb_configuration {
-  /// Average EPRE of the resources elements that carry the SSS in dBm as per TS38.331 Section 6.3.2 IE
-  /// ss-PBCH-BlockPower. Assumes a range of -60 to 50 dBm.
-  int8_t ssb_power;
   /// SSB subcarrier spacing as per TS38.211 Table 4.2-1.
   // TODO: verify if which SCS this refers to.
   subcarrier_spacing scs;
-  /// Represents the offset to Point A in PRBs as per TS38.331 Section 6.3.2 IE offsetToPointA. Assumes a range of 0 to
-  /// 2199.
+  /// Represents the offset to Point A in PRBs as per TS38.331 Section 6.3.2 IE offsetToPointA.
+  /// Possible values: {0, ..., 2199}.
   uint16_t ssb_offset_to_point_A;
   /// SSB periodicity.
   ssb_periodicity ssb_period;
-  /// SSB SubcarrierOffest or k_ssb as per TS38.211 Section 7.4.3.1. Assumes a range of 0 to 23.
+  /// SSB SubcarrierOffest or k_ssb as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
   uint8_t ssb_subcarrier_offset;
   /// Each bit in this bitmap represents if a beam is active or not as per TS38.331 Section 6.3.2 IE
   /// ssb-PositionsInBurst.

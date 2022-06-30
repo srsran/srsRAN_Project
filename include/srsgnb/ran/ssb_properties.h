@@ -14,7 +14,13 @@
 namespace srsgnb {
 
 /// \brief SSB periodicity in milliseconds as per TS38.331 Section 6.3.2 IE ssb-periodicityServingCell.
-enum class ssb_periodicity { ms5, ms10, ms20, ms40, ms80, ms160 };
+enum class ssb_periodicity { ms5 = 5, ms10 = 10, ms20 = 20, ms40 = 40, ms80 = 80, ms160 = 160 };
+
+/// \brief Converts the SSB periodicity property to its corresponding value in milliseconds.
+inline unsigned ssb_periodicity_to_value(ssb_periodicity periodicity)
+{
+  return static_cast<unsigned>(periodicity);
+}
 
 /// \brief PSS power level allocation in dB, relative to SSS as per TS38.213 Section 4.1.
 enum class ssb_beta_pss { dB_0, dB_3 };

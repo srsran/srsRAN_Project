@@ -247,7 +247,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   // SSB params.
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));
-  asn1::number_to_enum(cell.ssb_periodicity_serving_cell, du_cfg.ssb_cfg.ssb_period);
+  asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
   cell.ss_pbch_block_pwr = -16;
   // TODO: Fill remaining fields.
   return cell;
