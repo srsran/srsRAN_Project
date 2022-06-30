@@ -25,8 +25,6 @@ scheduler_impl::scheduler_impl(sched_configuration_notifier& notifier) :
 
 bool scheduler_impl::handle_cell_configuration_request(const sched_cell_configuration_request_message& msg)
 {
-  srsran_sanity_check(is_cell_configuration_request_valid(msg), "Invalid cell configuration");
-
   cells.add_cell(msg.cell_index, msg);
 
   ue_sched->add_cell(

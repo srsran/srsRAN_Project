@@ -80,15 +80,3 @@ cell_configuration::cell_configuration(const sched_cell_configuration_request_me
     }
   }
 }
-
-#define CHECK(cond, ...)                                                                                               \
-  if (not(cond))                                                                                                       \
-    return {fmt::format(__VA_ARGS__)};
-
-error_type<std::string> srsgnb::is_cell_configuration_request_valid(const sched_cell_configuration_request_message& msg)
-{
-  CHECK(msg.cell_index < MAX_NOF_DU_CELLS, "Invalid cell index={}", msg.cell_index);
-  CHECK(msg.pci <= MAX_PCI, "Invalid pci={}", msg.pci);
-  // TODO
-  return {};
-}

@@ -26,7 +26,10 @@ using namespace srsgnb;
   }
 
 #define CHECK_EQ(val, expected_val, name)                                                                              \
-  CHECK_TRUE((val == expected_val), "Invalid {} ({} != {}", name, val, expected_val)
+  CHECK_TRUE((val == expected_val), "Invalid {} ({} != {})", name, val, expected_val)
+
+#define CHECK_NEQ(val, expected_val, name)                                                                             \
+  CHECK_TRUE((val != expected_val), "Invalid {} ({} == {})", name, val, expected_val)
 
 /// Checks if "val" is below or equal to "max_val".
 #define CHECK_EQ_OR_BELOW(val, max_val, name) CHECK_TRUE((val <= max_val), "Invalid {} ({} > {})", name, val, max_val)
@@ -67,6 +70,12 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   // PDCCH
   if (bwp.pdcch_common.coreset0.has_value()) {
     HANDLE_RETURN(is_coreset0_params_valid(*bwp.pdcch_common.coreset0, cell_cfg.pci));
+  }
+  if (bwp.pdcch_common.sib1_search_space_id != srsgnb::MAX_NOF_SEARCH_SPACES) {
+    CHECK_EQ(bwp.pdcch_common.sib1_search_space_id, 0, "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
+  }
+  if (bwp.pdcch_common.common_coreset.has_value()) {
+    CHECK_NEQ(bwp.pdcch_common.common_coreset->id, 0, "Common CORESET");
   }
   // PDSCH
   CHECK_TRUE(not bwp.pdsch_common.pdsch_td_alloc_list.empty(), "Empty PDSCH-TimeDomainAllocationList");

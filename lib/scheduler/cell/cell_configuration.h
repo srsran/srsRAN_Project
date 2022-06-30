@@ -78,9 +78,6 @@ private:
   std::vector<uint8_t> ul_enabled_slot_lst;
 };
 
-/// Verify correctness of cell configuration request message
-error_type<std::string> is_cell_configuration_request_valid(const sched_cell_configuration_request_message& msg);
-
 } // namespace srsgnb
 
 #endif // LIB_MAC_SCHED_CELL_CONFIGURATION_H
