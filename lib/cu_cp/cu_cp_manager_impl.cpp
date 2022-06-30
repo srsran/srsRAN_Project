@@ -9,6 +9,7 @@
  */
 
 #include "cu_cp_manager_impl.h"
+#include "../lib/f1_interface/common/asn1_helpers.h"
 #include "../ran/bcd_helpers.h"
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -88,7 +89,7 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initi
 
   cfg.logger.info(
       "Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
-  cfg.logger.debug("mcc={}, mnc={}", cgi.mcc, cgi.mnc);
+  cfg.logger.debug("plmn={}", cgi.plmn);
 
   // TODO: Look up DU and cell with NR-CGI
 

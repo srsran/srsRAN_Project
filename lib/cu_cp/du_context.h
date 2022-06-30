@@ -14,23 +14,11 @@
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/ran/nr_cgi.h"
 #include <string>
 
 namespace srsgnb {
 namespace srs_cu_cp {
-
-/// 36-bit identifying an NR Cell Id as specified in subclause 9.3.1.7 of 3GPP TS 38.413
-struct nr_cell_identity {
-  uint64_t packed;       /// All 36 bits combined
-  uint32_t gnb_identity; /// 22 to 32 bits
-  uint16_t cell_idenity; /// 4 to 14 bits
-};
-
-struct nr_cell_global_identity {
-  uint16_t         mcc; /// 3 digits mobile country code
-  uint16_t         mnc; /// 2 or 3 digits mobile network code
-  nr_cell_identity nci; /// NR cell id
-};
 
 /// Basic cell system information provided by DU
 struct du_sys_info {
