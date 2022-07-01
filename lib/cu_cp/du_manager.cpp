@@ -85,7 +85,7 @@ du_index_t du_manager::get_next_du_index()
 {
   du_index_t new_index;
   do {
-    new_index = to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
+    new_index = int_to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
   } while (du_db.contains(new_index));
   return new_index;
 }

@@ -78,7 +78,12 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
 void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
 {
-  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
+  // Retrieve cell context to handle message
+  auto cell_it = du_mng.find_cell(msg.msg->nrcgi.value.nrcell_id.to_number());
+  if (cell_it == nullptr) {
+    cfg.logger.error("Could not find cell with cell_id={}", msg.msg->nrcgi.value.nrcell_id.to_number());
+    return;
+  }
 
   // Reject request without served cells
   if (not msg.msg->duto_currc_container_present) {
@@ -87,21 +92,29 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initi
     return;
   }
 
+  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
+
   cfg.logger.info(
       "Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
   cfg.logger.debug("plmn={}", cgi.plmn);
-
-  // Retrieve cell context to handle message
-  auto cell_it = du_mng.find_cell(msg.msg->nrcgi.value.nrcell_id.to_number());
-  if (cell_it == nullptr) {
-    cfg.logger.error("Could not find cell with NR-CGI={}", cgi.nci.packed);
-    return;
-  }
 
   if (msg.msg->sul_access_ind_present) {
     cfg.logger.debug("Ignoring SUL access indicator");
   }
 
+  // create user (TODO: will be split into own (sub)-procedure)
+  ue_context tmp_ue{};
+  tmp_ue.ue_index    = ue_mng.get_next_ue_index();
+  tmp_ue.du_index    = cell_it->du_index;
+  tmp_ue.pcell_index = cell_it->cell_index;
+
+  auto new_ue = ue_mng.add_ue(tmp_ue);
+  if (new_ue == nullptr) {
+    cfg.logger.error("Couldn't register new UE");
+    return;
+  }
+
+  // TODO: handle message
   send_rrc_setup(msg);
 }
 

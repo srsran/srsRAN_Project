@@ -21,22 +21,25 @@ namespace srs_cu_cp {
 class ue_manager_ctrl_configurer
 {
 public:
-  virtual ~ue_manager_ctrl_configurer()              = default;
+  virtual ~ue_manager_ctrl_configurer() = default;
+
   virtual ue_context* add_ue(ue_context u)           = 0;
   virtual void        remove_ue(ue_index_t ue_index) = 0;
+  virtual ue_index_t  get_next_ue_index()            = 0;
   virtual ue_context* find_ue(ue_index_t ue_index)   = 0;
 };
 
 class du_manager_ctrl_configurer
 {
 public:
-  virtual ~du_manager_ctrl_configurer()              = default;
-  virtual du_context* add_du(du_context du)          = 0;
-  virtual void        remove_du(du_index_t du_index) = 0;
+  virtual ~du_manager_ctrl_configurer() = default;
+
+  virtual du_context*      add_du(du_context du)                 = 0;
+  virtual void             remove_du(du_index_t du_index)        = 0;
   virtual du_index_t       get_next_du_index()                   = 0;
-  virtual du_context* find_du(du_index_t du_index)   = 0;
+  virtual du_context*      find_du(du_index_t du_index)          = 0;
   virtual du_cell_context* find_cell(uint64_t packed_nr_cell_id) = 0;
-  virtual size_t      get_nof_dus() const            = 0;
+  virtual size_t           get_nof_dus() const                   = 0;
 };
 
 } // namespace srs_cu_cp

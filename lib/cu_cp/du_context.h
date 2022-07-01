@@ -36,6 +36,7 @@ struct du_sys_info {
 
 struct du_cell_context {
   du_cell_index_t         cell_index; /// CU internal cell ID
+  du_index_t              du_index;   /// Index of the DU containing the cell
   nr_cell_global_identity cgi;        /// global cell ID
   uint16_t                pci;        /// Physical cell ID
   du_sys_info             sys_info;   /// System information provided by DU

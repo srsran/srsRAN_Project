@@ -32,6 +32,7 @@ public:
 
   ue_context* add_ue(ue_context u) override;
   void        remove_ue(ue_index_t ue_index) override;
+  ue_index_t  get_next_ue_index() override;
   ue_context* find_ue(ue_index_t ue_index) override;
 
 private:
@@ -39,6 +40,7 @@ private:
   srslog::basic_logger&   logger;
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
+  std::atomic<uint16_t>               next_ue_index{0};
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;

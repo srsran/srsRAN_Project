@@ -27,12 +27,12 @@ class du_manager : public du_manager_ctrl_configurer
 public:
   explicit du_manager(cu_cp_manager_config_t& cfg_);
 
-  du_context* add_du(du_context du) override;
-  void        remove_du(du_index_t du_index) override;
+  du_context*      add_du(du_context du) override;
+  void             remove_du(du_index_t du_index) override;
   du_index_t       get_next_du_index() override;
-  du_context* find_du(du_index_t de_index) override;
+  du_context*      find_du(du_index_t de_index) override;
   du_cell_context* find_cell(uint64_t packed_nr_cell_id) override;
-  size_t      get_nof_dus() const override;
+  size_t           get_nof_dus() const override;
 
 private:
   cu_cp_manager_config_t& cfg;

@@ -61,3 +61,12 @@ void ue_manager::remove_ue(ue_index_t ue_index)
     CORO_RETURN();
   });
 }
+
+ue_index_t ue_manager::get_next_ue_index()
+{
+  ue_index_t new_index;
+  do {
+    new_index = int_to_ue_index(next_ue_index.fetch_add(1, std::memory_order_relaxed));
+  } while (ue_db.contains(new_index));
+  return new_index;
+}
