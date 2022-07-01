@@ -101,7 +101,7 @@ struct test_bench {
     }
     msg.pdcch_config_sib1     = pdcch_config_sib1;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
-    msg.ssb_config.ssb_period = static_cast<uint8_t>(ssb_periodicity_to_value(ssb_period));
+    msg.ssb_config.ssb_period = ssb_period;
     return msg;
   }
 
