@@ -11,7 +11,7 @@
 #define SRSGNB_LIB_RLC_AM_PDU_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rlc/rlc_types.h"
+#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {

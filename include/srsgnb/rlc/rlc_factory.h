@@ -12,23 +12,23 @@
 #define SRSGNB_RLC_MANAGER_FACTORY_H
 
 #include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_entity.h"
 #include <memory>
 
 namespace srsgnb {
 
-enum class rlc_mode { TM, UM, AM };
-
-struct rlc_entity_config {
+struct rlc_entity_creation_message {
   du_ue_index_t                        ue_index;
   lcid_t                               lcid;
-  rlc_mode                             mode;
+  rlc_config                           config;
   rlc_rx_upper_layer_data_notifier*    upper_dn;
   rlc_tx_upper_layer_control_notifier* upper_cn;
 };
 
 /// Creates an instance of a RLC bearer
-std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_config& config);
+std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_creation_message& msg);
+
 } // namespace srsgnb
 
 #endif // SRSGNB_RLC_MANAGER_FACTORY_H

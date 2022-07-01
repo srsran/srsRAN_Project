@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_TYPES_H
-#define SRSGNB_RLC_TYPES_H
+#ifndef SRSGNB_RLC_CONFIG_H
+#define SRSGNB_RLC_CONFIG_H
 
 #include <cstdint>
 #include <string>
@@ -91,6 +91,11 @@ inline std::string to_string(const rlc_control_pdu_type& type)
   constexpr static const char* options[] = {"Control PDU"};
   return options[to_number(type)];
 }
+
+/// Configuration of RLC bearer.
+struct rlc_config {
+  rlc_mode mode;
+};
 
 } // namespace srsgnb
 #endif

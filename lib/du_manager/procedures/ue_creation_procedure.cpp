@@ -90,13 +90,13 @@ void ue_creation_procedure::create_srb0()
   srb0.rlc_ctrl_notif = std::make_unique<rlc_tx_control_notifier>();
 
   // Create RLC entity.
-  rlc_entity_config rlc_cfg{};
-  rlc_cfg.lcid     = LCID_SRB0;
-  rlc_cfg.mode     = rlc_mode::TM;
-  rlc_cfg.ue_index = ue_ctx.ue_index;
-  rlc_cfg.upper_dn = srb0.rlc_ul_sdu_notif.get();
-  rlc_cfg.upper_cn = srb0.rlc_ctrl_notif.get();
-  srb0.rlc_bearer  = create_rlc_entity(rlc_cfg);
+  rlc_entity_creation_message rlc_msg{};
+  rlc_msg.ue_index    = ue_ctx.ue_index;
+  rlc_msg.lcid        = LCID_SRB0;
+  rlc_msg.upper_dn    = srb0.rlc_ul_sdu_notif.get();
+  rlc_msg.upper_cn    = srb0.rlc_ctrl_notif.get();
+  rlc_msg.config.mode = rlc_mode::tm;
+  srb0.rlc_bearer     = create_rlc_entity(rlc_msg);
 
   // Create MAC -> RLC adapters.
   srb0.mac_rx_notifier = std::make_unique<mac_sdu_rx_adapter>(*srb0.rlc_bearer->get_rx_pdu_handler());

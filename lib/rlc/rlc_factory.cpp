@@ -14,14 +14,16 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_config& config)
+std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_message& msg)
 {
-  switch (config.mode) {
-    case rlc_mode::TM:
-      return std::make_unique<rlc_tm_entity>(config.ue_index, config.lcid, *config.upper_dn, *config.upper_cn);
-    case rlc_mode::UM:
-      return std::make_unique<rlc_um_entity>(config.ue_index, config.lcid, *config.upper_dn, *config.upper_cn);
-    case rlc_mode::AM:
+  switch (msg.config.mode) {
+    case rlc_mode::tm:
+      return std::make_unique<rlc_tm_entity>(msg.ue_index, msg.lcid, *msg.upper_dn, *msg.upper_cn);
+    case rlc_mode::um_unidir_dl:
+    case rlc_mode::um_unidir_ul:
+    case rlc_mode::um_bidir:
+      return std::make_unique<rlc_um_entity>(msg.ue_index, msg.lcid, *msg.upper_dn, *msg.upper_cn);
+    case rlc_mode::am:
     default:
       srsran_terminate("RLC mode not supported");
   }
