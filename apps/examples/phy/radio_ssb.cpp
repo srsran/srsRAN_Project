@@ -302,7 +302,7 @@ lower_phy_configuration create_lower_phy_configuration(unsigned                 
 {
   lower_phy_configuration phy_config;
   phy_config.dft_size_15kHz             = dft_size_15kHz;
-  phy_config.numerology                 = to_numerology_value(scs);
+  phy_config.scs                        = scs;
   phy_config.max_processing_delay_slots = max_processing_delay_slots;
   phy_config.ul_to_dl_slot_offset       = ul_to_dl_slot_offset;
   phy_config.rx_to_tx_delay             = rx_to_tx_delay;

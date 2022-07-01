@@ -1,0 +1,209 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#ifndef SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
+#define SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
+
+#include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
+#include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
+
+namespace srsgnb {
+
+/// \brief Lower PHY receive symbol spy class.
+///
+/// This class stores all uplink reception events notified by a lower PHY for a later inspection from an external
+/// entity.
+class lower_phy_rx_symbol_notifier_spy : public lower_phy_rx_symbol_notifier
+{
+private:
+  srslog::basic_logger& logger;
+
+  struct rx_symbol_event {
+    lower_phy_rx_symbol_context context;
+    resource_grid_reader*       grid;
+  };
+  std::vector<rx_symbol_event> rx_symbol_events;
+
+  struct rx_prach_event {
+    prach_buffer_context context;
+    prach_buffer*        grid;
+  };
+  std::vector<rx_prach_event> rx_prach_events;
+
+public:
+  /// Default constructor.
+  lower_phy_rx_symbol_notifier_spy(std::string log_level = "warning") :
+    logger(srslog::fetch_basic_logger("Rx Notifier"))
+  {
+    logger.set_level(srslog::str_to_basic_level(log_level));
+  }
+
+  // See interface for documentation.
+  void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Sector {} - On Rx Symbol {}.", context.sector, context.nof_symbols);
+  }
+
+  // See interface for documentation.
+  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Sector {} - On Rx PRACH Window.", context.sector);
+  }
+
+  // See interface for documentation.
+  void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Sector {} - On Rx SRS Symbol.", context.sector);
+  }
+
+  /// \brief Gets the total number of events of any kind.
+  ///
+  /// A use case to ensure no event happened:
+  /// \code
+  /// TESTASSERT_EQ(0, rx_symbol_notifier.get_nof_events());
+  /// \endcode
+  ///
+  /// \return The total number of events that have been registered.
+  unsigned get_nof_events() const { return rx_symbol_events.size() + rx_prach_events.size(); }
+
+  /// \brief Gets the uplink received symbol event list.
+  ///
+  /// Uplink received symbols are notified through lower_phy_rx_symbol_notifier::on_rx_symbol() interface.
+  ///
+  /// \return A constant reference to the list.
+  const std::vector<rx_symbol_event>& get_rx_symbol_events() const { return rx_symbol_events; }
+
+  /// \brief Gets the uplink received PRACH window event list.
+  ///
+  /// Uplink received PRACH windows are notified through lower_phy_rx_symbol_notifier::on_rx_prach_window() interface.
+  ///
+  /// \return A constant reference to the list.
+  const std::vector<rx_prach_event>& get_rx_prach_events() const { return rx_prach_events; }
+
+  /// Clears all the stored events.
+  void clear_all_events()
+  {
+    rx_symbol_events.clear();
+    rx_prach_events.clear();
+  }
+};
+
+/// \brief Lower PHY timing notify spy class.
+///
+/// This class stores all timing notification events reported by a lower PHY for a later inspection from an external
+/// entity.
+class lower_phy_timing_notifier_spy : public lower_phy_timing_notifier
+{
+private:
+  srslog::basic_logger&                   logger;
+  std::vector<lower_phy_timing_context>   tti_boundaries_events;
+  std::vector<lower_phy_timing_context>   ul_half_slot_events;
+  std::vector<lower_phy_timing_context>   ul_full_slot_events;
+  std::vector<late_resource_grid_context> late_rg_events;
+
+public:
+  /// Default constructor.
+  lower_phy_timing_notifier_spy(std::string log_level) : logger(srslog::fetch_basic_logger("Timing Notifier"))
+  {
+    logger.set_level(srslog::str_to_basic_level(log_level));
+  }
+
+  // See interface for documentation.
+  void on_tti_boundary(const lower_phy_timing_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("New TTI boundary.");
+    tti_boundaries_events.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Half uplink slot boundary.");
+    ul_half_slot_events.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Full uplink slot boundary.");
+    ul_full_slot_events.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_late_resource_grid(const late_resource_grid_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug(
+        "Sector {} - Detected late resource grid for symbol {}.", context.sector, context.symbol, context.symbol);
+
+    late_rg_events.push_back(context);
+  }
+
+  /// \brief Gets the total number of events of any kind.
+  ///
+  /// A use case to ensure no event happened:
+  /// \code
+  /// TESTASSERT_EQ(0, timing_notifier.get_nof_events());
+  /// \endcode
+  ///
+  /// \return The total number of events that have been registered.
+  unsigned get_nof_events() const
+  {
+    return tti_boundaries_events.size() + ul_half_slot_events.size() + ul_full_slot_events.size() +
+           late_rg_events.size();
+  }
+
+  /// \brief Gets the TTI boundaries event list.
+  ///
+  /// TTI boundaries are notified through lower_phy_timing_notifier::on_tti_boundary() interface.
+  ///
+  /// \return A constant reference to the event list.
+  const std::vector<lower_phy_timing_context>& get_tti_boundaries_events() const { return tti_boundaries_events; }
+
+  /// \brief Gets the uplink half slot event list.
+  ///
+  /// TTI boundaries are notified through lower_phy_timing_notifier::on_ul_half_slot_boundary() interface.
+  ///
+  /// \return A constant reference to the event list.
+  const std::vector<lower_phy_timing_context>& get_ul_half_slot_events() const { return ul_half_slot_events; }
+
+  /// \brief Gets the uplink full slot event list.
+  ///
+  /// TTI boundaries are notified through lower_phy_timing_notifier::on_ul_full_slot_boundary() interface.
+  ///
+  /// \return A constant reference to the event list.
+  const std::vector<lower_phy_timing_context>& get_ul_full_slot_events() const { return ul_full_slot_events; }
+
+  /// \brief Gets the late resource grid event list.
+  ///
+  /// TTI boundaries are notified through lower_phy_timing_notifier::on_late_resource_grid() interface.
+  ///
+  /// \return A constant reference to the event list.
+  const std::vector<late_resource_grid_context>& get_late_rg_events() const { return late_rg_events; }
+
+  /// Clears all the stored events.
+  void clear_all_events()
+  {
+    tti_boundaries_events.clear();
+    ul_half_slot_events.clear();
+    ul_full_slot_events.clear();
+    late_rg_events.clear();
+  }
+};
+
+} // namespace srsgnb
+
+#endif // SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H

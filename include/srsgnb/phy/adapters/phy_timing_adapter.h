@@ -42,6 +42,15 @@ public:
     upper_context.slot = context.slot;
     timing_handler->handle_ul_full_slot_boundary(upper_context);
   }
+
+  // See interface for documentation.
+  void on_late_resource_grid(const late_resource_grid_context& context) override
+  {
+    fmt::print("Unavailable data to transmit for sector {}, slot {} and symbol {}.",
+               context.sector,
+               context.slot,
+               context.symbol);
+  }
 };
 
 } // namespace srsgnb

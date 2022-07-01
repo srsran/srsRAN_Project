@@ -16,17 +16,17 @@ using namespace srsgnb;
 class resource_grid_reader_empty : public resource_grid_reader
 {
 public:
-  bool is_empty(unsigned port) const override { return true; }
-  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
+  bool is_empty(unsigned /**/) const override { return true; }
+  void get(span<cf_t> symbols, unsigned /**/, span<const resource_grid_coordinate> /**/) const override
   {
     srsvec::zero(symbols);
   }
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  span<cf_t> get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/, span<const bool> /**/) const override
   {
     srsvec::zero(symbols);
     return {};
   }
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { srsvec::zero(symbols); }
+  void get(span<cf_t> symbols, unsigned /**/, unsigned /**/, unsigned /**/) const override { srsvec::zero(symbols); }
 };
 
 static const resource_grid_reader_empty rg_reader_empty;
@@ -95,8 +95,7 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
   transmit_metadata.ts                                     = timestamp + rx_to_tx_delay;
 
   // Get transmit resource grid buffer for the given slot.
-  lower_phy_rg_buffer<const resource_grid_reader>& dl_grid_buffer =
-      dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()];
+  lower_phy_rg_buffer<const resource_grid_reader>& dl_grid_buffer = dl_rg_buffers[dl_slot_context.system_slot()];
 
   // Resize radio buffers, assume all sectors and ports symbol sizes are the same.
   unsigned symbol_sz = modulators.front()->get_symbol_size(symbol_id);
@@ -115,7 +114,11 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
     // If there is no data available for the sector.
     if (dl_rg == nullptr) {
       // Log warning indicating the sector.
-      logger.warning("Unavailable data to transmit for sector {} and symbol {}.", sector_id, symbol_id);
+      lower_phy_timing_notifier::late_resource_grid_context context;
+      context.sector = sector_id;
+      context.slot   = dl_slot_context;
+      context.symbol = symbol_id;
+      timing_notifier.on_late_resource_grid(context);
     }
 
     // Iterate for each port in the sector...
@@ -180,15 +183,17 @@ void lower_phy_impl::process_symbol()
   // Process downlink symbol.
   process_dl_symbol(dl_symbol_subframe_idx, rx_timestamp);
 
-  // Reset DL resource grid buffers.
-  dl_rg_buffers[dl_slot_context.system_slot()].reset();
-
   // Increment symbol index within the slot.
   ++symbol_slot_idx;
 
   // Detect symbol index overflow.
   if (symbol_slot_idx == nof_symbols_per_slot) {
-    // Reset the synbol index.
+    // Reset DL resource grid buffers.
+    logger.debug("Clearing DL resource grid slot {}.", dl_slot_context.system_slot());
+    dl_rg_buffers[dl_slot_context.system_slot()].reset();
+    ul_rg_buffers[dl_slot_context.system_slot()].reset();
+
+    // Reset the symbol index.
     symbol_slot_idx = 0;
 
     // Increment slot.
@@ -233,7 +238,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   sectors(config.sectors),
-  ul_slot_context(config.numerology, 0),
+  ul_slot_context(to_numerology_value(config.scs), 0),
   dl_slot_context(ul_slot_context + config.ul_to_dl_slot_offset)
 {
   logger.set_level(srslog::str_to_basic_level(config.log_level));
@@ -261,10 +266,10 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
                 "The number of sectors ({}) and demodulators ({}) do not match.",
                 config.sectors.size(),
                 demodulators.size());
-  for (auto& modulator : common_config.modulators) {
+  for (auto& modulator : modulators) {
     srsran_assert(modulator, "Invalid modulator.");
   }
-  for (auto& demodulator : common_config.demodulators) {
+  for (auto& demodulator : demodulators) {
     srsran_assert(demodulator, "Invalid demodulator.");
   }
 
@@ -279,8 +284,10 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
     dl_rg_buffers[slot_count].set_nof_sectors(sectors.size());
 
     // If the slot is inside the start transition, then set an initial resource grid reader than is empty.
-    if (slot_count < max_processing_delay_slots) {
+    if (slot_count >= config.ul_to_dl_slot_offset &&
+        slot_count < config.ul_to_dl_slot_offset + max_processing_delay_slots) {
       for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+        logger.debug("Writing initial DL resource grid for sector {} and slot {}.", sector_id, slot_count);
         dl_rg_buffers[slot_count].set_grid(rg_reader_empty, sector_id);
       }
     }
@@ -298,7 +305,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
 void lower_phy_impl::start(task_executor& realtime_task_executor)
 {
   logger.info("Starting...");
-  realtime_process_loop(realtime_task_executor);
+  realtime_task_executor.defer([this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); });
 }
 
 void lower_phy_impl::stop()

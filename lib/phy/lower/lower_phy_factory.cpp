@@ -38,9 +38,9 @@ public:
     for (const lower_phy_sector_description& sector : config.sectors) {
       // Prepare sector modulator.
       ofdm_modulator_configuration configuration = {};
-      configuration.numerology                   = config.numerology;
+      configuration.numerology                   = to_numerology_value(config.scs);
       configuration.bw_rb                        = sector.bandwidth_rb;
-      configuration.dft_size                     = config.dft_size_15kHz / pow2(config.numerology);
+      configuration.dft_size                     = config.dft_size_15kHz / pow2(to_numerology_value(config.scs));
       configuration.cp                           = config.cp;
       configuration.scale                        = config.tx_scale;
       configuration.center_freq_hz               = sector.dl_freq_hz;
@@ -56,9 +56,9 @@ public:
     for (const lower_phy_sector_description& sector : config.sectors) {
       // Prepare sector demodulator.
       ofdm_demodulator_configuration configuration = {};
-      configuration.numerology                     = config.numerology;
+      configuration.numerology                     = to_numerology_value(config.scs);
       configuration.bw_rb                          = sector.bandwidth_rb;
-      configuration.dft_size                       = config.dft_size_15kHz / pow2(config.numerology);
+      configuration.dft_size                       = config.dft_size_15kHz / pow2(to_numerology_value(config.scs));
       configuration.cp                             = config.cp;
       configuration.scale                          = config.tx_scale;
       configuration.center_freq_hz                 = sector.ul_freq_hz;

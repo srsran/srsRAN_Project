@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
@@ -8,6 +17,7 @@
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
 
@@ -35,8 +45,8 @@ struct lower_phy_sector_description {
 struct lower_phy_configuration {
   /// Indicates the DFT size for a 15kHz SCS.
   unsigned dft_size_15kHz;
-  /// Indicates the numerology.
-  unsigned numerology;
+  /// Indicates the subcarrier spacing for the overall PHY.
+  subcarrier_spacing scs;
   /// Indicates the number of slots that the timing handler is notified in advance. This sets the maximum allowed
   /// processing delay in slots.
   unsigned max_processing_delay_slots;
@@ -48,7 +58,7 @@ struct lower_phy_configuration {
   float tx_scale;
   /// Indicates the cyclic prefix.
   cyclic_prefix cp;
-  /// Provides the radio data plane.
+  /// Provides the basebabd gateway.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
   lower_phy_rx_symbol_notifier* rx_symbol_notifier;
@@ -56,7 +66,7 @@ struct lower_phy_configuration {
   lower_phy_timing_notifier* timing_notifier;
   /// Provides the sectors configuration.
   std::vector<lower_phy_sector_description> sectors;
-  /// Indicates the numbers of channels for every stream.
+  /// Indicates the numbers of channels for every baseband stream.
   std::vector<unsigned> nof_channels_per_stream;
   /// Indicates the log level.
   std::string log_level;

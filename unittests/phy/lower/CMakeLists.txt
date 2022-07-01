@@ -7,3 +7,7 @@
 #
 
 add_subdirectory(modulation)
+
+add_executable(lower_phy_test lower_phy_test.cpp)
+target_link_libraries(lower_phy_test srsgnb_lower_phy srslog)
+add_test(lower_phy_test lower_phy_test)

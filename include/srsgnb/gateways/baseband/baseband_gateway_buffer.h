@@ -1,8 +1,18 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_base.h"
+#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <complex>
 #include <vector>
@@ -26,10 +36,12 @@ public:
   /// \param[in] channel_idx Indicates the channel index.
   /// \return A view to a baseband buffer.
   /// \note An invalid channel index causes undefined behaviour.
-  virtual span<radio_sample_type> get_channel_buffer(unsigned channel_idx) = 0;
+  virtual span<radio_sample_type>       get_channel_buffer(unsigned channel_idx)       = 0;
+  virtual span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const = 0;
 
   /// See get_channel_buffer() documentation.
-  span<radio_sample_type> operator[](unsigned channel_index) { return get_channel_buffer(channel_index); }
+  span<radio_sample_type>       operator[](unsigned channel_index) { return get_channel_buffer(channel_index); }
+  span<const radio_sample_type> operator[](unsigned channel_index) const { return get_channel_buffer(channel_index); }
 };
 
 /// \brief Describes a baseband buffer implementation that comprises a fix number of channels that can be dynamically
@@ -60,6 +72,16 @@ public:
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<radio_sample_type>(data).subspan(offset, nof_samples);
+  }
+
+  // See interface for documentation.
+  span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
+  {
+    srsran_always_assert(!data.empty(), "Data is empty. Was the buffer moved?");
+    srsran_always_assert(
+        channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
+    unsigned offset = nof_samples * channel_idx;
+    return span<const radio_sample_type>(data).subspan(offset, nof_samples);
   }
 
   /// \brief Resize buffer.
