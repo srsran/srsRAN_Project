@@ -12,14 +12,11 @@
 #include "../cell/resource_grid.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
+#include "../support/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 
 using namespace srsgnb;
-
-// TODO: Check if this can be moved to a different file.
-// Refer to "SS/PBCH block and CORESET multiplexing pattern", TS 38.213, Section 13.
-enum class ssb_coreset0_mplex_pattern { mplx_pattern1 = 0, mplx_pattern2, mplx_pattern3, mplex_invalid };
 
 //  ------   Helper functions   ------ .
 
