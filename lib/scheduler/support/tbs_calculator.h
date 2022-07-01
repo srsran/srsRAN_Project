@@ -69,7 +69,7 @@ struct tbs_calculator_pdsch_configuration {
 /// \return Scaling factor S corresponding to scaling.
 float tbs_calculator_pdsch_get_scaling_factor(unsigned scaling);
 
-/// \brief Get smallest TBS (from Table 5.1.3.2-1, TS 38.214) greater than or equal to a given value.
+/// \brief Get smallest TBS in bits (from Table 5.1.3.2-1, TS 38.214) greater than or equal to a given value.
 ///
 /// \param[in] nof_info_prime is the quantized intermediate num. of information bits, as per Section 5.1.3.2, TS 38.214.
 /// \remark nof_info_prime must not be greater than 3824 bits.
