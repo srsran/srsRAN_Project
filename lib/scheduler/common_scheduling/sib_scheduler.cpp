@@ -13,6 +13,7 @@
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
+#include "srsgnb/ran/sib_configuration.h"
 
 using namespace srsgnb;
 
@@ -124,7 +125,7 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
                                uint8_t                   sib1_mcs_,
                                uint8_t                   sib1_rv_,
                                aggregation_level         sib1_dci_aggr_lev_,
-                               unsigned                  sib1_rxtx_periodicity_,
+                               sib1_rtx_periodicity      sib1_rtx_period_,
                                subcarrier_spacing        scs_common) :
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
@@ -134,9 +135,11 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   sib1_dci_aggr_lev{sib1_dci_aggr_lev_}
 {
   // Compute derived SIB1 parameters.
-  sib1_periodicity = sib1_rxtx_periodicity_ == 0
-                         ? SIB1_PERIODICITY
-                         : std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rxtx_periodicity_);
+  sib1_period =
+      sib1_rtx_period_ == sib1_rtx_periodicity::not_set
+          ? SIB1_PERIODICITY
+          : std::max(static_cast<unsigned>(cfg_.ssb_cfg.ssb_period), sib1_rtx_periodicity_to_value(sib1_rtx_period_));
+
   precompute_sib1_n0(scs_common);
 
   // Define a BWP configuration limited by CORESET#0 RBs.
@@ -155,7 +158,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
   // The sib1_period_slots is expressed in unit of slots.
   // NOTE: As sib1_period_slots is expressed in milliseconds or subframes, we need to this these into slots.
-  unsigned sib1_period_slots = sib1_periodicity * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
+  unsigned sib1_period_slots = sib1_period * static_cast<unsigned>(sl_point.nof_slots_per_subframe());
 
   // Helper function that determines from SSB bitmap whether n-th beam is used.
   auto is_nth_ssb_beam_active = [](uint64_t ssb_bitmap, unsigned ssb_index) {

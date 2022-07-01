@@ -35,7 +35,7 @@ public:
              msg.sib1_mcs,
              msg.sib1_rv,
              msg.sib1_dci_aggr_lev,
-             msg.sib1_retx_periodicity,
+             msg.sib1_retx_period,
              msg.scs_common)
   {
   }

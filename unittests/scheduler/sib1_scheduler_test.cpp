@@ -67,8 +67,11 @@ struct test_bench {
   dummy_pdcch_scheduler                    pdcch_sch;
   slot_point                               sl_tx;
 
-  test_bench(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap) :
-    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap)},
+  test_bench(subcarrier_spacing init_bwp_scs,
+             uint8_t            pdcch_config_sib1,
+             uint8_t            ssb_bitmap,
+             ssb_periodicity    ssb_period = ssb_periodicity::ms5) :
+    cfg_msg{make_cell_cfg_req_for_sib_sched(init_bwp_scs, pdcch_config_sib1, ssb_bitmap, ssb_period)},
     cfg{cfg_msg},
     res_grid{cfg},
     sl_tx{to_numerology_value(cfg.dl_cfg_common.init_dl_bwp.generic_params.scs), 0}
@@ -79,8 +82,10 @@ struct test_bench {
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
 
   // Create default configuration and change specific parameters based on input args.
-  sched_cell_configuration_request_message
-  make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs, uint8_t pdcch_config_sib1, uint8_t ssb_bitmap)
+  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(subcarrier_spacing init_bwp_scs,
+                                                                           uint8_t            pdcch_config_sib1,
+                                                                           uint8_t            ssb_bitmap,
+                                                                           ssb_periodicity    ssb_period)
   {
     sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
@@ -96,6 +101,7 @@ struct test_bench {
     }
     msg.pdcch_config_sib1     = pdcch_config_sib1;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
+    msg.ssb_config.ssb_period = static_cast<uint8_t>(ssb_periodicity_to_value(ssb_period));
     return msg;
   }
 
@@ -156,7 +162,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
                             t_bench.cfg_msg.sib1_mcs,
                             t_bench.cfg_msg.sib1_rv,
                             t_bench.cfg_msg.sib1_dci_aggr_lev,
-                            t_bench.cfg_msg.sib1_retx_periodicity,
+                            t_bench.cfg_msg.sib1_retx_period,
                             t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs};
 
   // SIB1 periodicity in slots.
@@ -189,6 +195,71 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
         // Verify the PRBs in the res_grid are set as used.
         t_bench.verify_prbs_allocation();
       }
+    }
+
+    // Update SLOT.
+    t_bench.slot_indication();
+  }
+}
+
+/// \brief Tests if the SIB1 scheduler schedules SIB1s according to the correct retransmission periodicity.
+///
+/// This test evaluates the correct SIB1 retransmission period, which we assume it should be the maximum between the SSB
+/// periodicity and the SIB1 retx periodicity set as a parameter. This is due to the fact that the SIB1 requires the SSB
+/// to be decoded, meaning there is no point in scheduling SIBs more frequently than SSBs.
+/// This test only evaluates the periodicity of SIB1, therefore it uses a standard set of values for the remaining
+/// parameters (e.g., SCS, pdcch_config_sib1, SSB bitmap).
+///
+/// \param[in] sib1_rtx_period period set for the SIB1 retransmissions.
+/// \param[in] ssb_period period set for the SSB.
+void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity ssb_period)
+{
+  // Instantiate the test_bench and the SIB1 scheduler.
+  test_bench     t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, ssb_period};
+  sib1_scheduler sib1_sched{t_bench.cfg,
+                            t_bench.pdcch_sch,
+                            t_bench.cfg_msg.pdcch_config_sib1,
+                            t_bench.cfg_msg.sib1_mcs,
+                            t_bench.cfg_msg.sib1_rv,
+                            t_bench.cfg_msg.sib1_dci_aggr_lev,
+                            sib1_rtx_period,
+                            t_bench.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs};
+
+  // Determine the expected SIB1 retx periodicity.
+  unsigned expected_sib1_period_ms;
+  if (sib1_rtx_period == sib1_rtx_periodicity::not_set) {
+    expected_sib1_period_ms = SIB1_PERIODICITY;
+  } else {
+    expected_sib1_period_ms = sib1_rtx_periodicity_to_value(sib1_rtx_period) > ssb_periodicity_to_value(ssb_period)
+                                  ? sib1_rtx_periodicity_to_value(sib1_rtx_period)
+                                  : ssb_periodicity_to_value(ssb_period);
+  }
+
+  // SIB1 periodicity in slots.
+  unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.sl_tx.nof_slots_per_subframe();
+
+  // Slot (or offset) at which SIB1 PDCCH is allocated, measured as a delay compared to the slot with SSB. Specifically,
+  // 5 is the offset of the SIB1 for the first beam, for searcSpaceZero = 9U, multiplexing pattern 1 (15kHz SCS, FR1);
+  // as per Section 13, TS 38.213.
+  const unsigned sib1_allocation_slot{5};
+
+  // Run the test for 10000 slots.
+  size_t test_length_slots = 10000;
+  for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    // Run SIB1 scheduler.
+    sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+
+    auto& res_slot_grid = t_bench.get_slot_res_grid();
+
+    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
+
+    // With the SSB bitmap set 0b10000000, only the SSB and SIB1 for the 1 beams are used; we perform the check for
+    // this beam.
+    if ((sl_idx % expected_sib1_period_slots) == sib1_allocation_slot) {
+      // Verify that the scheduler results list contain 1 element with the SIB1 information.
+      TESTASSERT_EQ(1, res_slot_grid.result.dl.bc.sibs.size());
+    } else {
+      TESTASSERT(res_slot_grid.result.dl.bc.sibs.empty());
     }
 
     // Update SLOT.
@@ -241,6 +312,18 @@ int main()
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b10101010);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b01010101);
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b11111111);
+
+  // Test the SIB1 scheduler periodicity for different combinations of SIB1 retx perdiod and SSB period values.
+  // This test uses a standard set of values for SCS, searchSpaceSetZero and SSB bitmap.
+  test_sib1_periodicity(sib1_rtx_periodicity::ms5, ssb_periodicity::ms40);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms20);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms10, ssb_periodicity::ms10);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms20, ssb_periodicity::ms80);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms40, ssb_periodicity::ms10);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms40, ssb_periodicity::ms10);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms160, ssb_periodicity::ms80);
+  test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms160);
+  test_sib1_periodicity(sib1_rtx_periodicity::not_set, ssb_periodicity::ms80);
 
   return 0;
 }

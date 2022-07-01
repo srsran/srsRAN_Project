@@ -30,7 +30,7 @@ public:
                  uint8_t                   sib1_mcs_,
                  uint8_t                   sib1_rv_,
                  aggregation_level         sib1_dci_aggr_lev_,
-                 unsigned                  sib1_rxtx_periodicity_,
+                 sib1_rtx_periodicity      sib1_rtx_period_,
                  subcarrier_spacing        scs_common);
 
   /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
@@ -75,7 +75,7 @@ private:
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
-  unsigned sib1_periodicity;
+  unsigned sib1_period;
 
   /// This is a dummy BWP configuration dimensioned based on CORESET#0 RB limits. It's used for CRB-to-PRB conversion.
   bwp_configuration coreset0_bwp_cfg;

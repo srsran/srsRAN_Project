@@ -17,6 +17,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/ran/sib_configuration.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -50,11 +51,11 @@ struct sched_cell_configuration_request_message {
 
   /// [Implementation-defined] SIB1 parameters.
   /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
-  uint8_t           pdcch_config_sib1;
-  unsigned          sib1_retx_periodicity;
-  uint8_t           sib1_mcs;
-  uint8_t           sib1_rv;
-  aggregation_level sib1_dci_aggr_lev;
+  uint8_t              pdcch_config_sib1;
+  sib1_rtx_periodicity sib1_retx_period;
+  uint8_t              sib1_mcs;
+  uint8_t              sib1_rv;
+  aggregation_level    sib1_dci_aggr_lev;
 };
 
 /// \remark See TS 38.331, "PDCCH-Config"
