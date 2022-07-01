@@ -23,7 +23,7 @@ public:
   {
   }
 
-  void handle_pdu(byte_buffer buf) override { upper_dn.on_new_sdu(std::move(buf)); }
+  void handle_pdu(rlc_pdu_data buf) override { upper_dn.on_new_sdu(std::move(buf)); }
 };
 
 } // namespace srsgnb

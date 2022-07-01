@@ -23,7 +23,7 @@ public:
   {
   }
 
-  void handle_pdu(byte_buffer buf) override
+  void handle_pdu(rlc_pdu_data buf) override
   {
     logger.log_info("Rx PDU ({} B)", buf.length());
     upper_dn.on_new_sdu(std::move(buf));

@@ -21,10 +21,12 @@ struct f1ap_ue_create_response {
   bool result;
 };
 
+using f1_pdu_data = byte_buffer_owning_view;
+
 struct f1_rx_pdu {
   du_ue_index_t ue_index;
   lcid_t        lcid;
-  byte_buffer   pdu;
+  f1_pdu_data   pdu;
 };
 
 struct f1ap_initial_ul_rrc_msg {

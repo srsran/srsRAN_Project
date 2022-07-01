@@ -69,7 +69,7 @@ public:
 
     // In TM there is no header, just pass the plain SDU
     rlc_byte_buffer pdu = {};
-    pdu.set_payload(sdu.buf);
+    pdu.set_payload(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     return pdu;
   }

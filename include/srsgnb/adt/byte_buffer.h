@@ -709,10 +709,16 @@ public:
   using const_iterator = byte_buffer_view::const_iterator;
 
   byte_buffer_owning_view() = default;
+  byte_buffer_owning_view(byte_buffer&& buf_) : slice(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
   explicit byte_buffer_owning_view(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
   byte_buffer_owning_view(const byte_buffer& buf_, size_t offset, size_t length) :
     slice(buf_, offset, length), buf(buf_.copy())
   {
+  }
+  byte_buffer_owning_view(const byte_buffer& buf_, byte_buffer_view view) : slice(view), buf(buf_.copy())
+  {
+    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)length(),
+                        "byte_buffer_view is not part of the owned byte_buffer");
   }
 
   void clear()
@@ -738,7 +744,7 @@ public:
   template <typename Range>
   bool operator==(const Range& r) const
   {
-    return slice == r.slice;
+    return std::equal(begin(), end(), r.begin(), r.end());
   }
 
   template <typename Range>

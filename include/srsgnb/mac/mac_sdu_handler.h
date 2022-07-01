@@ -9,6 +9,9 @@
 
 namespace srsgnb {
 
+/// SDU byte buffer type that the MAC forwards to upper layers.
+using mac_sdu_data = byte_buffer_owning_view;
+
 /// This interface notifies to upper layers the reception of new SDUs over a logical channel.
 class mac_sdu_rx_notifier
 {
@@ -16,7 +19,7 @@ public:
   virtual ~mac_sdu_rx_notifier() = default;
 
   /// This callback is invoked on each received SDU.
-  virtual void on_new_sdu(byte_buffer sdu) = 0;
+  virtual void on_new_sdu(mac_sdu_data sdu) = 0;
 };
 
 /// This interface represents the entry point of a logical channel in the MAC layer.

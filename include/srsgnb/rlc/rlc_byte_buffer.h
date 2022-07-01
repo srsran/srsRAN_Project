@@ -116,6 +116,8 @@ public:
 
   void set_payload(const byte_buffer& buf) { payload = byte_buffer_owning_view{buf}; }
 
+  void set_payload(byte_buffer_owning_view buf) { payload = std::move(buf); }
+
   void set_payload(const byte_buffer& buf, size_t start, size_t sz)
   {
     payload = byte_buffer_owning_view{buf, start, sz};
