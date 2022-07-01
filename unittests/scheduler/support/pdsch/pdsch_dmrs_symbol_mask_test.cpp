@@ -49,16 +49,16 @@ static void pdsch_dmrs_symbol_mask_mapping_type_A_single_test()
             config.duration                          = duration;
             config.lte_crs_match_around              = lte_crs_match_around;
             config.ue_capable_additional_dmrs_dl_alt = ue_capable_additional_dmrs_dl_alt;
-            pdsch_dmrs_symbol_mask mask              = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(config);
+            dmrs_symbol_mask mask                    = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(config);
 
             // Calculate expected mask.
-            dmrs_typeA_position    l0 = typeA_pos;
-            unsigned               l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
+            dmrs_typeA_position l0 = typeA_pos;
+            unsigned            l1 = (config.lte_crs_match_around && config.ue_capable_additional_dmrs_dl_alt &&
                            config.additional_position == srsgnb::dmrs_additional_positions::pos1 &&
                            l0 == srsgnb::dmrs_typeA_position::pos3)
-                                            ? 12
-                                            : 11;
-            pdsch_dmrs_symbol_mask expected(14);
+                                         ? 12
+                                         : 11;
+            dmrs_symbol_mask    expected(14);
             TESTASSERT(pdsch_dmrs_symbol_mask_mapping_type_A_single_table.count({duration, additional_position}),
                        "Missing case for duration={} and additional_position={}.",
                        duration,

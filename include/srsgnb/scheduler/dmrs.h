@@ -56,10 +56,10 @@ struct dmrs_downlink_config {
   optional<ptrs_downlink_config> phase_tracking_rs;
 };
 
-/// \brief Data type used to represent a DMRS for PDSCH symbol mask.
+/// \brief Data type used to represent a DMRS symbol mask for PDSCH and PUSCH transmissions.
 ///
 /// Each bit set in the bitset represents a symbol within the slot. The first bit corresponds to the first symbol.
-using pdsch_dmrs_symbol_mask = bounded_bitset<14>;
+using dmrs_symbol_mask = bounded_bitset<14>;
 
 } // namespace srsgnb
 

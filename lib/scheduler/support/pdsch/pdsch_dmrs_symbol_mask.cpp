@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-pdsch_dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
+dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config)
 {
   srsran_assert(config.typeA_pos == dmrs_typeA_position::pos2 || config.typeA_pos == dmrs_typeA_position::pos3,
@@ -26,7 +26,7 @@ pdsch_dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
           ? 12
           : 11;
 
-  pdsch_dmrs_symbol_mask mask(14);
+  dmrs_symbol_mask mask(14);
   mask.set(l0);
 
   if (config.duration < 8 || config.additional_position == dmrs_additional_positions::pos0) {

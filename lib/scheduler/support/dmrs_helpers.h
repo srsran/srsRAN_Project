@@ -17,6 +17,23 @@
 
 namespace srsgnb {
 
+/// Calculates the number of RE used for DMRS per RB in PDSCH and PUSCH transmissions.
+inline unsigned calculate_nof_dmrs_per_rb(const dmrs_information& dmrs)
+{
+  // Calculate number of RE for DMRS per RB, symbol and CDM group.
+  unsigned nof_dmrs_re = (dmrs.config_type == dmrs_config_type::type1) ? 6 : 4;
+
+  // Calculate the maximum number of CDM groups without data and make sure the number does not exceed the maximum.
+  unsigned max_nof_cdm_groups_without_data = (dmrs.config_type == dmrs_config_type::type1) ? 2 : 3;
+  srsran_assert(dmrs.num_dmrs_cdm_grps_no_data >= 1 &&
+                    dmrs.num_dmrs_cdm_grps_no_data <= max_nof_cdm_groups_without_data,
+                "Invalid number of CDM groups without data {}.",
+                dmrs.num_dmrs_cdm_grps_no_data);
+
+  // Determines the number of RE for DMRS per RB.
+  return nof_dmrs_re * dmrs.num_dmrs_cdm_grps_no_data * dmrs.dmrs_symb_pos.count();
+}
+
 /// Helper factory of a default DM-RS Information object for DCI f1_0 or for when higher layer configuration parameters
 /// are not yet available.
 /// TODO: generalize to other cases (e.g. mapping type B).

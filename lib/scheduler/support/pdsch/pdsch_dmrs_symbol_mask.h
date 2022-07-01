@@ -41,7 +41,7 @@ struct pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration {
 /// It is implemented as per TS38.211 Table 5.1.2.1.1-2.
 ///
 /// Any configuration that is not covered in the table triggers an assertion.
-pdsch_dmrs_symbol_mask pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
+dmrs_symbol_mask pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config);
 
 } // namespace srsgnb
