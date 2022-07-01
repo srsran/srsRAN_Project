@@ -23,7 +23,12 @@ ssb_assembler::ssb_assembler(pci_t pci_, const ssb_configuration& ssb_cfg_, unsi
 {
 }
 
-void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
+void ssb_assembler::assemble_ssb(dl_ssb_pdu&            ssb_pdu,
+                                 const ssb_information& ssb_info,
+                                 uint8_t                pdcch_config_sib1,
+                                 dmrs_typeA_position    dmrs_typeA_pos,
+                                 bool                   cell_barred,
+                                 bool                   intra_f_resel)
 {
   ssb_pdu.pci                   = pci;
   ssb_pdu.beta_pss_profile_nr   = ssb_beta_pss::dB_0;
@@ -36,8 +41,8 @@ void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb
 
   /// Fields required for PBCH payload/MIB generation.
   // TODO: Understand where these parameters should be taken (They come from RRC MIB msg)
-  ssb_pdu.mib_data.cell_barred            = false;
-  ssb_pdu.mib_data.intra_freq_reselection = false;
-  ssb_pdu.mib_data.dmrs_typeA_position    = 0;
-  ssb_pdu.mib_data.pdcch_config_sib1      = 0;
+  ssb_pdu.mib_data.cell_barred            = cell_barred;
+  ssb_pdu.mib_data.intra_freq_reselection = intra_f_resel;
+  ssb_pdu.mib_data.dmrs_typeA_position    = dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
+  ssb_pdu.mib_data.pdcch_config_sib1      = pdcch_config_sib1;
 }

@@ -37,6 +37,12 @@ struct du_cell_config {
   /// SearcSpace#0 index of Table 13-{11, ..., 15}, TS 38.213.
   unsigned searchspace0_idx;
 
+  /// Parameters used to pack MIB.
+  /// "cellBarred" as per MIB, TS 38.311. true = barred; false = notBarred.
+  bool cell_barred;
+  /// "intraFreqReselection" as per MIB, TS 38.311. true = allowed; false = notAllowed.
+  bool intra_freq_resel;
+
   /// Cell-specific DL and UL configuration used by common searchSpaces.
   dl_config_common dl_cfg_common;
   ul_config_common ul_cfg_common;

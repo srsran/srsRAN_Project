@@ -13,6 +13,7 @@
 
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
+#include "srsgnb/scheduler/dmrs.h"
 #include <cstddef>
 
 namespace srsgnb {
@@ -31,9 +32,17 @@ public:
   /// This function fills the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB);(ii)
   /// SSB-specific dependent parameters; (iii) SSB scheduling results.
   /// \param[out] ssb_pdu SSB message to be sent to PHY.
-  /// \param[in]  cell_cfg MAC's Cell configuration.
   /// \param[in]  ssb_info SSB scheduling results.
-  void assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info);
+  /// \param[in]  pdcch_config_sib1 parameter PDCCH-ConfigSIB1 as per [MIB, TS 38.331] used to pack the MIB.
+  /// \param[in]  dmrs_typeA_pos parameter dmrs-TypeA-Position as per [MIB, TS 38.331] used to pack the MIB.
+  /// \param[in]  cell_barred parameter cellBarred as per [MIB, TS 38.331] used to pack the MIB.
+  /// \param[in]  intra_f_resel parameter intraFreqReselection as per [MIB, TS 38.331] used to pack the MIB.
+  void assemble_ssb(dl_ssb_pdu&            ssb_pdu,
+                    const ssb_information& ssb_info,
+                    uint8_t                pdcch_config_sib1,
+                    dmrs_typeA_position    dmrs_typeA_pos,
+                    bool                   cell_barred,
+                    bool                   intra_f_resel);
 
 private:
   /// Cell PCI.

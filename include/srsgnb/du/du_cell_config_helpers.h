@@ -185,6 +185,8 @@ inline du_cell_config make_default_du_cell_config()
   cfg.scs_common       = subcarrier_spacing::kHz15;
   cfg.ssb_cfg          = make_default_ssb_config();
   cfg.dmrs_typeA_pos   = dmrs_typeA_position::pos2;
+  cfg.cell_barred      = false;
+  cfg.intra_freq_resel = false;
   return cfg;
 }
 

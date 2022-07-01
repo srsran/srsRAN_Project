@@ -48,10 +48,12 @@ struct sched_cell_configuration_request_message {
   carrier_configuration ul_carrier;
   ssb_configuration     ssb_config;
   dmrs_typeA_position   dmrs_typeA_pos;
+  /// This corresponds to controlResourceSetZero as per PDCCH-ConfigSIB1, TS 38.331.
+  uint8_t coreset0;
+  /// This corresponds to searchSpaceZero as per PDCCH-ConfigSIB1, TS 38.331.
+  uint8_t searchspace0;
 
   /// [Implementation-defined] SIB1 parameters.
-  /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
-  uint8_t              pdcch_config_sib1;
   sib1_rtx_periodicity sib1_retx_period;
   uint8_t              sib1_mcs;
   uint8_t              sib1_rv;

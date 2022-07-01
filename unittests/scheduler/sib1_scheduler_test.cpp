@@ -99,7 +99,8 @@ struct test_bench {
       msg.dl_carrier.carrier_bw_mhz = 20;
       msg.dl_carrier.nof_ant        = 1;
     }
-    msg.pdcch_config_sib1     = pdcch_config_sib1;
+    msg.coreset0              = (pdcch_config_sib1 >> 4U) & 0b00001111;
+    msg.searchspace0          = pdcch_config_sib1 & 0b00001111;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period = ssb_period;
     return msg;
@@ -158,7 +159,7 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
   test_bench     t_bench{scs_common, pdcch_config_sib1, ssb_beam_bitmap};
   sib1_scheduler sib1_sched{t_bench.cfg,
                             t_bench.pdcch_sch,
-                            t_bench.cfg_msg.pdcch_config_sib1,
+                            pdcch_config_sib1,
                             t_bench.cfg_msg.sib1_mcs,
                             t_bench.cfg_msg.sib1_rv,
                             t_bench.cfg_msg.sib1_dci_aggr_lev,

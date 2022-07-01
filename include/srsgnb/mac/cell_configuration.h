@@ -43,8 +43,11 @@ struct mac_cell_creation_request {
   /// Embedded scheduler cell configuration request.
   sched_cell_configuration_request_message sched_req;
 
+  bool cell_barred;
+  bool intra_freq_resel;
+
   /// [Implementation-defined] SIB1 parameters.
-  byte_buffer       sib1_payload;
+  byte_buffer sib1_payload;
 
   // TODO: Fill remaining fields
 };

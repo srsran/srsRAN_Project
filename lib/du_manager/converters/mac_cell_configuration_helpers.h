@@ -67,7 +67,8 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
   sched_req.nof_ant_ports = 1;
 
   /// SIB1 parameters.
-  sched_req.pdcch_config_sib1     = (du_cfg.coreset0_idx << 4U) + du_cfg.searchspace0_idx;
+  sched_req.coreset0              = du_cfg.searchspace0_idx;
+  sched_req.searchspace0          = du_cfg.searchspace0_idx;
   sched_req.sib1_mcs              = 5;
   sched_req.sib1_rv               = 0;
   sched_req.sib1_dci_aggr_lev     = aggregation_level::n4;
@@ -80,12 +81,14 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
 inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index, const du_cell_config& du_cfg)
 {
   mac_cell_creation_request mac_cfg{};
-  mac_cfg.cell_index = cell_index;
-  mac_cfg.pci        = du_cfg.pci;
-  mac_cfg.scs_common = du_cfg.scs_common;
-  mac_cfg.ssb_cfg    = du_cfg.ssb_cfg;
-  mac_cfg.dl_carrier = du_cfg.dl_carrier;
-  mac_cfg.ul_carrier = du_cfg.ul_carrier;
+  mac_cfg.cell_index       = cell_index;
+  mac_cfg.pci              = du_cfg.pci;
+  mac_cfg.scs_common       = du_cfg.scs_common;
+  mac_cfg.ssb_cfg          = du_cfg.ssb_cfg;
+  mac_cfg.dl_carrier       = du_cfg.dl_carrier;
+  mac_cfg.ul_carrier       = du_cfg.ul_carrier;
+  mac_cfg.cell_barred      = du_cfg.cell_barred;
+  mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
   mac_cfg.sib1_payload.append(srs_du::make_asn1_rrc_cell_sib1_buffer(du_cfg));
   mac_cfg.sched_req = make_sched_cell_config_req(cell_index, du_cfg);
   return mac_cfg;

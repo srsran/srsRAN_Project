@@ -31,7 +31,7 @@ public:
     ra_sch(cell_cfg, pdcch_sch),
     sib1_sch(cell_cfg,
              pdcch_sch,
-             msg.pdcch_config_sib1,
+             (msg.coreset0 << 4) + msg.searchspace0,
              msg.sib1_mcs,
              msg.sib1_rv,
              msg.sib1_dci_aggr_lev,
