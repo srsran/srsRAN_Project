@@ -26,13 +26,13 @@ namespace fapi_adaptor {
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
-  phy_fapi_adaptor_impl(upper_phy_timing_notifier& phy_timing_notifier,
-                        unsigned                   sector_id,
-                        downlink_processor_pool&   dl_processor_pool,
-                        resource_grid_pool&        rg_pool);
+  phy_fapi_adaptor_impl(unsigned sector_id, downlink_processor_pool& dl_processor_pool, resource_grid_pool& rg_pool);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_upper_phy_timing_notifier() override;
+
+  // See interface for documentation.
+  fapi::slot_message_gateway& get_slot_message_gateway() override;
 
   // See interface for documentation.
   void set_slot_message_notifier(fapi::slot_message_notifier& fapi_slot_notifier) override;

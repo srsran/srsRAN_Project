@@ -32,3 +32,8 @@ void mac_fapi_adaptor_impl::set_mac_cell_slot_handler(mac_cell_slot_handler& mac
 {
   slot_dispatcher.set_mac_cell_slot_handler(mac_slot_handler);
 }
+
+mac_cell_result_notifier& mac_fapi_adaptor_impl::get_cell_result_notifier()
+{
+  return mac_translator;
+}

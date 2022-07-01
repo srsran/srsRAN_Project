@@ -15,6 +15,7 @@
 
 namespace srsgnb {
 
+class mac_cell_result_notifier;
 class mac_cell_slot_handler;
 
 namespace fapi_adaptor {
@@ -31,6 +32,9 @@ public:
 
   /// \brief Returns the adaptor's slot_message_notifier.
   virtual fapi::slot_message_notifier& get_slot_notifier() = 0;
+
+  /// \brief Returns the adaptor's MAC cell result notifier.
+  virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;
 
   /// \brief Configures the adaptor's MAC cell slot handler to the given one.
   ///

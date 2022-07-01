@@ -22,8 +22,7 @@ class resource_grid_pool;
 namespace fapi_adaptor {
 
 struct phy_fapi_adaptor_factory_config {
-  unsigned                                          sector_id;
-  std::reference_wrapper<upper_phy_timing_notifier> phy_timing_notifier;
+  unsigned sector_id;
 };
 
 /// Factory that creates phy_fapi adaptors.

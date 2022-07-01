@@ -32,6 +32,9 @@ public:
   fapi::slot_message_notifier& get_slot_notifier() override;
 
   // See interface for documentation.
+  mac_cell_result_notifier& get_cell_result_notifier() override;
+
+  // See interface for documentation.
   void set_mac_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override;
 
 private:

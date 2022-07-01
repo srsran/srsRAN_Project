@@ -14,10 +14,9 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(upper_phy_timing_notifier& phy_timing_notifier,
-                                             unsigned int               sector_id,
-                                             downlink_processor_pool&   dl_processor_pool,
-                                             resource_grid_pool&        rg_pool) :
+phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int             sector_id,
+                                             downlink_processor_pool& dl_processor_pool,
+                                             resource_grid_pool&      rg_pool) :
   fapi_translator(sector_id, dl_processor_pool, rg_pool), slot_dispatcher(phy_translator, fapi_translator)
 {
 }
@@ -30,4 +29,9 @@ upper_phy_timing_notifier& phy_fapi_adaptor_impl::get_upper_phy_timing_notifier(
 void phy_fapi_adaptor_impl::set_slot_message_notifier(slot_message_notifier& fapi_slot_notifier)
 {
   phy_translator.set_slot_message_notifier(fapi_slot_notifier);
+}
+
+fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()
+{
+  return fapi_translator;
 }

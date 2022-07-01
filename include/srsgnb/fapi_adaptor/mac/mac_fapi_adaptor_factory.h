@@ -20,6 +20,11 @@ namespace srsgnb {
 namespace fapi_adaptor {
 
 struct mac_fapi_adaptor_factory_config {
+  mac_fapi_adaptor_factory_config(unsigned sector_id, subcarrier_spacing scs, fapi::slot_message_gateway& gateway) :
+    sector_id(sector_id), gateway(gateway), scs(scs)
+  {
+  }
+
   unsigned                                           sector_id;
   std::reference_wrapper<fapi::slot_message_gateway> gateway;
   subcarrier_spacing                                 scs;
