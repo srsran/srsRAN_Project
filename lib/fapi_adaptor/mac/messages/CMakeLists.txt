@@ -6,5 +6,9 @@
 # the distribution.
 #
 
-add_library(srsgnb_mac_fapi_adaptors STATIC ssb.cpp)
+set(SOURCES
+        pdcch.cpp
+        ssb.cpp)
+
+add_library(srsgnb_mac_fapi_adaptors STATIC ${SOURCES})
 target_link_libraries(srsgnb_mac_fapi_adaptors srsvec)

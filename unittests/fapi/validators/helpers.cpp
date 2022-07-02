@@ -175,8 +175,8 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   std::uniform_int_distribution<int>      power_dist(-8, 8);
   std::uniform_int_distribution<unsigned> custom_dist(2, 3);
 
-  // :TODO: generate  better frequency domain resource bitmap.
-  static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
+  freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
+                                      1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
 
   // Always work with the biggest numerology.
   builder.set_bwp_parameters(bwp_size_dist(gen),
@@ -186,13 +186,13 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
 
   builder.set_coreset_parameters(start_symbol_index_dist(gen),
                                  duration_symbol_dist(gen),
-                                 {freq_domain},
+                                 freq_domain,
                                  static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
                                  custom_dist(gen),
                                  custom_dist(gen),
                                  static_cast<pdcch_coreset_type>(binary_dist(gen)),
                                  shift_index_dist(gen),
-                                 static_cast<precoder_granularity_type>(binary_dist(gen)));
+                                 static_cast<coreset_configuration::precoder_granularity_type>(binary_dist(gen)));
 
   // Add DCI.
   auto builder_dci = builder.add_dl_dci();
@@ -207,9 +207,9 @@ dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
   builder_dci.set_tx_power_info_parameter(profile_nr);
 
   // Payload.
-  static_vector<uint8_t, 128> payload(32, 1);
+  dci_payload payload;
 
-  builder_dci.set_payload(2, {payload});
+  builder_dci.set_payload(payload);
 
   optional<float> profile_data;
   optional<float> profile_dmrs;

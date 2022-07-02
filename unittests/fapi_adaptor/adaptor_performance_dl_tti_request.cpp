@@ -116,8 +116,8 @@ static void pdcch_conversion_benchmark()
 
     dl_pdcch_pdu_builder builder_pdcch = builder.add_pdcch_pdu(10);
 
-    // :TODO: generate  better frequency domain resource bitmap.
-    static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
+    freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
+                                        1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
 
     // Always work with the biggest numerology.
     builder_pdcch.set_bwp_parameters(bwp_size_dist(gen),
@@ -125,15 +125,16 @@ static void pdcch_conversion_benchmark()
                                      subcarrier_spacing::kHz240,
                                      static_cast<cyclic_prefix_type>(binary_dist(gen)));
 
-    builder_pdcch.set_coreset_parameters(start_symbol_index_dist(gen),
-                                         duration_symbol_dist(gen),
-                                         {freq_domain},
-                                         static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
-                                         custom_dist(gen),
-                                         custom_dist(gen),
-                                         static_cast<pdcch_coreset_type>(binary_dist(gen)),
-                                         shift_index_dist(gen),
-                                         static_cast<precoder_granularity_type>(binary_dist(gen)));
+    builder_pdcch.set_coreset_parameters(
+        start_symbol_index_dist(gen),
+        duration_symbol_dist(gen),
+        freq_domain,
+        static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
+        custom_dist(gen),
+        custom_dist(gen),
+        static_cast<pdcch_coreset_type>(binary_dist(gen)),
+        shift_index_dist(gen),
+        static_cast<coreset_configuration::precoder_granularity_type>(binary_dist(gen)));
 
     // Add DCI.
     auto builder_dci = builder_pdcch.add_dl_dci();
@@ -145,12 +146,8 @@ static void pdcch_conversion_benchmark()
     builder_dci.set_tx_power_info_parameter(profile_nr);
 
     // Payload.
-    static_vector<uint8_t, 128> payload(128, 1);
-    static_vector<uint8_t, 128> packed_payload;
-    packed_payload.resize(std::ceil(payload.size() / 8.F));
-    srsvec::bit_pack({packed_payload}, {payload});
-
-    builder_dci.set_payload(12, {packed_payload});
+    dci_payload payload;
+    builder_dci.set_payload(payload);
 
     optional<float> profile_data;
     optional<float> profile_dmrs;

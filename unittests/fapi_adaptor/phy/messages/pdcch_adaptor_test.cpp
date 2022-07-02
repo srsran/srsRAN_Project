@@ -45,8 +45,8 @@ static void pdcch_conversion_test()
       for (auto reg_bundle : {2U, 3U, 6U}) {
         for (auto interleaver_size : {2U, 3U, 6U}) {
           for (auto type : {pdcch_coreset_type::pbch_or_sib1, pdcch_coreset_type::other}) {
-            for (auto precoder :
-                 {precoder_granularity_type::same_as_reg_bundle, precoder_granularity_type::all_contiguous_rbs}) {
+            for (auto precoder : {coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
+                                  coreset_configuration::precoder_granularity_type::all_contiguous_rbs}) {
               for (int power_nr = -9; power_nr != -7; ++power_nr) {
                 for (int power = -33; power != 3; power += 3) {
                   unsigned sfn                = sfn_dist(gen);
@@ -66,13 +66,15 @@ static void pdcch_conversion_test()
                   dl_pdcch_pdu         pdu;
                   dl_pdcch_pdu_builder builder(pdu);
 
-                  static_vector<uint8_t, 6> freq_domain = {3, 2, 1, 4, 5, 1};
+                  freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0,
+                                                      0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0,
+                                                      0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
 
                   // Always work with the biggest numerology.
                   builder.set_bwp_parameters(bwp_size, bwp_start, subcarrier_spacing::kHz240, cyclic_p);
                   builder.set_coreset_parameters(start_symbol_index,
                                                  duration_symbol,
-                                                 {freq_domain},
+                                                 freq_domain,
                                                  cce_reg_mapping,
                                                  reg_bundle,
                                                  interleaver_size,
@@ -95,12 +97,8 @@ static void pdcch_conversion_test()
                   builder_dci.set_tx_power_info_parameter(profile_nr);
 
                   // Payload.
-                  static_vector<uint8_t, 128> payload = {1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1};
-                  static_vector<uint8_t, 128> packed_payload;
-                  packed_payload.resize(std::ceil(payload.size() / 8.F));
-                  srsvec::bit_pack({packed_payload}, {payload});
-
-                  builder_dci.set_payload(16, {packed_payload});
+                  dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0};
+                  builder_dci.set_payload(payload);
 
                   optional<float> profile_data;
                   if (power != -33) {
@@ -163,14 +161,13 @@ static void pdcch_conversion_test()
                                        proc_pdu.dci_list[0].data_power_offset_dB) < 0.001F);
 
                   // Test vectors.
-                  TESTASSERT(payload == proc_pdu.dci_list[0].payload);
+                  for (unsigned i = 0, e = payload.size(); i != e; ++i) {
+                    TESTASSERT_EQ(payload.test(i), bool(proc_pdu.dci_list[0].payload[i]));
+                  }
 
                   // Test frequency domain resources.
                   for (unsigned i = 0, e = 45; i != e; ++i) {
-                    unsigned byte = i / 8;
-                    unsigned pos  = i % 8;
-                    TESTASSERT_EQ((static_cast<unsigned>(freq_domain[byte] >> pos) & 1U) == 1U,
-                                  proc_pdu.coreset.frequency_resources.test(i));
+                    TESTASSERT_EQ(freq_domain.test(i), bool(proc_pdu.coreset.frequency_resources.test(i)));
                   }
                 }
               }

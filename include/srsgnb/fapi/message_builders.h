@@ -15,6 +15,8 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/fapi/messages.h"
+#include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/pdcch/dci_packing.h"
 #include "srsgnb/support/math_utils.h"
 #include <algorithm>
 
@@ -201,11 +203,15 @@ public:
 
   /// Sets the payload of the DL DCI PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
-  dl_dci_pdu_builder& set_payload(unsigned size_in_bits, span<const uint8_t> payload)
+  dl_dci_pdu_builder& set_payload(const dci_payload& payload)
   {
-    pdu.payload_size_bits = size_in_bits;
-    // :TODO: Confirm that the bit order is: bit0-bit7 are mapped to first byte of MSB - LSB.
-    pdu.payload.assign(payload.begin(), payload.end());
+    // Set the payload size initializing it with zeros.
+    pdu.payload.resize(std::ceil(payload.size() / 8.F), 0U);
+
+    // NOTE:bit order is bit0-bit7 are mapped to first byte of MSB - LSB.
+    for (unsigned i = 0, e = payload.size(); i != e; ++i) {
+      pdu.payload[i / 8] |= uint8_t(payload.test(i) ? 1U : 0U) << i % 8;
+    }
 
     return *this;
   }
@@ -274,7 +280,7 @@ private:
 class dl_pdcch_pdu_builder
 {
 public:
-  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) {}
+  explicit dl_pdcch_pdu_builder(dl_pdcch_pdu& pdu) : pdu(pdu) { pdu.freq_domain_resource.fill(0); }
 
   /// Sets the BWP parameters for the fields of the PDCCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
@@ -293,15 +299,15 @@ public:
 
   /// Sets the coreset parameters for the fields of the PDCCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table PDCCH PDU.
-  dl_pdcch_pdu_builder& set_coreset_parameters(uint8_t                   start_symbol_index,
-                                               uint8_t                   duration_symbols,
-                                               span<const uint8_t>       freq_domain_resource,
-                                               cce_to_reg_mapping_type   cce_req_mapping_type,
-                                               uint8_t                   reg_bundle_size,
-                                               uint8_t                   interleaver_size,
-                                               pdcch_coreset_type        coreset_type,
-                                               uint16_t                  shift_index,
-                                               precoder_granularity_type precoder_granularity)
+  dl_pdcch_pdu_builder& set_coreset_parameters(uint8_t                                          start_symbol_index,
+                                               uint8_t                                          duration_symbols,
+                                               const freq_resource_bitmap&                      freq_domain_resource,
+                                               cce_to_reg_mapping_type                          cce_req_mapping_type,
+                                               uint8_t                                          reg_bundle_size,
+                                               uint8_t                                          interleaver_size,
+                                               pdcch_coreset_type                               coreset_type,
+                                               uint16_t                                         shift_index,
+                                               coreset_configuration::precoder_granularity_type precoder_granularity)
   {
     pdu.start_symbol_index   = start_symbol_index;
     pdu.duration_symbols     = duration_symbols;
@@ -312,10 +318,11 @@ public:
     pdu.shift_index          = shift_index;
     pdu.precoder_granularity = precoder_granularity;
 
-    // :TODO: confirm the format of the freq_domain_resource. Here it's expecting the LSB of the first Byte of the array
-    // to contain the first bit of the frequency domain resources, and so on.
-    srsran_assert(freq_domain_resource.size() == pdu.freq_domain_resource.size(), "Unexpected size mismatch");
-    std::copy(freq_domain_resource.begin(), freq_domain_resource.end(), pdu.freq_domain_resource.begin());
+    srsran_assert(pdu.freq_domain_resource.size() == std::ceil(freq_domain_resource.size() / 8.F),
+                  "Invalid size of frequency domain resource bitmap");
+    for (unsigned i = 0, e = 45, j = e - 1; i != e; ++i, --j) {
+      pdu.freq_domain_resource[i / 8] |= uint8_t(freq_domain_resource.test(j) ? 1U : 0U) << i % 8;
+    }
 
     return *this;
   }

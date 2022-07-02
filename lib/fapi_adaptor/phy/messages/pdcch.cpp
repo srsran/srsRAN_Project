@@ -42,8 +42,10 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
     // Unpack the payload.
     // :TODO: Verify in the future that the payload should be unpacked.
     dci.payload.resize(fapi_dci.payload.size() * 8);
-    srsvec::bit_unpack({dci.payload}, {fapi_dci.payload});
-
+    for (unsigned i = 0, e = fapi_dci.payload.size() * 8; i != e; ++i) {
+      dci.payload[i] = ((fapi_dci.payload[i / 8] >> i % 8) & 1U);
+    }
+    
     // :TODO: Fill this in the future.
     dci.ports = {0};
   }
@@ -90,15 +92,10 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
   // According to FAPI FreqDomainResource[0] designates LSByte of RRC parameter frequencyDomainResources, and the LSBit
   // of FreqDomainResource[0] carries frequencyDomainResources[0].
   coreset.frequency_resources.reset();
-  coreset.frequency_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
-  for (unsigned freq_res_index = 0, e = pdcch_constants::MAX_NOF_FREQ_RESOURCES; freq_res_index != e;
-       ++freq_res_index) {
-    unsigned byte = freq_res_index / 8;
-    unsigned pos  = freq_res_index % 8;
-
-    if ((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) {
-      coreset.frequency_resources.set(freq_res_index, ((fapi_pdu.freq_domain_resource[byte] >> pos) & 1U) == 1U);
-    }
+  for (unsigned freq_res_index = 0, e = pdcch_constants::MAX_NOF_FREQ_RESOURCES, j = e - 1; freq_res_index != e;
+       ++freq_res_index, --j) {
+    bool value = static_cast<bool>((fapi_pdu.freq_domain_resource[j / 8] >> j % 8) & 1U);
+    coreset.frequency_resources.push_back(value);
   }
 }
 

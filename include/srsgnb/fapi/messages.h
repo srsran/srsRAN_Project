@@ -13,6 +13,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -105,7 +106,7 @@ enum class cyclic_prefix_type : uint8_t { normal, extended };
 /// Downlink DCI PDU configuration.
 struct dl_dci_pdu {
   /// Maximum number of bytes supported by the DCI payload.
-  static constexpr unsigned MAX_DCI_PAYLOAD_BYTES = 128;
+  static constexpr unsigned MAX_DCI_PAYLOAD_BYTES = 16;
 
   rnti_t   rnti;
   uint16_t nid_pdcch_data;
@@ -115,33 +116,31 @@ struct dl_dci_pdu {
   //: TODO: beamforming info
   uint8_t                                       beta_pdcch_1_0;
   int8_t                                        power_control_offset_ss_profile_nr;
-  uint16_t                                      payload_size_bits;
   static_vector<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
 };
 
 /// CORESET CCE to REG mapping type.
 enum class cce_to_reg_mapping_type : uint8_t { non_interleaved, interleaved };
 enum class pdcch_coreset_type : uint8_t { pbch_or_sib1, other };
-enum class precoder_granularity_type : uint8_t { same_as_reg_bundle, all_contiguous_rbs };
 
 /// Downlink PDCCH PDU information.
 struct dl_pdcch_pdu {
-  uint16_t                                    coreset_bwp_size;
-  uint16_t                                    coreset_bwp_start;
-  subcarrier_spacing                          scs;
-  cyclic_prefix_type                          cyclic_prefix;
-  uint8_t                                     start_symbol_index;
-  uint8_t                                     duration_symbols;
-  std::array<uint8_t, 6>                      freq_domain_resource;
-  cce_to_reg_mapping_type                     cce_reg_mapping_type;
-  uint8_t                                     reg_bundle_size;
-  uint8_t                                     interleaver_size;
-  pdcch_coreset_type                          coreset_type;
-  uint16_t                                    shift_index;
-  precoder_granularity_type                   precoder_granularity;
-  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT> dl_dci;
-  dl_pdcch_pdu_maintenance_v3                 maintenance_v3;
-  dl_pdcch_pdu_parameters_v4                  parameters_v4;
+  uint16_t                                         coreset_bwp_size;
+  uint16_t                                         coreset_bwp_start;
+  subcarrier_spacing                               scs;
+  cyclic_prefix_type                               cyclic_prefix;
+  uint8_t                                          start_symbol_index;
+  uint8_t                                          duration_symbols;
+  std::array<uint8_t, 6>                           freq_domain_resource;
+  cce_to_reg_mapping_type                          cce_reg_mapping_type;
+  uint8_t                                          reg_bundle_size;
+  uint8_t                                          interleaver_size;
+  pdcch_coreset_type                               coreset_type;
+  uint16_t                                         shift_index;
+  coreset_configuration::precoder_granularity_type precoder_granularity;
+  static_vector<dl_dci_pdu, MAX_DCI_PER_SLOT>      dl_dci;
+  dl_pdcch_pdu_maintenance_v3                      maintenance_v3;
+  dl_pdcch_pdu_parameters_v4                       parameters_v4;
 };
 
 enum class pdsch_trans_type : uint8_t {

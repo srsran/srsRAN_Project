@@ -37,15 +37,18 @@ static void test_coreset_params()
   dl_pdcch_pdu         pdu;
   dl_pdcch_pdu_builder builder(pdu);
 
-  unsigned                  start_symb_id    = 7;
-  unsigned                  symb_duration    = 2;
-  unsigned                  reg_size         = 3;
-  unsigned                  interleaver_size = 3;
-  unsigned                  shift_index      = 100;
-  cce_to_reg_mapping_type   mapping_type     = cce_to_reg_mapping_type::interleaved;
-  pdcch_coreset_type        coreset_type     = pdcch_coreset_type::pbch_or_sib1;
-  precoder_granularity_type granularity      = precoder_granularity_type::same_as_reg_bundle;
-  std::array<uint8_t, 6>    freq_domain      = {1, 1, 1, 0, 0, 0};
+  unsigned                                         start_symb_id    = 7;
+  unsigned                                         symb_duration    = 2;
+  unsigned                                         reg_size         = 3;
+  unsigned                                         interleaver_size = 3;
+  unsigned                                         shift_index      = 100;
+  cce_to_reg_mapping_type                          mapping_type     = cce_to_reg_mapping_type::interleaved;
+  pdcch_coreset_type                               coreset_type     = pdcch_coreset_type::pbch_or_sib1;
+  coreset_configuration::precoder_granularity_type granularity =
+      coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
+
+  freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
+                                      1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
 
   builder.set_coreset_parameters(start_symb_id,
                                  symb_duration,
@@ -59,13 +62,16 @@ static void test_coreset_params()
 
   TESTASSERT_EQ(start_symb_id, pdu.start_symbol_index);
   TESTASSERT_EQ(symb_duration, pdu.duration_symbols);
-  TESTASSERT(freq_domain == pdu.freq_domain_resource);
   TESTASSERT_EQ(mapping_type, pdu.cce_reg_mapping_type);
   TESTASSERT_EQ(reg_size, pdu.reg_bundle_size);
   TESTASSERT_EQ(interleaver_size, pdu.interleaver_size);
   TESTASSERT_EQ(coreset_type, pdu.coreset_type);
   TESTASSERT_EQ(shift_index, pdu.shift_index);
   TESTASSERT_EQ(granularity, pdu.precoder_granularity);
+
+  for (unsigned i = 0, e = freq_domain.size(), j = e - 1; i != e; ++i, --j) {
+    TESTASSERT_EQ(freq_domain.test(i), bool((pdu.freq_domain_resource[j / 8] >> j % 8) & 1U));
+  }
 }
 
 static void test_add_dl_dci()
@@ -168,6 +174,21 @@ static void test_parameters_v4_dci()
   TESTASSERT_EQ(nid, pdu.parameters_v4.params[0].nid_pdcch_dmrs);
 }
 
+static void test_payload_dci()
+{
+  dl_pdcch_pdu         pdu;
+  dl_pdcch_pdu_builder builder(pdu);
+  dl_dci_pdu_builder   builder_dci = builder.add_dl_dci();
+
+  dci_payload payload = {1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1};
+  builder_dci.set_payload(payload);
+
+  const auto& pdu_payload = pdu.dl_dci.back().payload;
+  for (unsigned i = 0, e = payload.size(); i != e; ++i) {
+    TESTASSERT_EQ(payload.test(i), bool((pdu_payload[i / 8] >> i % 8) & 1U));
+  }
+}
+
 static void test_dl_dci_params()
 {
   test_dci_basic_params();
@@ -179,6 +200,8 @@ static void test_dl_dci_params()
   fmt::print("[PDCCH Builder] - Maintenance v3 DCI params tested -> OK\n");
   test_parameters_v4_dci();
   fmt::print("[PDCCH Builder] - Parameters v4 DCI tested -> OK\n");
+  test_payload_dci();
+  fmt::print("[PDCCH Builder] - DCI payload tested -> OK\n");
 }
 
 static void test_pdcch_builder()
