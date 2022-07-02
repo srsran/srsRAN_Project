@@ -14,22 +14,18 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu&          fapi_pdu,
-                                                     const bwp_configuration&     bwp_cfg,
-                                                     const coreset_configuration& coreset_cfg,
-                                                     span<const dci_info>         dcis)
+void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu& mac_pdu)
 {
   dl_pdcch_pdu_builder builder(fapi_pdu);
-  convert_pdcch_mac_to_fapi(builder, bwp_cfg, coreset_cfg, dcis);
+  convert_pdcch_mac_to_fapi(builder, mac_pdu);
 }
 
-void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&  builder,
-                                                     const bwp_configuration&     bwp_cfg,
-                                                     const coreset_configuration& coreset_cfg,
-                                                     span<const dci_info>         dcis)
+void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
 {
+  const std::vector<dci_info>& dcis = mac_pdu.dcis;
   srsran_assert(!dcis.empty(), "No DL_DCI to add to the PDCCH PDU");
 
+  const bwp_configuration& bwp_cfg = *mac_pdu.bwp_cfg;
   // Fill BWP parameters.
   builder.set_bwp_parameters(bwp_cfg.crbs.length(),
                              bwp_cfg.crbs.start(),
@@ -37,6 +33,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
                              (bwp_cfg.cp_extended) ? cyclic_prefix_type::extended : cyclic_prefix_type::normal);
 
   // Fill Coreset parameters.
+  const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
   // :TODO: change the start symbol index in the future.
   unsigned start_symbol_index = 0;
   builder.set_coreset_parameters(
