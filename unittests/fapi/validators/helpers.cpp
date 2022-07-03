@@ -31,11 +31,24 @@ static unsigned generate_slot()
   return dist(gen);
 }
 
+static unsigned generate_start_symbol_index()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 13);
+  return dist(gen);
+}
+
 static rnti_t generate_rnti()
 {
   std::uniform_int_distribution<unsigned> dist(1, 65535);
 
   return to_rnti(dist(gen));
+}
+
+static unsigned generate_uint16()
+{
+  std::uniform_int_distribution<unsigned> dist(0, 65535);
+
+  return dist(gen);
 }
 
 static unsigned generate_rapid()
@@ -155,66 +168,44 @@ dl_ssb_pdu unittest::build_valid_dl_ssb_pdu()
 
 dl_pdcch_pdu unittest::build_valid_dl_pdcch_pdu()
 {
-  dl_pdcch_pdu         pdu;
-  dl_pdcch_pdu_builder builder(pdu);
+  dl_pdcch_pdu pdu;
 
-  // Random generators.
-  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
-  std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
-  std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
-  std::uniform_int_distribution<unsigned> start_symbol_index_dist(0, 13);
-  std::uniform_int_distribution<unsigned> duration_symbol_dist(1, 3);
-  std::uniform_int_distribution<unsigned> shift_index_dist(0, 275);
-  std::uniform_int_distribution<unsigned> n_rnti_dist(0, 65535);
-  std::uniform_int_distribution<unsigned> cce_dist(0, 135);
-  std::uniform_int_distribution<unsigned> aggregation_dist(0, 4);
-  std::uniform_int_distribution<unsigned> nid_dmrs_dist(0, 65535);
-  std::uniform_int_distribution<unsigned> nid_data_dist(0, 65535);
-  std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<int>      power_dist(-8, 8);
-  std::uniform_int_distribution<unsigned> custom_dist(2, 3);
+  pdu.coreset_bwp_size     = generate_bwp_size();
+  pdu.coreset_bwp_start    = generate_bwp_start();
+  pdu.scs                  = subcarrier_spacing::kHz240;
+  pdu.cyclic_prefix        = generate_cyclic_prefix();
+  pdu.start_symbol_index   = generate_start_symbol_index();
+  pdu.duration_symbols     = 2;
+  pdu.cce_reg_mapping_type = cce_to_reg_mapping_type::interleaved;
+  pdu.reg_bundle_size      = 2;
+  pdu.interleaver_size     = 3;
+  pdu.coreset_type         = static_cast<pdcch_coreset_type>(generate_bool());
+  pdu.shift_index          = 129;
+  pdu.precoder_granularity = static_cast<coreset_configuration::precoder_granularity_type>(generate_bool());
 
-  freq_resource_bitmap freq_domain = {1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1,
-                                      1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 1, 1};
+  for (unsigned i = 0, e = pdu.freq_domain_resource.size(); i != e; ++i) {
+    pdu.freq_domain_resource[i] = generate_slot();
+  }
+  // Add a DCI.
+  pdu.dl_dci.emplace_back();
+  dl_dci_pdu& dci                        = pdu.dl_dci.back();
+  dci.rnti                               = generate_rnti();
+  dci.nid_pdcch_data                     = generate_uint16();
+  dci.nrnti_pdcch_data                   = generate_uint16();
+  dci.aggregation_level                  = 12;
+  dci.aggregation_level                  = 2;
+  dci.power_control_offset_ss_profile_nr = 0;
+  dci.payload                            = {1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0};
 
-  // Always work with the biggest numerology.
-  builder.set_bwp_parameters(bwp_size_dist(gen),
-                             bwp_start_dist(gen),
-                             subcarrier_spacing::kHz240,
-                             static_cast<cyclic_prefix_type>(binary_dist(gen)));
+  pdu.maintenance_v3.info.emplace_back();
+  dl_pdcch_pdu_maintenance_v3::maintenance_info& dci_v3 = pdu.maintenance_v3.info.back();
+  dci_v3.dci_index                                      = 2;
+  dci_v3.collocated_AL16_candidate                      = generate_bool();
+  dci_v3.pdcch_data_power_offset_profile_sss            = -32768;
+  dci_v3.pdcch_dmrs_power_offset_profile_sss            = -32768;
 
-  builder.set_coreset_parameters(start_symbol_index_dist(gen),
-                                 duration_symbol_dist(gen),
-                                 freq_domain,
-                                 static_cast<cce_to_reg_mapping_type>(binary_dist(gen)),
-                                 custom_dist(gen),
-                                 custom_dist(gen),
-                                 static_cast<pdcch_coreset_type>(binary_dist(gen)),
-                                 shift_index_dist(gen),
-                                 static_cast<coreset_configuration::precoder_granularity_type>(binary_dist(gen)));
-
-  // Add DCI.
-  auto builder_dci = builder.add_dl_dci();
-
-  builder_dci.set_basic_parameters(to_rnti(n_rnti_dist(gen) + 1),
-                                   nid_data_dist(gen),
-                                   n_rnti_dist(gen),
-                                   cce_dist(gen),
-                                   std::pow(2, aggregation_dist(gen)));
-  optional<float> profile_nr;
-  profile_nr.emplace(power_dist(gen));
-  builder_dci.set_tx_power_info_parameter(profile_nr);
-
-  // Payload.
-  dci_payload payload;
-
-  builder_dci.set_payload(payload);
-
-  optional<float> profile_data;
-  optional<float> profile_dmrs;
-  builder_dci.set_maintenance_v3_dci_parameters(true, profile_dmrs, profile_data);
-  builder_dci.set_parameters_v4_dci(nid_dmrs_dist(gen));
+  pdu.parameters_v4.params.emplace_back();
+  pdu.parameters_v4.params.back().nid_pdcch_dmrs = generate_uint16();
 
   return pdu;
 }
@@ -814,12 +805,6 @@ static multi_slot_tx_indicator_type generate_multi_slot_tx_indicator()
 static unsigned generate_prb_size()
 {
   std::uniform_int_distribution<unsigned> dist(1, 16);
-  return dist(gen);
-}
-
-static unsigned generate_start_symbol_index()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 13);
   return dist(gen);
 }
 

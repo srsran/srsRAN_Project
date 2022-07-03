@@ -45,7 +45,6 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
     for (unsigned i = 0, e = fapi_dci.payload.size() * 8; i != e; ++i) {
       dci.payload[i] = ((fapi_dci.payload[i / 8] >> i % 8) & 1U);
     }
-    
     // :TODO: Fill this in the future.
     dci.ports = {0};
   }

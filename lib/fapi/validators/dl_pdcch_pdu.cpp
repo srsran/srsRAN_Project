@@ -83,10 +83,26 @@ static bool validate_cce_reg_mapping_type(message_type_id msg_type, unsigned val
 }
 
 /// Validates the REG bundle size property of the PDCCH PDU, as per SCF-222 v4.0 section 3.4.2.1.
-static bool validate_reg_bundle_size(message_type_id msg_type, unsigned value, validator_report& report)
+static bool validate_reg_bundle_size(message_type_id         msg_type,
+                                     unsigned                value,
+                                     cce_to_reg_mapping_type cce_type,
+                                     unsigned                duration,
+                                     validator_report&       report)
 {
-  if (value == 2 || value == 3 || value == 6) {
-    return true;
+  if (cce_type == cce_to_reg_mapping_type::interleaved) {
+    if (duration == 3) {
+      if (value == 3 || value == 6) {
+        return true;
+      }
+    } else {
+      if (value == 2 || value == 6) {
+        return true;
+      }
+    }
+  } else {
+    if (value == 6) {
+      return true;
+    }
   }
 
   report.append(value, "REG bundle size", msg_type, pdu_type);
@@ -209,10 +225,11 @@ bool srsgnb::fapi::validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcc
   result &= validate_start_symbol_index(msg_type, pdu.start_symbol_index, report);
   result &= validate_duration_symbols(msg_type, pdu.duration_symbols, report);
   result &= validate_cce_reg_mapping_type(msg_type, static_cast<unsigned>(pdu.cce_reg_mapping_type), report);
-  result &= validate_reg_bundle_size(msg_type, pdu.reg_bundle_size, report);
-  result &= validate_interleaver_size(msg_type, pdu.interleaver_size, report);
+  result &=
+      validate_reg_bundle_size(msg_type, pdu.reg_bundle_size, pdu.cce_reg_mapping_type, pdu.duration_symbols, report);
   result &= validate_coreset_type(msg_type, static_cast<unsigned>(pdu.coreset_type), report);
   if (pdu.cce_reg_mapping_type == cce_to_reg_mapping_type::interleaved) {
+    result &= validate_interleaver_size(msg_type, pdu.interleaver_size, report);
     result &= validate_shift_index(msg_type, pdu.shift_index, pdu.coreset_type, report);
   }
   result &= validate_precoder_granularity(msg_type, static_cast<unsigned>(pdu.precoder_granularity), report);
