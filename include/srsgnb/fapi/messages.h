@@ -70,7 +70,7 @@ struct slot_indication_message : public base_message {
 
 /// Maximum number of supported DCIs per slot.
 // :TODO: fapi speaks about max dci per slots, but maybe this is better named max dcis per PDU?
-static constexpr unsigned MAX_DCI_PER_SLOT = 1;
+static constexpr unsigned MAX_DCI_PER_SLOT = 4;
 
 /// PDCCH PDU maintenance information added in FAPIv3.
 struct dl_pdcch_pdu_maintenance_v3 {
