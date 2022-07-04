@@ -37,12 +37,11 @@ void test_f1_setup(test_outcome outcome)
 
   // Successful initial outcome
   if (outcome == test_outcome::success) {
-    asn1::f1ap::f1_ap_pdu_c pdu;
+    f1c_msg f1c_msg = {};
+    f1c_msg.pdu.set_init_msg();
+    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
-    pdu.set_init_msg();
-    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-
-    auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
+    auto& setup_req                 = f1c_msg.pdu.init_msg().value.f1_setup_request();
     setup_req->transaction_id.value = 99;
     setup_req->gnb_du_id.value      = 0x11;
     setup_req->gnb_du_name_present  = true;
@@ -91,7 +90,7 @@ void test_f1_setup(test_outcome outcome)
 
     setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
 
-    f1ap_cu->handle_message(pdu);
+    f1ap_cu->handle_message(f1c_msg);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
     TESTASSERT(f1c_message_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
@@ -103,16 +102,17 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_f1ap_setup_response(msg);
 
     // Check the generated PDU is indeed the F1 Setup response
-    TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome, f1c_pdu_notifier.last_pdu.type());
+    TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::successful_outcome,
+                  f1c_pdu_notifier.last_f1c_msg.pdu.type());
     TESTASSERT_EQ(asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp,
-                  f1c_pdu_notifier.last_pdu.successful_outcome().value.type());
+                  f1c_pdu_notifier.last_f1c_msg.pdu.successful_outcome().value.type());
   } else {
-    asn1::f1ap::f1_ap_pdu_c pdu;
+    f1c_msg f1c_msg = {};
 
-    pdu.set_init_msg();
-    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    f1c_msg.pdu.set_init_msg();
+    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
-    auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
+    auto& setup_req                 = f1c_msg.pdu.init_msg().value.f1_setup_request();
     setup_req->transaction_id.value = 99;
     setup_req->gnb_du_id.value      = 0x11;
     setup_req->gnb_du_name_present  = true;
@@ -123,7 +123,7 @@ void test_f1_setup(test_outcome outcome)
     setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
     setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
 
-    f1ap_cu->handle_message(pdu);
+    f1ap_cu->handle_message(f1c_msg);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
     TESTASSERT(f1c_message_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
@@ -135,9 +135,10 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_f1ap_setup_response(msg);
 
     // Check the generated PDU is indeed the F1 Setup failure
-    TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::unsuccessful_outcome, f1c_pdu_notifier.last_pdu.type());
+    TESTASSERT_EQ(asn1::f1ap::f1_ap_pdu_c::types_opts::options::unsuccessful_outcome,
+                  f1c_pdu_notifier.last_f1c_msg.pdu.type());
     TESTASSERT_EQ(asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail,
-                  f1c_pdu_notifier.last_pdu.unsuccessful_outcome().value.type());
+                  f1c_pdu_notifier.last_f1c_msg.pdu.unsuccessful_outcome().value.type());
   }
 }
 

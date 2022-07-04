@@ -54,18 +54,18 @@ void f1ap_du_setup_procedure::operator()(coro_context<async_task<f1_setup_respon
 
 void f1ap_du_setup_procedure::send_f1_setup_request()
 {
+  f1c_msg msg = {};
   // set F1AP PDU contents
-  f1_ap_pdu_c pdu;
-  pdu.set_init_msg();
-  pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  pdu.init_msg().value.f1_setup_request() = request.msg;
+  msg.pdu.set_init_msg();
+  msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  msg.pdu.init_msg().value.f1_setup_request() = request.msg;
 
   // set values handled by F1
-  auto& setup_req                 = pdu.init_msg().value.f1_setup_request();
+  auto& setup_req                 = msg.pdu.init_msg().value.f1_setup_request();
   setup_req->transaction_id.value = transaction.id();
 
   // send request
-  cu_notifier.on_new_message(pdu);
+  cu_notifier.on_new_message(msg);
 }
 
 bool f1ap_du_setup_procedure::retry_required()

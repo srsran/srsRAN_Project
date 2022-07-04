@@ -96,36 +96,36 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
   log_ue_event(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
 
   // FIXME: fill message
-  asn1::f1ap::f1_ap_pdu_c f1ap_pdu;
+  f1c_msg msg;
 
   // Make it an initial message to let test pass.
-  f1ap_pdu.set_init_msg();
+  msg.pdu.set_init_msg();
 
   // send to handler
-  f1c_notifier.on_new_message(f1ap_pdu);
+  f1c_notifier.on_new_message(msg);
 }
 
-void f1ap_du_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
+void f1ap_du_impl::handle_message(const f1c_msg& msg)
 {
-  expected<uint8_t> transaction_id = get_transaction_id(pdu);
+  expected<uint8_t> transaction_id = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
     logger.info("Handling F1AP PDU of type \"{}.{}\" with transaction id={}",
-                pdu.type().to_string(),
-                get_message_type_str(pdu),
+                msg.pdu.type().to_string(),
+                get_message_type_str(msg.pdu),
                 transaction_id.value());
   } else {
-    logger.info("Handling F1AP PDU of type \"{}.{}\"", pdu.type().to_string(), get_message_type_str(pdu));
+    logger.info("Handling F1AP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
-  switch (pdu.type().value) {
+  switch (msg.pdu.type().value) {
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(pdu.init_msg());
+      handle_initiating_message(msg.pdu.init_msg());
       break;
     case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
-      handle_successful_outcome(pdu.successful_outcome());
+      handle_successful_outcome(msg.pdu.successful_outcome());
       break;
     case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
-      handle_unsuccessful_outcome(pdu.unsuccessful_outcome());
+      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
       logger.error("Invalid PDU type");

@@ -152,12 +152,12 @@ void test_rrc_message_transfer_procedure()
 
   // Handling of Initial UL RRC message transfer
   {
-    asn1::f1ap::f1_ap_pdu_c pdu;
+    f1c_msg f1c_msg = {};
 
-    pdu.set_init_msg();
-    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+    f1c_msg.pdu.set_init_msg();
+    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
 
-    auto& init_ul_rrc                     = pdu.init_msg().value.init_ulrrc_msg_transfer();
+    auto& init_ul_rrc                     = f1c_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
     init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
 
     init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
@@ -173,19 +173,19 @@ void test_rrc_message_transfer_procedure()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting Initial UL RRC message");
-    cu_cp_obj.get_f1c_message_handler().handle_message(pdu);
+    cu_cp_obj.get_f1c_message_handler().handle_message(f1c_msg);
   }
 
   // TODO: check that DU has received the RRCSetup
 
   // Handling of UL RRC message transfer
   {
-    asn1::f1ap::f1_ap_pdu_c pdu;
+    f1c_msg f1c_msg = {};
 
-    pdu.set_init_msg();
-    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
+    f1c_msg.pdu.set_init_msg();
+    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
 
-    auto& ul_rrc                     = pdu.init_msg().value.ulrrc_msg_transfer();
+    auto& ul_rrc                     = f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer();
     ul_rrc->gnb_cu_ue_f1_ap_id.value = 22;
     ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
     ul_rrc->srbid.value              = 1;
@@ -196,7 +196,7 @@ void test_rrc_message_transfer_procedure()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting UL RRC message");
-    cu_cp_obj.get_f1c_message_handler().handle_message(pdu);
+    cu_cp_obj.get_f1c_message_handler().handle_message(f1c_msg);
   }
 
   // TODO: check that CU has received the RRCSetupComplete

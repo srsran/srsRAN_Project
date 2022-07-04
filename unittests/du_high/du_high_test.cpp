@@ -54,7 +54,7 @@ void test_f1_setup_local()
   dummy_f1c_message_handler msg_handler;
   dummy_f1c_pdu_notifier    notifier(&msg_handler);
 
-  phy_dummy                 phy;
+  phy_dummy phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -87,14 +87,14 @@ void test_f1_setup_network()
     sctp_network_gateway gw;
     f1ap_asn1_packer     packer;
 
-    asn1::f1ap::f1_ap_pdu_c last_pdu;
-    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu) override { last_pdu = pdu; }
+    f1c_msg last_f1c_msg;
+    void    handle_message(const f1c_msg& msg) override { last_f1c_msg = msg; }
   };
 
-  du_high_worker_manager    workers;
-  f1c_network_adapter       pdu_handler;
-  dummy_f1c_pdu_notifier    notifier(&pdu_handler);
-  phy_dummy                 phy;
+  du_high_worker_manager workers;
+  f1c_network_adapter    pdu_handler;
+  dummy_f1c_pdu_notifier notifier(&pdu_handler);
+  phy_dummy              phy;
 
   du_high_configuration cfg{};
   cfg.du_mng_executor = &workers.ctrl_worker;
@@ -118,11 +118,11 @@ void test_du_ue_create()
   class dummy_f1c_pdu_handler : public f1c_message_handler
   {
   public:
-    asn1::f1ap::f1_ap_pdu_c last_pdu;
-    task_executor*          ctrl_exec;
-    void                    handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu) override
+    f1c_msg        last_f1c_msg;
+    task_executor* ctrl_exec;
+    void           handle_message(const f1c_msg& msg) override
     {
-      ctrl_exec->execute([this, pdu]() { last_pdu = pdu; });
+      ctrl_exec->execute([this, msg]() { last_f1c_msg = msg; });
     }
   };
 
@@ -149,11 +149,11 @@ void test_du_ue_create()
   du_obj.start();
 
   // Push F1c setup response to DU, signaling that the CU accepted the f1c connection.
-  asn1::f1ap::f1_ap_pdu_c f1c_pdu;
-  f1c_pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  f1c_pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
-  f1c_pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
-  du_obj.get_f1c_message_handler().handle_message(f1c_pdu);
+  f1c_msg f1c_msg;
+  f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
+  f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);
+  du_obj.get_f1c_message_handler().handle_message(f1c_msg);
 
   // Add UE
   mac_rx_pdu_list lst;
@@ -164,12 +164,12 @@ void test_du_ue_create()
   slot_point sl_tx{0, 0};
   for (uint32_t count = 0; count < 10000; count++) {
     du_obj.get_slot_handler(to_du_cell_index(0)).handle_slot_indication(sl_tx++);
-    if (pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
+    if (pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype) {
       break;
     }
     workers.ctrl_worker.run_next_blocking();
   }
-  TESTASSERT(pdu_handler.last_pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
+  TESTASSERT(pdu_handler.last_f1c_msg.pdu.type() != asn1::f1ap::f1_ap_pdu_c::types_opts::nulltype);
 
   workers.stop();
 }

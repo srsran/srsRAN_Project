@@ -46,36 +46,36 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+  TESTASSERT(msg_notifier.last_f1c_msg.pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  TESTASSERT(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value ==
              asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status: Procedure not yet ready.
   TESTASSERT(not t.ready());
 
   // Action 2: F1 setup response received.
-  asn1::f1ap::f1_ap_pdu_c pdu;
-  unsigned                transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
+  f1c_msg  f1c_msg;
+  unsigned transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
   // Successful initial outcome
   if (initial_outcome == test_outcome::success) {
-    pdu.set_successful_outcome();
-    pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    auto& setup_res                 = pdu.successful_outcome().value.f1_setup_resp();
+    f1c_msg.pdu.set_successful_outcome();
+    f1c_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    auto& setup_res                 = f1c_msg.pdu.successful_outcome().value.f1_setup_resp();
     setup_res->transaction_id.value = transaction_id;
     setup_res->gnb_cu_name_present  = true;
     setup_res->gnb_cu_name.value.from_string("srsCU");
     setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
 
-    f1ap_du->handle_message(pdu);
+    f1ap_du->handle_message(f1c_msg);
 
     TESTASSERT(t.ready());
     TESTASSERT(t.get().success);
     TESTASSERT(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number() == 2);
   } else {
     // Unsuccessful initial outcome
-    pdu.set_unsuccessful_outcome();
-    pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    auto& setup_fail                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
+    f1c_msg.pdu.set_unsuccessful_outcome();
+    f1c_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    auto& setup_fail                 = f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
     setup_fail->transaction_id.value = transaction_id;
     setup_fail->cause.value.set_radio_network();
     setup_fail->cause.value.radio_network() =
@@ -85,26 +85,26 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
     setup_fail->crit_diagnostics_present = false;
     // add critical diagnostics
 
-    f1ap_du->handle_message(pdu);
+    f1ap_du->handle_message(f1c_msg);
 
     // Status: CU received F1 Setup Request again.
-    TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-    TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+    TESTASSERT(msg_notifier.last_f1c_msg.pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+    TESTASSERT(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value ==
                asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
-    unsigned transaction_id2 = get_transaction_id(msg_notifier.last_pdu).value();
+    unsigned transaction_id2 = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
     TESTASSERT_NEQ(transaction_id, transaction_id2);
 
     // Successful outcome after reinitiated F1 Setup
     if (retry_outcome == test_outcome::success) {
-      pdu.set_successful_outcome();
-      pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-      auto& setup_res                 = pdu.successful_outcome().value.f1_setup_resp();
+      f1c_msg.pdu.set_successful_outcome();
+      f1c_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+      auto& setup_res                 = f1c_msg.pdu.successful_outcome().value.f1_setup_resp();
       setup_res->transaction_id.value = transaction_id2;
       setup_res->gnb_cu_name_present  = true;
       setup_res->gnb_cu_name.value.from_string("srsCU");
       setup_res->gnb_cu_rrc_version.value.latest_rrc_version.from_number(2);
 
-      f1ap_du->handle_message(pdu);
+      f1ap_du->handle_message(f1c_msg);
 
       TESTASSERT(t.ready());
       TESTASSERT(t.get().success);
@@ -114,7 +114,7 @@ void test_f1_setup(test_outcome initial_outcome, test_outcome retry_outcome)
     } else {
       setup_fail->time_to_wait_present = false;
       setup_fail->transaction_id.value = transaction_id2;
-      f1ap_du->handle_message(pdu);
+      f1ap_du->handle_message(f1c_msg);
 
       TESTASSERT(t.ready());
       TESTASSERT(not t.get().success);
@@ -144,20 +144,20 @@ void test_f1_setup_retry_limit()
   lazy_task_launcher<f1_setup_response_message> t_launcher(t);
 
   // Status: CU received F1 Setup Request.
-  TESTASSERT(msg_notifier.last_pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
-  TESTASSERT(msg_notifier.last_pdu.init_msg().value.type().value ==
+  TESTASSERT(msg_notifier.last_f1c_msg.pdu.type().value == asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg);
+  TESTASSERT(msg_notifier.last_f1c_msg.pdu.init_msg().value.type().value ==
              asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_setup_request);
 
   // Status
   TESTASSERT(not t.ready());
 
   // Action 2: F1 setup response received.
-  asn1::f1ap::f1_ap_pdu_c pdu;
-  unsigned                transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
+  f1c_msg  f1c_msg;
+  unsigned transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
 
-  pdu.set_unsuccessful_outcome();
-  pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-  auto& setup_fail                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
+  f1c_msg.pdu.set_unsuccessful_outcome();
+  f1c_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  auto& setup_fail                 = f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
   setup_fail->transaction_id.value = transaction_id;
   setup_fail->cause.value.set_radio_network();
   setup_fail->cause.value.radio_network() =
@@ -168,11 +168,11 @@ void test_f1_setup_retry_limit()
   // add critical diagnostics
 
   for (unsigned i = 0; i < request_msg.max_setup_retries + 1; i++) {
-    f1ap_du->handle_message(pdu);
+    f1ap_du->handle_message(f1c_msg);
 
     // Update transaction id.
-    transaction_id = get_transaction_id(msg_notifier.last_pdu).value();
-    pdu.unsuccessful_outcome().value.f1_setup_fail()->transaction_id.value = transaction_id;
+    transaction_id = get_transaction_id(msg_notifier.last_f1c_msg.pdu).value();
+    f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail()->transaction_id.value = transaction_id;
   }
 
   TESTASSERT(t.ready());

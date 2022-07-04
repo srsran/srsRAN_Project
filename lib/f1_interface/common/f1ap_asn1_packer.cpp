@@ -15,31 +15,32 @@ namespace srsgnb {
 
 f1ap_asn1_packer::f1ap_asn1_packer(network_gateway_data_handler& gw_, f1c_message_handler& f1c_handler) :
   logger(srslog::fetch_basic_logger("F1C-ASN1-PCK")), gw(gw_), f1c(f1c_handler)
-{}
+{
+}
 
 // Received packed F1AP PDU that needs to be unpacked and forwarded.
 void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 {
   logger.info("Received PDU of {} bytes", bytes.length());
 
-  asn1::cbit_ref          bref(bytes);
-  asn1::f1ap::f1_ap_pdu_c pdu;
-  if (pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
+  asn1::cbit_ref bref(bytes);
+  f1c_msg        msg = {};
+  if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Couldn't unpack F1C PDU");
     return;
   }
 
   // call packet handler
-  f1c.handle_message(pdu);
+  f1c.handle_message(msg);
 }
 
 // Receive populated ASN1 struct that needs to be packed and forwarded.
-void f1ap_asn1_packer::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
+void f1ap_asn1_packer::handle_message(const f1c_msg& msg)
 {
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;
   asn1::bit_ref bref(tx_pdu);
-  if (pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
+  if (msg.pdu.pack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Failed to pack F1AP PDU");
     return;
   }

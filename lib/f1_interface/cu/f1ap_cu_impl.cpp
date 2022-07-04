@@ -49,23 +49,23 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
 {
   // Pack message into PDU
-  asn1::f1ap::f1_ap_pdu_c pdu;
+  f1c_msg f1c_msg;
   if (msg.success) {
     // TODO send response
     logger.info("Transmitting F1SetupResponse message");
 
-    pdu.set_successful_outcome();
-    pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    pdu.successful_outcome().value.f1_setup_resp() = msg.response;
+    f1c_msg.pdu.set_successful_outcome();
+    f1c_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    f1c_msg.pdu.successful_outcome().value.f1_setup_resp() = msg.response;
 
     // set values handled by F1
-    pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = 99;
+    f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = 99;
   } else {
     logger.info("Transmitting F1SetupFailure message");
-    pdu.set_unsuccessful_outcome();
-    pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
-    pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
-    auto& setup_fail                                 = pdu.unsuccessful_outcome().value.f1_setup_fail();
+    f1c_msg.pdu.set_unsuccessful_outcome();
+    f1c_msg.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+    f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail() = msg.failure;
+    auto& setup_fail                                         = f1c_msg.pdu.unsuccessful_outcome().value.f1_setup_fail();
 
     // set values handled by F1
     setup_fail->transaction_id.value = 99;
@@ -74,26 +74,26 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
   }
 
   // send response
-  pdu_notifier.on_new_message(pdu);
+  pdu_notifier.on_new_message(f1c_msg);
 }
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg)
 {
   logger.info("Transmitting DL RRC message");
   // Pack message into PDU
-  asn1::f1ap::f1_ap_pdu_c pdu;
-  pdu.set_init_msg();
-  pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
-  pdu.init_msg().value.dlrrc_msg_transfer() = msg.msg;
+  f1c_msg f1c_msg;
+  f1c_msg.pdu.set_init_msg();
+  f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+  f1c_msg.pdu.init_msg().value.dlrrc_msg_transfer() = msg.msg;
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    pdu.to_json(js);
+    f1c_msg.pdu.to_json(js);
     logger.debug("Containerized DL RRC message: {}", js.to_string());
   }
 
   // send DL RRC message
-  pdu_notifier.on_new_message(pdu);
+  pdu_notifier.on_new_message(f1c_msg);
 }
 
 async_task<f1ap_ue_context_setup_response_message>
@@ -167,13 +167,13 @@ f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_
   });
 }
 
-void f1ap_cu_impl::handle_message(const asn1::f1ap::f1_ap_pdu_c& pdu)
+void f1ap_cu_impl::handle_message(const f1c_msg& msg)
 {
-  logger.info("Handling F1AP PDU of type {}", pdu.type().to_string());
+  logger.info("Handling F1AP PDU of type {}", msg.pdu.type().to_string());
 
-  switch (pdu.type().value) {
+  switch (msg.pdu.type().value) {
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(pdu.init_msg());
+      handle_initiating_message(msg.pdu.init_msg());
       break;
     default:
       logger.error("Invalid PDU type");

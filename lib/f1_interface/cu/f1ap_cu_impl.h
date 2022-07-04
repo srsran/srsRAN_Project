@@ -46,7 +46,7 @@ public:
 
   // f1c message handler functions
 
-  void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override;
+  void handle_message(const f1c_msg& msg) override;
 
   void handle_connection_loss() override {}
 

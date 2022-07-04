@@ -44,13 +44,13 @@ private:
 class f1c_null_notifier : public f1c_message_notifier
 {
 public:
-  asn1::f1ap::f1_ap_pdu_c last_pdu;
+  f1c_msg last_f1c_msg;
 
-  void on_new_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
+  void on_new_message(const f1c_msg& msg) override
   {
     srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
     test_logger.info("Received F1 AP PDU");
-    last_pdu = msg;
+    last_f1c_msg = msg;
   }
 };
 
@@ -64,17 +64,17 @@ public:
     logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
 
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; };
-  void on_new_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
+  void on_new_message(const f1c_msg& msg) override
   {
-    logger.info("Received a F1AP PDU of type {}", msg.type().to_string());
-    last_pdu = msg; // store msg
+    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    last_f1c_msg = msg; // store msg
 
     if (handler != nullptr) {
       logger.info("Forwarding F1AP PDU");
       handler->handle_message(msg);
     }
   }
-  asn1::f1ap::f1_ap_pdu_c last_pdu;
+  f1c_msg last_f1c_msg;
 
 private:
   srslog::basic_logger& logger;
@@ -86,9 +86,9 @@ class dummy_f1c_message_handler : public f1c_message_handler
 {
 public:
   dummy_f1c_message_handler() : logger(srslog::fetch_basic_logger("TEST")){};
-  void handle_message(const asn1::f1ap::f1_ap_pdu_c& msg) override
+  void handle_message(const f1c_msg& msg) override
   {
-    logger.info("Received a F1AP PDU of type %s\n", msg.type().to_string());
+    logger.info("Received a F1AP PDU of type %s\n", msg.pdu.type().to_string());
   }
 
 private:
