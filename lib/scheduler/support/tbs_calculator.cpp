@@ -72,7 +72,7 @@ unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
 {
   // LUT indexed by nof_info_prime in bytes based on TS38.214 Table 5.1.3.2-1 where the contents are the smallest not
   // less than nof_info_prime.
-  static const std::array<uint16_t, 478> table_valid_tbs = {
+  static const std::array<uint16_t, 479> table_valid_tbs = {
       24,   24,   24,   24,   32,   40,   48,   56,   64,   72,   80,   88,   96,   104,  112,  120,  128,  136,  144,
       152,  160,  168,  176,  184,  192,  208,  208,  224,  224,  240,  240,  256,  256,  272,  272,  288,  288,  304,
       304,  320,  320,  336,  336,  352,  352,  368,  368,  384,  384,  408,  408,  408,  432,  432,  432,  456,  456,
@@ -98,9 +98,15 @@ unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
       3368, 3368, 3368, 3368, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496, 3496,
       3496, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3624, 3752, 3752,
       3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3752, 3824, 3824, 3824, 3824, 3824,
-      3824, 3824, 3824};
+      3824, 3824, 3824, 3824};
 
-  return table_valid_tbs[nof_info_prime / 8];
+  unsigned index = divide_ceil(nof_info_prime, 8);
+  srsran_assert(index < table_valid_tbs.size(),
+                "The number of information bits exceeds {} the maximum {}.",
+                nof_info_prime,
+                3824);
+
+  return table_valid_tbs[index];
 }
 
 unsigned srsgnb::tbs_calculator_pdsch_calculate(const tbs_calculator_pdsch_configuration& config)
