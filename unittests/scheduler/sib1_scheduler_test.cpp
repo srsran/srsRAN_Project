@@ -227,13 +227,9 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
 
   // Determine the expected SIB1 retx periodicity.
   unsigned expected_sib1_period_ms;
-  if (sib1_rtx_period == sib1_rtx_periodicity::not_set) {
-    expected_sib1_period_ms = SIB1_PERIODICITY;
-  } else {
-    expected_sib1_period_ms = sib1_rtx_periodicity_to_value(sib1_rtx_period) > ssb_periodicity_to_value(ssb_period)
-                                  ? sib1_rtx_periodicity_to_value(sib1_rtx_period)
-                                  : ssb_periodicity_to_value(ssb_period);
-  }
+  expected_sib1_period_ms = sib1_rtx_periodicity_to_value(sib1_rtx_period) > ssb_periodicity_to_value(ssb_period)
+                                ? sib1_rtx_periodicity_to_value(sib1_rtx_period)
+                                : ssb_periodicity_to_value(ssb_period);
 
   // SIB1 periodicity in slots.
   unsigned expected_sib1_period_slots = expected_sib1_period_ms * t_bench.sl_tx.nof_slots_per_subframe();
@@ -323,7 +319,6 @@ int main()
   test_sib1_periodicity(sib1_rtx_periodicity::ms40, ssb_periodicity::ms10);
   test_sib1_periodicity(sib1_rtx_periodicity::ms160, ssb_periodicity::ms80);
   test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms160);
-  test_sib1_periodicity(sib1_rtx_periodicity::not_set, ssb_periodicity::ms80);
 
   return 0;
 }

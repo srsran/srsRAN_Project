@@ -135,10 +135,8 @@ sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
   sib1_dci_aggr_lev{sib1_dci_aggr_lev_}
 {
   // Compute derived SIB1 parameters.
-  sib1_period = sib1_rtx_period_ == sib1_rtx_periodicity::not_set
-                    ? SIB1_PERIODICITY
-                    : std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period),
-                               sib1_rtx_periodicity_to_value(sib1_rtx_period_));
+  sib1_period =
+      std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rtx_periodicity_to_value(sib1_rtx_period_));
 
   precompute_sib1_n0(scs_common);
 

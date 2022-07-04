@@ -71,7 +71,7 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
   sched_req.sib1_mcs              = 5;
   sched_req.sib1_rv               = 0;
   sched_req.sib1_dci_aggr_lev     = aggregation_level::n4;
-  sched_req.sib1_retx_period      = sib1_rtx_periodicity::not_set;
+  sched_req.sib1_retx_period      = sib1_rtx_periodicity::ms160;
 
   return sched_req;
 }
