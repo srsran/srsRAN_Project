@@ -106,7 +106,7 @@ void test_f1_setup()
 }
 
 /// Test the f1 initial UL RRC message transfer procedure
-void test_initial_ul_rrc_message_transfer()
+void test_rrc_message_transfer_procedure()
 {
   test_delimit_logger   delimiter{"Test F1 initial UL RRC message transfer procedure between DU and CU-CP"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
@@ -178,6 +178,29 @@ void test_initial_ul_rrc_message_transfer()
 
   // TODO: check that DU has received the RRCSetup
 
+  // Handling of UL RRC message transfer
+  {
+    asn1::f1ap::f1_ap_pdu_c pdu;
+
+    pdu.set_init_msg();
+    pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
+
+    auto& ul_rrc                     = pdu.init_msg().value.ulrrc_msg_transfer();
+    ul_rrc->gnb_cu_ue_f1_ap_id.value = 22;
+    ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
+    ul_rrc->srbid.value              = 1;
+    ul_rrc->rrc_container.value.from_string(
+        "000010c01000082727e01c3ff100c047e004139000bf202f8998000410000000f2e04f070f0707100517e004139000bf202f8998000410"
+        "000000f1001032e04f070f0702f1b08010027db00000000080101b669000000000801000001000000005202f8990000011707f070c0401"
+        "980b018010174000090530101000000000");
+
+    // Pass PDU to CU-CP
+    test_logger.info("Injecting UL RRC message");
+    cu_cp_obj.get_f1c_message_handler().handle_message(pdu);
+  }
+
+  // TODO: check that CU has received the RRCSetupComplete
+
   workers.stop();
 
   return;
@@ -190,7 +213,7 @@ int main()
   srslog::init();
 
   test_f1_setup();
-  test_initial_ul_rrc_message_transfer();
+  test_rrc_message_transfer_procedure();
 
   return 0;
 }

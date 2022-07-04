@@ -84,7 +84,11 @@ void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initi
 
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)
 {
-  // TODO: add handling and start procedure if needed
+  cfg.logger.info("Handling UL RRC Message transfer.");
+
+  // Convert RRCContainer to byte_buffer
+  byte_buffer pdcp_pdu = make_byte_buffer(msg.msg->rrc_container.value.to_string());
+  // TODO: Send pdcp_pdu to PDCP
 }
 
 /// Sender for F1AP messages
