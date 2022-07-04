@@ -9,10 +9,10 @@
  */
 
 #include "sib_scheduler.h"
-#include "../cell/resource_grid.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
+#include "../support/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 
@@ -53,65 +53,6 @@ static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_sp
   sib_1_n0 += sib1_is_even_frame(sib1_offset, sib1_M, numerology_mu, ssb_index) * sib_1_n0.nof_slots_per_frame();
 
   return sib_1_n0;
-}
-
-// Dummy function that returns O and M values given pdcch_config_sib1 from Table 13-11, TS 38.213.
-// TODO: replace this with proper function from PHY team.
-static void
-get_sib1_offset_M(unsigned& offset, double& sib1_M, ssb_coreset0_mplex_pattern mplex_pattern, uint8_t pdcch_config_sib1)
-{
-  srsran_sanity_check(mplex_pattern == ssb_coreset0_mplex_pattern::mplx_pattern1,
-                      "Only SSB/Coreset0 multiplexing pattern 1 is currently supported");
-  switch (mplex_pattern) {
-    case ssb_coreset0_mplex_pattern::mplx_pattern1: {
-      uint8_t search_space_zero = (pdcch_config_sib1 & 0b00001111);
-      if (search_space_zero == 0U) {
-        offset = 0;
-        sib1_M = 1;
-      } else if (search_space_zero == 1U) {
-        offset = 0;
-        sib1_M = 0.5;
-      } else if (search_space_zero == 2U) {
-        offset = 2;
-        sib1_M = 1;
-      } else if (search_space_zero == 3U) {
-        offset = 2;
-        sib1_M = 0.5;
-      } else if (search_space_zero == 4U) {
-        offset = 5;
-        sib1_M = 1;
-      } else if (search_space_zero == 5U) {
-        offset = 5;
-        sib1_M = 0.5;
-      } else if (search_space_zero == 6U) {
-        offset = 7;
-        sib1_M = 1;
-      } else if (search_space_zero == 7U) {
-        offset = 7;
-        sib1_M = 0.5;
-      } else if (search_space_zero == 8U) {
-        offset = 0;
-        sib1_M = 2;
-      } else if (search_space_zero == 9U) {
-        offset = 5;
-        sib1_M = 2;
-      } else if (search_space_zero == 10U or search_space_zero == 11U) {
-        offset = 0;
-        sib1_M = 1;
-      } else if (search_space_zero == 12U or search_space_zero == 13U) {
-        offset = 2;
-        sib1_M = 1;
-      } else if (search_space_zero == 14U or search_space_zero == 15U) {
-        offset = 5;
-        sib1_M = 1;
-      }
-      break;
-    }
-    default:
-      // Only ssb_coreset0_mplex_pattern::mplx_pattern1 is currently supported.
-      srsran_terminate("Only SSB/Coreset0 multiplexing pattern 1 is currently supported");
-      return;
-  }
 }
 
 //  ------   Public methods   ------ .
@@ -186,16 +127,17 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
 void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 {
-  // This corresponds to parameter O in TS 38.213, Section 13.
-  unsigned sib1_offset;
-  // This corresponds to parameter M in TS 38.213, Section 13.
-  double sib1_M;
-
-  // TODO: Extend function to all multiplexing patterns
-  get_sib1_offset_M(sib1_offset, sib1_M, ssb_coreset0_mplex_pattern::mplx_pattern1, pdcch_config_sib1);
+  // TODO: (i) Extend function to all multiplexing patterns
+  // TODO: (ii) Embed is_fr2 in the scheduler configuration
+  pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
+      pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
+          .is_fr2           = false,
+          .ss_zero_index    = static_cast<uint8_t>(pdcch_config_sib1 & 0b00001111U),
+          .nof_symb_coreset = 1});
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
-    sib1_n0_slots.emplace_back(get_sib1_n0(sib1_offset, sib1_M, scs_common, i_ssb));
+    sib1_n0_slots.emplace_back(get_sib1_n0(
+        static_cast<unsigned>(ss0_config_occasion_param.offset), ss0_config_occasion_param.M, scs_common, i_ssb));
   }
 }
 
