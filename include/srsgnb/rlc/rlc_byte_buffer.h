@@ -114,13 +114,13 @@ public:
 
   void set_header(std::initializer_list<uint8_t> bytes) { header = bytes; }
 
-  void set_payload(const byte_buffer& buf) { payload = byte_buffer_owning_view{buf}; }
+  void set_payload(const byte_buffer& buf) { payload = shared_byte_buffer_view{buf}; }
 
-  void set_payload(byte_buffer_owning_view buf) { payload = std::move(buf); }
+  void set_payload(shared_byte_buffer_view buf) { payload = std::move(buf); }
 
   void set_payload(const byte_buffer& buf, size_t start, size_t sz)
   {
-    payload = byte_buffer_owning_view{buf, start, sz};
+    payload = shared_byte_buffer_view{buf, start, sz};
   }
 
   /// Prepends bytes to rlc buffer segment. This function may allocate new segments.
@@ -175,7 +175,7 @@ public:
 
 private:
   byte_buffer             header;
-  byte_buffer_owning_view payload;
+  shared_byte_buffer_view payload;
 };
 
 } // namespace srsgnb

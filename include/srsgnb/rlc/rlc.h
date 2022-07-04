@@ -27,7 +27,7 @@ public:
   virtual ~rlc_rx_pdu_handler() = default;
 
   /// Handle the incoming PDU.
-  virtual void handle_pdu(byte_buffer_owning_view pdu) = 0;
+  virtual void handle_pdu(shared_byte_buffer_view pdu) = 0;
 };
 
 /// This interface represents the data exit point of the receiving side of a RLC entity.
@@ -40,7 +40,7 @@ public:
   virtual ~rlc_rx_upper_layer_data_notifier() = default;
 
   /// This method is called to pass the SDU to the upper layers
-  virtual void on_new_sdu(byte_buffer_owning_view pdu) = 0;
+  virtual void on_new_sdu(shared_byte_buffer_view pdu) = 0;
   virtual void on_ack_received()                       = 0;
 };
 
@@ -49,9 +49,9 @@ public:
 /// so that RLC AM can notify the PDCP of ACKs
 struct rlc_sdu {
   uint32_t                pdcp_sn = 0;
-  byte_buffer_owning_view buf     = {};
+  shared_byte_buffer_view buf     = {};
   rlc_sdu()                       = default;
-  rlc_sdu(uint32_t pdcp_sn, byte_buffer_owning_view buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
+  rlc_sdu(uint32_t pdcp_sn, shared_byte_buffer_view buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.

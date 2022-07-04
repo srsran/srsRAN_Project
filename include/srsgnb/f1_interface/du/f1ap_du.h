@@ -24,7 +24,7 @@ struct f1ap_ue_create_response {
 struct f1_rx_pdu {
   du_ue_index_t           ue_index;
   lcid_t                  lcid;
-  byte_buffer_owning_view pdu;
+  shared_byte_buffer_view pdu;
 };
 
 struct f1ap_initial_ul_rrc_msg {

@@ -65,7 +65,7 @@ bool pdu_rx_handler::push_ul_ccch_msg(du_ue_index_t ue_index, byte_buffer ul_ccc
   log_ul_pdu(logger, ue->ue_index, ue->rnti, MAX_NOF_DU_CELLS, "CCCH", "Pushing {} bytes", ul_ccch_msg.length());
 
   // Push CCCH message to upper layers.
-  ue->ul_bearers[LCID_SRB0]->on_new_sdu(byte_buffer_owning_view{std::move(ul_ccch_msg)});
+  ue->ul_bearers[LCID_SRB0]->on_new_sdu(shared_byte_buffer_view{std::move(ul_ccch_msg)});
   return true;
 }
 
@@ -112,7 +112,7 @@ bool pdu_rx_handler::handle_sdu(const decoded_mac_rx_pdu& ctx, const mac_ul_sch_
   }
 
   // Push PDU to upper layers
-  ue->ul_bearers[lcid]->on_new_sdu(byte_buffer_owning_view{ctx.pdu_rx.pdu, sdu.payload()});
+  ue->ul_bearers[lcid]->on_new_sdu(shared_byte_buffer_view{ctx.pdu_rx.pdu, sdu.payload()});
   return true;
 }
 
