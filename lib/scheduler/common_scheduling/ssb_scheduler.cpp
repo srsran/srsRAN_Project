@@ -10,8 +10,8 @@
 
 #include "ssb_scheduler.h"
 #include "../cell/resource_grid.h"
-#include "../support/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/frame_types.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
 using namespace srsgnb;

@@ -8,7 +8,7 @@
  *
  */
 
-#include "lib/scheduler/support/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
@@ -51,9 +51,9 @@ static void test_table_13_1()
 
       // Assert offset.
       if (config_index < 6) {
-        TESTASSERT_EQ(2 * (config_index % 3), description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>(2 * (config_index % 3)), description.offset);
       } else if (config_index < 12) {
-        TESTASSERT_EQ(4 * ((config_index - 6) % 2) + 12, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>(4 * ((config_index - 6) % 2) + 12), description.offset);
       } else if (config_index < 15) {
         TESTASSERT_EQ(38, description.offset);
       } else {
@@ -99,9 +99,9 @@ static void test_table_13_2()
 
       // Assert offset.
       if (config_index < 8) {
-        TESTASSERT_EQ((config_index % 4) + 5, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>((config_index % 4) + 5), description.offset);
       } else if (config_index < 14) {
-        TESTASSERT_EQ(((config_index - 14) % 2) * 2 + 18, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>(((config_index - 14) % 2) * 2 + 18), description.offset);
       } else {
         TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
       }
@@ -145,7 +145,7 @@ static void test_table_13_3()
 
       // Assert offset.
       if (config_index < 6) {
-        TESTASSERT_EQ((config_index % 2) * 4 + 2, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>((config_index % 2) * 4 + 2), description.offset);
       } else if (config_index < 9) {
         TESTASSERT_EQ(28, description.offset);
       } else {
@@ -185,9 +185,9 @@ static void test_table_13_4()
 
       // Assert offset.
       if (config_index < 10) {
-        TESTASSERT_EQ(config_index % 5, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>(config_index % 5), description.offset);
       } else {
-        TESTASSERT_EQ(12 + ((config_index - 10) % 3) * 2, description.offset);
+        TESTASSERT_EQ(static_cast<int8_t>(12 + ((config_index - 10) % 3) * 2), description.offset);
       }
     }
   }
@@ -228,7 +228,7 @@ static void test_table_13_5()
     if (config_index < 3) {
       TESTASSERT_EQ(4, description.offset);
     } else if (config_index < 9) {
-      TESTASSERT_EQ(((config_index - 3) % 2) * 56, description.offset);
+      TESTASSERT_EQ(static_cast<int8_t>(((config_index - 3) % 2) * 56), description.offset);
     } else {
       TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
     }
@@ -266,9 +266,9 @@ static void test_table_13_6()
 
     // Assert offset.
     if (config_index < 5) {
-      TESTASSERT_EQ((config_index % 2) * 4, description.offset);
+      TESTASSERT_EQ(static_cast<int8_t>((config_index % 2) * 4), description.offset);
     } else if (config_index < 10) {
-      TESTASSERT_EQ((config_index % 2) * 28, description.offset);
+      TESTASSERT_EQ(static_cast<int8_t>((config_index % 2) * 28), description.offset);
     } else {
       TESTASSERT_EQ(PDCCH_TYPE0_CSS_CORESET_RESERVED.offset, description.offset);
     }

@@ -12,7 +12,7 @@
 #include "../cell/resource_grid.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
-#include "../support/pdcch/pdcch_type0_css_coreset_config.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 

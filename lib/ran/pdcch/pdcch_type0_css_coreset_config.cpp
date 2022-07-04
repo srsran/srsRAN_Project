@@ -8,7 +8,7 @@
  *
  */
 
-#include "pdcch_type0_css_coreset_config.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/adt/span.h"
 
 using namespace srsgnb;
