@@ -19,7 +19,7 @@ using namespace fapi_adaptor;
 
 namespace {
 
-// Auxiliary struct to group PDCCH PDUs.
+/// Auxiliary struct to group PDCCH PDUs.
 struct pdcch_group {
   const pdcch_dl_information* info;
   const dci_payload*          payload;
@@ -33,15 +33,16 @@ inline bool operator==(const pdcch_group& lhs, const pdcch_group& rhs)
 
 } // namespace
 
-static std::vector<unsigned> find_same_bwp_and_coreset_for_first_element(const std::vector<pdcch_group>& candidates)
+static static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>
+find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT>& candidates)
 {
-  std::vector<unsigned> result;
+  static_vector<unsigned, MAX_DL_PDUS_PER_SLOT> result;
 
   const pdcch_group& lhs = candidates.front();
 
-  for (auto I = std::find(candidates.begin() + 1, candidates.end(), lhs), E = candidates.cend(); I != E;
+  for (auto I = std::find(candidates.begin() + 1, candidates.end(), lhs), E = candidates.end(); I != E;
        I = std::find(I + 1, candidates.end(), lhs)) {
-    result.push_back(std::distance(candidates.cbegin(), I));
+    result.push_back(std::distance(candidates.begin(), I));
   }
 
   return result;
@@ -50,11 +51,9 @@ static std::vector<unsigned> find_same_bwp_and_coreset_for_first_element(const s
 static void add_pdcch_pdus_to_request(dl_tti_request_message_builder& builder, const mac_dl_sched_result& dl_res)
 {
   // Group the PDU's.
-  std::vector<mac_pdcch_pdu> pdus;
-  pdus.reserve(dl_res.pdcch_pdus.size());
+  static_vector<mac_pdcch_pdu, MAX_DL_PDUS_PER_SLOT> pdus;
 
-  std::vector<pdcch_group> candidates;
-  candidates.reserve(dl_res.pdcch_pdus.size());
+  static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT> candidates;
 
   // Fill the candidates.
   for (unsigned i = 0, e = dl_res.pdcch_pdus.size(); i != e; ++i) {
@@ -74,20 +73,21 @@ static void add_pdcch_pdus_to_request(dl_tti_request_message_builder& builder, c
     pdu.dcis.push_back({candidate.info, candidate.payload});
 
     // Find the same BWP and Coreset PDUs.
-    const std::vector<unsigned> pdu_indexes = find_same_bwp_and_coreset_for_first_element(candidates);
+    const static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>& pdu_indexes =
+        find_same_bwp_and_coreset_for_first_element(candidates);
 
-    // Append the DCIs.
+    // Append the DCIs and remove them from the candidates.
     for (unsigned i = pdu_indexes.size(); i; --i) {
       unsigned index = i - 1;
       pdu.dcis.push_back({candidates[index].info, candidates[index].payload});
-      candidates.erase(candidates.cbegin() + index);
+      candidates.erase((candidates.begin() + index));
     }
 
     // Remove the first element.
-    candidates.erase(candidates.cbegin());
+    candidates.erase(candidates.begin());
   }
 
-  // Convert the PDU's to
+  // Convert the MAC PDUs into FAPI PDUs.
   for (const auto& pdu : pdus) {
     dl_pdcch_pdu_builder pdcch_builder = builder.add_pdcch_pdu(pdu.dcis.size());
     convert_pdcch_mac_to_fapi(pdcch_builder, pdu);

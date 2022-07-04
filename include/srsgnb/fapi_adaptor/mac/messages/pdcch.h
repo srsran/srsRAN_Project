@@ -17,17 +17,17 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-// Groups the DCI information.
+/// Groups the DCI information.
 struct dci_info {
   const pdcch_dl_information* parameters;
   const dci_payload*          payload;
 };
 
-// Groups the MAC PDCCH PDU.
+/// Groups the MAC PDCCH PDU.
 struct mac_pdcch_pdu {
-  const bwp_configuration*     bwp_cfg;
-  const coreset_configuration* coreset_cfg;
-  std::vector<dci_info>        dcis;
+  const bwp_configuration*                      bwp_cfg;
+  const coreset_configuration*                  coreset_cfg;
+  static_vector<dci_info, MAX_DL_PDUS_PER_SLOT> dcis;
 };
 
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.
