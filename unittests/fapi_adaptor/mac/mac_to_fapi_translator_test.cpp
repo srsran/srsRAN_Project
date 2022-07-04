@@ -83,7 +83,8 @@ static void test_sched_result_ok()
   // MIB.
   TESTASSERT_EQ(bch_payload_type::phy_full, fapi_pdu.bch_payload_flag);
   TESTASSERT_EQ(pdu.mib_data.pdcch_config_sib1, fapi_pdu.bch_payload.phy_mib_pdu.pdcch_config_sib1);
-  TESTASSERT_EQ(pdu.mib_data.dmrs_typeA_position, fapi_pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position);
+  uint8_t dmrs_typeA_pos = pdu.mib_data.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
+  TESTASSERT_EQ(dmrs_typeA_pos, fapi_pdu.bch_payload.phy_mib_pdu.dmrs_typeA_position);
   TESTASSERT_EQ(pdu.mib_data.cell_barred, fapi_pdu.bch_payload.phy_mib_pdu.cell_barred);
   TESTASSERT_EQ(pdu.mib_data.intra_freq_reselection, fapi_pdu.bch_payload.phy_mib_pdu.intrafreq_reselection);
 }

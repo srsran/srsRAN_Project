@@ -15,10 +15,10 @@ namespace srsgnb {
 constexpr size_t MAX_DL_PDUS_PER_SLOT = 16;
 
 struct ssb_mib_data_pdu {
-  uint8_t dmrs_typeA_position;
-  uint8_t pdcch_config_sib1;
-  bool    cell_barred;
-  bool    intra_freq_reselection;
+  dmrs_typeA_position dmrs_typeA_pos;
+  uint8_t             pdcch_config_sib1;
+  bool                cell_barred;
+  bool                intra_freq_reselection;
 };
 
 struct dl_ssb_pdu {

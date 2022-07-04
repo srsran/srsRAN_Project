@@ -47,7 +47,8 @@ void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& bui
 
   builder.set_maintenance_v3_tx_power_info({}, {});
 
-  const ssb_mib_data_pdu& mib_pdu = mac_pdu.mib_data;
+  const ssb_mib_data_pdu& mib_pdu             = mac_pdu.mib_data;
+  uint8_t                 dmrs_typeA_position = mib_pdu.dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
   builder.set_bch_payload_phy_full(
-      mib_pdu.dmrs_typeA_position, mib_pdu.pdcch_config_sib1, mib_pdu.cell_barred, mib_pdu.intra_freq_reselection);
+      dmrs_typeA_position, mib_pdu.pdcch_config_sib1, mib_pdu.cell_barred, mib_pdu.intra_freq_reselection);
 }

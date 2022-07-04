@@ -43,6 +43,6 @@ void ssb_assembler::assemble_ssb(dl_ssb_pdu&            ssb_pdu,
   // TODO: Understand where these parameters should be taken (They come from RRC MIB msg)
   ssb_pdu.mib_data.cell_barred            = cell_barred;
   ssb_pdu.mib_data.intra_freq_reselection = intra_f_resel;
-  ssb_pdu.mib_data.dmrs_typeA_position    = dmrs_typeA_pos == dmrs_typeA_position::pos2 ? 0 : 1;
+  ssb_pdu.mib_data.dmrs_typeA_pos         = dmrs_typeA_pos;
   ssb_pdu.mib_data.pdcch_config_sib1      = pdcch_config_sib1;
 }

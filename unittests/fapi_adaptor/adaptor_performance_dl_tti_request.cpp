@@ -44,17 +44,17 @@ static void ssb_conversion_benchmark()
 
   for (unsigned i = 0; i != iterations; ++i) {
     srsgnb::dl_ssb_pdu mac_pdu;
-    mac_pdu.pci                             = pci_dist(gen);
-    mac_pdu.beta_pss_profile_nr             = static_cast<ssb_beta_pss>(binary_dist(gen));
-    mac_pdu.ssb_index                       = block_index_dist(gen);
-    mac_pdu.ssb_subcarrier_offset           = subcarrier_offset_dist(gen);
-    mac_pdu.offset_to_point_A               = offset_pointA_dist(gen);
-    mac_pdu.ssb_case                        = static_cast<ssb_pattern_case>(case_dist(gen));
-    mac_pdu.L_max                           = 4;
-    mac_pdu.scs                             = subcarrier_spacing::kHz240;
-    mac_pdu.mib_data.dmrs_typeA_position    = binary_dist(gen);
-    mac_pdu.mib_data.pdcch_config_sib1      = sib1_dist(gen);
-    mac_pdu.mib_data.cell_barred            = binary_dist(gen);
+    mac_pdu.pci                        = pci_dist(gen);
+    mac_pdu.beta_pss_profile_nr        = static_cast<ssb_beta_pss>(binary_dist(gen));
+    mac_pdu.ssb_index                  = block_index_dist(gen);
+    mac_pdu.ssb_subcarrier_offset      = subcarrier_offset_dist(gen);
+    mac_pdu.offset_to_point_A          = offset_pointA_dist(gen);
+    mac_pdu.ssb_case                   = static_cast<ssb_pattern_case>(case_dist(gen));
+    mac_pdu.L_max                      = 4;
+    mac_pdu.scs                        = subcarrier_spacing::kHz240;
+    mac_pdu.mib_data.dmrs_typeA_pos    = binary_dist(gen) == 0 ? dmrs_typeA_position::pos2 : dmrs_typeA_position::pos3;
+    mac_pdu.mib_data.pdcch_config_sib1 = sib1_dist(gen);
+    mac_pdu.mib_data.cell_barred       = binary_dist(gen);
     mac_pdu.mib_data.intra_freq_reselection = binary_dist(gen);
 
     fapi::dl_ssb_pdu     fapi_pdu;
