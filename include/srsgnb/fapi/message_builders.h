@@ -208,9 +208,11 @@ public:
     // Set the payload size initializing it with zeros.
     pdu.payload.resize(std::ceil(payload.size() / 8.F), 0U);
 
-    // NOTE:bit order is bit0-bit7 are mapped to first byte of MSB - LSB.
+    // NOTE: bit order is bit0-bit7 are mapped to first byte of MSB - LSB. The first byte of the array carries the MSB
+    // of the payload in the bit position 0.
+    // NOTE: This builder is assuming that bit 0 is the MSB in dci_payload bitmap.
     for (unsigned i = 0, e = payload.size(); i != e; ++i) {
-      pdu.payload[i / 8] |= uint8_t(payload.test(i) ? 1U : 0U) << i % 8;
+      pdu.payload[i / 8] |= uint8_t(payload.test(i) ? 1U : 0U) << (i % 8);
     }
 
     return *this;
@@ -320,8 +322,9 @@ public:
 
     srsran_assert(pdu.freq_domain_resource.size() == std::ceil(freq_domain_resource.size() / 8.F),
                   "Invalid size of frequency domain resource bitmap");
-    for (unsigned i = 0, e = 45, j = e - 1; i != e; ++i, --j) {
-      pdu.freq_domain_resource[i / 8] |= uint8_t(freq_domain_resource.test(j) ? 1U : 0U) << i % 8;
+    // NOTE: Assuming that the LSB of freq_domain_resource bitmap is in position 0.
+    for (unsigned i = 0, e = 45; i != e; ++i) {
+      pdu.freq_domain_resource[i / 8] |= uint8_t(freq_domain_resource.test(i) ? 1U : 0U) << i % 8;
     }
 
     return *this;

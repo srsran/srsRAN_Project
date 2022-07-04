@@ -13,7 +13,6 @@
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/srsvec/bit.h"
-#include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
 
@@ -97,7 +96,7 @@ static void pdcch_conversion_test()
                   builder_dci.set_tx_power_info_parameter(profile_nr);
 
                   // Payload.
-                  dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 0};
+                  dci_payload payload = {1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1};
                   builder_dci.set_payload(payload);
 
                   optional<float> profile_data;

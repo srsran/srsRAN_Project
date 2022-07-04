@@ -69,8 +69,8 @@ static void test_coreset_params()
   TESTASSERT_EQ(shift_index, pdu.shift_index);
   TESTASSERT_EQ(granularity, pdu.precoder_granularity);
 
-  for (unsigned i = 0, e = freq_domain.size(), j = e - 1; i != e; ++i, --j) {
-    TESTASSERT_EQ(freq_domain.test(i), bool((pdu.freq_domain_resource[j / 8] >> j % 8) & 1U));
+  for (unsigned i = 0, e = freq_domain.size(); i != e; ++i) {
+    TESTASSERT_EQ(freq_domain.test(i), bool((pdu.freq_domain_resource[i / 8] >> i % 8) & 1U));
   }
 }
 
