@@ -181,6 +181,11 @@ pages:
   stage: notify status
   image: $SRS_TOOLS_IMAGE
   before_script:
+    - |
+      if [ -z ${SLACK_CHANNEL+x} ]; then
+        echo "Variable SLACK_CHANNEL is unset"
+        exit 1
+      fi
     - !reference [.srs_tools_setup_job, before_script]
     - srs_tools_setup
     - MSG="Pipeline <${CI_PIPELINE_URL}|#${CI_PIPELINE_IID}> for commit <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}."
@@ -189,16 +194,18 @@ pages:
 success ci:
   extends: .notifier
   rules:
-    - if: $ON_SCHEDULE
+    - if: $ON_SCHEDULE == "true" && $NOTIFY_SLACK == "true"
   script:
-    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "#ci_gnb" --token "${SLACK_TOKEN}"
+    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "${SLACK_CHANNEL}" --token "${SLACK_TOKEN}"
 
 failed ci:
   extends: .notifier
   rules:
-    - if: $ON_SCHEDULE
+    - if: $ON_SCHEDULE == "true" && $NOTIFY_SLACK == "true"
       when: on_failure
-    - if: $ON_DEFAULT_BRANCH
+    - if: $ON_DEFAULT_BRANCH == "true"
+      variables:
+        SLACK_CHANNEL: "#ci_gnb"
       when: on_failure
   script:
-    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "#ci_gnb" --token "${SLACK_TOKEN}"
+    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "${SLACK_CHANNEL}" --token "${SLACK_TOKEN}"

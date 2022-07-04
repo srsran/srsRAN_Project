@@ -3,3 +3,10 @@ Nightly:
   cron_timezone: "Europe/Madrid"
   ref: dev
   active: true
+  variables:
+    - variable_type: env_var
+      key: NOTIFY_SLACK
+      value: "false"
+    - variable_type: env_var
+      key: SLACK_CHANNEL
+      value: "#ci_test"
