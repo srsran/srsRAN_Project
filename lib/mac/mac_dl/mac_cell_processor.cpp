@@ -24,7 +24,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   cell_cfg(cell_cfg_req_),
   cell_exec(cfg.dl_exec_mapper.executor(cell_cfg.cell_index)),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
-  ssb_helper(cell_cfg_req_.pci, cell_cfg_req_.ssb_cfg, cell_cfg_req_.dl_carrier.arfcn),
+  ssb_helper(cell_cfg_req_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
 {
@@ -108,12 +108,7 @@ void mac_cell_processor::assemble_dl_sched_request(mac_dl_sched_result&   mac_re
   // Assemble SSB scheduling info and additional SSB/MIB parameters to pass to PHY.
   for (auto& ssb : dl_res.bc.ssb_info) {
     mac_res.ssb_pdu.emplace_back();
-    ssb_helper.assemble_ssb(mac_res.ssb_pdu.back(),
-                            ssb,
-                            (cell_cfg.sched_req.coreset0 << 4U) + cell_cfg.sched_req.searchspace0,
-                            cell_cfg.sched_req.dmrs_typeA_pos,
-                            cell_cfg.cell_barred,
-                            cell_cfg.intra_freq_resel);
+    ssb_helper.assemble_ssb(mac_res.ssb_pdu.back(), ssb);
   }
 
   // Encode PDCCH DCI payloads.

@@ -67,7 +67,7 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
   sched_req.nof_ant_ports = 1;
 
   /// SIB1 parameters.
-  sched_req.coreset0              = du_cfg.searchspace0_idx;
+  sched_req.coreset0              = du_cfg.coreset0_idx;
   sched_req.searchspace0          = du_cfg.searchspace0_idx;
   sched_req.sib1_mcs              = 5;
   sched_req.sib1_rv               = 0;

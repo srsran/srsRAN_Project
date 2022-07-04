@@ -15,20 +15,19 @@
 
 using namespace srsgnb;
 
-ssb_assembler::ssb_assembler(pci_t pci_, const ssb_configuration& ssb_cfg_, unsigned dl_arfcn) :
-  pci(pci_),
-  ssb_cfg(ssb_cfg_),
-  ssb_case(ssb_get_ssb_pattern(ssb_cfg.scs, dl_arfcn)),
-  L_max(ssb_get_L_max(ssb_cfg.scs, dl_arfcn))
+ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
+  pci(cell_cfg.pci),
+  ssb_cfg(cell_cfg.ssb_cfg),
+  pdcch_config_sib1((cell_cfg.sched_req.coreset0 << 4U) + cell_cfg.sched_req.searchspace0),
+  dmrs_typeA_pos(cell_cfg.sched_req.dmrs_typeA_pos),
+  cell_barred(cell_cfg.cell_barred),
+  intra_f_resel(cell_cfg.intra_freq_resel),
+  ssb_case(ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn)),
+  L_max(ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn))
 {
 }
 
-void ssb_assembler::assemble_ssb(dl_ssb_pdu&            ssb_pdu,
-                                 const ssb_information& ssb_info,
-                                 uint8_t                pdcch_config_sib1,
-                                 dmrs_typeA_position    dmrs_typeA_pos,
-                                 bool                   cell_barred,
-                                 bool                   intra_f_resel)
+void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
 {
   ssb_pdu.pci                   = pci;
   ssb_pdu.beta_pss_profile_nr   = ssb_beta_pss::dB_0;

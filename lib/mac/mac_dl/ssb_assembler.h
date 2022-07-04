@@ -11,6 +11,7 @@
 #ifndef SRSGNB_SSB_ASSEMBLER_H
 #define SRSGNB_SSB_ASSEMBLER_H
 
+#include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_configuration.h"
 #include "srsgnb/scheduler/dmrs.h"
@@ -26,29 +27,24 @@ struct ssb_information;
 class ssb_assembler
 {
 public:
-  explicit ssb_assembler(pci_t pci, const ssb_configuration& ssb_cfg_, unsigned dl_arfcn);
+  explicit ssb_assembler(const mac_cell_creation_request& cell_cfg);
 
   /// \brief Assemble SSB message to be sent to PHY.
   /// This function fills the SSB msg to send to PHY using parameters from: (i) MAC configuration (general and SSB);(ii)
   /// SSB-specific dependent parameters; (iii) SSB scheduling results.
   /// \param[out] ssb_pdu SSB message to be sent to PHY.
   /// \param[in]  ssb_info SSB scheduling results.
-  /// \param[in]  pdcch_config_sib1 parameter PDCCH-ConfigSIB1 as per [MIB, TS 38.331] used to pack the MIB.
-  /// \param[in]  dmrs_typeA_pos parameter dmrs-TypeA-Position as per [MIB, TS 38.331] used to pack the MIB.
-  /// \param[in]  cell_barred parameter cellBarred as per [MIB, TS 38.331] used to pack the MIB.
-  /// \param[in]  intra_f_resel parameter intraFreqReselection as per [MIB, TS 38.331] used to pack the MIB.
-  void assemble_ssb(dl_ssb_pdu&            ssb_pdu,
-                    const ssb_information& ssb_info,
-                    uint8_t                pdcch_config_sib1,
-                    dmrs_typeA_position    dmrs_typeA_pos,
-                    bool                   cell_barred,
-                    bool                   intra_f_resel);
+  void assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info);
 
 private:
   /// Cell PCI.
   pci_t pci;
   /// SSB configuration for the cell.
   const ssb_configuration ssb_cfg;
+  uint8_t                 pdcch_config_sib1;
+  dmrs_typeA_position     dmrs_typeA_pos;
+  bool                    cell_barred;
+  bool                    intra_f_resel;
 
   /// Other derived SSB parameters.
   ssb_pattern_case ssb_case;
