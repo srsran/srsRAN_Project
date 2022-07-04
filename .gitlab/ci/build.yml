@@ -21,6 +21,8 @@ stages:
 
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
+  tags:
+    - srs-rfci-docker
 
 # Build
 
