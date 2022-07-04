@@ -22,7 +22,7 @@ class mac_sdu_rx_adapter : public mac_sdu_rx_notifier
 public:
   explicit mac_sdu_rx_adapter(rlc_rx_pdu_handler& rlc_rx) : rlc_handler(rlc_rx) {}
 
-  void on_new_sdu(mac_sdu_data sdu) override { rlc_handler.handle_pdu(std::move(sdu)); }
+  void on_new_sdu(byte_buffer_owning_view sdu) override { rlc_handler.handle_pdu(std::move(sdu)); }
 
 private:
   rlc_rx_pdu_handler& rlc_handler;

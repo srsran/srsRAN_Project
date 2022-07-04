@@ -19,12 +19,6 @@
 
 namespace srsgnb {
 
-/// Type used to represent a PDU received or forward to the RLC entity.
-using rlc_pdu_data = byte_buffer_owning_view;
-
-/// Type used to represent an SDU received or forwarded to the RLC entity.
-using rlc_sdu_data = byte_buffer_owning_view;
-
 /// This interface represents the data entry point of the receiving side of a RLC entity.
 /// The lower-layers will use this class to pass PDUs into the RLC.
 class rlc_rx_pdu_handler
@@ -33,7 +27,7 @@ public:
   virtual ~rlc_rx_pdu_handler() = default;
 
   /// Handle the incoming PDU.
-  virtual void handle_pdu(rlc_pdu_data pdu) = 0;
+  virtual void handle_pdu(byte_buffer_owning_view pdu) = 0;
 };
 
 /// This interface represents the data exit point of the receiving side of a RLC entity.
@@ -46,18 +40,18 @@ public:
   virtual ~rlc_rx_upper_layer_data_notifier() = default;
 
   /// This method is called to pass the SDU to the upper layers
-  virtual void on_new_sdu(rlc_pdu_data pdu) = 0;
-  virtual void on_ack_received()            = 0;
+  virtual void on_new_sdu(byte_buffer_owning_view pdu) = 0;
+  virtual void on_ack_received()                       = 0;
 };
 
 /// Structure used to represent an RLC SDU. An RLC SDU
 /// must be accompanied with the corresponding PDCP SN
 /// so that RLC AM can notify the PDCP of ACKs
 struct rlc_sdu {
-  uint32_t     pdcp_sn = 0;
-  rlc_sdu_data buf     = {};
-  rlc_sdu()            = default;
-  rlc_sdu(uint32_t pdcp_sn, rlc_sdu_data buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
+  uint32_t                pdcp_sn = 0;
+  byte_buffer_owning_view buf     = {};
+  rlc_sdu()                       = default;
+  rlc_sdu(uint32_t pdcp_sn, byte_buffer_owning_view buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
