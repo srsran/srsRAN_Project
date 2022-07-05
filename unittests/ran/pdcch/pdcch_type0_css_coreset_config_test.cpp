@@ -278,7 +278,7 @@ static void test_table_13_6()
 static void test_table_13_7()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    for (ssb_subcarrier_offset subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
+    for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           40, subcarrier_spacing::kHz120, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
 
@@ -336,7 +336,7 @@ static void test_table_13_7()
 static void test_table_13_8()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    for (ssb_subcarrier_offset subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
+    for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           40, subcarrier_spacing::kHz120, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
 
@@ -386,7 +386,7 @@ static void test_table_13_8()
 static void test_table_13_9()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    for (ssb_subcarrier_offset subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
+    for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           40, subcarrier_spacing::kHz240, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
 
@@ -424,7 +424,7 @@ static void test_table_13_9()
 static void test_table_13_10()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    for (ssb_subcarrier_offset subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
+    for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           40, subcarrier_spacing::kHz240, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
 
