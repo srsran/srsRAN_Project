@@ -14,6 +14,7 @@
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_config.h"
 #include "srsgnb/rlc/rlc_entity.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
@@ -24,6 +25,7 @@ struct rlc_entity_creation_message {
   rlc_config                           config;
   rlc_rx_upper_layer_data_notifier*    upper_dn;
   rlc_tx_upper_layer_control_notifier* upper_cn;
+  timer_manager*                       timers;
 };
 
 /// Creates an instance of a RLC bearer

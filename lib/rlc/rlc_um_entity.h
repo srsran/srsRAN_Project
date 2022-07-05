@@ -24,11 +24,12 @@ public:
                 lcid_t                               lcid,
                 const rlc_um_config&                 config,
                 rlc_rx_upper_layer_data_notifier&    upper_dn,
-                rlc_tx_upper_layer_control_notifier& upper_cn) :
+                rlc_tx_upper_layer_control_notifier& upper_cn,
+                timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
     tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_um_entity(du_index, lcid, config, upper_cn));
-    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, config, upper_dn));
+    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, config, upper_dn, timers));
   }
 };
 

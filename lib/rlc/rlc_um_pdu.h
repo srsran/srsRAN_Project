@@ -29,6 +29,11 @@ struct rlc_um_pdu_header {
   uint16_t       so;      ///< Segment offset
 };
 
+struct rlc_um_pdu {
+  rlc_um_pdu_header       header;
+  byte_buffer_owning_view payload;
+};
+
 /****************************************************************************
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 version 15.3.0 Section 6.2.2.3

@@ -16,4 +16,4 @@ set(SOURCES
 )
 
 add_library(srsgnb_rlc STATIC ${SOURCES})
-target_link_libraries(srsgnb_rlc)
+target_link_libraries(srsgnb_rlc srsgnb_support)
