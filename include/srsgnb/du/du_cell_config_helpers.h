@@ -175,7 +175,11 @@ inline ssb_configuration make_default_ssb_config()
 inline du_cell_config make_default_du_cell_config()
 {
   du_cell_config cfg{};
-  cfg.pci              = 1;
+  cfg.pci     = 1;
+  cfg.plmn    = "00101";
+  cfg.tac     = 1;
+  cfg.cell_id = 1;
+
   cfg.dl_carrier       = make_default_carrier_configuration();
   cfg.ul_carrier       = make_default_carrier_configuration();
   cfg.coreset0_idx     = 6U;

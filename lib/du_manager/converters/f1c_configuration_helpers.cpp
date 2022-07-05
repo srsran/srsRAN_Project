@@ -74,8 +74,6 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
       cfg.precoder_granurality == coreset_configuration::precoder_granularity_type::same_as_reg_bundle
           ? coreset_s::precoder_granularity_opts::same_as_reg_bundle
           : coreset_s::precoder_granularity_opts::all_contiguous_rbs;
-  // TODO: tci-StatesPDCCH-ToAddList
-  // TODO: tci-StatesPDCCH-ToReleaseList
   if (cfg.pdcch_dmrs_scrambling_id.has_value()) {
     cs.pdcch_dmrs_scrambling_id_present = true;
     cs.pdcch_dmrs_scrambling_id         = *cfg.pdcch_dmrs_scrambling_id;
@@ -110,7 +108,7 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
       ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset;
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl10:
-      ss.monitoring_slot_periodicity_and_offset.sl8() = cfg.monitoring_slot_offset;
+      ss.monitoring_slot_periodicity_and_offset.sl10() = cfg.monitoring_slot_offset;
       break;
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl16:
       ss.monitoring_slot_periodicity_and_offset.sl16() = cfg.monitoring_slot_offset;
@@ -267,16 +265,18 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
 
   sib1.cell_access_related_info.plmn_id_list.resize(1);
   sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc_present = true;
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[0]      = 0;
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[1]      = 0;
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mcc[2]      = 1;
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc.resize(2);
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc[0] = 0;
-  sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0].mnc[1] = 1;
-  sib1.cell_access_related_info.plmn_id_list[0].tac_present            = true;
-  // sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(cell_cfg.tac);
-  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(/* random choice*/ 1);
+  plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0];
+  plmn.mcc_present = true;
+  plmn.mcc[0]      = du_cfg.plmn[0];
+  plmn.mcc[1]      = du_cfg.plmn[1];
+  plmn.mcc[2]      = du_cfg.plmn[2];
+  plmn.mnc.resize(du_cfg.plmn.size() == 5 ? 2 : 3);
+  for (unsigned i = 3; i < du_cfg.plmn.size(); ++i) {
+    plmn.mnc[i - 3] = du_cfg.plmn[i];
+  }
+  sib1.cell_access_related_info.plmn_id_list[0].tac_present = true;
+  sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(du_cfg.tac);
+  sib1.cell_access_related_info.plmn_id_list[0].cell_id.from_number(du_cfg.cell_id);
   sib1.cell_access_related_info.plmn_id_list[0].cell_reserved_for_oper.value =
       plmn_id_info_s::cell_reserved_for_oper_opts::not_reserved;
 

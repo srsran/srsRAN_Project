@@ -20,7 +20,10 @@ namespace srsgnb {
 
 /// Initial, common Cell Configuration used in DU.
 struct du_cell_config {
-  pci_t pci;
+  pci_t       pci;
+  std::string plmn;
+  uint32_t    tac;
+  uint32_t    cell_id;
 
   carrier_configuration dl_carrier;
   carrier_configuration ul_carrier;
