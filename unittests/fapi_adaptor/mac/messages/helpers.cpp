@@ -96,7 +96,7 @@ dl_ssb_pdu unittests::build_valid_dl_ssb_pdu()
   pdu.ssb_case                        = static_cast<ssb_pattern_case>(generate_case_pattern());
   pdu.L_max                           = 4;
   pdu.scs                             = subcarrier_spacing::kHz240;
-  pdu.mib_data.dmrs_typeA_pos         = generate_binary() == 0 ? dmrs_typeA_position::pos2 : dmrs_typeA_position::pos3;
+  pdu.mib_data.dmrs_typeA_pos         = generate_bool() ? dmrs_typeA_position::pos2 : dmrs_typeA_position::pos3;
   pdu.mib_data.pdcch_config_sib1      = generate_byte();
   pdu.mib_data.cell_barred            = generate_bool();
   pdu.mib_data.intra_freq_reselection = generate_bool();

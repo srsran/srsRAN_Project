@@ -216,10 +216,11 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
 void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity ssb_period)
 {
   // Instantiate the test_bench and the SIB1 scheduler.
-  test_bench     t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, ssb_period};
+  test_bench t_bench{subcarrier_spacing::kHz15, 9U, 0b10000000, ssb_period};
+  uint8_t    pdcch_config_sib1 = static_cast<uint8_t>((t_bench.cfg_msg.coreset0 << 4U) + t_bench.cfg_msg.searchspace0);
   sib1_scheduler sib1_sched{t_bench.cfg,
                             t_bench.pdcch_sch,
-                            t_bench.cfg_msg.pdcch_config_sib1,
+                            pdcch_config_sib1,
                             t_bench.cfg_msg.sib1_mcs,
                             t_bench.cfg_msg.sib1_rv,
                             t_bench.cfg_msg.sib1_dci_aggr_lev,
