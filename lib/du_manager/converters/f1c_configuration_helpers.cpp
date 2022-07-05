@@ -155,14 +155,19 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level8, cfg.nof_candidates[3]);
   asn1::number_to_enum(ss.nrof_candidates.aggregation_level16, cfg.nof_candidates[4]);
   ss.search_space_type_present = true;
-  // TODO: support more format types.
-  if (cfg.type == search_space_configuration::common) {
+  if (cfg.type == search_space_configuration::type::common) {
     ss.search_space_type.set_common();
-    ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = true;
+    ss.search_space_type.common().dci_format0_minus0_and_format1_minus0_present = cfg.common.f0_0_and_f1_0;
+    ss.search_space_type.common().dci_format2_minus0_present                    = cfg.common.f2_0;
+    ss.search_space_type.common().dci_format2_minus1_present                    = cfg.common.f2_1;
+    ss.search_space_type.common().dci_format2_minus2_present                    = cfg.common.f2_2;
+    ss.search_space_type.common().dci_format2_minus3_present                    = cfg.common.f2_3;
   } else {
     ss.search_space_type.set_ue_specific();
     ss.search_space_type.ue_specific().dci_formats.value =
-        search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus0_and_minus1_minus0;
+        cfg.ue_specific == srsgnb::search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0
+            ? search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus0_and_minus1_minus0
+            : search_space_s::search_space_type_c_::ue_specific_s_::dci_formats_opts::formats0_minus1_and_minus1_minus1;
   }
   return ss;
 }
@@ -267,12 +272,12 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list.resize(1);
   plmn_id_s& plmn  = sib1.cell_access_related_info.plmn_id_list[0].plmn_id_list[0];
   plmn.mcc_present = true;
-  plmn.mcc[0]      = du_cfg.plmn[0];
-  plmn.mcc[1]      = du_cfg.plmn[1];
-  plmn.mcc[2]      = du_cfg.plmn[2];
+  plmn.mcc[0]      = du_cfg.plmn[0] - '0';
+  plmn.mcc[1]      = du_cfg.plmn[1] - '0';
+  plmn.mcc[2]      = du_cfg.plmn[2] - '0';
   plmn.mnc.resize(du_cfg.plmn.size() == 5 ? 2 : 3);
   for (unsigned i = 3; i < du_cfg.plmn.size(); ++i) {
-    plmn.mnc[i - 3] = du_cfg.plmn[i];
+    plmn.mnc[i - 3] = du_cfg.plmn[i] - '0';
   }
   sib1.cell_access_related_info.plmn_id_list[0].tac_present = true;
   sib1.cell_access_related_info.plmn_id_list[0].tac.from_number(du_cfg.tac);

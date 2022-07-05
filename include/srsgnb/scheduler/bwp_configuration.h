@@ -44,7 +44,17 @@ inline bool is_search_space_valid(search_space_id ss_id)
 /// \remark See TS 38.331, "SearchSpace".
 struct search_space_configuration {
   /// SearchSpace Type.
-  enum search_space_type { common, ue_dedicated };
+  enum class type { common, ue_dedicated };
+  /// SearchSpace Common Type DCI Formats.
+  struct common_dci_format {
+    bool f0_0_and_f1_0;
+    bool f2_0;
+    bool f2_1;
+    bool f2_2;
+    bool f2_3;
+  };
+  /// SearchSpace UE-specific DCI formats.
+  enum class ue_specific_dci_format { f0_0_and_f1_0, f0_1_and_1_1 };
 
   search_space_id id;
   coreset_id      cs_id;
@@ -61,7 +71,11 @@ struct search_space_configuration {
   /// Number of PDCCH candidates per aggregation level. The aggregation level for the array element with index "x"
   /// is L=1U << x. The possible values for each element are {0, 1, 2, 3, 4, 5, 6, 8}.
   std::array<uint8_t, 5> nof_candidates;
-  search_space_type      type;
+  type                   type;
+  union {
+    common_dci_format      common;
+    ue_specific_dci_format ue_specific;
+  };
 };
 
 /// \remark See TS 38.331, "PDCCH-ConfigCommon"

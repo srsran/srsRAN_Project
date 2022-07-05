@@ -349,7 +349,7 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
   pdcch.ctx.cces.aggr_lvl     = aggr_lvl;
   // See TS 38.331, 7.3.2.3 - Scrambling.
   pdcch.ctx.n_id_pdcch_data = cell_cfg.pci;
-  if (ss_cfg.type == search_space_configuration::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
+  if (ss_cfg.type == search_space_configuration::type::ue_dedicated and cs_cfg.pdcch_dmrs_scrambling_id.has_value()) {
     pdcch.ctx.n_id_pdcch_data   = cs_cfg.pdcch_dmrs_scrambling_id.value();
     pdcch.ctx.n_rnti_pdcch_data = rnti;
   }

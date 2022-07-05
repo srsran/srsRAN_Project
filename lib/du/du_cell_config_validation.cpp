@@ -112,7 +112,8 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   }
   for (const search_space_configuration& ss : bwp.pdcch_common.search_spaces) {
     HANDLE_RETURN(is_search_space_valid(ss));
-    CHECK_EQ(ss.type, search_space_configuration::common, "common SearchSpace#{} type", ss.id);
+    CHECK_EQ(ss.type, search_space_configuration::type::common, "common SearchSpace#{} type", ss.id);
+    CHECK_TRUE(ss.common.f0_0_and_f1_0, "common SearchSpace#{} must enable DCI format1_0 and format0_0", ss.id);
     if (ss.cs_id == 0) {
       CHECK_TRUE(
           bwp.pdcch_common.coreset0.has_value(), "common SearchSpace#{} points to CORESET#0 which is inactive", ss.id);
