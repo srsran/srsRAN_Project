@@ -101,16 +101,16 @@ public:
         }
 
         ssb_processor::pdu_t pdu;
-        pdu.slot                  = context.slot;
-        pdu.phys_cell_id          = ssb_config.phys_cell_id;
-        pdu.beta_pss              = ssb_config.beta_pss_dB;
-        pdu.ssb_idx               = ssb_idx;
-        pdu.L_max                 = ssb_config.L_max;
-        pdu.ssb_subcarrier_offset = ssb_config.ssb_subcarrier_offset;
-        pdu.ssb_offset_pointA     = ssb_config.ssb_offset_pointA;
-        pdu.pattern_case          = ssb_config.pattern_case;
-        pdu.bch_payload           = {};
-        pdu.ports                 = {0};
+        pdu.slot              = context.slot;
+        pdu.phys_cell_id      = ssb_config.phys_cell_id;
+        pdu.beta_pss          = ssb_config.beta_pss_dB;
+        pdu.ssb_idx           = ssb_idx;
+        pdu.L_max             = ssb_config.L_max;
+        pdu.subcarrier_offset = ssb_config.ssb_subcarrier_offset;
+        pdu.offset_to_pointA  = ssb_config.ssb_offset_pointA;
+        pdu.pattern_case      = ssb_config.pattern_case;
+        pdu.bch_payload       = {};
+        pdu.ports             = {0};
 
         ssb->process(pdu, rg);
         logger.info("SSB: phys_cell_id={}; ssb_idx={};", pdu.phys_cell_id, pdu.ssb_idx);

@@ -11,6 +11,7 @@
 #ifndef SRSGNB_RAN_SUBCARRIER_SPACING_H
 #define SRSGNB_RAN_SUBCARRIER_SPACING_H
 
+#include "srsgnb/ran/frequency_range.h"
 #include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
@@ -26,10 +27,10 @@ constexpr inline bool is_scs_valid(subcarrier_spacing scs)
 {
   return scs <= subcarrier_spacing::kHz240;
 }
-constexpr inline bool is_scs_valid(subcarrier_spacing scs, bool is_fr2)
+constexpr inline bool is_scs_valid(subcarrier_spacing scs, frequency_range fr)
 {
-  return is_scs_valid(scs) and
-         ((is_fr2 and scs >= subcarrier_spacing::kHz60) or (not is_fr2 and scs <= subcarrier_spacing::kHz60));
+  return is_scs_valid(scs) and (((fr == frequency_range::FR2) and scs >= subcarrier_spacing::kHz60) or
+                                ((fr == frequency_range::FR1) and scs <= subcarrier_spacing::kHz60));
 }
 
 /// Convert SCS into integer in kHz

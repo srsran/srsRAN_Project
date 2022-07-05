@@ -56,8 +56,8 @@ bool srsgnb::slot_is_ul(const tdd_ul_dl_config_common& cfg, slot_point slot)
 cell_configuration::cell_configuration(const sched_cell_configuration_request_message& msg) :
   cell_index(msg.cell_index),
   pci(msg.pci),
-  nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, msg.scs_common, false)),
-  nof_ul_prbs(get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, msg.scs_common, false)),
+  nof_dl_prbs(get_max_Nprb(msg.dl_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),
+  nof_ul_prbs(get_max_Nprb(msg.ul_carrier.carrier_bw_mhz, msg.scs_common, frequency_range::FR1)),
   nof_slots_per_frame(get_nof_slots_per_subframe(msg.dl_cfg_common.init_dl_bwp.generic_params.scs)),
   dl_cfg_common(msg.dl_cfg_common),
   ul_cfg_common(msg.ul_cfg_common),

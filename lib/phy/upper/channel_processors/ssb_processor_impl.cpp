@@ -19,7 +19,10 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   // Calculate derivative parameters
   unsigned l_start_in_burst = ssb_get_l_first(pdu.pattern_case, pdu.ssb_idx);
   unsigned l_start          = (l_start_in_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL));
-  unsigned k_start          = ssb_get_k_first(pdu.slot.numerology(), pdu.ssb_offset_pointA, pdu.ssb_subcarrier_offset);
+  unsigned k_start          = ssb_get_k_first(to_frequency_range(pdu.pattern_case),
+                                     to_subcarrier_spacing(pdu.pattern_case),
+                                     pdu.offset_to_pointA,
+                                     pdu.subcarrier_offset);
 
   // Make sure the slot matches with the SS/PBCH transmission slot
   srsran_assert((l_start_in_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL)) == pdu.slot.hrf_slot_index(),
@@ -35,7 +38,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   pbch_msg.hrf                      = pdu.slot.is_odd_hrf();
   pbch_msg.payload                  = pdu.bch_payload;
   pbch_msg.sfn                      = pdu.slot.sfn();
-  pbch_msg.k_ssb                    = pdu.ssb_subcarrier_offset;
+  pbch_msg.k_ssb                    = pdu.subcarrier_offset;
 
   // Encode PBCH
   std::array<uint8_t, pbch_encoder::E> encoded_bits;

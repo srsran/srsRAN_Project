@@ -137,14 +137,14 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
                                                    uint16_t              sfn,
                                                    uint16_t              slot)
 {
-  proc_pdu.slot                  = slot_point(static_cast<uint32_t>(fapi_pdu.ssb_maintenance_v3.scs), sfn, slot);
-  proc_pdu.phys_cell_id          = fapi_pdu.phys_cell_id;
-  proc_pdu.beta_pss              = get_beta_pss(fapi_pdu);
-  proc_pdu.ssb_idx               = fapi_pdu.ssb_block_index;
-  proc_pdu.L_max                 = fapi_pdu.ssb_maintenance_v3.lmax;
-  proc_pdu.ssb_subcarrier_offset = fapi_pdu.ssb_subcarrier_offset;
-  proc_pdu.ssb_offset_pointA     = fapi_pdu.ssb_offset_pointA;
-  proc_pdu.pattern_case          = fapi_pdu.ssb_maintenance_v3.case_type;
+  proc_pdu.slot              = slot_point(static_cast<uint32_t>(fapi_pdu.ssb_maintenance_v3.scs), sfn, slot);
+  proc_pdu.phys_cell_id      = fapi_pdu.phys_cell_id;
+  proc_pdu.beta_pss          = get_beta_pss(fapi_pdu);
+  proc_pdu.ssb_idx           = fapi_pdu.ssb_block_index;
+  proc_pdu.L_max             = fapi_pdu.ssb_maintenance_v3.lmax;
+  proc_pdu.subcarrier_offset = fapi_pdu.ssb_subcarrier_offset;
+  proc_pdu.offset_to_pointA  = fapi_pdu.ssb_offset_pointA;
+  proc_pdu.pattern_case      = fapi_pdu.ssb_maintenance_v3.case_type;
 
   // Calculate half radio frame.
   unsigned hrf = proc_pdu.slot.is_odd_hrf() ? 1 : 0;

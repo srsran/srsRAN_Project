@@ -401,11 +401,10 @@ int main(int argc, char** argv)
   double ssb_offset_pointA_Hz = ssb_lowest_freq_Hz - dl_pointA_freq_Hz;
   // SSB frequency from PointA to the lowest SS/PBCH block subcarrier in 15kHz subcarriers.
   unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
-  // SSB frequency from PointA to the lowest SS/PBCH block subcarrier in PRB of the SCS.
-  unsigned ssb_offset_pointA_subc_rb = ssb_offset_pointA_subc_15kHz / (NRE * pow2(to_numerology_value(scs)));
+  // Offset between the point A and the beginning of the common resource grid in RB.
+  ssb_offset_to_pointA ssb_offset_pointA_subc_rb = divide_ceil(ssb_offset_pointA_subc_15kHz, NRE);
   // Remainder SSB frequency from PointA to the lowest SS/PBCH block subcarrier in 15kHz subcarriers.
-  unsigned ssb_subcarrier_offset_subc_15kHz =
-      ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb * (NRE * pow2(to_numerology_value(scs)));
+  unsigned ssb_subcarrier_offset_subc_15kHz = ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb * NRE;
 
   upper_phy_ssb_example::configuration upper_phy_sample_config;
   upper_phy_sample_config.log_level                        = log_level;

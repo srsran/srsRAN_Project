@@ -41,6 +41,8 @@ int main()
   std::uniform_int_distribution<unsigned> pci_dist(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> bit_dist(0, 1);
   std::uniform_int_distribution<unsigned> port_dist(0, 63);
+  std::uniform_int_distribution<unsigned> offset_to_pointA_dist(0, 11);
+  std::uniform_int_distribution<unsigned> ssb_subcarrier_offset_dist(0, 2199);
 
   resource_grid_dummy grid;
 
@@ -67,25 +69,7 @@ int main()
       // Iterate possible beta PSS
       for (float beta_pss : {0.0F, -3.0F}) {
         // Select numerology from case
-        unsigned numerology = 0; // 15 kHz
-        switch (pattern_case) {
-          case ssb_pattern_case::A:
-            // 15 kHz
-            break;
-          case ssb_pattern_case::B:
-          case ssb_pattern_case::C:
-            numerology = 1; // 30 kHz
-            break;
-          case ssb_pattern_case::D:
-            numerology = 3; // 120 kHz
-            break;
-          case ssb_pattern_case::E:
-            numerology = 4; // 240 kHz
-            break;
-          case ssb_pattern_case::invalid:
-            TESTASSERT(false, "Invalid SSB pattern case.");
-            break;
-        }
+        subcarrier_spacing scs = to_subcarrier_spacing(pattern_case);
 
         // Skip invalid pattern and L_max combinations
         if (pattern_case != ssb_pattern_case::E && pattern_case != ssb_pattern_case::D && L_max == 64) {
@@ -94,32 +78,42 @@ int main()
 
         // Iterate over all possible SS/PBCH block candidates
         for (unsigned ssb_idx = 0; ssb_idx < L_max; ++ssb_idx) {
-          unsigned ssb_offset_pointA     = 0;
-          unsigned ssb_subcarrier_offset = 0;
+          unsigned ssb_offset_pointA     = offset_to_pointA_dist(rgen);
+          unsigned ssb_subcarrier_offset = ssb_subcarrier_offset_dist(rgen);
+
+          // Round subcarrier offset to be valid.
+          if (scs != subcarrier_spacing::kHz15 && scs != subcarrier_spacing::kHz60) {
+            unsigned N = 2;
+            if (scs == subcarrier_spacing::kHz240) {
+              N = 4;
+            }
+            ssb_subcarrier_offset = N * (ssb_subcarrier_offset / N);
+          }
 
           // Deduce derivative variables
           unsigned ssb_first_symbol_burst = ssb_get_l_first(pattern_case, ssb_idx);
-          unsigned nslots_in_subframe     = 1 << numerology;
+          unsigned nslots_in_subframe     = pow2(to_numerology_value(scs));
           unsigned slot_in_burst          = ssb_first_symbol_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL);
           unsigned subframe_in_burst      = slot_in_burst / nslots_in_subframe;
           unsigned slot_in_subframe       = slot_in_burst % nslots_in_subframe;
 
           // Deduce derivative assertion values
-          unsigned ssb_first_subcarrier  = ssb_get_k_first(numerology, ssb_offset_pointA, ssb_subcarrier_offset);
+          unsigned ssb_first_subcarrier =
+              ssb_get_k_first(to_frequency_range(pattern_case), scs, ssb_offset_pointA, ssb_subcarrier_offset);
           unsigned ssb_first_symbol_slot = ssb_first_symbol_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
           // Iterate half frames
           for (unsigned subframe : {0 + subframe_in_burst, 5 + subframe_in_burst}) {
             // Generate PBCH PDU
-            ssb_processor::pdu_t pdu  = {};
-            pdu.slot                  = {numerology, sfn_dist(rgen), subframe, slot_in_subframe};
-            pdu.phys_cell_id          = pci_dist(rgen);
-            pdu.beta_pss              = beta_pss;
-            pdu.ssb_idx               = ssb_idx;
-            pdu.L_max                 = L_max;
-            pdu.ssb_subcarrier_offset = ssb_offset_pointA;
-            pdu.ssb_offset_pointA     = 0;
-            pdu.pattern_case          = pattern_case;
+            ssb_processor::pdu_t pdu = {};
+            pdu.slot                 = {to_numerology_value(scs), sfn_dist(rgen), subframe, slot_in_subframe};
+            pdu.phys_cell_id         = pci_dist(rgen);
+            pdu.beta_pss             = beta_pss;
+            pdu.ssb_idx              = ssb_idx;
+            pdu.L_max                = L_max;
+            pdu.subcarrier_offset    = ssb_subcarrier_offset;
+            pdu.offset_to_pointA     = ssb_offset_pointA;
+            pdu.pattern_case         = pattern_case;
             pdu.ports.emplace_back(port_dist(rgen));
             for (uint8_t& bit : pdu.bch_payload) {
               bit = bit_dist(rgen);
@@ -150,14 +144,14 @@ int main()
             TESTASSERT(encoder_entry.msg.hrf == pdu.slot.is_odd_hrf());
             TESTASSERT(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload));
             TESTASSERT(encoder_entry.msg.sfn == pdu.slot.sfn());
-            TESTASSERT(encoder_entry.msg.k_ssb == pdu.ssb_subcarrier_offset);
+            TESTASSERT(encoder_entry.msg.k_ssb == pdu.subcarrier_offset);
             TESTASSERT(encoder_entry.encoded.size() == pbch_encoder::E);
 
             // Assert modulator
             const auto& modulator_entry = modulator->get_entries()[0];
             TESTASSERT(modulator_entry.config.phys_cell_id == pdu.phys_cell_id);
             TESTASSERT(modulator_entry.config.ssb_idx == pdu.ssb_idx);
-            TESTASSERT(modulator_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
+            TESTASSERT_EQ(ssb_first_subcarrier, modulator_entry.config.ssb_first_subcarrier);
             TESTASSERT(modulator_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
             TESTASSERT(modulator_entry.config.amplitude == 1.0F);
             TESTASSERT(srsvec::equal(modulator_entry.config.ports, pdu.ports));
