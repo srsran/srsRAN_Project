@@ -13,10 +13,11 @@
 
 using namespace srsgnb;
 
-pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t            band_minimum_bandwidth_MHz,
+pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t            minimum_bandwidth_MHz,
                                                                         subcarrier_spacing ssb_scs,
                                                                         subcarrier_spacing pdcch_scs,
-                                                                        uint8_t            coreset_zero_index)
+                                                                        uint8_t            coreset_zero_index,
+                                                                        uint8_t            subcarrier_offset)
 {
   // TS38.213 Table 13-1. {SS/PBCH block, PDCCH} SCS is {15, 15} kHz and minimum channel bandwidth 5 MHz or 10 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 15> TABLE_13_1 = {{
@@ -96,7 +97,7 @@ pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t 
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 3, 0},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 3, 56},
   }};
-  // TS38.213 Table 13-6. {SS/PBCH block, PDCCH} SCS is {30, 15} kHz and minimum channel bandwidth 40 MHz.
+  // TS38.213 Table 13-6. {SS/PBCH block, PDCCH} SCS is {30, 30} kHz and minimum channel bandwidth 40 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 10> TABLE_13_6 = {{
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 24, 2, 0},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 24, 2, 4},
@@ -109,30 +110,88 @@ pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t 
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 3, 0},
       {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 3, 28},
   }};
+  // TS38.213 Table 13-7. {SS/PBCH block, PDCCH} SCS is {120, 60} kHz
+  static const std::array<pdcch_type0_css_coreset_description, 12> TABLE_13_7 = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 8},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 8},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 3, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 3, 8},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 28},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 28},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 48, 1, -41},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 48, 1, 49},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 96, 1, -41},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 96, 1, 97},
+  }};
+  // TS38.213 Table 13-8. {SS/PBCH block, PDCCH} SCS is {120, 120} kHz
+  static const std::array<pdcch_type0_css_coreset_description, 8> TABLE_13_8 = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 24, 2, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 24, 2, 4},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 14},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 14},
+      {ssb_coreset0_mplex_pattern::mplx_pattern3, 24, 2, -20},
+      {ssb_coreset0_mplex_pattern::mplx_pattern3, 24, 2, 24},
+      {ssb_coreset0_mplex_pattern::mplx_pattern3, 48, 2, -20},
+      {ssb_coreset0_mplex_pattern::mplx_pattern3, 48, 2, 48},
+  }};
+  // TS38.213 Table 13-9. {SS/PBCH block, PDCCH} SCS is {240, 60} kHz
+  static const std::array<pdcch_type0_css_coreset_description, 4> TABLE_13_9 = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 1, 16},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 96, 2, 16},
+  }};
+  // TS38.213 Table 13-10. {SS/PBCH block, PDCCH} SCS is {240, 120} kHz
+  static const std::array<pdcch_type0_css_coreset_description, 8> TABLE_13_10 = {{
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 1, 8},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 0},
+      {ssb_coreset0_mplex_pattern::mplx_pattern1, 48, 2, 8},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 24, 1, -41},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 24, 1, 25},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 48, 1, -41},
+      {ssb_coreset0_mplex_pattern::mplx_pattern2, 48, 1, 49},
+  }};
 
   span<const pdcch_type0_css_coreset_description> table = {};
   if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz15 &&
-      (band_minimum_bandwidth_MHz == 5 || band_minimum_bandwidth_MHz == 10)) {
+      (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
     table = TABLE_13_1;
   } else if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             (band_minimum_bandwidth_MHz == 5 || band_minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
     table = TABLE_13_2;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz15 &&
-             (band_minimum_bandwidth_MHz == 5 || band_minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
     table = TABLE_13_3;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             (band_minimum_bandwidth_MHz == 5 || band_minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
     table = TABLE_13_4;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz15 &&
-             band_minimum_bandwidth_MHz == 40) {
+             minimum_bandwidth_MHz == 40) {
     table = TABLE_13_5;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             band_minimum_bandwidth_MHz == 40) {
+             minimum_bandwidth_MHz == 40) {
     table = TABLE_13_6;
+  } else if (ssb_scs == subcarrier_spacing::kHz120 && pdcch_scs == subcarrier_spacing::kHz60) {
+    table = TABLE_13_7;
+  } else if (ssb_scs == subcarrier_spacing::kHz120 && pdcch_scs == subcarrier_spacing::kHz120) {
+    table = TABLE_13_8;
+  } else if (ssb_scs == subcarrier_spacing::kHz240 && pdcch_scs == subcarrier_spacing::kHz60) {
+    table = TABLE_13_9;
+  } else if (ssb_scs == subcarrier_spacing::kHz240 && pdcch_scs == subcarrier_spacing::kHz120) {
+    table = TABLE_13_10;
   }
 
   if (coreset_zero_index < table.size()) {
-    return table[coreset_zero_index];
+    pdcch_type0_css_coreset_description result = table[coreset_zero_index];
+
+    if (result.offset < 0 && subcarrier_offset != 0) {
+      --result.offset;
+    }
+
+    return result;
   }
 
   return PDCCH_TYPE0_CSS_CORESET_RESERVED;
