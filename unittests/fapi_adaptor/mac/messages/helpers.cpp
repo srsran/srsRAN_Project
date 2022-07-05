@@ -157,15 +157,20 @@ static coreset_configuration generate_coreset_configuration()
   config.id                   = generate_coreset_id();
   config.duration             = generate_duration();
   config.precoder_granurality = static_cast<coreset_configuration::precoder_granularity_type>(generate_binary());
-  config.coreset0_rb_start    = 0;
   if (generate_bool()) {
     config.pdcch_dmrs_scrambling_id.emplace(10);
     config.interleaved.emplace(
         coreset_configuration::interleaved_mapping_type{generate_reg_bundle_sz(), generate_reg_bundle_sz(), {15}});
   }
 
-  for (unsigned i = 0, e = config.freq_domain_resources.max_size(); i != e; ++i) {
-    config.freq_domain_resources.push_back(generate_bool());
+  if (config.id == to_coreset_id(0)) {
+    config.set_coreset0_crbs({0, 48});
+  } else {
+    freq_resource_bitmap freq_res_bitmap;
+    for (unsigned i = 0, e = freq_res_bitmap.max_size(); i != e; ++i) {
+      freq_res_bitmap.push_back(generate_bool());
+    }
+    config.set_freq_domain_resources(freq_res_bitmap);
   }
 
   return config;

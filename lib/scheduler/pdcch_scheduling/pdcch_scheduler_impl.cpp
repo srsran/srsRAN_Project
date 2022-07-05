@@ -186,7 +186,7 @@ static prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
       shift_index = pci;
     }
     return cce_to_prb_mapping_interleaved(bwp_cfg.crbs.start(),
-                                          cs_cfg.freq_domain_resources,
+                                          cs_cfg.freq_domain_resources(),
                                           cs_cfg.duration,
                                           cs_cfg.interleaved->reg_bundle_sz,
                                           cs_cfg.interleaved->interleaver_sz,
@@ -195,7 +195,7 @@ static prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
                                           ncce);
   }
   return cce_to_prb_mapping_non_interleaved(
-      bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources, cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
+      bwp_cfg.crbs.start(), cs_cfg.freq_domain_resources(), cs_cfg.duration, to_nof_cces(aggr_lvl), ncce);
 }
 
 bool pdcch_scheduler_impl::pdcch_slot_allocator::allocate_cce(cell_slot_resource_allocator& slot_alloc,

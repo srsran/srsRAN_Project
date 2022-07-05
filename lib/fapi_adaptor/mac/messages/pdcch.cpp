@@ -39,7 +39,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   builder.set_coreset_parameters(
       start_symbol_index,
       coreset_cfg.duration,
-      coreset_cfg.freq_domain_resources,
+      coreset_cfg.freq_domain_resources(),
       coreset_cfg.interleaved.has_value() ? cce_to_reg_mapping_type::interleaved
                                           : cce_to_reg_mapping_type::non_interleaved,
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().reg_bundle_sz : 6U,

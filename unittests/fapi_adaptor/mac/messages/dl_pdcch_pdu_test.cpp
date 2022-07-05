@@ -59,7 +59,7 @@ static void test_conversion_ok()
                     : pdcch_coreset_type::other,
                 fapi_pdu.coreset_type);
 
-  const freq_resource_bitmap& mac_freq = mac_pdu.coreset_cfg->freq_domain_resources;
+  const freq_resource_bitmap& mac_freq = mac_pdu.coreset_cfg->freq_domain_resources();
   for (unsigned i = 0, e = mac_freq.size(); i != e; ++i) {
     TESTASSERT_EQ(mac_freq.test(i), bool((fapi_pdu.freq_domain_resource[i / 8] >> i % 8) & 1U));
   }

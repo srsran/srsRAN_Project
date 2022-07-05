@@ -14,6 +14,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
+#include "srsgnb/ran/resource_allocation/rb_interval.h"
 
 namespace srsgnb {
 
@@ -48,16 +49,38 @@ struct coreset_configuration {
   };
   enum class precoder_granularity_type { same_as_reg_bundle, all_contiguous_rbs };
 
-  coreset_id           id;
-  freq_resource_bitmap freq_domain_resources;
+  coreset_id id;
   /// Duration in number of symbols. Values: (1..maxCORESETDuration).
   unsigned                           duration;
   optional<interleaved_mapping_type> interleaved;
   precoder_granularity_type          precoder_granurality;
   /// PDCCH DMRS scrambling initialization. When absent, UE applies PCI. Values: (0..65535).
   optional<unsigned> pdcch_dmrs_scrambling_id;
-  /// Integer offset in RBs from the pointA to the lowest RB of CORESET#0. Only used when id == 0.
-  unsigned coreset0_rb_start;
+
+  void set_coreset0_crbs(crb_interval crbs)
+  {
+    srsran_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    coreset0_rbs = crbs;
+  }
+  const crb_interval& coreset0_crbs() const
+  {
+    srsran_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    return coreset0_rbs;
+  }
+  void set_freq_domain_resources(freq_resource_bitmap res_bitmap)
+  {
+    srsran_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    other_coreset_freq_resources = res_bitmap;
+  }
+  const freq_resource_bitmap& freq_domain_resources() const
+  {
+    srsran_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    return other_coreset_freq_resources;
+  }
+
+private:
+  crb_interval         coreset0_rbs;
+  freq_resource_bitmap other_coreset_freq_resources;
 };
 
 } // namespace srsgnb

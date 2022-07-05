@@ -57,7 +57,7 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
   using namespace asn1::rrc_nr;
   coreset_s cs;
   cs.coreset_id = cfg.id;
-  cs.freq_domain_res.from_number(cfg.freq_domain_resources.to_uint64());
+  cs.freq_domain_res.from_number(cfg.freq_domain_resources().to_uint64());
   cs.dur = cfg.duration;
   if (cfg.interleaved.has_value()) {
     auto& interv = cs.cce_reg_map_type.set_interleaved();

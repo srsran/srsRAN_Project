@@ -31,19 +31,21 @@ get_pusch_time_domain_resource_table(const pusch_config_common& pusch_cfg)
 inline unsigned get_coreset_nof_prbs(const coreset_configuration& cs_cfg)
 {
   static constexpr unsigned NOF_RBS_PER_GROUP = 6U;
-  return cs_cfg.freq_domain_resources.count() * NOF_RBS_PER_GROUP;
+  if (cs_cfg.id == to_coreset_id(0)) {
+    return cs_cfg.coreset0_crbs().length();
+  }
+  return cs_cfg.freq_domain_resources().count() * NOF_RBS_PER_GROUP;
 }
 
 /// Computes the lowest RB used by the CORESET.
 inline unsigned get_coreset_start_crb(const coreset_configuration& cs_cfg)
 {
   static constexpr unsigned NOF_RBS_PER_GROUP = 6U;
-  uint64_t                  bits              = cs_cfg.freq_domain_resources.to_uint64();
-  unsigned                  rb_start          = find_first_lsb_one(bits) * NOF_RBS_PER_GROUP;
   if (cs_cfg.id == to_coreset_id(0)) {
-    rb_start += cs_cfg.coreset0_rb_start;
+    return cs_cfg.coreset0_crbs().start();
   }
-  return rb_start;
+  uint64_t bits = cs_cfg.freq_domain_resources().to_uint64();
+  return find_first_lsb_one(bits) * NOF_RBS_PER_GROUP;
 }
 
 /// Computes the CRB interval that delimits CORESET#0.

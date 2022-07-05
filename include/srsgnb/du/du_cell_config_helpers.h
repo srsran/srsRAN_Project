@@ -45,10 +45,11 @@ inline coreset_configuration make_default_coreset_config()
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
-  cfg.freq_domain_resources.resize(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
+  freq_resource_bitmap freq_resources(pdcch_constants::MAX_NOF_FREQ_RESOURCES);
   for (size_t i = 0; i < 6; ++i) {
-    cfg.freq_domain_resources.set(i);
+    freq_resources.set(i);
   }
+  cfg.set_freq_domain_resources(freq_resources);
   cfg.duration             = 1;
   cfg.precoder_granurality = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
   return cfg;
@@ -61,10 +62,7 @@ inline coreset_configuration make_default_coreset0_config()
   coreset_configuration cfg = make_default_coreset_config();
   cfg.id                    = to_coreset_id(0);
   cfg.duration              = 1;
-  cfg.coreset0_rb_start     = 0;
-  for (size_t i = 0; i < 48U / pdcch_constants::NOF_RB_PER_FREQ_RESOURCE; ++i) {
-    cfg.freq_domain_resources.set(i);
-  }
+  cfg.set_coreset0_crbs({0, 48});
   // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.
   cfg.interleaved.emplace();
   cfg.interleaved->interleaver_sz = 2;
