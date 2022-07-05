@@ -323,7 +323,7 @@ public:
     srsran_assert(pdu.freq_domain_resource.size() == std::ceil(freq_domain_resource.size() / 8.F),
                   "Invalid size of frequency domain resource bitmap");
     // NOTE: Assuming that the LSB of freq_domain_resource bitmap is in position 0.
-    for (unsigned i = 0, e = 45; i != e; ++i) {
+    for (unsigned i = 0, e = freq_domain_resource.size(); i != e; ++i) {
       pdu.freq_domain_resource[i / 8] |= uint8_t(freq_domain_resource.test(i) ? 1U : 0U) << i % 8;
     }
 
