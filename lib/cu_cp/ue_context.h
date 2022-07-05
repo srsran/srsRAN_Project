@@ -13,14 +13,15 @@
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/ran/rnti.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
 struct ue_context {
   ue_index_t      ue_index;
-  du_index_t      du_index;
   du_cell_index_t pcell_index;
+  rnti_t          c_rnti;
 };
 
 } // namespace srs_cu_cp

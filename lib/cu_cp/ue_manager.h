@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UE_MANAGER_H
-#define SRSGNB_UE_MANAGER_H
+#ifndef SRSGNB_CU_CP_UE_MANAGER_H
+#define SRSGNB_CU_CP_UE_MANAGER_H
 
 #include "cu_cp_manager_config.h"
 #include "cu_cp_manager_interfaces.h"
@@ -29,15 +29,17 @@ public:
 
   ue_context* add_ue(ue_context u) override;
   void        remove_ue(ue_index_t ue_index) override;
-  ue_index_t  get_next_ue_index() override;
   ue_context* find_ue(ue_index_t ue_index) override;
+  ue_context* find_rnti(rnti_t rnti) override;
+
+  void handle_initial_ul_rrc_message_transfer(du_cell_index_t pcell_idx, const f1ap_initial_ul_rrc_msg& msg);
 
 private:
   cu_cp_manager_config_t& cfg;
   srslog::basic_logger&   logger;
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
-  std::atomic<uint16_t>               next_ue_index{0};
+  std::array<int, MAX_NOF_UES>        rnti_to_ue_index;
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
@@ -47,4 +49,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_MANAGER_H
+#endif // SRSGNB_CU_CP_UE_MANAGER_H

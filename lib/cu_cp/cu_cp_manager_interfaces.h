@@ -27,8 +27,8 @@ public:
 
   virtual ue_context* add_ue(ue_context u)           = 0;
   virtual void        remove_ue(ue_index_t ue_index) = 0;
-  virtual ue_index_t  get_next_ue_index()            = 0;
   virtual ue_context* find_ue(ue_index_t ue_index)   = 0;
+  virtual ue_context* find_rnti(rnti_t rnti)         = 0;
 };
 
 class du_manager_ctrl_configurer
@@ -36,12 +36,12 @@ class du_manager_ctrl_configurer
 public:
   virtual ~du_manager_ctrl_configurer() = default;
 
-  virtual du_processor*    add_du(std::unique_ptr<du_processor> du) = 0;
-  virtual void             remove_du(du_index_t du_index)        = 0;
-  virtual du_index_t       get_next_du_index()                   = 0;
-  virtual du_processor*    find_du(du_index_t du_index)             = 0;
-  virtual du_processor*    find_du(uint64_t packed_nr_cell_id)      = 0;
-  virtual size_t           get_nof_dus() const                   = 0;
+  virtual du_processor* add_du(std::unique_ptr<du_processor> du) = 0;
+  virtual void          remove_du(du_index_t du_index)           = 0;
+  virtual du_index_t    get_next_du_index()                      = 0;
+  virtual du_processor* find_du(du_index_t du_index)             = 0;
+  virtual du_processor* find_du(uint64_t packed_nr_cell_id)      = 0;
+  virtual size_t        get_nof_dus() const                      = 0;
 
   virtual void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
 };

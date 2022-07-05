@@ -35,20 +35,8 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_
     logger.debug("Ignoring SUL access indicator");
   }
 
-  // create user (TODO: will be split into own (sub)-procedure)
-  ue_context tmp_ue{};
-  tmp_ue.ue_index    = ue_mng.get_next_ue_index();
-  tmp_ue.du_index    = context.du_index;
-  tmp_ue.pcell_index = find_cell(cgi.nci.packed);
-
-  auto new_ue = ue_mng.add_ue(tmp_ue);
-  if (new_ue == nullptr) {
-    logger.error("Couldn't register new UE");
-    return;
-  }
-
-  // TODO: pass to RRC
-  send_rrc_setup(msg);
+  du_cell_index_t pcell_index = find_cell(cgi.nci.packed);
+  ue_mng.handle_initial_ul_rrc_message_transfer(pcell_index, msg);
 }
 
 du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
