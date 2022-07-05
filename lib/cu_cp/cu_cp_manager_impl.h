@@ -15,9 +15,7 @@
 #include "du_manager.h"
 #include "srsgnb/cu_cp/cu_cp_manager.h"
 #include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/executors/task_executor.h"
-#include "ue_manager.h"
 #include <memory>
 
 namespace srsgnb {
@@ -47,11 +45,6 @@ private:
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
 
-  /// \brief Send RRCSetup message via DL RRC message transfer (TS 38.473 section 8.4.2), as response to an initial UL
-  /// RRC message transfer.
-  /// \param[in] msg The received initial UL RRC message transfer.
-  void send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg);
-
   // DU manager configuration that will be visible to all running procedures
   cu_cp_manager_config_t cfg;
 
@@ -60,7 +53,6 @@ private:
 
   // Components
   du_manager du_mng;
-  ue_manager ue_mng;
 
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;

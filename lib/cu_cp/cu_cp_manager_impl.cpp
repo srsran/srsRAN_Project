@@ -17,8 +17,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
-  cfg(cfg_), du_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
+cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) : cfg(cfg_), du_mng(cfg), main_ctrl_loop(128)
 {
   // nothing to start straigt away on the CU
   ctx = {}; // make it compile
@@ -37,7 +36,8 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
   }
 
   // Create new DU context
-  du_context du_ctxt{};
+  std::unique_ptr<du_processor> du      = std::unique_ptr<du_processor>(new du_processor(cfg));
+  auto&                         du_ctxt = du->get_context();
   du_ctxt.du_index = du_mng.get_next_du_index();
   du_ctxt.id       = msg.request->gnb_du_id.value;
   if (msg.request->gnb_du_name_present) {
@@ -67,56 +67,20 @@ void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message&
 
     // add cell to DU context
     du_cell_index_t cell_index = du_cell.cell_index;
-    du_ctxt.cell_db.emplace(cell_index, std::move(du_cell));
+    du->get_cell_db().emplace(cell_index, std::move(du_cell));
   }
 
-  send_f1_setup_response(du_ctxt);
-
   // add DU
-  du_mng.add_du(du_ctxt);
+  du_mng.add_du(std::move(du));
+
+  // send setup response
+  send_f1_setup_response(du_ctxt);
 }
 
 void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
 {
-  // Retrieve cell context to handle message
-  auto cell_it = du_mng.find_cell(msg.msg->nrcgi.value.nrcell_id.to_number());
-  if (cell_it == nullptr) {
-    cfg.logger.error("Could not find cell with cell_id={}", msg.msg->nrcgi.value.nrcell_id.to_number());
-    return;
-  }
-
-  // Reject request without served cells
-  if (not msg.msg->duto_currc_container_present) {
-    cfg.logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
-    /// Assume the DU can't serve the UE. Ignoring the message.
-    return;
-  }
-
-  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
-
-  cfg.logger.info(
-      "Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
-  cfg.logger.debug("plmn={}", cgi.plmn);
-
-  if (msg.msg->sul_access_ind_present) {
-    cfg.logger.debug("Ignoring SUL access indicator");
-  }
-
-  // create user (TODO: will be split into own (sub)-procedure)
-  ue_context tmp_ue{};
-  tmp_ue.ue_index    = ue_mng.get_next_ue_index();
-  tmp_ue.du_index    = cell_it->du_index;
-  tmp_ue.pcell_index = cell_it->cell_index;
-
-  auto new_ue = ue_mng.add_ue(tmp_ue);
-  if (new_ue == nullptr) {
-    cfg.logger.error("Couldn't register new UE");
-    return;
-  }
-
-  // TODO: handle message
-  send_rrc_setup(msg);
-}
+  du_mng.handle_initial_ul_rrc_message_transfer(msg);
+};
 
 void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)
 {
@@ -128,7 +92,8 @@ void cu_cp_manager_impl::send_f1_setup_response(const du_context& du_ctxt)
 {
   f1_setup_response_message response;
   response.success = true;
-  fill_asn1_f1_setup_response(response.response, cfg.name, cfg.rrc_version, du_ctxt.cell_db);
+  fill_asn1_f1_setup_response(
+      response.response, cfg.name, cfg.rrc_version, du_mng.find_du(du_ctxt.du_index)->get_cell_db());
   cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
 }
 
@@ -140,41 +105,6 @@ void cu_cp_manager_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::optio
   cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
 }
 
-void cu_cp_manager_impl::send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg)
-{
-  f1ap_dl_rrc_msg dl_rrc_msg = {};
-
-  // GNB DU UE F1AP ID
-  dl_rrc_msg.msg->gnb_du_ue_f1_ap_id.value = msg.msg->gnb_du_ue_f1_ap_id.value;
-
-  // GNB CU UE F1AP ID
-  // TODO: set real GNB CU UE F1AP ID
-  dl_rrc_msg.msg->gnb_cu_ue_f1_ap_id.value = 22;
-
-  // fill rrc setup
-  asn1::rrc_nr::dl_ccch_msg_s dl_ccch_msg = {};
-  dl_ccch_msg.msg.set_c1().set_rrc_setup();
-  asn1::rrc_nr::rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
-  fill_asn1_rrc_setup_msg(rrc_setup, msg);
-
-  if (cfg.logger.debug.enabled()) {
-    asn1::json_writer js;
-    rrc_setup.to_json(js);
-    cfg.logger.debug("Containerized RRCSetup: {}", js.to_string());
-  }
-
-  // pack DL CCCH msg
-  byte_buffer   byte_buf{};
-  asn1::bit_ref packed_dl_ccch_msg{byte_buf};
-  dl_ccch_msg.pack(packed_dl_ccch_msg);
-
-  dl_rrc_msg.msg->rrc_container.value.resize(byte_buf.length());
-  std::copy(byte_buf.begin(), byte_buf.end(), dl_rrc_msg.msg->rrc_container.value.begin());
-
-  // send to f1ap
-  cfg.f1ap_rrc_msg_proc_handler->handle_dl_rrc_message_transfer(dl_rrc_msg);
-}
-
 size_t cu_cp_manager_impl::get_nof_dus() const
 {
   // TODO: this probably needs to be protected. It's hard to say when this is needed.
@@ -183,20 +113,6 @@ size_t cu_cp_manager_impl::get_nof_dus() const
 
 size_t cu_cp_manager_impl::get_nof_ues() const
 {
-  // TODO: This is temporary code.
-  static std::mutex              mutex;
-  static std::condition_variable cvar;
-  size_t                         result = MAX_NOF_UES;
-  cfg.cu_cp_mng_exec->execute([this, &result]() {
-    std::unique_lock<std::mutex> lock(mutex);
-    result = ue_mng.get_ues().size();
-    cvar.notify_one();
-  });
-  {
-    std::unique_lock<std::mutex> lock(mutex);
-    while (result == MAX_NOF_DU_UES) {
-      cvar.wait(lock);
-    }
-  }
-  return result;
+  // TODO: implement loop to iterate over all DUs
+  return MAX_NOF_UES;
 }

@@ -18,6 +18,8 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+class du_processor;
+
 class ue_manager_ctrl_configurer
 {
 public:
@@ -34,12 +36,14 @@ class du_manager_ctrl_configurer
 public:
   virtual ~du_manager_ctrl_configurer() = default;
 
-  virtual du_context*      add_du(du_context du)                 = 0;
+  virtual du_processor*    add_du(std::unique_ptr<du_processor> du) = 0;
   virtual void             remove_du(du_index_t du_index)        = 0;
   virtual du_index_t       get_next_du_index()                   = 0;
-  virtual du_context*      find_du(du_index_t du_index)          = 0;
-  virtual du_cell_context* find_cell(uint64_t packed_nr_cell_id) = 0;
+  virtual du_processor*    find_du(du_index_t du_index)             = 0;
+  virtual du_processor*    find_du(uint64_t packed_nr_cell_id)      = 0;
   virtual size_t           get_nof_dus() const                   = 0;
+
+  virtual void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
 };
 
 } // namespace srs_cu_cp

@@ -14,10 +14,7 @@
 #include "cu_cp_manager_config.h"
 #include "cu_cp_manager_interfaces.h"
 #include "srsgnb/adt/slot_array.h"
-#include "srsgnb/du_manager/du_manager.h"
-#include "srsgnb/ran/du_types.h"
 #include "srsgnb/support/async/async_task_loop.h"
-#include "ue_context.h"
 
 namespace srsgnb {
 

@@ -21,41 +21,42 @@ du_manager::du_manager(cu_cp_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.log
   }
 }
 
-du_context* du_manager::find_du(du_index_t du_index)
+du_processor* du_manager::find_du(du_index_t du_index)
 {
   srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
-  return du_db.contains(du_index) ? &du_db[du_index] : nullptr;
+  return du_db.contains(du_index) ? du_db[du_index].get() : nullptr;
 }
 
-du_cell_context* du_manager::find_cell(uint64_t packed_nr_cell_id)
+du_processor* du_manager::find_du(uint64_t packed_nr_cell_id)
 {
-  auto cell_it = cell_dict.find(packed_nr_cell_id);
-  if (cell_it != cell_dict.end()) {
-    return cell_it->second;
+  auto du_it = du_dict.find(packed_nr_cell_id);
+  if (du_it != du_dict.end()) {
+    return du_it->second;
   }
   return nullptr;
 }
 
-du_context* du_manager::add_du(du_context du_ctx)
+/// Create DU object with valid index
+du_processor* du_manager::add_du(std::unique_ptr<du_processor> du)
 {
-  srsran_assert(du_ctx.du_index < MAX_NOF_DUS, "Invalid du_index={}", du_ctx.du_index);
+  srsran_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
 
-  if (du_db.contains(du_ctx.du_index)) {
+  if (du_db.contains(du->get_context().du_index)) {
     // DU already existed with same du_index
     return nullptr;
   }
 
   // Create DU object
-  du_index_t du_index = du_ctx.du_index;
-  du_db.emplace(du_index, std::move(du_ctx));
+  du_index_t du_index = du->get_context().du_index;
+  du_db.emplace(du_index, std::move(du));
   auto& u = du_db[du_index];
 
   // Add each of the DU's cells to our cell database using packed NCI as lookup key
-  for (auto& cell : u.cell_db) {
-    cell_dict.insert(std::make_pair(cell.cgi.nci.packed, &cell));
+  for (auto& cell : u->get_cell_db()) {
+    du_dict.insert(std::make_pair(cell.cgi.nci.packed, u.get()));
   }
 
-  return &u;
+  return u.get();
 }
 
 void du_manager::remove_du(du_index_t du_index)
@@ -88,4 +89,15 @@ du_index_t du_manager::get_next_du_index()
     new_index = int_to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
   } while (du_db.contains(new_index));
   return new_index;
+}
+
+void du_manager::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
+{
+  logger.debug("Handling initial UL RRC message transfer");
+  auto du_it = find_du(msg.msg->nrcgi.value.nrcell_id.to_number());
+  if (du_it == nullptr) {
+    logger.error("Could not find cell with cell_id={}", msg.msg->nrcgi.value.nrcell_id.to_number());
+    return;
+  }
+  du_it->handle_initial_ul_rrc_message_transfer(msg);
 }

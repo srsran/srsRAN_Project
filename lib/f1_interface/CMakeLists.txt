@@ -12,6 +12,7 @@ set(SOURCES
         du/f1ap_du_impl.cpp
         cu/f1ap_cu_impl.cpp
         common/f1ap_asn1_packer.cpp
+        common/asn1_helpers.cpp
         du/handlers/f1c_du_packet_handler.cpp
         du/procedures/f1ap_du_setup_procedure.cpp
     )
