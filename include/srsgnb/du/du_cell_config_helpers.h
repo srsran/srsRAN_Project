@@ -18,21 +18,31 @@
 
 namespace srsgnb {
 
+/// \brief Main cell parameters from which other cell parameters (e.g. coreset0, BWP RBs) will be derived.
+/// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
+/// in this struct.
+struct du_cell_config_default_params {
+  pci_t              pci        = 1;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  unsigned           nof_crbs   = 52;
+  unsigned           arfcn      = 365000;
+};
+
 namespace du_config_helpers {
 
-inline carrier_configuration make_default_carrier_configuration()
+inline carrier_configuration make_default_carrier_configuration(const du_cell_config_default_params& params = {})
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = 10;
-  cfg.arfcn          = 365000;
+  cfg.carrier_bw_mhz = std::round(params.nof_crbs / (float)5); // TODO: Fix conversion.
+  cfg.arfcn          = params.arfcn;
   cfg.nof_ant        = 1;
   return cfg;
 }
 
-inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common()
+inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common(const du_cell_config_default_params& params = {})
 {
   tdd_ul_dl_config_common cfg{};
-  cfg.ref_scs                            = subcarrier_spacing::kHz15;
+  cfg.ref_scs                            = params.scs_common;
   cfg.pattern1.dl_ul_tx_period_nof_slots = 10;
   cfg.pattern1.nof_dl_slots              = 6;
   cfg.pattern1.nof_dl_symbols            = 0;
@@ -41,7 +51,7 @@ inline tdd_ul_dl_config_common make_default_tdd_ul_dl_config_common()
   return cfg;
 }
 
-inline coreset_configuration make_default_coreset_config()
+inline coreset_configuration make_default_coreset_config(const du_cell_config_default_params& params = {})
 {
   coreset_configuration cfg{};
   cfg.id = to_coreset_id(1);
@@ -57,9 +67,9 @@ inline coreset_configuration make_default_coreset_config()
 
 /// Generates a default CORESET#0 configuration. The default CORESET#0 table index value used is equal to 6.
 /// \remark See TS 38.213, Table 13-1.
-inline coreset_configuration make_default_coreset0_config()
+inline coreset_configuration make_default_coreset0_config(const du_cell_config_default_params& params = {})
 {
-  coreset_configuration cfg = make_default_coreset_config();
+  coreset_configuration cfg = make_default_coreset_config(params);
   cfg.id                    = to_coreset_id(0);
   cfg.duration              = 1;
   cfg.set_coreset0_crbs({0, 48});
@@ -100,29 +110,29 @@ inline search_space_configuration make_default_ue_search_space_config()
   return cfg;
 }
 
-inline bwp_configuration make_default_init_bwp()
+inline bwp_configuration make_default_init_bwp(const du_cell_config_default_params& params = {})
 {
   bwp_configuration cfg{};
-  cfg.scs         = subcarrier_spacing::kHz15;
-  cfg.crbs        = {0, 52};
+  cfg.scs         = params.scs_common;
+  cfg.crbs        = {0, params.nof_crbs};
   cfg.cp_extended = false;
   return cfg;
 }
 
-inline dl_config_common make_default_dl_config_common()
+inline dl_config_common make_default_dl_config_common(const du_cell_config_default_params& params = {})
 {
   dl_config_common cfg{};
 
   // Configure FrequencyInfoDL.
   cfg.freq_info_dl.offset_to_point_a = 12;
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
-  cfg.freq_info_dl.scs_carrier_list.back().scs               = subcarrier_spacing::kHz15;
+  cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
-  cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = 52;
+  cfg.freq_info_dl.scs_carrier_list.back().carrier_bandwidth = params.nof_crbs;
 
   // Configure initial DL BWP.
-  cfg.init_dl_bwp.generic_params = make_default_init_bwp();
-  cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config());
+  cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);
+  cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config(params));
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
   cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
   cfg.init_dl_bwp.pdcch_common.sib1_search_space_id     = to_search_space_id(0);
@@ -137,10 +147,10 @@ inline dl_config_common make_default_dl_config_common()
   return cfg;
 }
 
-inline ul_config_common make_default_ul_config_common()
+inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  cfg.init_ul_bwp.generic_params = make_default_init_bwp();
+  cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
@@ -171,20 +181,20 @@ inline ssb_configuration make_default_ssb_config()
 }
 
 /// Generates default cell configuration used by gNB DU. The default configuration should be valid.
-inline du_cell_config make_default_du_cell_config()
+inline du_cell_config make_default_du_cell_config(const du_cell_config_default_params& params = {})
 {
   du_cell_config cfg{};
-  cfg.pci     = 1;
+  cfg.pci     = params.pci;
   cfg.plmn    = "00101";
   cfg.tac     = 1;
   cfg.cell_id = 1;
 
-  cfg.dl_carrier       = make_default_carrier_configuration();
-  cfg.ul_carrier       = make_default_carrier_configuration();
+  cfg.dl_carrier       = make_default_carrier_configuration(params);
+  cfg.ul_carrier       = make_default_carrier_configuration(params);
   cfg.coreset0_idx     = 6U;
   cfg.searchspace0_idx = 0U;
-  cfg.dl_cfg_common    = make_default_dl_config_common();
-  cfg.ul_cfg_common    = make_default_ul_config_common();
+  cfg.dl_cfg_common    = make_default_dl_config_common(params);
+  cfg.ul_cfg_common    = make_default_ul_config_common(params);
   cfg.scs_common       = subcarrier_spacing::kHz15;
   cfg.ssb_cfg          = make_default_ssb_config();
   cfg.dmrs_typeA_pos   = dmrs_typeA_position::pos2;
