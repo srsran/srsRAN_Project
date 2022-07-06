@@ -75,10 +75,13 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
   return frequency_range::FR2;
 }
 
-/// \brief Represents the offset between the point A and the beginning of the common resource grid in RB.
+/// \brief Data type used to represent the frequency offset between point A and the lowest subcarrier of the lowest
+/// common resource block that overlaps with the SS/PBCH block.
 ///
-/// Parameter \c offsetToPointA as per TS38.211 Section 4.4.4.2. It represents the frequency offset between point A and
-/// the lowest subcarrier of the lowest resource block and overlaps with the SS/PBCH block.
+/// Parameter \c offsetToPointA as per TS38.211 Section 4.4.4.2.
+///
+/// Read [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
+/// page](http://nrexplained.com/rbs) for a more detailed explanation of resource block indexing .
 ///
 /// Used as \f$N_{CRB}^{SSB}\f$ in TS38.211 Section 7.4.3.1.
 ///
@@ -91,16 +94,18 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 /// \see ssb_subcarrier_offset
 using ssb_offset_to_pointA = uint16_t;
 
-/// \brief Represents the SSB offset between the common resource grid and the beginning of the SS/PBCH block.
+/// \brief Data type used to represent the offset from subcarrier 0 in common resource block \f$N_{CRB}^{SSB}\f$ to
+/// subcarrier zero of the SS/PBCH block.
 ///
-/// Parameter \f$ k_{SSB} \f$ as per TS38.211 Section 7.4.3.1. It is the is the subcarrier offset from subcarrier 0
-/// in common resource block \f$N_{CRB}^{SSB}\f$ to subcarrier zero of the SS/PBCH block.
+/// Parameter \f$ k_{SSB} \f$ as per TS38.211 Section 7.4.3.1. It is expressed in subcarriers of the same SCS than the
+/// SS/PBCH block.
 ///
-/// For numerology \f$\mu\epsilon\{0, 1\}\f$ the field is 5 bit wide, the range is {0, ..., 23} and it is expressed in
-/// terms of 15kHz SCS.
+/// Read [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
+/// page](http://nrexplained.com/rbs) for a more detailed explanation of resource block indexing .
 ///
-/// For numerology \f$\mu\epsilon\{3, 4\}\f$ the field is 4 bit wide, the range is {0, ..., 11} and it is expressed in
-/// terms of 60kHz SCS.
+/// For numerology \f$\mu\epsilon\{0, 1\}\f$ the field is 5 bit wide, the range is {0, ..., 23}.
+///
+/// For numerology \f$\mu\epsilon\{3, 4\}\f$ the field is 4 bit wide, the range is {0, ..., 11}.
 ///
 /// The 4 LSB bits are given by the higher layer parameter \c ssb-SubcarrierOffset as per TS38.331 \c MIB. If the field
 /// is 5 bit wide, the MSB is given by bit \f$\bar{a}_{\bar{A}+5}\f$ in the PBCH payload as per TS38.212 Section 7.1.1.

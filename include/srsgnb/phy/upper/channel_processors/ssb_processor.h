@@ -37,9 +37,9 @@ public:
     unsigned ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
     unsigned L_max;
-    /// SSB offset between the common resource grid and the beginning of the SS/PBCH block.
+    /// Alignment offset between the resource grid and the SS/PBCH block. \see ssb_subcarrier_offset for more details.
     ssb_subcarrier_offset subcarrier_offset;
-    /// Offset between the point A and the beginning of the common resource grid in RB.
+    /// Start of the SS/PBCH block relative to Point A in PRB. \see ssb_offset_to_pointA for more details.
     ssb_offset_to_pointA offset_to_pointA;
     /// SS/PBCH pattern case (A,B,C,D,E).
     ssb_pattern_case pattern_case;

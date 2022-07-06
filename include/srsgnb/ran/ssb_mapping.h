@@ -80,36 +80,48 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   return {};
 }
 
-/// Calculates the position of the SS/PBCH block first subcarrier relative to the bottom of the grid (pointA).
+/// \brief Calculates the position of the SS/PBCH block first subcarrier relative to the bottom of the grid (pointA).
+///
+/// Assertions are triggered for:
+/// - invalid SS/PBCH SCS and frequency combinations, or
+/// - the result would point in a fraction of the subcarrier index.
+///
+/// \param[in] fr                Frequency range.
+/// \param[in] ssb_scs           SS/PBCH block SCS resource grid.
+/// \param[in] offset_to_pointA  \see ssb_offset_to_pointA.
+/// \param[in] subcarrier_offset \see ssb_subcarrier_offset.
+/// \return The index of the lowest subcarrier of the SS/PBCH block.
 inline unsigned ssb_get_k_first(frequency_range       fr,
-                                subcarrier_spacing    scs,
+                                subcarrier_spacing    ssb_scs,
                                 ssb_offset_to_pointA  offset_to_pointA,
                                 ssb_subcarrier_offset subcarrier_offset)
 {
   // Verify the SCS is valid for the frequency range.
-  srsran_assert(is_scs_valid(scs, fr),
+  srsran_assert(is_scs_valid(ssb_scs, fr),
                 "Unsupported combination of FR{} and SCS {}kHz.",
                 fr == frequency_range::FR1 ? 1 : 2,
-                scs_to_khz(scs));
+                scs_to_khz(ssb_scs));
 
-  // Select reference SCS depending on the frequency range and convert SCS to kHz.
-  unsigned ref_scs_kHz =
+  // Select the Point A offset SCS depending on the frequency range and convert SCS to kHz.
+  unsigned pointA_offset_scs_kHz =
       scs_to_khz((fr == frequency_range::FR1) ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz60);
-  unsigned scs_kHz = scs_to_khz(scs);
 
-  // Calculate the number reference subcarriers per actual subcarriers.
-  unsigned nof_ref_per_scs = scs_kHz / ref_scs_kHz;
+  // SS/PBCH block SCS in kHz.
+  unsigned scs_kHz = scs_to_khz(ssb_scs);
 
-  // Verify the result is rounded to the subcarriers in the grid.
-  srsran_assert((offset_to_pointA * NRE + subcarrier_offset) % nof_ref_per_scs == 0,
+  // Calculate the ratio between the SCS used for SS/PBCH block transmission and the SCS for the Point A SCS offset.
+  unsigned ratio_ssb_to_pointA_offset_scs = scs_kHz / pointA_offset_scs_kHz;
+
+  // The Point A offset must be multiple of the ratio to ensure that the
+  srsran_assert(offset_to_pointA % ratio_ssb_to_pointA_offset_scs == 0,
                 "Unsupported combination of FR{}, SCS {}kHz, offsetToPointA {} and ssb-SubcarrierOffset {}.",
                 fr == frequency_range::FR1 ? 1 : 2,
-                scs_to_khz(scs),
+                scs_to_khz(ssb_scs),
                 offset_to_pointA,
                 subcarrier_offset);
 
   // Calculate actual result.
-  return (offset_to_pointA * NRE - subcarrier_offset) / nof_ref_per_scs;
+  return (offset_to_pointA / ratio_ssb_to_pointA_offset_scs) * NRE + subcarrier_offset;
 }
 
 /// Calculates SSB pattern from SSB subcarrier spacing and DL ARFCN.

@@ -393,18 +393,24 @@ int main(int argc, char** argv)
 
   double scs_Hz = static_cast<double>(1000U * scs_to_khz(scs));
 
+  // Ratio between the resource grid SCS and 15kHz SCS.
+  unsigned ratio_scs_over_15kHz = pow2(to_numerology_value(scs));
   // Frequency of PointA in Hz.
   double dl_pointA_freq_Hz = dl_center_freq - scs_Hz * NRE * bw_rb / 2;
   // Frequency of the lowest SS/PBCH block subcarrier.
   double ssb_lowest_freq_Hz = ssb_center_freq - (scs_Hz * NRE * SSB_BW_RB / 2);
-  // SSB frequency from PointA to the lowest SS/PBCH block subcarrier in Hz.
+  // SSB frequency from Point A to the lowest SS/PBCH block subcarrier in Hz.
   double ssb_offset_pointA_Hz = ssb_lowest_freq_Hz - dl_pointA_freq_Hz;
-  // SSB frequency from PointA to the lowest SS/PBCH block subcarrier in 15kHz subcarriers.
+  // SSB frequency from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
   unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
-  // Offset between the point A and the beginning of the common resource grid in RB.
-  ssb_offset_to_pointA ssb_offset_pointA_subc_rb = divide_ceil(ssb_offset_pointA_subc_15kHz, NRE);
-  // Remainder SSB frequency from PointA to the lowest SS/PBCH block subcarrier in 15kHz subcarriers.
-  unsigned ssb_subcarrier_offset_subc_15kHz = ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb * NRE;
+  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0, "Invalid combination.");
+  // Offset between the Point A and the beginning of the common resource grid in RB.
+  ssb_offset_to_pointA ssb_offset_pointA_subc_rb = ssb_offset_pointA_subc_15kHz / NRE;
+  // Round down the offset to Point A to match CRB boundaries.
+  ssb_offset_pointA_subc_rb = (ssb_offset_pointA_subc_rb / ratio_scs_over_15kHz) * ratio_scs_over_15kHz;
+  // Remainder SSB frequency from PointA to the lowest SS/PBCH block subcarrier in SCS units.
+  ssb_subcarrier_offset subcarrier_offset =
+      (ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb * NRE) / ratio_scs_over_15kHz;
 
   upper_phy_ssb_example::configuration upper_phy_sample_config;
   upper_phy_sample_config.log_level                        = log_level;
@@ -419,7 +425,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.beta_pss_dB           = 0.0;
   upper_phy_sample_config.ssb_config.ssb_idx               = {0};
   upper_phy_sample_config.ssb_config.L_max                 = 8;
-  upper_phy_sample_config.ssb_config.ssb_subcarrier_offset = ssb_subcarrier_offset_subc_15kHz;
+  upper_phy_sample_config.ssb_config.ssb_subcarrier_offset = subcarrier_offset;
   upper_phy_sample_config.ssb_config.ssb_offset_pointA     = ssb_offset_pointA_subc_rb;
   upper_phy_sample_config.ssb_config.pattern_case          = ssb_pattern;
   upper_phy                                                = upper_phy_ssb_example::create(upper_phy_sample_config);

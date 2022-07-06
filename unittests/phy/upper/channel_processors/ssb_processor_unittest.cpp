@@ -87,7 +87,7 @@ int main()
             if (scs == subcarrier_spacing::kHz240) {
               N = 4;
             }
-            ssb_subcarrier_offset = N * (ssb_subcarrier_offset / N);
+            ssb_offset_pointA = N * (ssb_offset_pointA / N);
           }
 
           // Deduce derivative variables
