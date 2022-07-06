@@ -24,14 +24,9 @@ enum class ssb_pattern_case;
 class sib1_scheduler
 {
 public:
-  sib1_scheduler(const cell_configuration& cfg_,
-                 pdcch_scheduler&          pdcch_sch,
-                 uint8_t                   pdcch_config_sib1_,
-                 uint8_t                   sib1_mcs_,
-                 uint8_t                   sib1_rv_,
-                 aggregation_level         sib1_dci_aggr_lev_,
-                 sib1_rtx_periodicity      sib1_rtx_period_,
-                 subcarrier_spacing        scs_common);
+  sib1_scheduler(const cell_configuration&                       cfg_,
+                 pdcch_scheduler&                                pdcch_sch,
+                 const sched_cell_configuration_request_message& msg);
 
   /// \brief Performs beams' SIB1s (if any) scheduling for the current slot.
   ///
@@ -74,6 +69,8 @@ private:
   uint8_t           sib1_mcs;
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
+  /// The SIB1 payload is in bytes.
+  unsigned          sib1_payload_size;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned sib1_period;
 

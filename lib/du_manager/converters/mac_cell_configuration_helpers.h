@@ -48,8 +48,8 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
 } // namespace test_helpers
 
 /// Derives Scheduler Cell Configuration from DU Cell Configuration.
-inline sched_cell_configuration_request_message make_sched_cell_config_req(du_cell_index_t       cell_index,
-                                                                           const du_cell_config& du_cfg)
+inline sched_cell_configuration_request_message
+make_sched_cell_config_req(du_cell_index_t cell_index, const du_cell_config& du_cfg, unsigned sib1_payload_size)
 {
   sched_cell_configuration_request_message sched_req{};
   sched_req.cell_index     = cell_index;
@@ -67,12 +67,13 @@ inline sched_cell_configuration_request_message make_sched_cell_config_req(du_ce
   sched_req.nof_ant_ports = 1;
 
   /// SIB1 parameters.
-  sched_req.coreset0              = du_cfg.coreset0_idx;
-  sched_req.searchspace0          = du_cfg.searchspace0_idx;
-  sched_req.sib1_mcs              = 5;
-  sched_req.sib1_rv               = 0;
-  sched_req.sib1_dci_aggr_lev     = aggregation_level::n4;
-  sched_req.sib1_retx_period      = sib1_rtx_periodicity::ms160;
+  sched_req.coreset0          = du_cfg.coreset0_idx;
+  sched_req.searchspace0      = du_cfg.searchspace0_idx;
+  sched_req.sib1_mcs          = 5;
+  sched_req.sib1_rv           = 0;
+  sched_req.sib1_dci_aggr_lev = aggregation_level::n4;
+  sched_req.sib1_retx_period  = sib1_rtx_periodicity::ms160;
+  sched_req.sib1_payload_size = sib1_payload_size;
 
   return sched_req;
 }
@@ -90,7 +91,8 @@ inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index
   mac_cfg.cell_barred      = du_cfg.cell_barred;
   mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
   mac_cfg.sib1_payload.append(srs_du::make_asn1_rrc_cell_sib1_buffer(du_cfg));
-  mac_cfg.sched_req = make_sched_cell_config_req(cell_index, du_cfg);
+  mac_cfg.sched_req =
+      make_sched_cell_config_req(cell_index, du_cfg, static_cast<unsigned>(mac_cfg.sib1_payload.length()));
   return mac_cfg;
 }
 

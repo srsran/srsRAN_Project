@@ -20,7 +20,9 @@ namespace srsgnb {
 inline sched_cell_configuration_request_message make_default_sched_cell_configuration_request()
 {
   du_cell_config default_du_cell_cfg = du_config_helpers::make_default_du_cell_config();
-  return make_sched_cell_config_req(to_du_cell_index(0), default_du_cell_cfg);
+  /// Random size of a SIB1 payload in bytes.
+  const unsigned sib1_payload_size = 50;
+  return make_sched_cell_config_req(to_du_cell_index(0), default_du_cell_cfg, sib1_payload_size);
 }
 
 rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)

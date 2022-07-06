@@ -11,8 +11,9 @@
 #include "sib_scheduler.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
-#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "../support/pdcch/pdcch_type0_css_occasions.h"
+#include "../support/prbs_calculator.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
 
@@ -57,26 +58,22 @@ static slot_point get_sib1_n0(unsigned sib1_offset, double sib1_M, subcarrier_sp
 
 //  ------   Public methods   ------ .
 
-sib1_scheduler::sib1_scheduler(const cell_configuration& cfg_,
-                               pdcch_scheduler&          pdcch_sch,
-                               uint8_t                   pdcch_config_sib1_,
-                               uint8_t                   sib1_mcs_,
-                               uint8_t                   sib1_rv_,
-                               aggregation_level         sib1_dci_aggr_lev_,
-                               sib1_rtx_periodicity      sib1_rtx_period_,
-                               subcarrier_spacing        scs_common) :
+sib1_scheduler::sib1_scheduler(const cell_configuration&                       cfg_,
+                               pdcch_scheduler&                                pdcch_sch,
+                               const sched_cell_configuration_request_message& msg) :
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
-  pdcch_config_sib1{pdcch_config_sib1_},
-  sib1_mcs{sib1_mcs_},
-  sib1_rv{sib1_rv_},
-  sib1_dci_aggr_lev{sib1_dci_aggr_lev_}
+  pdcch_config_sib1{static_cast<uint8_t>((msg.coreset0 << 4U) + msg.searchspace0)},
+  sib1_mcs{msg.sib1_mcs},
+  sib1_rv{msg.sib1_rv},
+  sib1_dci_aggr_lev{msg.sib1_dci_aggr_lev},
+  sib1_payload_size{msg.sib1_payload_size}
 {
   // Compute derived SIB1 parameters.
   sib1_period =
-      std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rtx_periodicity_to_value(sib1_rtx_period_));
+      std::max(ssb_periodicity_to_value(cfg_.ssb_cfg.ssb_period), sib1_rtx_periodicity_to_value(msg.sib1_retx_period));
 
-  precompute_sib1_n0(scs_common);
+  precompute_sib1_n0(msg.scs_common);
 
   // Define a BWP configuration limited by CORESET#0 RBs.
   coreset0_bwp_cfg      = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
@@ -143,8 +140,24 @@ void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
 {
-  // TODO: PBRs for SIB1 should be derived from the SIB1 size.
-  const unsigned nof_prbs_per_sib1 = 5;
+  // This is the list of parameters that are hard-coded and will need to be derived from some general config.
+  static const ofdm_symbol_range sib1_ofdm_symbols{2, 14};
+  static const unsigned          nof_symb_sh      = sib1_ofdm_symbols.length();
+  static const unsigned          nof_dmrs_prb     = 36;
+  static const unsigned          mod_order        = to_qam_modulation_order(qam_modulation::qam4);
+  static const float             target_code_rate = 379.0f;
+  static const unsigned          nof_layers       = 1;
+  // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by
+  // SI-RNTI.
+  static const unsigned nof_oh_prb = 0;
+
+  unsigned nof_prbs_per_sib1 = get_nof_prbs(prbs_calculator_pdsch_config{sib1_payload_size,
+                                                                         nof_symb_sh,
+                                                                         nof_dmrs_prb,
+                                                                         nof_oh_prb,
+                                                                         mod_order,
+                                                                         static_cast<float>(target_code_rate / 1024),
+                                                                         nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
@@ -175,10 +188,8 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // NOTE:
   // - ofdm_symbol_range{2, 14} is a temporary hack. The OFDM symbols should be derived from the SIB1 size and
   //   frequency allocation.
-  res_grid.dl_res_grid.fill(grant_info{grant_info::channel::sch,
-                                       cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                                       ofdm_symbol_range{2, 14},
-                                       sib1_crbs});
+  res_grid.dl_res_grid.fill(grant_info{
+      grant_info::channel::sch, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, sib1_ofdm_symbols, sib1_crbs});
 
   // 4. Delegate filling SIB1 grants to helper function.
   fill_sib1_grant(res_grid, beam_idx, sib1_crbs);
@@ -234,7 +245,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
   cw.qam_mod = qam4; // TODO: Derive QAM from MCS.
   // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
-  cw.target_code_rate = 379.0;
+  cw.target_code_rate = 379.0f;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
   cw.tb_size_bytes = 51;

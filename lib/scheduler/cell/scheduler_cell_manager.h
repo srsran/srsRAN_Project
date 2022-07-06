@@ -29,14 +29,7 @@ public:
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
     ra_sch(cell_cfg, pdcch_sch),
-    sib1_sch(cell_cfg,
-             pdcch_sch,
-             (msg.coreset0 << 4) + msg.searchspace0,
-             msg.sib1_mcs,
-             msg.sib1_rv,
-             msg.sib1_dci_aggr_lev,
-             msg.sib1_retx_period,
-             msg.scs_common)
+    sib1_sch(cell_cfg, pdcch_sch, msg)
   {
   }
 

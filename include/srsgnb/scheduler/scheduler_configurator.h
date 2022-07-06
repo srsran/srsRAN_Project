@@ -58,6 +58,8 @@ struct sched_cell_configuration_request_message {
   uint8_t              sib1_mcs;
   uint8_t              sib1_rv;
   aggregation_level    sib1_dci_aggr_lev;
+  /// Payload size is in bytes.
+  unsigned sib1_payload_size;
 };
 
 /// \remark See TS 38.331, "PDCCH-Config"
