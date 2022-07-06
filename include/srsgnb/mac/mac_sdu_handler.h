@@ -3,8 +3,6 @@
 #define SRSGNB_MAC_SDU_HANDLER_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
 #include "srsgnb/rlc/rlc_byte_buffer.h" // TODO: We should make this type independent of the RLC to improve decoupling.
 
 namespace srsgnb {

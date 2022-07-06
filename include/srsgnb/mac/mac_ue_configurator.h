@@ -3,6 +3,7 @@
 #define SRSGNB_MAC_UE_CONFIGURATOR_H
 
 #include "srsgnb/mac/mac_sdu_handler.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "srsgnb/support/async/async_task.h"
