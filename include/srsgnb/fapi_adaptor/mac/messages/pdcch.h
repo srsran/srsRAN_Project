@@ -33,17 +33,13 @@ struct mac_pdcch_pdu {
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.
 ///
 /// \param[out] fapi_pdu PDCCH FAPI PDU that will store the converted data.
-/// \param[in] bwp_cfg  Contains the BWP configuration information of the PDCCH PDU..
-/// \param[in] coreset_cfg Contains the coreset information of the PDCCH PDU.
-/// \param[in] dcis Span that contains the DL DCI information for the PDCCH PDU.
+/// \param[in] mac_pdu  MAC PDCCH PDU to convert to FAPI.
 void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pdu, const mac_pdcch_pdu& mac_pdu);
 
 /// \brief Helper function that converts from a PDCCH MAC PDU to a PDCCH FAPI PDU.
 ///
 /// \param[out] builder PDCCH FAPI builder that helps to fill the PDU.
-/// \param[in] bwp_cfg  Contains the BWP configuration information of the PDCCH PDU..
-/// \param[in] coreset_cfg Contains the coreset information of the PDCCH PDU.
-/// \param[in] dcis Span that contains the DL DCI information for the PDCCH PDU.
+/// \param[in] mac_pdu  MAC PDCCH PDU to convert to FAPI.
 void convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu);
 
 } // namespace fapi_adaptor
