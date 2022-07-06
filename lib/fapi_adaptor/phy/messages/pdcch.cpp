@@ -25,6 +25,7 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
     const auto& fapi_dci_v3 = fapi_pdu.maintenance_v3.info[i];
     const auto& fapi_dci_v4 = fapi_pdu.parameters_v4.params[i];
 
+    dci.rnti              = fapi_dci.rnti;
     dci.n_id_pdcch_data   = fapi_dci.nid_pdcch_data;
     dci.n_id_pdcch_dmrs   = fapi_dci_v4.nid_pdcch_dmrs;
     dci.n_rnti            = fapi_dci.nrnti_pdcch_data;
@@ -40,10 +41,10 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
                                    : float(fapi_dci_v3.pdcch_data_power_offset_profile_sss) * 0.001F;
 
     // Unpack the payload.
-    dci.payload.resize(fapi_dci.payload.size() * 8);
+    dci.payload.resize(fapi_dci.payload_size_in_bits);
     // According to FAPI, bit order is "bit0-bit7 are mapped to first byte of MSB - LSB", so the bit 0 in
     // fapi_dci.payload[0] is the MSB.
-    for (unsigned i = 0, e = fapi_dci.payload.size() * 8; i != e; ++i) {
+    for (unsigned i = 0, e = fapi_dci.payload_size_in_bits; i != e; ++i) {
       dci.payload[i] = ((fapi_dci.payload[i / 8] >> i % 8) & 1U);
     }
     // :TODO: Fill this in the future.

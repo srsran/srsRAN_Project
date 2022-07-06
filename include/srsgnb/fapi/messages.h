@@ -116,6 +116,7 @@ struct dl_dci_pdu {
   //: TODO: beamforming info
   uint8_t                                       beta_pdcch_1_0;
   int8_t                                        power_control_offset_ss_profile_nr;
+  uint16_t                                      payload_size_in_bits;
   static_vector<uint8_t, MAX_DCI_PAYLOAD_BYTES> payload;
 };
 

@@ -205,6 +205,9 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.1, in table DL DCI PDU.
   dl_dci_pdu_builder& set_payload(const dci_payload& payload)
   {
+    // Set the payload size in bits.
+    pdu.payload_size_in_bits = payload.size();
+
     // Set the payload size initializing it with zeros.
     pdu.payload.resize(std::ceil(payload.size() / 8.F), 0U);
 

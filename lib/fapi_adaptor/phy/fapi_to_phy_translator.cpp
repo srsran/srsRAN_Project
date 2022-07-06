@@ -10,6 +10,7 @@
 
 #include "fapi_to_phy_translator.h"
 #include "srsgnb/fapi/messages.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -89,8 +90,12 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
     switch (pdu.pdu_type) {
       case dl_pdu_type::CSI_RS:
         break;
-      case dl_pdu_type::PDCCH:
+      case dl_pdu_type::PDCCH: {
+        pdcch_processor::pdu_t pdcch_pdu;
+        convert_pdcch_fapi_to_phy(pdcch_pdu, pdu.pdcch_pdu, msg.sfn, msg.slot);
+        current_slot_controller->process_pdcch(pdcch_pdu);
         break;
+      }
       case dl_pdu_type::PDSCH:
         break;
       case dl_pdu_type::SSB: {
