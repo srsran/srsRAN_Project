@@ -11,6 +11,7 @@
 #include "mac_to_fapi_translator.h"
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
+#include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsgnb;
@@ -102,6 +103,17 @@ static void add_ssb_pdus_to_request(dl_tti_request_message_builder& builder, con
   }
 }
 
+static void add_pdsch_pdus_to_request(dl_tti_request_message_builder& builder,
+                                      pdsch_pdu_registy&              pdsch_registry,
+                                      const mac_dl_sched_result&      dl_res)
+{
+  for (const auto& pdu : dl_res.dl_res->bc.sibs) {
+    dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
+    convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
+    pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registy::sib);
+  }
+}
+
 void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res)
 {
   // :TODO: should we manage here 2 different numerologies in the same dl_res?
@@ -114,6 +126,12 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 
   // Add PDCCH PDUs to the DL_TTI.request.
   add_pdcch_pdus_to_request(builder, dl_res);
+
+  {
+    std::lock_guard<std::mutex> lock(mutex);
+    // Add PDSCH PDUs to the DL_TTI.request.
+    add_pdsch_pdus_to_request(builder, pdsch_registry, dl_res);
+  }
 
   // Add SSB PDUs to the DL_TTI.request.
   add_ssb_pdus_to_request(builder, dl_res);
@@ -130,6 +148,10 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   gateway.dl_tti_request(msg);
 }
 
-void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data) {}
+void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  // :TODO: add tx_data.request.
+}
 
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) {}

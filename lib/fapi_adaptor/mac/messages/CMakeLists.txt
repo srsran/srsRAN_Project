@@ -8,6 +8,7 @@
 
 set(SOURCES
         pdcch.cpp
+        pdsch.cpp
         ssb.cpp)
 
 add_library(srsgnb_mac_fapi_adaptors STATIC ${SOURCES})

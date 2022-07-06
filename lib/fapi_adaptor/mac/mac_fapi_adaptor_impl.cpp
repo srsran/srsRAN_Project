@@ -17,7 +17,7 @@ using namespace fapi_adaptor;
 mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(slot_message_gateway& gateway,
                                              unsigned              sector_id_,
                                              subcarrier_spacing    scs) :
-  sector_id(sector_id_), mac_translator(gateway), fapi_translator(scs, slot_dispatcher)
+  sector_id(sector_id_), mac_translator(gateway), slot_dispatcher(mac_translator), fapi_translator(scs, slot_dispatcher)
 {
   // :TODO: remove this when sector id is used (in logging)
   (void)(sector_id);

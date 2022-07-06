@@ -217,13 +217,10 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   results.reserve(iterations);
 
   // Random generators.
-  std::uniform_int_distribution<unsigned> sfn_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> slot_dist(0, 159);
   std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
   std::uniform_int_distribution<unsigned> bwp_size_dist(1, 275);
   std::uniform_int_distribution<unsigned> bwp_start_dist(0, 274);
   std::uniform_int_distribution<unsigned> nid_pdsch_dist(0, 1023);
-  std::uniform_int_distribution<unsigned> nof_layers_dist(1, 8);
   std::uniform_int_distribution<unsigned> dmrs_scrambling_dist(0, 65535);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
   std::uniform_int_distribution<unsigned> dmrs_cdm_grps_no_data_dist(1, 3);
@@ -267,7 +264,9 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   dl_pdsch_pdu         pdu;
   dl_pdsch_pdu_builder builder_pdsch(pdu);
 
-  builder_pdsch.set_basic_parameters(pdu_bitmap & 1, (pdu_bitmap >> 1) & 1, rnti);
+  builder_pdsch.set_basic_parameters(rnti);
+
+  builder_pdsch.set_ptrs_params();
 
   // Always work with the biggest numerology.
   builder_pdsch.set_bwp_parameters(bwp_size, bwp_start, subcarrier_spacing::kHz240, cyclic_p);

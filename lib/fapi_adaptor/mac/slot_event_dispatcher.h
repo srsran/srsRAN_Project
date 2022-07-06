@@ -17,11 +17,13 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
+class mac_to_fapi_translator;
+
 /// Handles each new slot event by dispatching them to multiple clients.
 class slot_event_dispatcher
 {
 public:
-  slot_event_dispatcher();
+  explicit slot_event_dispatcher(mac_to_fapi_translator&);
 
   /// Handles the new slot by dispatching it to the registered clients.
   ///
@@ -35,6 +37,7 @@ public:
 
 private:
   std::reference_wrapper<mac_cell_slot_handler> mac_slot_handler;
+  mac_to_fapi_translator&                       translator;
 };
 
 } // namespace fapi_adaptor

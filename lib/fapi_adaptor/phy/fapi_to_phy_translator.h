@@ -11,7 +11,9 @@
 #ifndef SRSGNB_LIB_FAPI_ADAPTOR_PHY_FAPI_TO_PHY_TRANSLATOR_H
 #define SRSGNB_LIB_FAPI_ADAPTOR_PHY_FAPI_TO_PHY_TRANSLATOR_H
 
+#include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
+#include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/ran/slot_point.h"
 #include <mutex>
 
@@ -33,6 +35,8 @@ namespace fapi_adaptor {
 /// previously validated using the provided FAPI validators.
 /// \note This class has been designed to be thread safe to allow calling the \c set_handle() method and message
 /// handlers from different threads.
+/// \note The translator assumes that only one message of each type can be received for a slot. If multiples messages of
+/// the same type arrives, this will result in undefined behaviour.
 class fapi_to_phy_translator : public fapi::slot_message_gateway
 {
   /// RAII style class which is meant to have a lifetime of a single slot. It executes the preparation and closing
@@ -87,6 +91,7 @@ public:
   /// - Updating the current slot.
   /// - Grabbing a resource grid and a downlink processor.
   /// - Configuring the downlink processor with the new resource grid.
+  /// - Resetting the pdsch_pdu vector.
   ///
   /// \param slot Identifies the new slot.
   /// \note This method may be called from a different thread compared to the rest of methods.
@@ -97,8 +102,9 @@ private:
   downlink_processor_pool& dl_processor_pool;
   resource_grid_pool&      rg_pool;
 
-  slot_based_upper_phy_controller current_slot_controller;
-  // Protects current_slot_controller.
+  slot_based_upper_phy_controller                                                   current_slot_controller;
+  static_vector<pdsch_processor::pdu_t, fapi::dl_tti_request_message::MAX_NUM_PDUS> pdsch_pdus;
+  // Protects current_slot_controller and pdsch_pdus.
   //: TODO: make this lock free.
   std::mutex mutex;
 };

@@ -11,6 +11,7 @@
 #include "fapi_to_phy_translator.h"
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
+#include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -96,8 +97,11 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
         current_slot_controller->process_pdcch(pdcch_pdu);
         break;
       }
-      case dl_pdu_type::PDSCH:
+      case dl_pdu_type::PDSCH: {
+        pdsch_pdus.emplace_back();
+        convert_pdsch_fapi_to_phy(pdsch_pdus.back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
         break;
+      }
       case dl_pdu_type::SSB: {
         ssb_processor::pdu_t ssb_pdu;
         convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot);
@@ -114,10 +118,28 @@ void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg) {
 
 void fapi_to_phy_translator::ul_dci_request(const ul_dci_request_message& msg) {}
 
-void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg) {}
+void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+
+  // Sanity check.
+  srsran_assert(msg.pdus.size() == pdsch_pdus.size(),
+                "Invalid TX_data.request received. Message contains ({}) payload PDUs bit it expects ({})",
+                msg.pdus.size(),
+                pdsch_pdus.size());
+
+  unsigned i = 0;
+  for (const auto& pdu : msg.pdus) {
+    static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
+    data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length);
+
+    current_slot_controller->process_pdsch(data, pdsch_pdus[i++]);
+  }
+}
 
 void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
   current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
+  pdsch_pdus.clear();
 }

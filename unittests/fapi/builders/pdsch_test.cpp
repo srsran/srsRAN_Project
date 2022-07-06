@@ -21,19 +21,15 @@ static void test_basic_parameters()
 {
   std::uniform_int_distribution<unsigned> rnti_dist(1, 65535);
 
-  for (unsigned ptrs = 0; ptrs != 2; ++ptrs) {
-    for (unsigned cbg = 0; cbg != 2; ++cbg) {
-      dl_pdsch_pdu         pdu;
-      dl_pdsch_pdu_builder builder(pdu);
+  dl_pdsch_pdu         pdu;
+  dl_pdsch_pdu_builder builder(pdu);
 
-      rnti_t rnti = to_rnti(rnti_dist(gen));
-      builder.set_basic_parameters(ptrs, cbg, rnti);
+  rnti_t rnti = to_rnti(rnti_dist(gen));
+  builder.set_basic_parameters(rnti);
 
-      TESTASSERT_EQ(rnti, pdu.rnti);
-      TESTASSERT_EQ(cbg, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]);
-      TESTASSERT_EQ(ptrs, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT]);
-    }
-  }
+  TESTASSERT_EQ(rnti, pdu.rnti);
+  TESTASSERT_EQ(0, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]);
+  TESTASSERT_EQ(0, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT]);
 }
 
 static void test_bwp_parameters()
@@ -256,6 +252,7 @@ static void test_cbg_retx_ctrl_parameters()
 
       TESTASSERT_EQ(last_cb, pdu.is_last_cb_present);
       TESTASSERT_EQ(inline_tb_crc, pdu.is_inline_tb_crc);
+      TESTASSERT_EQ(1, pdu.pdu_bitmap[dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT]);
     }
   }
 }

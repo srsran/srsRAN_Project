@@ -39,8 +39,8 @@ public:
 
 private:
   const unsigned         sector_id;
-  slot_event_dispatcher  slot_dispatcher;
   mac_to_fapi_translator mac_translator;
+  slot_event_dispatcher  slot_dispatcher;
   fapi_to_mac_translator fapi_translator;
 };
 

@@ -413,13 +413,13 @@ public:
     pdu.pdsch_maintenance_v3.ssb_pdus_for_rate_matching.fill(0);
   }
 
+  /// Returns the PDU index.
+  unsigned get_pdu_id() const { return pdu.pdu_index; }
+
   /// Sets the basic parameters for the fields of the PDSCH PDU.
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU.
-  dl_pdsch_pdu_builder& set_basic_parameters(bool enable_ptrs, bool enable_cbg_retx, rnti_t rnti)
+  dl_pdsch_pdu_builder& set_basic_parameters(rnti_t rnti)
   {
-    pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT, enable_ptrs);
-    pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT, enable_cbg_retx);
-
     pdu.rnti = rnti;
 
     return *this;
@@ -534,7 +534,14 @@ public:
     return *this;
   }
 
-  // :TODO: PTRS.
+  // :TODO: Finish PTRS.
+  dl_pdsch_pdu_builder& set_ptrs_params()
+  {
+    pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_PTRS_BIT);
+
+    return *this;
+  }
+
   // :TODO: Beamforming.
 
   /// Sets the Tx Power info parameters for the fields of the PDSCH PDU.
@@ -563,6 +570,8 @@ public:
                                                       inline_tb_crc_type   tb_crc,
                                                       span<const uint32_t> dl_tb_crc_cw)
   {
+    pdu.pdu_bitmap.set(dl_pdsch_pdu::PDU_BITMAP_CBG_RETX_CTRL_BIT);
+
     set_bitmap_bit<uint8_t>(
         pdu.is_last_cb_present, dl_pdsch_pdu::LAST_CB_BITMAP_FIRST_TB_BIT, last_cb_present_first_tb);
     set_bitmap_bit<uint8_t>(
@@ -884,7 +893,17 @@ public:
 
   /// Adds a PDSCH PDU to the message, fills its basic parameters using the given arguments and returns a PDSCH PDU
   /// builder.
-  dl_pdsch_pdu_builder add_pdsch_pdu(bool enable_ptrs, bool enable_cbg_retx, rnti_t rnti)
+  dl_pdsch_pdu_builder add_pdsch_pdu(rnti_t rnti)
+  {
+    dl_pdsch_pdu_builder builder = add_pdsch_pdu();
+    builder.set_basic_parameters(rnti);
+
+    return builder;
+  }
+
+  /// Adds a PDSCH PDU to the message, fills its basic parameters using the given arguments and returns a PDSCH PDU
+  /// builder.
+  dl_pdsch_pdu_builder add_pdsch_pdu()
   {
     // Add a new PDU.
     msg.pdus.emplace_back();
@@ -900,8 +919,6 @@ public:
     pdu.pdu_type = dl_pdu_type::PDSCH;
 
     dl_pdsch_pdu_builder builder(pdu.pdsch_pdu);
-
-    builder.set_basic_parameters(enable_ptrs, enable_cbg_retx, rnti);
 
     return builder;
   }

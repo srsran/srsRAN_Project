@@ -9,6 +9,7 @@
  */
 
 #include "slot_event_dispatcher.h"
+#include "mac_to_fapi_translator.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -28,7 +29,10 @@ public:
 /// method.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
-slot_event_dispatcher::slot_event_dispatcher() : mac_slot_handler(mac_dummy_handler) {}
+slot_event_dispatcher::slot_event_dispatcher(mac_to_fapi_translator& translator) :
+  mac_slot_handler(mac_dummy_handler), translator(translator)
+{
+}
 
 void slot_event_dispatcher::set_mac_cell_slot_handler(mac_cell_slot_handler& handler)
 {
@@ -37,5 +41,6 @@ void slot_event_dispatcher::set_mac_cell_slot_handler(mac_cell_slot_handler& han
 
 void slot_event_dispatcher::handle_new_slot(slot_point slot)
 {
+  translator.handle_new_slot();
   mac_slot_handler.get().handle_slot_indication(slot);
 }
