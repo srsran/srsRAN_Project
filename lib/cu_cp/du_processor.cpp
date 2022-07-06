@@ -10,7 +10,6 @@
 
 #include "du_processor.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
-#include "rrc_asn1_helpers.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -47,39 +46,4 @@ du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
     }
   }
   return MIN_DU_CELL_INDEX;
-}
-
-void du_processor::send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg)
-{
-  f1ap_dl_rrc_msg dl_rrc_msg = {};
-
-  // GNB DU UE F1AP ID
-  dl_rrc_msg.msg->gnb_du_ue_f1_ap_id.value = msg.msg->gnb_du_ue_f1_ap_id.value;
-
-  // GNB CU UE F1AP ID
-  // TODO: set real GNB CU UE F1AP ID
-  dl_rrc_msg.msg->gnb_cu_ue_f1_ap_id.value = 22;
-
-  // fill rrc setup
-  asn1::rrc_nr::dl_ccch_msg_s dl_ccch_msg = {};
-  dl_ccch_msg.msg.set_c1().set_rrc_setup();
-  asn1::rrc_nr::rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
-  fill_asn1_rrc_setup_msg(rrc_setup, msg);
-
-  if (cfg.logger.debug.enabled()) {
-    asn1::json_writer js;
-    rrc_setup.to_json(js);
-    cfg.logger.debug("Containerized RRCSetup: {}", js.to_string());
-  }
-
-  // pack DL CCCH msg
-  byte_buffer   byte_buf{};
-  asn1::bit_ref packed_dl_ccch_msg{byte_buf};
-  dl_ccch_msg.pack(packed_dl_ccch_msg);
-
-  dl_rrc_msg.msg->rrc_container.value.resize(byte_buf.length());
-  std::copy(byte_buf.begin(), byte_buf.end(), dl_rrc_msg.msg->rrc_container.value.begin());
-
-  // send to f1ap
-  cfg.f1ap_rrc_msg_proc_handler->handle_dl_rrc_message_transfer(dl_rrc_msg);
 }

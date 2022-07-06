@@ -11,8 +11,7 @@
 #ifndef SRSGNB_CU_CP_RRC_ASN1_HELPERS_H
 #define SRSGNB_CU_CP_RRC_ASN1_HELPERS_H
 
-#include "../ran/bcd_helpers.h"
-#include "du_context.h"
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 
 namespace srsgnb {
@@ -22,8 +21,7 @@ namespace srs_cu_cp {
 /// \brief Fills ASN.1 RRC Setup struct.
 /// \param[out] rrc_setup The RRC Setup ASN.1 struct to fill.
 /// \param[in] init_ul_rrc_transfer_msg The Init_UL_RRC_Transfer message received by the CU.
-void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s&     rrc_setup,
-                             const f1ap_initial_ul_rrc_msg& init_ul_rrc_transfer_msg)
+void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s& rrc_setup, const byte_buffer& mcg)
 {
   asn1::rrc_nr::rrc_setup_ies_s& setup_ies = rrc_setup.crit_exts.set_rrc_setup();
 
@@ -35,10 +33,8 @@ void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s&     rrc_setup,
 
   // Copy cell config from DU_to_CU_RRC_Container to master cell group
   auto& master_cell_group = setup_ies.master_cell_group;
-  master_cell_group.resize(init_ul_rrc_transfer_msg.msg->duto_currc_container->size());
-  std::copy(init_ul_rrc_transfer_msg.msg->duto_currc_container->begin(),
-            init_ul_rrc_transfer_msg.msg->duto_currc_container->end(),
-            master_cell_group.begin());
+  master_cell_group.resize(mcg.length());
+  std::copy(mcg.begin(), mcg.end(), master_cell_group.begin());
 }
 
 } // namespace srs_cu_cp

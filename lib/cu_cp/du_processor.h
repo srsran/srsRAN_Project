@@ -37,11 +37,6 @@ public:
   du_context&                                    get_context() { return context; }
 
 private:
-  /// \brief Send RRCSetup message via DL RRC message transfer (TS 38.473 section 8.4.2), as response to an initial UL
-  /// RRC message transfer.
-  /// \param[in] msg The received initial UL RRC message transfer.
-  void send_rrc_setup(const f1ap_initial_ul_rrc_msg& msg);
-
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] The packed NR cell ID received over F1AP.
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id);

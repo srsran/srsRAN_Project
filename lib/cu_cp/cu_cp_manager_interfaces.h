@@ -12,7 +12,7 @@
 #define SRSGNB_CU_CP_MANAGER_INTERFACES_H
 
 #include "du_context.h"
-#include "ue_context.h"
+#include "srsgnb/cu_cp/ue_context.h"
 
 namespace srsgnb {
 
