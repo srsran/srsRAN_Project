@@ -74,7 +74,7 @@ static check_outcome is_coreset0_params_valid(const coreset_configuration& cs_cf
   CHECK_TRUE(cs_cfg.interleaved.has_value(), "CORESET#0 must be interleaved");
   CHECK_EQ(cs_cfg.interleaved->interleaver_sz, 2, "CORESET#0 interleaver size (R)");
   CHECK_EQ(cs_cfg.interleaved->reg_bundle_sz, 6, "CORESET#0 REG Bundle size (L)");
-  CHECK_TRUE(not cs_cfg.interleaved->shift_index.has_value(), "CORESET#0 shift index should be equal to PCI");
+  CHECK_EQ(cs_cfg.interleaved->shift_index, pci, "CORESET#0 shift index should be equal to PCI");
   CHECK_EQ(cs_cfg.precoder_granurality,
            coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
            "CORESET#0 Precoder Granularity");

@@ -47,11 +47,8 @@ static void test_conversion_ok()
   TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value() ? mac_pdu.coreset_cfg->interleaved.value().interleaver_sz
                                                              : 0U,
                 fapi_pdu.interleaver_size);
-  TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value()
-                    ? mac_pdu.coreset_cfg->interleaved.value().shift_index.has_value()
-                          ? mac_pdu.coreset_cfg->interleaved.value().shift_index.value()
-                          : 0U
-                    : 0U,
+  TESTASSERT_EQ(mac_pdu.coreset_cfg->interleaved.has_value() ? mac_pdu.coreset_cfg->interleaved.value().shift_index
+                                                             : 0U,
                 fapi_pdu.shift_index);
   TESTASSERT_EQ(mac_pdu.coreset_cfg->precoder_granurality, fapi_pdu.precoder_granularity);
   TESTASSERT_EQ((mac_pdu.dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0)

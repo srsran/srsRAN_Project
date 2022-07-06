@@ -63,10 +63,8 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
     auto& interv = cs.cce_reg_map_type.set_interleaved();
     asn1::number_to_enum(interv.reg_bundle_size, cfg.interleaved->reg_bundle_sz);
     asn1::number_to_enum(interv.interleaver_size, cfg.interleaved->interleaver_sz);
-    if (cfg.interleaved->shift_index.has_value()) {
-      interv.shift_idx_present = true;
-      interv.shift_idx         = *cfg.interleaved->shift_index;
-    }
+    interv.shift_idx_present = true;
+    interv.shift_idx         = cfg.interleaved->shift_index;
   } else {
     cs.cce_reg_map_type.set_non_interleaved();
   }

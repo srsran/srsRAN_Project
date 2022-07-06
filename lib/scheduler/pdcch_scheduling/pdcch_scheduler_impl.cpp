@@ -177,20 +177,12 @@ static prb_index_list cce_to_prb_mapping(const bwp_configuration&     bwp_cfg,
         get_coreset_start_crb(cs_cfg), get_coreset_nof_prbs(cs_cfg), cs_cfg.duration, pci, to_nof_cces(aggr_lvl), ncce);
   }
   if (cs_cfg.interleaved.has_value()) {
-    unsigned shift_index;
-    if (cs_cfg.interleaved->shift_index.has_value()) {
-      shift_index = cs_cfg.interleaved->shift_index.value();
-    } else {
-      // [TS 38.331, "ControlResourceSet"] When the field is absent the UE applies the value of the physCellId
-      // configured for this serving cell.
-      shift_index = pci;
-    }
     return cce_to_prb_mapping_interleaved(bwp_cfg.crbs.start(),
                                           cs_cfg.freq_domain_resources(),
                                           cs_cfg.duration,
                                           cs_cfg.interleaved->reg_bundle_sz,
                                           cs_cfg.interleaved->interleaver_sz,
-                                          shift_index,
+                                          cs_cfg.interleaved->shift_index,
                                           to_nof_cces(aggr_lvl),
                                           ncce);
   }

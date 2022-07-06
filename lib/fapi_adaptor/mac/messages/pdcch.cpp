@@ -46,10 +46,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
       coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().interleaver_sz : 0U,
       (dcis.front().parameters->dci.type == dci_dl_rnti_config_type::si_f1_0) ? pdcch_coreset_type::pbch_or_sib1
                                                                               : pdcch_coreset_type::other,
-      coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().shift_index.has_value()
-                                                ? coreset_cfg.interleaved.value().shift_index.value()
-                                                : 0U
-                                          : 0U,
+      coreset_cfg.interleaved.has_value() ? coreset_cfg.interleaved.value().shift_index : 0U,
       coreset_cfg.precoder_granurality);
 
   // Fill the DCIs.

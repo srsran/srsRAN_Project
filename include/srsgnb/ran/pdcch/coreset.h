@@ -45,7 +45,7 @@ struct coreset_configuration {
     /// Values: (2, 3, 6).
     unsigned interleaver_sz;
     /// Values: (0..MAX_NOF_PRBS-1).
-    optional<unsigned> shift_index;
+    unsigned shift_index;
   };
   enum class precoder_granularity_type { same_as_reg_bundle, all_contiguous_rbs };
 
