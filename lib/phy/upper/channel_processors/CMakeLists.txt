@@ -33,7 +33,7 @@ add_library(srsgnb_pdsch_processor STATIC pdsch_processor_impl.cpp)
 target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 
 add_library(srsgnb_prach_detector STATIC
-        prach_detector_impl.cpp
+        prach_detector_simple_impl.cpp
         prach_generator_impl.cpp)
 
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)

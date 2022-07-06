@@ -68,21 +68,6 @@ private:
   /// Determines the sequence length \f$L_{RA}\f$ as per TS38.211 Table 6.3.3.1-1.
   static unsigned get_sequence_length(preamble_format format);
 
-  /// \brief Get PRACH subcarrier spacing \f$\Delta f^{RA}\f$.
-  /// \param[in] format Preamble format.
-  /// \return Return the PRACH subcarrier spacing in Hz if the preamble is implemented. Otherwise, \c RESERVED.
-  static unsigned get_prach_scs_Hz(preamble_format format);
-
-  /// \brief Get PRACH sequence parameter \f$N_u\f$.
-  /// \param[in] format Preamble format.
-  /// \return Return a valid \f$N_u\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  static unsigned get_N_u(preamble_format format);
-
-  /// \brief Get PRACH sequence parameter \f$N_{CP}^{RA}\f$.
-  /// \param[in] format Preamble format.
-  /// \return Return a valid \f$N_{CP}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  static unsigned get_N_cp_ra(preamble_format format);
-
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);
 

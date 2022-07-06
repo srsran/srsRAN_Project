@@ -89,6 +89,10 @@ add_custom_command(
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
 target_link_libraries(pdsch_processor_unittest srsgnb_pdsch_processor srslog)
 
+add_executable(prach_detector_test prach_detector_test.cpp)
+target_link_libraries(prach_detector_test srsgnb_channel_processors srsgnb_generic_funcs srslog)
+add_test(prach_detector_test prach_detector_test)
+
 add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
 target_link_libraries(prach_generator_vectortest srsgnb_channel_processors srsgnb_generic_funcs srslog)
 add_test(prach_generator_vectortest prach_generator_vectortest)

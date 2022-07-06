@@ -21,7 +21,8 @@ namespace srsgnb {
 
 /// \brief PRACH generator interface.
 ///
-/// Generates the PRACH time domain signal as described in TS38.211 Section 6.3.3.
+/// It generates the PRACH frequency-domain sequences as per TS38.211 Section 6.3.3 and modulates the channel
+/// as per TS38.211 Section 5.3.2.
 ///
 class prach_generator
 {
@@ -46,14 +47,20 @@ public:
     unsigned rb_offset;
     /// Subcarrier spacing for PUSCH.
     subcarrier_spacing pusch_scs;
+    /// Generate the sequence in frequency-domain.
+    bool frequency_domain;
   };
 
   /// Default destructor.
   virtual ~prach_generator() = default;
 
-  /// \brief Generates the PRACH time domain signal.
-  /// \param[in] config Provides the necessary parameters to generate the time domain signal.
-  /// \return A read-only view of the time domain generated signal.
+  /// \brief Generates the PRACH sequence.
+  ///
+  /// If the parameter \c config.frequency_domain is false, it generates the time-domain modulated PRACH sequence.
+  /// Otherwise, it generates the frequency-domain symbol.
+  ///
+  /// \param[in] config Provides the necessary parameters to generate the sequence.
+  /// \return A read-only view of the generated sequence.
   virtual span<const cf_t> generate(const configuration& config) = 0;
 };
 } // namespace srsgnb
