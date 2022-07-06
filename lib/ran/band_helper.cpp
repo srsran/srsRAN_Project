@@ -70,9 +70,9 @@ struct nr_operating_band {
   uint16_t    band;
   duplex_mode duplex;
 };
-static const uint32_t nof_nr_operating_band_fr1                                                  = 32;
-static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1 = {{
-    // clang-format off
+static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
+static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
+       // clang-format off
     {1,  duplex_mode::FDD},
     {2,  duplex_mode::FDD},
     {3,  duplex_mode::FDD},
@@ -114,7 +114,7 @@ struct nr_band_ssb_scs_case {
   subcarrier_spacing scs;
   ssb_pattern_case   pattern;
 };
-static const uint32_t nof_nr_ssb_bands_fr1                                                             = 32;
+static const uint32_t                                                   nof_nr_ssb_bands_fr1           = 32;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_band_scs_case_table_fr1 = {{
     // clang-format off
     {1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
@@ -179,6 +179,25 @@ ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(uint16_t band, subcarrier_
 
   // Band is out of range, so consider invalid.
   return ssb_pattern_case::invalid;
+}
+
+subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(uint16_t band)
+{
+  // Look for the given band and SCS
+  for (const nr_band_ssb_scs_case& ss_raster : nr_ssb_band_scs_case_table_fr1) {
+    // Check if band and SCS match!
+    if (ss_raster.band == band) {
+      return ss_raster.scs;
+    }
+
+    // As bands are in ascending order, do not waste more time if the current band is bigger
+    if (ss_raster.band > band) {
+      return subcarrier_spacing::invalid;
+    }
+  }
+
+  // Band is out of range, so consider invalid.
+  return subcarrier_spacing::invalid;
 }
 
 duplex_mode srsgnb::band_helper::get_duplex_mode(uint16_t band)

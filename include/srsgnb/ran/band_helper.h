@@ -42,6 +42,11 @@ uint16_t get_band_from_dl_arfcn(uint32_t arfcn);
 /// \return    The SSB pattern case if band and subcarrier spacing match, invalid otherwise.
 ssb_pattern_case get_ssb_pattern(uint16_t band, subcarrier_spacing scs);
 
+/// \brief Selects the lowest SSB subcarrier spacing valid for this band.
+/// \param[in] band NR band number.
+/// \return The SSB subcarrier spacing.
+subcarrier_spacing get_lowest_ssb_scs(uint16_t band);
+
 /// \brief     Returns boolean indicating whether the band is in paired spectrum.
 /// \remark    Paired spectrum is FDD, unpaired spectrum is TDD, SUL, SDL.
 /// \param[in] band Given band.

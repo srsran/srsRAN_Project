@@ -12,6 +12,7 @@
 #define SRSGNB_DU_CELL_CONFIG_HELPERS_H
 
 #include "du_cell_config.h"
+#include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 
@@ -97,8 +98,8 @@ inline search_space_configuration make_default_search_space_zero_config()
   cfg.monitoring_slot_period = 1;
   cfg.monitoring_slot_offset = 0;
   cfg.duration               = 1;
-  // See TS38.213, Table 10.1-1.
-  cfg.nof_candidates       = {0, 0, 4, 2, 1};
+  // TODO: Use TS38.213, Table 10.1-1.
+  cfg.nof_candidates       = {0, 0, 1, 0, 0};
   cfg.type                 = search_space_configuration::type::common;
   cfg.common.f0_0_and_f1_0 = true;
   return cfg;
@@ -176,7 +177,7 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
 {
   ssb_configuration cfg{};
 
-  cfg.scs                   = params.scs_common;
+  cfg.scs                   = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.arfcn));
   cfg.ssb_offset_to_point_A = params.offset_to_point_a;
   cfg.ssb_period            = ssb_periodicity::ms10;
   cfg.ssb_subcarrier_offset = 0;
