@@ -117,7 +117,7 @@ scheduler:
 ################################################################################
 # Doc generation
 ################################################################################
-tests-report:
+requirements-report:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
@@ -126,8 +126,24 @@ tests-report:
     - !reference [.srs_tools_setup_job, before_script]
     - srs_tools_setup
   script:
-    - test-reporter --input unittests --output ./test_report.html
+    - test-reporter --input unittests --output ./requirement_report.html
   dependencies: []
+  artifacts:
+    paths:
+      - requirement_report.html
+
+tests-report:
+  stage: build and publish doc
+  rules:
+    - if: $ON_SCHEDULE
+  image: python:3.9-alpine # sh entrypoint
+  before_script:
+    - pip install junit2html
+  script:
+    - junit2html xunit.xml ./test_report.html
+  needs:
+    - job: unit tests
+      artifacts: true
   artifacts:
     paths:
       - test_report.html
@@ -142,12 +158,15 @@ pages:
     - mv build/public .
     - mv coverage.html public/
     - mv test_report.html public/
+    - mv requirement_report.html public/
     - mv public/index.html public/index_doxygen.html
     - mv docs/index.html public/index.html
     - mv docs/*.png public/
-    - sed -i 's/commit_hash/'$(git rev-parse HEAD)'/' public/index.html
+    - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:
     - job: unit tests
+      artifacts: true
+    - job: requirements-report
       artifacts: true
     - job: tests-report
       artifacts: true
