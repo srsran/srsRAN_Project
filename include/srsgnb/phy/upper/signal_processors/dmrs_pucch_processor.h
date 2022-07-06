@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/phy/upper/channel_estimate.h"
+#include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"

@@ -58,13 +58,16 @@ int main()
     grid.write(testvector_symbols);
 
     // Object to store channel estimation results
-    channel_estimate estimate(nof_prb, test_case.config.cp);
+    channel_estimate::channel_estimate_dimensions ch_est_dims = {};
+    ch_est_dims.nof_prb                                       = nof_prb;
+    ch_est_dims.nof_symbols                                   = get_nsymb_per_slot(test_case.config.cp);
+    ch_est_dims.nof_tx_layers                                 = 1;
+    ch_est_dims.nof_rx_antennas                               = 1;
+    channel_estimate estimate(ch_est_dims);
 
     // Estimate channel
     dmrs_pucch->estimate(estimate, grid, test_case.config);
 
-    srsran_assert(fabsf(estimate.noise_estimate) < 1e-6, "Expected an ideal channel!");
+    srsran_assert(estimate.noise_variance[0] < 1e-6, "Expected an ideal channel!");
   }
-
-  return 0;
 }

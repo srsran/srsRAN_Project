@@ -186,15 +186,15 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   epre /= n_pucch_sum;
 
   // Set power measures.
-  rsrp                         = std::min(rsrp, epre);
-  estimate.rsrp                = rsrp;
-  estimate.rsrp_dBfs           = convert_power_to_dB(rsrp);
-  estimate.epre                = epre;
-  estimate.epre_dBfs           = convert_power_to_dB(epre);
-  estimate.noise_estimate      = std::max(epre - rsrp, 1e-6f);
-  estimate.noise_estimate_dbFs = convert_power_to_dB(estimate.noise_estimate);
-  estimate.snr                 = rsrp / estimate.noise_estimate;
-  estimate.snr_db              = convert_power_to_dB(estimate.snr);
+  rsrp                          = std::min(rsrp, epre);
+  estimate.rsrp[0]              = rsrp;
+  estimate.rsrp_dB[0]           = convert_power_to_dB(rsrp);
+  estimate.epre[0]              = epre;
+  estimate.epre_dB[0]           = convert_power_to_dB(epre);
+  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6f);
+  estimate.noise_variance_dB[0] = convert_power_to_dB(estimate.noise_variance[0]);
+  estimate.snr[0]               = rsrp / estimate.noise_variance[0];
+  estimate.snr_dB[0]            = convert_power_to_dB(estimate.snr[0]);
 
   // Interpolates between DMRS symbols.
   for (uint32_t m = 0; m < n_pucch_sum; ++m) {
