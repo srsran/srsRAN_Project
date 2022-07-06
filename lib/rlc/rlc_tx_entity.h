@@ -13,6 +13,7 @@
 
 #include "rlc_logger.h"
 #include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_metrics.h"
 
 namespace srsgnb {
 
@@ -20,7 +21,7 @@ namespace srsgnb {
 /// It provides interfaces for the RLC bearers, for both higher layers and lower layers
 /// It also stores interfaces for the higher layers, both for the user-plane
 /// and the control plane.
-class rlc_tx_entity : public rlc_tx_sdu_handler, public rlc_tx_pdu_transmitter
+class rlc_tx_entity : public rlc_tx_sdu_handler, public rlc_tx_pdu_transmitter, public rlc_bearer_tx_metrics
 {
 protected:
   rlc_tx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :

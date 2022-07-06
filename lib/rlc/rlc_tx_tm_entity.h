@@ -31,10 +31,13 @@ public:
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override
   {
+    size_t sdu_length = sdu.buf.length();
     if (sdu_queue.write(sdu)) {
       logger.log_info("Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
+      metrics_add_sdus(1, sdu_length);
     } else {
       logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
+      metrics_add_lost_sdus(1);
     }
   }
 
@@ -71,6 +74,7 @@ public:
     rlc_byte_buffer pdu = {};
     pdu.set_payload(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
+    metrics_add_pdus(1, pdu.length());
     return pdu;
   }
 

@@ -13,12 +13,13 @@
 
 #include "rlc_logger.h"
 #include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_metrics.h"
 
 namespace srsgnb {
 
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
-class rlc_rx_entity : public rlc_rx_pdu_handler
+class rlc_rx_entity : public rlc_rx_pdu_handler, public rlc_bearer_rx_metrics
 {
 protected:
   rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :

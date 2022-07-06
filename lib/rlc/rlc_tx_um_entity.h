@@ -14,6 +14,7 @@
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "rlc_um_pdu.h"
+#include "srsgnb/rlc/rlc_metrics.h"
 
 namespace srsgnb {
 

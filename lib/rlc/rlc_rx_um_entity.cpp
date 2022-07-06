@@ -48,8 +48,7 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
   if (reassembly_timer.id() == timeout_id) {
     logger.log_debug("reassembly timeout expiry for SN={} - updating RX_Next_Reassembly and reassembling",
                      RX_Next_Reassembly);
-
-    // metrics.num_lost_pdus++;
+    metrics_add_lost_pdus(1);
 
     // update RX_Next_Reassembly to the next SN that has not been reassembled yet
     RX_Next_Reassembly = RX_Timer_Trigger;
@@ -87,10 +86,13 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
 
   std::lock_guard<std::mutex> lock(mutex);
 
+  metrics_add_pdus(1, buf.length());
+
   logger.log_debug("Rx data PDU ({} B)", buf.length());
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf, cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
+    metrics_add_malformed_pdus(1);
     return;
   }
 
@@ -104,6 +106,7 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
     logger.log_info("Rx SDU ({} B)", payload.length());
     // TODO: optimize copy
     byte_buffer sdu(payload.begin(), payload.end());
+    metrics_add_sdus(1, sdu.length());
     upper_dn.on_new_sdu(std::move(sdu));
   } else if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarding SN={}", header.sn);
@@ -226,6 +229,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
     if (sdu_complete) {
       // deliver full SDU to upper layers
       logger.log_info("Rx SDU ({} B)", pdu.sdu.length());
+      metrics_add_sdus(1, pdu.sdu.length());
       upper_dn.on_new_sdu(std::move(pdu.sdu));
 
       // delete PDU from rx_window
@@ -260,7 +264,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
                           RX_Next_Highest - UM_Window_Size,
                           RX_Next_Highest);
           it = rx_window.erase(it);
-          // metrics.num_lost_pdus++;
+          metrics_add_lost_pdus(1);
         } else {
           ++it;
         }

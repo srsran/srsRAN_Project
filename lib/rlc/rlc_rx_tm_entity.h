@@ -25,7 +25,9 @@ public:
 
   void handle_pdu(shared_byte_buffer_view buf) override
   {
+    metrics_add_pdus(1, buf.length());
     logger.log_info("Rx PDU ({} B)", buf.length());
+    metrics_add_sdus(1, buf.length());
     upper_dn.on_new_sdu(std::move(buf));
   }
 };

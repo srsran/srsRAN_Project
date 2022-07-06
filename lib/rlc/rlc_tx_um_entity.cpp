@@ -31,14 +31,15 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
 /// into the RLC entity.
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
 {
+  size_t sdu_length = sdu.buf.length();
   if (sdu_queue.write(sdu)) {
     logger.log_info(
-        "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu.buf.length(), sdu.pdcp_sn, sdu_queue.size_sdus());
+        "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu_length, sdu.pdcp_sn, sdu_queue.size_sdus());
+    metrics_add_sdus(1, sdu_length);
   } else {
-    logger.log_warning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
-                       sdu.buf.length(),
-                       sdu.pdcp_sn,
-                       sdu_queue.size_sdus());
+    logger.log_warning(
+        "Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu_length, sdu.pdcp_sn, sdu_queue.size_sdus());
+    metrics_add_lost_sdus(1);
   }
 }
 
@@ -132,6 +133,8 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
     // TODO
     // logger.log_info(payload, ret, "Tx PDU SN=%d (%d B)", header.sn, pdu->N_bytes);
   }
+
+  metrics_add_pdus(1, pdu_buf.length());
 
   debug_state();
 

@@ -15,6 +15,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_tx_entity.h"
 #include "srsgnb/rlc/rlc_entity.h"
+#include "srsgnb/rlc/rlc_metrics.h"
 
 namespace srsgnb {
 
@@ -33,6 +34,20 @@ public:
   rlc_tx_sdu_handler*     get_tx_sdu_handler() final { return tx.get(); };
   rlc_tx_pdu_transmitter* get_tx_pdu_transmitter() final { return tx.get(); };
   rlc_rx_pdu_handler*     get_rx_pdu_handler() final { return rx.get(); };
+
+  rlc_bearer_metrics_container get_metrics()
+  {
+    rlc_bearer_metrics_container metrics;
+    metrics.tx = tx->get_metrics();
+    metrics.rx = rx->get_metrics();
+    return metrics;
+  }
+
+  void reset_metrics()
+  {
+    tx->reset_metrics();
+    rx->reset_metrics();
+  }
 
 protected:
   rlc_logger logger;

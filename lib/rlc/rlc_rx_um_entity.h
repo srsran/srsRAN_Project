@@ -14,6 +14,7 @@
 #include "rlc_rx_entity.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_um_pdu.h"
+#include "srsgnb/rlc/rlc_metrics.h"
 #include "srsgnb/support/timers.h"
 #include <map>
 
