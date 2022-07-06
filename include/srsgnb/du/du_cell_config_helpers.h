@@ -97,9 +97,10 @@ inline search_space_configuration make_default_search_space_zero_config()
   cfg.monitoring_slot_period = 1;
   cfg.monitoring_slot_offset = 0;
   cfg.duration               = 1;
-  cfg.nof_candidates         = {0, 0, 1, 0, 0};
-  cfg.type                   = search_space_configuration::type::common;
-  cfg.common.f0_0_and_f1_0   = true;
+  // See TS38.213, Table 10.1-1.
+  cfg.nof_candidates       = {0, 0, 4, 2, 1};
+  cfg.type                 = search_space_configuration::type::common;
+  cfg.common.f0_0_and_f1_0 = true;
   return cfg;
 }
 
