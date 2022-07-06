@@ -10,6 +10,7 @@
 
 #include "ra_scheduler.h"
 #include "../../ran/gnb_format.h"
+#include "../pdcch_scheduling/pdcch_config_helpers.h"
 #include "../pdcch_scheduling/pdcch_scheduler_impl.h"
 #include "../support/config_helpers.h"
 #include "../support/dmrs_helpers.h"
@@ -149,6 +150,13 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   // Ensure slot for RAR PDCCH+PDSCH has DL enabled.
   if (not cfg.is_dl_enabled(pdcch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH and PDSCH are available.
+    return;
+  }
+
+  // Ensure RA SearchSpace PDCCH monitoring is active for this slot.
+  search_space_id ss_id = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
+  if (not is_pdcch_monitoring_active(pdcch_slot, cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[ss_id])) {
+    // Early exit. RAR scheduling only possible when PDCCH monitoring is active.
     return;
   }
 

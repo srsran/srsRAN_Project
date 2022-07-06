@@ -24,6 +24,12 @@ inline unsigned to_nof_cces(aggregation_level lvl)
   return 1U << static_cast<uint8_t>(lvl);
 }
 
+/// Calculates the index associated to the passed aggregation level.
+inline unsigned to_aggregation_level_index(aggregation_level lvl)
+{
+  return static_cast<unsigned>(lvl);
+}
+
 } // namespace srsgnb
 
 #endif // SRSGNB_AGGREGATION_LEVEL_H

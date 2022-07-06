@@ -10,6 +10,7 @@
 
 #include "pdcch_scheduler_impl.h"
 #include "../support/config_helpers.h"
+#include "pdcch_config_helpers.h"
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
 #include "srsgnb/ran/pdcch/pdcch_candidates.h"
 
@@ -33,7 +34,7 @@ public:
   };
 
   explicit pdcch_slot_allocator(const cell_configuration& cell_cfg_, unsigned slot_index);
-  ~pdcch_slot_allocator() {}
+  ~pdcch_slot_allocator() = default;
 
   void clear();
 
@@ -64,7 +65,6 @@ pdcch_scheduler_impl::pdcch_slot_allocator::pdcch_slot_allocator(const cell_conf
                                                                  unsigned                  slot_index_) :
   cell_cfg(cell_cfg_), slot_index(slot_index_)
 {
-  (void)cell_cfg;
   (void)slot_index;
 }
 
@@ -162,7 +162,7 @@ pdcch_candidate_list pdcch_scheduler_impl::pdcch_slot_allocator::get_cce_loc_tab
   aggregation_level l = record.pdcch_ctx->cces.aggr_lvl;
   return pdcch_candidates_common_ss_get_lowest_cce(
       pdcch_candidates_common_ss_configuration{l,
-                                               record.ss_cfg->nof_candidates[static_cast<unsigned>(l)],
+                                               record.ss_cfg->nof_candidates[to_aggregation_level_index(l)],
                                                get_coreset_nof_cces(*record.pdcch_ctx->coreset_cfg)});
 }
 
@@ -264,7 +264,6 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_pdcch_common(cell_slot_resourc
     cs_cfg = &(*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
   } else {
     cs_cfg = &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.common_coreset.value();
-    srsran_sanity_check(cs_cfg->id == ss_cfg.cs_id, "Invalid SearchSpace CoresetId={}", ss_cfg.cs_id);
   }
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, *cs_cfg, ss_cfg, aggr_lvl, dci_dl_format::f1_0);
@@ -329,6 +328,11 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
                                                                   aggregation_level                 aggr_lvl,
                                                                   dci_dl_format                     dci_fmt)
 {
+  if (not is_pdcch_monitoring_active(slot_alloc.slot, ss_cfg)) {
+    // PDCCH monitoring is not active in this slot.
+    return nullptr;
+  }
+
   pdcch_slot_allocator& pdcch_alloc = get_pdcch_slot_alloc(slot_alloc.slot);
 
   // Create PDCCH list element.
