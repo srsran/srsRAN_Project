@@ -22,10 +22,12 @@ namespace srsgnb {
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
 /// in this struct.
 struct du_cell_config_default_params {
-  pci_t              pci        = 1;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-  unsigned           nof_crbs   = 52;
-  unsigned           arfcn      = 365000;
+  pci_t              pci               = 1;
+  subcarrier_spacing scs_common        = subcarrier_spacing::kHz15;
+  unsigned           nof_crbs          = 52;
+  unsigned           arfcn             = 365000;
+  unsigned           offset_to_point_a = 12;
+  unsigned           coreset0_index    = 6;
 };
 
 namespace du_config_helpers {
@@ -125,7 +127,7 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
   dl_config_common cfg{};
 
   // Configure FrequencyInfoDL.
-  cfg.freq_info_dl.offset_to_point_a = 12;
+  cfg.freq_info_dl.offset_to_point_a = params.offset_to_point_a;
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
@@ -163,12 +165,12 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   return cfg;
 }
 
-inline ssb_configuration make_default_ssb_config()
+inline ssb_configuration make_default_ssb_config(const du_cell_config_default_params& params = {})
 {
-  ssb_configuration cfg;
+  ssb_configuration cfg{};
 
-  cfg.scs                   = subcarrier_spacing::kHz15;
-  cfg.ssb_offset_to_point_A = 0;
+  cfg.scs                   = params.scs_common;
+  cfg.ssb_offset_to_point_A = params.offset_to_point_a;
   cfg.ssb_period            = ssb_periodicity::ms10;
   cfg.ssb_subcarrier_offset = 0;
 
@@ -192,12 +194,12 @@ inline du_cell_config make_default_du_cell_config(const du_cell_config_default_p
 
   cfg.dl_carrier       = make_default_carrier_configuration(params);
   cfg.ul_carrier       = make_default_carrier_configuration(params);
-  cfg.coreset0_idx     = 6U;
+  cfg.coreset0_idx     = params.coreset0_index;
   cfg.searchspace0_idx = 0U;
   cfg.dl_cfg_common    = make_default_dl_config_common(params);
   cfg.ul_cfg_common    = make_default_ul_config_common(params);
-  cfg.scs_common       = subcarrier_spacing::kHz15;
-  cfg.ssb_cfg          = make_default_ssb_config();
+  cfg.scs_common       = params.scs_common;
+  cfg.ssb_cfg          = make_default_ssb_config(params);
   cfg.dmrs_typeA_pos   = dmrs_typeA_position::pos2;
   cfg.cell_barred      = false;
   cfg.intra_freq_resel = false;
