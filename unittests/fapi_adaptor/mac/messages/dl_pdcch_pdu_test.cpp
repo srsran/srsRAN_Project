@@ -68,10 +68,7 @@ static void test_conversion_ok()
   TESTASSERT_EQ(mac_pdu.dcis.front().parameters->ctx.cces.ncce, fapi_pdu.dl_dci.front().cce_index);
   TESTASSERT_EQ(to_nof_cces(mac_pdu.dcis.front().parameters->ctx.cces.aggr_lvl),
                 fapi_pdu.dl_dci.front().aggregation_level);
-  TESTASSERT_EQ(mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id.has_value()
-                    ? mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id.value()
-                    : 0U,
-                fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
+  TESTASSERT_EQ(mac_pdu.coreset_cfg->pdcch_dmrs_scrambling_id, fapi_pdu.parameters_v4.params.front().nid_pdcch_dmrs);
 
   const dci_payload&               mac_pay  = *mac_pdu.dcis.front().payload;
   const static_vector<uint8_t, 16> fapi_pay = fapi_pdu.dl_dci.front().payload;

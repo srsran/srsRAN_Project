@@ -72,10 +72,8 @@ static asn1::rrc_nr::coreset_s make_asn1_rrc_coreset(const coreset_configuration
       cfg.precoder_granurality == coreset_configuration::precoder_granularity_type::same_as_reg_bundle
           ? coreset_s::precoder_granularity_opts::same_as_reg_bundle
           : coreset_s::precoder_granularity_opts::all_contiguous_rbs;
-  if (cfg.pdcch_dmrs_scrambling_id.has_value()) {
-    cs.pdcch_dmrs_scrambling_id_present = true;
-    cs.pdcch_dmrs_scrambling_id         = *cfg.pdcch_dmrs_scrambling_id;
-  }
+  cs.pdcch_dmrs_scrambling_id_present = true;
+  cs.pdcch_dmrs_scrambling_id         = cfg.pdcch_dmrs_scrambling_id;
   return cs;
 }
 

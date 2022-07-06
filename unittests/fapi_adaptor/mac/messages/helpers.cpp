@@ -158,9 +158,9 @@ static coreset_configuration generate_coreset_configuration()
   config.duration             = generate_duration();
   config.precoder_granurality = static_cast<coreset_configuration::precoder_granularity_type>(generate_binary());
   if (generate_bool()) {
-    config.pdcch_dmrs_scrambling_id.emplace(10);
+    config.pdcch_dmrs_scrambling_id = 10;
     config.interleaved.emplace(
-        coreset_configuration::interleaved_mapping_type{generate_reg_bundle_sz(), generate_reg_bundle_sz(), {15}});
+        coreset_configuration::interleaved_mapping_type{generate_reg_bundle_sz(), generate_reg_bundle_sz(), 10});
   }
 
   if (config.id == to_coreset_id(0)) {

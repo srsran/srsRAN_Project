@@ -54,8 +54,8 @@ struct coreset_configuration {
   unsigned                           duration;
   optional<interleaved_mapping_type> interleaved;
   precoder_granularity_type          precoder_granurality;
-  /// PDCCH DMRS scrambling initialization. When absent, UE applies PCI. Values: (0..65535).
-  optional<unsigned> pdcch_dmrs_scrambling_id;
+  /// PDCCH DMRS scrambling initialization. Values: (0..65535).
+  unsigned pdcch_dmrs_scrambling_id;
 
   void set_coreset0_crbs(crb_interval crbs)
   {
