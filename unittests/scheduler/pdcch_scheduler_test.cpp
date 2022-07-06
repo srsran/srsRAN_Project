@@ -120,58 +120,69 @@ void test_pdcch_sched_ue()
 
 void test_pdcch_sched_monitoring_period()
 {
-  test_delimit_logger delimiter{"Test PDCCH Monitoring Periodicity"};
+  test_delimit_logger   delimiter{"Test PDCCH Monitoring Periodicity"};
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
 
   std::random_device rd;
   std::mt19937       rgen(rd());
 
   for (unsigned period : {20, 40}) {
-    unsigned duration = 2;
-    unsigned offset   = std::uniform_int_distribution<unsigned>{0, period - 1}(rgen);
-    // Note: First slot is one slot before the PDCCH monitoring window.
-    unsigned first_sl = (period * std::uniform_int_distribution<unsigned>{0, 100}(rgen) + offset - 1U) % 10240;
+    for (unsigned duration = 1; duration < period - 1; ++duration) {
+      for (unsigned offset = 0; offset < period - 1; ++offset) {
+        // Note: First slot is one slot before the PDCCH monitoring window.
+        unsigned randint  = std::uniform_int_distribution<unsigned>{0, 10240}(rgen);
+        unsigned first_sl = (((randint / period) * period) + offset + 10239) % 10240;
 
-    sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
-    msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_period = period;
-    msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_offset = offset;
-    msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].duration               = duration;
+        sched_cell_configuration_request_message msg = make_default_sched_cell_configuration_request();
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_period = period;
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].monitoring_slot_offset = offset;
+        msg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].duration               = duration;
 
-    cell_configuration      cfg{msg};
-    cell_resource_allocator res_grid{cfg};
+        cell_configuration      cfg{msg};
+        cell_resource_allocator res_grid{cfg};
 
-    pdcch_scheduler_impl pdcch_sch(cfg);
+        pdcch_scheduler_impl pdcch_sch(cfg);
 
-    // Action: Attempt allocation of one RAR outside PDCCH monitoring window.
-    slot_point sl_tx{0, first_sl};
+        // Action: Attempt allocation of one RAR outside PDCCH monitoring window.
+        slot_point sl_tx{0, first_sl};
 
-    // Action: Attempt to allocate PDCCHs outside and inside PDCCH monitoring window.
-    rnti_t            ra_rnti = to_rnti(1);
-    std::vector<bool> expected_result(duration + 2, true);
-    expected_result[0]     = false;
-    expected_result.back() = false;
-    for (unsigned i = 0; i < duration + 2; ++i) {
-      res_grid.slot_indication(sl_tx);
-      pdcch_sch.slot_indication(sl_tx);
+        // Action: Attempt to allocate PDCCHs outside and inside PDCCH monitoring window.
+        rnti_t            ra_rnti = to_rnti(1);
+        std::vector<bool> expected_result(duration + 2, true);
+        expected_result[0]     = false;
+        expected_result.back() = false;
+        for (unsigned i = 0; i < duration + 2; ++i) {
+          res_grid.slot_indication(sl_tx);
+          pdcch_sch.slot_indication(sl_tx);
+          logger.set_context(sl_tx.to_uint());
+          logger.debug("Test: period={}, offset={}, duration={}", period, offset, duration);
 
-      pdcch_dl_information* pdcch =
-          pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
+          pdcch_dl_information* pdcch =
+              pdcch_sch.alloc_pdcch_common(res_grid[0], ra_rnti, to_search_space_id(1), aggregation_level::n4);
 
-      if (expected_result[i]) {
-        // Inside PDCCH monitoring window.
-        TESTASSERT(pdcch != nullptr);
-        TESTASSERT(pdcch->ctx.rnti == ra_rnti);
-      } else {
-        // Outside PDCCH monitoring window.
-        TESTASSERT(pdcch == nullptr);
+          if (expected_result[i]) {
+            // Inside PDCCH monitoring window.
+            TESTASSERT(pdcch != nullptr);
+            TESTASSERT(pdcch->ctx.rnti == ra_rnti);
+          } else {
+            // Outside PDCCH monitoring window.
+            TESTASSERT(pdcch == nullptr);
+          }
+
+          sl_tx++;
+        }
       }
-
-      sl_tx++;
     }
   }
 }
 
 int main()
 {
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+  logger.set_level(srslog::basic_levels::info);
+
+  srslog::init();
+
   test_pdcch_sched_sib1();
   test_pdcch_sched_rar();
   test_pdcch_sched_ue();
