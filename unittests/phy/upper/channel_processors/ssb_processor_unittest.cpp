@@ -41,8 +41,8 @@ int main()
   std::uniform_int_distribution<unsigned> pci_dist(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> bit_dist(0, 1);
   std::uniform_int_distribution<unsigned> port_dist(0, 63);
-  std::uniform_int_distribution<unsigned> offset_to_pointA_dist(0, 11);
-  std::uniform_int_distribution<unsigned> ssb_subcarrier_offset_dist(0, 2199);
+  std::uniform_int_distribution<unsigned> offset_to_pointA_dist(0, 2199);
+  std::uniform_int_distribution<unsigned> ssb_subcarrier_offset_dist(0, 11);
 
   resource_grid_dummy grid;
 
@@ -92,7 +92,7 @@ int main()
 
           // Deduce derivative variables
           unsigned ssb_first_symbol_burst = ssb_get_l_first(pattern_case, ssb_idx);
-          unsigned nslots_in_subframe     = pow2(to_numerology_value(scs));
+          unsigned nslots_in_subframe     = get_nof_slots_per_subframe(scs);
           unsigned slot_in_burst          = ssb_first_symbol_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL);
           unsigned subframe_in_burst      = slot_in_burst / nslots_in_subframe;
           unsigned slot_in_subframe       = slot_in_burst % nslots_in_subframe;

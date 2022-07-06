@@ -58,7 +58,6 @@ inline subcarrier_spacing to_subcarrier_spacing(ssb_pattern_case pattern_case)
       return subcarrier_spacing::kHz120;
     case ssb_pattern_case::E:
     case ssb_pattern_case::invalid:
-    default:
       break;
   }
   return subcarrier_spacing::kHz240;
@@ -91,7 +90,7 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 /// - 15kHz SCS for FR1, and
 /// - 60kHz SCS for FR2.
 ///
-/// \see ssb_subcarrier_offset
+/// \sa ssb_subcarrier_offset
 using ssb_offset_to_pointA = uint16_t;
 
 /// \brief Data type used to represent the offset from subcarrier 0 in common resource block \f$N_{CRB}^{SSB}\f$ to
@@ -103,14 +102,15 @@ using ssb_offset_to_pointA = uint16_t;
 /// Read [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
 /// page](http://nrexplained.com/rbs) for a more detailed explanation of resource block indexing .
 ///
-/// For numerology \f$\mu\epsilon\{0, 1\}\f$ the field is 5 bit wide, the range is {0, ..., 23}.
+/// For numerology \f$\mu\in\{0,1\}\f$ the field is 5-bit wide, the range is {0, ..., 23}.
 ///
-/// For numerology \f$\mu\epsilon\{3, 4\}\f$ the field is 4 bit wide, the range is {0, ..., 11}.
+/// For numerology \f$\mu\in\{3,4\}\f$ the field is 4-bit wide, the range is {0, ..., 11}.
 ///
-/// The 4 LSB bits are given by the higher layer parameter \c ssb-SubcarrierOffset as per TS38.331 \c MIB. If the field
-/// is 5 bit wide, the MSB is given by bit \f$\bar{a}_{\bar{A}+5}\f$ in the PBCH payload as per TS38.212 Section 7.1.1.
+/// The four least significant bits bits are given by the higher layer parameter \c ssb-SubcarrierOffset as per TS38.331
+/// \c MIB. If the field is 5-bit wide, the MSB is given by bit \f$\bar{a}_{\bar{A}+5}\f$ in the PBCH payload as per
+/// TS38.212 Section 7.1.1.
 ///
-/// \see ssb_offset_to_pointA
+/// \sa ssb_offset_to_pointA
 using ssb_subcarrier_offset = uint8_t;
 
 } // namespace srsgnb

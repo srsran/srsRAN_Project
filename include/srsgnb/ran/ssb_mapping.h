@@ -87,7 +87,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
 /// - the result would point in a fraction of the subcarrier index.
 ///
 /// \param[in] fr                Frequency range.
-/// \param[in] ssb_scs           SS/PBCH block SCS resource grid.
+/// \param[in] ssb_scs           SS/PBCH block SCS.
 /// \param[in] offset_to_pointA  \see ssb_offset_to_pointA.
 /// \param[in] subcarrier_offset \see ssb_subcarrier_offset.
 /// \return The index of the lowest subcarrier of the SS/PBCH block.
