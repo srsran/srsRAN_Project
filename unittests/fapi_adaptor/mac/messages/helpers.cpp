@@ -131,12 +131,6 @@ static bwp_configuration generate_bwp_configuration()
   return config;
 }
 
-static coreset_id generate_coreset_id()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 11);
-  return static_cast<coreset_id>(dist(gen));
-}
-
 static unsigned generate_duration()
 {
   std::uniform_int_distribution<unsigned> dist(1, 3);
@@ -154,7 +148,7 @@ static coreset_configuration generate_coreset_configuration()
 {
   coreset_configuration config;
 
-  config.id                   = generate_coreset_id();
+  config.id                   = to_coreset_id(0);
   config.duration             = generate_duration();
   config.precoder_granurality = static_cast<coreset_configuration::precoder_granularity_type>(generate_binary());
   if (generate_bool()) {
@@ -224,6 +218,8 @@ static dci_dl_context_information generate_dci_context(const bwp_configuration& 
   return info;
 }
 
+static dl_sched_result result_in_mem;
+
 static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
 {
   static const unsigned                                nof_pdus    = 4;
@@ -232,7 +228,6 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
   static const static_vector<bwp_configuration, 2>     bwp_config  = {generate_bwp_configuration(),
                                                                       generate_bwp_configuration()};
 
-  static dl_sched_result result_in_mem;
   if (result_in_mem.dl_pdcchs.empty()) {
     for (unsigned i = 0; i != nof_pdus; ++i) {
       pdcch_dl_information info{generate_dci_context(bwp_config[(i == 1) ? 1U : 0U], coreset_cfg[(i == 1) ? 1U : 0U]),
@@ -249,6 +244,30 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
   result.dl_res = &result_in_mem;
 }
 
+sib_information unittests::build_valid_sib1_information_pdu()
+{
+  static const coreset_configuration coreset_cfg = {generate_coreset_configuration()};
+  static const bwp_configuration     bwp_config  = {generate_bwp_configuration()};
+  static const pdcch_dl_information  pdcch_info  = {generate_dci_context(bwp_config, coreset_cfg),
+                                                    generate_dci_dl_info()};
+
+  sib_information info;
+  info.si_indicator = sib_information::si_indicator_type::sib1;
+
+  info.nof_txs   = 0;
+  info.pdcch_cfg = &pdcch_info;
+
+  // Add PDSCH info.
+  info.pdsch_cfg.rnti    = to_rnti(3);
+  info.pdsch_cfg.bwp_cfg = &bwp_config;
+  info.pdsch_cfg.prbs    = {prb_interval{40, 60}};
+  info.pdsch_cfg.symbols = {3, 10};
+  info.pdsch_cfg.dmrs    = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
+  info.pdsch_cfg.codewords.push_back(pdsch_codeword{3, qam_modulation::qam16, 5, mcs_pdsch_table::qam64, 2, 128});
+
+  return info;
+}
+
 mac_dl_sched_result unittests::build_valid_mac_dl_sched_result()
 {
   mac_dl_sched_result result;
@@ -257,6 +276,9 @@ mac_dl_sched_result unittests::build_valid_mac_dl_sched_result()
 
   // Add PDCCH PDUs.
   add_pdcch_pdus_to_result(result);
+
+  // Add PDSCH PDU.
+  result_in_mem.bc.sibs.push_back(build_valid_sib1_information_pdu());
 
   // Add SSBs.
   result.ssb_pdu.push_back(build_valid_dl_ssb_pdu());

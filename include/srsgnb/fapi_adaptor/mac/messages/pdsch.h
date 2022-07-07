@@ -15,7 +15,7 @@
 
 namespace srsgnb {
 
-class sib_information;
+struct sib_information;
 
 namespace fapi_adaptor {
 

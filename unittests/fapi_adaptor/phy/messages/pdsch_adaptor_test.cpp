@@ -236,9 +236,7 @@ static void pdsch_conversion_test()
                         // :TODO: not filling CBG to retx control parameters.
 
                         builder.set_maintenance_v3_bwp_parameters(trasn_type, coreset_start, initial_bwp_size);
-                        builder.set_maintenance_v3_codeword_parameters(
-                            ldpc_graph, tb_size_lbrm_bytes, 0, 0);
-
+                        builder.set_maintenance_v3_codeword_parameters(ldpc_graph, tb_size_lbrm_bytes, 0, 0);
                         builder.set_maintenance_v3_tx_power_info_parameters(dmrs_profile_sss, data_profile_sss);
 
                         pdsch_processor::pdu_t proc_pdu;

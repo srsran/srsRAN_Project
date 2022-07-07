@@ -75,7 +75,10 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   // :TODO: Check this parameters
   static const unsigned transmision_scheme = 0;
   static const unsigned num_layers         = 1;
-  builder.set_codeword_information_parameters(1, num_layers, transmision_scheme, pdsch_ref_point_type::subcarrier_0);
+  // :TODO: nid_pdsch is pci for now.
+  static const unsigned nid_pdsch = 1;
+  builder.set_codeword_information_parameters(
+      nid_pdsch, num_layers, transmision_scheme, pdsch_ref_point_type::subcarrier_0);
 
   // DMRS.
   const dmrs_information& dmrs_cfg = mac_pdu.pdsch_cfg.dmrs;

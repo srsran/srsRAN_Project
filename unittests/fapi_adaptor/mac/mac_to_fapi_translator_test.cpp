@@ -57,8 +57,9 @@ static void test_sched_result_ok()
 
   TESTASSERT(gateway_spy.has_dl_tti_request_method_called());
   const dl_tti_request_message& msg = gateway_spy.dl_tti_request_msg();
-  TESTASSERT_EQ(msg.pdus.size(), 4U);
+  TESTASSERT_EQ(msg.pdus.size(), 5U);
   TESTASSERT_EQ((msg.pdus.begin() + 1)->pdu_type, dl_pdu_type::PDCCH);
+  TESTASSERT_EQ((msg.pdus.begin() + 2)->pdu_type, dl_pdu_type::PDSCH);
   TESTASSERT_EQ(msg.pdus.front().pdu_type, dl_pdu_type::PDCCH);
   TESTASSERT_EQ(msg.pdus.front().pdcch_pdu.dl_dci.size(), 3U);
   TESTASSERT_EQ((msg.pdus.begin() + 1)->pdcch_pdu.dl_dci.size(), 1U);

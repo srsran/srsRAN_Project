@@ -16,6 +16,9 @@
 namespace srsgnb {
 namespace unittests {
 
+/// Builds and returns a valid SIB1 information PDU.
+sib_information build_valid_sib1_information_pdu();
+
 /// Builds and returns a valid MAC SSB PDU.
 dl_ssb_pdu build_valid_dl_ssb_pdu();
 
