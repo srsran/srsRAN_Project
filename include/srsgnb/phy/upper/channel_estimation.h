@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"

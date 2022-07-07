@@ -13,11 +13,11 @@
 
 #pragma once
 
-#include "channel_estimation.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/upper/channel_estimation.h"
 
 namespace srsgnb {
 
@@ -27,14 +27,18 @@ class port_channel_estimator
 public:
   /// Estimator configuration parameters.
   struct configuration {
-    /// Cyclic prefix.
-    cyclic_prefix c_pref = cyclic_prefix::NORMAL;
     /// Resource blocks for which the channel should be estimated (binary mask).
     bounded_bitset<MAX_RB> rb_mask = {};
+    /// Cyclic prefix.
+    cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
     /// First OFDM symbol within the slot for which the channel should be estimated.
     unsigned first_symbol = 0;
     /// Number of OFDM symbols for which the channel should be estimated.
     unsigned nof_symbols = 0;
+    /// Number of transmit layers.
+    unsigned nof_tx_layers = 0;
+    /// Number of receive antennas.
+    unsigned nof_rx_antennas = 0;
   };
 
   /// Default destructor.
@@ -55,7 +59,7 @@ public:
                        const resource_grid_reader&  grid,
                        unsigned                     port,
                        span<const dmrs_symbol_list> symbols,
-                       span<dmrs_mask>              mask,
+                       span<const dmrs_mask>        mask,
                        const configuration&         cfg) = 0;
 };
 

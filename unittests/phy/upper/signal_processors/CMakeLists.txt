@@ -78,3 +78,6 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/csi_rs_processor_test_data.tar.gz
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/csi_rs_processor_test_data.tar.gz
         VERBATIM)
+
+add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
+target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsvec srslog)

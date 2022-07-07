@@ -40,12 +40,18 @@ public:
     bool n_scid;
     /// Generated signal linear amplitude.
     float amplitude;
-    /// DM-RS symbol position indices.
-    std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
+    /// Cyclic prefix.
+    cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
     /// Allocation RB list: the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;
-    /// List of ports: every entry is an index.
-    static_vector<uint8_t, DMRS_MAX_NPORTS> ports;
+    /// First OFDM symbol within the slot for which the channel should be estimated.
+    unsigned first_symbol = 0;
+    /// Number of OFDM symbols for which the channel should be estimated.
+    unsigned nof_symbols = 0;
+    /// Number of transmit layers.
+    unsigned nof_tx_layers = 0;
+    /// Number of receive antennas.
+    unsigned nof_rx_antennas = 0;
   };
 
   /// Default destructor.
