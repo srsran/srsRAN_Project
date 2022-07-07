@@ -6,7 +6,7 @@ Nightly:
   variables:
     - variable_type: env_var
       key: NOTIFY_SLACK
-      value: "false"
+      value: "true"
     - variable_type: env_var
       key: SLACK_CHANNEL
-      value: "#ci_test"
+      value: "#ci_gnb"
