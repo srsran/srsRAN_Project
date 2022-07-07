@@ -98,4 +98,21 @@ public:
   ~channel_estimate() = default;
 };
 
+/// \brief Maximum number of DM-RS symbols for one port.
+///
+/// At most half of the total number of subcarriers (i.e., <tt>MAX_RB * NRE / 2</tt>) is assigned a DM-RS symbol.
+/// Moreover, the number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
+/// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.
+static constexpr unsigned MAX_NOF_PORT_DMRS_SYMBOLS = MAX_RB * NRE / 2 * 4 * 2;
+
+/// Container for DM-RS symbols.
+using dmrs_symbol_list = static_vector<cf_t, MAX_NOF_PORT_DMRS_SYMBOLS>;
+
+/// Boolean mask to specify the position of DM-RS symbols in the resource grid.
+struct dmrs_mask {
+  /// Boolean mask to specify the OFDM symbols carrying DM-RS symbols.
+  static_vector<bool, MAX_NSYMB_PER_SLOT> symbols = {};
+  /// Boolean mask to specify the resource elements carrying DM-RS symbols.
+  bounded_bitset<MAX_NOF_PORT_DMRS_SYMBOLS / 2> res_elements = {};
+};
 } // namespace srsgnb
