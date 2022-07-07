@@ -50,6 +50,27 @@ public:
     log_helper(logger.error, fmt, std::forward<Args>(args)...);
   }
 
+  template <typename It, typename... Args>
+  void log_debug(It it_begin, It it_end, const char* fmt, Args&&... args)
+  {
+    log_helper(it_begin, it_end, logger.debug, fmt, std::forward<Args>(args)...);
+  }
+  template <typename It, typename... Args>
+  void log_info(It it_begin, It it_end, const char* fmt, Args&&... args)
+  {
+    log_helper(it_begin, it_end, logger.info, fmt, std::forward<Args>(args)...);
+  }
+  template <typename It, typename... Args>
+  void log_warning(It it_begin, It it_end, const char* fmt, Args&&... args)
+  {
+    log_helper(it_begin, it_end, logger.warning, fmt, std::forward<Args>(args)...);
+  }
+  template <typename It, typename... Args>
+  void log_error(It it_begin, It it_end, const char* fmt, Args&&... args)
+  {
+    log_helper(it_begin, it_end, logger.error, fmt, std::forward<Args>(args)...);
+  }
+
   const du_ue_index_t du_index;
   const lcid_t        lcid;
 
@@ -62,6 +83,14 @@ private:
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
     channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
+  }
+
+  template <typename It, typename... Args>
+  void log_helper(It it_begin, It it_end, srslog::log_channel& channel, const char* fmt, Args&&... args)
+  {
+    fmt::memory_buffer buffer;
+    fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
+    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
   }
 };
 

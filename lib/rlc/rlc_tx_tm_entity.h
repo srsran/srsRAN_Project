@@ -32,8 +32,12 @@ public:
   void handle_sdu(rlc_sdu sdu) override
   {
     size_t sdu_length = sdu.buf.length();
+    logger.log_info(sdu.buf.begin(),
+                    sdu.buf.end(),
+                    "Tx SDU (length: {} B, enqueued SDUs: {})",
+                    sdu.buf.length(),
+                    sdu_queue.size_sdus());
     if (sdu_queue.write(sdu)) {
-      logger.log_info("Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());
       metrics_add_sdus(1, sdu_length);
     } else {
       logger.log_warning("Dropped Tx SDU (length: {} B, enqueued SDUs: {})", sdu.buf.length(), sdu_queue.size_sdus());

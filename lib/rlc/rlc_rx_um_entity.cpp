@@ -10,11 +10,6 @@
 
 #include "rlc_rx_um_entity.h"
 
-#define RlcHexDebug(msg, bytes, fmt, ...) logger.log_debug(fmt, ##__VA_ARGS__)
-#define RlcHexInfo(msg, bytes, fmt, ...) logger.log_info(fmt, ##__VA_ARGS__)
-#define RlcHexWarning(msg, bytes, fmt, ...) logger.log_warning(fmt, ##__VA_ARGS__)
-#define RlcHexError(msg, bytes, fmt, ...) logger.log_error(fmt, ##__VA_ARGS__)
-
 using namespace srsgnb;
 
 rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
@@ -88,7 +83,7 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
 
   metrics_add_pdus(1, buf.length());
 
-  logger.log_debug("Rx data PDU ({} B)", buf.length());
+  logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
   rlc_um_pdu_header header = {};
   if (not rlc_um_read_data_pdu_header(buf, cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
@@ -120,25 +115,24 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
     // check if this SN is already present in rx buffer
     if (rx_window.find(header.sn) == rx_window.end()) {
       // first received segment of this SN, add to rx buffer
-      RlcHexDebug(rx_pdu.buf->msg,
-                  rx_pdu.buf->N_bytes,
-                  "placing {} segment of SN={} ({} B) in Rx buffer",
-                  to_string(header.si).c_str(),
-                  header.sn,
-                  rx_pdu.payload.length());
+      logger.log_debug(rx_pdu.payload.begin(),
+                       rx_pdu.payload.end(),
+                       "placing {} segment of SN={} ({} B) in Rx buffer",
+                       to_string(header.si).c_str(),
+                       header.sn,
+                       rx_pdu.payload.length());
       rlc_umd_pdu_segments pdu_segments = {};
       update_total_sdu_length(pdu_segments, rx_pdu);
       pdu_segments.segments.emplace(header.so, std::move(rx_pdu));
       rx_window[header.sn] = std::move(pdu_segments);
     } else {
       // other segment for this SN already present, update received data
-      RlcHexDebug(rx_pdu.buf->msg,
-                  rx_pdu.buf->N_bytes,
-                  "updating SN={} at SO={} with {} B",
-                  rx_pdu.header.sn,
-                  rx_pdu.header.so,
-                  rx_pdu.payload.length());
-
+      logger.log_debug(rx_pdu.payload.begin(),
+                       rx_pdu.payload.end(),
+                       "updating SN={} at SO={} with {} B",
+                       rx_pdu.header.sn,
+                       rx_pdu.header.so,
+                       rx_pdu.payload.length());
       auto& pdu_segments = rx_window.at(header.sn);
 
       // calculate total SDU length

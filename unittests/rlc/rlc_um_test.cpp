@@ -198,7 +198,7 @@ int main()
   srslog::init();
   srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
-
+  srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(-1);
   fprintf(stdout, "Testing RLC UM\n");
   std::initializer_list<srsgnb::rlc_um_sn_size> sn_sizes = {srsgnb::rlc_um_sn_size::size6bits,
                                                             srsgnb::rlc_um_sn_size::size12bits};

@@ -147,6 +147,7 @@ int main()
   srslog::init();
   srslog::fetch_basic_logger("TEST", false).set_level(srslog::basic_levels::debug);
   srslog::fetch_basic_logger("RLC", false).set_level(srslog::basic_levels::debug);
+  srslog::fetch_basic_logger("RLC", false).set_hex_dump_max_size(-1);
   fprintf(stdout, "Testing RLC TM\n");
 
   srsgnb::test_rx();

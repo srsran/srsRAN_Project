@@ -32,9 +32,13 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
 {
   size_t sdu_length = sdu.buf.length();
+  logger.log_info(sdu.buf.begin(),
+                  sdu.buf.end(),
+                  "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
+                  sdu.buf.length(),
+                  sdu.pdcp_sn,
+                  sdu_queue.size_sdus());
   if (sdu_queue.write(sdu)) {
-    logger.log_info(
-        "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu_length, sdu.pdcp_sn, sdu_queue.size_sdus());
     metrics_add_sdus(1, sdu_length);
   } else {
     logger.log_warning(
@@ -132,11 +136,10 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
                 nof_bytes);
 
   if (header.si == rlc_si_field::full_sdu) {
-    // log without SN (TODO)
-    // logger.log_info(pdu_buf, "Tx PDU (%d B)", pdu->N_bytes);
+    // log without SN
+    logger.log_info(pdu_buf.begin(), pdu_buf.end(), "Tx PDU ({} B)", pdu_buf.length());
   } else {
-    // TODO
-    // logger.log_info(payload, ret, "Tx PDU SN=%d (%d B)", header.sn, pdu->N_bytes);
+    logger.log_info(pdu_buf.begin(), pdu_buf.end(), "Tx PDU SN={} ({} B)", header.sn, pdu_buf.length());
   }
 
   metrics_add_pdus(1, pdu_buf.length());
