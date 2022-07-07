@@ -82,11 +82,7 @@ public:
     return pdu;
   }
 
-  void get_buffer_state(uint32_t& bytes) override
-  {
-    // TODO
-    bytes = 0;
-  }
+  void get_buffer_state(uint32_t& bytes) override { bytes = sdu_queue.size_bytes(); }
 };
 
 } // namespace srsgnb

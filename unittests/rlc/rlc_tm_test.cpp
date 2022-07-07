@@ -82,6 +82,8 @@ void test_tx()
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
 
+  uint32_t buffer_state = 0;
+
   const int                              payload_len = 4;
   const std::array<uint8_t, payload_len> tv_sdu      = {0xc0, 0xca, 0xc0, 0x1a};
   const std::array<uint8_t, payload_len> tv_pdu      = {0xc0, 0xca, 0xc0, 0x1a};
@@ -91,6 +93,8 @@ void test_tx()
     rlc_sdu sdu = {0, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(payload_len, buffer_state);
 
   {
     // read PDU from lower end
@@ -98,18 +102,24 @@ void test_tx()
     TESTASSERT(not pdu.empty());
     TESTASSERT(pdu == tv_pdu);
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(0, buffer_state);
 
   {
     // read another PDU from lower end but there is nothing to read
     rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT(pdu.empty());
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(0, buffer_state);
 
   {
     // write another SDU into upper end
     rlc_sdu sdu = {1, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(payload_len, buffer_state);
 
   {
     // read PDU from lower end with insufficient space for the whole SDU
@@ -117,6 +127,8 @@ void test_tx()
     rlc_byte_buffer pdu      = rlc1_tx_lower->pull_pdu(payload_len - shortage);
     TESTASSERT(pdu.empty());
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(payload_len, buffer_state);
 
   {
     // write another SDU into upper end
@@ -124,6 +136,8 @@ void test_tx()
     rlc_sdu sdu = {2, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(2 * payload_len, buffer_state);
 
   {
     // read PDU from lower end with oversized space
@@ -132,12 +146,16 @@ void test_tx()
     TESTASSERT_EQ(pdu.length(), payload_len);
     TESTASSERT(pdu == tv_pdu);
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(payload_len, buffer_state);
 
   {
     // read another PDU from lower end. There should still be one SDU in the queue
     rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT_EQ(pdu.length(), payload_len);
   }
+  rlc1_tx_lower->get_buffer_state(buffer_state);
+  TESTASSERT_EQ(0, buffer_state);
 }
 
 } // namespace srsgnb
