@@ -60,10 +60,6 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   // As such we need to lock to access these variables.
   std::lock_guard<std::mutex> lock(mutex);
 
-  rlc_um_pdu_header header = {};
-  header.sn                = TX_Next;
-  header.sn_size           = cfg.sn_field_length;
-
   // Get a new SDU, if none is currently being transmitted
   if (sdu.buf.empty()) {
     if (not sdu_queue.read(sdu)) {
@@ -72,6 +68,11 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
     }
     srsran_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so = {})", next_so);
   }
+
+  rlc_um_pdu_header header = {};
+  header.sn                = TX_Next;
+  header.sn_size           = cfg.sn_field_length;
+  header.so                = next_so;
 
   // Get SI and expected header size
   uint32_t head_len = 0;
@@ -91,14 +92,14 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
                       header_buf.length(),
                       head_len);
 
-  if (nof_bytes <= head_len + 1) {
+  if (nof_bytes <= head_len) {
     logger.log_info("Cannot build a PDU - {} B available, {} B required for header", nof_bytes, head_len);
     return {};
   }
 
   // Calculate the amount of data to move
   uint32_t space   = nof_bytes - head_len;
-  uint32_t to_move = space >= sdu.buf.length() ? sdu.buf.length() : space;
+  uint32_t to_move = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
 
   // Log
   logger.log_debug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
@@ -110,14 +111,18 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   byte_buffer tmp = {sdu.buf.begin(), sdu.buf.end()};
   pdu_buf.set_payload(tmp, next_so, to_move);
 
-  // advance SO offset
-  next_so += to_move;
-
-  // Release SDU and update SN if needed
-  if (header.si == rlc_si_field::last_segment) {
+  // Release SDU if needed
+  if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {
     sdu.buf.clear();
-    TX_Next = (TX_Next + 1) % mod;
     next_so = 0;
+  } else {
+    // advance SO offset
+    next_so += to_move;
+  }
+
+  // Update SN if needed
+  if (header.si == rlc_si_field::last_segment) {
+    TX_Next = (TX_Next + 1) % mod;
   }
 
   // Assert number of bytes
