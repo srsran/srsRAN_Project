@@ -87,6 +87,8 @@ inline coreset_configuration make_default_coreset0_config(const du_cell_config_d
   cfg.interleaved->reg_bundle_sz  = 6;
   cfg.interleaved->shift_index    = params.pci;
   cfg.precoder_granurality        = coreset_configuration::precoder_granularity_type::same_as_reg_bundle;
+  cfg.pdcch_dmrs_scrambling_id    = params.pci;
+
   return cfg;
 }
 

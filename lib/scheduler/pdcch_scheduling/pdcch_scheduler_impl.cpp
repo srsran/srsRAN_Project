@@ -348,6 +348,8 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
   if (ss_cfg.type == search_space_configuration::type::ue_dedicated and
       cs_cfg.pdcch_dmrs_scrambling_id != cell_cfg.pci) {
     pdcch.ctx.n_rnti_pdcch_data = rnti;
+  } else {
+    pdcch.ctx.n_rnti_pdcch_data = 0;
   }
 
   // Allocate a position for DL PDCCH in CORESET.
