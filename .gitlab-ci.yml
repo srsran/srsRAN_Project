@@ -34,6 +34,16 @@ check-ci-versions:
     - ci-version-check --check-main .gitlab-ci.yml --check-directory .gitlab
   dependencies: []
 
+auto rebaser:
+  stage: ci check
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+  image: $SRS_TOOLS_IMAGE
+  extends: .srs_tools_setup_job
+  script:
+    - srs_tools_setup
+    - gitlab-rebaser --token ${CODEBOT_TOKEN} --namespace ${CI_PROJECT_NAMESPACE} --project ${CI_PROJECT_NAME} --target dev
+
 ################################################################################
 ## Static
 ################################################################################
