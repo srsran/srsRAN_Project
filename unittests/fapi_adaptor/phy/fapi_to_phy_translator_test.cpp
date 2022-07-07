@@ -10,6 +10,7 @@
 
 #include "../../../lib/fapi_adaptor/phy/fapi_to_phy_translator.h"
 #include "../../fapi/validators/helpers.h"
+#include "../../phy/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -22,28 +23,9 @@ using namespace unittest;
 
 namespace {
 
-class resource_grid_dummy : public resource_grid
-{
-public:
-  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override {}
-  span<const cf_t>
-  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
-  {
-    return {};
-  }
-  void       put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override {}
-  void       get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override {}
-  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
-  {
-    return {};
-  }
-  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override {}
-  void set_all_zero() override {}
-};
-
 class resource_grid_pool_dummy : public resource_grid_pool
 {
-  resource_grid_dummy grid;
+  resource_grid_spy grid;
 
 public:
   resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) override { return grid; }
@@ -80,11 +62,15 @@ static void test_downlink_processor_is_configured_on_new_slot()
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
   // Assert that the downlink processor is configured.
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+
+  // Assert that the resource grid has been set to zero.
+  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 }
 
 static void test_current_grid_is_send_on_new_slot()
@@ -97,11 +83,14 @@ static void test_current_grid_is_send_on_new_slot()
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
   // Assert that the downlink processor is configured.
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  // Assert that the resource grid has been set to zero.
+  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   slot_point slot2(1, 1, 1);
   translator.handle_new_slot(slot2);
@@ -122,12 +111,15 @@ static void test_dl_ssb_pdu_is_processed()
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
   // Assert that the downlink processor is configured.
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
+  // Assert that the resource grid has been set to zero.
+  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();
@@ -156,6 +148,7 @@ static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
+  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();

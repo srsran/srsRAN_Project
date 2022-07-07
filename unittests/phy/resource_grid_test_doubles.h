@@ -238,6 +238,9 @@ public:
     entries.emplace(key, entry.value);
   }
 
+  /// Clears any possible state.
+  void reset() { entries.clear(); }
+
 private:
   /// \brief Defines the resource grid indexing key as the tuple of the port, symbol and subcarrier indexes.
   using entry_key_t = std::tuple<uint8_t, uint8_t, uint16_t>;
@@ -258,6 +261,58 @@ private:
                   subcarrier);
 
     return entries.at(key);
+  }
+};
+
+/// Describes a resource grid spy.
+class resource_grid_spy : public resource_grid
+{
+  resource_grid_reader_spy reader;
+  resource_grid_writer_spy writer;
+  bool                     method_set_all_zero_has_been_called = false;
+
+public:
+  /// Returns true if the \c set_all_zero() method has been called, otherwise false.
+  bool has_set_all_zero_method_been_called() const { return method_set_all_zero_has_been_called; }
+
+  void set_all_zero() override
+  {
+    method_set_all_zero_has_been_called = true;
+
+    // Reset the reader and writer.
+    reader.reset();
+    writer.reset();
+  }
+
+  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
+  {
+    reader.get(symbols, port, coordinates);
+  }
+
+  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  {
+    return reader.get(symbols, port, l, k_init, mask);
+  }
+
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
+  {
+    reader.get(symbols, port, l, k_init);
+  }
+
+  void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
+  {
+    writer.put(port, coordinates, symbols);
+  }
+
+  span<const cf_t>
+  put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
+  {
+    return writer.put(port, l, k_init, mask, symbols);
+  }
+
+  void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
+  {
+    writer.put(port, l, k_init, symbols);
   }
 };
 
