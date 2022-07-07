@@ -12,15 +12,15 @@
 #define SRSGNB_CU_CP_UE_MANAGER_H
 
 #include "cu_cp_manager_config.h"
-#include "cu_cp_manager_interfaces.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "ue_manager_interfaces.h"
 
 namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ue_manager : public ue_manager_ctrl_configurer
+class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_rrc_message_handler
 {
 public:
   explicit ue_manager(cu_cp_manager_config_t& cfg_);
@@ -31,8 +31,10 @@ public:
   void        remove_ue(ue_index_t ue_index) override;
   ue_context* find_ue(ue_index_t ue_index) override;
   ue_context* find_rnti(rnti_t rnti) override;
+  size_t      get_nof_ues() override;
 
-  void handle_initial_ul_rrc_message_transfer(du_cell_index_t pcell_idx, const f1ap_initial_ul_rrc_msg& msg);
+  void handle_initial_ul_rrc_message_transfer(du_cell_index_t pcell_idx, const f1ap_initial_ul_rrc_msg& msg) override;
+  void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override;
 
 private:
   cu_cp_manager_config_t& cfg;
@@ -43,6 +45,8 @@ private:
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
+
+  ue_manager_f1ap_event_indicator f1ap_ev_notifier;
 };
 
 } // namespace srs_cu_cp

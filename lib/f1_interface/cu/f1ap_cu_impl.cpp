@@ -35,11 +35,15 @@ public:
   event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response_message;
 };
 
-f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&            f1c_pdu_notifier_,
-                           f1c_initiating_message_notifier& f1c_init_message_notifier_) :
+f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
+                           f1c_du_processor_message_notifier& du_processor_notifier_,
+                           f1c_ue_manager_message_notifier&   ue_manager_notifier_,
+                           f1c_du_management_notifier&        f1c_du_management_notifier_) :
   logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
-  init_message_notifier(f1c_init_message_notifier_)
+  du_processor_notifier(du_processor_notifier_),
+  ue_manager_notifier(ue_manager_notifier_),
+  du_management_notifier(f1c_du_management_notifier_)
 {
 }
 
@@ -187,19 +191,26 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::options::f1_setup_request: {
       f1_setup_request_message req_msg = {};
       req_msg.request                  = msg.value.f1_setup_request();
-      init_message_notifier.on_f1_setup_request_received(req_msg);
+      du_processor_notifier.on_f1_setup_request_received(req_msg);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {
       f1ap_initial_ul_rrc_msg ul_transfer = {};
       ul_transfer.msg                     = msg.value.init_ulrrc_msg_transfer();
-      init_message_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
+      du_processor_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
       f1ap_ul_rrc_msg ul_transfer = {};
       ul_transfer.msg             = msg.value.ulrrc_msg_transfer();
-      init_message_notifier.on_ul_rrc_message_transfer_received(ul_transfer);
+      ue_manager_notifier.on_ul_rrc_message_transfer_received(ul_transfer);
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
+}
+
+void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)
+{
+  // TODO: get real du_index
+  du_index_t du_index = int_to_du_index(0);
+  du_management_notifier.on_du_remove_request_received(du_index);
 }

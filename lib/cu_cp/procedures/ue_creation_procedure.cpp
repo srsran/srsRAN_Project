@@ -86,6 +86,6 @@ void ue_creation_procedure::create_srb0()
   cu_srb_context& srb0 = ue_ctx.srbs[LCID_SRB0];
   srb0.lcid            = LCID_SRB0;
 
-  // create F1C to RRC adapter
+  // create UE manager to RRC adapter
   srb0.rx_notifier = std::make_unique<rrc_ul_ccch_adapter>(*ue_ctx.rrc->get_ul_ccch_pdu_handler());
 }

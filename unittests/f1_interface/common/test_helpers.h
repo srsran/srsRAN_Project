@@ -11,16 +11,17 @@
 #ifndef SRSGNB_LIB_F1_TEST_HELPERS_H
 #define SRSGNB_LIB_F1_TEST_HELPERS_H
 
+#include "srsgnb/cu_cp/cu_cp_manager.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
-#include "test_helpers.h"
 
 namespace srsgnb {
 
-class dummy_f1c_init_message_notifier : public srs_cu_cp::f1c_initiating_message_notifier
+class dummy_f1c_du_processor_message_notifier : public srs_cu_cp::f1c_du_processor_message_notifier
 {
 public:
-  dummy_f1c_init_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_f1c_du_processor_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
   srs_cu_cp::f1_setup_request_message last_f1_setup_request_message;
   void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
   {
@@ -31,6 +32,15 @@ public:
   {
     logger.info("Received Initial UL RRC Message transfer message.");
   }
+
+private:
+  srslog::basic_logger& logger;
+};
+
+class dummy_f1c_ue_manager_message_notifier : public srs_cu_cp::f1c_ue_manager_message_notifier
+{
+public:
+  dummy_f1c_ue_manager_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
   void on_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_ul_rrc_msg& msg) override
   {
     logger.info("Received UL RRC Message transfer message.");
@@ -79,6 +89,66 @@ public:
 private:
   srslog::basic_logger& logger;
   f1c_message_handler*  handler = nullptr;
+};
+
+/// Reusable notifier class that a) stores the received PDU for test inspection and b)
+/// calls the registered PDU handler (if any). The handler can be added upon construction
+/// or later via the attach_handler() method.
+class dummy_cu_cp_f1c_pdu_notifier : public f1c_message_notifier
+{
+public:
+  dummy_cu_cp_f1c_pdu_notifier(srs_cu_cp::cu_cp_manager_interface* manager_, f1c_message_handler* handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), manager(manager_), handler(handler_){};
+
+  void attach_handler(srs_cu_cp::cu_cp_manager_interface* manager_, f1c_message_handler* handler_)
+  {
+    manager = manager_;
+    handler = handler_;
+    manager->on_new_connection();
+  };
+  void on_new_message(const f1c_msg& msg) override
+  {
+    logger.info("Received a F1AP PDU of type {}", msg.pdu.type().to_string());
+    last_f1c_msg = msg; // store msg
+
+    if (handler != nullptr) {
+      logger.info("Forwarding F1AP PDU");
+      handler->handle_message(msg);
+    }
+  }
+  f1c_msg last_f1c_msg;
+
+private:
+  srslog::basic_logger&               logger;
+  srs_cu_cp::cu_cp_manager_interface* manager = nullptr;
+  f1c_message_handler*                handler = nullptr;
+};
+
+/// Reusable notifier class that a) stores the received du_index for test inspection and b)
+/// calls the registered DU handler (if any). The handler can be added upon construction
+/// or later via the attach_handler() method.
+class dummy_f1c_du_management_notifier : public srs_cu_cp::f1c_du_management_notifier
+{
+public:
+  dummy_f1c_du_management_notifier(srs_cu_cp::cu_cp_manager_du_handler* handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
+
+  void attach_handler(srs_cu_cp::cu_cp_manager_du_handler* handler_) { handler = handler_; };
+  void on_du_remove_request_received(const srs_cu_cp::du_index_t idx) override
+  {
+    logger.info("Received a du remove request for du {}", idx);
+    last_du_idx = idx; // store idx
+
+    if (handler != nullptr) {
+      logger.info("Forwarding remove request");
+      handler->handle_du_remove_request(idx);
+    }
+  }
+  srs_cu_cp::du_index_t last_du_idx;
+
+private:
+  srslog::basic_logger&                logger;
+  srs_cu_cp::cu_cp_manager_du_handler* handler = nullptr;
 };
 
 /// Dummy handler just printing the received PDU.

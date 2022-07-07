@@ -7,10 +7,9 @@
 #
 
 set(SOURCES
-      cu_cp.cpp      
+      cu_cp.cpp
       cu_cp_manager_impl.cpp
       cu_cp_manager_factory.cpp
-      du_manager.cpp
       du_processor.cpp
       ue_manager.cpp
       procedures/ue_creation_procedure.cpp

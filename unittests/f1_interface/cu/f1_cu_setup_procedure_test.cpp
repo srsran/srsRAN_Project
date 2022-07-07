@@ -28,9 +28,11 @@ void test_f1_setup(test_outcome outcome)
                                 outcome == test_outcome::success ? "Success" : "Failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  dummy_f1c_pdu_notifier          f1c_pdu_notifier(nullptr);
-  dummy_f1c_init_message_notifier f1c_message_notifier;
-  auto                            f1ap_cu = create_f1ap(f1c_pdu_notifier, f1c_message_notifier);
+  dummy_f1c_pdu_notifier                  f1c_pdu_notifier(nullptr);
+  dummy_f1c_du_processor_message_notifier du_processor_notifier;
+  dummy_f1c_ue_manager_message_notifier   ue_manager_notifier;
+  dummy_f1c_du_management_notifier        f1c_du_mgmt_notifier(nullptr);
+  auto f1ap_cu = create_f1ap(f1c_pdu_notifier, du_processor_notifier, ue_manager_notifier, f1c_du_mgmt_notifier);
 
   // Action 1: Receive F1SetupRequest message
   test_logger.info("TEST: Receive F1SetupRequest message...");
@@ -93,7 +95,7 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_message(f1c_msg);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
-    TESTASSERT(f1c_message_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
+    TESTASSERT(du_processor_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
 
     // Action 3: Transmit F1SetupResponse message
     test_logger.info("TEST: Transmit F1SetupResponse message...");
@@ -126,7 +128,7 @@ void test_f1_setup(test_outcome outcome)
     f1ap_cu->handle_message(f1c_msg);
 
     // Action 2: Check if F1SetupRequest was forwarded to CU manager
-    TESTASSERT(f1c_message_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
+    TESTASSERT(du_processor_notifier.last_f1_setup_request_message.request->gnb_du_id.value = 0x11);
 
     // Action 3: Transmit F1SetupFailure message
     test_logger.info("TEST: Transmit F1SetupFailure message...");

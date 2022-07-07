@@ -22,7 +22,10 @@ namespace srs_cu_cp {
 class f1ap_cu_impl final : public f1_interface
 {
 public:
-  f1ap_cu_impl(f1c_message_notifier& f1c_pdu_notifier_, f1c_initiating_message_notifier& f1c_init_message_notifier_);
+  f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
+               f1c_du_processor_message_notifier& du_processor_notifier_,
+               f1c_ue_manager_message_notifier&   ue_manager_notifier_,
+               f1c_du_management_notifier&        f1c_du_management_notifier_);
   ~f1ap_cu_impl();
 
   // f1ap connection manager functions
@@ -57,9 +60,15 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  srslog::basic_logger&            logger;
-  f1c_message_notifier&            pdu_notifier;
-  f1c_initiating_message_notifier& init_message_notifier;
+  /// \brief Notify the CU-CP manager about the reception of an F1 Removal Request
+  /// \param[in] msg The F1 Removal Request message.
+  void handle_f1_removal_resquest(const f1_removal_request_message& msg);
+
+  srslog::basic_logger&              logger;
+  f1c_message_notifier&              pdu_notifier;
+  f1c_du_processor_message_notifier& du_processor_notifier;
+  f1c_ue_manager_message_notifier&   ue_manager_notifier;
+  f1c_du_management_notifier&        du_management_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;
 };

@@ -12,8 +12,8 @@
 #define SRSGNB_CU_CP_UE_CREATION_PROCEDURE_H
 
 #include "../cu_cp_manager_config.h"
-#include "../cu_cp_manager_interfaces.h"
 #include "../log_format.h"
+#include "../ue_manager_interfaces.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/async/async_task.h"
 

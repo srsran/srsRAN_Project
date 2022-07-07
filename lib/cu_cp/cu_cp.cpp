@@ -26,8 +26,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_)
   assert_cu_cp_configuration_valid(cfg);
 
   // Create layers
-  f1ap    = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier);
-  manager = srs_cu_cp::create_cu_cp_manager(timers, *f1ap, *f1ap, *cfg.cu_executor);
+  manager = srs_cu_cp::create_cu_cp_manager(timers, f1ap_ev_notifier, *cfg.f1c_notifier, *cfg.cu_executor);
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect(*manager);
@@ -47,7 +46,17 @@ size_t cu_cp::get_nof_dus()
   return manager->get_nof_dus();
 }
 
-f1c_message_handler& cu_cp::get_f1c_message_handler()
+size_t cu_cp::get_nof_ues()
 {
-  return *f1ap;
+  return manager->get_nof_ues();
+}
+
+f1c_message_handler* cu_cp::get_f1c_message_handler(du_index_t du_index)
+{
+  return manager->get_f1c_message_handler(du_index);
+}
+
+cu_cp_manager_interface& cu_cp::get_cu_cp_manager()
+{
+  return *manager;
 }

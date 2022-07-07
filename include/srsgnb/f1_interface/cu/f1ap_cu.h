@@ -14,6 +14,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/support/async/async_task.h"
 
@@ -50,6 +51,10 @@ struct f1_setup_response_message {
 
 struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
+};
+
+struct f1_removal_request_message {
+  asn1::f1ap::f1_removal_request_s request;
 };
 
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
@@ -116,23 +121,41 @@ public:
   handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) = 0;
 };
 
-/// Methods used by F1AP to notify reception of initiating messages.
-class f1c_initiating_message_notifier
+/// Methods used by F1AP to notify the DU processor about messages.
+class f1c_du_processor_message_notifier
 {
 public:
-  virtual ~f1c_initiating_message_notifier() = default;
+  virtual ~f1c_du_processor_message_notifier() = default;
 
-  /// \brief Notifies the CU about the reception of a F1 Setup Request message.
+  /// \brief Notifies the DU processor about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 
-  /// \brief Notifies the CU about the reception of a initial UL RRC message transfer message.
+  /// \brief Notifies the DU Processor about the reception of a initial UL RRC message transfer message.
   /// \param[in] msg The received initial UL RRC message transfer message.
   virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) = 0;
+};
 
-  /// \brief Notifies the CU about the reception of a UL RRC message transfer message.
+/// Methods used by F1AP to notify the UE manager about messages.
+class f1c_ue_manager_message_notifier
+{
+public:
+  virtual ~f1c_ue_manager_message_notifier() = default;
+
+  /// \brief Notifies the UE manager about the reception of a UL RRC message transfer message.
   /// \param[in] msg The received UL RRC message transfer message.
   virtual void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_msg& msg) = 0;
+};
+
+/// Methods used by F1AP to notify CU-CP manager about DU specific events.
+class f1c_du_management_notifier
+{
+public:
+  virtual ~f1c_du_management_notifier() = default;
+  /// \brief Notifies the CU-CP manager about a successful F1 Removal procedure.
+  /// The corresponding DU processor will be removed now.
+  /// \param[in] du_index The index of the DU processor to delete.
+  virtual void on_du_remove_request_received(const du_index_t du_index) = 0;
 };
 
 /// Combined entry point for F1C/U handling.

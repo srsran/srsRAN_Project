@@ -9,114 +9,112 @@
  */
 
 #include "cu_cp_manager_impl.h"
-#include "../lib/f1_interface/common/asn1_helpers.h"
 #include "../ran/bcd_helpers.h"
-#include "f1c_asn1_helpers.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) : cfg(cfg_), du_mng(cfg), main_ctrl_loop(128)
+cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
+  cfg(cfg_), logger(cfg_.logger), main_ctrl_loop(128)
 {
-  // nothing to start straigt away on the CU
+  const size_t number_of_pending_procedures = 16;
+  for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
+    du_ctrl_loop.emplace(i, number_of_pending_procedures);
+  }
+
   ctx = {}; // make it compile
 }
 
-void cu_cp_manager_impl::handle_f1_setup_request(const f1_setup_request_message& msg)
+du_processor* cu_cp_manager_impl::find_du(du_index_t du_index)
 {
-  // TODO: add handling
-  cfg.logger.debug("Received F1 setup request");
-
-  // Reject request without served cells
-  if (not msg.request->gnb_du_served_cells_list_present) {
-    cfg.logger.error("Not handling F1 setup without served cells");
-    send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
-    return;
-  }
-
-  // Create new DU context
-  std::unique_ptr<du_processor> du      = std::unique_ptr<du_processor>(new du_processor(cfg));
-  auto&                         du_ctxt = du->get_context();
-  du_ctxt.du_index = du_mng.get_next_du_index();
-  du_ctxt.id       = msg.request->gnb_du_id.value;
-  if (msg.request->gnb_du_name_present) {
-    du_ctxt.name = msg.request->gnb_du_name.value.to_string();
-  }
-
-  for (const auto& served_cell : msg.request->gnb_du_served_cells_list.value) {
-    const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
-    du_cell_context du_cell;
-    du_cell.cell_index = MIN_DU_CELL_INDEX; // TODO: get unique next idx
-    du_cell.pci        = cell_item.served_cell_info.nrpci;
-    du_cell.cgi        = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
-
-    if (not cell_item.gnb_du_sys_info_present) {
-      cfg.logger.error("Not handling served cells without system information");
-      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
-      return;
-    }
-
-    // Store and unpack system information
-    du_cell.sys_info.packed_mib =
-        byte_buffer(cell_item.gnb_du_sys_info.mib_msg.begin(), cell_item.gnb_du_sys_info.mib_msg.end());
-    du_cell.sys_info.packed_sib1 =
-        byte_buffer(cell_item.gnb_du_sys_info.sib1_msg.begin(), cell_item.gnb_du_sys_info.sib1_msg.end());
-
-    // TODO: add unpacking
-
-    // add cell to DU context
-    du_cell_index_t cell_index = du_cell.cell_index;
-    du->get_cell_db().emplace(cell_index, std::move(du_cell));
-  }
-
-  // add DU
-  du_mng.add_du(std::move(du));
-
-  // send setup response
-  send_f1_setup_response(du_ctxt);
+  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  return du_db.contains(du_index) ? du_db[du_index].get() : nullptr;
 }
 
-void cu_cp_manager_impl::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
+du_processor* cu_cp_manager_impl::find_du(uint64_t packed_nr_cell_id)
 {
-  du_mng.handle_initial_ul_rrc_message_transfer(msg);
-};
-
-void cu_cp_manager_impl::handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)
-{
-  cfg.logger.info("Handling UL RRC Message transfer.");
-
-  // Convert RRCContainer to byte_buffer
-  byte_buffer pdcp_pdu = make_byte_buffer(msg.msg->rrc_container.value.to_string());
-  // TODO: Send pdcp_pdu to PDCP
+  auto du_it = du_dict.find(packed_nr_cell_id);
+  if (du_it != du_dict.end()) {
+    return du_it->second;
+  }
+  return nullptr;
 }
 
-/// Sender for F1AP messages
-void cu_cp_manager_impl::send_f1_setup_response(const du_context& du_ctxt)
+/// Create DU object with valid index
+void cu_cp_manager_impl::add_du()
 {
-  f1_setup_response_message response;
-  response.success = true;
-  fill_asn1_f1_setup_response(
-      response.response, cfg.name, cfg.rrc_version, du_mng.find_du(du_ctxt.du_index)->get_cell_db());
-  cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
+  std::unique_ptr<du_processor> du       = std::unique_ptr<du_processor>(new du_processor(cfg));
+  du_index_t                    du_index = get_next_du_index();
+  du->get_context().du_index             = du_index;
+
+  srsran_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
+
+  // Create DU object
+  du_db.emplace(du_index, std::move(du));
+
+  return;
 }
 
-void cu_cp_manager_impl::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause)
+void cu_cp_manager_impl::remove_du(du_index_t du_index)
 {
-  f1_setup_response_message response;
-  response.success = false;
-  response.failure->cause->set(cause);
-  cfg.f1ap_conn_mng->handle_f1ap_setup_response(response);
+  // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
+  // before safely removing the DU. This is achieved via a scheduled async task
+
+  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  logger.debug("Scheduling du_index={} deletion", du_index);
+
+  // Schedule DU removal task
+  du_ctrl_loop[du_index].schedule([this, du_index](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+    srsran_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
+    du_db.erase(du_index);
+    logger.info("Removed du_index={}", du_index);
+    CORO_RETURN();
+  });
 }
 
 size_t cu_cp_manager_impl::get_nof_dus() const
 {
-  // TODO: this probably needs to be protected. It's hard to say when this is needed.
-  return du_mng.get_nof_dus();
+  return du_db.size();
+}
+
+du_index_t cu_cp_manager_impl::get_next_du_index()
+{
+  du_index_t new_index;
+  do {
+    new_index = int_to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
+  } while (du_db.contains(new_index));
+  return new_index;
 }
 
 size_t cu_cp_manager_impl::get_nof_ues() const
 {
-  // TODO: implement loop to iterate over all DUs
-  return MAX_NOF_UES;
+  size_t nof_ues = 0;
+  for (auto& du : du_db) {
+    nof_ues += du->get_nof_ues();
+  }
+  return nof_ues;
+}
+
+f1c_message_handler* cu_cp_manager_impl::get_f1c_message_handler(const du_index_t du_index)
+{
+  auto du_it = cu_cp_manager_impl::find_du(du_index);
+  if (du_it == nullptr) {
+    logger.error("Could not find DU with du_index={}", du_index);
+    return nullptr;
+  }
+
+  return du_it->get_f1c_message_handler();
+}
+
+void cu_cp_manager_impl::on_new_connection()
+{
+  logger.info("New DU connection - adding DU");
+  cu_cp_manager_impl::add_du();
+}
+
+void cu_cp_manager_impl::handle_du_remove_request(const du_index_t du_index)
+{
+  logger.info("removing DU {}", du_index);
+  cu_cp_manager_impl::remove_du(du_index);
 }

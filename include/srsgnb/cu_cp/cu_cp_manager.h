@@ -12,54 +12,56 @@
 #define SRSGNB_CU_CP_MANAGER_H
 
 #include "cu_cp_types.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include <string>
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Forward declared messages.
-struct f1ap_initial_ul_rrc_msg;
+class du_processor;
 
-struct f1ap_ul_rrc_msg;
-
-struct f1_setup_request_message;
-
-struct ue_delete_message {
-  ue_index_t ue_index;
-};
-
-/// Interface used to handle external events (e.g. UL RRC Message Transfer).
-class cu_cp_manager_ccch_handler
+/// Interface to notify about DU connections to the CU-CP
+class cu_cp_manager_du_connection_notifier
 {
 public:
-  virtual ~cu_cp_manager_ccch_handler()                                                   = default;
-  virtual void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
-  virtual void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)                 = 0;
+  virtual ~cu_cp_manager_du_connection_notifier() = default;
+
+  /// \brief Notifies the CU-CP manager about a new DU connection.
+  virtual void on_new_connection() = 0;
 };
 
-class cu_cp_manager_f1ap_setup_handler
+/// Interface used to handle DU specific F1AP procedure outcomes (e.g. F1 removal request)
+class cu_cp_manager_du_handler
 {
 public:
-  virtual ~cu_cp_manager_f1ap_setup_handler()                               = default;
-  virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
+  virtual ~cu_cp_manager_du_handler() = default;
+
+  /// \brief Handles a remove request. The corresponding DU processor will be removed.
+  /// \param[in] du_index The index of the DU processor to delete.
+  virtual void handle_du_remove_request(const du_index_t du_index) = 0;
 };
 
-class cu_cp_manager_interface_query
+class cu_cp_manager_du_interface
 {
 public:
-  virtual ~cu_cp_manager_interface_query() = default;
-  virtual size_t get_nof_dus() const       = 0;
-  virtual size_t get_nof_ues() const       = 0;
+  virtual ~cu_cp_manager_du_interface()                     = default;
+  virtual void          add_du()                            = 0;
+  virtual void          remove_du(du_index_t du_index)      = 0;
+  virtual du_index_t    get_next_du_index()                 = 0;
+  virtual du_processor* find_du(du_index_t du_index)        = 0;
+  virtual du_processor* find_du(uint64_t packed_nr_cell_id) = 0;
+
+  virtual size_t get_nof_dus() const = 0;
+  virtual size_t get_nof_ues() const = 0;
+
+  virtual f1c_message_handler* get_f1c_message_handler(const du_index_t du_index) = 0;
 };
 
-/// Combined interface for all F1C handlers
-class cu_cp_manager_f1c_interface : public cu_cp_manager_f1ap_setup_handler, public cu_cp_manager_ccch_handler
-{
-public:
-  virtual ~cu_cp_manager_f1c_interface() = default;
-};
+class cu_cp_manager_interface : public cu_cp_manager_du_connection_notifier,
+                                public cu_cp_manager_du_handler,
+                                public cu_cp_manager_du_interface
 
-class cu_cp_manager_interface : public cu_cp_manager_interface_query, public cu_cp_manager_f1c_interface
 {
 public:
   virtual ~cu_cp_manager_interface() = default;
