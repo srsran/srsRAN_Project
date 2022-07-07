@@ -114,7 +114,7 @@ enum class mcs_pdsch_table { qam64 = 0, qam256 = 1, qam64LowSE = 2 };
 /// PDSCH codeword.
 /// \remark See FAPI PDSCH PDU.
 struct pdsch_codeword {
-  uint16_t       target_code_rate;
+  float          target_code_rate;
   qam_modulation qam_mod;
   /// MCS index [3GPP TS 38.214, sec 5.1.3.1], should match value sent in DCI. Values (0..31).
   uint8_t         mcs_index;

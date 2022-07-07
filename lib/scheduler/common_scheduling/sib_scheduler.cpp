@@ -202,7 +202,7 @@ void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsigned beam_idx)
 {
   // TODO: PBRs for SIB1 should be derived from the SIB1 size.
-  const unsigned nof_prbs_per_sib1 = 4;
+  const unsigned nof_prbs_per_sib1 = 5;
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
@@ -248,6 +248,9 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
                                      unsigned                      beam_idx,
                                      crb_interval                  sib1_crbs_grant)
 {
+  // System information indicator for SIB1, in DCI 1_0. Refer to Section 7.3.1.2.1 and Table 7.3.1.2.1-2, TS 38.212.
+  const unsigned sib1_si_indicator = 0;
+
   // Add DCI to list to dl_pdcch.
   srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
   auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
@@ -265,7 +268,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   dci.vrb_to_prb_mapping           = 0; // TODO.
   dci.modulation_coding_scheme     = sib1_mcs;
   dci.redundancy_version           = sib1_rv;
-  dci.system_information_indicator = 0;
+  dci.system_information_indicator = sib1_si_indicator;
 
   // Add SIB1 to list of SIB1 information to pass to lower layers.
   res_grid.result.dl.bc.sibs.emplace_back();
@@ -280,13 +283,17 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
   pdsch.prbs    = sib1_prbs;
   pdsch.codewords.emplace_back();
-  pdsch_codeword& cw  = pdsch.codewords.back();
-  cw.rv_index         = dci.redundancy_version;
-  cw.mcs_index        = dci.modulation_coding_scheme;
-  cw.mcs_table        = mcs_pdsch_table::qam64;
-  cw.qam_mod          = qam4; // TODO: Derive QAM from MCS.
-  cw.target_code_rate = 0;    // TODO.
-  cw.tb_size_bytes    = 0;    // TODO.
-  pdsch.dmrs          = make_dmrs_info_common(
+  pdsch_codeword& cw = pdsch.codewords.back();
+  cw.rv_index        = dci.redundancy_version;
+  cw.mcs_index       = dci.modulation_coding_scheme;
+  cw.mcs_table       = mcs_pdsch_table::qam64;
+  // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
+  cw.qam_mod = qam4; // TODO: Derive QAM from MCS.
+  // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
+  cw.target_code_rate = 379.0;
+  // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
+  // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
+  cw.tb_size_bytes = 408;
+  pdsch.dmrs       = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 }
