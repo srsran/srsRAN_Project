@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "3"
+    ref: "4"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "3"
+    ref: "4"
     file: .gitlab/ci-shared/srs_tools.yml
 
 variables:
@@ -11,6 +11,7 @@ variables:
   os_type: ubuntu
   os_version: "22.04"
   compiler: gcc
+  uhd_version: "4.1.0.5"
   docker_version: $DOCKER_BUILDER_VERSION
   run_tests: "true"
   enable_coverage: "true"
@@ -35,7 +36,7 @@ stages:
       if [ $enable_coverage = "true" ]; then
         EXTRA_BUILD_ARGS="-DENABLE_GCOV=True"
       fi
-    - builder.sh -c $compiler $EXTRA_BUILD_ARGS .
+    - builder.sh -c $compiler -u $uhd_version $EXTRA_BUILD_ARGS .
   cache: &build_cache
     key: ${os_type}-${os_version}-${docker_version}-${compiler}
     paths:
@@ -110,7 +111,7 @@ build [clean]:
         GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
         gcovr --xml --print-summary $GCOVR_ARGS -o coverage.xml
         gcovr --html                $GCOVR_ARGS -o coverage.html
-        ls -lah coverage.xml
+        ls -lah coverage.xml  # FIXME fail if size > 10MB (gitlab limit)
       fi
   after_script:
     # Move files to upload to root so no intermiddle folders will be created in the artifact

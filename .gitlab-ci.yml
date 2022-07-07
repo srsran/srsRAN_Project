@@ -1,12 +1,12 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "3"
+    ref: "4"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "3"
+    ref: "4"
     file: .gitlab/ci-shared/scheduler.yml
   - project: softwareradiosystems/testing-tools
-    ref: "3"
+    ref: "4"
     file: .gitlab/versions.yml
   - local: .gitlab/ci/build.yml
 
@@ -75,8 +75,15 @@ no-binaries-added:
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
-alternative builds:
+.alternative builds:
   stage: build
+  needs: []
+  trigger:
+    include: .gitlab/ci/build.yml
+    strategy: depend
+
+alternative builds:
+  extends: .alternative builds
   rules:
     - if: $ON_MR
       variables:
@@ -93,13 +100,34 @@ alternative builds:
       - os_type: ubuntu
         os_version: "22.04"
         compiler: clang
+        uhd_version: "4.1.0.5"
       - os_type: ubuntu
         os_version: "20.04"
+        uhd_version: "3.15.0.0"
         compiler: [gcc, clang]
         enable_coverage: "false" # Ignore old warnings
       - os_type: archlinux
         os_version: latest
+        uhd_version: "4.2.0.0"
         compiler: [gcc, clang]
+
+alternative builds uhd:
+  extends: alternative builds
+  rules:
+    - if: $ON_SCHEDULE
+      variables:
+        run_tests: "false"
+        enable_coverage: "false"
+  parallel:
+    matrix:
+      - os_type: ubuntu
+        os_version: "22.04"
+        compiler: [gcc, clang]
+        uhd_version: "4.2.0.0"
+      - os_type: ubuntu
+        os_version: "20.04"
+        compiler: [gcc, clang]
+        uhd_version: ["4.2.0.0", "4.1.0.5"]
 
 ################################################################################
 ## Scheduler
