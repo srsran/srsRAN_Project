@@ -150,6 +150,43 @@ public:
 
   /// Builds the provided log entry and passes it to the backend. When the
   /// channel is disabled the log entry will be discarded.
+  template <typename It, typename... Args, typename std::enable_if<detail::is_byte_iterable<It>::value, int>::type = 0>
+  void operator()(It it_begin, It it_end, const char* fmtstr, Args&&... args)
+  {
+    if (!enabled()) {
+      return;
+    }
+
+    // Populate the store with all incoming arguments.
+    auto* store = backend.alloc_arg_store();
+    if (!store) {
+      return;
+    }
+    (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
+
+    // Calculate the length to capture in the buffer.
+    if (hex_max_size > std::distance(it_begin, it_end)) {
+      it_end = it_begin + hex_max_size;
+    }
+
+    // Send the log entry to the backend.
+    log_formatter&    formatter = log_sink.get_formatter();
+    detail::log_entry entry     = {&log_sink,
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                 formatter.format(std::move(metadata), buffer);
+                               },
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag,
+                                    std::vector<uint8_t>(it_begin, it_end)}};
+    backend.push(std::move(entry));
+  }
+
+  /// Builds the provided log entry and passes it to the backend. When the
+  /// channel is disabled the log entry will be discarded.
   template <typename... Ts>
   void operator()(const context<Ts...>& ctx)
   {

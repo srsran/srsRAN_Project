@@ -12,7 +12,9 @@
 #define SRSLOG_DETAIL_SUPPORT_TMP_UTILS_H
 
 #include <cstddef>
+#include <cstdint>
 #include <tuple>
+#include <type_traits>
 
 namespace srslog {
 
@@ -58,6 +60,25 @@ constexpr std::size_t get_type_index_in_tuple()
 {
   return tuple_index<T, std::tuple<Ts...> >::value;
 }
+
+///
+/// Traits to restrict template parameter to iterators over uint8_t, e.g. for byte_buffer and friends.
+///
+
+template <typename...>
+using void_t = void;
+
+template <typename, typename = void>
+struct is_byte_iterable : public std::false_type {
+};
+
+template <typename T>
+struct is_byte_iterable<
+    T,
+    void_t<decltype(++std::declval<T>()),
+           typename std::enable_if<std::is_same<typename T::value_type, uint8_t>::value, int>::type>>
+  : public std::true_type {
+};
 
 } // namespace detail
 
