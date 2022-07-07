@@ -15,6 +15,7 @@ set(SOURCES
         dot_prod.cpp
         prod.cpp
         sc_prod.cpp
+        clip.cpp
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/include/srsgnb/srsvec)

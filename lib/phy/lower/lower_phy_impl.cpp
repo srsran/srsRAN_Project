@@ -142,6 +142,19 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
       // Modulate symbol if the resource grid is available. Otherwise, set all to zeros.
       if (dl_rg != nullptr) {
         modulators[sector_id]->modulate(buffer, *dl_rg, port_id, symbol_id);
+
+        // Process time domain signal with the amplitude controller.
+        amplitude_controller_metrics amplitude_control_metrics =
+            amplitude_controllers[sector_id]->process(buffer, buffer);
+        logger.debug(
+            "Amplitude controller metrics: Mean pwr={:.2f} dBFS, Peak pwr={:.2f} dBFS, PAPR={:.2f} dB, Gain={:.2f} dB, "
+            "Clipped sps={}, Clipping prob={:.2e}.",
+            amplitude_control_metrics.avg_power_dBFS,
+            amplitude_control_metrics.peak_power_dBFS,
+            amplitude_control_metrics.papr_dB,
+            amplitude_control_metrics.gain_dB,
+            amplitude_control_metrics.nof_clipped_samples,
+            amplitude_control_metrics.clipping_probability);
       } else {
         srsvec::zero(buffer);
       }
@@ -244,6 +257,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   error_notifier(*config.error_notifier),
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
+  amplitude_controllers(std::move(common_config.amplitude_controllers)),
   prach_proc(std::move(common_config.prach_proc)),
   rx_to_tx_delay(get_rx_to_tx_delay(config.ul_to_dl_subframe_offset,
                                     config.time_advance_calibration,
@@ -280,11 +294,18 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
                 "The number of sectors ({}) and demodulators ({}) do not match.",
                 config.sectors.size(),
                 demodulators.size());
+  srsgnb_assert(amplitude_controllers.size() == config.sectors.size(),
+                "The number of sectors ({}) and amplitude controllers ({}) do not match.",
+                config.sectors.size(),
+                amplitude_controllers.size());
   for (auto& modulator : modulators) {
     srsgnb_assert(modulator, "Invalid modulator.");
   }
   for (auto& demodulator : demodulators) {
     srsgnb_assert(demodulator, "Invalid demodulator.");
+  }
+  for (auto& amplitude_controller : amplitude_controllers) {
+    srsgnb_assert(amplitude_controller, "Invalid amplitude controller.");
   }
 
   // Create radio buffers and receive metadata.

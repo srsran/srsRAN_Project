@@ -37,6 +37,7 @@ static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory   = nullp
 static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory = nullptr;
 static std::shared_ptr<prach_processor_factory_spy>  prach_factory       = nullptr;
 static std::shared_ptr<lower_phy_factory>            phy_factory         = nullptr;
+static std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = nullptr;
 
 static lower_phy_configuration create_phy_config(baseband_gateway_spy&         bb_gateway,
                                                  lower_phy_error_notifier&     error_notifier,
@@ -66,6 +67,9 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.nof_channels_per_stream                       = {1};
   config.log_level                                     = log_level;
 
+  // Keep the amplitude control clipping disabled throughout the test.
+  config.amplitude_config                              = {};
+  
   return config;
 }
 
@@ -244,8 +248,10 @@ int main()
   TESTASSERT(demodulator_factory);
   prach_factory = std::make_shared<prach_processor_factory_spy>();
   TESTASSERT(demodulator_factory);
+  amplitude_control_factory = create_amplitude_controller_factory();
+  TESTASSERT(amplitude_control_factory);
 
-  phy_factory = create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory);
+  phy_factory = create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory, amplitude_control_factory);
   TESTASSERT(phy_factory);
 
   test_start_run_stop();

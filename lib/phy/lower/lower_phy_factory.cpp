@@ -16,20 +16,24 @@ using namespace srsgnb;
 class lower_phy_factory_generic : public lower_phy_factory
 {
 public:
-  std::shared_ptr<ofdm_modulator_factory>   modulator_factory;
-  std::shared_ptr<ofdm_demodulator_factory> demodulator_factory;
-  std::shared_ptr<prach_processor_factory>  prach_factory;
+  std::shared_ptr<ofdm_modulator_factory>       modulator_factory;
+  std::shared_ptr<ofdm_demodulator_factory>     demodulator_factory;
+  std::shared_ptr<prach_processor_factory>      prach_factory;
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory;
 
-  lower_phy_factory_generic(std::shared_ptr<ofdm_modulator_factory>&   modulator_factory_,
-                            std::shared_ptr<ofdm_demodulator_factory>& demodulator_factory_,
-                            std::shared_ptr<prach_processor_factory>&  prach_processor_factory_) :
+  lower_phy_factory_generic(std::shared_ptr<ofdm_modulator_factory>&       modulator_factory_,
+                            std::shared_ptr<ofdm_demodulator_factory>&     demodulator_factory_,
+                            std::shared_ptr<prach_processor_factory>&      prach_processor_factory_,
+                            std::shared_ptr<amplitude_controller_factory>& amplitude_control_factory_) :
     modulator_factory(modulator_factory_),
     demodulator_factory(demodulator_factory_),
-    prach_factory(prach_processor_factory_)
+    prach_factory(prach_processor_factory_),
+    amplitude_control_factory(amplitude_control_factory_)
   {
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
     srsgnb_assert(demodulator_factory, "Invalid demodulator factory.");
     srsgnb_assert(prach_factory, "Invalid PRACH processor factory.");
+    srsgnb_assert(amplitude_control_factory, "Invalid amplitude control factory");
   }
 
   std::unique_ptr<srsgnb::lower_phy> create(lower_phy_configuration& config) override
@@ -37,6 +41,7 @@ public:
     lower_phy_common_configuration common_config;
     common_config.modulators.reserve(config.sectors.size());
     common_config.demodulators.reserve(config.sectors.size());
+    common_config.amplitude_controllers.reserve(config.sectors.size());
 
     // For each sector, create a modulator.
     for (const lower_phy_sector_description& sector : config.sectors) {
@@ -74,6 +79,17 @@ public:
       srsgnb_assert(common_config.demodulators.back(), "Error: failed to create OFDM demodulator.");
     }
 
+    // For each sector, create an amplitude controller.
+    for (unsigned i = 0; i != config.sectors.size(); ++i) {
+      // Prepare sector amplitude controller.
+      common_config.amplitude_controllers.emplace_back(
+          amplitude_control_factory->create_amplitude_controller(config.amplitude_config));
+
+      // Make sure the amplitude controller creation is successful.
+      srsgnb_assert(common_config.amplitude_controllers.back() != nullptr,
+                    "Error: failed to create amplitude controller.");
+    }
+
     common_config.prach_proc = prach_factory->create(*config.prach_async_executor);
     srsgnb_assert(common_config.prach_proc, "Failed to create PRACH processor.");
 
@@ -82,9 +98,11 @@ public:
 };
 
 std::unique_ptr<lower_phy_factory>
-srsgnb::create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>   modulator_factory,
-                                    std::shared_ptr<ofdm_demodulator_factory> demodulator_factory,
-                                    std::shared_ptr<prach_processor_factory>  prach_processor_factory)
+srsgnb::create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modulator_factory,
+                                    std::shared_ptr<ofdm_demodulator_factory>     demodulator_factory,
+                                    std::shared_ptr<prach_processor_factory>      prach_processor_factory,
+                                    std::shared_ptr<amplitude_controller_factory> amplitude_control_factory)
 {
-  return std::make_unique<lower_phy_factory_generic>(modulator_factory, demodulator_factory, prach_processor_factory);
+  return std::make_unique<lower_phy_factory_generic>(
+      modulator_factory, demodulator_factory, prach_processor_factory, amplitude_control_factory);
 }

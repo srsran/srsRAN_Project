@@ -20,6 +20,7 @@
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 
 namespace srsgnb {
 
@@ -104,6 +105,8 @@ struct lower_phy_configuration {
   std::vector<unsigned> nof_channels_per_stream;
   /// Indicates the log level.
   std::string log_level;
+  /// Amplitude control parameters, including baseband gain and clipping.
+  amplitude_controller_configuration amplitude_config;
 };
 
 } // namespace srsgnb

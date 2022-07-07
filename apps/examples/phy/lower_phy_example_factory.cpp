@@ -43,9 +43,13 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
       create_prach_processor_factory_sw(prach_demodulator_factory, config.srate.get_dft_size(15e3), 1);
   report_fatal_error_if_not(prach_processor_factory, "Failed to create PRACH processor factory.");
 
+  // Create amplitude control factory.
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = create_amplitude_controller_factory();
+  report_fatal_error_if_not(amplitude_control_factory, "Failed to create amplitude controller factory.");
+
   // Create Lower PHY factory.
-  std::shared_ptr<lower_phy_factory> lphy_factory =
-      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_processor_factory);
+  std::shared_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_sw(
+      modulator_factory, demodulator_factory, prach_processor_factory, amplitude_control_factory);
   report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   return lphy_factory->create(config);

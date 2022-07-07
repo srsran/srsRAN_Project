@@ -68,6 +68,12 @@ static unsigned                                  duration_slots = 60000;
 static bool                                      zmq_loopback   = true;
 static ssb_pattern_case                          ssb_pattern    = ssb_pattern_case::A;
 
+// Amplitude control args.
+static float baseband_gain_dB       = -3.0F;
+static bool  enable_clipping        = false;
+static float full_scale_amplitude   = 1.0F;
+static float amplitude_ceiling_dBFS = -0.1F;
+
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
     {"b200_20MHz",
@@ -207,9 +213,11 @@ static void usage(std::string prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-D Duration in slots. [Default {}]\n", duration_slots);
-  fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true [Default {}].\n", zmq_loopback);
+  fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true. [Default {}]\n", zmq_loopback);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
-  fmt::print("\t-h print this message.\n");
+  fmt::print("\t-c Enable amplitude clipping. Set to 0 to disable, otherwise true. [Default {}]\n", enable_clipping);
+  fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
+  fmt::print("\t-h Print this message.\n");
 }
 
 static void parse_args(int argc, char** argv)
@@ -217,7 +225,7 @@ static void parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:L:v:h")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -236,6 +244,14 @@ static void parse_args(int argc, char** argv)
         break;
       case 'v':
         log_level = std::string(optarg);
+        break;
+      case 'c':
+        enable_clipping = true;
+        break;
+      case 'b':
+        if (optarg != nullptr) {
+          baseband_gain_dB = std::strtof(optarg, nullptr);
+        }
         break;
       case 'h':
       default:
@@ -300,7 +316,8 @@ static radio_configuration::radio create_radio_configuration()
 lower_phy_configuration create_lower_phy_configuration(float                         tx_scale,
                                                        lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                       lower_phy_timing_notifier*    timing_notifier)
+                                                       lower_phy_timing_notifier*    timing_notifier,
+                                                       amplitude_controller_configuration& amplitude_config)
 {
   lower_phy_configuration phy_config;
   phy_config.srate                      = srate;
@@ -315,6 +332,7 @@ lower_phy_configuration create_lower_phy_configuration(float                    
   phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;
   phy_config.timing_notifier            = timing_notifier;
+  phy_config.amplitude_config           = amplitude_config;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = bw_rb;
@@ -354,6 +372,13 @@ int main(int argc, char** argv)
                             to_numerology_value(scs),
                             srate);
 
+  // Amplitude controller configuration.
+  amplitude_controller_configuration amplitude_config = {};
+  amplitude_config.full_scale_lin                     = full_scale_amplitude;
+  amplitude_config.ceiling_dBFS                       = amplitude_ceiling_dBFS;
+  amplitude_config.enable_clipping                    = enable_clipping;
+  amplitude_config.input_gain_dB                      = baseband_gain_dB;
+
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
   std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
@@ -388,7 +413,7 @@ int main(int argc, char** argv)
   // Create lower physical layer.
   {
     lower_phy_configuration phy_config =
-        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
+        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter, amplitude_config);
     lower_phy_instance = create_lower_phy(phy_config);
     srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }
