@@ -282,6 +282,8 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   pdsch.bwp_cfg            = sib1_pdcch.ctx.bwp_cfg;
   pdsch.symbols = cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[dci.time_resource].symbols;
   pdsch.prbs    = sib1_prbs;
+  // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
+  pdsch.n_id = cell_cfg.pci;
   pdsch.codewords.emplace_back();
   pdsch_codeword& cw = pdsch.codewords.back();
   cw.rv_index        = dci.redundancy_version;
@@ -293,7 +295,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.target_code_rate = 379.0;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
-  cw.tb_size_bytes = 408;
+  cw.tb_size_bytes = 51;
   pdsch.dmrs       = make_dmrs_info_common(
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
 }

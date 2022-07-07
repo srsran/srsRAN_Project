@@ -134,6 +134,8 @@ struct pdsch_information {
   ofdm_symbol_range                symbols;
   static_vector<pdsch_codeword, 2> codewords;
   dmrs_information                 dmrs;
+  /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
+  unsigned n_id;
 };
 
 struct dl_msg_lc_info {
