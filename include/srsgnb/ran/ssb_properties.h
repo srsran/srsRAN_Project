@@ -102,9 +102,13 @@ using ssb_offset_to_pointA = uint16_t;
 /// Read [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
 /// page](http://nrexplained.com/rbs) for a more detailed explanation of resource block indexing .
 ///
-/// For numerology \f$\mu\in\{0,1\}\f$ the field is 5-bit wide, the range is {0, ..., 23}.
+/// For numerology \f$\mu\in\{0,1\}\f$:
+/// - the field is 5-bit wide, the range is {0, ..., 23}, and
+/// - it is expressed in terms of 15kHz SCS.
 ///
-/// For numerology \f$\mu\in\{3,4\}\f$ the field is 4-bit wide, the range is {0, ..., 11}.
+/// For numerology \f$\mu\in\{3,4\}\f$:
+/// - the field is 4-bit wide, the range is {0, ..., 11}, and
+/// - it is expressed in terms of SCS provided by higher layers parameter \c subCarrierSpacingCommon as TS38.331 \c MIB.
 ///
 /// The four least significant bits bits are given by the higher layer parameter \c ssb-SubcarrierOffset as per TS38.331
 /// \c MIB. If the field is 5-bit wide, the MSB is given by bit \f$\bar{a}_{\bar{A}+5}\f$ in the PBCH payload as per

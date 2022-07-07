@@ -21,6 +21,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   unsigned l_start          = (l_start_in_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL));
   unsigned k_start          = ssb_get_k_first(to_frequency_range(pdu.pattern_case),
                                      to_subcarrier_spacing(pdu.pattern_case),
+                                     pdu.common_scs,
                                      pdu.offset_to_pointA,
                                      pdu.subcarrier_offset);
 
