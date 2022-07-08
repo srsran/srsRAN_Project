@@ -44,7 +44,7 @@ public:
     /// Redundancy version index.
     unsigned rv;
     /// LDPC base graph to use for CW generation.
-    ldpc::base_graph_t ldpc_base_graph;
+    ldpc_base_graph_type ldpc_base_graph;
     /// Flags new data transmissions.
     bool new_data;
   };

@@ -117,7 +117,7 @@ int main(int argc, char** argv)
     // Recall that llrs_all contains all retransmissions concatenated.
     unsigned cws = llrs_all.size() / nof_retx;
 
-    unsigned nof_codeblocks = compute_nof_codeblocks(tbs, cfg.base_graph);
+    unsigned nof_codeblocks = ldpc::compute_nof_codeblocks(tbs, cfg.base_graph);
 
     // The codeword is the concatenation of codeblocks. However, since codeblock sizes can vary slightly, we add some
     // extra margin.

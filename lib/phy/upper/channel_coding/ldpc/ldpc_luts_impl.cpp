@@ -17,9 +17,9 @@
 //    static constexpr std::array<BG_matrix_t, srsgnb::ldpc::nof_lifting_indices> BG2_matrices{...} -- 1696 lines
 //    static const BG_edge_matrix_t BG1_edge_matrix{...} -- 89 lines
 //    static const BG_edge_matrix_t BG2_edge_matrix{...} -- 43 lines
-//    BG_matrix_t get_graph(base_graph_t bg, lifting_size_t ls) {...}
+//    BG_matrix_t get_graph(ldpc_base_graph_type bg, lifting_size_t ls) {...}
 //    uint8_t get_lifting_index(lifting_size_t ls) {...}
-//    const BG_edge_matrix_t* get_edge_matrix(base_graph_t bg)
+//    const BG_edge_matrix_t* get_edge_matrix(ldpc_base_graph_type bg)
 #include "ldpc_luts_impl.h"
 #include "ldpc_graph_impl.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -4506,16 +4506,16 @@ static const BG_adjacency_matrix_t BG2_adjacency_matrix = {
      {2, 10, 13, 50, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE},
      {1, 5, 11, 51, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE, NO_EDGE}}};
 
-BG_matrix_t srsgnb::ldpc::get_graph(base_graph_t bg, lifting_size_t ls)
+BG_matrix_t srsgnb::ldpc::get_graph(ldpc_base_graph_type bg, lifting_size_t ls)
 {
   int ls_index = LSindex[ls].index;
   assert(ls_index != VOID_LIFTSIZE);
 
-  BG_matrix_t graph_matrix = (bg == base_graph_t::BG1) ? BG1_matrices[ls_index] : BG2_matrices[ls_index];
+  BG_matrix_t graph_matrix = (bg == ldpc_base_graph_type::BG1) ? BG1_matrices[ls_index] : BG2_matrices[ls_index];
 
   unsigned nof_BG_check_nodes    = BG1_M;
   unsigned nof_BG_var_nodes_full = BG1_N_FULL;
-  if (bg == base_graph_t::BG2) {
+  if (bg == ldpc_base_graph_type::BG2) {
     nof_BG_check_nodes    = BG2_M;
     nof_BG_var_nodes_full = BG2_N_FULL;
   }
@@ -4541,12 +4541,12 @@ uint8_t srsgnb::ldpc::get_lifting_size_position(lifting_size_t ls)
   return LSindex[ls].position;
 }
 
-const BG_adjacency_matrix_t* srsgnb::ldpc::get_adjacency_matrix(base_graph_t bg)
+const BG_adjacency_matrix_t* srsgnb::ldpc::get_adjacency_matrix(ldpc_base_graph_type bg)
 {
-  if (bg == base_graph_t::BG1) {
+  if (bg == ldpc_base_graph_type::BG1) {
     return &BG1_adjacency_matrix;
   }
-  if (bg == base_graph_t::BG2) {
+  if (bg == ldpc_base_graph_type::BG2) {
     return &BG2_adjacency_matrix;
   }
   srsran_assert(false, "Invalid base graph");

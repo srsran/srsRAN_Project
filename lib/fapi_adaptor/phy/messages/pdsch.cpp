@@ -199,9 +199,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t& pro
 
   fill_power_values(proc_pdu, fapi_pdu);
 
-  proc_pdu.ldpc_base_graph = (fapi_pdu.pdsch_maintenance_v3.ldpc_base_graph == ldpc_base_graph_type::bg_1)
-                                 ? ldpc::base_graph_t::BG1
-                                 : ldpc::base_graph_t::BG2;
+  proc_pdu.ldpc_base_graph = fapi_pdu.pdsch_maintenance_v3.ldpc_base_graph;
   proc_pdu.tbs_lbrm_bytes  = fapi_pdu.pdsch_maintenance_v3.tb_size_lbrm_bytes;
 
   fill_reserved_re_pattern(proc_pdu, fapi_pdu);

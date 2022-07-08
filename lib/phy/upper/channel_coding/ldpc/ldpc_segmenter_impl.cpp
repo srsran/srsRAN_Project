@@ -43,7 +43,7 @@ std::unique_ptr<ldpc_segmenter_rx> ldpc_segmenter_impl::create_ldpc_segmenter_im
 void ldpc_segmenter_impl::compute_lifting_size()
 {
   unsigned ref_length = 22;
-  if (base_graph == base_graph_t::BG2) {
+  if (base_graph == ldpc_base_graph_type::BG2) {
     if (nof_tb_bits_in > 640) {
       ref_length = 10;
     } else if (nof_tb_bits_in > 560) {
@@ -71,7 +71,7 @@ void ldpc_segmenter_impl::compute_segment_length()
 {
   constexpr unsigned base_length_BG1 = BG1_N_FULL - BG1_M;
   constexpr unsigned base_length_BG2 = BG2_N_FULL - BG2_M;
-  unsigned           base_length     = (base_graph == base_graph_t::BG1) ? base_length_BG1 : base_length_BG2;
+  unsigned           base_length     = (base_graph == ldpc_base_graph_type::BG1) ? base_length_BG1 : base_length_BG2;
 
   segment_length = base_length * lifting_size;
 }
@@ -291,7 +291,7 @@ codeblock_metadata ldpc_segmenter_impl::generate_cb_metadata(const segment_inter
   // BG1 has rate 1/3 and BG2 has rate 1/5.
   constexpr unsigned INVERSE_BG1_RATE = 3;
   constexpr unsigned INVERSE_BG2_RATE = 5;
-  unsigned           inverse_rate     = (base_graph == base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
+  unsigned           inverse_rate     = (base_graph == ldpc_base_graph_type::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
   unsigned           rm_length        = compute_rm_length(seg_extra.i_segment, cfg.mod, cfg.nof_layers);
 
   tmp_description.cb_specific.full_length     = segment_length * inverse_rate;

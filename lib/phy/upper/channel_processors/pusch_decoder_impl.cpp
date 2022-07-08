@@ -69,7 +69,7 @@ static std::tuple<unsigned, unsigned, unsigned> get_cblk_bit_breakdown(const cod
   constexpr unsigned INVERSE_BG1_RATE = 3;
   constexpr unsigned INVERSE_BG2_RATE = 5;
   unsigned           inverse_rate =
-      (cb_meta.tb_common.base_graph == ldpc::base_graph_t::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
+      (cb_meta.tb_common.base_graph == ldpc_base_graph_type::BG1) ? INVERSE_BG1_RATE : INVERSE_BG2_RATE;
   unsigned msg_length = cb_length / inverse_rate;
 
   // Number of data bits (no CRC, no filler bits - may contain zero-padding).

@@ -59,15 +59,15 @@ static void test_sched_result_ok()
   const dl_tti_request_message& msg = gateway_spy.dl_tti_request_msg();
   TESTASSERT_EQ(msg.pdus.size(), 5U);
   TESTASSERT_EQ((msg.pdus.begin() + 1)->pdu_type, dl_pdu_type::PDCCH);
-  TESTASSERT_EQ((msg.pdus.begin() + 2)->pdu_type, dl_pdu_type::PDSCH);
+  TESTASSERT_EQ(msg.pdus.back().pdu_type, dl_pdu_type::PDSCH);
   TESTASSERT_EQ(msg.pdus.front().pdu_type, dl_pdu_type::PDCCH);
   TESTASSERT_EQ(msg.pdus.front().pdcch_pdu.dl_dci.size(), 3U);
   TESTASSERT_EQ((msg.pdus.begin() + 1)->pdcch_pdu.dl_dci.size(), 1U);
   TESTASSERT_EQ((msg.pdus.end() - 2)->pdu_type, dl_pdu_type::SSB);
-  TESTASSERT_EQ(msg.pdus.back().pdu_type, dl_pdu_type::SSB);
+  TESTASSERT_EQ((msg.pdus.end() - 3)->pdu_type, dl_pdu_type::SSB);
 
   const srsgnb::dl_ssb_pdu& pdu      = result.ssb_pdu.front();
-  const fapi::dl_ssb_pdu&   fapi_pdu = (msg.pdus.end() - 2)->ssb_pdu;
+  const fapi::dl_ssb_pdu&   fapi_pdu = (msg.pdus.end() - 3)->ssb_pdu;
   TESTASSERT_EQ(pdu.pci, fapi_pdu.phys_cell_id);
   TESTASSERT_EQ(static_cast<unsigned>(pdu.beta_pss_profile_nr), static_cast<unsigned>(fapi_pdu.beta_pss_profile_nr));
   TESTASSERT_EQ(pdu.ssb_index, fapi_pdu.ssb_block_index);

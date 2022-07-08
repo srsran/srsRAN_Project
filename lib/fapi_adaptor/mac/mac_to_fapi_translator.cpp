@@ -127,14 +127,14 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   // Add PDCCH PDUs to the DL_TTI.request.
   add_pdcch_pdus_to_request(builder, dl_res);
 
+  // Add SSB PDUs to the DL_TTI.request.
+  add_ssb_pdus_to_request(builder, dl_res);
+
   {
     std::lock_guard<std::mutex> lock(mutex);
     // Add PDSCH PDUs to the DL_TTI.request.
     add_pdsch_pdus_to_request(builder, pdsch_registry, dl_res);
   }
-
-  // Add SSB PDUs to the DL_TTI.request.
-  add_ssb_pdus_to_request(builder, dl_res);
 
   // Validate that the DL_TTI.request message is correct.
   error_type<validator_report> result = validate_dl_tti_request(msg);
@@ -151,7 +151,54 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
 {
   std::lock_guard<std::mutex> lock(mutex);
-  // :TODO: add tx_data.request.
+
+  // Sanity checks.
+  srsran_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
+                "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
+                dl_data.sib1_pdus.size());
+
+  srsran_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
+                "Number of PDUs ({}) and Payloads ({}) for RAR PDUs doesn't match",
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
+                dl_data.rar_pdus.size());
+
+  srsran_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
+                "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
+                dl_data.ue_pdus.size());
+
+  tx_data_request_message msg;
+  tx_data_request_builder builder(msg);
+
+  builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
+
+  // Add SIB1 PDUs.
+  const static_vector<byte_buffer, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
+  for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
+    const byte_buffer& payload = sib1_pdus[i];
+    builder.add_pdu_custom_payload(
+        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::sib), 1, {&*payload.cbegin(), &*payload.cend()});
+  }
+
+  // Add RAR PDUs.
+  const static_vector<byte_buffer, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
+  for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
+    const byte_buffer& payload = rar_pdus[i];
+    builder.add_pdu_custom_payload(
+        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::rar), 1, {&*payload.cbegin(), &*payload.cend()});
+  }
+
+  // Add UE PDUs.
+  const static_vector<rlc_byte_buffer, MAX_DL_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
+  for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
+    const rlc_byte_buffer& payload = ue_pdus[i];
+    builder.add_pdu_custom_payload(
+        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::ue), 1, {&*payload.begin(), &*payload.end()});
+  }
+
+  // Send the message.
+  gateway.tx_data_request(msg);
 }
 
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) {}

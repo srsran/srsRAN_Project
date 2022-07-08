@@ -160,7 +160,7 @@ static void pdsch_conversion_test()
                                             pdsch_trans_type::interleaved_common_type0_coreset0,
                                             pdsch_trans_type::interleaved_common_any_coreset0_present,
                                             pdsch_trans_type::interleaved_common_any_coreset0_not_present}) {
-                      for (auto ldpc_graph : {ldpc_base_graph_type::bg_1, ldpc_base_graph_type::bg_2}) {
+                      for (auto ldpc_graph : {ldpc_base_graph_type::BG1, ldpc_base_graph_type::BG2}) {
                         unsigned sfn                      = sfn_dist(gen);
                         unsigned slot                     = slot_dist(gen);
                         rnti_t   rnti                     = to_rnti(rnti_dist(gen));
@@ -299,9 +299,7 @@ static void pdsch_conversion_test()
                                                                              rb_size);
                         TESTASSERT(freq_allocation == proc_pdu.freq_alloc);
 
-                        TESTASSERT_EQ((ldpc_graph == ldpc_base_graph_type::bg_1) ? ldpc::base_graph_t::BG1
-                                                                                 : ldpc::base_graph_t::BG2,
-                                      proc_pdu.ldpc_base_graph);
+                        TESTASSERT_EQ(ldpc_graph, proc_pdu.ldpc_base_graph);
                         TESTASSERT_EQ(tb_size_lbrm_bytes, proc_pdu.tbs_lbrm_bytes);
 
                         // :TODO: re_pattern.

@@ -286,7 +286,7 @@ static void test_maintenance_v3_codeword_info_parameters()
   std::uniform_int_distribution<unsigned> tb_size_dist(1, 274);
 
   for (unsigned tb_crc = 0; tb_crc != 4; ++tb_crc) {
-    for (auto graph_type : {ldpc_base_graph_type::bg_2, ldpc_base_graph_type::bg_1}) {
+    for (auto graph_type : {ldpc_base_graph_type::BG2, ldpc_base_graph_type::BG1}) {
       dl_pdsch_pdu         pdu;
       dl_pdsch_pdu_builder builder(pdu);
 

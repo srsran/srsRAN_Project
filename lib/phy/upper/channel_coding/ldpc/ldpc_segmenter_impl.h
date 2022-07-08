@@ -104,7 +104,7 @@ private:
   static_vector<uint8_t, MAX_TBS> buffer;
 
   /// Base graph used for encoding/decoding the current transport block.
-  ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
+  ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
   /// Lifting size used for encoding/decoding the current transport block.
   unsigned lifting_size = 0;
 

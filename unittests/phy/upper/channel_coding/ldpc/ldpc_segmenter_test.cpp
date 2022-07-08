@@ -44,7 +44,7 @@ int main()
   segmenter_config seg_cfg{};
 
   for (const auto& test_data : ldpc_segmenter_test_data) {
-    seg_cfg.base_graph     = static_cast<base_graph_t>(test_data.bg - 1);
+    seg_cfg.base_graph     = static_cast<ldpc_base_graph_type>(test_data.bg - 1);
     seg_cfg.mod            = modulation_scheme::QPSK;
     seg_cfg.rv             = 0;
     seg_cfg.nof_layers     = 1;

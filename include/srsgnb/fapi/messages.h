@@ -12,6 +12,7 @@
 #define SRSGNB_FAPI_MESSAGES_H
 
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/rnti.h"
@@ -152,8 +153,6 @@ enum class pdsch_trans_type : uint8_t {
   interleaved_common_any_coreset0_not_present,
   interleaved_other
 };
-
-enum class ldpc_base_graph_type : uint8_t { bg_1 = 1, bg_2 };
 
 /// \note For this release num_coreset_rm_patterns = 0.
 /// \note For this release num_prb_sym_rm_patts_by_value = 0.

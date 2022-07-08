@@ -320,7 +320,7 @@ static void test_maintenance_v3_dmrs_params()
 static void test_maintenance_v3_freq_allocation_params()
 {
   unsigned             pusch_second_hop = 2;
-  ldpc_base_graph_type ldcp_graph       = ldpc_base_graph_type::bg_2;
+  ldpc_base_graph_type ldcp_graph       = ldpc_base_graph_type::BG2;
   unsigned             tb_size          = 3232;
 
   ul_pusch_pdu         pdu;

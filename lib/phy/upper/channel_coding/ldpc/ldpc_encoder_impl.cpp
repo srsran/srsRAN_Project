@@ -73,10 +73,10 @@ void ldpc_encoder_impl::encode(span<uint8_t>                                 out
 
 void ldpc_encoder_generic::select_strategy()
 {
-  base_graph_t current_bg       = current_graph->get_base_graph();
-  uint8_t      current_ls_index = current_graph->get_lifting_index();
+  ldpc_base_graph_type current_bg       = current_graph->get_base_graph();
+  uint8_t              current_ls_index = current_graph->get_lifting_index();
 
-  if (current_bg == base_graph_t::BG1) {
+  if (current_bg == ldpc_base_graph_type::BG1) {
     if (current_ls_index == 6) {
       high_rate = &ldpc_encoder_generic::high_rate_bg1_i6;
       return;
@@ -85,7 +85,7 @@ void ldpc_encoder_generic::select_strategy()
     high_rate = &ldpc_encoder_generic::high_rate_bg1_other;
     return;
   }
-  if (current_bg == base_graph_t::BG2) {
+  if (current_bg == ldpc_base_graph_type::BG2) {
     if ((current_ls_index == 3) || (current_ls_index == 7)) {
       high_rate = &ldpc_encoder_generic::high_rate_bg2_i3_7;
       return;

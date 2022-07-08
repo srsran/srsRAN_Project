@@ -49,14 +49,14 @@ int main()
   TESTASSERT(dec_generic);
 
   for (const auto& test_data : ldpc_encoder_test_data) {
-    base_graph_t   bg = static_cast<base_graph_t>(test_data.bg - 1);
-    lifting_size_t ls = static_cast<lifting_size_t>(test_data.ls);
+    ldpc_base_graph_type bg = static_cast<ldpc_base_graph_type>(test_data.bg - 1);
+    lifting_size_t       ls = static_cast<lifting_size_t>(test_data.ls);
 
     // Set base-graph message and codeblock lengths.
     unsigned min_cb_length_bg = 24;
     unsigned max_cb_length_bg = 66;
     unsigned msg_length_bg    = 22;
-    if (bg == srsgnb::ldpc::base_graph_t::BG2) {
+    if (bg == srsgnb::ldpc_base_graph_type::BG2) {
       min_cb_length_bg = 12;
       max_cb_length_bg = 50;
       msg_length_bg    = 10;

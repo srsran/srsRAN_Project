@@ -239,7 +239,7 @@ dl_pdsch_pdu unittest::build_valid_dl_pdsch_pdu()
   int                      power_nr            = -7;
   int                      power               = -30;
   pdsch_trans_type         trasn_type          = pdsch_trans_type::non_interleaved_other;
-  ldpc_base_graph_type     ldpc_graph          = ldpc_base_graph_type::bg_1;
+  ldpc_base_graph_type     ldpc_graph          = ldpc_base_graph_type::BG1;
 
   rnti_t   rnti                     = to_rnti(rnti_dist(gen));
   unsigned bwp_size                 = bwp_size_dist(gen);

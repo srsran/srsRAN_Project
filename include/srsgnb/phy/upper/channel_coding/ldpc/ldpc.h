@@ -16,6 +16,7 @@
 #ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
 #define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
 
+#include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/support/math_utils.h"
 #include <array>
 
@@ -23,8 +24,6 @@ namespace srsgnb {
 
 /// LDPC constants and helper functions.
 namespace ldpc {
-/// Base graph types.
-enum class base_graph_t { BG1, BG2 };
 
 /// Available lifting sizes.
 enum lifting_size_t {
@@ -103,13 +102,13 @@ static constexpr unsigned MAX_CODEBLOCK_SIZE = all_lifting_sizes.back() * 66;
 /// \param[in] tbs Transport block size as a number of bits (not including CRC).
 /// \param[in] bg  Base graph.
 /// \return The number of codeblocks a transport block of size \c tbs is encoded into when using using base graph \c bg.
-inline constexpr unsigned compute_nof_codeblocks(unsigned tbs, base_graph_t bg)
+inline constexpr unsigned compute_nof_codeblocks(unsigned tbs, ldpc_base_graph_type bg)
 {
   constexpr unsigned CBLOC_CRC_LENGTH = 24;
   constexpr unsigned MAX_BITS_CRC16   = 3824;
   unsigned           tb_and_crc_bits  = tbs + ((tbs <= MAX_BITS_CRC16) ? 16 : 24);
 
-  unsigned max_segment_length = (bg == base_graph_t::BG1) ? 8448 : 3840;
+  unsigned max_segment_length = (bg == ldpc_base_graph_type::BG1) ? 8448 : 3840;
 
   return ((tb_and_crc_bits <= max_segment_length)
               ? 1

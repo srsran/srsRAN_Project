@@ -62,7 +62,22 @@ void downlink_processor_single_executor_impl::process_pdsch(
 
   increase_pending_pdus();
 
-  executor.execute([this, data, pdu]() {
+  // :TODO: look for this value
+  static constexpr unsigned MAX_SIZE_TB_BYTES = 4096;
+
+  static_vector<static_vector<uint8_t, MAX_SIZE_TB_BYTES>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> copy;
+
+  for (const auto& tb : data) {
+    copy.emplace_back(tb.begin(), tb.end());
+  }
+
+  executor.execute([this, copy, pdu]() {
+    static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
+
+    for (const auto& tb : copy) {
+      data.emplace_back(tb.begin(), tb.end());
+    }
+
     pdsch_proc->process(*current_grid, data, pdu);
 
     decrease_pending_pdus_and_try_sending_grid();

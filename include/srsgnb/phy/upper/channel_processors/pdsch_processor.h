@@ -111,7 +111,7 @@ public:
     // Ignore CBGs.
     // ...
     /// LDPC base graph to use for CW generation.
-    ldpc::base_graph_t ldpc_base_graph;
+    ldpc_base_graph_type ldpc_base_graph;
     /// \brief Limits codeblock encoding circular buffer in bytes.
     ///
     /// Parameter \f$TBS_{LBRM}\f$ from 3GPP TS 38.212 section 5.4.2.1, for computing the size of the circular buffer.

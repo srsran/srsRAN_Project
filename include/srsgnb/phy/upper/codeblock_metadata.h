@@ -32,7 +32,7 @@ struct codeblock_metadata {
     // TODO(david,alex): Improve name and possibly merge with segment_config below.
 
     /// Code base graph.
-    ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
+    ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
     /// Code lifting size.
     ldpc::lifting_size_t lifting_size = ldpc::LS2;
     /// Redundancy version, values in {0, 1, 2, 3}.
@@ -96,7 +96,7 @@ using described_rx_codeblock = std::pair<span<const log_likelihood_ratio>, codeb
 /// Gathers all segmentation configuration parameters.
 struct segmenter_config {
   /// Code base graph.
-  ldpc::base_graph_t base_graph = ldpc::base_graph_t::BG1;
+  ldpc_base_graph_type base_graph = ldpc_base_graph_type::BG1;
   /// Redundancy version, values in {0, 1, 2, 3}.
   unsigned rv = 0;
   /// Modulation scheme.

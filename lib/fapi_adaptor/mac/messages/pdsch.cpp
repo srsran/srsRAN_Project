@@ -37,16 +37,6 @@ static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_
   return fapi::dmrs_config_type::type_1;
 }
 
-/// Returns the LDPC base graph based in the given code rate and TB size, as per TS 38.212 section 7.2.2.
-static ldpc_base_graph_type get_ldpc_graph(float target_code_rate, unsigned tb_size_bytes)
-{
-  if (tb_size_bytes <= 292U || target_code_rate <= 0.25F || (tb_size_bytes <= 3824U && target_code_rate <= 0.67F)) {
-    return ldpc_base_graph_type::bg_2;
-  }
-
-  return ldpc_base_graph_type::bg_1;
-}
-
 void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const sib_information&      mac_pdu)
 {
@@ -128,7 +118,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   unsigned              tb_size_lbrm_bytes = 0;
   const pdsch_codeword& cw                 = mac_pdu.pdsch_cfg.codewords.front();
   builder.set_maintenance_v3_codeword_parameters(
-      get_ldpc_graph(cw.target_code_rate, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);
+      get_ldpc_base_graph(cw.target_code_rate, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);
 
   // :TODO Rate-Matching related parameters, not used now.
 

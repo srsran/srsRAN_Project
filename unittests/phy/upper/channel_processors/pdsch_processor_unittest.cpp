@@ -85,7 +85,7 @@ int main()
         pdu.freq_alloc                  = rb_allocation::make_custom({1, 2, 3, 4});
         pdu.start_symbol_index          = dist_start_symb(rgen);
         pdu.nof_symbols                 = get_nsymb_per_slot(cp) - pdu.start_symbol_index;
-        pdu.ldpc_base_graph             = static_cast<ldpc::base_graph_t>(dist_bool(rgen));
+        pdu.ldpc_base_graph             = static_cast<ldpc_base_graph_type>(dist_bool(rgen));
         pdu.tbs_lbrm_bytes              = ldpc::MAX_CODEBLOCK_SIZE / 8;
         pdu.reserved                    = {};
         pdu.ratio_pdsch_dmrs_to_sss_dB  = dist_power(rgen);

@@ -76,8 +76,8 @@ public:
   /// \name Constructors and destructors
 
   ///@{
-  ldpc_graph_impl(ldpc::base_graph_t _bg, ldpc::lifting_size_t _ls);
-  ldpc_graph_impl() : ldpc_graph_impl(ldpc::base_graph_t::BG1, ldpc::lifting_size_t::LS2) {}
+  ldpc_graph_impl(ldpc_base_graph_type _bg, ldpc::lifting_size_t _ls);
+  ldpc_graph_impl() : ldpc_graph_impl(ldpc_base_graph_type::BG1, ldpc::lifting_size_t::LS2) {}
   ~ldpc_graph_impl() = default;
   ///@}
 
@@ -85,7 +85,7 @@ public:
   /// Deleted
 
   ///@{
-  ldpc_graph_impl(ldpc_graph_impl&) = delete;
+  ldpc_graph_impl(ldpc_graph_impl&)            = delete;
   ldpc_graph_impl& operator=(ldpc_graph_impl&) = delete;
   ///@}
 
@@ -93,12 +93,12 @@ public:
   /// Default
 
   ///@{
-  ldpc_graph_impl(ldpc_graph_impl&&) = default;
+  ldpc_graph_impl(ldpc_graph_impl&&)            = default;
   ldpc_graph_impl& operator=(ldpc_graph_impl&&) = default;
   ///@}
 
   /// Returns the base graph generating the current graph.
-  ldpc::base_graph_t get_base_graph() const { return base_graph; }
+  ldpc_base_graph_type get_base_graph() const { return base_graph; }
 
   /// Returns the lifting size generating the current graph.
   ldpc::lifting_size_t get_lifting_size() const { return lifting_size; }
@@ -130,7 +130,7 @@ public:
 
 private:
   /// Base graph.
-  ldpc::base_graph_t base_graph;
+  ldpc_base_graph_type base_graph;
   /// Lifting size.
   ldpc::lifting_size_t lifting_size;
   /// Lifting index.

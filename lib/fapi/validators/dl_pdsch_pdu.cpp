@@ -328,8 +328,8 @@ static bool validate_maintenance_v3_initial_dl_bwp_size(unsigned value, validato
 /// Validates the LDPC base graph property of the PDSCH PDU, as per SCF-222 v4.0 section 3.4.2.2.
 static bool validate_maintenance_v3_ldpc_base_graph(unsigned value, validator_report& report)
 {
-  static constexpr unsigned MIN_VALUE = 1;
-  static constexpr unsigned MAX_VALUE = 2;
+  static constexpr unsigned MIN_VALUE = static_cast<unsigned>(ldpc_base_graph_type::BG1);
+  static constexpr unsigned MAX_VALUE = static_cast<unsigned>(ldpc_base_graph_type::BG2);
 
   return validate_field(MIN_VALUE, MAX_VALUE, value, "LDPC base graph", msg_type, pdu_type, report);
 }
