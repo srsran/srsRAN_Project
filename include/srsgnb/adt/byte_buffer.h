@@ -211,7 +211,7 @@ private:
 };
 
 class byte_buffer_view;
-class byte_buffer_owning_view;
+class shared_byte_buffer_view;
 
 /// Memory buffer that store bytes in a linked list of memory chunks.
 class byte_buffer
@@ -405,7 +405,7 @@ public:
   void append(const byte_buffer_view& view);
 
   /// Appends an owning view of bytes into current byte buffer.
-  void append(const byte_buffer_owning_view& view);
+  void append(const shared_byte_buffer_view& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   void prepend(span<const uint8_t> bytes)
@@ -762,7 +762,7 @@ private:
   byte_buffer      buf;
 };
 
-inline void byte_buffer::append(const byte_buffer_owning_view& view)
+inline void byte_buffer::append(const shared_byte_buffer_view& view)
 {
   if (empty() and not view.empty()) {
     append_segment();

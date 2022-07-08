@@ -31,7 +31,7 @@ struct rlc_um_pdu_header {
 
 struct rlc_um_pdu {
   rlc_um_pdu_header       header;
-  byte_buffer_owning_view payload;
+  shared_byte_buffer_view payload;
 };
 
 /****************************************************************************

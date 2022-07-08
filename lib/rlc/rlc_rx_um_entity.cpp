@@ -80,8 +80,11 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
   }
 }
 
-void rlc_rx_um_entity::handle_pdu(byte_buffer buf)
+void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
 {
+  // TODO: Optimize copy
+  byte_buffer buf = {buf_.begin(), buf_.end()};
+
   std::lock_guard<std::mutex> lock(mutex);
 
   logger.log_debug("Rx data PDU ({} B)", buf.length());
@@ -93,7 +96,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer buf)
 
   // strip header, extract payload
   size_t                  header_len = rlc_um_nr_packed_length(header);
-  byte_buffer_owning_view payload(buf, header_len, buf.length() - header_len);
+  shared_byte_buffer_view payload(buf, header_len, buf.length() - header_len);
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {

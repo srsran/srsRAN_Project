@@ -75,7 +75,7 @@ public:
 
   void timer_expired(uint32_t timeout_id);
 
-  void handle_pdu(shared_byte_buffer_view buf) override { upper_dn.on_new_sdu(std::move(buf)); }
+  void handle_pdu(shared_byte_buffer_view buf) override;
 };
 
 } // namespace srsgnb
