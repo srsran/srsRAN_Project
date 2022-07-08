@@ -73,7 +73,7 @@ void test_full_sdus(rlc_um_sn_size sn_size)
   for (uint32_t i = 0; i < num_sdus; i++) {
     sdu_bufs[i] = byte_buffer();
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -141,7 +141,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -226,7 +226,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -320,7 +320,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -406,7 +406,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -481,7 +481,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -565,7 +565,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
@@ -649,7 +649,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     sdu_bufs[i] = byte_buffer();
     // Write the index into the buffer
     for (uint32_t k = 0; k < sdu_size; ++k) {
-      sdu_bufs[i].append(i);
+      sdu_bufs[i].append(i + k);
     }
 
     // write SDU into upper end
