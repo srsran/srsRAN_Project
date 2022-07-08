@@ -22,12 +22,15 @@ using namespace fapi_adaptor;
 using namespace unittest;
 
 namespace {
+static resource_grid_spy grid;
 
 class resource_grid_pool_dummy : public resource_grid_pool
 {
-  resource_grid_spy grid;
+  resource_grid& grid;
 
 public:
+  resource_grid_pool_dummy(resource_grid& grid) : grid(grid) {}
+
   resource_grid& get_resource_grid(const srsgnb::resource_grid_context& context) override { return grid; }
 };
 
@@ -54,15 +57,16 @@ public:
 
 static void test_downlink_processor_is_configured_on_new_slot()
 {
+  resource_grid_spy             grid;
   downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool;
+  resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
   fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(!grid.has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
@@ -70,27 +74,28 @@ static void test_downlink_processor_is_configured_on_new_slot()
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
 
   // Assert that the resource grid has been set to zero.
-  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(grid.has_set_all_zero_method_been_called());
 }
 
 static void test_current_grid_is_send_on_new_slot()
 {
+  resource_grid_spy             grid;
   downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool;
+  resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
   fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(!grid.has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
   // Assert that the downlink processor is configured.
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   // Assert that the resource grid has been set to zero.
-  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(grid.has_set_all_zero_method_been_called());
 
   slot_point slot2(1, 1, 1);
   translator.handle_new_slot(slot2);
@@ -103,15 +108,16 @@ static void test_current_grid_is_send_on_new_slot()
 
 static void test_dl_ssb_pdu_is_processed()
 {
+  resource_grid_spy             grid;
   downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool;
+  resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
   fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(!grid.has_set_all_zero_method_been_called());
 
   translator.handle_new_slot(slot);
 
@@ -119,7 +125,7 @@ static void test_dl_ssb_pdu_is_processed()
   TESTASSERT(dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
   // Assert that the resource grid has been set to zero.
-  TESTASSERT(static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();
@@ -139,8 +145,9 @@ static void test_dl_ssb_pdu_is_processed()
 
 static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
 {
+  resource_grid_spy             grid;
   downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool;
+  resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
   fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
@@ -148,7 +155,7 @@ static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
-  TESTASSERT(!static_cast<resource_grid_spy&>(rg_pool.get_resource_grid({})).has_set_all_zero_method_been_called());
+  TESTASSERT(!grid.has_set_all_zero_method_been_called());
 
   // Process SSB PDU.
   const dl_tti_request_message& msg = build_valid_dl_tti_request();
