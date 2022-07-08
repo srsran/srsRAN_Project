@@ -80,11 +80,14 @@ size_t cu_cp_manager_impl::get_nof_dus() const
 
 du_index_t cu_cp_manager_impl::get_next_du_index()
 {
-  du_index_t new_index;
-  do {
-    new_index = int_to_du_index(next_du_index.fetch_add(1, std::memory_order_relaxed));
-  } while (du_db.contains(new_index));
-  return new_index;
+  for (int du_idx_int = MIN_DU_INDEX; du_idx_int < MAX_NOF_DUS; du_idx_int++) {
+    du_index_t du_idx = int_to_du_index(du_idx_int);
+    if (!du_db.contains(du_idx)) {
+      return du_idx;
+    }
+  }
+  logger.error("No du index available");
+  return INVALID_DU_INDEX;
 }
 
 size_t cu_cp_manager_impl::get_nof_ues() const

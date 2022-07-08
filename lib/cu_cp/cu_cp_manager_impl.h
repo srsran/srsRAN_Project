@@ -53,7 +53,6 @@ private:
 
   // Components
   slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
-  std::atomic<uint16_t>                                  next_du_index{0};
 
   std::unordered_map<uint64_t, du_processor*> du_dict; // Hash-table to find DU by cell_id
 

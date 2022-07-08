@@ -91,7 +91,7 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_
   }
 
   du_cell_index_t pcell_index = find_cell(cgi.nci.packed);
-  if (pcell_index == MAX_NOF_DU_CELLS) {
+  if (pcell_index == INVALID_DU_CELL_INDEX) {
     logger.error("Could not find cell with cell_id={}", cgi.nci.packed);
     return;
   }
@@ -106,8 +106,7 @@ du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
       return cell.cell_index;
     }
   }
-  // this is never a valid index
-  return MAX_NOF_DU_CELLS;
+  return INVALID_DU_CELL_INDEX;
 }
 
 /// Sender for F1AP messages

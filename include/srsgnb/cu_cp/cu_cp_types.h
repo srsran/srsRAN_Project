@@ -18,13 +18,23 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Maximum number of UEs supported by CU-CP (implementation-defined).
-enum ue_index_t : uint16_t { MIN_UE_INDEX = 0, MAX_UE_INDEX = 1023, MAX_NOF_UES = 1024 };
+enum ue_index_t : uint16_t {
+  MIN_UE_INDEX     = 0,
+  MAX_UE_INDEX     = 1023,
+  MAX_NOF_UES      = 1024,
+  INVALID_UE_INDEX = MAX_NOF_UES
+};
 
 /// Maximum number of DUs supported by CU-CP (implementation-defined).
-enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2 };
+enum du_index_t : uint16_t { MIN_DU_INDEX = 0, MAX_DU_INDEX = 1, MAX_NOF_DUS = 2, INVALID_DU_INDEX = MAX_NOF_DUS };
 
 /// Maximum number of cells per DU supported by CU-CP (implementation-defined).
-enum du_cell_index_t : uint16_t { MIN_DU_CELL_INDEX = 0, MAX_DU_CELL_INDEX = 15, MAX_NOF_DU_CELLS = 16 };
+enum du_cell_index_t : uint16_t {
+  MIN_DU_CELL_INDEX     = 0,
+  MAX_DU_CELL_INDEX     = 15,
+  MAX_NOF_DU_CELLS      = 16,
+  INVALID_DU_CELL_INDEX = MAX_NOF_DU_CELLS
+};
 
 /// Convert integer to DU index type.
 constexpr inline du_index_t int_to_du_index(std::underlying_type_t<du_index_t> idx)
