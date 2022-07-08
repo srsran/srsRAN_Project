@@ -395,40 +395,45 @@ int main(int argc, char** argv)
 
   // Ratio between the resource grid SCS and 15kHz SCS.
   unsigned ratio_scs_over_15kHz = pow2(to_numerology_value(scs));
-  // Frequency of PointA in Hz.
+  // Frequency of Point A in Hz.
   double dl_pointA_freq_Hz = dl_center_freq - scs_Hz * NRE * bw_rb / 2;
   // Frequency of the lowest SS/PBCH block subcarrier.
   double ssb_lowest_freq_Hz = ssb_center_freq - (scs_Hz * NRE * SSB_BW_RB / 2);
-  // SSB frequency from Point A to the lowest SS/PBCH block subcarrier in Hz.
+  // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in Hz.
   double ssb_offset_pointA_Hz = ssb_lowest_freq_Hz - dl_pointA_freq_Hz;
-  // SSB frequency from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
+  // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
   unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
-  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0, "Invalid combination.");
-  // Offset between the Point A and the beginning of the common resource grid in RB.
+  // Make sure it is possible to map the SS/PBCH block in the grid.
+  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
+                "The combination of DL center frequency {} MHz and SSB center frequency {} MHz results in a fractional "
+                "offset of {}kHz SCS between Point A and the lowest SS/PBCH block lowest subcarrier.",
+                dl_center_freq,
+                ssb_center_freq,
+                scs_to_khz(scs));
+  // SSB frequency offset to Point A as a number of RBs.
   ssb_offset_to_pointA ssb_offset_pointA_subc_rb = ssb_offset_pointA_subc_15kHz / NRE;
   // Round down the offset to Point A to match CRB boundaries.
-  ssb_offset_pointA_subc_rb = (ssb_offset_pointA_subc_rb / ratio_scs_over_15kHz) * ratio_scs_over_15kHz;
-  // Remainder SSB frequency from PointA to the lowest SS/PBCH block subcarrier in SCS units.
-  ssb_subcarrier_offset subcarrier_offset =
-      (ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb * NRE) / ratio_scs_over_15kHz;
+  ssb_offset_pointA_subc_rb = (ssb_offset_pointA_subc_rb.to_uint() / ratio_scs_over_15kHz) * ratio_scs_over_15kHz;
+  // Remainder SSB frequency offset from Point A after rounding.
+  ssb_subcarrier_offset subcarrier_offset = ssb_offset_pointA_subc_15kHz - ssb_offset_pointA_subc_rb.to_uint() * NRE;
 
   upper_phy_ssb_example::configuration upper_phy_sample_config;
-  upper_phy_sample_config.log_level                        = log_level;
-  upper_phy_sample_config.max_nof_prb                      = bw_rb;
-  upper_phy_sample_config.max_nof_ports                    = nof_ports;
-  upper_phy_sample_config.rg_pool_size                     = 2 * max_processing_delay_slots;
-  upper_phy_sample_config.ldpc_encoder_type                = "generic";
-  upper_phy_sample_config.gateway                          = &rg_gateway_adapter;
-  upper_phy_sample_config.ssb_config.phys_cell_id          = 500;
-  upper_phy_sample_config.ssb_config.cp                    = cyclic_prefix::NORMAL;
-  upper_phy_sample_config.ssb_config.period_ms             = 5;
-  upper_phy_sample_config.ssb_config.beta_pss_dB           = 0.0;
-  upper_phy_sample_config.ssb_config.ssb_idx               = {0};
-  upper_phy_sample_config.ssb_config.L_max                 = 8;
-  upper_phy_sample_config.ssb_config.ssb_subcarrier_offset = subcarrier_offset;
-  upper_phy_sample_config.ssb_config.ssb_offset_pointA     = ssb_offset_pointA_subc_rb;
-  upper_phy_sample_config.ssb_config.pattern_case          = ssb_pattern;
-  upper_phy                                                = upper_phy_ssb_example::create(upper_phy_sample_config);
+  upper_phy_sample_config.log_level                    = log_level;
+  upper_phy_sample_config.max_nof_prb                  = bw_rb;
+  upper_phy_sample_config.max_nof_ports                = nof_ports;
+  upper_phy_sample_config.rg_pool_size                 = 2 * max_processing_delay_slots;
+  upper_phy_sample_config.ldpc_encoder_type            = "generic";
+  upper_phy_sample_config.gateway                      = &rg_gateway_adapter;
+  upper_phy_sample_config.ssb_config.phys_cell_id      = 500;
+  upper_phy_sample_config.ssb_config.cp                = cyclic_prefix::NORMAL;
+  upper_phy_sample_config.ssb_config.period_ms         = 5;
+  upper_phy_sample_config.ssb_config.beta_pss_dB       = 0.0;
+  upper_phy_sample_config.ssb_config.ssb_idx           = {0};
+  upper_phy_sample_config.ssb_config.L_max             = 8;
+  upper_phy_sample_config.ssb_config.subcarrier_offset = subcarrier_offset;
+  upper_phy_sample_config.ssb_config.offset_pointA     = ssb_offset_pointA_subc_rb;
+  upper_phy_sample_config.ssb_config.pattern_case      = ssb_pattern;
+  upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
   srsran_assert(upper_phy, "Failed to create upper physical layer.");
 
   // Connect adapters.

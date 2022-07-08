@@ -39,7 +39,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   pbch_msg.hrf                      = pdu.slot.is_odd_hrf();
   pbch_msg.payload                  = pdu.bch_payload;
   pbch_msg.sfn                      = pdu.slot.sfn();
-  pbch_msg.k_ssb                    = pdu.subcarrier_offset;
+  pbch_msg.k_ssb                    = pdu.subcarrier_offset.to_uint();
 
   // Encode PBCH
   std::array<uint8_t, pbch_encoder::E> encoded_bits;

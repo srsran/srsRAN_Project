@@ -107,8 +107,8 @@ public:
         pdu.ssb_idx           = ssb_idx;
         pdu.L_max             = ssb_config.L_max;
         pdu.common_scs        = to_subcarrier_spacing(ssb_config.pattern_case);
-        pdu.subcarrier_offset = ssb_config.ssb_subcarrier_offset;
-        pdu.offset_to_pointA  = ssb_config.ssb_offset_pointA;
+        pdu.subcarrier_offset = ssb_config.subcarrier_offset;
+        pdu.offset_to_pointA  = ssb_config.offset_pointA;
         pdu.pattern_case      = ssb_config.pattern_case;
         pdu.bch_payload       = {};
         pdu.ports             = {0};

@@ -99,8 +99,8 @@ static void ssb_conversion_test()
             }
             TESTASSERT_EQ(pdu.ssb_idx, ssb_idx);
             TESTASSERT_EQ(pdu.L_max, lmax);
-            TESTASSERT_EQ(pdu.subcarrier_offset, ssb_subcarrier_offset);
-            TESTASSERT_EQ(pdu.offset_to_pointA, offset_pointA);
+            TESTASSERT_EQ(pdu.subcarrier_offset.to_uint(), ssb_subcarrier_offset);
+            TESTASSERT_EQ(pdu.offset_to_pointA.to_uint(), offset_pointA);
             TESTASSERT_EQ(pdu.pattern_case, pattern_case);
             TESTASSERT(srsvec::equal(pdu.ports, std::vector<uint8_t>{0}));
 

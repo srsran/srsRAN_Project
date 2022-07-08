@@ -27,6 +27,8 @@ constexpr inline bool is_scs_valid(subcarrier_spacing scs)
 {
   return scs <= subcarrier_spacing::kHz240;
 }
+
+/// Checks whether the provided SCS&ndash;FR pair is valid.
 constexpr inline bool is_scs_valid(subcarrier_spacing scs, frequency_range fr)
 {
   return is_scs_valid(scs) and (((fr == frequency_range::FR2) and scs >= subcarrier_spacing::kHz60) or

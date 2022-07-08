@@ -50,8 +50,10 @@ public:
     std::array<uint8_t, A> payload;
     /// System Frame Number.
     unsigned sfn;
-    /// \brief Subcarrier offset. The value range is {0, ..., 15} if \f$L_{MAX} = 64\f$, otherwise {0, ..., 31}.
-    /// parameter \f$k_{SSB}\f$ as per TS 38.211 7.4.3.1.
+    /// \brief Subcarrier offset.
+    ///
+    /// Corresponds to parameter \f$k_{SSB}\f$ as defined in TS 38.211 Section 7.4.3.1. The value range is {0, ..., 11}
+    /// if \f$L_{MAX} = 64\f$, {0, ..., 23} otherwise.
     unsigned k_ssb;
   };
 

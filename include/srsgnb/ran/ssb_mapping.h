@@ -80,17 +80,25 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   return {};
 }
 
-/// \brief Calculates the position of the SS/PBCH block first subcarrier relative to the bottom of the grid (pointA).
+/// \brief Calculates the position of the SS/PBCH block first subcarrier relative to Point A.
 ///
-/// Assertions are triggered for:
-/// - invalid SS/PBCH SCS and frequency combinations, or
-/// - the result would point in a fraction of the subcarrier index.
+/// The result is expressed in units of subcarriers of SS/PBCH block SCS \c ssb_scs assuming that:
+/// - the lowest subcarrier of the resource grid overlaps with the Point A, and
+/// - the resource grid SCS matches the SS/PBCH block SCS.
+///
+/// In other words, it is not possible to determine an SS/PBCH block position in the grid if the SS/PBCH block
+/// subcarrier offset does not match the position of the resource grid subcarriers. Because of this, the parameters must
+/// result in a integer subcarrier index of the SS/PBCH block SCS.
+///
+/// Assertions are triggered if:
+/// - the provided SS/PBCH SCS and frequency range combination is invalid, or
+/// - the result would point to a non-integer subcarrier index.
 ///
 /// \param[in] fr                Frequency range.
-/// \param[in] ssb_scs           SS/PBCH block SCS.
+/// \param[in] ssb_scs           SS/PBCH block subcarrier spacing.
 /// \param[in] common_scs        Higher layer parameter \c subCarrierSpacingCommon as per TS38.331 \c MIB.
-/// \param[in] offset_to_pointA  \see ssb_offset_to_pointA.
-/// \param[in] subcarrier_offset \see ssb_subcarrier_offset.
+/// \param[in] offset_to_pointA  Offset to Point A (see [here](\ref ssb_offset_to_pointA) for more information).
+/// \param[in] subcarrier_offset Subcarrier offset (see [here](\ref ssb_subcarrier_offset) for more information).
 /// \return The index of the lowest subcarrier of the SS/PBCH block.
 inline unsigned ssb_get_k_first(frequency_range       fr,
                                 subcarrier_spacing    ssb_scs,
@@ -108,6 +116,17 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                 fr == frequency_range::FR1 ? 1 : 2,
                 scs_to_khz(common_scs));
 
+  // Verify the offset to Point A and the subcarrier offset are valid.
+  srsran_assert(offset_to_pointA.is_valid(),
+                "Invalid offset to Point A {} (max {})",
+                offset_to_pointA.to_uint(),
+                ssb_offset_to_pointA::max());
+  srsran_assert(subcarrier_offset.is_valid(fr),
+                "Invalid subcarrier offset {} for FR{} (max {})",
+                subcarrier_offset.to_uint(),
+                fr == frequency_range::FR1 ? 1 : 2,
+                ssb_subcarrier_offset::max(fr));
+
   // Select the Point A offset SCS depending on the frequency range and convert SCS to kHz.
   unsigned pointA_offset_scs_kHz =
       scs_to_khz((fr == frequency_range::FR1) ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz60);
@@ -119,19 +138,20 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
   // SS/PBCH block SCS in kHz.
   unsigned ssb_scs_kHz = scs_to_khz(ssb_scs);
 
-  // Calculate number of subcarriers from point A to the first subcarrier of the SS/PBCH block with 15kHz reference.
-  unsigned k_first_15kHz =
-      (offset_to_pointA * NRE * pointA_offset_scs_kHz + subcarrier_offset * subcarrier_offset_scs_kHz) / 15;
+  // Calculate the number of 15kHz subcarriers from point A to the first subcarrier of the SS/PBCH block.
+  unsigned k_first_15kHz = (offset_to_pointA.to_uint() * NRE * pointA_offset_scs_kHz +
+                            subcarrier_offset.to_uint() * subcarrier_offset_scs_kHz) /
+                           15;
 
-  // Make sure the conversion from the reference in 15kHz to the SSB SCS is not fractional.
+  // Make sure the above conversion is exact and has no remainder.
   srsran_assert((k_first_15kHz * 15) % ssb_scs_kHz == 0,
                 "Unsupported combination of FR{}, SSB SCS {}kHz, Common SCS {}kHz, offsetToPointA {} and "
                 "ssb-SubcarrierOffset {}.",
                 fr == frequency_range::FR1 ? 1 : 2,
                 ssb_scs_kHz,
                 scs_to_khz(common_scs),
-                offset_to_pointA,
-                subcarrier_offset);
+                offset_to_pointA.to_uint(),
+                subcarrier_offset.to_uint());
 
   // Calculate actual result.
   return (k_first_15kHz * 15) / ssb_scs_kHz;

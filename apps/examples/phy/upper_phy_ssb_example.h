@@ -50,9 +50,9 @@ public:
     /// Maximum number of SSB candidates.
     unsigned L_max;
     /// SSB offset between the common resource grid and the beginning of the SSB as a number of 15kHz subcarriers.
-    unsigned ssb_subcarrier_offset;
-    /// SSB offset between the point A and the beginning of the common resource grid in RB.
-    unsigned ssb_offset_pointA;
+    ssb_subcarrier_offset subcarrier_offset;
+    /// SSB offset between Point A and the beginning of the common resource grid in RB.
+    ssb_offset_to_pointA offset_pointA;
     /// SS/PBCH pattern case (A,B,C,D,E).
     ssb_pattern_case pattern_case;
   };

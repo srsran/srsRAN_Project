@@ -61,10 +61,10 @@ int main()
 
   std::unique_ptr<ssb_processor> pbch = create_ssb_processor(config);
 
-  // Iterate all possible SSB pattern cases
+  // Iterate all possible SSB pattern cases.
   for (const ssb_pattern_case& pattern_case :
        {ssb_pattern_case::A, ssb_pattern_case::B, ssb_pattern_case::C, ssb_pattern_case::D, ssb_pattern_case::E}) {
-    // Deduce frequency range from the pattern case.
+    // Obtain the frequency range from the pattern case.
     frequency_range freq_range = to_frequency_range(pattern_case);
 
     // Iterate possible L_max
@@ -76,10 +76,10 @@ int main()
                                               subcarrier_spacing::kHz30,
                                               subcarrier_spacing::kHz60,
                                               subcarrier_spacing::kHz120}) {
-          // Select numerology from case
+          // Select numerology from case.
           subcarrier_spacing ssb_scs = to_subcarrier_spacing(pattern_case);
 
-          // Skip invalid pattern and L_max combinations
+          // Skip invalid pattern and L_max combinations.
           if (pattern_case != ssb_pattern_case::E && pattern_case != ssb_pattern_case::D && L_max == 64) {
             continue;
           }
@@ -89,33 +89,33 @@ int main()
             continue;
           }
 
-          // Iterate over all possible SS/PBCH block candidates
+          // Iterate over all possible SS/PBCH block candidates.
           for (unsigned ssb_idx = 0; ssb_idx < L_max; ++ssb_idx) {
-            unsigned ssb_offset_pointA     = offset_to_pointA_dist(rgen);
-            unsigned ssb_subcarrier_offset = ssb_subcarrier_offset_dist(rgen);
+            ssb_offset_to_pointA  offset_pointA     = offset_to_pointA_dist(rgen);
+            ssb_subcarrier_offset subcarrier_offset = ssb_subcarrier_offset_dist(rgen);
 
             // Round the SS/PBCH block subcarrier offset to avoid incompatible subcarrier offsets.
             if (freq_range == frequency_range::FR1 && ssb_scs != subcarrier_spacing::kHz15) {
-              ssb_subcarrier_offset = 2 * (ssb_subcarrier_offset / 2);
+              subcarrier_offset = 2 * (subcarrier_offset.to_uint() / 2);
             } else if (freq_range == frequency_range::FR2) {
-              ssb_subcarrier_offset = 4 * (ssb_subcarrier_offset / 4);
+              subcarrier_offset = 4 * (subcarrier_offset.to_uint() / 4);
             }
 
-            // Deduce derivative variables
+            // Compute secondary variables.
             unsigned ssb_first_symbol_burst = ssb_get_l_first(pattern_case, ssb_idx);
             unsigned nslots_in_subframe     = get_nof_slots_per_subframe(ssb_scs);
             unsigned slot_in_burst          = ssb_first_symbol_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL);
             unsigned subframe_in_burst      = slot_in_burst / nslots_in_subframe;
             unsigned slot_in_subframe       = slot_in_burst % nslots_in_subframe;
 
-            // Deduce derivative assertion values
+            // Compute secondary assertion values.
             unsigned ssb_first_subcarrier =
-                ssb_get_k_first(freq_range, ssb_scs, common_scs, ssb_offset_pointA, ssb_subcarrier_offset);
+                ssb_get_k_first(freq_range, ssb_scs, common_scs, offset_pointA, subcarrier_offset);
             unsigned ssb_first_symbol_slot = ssb_first_symbol_burst % get_nsymb_per_slot(cyclic_prefix::NORMAL);
 
-            // Iterate half frames
+            // Iterate half frames.
             for (unsigned subframe : {0 + subframe_in_burst, 5 + subframe_in_burst}) {
-              // Generate PBCH PDU
+              // Generate PBCH PDU.
               ssb_processor::pdu_t pdu = {};
               pdu.slot                 = {to_numerology_value(ssb_scs), sfn_dist(rgen), subframe, slot_in_subframe};
               pdu.phys_cell_id         = pci_dist(rgen);
@@ -123,32 +123,32 @@ int main()
               pdu.ssb_idx              = ssb_idx;
               pdu.L_max                = L_max;
               pdu.common_scs           = common_scs;
-              pdu.subcarrier_offset    = ssb_subcarrier_offset;
-              pdu.offset_to_pointA     = ssb_offset_pointA;
+              pdu.subcarrier_offset    = subcarrier_offset;
+              pdu.offset_to_pointA     = offset_pointA;
               pdu.pattern_case         = pattern_case;
               pdu.ports.emplace_back(port_dist(rgen));
               for (uint8_t& bit : pdu.bch_payload) {
                 bit = bit_dist(rgen);
               }
 
-              // Reset spies
+              // Reset spies.
               encoder->reset();
               modulator->reset();
               dmrs->reset();
               pss->reset();
               sss->reset();
 
-              // Process PDU
+              // Process PDU.
               pbch->process(pdu, grid);
 
-              // Assert modules number of entries
+              // Assert modules number of entries.
               TESTASSERT_EQ(encoder->get_nof_entries(), 1);
               TESTASSERT_EQ(modulator->get_nof_entries(), 1);
               TESTASSERT_EQ(dmrs->get_nof_entries(), 1);
               TESTASSERT_EQ(pss->get_nof_entries(), 1);
               TESTASSERT_EQ(sss->get_nof_entries(), 1);
 
-              // Assert encoder
+              // Assert encoder.
               const auto& encoder_entry = encoder->get_entries()[0];
               TESTASSERT(encoder_entry.msg.N_id == pdu.phys_cell_id);
               TESTASSERT(encoder_entry.msg.ssb_idx == pdu.ssb_idx);
@@ -156,10 +156,10 @@ int main()
               TESTASSERT(encoder_entry.msg.hrf == pdu.slot.is_odd_hrf());
               TESTASSERT(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload));
               TESTASSERT(encoder_entry.msg.sfn == pdu.slot.sfn());
-              TESTASSERT(encoder_entry.msg.k_ssb == pdu.subcarrier_offset);
+              TESTASSERT(encoder_entry.msg.k_ssb == pdu.subcarrier_offset.to_uint());
               TESTASSERT(encoder_entry.encoded.size() == pbch_encoder::E);
 
-              // Assert modulator
+              // Assert modulator.
               const auto& modulator_entry = modulator->get_entries()[0];
               TESTASSERT(modulator_entry.config.phys_cell_id == pdu.phys_cell_id);
               TESTASSERT(modulator_entry.config.ssb_idx == pdu.ssb_idx);
@@ -170,7 +170,7 @@ int main()
               TESTASSERT(srsvec::equal(modulator_entry.bits, encoder_entry.encoded));
               TESTASSERT(modulator_entry.grid_ptr == &grid);
 
-              // Assert DMRS for PBCH
+              // Assert DMRS for PBCH.
               const auto& dmrs_entry = dmrs->get_entries()[0];
               TESTASSERT(dmrs_entry.config.phys_cell_id == pdu.phys_cell_id);
               TESTASSERT(dmrs_entry.config.ssb_idx == pdu.ssb_idx);
@@ -181,7 +181,7 @@ int main()
               TESTASSERT(dmrs_entry.config.amplitude == 1.0F);
               TESTASSERT(srsvec::equal(dmrs_entry.config.ports, pdu.ports));
 
-              // Assert PSS
+              // Assert PSS.
               const auto& pss_entry = pss->get_entries()[0];
               TESTASSERT(pss_entry.config.phys_cell_id == pdu.phys_cell_id);
               TESTASSERT(pss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
@@ -189,7 +189,7 @@ int main()
               TESTASSERT(pss_entry.config.amplitude == convert_dB_to_amplitude(beta_pss));
               TESTASSERT(srsvec::equal(pss_entry.config.ports, pdu.ports));
 
-              // Assert SSS
+              // Assert SSS.
               const auto& sss_entry = sss->get_entries()[0];
               TESTASSERT(sss_entry.config.phys_cell_id == pdu.phys_cell_id);
               TESTASSERT(sss_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
