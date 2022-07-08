@@ -77,6 +77,7 @@ int main()
 
     srsgnb::codeblock_metadata::tb_common_metadata cfg_enc = {bg, ls};
     srsgnb::ldpc_decoder::configuration            cfg_dec = {{cfg_enc}, {}};
+    cfg_dec.algorithm_conf.max_iterations                  = 1;
 
     unsigned used_msg_bits   = 0;
     unsigned used_cblck_bits = 0;

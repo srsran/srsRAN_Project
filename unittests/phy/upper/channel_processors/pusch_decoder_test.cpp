@@ -21,6 +21,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
 #include "srsgnb/support/test_utils.h"
+#include <getopt.h>
 
 /// \cond
 namespace srsgnb {
@@ -37,8 +38,39 @@ std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffe
 
 using namespace srsgnb;
 
-int main()
+static bool     use_early_stop      = false;
+static unsigned nof_ldpc_iterations = 6;
+
+static void usage(const char* prog)
 {
+  fmt::print("Usage: {} [-eX] [-iX]\n", prog);
+  fmt::print("\t-e Use LDPC decoder early stop [Default {}]\n", use_early_stop);
+  fmt::print("\t-i Number of LDPC iterations [Default {}]\n", nof_ldpc_iterations);
+}
+
+static void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "e:i:")) != -1) {
+    //  printf("opt : %d\n", opt);
+    switch (opt) {
+      case 'e':
+        use_early_stop = (strtol(optarg, nullptr, 10) != 0);
+        break;
+      case 'i':
+        nof_ldpc_iterations = strtol(optarg, nullptr, 10);
+        break;
+      default:
+        usage(argv[0]);
+        exit(-1);
+    }
+  }
+}
+
+int main(int argc, char** argv)
+{
+  parse_args(argc, argv);
+
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
   TESTASSERT(crc_calculator_factory);
 
@@ -104,9 +136,10 @@ int main()
 
     pusch_decoder::configuration dec_cfg = {};
 
-    std::size_t cw_offset  = 0;
-    dec_cfg.new_data       = true;
-    dec_cfg.use_early_stop = true;
+    std::size_t cw_offset       = 0;
+    dec_cfg.new_data            = true;
+    dec_cfg.nof_ldpc_iterations = nof_ldpc_iterations;
+    dec_cfg.use_early_stop      = use_early_stop;
     for (auto rv : rv_sequence) {
       cfg.rv = rv;
       std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
@@ -122,35 +155,15 @@ int main()
       TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly.");
       TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_observations(),
                     dec_stats.nof_codeblocks_total,
-                    "Error reporting decoded codeblocks.");
-      TESTASSERT(dec_stats.ldpc_decoder_stats.get_max() <= 2, "Too many decoder iterations.");
-
-      // Force all CRCs to false to test LLR combining.
-      softbuffer->reset_codeblocks_crc();
-    }
-
-    cw_offset              = 0;
-    dec_cfg.new_data       = true;
-    dec_cfg.use_early_stop = false;
-    for (auto rv : rv_sequence) {
-      cfg.rv = rv;
-      std::vector<uint8_t> rx_tb(tbs / BITS_PER_BYTE);
-
-      dec_cfg.segmenter_cfg = cfg;
-
-      decoder->decode(
-          rx_tb, dec_stats, softbuffer, span<const log_likelihood_ratio>(llrs_all).subspan(cw_offset, cws), dec_cfg);
-      cw_offset += cws;
-      dec_cfg.new_data = false;
-
-      TESTASSERT(dec_stats.tb_crc_ok, "TB CRC checksum failed (no early stop).");
-      TESTASSERT_EQ(span<uint8_t>(rx_tb), span<uint8_t>(ref_tb), "TB not decoded correctly (no early stop).");
-      TESTASSERT_EQ(dec_stats.ldpc_decoder_stats.get_nof_observations(),
-                    dec_stats.nof_codeblocks_total,
-                    "Error reporting decoded codeblocks (no early stop).");
-      TESTASSERT_EQ(dec_cfg.nof_ldpc_iterations,
-                    dec_stats.ldpc_decoder_stats.get_min(),
-                    "Something wrong with iteration counting (no early stop).");
+                    "Error reporting decoded codeblocks (use_early_stop={}).",
+                    use_early_stop);
+      if (use_early_stop) {
+        TESTASSERT(dec_stats.ldpc_decoder_stats.get_max() <= 2, "Too many decoder iterations.");
+      } else {
+        TESTASSERT_EQ(dec_cfg.nof_ldpc_iterations,
+                      dec_stats.ldpc_decoder_stats.get_min(),
+                      "Something wrong with iteration counting (no early stop).");
+      }
 
       // Force all CRCs to false to test LLR combining.
       softbuffer->reset_codeblocks_crc();

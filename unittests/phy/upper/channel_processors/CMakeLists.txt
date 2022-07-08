@@ -103,7 +103,8 @@ add_custom_command(
 
 add_executable(pusch_decoder_test pusch_decoder_test.cpp)
 target_link_libraries(pusch_decoder_test srsgnb_channel_processors srslog srsgnb_upper_phy_support)
-add_test(pusch_decoder_test pusch_decoder_test)
+add_test(pusch_decoder_test pusch_decoder_test -e0 -i2)
+add_test(pusch_decoder_early_stop_test pusch_decoder_test -e1 -i6)
 
 add_custom_command(
   TARGET pusch_decoder_test
