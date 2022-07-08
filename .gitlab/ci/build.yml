@@ -1,9 +1,9 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "4"
+    ref: "5"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "4"
+    ref: "5"
     file: .gitlab/ci-shared/srs_tools.yml
 
 variables:
