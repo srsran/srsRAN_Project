@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_DETAIL_SUPPORT_TMP_UTILS_H
-#define SRSLOG_DETAIL_SUPPORT_TMP_UTILS_H
+#ifndef SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H
+#define SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H
 
 #include <cstddef>
 #include <cstdint>
@@ -84,4 +84,4 @@ struct is_byte_iterable<
 
 } // namespace srslog
 
-#endif // SRSLOG_DETAIL_SUPPORT_TMP_UTILS_H
+#endif // SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H
