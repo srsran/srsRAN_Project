@@ -735,6 +735,13 @@ public:
   byte_buffer_view view() const { return slice; }
   explicit         operator byte_buffer_view() const { return slice; }
 
+  /// Returns another owning sub-view with dimensions specified in arguments
+  shared_byte_buffer_view shared_view(size_t offset, size_t size)
+  {
+    srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
+    return {buf, offset, size};
+  }
+
   bool   empty() const { return slice.empty(); }
   size_t length() const { return slice.length(); }
 

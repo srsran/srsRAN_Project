@@ -47,7 +47,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
   }
 }
 
-/// Interface for higher layers to pass SDUs
+/// Interface for higher layers to pass PDUs
 /// into the RLC entity.
 rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 {
@@ -111,9 +111,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   // Move data from SDU to PDU
   rlc_byte_buffer pdu_buf = {};
   pdu_buf.set_header(std::move(header_buf));
-  // TODO: Optimize copy
-  byte_buffer tmp = {sdu.buf.begin(), sdu.buf.end()};
-  pdu_buf.set_payload(tmp, next_so, to_move);
+  pdu_buf.set_payload(sdu.buf.shared_view(next_so, to_move));
 
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {

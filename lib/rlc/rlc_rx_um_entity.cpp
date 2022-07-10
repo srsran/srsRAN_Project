@@ -74,18 +74,15 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
   }
 }
 
-void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
+void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
 {
-  // TODO: Optimize copy
-  byte_buffer buf = {buf_.begin(), buf_.end()};
-
   std::lock_guard<std::mutex> lock(mutex);
 
   metrics_add_pdus(1, buf.length());
 
   logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
   rlc_um_pdu_header header = {};
-  if (not rlc_um_read_data_pdu_header(buf, cfg.sn_field_length, &header)) {
+  if (not rlc_um_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
     logger.log_warning("Failed to unpack header of RLC PDU");
     metrics_add_malformed_pdus(1);
     return;
@@ -93,16 +90,14 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf_)
 
   // strip header, extract payload
   size_t                  header_len = rlc_um_nr_packed_length(header);
-  shared_byte_buffer_view payload(buf, header_len, buf.length() - header_len);
+  shared_byte_buffer_view payload    = buf.shared_view(header_len, buf.length() - header_len);
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {
     // deliver to upper layer
     logger.log_info("Rx SDU ({} B)", payload.length());
-    // TODO: optimize copy
-    byte_buffer sdu(payload.begin(), payload.end());
-    metrics_add_sdus(1, sdu.length());
-    upper_dn.on_new_sdu(std::move(sdu));
+    metrics_add_sdus(1, payload.length());
+    upper_dn.on_new_sdu(std::move(payload));
   } else if (sn_invalid_for_rx_buffer(header.sn)) {
     logger.log_info("Discarding SN={}", header.sn);
     // Nothing else to do here ..
@@ -187,7 +182,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
         if (pdu.next_expected_so == 0) {
           if (pdu.sdu.empty()) {
             // reuse buffer of first segment for final SDU
-            // TODO: optimize copy
+            // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
             pdu.sdu              = byte_buffer(it->second.payload.begin(), it->second.payload.end());
             pdu.next_expected_so = pdu.sdu.length();
             logger.log_debug("Reusing first segment of SN={} for final SDU", it->second.header.sn);
@@ -202,7 +197,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
           }
         } else {
           // add this segment to the end of the SDU buffer
-          // TODO: optimize copy
+          // TODO: optimize copy - e.g. change upstream SDU type to a list-like aggregate of shared_byte_buffer
           pdu.sdu.append(it->second.payload);
           pdu.next_expected_so += it->second.payload.length();
           logger.log_debug("Appended SO={} of SN={}", it->second.header.so, it->second.header.sn);

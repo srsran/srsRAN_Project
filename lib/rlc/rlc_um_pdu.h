@@ -38,7 +38,8 @@ struct rlc_um_pdu {
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 version 15.3.0 Section 6.2.2.3
  ***************************************************************************/
-inline bool rlc_um_read_data_pdu_header(const byte_buffer& pdu, const rlc_um_sn_size sn_size, rlc_um_pdu_header* header)
+inline bool
+rlc_um_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_um_sn_size sn_size, rlc_um_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.empty()) {
