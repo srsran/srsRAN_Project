@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_TDD_CFG_HELPER_H
-#define SRSGNB_TDD_CFG_HELPER_H
+#ifndef SRSGNB_ASN1_RRC_NR_TDD_CFG_HELPER_H
+#define SRSGNB_ASN1_RRC_NR_TDD_CFG_HELPER_H
 
 #include "rrc_nr.h"
 #include "srsgnb/adt/static_vector.h"
@@ -30,4 +30,4 @@ bool slot_is_ul(const asn1::rrc_nr::tdd_ul_dl_cfg_common_s& cfg, slot_point sl);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_TDD_CFG_HELPER_H
+#endif // SRSGNB_ASN1_RRC_NR_TDD_CFG_HELPER_H

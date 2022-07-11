@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_RACH_HANDLER_H
-#define SRSGNB_MAC_RACH_HANDLER_H
+#ifndef SRSGNB_MAC_MAC_RACH_HANDLER_H
+#define SRSGNB_MAC_MAC_RACH_HANDLER_H
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/slot_point.h"
@@ -28,4 +28,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_RACH_HANDLER_H
+#endif // SRSGNB_MAC_MAC_RACH_HANDLER_H

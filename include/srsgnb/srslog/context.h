@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_CONTEXT_H
-#define SRSLOG_CONTEXT_H
+#ifndef SRSGNB_SRSLOG_CONTEXT_H
+#define SRSGNB_SRSLOG_CONTEXT_H
 
 #include "srsgnb/srslog/detail/support/tmpl_utils.h"
 #include <cassert>
@@ -236,4 +236,4 @@ using build_context_type = context<typename std::decay<Ts>::type...>;
 
 } // namespace srslog
 
-#endif // SRSLOG_CONTEXT_H
+#endif // SRSGNB_SRSLOG_CONTEXT_H

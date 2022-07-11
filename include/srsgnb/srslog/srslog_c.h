@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SRSLOG_C_H
-#define SRSLOG_SRSLOG_C_H
+#ifndef SRSGNB_SRSLOG_SRSLOG_C_H
+#define SRSGNB_SRSLOG_SRSLOG_C_H
 
 #ifdef __cplusplus
 #include <cstddef>

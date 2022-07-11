@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SRSLOG_H
-#define SRSLOG_SRSLOG_H
+#ifndef SRSGNB_SRSLOG_SRSLOG_H
+#define SRSGNB_SRSLOG_SRSLOG_H
 
 #include "srsgnb/srslog/detail/support/any.h"
 #include "srsgnb/srslog/logger.h"
@@ -245,4 +245,4 @@ void set_error_handler(error_handler handler);
 
 } // namespace srslog
 
-#endif // SRSLOG_SRSLOG_H
+#endif // SRSGNB_SRSLOG_SRSLOG_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UNIQUE_COROUTINE_H
-#define SRSGNB_UNIQUE_COROUTINE_H
+#ifndef SRSGNB_SUPPORT_ASYNC_DETAIL_UNIQUE_COROUTINE_H
+#define SRSGNB_SUPPORT_ASYNC_DETAIL_UNIQUE_COROUTINE_H
 
 #include "../coroutine.h"
 #include <utility>
@@ -58,4 +58,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UNIQUE_COROUTINE_H
+#endif // SRSGNB_SUPPORT_ASYNC_DETAIL_UNIQUE_COROUTINE_H

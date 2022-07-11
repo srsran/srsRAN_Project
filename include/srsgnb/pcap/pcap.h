@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PCAP_H
-#define SRSGNB_PCAP_H
+#ifndef SRSGNB_PCAP_PCAP_H
+#define SRSGNB_PCAP_PCAP_H
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
@@ -67,4 +67,4 @@ private:
   uint32_t              dlt = 0;
 };
 
-#endif // SRSGNB_PCAP_H
+#endif // SRSGNB_PCAP_PCAP_H

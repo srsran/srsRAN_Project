@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_FACTORY_H
-#define SRSGNB_SCHEDULER_FACTORY_H
+#ifndef SRSGNB_SCHEDULER_SCHEDULER_FACTORY_H
+#define SRSGNB_SCHEDULER_SCHEDULER_FACTORY_H
 
 #include "srsgnb/scheduler/mac_scheduler.h"
 
@@ -20,4 +20,4 @@ std::unique_ptr<mac_scheduler> create_scheduler(sched_configuration_notifier& co
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHEDULER_FACTORY_H
+#endif // SRSGNB_SCHEDULER_SCHEDULER_FACTORY_H

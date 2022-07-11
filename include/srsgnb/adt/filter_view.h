@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_FILTER_VIEW_H
-#define SRSGNB_FILTER_VIEW_H
+#ifndef SRSGNB_ADT_FILTER_VIEW_H
+#define SRSGNB_ADT_FILTER_VIEW_H
 
 #include "srsgnb/support/srsran_assert.h"
 #include <memory>
@@ -95,4 +95,4 @@ filter_view<Range, Pred> filter(Range&& r, Pred&& p)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_FILTER_VIEW_H
+#endif // SRSGNB_ADT_FILTER_VIEW_H

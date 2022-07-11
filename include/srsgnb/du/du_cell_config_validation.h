@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_CELL_CONFIG_VALIDATION_H
-#define SRSGNB_DU_CELL_CONFIG_VALIDATION_H
+#ifndef SRSGNB_DU_DU_CELL_CONFIG_VALIDATION_H
+#define SRSGNB_DU_DU_CELL_CONFIG_VALIDATION_H
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/du/du_cell_config.h"
@@ -24,4 +24,4 @@ error_type<std::string> is_du_cell_config_valid(const du_cell_config& cell_cfg);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_CELL_CONFIG_VALIDATION_H
+#endif // SRSGNB_DU_DU_CELL_CONFIG_VALIDATION_H

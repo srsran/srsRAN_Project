@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_ASYNC_TEST_UTILS_H
-#define SRSGNB_ASYNC_TEST_UTILS_H
+#ifndef SRSGNB_SUPPORT_ASYNC_ASYNC_TEST_UTILS_H
+#define SRSGNB_SUPPORT_ASYNC_ASYNC_TEST_UTILS_H
 
 #include "async_task.h"
 #include "eager_async_task.h"
@@ -75,4 +75,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASYNC_TEST_UTILS_H
+#endif // SRSGNB_SUPPORT_ASYNC_ASYNC_TEST_UTILS_H

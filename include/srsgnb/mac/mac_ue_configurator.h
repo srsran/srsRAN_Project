@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_MAC_UE_CONFIGURATOR_H
-#define SRSGNB_MAC_UE_CONFIGURATOR_H
+#ifndef SRSGNB_MAC_MAC_UE_CONFIGURATOR_H
+#define SRSGNB_MAC_MAC_UE_CONFIGURATOR_H
 
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/ran/lcid.h"
@@ -76,4 +76,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_UE_CONFIGURATOR_H
+#endif // SRSGNB_MAC_MAC_UE_CONFIGURATOR_H

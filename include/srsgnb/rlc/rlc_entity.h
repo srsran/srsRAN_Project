@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_ENTITY_H
-#define SRSGNB_RLC_ENTITY_H
+#ifndef SRSGNB_RLC_RLC_ENTITY_H
+#define SRSGNB_RLC_RLC_ENTITY_H
 
 #include "srsgnb/rlc/rlc.h"
 

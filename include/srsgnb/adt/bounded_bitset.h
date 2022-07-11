@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_BOUNDED_BITSET_H
-#define SRSGNB_BOUNDED_BITSET_H
+#ifndef SRSGNB_ADT_BOUNDED_BITSET_H
+#define SRSGNB_ADT_BOUNDED_BITSET_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/math_utils.h"
@@ -844,4 +844,4 @@ struct formatter<srsgnb::bounded_bitset<N, reversed> > {
 };
 } // namespace fmt
 
-#endif // SRSGNB_BOUNDED_BITSET_H
+#endif // SRSGNB_ADT_BOUNDED_BITSET_H

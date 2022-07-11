@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_BASE_TASK_H
-#define SRSGNB_BASE_TASK_H
+#ifndef SRSGNB_SUPPORT_ASYNC_DETAIL_BASE_TASK_H
+#define SRSGNB_SUPPORT_ASYNC_DETAIL_BASE_TASK_H
 
 #include "../coroutine.h"
 #include "promise_data.h"
@@ -77,4 +77,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_BASE_TASK_H
+#endif // SRSGNB_SUPPORT_ASYNC_DETAIL_BASE_TASK_H

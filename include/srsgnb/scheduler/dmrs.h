@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DMRS_H
-#define SRSGNB_DMRS_H
+#ifndef SRSGNB_SCHEDULER_DMRS_H
+#define SRSGNB_SCHEDULER_DMRS_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
@@ -63,4 +63,4 @@ using dmrs_symbol_mask = bounded_bitset<14>;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DMRS_H
+#endif // SRSGNB_SCHEDULER_DMRS_H

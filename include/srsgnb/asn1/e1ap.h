@@ -14,8 +14,8 @@
  *
  ******************************************************************************/
 
-#ifndef SRSASN1_E1AP_H
-#define SRSASN1_E1AP_H
+#ifndef SRSGNB_ASN1_E1AP_H
+#define SRSGNB_ASN1_E1AP_H
 
 #include "asn1_utils.h"
 #include <cstdio>
@@ -8266,4 +8266,4 @@ extern template struct asn1::protocol_ie_field_s<asn1::e1ap::reset_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::reset_ack_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::e1ap::ul_data_notif_ies_o>;
 
-#endif // SRSASN1_E1AP_H
+#endif // SRSGNB_ASN1_E1AP_H

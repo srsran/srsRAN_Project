@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_RESOURCE_GRID_CONTEXT_H
-#define SRSGNB_SUPPORT_RESOURCE_GRID_CONTEXT_H
+#ifndef SRSGNB_PHY_RESOURCE_GRID_CONTEXT_H
+#define SRSGNB_PHY_RESOURCE_GRID_CONTEXT_H
 
 #include "resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
@@ -26,4 +26,4 @@ struct resource_grid_context {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SUPPORT_RESOURCE_GRID_CONTEXT_H
+#endif // SRSGNB_PHY_RESOURCE_GRID_CONTEXT_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_OFDM_SYMBOL_RANGE_H
-#define SRSGNB_OFDM_SYMBOL_RANGE_H
+#ifndef SRSGNB_RAN_OFDM_SYMBOL_RANGE_H
+#define SRSGNB_RAN_OFDM_SYMBOL_RANGE_H
 
 #include "srsgnb/adt/interval.h"
 #include "srsgnb/ran/frame_types.h"
@@ -34,4 +34,4 @@ inline ofdm_symbol_range sliv_to_ofdm_symbols(uint32_t sliv)
 
 } // namespace srsgnb
 
-#endif // SRSGNB_OFDM_SYMBOL_RANGE_H
+#endif // SRSGNB_RAN_OFDM_SYMBOL_RANGE_H

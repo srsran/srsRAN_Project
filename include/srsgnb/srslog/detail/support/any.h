@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_DETAIL_SUPPORT_ANY_H
-#define SRSLOG_DETAIL_SUPPORT_ANY_H
+#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_ANY_H
+#define SRSGNB_SRSLOG_DETAIL_SUPPORT_ANY_H
 
 #include <memory>
 #include <type_traits>
@@ -187,4 +187,4 @@ const char any::type_tag<T>::tag = 0;
 
 } // namespace srslog
 
-#endif // SRSLOG_DETAIL_SUPPORT_ANY_H
+#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_ANY_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SSB_CONFIGURATION_H
-#define SRSGNB_SSB_CONFIGURATION_H
+#ifndef SRSGNB_RAN_SSB_CONFIGURATION_H
+#define SRSGNB_RAN_SSB_CONFIGURATION_H
 
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -42,4 +42,4 @@ struct ssb_configuration {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SSB_CONFIGURATION_H
+#endif // SRSGNB_RAN_SSB_CONFIGURATION_H

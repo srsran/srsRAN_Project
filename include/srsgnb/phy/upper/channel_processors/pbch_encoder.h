@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_PBCH_ENCODER_H
-#define SRSGNB_PHY_UPPER_PBCH_ENCODER_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_H
+#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_H
 
 #include "srsgnb/adt/span.h"
 #include <array>
@@ -68,4 +68,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_PBCH_ENCODER_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_H

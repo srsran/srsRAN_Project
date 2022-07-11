@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_TEST_H
-#define SRSGNB_TEST_H
+#ifndef SRSGNB_SUPPORT_SRSGNB_TEST_H
+#define SRSGNB_SUPPORT_SRSGNB_TEST_H
 
 #include "srsran_assert.h"
 
@@ -52,4 +52,4 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
 
 } // namespace srsgnb
 
-#endif // SRSGNB_TEST_H
+#endif // SRSGNB_SUPPORT_SRSGNB_TEST_H

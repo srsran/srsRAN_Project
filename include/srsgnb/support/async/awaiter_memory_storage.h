@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_AWAITER_MEMORY_STORAGE_H
-#define SRSGNB_AWAITER_MEMORY_STORAGE_H
+#ifndef SRSGNB_SUPPORT_ASYNC_AWAITER_MEMORY_STORAGE_H
+#define SRSGNB_SUPPORT_ASYNC_AWAITER_MEMORY_STORAGE_H
 
 #include "srsgnb/support/srsran_assert.h"
 #include <cstddef>
@@ -132,4 +132,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_AWAITER_MEMORY_STORAGE_H
+#endif // SRSGNB_SUPPORT_ASYNC_AWAITER_MEMORY_STORAGE_H

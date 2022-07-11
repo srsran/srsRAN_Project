@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_STABLE_ID_MAP_H
-#define SRSGNB_STABLE_ID_MAP_H
+#ifndef SRSGNB_ADT_STABLE_ID_MAP_H
+#define SRSGNB_ADT_STABLE_ID_MAP_H
 
 #include <array>
 #include <memory>
@@ -144,4 +144,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_STABLE_ID_MAP_H
+#endif // SRSGNB_ADT_STABLE_ID_MAP_H

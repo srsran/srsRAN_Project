@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_F1AP_CU_FACTORY_H
-#define SRSGNB_F1AP_CU_FACTORY_H
+#ifndef SRSGNB_F1_INTERFACE_CU_F1AP_CU_FACTORY_H
+#define SRSGNB_F1_INTERFACE_CU_F1AP_CU_FACTORY_H
 
 #include "f1ap_cu.h"
 #include <memory>
@@ -26,4 +26,4 @@ std::unique_ptr<f1_interface> create_f1ap(f1c_message_notifier&              f1c
 } // namespace srs_cu_cp
 } // namespace srsgnb
 
-#endif // SRSGNB_F1AP_CU_FACTORY_H
+#endif // SRSGNB_F1_INTERFACE_CU_F1AP_CU_FACTORY_H

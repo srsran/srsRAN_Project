@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_ASYNC_TASK_LOOP_H
-#define SRSGNB_ASYNC_TASK_LOOP_H
+#ifndef SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_LOOP_H
+#define SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_LOOP_H
 
 #include "async_queue.h"
 #include "async_task.h"
@@ -85,4 +85,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASYNC_TASK_LOOP_H
+#endif // SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_LOOP_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_MESSAGES_PDCCH_H
-#define SRSGNB_FAPI_ADAPTOR_MESSAGES_PDCCH_H
+#ifndef SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_PDCCH_H
+#define SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_PDCCH_H
 
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
@@ -26,4 +26,4 @@ void convert_pdcch_fapi_to_phy(pdcch_processor::pdu_t&   proc_pdu,
 } // namespace fapi_adaptor
 } // namespace srsgnb
 
-#endif // SRSGNB_FAPI_ADAPTOR_MESSAGES_PDCCH_H
+#endif // SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_PDCCH_H

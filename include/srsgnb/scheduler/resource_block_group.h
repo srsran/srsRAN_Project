@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RESOURCE_BLOCK_GROUP_H
-#define SRSGNB_RESOURCE_BLOCK_GROUP_H
+#ifndef SRSGNB_SCHEDULER_RESOURCE_BLOCK_GROUP_H
+#define SRSGNB_SCHEDULER_RESOURCE_BLOCK_GROUP_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/ran/resource_allocation/rb_interval.h"
@@ -47,4 +47,4 @@ uint32_t get_rbg_size(crb_interval bwp_rbs, nominal_rbg_size P, uint32_t rbg_idx
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RESOURCE_BLOCK_GROUP_H
+#endif // SRSGNB_SCHEDULER_RESOURCE_BLOCK_GROUP_H

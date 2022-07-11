@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_OPERATOR_H
-#define SRSGNB_OPERATOR_H
+#ifndef SRSGNB_ADT_DETAIL_OPERATOR_H
+#define SRSGNB_ADT_DETAIL_OPERATOR_H
 
 namespace srsgnb {
 
@@ -19,4 +19,4 @@ struct noop_operator {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_OPERATOR_H
+#endif // SRSGNB_ADT_DETAIL_OPERATOR_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CIRCULAR_ARRAY_H
-#define SRSGNB_CIRCULAR_ARRAY_H
+#ifndef SRSGNB_ADT_CIRCULAR_ARRAY_H
+#define SRSGNB_ADT_CIRCULAR_ARRAY_H
 
 #include <array>
 #include <cstddef>
@@ -51,4 +51,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CIRCULAR_ARRAY_H
+#endif // SRSGNB_ADT_CIRCULAR_ARRAY_H

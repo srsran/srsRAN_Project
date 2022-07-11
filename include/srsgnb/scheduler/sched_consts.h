@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHED_CONSTS_H
-#define SRSGNB_SCHED_CONSTS_H
+#ifndef SRSGNB_SCHEDULER_SCHED_CONSTS_H
+#define SRSGNB_SCHEDULER_SCHED_CONSTS_H
 
 #include "srsgnb/ran/resource_block.h"
 #include <cstddef>
@@ -38,4 +38,4 @@ const unsigned MAX_NUM_BEAMS = 8;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHED_CONSTS_H
+#endif // SRSGNB_SCHEDULER_SCHED_CONSTS_H

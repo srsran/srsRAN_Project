@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_EVENT_SIGNAL_H
-#define SRSGNB_EVENT_SIGNAL_H
+#ifndef SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H
+#define SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H
 
 #include "coroutine.h"
 #include "detail/event_impl.h"
@@ -110,4 +110,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_EVENT_SIGNAL_H
+#endif // SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H

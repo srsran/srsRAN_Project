@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_BIT_ENCODING_H
-#define SRSGNB_BIT_ENCODING_H
+#ifndef SRSGNB_SUPPORT_BIT_ENCODING_H
+#define SRSGNB_SUPPORT_BIT_ENCODING_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
@@ -160,4 +160,4 @@ struct formatter<srsgnb::bit_decoder> {
 
 } // namespace fmt
 
-#endif // SRSGNB_BIT_ENCODING_H
+#endif // SRSGNB_SUPPORT_BIT_ENCODING_H

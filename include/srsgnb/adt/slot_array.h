@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_SLOT_ARRAY_H
-#define SRSGNB_SLOT_ARRAY_H
+#ifndef SRSGNB_ADT_SLOT_ARRAY_H
+#define SRSGNB_ADT_SLOT_ARRAY_H
 
 #include "optional.h"
 #include "span.h"
@@ -468,4 +468,4 @@ make_slot_span(T (&array)[N], typename std::conditional<std::is_const<T>::value,
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SLOT_ARRAY_H
+#endif // SRSGNB_ADT_SLOT_ARRAY_H

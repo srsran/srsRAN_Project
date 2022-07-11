@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_CONFIG_H
-#define SRSGNB_RLC_CONFIG_H
+#ifndef SRSGNB_RLC_RLC_CONFIG_H
+#define SRSGNB_RLC_RLC_CONFIG_H
 
 #include <cstdint>
 #include <memory>

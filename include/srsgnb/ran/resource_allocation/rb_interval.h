@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RB_INTERVAL_H
-#define SRSGNB_RB_INTERVAL_H
+#ifndef SRSGNB_RAN_RESOURCE_ALLOCATION_RB_INTERVAL_H
+#define SRSGNB_RAN_RESOURCE_ALLOCATION_RB_INTERVAL_H
 
 #include "srsgnb/adt/interval.h"
 
@@ -41,4 +41,4 @@ struct formatter<srsgnb::crb_interval> : public formatter<srsgnb::interval<uint3
 
 } // namespace fmt
 
-#endif // SRSGNB_RB_INTERVAL_H
+#endif // SRSGNB_RAN_RESOURCE_ALLOCATION_RB_INTERVAL_H

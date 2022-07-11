@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
-#define SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
+#ifndef SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
+#define SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include <chrono>
@@ -42,4 +42,4 @@ struct log_entry_metadata {
 
 } // namespace srslog
 
-#endif // SRSLOG_DETAIL_LOG_ENTRY_METADATA_H
+#endif // SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_METADATA_H

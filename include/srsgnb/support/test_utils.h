@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_TEST_UTILS_H
-#define SRSGNB_TEST_UTILS_H
+#ifndef SRSGNB_SUPPORT_TEST_UTILS_H
+#define SRSGNB_SUPPORT_TEST_UTILS_H
 
 #include "srsgnb_test.h"
 
@@ -223,4 +223,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_TEST_UTILS_H
+#endif // SRSGNB_SUPPORT_TEST_UTILS_H

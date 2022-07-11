@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_STATIC_VECTOR_H
-#define SRSGNB_STATIC_VECTOR_H
+#ifndef SRSGNB_ADT_STATIC_VECTOR_H
+#define SRSGNB_ADT_STATIC_VECTOR_H
 
 #include "detail/type_storage.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -263,4 +263,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_STATIC_VECTOR_H
+#endif // SRSGNB_ADT_STATIC_VECTOR_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_SC_PROD_H_
-#define SRSGNB_SRSVEC_SC_PROD_H_
+#ifndef SRSGNB_SRSVEC_SC_PROD_H
+#define SRSGNB_SRSVEC_SC_PROD_H
 
 #include "srsgnb/srsvec/types.h"
 
@@ -23,4 +23,4 @@ void sc_prod(span<const float> x, float h, span<float> z);
 } // namespace srsvec
 } // namespace srsgnb
 
-#endif // SRSGNB_SRSVEC_SC_PROD_H_
+#endif // SRSGNB_SRSVEC_SC_PROD_H

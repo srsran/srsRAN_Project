@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_CELL_CONFIG_HELPERS_H
-#define SRSGNB_DU_CELL_CONFIG_HELPERS_H
+#ifndef SRSGNB_DU_DU_CELL_CONFIG_HELPERS_H
+#define SRSGNB_DU_DU_CELL_CONFIG_HELPERS_H
 
 #include "du_cell_config.h"
 #include "srsgnb/ran/band_helper.h"
@@ -231,4 +231,4 @@ inline du_cell_config make_default_du_cell_config(const du_cell_config_default_p
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_CELL_CONFIG_HELPERS_H
+#endif // SRSGNB_DU_DU_CELL_CONFIG_HELPERS_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_EAGER_ASYNC_TASK_H
-#define SRSGNB_EAGER_ASYNC_TASK_H
+#ifndef SRSGNB_SUPPORT_ASYNC_EAGER_ASYNC_TASK_H
+#define SRSGNB_SUPPORT_ASYNC_EAGER_ASYNC_TASK_H
 
 #include "coroutine.h"
 #include "detail/base_task.h"
@@ -82,4 +82,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_EAGER_ASYNC_TASK_H
+#endif // SRSGNB_SUPPORT_ASYNC_EAGER_ASYNC_TASK_H

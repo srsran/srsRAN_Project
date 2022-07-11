@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_BLOCKING_TASK_WORKER_H
-#define SRSGNB_BLOCKING_TASK_WORKER_H
+#ifndef SRSGNB_SUPPORT_EXECUTORS_BLOCKING_TASK_WORKER_H
+#define SRSGNB_SUPPORT_EXECUTORS_BLOCKING_TASK_WORKER_H
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "task_executor.h"
@@ -54,4 +54,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_BLOCKING_TASK_WORKER_H
+#endif // SRSGNB_SUPPORT_EXECUTORS_BLOCKING_TASK_WORKER_H

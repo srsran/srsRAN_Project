@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CORESET_H
-#define SRSGNB_CORESET_H
+#ifndef SRSGNB_RAN_PDCCH_CORESET_H
+#define SRSGNB_RAN_PDCCH_CORESET_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
@@ -85,4 +85,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CORESET_H
+#endif // SRSGNB_RAN_PDCCH_CORESET_H

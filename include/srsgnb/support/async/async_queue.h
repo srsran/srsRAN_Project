@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_ASYNC_QUEUE_H
-#define SRSGNB_ASYNC_QUEUE_H
+#ifndef SRSGNB_SUPPORT_ASYNC_ASYNC_QUEUE_H
+#define SRSGNB_SUPPORT_ASYNC_ASYNC_QUEUE_H
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/support/async/coroutine.h"
@@ -93,4 +93,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASYNC_QUEUE_H
+#endif // SRSGNB_SUPPORT_ASYNC_ASYNC_QUEUE_H

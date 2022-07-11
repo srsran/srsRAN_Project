@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_E1AP_PCAP_H
-#define SRSGNB_E1AP_PCAP_H
+#ifndef SRSGNB_PCAP_E1AP_PCAP_H
+#define SRSGNB_PCAP_E1AP_PCAP_H
 
 #include "pcap.h"
 
@@ -33,4 +33,4 @@ public:
 
 } // namespace srsran
 
-#endif // SRSGNB_E1AP_PCAP_H
+#endif // SRSGNB_PCAP_E1AP_PCAP_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
+#ifndef SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H
+#define SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H
 
 #include "srsgnb/phy/constants.h"
 
@@ -56,4 +56,4 @@ static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 } // namespace pdcch_constants
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_CONSTANTS_H
+#endif // SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H

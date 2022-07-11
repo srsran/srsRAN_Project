@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SHARED_TYPES_H
-#define SRSLOG_SHARED_TYPES_H
+#ifndef SRSGNB_SRSLOG_SHARED_TYPES_H
+#define SRSGNB_SRSLOG_SHARED_TYPES_H
 
 #include <functional>
 #include <string>
@@ -43,4 +43,4 @@ enum class syslog_local_type {
 
 } // namespace srslog
 
-#endif // SRSLOG_SHARED_TYPES_H
+#endif // SRSGNB_SRSLOG_SHARED_TYPES_H

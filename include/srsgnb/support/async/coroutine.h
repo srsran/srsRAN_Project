@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_COROUTINE_H
-#define SRSGNB_COROUTINE_H
+#ifndef SRSGNB_SUPPORT_ASYNC_COROUTINE_H
+#define SRSGNB_SUPPORT_ASYNC_COROUTINE_H
 
 #include "awaiter_memory_storage.h"
 #include "srsgnb/support/async/detail/function_signature.h"
@@ -400,4 +400,4 @@ using coro_context = detail::base_coro_frame<typename FutureType::promise_type>;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_COROUTINE_H
+#endif // SRSGNB_SUPPORT_ASYNC_COROUTINE_H

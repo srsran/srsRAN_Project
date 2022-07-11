@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_LOGGER_H
-#define SRSLOG_LOGGER_H
+#ifndef SRSGNB_SRSLOG_LOGGER_H
+#define SRSGNB_SRSLOG_LOGGER_H
 
 #include "srsgnb/srslog/log_channel.h"
 
@@ -189,4 +189,4 @@ inline const char* basic_level_to_string(basic_levels level)
 
 } // namespace srslog
 
-#endif // SRSLOG_LOGGER_H
+#endif // SRSGNB_SRSLOG_LOGGER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_DETAIL_LOG_BACKEND_H
-#define SRSLOG_DETAIL_LOG_BACKEND_H
+#ifndef SRSGNB_SRSLOG_DETAIL_LOG_BACKEND_H
+#define SRSGNB_SRSLOG_DETAIL_LOG_BACKEND_H
 
 #include "srsgnb/srslog/bundled/fmt/core.h"
 #include "srsgnb/srslog/shared_types.h"
@@ -47,4 +47,4 @@ public:
 
 } // namespace srslog
 
-#endif // SRSLOG_DETAIL_LOG_BACKEND_H
+#endif // SRSGNB_SRSLOG_DETAIL_LOG_BACKEND_H

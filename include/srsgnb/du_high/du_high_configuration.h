@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_DU_HIGH_CONFIGURATION_H
-#define SRSGNB_DU_HIGH_CONFIGURATION_H
+#ifndef SRSGNB_DU_HIGH_DU_HIGH_CONFIGURATION_H
+#define SRSGNB_DU_HIGH_DU_HIGH_CONFIGURATION_H
 
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
@@ -24,4 +24,4 @@ struct du_high_configuration {
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_HIGH_CONFIGURATION_H
+#endif // SRSGNB_DU_HIGH_DU_HIGH_CONFIGURATION_H

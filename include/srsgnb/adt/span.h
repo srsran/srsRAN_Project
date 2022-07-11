@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SPAN_H
-#define SRSGNB_SPAN_H
+#ifndef SRSGNB_ADT_SPAN_H
+#define SRSGNB_ADT_SPAN_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include <algorithm>
@@ -299,4 +299,4 @@ struct formatter<srsgnb::span<T> > {
 };
 } // namespace fmt
 
-#endif // SRSGNB_SPAN_H
+#endif // SRSGNB_ADT_SPAN_H

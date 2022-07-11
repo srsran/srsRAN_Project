@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SINK_H
-#define SRSLOG_SINK_H
+#ifndef SRSGNB_SRSLOG_SINK_H
+#define SRSGNB_SRSLOG_SINK_H
 
 #include "srsgnb/srslog/detail/support/error_string.h"
 #include "srsgnb/srslog/detail/support/memory_buffer.h"
@@ -46,4 +46,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_SINK_H
+#endif // SRSGNB_SRSLOG_SINK_H

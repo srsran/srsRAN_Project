@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CIRCULAR_BUFFER_H
-#define SRSGNB_CIRCULAR_BUFFER_H
+#ifndef SRSGNB_ADT_CIRCULAR_BUFFER_H
+#define SRSGNB_ADT_CIRCULAR_BUFFER_H
 
 #include "srsgnb/adt/detail/operator.h"
 #include "srsgnb/adt/detail/type_storage.h"
@@ -666,4 +666,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CIRCULAR_BUFFER_H
+#endif // SRSGNB_ADT_CIRCULAR_BUFFER_H

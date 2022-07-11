@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_EXPECTED_H
-#define SRSGNB_EXPECTED_H
+#ifndef SRSGNB_ADT_EXPECTED_H
+#define SRSGNB_ADT_EXPECTED_H
 
 #include "srsgnb/support/srsran_assert.h"
 #include <memory>
@@ -237,4 +237,4 @@ using error_type = expected<default_success_t, E>;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_EXPECTED_H
+#endif // SRSGNB_ADT_EXPECTED_H

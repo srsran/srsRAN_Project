@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MANUAL_EVENT_H
-#define SRSGNB_MANUAL_EVENT_H
+#ifndef SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H
+#define SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H
 
 #include "coroutine.h"
 #include "detail/event_impl.h"
@@ -133,4 +133,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MANUAL_EVENT_H
+#endif // SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H

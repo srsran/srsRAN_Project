@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_RESOURCE_GRID_POOL_H
-#define SRSGNB_SUPPORT_RESOURCE_GRID_POOL_H
+#ifndef SRSGNB_PHY_RESOURCE_GRID_POOL_H
+#define SRSGNB_PHY_RESOURCE_GRID_POOL_H
 
 #include "resource_grid.h"
 #include "resource_grid_context.h"
@@ -48,4 +48,4 @@ std::unique_ptr<resource_grid_pool> create_resource_grid_pool(resource_grid_pool
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SUPPORT_RESOURCE_GRID_POOL_H
+#endif // SRSGNB_PHY_RESOURCE_GRID_POOL_H

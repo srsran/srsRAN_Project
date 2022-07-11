@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RB_ALLOCATION_H
-#define SRSGNB_RB_ALLOCATION_H
+#ifndef SRSGNB_PHY_UPPER_RB_ALLOCATION_H
+#define SRSGNB_PHY_UPPER_RB_ALLOCATION_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
@@ -184,4 +184,4 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_RB_ALLOCATION_H
+#endif // SRSGNB_PHY_UPPER_RB_ALLOCATION_H

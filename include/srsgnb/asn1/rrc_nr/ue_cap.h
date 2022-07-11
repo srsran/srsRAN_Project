@@ -14,8 +14,8 @@
  *
  ******************************************************************************/
 
-#ifndef SRSASN1_RRC_NR_UE_CAP_H
-#define SRSASN1_RRC_NR_UE_CAP_H
+#ifndef SRSGNB_ASN1_RRC_NR_UE_CAP_H
+#define SRSGNB_ASN1_RRC_NR_UE_CAP_H
 
 #include "common.h"
 
@@ -3550,4 +3550,4 @@ struct ue_nr_cap_s {
 } // namespace rrc_nr
 } // namespace asn1
 
-#endif // SRSASN1_RRC_NR_UE_CAP_H
+#endif // SRSGNB_ASN1_RRC_NR_UE_CAP_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_INCLUDE_SRSGNB_ADT_INTRUSIVE_LIST_H
-#define SRSGNB_INCLUDE_SRSGNB_ADT_INTRUSIVE_LIST_H
+#ifndef SRSGNB_ADT_INTRUSIVE_LIST_H
+#define SRSGNB_ADT_INTRUSIVE_LIST_H
 
 #include <iterator>
 #include <type_traits>
@@ -243,4 +243,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_INCLUDE_SRSGNB_ADT_INTRUSIVE_LIST_H
+#endif // SRSGNB_ADT_INTRUSIVE_LIST_H

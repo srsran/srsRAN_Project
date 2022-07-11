@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_FUNCTION_SIGNATURE_H
-#define SRSGNB_FUNCTION_SIGNATURE_H
+#ifndef SRSGNB_SUPPORT_ASYNC_DETAIL_FUNCTION_SIGNATURE_H
+#define SRSGNB_SUPPORT_ASYNC_DETAIL_FUNCTION_SIGNATURE_H
 
 #include "srsgnb/support/detail/type_list.h"
 
@@ -55,4 +55,4 @@ auto callable_arguments() -> typename function_signature<decltype(&std::decay_t<
 
 } // namespace srsgnb
 
-#endif // SRSGNB_FUNCTION_SIGNATURE_H
+#endif // SRSGNB_SUPPORT_ASYNC_DETAIL_FUNCTION_SIGNATURE_H

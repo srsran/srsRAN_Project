@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_BINARY_H_
-#define SRSGNB_SRSVEC_BINARY_H_
+#ifndef SRSGNB_SRSVEC_BINARY_H
+#define SRSGNB_SRSVEC_BINARY_H
 
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
@@ -71,4 +71,4 @@ void binary_or(const T& x, const U& y, V&& z)
 } // namespace srsvec
 } // namespace srsgnb
 
-#endif // SRSGNB_SRSVEC_BINARY_H_
+#endif // SRSGNB_SRSVEC_BINARY_H

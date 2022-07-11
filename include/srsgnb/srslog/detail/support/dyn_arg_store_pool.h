@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
-#define SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
+#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
+#define SRSGNB_SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
 
 #include "srsgnb/srslog/bundled/fmt/core.h"
 #include "srsgnb/srslog/detail/support/backend_capacity.h"
@@ -73,4 +73,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
+#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_DYN_ARG_STORE_POOL_H
