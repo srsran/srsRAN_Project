@@ -7,8 +7,8 @@
  * the distribution.
  *
  */
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_FACTORIES_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_FACTORIES_H
+#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_CHANNEL_CODING_FACTORIES_H
+#define SRSGNB_PHY_UPPER_CHANNEL_CODING_CHANNEL_CODING_FACTORIES_H
 
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
@@ -91,4 +91,4 @@ create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& 
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_FACTORIES_H
+#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_CHANNEL_CODING_FACTORIES_H

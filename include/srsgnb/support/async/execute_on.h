@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
-#define SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
+#ifndef SRSGNB_SUPPORT_ASYNC_EXECUTE_ON_H
+#define SRSGNB_SUPPORT_ASYNC_EXECUTE_ON_H
 
 #include "async_task.h"
 #include "detail/function_signature.h"
@@ -187,4 +187,4 @@ dispatch_and_resume_on(DispatchTaskExecutor& dispatch_exec, CurrentTaskExecutor&
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SUPPORT_ASYNC_EXECUTOR_ON_H
+#endif // SRSGNB_SUPPORT_ASYNC_EXECUTE_ON_H

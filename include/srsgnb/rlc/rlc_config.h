@@ -170,4 +170,5 @@ struct rlc_config {
 };
 
 } // namespace srsgnb
-#endif
+
+#endif // SRSGNB_RLC_RLC_CONFIG_H

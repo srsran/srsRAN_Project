@@ -155,4 +155,4 @@ srslog_sink* srslog_fetch_file_sink(const char* path, size_t max_size, srslog_bo
 }
 #endif
 
-#endif
+#endif /* SRSGNB_SRSLOG_SRSLOG_C_H */

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSASN_COMMON_UTILS_H
-#define SRSASN_COMMON_UTILS_H
+#ifndef SRSGNB_ASN1_ASN1_UTILS_H
+#define SRSGNB_ASN1_ASN1_UTILS_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/srslog.h"
@@ -1862,4 +1862,4 @@ public:
 
 } // namespace asn1
 
-#endif // SRSASN_COMMON_UTILS_H
+#endif // SRSGNB_ASN1_ASN1_UTILS_H

@@ -29,4 +29,5 @@ public:
 };
 
 } // namespace srsgnb
-#endif
+
+#endif // SRSGNB_RLC_RLC_ENTITY_H

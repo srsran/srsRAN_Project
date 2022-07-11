@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_MANAGER_FACTORY_H
-#define SRSGNB_RLC_MANAGER_FACTORY_H
+#ifndef SRSGNB_RLC_RLC_FACTORY_H
+#define SRSGNB_RLC_RLC_FACTORY_H
 
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_config.h"
@@ -33,4 +33,4 @@ std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_creation_message&
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RLC_MANAGER_FACTORY_H
+#endif // SRSGNB_RLC_RLC_FACTORY_H

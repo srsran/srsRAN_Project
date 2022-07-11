@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSRAN_THREADS_H
-#define SRSRAN_THREADS_H
+#ifndef SRSGNB_SUPPORT_UNIQUE_THREAD_H
+#define SRSGNB_SUPPORT_UNIQUE_THREAD_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/unique_function.h"
@@ -131,4 +131,4 @@ void print_this_thread_priority();
 
 } // namespace srsgnb
 
-#endif // SRSRAN_THREADS_H
+#endif // SRSGNB_SUPPORT_UNIQUE_THREAD_H

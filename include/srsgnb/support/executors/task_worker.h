@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSRAN_THREAD_POOL_H
-#define SRSRAN_THREAD_POOL_H
+#ifndef SRSGNB_SUPPORT_EXECUTORS_TASK_WORKER_H
+#define SRSGNB_SUPPORT_EXECUTORS_TASK_WORKER_H
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/adt/unique_function.h"
@@ -109,4 +109,4 @@ inline std::unique_ptr<task_executor> make_task_executor(task_worker& w)
 
 } // namespace srsgnb
 
-#endif // SRSRAN_THREAD_POOL_H
+#endif // SRSGNB_SUPPORT_EXECUTORS_TASK_WORKER_H

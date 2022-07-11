@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_LAZY_TAKS_H
-#define SRSGNB_LAZY_TAKS_H
+#ifndef SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_H
+#define SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_H
 
 #include "detail/base_task.h"
 
@@ -82,4 +82,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LAZY_TAKS_H
+#endif // SRSGNB_SUPPORT_ASYNC_ASYNC_TASK_H
