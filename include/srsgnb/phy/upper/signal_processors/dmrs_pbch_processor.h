@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/pci.h"
 
 namespace srsgnb {
 
@@ -22,7 +23,7 @@ public:
   /// Describes the required parameters to generate the signal
   struct config_t {
     /// Physical cell identifier
-    unsigned phys_cell_id;
+    pci_t phys_cell_id;
     /// SS/PBCH block index in the burst
     unsigned ssb_idx;
     /// Maximum number of SS/PBCH transmissions in a burst (5ms)

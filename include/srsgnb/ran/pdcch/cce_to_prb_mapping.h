@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
 
@@ -32,7 +33,7 @@ using prb_index_list = static_vector<uint16_t, pdcch_constants::MAX_NOF_RB_PDCCH
 prb_index_list cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
                                            unsigned N_coreset0_size,
                                            unsigned N_symb_coreset,
-                                           unsigned N_id_cell,
+                                           pci_t    N_id_cell,
                                            unsigned aggregation_level,
                                            unsigned cce_index);
 

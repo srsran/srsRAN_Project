@@ -69,7 +69,6 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
     // :TODO: check collocated Al16 candicate and powers.
     dci_builder.set_maintenance_v3_dci_parameters(false, {}, {});
 
-    // :TODO: Is this correct? In FAPI this is a DCI parameter.
     dci_builder.set_parameters_v4_dci(coreset_cfg.pdcch_dmrs_scrambling_id);
 
     dci_builder.set_payload(*dci.payload);

@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/pci.h"
 #include <memory>
 
 namespace srsgnb {
@@ -23,7 +24,7 @@ public:
   /// Describes the required parameters to generate the signal
   struct config_t {
     /// Physical cell identifier
-    unsigned phys_cell_id;
+    pci_t phys_cell_id;
     /// First subcarrier in the resource grid
     unsigned ssb_first_subcarrier;
     /// Denotes the first symbol of the SS/PBCH block within the slot.

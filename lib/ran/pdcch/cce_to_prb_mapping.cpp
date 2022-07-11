@@ -136,7 +136,7 @@ static prb_index_list reg_to_prb_mapping_other(unsigned              N_bwp_start
 prb_index_list srsgnb::cce_to_prb_mapping_coreset0(unsigned N_coreset0_start,
                                                    unsigned N_coreset0_size,
                                                    unsigned N_symb_coreset,
-                                                   unsigned N_id_cell,
+                                                   pci_t    N_id_cell,
                                                    unsigned aggregation_level,
                                                    unsigned cce_index)
 {

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/ran/pci.h"
 #include <array>
 #include <memory>
 
@@ -38,7 +39,7 @@ public:
   /// Describes a PBCH message to encode.
   struct pbch_msg_t {
     /// Physical cell identifier.
-    unsigned N_id;
+    pci_t N_id;
     /// SSB candidate index in a 5ms burst.
     unsigned ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.

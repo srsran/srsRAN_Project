@@ -14,6 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/pci.h"
 
 namespace srsgnb {
 
@@ -30,7 +31,7 @@ public:
   /// Describes the PBCH modulator arguments
   struct config_t {
     /// Physical cell identifier
-    unsigned phys_cell_id;
+    pci_t phys_cell_id;
     /// SS/PBCH block index
     unsigned ssb_idx;
     /// First subcarrier in the resource grid

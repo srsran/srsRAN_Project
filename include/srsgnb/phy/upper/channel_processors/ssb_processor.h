@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_mapping.h"
 
@@ -29,7 +30,7 @@ public:
     /// Current slot context.
     slot_point slot;
     /// Physical Cell identifier.
-    unsigned phys_cell_id;
+    pci_t phys_cell_id;
     /// PSS power level allocation in dB, relative to SSS.
     float beta_pss;
     /// SSB opportunity index in a burst.

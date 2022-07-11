@@ -20,8 +20,8 @@ namespace fapi_adaptor {
 
 /// \brief MAC-FAPI adaptor implementation.
 ///
-/// This class owns all the components of the MAC-FAPI adaptor, handling the objects life. It gives access to all the
-/// required interfaces and setters, so the adaptor can be connected with the other modules.
+/// This class owns all the components of the MAC-FAPI adaptor, managing the objects lifetime. It gives access to all
+/// the required interfaces and setters, so the adaptor can be connected with the other modules.
 class mac_fapi_adaptor_impl : public mac_fapi_adaptor
 {
 public:

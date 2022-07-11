@@ -13,6 +13,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/subcarrier_spacing.h"

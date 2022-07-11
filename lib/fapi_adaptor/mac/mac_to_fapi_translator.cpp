@@ -24,13 +24,13 @@ namespace {
 struct pdcch_group {
   const pdcch_dl_information* info;
   const dci_payload*          payload;
-};
 
-inline bool operator==(const pdcch_group& lhs, const pdcch_group& rhs)
-{
-  // :TODO: comparing the 2 pointers, change this to compare the BWP.
-  return lhs.info->ctx.bwp_cfg == rhs.info->ctx.bwp_cfg && lhs.info->ctx.coreset_cfg == rhs.info->ctx.coreset_cfg;
-}
+  bool operator==(const pdcch_group& other) const
+  {
+    // :TODO: comparing the 2 pointers, change this to compare the BWP.
+    return info->ctx.bwp_cfg == other.info->ctx.bwp_cfg && info->ctx.coreset_cfg == other.info->ctx.coreset_cfg;
+  }
+};
 
 } // namespace
 

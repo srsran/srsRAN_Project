@@ -18,10 +18,10 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// \brief MAC-FAPI adaptor implementation.
+/// \brief PHY-FAPI adaptor implementation.
 ///
-/// This class owns all the components of the MAC-FAPI adaptor, handling the objects life. It gives access to all the
-/// required interfaces and setters, so the adaptor can be connected with the other modules.
+/// This class owns all the components of the PHY-FAPI adaptor, managing the objects lifetime. It gives access to all
+/// the required interfaces and setters, so the adaptor can be connected with the other modules.
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:

@@ -13,6 +13,7 @@
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
+#include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include <memory>
 #include <string>
@@ -37,7 +38,7 @@ public:
   /// Collects the necessary parameters to generate a periodic DL waveform.
   struct ssb_configuration {
     /// Physical cell identifier.
-    unsigned phys_cell_id;
+    pci_t phys_cell_id;
     /// Cyclic prefix.
     cyclic_prefix cp;
     /// SSB period in milliseconds.

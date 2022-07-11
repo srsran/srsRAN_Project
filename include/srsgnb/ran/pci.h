@@ -15,7 +15,7 @@
 namespace srsgnb {
 
 /// 3GPP TS 38.331, PhysCellId ::= INTEGER (0..1007)
-using pci_t         = uint16_t;
-const pci_t MAX_PCI = 1007;
+using pci_t             = uint16_t;
+constexpr pci_t MAX_PCI = 1007;
 
 } // namespace srsgnb
