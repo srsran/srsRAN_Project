@@ -61,7 +61,7 @@ class upper_phy_impl : public upper_phy
 public:
   upper_phy_impl(unsigned                                 sector_id_,
                  std::unique_ptr<downlink_processor_pool> dl_processor_pool,
-                 std::unique_ptr<resource_grid_pool>      rgrid_pool);
+                 std::unique_ptr<resource_grid_pool>      rg_pool_);
 
   // See interface for documentation.
   upper_phy_rx_symbol_handler& get_upper_phy_rx_symbol_handler() override;
@@ -81,7 +81,7 @@ public:
 private:
   const unsigned                           sector_id;
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
-  std::unique_ptr<resource_grid_pool>      rgrid_pool;
+  std::unique_ptr<resource_grid_pool>      rg_pool;
 
   // :TODO: Create implementations for these 2 handlers, and remove the unique_ptr.
   upper_phy_rx_symbol_handler_dummy symbol_handler;

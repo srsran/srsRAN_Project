@@ -19,12 +19,13 @@ class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
 
-/// \brief This interface describes and upper PHY and give access to the gateways and notifications of the upper PHY.
+/// \brief This interface describes the upper PHY layer giving access to its gateways and event notifications.
 ///
-/// An upper PHY in DL, process all the given PDUs (PDCCH, PDSCH, NZI-CSI-RS and SSB) and sends the resulting resource
-/// grid through the configured resource_grid_gateway. It also handles all the UL notifications, including the new slot
-/// or new TTI boundary.
-// TODO: improve the description with the UL features.
+/// The downlink part of the upper PHY processes different PDU types such as PDCCH, PDSCH, NZI-CSI-RS and SSB PDUs and
+/// then sends the resulting resource grid through the configured \c resource_grid_gateway.
+///
+/// The uplink part of the upper PHY notifies about the new incoming symbols, processing them to generate the uplink
+/// PDUs such as PUSCH or PUCCH. It also notifies when a new slot starts.
 class upper_phy
 {
 public:
@@ -45,7 +46,7 @@ public:
 
   /// \brief Sets the upper_phy_timing_notifier for this upper PHY to the given one.
   ///
-  /// \param notifier Notifier to set.
+  /// \param notifier Notifier to be set.
   virtual void set_upper_phy_notifier(upper_phy_timing_notifier& notifier) = 0;
 };
 

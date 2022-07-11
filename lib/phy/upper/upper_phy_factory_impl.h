@@ -17,7 +17,6 @@ namespace srsgnb {
 
 class upper_phy_factory_impl : public upper_phy_factory
 {
-
 public:
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override;
 };

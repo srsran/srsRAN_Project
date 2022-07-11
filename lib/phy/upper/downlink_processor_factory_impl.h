@@ -25,12 +25,6 @@ class upper_phy_rg_gateway;
 class downlink_processor_single_executor_factory : public downlink_processor_factory
 {
 public:
-  //  downlink_processor_single_executor_factory(upper_phy_rg_gateway&                    gateway,
-  //                                             std::shared_ptr<pdcch_processor_factory> pdcch_proc,
-  //                                             std::shared_ptr<pdsch_processor_factory> pdsch_proc,
-  //                                             std::shared_ptr<ssb_processor_factory>   ssb_proc,
-  //                                             task_executor&                           executor);
-
   downlink_processor_single_executor_factory(upper_phy_rg_gateway& gateway, task_executor& executor);
 
   // See interface for documentation.

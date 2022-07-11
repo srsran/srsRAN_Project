@@ -12,7 +12,7 @@
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
 
-// :TODO:
+// :TODO: remove this include list when the processor factories are moved to the channel_processor folder.
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -35,7 +35,7 @@ struct ssb_processor_config {
   std::unique_ptr<sss_processor>       sss;
 };
 
-std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
+extern std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
 
 /// Struct that defines the configuration for the PDCCH processor.
 struct pdcch_processor_config_t {
@@ -43,7 +43,8 @@ struct pdcch_processor_config_t {
   std::unique_ptr<pdcch_modulator>      modulator;
   std::unique_ptr<dmrs_pdcch_processor> dmrs;
 };
-std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
+
+extern std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
 
 /// Struct that defines the configuration for the PDSCH processor.
 struct pdsch_processor_configuration {
@@ -51,7 +52,8 @@ struct pdsch_processor_configuration {
   std::unique_ptr<pdsch_modulator>      modulator;
   std::unique_ptr<dmrs_pdsch_processor> dmrs;
 };
-std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
+
+extern std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
 
 class pdcch_processor_factory
 {

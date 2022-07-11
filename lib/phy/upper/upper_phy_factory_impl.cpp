@@ -20,10 +20,10 @@ static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const up
   downlink_processor_single_executor_factory factory(*config.gateway, *config.executor);
 
   downlink_processor_pool_config config_pool;
-  config_pool.num_sectors                   = 1;
+  config_pool.num_sectors = 1;
+  // :TODO: Change how to manage the numerologies in the future.
   downlink_processor_pool_config::info info = {0, 0, {}};
 
-  // Add 10 downlink processors.
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     std::unique_ptr<downlink_processor> dl_proc = factory.create({});
     srsran_assert(dl_proc, "Invalid downlink processor");
