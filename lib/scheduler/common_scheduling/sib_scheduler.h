@@ -70,7 +70,7 @@ private:
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;
   /// The SIB1 payload is in bytes.
-  unsigned          sib1_payload_size;
+  unsigned sib1_payload_size;
   /// This is a derived parameters, that depends on the SSB periodicity, SIB1 periodicity and SIB1 re-tx periodicity.
   unsigned sib1_period;
 
