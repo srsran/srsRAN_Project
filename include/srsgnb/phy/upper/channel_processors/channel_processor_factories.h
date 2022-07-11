@@ -16,6 +16,7 @@
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
+#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
@@ -51,6 +52,15 @@ public:
 std::shared_ptr<pdcch_modulator_factory>
     create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
                                       std::shared_ptr<pseudo_random_generator_factory>);
+
+class pdcch_encoder_factory
+{
+public:
+  virtual ~pdcch_encoder_factory()                = default;
+  virtual std::unique_ptr<pdcch_encoder> create() = 0;
+};
+
+std::shared_ptr<pdcch_encoder_factory> create_pdcch_encoder_factory_sw();
 
 class pdsch_encoder_factory
 {

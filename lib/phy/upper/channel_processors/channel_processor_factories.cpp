@@ -11,6 +11,7 @@
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "pbch_encoder_impl.h"
 #include "pbch_modulator_impl.h"
+#include "pdcch_encoder_impl.h"
 #include "pdcch_modulator_impl.h"
 #include "pdsch_encoder_impl.h"
 #include "pdsch_modulator_impl.h"
@@ -63,6 +64,12 @@ public:
   {
     return std::make_unique<pdcch_modulator_impl>(modulator_factory->create(), prg_factory->create());
   }
+};
+
+class pdcch_encoder_factory_sw : public pdcch_encoder_factory
+{
+public:
+  std::unique_ptr<pdcch_encoder> create() override { return std::make_unique<pdcch_encoder_impl>(); }
 };
 
 class pdsch_encoder_factory_sw : public pdsch_encoder_factory
@@ -223,6 +230,11 @@ srsgnb::create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_fact
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pdcch_modulator_factory_sw>(modulator_factory, prg_factory);
+}
+
+std::shared_ptr<pdcch_encoder_factory> srsgnb::create_pdcch_encoder_factory_sw()
+{
+  return std::make_shared<pdcch_encoder_factory_sw>();
 }
 
 std::shared_ptr<pdsch_encoder_factory>

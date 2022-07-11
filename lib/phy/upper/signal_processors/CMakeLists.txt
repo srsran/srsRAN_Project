@@ -22,5 +22,6 @@ set(SOURCES
 include_directories(../../../../include/srsgnb/phy/upper/signal_processors)
 
 add_library(srsgnb_signal_processors STATIC ${SOURCES})
+target_link_libraries(srsgnb_signal_processors srsvec)
 
 install(TARGETS srsgnb_signal_processors EXPORT srsgnb_export)
