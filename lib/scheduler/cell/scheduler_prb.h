@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSRAN_SCHED_NR_RB_H
-#define SRSRAN_SCHED_NR_RB_H
+#ifndef SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_PRB_H
+#define SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_PRB_H
 
 #include "../support/rb_find_algorithm.h"
 #include "srsgnb/adt/bounded_bitset.h"
@@ -133,4 +133,4 @@ struct formatter<srsgnb::prb_grant> : public formatter<srsgnb::rbg_bitmap> {
 
 } // namespace fmt
 
-#endif // SRSRAN_SCHED_NR_RB_H
+#endif // SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_PRB_H

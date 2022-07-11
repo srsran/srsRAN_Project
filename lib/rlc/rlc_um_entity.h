@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_UM_BEARER_H
-#define SRSGNB_RLC_UM_BEARER_H
+#ifndef SRSGNB_LIB_RLC_RLC_UM_ENTITY_H
+#define SRSGNB_LIB_RLC_RLC_UM_ENTITY_H
 
 #include "rlc_base_entity.h"
 #include "rlc_rx_um_entity.h"
@@ -47,4 +47,4 @@ public:
 
 } // namespace srsgnb
 
-#endif
+#endif // SRSGNB_LIB_RLC_RLC_UM_ENTITY_H

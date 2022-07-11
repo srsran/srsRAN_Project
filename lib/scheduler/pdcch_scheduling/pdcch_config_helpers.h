@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PDCCH_HELPERS_H
-#define SRSGNB_PDCCH_HELPERS_H
+#ifndef SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_CONFIG_HELPERS_H
+#define SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_CONFIG_HELPERS_H
 
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/scheduler/bwp_configuration.h"
@@ -36,4 +36,4 @@ inline bool is_pdcch_monitoring_active(slot_point sl, const search_space_configu
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PDCCH_HELPERS_H
+#endif // SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_CONFIG_HELPERS_H

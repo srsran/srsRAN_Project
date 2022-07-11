@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_DMRS_SEQUENCE_HELPER_H
-#define SRSGNB_LIB_PHY_UPPER_DMRS_SEQUENCE_HELPER_H
+#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_HELPER_H
+#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_HELPER_H
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/complex.h"
@@ -83,4 +83,4 @@ inline void dmrs_sequence_generate(span<cf_t>                    sequence,
 }
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_PHY_UPPER_DMRS_SEQUENCE_HELPER_H
+#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_HELPER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_UE_CTRL_H
-#define SRSGNB_MAC_UE_CTRL_H
+#ifndef SRSGNB_LIB_MAC_MAC_CTRL_MAC_CONTROLLER_H
+#define SRSGNB_LIB_MAC_MAC_CTRL_MAC_CONTROLLER_H
 
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
@@ -86,4 +86,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_UE_CTRL_H
+#endif // SRSGNB_LIB_MAC_MAC_CTRL_MAC_CONTROLLER_H

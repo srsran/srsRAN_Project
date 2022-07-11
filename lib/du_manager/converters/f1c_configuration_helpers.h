@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_ASN1_HELPERS_H
-#define SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_ASN1_HELPERS_H
+#ifndef SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_CONFIGURATION_HELPERS_H
+#define SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_CONFIGURATION_HELPERS_H
 
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/du/du_cell_config.h"
@@ -46,4 +46,4 @@ void fill_asn1_f1_setup_request(asn1::f1ap::f1_setup_request_s& request,
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_ASN1_HELPERS_H
+#endif // SRSGNB_LIB_DU_MANAGER_CONVERTERS_F1C_CONFIGURATION_HELPERS_H

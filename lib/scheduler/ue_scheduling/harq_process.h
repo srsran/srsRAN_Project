@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SCHED_HARQ_H
-#define SCHED_HARQ_H
+#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H
+#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
@@ -207,4 +207,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SCHED_HARQ_H
+#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H

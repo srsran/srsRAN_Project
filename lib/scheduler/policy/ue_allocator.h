@@ -7,8 +7,8 @@
  *
  */
 
-#ifndef SRSGNB_UE_SCH_ALLOCATOR_H
-#define SRSGNB_UE_SCH_ALLOCATOR_H
+#ifndef SRSGNB_LIB_SCHEDULER_POLICY_UE_ALLOCATOR_H
+#define SRSGNB_LIB_SCHEDULER_POLICY_UE_ALLOCATOR_H
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_scheduler.h"
@@ -64,4 +64,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_SCH_ALLOCATOR_H
+#endif // SRSGNB_LIB_SCHEDULER_POLICY_UE_ALLOCATOR_H

@@ -1,6 +1,6 @@
 
-#ifndef OMEGA_64_H_INCLUDED
-#define OMEGA_64_H_INCLUDED
+#ifndef SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H
+#define SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H
 #include <math.h>
 #include <stdlib.h>
 
@@ -113,4 +113,4 @@ static double fr(int m, int i, double r)
 
 //#pragma GCC diagnostic pop
 
-#endif
+#endif // SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H

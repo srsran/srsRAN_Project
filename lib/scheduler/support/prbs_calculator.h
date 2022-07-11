@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_GET_NOF_PRBS_H
-#define SRSGNB_GET_NOF_PRBS_H
+#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_PRBS_CALCULATOR_H
+#define SRSGNB_LIB_SCHEDULER_SUPPORT_PRBS_CALCULATOR_H
 
 #include "srsgnb/ran/resource_block.h"
 #include "srsgnb/support/math_utils.h"
@@ -80,4 +80,4 @@ pdsch_prbs_tbs get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
 
 } // namespace srsgnb
 
-#endif // SRSGNB_GET_NOF_PRBS_H
+#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_PRBS_CALCULATOR_H
