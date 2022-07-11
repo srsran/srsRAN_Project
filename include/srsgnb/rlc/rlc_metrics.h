@@ -20,7 +20,7 @@ struct rlc_bearer_tx_metrics_container {
   // SDU metrics
   uint32_t num_sdus;      ///< Number of SDUs
   size_t   num_sdu_bytes; ///< Number of SDU bytes
-  uint32_t num_lost_sdus; ///< Count dropped SDUs at Tx due to full queue
+  uint32_t num_lost_sdus; ///< Number of dropped SDUs (full queue)
 
   // PDU metrics
   uint32_t num_pdus;      ///< Number of PDUs
@@ -82,8 +82,8 @@ struct rlc_bearer_rx_metrics_container {
   // PDU metrics
   uint32_t num_pdus;           ///< Number of PDUs
   size_t   num_pdu_bytes;      ///< Number of PDU bytes
-  uint32_t num_lost_pdus;      ///< Count dropped SDUs at Rx due to bearer inactivity or empty buffer
-  uint32_t num_malformed_pdus; ///< Average time in ms from first RLC segment to full SDU
+  uint32_t num_lost_pdus;      ///< Number of dropped PDUs (reassembly timeout expiry or out of rx window)
+  uint32_t num_malformed_pdus; ///< Number of malformed PDUs
 };
 
 class rlc_bearer_rx_metrics
