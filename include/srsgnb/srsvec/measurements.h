@@ -17,7 +17,10 @@ namespace srsgnb {
 
 namespace srsvec {
 
-unsigned max_abs_element(span<const cf_t> x)
+/// \brief Finds the maximum absolute value in a complex span.
+/// \param[in] x Input samples.
+/// \return The index of the values with the maximum absolute value in the span.
+inline unsigned max_abs_element(span<const cf_t> x)
 {
   unsigned max_index = 0;
   float    max_abs   = 0.0F;
@@ -34,8 +37,8 @@ unsigned max_abs_element(span<const cf_t> x)
   return max_index;
 }
 
-/// \brief Estimates the average linear power of a complex vector.
-float average_power(span<const cf_t> x)
+/// \brief Estimates the average power of a complex vector - linear scale.
+inline float average_power(span<const cf_t> x)
 {
   if (x.empty()) {
     return 0.0F;

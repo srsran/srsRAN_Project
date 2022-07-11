@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PRACH_SUBCARRIER_SPACING_H
-#define SRSGNB_PRACH_SUBCARRIER_SPACING_H
+#ifndef SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H
+#define SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H
 
 #include "srsgnb/support/srsran_assert.h"
 
@@ -17,7 +17,7 @@ class prach_subcarrier_spacing
 {
 public:
   /// Possible PRACH subcarrier spacing.
-  enum values { kHz15, kHz30, kHz60, kHz120, kHz1dot25, kHz5 };
+  enum values { kHz15, kHz30, kHz60, kHz120, kHz1_25, kHz5 };
 
   /// Default constructor.
   prach_subcarrier_spacing() : value(kHz15) {}
@@ -28,7 +28,7 @@ public:
   /// Copy constructor.
   prach_subcarrier_spacing(const prach_subcarrier_spacing& other) : value(other.value) {}
 
-  /// Get PRACH subcarrier spacing in Hz.
+  /// Gets PRACH subcarrier spacing in Hz.
   unsigned to_Hz() const
   {
     switch (value) {
@@ -39,17 +39,16 @@ public:
       case kHz60:
         return 60000;
       case kHz120:
-        return 60000;
-      case kHz1dot25:
+        return 120000;
+      case kHz1_25:
         return 1250;
       case kHz5:
       default:
-        break;
+        return 5000;
     }
-    return 5000;
   }
 
-  /// Override operator equal.
+  /// Equality operator overload.
   bool operator==(const prach_subcarrier_spacing& other) const { return other.value == value; }
 
 private:
@@ -57,4 +56,4 @@ private:
   values value;
 };
 
-#endif // SRSGNB_PRACH_SUBCARRIER_SPACING_H
+#endif // SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H

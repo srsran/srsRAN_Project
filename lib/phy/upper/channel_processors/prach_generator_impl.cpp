@@ -37,13 +37,13 @@ unsigned prach_generator_impl::get_nof_cyclic_shifts(unsigned              prach
                                                      unsigned              zero_correlation_zone)
 {
   // TS38.211 Table 6.3.3.1-5 First column.
-  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_UNRESTRICTED = {
+  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_25_UNRESTRICTED = {
       0, 13, 15, 18, 22, 26, 32, 38, 46, 59, 76, 93, 119, 167, 279, 419};
   // TS38.211 Table 6.3.3.1-5 Second column.
-  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_A = {
+  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_25_TYPE_A = {
       15, 18, 22, 26, 32, 38, 46, 55, 68, 82, 100, 128, 158, 202, 237, RESERVED};
   // TS38.211 Table 6.3.3.1-5 Third column.
-  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_B = {
+  static const std::array<unsigned, 16> NOF_CYCLIC_SHIFTS_1_25_TYPE_B = {
       15, 18, 22, 26, 32, 38, 46, 55, 68, 82, 100, 118, 137, RESERVED, RESERVED, RESERVED};
 
   // TS38.211 Table 6.3.3.1-6 First column.
@@ -59,11 +59,11 @@ unsigned prach_generator_impl::get_nof_cyclic_shifts(unsigned              prach
   if (prach_scs == 1250) {
     switch (restricted_set) {
       case restricted_set_config::UNRESTRICTED:
-        return NOF_CYCLIC_SHIFTS_1_DOT_25_UNRESTRICTED[zero_correlation_zone];
+        return NOF_CYCLIC_SHIFTS_1_25_UNRESTRICTED[zero_correlation_zone];
       case restricted_set_config::TYPE_A:
-        return NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_A[zero_correlation_zone];
+        return NOF_CYCLIC_SHIFTS_1_25_TYPE_A[zero_correlation_zone];
       case restricted_set_config::TYPE_B:
-        return NOF_CYCLIC_SHIFTS_1_DOT_25_TYPE_B[zero_correlation_zone];
+        return NOF_CYCLIC_SHIFTS_1_25_TYPE_B[zero_correlation_zone];
     }
   }
 
@@ -206,7 +206,7 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
   unsigned                       L_ra         = get_sequence_length(config.format);
 
   // Select DFT to generate the time domain sequence.
-  dft_processor* dft = dft_1_dot_25_kHz.get();
+  dft_processor* dft = dft_1_25_kHz.get();
   if (prach_scs_Hz == 5000) {
     dft = dft_5_kHz.get();
   }

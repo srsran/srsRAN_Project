@@ -24,11 +24,11 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
   prach_preamble_modulation_info preamble_info = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
 
   // Select DFT and IDFT.
-  dft_processor* dft  = dft_1_dot_25_kHz.get();
-  dft_processor* idft = idft_1_dot_25_kHz.get();
+  dft_processor* dft  = dft_1_25_kHz.get();
+  dft_processor* idft = idft_1_25_kHz.get();
   if (preamble_info.scs == prach_subcarrier_spacing::kHz5) {
-    dft = dft_5_kHz.get();
-    dft = idft_5_kHz.get();
+    dft  = dft_5_kHz.get();
+    idft = idft_5_kHz.get();
   }
 
   // Select PRACH window.

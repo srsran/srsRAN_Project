@@ -48,7 +48,7 @@ inline V dot_prod(const T& x, const U& y, V init)
   return std::inner_product(x.begin(), x.end(), y.begin(), init);
 }
 
-/// \brief Dot product of two complex spans in which the second one is conjugated.
+/// \brief Dot product of two complex spans.
 ///
 /// Computes the dot product (a.k.a. inner product or scalar product) of the two complex sequences. The sequences are
 /// represented by the input spans \c x and \c y, the second sequence \c y is conjugated. It adds an initial offset \c
@@ -57,10 +57,10 @@ inline V dot_prod(const T& x, const U& y, V init)
 /// \param[in] x      First span.
 /// \param[in] y      Second span.
 /// \param[in] init   Initialization value.
-/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot conj(y) + \mathrm{init} = \sum_i x_i
-/// conj(y_i) + \mathrm{init}\f$.
+/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot \bar{y} + \mathrm{init} = \sum_i x_i
+/// \bar{y_i} + \mathrm{init}\f$.
 /// \remark The two input spans must have the same length.
-inline cf_t dot_prod_conj(span<const cf_t> x, span<const cf_t>& y, cf_t init)
+inline cf_t dot_prod_conj(span<const cf_t> x, span<const cf_t> y, cf_t init)
 {
   srsgnb_srsvec_assert_size(x, y);
   return std::inner_product(

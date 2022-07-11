@@ -39,7 +39,7 @@ private:
   /// DFT for short frequency-domain sequence generation.
   std::unique_ptr<dft_processor> dft_l139;
   /// DFT for preambles 0, 1 and 2.
-  std::unique_ptr<dft_processor> dft_1_dot_25_kHz;
+  std::unique_ptr<dft_processor> dft_1_25_kHz;
   /// DFT for preamble 3.
   std::unique_ptr<dft_processor> dft_5_kHz;
   /// DFT for short preambles (A1, A2, A3, B1, B2, B3, B4, C0 and C2).
@@ -104,21 +104,21 @@ public:
   /// \param dft_size_15kHz_   DFT size for 15kHz subcarrier spacing.
   /// \param dft_l839_         DFT processor for generating long sequences.
   /// \param dft_l139_         DFT processor for generating short sequences.
-  /// \param dft_1_dot_25_kHz_ DFT processor for subcarrier spacing of 1.25kHz.
+  /// \param dft_1_25_kHz_ DFT processor for subcarrier spacing of 1.25kHz.
   /// \param dft_5_kHz_        DFT processor for subcarrier spacing of 5kHz.
   /// \param dft_short_        DFT processor for short preambles.
   prach_generator_impl(unsigned                       nof_prb_ul_grid_,
                        unsigned                       dft_size_15kHz_,
                        std::unique_ptr<dft_processor> dft_l839_,
                        std::unique_ptr<dft_processor> dft_l139_,
-                       std::unique_ptr<dft_processor> dft_1_dot_25_kHz_,
+                       std::unique_ptr<dft_processor> dft_1_25_kHz_,
                        std::unique_ptr<dft_processor> dft_5_kHz_,
                        std::unique_ptr<dft_processor> dft_short_) :
     nof_prb_ul_grid(nof_prb_ul_grid_),
     dft_size_15kHz(dft_size_15kHz_),
     dft_l839(std::move(dft_l839_)),
     dft_l139(std::move(dft_l139_)),
-    dft_1_dot_25_kHz(std::move(dft_1_dot_25_kHz_)),
+    dft_1_25_kHz(std::move(dft_1_25_kHz_)),
     dft_5_kHz(std::move(dft_5_kHz_)),
     dft_short(std::move(dft_short_)),
     temp(MAX_PRACH_LENGTH_SF * 15 * dft_size_15kHz)
@@ -131,9 +131,9 @@ public:
     srsran_assert(dft_l139->get_direction() == dft_processor::direction::DIRECT, "Invalid L139 DFT direction");
     srsran_assert(dft_l139->get_size() == 139U, "Invalid L139 DFT size");
 
-    srsran_assert(dft_1_dot_25_kHz, "Invalid 1k25 DFT pointer");
-    srsran_assert(dft_1_dot_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
-    srsran_assert(dft_1_dot_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
+    srsran_assert(dft_1_25_kHz, "Invalid 1k25 DFT pointer");
+    srsran_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
+    srsran_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
 
     srsran_assert(dft_5_kHz, "Invalid 5k DFT pointer");
     srsran_assert(dft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 5k DFT direction");

@@ -67,7 +67,7 @@ inline prach_preamble_modulation_info prach_preamble_modulation_info_get_long(pr
   result.N_u     = (N_u * dft_size_15kHz) / 2048;
   result.N_cp_ra = (N_cp_ra * dft_size_15kHz) / 2048;
   result.scs =
-      (format == preamble_format::FORMAT3) ? prach_subcarrier_spacing::kHz5 : prach_subcarrier_spacing::kHz1dot25;
+      (format == preamble_format::FORMAT3) ? prach_subcarrier_spacing::kHz5 : prach_subcarrier_spacing::kHz1_25;
   return result;
 }
 
