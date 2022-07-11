@@ -40,6 +40,8 @@ static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_
 void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const sib_information&      mac_pdu)
 {
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+
   // Basic parameters.
   builder.set_basic_parameters(mac_pdu.pdsch_cfg.rnti);
 
@@ -115,7 +117,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                             coreset_cfg.coreset0_crbs().length());
 
   // :TODO: ask these values.
-  unsigned              tb_size_lbrm_bytes = 0;
+  unsigned              tb_size_lbrm_bytes = 11525;
   const pdsch_codeword& cw                 = mac_pdu.pdsch_cfg.codewords.front();
   builder.set_maintenance_v3_codeword_parameters(
       get_ldpc_base_graph(cw.target_code_rate, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);

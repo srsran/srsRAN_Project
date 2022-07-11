@@ -124,16 +124,16 @@ void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
 
   // Sanity check.
   srsran_assert(msg.pdus.size() == pdsch_pdus.size(),
-                "Invalid TX_data.request received. Message contains ({}) payload PDUs bit it expects ({})",
+                "Invalid TX_data.request received. Message contains ({}) payload PDUs but it expects ({})",
                 msg.pdus.size(),
                 pdsch_pdus.size());
 
-  unsigned i = 0;
-  for (const auto& pdu : msg.pdus) {
+  for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
+    const tx_data_req_pdu&                                                        pdu = msg.pdus[i];
     data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length);
 
-    current_slot_controller->process_pdsch(data, pdsch_pdus[i++]);
+    current_slot_controller->process_pdsch(data, pdsch_pdus[i]);
   }
 }
 
