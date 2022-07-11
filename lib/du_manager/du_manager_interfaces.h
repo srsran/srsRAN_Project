@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_MANAGER_INTERFACES_H
-#define SRSGNB_DU_MANAGER_INTERFACES_H
+#ifndef SRSGNB_LIB_DU_MANAGER_DU_MANAGER_INTERFACES_H
+#define SRSGNB_LIB_DU_MANAGER_DU_MANAGER_INTERFACES_H
 
 #include "du_manager_config.h"
 #include "du_ue_context.h"
@@ -30,4 +30,4 @@ public:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_MANAGER_INTERFACES_H
+#endif // SRSGNB_LIB_DU_MANAGER_DU_MANAGER_INTERFACES_H

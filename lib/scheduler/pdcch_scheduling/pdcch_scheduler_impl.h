@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PDCCH_SCHEDULER_IMPL_H
-#define SRSGNB_PDCCH_SCHEDULER_IMPL_H
+#ifndef SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_SCHEDULER_IMPL_H
+#define SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_SCHEDULER_IMPL_H
 
 #include "../cell/resource_grid.h"
 #include "../ue_scheduling/ue_configuration.h"
@@ -74,4 +74,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PDCCH_SCHEDULER_IMPL_H
+#endif // SRSGNB_LIB_SCHEDULER_PDCCH_SCHEDULING_PDCCH_SCHEDULER_IMPL_H

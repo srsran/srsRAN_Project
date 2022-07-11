@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_UL_SCH_PDU_H
-#define SRSGNB_MAC_UL_SCH_PDU_H
+#ifndef SRSGNB_LIB_MAC_MAC_UL_MAC_UL_SCH_PDU_H
+#define SRSGNB_LIB_MAC_MAC_UL_MAC_UL_SCH_PDU_H
 
 #include "lcid_ul_sch.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -95,4 +95,4 @@ struct formatter<srsgnb::mac_ul_sch_subpdu, Char> : detail::fallback_formatter<s
 
 } // namespace fmt
 
-#endif // SRSGNB_MAC_UL_SCH_PDU_H
+#endif // SRSGNB_LIB_MAC_MAC_UL_MAC_UL_SCH_PDU_H

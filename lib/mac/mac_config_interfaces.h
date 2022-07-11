@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_CONFIG_INTERFACES_H
-#define SRSGNB_MAC_CONFIG_INTERFACES_H
+#ifndef SRSGNB_LIB_MAC_MAC_CONFIG_INTERFACES_H
+#define SRSGNB_LIB_MAC_MAC_CONFIG_INTERFACES_H
 
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/support/async/async_task.h"
@@ -45,4 +45,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_CONFIG_INTERFACES_H
+#endif // SRSGNB_LIB_MAC_MAC_CONFIG_INTERFACES_H

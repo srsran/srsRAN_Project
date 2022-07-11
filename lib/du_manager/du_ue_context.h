@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_UE_CONTEXT_H
-#define SRSGNB_DU_UE_CONTEXT_H
+#ifndef SRSGNB_LIB_DU_MANAGER_DU_UE_CONTEXT_H
+#define SRSGNB_LIB_DU_MANAGER_DU_UE_CONTEXT_H
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/mac/mac_sdu_handler.h"
@@ -40,4 +40,4 @@ struct du_ue_context {
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_UE_CONTEXT_H
+#endif // SRSGNB_LIB_DU_MANAGER_DU_UE_CONTEXT_H

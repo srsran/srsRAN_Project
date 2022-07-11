@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_FILE_SINK_H
-#define SRSLOG_FILE_SINK_H
+#ifndef SRSGNB_LIB_SRSLOG_SINKS_FILE_SINK_H
+#define SRSGNB_LIB_SRSLOG_SINKS_FILE_SINK_H
 
 #include "file_utils.h"
 #include "srsgnb/srslog/sink.h"
@@ -100,4 +100,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_FILE_SINK_H
+#endif // SRSGNB_LIB_SRSLOG_SINKS_FILE_SINK_H

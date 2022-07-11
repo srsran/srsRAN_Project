@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_GNB_FORMAT_H
-#define SRSGNB_GNB_FORMAT_H
+#ifndef SRSGNB_LIB_RAN_GNB_FORMAT_H
+#define SRSGNB_LIB_RAN_GNB_FORMAT_H
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -224,4 +224,4 @@ struct formatter<srsgnb::ue_event_prefix> {
 
 } // namespace fmt
 
-#endif // SRSGNB_GNB_FORMAT_H
+#endif // SRSGNB_LIB_RAN_GNB_FORMAT_H

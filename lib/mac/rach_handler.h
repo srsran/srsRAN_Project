@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RACH_HANDLER_H
-#define SRSGNB_RACH_HANDLER_H
+#ifndef SRSGNB_LIB_MAC_RACH_HANDLER_H
+#define SRSGNB_LIB_MAC_RACH_HANDLER_H
 
 #include "du_rnti_table.h"
 #include "srsgnb/mac/mac.h"
@@ -79,4 +79,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RACH_HANDLER_H
+#endif // SRSGNB_LIB_MAC_RACH_HANDLER_H

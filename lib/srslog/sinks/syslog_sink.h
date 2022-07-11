@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SYSLOG_SINK_H
-#define SRSLOG_SYSLOG_SINK_H
+#ifndef SRSGNB_LIB_SRSLOG_SINKS_SYSLOG_SINK_H
+#define SRSGNB_LIB_SRSLOG_SINKS_SYSLOG_SINK_H
 
 #include "srsgnb/srslog/shared_types.h"
 #include "srsgnb/srslog/sink.h"
@@ -92,4 +92,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_SYSLOG_SINK_H
+#endif // SRSGNB_LIB_SRSLOG_SINKS_SYSLOG_SINK_H

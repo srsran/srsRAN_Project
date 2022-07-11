@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_RNTI_TABLE_H
-#define SRSGNB_DU_RNTI_TABLE_H
+#ifndef SRSGNB_LIB_MAC_DU_RNTI_TABLE_H
+#define SRSGNB_LIB_MAC_DU_RNTI_TABLE_H
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
@@ -87,4 +87,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_RNTI_TABLE_H
+#endif // SRSGNB_LIB_MAC_DU_RNTI_TABLE_H

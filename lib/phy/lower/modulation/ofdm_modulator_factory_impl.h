@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_OFDM_MODULATOR_FACTORY_IMPL_H
-#define SRSGNB_OFDM_MODULATOR_FACTORY_IMPL_H
+#ifndef SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_IMPL_H
+#define SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_IMPL_H
 
 #include "ofdm_modulator_impl.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator_factory.h"
@@ -38,4 +38,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_OFDM_MODULATOR_FACTORY_IMPL_H
+#endif // SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_IMPL_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_FILE_UTILS_H
-#define SRSLOG_FILE_UTILS_H
+#ifndef SRSGNB_LIB_SRSLOG_SINKS_FILE_UTILS_H
+#define SRSGNB_LIB_SRSLOG_SINKS_FILE_UTILS_H
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/srslog/detail/support/error_string.h"
@@ -139,4 +139,4 @@ public:
 
 } // namespace srslog
 
-#endif // SRSLOG_FILE_UTILS_H
+#endif // SRSGNB_LIB_SRSLOG_SINKS_FILE_UTILS_H

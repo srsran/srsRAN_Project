@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PDU_RX_HANDLER_H
-#define SRSGNB_PDU_RX_HANDLER_H
+#ifndef SRSGNB_LIB_MAC_MAC_UL_PDU_RX_HANDLER_H
+#define SRSGNB_LIB_MAC_MAC_UL_PDU_RX_HANDLER_H
 
 #include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
@@ -125,4 +125,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PDU_RX_HANDLER_H
+#endif // SRSGNB_LIB_MAC_MAC_UL_PDU_RX_HANDLER_H

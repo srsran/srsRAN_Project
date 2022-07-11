@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_TEXT_FORMATTER_H
-#define SRSLOG_TEXT_FORMATTER_H
+#ifndef SRSGNB_LIB_SRSLOG_FORMATTERS_TEXT_FORMATTER_H
+#define SRSGNB_LIB_SRSLOG_FORMATTERS_TEXT_FORMATTER_H
 
 #include "srsgnb/srslog/formatter.h"
 
@@ -97,4 +97,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_TEXT_FORMATTER_H
+#endif // SRSGNB_LIB_SRSLOG_FORMATTERS_TEXT_FORMATTER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_F1AP_DU_EVENT_MANAGER_H
-#define SRSGNB_F1AP_DU_EVENT_MANAGER_H
+#ifndef SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_EVENT_MANAGER_H
+#define SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_EVENT_MANAGER_H
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -43,4 +43,4 @@ public:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_F1AP_DU_EVENT_MANAGER_H
+#endif // SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_EVENT_MANAGER_H

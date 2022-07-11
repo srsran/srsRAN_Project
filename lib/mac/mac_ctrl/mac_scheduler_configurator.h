@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_SCHEDULER_CONFIGURATOR_H
-#define SRSGNB_MAC_SCHEDULER_CONFIGURATOR_H
+#ifndef SRSGNB_LIB_MAC_MAC_CTRL_MAC_SCHEDULER_CONFIGURATOR_H
+#define SRSGNB_LIB_MAC_MAC_CTRL_MAC_SCHEDULER_CONFIGURATOR_H
 
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
@@ -42,4 +42,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_SCHEDULER_CONFIGURATOR_H
+#endif // SRSGNB_LIB_MAC_MAC_CTRL_MAC_SCHEDULER_CONFIGURATOR_H

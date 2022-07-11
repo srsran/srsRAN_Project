@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_MANAGER_IMPL_H
-#define SRSGNB_DU_MANAGER_IMPL_H
+#ifndef SRSGNB_LIB_DU_MANAGER_DU_MANAGER_IMPL_H
+#define SRSGNB_LIB_DU_MANAGER_DU_MANAGER_IMPL_H
 
 #include "du_cell_manager.h"
 #include "du_ue_manager.h"
@@ -52,4 +52,4 @@ private:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_MANAGER_IMPL_H
+#endif // SRSGNB_LIB_DU_MANAGER_DU_MANAGER_IMPL_H

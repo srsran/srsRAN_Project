@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_SRSLOG_INSTANCE_H
-#define SRSLOG_SRSLOG_INSTANCE_H
+#ifndef SRSGNB_LIB_SRSLOG_SRSLOG_INSTANCE_H
+#define SRSGNB_LIB_SRSLOG_SRSLOG_INSTANCE_H
 
 #include "formatters/text_formatter.h"
 #include "log_backend_impl.h"
@@ -111,4 +111,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_SRSLOG_INSTANCE_H
+#endif // SRSGNB_LIB_SRSLOG_SRSLOG_INSTANCE_H

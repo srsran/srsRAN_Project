@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_F1C_ASN1_HELPERS_H
-#define SRSGNB_CU_CP_F1C_ASN1_HELPERS_H
+#ifndef SRSGNB_LIB_CU_CP_F1C_ASN1_HELPERS_H
+#define SRSGNB_LIB_CU_CP_F1C_ASN1_HELPERS_H
 
 #include "../ran/bcd_helpers.h"
 #include "du_context.h"
@@ -48,4 +48,4 @@ void fill_asn1_f1_setup_response(asn1::f1ap::f1_setup_resp_s&                   
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_F1C_ASN1_HELPERS_H
+#endif // SRSGNB_LIB_CU_CP_F1C_ASN1_HELPERS_H

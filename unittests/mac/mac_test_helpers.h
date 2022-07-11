@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_TEST_HELPERS_H
-#define SRSGNB_MAC_TEST_HELPERS_H
+#ifndef SRSGNB_UNITTESTS_MAC_MAC_TEST_HELPERS_H
+#define SRSGNB_UNITTESTS_MAC_MAC_TEST_HELPERS_H
 
 #include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -30,4 +30,4 @@ inline mac_cell_creation_request make_default_mac_cell_config()
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_TEST_HELPERS_H
+#endif // SRSGNB_UNITTESTS_MAC_MAC_TEST_HELPERS_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_UE_MANAGER_H
-#define SRSGNB_CU_CP_UE_MANAGER_H
+#ifndef SRSGNB_LIB_CU_CP_UE_MANAGER_H
+#define SRSGNB_LIB_CU_CP_UE_MANAGER_H
 
 #include "cu_cp_manager_config.h"
 #include "srsgnb/adt/slot_array.h"
@@ -55,4 +55,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_UE_MANAGER_H
+#endif // SRSGNB_LIB_CU_CP_UE_MANAGER_H

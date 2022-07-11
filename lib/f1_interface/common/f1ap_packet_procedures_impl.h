@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_F1AP_PACKET_PROCEDURES_IMPL_H
-#define SRSGNB_F1AP_PACKET_PROCEDURES_IMPL_H
+#ifndef SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_IMPL_H
+#define SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_IMPL_H
 
 /// Notice that we are not using any implementation specific header files. We are decoupled.
 #include "srsgnb/f1_interface/common/f1ap_packet_procedures.h"
@@ -37,4 +37,4 @@ namespace srsgnb {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_F1AP_PACKET_PROCEDURES_IMPL_H
+#endif // SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_IMPL_H

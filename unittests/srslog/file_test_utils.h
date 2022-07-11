@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_FILE_TEST_UTILS_H
-#define SRSLOG_FILE_TEST_UTILS_H
+#ifndef SRSGNB_UNITTESTS_SRSLOG_FILE_TEST_UTILS_H
+#define SRSGNB_UNITTESTS_SRSLOG_FILE_TEST_UTILS_H
 
 #include <cstdio>
 #include <fstream>
@@ -62,4 +62,4 @@ inline bool compare_file_contents(const std::string& path, const std::vector<std
 
 } // namespace file_test_utils
 
-#endif // SRSLOG_FILE_TEST_UTILS_H
+#endif // SRSGNB_UNITTESTS_SRSLOG_FILE_TEST_UTILS_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UE_CREATION_PROCEDURE_H
-#define SRSGNB_UE_CREATION_PROCEDURE_H
+#ifndef SRSGNB_LIB_MAC_MAC_CTRL_UE_CREATION_PROCEDURE_H
+#define SRSGNB_LIB_MAC_MAC_CTRL_UE_CREATION_PROCEDURE_H
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
@@ -104,4 +104,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_CREATION_PROCEDURE_H
+#endif // SRSGNB_LIB_MAC_MAC_CTRL_UE_CREATION_PROCEDURE_H

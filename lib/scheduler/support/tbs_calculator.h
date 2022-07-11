@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
-#define SRSGNB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
+#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
+#define SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
 
 #include <array>
 
@@ -83,4 +83,4 @@ unsigned tbs_calculator_pdsch_calculate(const tbs_calculator_pdsch_configuration
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
+#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H

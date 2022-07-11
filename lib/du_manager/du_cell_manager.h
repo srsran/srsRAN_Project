@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_CELL_MANAGER_H
-#define SRSGNB_DU_CELL_MANAGER_H
+#ifndef SRSGNB_LIB_DU_MANAGER_DU_CELL_MANAGER_H
+#define SRSGNB_LIB_DU_MANAGER_DU_CELL_MANAGER_H
 
 #include "du_manager_config.h"
 #include "srsgnb/adt/stable_id_map.h"
@@ -66,4 +66,4 @@ private:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_CELL_MANAGER_H
+#endif // SRSGNB_LIB_DU_MANAGER_DU_CELL_MANAGER_H

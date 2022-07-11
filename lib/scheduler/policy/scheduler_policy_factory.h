@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_POLICY_FACTORY_H
-#define SRSGNB_SCHEDULER_POLICY_FACTORY_H
+#ifndef SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_FACTORY_H
+#define SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_FACTORY_H
 
 #include "scheduler_policy.h"
 
@@ -24,4 +24,4 @@ std::unique_ptr<scheduler_policy> create_scheduler_strategy(const scheduler_stra
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHEDULER_POLICY_FACTORY_H
+#endif // SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_FACTORY_H

@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_UE_CONFIGURATION_H
-#define SRSGNB_UE_CONFIGURATION_H
+#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_CONFIGURATION_H
+#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_CONFIGURATION_H
 
 #include "../cell/cell_configuration.h"
 #include "srsgnb/adt/static_vector.h"
@@ -50,4 +50,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_CONFIGURATION_H
+#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_CONFIGURATION_H

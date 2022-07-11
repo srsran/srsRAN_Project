@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SLOT_SYNC_POINT_H
-#define SRSGNB_SLOT_SYNC_POINT_H
+#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_SYNC_POINT_H
+#define SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_SYNC_POINT_H
 
 #include "srsgnb/ran/slot_point.h"
 #include <condition_variable>
@@ -68,4 +68,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SLOT_SYNC_POINT_H
+#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_SYNC_POINT_H

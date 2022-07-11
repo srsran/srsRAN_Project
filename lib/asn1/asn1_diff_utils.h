@@ -1,6 +1,6 @@
 
-#ifndef SRSGNB_ASN1_DIFF_UTILS_H
-#define SRSGNB_ASN1_DIFF_UTILS_H
+#ifndef SRSGNB_LIB_ASN1_ASN1_DIFF_UTILS_H
+#define SRSGNB_LIB_ASN1_ASN1_DIFF_UTILS_H
 
 #include "srsgnb/support/async/detail/function_signature.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -97,4 +97,4 @@ void apply_addmodremlist_diff(AddModList&       src_and_dest_list,
 
 } // namespace srsgnb
 
-#endif // SRSGNB_ASN1_DIFF_UTILS_H
+#endif // SRSGNB_LIB_ASN1_ASN1_DIFF_UTILS_H

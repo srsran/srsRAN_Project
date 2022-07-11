@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RESOURCE_GRID_IMPL_H
-#define SRSGNB_RESOURCE_GRID_IMPL_H
+#ifndef SRSGNB_LIB_PHY_RESOURCE_GRID_IMPL_H
+#define SRSGNB_LIB_PHY_RESOURCE_GRID_IMPL_H
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/srsvec/aligned_vec.h"
@@ -49,4 +49,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RESOURCE_GRID_IMPL_H
+#endif // SRSGNB_LIB_PHY_RESOURCE_GRID_IMPL_H

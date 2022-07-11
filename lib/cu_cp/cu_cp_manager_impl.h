@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_MANAGER_IMPL_H
-#define SRSGNB_CU_CP_MANAGER_IMPL_H
+#ifndef SRSGNB_LIB_CU_CP_CU_CP_MANAGER_IMPL_H
+#define SRSGNB_LIB_CU_CP_CU_CP_MANAGER_IMPL_H
 
 #include "cu_cp_manager_context.h"
 #include "du_processor.h"
@@ -71,4 +71,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_MANAGER_IMPL_H
+#endif // SRSGNB_LIB_CU_CP_CU_CP_MANAGER_IMPL_H

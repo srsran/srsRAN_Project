@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef TESTING_HELPERS_H
-#define TESTING_HELPERS_H
+#ifndef SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H
+#define SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H
 
 #include <cstdio>
 
@@ -58,4 +58,4 @@
     }                                                                                                                  \
   } while (0)
 
-#endif // TESTING_HELPERS_H
+#endif // SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H

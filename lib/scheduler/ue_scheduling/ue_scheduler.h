@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UE_SCHEDULER_H
-#define SRSGNB_UE_SCHEDULER_H
+#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H
+#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H
 
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h" // TEMP
@@ -45,4 +45,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_SCHEDULER_H
+#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H

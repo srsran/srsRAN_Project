@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_TEST_SUITE_H
-#define SRSGNB_SCHEDULER_TEST_SUITE_H
+#ifndef SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H
+#define SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H
 
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
@@ -40,4 +40,4 @@ void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHEDULER_TEST_SUITE_H
+#endif // SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H

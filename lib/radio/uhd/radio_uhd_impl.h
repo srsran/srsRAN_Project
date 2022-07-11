@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_RADIO_UHD_IMPL_H
-#define SRSGNB_LIB_RADIO_RADIO_UHD_IMPL_H
+#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_IMPL_H
+#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_IMPL_H
 
 #include "radio_uhd_device.h"
 #include "radio_uhd_device_type.h"
@@ -143,4 +143,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_RADIO_RADIO_UHD_IMPL_H
+#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_IMPL_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_MANAGER_CONFIG_H
-#define SRSGNB_DU_MANAGER_CONFIG_H
+#ifndef SRSGNB_LIB_DU_MANAGER_DU_MANAGER_CONFIG_H
+#define SRSGNB_LIB_DU_MANAGER_DU_MANAGER_CONFIG_H
 
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/du_manager/du_manager.h"
@@ -41,4 +41,4 @@ struct du_manager_config_t {
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_MANAGER_CONFIG_H
+#endif // SRSGNB_LIB_DU_MANAGER_DU_MANAGER_CONFIG_H

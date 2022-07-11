@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_F1AP_DU_IMPL_H
-#define SRSGNB_F1AP_DU_IMPL_H
+#ifndef SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_IMPL_H
+#define SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_IMPL_H
 
 #include "f1ap_du_context.h"
 #include "handlers/f1c_du_packet_handler.h"
@@ -81,4 +81,4 @@ private:
 } // namespace srs_du
 } // namespace srsgnb
 
-#endif // SRSGNB_F1AP_DU_IMPL_H
+#endif // SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_IMPL_H

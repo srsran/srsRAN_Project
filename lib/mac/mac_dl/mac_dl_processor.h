@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_DL_PROCESSOR_H
-#define SRSGNB_MAC_DL_PROCESSOR_H
+#ifndef SRSGNB_LIB_MAC_MAC_DL_MAC_DL_PROCESSOR_H
+#define SRSGNB_LIB_MAC_MAC_DL_MAC_DL_PROCESSOR_H
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
@@ -62,4 +62,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_DL_PROCESSOR_H
+#endif // SRSGNB_LIB_MAC_MAC_DL_MAC_DL_PROCESSOR_H

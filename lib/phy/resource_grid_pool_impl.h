@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RESOURCE_GRID_POOL_IMPL_H
-#define SRSGNB_RESOURCE_GRID_POOL_IMPL_H
+#ifndef SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H
+#define SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/resource_grid_pool.h"
@@ -32,4 +32,4 @@ public:
 };
 } // namespace srsgnb
 
-#endif // SRSGNB_RESOURCE_GRID_POOL_IMPL_H
+#endif // SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H

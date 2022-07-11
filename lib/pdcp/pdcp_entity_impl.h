@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PDCP_PDCP_ENTITY_IMPL_H
-#define SRSGNB_PDCP_PDCP_ENTITY_IMPL_H
+#ifndef SRSGNB_LIB_PDCP_PDCP_ENTITY_IMPL_H
+#define SRSGNB_LIB_PDCP_PDCP_ENTITY_IMPL_H
 
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include <cstdio>
@@ -30,4 +30,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PDCP_PDCP_ENTITY_IMPL_H
+#endif // SRSGNB_LIB_PDCP_PDCP_ENTITY_IMPL_H

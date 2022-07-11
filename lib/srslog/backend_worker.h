@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_BACKEND_WORKER_H
-#define SRSLOG_BACKEND_WORKER_H
+#ifndef SRSGNB_LIB_SRSLOG_BACKEND_WORKER_H
+#define SRSGNB_LIB_SRSLOG_BACKEND_WORKER_H
 
 #include "srsgnb/srslog/detail/log_entry.h"
 #include "srsgnb/srslog/detail/support/dyn_arg_store_pool.h"
@@ -111,4 +111,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_BACKEND_WORKER_H
+#endif // SRSGNB_LIB_SRSLOG_BACKEND_WORKER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SSB_ASSEMBLER_H
-#define SRSGNB_SSB_ASSEMBLER_H
+#ifndef SRSGNB_LIB_MAC_MAC_DL_SSB_ASSEMBLER_H
+#define SRSGNB_LIB_MAC_MAC_DL_SSB_ASSEMBLER_H
 
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/ran/pci.h"
@@ -53,4 +53,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SSB_ASSEMBLER_H
+#endif // SRSGNB_LIB_MAC_MAC_DL_SSB_ASSEMBLER_H

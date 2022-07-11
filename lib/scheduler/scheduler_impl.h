@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_IMPL_H
-#define SRSGNB_SCHEDULER_IMPL_H
+#ifndef SRSGNB_LIB_SCHEDULER_SCHEDULER_IMPL_H
+#define SRSGNB_LIB_SCHEDULER_SCHEDULER_IMPL_H
 
 #include "cell/scheduler_cell_manager.h"
 #include "srsgnb/scheduler/mac_scheduler.h"
@@ -60,4 +60,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_SCHEDULER_IMPL_H
+#endif // SRSGNB_LIB_SCHEDULER_SCHEDULER_IMPL_H

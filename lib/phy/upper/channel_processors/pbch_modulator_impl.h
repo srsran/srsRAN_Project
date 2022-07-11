@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H_
-#define SRSGNB_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H_
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
@@ -53,4 +53,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H_
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_IMPL_H

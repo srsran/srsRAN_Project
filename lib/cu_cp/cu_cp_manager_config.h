@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_MANAGER_CONFIG_H
-#define SRSGNB_CU_CP_MANAGER_CONFIG_H
+#ifndef SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONFIG_H
+#define SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONFIG_H
 
 #include "adapters/f1ap_adapters.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -36,4 +36,4 @@ struct cu_cp_manager_config_t {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_MANAGER_CONFIG_H
+#endif // SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONFIG_H

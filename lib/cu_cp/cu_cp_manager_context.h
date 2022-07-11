@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_MANAGER_CONTEXT_H
-#define SRSGNB_CU_CP_MANAGER_CONTEXT_H
+#ifndef SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONTEXT_H
+#define SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONTEXT_H
 
 namespace srsgnb {
 
@@ -17,4 +17,4 @@ struct cu_cp_manager_context {};
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_MANAGER_CONTEXT_H
+#endif // SRSGNB_LIB_CU_CP_CU_CP_MANAGER_CONTEXT_H

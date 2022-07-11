@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_TEST_HELPERS_H
-#define SRSGNB_LIB_F1_TEST_HELPERS_H
+#ifndef SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H
+#define SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H
 
 #include "srsgnb/cu_cp/cu_cp_manager.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -175,4 +175,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_F1_TEST_HELPERS_H
+#endif // SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H

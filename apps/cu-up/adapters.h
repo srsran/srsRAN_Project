@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef ADAPTERS_H
-#define ADAPTERS_H
+#ifndef SRSGNB_APPS_CU_UP_ADAPTERS_H
+#define SRSGNB_APPS_CU_UP_ADAPTERS_H
 
 #include "srsgnb/pdcp/pdcp.h"
 #include "srsgnb/sdap/sdap.h"
@@ -42,4 +42,4 @@ public:
 
 } // namespace cu_up
 
-#endif // ADAPTERS_H
+#endif // SRSGNB_APPS_CU_UP_ADAPTERS_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef MAC_UL_BSR_H
-#define MAC_UL_BSR_H
+#ifndef SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H
+#define SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
@@ -58,4 +58,4 @@ ul_bsr_lcg_report make_sched_lcg_report(const lcg_bsr_report& ul_bsr_ce, bsr_for
 
 } // namespace srsgnb
 
-#endif // MAC_UL_BSR_H
+#endif // SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H

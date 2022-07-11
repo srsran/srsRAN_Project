@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSLOG_JSON_FORMATTER_H
-#define SRSLOG_JSON_FORMATTER_H
+#ifndef SRSGNB_LIB_SRSLOG_FORMATTERS_JSON_FORMATTER_H
+#define SRSGNB_LIB_SRSLOG_FORMATTERS_JSON_FORMATTER_H
 
 #include "srsgnb/srslog/formatter.h"
 
@@ -123,4 +123,4 @@ private:
 
 } // namespace srslog
 
-#endif // SRSLOG_JSON_FORMATTER_H
+#endif // SRSGNB_LIB_SRSLOG_FORMATTERS_JSON_FORMATTER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_MAC_DL_UE_MANAGER_H
-#define SRSGNB_MAC_DL_UE_MANAGER_H
+#ifndef SRSGNB_LIB_MAC_MAC_DL_MAC_DL_UE_MANAGER_H
+#define SRSGNB_LIB_MAC_MAC_DL_MAC_DL_UE_MANAGER_H
 
 #include "../du_rnti_table.h"
 #include "srsgnb/mac/mac.h"
@@ -153,4 +153,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_MAC_DL_UE_MANAGER_H
+#endif // SRSGNB_LIB_MAC_MAC_DL_MAC_DL_UE_MANAGER_H

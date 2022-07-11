@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_DU_CONTEXT_H
-#define SRSGNB_DU_CONTEXT_H
+#ifndef SRSGNB_LIB_CU_CP_DU_CONTEXT_H
+#define SRSGNB_LIB_CU_CP_DU_CONTEXT_H
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
@@ -52,4 +52,4 @@ struct du_context {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_DU_CONTEXT_H
+#endif // SRSGNB_LIB_CU_CP_DU_CONTEXT_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H_
-#define SRSGNB_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H_
+#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H
+#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H
 
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
@@ -54,4 +54,4 @@ public:
 std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
 
 } // namespace srsgnb
-#endif // SRSGNB_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H_
+#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_IMPL_H

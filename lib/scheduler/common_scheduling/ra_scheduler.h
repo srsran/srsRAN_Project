@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RA_SCHEDULER_H
-#define SRSGNB_RA_SCHEDULER_H
+#ifndef SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_RA_SCHEDULER_H
+#define SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_RA_SCHEDULER_H
 
 #include "../cell/resource_grid.h"
 #include "../pdcch_scheduling/pdcch_scheduler.h"
@@ -106,4 +106,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RA_SCHEDULER_H
+#endif // SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_RA_SCHEDULER_H

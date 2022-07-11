@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CONFIG_GENERATORS_H
-#define SRSGNB_CONFIG_GENERATORS_H
+#ifndef SRSGNB_UNITTESTS_SCHEDULER_CONFIG_GENERATORS_H
+#define SRSGNB_UNITTESTS_SCHEDULER_CONFIG_GENERATORS_H
 
 #include "../../lib/du_manager/converters/mac_cell_configuration_helpers.h"
 #include "srsgnb/mac/mac_configuration_helpers.h"
@@ -41,4 +41,4 @@ rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t t
 
 } // namespace srsgnb
 
-#endif // SRSGNB_CONFIG_GENERATORS_H
+#endif // SRSGNB_UNITTESTS_SCHEDULER_CONFIG_GENERATORS_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_UE_H
-#define SRSGNB_UE_H
+#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_H
+#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_H
 
 #include "harq_process.h"
 #include "srsgnb/adt/stable_id_map.h"
@@ -124,4 +124,4 @@ using ue_list = stable_id_map<du_ue_index_t, ue, MAX_NOF_DU_UES>;
 
 } // namespace srsgnb
 
-#endif // SRSGNB_UE_H
+#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_H

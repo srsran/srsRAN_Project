@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_PHY_LOWER_PHY_STATE_FSM_H
-#define SRSGNB_PHY_LOWER_PHY_STATE_FSM_H
+#ifndef SRSGNB_LIB_PHY_LOWER_LOWER_PHY_STATE_FSM_H
+#define SRSGNB_LIB_PHY_LOWER_LOWER_PHY_STATE_FSM_H
 
 #include <condition_variable>
 #include <mutex>
@@ -83,4 +83,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_PHY_LOWER_PHY_STATE_FSM_H
+#endif // SRSGNB_LIB_PHY_LOWER_LOWER_PHY_STATE_FSM_H
