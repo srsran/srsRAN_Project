@@ -15,6 +15,7 @@ variables:
   docker_version: $DOCKER_BUILDER_VERSION
   run_tests: "true"
   enable_coverage: "true"
+  check_flags: "true"
 
 stages:
   - build
@@ -78,6 +79,20 @@ build [clean]:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache: []
+
+cmake flag check:
+  stage: build
+  extends: .build_and_unit
+  rules:
+    - if: $check_flags == "true"
+  script:
+    - CC=/usr/bin/gcc
+    - CXX=/usr/bin/g++
+    - mkdir build && cd build && cmake -G Ninja -D${flag}=True ..
+  parallel:
+    matrix:
+      - flag: [STOP_ON_WARNING, ENABLE_TSAN, ENABLE_ASAN, ENABLE_EXPORT]
+  dependencies: []
 
 # Unit tests
 

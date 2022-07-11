@@ -78,6 +78,8 @@ no-binaries-added:
 .alternative builds:
   stage: build
   needs: []
+  variables:
+    check_flags: "false"
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
