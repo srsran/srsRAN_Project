@@ -80,15 +80,15 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   return {};
 }
 
-/// \brief Calculates the position of the SS/PBCH block first subcarrier relative to Point A.
+/// \brief Calculates the position of the first SS/PBCH block subcarrier relative to Point A.
 ///
 /// The result is expressed in units of subcarriers of SS/PBCH block SCS \c ssb_scs assuming that:
-/// - the lowest subcarrier of the resource grid overlaps with the Point A, and
+/// - the lowest subcarrier of the resource grid overlaps with Point A, and
 /// - the resource grid SCS matches the SS/PBCH block SCS.
 ///
 /// In other words, it is not possible to determine an SS/PBCH block position in the grid if the SS/PBCH block
 /// subcarrier offset does not match the position of the resource grid subcarriers. Because of this, the parameters must
-/// result in a integer subcarrier index of the SS/PBCH block SCS.
+/// result in an integer subcarrier index of the SS/PBCH block SCS.
 ///
 /// Assertions are triggered if:
 /// - the provided SS/PBCH SCS and frequency range combination is invalid, or
@@ -96,7 +96,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
 ///
 /// \param[in] fr                Frequency range.
 /// \param[in] ssb_scs           SS/PBCH block subcarrier spacing.
-/// \param[in] common_scs        Higher layer parameter \c subCarrierSpacingCommon as per TS38.331 \c MIB.
+/// \param[in] common_scs        Higher layer parameter \e subCarrierSpacingCommon as per TS38.331 \e MIB.
 /// \param[in] offset_to_pointA  Offset to Point A (see [here](\ref ssb_offset_to_pointA) for more information).
 /// \param[in] subcarrier_offset Subcarrier offset (see [here](\ref ssb_subcarrier_offset) for more information).
 /// \return The index of the lowest subcarrier of the SS/PBCH block.
@@ -127,7 +127,7 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                 fr == frequency_range::FR1 ? 1 : 2,
                 ssb_subcarrier_offset::max(fr));
 
-  // Select the Point A offset SCS depending on the frequency range and convert SCS to kHz.
+  // Select Point A offset SCS depending on the frequency range and convert SCS to kHz.
   unsigned pointA_offset_scs_kHz =
       scs_to_khz((fr == frequency_range::FR1) ? subcarrier_spacing::kHz15 : subcarrier_spacing::kHz60);
 

@@ -33,7 +33,7 @@ public:
     unsigned phys_cell_id;
     /// Root sequence index {0...837}.
     unsigned root_sequence_index;
-    /// Frequency offset between PointA and the PRB overlapping with the lowest RE of the PRACH signal in PRB.
+    /// Frequency offset between Point A and the PRB overlapping with the lowest RE of the PRACH signal in PRB.
     unsigned frequency_offset;
     /// Starting symbol index for the first PRACH TD occasion in the current PRACH FD occasion.
     unsigned start_symbol;

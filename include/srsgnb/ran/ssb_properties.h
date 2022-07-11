@@ -27,7 +27,7 @@ inline unsigned ssb_periodicity_to_value(ssb_periodicity periodicity)
 /// \brief PSS power level allocation in dB, relative to SSS as per TS38.213 Section 4.1.
 enum class ssb_beta_pss { dB_0, dB_3 };
 
-/// Labels for the different SS/PBCH block patterns defined in 38.213 section 4.1 Cell search.
+/// Labels for the different SS/PBCH block patterns defined in TS38.213 Section 4.1.
 enum class ssb_pattern_case {
   /// Case A - 15 kHz SCS, FR1: index pattern \f$\{2, 8\} + 14\cdot n\f$.
   A,
@@ -73,21 +73,20 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
   return frequency_range::FR2;
 }
 
-/// \brief Data type used to represent the frequency offset between point A and the lowest subcarrier of the lowest
+/// \brief Data type used to represent the frequency offset between Point A and the lowest subcarrier of the lowest
 /// common resource block that overlaps with the SS/PBCH block.
 ///
-/// Parameter \c offsetToPointA as per TS38.211 Section 4.4.4.2.
-///
-/// Read [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
-/// page](http://nrexplained.com/rbs) for a more detailed explanation of resource block indexing .
-///
-/// Used as \f$N_{CRB}^{SSB}\f$ in TS38.211 Section 7.4.3.1.
-///
-/// The range is {0, ..., 2199} as per TS38.331 \c FrequencyInfoDL-SIB.
-///
-/// It is expressed in units of resource blocks assuming:
+/// The quantity expressed in terms of this data type corresponds to \e offsetToPointA in TS38.211 Section 4.4.4.2 and
+/// it is used in TS38.211 Section 7.4.3.1 to compute \f$N_{CRB}^{SSB}\f$.
+/// It is measured as a number of resource blocks, assuming:
 /// - 15kHz SCS for FR1, and
 /// - 60kHz SCS for FR2.
+///
+/// The range of values is {0, ..., 2199} &mdash; see TS38.331 Section 6.3.2, Information Element \e
+/// FrequencyInfoDL-SIB.
+///
+/// The reader is referred to [this page](https://www.sharetechnote.com/html/5G/5G_ResourceBlockIndexing.html) and [this
+/// page](http://nrexplained.com/rbs) for more details about resource block indexing.
 ///
 /// \sa ssb_subcarrier_offset
 class ssb_offset_to_pointA
@@ -101,10 +100,10 @@ private:
   type value;
 
 public:
-  /// Return the maximum value.
+  /// Returns the maximum value.
   static constexpr unsigned max() { return static_cast<unsigned>(MAX_VALUE); }
 
-  /// Default constructor constructs using an invalid value.
+  /// Default constructor: sets an invalid value.
   ssb_offset_to_pointA() : value(MAX_VALUE + 1) {}
 
   /// Constructs the object from a value.
@@ -114,17 +113,17 @@ public:
     static_assert(std::is_convertible<T, type>::value && std::is_literal_type<T>::value, "Invalid value type.");
   }
 
-  /// Constructs the object with another of its kind.
+  /// Copy constructor.
   ssb_offset_to_pointA(const ssb_offset_to_pointA& other) : value(other.value) {}
 
   /// Returns true if the value is within the range.
   bool is_valid() const { return value <= max(); }
 
-  /// Get the value as an unsigned integer.
+  /// Gets the value as an unsigned integer.
   unsigned to_uint() const { return static_cast<unsigned>(value); }
 };
 
-/// \brief Data type used to represent the offset from subcarrier 0 in common resource block \f$N_{CRB}^{SSB}\f$ to
+/// \brief Data type used to represent the offset from subcarrier zero in common resource block \f$N_{CRB}^{SSB}\f$ to
 /// subcarrier zero of the SS/PBCH block.
 ///
 /// The quantity expressed in terms of this data type corresponds to \f$ k_{SSB} \f$ in TS38.211 Section 7.4.3.1. It is
@@ -156,13 +155,13 @@ private:
   type value;
 
 public:
-  /// Return the maximum value.
+  /// Returns the maximum value for the given frequency range.
   static constexpr unsigned max(frequency_range fr)
   {
     return static_cast<unsigned>((fr == frequency_range::FR1) ? MAX_VALUE_FR1 : MAX_VALUE_FR2);
   }
 
-  /// Default constructor constructs using an invalid value.
+  /// Default constructor: sets an invalid value.
   ssb_subcarrier_offset() : value(MAX_VALUE_FR1 + 1) {}
 
   /// Constructs the object from a value.
@@ -175,7 +174,7 @@ public:
   /// Returns true if the value is within the range.
   bool is_valid(frequency_range fr) const { return value <= max(fr); }
 
-  /// Get the value as an unsigned integer.
+  /// Gets the value as an unsigned integer.
   unsigned to_uint() const { return static_cast<unsigned>(value); }
 };
 
