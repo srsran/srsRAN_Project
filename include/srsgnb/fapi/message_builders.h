@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_MESSAGE_BUILDERS_H
-#define SRSGNB_FAPI_MESSAGE_BUILDERS_H
+#pragma once
 
 #include "srsgnb/adt/bitmap_utils.h"
 #include "srsgnb/adt/optional.h"
@@ -2484,5 +2483,3 @@ public:
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_MESSAGE_BUILDERS_H

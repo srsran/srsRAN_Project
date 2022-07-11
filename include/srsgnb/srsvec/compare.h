@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_COMPARE_H
-#define SRSGNB_SRSVEC_COMPARE_H
+#pragma once
 
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
@@ -45,5 +44,3 @@ std::pair<unsigned, float> max_abs_element(span<const cf_t> x);
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_COMPARE_H

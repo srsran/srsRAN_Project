@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
@@ -39,5 +38,3 @@ public:
 std::unique_ptr<polar_interleaver> create_polar_interleaver();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_INTERLEAVER_H

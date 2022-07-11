@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
-#define SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
+#pragma once
 
 #include "lower_phy_state_fsm.h"
 #include "srsgnb/adt/circular_array.h"
@@ -155,5 +154,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PUSCH_PUSCH_CONSTANTS_H
-#define SRSGNB_RAN_PUSCH_PUSCH_CONSTANTS_H
+#pragma once
 
 namespace srsgnb {
 
@@ -28,5 +27,3 @@ static constexpr unsigned MAX_MODULATION_ORDER = 8;
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PUSCH_PUSCH_CONSTANTS_H

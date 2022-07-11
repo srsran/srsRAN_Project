@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_RB_FIND_ALGORITHM_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_RB_FIND_ALGORITHM_H
+#pragma once
 
 #include "srsgnb/scheduler/prb_grant.h"
 
@@ -63,5 +62,3 @@ find_empty_interval_of_length(const prb_bitmap& used_rb_bitmap, size_t nof_rbs, 
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_RB_FIND_ALGORITHM_H

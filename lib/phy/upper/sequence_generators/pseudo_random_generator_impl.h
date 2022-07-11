@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include <cstdint>
@@ -167,5 +166,3 @@ public:
   void    generate(span<float> buffer, float value) override;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_IMPL_H

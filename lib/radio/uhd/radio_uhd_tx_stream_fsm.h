@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_TX_STREAM_FSM_H
-#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_TX_STREAM_FSM_H
+#pragma once
 
 #include <mutex>
 
@@ -159,5 +158,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_TX_STREAM_FSM_H

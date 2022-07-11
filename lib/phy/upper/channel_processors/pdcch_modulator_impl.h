@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -76,5 +75,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_MODULATOR_IMPL_H

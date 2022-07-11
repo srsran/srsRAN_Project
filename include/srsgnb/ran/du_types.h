@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_DU_TYPES_H
-#define SRSGNB_RAN_DU_TYPES_H
+#pragma once
 
 #include <cstdint>
 #include <type_traits>
@@ -48,5 +47,3 @@ inline ue_cell_index_t to_ue_cell_index(std::underlying_type_t<ue_cell_index_t> 
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_DU_TYPES_H

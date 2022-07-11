@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_VALIDATOR_REPORT_H
-#define SRSGNB_FAPI_VALIDATOR_REPORT_H
+#pragma once
 
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/adt/static_vector.h"
@@ -110,5 +109,3 @@ struct validator_report {
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_VALIDATOR_REPORT_H

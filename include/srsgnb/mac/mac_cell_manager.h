@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_CELL_MANAGER_H
-#define SRSGNB_MAC_MAC_CELL_MANAGER_H
+#pragma once
 
 #include "cell_configuration.h"
 #include "mac_ue_configurator.h"
@@ -40,5 +39,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_CELL_MANAGER_H

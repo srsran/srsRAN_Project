@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_ADAPTERS_PHY_TIMING_ADAPTER_H
-#define SRSGNB_PHY_ADAPTERS_PHY_TIMING_ADAPTER_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
@@ -46,5 +45,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_ADAPTERS_PHY_TIMING_ADAPTER_H

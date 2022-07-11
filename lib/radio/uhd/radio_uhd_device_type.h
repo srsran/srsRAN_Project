@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_TYPE_H
-#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_TYPE_H
+#pragma once
 
 namespace srsgnb {
 
@@ -54,5 +53,3 @@ private:
   types type = types::UNKNOWN;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_TYPE_H

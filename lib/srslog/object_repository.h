@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SRSLOG_OBJECT_REPOSITORY_H
-#define SRSGNB_LIB_SRSLOG_OBJECT_REPOSITORY_H
+#pragma once
 
 #include "srsgnb/srslog/detail/support/thread_utils.h"
 #include <unordered_map>
@@ -93,5 +92,3 @@ public:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_LIB_SRSLOG_OBJECT_REPOSITORY_H

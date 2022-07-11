@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
@@ -398,4 +397,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H

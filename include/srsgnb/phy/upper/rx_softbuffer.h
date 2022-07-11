@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_RX_SOFTBUFFER_H
-#define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
@@ -59,5 +58,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_RX_SOFTBUFFER_H

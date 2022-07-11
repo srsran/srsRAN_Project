@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_LDPC_BASE_GRAPH_H
-#define SRSGNB_RAN_LDPC_BASE_GRAPH_H
+#pragma once
 
 #include <cstdint>
 
@@ -30,5 +29,3 @@ constexpr ldpc_base_graph_type get_ldpc_base_graph(float target_code_rate, unsig
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_LDPC_BASE_GRAPH_H

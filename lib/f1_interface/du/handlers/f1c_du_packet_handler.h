@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_DU_HANDLERS_F1C_DU_PACKET_HANDLER_H
-#define SRSGNB_LIB_F1_INTERFACE_DU_HANDLERS_F1C_DU_PACKET_HANDLER_H
+#pragma once
 
 /// Notice that we are not using any implementation specific header files. We are decoupled.
 #include "srsgnb/asn1/f1ap.h"
@@ -34,5 +33,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_DU_HANDLERS_F1C_DU_PACKET_HANDLER_H

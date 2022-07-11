@@ -10,8 +10,7 @@
 
 /// \file
 /// \brief LDPC encoder declaration.
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_IMPL_H
+#pragma once
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/adt/span.h"
@@ -129,5 +128,3 @@ class ldpc_encoder_avx2 : public ldpc_encoder_impl
   static void not_implemented() { std::cout << "AVX2 Encoder - not implemented yet.\n"; }
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_IMPL_H

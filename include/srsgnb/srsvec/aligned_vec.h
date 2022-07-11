@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_ALIGNED_VEC_H
-#define SRSGNB_SRSVEC_ALIGNED_VEC_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 
@@ -53,5 +52,3 @@ public:
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_ALIGNED_VEC_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_SRSLOG_C_H
-#define SRSGNB_SRSLOG_SRSLOG_C_H
+#pragma once
 
 #ifdef __cplusplus
 #include <cstddef>
@@ -154,5 +153,3 @@ srslog_sink* srslog_fetch_file_sink(const char* path, size_t max_size, srslog_bo
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* SRSGNB_SRSLOG_SRSLOG_C_H */

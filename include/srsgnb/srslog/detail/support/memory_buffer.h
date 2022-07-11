@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_MEMORY_BUFFER_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_MEMORY_BUFFER_H
+#pragma once
 
 #include <string>
 
@@ -45,5 +44,3 @@ public:
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_MEMORY_BUFFER_H

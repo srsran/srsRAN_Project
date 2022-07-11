@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_ZMQ_RADIO_FACTORY_ZMQ_IMPL_H
-#define SRSGNB_LIB_RADIO_ZMQ_RADIO_FACTORY_ZMQ_IMPL_H
+#pragma once
 
 #include "srsgnb/radio/radio_factory.h"
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RADIO_ZMQ_RADIO_FACTORY_ZMQ_IMPL_H

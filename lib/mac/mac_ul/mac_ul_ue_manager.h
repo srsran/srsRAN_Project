@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_UL_MAC_UL_UE_MANAGER_H
-#define SRSGNB_LIB_MAC_MAC_UL_MAC_UL_UE_MANAGER_H
+#pragma once
 
 #include "../../ran/gnb_format.h"
 #include "../du_rnti_table.h"
@@ -147,5 +146,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_UL_MAC_UL_UE_MANAGER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_SETUP_PROCEDURE_H
-#define SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_SETUP_PROCEDURE_H
+#pragma once
 
 #include "common/f1ap_asn1_utils.h"
 #include "f1ap_du_event_manager.h"
@@ -52,5 +51,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_DU_PROCEDURES_F1AP_DU_SETUP_PROCEDURE_H

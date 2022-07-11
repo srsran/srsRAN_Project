@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_RESOURCE_BLOCK_H
-#define SRSGNB_RAN_RESOURCE_BLOCK_H
+#pragma once
 
 #include "subcarrier_spacing.h"
 #include <cstdint>
@@ -113,5 +112,3 @@ inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, freq
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_RESOURCE_BLOCK_H

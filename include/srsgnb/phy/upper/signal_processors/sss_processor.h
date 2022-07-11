@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
@@ -48,5 +47,3 @@ public:
 std::unique_ptr<sss_processor> create_sss_processor();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_H

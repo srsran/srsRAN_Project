@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_LOWER_MODULATION_MODULATION_FACTORIES_H
-#define SRSGNB_PHY_LOWER_MODULATION_MODULATION_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
@@ -72,5 +71,3 @@ std::shared_ptr<ofdm_demodulator_factory>
 create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_MODULATION_MODULATION_FACTORIES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_LCID_H
-#define SRSGNB_RAN_LCID_H
+#pragma once
 
 #include <cstdint>
 
@@ -80,5 +79,3 @@ enum class drb_id_t : uint16_t {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_LCID_H

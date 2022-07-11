@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_CU_CP_TYPES_H
-#define SRSGNB_CU_CP_CU_CP_TYPES_H
+#pragma once
 
 #include <cstdint>
 #include <type_traits>
@@ -61,5 +60,3 @@ inline du_cell_index_t int_to_du_cell_index(std::underlying_type_t<du_cell_index
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_CU_CP_CU_CP_TYPES_H

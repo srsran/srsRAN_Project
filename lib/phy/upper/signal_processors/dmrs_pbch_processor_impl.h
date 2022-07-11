@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PBCH_PROCESSOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PBCH_PROCESSOR_IMPL_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/constants.h"
@@ -54,5 +53,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PBCH_PROCESSOR_IMPL_H

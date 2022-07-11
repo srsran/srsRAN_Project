@@ -7,8 +7,7 @@
  * the distribution.
  *
  */
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_PROCESSOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_PROCESSOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
@@ -86,5 +85,3 @@ public:
 std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_PROCESSOR_IMPL_H

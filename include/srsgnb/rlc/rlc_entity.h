@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_RLC_ENTITY_H
-#define SRSGNB_RLC_RLC_ENTITY_H
+#pragma once
 
 #include "srsgnb/rlc/rlc.h"
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RLC_RLC_ENTITY_H

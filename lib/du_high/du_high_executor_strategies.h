@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_HIGH_DU_HIGH_EXECUTOR_STRATEGIES_H
-#define SRSGNB_LIB_DU_HIGH_DU_HIGH_EXECUTOR_STRATEGIES_H
+#pragma once
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/span.h"
@@ -91,5 +90,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_HIGH_DU_HIGH_EXECUTOR_STRATEGIES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_SUBCARRIER_SPACING_H
-#define SRSGNB_RAN_SUBCARRIER_SPACING_H
+#pragma once
 
 #include "srsgnb/ran/frequency_range.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -75,5 +74,3 @@ constexpr inline unsigned get_nof_slots_per_subframe(subcarrier_spacing scs)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_SUBCARRIER_SPACING_H

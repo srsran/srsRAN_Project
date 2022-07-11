@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_BENCHMARK_UTILS_H
-#define SRSGNB_SUPPORT_BENCHMARK_UTILS_H
+#pragma once
 
 #include <chrono>
 #include <string>
@@ -120,5 +119,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_BENCHMARK_UTILS_H

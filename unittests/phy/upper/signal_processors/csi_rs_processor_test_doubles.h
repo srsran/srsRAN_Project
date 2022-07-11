@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
 
@@ -28,5 +27,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DOUBLES_H

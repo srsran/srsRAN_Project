@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BASE_H
-#define SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BASE_H
+#pragma once
 
 namespace srsgnb {
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BASE_H

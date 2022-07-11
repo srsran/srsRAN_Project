@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_ZMQ_RADIO_ZMQ_RX_CHANNEL_FSM_H
-#define SRSGNB_LIB_RADIO_ZMQ_RADIO_ZMQ_RX_CHANNEL_FSM_H
+#pragma once
 
 #include <condition_variable>
 #include <mutex>
@@ -117,5 +116,3 @@ public:
   }
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RADIO_ZMQ_RADIO_ZMQ_RX_CHANNEL_FSM_H

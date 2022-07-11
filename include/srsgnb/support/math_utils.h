@@ -11,8 +11,7 @@
 /// \file
 /// \brief Mathematical utility functions.
 
-#ifndef SRSGNB_SUPPORT_MATH_UTILS_H
-#define SRSGNB_SUPPORT_MATH_UTILS_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsran_assert.h"
@@ -142,5 +141,3 @@ constexpr const T& clamp(const T& value, const T& lower_bound, const T& upper_bo
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_MATH_UTILS_H

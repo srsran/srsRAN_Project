@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_EXPECTED_H
-#define SRSGNB_ADT_EXPECTED_H
+#pragma once
 
 #include "srsgnb/support/srsran_assert.h"
 #include <memory>
@@ -236,5 +235,3 @@ template <typename E>
 using error_type = expected<default_success_t, E>;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_EXPECTED_H

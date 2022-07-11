@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SDAP_SDAP_ENTITY_FACTORY_H
-#define SRSGNB_SDAP_SDAP_ENTITY_FACTORY_H
+#pragma once
 
 #include "srsgnb/sdap/sdap_entity.h"
 #include <memory>
@@ -23,5 +22,3 @@ namespace srsgnb {
 std::unique_ptr<sdap_entity> create_sdap_entity();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SDAP_SDAP_ENTITY_FACTORY_H

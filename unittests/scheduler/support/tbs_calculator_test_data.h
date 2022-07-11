@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_SCHEDULER_SUPPORT_TBS_CALCULATOR_TEST_DATA_H
-#define SRSGNB_UNITTESTS_SCHEDULER_SUPPORT_TBS_CALCULATOR_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsTBSCalculatorUnittest.m"
@@ -286,5 +285,3 @@ static const std::vector<test_case_t> tbs_calculator_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_SCHEDULER_SUPPORT_TBS_CALCULATOR_TEST_DATA_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_FILE_SINK_H
-#define SRSGNB_SUPPORT_FILE_SINK_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include <fstream>
@@ -46,5 +45,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_FILE_SINK_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_RAN_PDCCH_PDCCH_CANDIDATES_COMMON_TEST_DATA_H
-#define SRSGNB_UNITTESTS_RAN_PDCCH_PDCCH_CANDIDATES_COMMON_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsPDCCHCandidatesCommonUnittest.m"
@@ -247,5 +246,3 @@ static const std::vector<test_case_t> pdcch_candidates_common_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_RAN_PDCCH_PDCCH_CANDIDATES_COMMON_TEST_DATA_H

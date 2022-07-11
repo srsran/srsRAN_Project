@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_MODULATION_MODULATION_MAPPER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_MODULATION_MODULATION_MAPPER_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -36,5 +35,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_MODULATION_MODULATION_MAPPER_H

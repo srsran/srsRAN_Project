@@ -10,8 +10,7 @@
 
 /// \file
 /// \brief LDPC codeblock segmentation (transmit side).
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_TX_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_TX_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
@@ -44,5 +43,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_TX_H

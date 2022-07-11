@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 
@@ -28,5 +27,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_TEST_DOUBLES_H

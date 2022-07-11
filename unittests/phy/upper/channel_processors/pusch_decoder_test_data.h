@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsPUSCHDecoderUnittest.m"
@@ -200,5 +199,3 @@ static const std::vector<test_case_t> pusch_decoder_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_TEST_DATA_H

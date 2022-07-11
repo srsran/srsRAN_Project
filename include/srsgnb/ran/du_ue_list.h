@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_DU_UE_LIST_H
-#define SRSGNB_RAN_DU_UE_LIST_H
+#pragma once
 
 #include "du_types.h"
 #include "srsgnb/adt/slot_array.h"
@@ -21,5 +20,3 @@ template <typename T>
 using du_ue_list = slot_array<T, MAX_NOF_DU_UES>;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_DU_UE_LIST_H

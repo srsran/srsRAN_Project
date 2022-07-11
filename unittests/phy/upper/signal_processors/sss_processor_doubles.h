@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
@@ -38,5 +37,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_SSS_PROCESSOR_DOUBLES_H

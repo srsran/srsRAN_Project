@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_BAND_HELPER_H
-#define SRSGNB_RAN_BAND_HELPER_H
+#pragma once
 
 /// This header is currently used only by the MAC to compute extra SSB parameters (needed for scheduling) from those
 /// provided by DU.
@@ -98,5 +97,3 @@ double get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_poi
 } // namespace band_helper
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_BAND_HELPER_H

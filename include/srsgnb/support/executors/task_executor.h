@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_EXECUTORS_TASK_EXECUTOR_H
-#define SRSGNB_SUPPORT_EXECUTORS_TASK_EXECUTOR_H
+#pragma once
 
 #include "srsgnb/adt/unique_function.h"
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_EXECUTORS_TASK_EXECUTOR_H

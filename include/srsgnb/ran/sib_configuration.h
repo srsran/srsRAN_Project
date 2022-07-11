@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_SIB_CONFIGURATION_H
-#define SRSGNB_RAN_SIB_CONFIGURATION_H
+#pragma once
 
 namespace srsgnb {
 
@@ -24,5 +23,3 @@ inline unsigned sib1_rtx_periodicity_to_value(sib1_rtx_periodicity periodicity)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_SIB_CONFIGURATION_H

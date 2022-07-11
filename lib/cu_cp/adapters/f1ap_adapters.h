@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_ADAPTERS_F1AP_ADAPTERS_H
-#define SRSGNB_LIB_CU_CP_ADAPTERS_F1AP_ADAPTERS_H
+#pragma once
 
 #include "../ue_manager_interfaces.h"
 #include "srsgnb/cu_cp/cu_cp_manager.h"
@@ -88,5 +87,3 @@ private:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_CU_CP_ADAPTERS_F1AP_ADAPTERS_H

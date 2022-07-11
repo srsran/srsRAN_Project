@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_CONTEXT_H
-#define SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_CONTEXT_H
+#pragma once
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/du_manager/du_manager.h"
@@ -31,5 +30,3 @@ struct f1ap_du_context {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_DU_F1AP_DU_CONTEXT_H

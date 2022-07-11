@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PDCP_PDCP_PACKET_PROCEDURES_H
-#define SRSGNB_PDCP_PDCP_PACKET_PROCEDURES_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -20,5 +19,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PDCP_PDCP_PACKET_PROCEDURES_H

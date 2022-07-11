@@ -14,8 +14,7 @@
  *
  ******************************************************************************/
 
-#ifndef SRSGNB_ASN1_RRC_NR_SERVING_CELL_H
-#define SRSGNB_ASN1_RRC_NR_SERVING_CELL_H
+#pragma once
 
 #include "common.h"
 
@@ -7596,5 +7595,3 @@ struct serving_cell_cfg_s {
 
 } // namespace rrc_nr
 } // namespace asn1
-
-#endif // SRSGNB_ASN1_RRC_NR_SERVING_CELL_H

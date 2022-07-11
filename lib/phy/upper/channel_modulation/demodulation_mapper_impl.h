@@ -11,8 +11,7 @@
 /// \file
 /// \brief Demodulator implementation.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 
@@ -39,5 +38,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_IMPL_H

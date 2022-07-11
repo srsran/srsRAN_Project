@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_MAC_MAC_CTRL_TEST_DUMMIES_H
-#define SRSGNB_UNITTESTS_MAC_MAC_CTRL_TEST_DUMMIES_H
+#pragma once
 
 #include "../../lib/mac/mac_config_interfaces.h"
 #include "../../lib/mac/mac_ctrl/mac_scheduler_configurator.h"
@@ -227,5 +226,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_MAC_MAC_CTRL_TEST_DUMMIES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 
@@ -30,5 +29,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_TEST_DOUBLES_H

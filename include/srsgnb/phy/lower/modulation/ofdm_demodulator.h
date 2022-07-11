@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H
-#define SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -89,5 +88,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_H

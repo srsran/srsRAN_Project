@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SCHED_CONSTS_H
-#define SRSGNB_SCHEDULER_SCHED_CONSTS_H
+#pragma once
 
 #include "srsgnb/ran/resource_block.h"
 #include <cstddef>
@@ -37,5 +36,3 @@ const unsigned SIB1_PERIODICITY = 160;
 const unsigned MAX_NUM_BEAMS = 8;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_SCHED_CONSTS_H

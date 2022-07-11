@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_ORTHOGONAL_SEQUENCE_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_ORTHOGONAL_SEQUENCE_H
+#pragma once
 
 #include <array>
 #include "srsgnb/ran/pucch_mapping.h"
@@ -60,5 +59,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_ORTHOGONAL_SEQUENCE_H

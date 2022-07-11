@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_VRB_TO_PRB_MAPPER_H
-#define SRSGNB_PHY_UPPER_VRB_TO_PRB_MAPPER_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
@@ -141,5 +140,3 @@ public:
   }
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_VRB_TO_PRB_MAPPER_H

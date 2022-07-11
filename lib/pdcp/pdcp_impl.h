@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PDCP_PDCP_IMPL_H
-#define SRSGNB_LIB_PDCP_PDCP_IMPL_H
+#pragma once
 
 #include "srsgnb/pdcp/pdcp.h"
 #include "srsgnb/pdcp/pdcp_packet_procedures.h"
@@ -41,5 +40,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PDCP_PDCP_IMPL_H

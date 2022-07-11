@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_UPPER_PHY_H
-#define SRSGNB_PHY_UPPER_UPPER_PHY_H
+#pragma once
 
 namespace srsgnb {
 
@@ -51,5 +50,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_UPPER_PHY_H

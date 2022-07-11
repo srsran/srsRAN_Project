@@ -10,8 +10,7 @@
 
 /// \file
 /// \brief Codeblock metadata and related types and constants.
-#ifndef SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
-#define SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H
+#pragma once
 
 #include "log_likelihood_ratio.h"
 #include "srsgnb/adt/span.h"
@@ -111,5 +110,3 @@ struct segmenter_config {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CODEBLOCK_METADATA_H

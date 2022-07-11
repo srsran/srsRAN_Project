@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_RADIO_RADIO_NOTIFIER_SAMPLE_H
-#define SRSGNB_APPS_EXAMPLES_RADIO_RADIO_NOTIFIER_SAMPLE_H
+#pragma once
 
 #include "srsgnb/radio/radio_factory.h"
 
@@ -93,5 +92,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_APPS_EXAMPLES_RADIO_RADIO_NOTIFIER_SAMPLE_H

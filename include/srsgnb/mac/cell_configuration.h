@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_CELL_CONFIGURATION_H
-#define SRSGNB_MAC_CELL_CONFIGURATION_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/byte_buffer.h"
@@ -53,5 +52,3 @@ struct mac_cell_creation_request {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_CELL_CONFIGURATION_H

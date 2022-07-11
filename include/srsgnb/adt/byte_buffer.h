@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_BYTE_BUFFER_H
-#define SRSGNB_ADT_BYTE_BUFFER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
@@ -986,5 +985,3 @@ struct formatter<srsgnb::byte_buffer_slice> : public formatter<srsgnb::byte_buff
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_ADT_BYTE_BUFFER_H

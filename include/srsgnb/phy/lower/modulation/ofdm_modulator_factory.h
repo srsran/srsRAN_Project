@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_H
-#define SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/dft_processor_factory.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
@@ -43,5 +42,3 @@ std::unique_ptr<ofdm_modulator_factory>
 create_ofdm_modulator_factory(const ofdm_modulator_factory_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_MODULATION_OFDM_MODULATOR_FACTORY_H

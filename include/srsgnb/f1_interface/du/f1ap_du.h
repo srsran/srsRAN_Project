@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_F1_INTERFACE_DU_F1AP_DU_H
-#define SRSGNB_F1_INTERFACE_DU_F1AP_DU_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
@@ -160,5 +159,3 @@ public:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_F1_INTERFACE_DU_F1AP_DU_H

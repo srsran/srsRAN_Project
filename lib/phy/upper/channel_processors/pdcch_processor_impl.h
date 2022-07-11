@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_modulator.h"
@@ -71,4 +70,3 @@ public:
 std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_PROCESSOR_IMPL_H

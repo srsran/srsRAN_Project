@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H
-#define SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H
+#pragma once
 
 #include "srsgnb/support/srsran_assert.h"
 
@@ -55,5 +54,3 @@ private:
   /// Actual value.
   values value;
 };
-
-#endif // SRSGNB_RAN_PRACH_PRACH_SUBCARRIER_SPACING_H

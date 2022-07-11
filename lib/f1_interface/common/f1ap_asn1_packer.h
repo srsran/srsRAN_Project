@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_PACKER_H
-#define SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_PACKER_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
@@ -35,5 +34,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_PACKER_H

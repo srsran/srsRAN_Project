@@ -11,8 +11,7 @@
 /// \file
 /// \brief Short-block detector implementation.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/short/short_block_detector.h"
 
@@ -52,4 +51,3 @@ private:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_IMPL_H

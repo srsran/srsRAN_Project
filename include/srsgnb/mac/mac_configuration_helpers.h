@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_CONFIGURATION_HELPERS_H
-#define SRSGNB_MAC_MAC_CONFIGURATION_HELPERS_H
+#pragma once
 
 #include "srsgnb/mac/cell_configuration.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
@@ -16,5 +15,3 @@ make_scheduler_cell_configuration_request(const mac_cell_creation_request& reque
 sched_ue_creation_request_message make_scheduler_ue_creation_request(const mac_ue_create_request_message& request);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_CONFIGURATION_HELPERS_H

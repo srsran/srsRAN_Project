@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PRACH_PRACH_PREAMBLE_FORMAT_H
-#define SRSGNB_RAN_PRACH_PRACH_PREAMBLE_FORMAT_H
+#pragma once
 
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
 
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PRACH_PRACH_PREAMBLE_FORMAT_H

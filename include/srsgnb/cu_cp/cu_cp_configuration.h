@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_CU_CP_CONFIGURATION_H
-#define SRSGNB_CU_CP_CU_CP_CONFIGURATION_H
+#pragma once
 
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -25,5 +24,3 @@ struct cu_cp_configuration {
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_CU_CP_CU_CP_CONFIGURATION_H

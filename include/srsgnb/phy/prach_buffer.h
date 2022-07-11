@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_PRACH_BUFFER_H
-#define SRSGNB_PHY_PRACH_BUFFER_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 
@@ -40,5 +39,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_PRACH_BUFFER_H

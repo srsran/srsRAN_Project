@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_ASYNC_PROCEDURE_H
-#define SRSGNB_SUPPORT_ASYNC_ASYNC_PROCEDURE_H
+#pragma once
 
 #include "async_task.h"
 #include "coroutine.h"
@@ -128,5 +127,3 @@ template <typename R>
 using async_procedure = base_resumable_procedure<async_task<R> >;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_ASYNC_PROCEDURE_H

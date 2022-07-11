@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_INTRUSIVE_LIST_H
-#define SRSGNB_ADT_INTRUSIVE_LIST_H
+#pragma once
 
 #include <iterator>
 #include <type_traits>
@@ -242,5 +241,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_INTRUSIVE_LIST_H

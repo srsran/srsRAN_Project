@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_H
-#define SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_H
+#pragma once
 
 #include "ue_allocator.h"
 
@@ -36,5 +35,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_POLICY_H

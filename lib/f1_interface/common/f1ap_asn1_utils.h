@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_UTILS_H
-#define SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_UTILS_H
+#pragma once
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -129,5 +128,3 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::f1_ap_pdu_c& pdu)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_COMMON_F1AP_ASN1_UTILS_H

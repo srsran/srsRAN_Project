@@ -10,8 +10,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_BITMAP_UTILS_H
-#define SRSGNB_ADT_BITMAP_UTILS_H
+#pragma once
 
 #include "srsgnb/support/srsran_assert.h"
 
@@ -50,5 +49,3 @@ bool check_bitmap_bit(Integer bitmap, unsigned bit)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_BITMAP_UTILS_H

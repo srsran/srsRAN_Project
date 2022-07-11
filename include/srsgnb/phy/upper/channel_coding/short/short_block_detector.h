@@ -11,8 +11,7 @@
 /// \file
 /// \brief Detector interface for short blocks.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
@@ -43,5 +42,3 @@ public:
 
 std::unique_ptr<short_block_detector> create_short_block_detector();
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_H

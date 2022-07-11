@@ -11,8 +11,7 @@
 /// \file
 /// \brief LDPC codeblock segmentation declaration.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_IMPL_H
+#pragma once
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
@@ -136,5 +135,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_SEGMENTER_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_MODULATION_CHANNEL_MODULATION_FACTORIES_H
-#define SRSGNB_PHY_UPPER_CHANNEL_MODULATION_CHANNEL_MODULATION_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include <memory>
@@ -26,5 +25,3 @@ public:
 std::shared_ptr<modulation_mapper_factory> create_modulation_mapper_sw_factory();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_MODULATION_CHANNEL_MODULATION_FACTORIES_H

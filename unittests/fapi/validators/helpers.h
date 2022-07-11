@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H
-#define SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H
+#pragma once
 
 #include "srsgnb/fapi/messages.h"
 
@@ -151,5 +150,3 @@ srsgnb::fapi::ul_pusch_pdu build_valid_ul_pusch_pdu();
 srsgnb::fapi::ul_tti_request_message build_valid_ul_tti_request();
 
 } // namespace unittest
-
-#endif // SRSGNB_UNITTESTS_FAPI_VALIDATORS_HELPERS_H

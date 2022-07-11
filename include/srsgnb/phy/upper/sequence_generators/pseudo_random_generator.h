@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_H
-#define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/complex.h"
@@ -90,5 +89,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_PSEUDO_RANDOM_GENERATOR_H

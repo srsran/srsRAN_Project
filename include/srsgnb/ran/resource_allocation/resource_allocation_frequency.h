@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_RESOURCE_ALLOCATION_RESOURCE_ALLOCATION_FREQUENCY_H
-#define SRSGNB_RAN_RESOURCE_ALLOCATION_RESOURCE_ALLOCATION_FREQUENCY_H
+#pragma once
 
 namespace srsgnb {
 
@@ -97,5 +96,3 @@ struct ra_frequency_type1_special_configuration {
 unsigned ra_frequency_type1_special_get_riv(const ra_frequency_type1_special_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_RESOURCE_ALLOCATION_RESOURCE_ALLOCATION_FREQUENCY_H

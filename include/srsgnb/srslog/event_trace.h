@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_EVENT_TRACE_H
-#define SRSGNB_SRSLOG_EVENT_TRACE_H
+#pragma once
 
 #include <chrono>
 #include <string>
@@ -93,5 +92,3 @@ private:
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_EVENT_TRACE_H

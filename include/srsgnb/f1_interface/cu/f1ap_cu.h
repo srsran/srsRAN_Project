@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_F1_INTERFACE_CU_F1AP_CU_H
-#define SRSGNB_F1_INTERFACE_CU_F1AP_CU_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
@@ -195,5 +194,3 @@ public:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_F1_INTERFACE_CU_F1AP_CU_H

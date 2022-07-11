@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RLC_RLC_RX_UM_ENTITY_H
-#define SRSGNB_LIB_RLC_RLC_RX_UM_ENTITY_H
+#pragma once
 
 #include "rlc_rx_entity.h"
 #include "rlc_sdu_queue.h"
@@ -99,5 +98,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RLC_RLC_RX_UM_ENTITY_H

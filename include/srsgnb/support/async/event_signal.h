@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H
-#define SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H
+#pragma once
 
 #include "coroutine.h"
 #include "detail/event_impl.h"
@@ -109,5 +108,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_EVENT_SIGNAL_H

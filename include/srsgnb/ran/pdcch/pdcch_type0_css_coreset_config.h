@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_PDCCH_TYPE0_CSS_CORESET_CONFIG_H
-#define SRSGNB_RAN_PDCCH_PDCCH_TYPE0_CSS_CORESET_CONFIG_H
+#pragma once
 
 #include "srsgnb/ran/subcarrier_spacing.h"
 
@@ -55,5 +54,3 @@ pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(uint8_t         
                                                                 uint8_t            subcarrier_offset);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_PDCCH_TYPE0_CSS_CORESET_CONFIG_H

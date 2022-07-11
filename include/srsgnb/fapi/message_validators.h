@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_MESSAGE_VALIDATORS_H
-#define SRSGNB_FAPI_MESSAGE_VALIDATORS_H
+#pragma once
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/fapi/validator_report.h"
@@ -58,5 +57,3 @@ error_type<validator_report> validate_ul_tti_request(const ul_tti_request_messag
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_MESSAGE_VALIDATORS_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_ENCODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_ENCODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
@@ -46,5 +45,3 @@ public:
 std::unique_ptr<pdcch_encoder> create_pdcch_encoder();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDCCH_ENCODER_H

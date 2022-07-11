@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_DETAIL_PROMISE_DATA_H
-#define SRSGNB_SUPPORT_ASYNC_DETAIL_PROMISE_DATA_H
+#pragma once
 
 #include "srsgnb/support/srsran_assert.h"
 #include <memory>
@@ -68,5 +67,3 @@ struct promise_data<void, Base> : public Base {
 } // namespace detail
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_DETAIL_PROMISE_DATA_H

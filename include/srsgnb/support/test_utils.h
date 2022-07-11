@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_TEST_UTILS_H
-#define SRSGNB_SUPPORT_TEST_UTILS_H
+#pragma once
 
 #include "srsgnb_test.h"
 
@@ -222,5 +221,3 @@ private:
 #define TESTERROR(fmt, ...) CONDERROR(true, fmt, ##__VA_ARGS__)
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_TEST_UTILS_H

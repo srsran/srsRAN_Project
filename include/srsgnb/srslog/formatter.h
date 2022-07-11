@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_FORMATTER_H
-#define SRSGNB_SRSLOG_FORMATTER_H
+#pragma once
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/srslog/context.h"
@@ -151,5 +150,3 @@ private:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_FORMATTER_H

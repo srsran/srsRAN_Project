@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_LOGGER_H
-#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_LOGGER_H
+#pragma once
 
 #pragma GCC diagnostic push
 #ifdef __clang__
@@ -33,5 +32,3 @@
 #define Debug(message) UHD_LOG << message << std::endl
 #define Trace(message) UHD_LOG << message << std::endl
 #endif
-
-#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_LOGGER_H

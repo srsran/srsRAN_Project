@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTX_IMPL_H
-#define SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTX_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/srsvec/aligned_vec.h"
@@ -43,5 +42,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_FFTX_IMPL_H

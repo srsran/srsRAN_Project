@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_H
-#define SRSGNB_MAC_MAC_H
+#pragma once
 
 #include "srsgnb/mac/mac_cell_control_information_handler.h"
 #include "srsgnb/mac/mac_cell_manager.h"
@@ -38,5 +37,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_H

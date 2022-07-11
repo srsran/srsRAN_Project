@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsLDPCEncoderUnittest.m"
@@ -134,5 +133,3 @@ static const std::vector<test_case_t> ldpc_encoder_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_TEST_DATA_H

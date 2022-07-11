@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_FACTORY_H
-#define SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_FACTORY_H
+#pragma once
 
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include <memory>
@@ -41,5 +40,3 @@ std::unique_ptr<phy_fapi_adaptor_factory> create_phy_fapi_adaptor_factory(downli
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_FACTORY_H

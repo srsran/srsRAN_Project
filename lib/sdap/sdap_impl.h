@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SDAP_SDAP_IMPL_H
-#define SRSGNB_LIB_SDAP_SDAP_IMPL_H
+#pragma once
 
 #include "srsgnb/sdap/sdap.h"
 #include "srsgnb/sdap/sdap_packet_procedures.h"
@@ -41,5 +40,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SDAP_SDAP_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsShortBlockDetectorUnittest.m"
@@ -54,5 +53,3 @@ static const std::vector<test_case_t> short_block_detector_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_DETECTOR_TEST_DATA_H

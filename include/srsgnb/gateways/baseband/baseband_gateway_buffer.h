@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BUFFER_H
-#define SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BUFFER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_base.h"
@@ -97,5 +96,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_BUFFER_H

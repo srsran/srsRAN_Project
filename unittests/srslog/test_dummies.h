@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_SRSLOG_TEST_DUMMIES_H
-#define SRSGNB_UNITTESTS_SRSLOG_TEST_DUMMIES_H
+#pragma once
 
 #include "srsgnb/srslog/detail/log_backend.h"
 #include "srsgnb/srslog/shared_types.h"
@@ -76,5 +75,3 @@ public:
 };
 
 } // namespace test_dummies
-
-#endif // SRSGNB_UNITTESTS_SRSLOG_TEST_DUMMIES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -54,5 +53,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_MODULATOR_H

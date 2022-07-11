@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_IMPL_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_IMPL_H
+#pragma once
 
 #include "fapi_to_mac_translator.h"
 #include "mac_to_fapi_translator.h"
@@ -46,5 +45,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_IMPL_H

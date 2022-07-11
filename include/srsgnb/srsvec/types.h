@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_TYPES_H
-#define SRSGNB_SRSVEC_TYPES_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -28,5 +27,3 @@
  */
 
 #define srsgnb_srsvec_assert_size(X, Y) assert(X.size() == Y.size())
-
-#endif // SRSGNB_SRSVEC_TYPES_H

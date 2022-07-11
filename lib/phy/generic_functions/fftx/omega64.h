@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H
-#define SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H
+#pragma once
 #include <math.h>
 #include <stdlib.h>
 
@@ -112,5 +111,3 @@ static double fr(int m, int i, double r)
 #define MIN_FLT_FLT MIN_INT_INT
 
 //#pragma GCC diagnostic pop
-
-#endif // SRSGNB_LIB_PHY_GENERIC_FUNCTIONS_FFTX_OMEGA64_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_MATCHER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_MATCHER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
@@ -27,5 +26,3 @@ public:
   void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) override;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_MATCHER_IMPL_H

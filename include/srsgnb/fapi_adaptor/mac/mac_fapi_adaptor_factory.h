@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
-#define SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H
+#pragma once
 
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/mac_fapi_adaptor.h"
@@ -45,5 +44,3 @@ std::unique_ptr<mac_fapi_adaptor_factory> create_mac_fapi_adaptor_factory();
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_MAC_MAC_FAPI_ADAPTOR_FACTORY_H

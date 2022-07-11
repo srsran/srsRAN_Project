@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
@@ -163,5 +162,3 @@ std::shared_ptr<pusch_processor_factory>
 create_pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_CHANNEL_PROCESSOR_FACTORIES_H

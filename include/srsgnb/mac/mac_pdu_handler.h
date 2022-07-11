@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_PDU_HANDLER_H
-#define SRSGNB_MAC_MAC_PDU_HANDLER_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
@@ -61,5 +60,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_PDU_HANDLER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SDAP_SDAP_ENTITY_IMPL_H
-#define SRSGNB_LIB_SDAP_SDAP_ENTITY_IMPL_H
+#pragma once
 
 #include "srsgnb/sdap/sdap_entity.h"
 #include <cstdio>
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SDAP_SDAP_ENTITY_IMPL_H

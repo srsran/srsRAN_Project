@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
@@ -103,5 +102,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_H

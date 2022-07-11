@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_PROD_H
-#define SRSGNB_SRSVEC_PROD_H
+#pragma once
 
 #include "srsgnb/srsvec/types.h"
 
@@ -25,5 +24,3 @@ void prod_conj(span<const cf_t> x, span<const cf_t> y, span<cf_t> z);
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_PROD_H

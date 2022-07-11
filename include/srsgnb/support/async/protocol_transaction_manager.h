@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_PROTOCOL_TRANSACTION_MANAGER_H
-#define SRSGNB_SUPPORT_ASYNC_PROTOCOL_TRANSACTION_MANAGER_H
+#pragma once
 
 #include "manual_event.h"
 #include "srsgnb/adt/expected.h"
@@ -111,5 +110,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_PROTOCOL_TRANSACTION_MANAGER_H

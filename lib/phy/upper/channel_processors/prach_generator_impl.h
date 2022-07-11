@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
@@ -145,5 +144,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_IMPL_H

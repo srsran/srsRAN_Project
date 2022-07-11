@@ -11,8 +11,7 @@
 /// \file
 /// \brief PUSCH decoder interface declaration.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -81,5 +80,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_H

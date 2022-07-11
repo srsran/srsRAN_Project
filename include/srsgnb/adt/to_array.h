@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_ADT_TO_ARRAY_H
-#define SRSGNB_ADT_TO_ARRAY_H
+#pragma once
 
 #include <array>
 
@@ -36,5 +35,3 @@ constexpr std::array<std::remove_cv_t<T>, N> to_array(T(&&a)[N])
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_TO_ARRAY_H

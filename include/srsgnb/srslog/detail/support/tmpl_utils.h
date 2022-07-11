@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -83,5 +82,3 @@ struct is_byte_iterable<
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_TMPL_UTILS_H

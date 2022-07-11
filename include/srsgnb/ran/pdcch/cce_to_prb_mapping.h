@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_CCE_TO_PRB_MAPPING_H
-#define SRSGNB_RAN_PDCCH_CCE_TO_PRB_MAPPING_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
@@ -72,5 +71,3 @@ prb_index_list cce_to_prb_mapping_interleaved(unsigned                    N_bwp_
                                               unsigned                    cce_index);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_CCE_TO_PRB_MAPPING_H

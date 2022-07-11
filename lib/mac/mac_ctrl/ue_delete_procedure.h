@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_CTRL_UE_DELETE_PROCEDURE_H
-#define SRSGNB_LIB_MAC_MAC_CTRL_UE_DELETE_PROCEDURE_H
+#pragma once
 
 #include "../mac_config.h"
 #include "../mac_config_interfaces.h"
@@ -73,5 +72,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_CTRL_UE_DELETE_PROCEDURE_H

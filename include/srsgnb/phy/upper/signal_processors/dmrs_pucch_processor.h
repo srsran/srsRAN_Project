@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimate.h"
@@ -85,5 +84,3 @@ std::unique_ptr<dmrs_pucch_processor> create_dmrs_pucch_processor(const pucch_fo
                                                                   const pucch_orthogonal_sequence*    occ = nullptr);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_H

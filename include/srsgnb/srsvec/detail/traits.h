@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_DETAIL_TRAITS_H
-#define SRSGNB_SRSVEC_DETAIL_TRAITS_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 
@@ -85,5 +84,3 @@ struct is_span_compatible<T, std::enable_if_t<std::is_convertible<T, span<value_
 } // namespace detail
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_DETAIL_TRAITS_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H
-#define SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/span.h"
@@ -57,5 +56,3 @@ uint32_t buff_size_field_to_bytes(size_t buff_size_index, bsr_format format);
 ul_bsr_lcg_report make_sched_lcg_report(const lcg_bsr_report& ul_bsr_ce, bsr_format bsr_format);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_UL_UL_BSR_H

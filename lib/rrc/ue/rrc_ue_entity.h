@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RRC_UE_RRC_UE_ENTITY_H
-#define SRSGNB_LIB_RRC_UE_RRC_UE_ENTITY_H
+#pragma once
 
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_factory.h"
@@ -87,5 +86,3 @@ private:
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RRC_UE_RRC_UE_ENTITY_H

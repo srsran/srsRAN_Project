@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_CELL_SLOT_HANDLER_H
-#define SRSGNB_MAC_MAC_CELL_SLOT_HANDLER_H
+#pragma once
 
 #include "srsgnb/ran/slot_point.h"
 
@@ -15,5 +14,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_CELL_SLOT_HANDLER_H

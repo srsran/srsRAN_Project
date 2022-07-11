@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_SSB_H
-#define SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_SSB_H
+#pragma once
 
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
@@ -25,5 +24,3 @@ void convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_PHY_MESSAGES_SSB_H

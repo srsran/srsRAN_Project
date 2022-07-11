@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_EXCEPTION_HANDLER_H
-#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_EXCEPTION_HANDLER_H
+#pragma once
 
 #include "radio_uhd_logger.h"
 #include <boost/exception/diagnostic_information.hpp>
@@ -67,4 +66,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_EXCEPTION_HANDLER_H

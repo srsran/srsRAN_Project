@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_CU_F1AP_CU_IMPL_H
-#define SRSGNB_LIB_F1_INTERFACE_CU_F1AP_CU_IMPL_H
+#pragma once
 
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -97,5 +96,3 @@ private:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_CU_F1AP_CU_IMPL_H

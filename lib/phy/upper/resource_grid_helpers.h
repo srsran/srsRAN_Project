@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_RESOURCE_GRID_HELPERS_H
-#define SRSGNB_LIB_PHY_UPPER_RESOURCE_GRID_HELPERS_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
@@ -84,5 +83,3 @@ inline static_vector<bool, MAX_RB * NRE> get_rg_subc_mask(const bounded_bitset<M
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_RESOURCE_GRID_HELPERS_H

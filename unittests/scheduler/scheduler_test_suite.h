@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H
-#define SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H
+#pragma once
 
 #include "lib/scheduler/cell/cell_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
@@ -39,5 +38,3 @@ void test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
 void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_SCHEDULER_SCHEDULER_TEST_SUITE_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_SSB_H
-#define SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_SSB_H
+#pragma once
 
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/mac/mac_cell_result.h"
@@ -31,5 +30,3 @@ void convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder, const srsgnb::dl
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_SSB_H

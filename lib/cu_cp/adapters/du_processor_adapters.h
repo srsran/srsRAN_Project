@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H
-#define SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H
+#pragma once
 
 #include "srsgnb/rrc/rrc.h"
 
@@ -36,5 +35,3 @@ private:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H

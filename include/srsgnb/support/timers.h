@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_TIMERS_H
-#define SRSGNB_SUPPORT_TIMERS_H
+#pragma once
 
 #include "srsgnb/adt/intrusive_list.h"
 #include "srsgnb/adt/unique_function.h"
@@ -336,5 +335,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_TIMERS_H

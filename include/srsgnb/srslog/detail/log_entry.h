@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_H
-#define SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_H
+#pragma once
 
 #include "srsgnb/srslog/detail/log_entry_metadata.h"
 #include "srsgnb/srslog/detail/support/thread_utils.h"
@@ -40,5 +39,3 @@ struct log_entry {
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_LOG_ENTRY_H

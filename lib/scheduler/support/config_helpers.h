@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_CONFIG_HELPERS_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_CONFIG_HELPERS_H
+#pragma once
 
 #include "srsgnb/scheduler/bwp_configuration.h"
 
@@ -63,5 +62,3 @@ inline unsigned get_coreset_nof_cces(const coreset_configuration& cs_cfg)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_CONFIG_HELPERS_H

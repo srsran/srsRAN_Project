@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_CU_CP_H
-#define SRSGNB_LIB_CU_CP_CU_CP_H
+#pragma once
 
 #include "adapters/f1ap_adapters.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
@@ -49,5 +48,3 @@ private:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_CU_CP_CU_CP_H

@@ -1,5 +1,4 @@
-#ifndef SRSGNB_F1_INTERFACE_CU_F1U_CU_H
-#define SRSGNB_F1_INTERFACE_CU_F1U_CU_H
+#pragma once
 
 #include "srsgnb/ran/nr_up_protocol.h"
 
@@ -26,5 +25,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_F1_INTERFACE_CU_F1U_CU_H

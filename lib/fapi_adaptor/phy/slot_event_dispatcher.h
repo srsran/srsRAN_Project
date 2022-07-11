@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_PHY_SLOT_EVENT_DISPATCHER_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_PHY_SLOT_EVENT_DISPATCHER_H
+#pragma once
 
 #include "phy_to_fapi_translator.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
@@ -36,5 +35,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_PHY_SLOT_EVENT_DISPATCHER_H

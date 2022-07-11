@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H
-#define SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H
+#pragma once
 
 #include "srsgnb/phy/upper/rx_softbuffer.h"
 #include "srsgnb/ran/slot_point.h"
@@ -79,5 +78,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_RX_SOFTBUFFER_POOL_H

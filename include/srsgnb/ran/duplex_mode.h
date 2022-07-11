@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_DUPLEX_MODE_H
-#define SRSGNB_RAN_DUPLEX_MODE_H
+#pragma once
 
 namespace srsgnb {
 
@@ -27,5 +26,3 @@ enum class duplex_mode {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_DUPLEX_MODE_H

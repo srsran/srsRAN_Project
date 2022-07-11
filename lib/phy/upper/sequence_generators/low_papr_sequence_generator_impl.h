@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include <memory>
@@ -91,5 +90,3 @@ public:
 std::unique_ptr<low_papr_sequence_generator> create_low_papr_sequence_generator();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_IMPL_H

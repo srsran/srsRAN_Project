@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_ADT_CIRCULAR_MAP_H
-#define SRSGNB_ADT_CIRCULAR_MAP_H
+#pragma once
 
 #include "detail/type_storage.h"
 #include "expected.h"
@@ -306,5 +305,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_CIRCULAR_MAP_H

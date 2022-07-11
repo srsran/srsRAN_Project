@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H
-#define SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H
+#pragma once
 
 #include "srsgnb/gateways/network_gateway.h"
 #include "srsgnb/srslog/srslog.h"
@@ -28,5 +27,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_GATEWAYS_SCTP_NETWORK_GATEWAY_H

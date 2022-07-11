@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_MAC_SLOT_EVENT_DISPATCHER_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_MAC_SLOT_EVENT_DISPATCHER_H
+#pragma once
 
 #include "srsgnb/mac/mac_cell_slot_handler.h"
 #include "srsgnb/ran/slot_point.h"
@@ -42,5 +41,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_MAC_SLOT_EVENT_DISPATCHER_H

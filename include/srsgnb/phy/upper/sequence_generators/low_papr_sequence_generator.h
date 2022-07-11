@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_H
-#define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -32,5 +31,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_GENERATOR_H

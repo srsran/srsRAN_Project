@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -66,5 +65,3 @@ public:
   virtual span<const cf_t> generate(const configuration& config) = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_CELL_MANAGER_H
-#define SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_CELL_MANAGER_H
+#pragma once
 
 #include "../common_scheduling/ra_scheduler.h"
 #include "../common_scheduling/sib_scheduler.h"
@@ -88,5 +87,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_CELL_SCHEDULER_CELL_MANAGER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_CARRIER_CONFIGURATION_H
-#define SRSGNB_RAN_CARRIER_CONFIGURATION_H
+#pragma once
 
 #include <cstdint>
 
@@ -27,5 +26,3 @@ struct carrier_configuration {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_CARRIER_CONFIGURATION_H

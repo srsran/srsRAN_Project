@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_DU_HIGH_DU_L2_DL_EXECUTOR_MAPPER_H
-#define SRSGNB_DU_HIGH_DU_L2_DL_EXECUTOR_MAPPER_H
+#pragma once
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -17,5 +16,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_DU_HIGH_DU_L2_DL_EXECUTOR_MAPPER_H

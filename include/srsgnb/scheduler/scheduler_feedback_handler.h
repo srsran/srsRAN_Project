@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SCHEDULER_FEEDBACK_HANDLER_H
-#define SRSGNB_SCHEDULER_SCHEDULER_FEEDBACK_HANDLER_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
@@ -55,5 +54,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_SCHEDULER_FEEDBACK_HANDLER_H

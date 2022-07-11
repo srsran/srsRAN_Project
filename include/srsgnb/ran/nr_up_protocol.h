@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_NR_UP_PROTOCOL_H
-#define SRSGNB_RAN_NR_UP_PROTOCOL_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -28,5 +27,3 @@ struct nr_up_dl_message {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_NR_UP_PROTOCOL_H

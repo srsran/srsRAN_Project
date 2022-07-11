@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
@@ -82,5 +81,3 @@ public:
 std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_IMPL_H

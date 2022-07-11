@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_dematcher.h"
@@ -84,5 +83,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PUSCH_DECODER_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_UPPER_PHY_FACTORY_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_UPPER_PHY_FACTORY_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/upper_phy_factory.h"
 
@@ -22,5 +21,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_UPPER_PHY_FACTORY_IMPL_H

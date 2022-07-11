@@ -1,5 +1,4 @@
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsCSIRSUnittest.m"
@@ -207,5 +206,3 @@ static const std::vector<test_case_t> csi_rs_processor_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_CSI_RS_PROCESSOR_TEST_DATA_H

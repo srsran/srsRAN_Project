@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PDCP_PDCP_FACTORY_H
-#define SRSGNB_PDCP_PDCP_FACTORY_H
+#pragma once
 
 #include "srsgnb/pdcp/pdcp.h"
 #include <memory>
@@ -14,5 +13,3 @@ namespace srsgnb {
 std::unique_ptr<pdcp_pdu_handler> create_pdcp(pdcp_sdu_rx_notifier& listener);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PDCP_PDCP_FACTORY_H

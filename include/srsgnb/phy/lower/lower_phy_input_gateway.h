@@ -7,8 +7,7 @@
  * the distribution.
  *
  */
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_INPUT_GATEWAY_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_INPUT_GATEWAY_H
+#pragma once
 
 #include "srsgnb/phy/prach_buffer.h"
 #include "srsgnb/phy/prach_buffer_context.h"
@@ -50,5 +49,3 @@ public:
   virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_INPUT_GATEWAY_H

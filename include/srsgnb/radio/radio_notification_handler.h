@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
-#define SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H
+#pragma once
 
 #include "srsgnb/radio/radio_base.h"
 
@@ -131,5 +130,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RADIO_RADIO_NOTIFICATION_HANDLER_H

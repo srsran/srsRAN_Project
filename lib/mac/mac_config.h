@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_CONFIG_H
-#define SRSGNB_LIB_MAC_MAC_CONFIG_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
@@ -42,5 +41,3 @@ struct mac_common_config_t {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_CONFIG_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_RNTI_H
-#define SRSGNB_RAN_RNTI_H
+#pragma once
 
 #include <cstdint>
 #include <type_traits>
@@ -42,5 +41,3 @@ constexpr rnti_t to_rnti(std::underlying_type_t<rnti_t> number)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_RNTI_H

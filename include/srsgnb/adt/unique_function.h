@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_UNIQUE_FUNCTION_H
-#define SRSGNB_ADT_UNIQUE_FUNCTION_H
+#pragma once
 
 #include "srsgnb/adt/detail/type_storage.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -188,5 +187,3 @@ constexpr size_t default_unique_task_buffer_size = 64;
 using unique_task = unique_function<void(), default_unique_task_buffer_size>;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_UNIQUE_FUNCTION_H

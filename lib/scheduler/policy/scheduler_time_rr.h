@@ -7,8 +7,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_TIME_RR_H
-#define SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_TIME_RR_H
+#pragma once
 
 #include "scheduler_policy.h"
 
@@ -26,5 +25,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_POLICY_SCHEDULER_TIME_RR_H

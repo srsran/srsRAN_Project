@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H
-#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
@@ -206,5 +205,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_HARQ_PROCESS_H

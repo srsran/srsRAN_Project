@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_DMRS_H
-#define SRSGNB_SCHEDULER_DMRS_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/optional.h"
@@ -62,5 +61,3 @@ struct dmrs_downlink_config {
 using dmrs_symbol_mask = bounded_bitset<14>;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_DMRS_H

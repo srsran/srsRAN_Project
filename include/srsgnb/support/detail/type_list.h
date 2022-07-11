@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_DETAIL_TYPE_LIST_H
-#define SRSGNB_SUPPORT_DETAIL_TYPE_LIST_H
+#pragma once
 
 #include <type_traits>
 
@@ -65,5 +64,3 @@ using get_type_from_index_t = typename get_type_from_index<Index, Types...>::typ
 } // namespace detail
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_DETAIL_TYPE_LIST_H

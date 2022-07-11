@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_NR_CGI_H
-#define SRSGNB_RAN_NR_CGI_H
+#pragma once
 
 #include <string>
 
@@ -31,5 +30,3 @@ struct nr_cell_global_identity {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_NR_CGI_H

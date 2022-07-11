@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_SESSION_H
-#define SRSGNB_RADIO_RADIO_SESSION_H
+#pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/radio/radio_configuration.h"
@@ -37,4 +36,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_RADIO_RADIO_SESSION_H

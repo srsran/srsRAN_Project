@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
-#define SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H
+#pragma once
 
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi/slot_message_notifier.h"
@@ -44,5 +43,3 @@ public:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_H

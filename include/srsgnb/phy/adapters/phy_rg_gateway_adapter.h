@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PHY_ADAPTERS_PHY_RG_GATEWAY_ADAPTER_H
-#define SRSGNB_PHY_ADAPTERS_PHY_RG_GATEWAY_ADAPTER_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
@@ -25,5 +24,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_ADAPTERS_PHY_RG_GATEWAY_ADAPTER_H

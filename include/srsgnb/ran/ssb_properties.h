@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_SSB_PROPERTIES_H
-#define SRSGNB_RAN_SSB_PROPERTIES_H
+#pragma once
 
 #include "srsgnb/ran/subcarrier_spacing.h"
 
@@ -179,5 +178,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_SSB_PROPERTIES_H

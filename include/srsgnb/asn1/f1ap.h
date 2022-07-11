@@ -14,8 +14,7 @@
  *
  ******************************************************************************/
 
-#ifndef SRSGNB_ASN1_F1AP_H
-#define SRSGNB_ASN1_F1AP_H
+#pragma once
 
 #include "asn1_utils.h"
 #include <cstdio>
@@ -11845,5 +11844,3 @@ extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ue_inactivity_notif
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::ulrrc_msg_transfer_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_request_ies_o>;
 extern template struct asn1::protocol_ie_field_s<asn1::f1ap::write_replace_warning_resp_ies_o>;
-
-#endif // SRSGNB_ASN1_F1AP_H

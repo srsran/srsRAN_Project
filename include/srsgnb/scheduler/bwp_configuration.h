@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_BWP_CONFIGURATION_H
-#define SRSGNB_SCHEDULER_BWP_CONFIGURATION_H
+#pragma once
 
 #include "dmrs.h"
 #include "prb_grant.h"
@@ -224,5 +223,3 @@ struct ul_config_common {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_BWP_CONFIGURATION_H

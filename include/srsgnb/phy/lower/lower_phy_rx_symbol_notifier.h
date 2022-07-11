@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_RX_SYMBOL_NOTIFIER_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_RX_SYMBOL_NOTIFIER_H
+#pragma once
 
 #include "srsgnb/phy/prach_buffer.h"
 #include "srsgnb/phy/prach_buffer_context.h"
@@ -48,5 +47,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_RX_SYMBOL_NOTIFIER_H

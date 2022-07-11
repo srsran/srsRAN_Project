@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsPUCCHdmrsUnittest.m"
@@ -50,5 +49,3 @@ static const std::vector<test_case_t> dmrs_pucch_processor_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUCCH_PROCESSOR_TEST_DATA_H

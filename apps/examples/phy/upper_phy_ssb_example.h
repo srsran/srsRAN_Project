@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_PHY_UPPER_PHY_SSB_EXAMPLE_H
-#define SRSGNB_APPS_EXAMPLES_PHY_UPPER_PHY_SSB_EXAMPLE_H
+#pragma once
 
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
@@ -80,4 +79,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_APPS_EXAMPLES_PHY_UPPER_PHY_SSB_EXAMPLE_H

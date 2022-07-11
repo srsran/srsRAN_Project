@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsgnb/srsvec/aligned_vec.h"
@@ -34,4 +33,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_IMPL_H

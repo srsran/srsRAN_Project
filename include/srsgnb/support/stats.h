@@ -11,8 +11,7 @@
 /// \file
 /// \brief Simple utility to collect basic sample statistics.
 
-#ifndef SRSGNB_SUPPORT_STATS_H
-#define SRSGNB_SUPPORT_STATS_H
+#pragma once
 
 #include <algorithm>
 #include <cmath>
@@ -249,5 +248,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_STATS_H

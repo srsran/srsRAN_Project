@@ -1,5 +1,4 @@
-#ifndef SRSGNB_GATEWAYS_NETWORK_GATEWAY_H
-#define SRSGNB_GATEWAYS_NETWORK_GATEWAY_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -40,5 +39,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_GATEWAYS_NETWORK_GATEWAY_H

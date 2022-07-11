@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SIGNAL_PROCESSOR_FACTORIES_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SIGNAL_PROCESSOR_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
@@ -33,5 +32,3 @@ struct pusch_estimator_generic_configuration {
 std::unique_ptr<dmrs_pusch_estimator> create_pusch_estimator_generic(pusch_estimator_generic_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_SIGNAL_PROCESSOR_FACTORIES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/downlink_processor_factory.h"
 
@@ -39,5 +38,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_IMPL_H

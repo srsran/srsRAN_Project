@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RLC_RLC_BASE_ENTITY_H
-#define SRSGNB_LIB_RLC_RLC_BASE_ENTITY_H
+#pragma once
 
 #include "rlc_rx_entity.h"
 #include "rlc_tx_entity.h"
@@ -57,5 +56,3 @@ protected:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RLC_RLC_BASE_ENTITY_H

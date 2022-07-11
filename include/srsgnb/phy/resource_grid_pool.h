@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_RESOURCE_GRID_POOL_H
-#define SRSGNB_PHY_RESOURCE_GRID_POOL_H
+#pragma once
 
 #include "resource_grid.h"
 #include "resource_grid_context.h"
@@ -47,5 +46,3 @@ struct resource_grid_pool_config {
 std::unique_ptr<resource_grid_pool> create_resource_grid_pool(resource_grid_pool_config& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_RESOURCE_GRID_POOL_H

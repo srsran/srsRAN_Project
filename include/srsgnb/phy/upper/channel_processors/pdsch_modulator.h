@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
@@ -89,5 +88,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_H

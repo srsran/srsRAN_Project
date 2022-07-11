@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H
+#pragma once
 
 #include "srsgnb/ran/slot_point.h"
 
@@ -34,5 +33,3 @@ public:
   virtual void on_ul_full_slot_boundary(const lower_phy_timing_context& context) = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_TIMING_NOTIFIER_H

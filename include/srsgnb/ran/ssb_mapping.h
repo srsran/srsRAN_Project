@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_SSB_MAPPING_H
-#define SRSGNB_RAN_SSB_MAPPING_H
+#pragma once
 
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/frequency_range.h"
@@ -168,5 +167,3 @@ ssb_pattern_case ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arf
 uint8_t ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_SSB_MAPPING_H

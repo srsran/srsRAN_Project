@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_RESOURCE_GRID_H
-#define SRSGNB_PHY_RESOURCE_GRID_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -162,5 +161,3 @@ public:
 std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_RESOURCE_GRID_H

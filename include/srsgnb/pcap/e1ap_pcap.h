@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PCAP_E1AP_PCAP_H
-#define SRSGNB_PCAP_E1AP_PCAP_H
+#pragma once
 
 #include "pcap.h"
 
@@ -31,6 +30,4 @@ public:
   void write_pdu(srsgnb::const_span<uint8_t> pdu);
 };
 
-} // namespace srsran
-
-#endif // SRSGNB_PCAP_E1AP_PCAP_H
+} // namespace srsgnb

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_VALIDATORS_UL_PRACH_PDU_H
-#define SRSGNB_LIB_FAPI_VALIDATORS_UL_PRACH_PDU_H
+#pragma once
 
 namespace srsgnb {
 namespace fapi {
@@ -22,5 +21,3 @@ bool validate_ul_prach_pdu(const ul_prach_pdu& pdu, validator_report& report);
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_VALIDATORS_UL_PRACH_PDU_H

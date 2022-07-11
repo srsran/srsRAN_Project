@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SRSLOG_SINKS_STREAM_SINK_H
-#define SRSGNB_LIB_SRSLOG_SINKS_STREAM_SINK_H
+#pragma once
 
 #include "srsgnb/srslog/sink.h"
 
@@ -49,5 +48,3 @@ private:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_LIB_SRSLOG_SINKS_STREAM_SINK_H

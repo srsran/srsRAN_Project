@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_PROCEDURES_INITIAL_DU_SETUP_PROCEDURE_H
-#define SRSGNB_LIB_DU_MANAGER_PROCEDURES_INITIAL_DU_SETUP_PROCEDURE_H
+#pragma once
 
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/support/async/async_task.h"
@@ -39,5 +38,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_PROCEDURES_INITIAL_DU_SETUP_PROCEDURE_H

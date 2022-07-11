@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_RLC_CONFIG_H
-#define SRSGNB_RLC_RLC_CONFIG_H
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -170,5 +169,3 @@ struct rlc_config {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RLC_RLC_CONFIG_H

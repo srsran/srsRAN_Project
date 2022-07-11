@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_UE_CONTEXT_H
-#define SRSGNB_CU_CP_UE_CONTEXT_H
+#pragma once
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -49,5 +48,3 @@ struct ue_context {
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_CU_CP_UE_CONTEXT_H

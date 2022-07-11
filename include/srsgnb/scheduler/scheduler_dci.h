@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SCHEDULER_DCI_H
-#define SRSGNB_SCHEDULER_SCHEDULER_DCI_H
+#pragma once
 
 #include "prb_grant.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
@@ -87,5 +86,3 @@ struct dci_ul_info {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_SCHEDULER_DCI_H

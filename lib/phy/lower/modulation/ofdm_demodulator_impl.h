@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_IMPL_H
-#define SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_IMPL_H
+#pragma once
 
 #include "phase_compensation_lut.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
@@ -102,5 +101,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_IMPL_H

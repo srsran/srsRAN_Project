@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_DMRS_HELPERS_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_DMRS_HELPERS_H
+#pragma once
 
 #include "../cell/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
@@ -79,5 +78,3 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_DMRS_HELPERS_H

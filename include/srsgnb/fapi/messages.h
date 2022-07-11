@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_MESSAGES_H
-#define SRSGNB_FAPI_MESSAGES_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/ldpc_base_graph.h"
@@ -2215,5 +2214,3 @@ enum class tlv_tags : uint16_t {
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_MESSAGES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_FREQUENCY_RANGE_H
-#define SRSGNB_RAN_FREQUENCY_RANGE_H
+#pragma once
 
 namespace srsgnb {
 
@@ -22,5 +21,3 @@ enum class frequency_range {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_FREQUENCY_RANGE_H

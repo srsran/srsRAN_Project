@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SDAP_SDAP_ENTITY_H
-#define SRSGNB_SDAP_SDAP_ENTITY_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SDAP_SDAP_ENTITY_H

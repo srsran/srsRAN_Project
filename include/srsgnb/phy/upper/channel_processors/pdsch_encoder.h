@@ -14,8 +14,7 @@
 /// PDSCH encoder black-box interface, with a single method that takes a transport block as input and returns a
 /// codeword.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -44,5 +43,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_H

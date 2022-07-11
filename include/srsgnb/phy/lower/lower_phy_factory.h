@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_FACTORY_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_FACTORY_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
@@ -32,4 +31,3 @@ struct lower_phy_factory_generic_configuration {
 std::unique_ptr<lower_phy_factory> create_lower_phy_factory_generic(lower_phy_factory_generic_configuration& config);
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_FACTORY_H

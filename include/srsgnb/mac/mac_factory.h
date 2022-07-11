@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_FACTORY_H
-#define SRSGNB_MAC_MAC_FACTORY_H
+#pragma once
 
 #include "mac.h"
 #include "mac_cell_result.h"
@@ -17,5 +16,3 @@ std::unique_ptr<mac_interface> create_mac(mac_ul_ccch_notifier&     event_notifi
                                           mac_result_notifier&      phy_notifier);
 
 }
-
-#endif // SRSGNB_MAC_MAC_FACTORY_H

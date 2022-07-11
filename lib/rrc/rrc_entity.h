@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RRC_RRC_ENTITY_H
-#define SRSGNB_LIB_RRC_RRC_ENTITY_H
+#pragma once
 
 #include "srsgnb/rrc/rrc_config.h"
 #include "srsgnb/rrc/rrc_entity_interface.h"
@@ -46,5 +45,3 @@ private:
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RRC_RRC_ENTITY_H

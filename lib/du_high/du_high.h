@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_HIGH_DU_HIGH_H
-#define SRSGNB_LIB_DU_HIGH_DU_HIGH_H
+#pragma once
 
 #include "adapters.h"
 #include "srsgnb/du_high/du_high_configuration.h"
@@ -56,5 +55,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_HIGH_DU_HIGH_H

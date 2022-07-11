@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_DCI_PACKING_H
-#define SRSGNB_RAN_PDCCH_DCI_PACKING_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
@@ -114,5 +113,3 @@ struct dci_1_0_ra_rnti_configuration {
 dci_payload dci_1_0_ra_rnti_pack(const dci_1_0_ra_rnti_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_DCI_PACKING_H

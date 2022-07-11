@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_PRB_GRANT_H
-#define SRSGNB_SCHEDULER_PRB_GRANT_H
+#pragma once
 
 #include "resource_block_group.h"
 #include "srsgnb/adt/bounded_bitset.h"
@@ -153,5 +152,3 @@ inline prb_bitmap& operator|=(prb_bitmap& prb_bitmap, const prb_interval& grant)
 prb_bitmap convert_rbgs_to_prbs(const rbg_bitmap& rbgs, crb_interval bwp_rbs, nominal_rbg_size P);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_PRB_GRANT_H

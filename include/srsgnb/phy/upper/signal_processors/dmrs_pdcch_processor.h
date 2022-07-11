@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
@@ -56,5 +55,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PDCCH_PROCESSOR_H

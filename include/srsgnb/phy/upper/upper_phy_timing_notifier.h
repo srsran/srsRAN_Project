@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_NOTIFIER_H
-#define SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_NOTIFIER_H
+#pragma once
 
 #include "srsgnb/ran/slot_point.h"
 
@@ -27,5 +26,3 @@ public:
   virtual void on_tti_boundary(slot_point slot) = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_NOTIFIER_H

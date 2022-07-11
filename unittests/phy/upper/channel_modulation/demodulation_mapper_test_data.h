@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsDemodulationMapperUnittest.m"
@@ -45,5 +44,3 @@ static const std::vector<test_case_t> demodulation_mapper_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_TEST_DATA_H

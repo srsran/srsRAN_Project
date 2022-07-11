@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_FRAME_TYPES_H
-#define SRSGNB_RAN_FRAME_TYPES_H
+#pragma once
 
 #include <cstddef>
 
@@ -20,5 +19,3 @@ const unsigned NOF_OFDM_SYM_PER_SLOT_NORMAL_CP   = 14;
 const unsigned NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP = 12;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_FRAME_TYPES_H

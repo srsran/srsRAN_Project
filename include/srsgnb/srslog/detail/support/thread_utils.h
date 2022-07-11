@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_THREAD_UTILS_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_THREAD_UTILS_H
+#pragma once
 
 #include <pthread.h>
 
@@ -165,5 +164,3 @@ public:
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_THREAD_UTILS_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_ADAPTERS_MAC_ADAPTERS_H
-#define SRSGNB_LIB_DU_MANAGER_ADAPTERS_MAC_ADAPTERS_H
+#pragma once
 
 #include "srsgnb/mac/mac_sdu_handler.h"
 #include "srsgnb/rlc/rlc.h"
@@ -41,5 +40,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_ADAPTERS_MAC_ADAPTERS_H

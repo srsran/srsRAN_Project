@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H
-#define SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H
+#pragma once
 
 #include <cstdio>
 
@@ -57,5 +56,3 @@
       return false;                                                                                                    \
     }                                                                                                                  \
   } while (0)
-
-#endif // SRSGNB_UNITTESTS_SRSLOG_TESTING_HELPERS_H

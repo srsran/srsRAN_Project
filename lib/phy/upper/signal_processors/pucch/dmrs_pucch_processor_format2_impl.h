@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT2_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT2_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"
@@ -69,5 +68,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT2_IMPL_H

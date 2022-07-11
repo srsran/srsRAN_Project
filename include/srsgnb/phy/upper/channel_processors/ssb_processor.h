@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
@@ -67,5 +66,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_PROCESSORS_SSB_PROCESSOR_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SRSLOG_SINKS_BUFFERED_FILE_SINK_H
-#define SRSGNB_LIB_SRSLOG_SINKS_BUFFERED_FILE_SINK_H
+#pragma once
 
 #include "file_utils.h"
 #include "srsgnb/srslog/sink.h"
@@ -83,5 +82,3 @@ private:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_LIB_SRSLOG_SINKS_BUFFERED_FILE_SINK_H

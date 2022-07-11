@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_EVENT_LIST_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_EVENT_LIST_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include <mutex>
@@ -62,5 +61,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_SLOT_EVENT_LIST_H

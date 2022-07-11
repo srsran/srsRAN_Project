@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_DU_DU_CELL_CONFIG_H
-#define SRSGNB_DU_DU_CELL_CONFIG_H
+#pragma once
 
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/pci.h"
@@ -52,5 +51,3 @@ struct du_cell_config {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_DU_DU_CELL_CONFIG_H

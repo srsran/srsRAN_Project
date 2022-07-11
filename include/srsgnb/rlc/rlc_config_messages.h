@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_RLC_CONFIG_MESSAGES_H
-#define SRSGNB_RLC_RLC_CONFIG_MESSAGES_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/du_types.h"
@@ -81,5 +80,3 @@ struct rlc_ue_reestablishment_response_message {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RLC_RLC_CONFIG_MESSAGES_H

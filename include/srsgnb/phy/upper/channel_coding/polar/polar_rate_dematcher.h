@@ -11,8 +11,7 @@
 /// \file
 /// \brief Polar code rate dematching.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
@@ -44,5 +43,3 @@ public:
 std::unique_ptr<polar_rate_dematcher> create_polar_rate_dematcher();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_H

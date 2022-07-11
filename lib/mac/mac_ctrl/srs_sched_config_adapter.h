@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_CTRL_SRS_SCHED_CONFIG_ADAPTER_H
-#define SRSGNB_LIB_MAC_MAC_CTRL_SRS_SCHED_CONFIG_ADAPTER_H
+#pragma once
 
 #include "mac_scheduler_configurator.h"
 #include "sched_config_helpers.h"
@@ -131,5 +130,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_CTRL_SRS_SCHED_CONFIG_ADAPTER_H

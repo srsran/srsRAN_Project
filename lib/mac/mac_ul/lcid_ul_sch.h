@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_UL_LCID_UL_SCH_H
-#define SRSGNB_LIB_MAC_MAC_UL_LCID_UL_SCH_H
+#pragma once
 
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
@@ -144,5 +143,3 @@ struct formatter<srsgnb::lcid_ul_sch_t> : public formatter<uint32_t> {
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_LIB_MAC_MAC_UL_LCID_UL_SCH_H

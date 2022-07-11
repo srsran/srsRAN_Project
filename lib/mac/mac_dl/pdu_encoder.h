@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_DL_PDU_ENCODER_H
-#define SRSGNB_LIB_MAC_MAC_DL_PDU_ENCODER_H
+#pragma once
 
 #include "srsgnb/mac/mac_cell_manager.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
@@ -60,5 +59,3 @@ inline void encode_rar_pdu(const mac_cell_creation_request& cell_cfg, const rar_
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_DL_PDU_ENCODER_H

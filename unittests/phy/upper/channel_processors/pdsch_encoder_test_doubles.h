@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
 #include "srsgnb/srsvec/copy.h"
@@ -44,5 +43,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_TEST_DOUBLES_H

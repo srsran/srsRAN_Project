@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_UE_MANAGER_INTERFACES_H
-#define SRSGNB_LIB_CU_CP_UE_MANAGER_INTERFACES_H
+#pragma once
 
 #include "du_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
@@ -39,5 +38,3 @@ public:
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_CU_CP_UE_MANAGER_INTERFACES_H

@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_ADAPTERS_PHY_RX_SYMBOL_ADAPTER_H
-#define SRSGNB_PHY_ADAPTERS_PHY_RX_SYMBOL_ADAPTER_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -48,5 +47,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_ADAPTERS_PHY_RX_SYMBOL_ADAPTER_H

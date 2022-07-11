@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_FILE_VECTOR_H
-#define SRSGNB_SUPPORT_FILE_VECTOR_H
+#pragma once
 
 #include <fstream>
 #include <vector>
@@ -44,5 +43,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_FILE_VECTOR_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_CONFIGURATION_H
-#define SRSGNB_RADIO_RADIO_CONFIGURATION_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/radio/radio_constants.h"
@@ -107,5 +106,3 @@ struct radio {
 
 } // namespace radio_configuration
 } // namespace srsgnb
-
-#endif // SRSGNB_RADIO_RADIO_CONFIGURATION_H

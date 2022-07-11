@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_MAC_SCHEDULER_H
-#define SRSGNB_SCHEDULER_MAC_SCHEDULER_H
+#pragma once
 
 #include "scheduler_configurator.h"
 #include "scheduler_feedback_handler.h"
@@ -27,5 +26,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_MAC_SCHEDULER_H

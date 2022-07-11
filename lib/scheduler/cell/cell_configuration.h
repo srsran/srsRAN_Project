@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_CELL_CELL_CONFIGURATION_H
-#define SRSGNB_LIB_SCHEDULER_CELL_CELL_CONFIGURATION_H
+#pragma once
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
@@ -79,5 +78,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_CELL_CELL_CONFIGURATION_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_HIGH_ADAPTERS_H
-#define SRSGNB_LIB_DU_HIGH_ADAPTERS_H
+#pragma once
 
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
@@ -50,5 +49,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_HIGH_ADAPTERS_H

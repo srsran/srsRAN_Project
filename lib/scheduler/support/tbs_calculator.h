@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H
+#pragma once
 
 #include <array>
 
@@ -82,5 +81,3 @@ unsigned tbs_calculator_table_find_smallest_not_less_than(unsigned nof_info_prim
 unsigned tbs_calculator_pdsch_calculate(const tbs_calculator_pdsch_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_TBS_CALCULATOR_H

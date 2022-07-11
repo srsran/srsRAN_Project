@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_H
-#define SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -48,5 +47,3 @@ struct downlink_processor_pool_config {
 std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_processor_pool_config config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_FACTORY_H

@@ -11,8 +11,7 @@
 /// \file
 /// \brief Encoder interface for short blocks.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_ENCODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_ENCODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
@@ -58,5 +57,3 @@ public:
 
 std::unique_ptr<short_block_encoder> create_short_block_encoder();
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_SHORT_SHORT_BLOCK_ENCODER_H

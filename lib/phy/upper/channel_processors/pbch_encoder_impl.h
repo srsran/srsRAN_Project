@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/crc_calculator.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
@@ -80,5 +79,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PBCH_ENCODER_IMPL_H

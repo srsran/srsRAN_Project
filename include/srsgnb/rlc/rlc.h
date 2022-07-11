@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_RLC_H
-#define SRSGNB_RLC_RLC_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
@@ -108,5 +107,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RLC_RLC_H

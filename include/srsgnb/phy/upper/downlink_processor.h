@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H
-#define SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
@@ -93,5 +92,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_DOWNLINK_PROCESSOR_H

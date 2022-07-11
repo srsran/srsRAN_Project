@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PCAP_PCAP_H
-#define SRSGNB_PCAP_PCAP_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/srslog.h"
@@ -66,5 +65,3 @@ private:
   std::string           filename;
   uint32_t              dlt = 0;
 };
-
-#endif // SRSGNB_PCAP_PCAP_H

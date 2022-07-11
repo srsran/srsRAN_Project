@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_H
-#define SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_H
+#pragma once
 
 #include "radio_uhd_exception_handler.h"
 #include "radio_uhd_rx_stream.h"
@@ -226,4 +225,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_LIB_RADIO_UHD_RADIO_UHD_DEVICE_H

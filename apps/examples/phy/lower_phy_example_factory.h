@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H
-#define SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
@@ -21,5 +20,3 @@ namespace srsgnb {
 std::unique_ptr<lower_phy_controller> create_lower_phy(lower_phy_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H

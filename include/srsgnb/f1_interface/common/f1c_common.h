@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_F1_INTERFACE_COMMON_F1C_COMMON_H
-#define SRSGNB_F1_INTERFACE_COMMON_F1C_COMMON_H
+#pragma once
 
 #include "srsgnb/asn1/f1ap.h"
 
@@ -48,5 +47,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_F1_INTERFACE_COMMON_F1C_COMMON_H

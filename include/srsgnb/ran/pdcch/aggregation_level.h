@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_AGGREGATION_LEVEL_H
-#define SRSGNB_RAN_PDCCH_AGGREGATION_LEVEL_H
+#pragma once
 
 #include <cstdint>
 
@@ -31,5 +30,3 @@ inline unsigned to_aggregation_level_index(aggregation_level lvl)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_AGGREGATION_LEVEL_H

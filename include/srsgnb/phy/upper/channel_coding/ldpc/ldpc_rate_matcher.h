@@ -10,8 +10,7 @@
 
 /// \file
 /// \brief LDPC rate matching.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_MATCHER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_MATCHER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -37,5 +36,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_RATE_MATCHER_H

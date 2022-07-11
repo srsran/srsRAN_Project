@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_DU_MANAGER_DU_MANAGER_FACTORY_H
-#define SRSGNB_DU_MANAGER_DU_MANAGER_FACTORY_H
+#pragma once
 
 #include "du_manager.h"
 #include "srsgnb/du/du_cell_config.h"
@@ -25,5 +24,3 @@ std::unique_ptr<du_manager_interface> create_du_manager(timer_manager&          
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_DU_MANAGER_DU_MANAGER_FACTORY_H

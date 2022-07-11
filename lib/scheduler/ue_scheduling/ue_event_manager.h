@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_EVENT_MANAGER_H
-#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_EVENT_MANAGER_H
+#pragma once
 
 #include "../support/slot_event_list.h"
 #include "srsgnb/adt/unique_function.h"
@@ -84,5 +83,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_EVENT_MANAGER_H

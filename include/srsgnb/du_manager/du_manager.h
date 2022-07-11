@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_DU_MANAGER_DU_MANAGER_H
-#define SRSGNB_DU_MANAGER_DU_MANAGER_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -52,5 +51,3 @@ public:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_DU_MANAGER_DU_MANAGER_H

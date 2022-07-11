@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_BASE_H
-#define SRSGNB_RADIO_RADIO_BASE_H
+#pragma once
 
 namespace srsgnb {
 
@@ -37,5 +36,3 @@ public:
   radio_base& operator=(radio_base&&) = delete;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_RADIO_BASE_H

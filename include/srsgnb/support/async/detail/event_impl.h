@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_DETAIL_EVENT_IMPL_H
-#define SRSGNB_SUPPORT_ASYNC_DETAIL_EVENT_IMPL_H
+#pragma once
 
 #include "../coroutine.h"
 
@@ -31,5 +30,3 @@ void flush_awaiter_list(AwaiterType* current)
 } // namespace detail
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_DETAIL_EVENT_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_ADD_H
-#define SRSGNB_SRSVEC_ADD_H
+#pragma once
 
 #include "srsgnb/srsvec/types.h"
 
@@ -23,5 +22,3 @@ void add(span<const int8_t> x, span<const int8_t> y, span<int8_t> z);
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_ADD_H

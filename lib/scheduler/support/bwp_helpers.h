@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_BWP_HELPERS_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_BWP_HELPERS_H
+#pragma once
 
 #include "srsgnb/scheduler/bwp_configuration.h"
 
@@ -60,5 +59,3 @@ inline prb_interval crb_to_prb(const bwp_configuration& bwp_cfg, crb_interval cr
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_BWP_HELPERS_H

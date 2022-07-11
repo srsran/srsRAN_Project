@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -306,5 +305,3 @@ public:
 std::unique_ptr<rx_softbuffer_pool> create_rx_softbuffer_pool(const rx_softbuffer_pool_description& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_RX_SOFTBUFFER_POOL_IMPL_H

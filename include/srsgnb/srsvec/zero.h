@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_ZERO_H
-#define SRSGNB_SRSVEC_ZERO_H
+#pragma once
 
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
@@ -26,5 +25,3 @@ void zero(T&& x)
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_ZERO_H

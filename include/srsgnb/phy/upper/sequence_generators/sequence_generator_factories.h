@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_SEQUENCE_GENERATOR_FACTORIES_H
-#define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_SEQUENCE_GENERATOR_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
 
@@ -25,5 +24,3 @@ public:
 std::shared_ptr<pseudo_random_generator_factory> create_pseudo_random_generator_sw_factory();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_SEQUENCE_GENERATOR_FACTORIES_H

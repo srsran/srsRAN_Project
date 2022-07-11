@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_H
-#define SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_H
+#pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway_base.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_buffer.h"
@@ -61,5 +60,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_H

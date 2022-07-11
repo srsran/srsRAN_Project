@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PDCP_PDCP_PACKET_PROCEDURES_IMPL_H
-#define SRSGNB_LIB_PDCP_PDCP_PACKET_PROCEDURES_IMPL_H
+#pragma once
 
 /// Notice that we are not using any implementation specific header files. We are decoupled.
 #include "srsgnb/pdcp/pdcp.h"
@@ -53,5 +52,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PDCP_PDCP_PACKET_PROCEDURES_IMPL_H

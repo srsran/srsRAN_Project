@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_SRSRAN_ASSERT_H
-#define SRSGNB_SUPPORT_SRSRAN_ASSERT_H
+#pragma once
 
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
@@ -100,5 +99,3 @@ template <typename... Args>
 #endif
 #define srsran_sanity_check(condition, fmt, ...)                                                                       \
   srsran_assert_ifdef(SANITY_CHECKS_ENABLED, condition, fmt, ##__VA_ARGS__)
-
-#endif // SRSGNB_SUPPORT_SRSRAN_ASSERT_H

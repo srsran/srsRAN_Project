@@ -7,8 +7,7 @@
  * the distribution.
  *
  */
-#ifndef SRSGNB_LIB_RLC_RLC_AM_PDU_H
-#define SRSGNB_LIB_RLC_RLC_AM_PDU_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_config.h"
@@ -213,5 +212,3 @@ inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RLC_RLC_AM_PDU_H

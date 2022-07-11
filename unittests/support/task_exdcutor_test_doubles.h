@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_SUPPORT_TASK_EXDCUTOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_SUPPORT_TASK_EXDCUTOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -101,5 +100,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_SUPPORT_TASK_EXDCUTOR_TEST_DOUBLES_H

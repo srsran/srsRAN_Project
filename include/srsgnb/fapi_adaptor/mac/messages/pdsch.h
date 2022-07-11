@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_PDSCH_H
-#define SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_PDSCH_H
+#pragma once
 
 #include "srsgnb/fapi/message_builders.h"
 
@@ -31,5 +30,3 @@ void convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder, const sib_in
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_ADAPTOR_MAC_MESSAGES_PDSCH_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_RLC_FACTORY_H
-#define SRSGNB_RLC_RLC_FACTORY_H
+#pragma once
 
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_config.h"
@@ -32,5 +31,3 @@ struct rlc_entity_creation_message {
 std::unique_ptr<rlc_entity> create_rlc_entity(const rlc_entity_creation_message& msg);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RLC_RLC_FACTORY_H

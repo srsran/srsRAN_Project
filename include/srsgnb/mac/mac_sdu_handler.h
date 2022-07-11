@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_MAC_SDU_HANDLER_H
-#define SRSGNB_MAC_MAC_SDU_HANDLER_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
@@ -26,5 +25,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_MAC_SDU_HANDLER_H

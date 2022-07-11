@@ -8,12 +8,9 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_BACKEND_CAPACITY_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_BACKEND_CAPACITY_H
+#pragma once
 
 /// Take this default value if users did not specify any custom size.
 #ifndef SRSLOG_QUEUE_CAPACITY
 #define SRSLOG_QUEUE_CAPACITY 8192
 #endif
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_BACKEND_CAPACITY_H

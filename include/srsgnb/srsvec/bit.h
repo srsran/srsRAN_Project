@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_BIT_H
-#define SRSGNB_SRSVEC_BIT_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
@@ -51,5 +50,3 @@ void bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked);
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_BIT_H

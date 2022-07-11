@@ -11,8 +11,7 @@
 /// \file
 /// \brief LDPC encoder interface.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
@@ -37,5 +36,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_ENCODER_H

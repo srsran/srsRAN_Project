@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H
-#define SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pdcch/aggregation_level.h"
@@ -57,5 +56,3 @@ struct pdcch_candidates_common_ss_configuration {
 pdcch_candidate_list pdcch_candidates_common_ss_get_lowest_cce(const pdcch_candidates_common_ss_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_PDCCH_CANDIDATES_H

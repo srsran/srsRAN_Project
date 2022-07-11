@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_RAN_SLIV_H
-#define SRSGNB_RAN_SLIV_H
+#pragma once
 
 #include <type_traits>
 
@@ -40,5 +39,3 @@ constexpr inline unsigned sliv_from_s_and_l(unsigned N, unsigned S, unsigned L)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_SLIV_H

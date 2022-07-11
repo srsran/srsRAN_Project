@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PRACH_RESTRICTED_SET_CONFIG_H
-#define SRSGNB_RAN_PRACH_RESTRICTED_SET_CONFIG_H
+#pragma once
 
 namespace srsgnb {
 
@@ -19,5 +18,3 @@ namespace srsgnb {
 enum class restricted_set_config { UNRESTRICTED, TYPE_A, TYPE_B };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PRACH_RESTRICTED_SET_CONFIG_H

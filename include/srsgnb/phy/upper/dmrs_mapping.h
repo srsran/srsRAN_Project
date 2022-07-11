@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_DMRS_MAPPING_H
-#define SRSGNB_PHY_UPPER_DMRS_MAPPING_H
+#pragma once
 
 #include "srsgnb/phy/upper/re_pattern.h"
 
@@ -107,5 +106,3 @@ static constexpr unsigned DMRS_MAX_NPORTS =
     std::max(dmrs_type(dmrs_type::TYPE1).dmrs_max_ports_type(), dmrs_type(dmrs_type::TYPE2).dmrs_max_ports_type());
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_DMRS_MAPPING_H

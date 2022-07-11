@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_DL_MAC_CELL_PROCESSOR_H
-#define SRSGNB_LIB_MAC_MAC_DL_MAC_CELL_PROCESSOR_H
+#pragma once
 
 #include "../mac_config.h"
 #include "mac_dl_ue_manager.h"
@@ -78,5 +77,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_DL_MAC_CELL_PROCESSOR_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_COPY_H
-#define SRSGNB_SRSVEC_COPY_H
+#pragma once
 
 #include "srsgnb/srsvec/detail/traits.h"
 #include "srsgnb/srsvec/types.h"
@@ -29,5 +28,3 @@ void copy(T&& dst, const U& src)
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_COPY_H

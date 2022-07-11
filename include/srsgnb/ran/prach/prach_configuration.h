@@ -15,8 +15,7 @@
 #include "srsgnb/ran/slot_point.h"
 #include <cstdint>
 
-#ifndef SRSGNB_RAN_PRACH_PRACH_CONFIGURATION_H
-#define SRSGNB_RAN_PRACH_PRACH_CONFIGURATION_H
+#pragma once
 
 namespace srsgnb {
 
@@ -64,4 +63,3 @@ static const prach_configuration PRACH_CONFIG_RESERVED =
 prach_configuration prach_configuration_get(frequency_range fr, duplex_mode dm, uint8_t prach_config_index);
 
 } // namespace srsgnb
-#endif // SRSGNB_RAN_PRACH_PRACH_CONFIGURATION_H

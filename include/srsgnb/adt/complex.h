@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_COMPLEX_H
-#define SRSGNB_ADT_COMPLEX_H
+#pragma once
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include <complex>
@@ -73,5 +72,3 @@ struct formatter<srsgnb::cf_t> {
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_ADT_COMPLEX_H

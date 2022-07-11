@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_COLLECTION_H
-#define SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_COLLECTION_H
+#pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsgnb/support/math_utils.h"
@@ -100,5 +99,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SEQUENCE_GENERATORS_LOW_PAPR_SEQUENCE_COLLECTION_H

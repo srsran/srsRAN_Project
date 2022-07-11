@@ -7,8 +7,7 @@
  * the distribution.
  *
  */
-#ifndef SRSGNB_CU_CP_SRB_PDU_NOTIFIER_H
-#define SRSGNB_CU_CP_SRB_PDU_NOTIFIER_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/asn1_utils.h"
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_CU_CP_SRB_PDU_NOTIFIER_H

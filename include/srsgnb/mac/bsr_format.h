@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_MAC_BSR_FORMAT_H
-#define SRSGNB_MAC_BSR_FORMAT_H
+#pragma once
 
 ///
 /// @brief  Logical Channel Group and UL Buffer Size format definition and levels according to 3GPP TS 38.321
@@ -26,5 +25,3 @@ inline const char* to_string(bsr_format bsr)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_MAC_BSR_FORMAT_H

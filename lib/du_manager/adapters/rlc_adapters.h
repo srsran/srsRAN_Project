@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_ADAPTERS_RLC_ADAPTERS_H
-#define SRSGNB_LIB_DU_MANAGER_ADAPTERS_RLC_ADAPTERS_H
+#pragma once
 
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/rlc/rlc_entity.h"
@@ -54,5 +53,3 @@ public:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_ADAPTERS_RLC_ADAPTERS_H

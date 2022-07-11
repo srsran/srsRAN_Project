@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_PROCEDURES_UE_DELETION_PROCEDURE_H
-#define SRSGNB_LIB_DU_MANAGER_PROCEDURES_UE_DELETION_PROCEDURE_H
+#pragma once
 
 #include "../../lib/ran/gnb_format.h"
 #include "du_manager_config.h"
@@ -80,5 +79,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_PROCEDURES_UE_DELETION_PROCEDURE_H

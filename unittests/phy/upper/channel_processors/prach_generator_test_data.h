@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_TEST_DATA_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_TEST_DATA_H
+#pragma once
 
 // This file was generated using the following MATLAB class:
 //   + "srsPRACHGeneratorUnittest.m"
@@ -228,5 +227,3 @@ static const std::vector<test_case_t> prach_generator_test_data = {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_GENERATOR_TEST_DATA_H

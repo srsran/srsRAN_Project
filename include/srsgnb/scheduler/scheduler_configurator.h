@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SCHEDULER_SCHEDULER_CONFIGURATOR_H
-#define SRSGNB_SCHEDULER_SCHEDULER_CONFIGURATOR_H
+#pragma once
 
 #include "bwp_configuration.h"
 #include "srsgnb/adt/optional.h"
@@ -161,5 +160,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SCHEDULER_SCHEDULER_CONFIGURATOR_H

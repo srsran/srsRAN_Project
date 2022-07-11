@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_COMMON_COLOCATED_MESSAGE_HANDLER_H
-#define SRSGNB_LIB_F1_INTERFACE_COMMON_COLOCATED_MESSAGE_HANDLER_H
+#pragma once
 
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 
@@ -28,5 +27,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_COMMON_COLOCATED_MESSAGE_HANDLER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_FACTORY_H
-#define SRSGNB_RADIO_RADIO_FACTORY_H
+#pragma once
 
 #include "srsgnb/radio/radio_session.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -34,5 +33,3 @@ public:
 std::unique_ptr<radio_factory> create_radio_factory(std::string driver_name);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RADIO_RADIO_FACTORY_H

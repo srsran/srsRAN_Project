@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RRC_UE_RRC_ASN1_HELPERS_H
-#define SRSGNB_LIB_RRC_UE_RRC_ASN1_HELPERS_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
@@ -40,5 +39,3 @@ void fill_asn1_rrc_setup_msg(asn1::rrc_nr::rrc_setup_s& rrc_setup, const byte_bu
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RRC_UE_RRC_ASN1_HELPERS_H

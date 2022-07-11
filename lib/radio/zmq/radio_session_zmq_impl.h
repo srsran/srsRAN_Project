@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RADIO_ZMQ_RADIO_SESSION_ZMQ_IMPL_H
-#define SRSGNB_LIB_RADIO_ZMQ_RADIO_SESSION_ZMQ_IMPL_H
+#pragma once
 
 #include "radio_zmq_rx_stream.h"
 #include "radio_zmq_tx_stream.h"
@@ -92,5 +91,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RADIO_ZMQ_RADIO_SESSION_ZMQ_IMPL_H

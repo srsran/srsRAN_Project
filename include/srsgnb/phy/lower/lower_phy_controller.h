@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONTROLLER_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_CONTROLLER_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
@@ -20,5 +19,3 @@ public:
   virtual void stop() = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_CONTROLLER_H

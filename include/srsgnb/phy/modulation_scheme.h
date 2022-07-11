@@ -11,8 +11,7 @@
 /// \file
 /// \brief Modulation schemes and orders.
 
-#ifndef SRSGNB_PHY_MODULATION_SCHEME_H
-#define SRSGNB_PHY_MODULATION_SCHEME_H
+#pragma once
 
 namespace srsgnb {
 
@@ -44,5 +43,3 @@ inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = get_bits_per_symbol(modulation_scheme::QAM256);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_MODULATION_SCHEME_H

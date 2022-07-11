@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RAN_BCD_HELPERS_H
-#define SRSGNB_LIB_RAN_BCD_HELPERS_H
+#pragma once
 
 #include <ctype.h>
 #include <stdint.h>
@@ -261,5 +260,3 @@ inline void ngap_mccmnc_to_plmn(uint16_t mcc, uint16_t mnc, uint32_t* plmn)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RAN_BCD_HELPERS_H

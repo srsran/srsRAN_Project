@@ -1,5 +1,4 @@
-#ifndef SRSGNB_PDCP_PDCP_ENTITY_FACTORY_H
-#define SRSGNB_PDCP_PDCP_ENTITY_FACTORY_H
+#pragma once
 
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include <memory>
@@ -13,5 +12,3 @@ namespace srsgnb {
 std::unique_ptr<pdcp_entity> create_pdcp_entity();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PDCP_PDCP_ENTITY_FACTORY_H

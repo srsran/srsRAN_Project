@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_HELPER_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_HELPER_H
+#pragma once
 
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
@@ -101,5 +100,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_PUCCH_HELPER_H

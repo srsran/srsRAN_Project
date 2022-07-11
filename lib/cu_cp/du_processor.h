@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_DU_PROCESSOR_H
-#define SRSGNB_LIB_CU_CP_DU_PROCESSOR_H
+#pragma once
 
 #include "adapters/f1ap_adapters.h"
 #include "du_context.h"
@@ -79,5 +78,3 @@ private:
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_CU_CP_DU_PROCESSOR_H

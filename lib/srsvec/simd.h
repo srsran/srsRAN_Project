@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SRSVEC_SIMD_H
-#define SRSGNB_LIB_SRSVEC_SIMD_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 
@@ -2010,5 +2009,3 @@ static inline simd_b_t srsran_simd_b_neg(simd_b_t a, simd_b_t b)
 #endif /*SRSRAN_SIMD_B_SIZE */
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SRSVEC_SIMD_H

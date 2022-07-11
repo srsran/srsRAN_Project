@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_UL_MAC_UL_PROCESSOR_H
-#define SRSGNB_LIB_MAC_MAC_UL_MAC_UL_PROCESSOR_H
+#pragma once
 
 #include "../../ran/gnb_format.h"
 #include "../mac_config.h"
@@ -94,5 +93,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_UL_MAC_UL_PROCESSOR_H

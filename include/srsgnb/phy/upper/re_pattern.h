@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_RE_PATTERN_H
-#define SRSGNB_PHY_UPPER_RE_PATTERN_H
+#pragma once
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
@@ -188,4 +187,3 @@ public:
 };
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_UPPER_RE_PATTERN_H

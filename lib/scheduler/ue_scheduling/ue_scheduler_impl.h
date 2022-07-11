@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_IMPL_H
-#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_IMPL_H
+#pragma once
 
 #include "../policy/scheduler_policy.h"
 #include "../support/slot_event_list.h"
@@ -58,5 +57,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_IMPL_H

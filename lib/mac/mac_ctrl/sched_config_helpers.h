@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_CTRL_SCHED_CONFIG_HELPERS_H
-#define SRSGNB_LIB_MAC_MAC_CTRL_SCHED_CONFIG_HELPERS_H
+#pragma once
 
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/scheduler_configurator.h"
@@ -39,5 +38,3 @@ make_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& in
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_CTRL_SCHED_CONFIG_HELPERS_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H
-#define SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H
+#pragma once
 
 #include "srsgnb/phy/constants.h"
 
@@ -55,5 +54,3 @@ static constexpr unsigned MAX_NOF_BITS = MAX_NOF_RE_PDCCH * 2;
 
 } // namespace pdcch_constants
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PDCCH_PDCCH_CONSTANTS_H

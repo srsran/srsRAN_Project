@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include <vector>
@@ -35,4 +34,3 @@ public:
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
 } // namespace srsgnb
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_MODULATOR_TEST_DOUBLES_H

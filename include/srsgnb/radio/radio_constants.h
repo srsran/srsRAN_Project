@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RADIO_RADIO_CONSTANTS_H
-#define SRSGNB_RADIO_RADIO_CONSTANTS_H
+#pragma once
 
 namespace srsgnb {
 
@@ -23,5 +22,3 @@ static constexpr unsigned RADIO_MAX_NOF_STREAMS = 8;
 static constexpr unsigned RADIO_MAX_NOF_PORTS = RADIO_MAX_NOF_CHANNELS * RADIO_MAX_NOF_STREAMS;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RADIO_RADIO_CONSTANTS_H

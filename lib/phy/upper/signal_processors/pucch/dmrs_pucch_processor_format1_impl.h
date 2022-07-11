@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H
+#pragma once
 
 #include "pucch_helper.h"
 #include "pucch_orthogonal_sequence.h"
@@ -72,5 +71,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_SIGNAL_PROCESSORS_PUCCH_DMRS_PUCCH_PROCESSOR_FORMAT1_IMPL_H

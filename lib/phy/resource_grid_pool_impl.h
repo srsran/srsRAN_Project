@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H
-#define SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/phy/resource_grid_pool.h"
@@ -31,5 +30,3 @@ public:
   resource_grid& get_resource_grid(const resource_grid_context& context) override;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_RESOURCE_GRID_POOL_IMPL_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_POOL_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_POOL_IMPL_H
+#pragma once
 
 #include "srsgnb/adt/circular_map.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -84,5 +83,3 @@ private:
   std::vector<sector> processors;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_DOWNLINK_PROCESSOR_POOL_IMPL_H

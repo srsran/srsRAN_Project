@@ -1,5 +1,4 @@
-#ifndef SRSGNB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_H
-#define SRSGNB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_H
+#pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
 
@@ -29,5 +28,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_F1_INTERFACE_COMMON_F1AP_PACKET_PROCEDURES_H

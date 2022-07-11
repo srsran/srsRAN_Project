@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_EXAMPLE_H
-#define SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_EXAMPLE_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
@@ -52,5 +51,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_APPS_EXAMPLES_PHY_RX_SYMBOL_HANDLER_EXAMPLE_H

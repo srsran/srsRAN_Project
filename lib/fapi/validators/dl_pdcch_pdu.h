@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_VALIDATORS_DL_PDCCH_PDU_H
-#define SRSGNB_LIB_FAPI_VALIDATORS_DL_PDCCH_PDU_H
+#pragma once
 
 #include "srsgnb/fapi/messages.h"
 
@@ -24,5 +23,3 @@ bool validate_dl_pdcch_pdu(message_type_id msg_type, const dl_pdcch_pdu& pdu, va
 } // namespace fapi
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_VALIDATORS_DL_PDCCH_PDU_H

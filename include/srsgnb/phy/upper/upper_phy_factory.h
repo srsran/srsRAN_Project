@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_UPPER_PHY_FACTORY_H
-#define SRSGNB_PHY_UPPER_UPPER_PHY_FACTORY_H
+#pragma once
 
 #include "srsgnb/phy/upper/upper_phy.h"
 #include <memory>
@@ -43,5 +42,3 @@ public:
 std::unique_ptr<upper_phy_factory> create_upper_phy_factory();
 
 } // namespace srsgnb
-
-#endif // #define SRSGNB_PHY_UPPER_UPPER_PHY_FACTORY_H

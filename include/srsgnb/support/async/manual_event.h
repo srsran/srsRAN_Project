@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H
-#define SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H
+#pragma once
 
 #include "coroutine.h"
 #include "detail/event_impl.h"
@@ -132,5 +131,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_ASYNC_MANUAL_EVENT_H

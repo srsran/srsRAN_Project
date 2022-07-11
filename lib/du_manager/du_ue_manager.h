@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_DU_UE_MANAGER_H
-#define SRSGNB_LIB_DU_MANAGER_DU_UE_MANAGER_H
+#pragma once
 
 #include "du_manager_config.h"
 #include "du_manager_interfaces.h"
@@ -50,5 +49,3 @@ private:
 
 } // namespace srs_du
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_DU_UE_MANAGER_H

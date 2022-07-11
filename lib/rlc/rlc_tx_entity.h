@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RLC_RLC_TX_ENTITY_H
-#define SRSGNB_LIB_RLC_RLC_TX_ENTITY_H
+#pragma once
 
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc.h"
@@ -34,5 +33,3 @@ protected:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RLC_RLC_TX_ENTITY_H

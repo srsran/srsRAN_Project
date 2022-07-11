@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_OPTIONAL_H
-#define SRSGNB_ADT_OPTIONAL_H
+#pragma once
 
 #include "detail/type_storage.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -142,5 +141,3 @@ bool operator<(const optional<T>& lhs, const optional<T>& rhs) noexcept
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_OPTIONAL_H

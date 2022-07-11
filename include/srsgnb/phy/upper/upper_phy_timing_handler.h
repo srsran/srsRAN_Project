@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_HANDLER_H
-#define SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_HANDLER_H
+#pragma once
 
 namespace srsgnb {
 
@@ -42,5 +41,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_UPPER_PHY_TIMING_HANDLER_H

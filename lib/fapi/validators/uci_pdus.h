@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_VALIDATORS_UCI_PDUS_H
-#define SRSGNB_LIB_FAPI_VALIDATORS_UCI_PDUS_H
+#pragma once
 
 namespace srsgnb {
 namespace fapi {
@@ -31,5 +30,3 @@ bool validate_uci_pucch_format234_pdu(const uci_pucch_pdu_format_2_3_4& pdu, val
 } // namespace fapi
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_VALIDATORS_UCI_PDUS_H

@@ -11,8 +11,7 @@
 /// \file
 /// \brief Dot product declarations.
 
-#ifndef SRSGNB_SRSVEC_DOT_PROD_H
-#define SRSGNB_SRSVEC_DOT_PROD_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srsvec/detail/traits.h"
@@ -82,5 +81,3 @@ inline float average_power(span<const cf_t> x)
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_DOT_PROD_H

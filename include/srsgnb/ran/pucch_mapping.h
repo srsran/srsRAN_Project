@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_PUCCH_MAPPING_H
-#define SRSGNB_RAN_PUCCH_MAPPING_H
+#pragma once
 
 namespace srsgnb {
 
@@ -39,5 +38,3 @@ static constexpr unsigned PUCCH_FORMAT2_MAX_NSYMB = 2;
 static constexpr unsigned PUCCH_FORMAT2_MAX_NPRB = 16;
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_PUCCH_MAPPING_H

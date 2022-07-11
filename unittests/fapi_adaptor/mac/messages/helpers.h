@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_FAPI_ADAPTOR_MAC_MESSAGES_HELPERS_H
-#define SRSGNB_UNITTESTS_FAPI_ADAPTOR_MAC_MESSAGES_HELPERS_H
+#pragma once
 
 #include "srsgnb/mac/mac_cell_result.h"
 
@@ -27,5 +26,3 @@ mac_dl_sched_result build_valid_mac_dl_sched_result();
 
 } // namespace unittests
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_FAPI_ADAPTOR_MAC_MESSAGES_HELPERS_H

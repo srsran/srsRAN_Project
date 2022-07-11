@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_UPPER_PHY_RX_SYMBOL_HANDLER_H
-#define SRSGNB_PHY_UPPER_UPPER_PHY_RX_SYMBOL_HANDLER_H
+#pragma once
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
@@ -45,5 +44,3 @@ public:
   virtual void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) = 0;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_UPPER_PHY_RX_SYMBOL_HANDLER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_LOG_FORMAT_H
-#define SRSGNB_LIB_CU_CP_LOG_FORMAT_H
+#pragma once
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -228,5 +227,3 @@ struct formatter<srsgnb::srs_cu_cp::ue_event_prefix> {
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_LIB_CU_CP_LOG_FORMAT_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_WORK_QUEUE_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_WORK_QUEUE_H
+#pragma once
 
 #include "srsgnb/adt/circular_buffer.h"
 #include "srsgnb/srslog/detail/support/backend_capacity.h"
@@ -102,5 +101,3 @@ public:
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_WORK_QUEUE_H

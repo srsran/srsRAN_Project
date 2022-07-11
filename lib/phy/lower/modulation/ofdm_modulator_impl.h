@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
-#define SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
+#pragma once
 
 #include "phase_compensation_lut.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -93,5 +92,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H

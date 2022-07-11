@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_F1_INTERFACE_COMMON_ASN1_HELPERS_H
-#define SRSGNB_LIB_F1_INTERFACE_COMMON_ASN1_HELPERS_H
+#pragma once
 
 #include "../../ran/bcd_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -23,5 +22,3 @@ namespace srsgnb {
 nr_cell_global_identity cgi_from_asn1(const asn1::f1ap::nrcgi_s& asn1_cgi);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_F1_INTERFACE_COMMON_ASN1_HELPERS_H

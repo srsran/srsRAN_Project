@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_DETAIL_SUPPORT_ERROR_STRING_H
-#define SRSGNB_SRSLOG_DETAIL_SUPPORT_ERROR_STRING_H
+#pragma once
 
 #include <string>
 
@@ -38,5 +37,3 @@ public:
 } // namespace detail
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_DETAIL_SUPPORT_ERROR_STRING_H

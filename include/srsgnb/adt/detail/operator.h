@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_ADT_DETAIL_OPERATOR_H
-#define SRSGNB_ADT_DETAIL_OPERATOR_H
+#pragma once
 
 namespace srsgnb {
 
@@ -18,5 +17,3 @@ struct noop_operator {
 } // namespace detail
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_DETAIL_OPERATOR_H

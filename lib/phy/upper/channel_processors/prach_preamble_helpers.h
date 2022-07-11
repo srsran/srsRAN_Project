@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_PREAMBLE_HELPERS_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_PREAMBLE_HELPERS_H
+#pragma once
 
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
@@ -72,5 +71,3 @@ inline prach_preamble_modulation_info prach_preamble_modulation_info_get_long(pr
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PRACH_PREAMBLE_HELPERS_H

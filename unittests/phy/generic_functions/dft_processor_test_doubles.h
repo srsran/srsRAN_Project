@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include <random>
@@ -92,5 +91,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_GENERIC_FUNCTIONS_DFT_PROCESSOR_TEST_DOUBLES_H

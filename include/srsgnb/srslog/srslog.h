@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_SRSLOG_H
-#define SRSGNB_SRSLOG_SRSLOG_H
+#pragma once
 
 #include "srsgnb/srslog/detail/support/any.h"
 #include "srsgnb/srslog/logger.h"
@@ -244,5 +243,3 @@ void flush();
 void set_error_handler(error_handler handler);
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_SRSLOG_H

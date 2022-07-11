@@ -14,8 +14,7 @@
  *
  ******************************************************************************/
 
-#ifndef SRSGNB_ASN1_RRC_NR_RRC_NR_H
-#define SRSGNB_ASN1_RRC_NR_RRC_NR_H
+#pragma once
 
 #include "serving_cell.h"
 #include "ue_cap.h"
@@ -12753,5 +12752,3 @@ struct var_short_mac_input_s {
 
 } // namespace rrc_nr
 } // namespace asn1
-
-#endif // SRSGNB_ASN1_RRC_NR_RRC_NR_H

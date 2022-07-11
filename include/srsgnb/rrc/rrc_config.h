@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RRC_RRC_CONFIG_H
-#define SRSGNB_RRC_RRC_CONFIG_H
+#pragma once
 
 #include "rrc_ue_config.h"
 #include "srsgnb/adt/optional.h"
@@ -43,5 +42,3 @@ struct rrc_cfg_t {
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RRC_RRC_CONFIG_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DEALLOCATOR_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DEALLOCATOR_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 
@@ -26,5 +25,3 @@ public:
 std::unique_ptr<polar_deallocator> create_polar_deallocator();
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_DEALLOCATOR_H

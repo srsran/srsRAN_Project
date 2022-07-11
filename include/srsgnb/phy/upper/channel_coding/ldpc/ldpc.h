@@ -13,8 +13,7 @@
 ///
 /// This file defines types, constants and classes to represent an LDPC Tanner graph
 /// according to TS38.212 Section 5.3.2.
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H
+#pragma once
 
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/support/math_utils.h"
@@ -118,4 +117,3 @@ inline constexpr unsigned compute_nof_codeblocks(unsigned tbs, ldpc_base_graph_t
 } // namespace ldpc
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_LDPC_LDPC_H

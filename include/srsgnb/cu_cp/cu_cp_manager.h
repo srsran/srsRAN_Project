@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_CU_CP_MANAGER_H
-#define SRSGNB_CU_CP_CU_CP_MANAGER_H
+#pragma once
 
 #include "cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -89,5 +88,3 @@ public:
 
 } // namespace srs_cu_cp
 } // namespace srsgnb
-
-#endif // SRSGNB_CU_CP_CU_CP_MANAGER_H

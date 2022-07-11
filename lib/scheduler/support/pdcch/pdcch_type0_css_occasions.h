@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_PDCCH_PDCCH_TYPE0_CSS_OCCASIONS_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_PDCCH_PDCCH_TYPE0_CSS_OCCASIONS_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 
@@ -64,5 +63,3 @@ pdcch_type0_css_occasion_pattern1_description
 pdcch_type0_css_occasions_get_pattern1(const pdcch_type0_css_occasion_pattern1_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_PDCCH_PDCCH_TYPE0_CSS_OCCASIONS_H

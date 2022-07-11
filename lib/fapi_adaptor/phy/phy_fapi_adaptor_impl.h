@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_IMPL_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_IMPL_H
+#pragma once
 
 #include "fapi_to_phy_translator.h"
 #include "phy_to_fapi_translator.h"
@@ -45,5 +44,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_PHY_PHY_FAPI_ADAPTOR_IMPL_H

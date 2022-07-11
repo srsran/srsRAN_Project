@@ -11,8 +11,7 @@
 /// \file
 /// \brief PDSCH encoder declaration.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
@@ -62,5 +61,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_PROCESSORS_PDSCH_ENCODER_IMPL_H

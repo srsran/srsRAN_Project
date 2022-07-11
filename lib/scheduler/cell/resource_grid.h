@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_CELL_RESOURCE_GRID_H
-#define SRSGNB_LIB_SCHEDULER_CELL_RESOURCE_GRID_H
+#pragma once
 
 #include "../support/bwp_helpers.h"
 #include "../support/rb_find_algorithm.h"
@@ -250,5 +249,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_CELL_RESOURCE_GRID_H

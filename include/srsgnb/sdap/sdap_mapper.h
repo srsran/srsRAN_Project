@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SDAP_SDAP_MAPPER_H
-#define SRSGNB_SDAP_SDAP_MAPPER_H
+#pragma once
 
 namespace srsgnb {
 
@@ -25,5 +24,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SDAP_SDAP_MAPPER_H

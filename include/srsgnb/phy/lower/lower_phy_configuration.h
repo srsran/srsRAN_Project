@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H
-#define SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H
+#pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -64,5 +63,3 @@ struct lower_phy_configuration {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_LOWER_LOWER_PHY_CONFIGURATION_H

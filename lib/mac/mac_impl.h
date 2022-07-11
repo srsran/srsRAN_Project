@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_MAC_MAC_IMPL_H
-#define SRSGNB_LIB_MAC_MAC_IMPL_H
+#pragma once
 
 #include "mac_config.h"
 #include "mac_ctrl/mac_controller.h"
@@ -68,5 +67,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_MAC_MAC_IMPL_H

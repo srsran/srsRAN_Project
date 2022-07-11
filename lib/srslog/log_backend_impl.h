@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SRSLOG_LOG_BACKEND_IMPL_H
-#define SRSGNB_LIB_SRSLOG_LOG_BACKEND_IMPL_H
+#pragma once
 
 #include "backend_worker.h"
 #include "srsgnb/srslog/detail/log_backend.h"
@@ -56,5 +55,3 @@ private:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_LIB_SRSLOG_LOG_BACKEND_IMPL_H

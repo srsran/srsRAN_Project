@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_SLOT_POINT_H
-#define SRSGNB_RAN_SLOT_POINT_H
+#pragma once
 
 #include "srsgnb/adt/interval.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -284,5 +283,3 @@ struct formatter<srsgnb::slot_point> {
   }
 };
 } // namespace fmt
-
-#endif // SRSGNB_RAN_SLOT_POINT_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SUPPORT_SRSGNB_TEST_H
-#define SRSGNB_SUPPORT_SRSGNB_TEST_H
+#pragma once
 
 #include "srsran_assert.h"
 
@@ -51,5 +50,3 @@ assert_eq_format_helper(T expected_val, U actual_val, bool eq_cmp, const std::st
       cond, "{}", srsgnb::detail::assert_eq_format_helper(true, false, true, fmt::format("" __VA_ARGS__)))
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SUPPORT_SRSGNB_TEST_H

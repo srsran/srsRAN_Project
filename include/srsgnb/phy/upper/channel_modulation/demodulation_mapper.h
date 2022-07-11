@@ -11,8 +11,7 @@
 /// \file
 /// \brief Demodulator interface.
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
@@ -59,4 +58,3 @@ public:
 std::unique_ptr<demodulation_mapper> create_demodulation_mapper();
 
 } // namespace srsgnb
-#endif // SRSGNB_PHY_UPPER_CHANNEL_MODULATION_DEMODULATION_MAPPER_H

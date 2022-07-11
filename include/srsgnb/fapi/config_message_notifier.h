@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_FAPI_CONFIG_MESSAGE_NOTIFIER_H
-#define SRSGNB_FAPI_CONFIG_MESSAGE_NOTIFIER_H
+#pragma once
 
 namespace srsgnb {
 namespace fapi {
@@ -42,5 +41,3 @@ public:
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_FAPI_CONFIG_MESSAGE_NOTIFIER_H

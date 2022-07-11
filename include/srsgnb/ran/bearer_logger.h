@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_RLC_RLC_LOGGER_H
-#define SRSGNB_LIB_RLC_RLC_LOGGER_H
+#pragma once
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -97,5 +96,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_RLC_RLC_LOGGER_H

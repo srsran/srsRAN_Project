@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H
-#define SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H
+#pragma once
 
 #include "srsgnb/cu_cp/cu_cp_manager.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -174,5 +173,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_F1_INTERFACE_COMMON_TEST_HELPERS_H

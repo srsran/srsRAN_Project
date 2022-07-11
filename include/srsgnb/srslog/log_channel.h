@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSLOG_LOG_CHANNEL_H
-#define SRSGNB_SRSLOG_LOG_CHANNEL_H
+#pragma once
 
 #include "srsgnb/srslog/detail/log_backend.h"
 #include "srsgnb/srslog/detail/log_entry.h"
@@ -253,5 +252,3 @@ private:
 };
 
 } // namespace srslog
-
-#endif // SRSGNB_SRSLOG_LOG_CHANNEL_H

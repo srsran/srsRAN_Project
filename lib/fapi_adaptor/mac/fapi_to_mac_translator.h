@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_MAC_FAPI_TO_MAC_TRANSLATOR_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_MAC_FAPI_TO_MAC_TRANSLATOR_H
+#pragma once
 
 #include "srsgnb/fapi/slot_message_notifier.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -58,5 +57,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_MAC_FAPI_TO_MAC_TRANSLATOR_H

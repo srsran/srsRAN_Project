@@ -14,8 +14,7 @@
 /// Type used for representing log-likelihood ratios. Values are stored in an \c int8_t variable, but the sum operator
 /// is overloaded with a saturated sum, meaning that the result is clipped if it (absolutely) exceeds \c LLR_MAX.
 
-#ifndef SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
-#define SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/srslog/bundled/fmt/format.h"
@@ -326,5 +325,3 @@ struct formatter<srsgnb::log_likelihood_ratio> {
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_PHY_UPPER_LOG_LIKELIHOOD_RATIO_H

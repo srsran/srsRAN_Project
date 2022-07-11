@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RAN_MODULATION_H
-#define SRSGNB_RAN_MODULATION_H
+#pragma once
 
 #include <cstdint>
 
@@ -30,5 +29,3 @@ constexpr inline unsigned to_nof_combinations(qam_modulation q)
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_MODULATION_H

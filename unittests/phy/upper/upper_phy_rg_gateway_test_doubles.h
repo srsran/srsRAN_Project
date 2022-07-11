@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_UPPER_UPPER_PHY_RG_GATEWAY_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_UPPER_UPPER_PHY_RG_GATEWAY_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 
@@ -26,5 +25,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_UPPER_UPPER_PHY_RG_GATEWAY_TEST_DOUBLES_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUSCH_ESTIMATOR_H
-#define SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUSCH_ESTIMATOR_H
+#pragma once
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -57,5 +56,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_SIGNAL_PROCESSORS_DMRS_PUSCH_ESTIMATOR_H

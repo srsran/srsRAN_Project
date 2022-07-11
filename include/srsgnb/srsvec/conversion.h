@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SRSVEC_CONVERSION_H
-#define SRSGNB_SRSVEC_CONVERSION_H
+#pragma once
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/srsvec/types.h"
@@ -61,5 +60,3 @@ void convert(span<const int16_t> x, float scale, span<float> z);
 
 } // namespace srsvec
 } // namespace srsgnb
-
-#endif // SRSGNB_SRSVEC_CONVERSION_H

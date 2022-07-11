@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_PHY_FAPI_TO_PHY_TRANSLATOR_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_PHY_FAPI_TO_PHY_TRANSLATOR_H
+#pragma once
 
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
@@ -111,5 +110,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_PHY_FAPI_TO_PHY_TRANSLATOR_H

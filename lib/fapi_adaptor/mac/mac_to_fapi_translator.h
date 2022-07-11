@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_TO_FAPI_TRANSLATOR_H
-#define SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_TO_FAPI_TRANSLATOR_H
+#pragma once
 
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/mac/mac_cell_result.h"
@@ -112,5 +111,3 @@ private:
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_ADAPTOR_MAC_MAC_TO_FAPI_TRANSLATOR_H

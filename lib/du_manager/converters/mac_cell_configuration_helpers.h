@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_DU_MANAGER_CONVERTERS_MAC_CELL_CONFIGURATION_HELPERS_H
-#define SRSGNB_LIB_DU_MANAGER_CONVERTERS_MAC_CELL_CONFIGURATION_HELPERS_H
+#pragma once
 
 #include "../du_manager_config.h"
 #include "f1c_configuration_helpers.h"
@@ -97,5 +96,3 @@ inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index
 }
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_DU_MANAGER_CONVERTERS_MAC_CELL_CONFIGURATION_HELPERS_H

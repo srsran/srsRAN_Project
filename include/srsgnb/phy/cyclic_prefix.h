@@ -11,8 +11,7 @@
 /// \file
 /// \brief Cyclic Prefix types and related slot size.
 
-#ifndef SRSGNB_PHY_CYCLIC_PREFIX_H
-#define SRSGNB_PHY_CYCLIC_PREFIX_H
+#pragma once
 
 #include "srsgnb/support/math_utils.h"
 #include <algorithm>
@@ -131,5 +130,3 @@ struct formatter<srsgnb::cyclic_prefix> {
   }
 };
 } // namespace fmt
-
-#endif // SRSGNB_PHY_CYCLIC_PREFIX_H

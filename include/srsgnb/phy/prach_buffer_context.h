@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_PRACH_BUFFER_CONTEXT_H
-#define SRSGNB_PHY_PRACH_BUFFER_CONTEXT_H
+#pragma once
 
 #include "srsgnb/ran/slot_point.h"
 
@@ -28,5 +27,3 @@ struct prach_buffer_context {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_PRACH_BUFFER_CONTEXT_H

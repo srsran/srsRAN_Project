@@ -14,8 +14,7 @@
  *
  ******************************************************************************/
 
-#ifndef SRSGNB_ASN1_RRC_NR_COMMON_H
-#define SRSGNB_ASN1_RRC_NR_COMMON_H
+#pragma once
 
 #include "srsgnb/asn1/asn1_utils.h"
 #include <cstdio>
@@ -720,5 +719,3 @@ struct srs_res_s {
 
 } // namespace rrc_nr
 } // namespace asn1
-
-#endif // SRSGNB_ASN1_RRC_NR_COMMON_H

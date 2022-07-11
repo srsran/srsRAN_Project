@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_ADT_DETAIL_TYPE_STORAGE_H
-#define SRSGNB_ADT_DETAIL_TYPE_STORAGE_H
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -81,5 +80,3 @@ void move_if_present_helper(type_storage<T, MinSize, AlignSize>& lhs,
 } // namespace detail
 
 } // namespace srsgnb
-
-#endif // SRSGNB_ADT_DETAIL_TYPE_STORAGE_H

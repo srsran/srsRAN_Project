@@ -1,6 +1,5 @@
 
-#ifndef SRSGNB_RAN_TDD_UL_DL_CONFIG_H
-#define SRSGNB_RAN_TDD_UL_DL_CONFIG_H
+#pragma once
 
 namespace srsgnb {
 
@@ -28,5 +27,3 @@ struct tdd_ul_dl_config_common {
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_RAN_TDD_UL_DL_CONFIG_H

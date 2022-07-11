@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_SUPPORT_PDSCH_PDSCH_DMRS_SYMBOL_MASK_H
-#define SRSGNB_LIB_SCHEDULER_SUPPORT_PDSCH_PDSCH_DMRS_SYMBOL_MASK_H
+#pragma once
 
 #include "srsgnb/scheduler/dmrs.h"
 
@@ -45,5 +44,3 @@ dmrs_symbol_mask pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_SUPPORT_PDSCH_PDSCH_DMRS_SYMBOL_MASK_H

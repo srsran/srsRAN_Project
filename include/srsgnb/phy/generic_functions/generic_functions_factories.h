@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_GENERIC_FUNCTIONS_GENERIC_FUNCTIONS_FACTORIES_H
-#define SRSGNB_PHY_GENERIC_FUNCTIONS_GENERIC_FUNCTIONS_FACTORIES_H
+#pragma once
 
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 
@@ -43,5 +42,3 @@ std::shared_ptr<dft_processor_factory> create_dft_processor_factory_fftw(bool   
                                                                          const std::string& wisdom_filename = "");
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_GENERIC_FUNCTIONS_GENERIC_FUNCTIONS_FACTORIES_H

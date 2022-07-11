@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_H
-#define SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_H
+#pragma once
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
@@ -36,5 +35,3 @@ public:
 std::unique_ptr<polar_encoder> create_polar_encoder_pipelined(unsigned code_size_log);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_ENCODER_H

@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_PHY_CONSTANTS_H
-#define SRSGNB_PHY_CONSTANTS_H
+#pragma once
 
 namespace srsgnb {
 
@@ -70,5 +69,3 @@ static inline unsigned NID_2(unsigned NID)
 
 } // namespace phys_cell_id
 } // namespace srsgnb
-
-#endif // SRSGNB_PHY_CONSTANTS_H

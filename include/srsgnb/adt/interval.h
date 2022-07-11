@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_ADT_INTERVAL_H
-#define SRSGNB_ADT_INTERVAL_H
+#pragma once
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -163,5 +162,3 @@ struct formatter<srsgnb::interval<T> > : public formatter<T> {
 };
 
 } // namespace fmt
-
-#endif // SRSGNB_ADT_INTERVAL_H

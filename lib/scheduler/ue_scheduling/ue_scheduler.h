@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H
-#define SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H
+#pragma once
 
 #include "srsgnb/scheduler/scheduler_configurator.h"
 #include "ue.h" // TEMP
@@ -44,5 +43,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_SCHEDULER_UE_SCHEDULING_UE_SCHEDULER_H

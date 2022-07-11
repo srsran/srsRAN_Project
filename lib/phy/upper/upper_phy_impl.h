@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_PHY_UPPER_UPPER_PHY_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_UPPER_PHY_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
@@ -89,5 +88,3 @@ private:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_UPPER_PHY_IMPL_H

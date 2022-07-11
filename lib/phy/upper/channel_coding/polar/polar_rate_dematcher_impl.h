@@ -11,8 +11,7 @@
 /// \file
 /// \brief Polar code rate dematcher declaration.
 
-#ifndef SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_IMPL_H
-#define SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_IMPL_H
+#pragma once
 
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
@@ -42,5 +41,3 @@ public:
                     const polar_code&                code) override;
 };
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_PHY_UPPER_CHANNEL_CODING_POLAR_POLAR_RATE_DEMATCHER_IMPL_H

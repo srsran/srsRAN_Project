@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H
-#define SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H
+#pragma once
 
 #include "srsgnb/fapi/message_validators.h"
 
@@ -59,5 +58,3 @@ inline bool validate_field(Integer           min,
 
 } // namespace fapi
 } // namespace srsgnb
-
-#endif // SRSGNB_LIB_FAPI_VALIDATORS_HELPERS_H

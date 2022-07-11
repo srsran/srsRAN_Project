@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_SDAP_SDAP_FACTORY_H
-#define SRSGNB_SDAP_SDAP_FACTORY_H
+#pragma once
 
 #include "srsgnb/sdap/sdap.h"
 #include <memory>
@@ -24,5 +23,3 @@ namespace srsgnb {
 std::unique_ptr<sdap_pdu_handler> create_sdap(sdap_sdu_rx_notifier& listener);
 
 } // namespace srsgnb
-
-#endif // SRSGNB_SDAP_SDAP_FACTORY_H
