@@ -54,7 +54,11 @@ private:
   /// \param[out,in] res_grid Resource grid with current allocations and scheduling results.
   /// \param[in] beam_idx SSB or beam index which the SIB1 corresponds to.
   /// \param[in] sib1_crbs_grant CRBs interval in the PDSCH allocated for SIB1.
-  void fill_sib1_grant(cell_slot_resource_allocator& res_grid, unsigned beam_idx, crb_interval sib1_crbs_grant);
+  void fill_sib1_grant(cell_slot_resource_allocator& res_grid,
+                       crb_interval                  sib1_crbs_grant,
+                       unsigned                      time_resource,
+                       const dmrs_information&       dmrs_info,
+                       unsigned                      tbs);
 
   /// SIB1 Logger.
   srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");

@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-unsigned srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
+pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
 {
   // Convert size into bits, as per TS procedures for TBS.
   unsigned payload_size = pdsch_cfg.payload_size_bytes * 8;
@@ -22,7 +22,7 @@ unsigned srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
 
   // This function is limited to payload_size <= 3824 bits.
   if (payload_size > max_payload_size_bits) {
-    return -1;
+    return {-1, -1};
   }
 
   // This is an estimate of the N_info (as per Section 5.1.3.2, TS 38.214), approximated as the TBS that is greater or
@@ -43,21 +43,20 @@ unsigned srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cfg)
   unsigned nof_prbs_estimate =
       static_cast<unsigned>(std::ceil(nof_re / static_cast<float>(std::min(nof_re_prime, 156U))));
 
-  // If the number of PRBs is 1, there is no point in trying to reduce this number.
-  if (nof_prbs_estimate == 1) {
-    return nof_prbs_estimate;
-  }
-
   // Due to the way this procedure is derived (inversion of non-invertible functions), the estimated num of PRBs can be
   // 1 PRB greater than required to fit the payload size. Thus, we compute the TBS for "nof_prbs_estimate - 1"; if
   // TBS(nof_prbs_estimate - 1) is enough to accommodate the payload_size, then we return nof_prbs_estimate - 1.
-  unsigned tbs = tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
-                                                                                   pdsch_cfg.nof_dmrs_prb,
-                                                                                   pdsch_cfg.nof_oh_prb,
-                                                                                   pdsch_cfg.target_code_rate,
-                                                                                   pdsch_cfg.mod_order,
-                                                                                   pdsch_cfg.nof_layers,
-                                                                                   pdsch_cfg.tb_scaling_field,
-                                                                                   nof_prbs_estimate - 1});
-  return tbs < payload_size ? nof_prbs_estimate : nof_prbs_estimate - 1;
+  unsigned tbs =
+      static_cast<int>(tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
+                                                                                         pdsch_cfg.nof_dmrs_prb,
+                                                                                         pdsch_cfg.nof_oh_prb,
+                                                                                         pdsch_cfg.target_code_rate,
+                                                                                         pdsch_cfg.mod_order,
+                                                                                         pdsch_cfg.nof_layers,
+                                                                                         pdsch_cfg.tb_scaling_field,
+                                                                                         nof_prbs_estimate - 1}));
+
+  unsigned nof_prbs = tbs < payload_size ? nof_prbs_estimate : nof_prbs_estimate - 1;
+
+  return {static_cast<int>(nof_prbs), static_cast<int>(tbs)};
 }

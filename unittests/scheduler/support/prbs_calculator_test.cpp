@@ -48,7 +48,7 @@ int main()
   // Run the test for all the values in the table.
   for (const auto& test_entry : prbs_calculator_test_table) {
     auto& test_params = test_entry.params;
-    TESTASSERT_EQ(test_entry.nof_prbs, get_nof_prbs(test_params));
+    TESTASSERT_EQ(test_entry.nof_prbs, static_cast<unsigned>(get_nof_prbs(test_params).nof_prbs));
   }
 
   return 0;

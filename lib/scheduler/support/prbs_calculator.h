@@ -54,6 +54,14 @@ struct prbs_calculator_pdsch_config {
   unsigned tb_scaling_field{0};
 };
 
+/// \brief Collects the outputs of the helper that returns the num. of PRBs and TBS, for a PDSCH transmission.
+struct pdsch_prbs_tbs {
+  /// Number of PRBs required for a given PDSCH transmission.
+  int nof_prbs;
+  /// TBS corresponding to the PRBs required for a given PDSCH transmission.
+  int tbs;
+};
+
 /// \brief Computes the required number of PRBs necessary to transmit a given payload size.
 ///
 /// This function implements the inverse procedure of the TBS calculation procedure (as per TS38.214 Section 5.1.3.2) to
@@ -63,7 +71,7 @@ struct prbs_calculator_pdsch_config {
 /// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \return If the payload_size is not greater than 478 bytes (3824 bits), returns the number of PRBs. Else, it returns
 /// -1.
-unsigned get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
+pdsch_prbs_tbs get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_config);
 
 } // namespace srsgnb
 

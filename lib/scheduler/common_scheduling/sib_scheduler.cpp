@@ -143,27 +143,33 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // This is the list of parameters that are hard-coded and will need to be derived from some general config.
   static const ofdm_symbol_range sib1_ofdm_symbols{2, 14};
   static const unsigned          nof_symb_sh      = sib1_ofdm_symbols.length();
-  static const unsigned          nof_dmrs_prb     = 36;
   static const unsigned          mod_order        = to_qam_modulation_order(qam_modulation::qam4);
   static const float             target_code_rate = 379.0f;
   static const unsigned          nof_layers       = 1;
+  // Time resource will be passed to the next function to fill the DCI.
+  static const unsigned time_resource = 0;
   // As per Section 5.1.3.2, TS 38.214, nof_oh_prb = 0 if PDSCH is scheduled by PDCCH with a CRC scrambled by
   // SI-RNTI.
   static const unsigned nof_oh_prb = 0;
 
-  unsigned nof_prbs_per_sib1 = get_nof_prbs(prbs_calculator_pdsch_config{sib1_payload_size,
-                                                                         nof_symb_sh,
-                                                                         nof_dmrs_prb,
-                                                                         nof_oh_prb,
-                                                                         mod_order,
-                                                                         static_cast<float>(target_code_rate / 1024),
-                                                                         nof_layers});
+  // Generate dmrs information to be passed to (i) the fnc that computes number of RE used for DMRS per RB and (ii) to
+  // the fnc that fills the DCI.
+  dmrs_information dmrs_info = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+
+  pdsch_prbs_tbs sib1_prbs_tbs = get_nof_prbs(prbs_calculator_pdsch_config{sib1_payload_size,
+                                                                           nof_symb_sh,
+                                                                           calculate_nof_dmrs_per_rb(dmrs_info),
+                                                                           nof_oh_prb,
+                                                                           mod_order,
+                                                                           static_cast<float>(target_code_rate / 1024),
+                                                                           nof_layers});
 
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
   {
     // TODO: find a better way to derive the SIB1 PRBs
-    unsigned          nof_sib1_rbs = nof_prbs_per_sib1;
+    unsigned          nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
     const prb_bitmap& used_crbs    = res_grid.dl_res_grid.sch_crbs(coreset0_bwp_cfg);
     sib1_crbs                      = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
@@ -192,14 +198,16 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
       grant_info::channel::sch, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, sib1_ofdm_symbols, sib1_crbs});
 
   // 4. Delegate filling SIB1 grants to helper function.
-  fill_sib1_grant(res_grid, beam_idx, sib1_crbs);
+  fill_sib1_grant(res_grid, sib1_crbs, time_resource, dmrs_info, sib1_prbs_tbs.tbs);
   logger.info("SCHED: Allocated SIB1 at slot {} for SSB beam idx: {}", res_grid.slot.to_uint(), beam_idx);
   return true;
 }
 
 void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
-                                     unsigned                      beam_idx,
-                                     crb_interval                  sib1_crbs_grant)
+                                     crb_interval                  sib1_crbs_grant,
+                                     unsigned                      time_resource,
+                                     const dmrs_information&       dmrs_info,
+                                     unsigned                      tbs)
 {
   // System information indicator for SIB1, in DCI 1_0. Refer to Section 7.3.1.2.1 and Table 7.3.1.2.1-2, TS 38.212.
   static const unsigned sib1_si_indicator = 0;
@@ -217,7 +225,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, sib1_prbs.start(), sib1_prbs.length()});
   // TODO: compute time_domain_assigment from OFDM symbols (WIP).
-  dci.time_resource                = 0;
+  dci.time_resource                = time_resource;
   dci.vrb_to_prb_mapping           = 0; // TODO.
   dci.modulation_coding_scheme     = sib1_mcs;
   dci.redundancy_version           = sib1_rv;
@@ -248,7 +256,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.target_code_rate = 379.0f;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
-  cw.tb_size_bytes = 51;
-  pdsch.dmrs       = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  cw.tb_size_bytes = tbs;
+  pdsch.dmrs       = dmrs_info;
 }
