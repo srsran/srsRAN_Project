@@ -82,6 +82,12 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
                        cp_len + dft_size,
                        numerology);
 
+  // Skip modulator if the grid is empty for the given port.
+  if (grid.is_empty(port_index)) {
+    srsvec::zero(output);
+    return;
+  }
+
   // Prepare lower bound frequency domain data.
   grid.get(dft->get_input().last(rg_size / 2), port_index, symbol_index % nsymb, 0);
 

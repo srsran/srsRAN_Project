@@ -96,6 +96,18 @@ public:
   /// Default destructor.
   virtual ~resource_grid_reader() = default;
 
+  /// \brief Determines whether a given port is empty.
+  ///
+  /// A port is considered empty if no \c put method have been called since last zero set.
+  ///
+  /// If zeros are written using any \c put method, it is considered not empty.
+  ///
+  /// An invalid port index triggers an assertion.
+  ///
+  /// \param[in] port Port index.
+  /// \return Return true if the given port is empty. Otherwise, false.
+  virtual bool is_empty(unsigned port) const = 0;
+
   /// \brief Get a number of elements from the grid for a given port according to a list of coordinates.
   ///
   /// \param[out] symbols Provides the destination symbol buffer.

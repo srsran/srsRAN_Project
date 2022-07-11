@@ -26,8 +26,11 @@ void test_all_zero(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
   // Set all grid to zero
   grid->set_all_zero();
 
-  // Verify all RE are zero
+  // Verify all RE are zero.
   for (unsigned port = 0; port != nof_ports; ++port) {
+    // Verify the grid for the port is empty.
+    TESTASSERT_EQ(true, grid->is_empty(port));
+
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
@@ -80,6 +83,9 @@ void test_coordinates(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
 
   // Assert grid
   for (unsigned port = 0; port != nof_ports; ++port) {
+    // Verify the grid for the port is NOT empty.
+    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
@@ -161,6 +167,9 @@ void test_mask(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc, unsi
   // Assert grid
   unsigned count = 0;
   for (unsigned port = 0; port != nof_ports; ++port) {
+    // Verify the grid for the port is NOT empty.
+    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);
@@ -230,6 +239,9 @@ void test_consecutive(unsigned nof_ports, unsigned nof_symbols, unsigned nof_sub
   // Assert grid
   unsigned count = 0;
   for (unsigned port = 0; port != nof_ports; ++port) {
+    // Verify the grid for the port is NOT empty.
+    TESTASSERT_EQ(port != port_gold, grid->is_empty(port));
+
     for (unsigned symbol = 0; symbol != nof_symbols; ++symbol) {
       // Get resource grid data for the given symbol
       std::vector<cf_t> rg_data(nof_subc);

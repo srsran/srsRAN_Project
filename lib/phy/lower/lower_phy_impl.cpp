@@ -13,8 +13,30 @@
 
 using namespace srsgnb;
 
+class resource_grid_reader_empty : public resource_grid_reader
+{
+public:
+  bool is_empty(unsigned port) const override { return true; }
+  void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
+  {
+    srsvec::zero(symbols);
+  }
+  span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
+  {
+    srsvec::zero(symbols);
+    return {};
+  }
+  void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { srsvec::zero(symbols); }
+};
+
+static const resource_grid_reader_empty rg_reader_empty;
+
 baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 {
+  // Get transmit resource grid buffer for the given slot.
+  lower_phy_rg_buffer<resource_grid>& ul_grid_buffer =
+      ul_rg_buffers[ul_slot_context.system_slot() % ul_rg_buffers.size()];
+
   // Calculate symbol size. Assumes all sectors have the same symbol size.
   unsigned symbol_sz = modulators[0]->get_symbol_size(symbol_id);
 
@@ -36,11 +58,11 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
     // Select sector configuration.
     const lower_phy_sector_description& sector = sectors[sector_id];
 
-    // Select resource grid from the UL pool.
-    resource_grid_context ul_rg_context = {};
-    ul_rg_context.sector                = sector_id;
-    ul_rg_context.slot                  = ul_slot_context;
-    resource_grid& ul_rg                = ul_rg_pool.get_resource_grid(ul_rg_context);
+    // Select resource grid from the UL pool and skip sector processing if there is no grid.
+    resource_grid* ul_rg = ul_grid_buffer.get_grid(sector_id);
+    if (ul_rg == nullptr) {
+      continue;
+    }
 
     // For each port of the sector.
     for (unsigned port_id = 0; port_id != sector.port_mapping.size(); ++port_id) {
@@ -52,7 +74,7 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
           radio_buffers[port_mapping.stream_id].get_channel_buffer(port_mapping.channel_id);
 
       //  Actual signal demodulation.
-      demodulators[sector_id]->demodulate(ul_rg, buffer, port_id, symbol_id);
+      demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
     }
 
     // Notify the received symbols.
@@ -60,7 +82,7 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
     ul_symbol_context.sector                      = sector_id;
     ul_symbol_context.slot                        = ul_slot_context;
     ul_symbol_context.nof_symbols                 = symbol_id;
-    rx_symbol_notifier.on_rx_symbol(ul_symbol_context, ul_rg);
+    rx_symbol_notifier.on_rx_symbol(ul_symbol_context, *ul_rg);
   }
 
   return aligned_receive_ts;
@@ -73,7 +95,8 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
   transmit_metadata.ts                                     = timestamp + rx_to_tx_delay;
 
   // Get transmit resource grid buffer for the given slot.
-  lower_phy_dl_rg_buffer& dl_grid_buffer = dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()];
+  lower_phy_rg_buffer<const resource_grid_reader>& dl_grid_buffer =
+      dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()];
 
   // Resize radio buffers, assume all sectors and ports symbol sizes are the same.
   unsigned symbol_sz = modulators.front()->get_symbol_size(symbol_id);
@@ -119,72 +142,70 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
   }
 }
 
-void lower_phy_impl::process_slot()
+void lower_phy_impl::process_symbol()
 {
-  // Update logger context.
-  logger.set_context(dl_slot_context.system_slot());
+  // Detect slot boundary.
+  if (symbol_slot_idx == 0) {
+    // Update logger context.
+    logger.set_context(dl_slot_context.system_slot());
 
-  // Notify slot boundary.
-  lower_phy_timing_context timing_context = {};
-  timing_context.slot                     = dl_slot_context + max_processing_delay_slots;
-  timing_notifier.on_tti_boundary(timing_context);
-
-  // For each symbol in the slot. Skip symbol processing if stop mis signaled.
-  for (unsigned symbol_slot_idx = 0; symbol_slot_idx < nof_symbols_per_slot && state_fsm.is_running();
-       ++symbol_slot_idx) {
-    // Calculate the symbol index within the subframe.
-    unsigned ul_symbol_subframe_idx = ul_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
-
-    // Notify UL half slot.
-    if (symbol_slot_idx == nof_symbols_per_slot / 2) {
-      lower_phy_timing_context ul_timing_context = {};
-      timing_context.slot                        = dl_slot_context;
-      timing_notifier.on_ul_half_slot_boundary(ul_timing_context);
-    }
-
-    // Process uplink symbol.
-    baseband_gateway_timestamp rx_timestamp = process_ul_symbol(ul_symbol_subframe_idx);
-
-    // Calculate the symbol index within the subframe.
-    unsigned dl_symbol_subframe_idx = dl_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
-
-    // Process downlink symbol.
-    process_dl_symbol(dl_symbol_subframe_idx, rx_timestamp);
-  }
-
-  // Immediate return if stop was signaled.
-  if (!state_fsm.is_running()) {
-    return;
-  }
-
-  // Notify the end of an uplink full slot.
-  lower_phy_timing_context ul_timing_context = {};
-  timing_context.slot                        = ul_slot_context;
-  timing_notifier.on_ul_full_slot_boundary(ul_timing_context);
-
-  // Reset DL resource grid buffers.
-  dl_rg_buffers[dl_slot_context.system_slot() % dl_rg_buffers.size()].reset();
-}
-
-void lower_phy_impl::realtime_process_loop()
-{
-  logger.info("Starting...");
-
-  // Notify the initial slot boundaries.
-  for (unsigned slot_count = 0; slot_count != max_processing_delay_slots; ++slot_count) {
+    // Notify slot boundary.
     lower_phy_timing_context timing_context = {};
-    timing_context.slot                     = dl_slot_context + slot_count;
+    timing_context.slot                     = dl_slot_context + max_processing_delay_slots;
     timing_notifier.on_tti_boundary(timing_context);
   }
 
-  // Process until stop is called.
-  while (state_fsm.is_running()) {
-    // Run slot.
-    process_slot();
+  // Calculate the symbol index within the subframe.
+  unsigned ul_symbol_subframe_idx = ul_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
+
+  // Notify UL signal demodulation.
+  if (symbol_slot_idx == nof_symbols_per_slot / 2) {
+    // Notify the end of an uplink half slot.
+    lower_phy_timing_context ul_timing_context = {};
+    ul_timing_context.slot                     = ul_slot_context;
+    timing_notifier.on_ul_half_slot_boundary(ul_timing_context);
+  } else if (symbol_slot_idx == nof_symbols_per_slot - 1) {
+    // Notify the end of an uplink full slot.
+    lower_phy_timing_context ul_timing_context = {};
+    ul_timing_context.slot                     = ul_slot_context;
+    timing_notifier.on_ul_full_slot_boundary(ul_timing_context);
+  }
+
+  // Process uplink symbol.
+  baseband_gateway_timestamp rx_timestamp = process_ul_symbol(ul_symbol_subframe_idx);
+
+  // Calculate the symbol index within the subframe.
+  unsigned dl_symbol_subframe_idx = dl_slot_context.subframe_slot_index() * nof_symbols_per_slot + symbol_slot_idx;
+
+  // Process downlink symbol.
+  process_dl_symbol(dl_symbol_subframe_idx, rx_timestamp);
+
+  // Reset DL resource grid buffers.
+  dl_rg_buffers[dl_slot_context.system_slot()].reset();
+
+  // Increment symbol index within the slot.
+  ++symbol_slot_idx;
+
+  // Detect symbol index overflow.
+  if (symbol_slot_idx == nof_symbols_per_slot) {
+    // Reset the synbol index.
+    symbol_slot_idx = 0;
 
     // Increment slot.
     dl_slot_context++;
     ul_slot_context++;
+  }
+}
+
+void lower_phy_impl::realtime_process_loop(task_executor& realtime_task_executor)
+{
+  // Process symbol.
+  process_symbol();
+
+  // Feedbacks the task if no stop has been signaled.
+  if (state_fsm.is_running()) {
+    realtime_task_executor.defer([this, &realtime_task_executor]() { realtime_process_loop(realtime_task_executor); });
+    return;
   }
 
   // Notify the stop of the asynchronous operation.
@@ -194,21 +215,10 @@ void lower_phy_impl::realtime_process_loop()
 
 void lower_phy_impl::send(const resource_grid_context& context, const resource_grid_reader& grid)
 {
-  // Skip if it is not running
-  if (!state_fsm.is_running()) {
-    return;
-  }
-
-  // Calculate slot index circular buffer.
-  unsigned slot_idx = context.slot.system_slot() % dl_rg_buffers.size();
-
-  logger.debug("Writing DL resource grid for sector {} and slot {} in index {}.",
-               context.sector,
-               context.slot.system_slot(),
-               slot_idx);
+  logger.debug("Writing DL resource grid for sector {} and slot {}.", context.sector, context.slot.system_slot());
 
   // Set grid. Concurrent protection is at resource grid buffer level.
-  dl_rg_buffers[slot_idx].set_grid(grid, context.sector);
+  dl_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }
 
 lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, const lower_phy_configuration& config) :
@@ -217,7 +227,6 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   receiver(config.bb_gateway->get_receiver()),
   rx_symbol_notifier(*config.rx_symbol_notifier),
   timing_notifier(*config.timing_notifier),
-  ul_rg_pool(*config.ul_resource_grid_pool),
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
@@ -232,13 +241,6 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   // Assert parameters.
   srsran_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
   srsran_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
-  srsran_assert((ul_slot_context.nof_slots_per_system_frame() % config.nof_dl_rg_buffers == 0) &&
-                    (config.nof_dl_rg_buffers > config.max_processing_delay_slots),
-                "The number of DL resource grids ({}) must be divisor of the number of slots per system frame "
-                "({}) and greater than the maximum processing delay in slots ({}).",
-                config.nof_dl_rg_buffers,
-                ul_slot_context.nof_slots_per_system_frame(),
-                config.max_processing_delay_slots);
 
   logger.info(
       "Initialized with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
@@ -251,7 +253,6 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsran_assert(config.ul_resource_grid_pool != nullptr, "Invalid uplink resource grid pool pointer.");
   srsran_assert(modulators.size() == config.sectors.size(),
                 "The number of sectors ({}) and modulators ({}) do not match.",
                 config.sectors.size(),
@@ -274,8 +275,20 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   receive_metadata.resize(config.nof_channels_per_stream.size());
 
   // Create pool of transmit resource grids.
-  for (unsigned slot_count = 0; slot_count != config.nof_dl_rg_buffers; ++slot_count) {
-    dl_rg_buffers.emplace_back(lower_phy_dl_rg_buffer(config.sectors.size()));
+  for (unsigned slot_count = 0; slot_count != dl_rg_buffers.size(); ++slot_count) {
+    dl_rg_buffers[slot_count].set_nof_sectors(sectors.size());
+
+    // If the slot is inside the start transition, then set an initial resource grid reader than is empty.
+    if (slot_count < max_processing_delay_slots) {
+      for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
+        dl_rg_buffers[slot_count].set_grid(rg_reader_empty, sector_id);
+      }
+    }
+  }
+
+  // Create pool of receive resource grids.
+  for (unsigned slot_count = 0; slot_count != ul_rg_buffers.size(); ++slot_count) {
+    ul_rg_buffers[slot_count].set_nof_sectors(sectors.size());
   }
 
   // Signal a successful initialization.
@@ -284,7 +297,8 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
 
 void lower_phy_impl::start(task_executor& realtime_task_executor)
 {
-  realtime_task_executor.execute([this]() { realtime_process_loop(); });
+  logger.info("Starting...");
+  realtime_process_loop(realtime_task_executor);
 }
 
 void lower_phy_impl::stop()
@@ -297,4 +311,10 @@ void lower_phy_impl::stop()
 void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer* buffer)
 {
   // Not implemented.
+}
+
+void lower_phy_impl::request_uplink_slot(const resource_grid_context& context, resource_grid& grid)
+{
+  logger.debug("Writing UL resource grid for sector {} and slot {}.", context.sector, context.slot.system_slot());
+  ul_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }

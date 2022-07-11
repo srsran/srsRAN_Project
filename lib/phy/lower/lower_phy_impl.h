@@ -12,6 +12,8 @@
 #define SRSGNB_LIB_PHY_LOWER_LOWER_PHY_IMPL_H
 
 #include "lower_phy_state_fsm.h"
+#include "srsgnb/adt/circular_array.h"
+#include "srsgnb/adt/optional.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
@@ -32,28 +34,25 @@ struct lower_phy_common_configuration {
   std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
 };
 
-class lower_phy_dl_rg_buffer
+template <class RG>
+class lower_phy_rg_buffer
 {
 private:
   /// Stores resource grid pointers for every sector.
-  std::vector<const resource_grid_reader*> grids;
+  std::vector<RG*> grids;
   /// Protects grids access from concurrent read/write.
   std::mutex mutex;
 
 public:
-  /// Default constructor. Allow implicit construction.
-  explicit lower_phy_dl_rg_buffer(unsigned nof_sectors) : grids(nof_sectors) {}
+  void set_nof_sectors(unsigned nof_sectors) { grids.resize(nof_sectors); }
 
-  /// Move constructor.
-  lower_phy_dl_rg_buffer(lower_phy_dl_rg_buffer&& other) noexcept : grids(std::move(other.grids)) {}
-
-  void set_grid(const resource_grid_reader& grid, unsigned sector_id)
+  void set_grid(RG& grid, unsigned sector_id)
   {
     std::unique_lock<std::mutex> lock(mutex);
     grids[sector_id] = &grid;
   }
 
-  const resource_grid_reader* get_grid(unsigned sector_id)
+  RG* get_grid(unsigned sector_id)
   {
     std::unique_lock<std::mutex> lock(mutex);
     return grids[sector_id];
@@ -73,6 +72,9 @@ public:
 class lower_phy_impl : public lower_phy_controller
 {
 private:
+  /// Number of resource grid buffers.
+  static constexpr unsigned NOF_RG_BUFFER = 40;
+
   /// Logger.
   srslog::basic_logger& logger;
   /// Baseband gateway transmitter.
@@ -83,10 +85,10 @@ private:
   lower_phy_rx_symbol_notifier& rx_symbol_notifier;
   /// Timing boundary handler.
   lower_phy_timing_notifier& timing_notifier;
-  /// Uplink resource grid pool.
-  resource_grid_pool& ul_rg_pool;
-  /// Stores resource grids buffers. Each entry belongs to a slot.
-  std::vector<lower_phy_dl_rg_buffer> dl_rg_buffers;
+  /// Stores downlink resource grids buffers. Each entry belongs to a slot.
+  circular_array<lower_phy_rg_buffer<const resource_grid_reader>, NOF_RG_BUFFER> dl_rg_buffers;
+  /// Stores uplink resource grids buffers. Each entry belongs to a slot.
+  circular_array<lower_phy_rg_buffer<resource_grid>, NOF_RG_BUFFER> ul_rg_buffers;
   /// Stores radio baseband buffers for each stream. Common for transmit and receive. The number of entries indicates
   /// the number of streams.
   std::vector<baseband_gateway_buffer_dynamic> radio_buffers;
@@ -108,6 +110,8 @@ private:
   slot_point ul_slot_context = {};
   /// Current downlink processing slot context.
   slot_point dl_slot_context = {};
+  /// Current symbol index within the processing slot.
+  unsigned symbol_slot_idx = 0;
   /// Indicates the asynchronous processing shall stop.
   lower_phy_state_fsm state_fsm;
 
@@ -122,16 +126,19 @@ private:
   void process_dl_symbol(unsigned symbol_idx, baseband_gateway_timestamp timestamp);
 
   /// \brief Processes uplink and downlink slot.
-  void process_slot();
+  void process_symbol();
 
   /// Runs the lower physical layer.
-  void realtime_process_loop();
-
-  // See interface for documentation.
-  void send(const resource_grid_context& context, const resource_grid_reader& grid) override;
+  void realtime_process_loop(task_executor& realtime_task_executor);
 
   // See interface for documentation.
   void request_prach_window(const prach_buffer_context& context, prach_buffer* buffer) override;
+
+  // See interface for documentation.
+  void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
+
+  // See interface for documentation.
+  void send(const resource_grid_context& context, const resource_grid_reader& grid) override;
 
 public:
   /// \brief Constructs a generic lower physical layer.

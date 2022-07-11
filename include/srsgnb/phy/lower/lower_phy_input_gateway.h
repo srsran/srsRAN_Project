@@ -33,6 +33,17 @@ public:
   /// \param[in] buffer  Provides the PRACH buffer used to write the PRACH window.
   virtual void request_prach_window(const prach_buffer_context& context, prach_buffer* buffer) = 0;
 
+  /// \brief Requests to the lower PHY an uplink slot.
+  ///
+  /// The lower PHY must process the slot described by \c context and notify the demodulation per symbol basis of the
+  /// requested slot.
+  ///
+  /// The notification contains the exact context and grid.
+  ///
+  /// \param[in] context Resource grid context.
+  /// \param[in] buffer  Resource grid to store the processed slot.
+  virtual void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
+
   /// \brief Sends resource grid through the gateway.
   /// \param[in] context Indicates the resource grid context.
   /// \param[in] grid Provides the resource grid to transmit.

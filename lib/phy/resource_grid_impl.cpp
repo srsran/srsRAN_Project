@@ -17,7 +17,7 @@
 using namespace srsgnb;
 
 resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, unsigned nof_subc_) :
-  nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_), port_buffers(nof_ports)
+  empty(nof_ports_), nof_ports(nof_ports_), nof_symb(nof_symb_), nof_subc(nof_subc_), port_buffers(nof_ports)
 {
   // For each port allocate buffer
   for (auto& buffer : port_buffers) {
@@ -46,6 +46,7 @@ void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate>
                   nof_subc);
     buffer[coordinate.symbol * nof_subc + coordinate.subcarrier] = symbols[count++];
   }
+  empty[port] = false;
 }
 
 span<const cf_t> resource_grid_impl::put(unsigned         port,
@@ -72,6 +73,7 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
       count++;
     }
   }
+  empty[port] = false;
 
   // Update symbol buffer
   return symbol_buffer.last(symbol_buffer.size() - count);
@@ -91,12 +93,16 @@ void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<co
 
   // Copy
   srsvec::copy(buffer.subspan(l * nof_subc + k_init, symbols.size()), symbols);
+  empty[port] = false;
 }
 void resource_grid_impl::set_all_zero()
 {
   // For each port buffer set to zero
-  for (auto& buffer : port_buffers) {
-    srsvec::zero(buffer);
+  for (unsigned port = 0; port != nof_ports; ++port) {
+    if (!empty[port]) {
+      srsvec::zero(port_buffers[port]);
+      empty[port] = true;
+    }
   }
 }
 
@@ -153,6 +159,12 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsi
 
   // Copy
   srsvec::copy(symbols, buffer.subspan(l * nof_subc + k_init, symbols.size()));
+}
+
+bool resource_grid_impl::is_empty(unsigned port) const
+{
+  srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
+  return empty[port];
 }
 
 std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)

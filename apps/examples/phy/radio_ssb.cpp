@@ -298,22 +298,19 @@ lower_phy_configuration create_lower_phy_configuration(unsigned                 
                                                        double                        rx_to_tx_delay,
                                                        float                         tx_scale,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                       lower_phy_timing_notifier*    timing_notifier,
-                                                       resource_grid_pool*           ul_resource_grid_pool)
+                                                       lower_phy_timing_notifier*    timing_notifier)
 {
   lower_phy_configuration phy_config;
   phy_config.dft_size_15kHz             = dft_size_15kHz;
   phy_config.numerology                 = to_numerology_value(scs);
   phy_config.max_processing_delay_slots = max_processing_delay_slots;
   phy_config.ul_to_dl_slot_offset       = ul_to_dl_slot_offset;
-  phy_config.nof_dl_rg_buffers          = max_processing_delay_slots * 2;
   phy_config.rx_to_tx_delay             = rx_to_tx_delay;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;
   phy_config.timing_notifier            = timing_notifier;
-  phy_config.ul_resource_grid_pool      = ul_resource_grid_pool;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = bw_rb;
@@ -381,24 +378,6 @@ int main(int argc, char** argv)
   // Create symbol handler.
   rx_symbol_handler_example rx_symbol_handler(log_level);
 
-  // Create UL resource grid pool configuration.
-  std::unique_ptr<resource_grid_pool> ul_rg_pool = nullptr;
-  {
-    resource_grid_pool_config rg_pool_config = {};
-    rg_pool_config.nof_sectors               = 1;
-    rg_pool_config.nof_slots                 = max_processing_delay_slots * 2;
-    for (unsigned sector_id = 0; sector_id != rg_pool_config.nof_sectors; ++sector_id) {
-      for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
-        rg_pool_config.grids.push_back(create_resource_grid(nof_ports, get_nsymb_per_slot(cp), bw_rb * NRE));
-        srsran_always_assert(rg_pool_config.grids.back(), "Failed to create resource grid.");
-      }
-    }
-
-    // Create UL resource grid pool.
-    ul_rg_pool = create_resource_grid_pool(rg_pool_config);
-    srsran_always_assert(ul_rg_pool, "Failed to create resource grid pool for UL");
-  }
-
   // Create adapters.
   phy_rx_symbol_adapter  rx_symbol_adapter;
   phy_rg_gateway_adapter rg_gateway_adapter;
@@ -406,8 +385,8 @@ int main(int argc, char** argv)
 
   // Create lower physical layer.
   {
-    lower_phy_configuration phy_config = create_lower_phy_configuration(
-        dft_size_15kHz, rx_to_tx_delay, tx_scale, &rx_symbol_adapter, &timing_adapter, ul_rg_pool.get());
+    lower_phy_configuration phy_config =
+        create_lower_phy_configuration(dft_size_15kHz, rx_to_tx_delay, tx_scale, &rx_symbol_adapter, &timing_adapter);
     lower_phy = create_lower_phy(phy_config);
     srsran_assert(lower_phy, "Failed to create lower physical layer.");
   }

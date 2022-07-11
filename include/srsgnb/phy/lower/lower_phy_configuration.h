@@ -43,9 +43,6 @@ struct lower_phy_configuration {
   unsigned max_processing_delay_slots;
   /// Indicates the UL/DL slot context offset.
   unsigned ul_to_dl_slot_offset;
-  /// Indicates the size of the circular transmit resource grid buffer in slots. It must be greater than \c
-  /// max_processing_delay_slots and divisor of the number of slots per system frame number.
-  unsigned nof_dl_rg_buffers;
   /// Indicates the Rx to Tx delay in seconds.
   double rx_to_tx_delay;
   /// OFDM modulator scale.
@@ -58,8 +55,6 @@ struct lower_phy_configuration {
   lower_phy_rx_symbol_notifier* rx_symbol_notifier;
   /// Provides the timing handler to notify the timing boundaries.
   lower_phy_timing_notifier* timing_notifier;
-  /// Provides the uplink resource grid pool.
-  resource_grid_pool* ul_resource_grid_pool;
   /// Provides the sectors configuration.
   std::vector<lower_phy_sector_description> sectors;
   /// Indicates the numbers of channels for every stream.

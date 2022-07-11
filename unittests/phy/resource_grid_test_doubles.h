@@ -195,7 +195,7 @@ public:
     /// Provides the complex resource element value.
     cf_t value;
   };
-
+  bool is_empty(unsigned port) const override { return entries.empty(); }
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
     srsran_always_assert(symbols.size() == coordinates.size(), "Number of symbols and coordinates must be the equal.");
@@ -270,6 +270,7 @@ class resource_grid_spy : public resource_grid
   resource_grid_reader_spy reader;
   resource_grid_writer_spy writer;
   bool                     method_set_all_zero_has_been_called = false;
+  bool                     empty                               = true;
 
 public:
   /// Returns true if the \c set_all_zero() method has been called, otherwise false.
@@ -283,6 +284,10 @@ public:
     reader.reset();
     writer.reset();
   }
+
+  void set_empty(bool empty_) { empty = empty_; }
+
+  bool is_empty(unsigned port) const override { return empty; }
 
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
@@ -331,6 +336,8 @@ private:
   }
 
 public:
+  unsigned set_all_zero_count = 0;
+
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
   {
     failure();
@@ -342,6 +349,11 @@ public:
     return {};
   }
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override { failure(); }
+  bool is_empty(unsigned int port) const override
+  {
+    failure();
+    return true;
+  }
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
     failure();
@@ -352,7 +364,9 @@ public:
     return {};
   }
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override { failure(); }
-  void set_all_zero() override { failure(); }
+  void set_all_zero() override { ++set_all_zero_count; }
+
+  void clear_set_all_zero_count() { set_all_zero_count = 0; }
 };
 
 } // namespace srsgnb
