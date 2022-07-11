@@ -8,14 +8,18 @@ include:
 
 variables:
   # Input variables
+  # General
   os_type: ubuntu
   os_version: "22.04"
+  docker_version: $DOCKER_BUILDER_VERSION
+  # Build
   compiler: gcc
   uhd_version: "4.1.0.5"
-  docker_version: $DOCKER_BUILDER_VERSION
+  check_flags: "true"
+  # Tests
   run_tests: "true"
   enable_coverage: "true"
-  check_flags: "true"
+  coverage_full: "false"
 
 stages:
   - build
@@ -69,6 +73,8 @@ build [clean and update cache]:
   extends: .build
   rules:
     - if: $ON_SCHEDULE
+      variables:
+        coverage_full: "true"
   cache:
     <<: *build_cache
     policy: push
@@ -120,19 +126,29 @@ cmake flag check:
     - cd build/${test_folder}
     - ctest -j "$(nproc --all)" --schedule-random --output-junit xunit.xml
     # Launch coverage
+    - cd ${CI_PROJECT_DIR}/build
+    - GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
     - |
-      if [ $enable_coverage = "true" ]; then
-        cd ${CI_PROJECT_DIR}/build
-        GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
+      if [ $enable_coverage = "true" ]; then 
         gcovr --xml --print-summary $GCOVR_ARGS -o coverage.xml
-        gcovr --html                $GCOVR_ARGS -o coverage.html
-        ls -lah coverage.xml  # FIXME fail if size > 10MB (gitlab limit)
+        filesize=$(stat -c%s coverage.xml)
+        maxsize=$((10*1204*1024))
+        (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
+      fi
+    - |
+      if [ $enable_coverage = "true" ]; then 
+        if [ $coverage_full = "true" ]; then
+          gcovr --html --html-details $GCOVR_ARGS -o coverage.html
+        else
+          gcovr --html                $GCOVR_ARGS -o coverage.html
+        fi
       fi
   after_script:
     # Move files to upload to root so no intermiddle folders will be created in the artifact
+    - mkdir coverage_html
     - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml ${CI_PROJECT_DIR}
     - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}
-    - mv ${CI_PROJECT_DIR}/build/coverage.html            ${CI_PROJECT_DIR}
+    - mv ${CI_PROJECT_DIR}/build/coverage.*               ${CI_PROJECT_DIR}/coverage_html
   artifacts:
     reports:
       junit: xunit.xml
@@ -140,7 +156,7 @@ cmake flag check:
         coverage_format: cobertura
         path: coverage.xml
     paths:
-      - coverage.html
+      - coverage_html
       - xunit.xml
     expire_in: 7 days
 
@@ -154,9 +170,3 @@ integration tests:
   extends: .ctest
   variables:
     test_folder: integrationtests
-  artifacts:
-    reports:
-      junit: xunit.xml
-    paths:
-      - coverage.html
-    expire_in: 7 days

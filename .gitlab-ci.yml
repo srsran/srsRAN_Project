@@ -196,7 +196,7 @@ pages:
   script:
     - doxygen_generator.sh
     - mv build/public .
-    - mv coverage.html public/
+    - mv coverage_html public/
     - mv test_report.html public/
     - mv requirement_report.html public/
     - mv public/index.html public/index_doxygen.html
