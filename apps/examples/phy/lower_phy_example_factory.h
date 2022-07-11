@@ -22,4 +22,4 @@ std::unique_ptr<lower_phy_controller> create_lower_phy(lower_phy_configuration& 
 
 } // namespace srsgnb
 
-#endif // SRSGNB_APPS_EXAMPLES_RADIO_SSB_FACTORIES_H
+#endif // SRSGNB_APPS_EXAMPLES_PHY_LOWER_PHY_EXAMPLE_FACTORY_H

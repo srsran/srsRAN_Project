@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SSB_SCHEDULER_H
-#define SRSGNB_SSB_SCHEDULER_H
+#ifndef SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SSB_SCHEDULER_H
+#define SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SSB_SCHEDULER_H
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/slot_point.h"
@@ -49,4 +49,4 @@ void schedule_ssb(cell_slot_resource_allocator& slot_allocator,
 
 } // namespace srsgnb
 
-#endif /// SRSGNB_SCHED_SSB_H
+#endif // SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SSB_SCHEDULER_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_SDU_QUEUE_H
-#define SRSGNB_RLC_SDU_QUEUE_H
+#ifndef SRSGNB_LIB_RLC_RLC_SDU_QUEUE_H
+#define SRSGNB_LIB_RLC_RLC_SDU_QUEUE_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/circular_buffer.h"
@@ -125,4 +125,5 @@ private:
 };
 
 } // namespace srsgnb
-#endif
+
+#endif // SRSGNB_LIB_RLC_RLC_SDU_QUEUE_H

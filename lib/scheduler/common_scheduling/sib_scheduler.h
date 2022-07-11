@@ -8,7 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_SIB_SCHEDULER_H
+#ifndef SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SIB_SCHEDULER_H
+#define SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SIB_SCHEDULER_H
 
 #include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "srsgnb/adt/static_vector.h"
@@ -87,6 +88,4 @@ private:
 
 } // end of namespace srsgnb
 
-#define SRSGNB_SIB_SCHEDULER_H
-
-#endif // SRSGNB_SIB_SCHEDULER_H
+#endif // SRSGNB_LIB_SCHEDULER_COMMON_SCHEDULING_SIB_SCHEDULER_H
