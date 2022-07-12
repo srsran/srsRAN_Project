@@ -187,19 +187,18 @@ bool rlc_tx_um_entity::get_si_and_expected_header_size(uint32_t      so,
   return true;
 }
 
-/// Update the buffer status information
 void rlc_tx_um_entity::get_buffer_state(uint32_t& bytes)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
   // minimum bytes needed to tx all queued SDUs + each header
-  uint32_t gross_queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_len_full;
+  uint32_t queue_bytes = sdu_queue.size_bytes() + sdu_queue.size_sdus() * head_len_full;
 
   // minimum bytes needed to tx SDU under segmentation + header (if applicable)
-  uint32_t gross_segment_bytes = 0;
+  uint32_t segment_bytes = 0;
   if (not sdu.buf.empty()) {
-    gross_segment_bytes = (sdu.buf.length() - next_so) + head_len_not_first;
+    segment_bytes = (sdu.buf.length() - next_so) + head_len_not_first;
   }
 
-  bytes = gross_queue_bytes + gross_segment_bytes;
+  bytes = queue_bytes + segment_bytes;
 }
