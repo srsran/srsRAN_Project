@@ -30,7 +30,8 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
     default:
       srsran_terminate("Invalid SCS common");
   }
-  mib.ssb_subcarrier_offset            = du_cfg.ssb_cfg.ssb_subcarrier_offset;
+  /// As per TS 38.331, MIB, the field "ssb-SubcarrierOffset" in the MIB only encodes the 4 LSB of k_SSB.
+  mib.ssb_subcarrier_offset            = static_cast<int>(du_cfg.ssb_cfg.ssb_subcarrier_offset & 0b00001111);
   mib.dmrs_type_a_position.value       = du_cfg.dmrs_typeA_pos == dmrs_typeA_position::pos2
                                              ? mib_s::dmrs_type_a_position_opts::pos2
                                              : mib_s::dmrs_type_a_position_opts::pos3;
@@ -332,7 +333,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));
   asn1::number_to_enum(cell.ssb_periodicity_serving_cell, ssb_periodicity_to_value(du_cfg.ssb_cfg.ssb_period));
-  cell.ss_pbch_block_pwr = -16;
+  cell.ss_pbch_block_pwr = du_cfg.ssb_cfg.ssb_block_power;
   // TODO: Fill remaining fields.
   return cell;
 }

@@ -15,12 +15,12 @@ using namespace fapi;
 using namespace fapi_adaptor;
 
 /// Converts the given beta_pss_profile_nr_type value into a beta_pss_profile_type.
-static beta_pss_profile_type convert_beta_pss_profile_nr(ssb_beta_pss value)
+static beta_pss_profile_type convert_beta_pss_profile_nr(ssb_pss_to_sss_epre value)
 {
   switch (value) {
-    case ssb_beta_pss::dB_0:
+    case ssb_pss_to_sss_epre::dB_0:
       return beta_pss_profile_type::dB_0;
-    case ssb_beta_pss::dB_3:
+    case ssb_pss_to_sss_epre::dB_3:
       return beta_pss_profile_type::dB_3;
     default:
       break;
@@ -38,7 +38,7 @@ void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu& fapi_pdu, c
 void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder, const srsgnb::dl_ssb_pdu& mac_pdu)
 {
   builder.set_basic_parameters(mac_pdu.pci,
-                               convert_beta_pss_profile_nr(mac_pdu.beta_pss_profile_nr),
+                               convert_beta_pss_profile_nr(mac_pdu.pss_to_sss_epre),
                                mac_pdu.ssb_index,
                                mac_pdu.ssb_subcarrier_offset,
                                mac_pdu.offset_to_point_A);

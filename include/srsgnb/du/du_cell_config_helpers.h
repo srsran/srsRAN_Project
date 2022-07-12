@@ -198,7 +198,9 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
   cfg.ssb_bitmap            = uint64_t(1) << beam_index;
   cfg.beam_ids[beam_index]  = 0;
 
-  cfg.beta_pss = ssb_beta_pss::dB_0;
+  /// The values we assign to these parameters are implementation-defined.
+  cfg.ssb_block_power = -16;
+  cfg.pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
 
   return cfg;
 }

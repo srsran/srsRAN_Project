@@ -23,8 +23,8 @@ inline unsigned ssb_periodicity_to_value(ssb_periodicity periodicity)
   return static_cast<unsigned>(periodicity);
 }
 
-/// \brief PSS power level allocation in dB, relative to SSS as per TS38.213 Section 4.1.
-enum class ssb_beta_pss { dB_0, dB_3 };
+/// \brief PSS EPRE to SSS EPRE for SSB, as per TS 38.213, Section 4.1.
+enum class ssb_pss_to_sss_epre { dB_0, dB_3 };
 
 /// Labels for the different SS/PBCH block patterns defined in TS38.213 Section 4.1.
 enum class ssb_pattern_case {

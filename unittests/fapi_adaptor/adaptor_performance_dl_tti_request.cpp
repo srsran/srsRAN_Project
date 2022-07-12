@@ -45,7 +45,7 @@ static void ssb_conversion_benchmark()
   for (unsigned i = 0; i != iterations; ++i) {
     srsgnb::dl_ssb_pdu mac_pdu;
     mac_pdu.pci                        = pci_dist(gen);
-    mac_pdu.beta_pss_profile_nr        = static_cast<ssb_beta_pss>(binary_dist(gen));
+    mac_pdu.pss_to_sss_epre                 = static_cast<ssb_pss_to_sss_epre>(binary_dist(gen));
     mac_pdu.ssb_index                  = block_index_dist(gen);
     mac_pdu.ssb_subcarrier_offset      = subcarrier_offset_dist(gen);
     mac_pdu.offset_to_point_A          = offset_pointA_dist(gen);

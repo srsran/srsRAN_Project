@@ -69,7 +69,7 @@ static void test_sched_result_ok()
   const srsgnb::dl_ssb_pdu& pdu      = result.ssb_pdu.front();
   const fapi::dl_ssb_pdu&   fapi_pdu = (msg.pdus.end() - 3)->ssb_pdu;
   TESTASSERT_EQ(pdu.pci, fapi_pdu.phys_cell_id);
-  TESTASSERT_EQ(static_cast<unsigned>(pdu.beta_pss_profile_nr), static_cast<unsigned>(fapi_pdu.beta_pss_profile_nr));
+  TESTASSERT_EQ(static_cast<unsigned>(pdu.pss_to_sss_epre), static_cast<unsigned>(fapi_pdu.beta_pss_profile_nr));
   TESTASSERT_EQ(pdu.ssb_index, fapi_pdu.ssb_block_index);
   TESTASSERT_EQ(pdu.ssb_subcarrier_offset, fapi_pdu.ssb_subcarrier_offset);
   TESTASSERT_EQ(pdu.offset_to_point_A, fapi_pdu.ssb_offset_pointA);

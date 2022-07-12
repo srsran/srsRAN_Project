@@ -30,7 +30,7 @@ ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
 void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
 {
   ssb_pdu.pci                   = pci;
-  ssb_pdu.beta_pss_profile_nr   = ssb_beta_pss::dB_0;
+  ssb_pdu.pss_to_sss_epre       = ssb_pss_to_sss_epre::dB_0;
   ssb_pdu.ssb_index             = ssb_info.ssb_index;
   ssb_pdu.scs                   = ssb_cfg.scs;
   ssb_pdu.ssb_subcarrier_offset = ssb_cfg.ssb_subcarrier_offset;

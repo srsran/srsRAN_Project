@@ -21,11 +21,13 @@ struct ssb_mib_data_pdu {
 };
 
 struct dl_ssb_pdu {
-  pci_t        pci;
-  ssb_beta_pss beta_pss_profile_nr;
-  uint8_t      ssb_index;
-  uint8_t      ssb_subcarrier_offset;
-  uint16_t     offset_to_point_A;
+  pci_t pci;
+  // This corresponds to the parameter "betaPssProfileNR" defined in the interface. In the MAC/Scheduler we use
+  // "pss_to_sss_epre" to prevent misusing TS terminology, where "beta_pss" is something different.
+  ssb_pss_to_sss_epre pss_to_sss_epre;
+  uint8_t             ssb_index;
+  uint8_t             ssb_subcarrier_offset;
+  uint16_t            offset_to_point_A;
 
   ssb_pattern_case ssb_case;
   uint8_t          L_max;

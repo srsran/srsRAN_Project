@@ -35,8 +35,12 @@ struct ssb_configuration {
   /// The n-th element of the array indicates what Beam ID to use for the n-th SSB occasion in \c ssb_bitmap. Only
   /// relevant if the n-th bit of \c ssb_bitmap is set.
   std::array<uint8_t, NOF_BEAMS> beam_ids;
-  /// PSS power level allocation in dB, relative to SSS.
-  ssb_beta_pss beta_pss;
+  /// PSS EPRE to SSS EPRE for SSB. TS 38.213, Section 4.1 gives an explanation of this measure, but doesn't provide a
+  /// name for this parameter. Nor is there a name in the TS 38.331.
+  ssb_pss_to_sss_epre pss_to_sss_epre;
+  /// Average EPRE of the resources elements that carry secondary synchronization signals in dBm, as per
+  /// ServingCellConfigCommonSIB, TS 38.331. Possible values: {-60, ..., 50}
+  int ssb_block_power;
 };
 
 } // namespace srsgnb
