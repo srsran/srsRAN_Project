@@ -32,44 +32,6 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   }
 }
 
-// TS 38.322 v16.2.0 Sec. 5.2.2.2.4
-void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
-{
-  std::lock_guard<std::mutex> lock(mutex);
-  if (reassembly_timer.id() == timeout_id) {
-    logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",
-                     st.rx_next_reassembly);
-    metrics_add_lost_pdus(1);
-
-    // update RX_Next_Reassembly to the next SN that has not been reassembled yet
-    st.rx_next_reassembly = st.rx_timer_trigger;
-    while (rx_mod_base(st.rx_next_reassembly) < rx_mod_base(st.rx_next_highest)) {
-      st.rx_next_reassembly = (st.rx_next_reassembly + 1) % mod;
-      debug_state();
-    }
-
-    // discard all segments with SN < updated RX_Next_Reassembly
-    for (auto it = rx_window.begin(); it != rx_window.end();) {
-      if (rx_mod_base(it->first) < rx_mod_base(st.rx_next_reassembly)) {
-        it = rx_window.erase(it);
-      } else {
-        ++it;
-      }
-    }
-
-    // check start of t_reassembly
-    if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_next_reassembly + 1) ||
-        ((rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1) &&
-          has_missing_byte_segment(st.rx_next_reassembly)))) {
-      logger.log_debug("starting reassembly timer for SN={}", st.rx_next_reassembly);
-      reassembly_timer.run();
-      st.rx_timer_trigger = st.rx_next_highest;
-    }
-
-    debug_state();
-  }
-}
-
 // TS 38.322 v16.2.0 Sec. 5.2.3.2.2
 void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
 {
@@ -139,27 +101,6 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
   }
 
   debug_state();
-}
-
-// TS 38.322 v16.2.0 Sec 5.2.2.2.1
-bool rlc_rx_um_entity::sn_in_reassembly_window(const uint32_t sn)
-{
-  return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
-          rx_mod_base(sn) < rx_mod_base(st.rx_next_highest));
-}
-
-// TS 38.322 v16.2.0 Sec 5.2.2.2.2
-bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
-{
-  return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
-          rx_mod_base(sn) < rx_mod_base(st.rx_next_reassembly));
-}
-
-bool rlc_rx_um_entity::has_missing_byte_segment(const uint32_t sn)
-{
-  // is at least one missing byte segment of the RLC SDU associated with SN = RX_Next_Reassembly before the last byte of
-  // all received segments of this RLC SDU
-  return (rx_window.find(sn) != rx_window.end());
 }
 
 // TS 38.322 v16.2.0 Sec 5.2.2.2.3
@@ -298,3 +239,62 @@ void rlc_rx_um_entity::update_total_sdu_length(rlc_umd_pdu_segments& pdu_segment
     logger.log_debug("updating total SDU length for SN={} to {} B", rx_pdu.header.sn, pdu_segments.total_sdu_length);
   }
 };
+
+// TS 38.322 v16.2.0 Sec. 5.2.2.2.4
+void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  if (reassembly_timer.id() == timeout_id) {
+    logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",
+                     st.rx_next_reassembly);
+    metrics_add_lost_pdus(1);
+
+    // update RX_Next_Reassembly to the next SN that has not been reassembled yet
+    st.rx_next_reassembly = st.rx_timer_trigger;
+    while (rx_mod_base(st.rx_next_reassembly) < rx_mod_base(st.rx_next_highest)) {
+      st.rx_next_reassembly = (st.rx_next_reassembly + 1) % mod;
+      debug_state();
+    }
+
+    // discard all segments with SN < updated RX_Next_Reassembly
+    for (auto it = rx_window.begin(); it != rx_window.end();) {
+      if (rx_mod_base(it->first) < rx_mod_base(st.rx_next_reassembly)) {
+        it = rx_window.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    // check start of t_reassembly
+    if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_next_reassembly + 1) ||
+        ((rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next_reassembly + 1) &&
+          has_missing_byte_segment(st.rx_next_reassembly)))) {
+      logger.log_debug("starting reassembly timer for SN={}", st.rx_next_reassembly);
+      reassembly_timer.run();
+      st.rx_timer_trigger = st.rx_next_highest;
+    }
+
+    debug_state();
+  }
+}
+
+// TS 38.322 v16.2.0 Sec 5.2.2.2.1
+bool rlc_rx_um_entity::sn_in_reassembly_window(const uint32_t sn)
+{
+  return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
+          rx_mod_base(sn) < rx_mod_base(st.rx_next_highest));
+}
+
+// TS 38.322 v16.2.0 Sec 5.2.2.2.2
+bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
+{
+  return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
+          rx_mod_base(sn) < rx_mod_base(st.rx_next_reassembly));
+}
+
+bool rlc_rx_um_entity::has_missing_byte_segment(const uint32_t sn)
+{
+  // is at least one missing byte segment of the RLC SDU associated with SN = RX_Next_Reassembly before the last byte of
+  // all received segments of this RLC SDU
+  return (rx_window.find(sn) != rx_window.end());
+}
