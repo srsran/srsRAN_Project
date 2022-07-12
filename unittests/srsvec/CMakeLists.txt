@@ -18,6 +18,10 @@ add_executable(srsvec_bit_test srsvec_bit_test.cpp)
 target_link_libraries(srsvec_bit_test srsvec srslog)
 add_test(srsvec_bit_test srsvec_bit_test)
 
+add_executable(srsvec_compare_test srsvec_compare_test.cpp)
+target_link_libraries(srsvec_compare_test srsvec srslog)
+add_test(srsvec_compare_test srsvec_compare_test)
+
 add_executable(srsvec_binary_test srsvec_binary_test.cpp)
 target_link_libraries(srsvec_binary_test srsvec srslog)
 add_test(srsvec_binary_test srsvec_binary_test)
@@ -25,6 +29,10 @@ add_test(srsvec_binary_test srsvec_binary_test)
 add_executable(srsvec_convert_test srsvec_convert_test.cpp)
 target_link_libraries(srsvec_convert_test srsvec srslog)
 add_test(srsvec_convert_test srsvec_convert_test)
+
+add_executable(srsvec_dot_prod_test srsvec_dot_prod_test.cpp)
+target_link_libraries(srsvec_dot_prod_test srsvec srslog)
+add_test(srsvec_dot_prod_test srsvec_dot_prod_test)
 
 add_executable(srsvec_prod_test srsvec_prod_test.cpp)
 target_link_libraries(srsvec_prod_test srsvec srslog)

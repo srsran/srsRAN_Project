@@ -3,7 +3,6 @@
 #include "srsgnb/support/math_utils.h"
 #include <numeric>
 
-#define HAVE_SSE
 #include "../../srsvec/simd.h"
 
 using namespace srsgnb;

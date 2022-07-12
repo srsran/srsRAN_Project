@@ -44,6 +44,7 @@ option(ENABLE_UHD            "Enable UHD"                               ON)
 option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
+option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -139,6 +140,37 @@ if (ENABLE_ZEROMQ)
         link_directories(${ZEROMQ_LIBRARY_DIRS})
     endif (ZEROMQ_FOUND)
 endif (ENABLE_ZEROMQ)
+
+########################################################################
+# Instruction Set Architecture setup
+########################################################################
+if (AUTO_DETECT_ISA)
+    find_package(SSE)
+
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+        set(GCC_ARCH armv8-a CACHE STRING "GCC compile for specific architecture.")
+        message(STATUS "Detected aarch64 processor")
+    else (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+        set(GCC_ARCH native CACHE STRING "GCC compile for specific architecture.")
+    endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+
+    ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-march=${GCC_ARCH}" HAVE_MARCH_${GCC_ARCH})
+    if (HAVE_AVX2)
+        add_definitions(-DHAVE_AVX2)
+    endif (HAVE_AVX2)
+    if (HAVE_AVX)
+        add_definitions(-DHAVE_AVX)
+    endif (HAVE_AVX)
+    if (HAVE_SSE)
+        add_definitions(-DHAVE_SSE)
+    endif (HAVE_SSE)
+    if (HAVE_FMA)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mfma -DHAVE_FMA")
+    endif (HAVE_FMA)
+    if (HAVE_AVX512)
+        add_definitions(-DHAVE_AVX512)
+    endif (HAVE_AVX512)
+endif (AUTO_DETECT_ISA)
 
 ########################################################################
 # Compiler launcher setup

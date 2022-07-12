@@ -11,6 +11,10 @@
 #include "crc_calculator_impl.h"
 #include "srsgnb/srsvec/bit.h"
 
+#if HAVE_SSE
+#include <immintrin.h>
+#endif // HAVE_SSE
+
 using namespace srsgnb;
 
 const std::map<crc_generator_poly, crc_calculator_impl::crc_table_s> crc_calculator_impl::crc_tables = {
@@ -129,9 +133,9 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
 
       // Get mask and write
       byte = (uint8_t)_mm_movemask_pi8(mask);
-#else  /* LV_HAVE_SSE */
+#else  // HAVE_SSE
       byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
-#endif /* LV_HAVE_SSE */
+#endif // HAVE_SSE
     }
     put_byte(byte);
   }

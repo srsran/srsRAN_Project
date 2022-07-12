@@ -10,8 +10,9 @@
 
 #include "prach_detector_simple_impl.h"
 #include "prach_preamble_helpers.h"
+#include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/measurements.h"
+#include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/prod.h"
 #include "srsgnb/support/math_utils.h"
 
@@ -89,13 +90,10 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
     // Convert to correlation to time-domain.
     span<const cf_t> correlation = idft->run();
 
-    // Find delay of the maximum value.
-    unsigned delay_n = srsvec::max_abs_element(correlation);
-
-    // Measure the maximum power.
-    srsran_assert(delay_n < correlation.size(), "Failed to find maximum.");
-    float max_power = correlation[delay_n].real() * correlation[delay_n].real() +
-                      correlation[delay_n].imag() * correlation[delay_n].imag();
+    // Find delay and power of the maximum absolute value.
+    std::pair<unsigned, float> max_abs   = srsvec::max_abs_element(correlation);
+    unsigned                   delay_n   = max_abs.first;
+    float                      max_power = max_abs.second;
 
     // Check if the maximum value gets over the threshold.
     float norm_corr = max_power / (rssi * preamble_power * idft->get_size() * idft->get_size() * idft->get_size());

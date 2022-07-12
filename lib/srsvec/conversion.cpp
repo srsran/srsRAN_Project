@@ -10,7 +10,6 @@
 
 #include "srsgnb/srsvec/conversion.h"
 
-#define HAVE_SSE
 #include "simd.h"
 
 using namespace srsgnb;
@@ -22,7 +21,7 @@ static inline void convert_fi_simd(const float* x, int16_t* z, float scale, unsi
 
 #if SRSRAN_SIMD_F_SIZE && SRSRAN_SIMD_S_SIZE
   simd_f_t s = srsran_simd_f_set1(scale);
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
       simd_f_t a = srsran_simd_f_load(&x[i]);
       simd_f_t b = srsran_simd_f_load(&x[i + SRSRAN_SIMD_F_SIZE]);
@@ -61,7 +60,7 @@ static inline void convert_if_simd(const int16_t* x, float* z, float scale, unsi
 
 #ifdef mHAVE_SSE
   __m128 s = _mm_set1_ps(gain);
-  if (SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(z)) {
     for (; i < len - 3; i += 4) {
       __m64* ptr = (__m64*)&x[i];
       __m128 fl  = _mm_cvtpi16_ps(*ptr);

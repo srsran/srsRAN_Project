@@ -12,6 +12,10 @@
 #include <cassert>
 #include <cstring>
 
+#if HAVE_SSE
+#include <immintrin.h>
+#endif // HAVE_SSE
+
 using namespace srsgnb;
 
 const pseudo_random_generator_impl::x1_init_s pseudo_random_generator_impl::x1_init =
@@ -129,7 +133,7 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
         // Loads input and perform sign XOR
         v = _mm_xor_ps((__m128)mask, v);
 
-        _mm_storeu_ps(out + i + j, v);
+        _mm_storeu_ps(&out[i + j], v);
       }
 #endif
       // Finish the parallel bits with generic code
@@ -292,12 +296,12 @@ void pseudo_random_generator_impl::apply_xor_bit(span<const uint8_t> in, span<ui
         mask = _mm_and_si128(mask, _mm_set1_epi8(1));
 
         // Load input
-        __m128i v = _mm_loadu_si128((__m128i*)(in + i + j));
+        __m128i v = _mm_loadu_si128((__m128i*)(&in[i + j]));
 
         // Apply XOR
         v = _mm_xor_si128(mask, v);
 
-        _mm_storeu_si128((__m128i*)(out + i + j), v);
+        _mm_storeu_si128((__m128i*)(&out[i + j]), v);
 
         // Increment bit counter `j`
         j += 16;
@@ -347,7 +351,7 @@ void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t>
         mask = _mm_cmpeq_epi8(mask, _mm_set_epi64x(0x8040201008040201, 0x8040201008040201));
 
         // Load input
-        __m128i v = _mm_loadu_si128((__m128i*)(in + i + j));
+        __m128i v = _mm_loadu_si128((__m128i*)(&in[i + j]));
 
         // Negate
         v = _mm_xor_si128(mask, v);
@@ -356,7 +360,7 @@ void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t>
         mask = _mm_and_si128(mask, _mm_set1_epi8(1));
         v    = _mm_add_epi8(v, mask);
 
-        _mm_storeu_si128((__m128i*)(out + i + j), v);
+        _mm_storeu_si128((__m128i*)(&out[i + j]), v);
 
         // Increment bit counter `j`
         j += 16;

@@ -47,6 +47,15 @@ inline constexpr unsigned pow2(unsigned power)
   return 1U << power;
 }
 
+/// \brief Calculates the squared modulus of a complex value.
+/// \param[in] x Complex value.
+/// \return The squared absolute of the given value, i.e. \f$\abs{x}^2=x\cdot\conj{x}=\Re(x)^2+\Im(x)^2\f$.
+inline constexpr float abs_sq(cf_t x)
+{
+  // Equivalent to but computationally simpler than std::pow(std::abs(x),2).
+  return x.real() * x.real() + x.imag() * x.imag();
+}
+
 /// \brief Calculates \f$\left \lceil log_2(n) \right \rceil\f$.
 ///
 /// \tparam Integer Any unsigned integer type.

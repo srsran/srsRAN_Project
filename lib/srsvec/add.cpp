@@ -10,7 +10,6 @@
 
 #include "srsgnb/srsvec/add.h"
 
-#define HAVE_SSE
 #include "simd.h"
 
 using namespace srsgnb;
@@ -21,7 +20,7 @@ static void add_fff_simd(const float* x, const float* y, float* z, std::size_t l
   std::size_t i = 0;
 
 #if SRSRAN_SIMD_F_SIZE
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(y) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_F_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
       simd_f_t a = srsran_simd_f_load(&x[i]);
       simd_f_t b = srsran_simd_f_load(&y[i]);
@@ -52,7 +51,7 @@ static void add_sss_simd(const int16_t* x, const int16_t* y, int16_t* z, std::si
   std::size_t i = 0;
 
 #if SRSRAN_SIMD_S_SIZE
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(y) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_S_SIZE < len + 1; i += SRSRAN_SIMD_S_SIZE) {
       simd_s_t a = srsran_simd_s_load(&x[i]);
       simd_s_t b = srsran_simd_s_load(&y[i]);
@@ -83,7 +82,7 @@ static void add_bbb_simd(const int8_t* x, const int8_t* y, int8_t* z, std::size_
   std::size_t i = 0;
 
 #if SRSRAN_SIMD_S_SIZE
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(y) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(y) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_B_SIZE < len + 1; i += SRSRAN_SIMD_B_SIZE) {
       simd_b_t a = srsran_simd_b_load(&x[i]);
       simd_b_t b = srsran_simd_b_load(&y[i]);

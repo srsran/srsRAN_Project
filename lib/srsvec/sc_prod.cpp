@@ -10,7 +10,6 @@
 
 #include "srsgnb/srsvec/sc_prod.h"
 
-#define HAVE_SSE
 #include "simd.h"
 
 using namespace srsgnb;
@@ -22,7 +21,7 @@ static void sc_prod_fff_simd(const float* x, float h, float* z, std::size_t len)
 
 #if SRSRAN_SIMD_F_SIZE
   simd_f_t b = srsran_simd_f_set1(h);
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_F_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
       simd_f_t a = srsran_simd_f_load(&x[i]);
 
@@ -52,7 +51,7 @@ static void sc_prod_ccc_simd(const cf_t* x, cf_t h, cf_t* z, std::size_t len)
 
 #if SRSRAN_SIMD_CF_SIZE
   simd_cf_t b = srsran_simd_cf_set1(h);
-  if (SRSRAN_IS_ALIGNED(x) && SRSRAN_IS_ALIGNED(z)) {
+  if (SIMD_IS_ALIGNED(x) && SIMD_IS_ALIGNED(z)) {
     for (; i + SRSRAN_SIMD_CF_SIZE < len + 1; i += SRSRAN_SIMD_F_SIZE) {
       simd_cf_t a = srsran_simd_cfi_load(&x[i]);
 

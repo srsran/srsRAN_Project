@@ -51,25 +51,33 @@ inline V dot_prod(const T& x, const U& y, V init)
 /// \brief Dot product of two complex spans.
 ///
 /// Computes the dot product (a.k.a. inner product or scalar product) of the two complex sequences. The sequences are
-/// represented by the input spans \c x and \c y, the second sequence \c y is conjugated. It adds an initial offset \c
-/// init.
+/// represented by the input spans \c x and \c y, the second sequence \c y is conjugated.
+///
+/// The implementation is equivalent to:
+/// \code
+/// cf_t dot_prod(span<const cf_t> x, span<const cf_t> y) {
+///   return std::inner_product(x.begin(), x.end(), y.begin(), cf_t(0.0F), std::plus<>(), [](cf_t a, cf_t b) { return a
+///   * std::conj(b); });
+/// }
+/// \endcode
 ///
 /// \param[in] x      First span.
 /// \param[in] y      Second span.
-/// \param[in] init   Initialization value.
-/// \return The dot product between the two spans plus \c init, i.e. \f$ x \cdot \bar{y} + \mathrm{init} = \sum_i x_i
-/// \bar{y_i} + \mathrm{init}\f$.
+/// \return The dot product between the two spans, i.e. \f$ x \cdot \conj{y}= \sum_i x_i \conj{y}_i \f$.
 /// \remark The two input spans must have the same length.
-inline cf_t dot_prod_conj(span<const cf_t> x, span<const cf_t> y, cf_t init)
+cf_t dot_prod(span<const cf_t> x, span<const cf_t> y);
+
+/// \brief Estimates the average power of a complex span - linear scale.
+///
+/// The average power of a span is defined as its squared Euclidean norm divided by the number of its elements, i.e.
+/// <tt>dot_prod(x, x) / x.size()</tt>.
+inline float average_power(span<const cf_t> x)
 {
-  srsgnb_srsvec_assert_size(x, y);
-  return std::inner_product(
-      x.begin(),
-      x.end(),
-      y.begin(),
-      init,
-      [](const cf_t& sum, const cf_t& value) { return sum + value; },
-      [](const cf_t& left, const cf_t& right) { return left * std::conj(right); });
+  if (x.empty()) {
+    return 0.0F;
+  }
+
+  return std::real(srsvec::dot_prod(x, x)) / static_cast<float>(x.size());
 }
 
 } // namespace srsvec

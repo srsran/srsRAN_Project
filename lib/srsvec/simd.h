@@ -30,19 +30,19 @@ namespace srsgnb {
  * SIMD Vector bit alignment
  */
 #ifdef HAVE_AVX512
-#define SRSRAN_SIMD_BIT_ALIGN 512
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x3f) == 0)
+#define SIMD_BYTE_ALIGN 64
+#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x3f) == 0)
 #else /* HAVE_AVX512 */
 #ifdef HAVE_AVX
-#define SRSRAN_SIMD_BIT_ALIGN 256
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x1f) == 0)
+#define SIMD_BYTE_ALIGN 32
+#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x1f) == 0)
 #else /* HAVE_AVX */
 #ifdef HAVE_SSE
-#define SRSRAN_SIMD_BIT_ALIGN 128
-#define SRSRAN_IS_ALIGNED(PTR) (((size_t)(PTR)&0x0f) == 0)
+#define SIMD_BYTE_ALIGN 16
+#define SIMD_IS_ALIGNED(PTR) (((size_t)(PTR)&0x0f) == 0)
 #else /* HAVE_SSE */
-#define SRSRAN_SIMD_BIT_ALIGN 64
-#define SRSRAN_IS_ALIGNED(PTR) (1)
+#define SIMD_BYTE_ALIGN 16
+#define SIMD_IS_ALIGNED(PTR) (1)
 #endif /* HAVE_SSE */
 #endif /* HAVE_AVX */
 #endif /* HAVE_AVX512 */
@@ -1112,7 +1112,7 @@ typedef uint32x4_t simd_sel_t;
 #endif /* HAVE_AVX2 */
 #endif /* HAVE_AVX512 */
 
-static inline simd_i_t srsran_simd_i_load(int* x)
+static inline simd_i_t srsran_simd_i_load(int32_t* x)
 {
 #ifdef HAVE_AVX512
   return _mm512_load_epi32((__m512i*)x);
@@ -1131,7 +1131,7 @@ static inline simd_i_t srsran_simd_i_load(int* x)
 #endif /* HAVE_AVX512 */
 }
 
-static inline void srsran_simd_i_store(int* x, simd_i_t reg)
+static inline void srsran_simd_i_store(int32_t* x, simd_i_t reg)
 {
 #ifdef HAVE_AVX512
   _mm512_store_epi32((__m512i*)x, reg);

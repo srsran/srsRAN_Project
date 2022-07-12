@@ -12,6 +12,10 @@
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
 
+#if HAVE_SSE
+#include <immintrin.h>
+#endif // HAVE_SSE
+
 using namespace srsgnb;
 using namespace srsvec;
 
@@ -69,10 +73,11 @@ void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
   srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
 #ifdef HAVE_SSE
+  const uint8_t* unpacked_ptr = unpacked.data();
   for (i = 0; i < nbytes; i++) {
     // Get 8 Bit
-    __m64 mask = _mm_cmpgt_pi8(*((__m64*)unpacked), _mm_set1_pi8(0));
-    unpacked += 8;
+    __m64 mask = _mm_cmpgt_pi8(*((__m64*)unpacked_ptr), _mm_set1_pi8(0));
+    unpacked_ptr += 8;
 
     // Reverse
     mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
@@ -80,11 +85,11 @@ void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
     // Get mask and write
     packed[i] = (uint8_t)_mm_movemask_pi8(mask);
   }
-#else  /* HAVE_SSE */
+#else  // HAVE_SSE
   for (i = 0; i < nbits / 8; i++) {
     packed[i] = (uint8_t)bit_pack(unpack_tmp, 8);
   }
-#endif /* HAVE_SSE */
+#endif // HAVE_SSE
 
   if (nbits % 8) {
     packed[i] = (uint8_t)bit_pack(unpack_tmp, nbits % 8);
