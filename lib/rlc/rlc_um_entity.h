@@ -30,9 +30,17 @@ public:
   {
     if (config.tx != nullptr) {
       tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_um_entity(du_index, lcid, *config.tx, upper_cn));
+      logger.log_info("RLC TX UM configured: sn_field_length={}", to_number(config.tx->sn_field_length));
+    } else {
+      logger.log_info("Configured RLC UM without TX entity");
     }
     if (config.rx != nullptr) {
       rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, *config.rx, upper_dn, timers));
+      logger.log_info("RLC RX UM configured: sn_field_length={}, t_reassembly_ms={}",
+                      to_number(config.rx->sn_field_length),
+                      config.rx->t_reassembly_ms);
+    } else {
+      logger.log_info("Configured RLC UM without RX entity");
     }
   }
 };

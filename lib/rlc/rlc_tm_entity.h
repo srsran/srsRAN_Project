@@ -28,6 +28,7 @@ public:
   {
     tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_tm_entity(ue_index, lcid, upper_cn));
     rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_tm_entity(ue_index, lcid, upper_dn));
+    logger.log_info("RLC TM configured");
   }
 };
 
