@@ -141,8 +141,15 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
 
     // Iterate for each symbol.
     for (unsigned symbol_idx = start_symbol_index; symbol_idx != end_symbol_index; ++symbol_idx) {
+      // Select mask for the OFDM symbol.
+      span<const bool> mask = allocation_mask[symbol_idx];
+
       // Write RE in resource grid.
-      x_buffer = grid.put(port_idx, symbol_idx, 0, span<const bool>(allocation_mask[symbol_idx]), x_buffer);
+      x_buffer = grid.put(port_idx,
+                          symbol_idx,
+                          config.bwp_start_rb * NRE,
+                          mask.subspan(config.bwp_start_rb * NRE, config.bwp_size_rb * NRE),
+                          x_buffer);
     }
 
     // Verify all the resource elements for the layer have been mapped.
@@ -224,9 +231,9 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
   }
 }
 
-void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&                    grid,
-                                    srsgnb::span<const srsgnb::span<const uint8_t> > codewords,
-                                    const srsgnb::pdsch_modulator::config_t&         config)
+void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&                   grid,
+                                    srsgnb::span<const srsgnb::span<const uint8_t>> codewords,
+                                    const srsgnb::pdsch_modulator::config_t&        config)
 {
   // Deduce the number of layers from the number of ports
   unsigned nof_layers = config.ports.size();

@@ -11,6 +11,7 @@
 #ifndef SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H_
 #define SRSGNB_UNITTESTS_PHY_RESOURCE_GRID_TEST_DOUBLES_H_
 
+#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include "srsgnb/support/srsran_assert.h"
@@ -37,7 +38,10 @@ public:
   };
 
   /// Constructs a resource spy.
-  resource_grid_writer_spy(std::string log_level = "none") :
+  resource_grid_writer_spy(unsigned max_ports_, unsigned max_symb_, unsigned max_prb_, std::string log_level = "none") :
+    max_ports(max_ports_),
+    max_symb(max_symb_),
+    max_prb(max_prb_),
     logger(srslog::fetch_basic_logger("unittest/resource_grid_spy", false))
   {
     srslog::init();
@@ -57,6 +61,11 @@ public:
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {
+    TESTASSERT(k_init + mask.size() <= max_prb * NRE,
+               "The mask staring at {} for {} subcarriers exceeds the resource grid bandwidth (max {}).",
+               k_init,
+               mask.size(),
+               max_prb * NRE);
     unsigned count = 0;
     for (unsigned k = 0; k != mask.size(); ++k) {
       if (mask[k]) {
@@ -145,6 +154,15 @@ private:
   /// Stores the resource grid written entries.
   std::map<entry_key_t, cf_t> entries;
 
+  /// Maximum number of ports.
+  unsigned max_ports;
+
+  /// Maximum number of OFDM symbols.
+  unsigned max_symb;
+
+  /// Maximum number of RB.
+  unsigned max_prb;
+
   /// Stores logger.
   srslog::basic_logger& logger;
 
@@ -160,12 +178,17 @@ private:
     // Generate key.
     entry_key_t key{port, symbol, subcarrier};
 
+    // Ensure the port, symbol and subcarrier indexes are in range.
+    TESTASSERT(port < max_ports, "Port index {} exceeded maximum {}.", port, max_ports);
+    TESTASSERT(symbol < max_symb, "Symbol index {} exceeded maximum {}.", symbol, max_symb);
+    TESTASSERT(subcarrier < max_prb * NRE, "Subcarrier index {} exceeded maximum {}.", subcarrier, max_prb * NRE);
+
     // Ensure the resource element does not exist.
-    srsran_assert(entries.count(key) == 0,
-                  "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.",
-                  port,
-                  symbol,
-                  subcarrier);
+    TESTASSERT(entries.count(key) == 0,
+               "Detected resource grid overwrite for port={}, symbol={} and subcarrier={}.",
+               port,
+               symbol,
+               subcarrier);
 
     // Debug trace.
     logger.debug("[put] port={:>2}; symbol={:>2}; subcarrier={:>4}; value={}; count={};",
@@ -273,6 +296,11 @@ class resource_grid_spy : public resource_grid
   bool                     empty                               = true;
 
 public:
+  resource_grid_spy() : writer(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB)
+  {
+    // Do nothing.
+  }
+
   /// Returns true if the \c set_all_zero() method has been called, otherwise false.
   bool has_set_all_zero_method_been_called() const { return method_set_all_zero_has_been_called; }
 

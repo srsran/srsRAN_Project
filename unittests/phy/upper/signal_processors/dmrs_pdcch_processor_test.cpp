@@ -19,8 +19,13 @@ int main()
   std::unique_ptr<dmrs_pdcch_processor> dmrs_pdcch = create_dmrs_pdcch_processor();
 
   for (const test_case_t& test_case : dmrs_pdcch_processor_test_data) {
-    // Create resource grid.
-    resource_grid_writer_spy grid;
+    int prb_idx_high = test_case.config.rb_mask.find_highest();
+    TESTASSERT(prb_idx_high > 1);
+    unsigned max_prb  = static_cast<unsigned>(prb_idx_high + 1);
+    unsigned max_symb = test_case.config.start_symbol_index + test_case.config.duration;
+
+    // Create resource grid spy.
+    resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
 
     // Map DMRS-PDCCH using the test case arguments.
     dmrs_pdcch->map(grid, test_case.config);

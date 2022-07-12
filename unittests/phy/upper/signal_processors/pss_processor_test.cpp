@@ -46,7 +46,8 @@ void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float
 static void test_case(pss_processor& pss, const pss_processor::config_t& pss_args)
 {
   // Create resource grid.
-  resource_grid_writer_spy grid;
+  resource_grid_writer_spy grid(
+      MAX_PORTS, pss_args.ssb_first_symbol + SSB_DURATION_NSYMB, pss_args.ssb_first_subcarrier / NRE + SSB_BW_RB);
 
   // Map PSS.
   pss.map(grid, pss_args);

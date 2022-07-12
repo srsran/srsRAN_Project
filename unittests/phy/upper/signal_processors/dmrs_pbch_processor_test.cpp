@@ -20,7 +20,7 @@ int main()
 
   for (const test_case_t& test_case : dmrs_pbch_processor_test_data) {
     // Create resource grid
-    resource_grid_writer_spy grid;
+    resource_grid_writer_spy grid(test_case.config.ports.size(), SSB_DURATION_NSYMB, SSB_BW_RB);
 
     // Map DMRS-PBCH using the test case arguments
     dmrs_pbch->map(grid, test_case.config);

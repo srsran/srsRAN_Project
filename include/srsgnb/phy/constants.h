@@ -22,6 +22,9 @@ static constexpr unsigned NRE = 12;
 /// Defines the SSB bandwidth in Resource Blocks (RBs)
 static constexpr unsigned SSB_BW_RB = 20;
 
+/// SS/PBCH Block duration in OFDM symbols.
+static constexpr unsigned SSB_DURATION_NSYMB = 4;
+
 /// Defines the SSB bandwidth in Resource Elements
 static constexpr unsigned SSB_BW_RE = NRE * SSB_BW_RB;
 

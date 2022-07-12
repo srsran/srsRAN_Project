@@ -21,7 +21,7 @@ int main()
 
   for (const test_case_t& test_case : csi_rs_processor_test_data) {
     // Create resource grid.
-    resource_grid_writer_spy grid;
+    resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, test_case.config.start_rb + test_case.config.nof_rb);
 
     // Map NZP-CSI-RS using the test case arguments.
     csi_rs->map(grid, test_case.config);

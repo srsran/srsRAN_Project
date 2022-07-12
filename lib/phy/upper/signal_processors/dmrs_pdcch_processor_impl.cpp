@@ -9,6 +9,7 @@
  */
 
 #include "dmrs_pdcch_processor_impl.h"
+#include "../resource_grid_helpers.h"
 #include "dmrs_helper.h"
 #include "srsgnb/support/math_utils.h"
 
@@ -34,52 +35,34 @@ void dmrs_pdcch_processor_impl::sequence_generation(span<cf_t>                  
       sequence, *prg, M_SQRT1_2 * config.amplitude, config.reference_point_k_rb, NOF_DMRS_PER_RB, config.rb_mask);
 }
 
-void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                 grid,
-                                        span<const cf_t>                      sequence,
-                                        span<const bool>                      mask,
-                                        unsigned int                          symbol,
-                                        const dmrs_pdcch_processor::config_t& config)
+void dmrs_pdcch_processor_impl::mapping(resource_grid_writer&                    grid,
+                                        span<const cf_t>                         sequence,
+                                        unsigned                                 rg_subc_mask_ref,
+                                        span<const bool>                         rg_subc_mask,
+                                        unsigned                                 symbol,
+                                        const static_vector<uint8_t, MAX_PORTS>& ports)
 {
   // Put signal for each port.
-  for (unsigned port_idx : config.ports) {
-    grid.put(port_idx, symbol, 0, mask, sequence);
+  for (unsigned port_idx : ports) {
+    grid.put(port_idx, symbol, rg_subc_mask_ref, rg_subc_mask, sequence);
   }
 }
 
 void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&                 grid,
                                     const srsgnb::dmrs_pdcch_processor::config_t& config)
 {
+  // Resource element allocation within a resource block for PDCCH.
+  static const std::array<bool, NRE> re_mask = {
+      false, true, false, false, false, true, false, false, false, true, false, false};
+
   // Count number of DMRS.
-  unsigned count_dmrs = 0;
+  unsigned count_dmrs = config.rb_mask.count() * NOF_DMRS_PER_RB;
 
-  unsigned prb_index_begin;
-  {
-    int ret = config.rb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB found to transmit");
-    prb_index_begin = static_cast<unsigned>(ret);
-  }
+  // Initial subcarrier index.
+  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
 
-  unsigned prb_index_end;
-  {
-    int ret = config.rb_mask.find_highest();
-    srsran_assert(ret != -1, "No RB found to transmit");
-    prb_index_end = static_cast<unsigned>(ret + 1);
-  }
-
-  // Generate allocation mask, common for all symbol.
-  std::array<bool, MAX_RB* NRE> mask = {};
-  for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
-    // Skip if the RB is not used.
-    if (!config.rb_mask.test(prb_index)) {
-      continue;
-    }
-
-    // Set the DMRS positions to true.
-    for (unsigned re_index = 1; re_index < NRE; re_index += STRIDE) {
-      mask[NRE * prb_index + re_index] = true;
-    }
-    count_dmrs += NOF_DMRS_PER_RB;
-  }
+  // Create RG OFDM symbol mask. Identical for all OFDM symbols.
+  static_vector<bool, MAX_RB* NRE> rg_subc_mask = get_rg_subc_mask(config.rb_mask, re_mask);
 
   // Generate and map for each symbol of the PDCCH transmission.
   for (unsigned symbol = 0; symbol != config.start_symbol_index + config.duration; ++symbol) {
@@ -90,6 +73,6 @@ void dmrs_pdcch_processor_impl::map(srsgnb::resource_grid_writer&               
     sequence_generation(sequence, symbol, config);
 
     // Map sequence in symbols.
-    mapping(grid, sequence, mask, symbol, config);
+    mapping(grid, sequence, rg_subc_mask_ref, rg_subc_mask, symbol, config.ports);
   }
 }

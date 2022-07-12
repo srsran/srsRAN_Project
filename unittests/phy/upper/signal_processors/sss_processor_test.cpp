@@ -57,7 +57,8 @@ void generate_sequence_gold(std::array<cf_t, 127>& sequence, unsigned NID, float
 static void test_case(sss_processor& sss, const sss_processor::config_t& sss_args)
 {
   // Create resource grid.
-  resource_grid_writer_spy grid;
+  resource_grid_writer_spy grid(
+      MAX_PORTS, sss_args.ssb_first_symbol + SSB_DURATION_NSYMB, sss_args.ssb_first_subcarrier / NRE + SSB_BW_RB);
 
   // Map SSS.
   sss.map(grid, sss_args);
@@ -90,7 +91,7 @@ int main()
   // Random distributions
   std::uniform_int_distribution<unsigned> dist_cell_id(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> dist_ssb_first_subcarrier(0, 270 * 12);
-  std::uniform_int_distribution<unsigned> dist_ssb_first_symbol(0, 13);
+  std::uniform_int_distribution<unsigned> dist_ssb_first_symbol(0, 13 - SSB_DURATION_NSYMB);
   std::uniform_int_distribution<uint8_t>  dist_port(0, MAX_PORTS - 1);
 
   for (unsigned rep = 0; rep != repetitions; ++rep) {

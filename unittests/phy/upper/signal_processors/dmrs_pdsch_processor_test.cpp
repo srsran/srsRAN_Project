@@ -27,8 +27,13 @@ int main()
   TESTASSERT(dmrs_pdsch);
 
   for (const test_case_t& test_case : dmrs_pdsch_processor_test_data) {
-    // Create resource grid.
-    resource_grid_writer_spy grid;
+    int prb_idx_high = test_case.config.rb_mask.find_highest();
+    TESTASSERT(prb_idx_high > 1);
+    unsigned max_prb  = static_cast<unsigned>(prb_idx_high + 1);
+    unsigned max_symb = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+
+    // Create resource grid spy.
+    resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
 
     // Map DMRS-PDSCH using the test case arguments.
     dmrs_pdsch->map(grid, test_case.config);

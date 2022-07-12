@@ -63,7 +63,8 @@ static void process_test_case_pdsch(const test_case_t& test_case, pdsch_processo
     transport_blocks.emplace_back(transport_block_packed);
 
     // Create fresh resource grid spy.
-    resource_grid_writer_spy pdsch_rg("warning");
+    resource_grid_writer_spy pdsch_rg(
+        1, get_nsymb_per_slot(pdsch_data.pdu.cp), pdsch_data.pdu.bwp_start_rb + pdsch_data.pdu.bwp_size_rb, "warning");
 
     // Process PDSCH.
     pdsch.process(pdsch_rg, transport_blocks, pdsch_data.pdu);
@@ -86,7 +87,10 @@ static void process_test_case_pdcch(const test_case_t& test_case, pdcch_processo
     }
 
     // Create fresh resource grid spy.
-    resource_grid_writer_spy pdcch_rg("warning");
+    resource_grid_writer_spy pdcch_rg(1,
+                                      get_nsymb_per_slot(pdcch_data.pdu.cp),
+                                      pdcch_data.pdu.coreset.bwp_start_rb + pdcch_data.pdu.coreset.bwp_size_rb,
+                                      "warning");
 
     // Process PDSCH.
     pdcch.process(pdcch_rg, pdcch_data.pdu);

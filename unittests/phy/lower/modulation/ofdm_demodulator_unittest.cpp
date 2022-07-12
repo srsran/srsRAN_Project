@@ -103,7 +103,7 @@ int main()
           dft.reset();
 
           // Demodulate signal.
-          resource_grid_writer_spy rg;
+          resource_grid_writer_spy rg(MAX_PORTS, MAX_NSYMB_PER_SLOT, ofdm_config.bw_rb);
           ofdm->demodulate(rg, time_data, port_idx, slot_idx);
 
           // Check the number of calls to DFT processor match with the number of symbols.

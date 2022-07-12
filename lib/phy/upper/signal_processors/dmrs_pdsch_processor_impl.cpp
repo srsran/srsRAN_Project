@@ -9,6 +9,7 @@
  */
 
 #include "dmrs_pdsch_processor_impl.h"
+#include "../resource_grid_helpers.h"
 #include "dmrs_helper.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
@@ -69,34 +70,35 @@ void srsgnb::dmrs_pdsch_processor_impl::sequence_generation(span<cf_t>      sequ
 
 void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
                                                 span<const cf_t>      sequence,
-                                                span<const bool>      base_mask,
+                                                unsigned              rg_subc_mask_ref,
+                                                span<const bool>      rg_subc_mask,
                                                 unsigned              symbol,
                                                 const config_t&       config)
 {
-  // Resource elements views for each port
+  // Resource elements views for each port.
   static_vector<span<const cf_t>, MAX_PORTS> re(config.ports.size());
 
-  // Set l_prime to 1 if the symbol follows another one
+  // Set l_prime to 1 if the symbol follows another one.
   unsigned l_prime = 0;
   if (symbol != 0) {
     l_prime = (config.symbols_mask[symbol - 1]) ? 1 : 0;
   }
 
-  // For each port compute the sequence
+  // For each port compute the sequence.
   for (unsigned port = 0; port != config.ports.size(); ++port) {
-    // Get parameter for this port and symbol
+    // Get parameter for this port and symbol.
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
-    // If no weights are applied, use sequence reference
+    // If no weights are applied, use sequence reference.
     if (params.w_t[l_prime] == +1.0f && params.w_f[0] == params.w_f[1]) {
       re[port] = sequence;
       continue;
     }
 
-    // Setup temporal RE
+    // Setup temporal RE.
     temp_re[port].resize(sequence.size());
 
-    // Apply w_t weight can be +1 or -1 depending on l_prime and port
+    // Apply w_t weight can be +1 or -1 depending on l_prime and port.
     if (params.w_t[l_prime] != +1.0f) {
       srsvec::sc_prod(sequence, -1, temp_re[port]);
     } else {
@@ -115,73 +117,53 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     re[port] = temp_re[port];
   }
 
-  // For each port put elements in grid
+  // For each port put elements in grid.
   for (unsigned port = 0; port != config.ports.size(); ++port) {
-    // Get parameter for this port and symbol
+    // Get parameter for this port and symbol.
     const params_t& params = (config.type == dmrs_type::TYPE1) ? params_type1[port] : params_type2[port];
 
-    // Put port elements in the resource grid
-    grid.put(config.ports[port], symbol, 0, base_mask.subspan(NRE - params.delta, MAX_RB * NRE), re[port]);
+    // Put port elements in the resource grid.
+    grid.put(config.ports[port],
+             symbol,
+             rg_subc_mask_ref + params.delta,
+             rg_subc_mask.first(rg_subc_mask.size() - params.delta),
+             re[port]);
   }
 }
 
 void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const config_t& config)
 {
-  // Count number of RB
+  // Resource element allocation within a resource block for PDCCH.
+  static const std::array<bool, NRE> re_mask_type1 = {
+      true, false, true, false, true, false, true, false, true, false, true, false};
+  static const std::array<bool, NRE> re_mask_type2 = {
+      true, true, false, false, false, false, true, true, false, false, false, false};
+
+  // Count number of RB.
   unsigned dmrs_re_count = config.type.nof_dmrs_per_rb() * config.rb_mask.count();
 
-  unsigned prb_index_begin;
-  {
-    int ret = config.rb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB found to transmit");
-    prb_index_begin = static_cast<unsigned>(ret);
-  }
+  // Initial subcarrier index.
+  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
 
-  unsigned prb_index_end;
-  {
-    int ret = config.rb_mask.find_highest();
-    srsran_assert(ret != -1, "No RB found to transmit");
-    prb_index_end = static_cast<unsigned>(ret + 1);
-  }
+  // Create RG OFDM symbol mask. Identical for all OFDM symbols.
+  static_vector<bool, MAX_RB* NRE> rg_subc_mask =
+      get_rg_subc_mask(config.rb_mask, config.type == dmrs_type::TYPE1 ? re_mask_type1 : re_mask_type2);
 
-  // Generate DMRS mask, with NRE padding at the first samples
-  std::array<bool, (MAX_RB + 1)* NRE> base_mask = {};
-  if (config.type == dmrs_type::TYPE1) {
-    // Generate type 1: {1,0,1,0,1,0,1,0,1,0,1,0}
-    for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
-      if (config.rb_mask.test(prb_index)) {
-        for (unsigned k = prb_index * NRE, k_end = (prb_index + 1) * NRE; k != k_end; k += 2) {
-          base_mask[NRE + k] = true;
-        }
-      }
-    }
-  } else {
-    // Generate type 2: {1,1,0,0,0,0,1,1,0,0,0,0,}
-    for (unsigned prb_index = prb_index_begin; prb_index != prb_index_end; ++prb_index) {
-      if (config.rb_mask.test(prb_index)) {
-        for (unsigned k = prb_index * NRE, k_end = (prb_index + 1) * NRE; k != k_end; k += 6) {
-          base_mask[NRE + k]     = true;
-          base_mask[NRE + k + 1] = true;
-        }
-      }
-    }
-  }
-
-  // Resize temporal RE for the symbol according to the number of ports
+  // Resize temporal RE for the symbol according to the number of ports.
   temp_re.resize(config.ports.size());
 
   // For each symbol in the slot....
   for (unsigned symbol = 0; symbol < MAX_NSYMB_PER_SLOT; ++symbol) {
-    // Skip symbol if it is not used to transmit
+    // Skip symbol if it is not selected.
     if (!config.symbols_mask[symbol]) {
       continue;
     }
 
-    // Generate sequence for the given symbol
+    // Generate sequence for the given symbol.
     static_vector<cf_t, MAX_DMRS_PER_SYMBOL> sequence(dmrs_re_count);
     sequence_generation(sequence, symbol, config);
 
-    // Mapping to physical resources for the given symbol
-    mapping(grid, sequence, base_mask, symbol, config);
+    // Mapping to physical resources for the given symbol.
+    mapping(grid, sequence, rg_subc_mask_ref, rg_subc_mask, symbol, config);
   }
 }

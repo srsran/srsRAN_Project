@@ -50,7 +50,9 @@ int main()
   std::unique_ptr<ssb_processor> ssb = create_ssb_processor(config);
 
   for (const test_case_t& test_case : ssb_processor_test_data) {
-    resource_grid_writer_spy grid;
+    // The test data was generated with 64 ports, the symbol indexes are relative to half frame and the bandwidth is
+    // limited to the SSB.
+    resource_grid_writer_spy grid(64, MAX_NSYMB_PER_SLOT * 5, SSB_BW_RB);
 
     // Process PDU
     ssb->process(test_case.config, grid);

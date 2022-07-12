@@ -48,7 +48,11 @@ struct resource_grid_coordinate {
   }
 };
 
-/// Describer a resource grid writer interface.
+/// \brief Resource grid writer interface.
+///
+/// Contains the necessary functions to write resource elements in a resource grid.
+///
+/// \remark All the methods contained in this interface must not result in writing outside of the resource grid region.
 class resource_grid_writer
 {
 public:
@@ -72,7 +76,7 @@ public:
   /// \param[in] mask Provides the mask to be used.
   /// \param[in] symbol_buffer Provides the symbol buffer.
   /// \return It returns a \c span<cf_t> referencing the unused entries of \c symbols.
-  /// \note The number of elements of \c mask shall be equal to or greater than the resource grid number of subcarriers.
+  /// \note The number of elements of \c mask plus \c k_init shall not exceed the resource grid bandwidth.
   /// \note The number of elements of \c symbol_buffer shall be equal to or greater than the number of true elements in
   /// \c mask.
   virtual span<const cf_t>

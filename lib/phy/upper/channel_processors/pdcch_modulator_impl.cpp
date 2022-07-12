@@ -9,6 +9,7 @@
  */
 
 #include "pdcch_modulator_impl.h"
+#include "../resource_grid_helpers.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -42,36 +43,11 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
   static const std::array<bool, NRE> re_mask = {
       true, false, true, true, true, false, true, true, true, false, true, true};
 
-  // Generate empty allocation mask for the all symbols.
-  std::array<bool, MAX_RB* NRE> mask = {};
+  // Initial subcarrier index.
+  unsigned rg_subc_mask_ref = get_rg_subc_mask_reference(config.rb_mask);
 
-  unsigned prb_begin_index;
-  {
-    int ret = config.rb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB allocated for the transmission rb_mask={}", config.rb_mask);
-    prb_begin_index = static_cast<unsigned>(ret);
-  }
-
-  unsigned prb_begin_end;
-  {
-    int ret = config.rb_mask.find_highest();
-    srsran_assert(ret != -1, "No RB allocated for the transmission rb_mask={}", config.rb_mask);
-    prb_begin_end = static_cast<unsigned>(ret + 1);
-  }
-
-  // Generate mapping mask for each .
-  for (unsigned prb_index = prb_begin_index; prb_index != prb_begin_end; ++prb_index) {
-    // Select RE mask for the given RB index.
-    span<bool> re_mask_rb = span<bool>(mask).subspan(prb_index * NRE, NRE);
-
-    // If the resource block is not used, set mask to false and skip.
-    if (!config.rb_mask.test(prb_index)) {
-      continue;
-    }
-
-    // Otherwise, copy RE mask into the RB.
-    std::copy(re_mask.begin(), re_mask.end(), re_mask_rb.begin());
-  }
+  // Create RG OFDM symbol mask. Identical for all OFDM symbols.
+  static_vector<bool, MAX_RB* NRE> rg_subc_mask = get_rg_subc_mask(config.rb_mask, re_mask);
 
   // Repeat the same process for all ports.
   for (uint8_t port_idx : config.ports) {
@@ -83,7 +59,7 @@ void pdcch_modulator_impl::map(resource_grid_writer& grid, span<const cf_t> d_pd
                   end_symbol_index = config.start_symbol_index + config.duration;
          symbol_idx != end_symbol_index;
          ++symbol_idx) {
-      d_buffer = grid.put(port_idx, symbol_idx, 0, mask, d_buffer);
+      d_buffer = grid.put(port_idx, symbol_idx, rg_subc_mask_ref, rg_subc_mask, d_buffer);
     }
   }
 }

@@ -684,15 +684,19 @@ void srsgnb::csi_rs_processor_impl::map(resource_grid_writer& grid, const config
     unsigned cdm_l_idx = 0;
     for (unsigned l = 0; l != get_nsymb_per_slot(config.cp); ++l) {
       if (symbol_mask[l]) {
+        // Create whole OFDM symbol mask.
         std::array<bool, MAX_RB* NRE> mask = {};
         pattern.get_inclusion_mask(mask, l);
+
+        // Select from the mask the region of interest.
+        span<const bool> mask_csi = span<const bool>(mask).subspan(config.start_rb * NRE, config.nof_rb * NRE);
 
         // Generate the generic sequence.
         generate_sequence(sequence, l, config);
 
         // Calculate the CDM sequence and write into the resource grid.
         apply_cdm(sequence, sequence, config.cdm, cdm_group_idx, cdm_l_idx++);
-        grid.put(config.ports[p], l, 0, mask, sequence);
+        grid.put(config.ports[p], l, config.start_rb * NRE, mask_csi, sequence);
       }
     }
   }

@@ -31,8 +31,15 @@ int main()
   TESTASSERT(pdsch);
 
   for (const test_case_t& test_case : pdsch_modulator_test_data) {
+    bounded_bitset<MAX_RB> prb_mask =
+        test_case.config.freq_allocation.get_prb_mask(test_case.config.bwp_start_rb, test_case.config.bwp_size_rb);
+    int prb_idx_high = prb_mask.find_highest();
+    TESTASSERT(prb_idx_high > 1);
+    unsigned max_prb  = static_cast<unsigned>(prb_idx_high + 1);
+    unsigned max_symb = get_nsymb_per_slot(cyclic_prefix::NORMAL);
+
     // Create resource grid spy.
-    resource_grid_writer_spy grid("a");
+    resource_grid_writer_spy grid(MAX_PORTS, max_symb, max_prb);
 
     // Read codeword.
     std::vector<uint8_t> data = test_case.data.read();

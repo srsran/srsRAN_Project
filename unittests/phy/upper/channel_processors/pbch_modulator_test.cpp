@@ -29,7 +29,7 @@ int main()
   TESTASSERT(modulator);
 
   for (const test_case_t& test_case : pbch_modulator_test_data) {
-    resource_grid_writer_spy grid;
+    resource_grid_writer_spy grid(test_case.config.ports.size(), SSB_DURATION_NSYMB, SSB_BW_RB);
 
     // Load input data
     const std::vector<uint8_t> testvector_data = test_case.data.read();

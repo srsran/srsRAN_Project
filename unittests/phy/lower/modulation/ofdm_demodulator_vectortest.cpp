@@ -37,7 +37,7 @@ int main()
 
   // Run all defined tests
   for (const test_case_t& test_case : ofdm_demodulator_test_data) {
-    resource_grid_writer_spy grid;
+    resource_grid_writer_spy grid(MAX_PORTS, MAX_NSYMB_PER_SLOT, test_case.test_config.config.bw_rb);
 
     // Create FFTW configuration;
     dft_processor::configuration config;
