@@ -24,11 +24,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   reassembly_timer(timers.create_unique_timer())
 {
   // check timer
-  if (not reassembly_timer.is_valid()) {
-    logger.log_error("Configuring RLC UM NR RX: timers not configured");
-    // TODO: Handle error - assert?
-    return;
-  }
+  srsran_assert(reassembly_timer.is_valid(), "Cannot create RLC RX UM: timers not configured");
 
   // configure timer
   if (cfg.t_reassembly_ms > 0) {
