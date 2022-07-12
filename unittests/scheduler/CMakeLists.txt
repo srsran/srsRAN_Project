@@ -62,5 +62,5 @@ target_link_libraries(ue_configuration_test srsgnb_sched srslog mac_configuratio
 add_test(ue_configuration_test ue_configuration_test)
 
 add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
-target_link_libraries(sib1_scheduler_test srsgnb_sched srslog mac_configuration_helpers scheduler_test_suite)
+target_link_libraries(sib1_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
 add_test(sib1_scheduler_test sib1_scheduler_test)

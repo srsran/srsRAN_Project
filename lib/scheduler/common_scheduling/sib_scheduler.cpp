@@ -198,7 +198,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
       grant_info::channel::sch, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, sib1_ofdm_symbols, sib1_crbs});
 
   // 4. Delegate filling SIB1 grants to helper function.
-  fill_sib1_grant(res_grid, sib1_crbs, time_resource, dmrs_info, sib1_prbs_tbs.tbs);
+  fill_sib1_grant(res_grid, sib1_crbs, time_resource, dmrs_info, sib1_prbs_tbs.tbs_bytes);
   logger.info("SCHED: Allocated SIB1 at slot {} for SSB beam idx: {}", res_grid.slot.to_uint(), beam_idx);
   return true;
 }
@@ -256,6 +256,6 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   cw.target_code_rate = 379.0f;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
-  cw.tb_size_bytes = tbs;
+  cw.tb_size_bytes = static_cast<uint32_t>(tbs);
   pdsch.dmrs       = dmrs_info;
 }

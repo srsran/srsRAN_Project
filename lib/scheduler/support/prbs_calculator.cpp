@@ -21,9 +21,7 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
   const unsigned max_payload_size_bits = 3824;
 
   // This function is limited to payload_size <= 3824 bits.
-  if (payload_size > max_payload_size_bits) {
-    return {-1, -1};
-  }
+  payload_size = std::min(max_payload_size_bits, payload_size);
 
   // This is an estimate of the N_info (as per Section 5.1.3.2, TS 38.214), approximated as the TBS that is greater or
   // equal to the payload size. This guarantees that the estimated num. of PRBs we obtained yields a TBS that is
@@ -44,19 +42,38 @@ pdsch_prbs_tbs srsgnb::get_nof_prbs(const prbs_calculator_pdsch_config& pdsch_cf
       static_cast<unsigned>(std::ceil(nof_re / static_cast<float>(std::min(nof_re_prime, 156U))));
 
   // Due to the way this procedure is derived (inversion of non-invertible functions), the estimated num of PRBs can be
-  // 1 PRB greater than required to fit the payload size. Thus, we compute the TBS for "nof_prbs_estimate - 1"; if
-  // TBS(nof_prbs_estimate - 1) is enough to accommodate the payload_size, then we return nof_prbs_estimate - 1.
-  unsigned tbs =
-      static_cast<int>(tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
-                                                                                         pdsch_cfg.nof_dmrs_prb,
-                                                                                         pdsch_cfg.nof_oh_prb,
-                                                                                         pdsch_cfg.target_code_rate,
-                                                                                         pdsch_cfg.mod_order,
-                                                                                         pdsch_cfg.nof_layers,
-                                                                                         pdsch_cfg.tb_scaling_field,
-                                                                                         nof_prbs_estimate - 1}));
+  // 1 PRB greater than required to fit the payload size.
+  // Thus, we compute the TBS for "nof_prbs_estimate - 1"; if TBS(nof_prbs_estimate - 1) is enough to accommodate the
+  // payload_size, then we return nof_prbs_estimate - 1.
+  unsigned tbs_bits_lb = tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
+                                                                                           pdsch_cfg.nof_dmrs_prb,
+                                                                                           pdsch_cfg.nof_oh_prb,
+                                                                                           pdsch_cfg.target_code_rate,
+                                                                                           pdsch_cfg.mod_order,
+                                                                                           pdsch_cfg.nof_layers,
+                                                                                           pdsch_cfg.tb_scaling_field,
+                                                                                           nof_prbs_estimate - 1});
+  // TBS(nof_prbs_estimate-1) is big enough for payload_size; return the couple
+  // {nof_prbs_estimate -1, TBS(nof_prbs_estimate-1)}
+  if (tbs_bits_lb >= payload_size) {
+    return {nof_prbs_estimate - 1, tbs_bits_lb / 8};
+  }
 
-  unsigned nof_prbs = tbs < payload_size ? nof_prbs_estimate : nof_prbs_estimate - 1;
+  // TBS(nof_prbs_estimate-1) NOT big enough for payload_size; recompute the TBS for nof_prbs_estimate.
+  unsigned tbs_bits_ub = tbs_calculator_pdsch_calculate(tbs_calculator_pdsch_configuration{pdsch_cfg.nof_symb_sh,
+                                                                                           pdsch_cfg.nof_dmrs_prb,
+                                                                                           pdsch_cfg.nof_oh_prb,
+                                                                                           pdsch_cfg.target_code_rate,
+                                                                                           pdsch_cfg.mod_order,
+                                                                                           pdsch_cfg.nof_layers,
+                                                                                           pdsch_cfg.tb_scaling_field,
+                                                                                           nof_prbs_estimate});
 
-  return {static_cast<int>(nof_prbs), static_cast<int>(tbs)};
+  // Handle an edge-case. It could happen that the TBS corresponding to the min. number of PRBs to fit the payload
+  // exceeds the maximum value of 3824 bits or 478 bytes. This means that the function is working outside its validity
+  // range. In this case, it returns the result {nof_prbs_estimate -1, TBS(nof_prbs_estimate-1)}, which won't be enough
+  // to accommodate the payload. It's up the caller to handle this case.
+  pdsch_prbs_tbs prbs_lbs_lb = {nof_prbs_estimate - 1, tbs_bits_lb / 8};
+  pdsch_prbs_tbs prbs_lbs_up = {nof_prbs_estimate, tbs_bits_ub / 8};
+  return tbs_bits_ub > max_payload_size_bits ? prbs_lbs_lb : prbs_lbs_up;
 }
