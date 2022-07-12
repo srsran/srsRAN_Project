@@ -6,6 +6,8 @@
 # the distribution.
 #
 
+find_package(GTest REQUIRED)
+
 add_subdirectory(adt)
 add_subdirectory(support)
 add_subdirectory(asn1)

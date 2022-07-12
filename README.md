@@ -22,10 +22,11 @@ Build Instructions
   * cmake:               https://cmake.org/
   * libfftw:             https://www.fftw.org/
   * git-lfs:             https://git-lfs.github.com/
+  * googletest:          https://github.com/google/googletest/
 
 For example, on Ubuntu 22.04, one can install the required libraries with:
 ```
-sudo apt-get install cmake libfftw3-dev git-lfs
+sudo apt-get install cmake libfftw3-dev git-lfs libgtest-dev
 git lfs install
 ```
 
