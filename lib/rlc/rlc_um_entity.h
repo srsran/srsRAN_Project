@@ -28,8 +28,12 @@ public:
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
-    tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_um_entity(du_index, lcid, config, upper_cn));
-    rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, config, upper_dn, timers));
+    if (config.tx != nullptr) {
+      tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_um_entity(du_index, lcid, *config.tx, upper_cn));
+    }
+    if (config.rx != nullptr) {
+      rx = std::unique_ptr<rlc_rx_entity>(new rlc_rx_um_entity(du_index, lcid, *config.rx, upper_dn, timers));
+    }
   }
 };
 

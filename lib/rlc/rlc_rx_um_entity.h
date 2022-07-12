@@ -24,7 +24,7 @@ class rlc_rx_um_entity : public rlc_rx_entity
 {
 private:
   // Config storage
-  const rlc_um_config cfg;
+  const rlc_rx_um_config cfg;
 
   // Mutexes
   std::mutex mutex;
@@ -70,7 +70,7 @@ private:
 public:
   rlc_rx_um_entity(du_ue_index_t                     du_index,
                    lcid_t                            lcid,
-                   const rlc_um_config&              config,
+                   const rlc_rx_um_config&           config,
                    rlc_rx_upper_layer_data_notifier& upper_dn,
                    timer_manager&                    timers);
 

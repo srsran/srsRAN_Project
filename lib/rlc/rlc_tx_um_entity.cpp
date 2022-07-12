@@ -14,7 +14,7 @@ using namespace srsgnb;
 
 rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index,
                                    lcid_t                               lcid,
-                                   const rlc_um_config&                 config,
+                                   const rlc_tx_um_config&              config,
                                    rlc_tx_upper_layer_control_notifier& upper_cn) :
   rlc_tx_entity(du_index, lcid, upper_cn),
   cfg(config),

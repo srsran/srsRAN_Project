@@ -22,7 +22,7 @@ class rlc_tx_um_entity : public rlc_tx_entity
 {
 private:
   // Config storage
-  const rlc_um_config cfg;
+  const rlc_tx_um_config cfg;
 
   // TX SDU buffers
   rlc_sdu_queue sdu_queue;
@@ -47,7 +47,7 @@ private:
 public:
   rlc_tx_um_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
-                   const rlc_um_config&                 config,
+                   const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_control_notifier& upper_cn);
 
   // Interfaces for higher layers
