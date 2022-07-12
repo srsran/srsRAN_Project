@@ -176,10 +176,6 @@ void test_sib1_scheduler(subcarrier_spacing                   scs_common,
   size_t test_length_slots = 10000;
   for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
     // Run SIB1 scheduler.
-    if (sl_idx == 5) {
-      printf("Stop here");
-    }
-
     sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
 
     auto& res_slot_grid = t_bench.get_slot_res_grid();

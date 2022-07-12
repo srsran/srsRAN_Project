@@ -68,6 +68,11 @@ struct pdsch_prbs_tbs {
 /// derive the number of PRBs from a given payload in bytes.
 ///
 /// \remark This function only works for payload size <= 478 bytes (3824 bits).
+/// \remark If the TBS that corresponds to input payload exceeds the maximum 478 bytes, the function is working outside
+/// its range. In that case, the function returns the max num. of PRBs such that the corresponding TBS won't exceed the
+/// max value of 478 bytes. Note that this value would not be enough to fit the payload. It is up to the caller to
+/// handle this case.
+///
 /// \param[in] pdsch_config is a struct with the PDSCH configuration to compute the num. of PRBs.
 /// \return Returns a struct with the number of PRBs and the corresponding TBS. If the payload_size is greater than 478
 /// bytes (3824 bits), it returns the number of PRBs and TBS corresponding to maximum allowed payload size of 478 bytes.
