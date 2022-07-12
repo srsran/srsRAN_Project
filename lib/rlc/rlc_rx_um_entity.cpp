@@ -32,7 +32,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   }
 }
 
-// TS 38.322 v15.003 Section 5.2.2.2.4
+// TS 38.322 v16.2.0 Sec. 5.2.2.2.4
 void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
 {
   std::lock_guard<std::mutex> lock(mutex);
@@ -70,6 +70,7 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
   }
 }
 
+// TS 38.322 v16.2.0 Sec. 5.2.3.2.2
 void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
 {
   std::lock_guard<std::mutex> lock(mutex);
@@ -140,14 +141,14 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
   debug_state();
 }
 
-// Sec 5.2.2.2.1
+// TS 38.322 v16.2.0 Sec 5.2.2.2.1
 bool rlc_rx_um_entity::sn_in_reassembly_window(const uint32_t sn)
 {
   return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
           rx_mod_base(sn) < rx_mod_base(st.rx_next_highest));
 }
 
-// Sec 5.2.2.2.2
+// TS 38.322 v16.2.0 Sec 5.2.2.2.2
 bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
 {
   return (rx_mod_base(st.rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
@@ -161,7 +162,7 @@ bool rlc_rx_um_entity::has_missing_byte_segment(const uint32_t sn)
   return (rx_window.find(sn) != rx_window.end());
 }
 
-// Sec 5.2.2.2.3
+// TS 38.322 v16.2.0 Sec 5.2.2.2.3
 void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
 {
   if (rx_window.find(sn) != rx_window.end()) {

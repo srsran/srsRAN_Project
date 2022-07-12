@@ -61,7 +61,10 @@ class rlc_tx_sdu_handler
 public:
   virtual ~rlc_tx_sdu_handler() = default;
 
-  /// Handle the incoming PDU.
+  ///
+  /// \brief Interface for higher layers to pass SDUs into RLC
+  /// \param sdu SDU to be handled
+  ///
   virtual void handle_sdu(rlc_sdu sdu) = 0;
 };
 

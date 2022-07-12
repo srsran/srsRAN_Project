@@ -27,8 +27,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
 {
 }
 
-/// Interface for higher layers to pass SDUs
-/// into the RLC entity.
+// TS 38.322 v16.2.0 Sec. 5.2.2.1
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
 {
   size_t sdu_length = sdu.buf.length();
@@ -47,8 +46,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
   }
 }
 
-/// Interface for higher layers to pass PDUs
-/// into the RLC entity.
+// TS 38.322 v16.2.0 Sec. 5.2.2.1
 rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 {
   logger.log_debug("PDU requested with up to {} B", nof_bytes);
@@ -187,6 +185,7 @@ bool rlc_tx_um_entity::get_si_and_expected_header_size(uint32_t      so,
   return true;
 }
 
+// TS 38.322 v16.2.0 Sec 5.5
 void rlc_tx_um_entity::get_buffer_state(uint32_t& bytes)
 {
   std::lock_guard<std::mutex> lock(mutex);
