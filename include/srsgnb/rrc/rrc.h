@@ -26,7 +26,7 @@ public:
   virtual ~rrc_ul_ccch_pdu_handler() = default;
 
   /// Handle the incoming PDU.
-  virtual void handle_ul_ccch_pdu(shared_byte_buffer_view pdu) = 0;
+  virtual void handle_ul_ccch_pdu(byte_buffer_slice pdu) = 0;
 };
 
 } // namespace srs_cu_cp

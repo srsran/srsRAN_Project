@@ -21,7 +21,7 @@ class rrc_ul_ccch_adapter : public srb_pdu_notifier
 public:
   explicit rrc_ul_ccch_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
 
-  void on_new_pdu(shared_byte_buffer_view pdu) override { rrc_handler.handle_ul_ccch_pdu(std::move(pdu)); }
+  void on_new_pdu(byte_buffer_slice pdu) override { rrc_handler.handle_ul_ccch_pdu(std::move(pdu)); }
 
 private:
   rrc_ul_ccch_pdu_handler& rrc_handler;

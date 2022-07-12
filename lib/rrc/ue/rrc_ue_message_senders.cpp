@@ -41,7 +41,7 @@ void rrc_ue_entity::send_rrc_setup()
 void rrc_ue_entity::send_srb0_pdu(byte_buffer pdu)
 {
   if (ctxt.srbs.contains(LCID_SRB0)) {
-    ctxt.srbs[LCID_SRB0].tx_notifier->on_new_pdu(shared_byte_buffer_view{pdu});
+    ctxt.srbs[LCID_SRB0].tx_notifier->on_new_pdu(byte_buffer_slice{pdu});
   } else {
     cfg.logger.error("Can't send RRC PDU - no SRB0 configured");
   }

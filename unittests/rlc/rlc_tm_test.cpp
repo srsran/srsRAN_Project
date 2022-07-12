@@ -35,7 +35,7 @@ public:
   uint32_t      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(shared_byte_buffer_view sdu) override
+  void on_new_sdu(byte_buffer_slice sdu) override
   {
     rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);
@@ -62,7 +62,7 @@ void test_rx()
   byte_buffer                            pdu         = make_byte_buffer_and_log(tv_pdu);
 
   // write PDU into lower end
-  rlc1_rx_lower->handle_pdu(shared_byte_buffer_view{std::move(pdu)});
+  rlc1_rx_lower->handle_pdu(byte_buffer_slice{std::move(pdu)});
 
   // read cached SDU from tester
   TESTASSERT(tester.sdu_queue.is_empty() == false);
@@ -90,7 +90,7 @@ void test_tx()
 
   {
     // write SDU into upper end
-    rlc_sdu sdu = {0, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {0, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);
@@ -115,7 +115,7 @@ void test_tx()
 
   {
     // write another SDU into upper end
-    rlc_sdu sdu = {1, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {1, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);
@@ -133,7 +133,7 @@ void test_tx()
   {
     // write another SDU into upper end
     // there should now be two SDUs in the queue
-    rlc_sdu sdu = {2, shared_byte_buffer_view{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {2, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);

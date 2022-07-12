@@ -98,7 +98,7 @@ public:
 
   void timer_expired(uint32_t timeout_id);
 
-  void handle_pdu(shared_byte_buffer_view buf) override;
+  void handle_pdu(byte_buffer_slice buf) override;
 };
 
 } // namespace srsgnb

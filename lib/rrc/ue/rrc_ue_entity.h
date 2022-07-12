@@ -27,7 +27,7 @@ public:
   ~rrc_ue_entity() = default;
 
   // rrc_ul_ccch_pdu_handler
-  void handle_ul_ccch_pdu(shared_byte_buffer_view pdu) override;
+  void handle_ul_ccch_pdu(byte_buffer_slice pdu) override;
 
   // rrc_ue_entity_interface
   rrc_ul_ccch_pdu_handler* get_ul_ccch_pdu_handler() override;
@@ -57,16 +57,9 @@ private:
   // Logging
   typedef enum { Rx = 0, Tx } direction_t;
   template <class T>
-  void log_rrc_message(const char*             source,
-                       const direction_t       dir,
-                       shared_byte_buffer_view pdu,
-                       const T&                msg,
-                       const char*             msg_type);
-  void log_rx_pdu_fail(uint16_t                rnti,
-                       uint32_t                lcid,
-                       shared_byte_buffer_view pdu,
-                       const char*             cause_str,
-                       bool                    log_hex = true);
+  void
+       log_rrc_message(const char* source, const direction_t dir, byte_buffer_slice pdu, const T& msg, const char* msg_type);
+  void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_slice pdu, const char* cause_str, bool log_hex = true);
 
   ue_context&         ctxt; // reference to the UE object
   const rrc_ue_cfg_t& cfg;

@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-void rrc_ue_entity::handle_ul_ccch_pdu(shared_byte_buffer_view pdu)
+void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
 {
   // Parse UL-CCCH
   ul_ccch_msg_s ul_ccch_msg;

@@ -35,8 +35,7 @@ class rlc_byte_buffer
     iterator_impl() = default;
     iterator_impl(parent_t& parent_, bool in_header_, underlying_it_t it_) :
       parent(&parent_), it(it_), in_header(in_header_)
-    {
-    }
+    {}
 
     reference operator*() { return *it; }
     reference operator*() const { return *it; }
@@ -114,14 +113,11 @@ public:
 
   void set_header(std::initializer_list<uint8_t> bytes) { header = bytes; }
 
-  void set_payload(const byte_buffer& buf) { payload = shared_byte_buffer_view{buf}; }
+  void set_payload(const byte_buffer& buf) { payload = byte_buffer_slice{buf}; }
 
-  void set_payload(shared_byte_buffer_view buf) { payload = std::move(buf); }
+  void set_payload(byte_buffer_slice buf) { payload = std::move(buf); }
 
-  void set_payload(const byte_buffer& buf, size_t start, size_t sz)
-  {
-    payload = shared_byte_buffer_view{buf, start, sz};
-  }
+  void set_payload(const byte_buffer& buf, size_t start, size_t sz) { payload = byte_buffer_slice{buf, start, sz}; }
 
   /// Prepends bytes to rlc buffer segment. This function may allocate new segments.
   void prepend_header(span<const uint8_t> bytes) { header.prepend(bytes); }
@@ -174,8 +170,8 @@ public:
   const_iterator end() const { return const_iterator{*this, false, payload.end()}; }
 
 private:
-  byte_buffer             header;
-  shared_byte_buffer_view payload;
+  byte_buffer       header;
+  byte_buffer_slice payload;
 };
 
 } // namespace srsgnb

@@ -21,9 +21,9 @@ class dummy_tx_pdu_handler
 {
 public:
   dummy_tx_pdu_handler() = default;
-  void handle_pdu(shared_byte_buffer_view pdu) { last_pdu = std::move(pdu); }
+  void handle_pdu(byte_buffer_slice pdu) { last_pdu = std::move(pdu); }
 
-  shared_byte_buffer_view last_pdu;
+  byte_buffer_slice last_pdu;
 };
 
 class dummy_adapter : public srb_pdu_notifier
@@ -31,7 +31,7 @@ class dummy_adapter : public srb_pdu_notifier
 public:
   dummy_adapter(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
 
-  void on_new_pdu(shared_byte_buffer_view pdu) override { handler.handle_pdu(std::move(pdu)); }
+  void on_new_pdu(byte_buffer_slice pdu) override { handler.handle_pdu(std::move(pdu)); }
 
 private:
   dummy_tx_pdu_handler& handler;

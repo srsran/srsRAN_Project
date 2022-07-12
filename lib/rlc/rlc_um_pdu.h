@@ -30,8 +30,8 @@ struct rlc_um_pdu_header {
 };
 
 struct rlc_um_pdu {
-  rlc_um_pdu_header       header;
-  shared_byte_buffer_view payload;
+  rlc_um_pdu_header header;
+  byte_buffer_slice payload;
 };
 
 /****************************************************************************

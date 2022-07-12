@@ -21,7 +21,7 @@ public:
   virtual ~srb_pdu_notifier() = default;
 
   /// This callback is invoked on each received PDU.
-  virtual void on_new_pdu(shared_byte_buffer_view pdu) = 0;
+  virtual void on_new_pdu(byte_buffer_slice pdu) = 0;
 };
 
 } // namespace srsgnb

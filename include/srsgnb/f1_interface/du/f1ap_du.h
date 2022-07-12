@@ -22,9 +22,9 @@ struct f1ap_ue_create_response {
 };
 
 struct f1_rx_pdu {
-  du_ue_index_t           ue_index;
-  lcid_t                  lcid;
-  shared_byte_buffer_view pdu;
+  du_ue_index_t     ue_index;
+  lcid_t            lcid;
+  byte_buffer_slice pdu;
 };
 
 struct f1ap_initial_ul_rrc_msg {

@@ -65,15 +65,15 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
     // check that SRB1 is present
     if (ue_ctx.srbs.contains(LCID_SRB0)) {
       ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_pdu(
-          shared_byte_buffer_view({msg.msg->rrc_container_rrc_setup_complete.value.begin(),
-                                   msg.msg->rrc_container_rrc_setup_complete.value.end()}));
+          byte_buffer_slice({msg.msg->rrc_container_rrc_setup_complete.value.begin(),
+                             msg.msg->rrc_container_rrc_setup_complete.value.end()}));
     } else {
       cfg.logger.error("SRB1 not present - dropping PDU");
     }
   } else {
     // pass UL-CCCH to RRC
     ue_ctx.srbs[LCID_SRB0].rx_notifier->on_new_pdu(
-        shared_byte_buffer_view({msg.msg->rrc_container.value.begin(), msg.msg->rrc_container.value.end()}));
+        byte_buffer_slice({msg.msg->rrc_container.value.begin(), msg.msg->rrc_container.value.end()}));
   }
 
   log_proc_completed(logger, ue_ctx.ue_index, ue_ctx.c_rnti, "UE Create");

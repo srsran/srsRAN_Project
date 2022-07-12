@@ -211,7 +211,7 @@ private:
 };
 
 class byte_buffer_view;
-class shared_byte_buffer_view;
+class byte_buffer_slice;
 
 /// Memory buffer that store bytes in a linked list of memory chunks.
 class byte_buffer
@@ -227,12 +227,10 @@ class byte_buffer
 
     iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
       current_segment(start_segment), offset(offset_)
-    {
-    }
+    {}
     template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
     iterator_impl(const iterator_impl<U>& other) : current_segment(other.current_segment), offset(other.offset)
-    {
-    }
+    {}
 
     reference operator*() { return *(current_segment->data() + offset); }
     reference operator*() const { return *(current_segment->data() + offset); }
@@ -321,7 +319,7 @@ public:
     other.len  = 0;
   }
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
-  byte_buffer& operator=(byte_buffer&& other) noexcept
+  byte_buffer& operator                               =(byte_buffer&& other) noexcept
   {
     head       = std::move(other.head);
     tail       = other.tail;
@@ -405,7 +403,7 @@ public:
   void append(const byte_buffer_view& view);
 
   /// Appends an owning view of bytes into current byte buffer.
-  void append(const shared_byte_buffer_view& view);
+  void append(const byte_buffer_slice& view);
 
   /// Prepends bytes to byte_buffer. This function may allocate new segments.
   void prepend(span<const uint8_t> bytes)
@@ -705,21 +703,20 @@ inline void byte_buffer::append(const byte_buffer_view& view)
   }
 }
 
-class shared_byte_buffer_view
+class byte_buffer_slice
 {
 public:
   using value_type     = byte_buffer_view::value_type;
   using iterator       = byte_buffer_view::iterator;
   using const_iterator = byte_buffer_view::const_iterator;
 
-  shared_byte_buffer_view() = default;
-  shared_byte_buffer_view(byte_buffer&& buf_) : slice(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
-  explicit shared_byte_buffer_view(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
-  shared_byte_buffer_view(const byte_buffer& buf_, size_t offset, size_t length) :
+  byte_buffer_slice() = default;
+  byte_buffer_slice(byte_buffer&& buf_) : slice(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
+  explicit byte_buffer_slice(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
+  byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
     slice(buf_, offset, length), buf(buf_.copy())
-  {
-  }
-  shared_byte_buffer_view(const byte_buffer& buf_, byte_buffer_view view) : slice(view), buf(buf_.copy())
+  {}
+  byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : slice(view), buf(buf_.copy())
   {
     srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
@@ -736,7 +733,7 @@ public:
   explicit         operator byte_buffer_view() const { return slice; }
 
   /// Returns another owning sub-view with dimensions specified in arguments
-  shared_byte_buffer_view shared_view(size_t offset, size_t size)
+  byte_buffer_slice shared_view(size_t offset, size_t size)
   {
     srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
     return {buf, offset, size};
@@ -769,7 +766,7 @@ private:
   byte_buffer      buf;
 };
 
-inline void byte_buffer::append(const shared_byte_buffer_view& view)
+inline void byte_buffer::append(const byte_buffer_slice& view)
 {
   if (empty() and not view.empty()) {
     append_segment();

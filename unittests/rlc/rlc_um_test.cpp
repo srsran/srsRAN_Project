@@ -36,7 +36,7 @@ public:
   uint32_t      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
-  void on_new_sdu(shared_byte_buffer_view sdu) override
+  void on_new_sdu(byte_buffer_slice sdu) override
   {
     rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);

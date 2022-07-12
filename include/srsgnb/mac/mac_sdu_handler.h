@@ -14,7 +14,7 @@ public:
   virtual ~mac_sdu_rx_notifier() = default;
 
   /// This callback is invoked on each received SDU.
-  virtual void on_new_sdu(shared_byte_buffer_view sdu) = 0;
+  virtual void on_new_sdu(byte_buffer_slice sdu) = 0;
 };
 
 /// This interface represents the entry point of a logical channel in the MAC layer.
