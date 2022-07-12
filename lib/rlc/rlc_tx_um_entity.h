@@ -18,24 +18,36 @@
 
 namespace srsgnb {
 
+///
+/// \brief Tx state variables
+/// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
+///
+struct rlc_tx_um_state {
+  ///
+  /// \brief  TX_Next – UM send state variable
+  /// It holds the value of the SN to be assigned for the next newly generated UMD PDU with
+  /// segment. It is initially set to 0, and is updated after the UM RLC entity submits a UMD PDU
+  /// including the last segment of an RLC SDU to lower layers.
+  ///
+  uint32_t tx_next = 0;
+};
+
 class rlc_tx_um_entity : public rlc_tx_entity
 {
 private:
   // Config storage
   const rlc_tx_um_config cfg;
 
-  // TX SDU buffers
+  // Tx state variables
+  rlc_tx_um_state st;
+
+  // Tx SDU buffers
   rlc_sdu_queue sdu_queue;
   rlc_sdu       sdu;
   uint32_t      next_so = 0; // The segment offset for the next generated PDU
 
   // Mutexes
   std::mutex mutex;
-
-  uint32_t tx_next = 0; // send state as defined in TS 38.322 v15.3 Section 7
-                        // It holds the value of the SN to be assigned for the next newly generated UMD PDU with
-                        // segment. It is initially set to 0, and is updated after the UM RLC entity submits a UMD PDU
-                        // including the last segment of an RLC SDU to lower layers.
 
   const uint32_t mod; // Tx counter modulus
 
@@ -64,7 +76,7 @@ private:
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
 
-  void debug_state() { logger.log_debug("tx_next={}, next_so={}", tx_next, next_so); }
+  void debug_state() { logger.log_debug("tx_next={}, next_so={}", st.tx_next, next_so); }
 };
 
 } // namespace srsgnb

@@ -74,7 +74,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   }
 
   rlc_um_pdu_header header = {};
-  header.sn                = tx_next;
+  header.sn                = st.tx_next;
   header.sn_size           = cfg.sn_field_length;
   header.so                = next_so;
 
@@ -124,7 +124,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   // Update SN if needed
   if (header.si == rlc_si_field::last_segment) {
-    tx_next = (tx_next + 1) % mod;
+    st.tx_next = (st.tx_next + 1) % mod;
   }
 
   // Assert number of bytes

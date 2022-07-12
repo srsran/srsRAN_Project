@@ -20,19 +20,41 @@
 
 namespace srsgnb {
 
+///
+/// \brief Rx state variables
+/// Ref: 3GPP TS 38.322 version 16.2.0 Section 7.1
+///
+struct rlc_rx_um_state {
+  ///
+  /// \brief RX_Next_Reassembly – UM receive state variable
+  /// The earliest SN that is still considered for reassembly
+  ///
+  uint32_t rx_next_reassembly = 0;
+
+  ///
+  /// \brief RX_Timer_Trigger - UM t-Reassembly state variable
+  /// The SN following the SN which triggered t-Reassembly
+  ///
+  uint32_t rx_timer_trigger = 0;
+
+  ///
+  /// \brief RX_Next_Highest - UM receive state variable
+  /// The SN following the SN of the UMD PDU with the highest SN among
+  /// received UMD PDUs. It serves as the higher edge of the reassembly window.
+  uint32_t rx_next_highest = 0;
+};
+
 class rlc_rx_um_entity : public rlc_rx_entity
 {
 private:
   // Config storage
   const rlc_rx_um_config cfg;
 
+  // Rx state variables
+  rlc_rx_um_state st;
+
   // Mutexes
   std::mutex mutex;
-
-  uint32_t rx_next_reassembly = 0; // the earliest SN that is still considered for reassembly
-  uint32_t rx_timer_trigger   = 0; // the SN following the SN which triggered t-Reassembly
-  uint32_t rx_next_highest    = 0; // the SN following the SN of the UMD PDU with the highest SN among
-                                   // received UMD PDUs. It serves as the higher edge of the reassembly window.
 
   const uint32_t mod; // Rx counter modulus
   const uint32_t um_window_size;
@@ -56,14 +78,14 @@ private:
   void handle_rx_buffer_update(const uint32_t sn);
   bool has_missing_byte_segment(const uint32_t sn);
 
-  constexpr uint32_t rx_mod_base(uint32_t x) { return (x - rx_next_highest - um_window_size) % mod; }
+  constexpr uint32_t rx_mod_base(uint32_t x) { return (x - st.rx_next_highest - um_window_size) % mod; }
 
   void debug_state()
   {
     logger.log_debug("rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}, t_reassembly={}",
-                     rx_next_reassembly,
-                     rx_timer_trigger,
-                     rx_next_highest,
+                     st.rx_next_reassembly,
+                     st.rx_timer_trigger,
+                     st.rx_next_highest,
                      reassembly_timer.is_running() ? "running" : "stopped");
   }
 
