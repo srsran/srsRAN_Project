@@ -60,7 +60,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   }
 
   // Multiple threads can read from the SDU queue and change the
-  // RLC UM Tx state (current SDU, TX_Next and next_so).
+  // RLC UM Tx state (current SDU, tx_next and next_so).
   // As such we need to lock to access these variables.
   std::lock_guard<std::mutex> lock(mutex);
 
@@ -74,7 +74,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   }
 
   rlc_um_pdu_header header = {};
-  header.sn                = TX_Next;
+  header.sn                = tx_next;
   header.sn_size           = cfg.sn_field_length;
   header.so                = next_so;
 
@@ -124,7 +124,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   // Update SN if needed
   if (header.si == rlc_si_field::last_segment) {
-    TX_Next = (TX_Next + 1) % mod;
+    tx_next = (tx_next + 1) % mod;
   }
 
   // Assert number of bytes

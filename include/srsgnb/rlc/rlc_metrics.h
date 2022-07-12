@@ -18,9 +18,9 @@ namespace srsgnb {
 
 struct rlc_bearer_tx_metrics_container {
   // SDU metrics
-  uint32_t num_sdus;      ///< Number of SDUs
-  size_t   num_sdu_bytes; ///< Number of SDU bytes
-  uint32_t num_lost_sdus; ///< Number of dropped SDUs (full queue)
+  uint32_t num_sdus;         ///< Number of SDUs
+  size_t   num_sdu_bytes;    ///< Number of SDU bytes
+  uint32_t num_dropped_sdus; ///< Number of dropped SDUs (full queue)
 
   // PDU metrics
   uint32_t num_pdus;      ///< Number of PDUs
@@ -43,7 +43,7 @@ public:
   inline void metrics_add_lost_sdus(uint32_t num_sdus_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
-    metrics.num_lost_sdus += num_sdus_;
+    metrics.num_dropped_sdus += num_sdus_;
   }
 
   inline void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)

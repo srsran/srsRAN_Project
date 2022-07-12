@@ -32,7 +32,7 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  uint32_t TX_Next = 0; // send state as defined in TS 38.322 v15.3 Section 7
+  uint32_t tx_next = 0; // send state as defined in TS 38.322 v15.3 Section 7
                         // It holds the value of the SN to be assigned for the next newly generated UMD PDU with
                         // segment. It is initially set to 0, and is updated after the UM RLC entity submits a UMD PDU
                         // including the last segment of an RLC SDU to lower layers.
@@ -64,7 +64,7 @@ private:
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
 
-  void debug_state() { logger.log_debug("TX_Next={}, next_so={}", TX_Next, next_so); }
+  void debug_state() { logger.log_debug("tx_next={}, next_so={}", tx_next, next_so); }
 };
 
 } // namespace srsgnb

@@ -20,7 +20,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
   mod((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 64 : 4096),
-  UM_Window_Size((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 32 : 2048),
+  um_window_size((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 32 : 2048),
   reassembly_timer(timers.create_unique_timer())
 {
   // check timer
@@ -37,20 +37,20 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
 {
   std::lock_guard<std::mutex> lock(mutex);
   if (reassembly_timer.id() == timeout_id) {
-    logger.log_debug("reassembly timeout expiry for SN={} - updating RX_Next_Reassembly and reassembling",
-                     RX_Next_Reassembly);
+    logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",
+                     rx_next_reassembly);
     metrics_add_lost_pdus(1);
 
     // update RX_Next_Reassembly to the next SN that has not been reassembled yet
-    RX_Next_Reassembly = RX_Timer_Trigger;
-    while (RX_MOD_NR_BASE(RX_Next_Reassembly) < RX_MOD_NR_BASE(RX_Next_Highest)) {
-      RX_Next_Reassembly = (RX_Next_Reassembly + 1) % mod;
+    rx_next_reassembly = rx_timer_trigger;
+    while (rx_mod_base(rx_next_reassembly) < rx_mod_base(rx_next_highest)) {
+      rx_next_reassembly = (rx_next_reassembly + 1) % mod;
       debug_state();
     }
 
     // discard all segments with SN < updated RX_Next_Reassembly
     for (auto it = rx_window.begin(); it != rx_window.end();) {
-      if (RX_MOD_NR_BASE(it->first) < RX_MOD_NR_BASE(RX_Next_Reassembly)) {
+      if (rx_mod_base(it->first) < rx_mod_base(rx_next_reassembly)) {
         it = rx_window.erase(it);
       } else {
         ++it;
@@ -58,12 +58,12 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
     }
 
     // check start of t_reassembly
-    if (RX_MOD_NR_BASE(RX_Next_Highest) > RX_MOD_NR_BASE(RX_Next_Reassembly + 1) ||
-        ((RX_MOD_NR_BASE(RX_Next_Highest) == RX_MOD_NR_BASE(RX_Next_Reassembly + 1) &&
-          has_missing_byte_segment(RX_Next_Reassembly)))) {
-      logger.log_debug("starting reassembly timer for SN={}", RX_Next_Reassembly);
+    if (rx_mod_base(rx_next_highest) > rx_mod_base(rx_next_reassembly + 1) ||
+        ((rx_mod_base(rx_next_highest) == rx_mod_base(rx_next_reassembly + 1) &&
+          has_missing_byte_segment(rx_next_reassembly)))) {
+      logger.log_debug("starting reassembly timer for SN={}", rx_next_reassembly);
       reassembly_timer.run();
-      RX_Timer_Trigger = RX_Next_Highest;
+      rx_timer_trigger = rx_next_highest;
     }
 
     debug_state();
@@ -143,15 +143,15 @@ void rlc_rx_um_entity::handle_pdu(shared_byte_buffer_view buf)
 // Sec 5.2.2.2.1
 bool rlc_rx_um_entity::sn_in_reassembly_window(const uint32_t sn)
 {
-  return (RX_MOD_NR_BASE(RX_Next_Highest - UM_Window_Size) <= RX_MOD_NR_BASE(sn) &&
-          RX_MOD_NR_BASE(sn) < RX_MOD_NR_BASE(RX_Next_Highest));
+  return (rx_mod_base(rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
+          rx_mod_base(sn) < rx_mod_base(rx_next_highest));
 }
 
 // Sec 5.2.2.2.2
 bool rlc_rx_um_entity::sn_invalid_for_rx_buffer(const uint32_t sn)
 {
-  return (RX_MOD_NR_BASE(RX_Next_Highest - UM_Window_Size) <= RX_MOD_NR_BASE(sn) &&
-          RX_MOD_NR_BASE(sn) < RX_MOD_NR_BASE(RX_Next_Reassembly));
+  return (rx_mod_base(rx_next_highest - um_window_size) <= rx_mod_base(sn) &&
+          rx_mod_base(sn) < rx_mod_base(rx_next_reassembly));
 }
 
 bool rlc_rx_um_entity::has_missing_byte_segment(const uint32_t sn)
@@ -221,33 +221,33 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
       rx_window.erase(sn);
 
       // find next SN in rx buffer
-      if (sn == RX_Next_Reassembly) {
+      if (sn == rx_next_reassembly) {
         if (rx_window.empty()) {
           // no further segments received
-          RX_Next_Reassembly = RX_Next_Highest;
+          rx_next_reassembly = rx_next_highest;
         } else {
           for (auto it = rx_window.begin(); it != rx_window.end(); ++it) {
             logger.log_debug("SN={} has {} segments", it->first, it->second.segments.size());
-            if (RX_MOD_NR_BASE(it->first) > RX_MOD_NR_BASE(RX_Next_Reassembly)) {
-              RX_Next_Reassembly = it->first;
+            if (rx_mod_base(it->first) > rx_mod_base(rx_next_reassembly)) {
+              rx_next_reassembly = it->first;
               break;
             }
           }
         }
-        logger.log_debug("Updating RX_Next_Reassembly={}", RX_Next_Reassembly);
+        logger.log_debug("Updating rx_next_reassembly={}", rx_next_reassembly);
       }
     } else if (not sn_in_reassembly_window(sn)) {
       // SN outside of rx window
-      RX_Next_Highest = (sn + 1) % mod; // update RX_Next_highest
-      logger.log_debug("Updating RX_Next_Highest={}", RX_Next_Highest);
+      rx_next_highest = (sn + 1) % mod; // update RX_Next_highest
+      logger.log_debug("Updating RX_Next_Highest={}", rx_next_highest);
 
       // drop all SNs outside of new rx window
       for (auto it = rx_window.begin(); it != rx_window.end();) {
         if (not sn_in_reassembly_window(it->first)) {
           logger.log_info("SN={} outside rx window [{}:{}] - discarding",
                           it->first,
-                          RX_Next_Highest - UM_Window_Size,
-                          RX_Next_Highest);
+                          rx_next_highest - um_window_size,
+                          rx_next_highest);
           it = rx_window.erase(it);
           metrics_add_lost_pdus(1);
         } else {
@@ -255,12 +255,12 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
         }
       }
 
-      if (not sn_in_reassembly_window(RX_Next_Reassembly)) {
+      if (not sn_in_reassembly_window(rx_next_reassembly)) {
         // update RX_Next_Reassembly to first SN that has not been reassembled and delivered
         for (const auto& rx_pdu : rx_window) {
-          if (rx_pdu.first >= RX_MOD_NR_BASE(RX_Next_Highest - UM_Window_Size)) {
-            RX_Next_Reassembly = rx_pdu.first;
-            logger.log_debug("Updating RX_Next_Reassembly={}", RX_Next_Reassembly);
+          if (rx_pdu.first >= rx_mod_base(rx_next_highest - um_window_size)) {
+            rx_next_reassembly = rx_pdu.first;
+            logger.log_debug("Updating rx_next_reassembly={}", rx_next_reassembly);
             break;
           }
         }
@@ -268,21 +268,21 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
     }
 
     if (reassembly_timer.is_running()) {
-      if (RX_Timer_Trigger <= RX_Next_Reassembly ||
-          (not sn_in_reassembly_window(RX_Timer_Trigger) and RX_Timer_Trigger != RX_Next_Highest) ||
-          ((RX_Next_Highest == RX_Next_Reassembly + 1) && not has_missing_byte_segment(RX_Next_Reassembly))) {
+      if (rx_timer_trigger <= rx_next_reassembly ||
+          (not sn_in_reassembly_window(rx_timer_trigger) and rx_timer_trigger != rx_next_highest) ||
+          ((rx_next_highest == rx_next_reassembly + 1) && not has_missing_byte_segment(rx_next_reassembly))) {
         logger.log_debug("stopping reassembly timer");
         reassembly_timer.stop();
       }
     }
 
     if (not reassembly_timer.is_running()) {
-      if ((RX_MOD_NR_BASE(RX_Next_Highest) > RX_MOD_NR_BASE(RX_Next_Reassembly + 1)) ||
-          ((RX_MOD_NR_BASE(RX_Next_Highest) == RX_MOD_NR_BASE(RX_Next_Reassembly + 1)) &&
-           has_missing_byte_segment(RX_Next_Reassembly))) {
+      if ((rx_mod_base(rx_next_highest) > rx_mod_base(rx_next_reassembly + 1)) ||
+          ((rx_mod_base(rx_next_highest) == rx_mod_base(rx_next_reassembly + 1)) &&
+           has_missing_byte_segment(rx_next_reassembly))) {
         logger.log_debug("Starting reassembly timer for SN={}", sn);
         reassembly_timer.run();
-        RX_Timer_Trigger = RX_Next_Highest;
+        rx_timer_trigger = rx_next_highest;
       }
     }
   } else {

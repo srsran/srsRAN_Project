@@ -29,13 +29,13 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  uint32_t RX_Next_Reassembly = 0; // the earliest SN that is still considered for reassembly
-  uint32_t RX_Timer_Trigger   = 0; // the SN following the SN which triggered t-Reassembly
-  uint32_t RX_Next_Highest    = 0; // the SN following the SN of the UMD PDU with the highest SN among
+  uint32_t rx_next_reassembly = 0; // the earliest SN that is still considered for reassembly
+  uint32_t rx_timer_trigger   = 0; // the SN following the SN which triggered t-Reassembly
+  uint32_t rx_next_highest    = 0; // the SN following the SN of the UMD PDU with the highest SN among
                                    // received UMD PDUs. It serves as the higher edge of the reassembly window.
 
   const uint32_t mod; // Rx counter modulus
-  const uint32_t UM_Window_Size;
+  const uint32_t um_window_size;
 
   // Rx window
   struct rlc_umd_pdu_segments {
@@ -56,14 +56,14 @@ private:
   void handle_rx_buffer_update(const uint32_t sn);
   bool has_missing_byte_segment(const uint32_t sn);
 
-  constexpr uint32_t RX_MOD_NR_BASE(uint32_t x) { return (x - RX_Next_Highest - UM_Window_Size) % mod; }
+  constexpr uint32_t rx_mod_base(uint32_t x) { return (x - rx_next_highest - um_window_size) % mod; }
 
   void debug_state()
   {
-    logger.log_debug("RX_Next_Reassembly={}, RX_Timer_Trigger={}, RX_Next_Highest={}, t_Reassembly={}",
-                     RX_Next_Reassembly,
-                     RX_Timer_Trigger,
-                     RX_Next_Highest,
+    logger.log_debug("rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}, t_reassembly={}",
+                     rx_next_reassembly,
+                     rx_timer_trigger,
+                     rx_next_highest,
                      reassembly_timer.is_running() ? "running" : "stopped");
   }
 
