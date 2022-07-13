@@ -375,7 +375,6 @@ void test_byte_buffer_iterator_plus_equal_op()
   pdu.append(bytes);
 
   auto it = pdu.begin();
-  TESTASSERT(pdu.cend() == nullptr);
   TESTASSERT(it != pdu.cend());
 
   // Point reader at 1 byte before the end
@@ -393,7 +392,6 @@ void test_byte_buffer_iterator_plus_equal_op()
   pdu.append(bytes);
 
   it = pdu.begin();
-  TESTASSERT(pdu.cend() == nullptr);
   TESTASSERT(it != pdu.cend());
 
   // Point reader at 1 byte before the end
@@ -410,7 +408,6 @@ void test_byte_buffer_iterator_plus_equal_op()
   pdu.append(bytes);
 
   it = pdu.begin();
-  TESTASSERT(pdu.cend() == nullptr);
   TESTASSERT(pdu.cend() != it);
 
   // Point reader at 1 byte before the end
@@ -432,7 +429,6 @@ void test_byte_buffer_reader_split_advance()
   pdu.append(bytes);
 
   auto it = pdu.begin();
-  TESTASSERT(pdu.cend() == nullptr);
   TESTASSERT(it != pdu.cend());
 
   // Get reader and check that beginning and end coincide with the original
@@ -461,7 +457,6 @@ void test_byte_buffer_reader_split_advance()
   pdu.append(bytes);
 
   it = pdu.begin();
-  TESTASSERT(pdu.cend() == nullptr);
   TESTASSERT(it != pdu.cend());
 
   // Get reader and check that beginning and end coincide with the original

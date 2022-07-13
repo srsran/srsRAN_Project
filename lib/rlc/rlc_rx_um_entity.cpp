@@ -49,7 +49,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 
   // strip header, extract payload
   size_t            header_len = rlc_um_nr_packed_length(header);
-  byte_buffer_slice payload    = buf.shared_view(header_len, buf.length() - header_len);
+  byte_buffer_slice payload    = buf.make_slice(header_len, buf.length() - header_len);
 
   // check if PDU contains a SN
   if (header.si == rlc_si_field::full_sdu) {

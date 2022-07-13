@@ -109,7 +109,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   // Move data from SDU to PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(sdu.buf.shared_view(next_so, to_move));
+  pdu_buf.push_back(sdu.buf.make_slice(next_so, to_move));
 
   // Release SDU if needed
   if (header.si == rlc_si_field::full_sdu || header.si == rlc_si_field::last_segment) {

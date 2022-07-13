@@ -213,7 +213,10 @@ private:
 class byte_buffer_view;
 class byte_buffer_slice;
 
-/// Memory buffer that store bytes in a linked list of memory chunks.
+/// \brief Byte sequence, which represents its data in memory via an intrusive linked list of memory chunks.
+/// This container is not contiguous in memory.
+/// Default copy ctor and assignment is disabled in this container. The user should instead std::move to transfer
+/// ownership, .copy() for shallow copies with shared ownership and .deep_copy() for byte-wise copies.
 class byte_buffer
 {
   template <typename T>
@@ -225,7 +228,7 @@ class byte_buffer
     using difference_type   = std::ptrdiff_t;
     using iterator_category = std::forward_iterator_tag;
 
-    iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
+    explicit iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
       current_segment(start_segment), offset(offset_)
     {
     }
@@ -254,13 +257,13 @@ class byte_buffer
       ++(*this);
       return tmp;
     }
-    iterator_impl operator+(difference_type n) const
+    iterator_impl operator+(unsigned n) const
     {
       iterator_impl tmp(*this);
       tmp += n;
       return tmp;
     }
-    iterator_impl& operator+=(difference_type n)
+    iterator_impl& operator+=(unsigned n)
     {
       offset += n;
       while (current_segment != nullptr and offset >= current_segment->length()) {
@@ -305,14 +308,14 @@ public:
   byte_buffer() = default;
   /// Explicit copy ctor. User should use copy() method for copy assignments.
   explicit byte_buffer(const byte_buffer&) noexcept = default;
-  byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
   byte_buffer(span<const uint8_t> bytes) { append(bytes); }
+  byte_buffer(std::initializer_list<uint8_t> lst) : byte_buffer(span<const uint8_t>{lst.begin(), lst.size()}) {}
   template <typename It>
-  byte_buffer(It b, It e)
+  byte_buffer(It other_begin, It other_end)
   {
     // TODO: optimize
-    for (; b != e; ++b) {
-      append(*b);
+    for (; other_begin != other_end; ++other_begin) {
+      append(*other_begin);
     }
   }
   byte_buffer(byte_buffer&& other) noexcept : head(std::move(other.head)), tail(other.tail), len(other.len)
@@ -320,7 +323,11 @@ public:
     other.tail = nullptr;
     other.len  = 0;
   }
+
+  /// copy assignment is disabled. Use std::move, .copy() or .deep_copy() instead.
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
+
+  /// Move assignment of byte_buffer. It avoids unnecessary reference counting increment.
   byte_buffer& operator=(byte_buffer&& other) noexcept
   {
     head       = std::move(other.head);
@@ -330,6 +337,8 @@ public:
     other.len  = 0;
     return *this;
   }
+
+  /// Assignment of span of bytes.
   byte_buffer& operator=(span<const uint8_t> bytes) noexcept
   {
     clear();
@@ -705,6 +714,12 @@ inline void byte_buffer::append(const byte_buffer_view& view)
   }
 }
 
+/// \brief This class represents a sub-interval or make_slice of a potentially larger byte_buffer.
+/// Like byte_buffer and byte_buffer_view, the represented bytes by this class are not contiguous in memory.
+/// Contrarily to byte_buffer_view, this class retains shared ownership of the segments held by the byte_buffer
+/// which it references.
+/// Due to the shared ownership model, the usage of this class may involve additional overhead associated with
+/// reference counting, which does not take place when using byte_buffer_view.
 class byte_buffer_slice
 {
 public:
@@ -713,13 +728,13 @@ public:
   using const_iterator = byte_buffer_view::const_iterator;
 
   byte_buffer_slice() = default;
-  byte_buffer_slice(byte_buffer&& buf_) : slice(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
-  explicit byte_buffer_slice(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
+  byte_buffer_slice(byte_buffer&& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(std::move(buf_)) {}
+  explicit byte_buffer_slice(const byte_buffer& buf_) : sliced_view(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
   byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
-    slice(buf_, offset, length), buf(buf_.copy())
+    sliced_view(buf_, offset, length), buf(buf_.copy())
   {
   }
-  byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : slice(view), buf(buf_.copy())
+  byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : sliced_view(view), buf(buf_.copy())
   {
     srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
@@ -728,29 +743,36 @@ public:
   void clear()
   {
     buf.clear();
-    slice = {};
+    sliced_view = {};
   }
 
   /// Converts to non-owning byte buffer view.
-  byte_buffer_view view() const { return slice; }
-  explicit         operator byte_buffer_view() const { return slice; }
+  byte_buffer_view view() const { return sliced_view; }
+  explicit         operator byte_buffer_view() const { return sliced_view; }
 
-  /// Returns another owning sub-view with dimensions specified in arguments
-  byte_buffer_slice shared_view(size_t offset, size_t size)
+  /// Returns another owning sub-view with dimensions specified in arguments.
+  byte_buffer_slice make_slice(size_t offset, size_t size)
   {
     srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
-    return {buf, offset, size};
+    return {buf, sliced_view.view(offset, size)};
   }
 
-  bool   empty() const { return slice.empty(); }
-  size_t length() const { return slice.length(); }
+  /// Advances slice by provided offset. The length of the slice gets automatically reduced by the provided offset.
+  byte_buffer_slice& advance(size_t offset)
+  {
+    sliced_view = byte_buffer_view{sliced_view.begin() + offset, sliced_view.end()};
+    return *this;
+  }
 
-  const uint8_t& operator[](size_t idx) const { return slice[idx]; }
+  bool   empty() const { return sliced_view.empty(); }
+  size_t length() const { return sliced_view.length(); }
 
-  iterator       begin() { return slice.begin(); }
-  const_iterator begin() const { return slice.begin(); }
-  iterator       end() { return slice.end(); }
-  const_iterator end() const { return slice.end(); }
+  const uint8_t& operator[](size_t idx) const { return sliced_view[idx]; }
+
+  iterator       begin() { return sliced_view.begin(); }
+  const_iterator begin() const { return sliced_view.begin(); }
+  iterator       end() { return sliced_view.end(); }
+  const_iterator end() const { return sliced_view.end(); }
 
   template <typename Range>
   bool operator==(const Range& r) const
@@ -765,7 +787,7 @@ public:
   }
 
 private:
-  byte_buffer_view slice;
+  byte_buffer_view sliced_view;
   byte_buffer      buf;
 };
 
@@ -897,7 +919,7 @@ inline byte_buffer make_byte_buffer(std::string hex_str)
 
 namespace fmt {
 
-/// \brief Custom formatter for byte_buffer_view
+/// \brief Custom formatter for byte_buffer_view.
 template <>
 struct formatter<srsgnb::byte_buffer_view> {
   enum { hexadecimal, binary } mode = hexadecimal;
@@ -925,7 +947,7 @@ struct formatter<srsgnb::byte_buffer_view> {
   }
 };
 
-/// \brief Custom formatter for byte_buffer
+/// \brief Custom formatter for byte_buffer.
 template <>
 struct formatter<srsgnb::byte_buffer> {
   enum { hexadecimal, binary } mode = hexadecimal;
@@ -953,7 +975,7 @@ struct formatter<srsgnb::byte_buffer> {
   }
 };
 
-/// \brief Custom formatter for byte_buffer_slice
+/// \brief Custom formatter for byte_buffer_slice.
 template <>
 struct formatter<srsgnb::byte_buffer_slice> : public formatter<srsgnb::byte_buffer_view> {
   template <typename FormatContext>
