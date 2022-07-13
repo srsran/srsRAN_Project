@@ -28,9 +28,9 @@ class cu_cp_manager_impl final : public cu_cp_manager_interface
 public:
   explicit cu_cp_manager_impl(const cu_cp_manager_config_t& cfg);
 
-  void          add_du() override;
-  void          remove_du(du_index_t du_index) override;
-  du_index_t    get_next_du_index() override;
+  void add_du() override;
+  void remove_du(du_index_t du_index) override;
+
   du_processor* find_du(du_index_t du_index) override;
   du_processor* find_du(uint64_t packed_nr_cell_id) override;
 
@@ -42,6 +42,10 @@ public:
   void handle_du_remove_request(const du_index_t du_index) override;
 
 private:
+  /// \brief Get the next available index from the DU processor database.
+  /// \return The DU index.
+  du_index_t get_next_du_index();
+
   // DU manager configuration that will be visible to all running procedures
   cu_cp_manager_config_t cfg;
 

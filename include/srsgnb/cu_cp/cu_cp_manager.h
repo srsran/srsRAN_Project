@@ -54,10 +54,6 @@ public:
   /// \param[in] du_index The index of the DU processor to delete.
   virtual void remove_du(du_index_t du_index) = 0;
 
-  /// \brief Get the next available index from the DU processor database.
-  /// \return The DU index.
-  virtual du_index_t get_next_du_index() = 0;
-
   /// \brief Find a DU object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The DU processor object.
