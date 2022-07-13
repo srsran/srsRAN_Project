@@ -40,16 +40,16 @@ class du_processor_f1ap_event_indicator : public f1c_du_processor_message_notifi
 {
 public:
   void connect(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
+
+  du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override
+  {
+    return du_f1c_handler->find_cell(packed_nr_cell_id);
+  }
+
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
     srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
     du_f1c_handler->handle_f1_setup_request(msg);
-  }
-
-  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) override
-  {
-    srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
-    du_f1c_handler->handle_initial_ul_rrc_message_transfer(msg);
   }
 
 private:
@@ -60,20 +60,37 @@ private:
 class ue_manager_f1ap_event_indicator : public f1c_ue_manager_message_notifier
 {
 public:
-  void connect(ue_manager_rrc_message_handler& ue_manager_f1c_handler_)
+  void connect(ue_manager_f1c_handler& ue_mng_f1c_handler_) { ue_mng_f1c_handler = &ue_mng_f1c_handler_; }
+
+  void on_initial_ul_rrc_message_transfer_received(const ue_index_t               ue_index,
+                                                   const du_cell_index_t          pcell_index,
+                                                   const f1ap_initial_ul_rrc_msg& msg) override
   {
-    ue_manager_f1c_handler = &ue_manager_f1c_handler_;
+    srsran_assert(ue_mng_f1c_handler != nullptr, "F1C handler must not be nullptr");
+
+    ue_manager_initial_ul_rrc_message ue_mng_msg = {};
+    ue_mng_msg.ue_index                          = ue_index;
+    ue_mng_msg.pcell_index                       = pcell_index;
+    ue_mng_msg.msg                               = msg;
+
+    ue_mng_f1c_handler->handle_initial_ul_rrc_message_transfer(ue_mng_msg);
   }
 
-  void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_msg& msg) override
+  void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) override
   {
-    srsran_assert(ue_manager_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsran_assert(ue_mng_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
-    ue_manager_f1c_handler->handle_ul_rrc_message_transfer(msg);
+    ue_manager_ul_rrc_message ue_mng_msg = {};
+    ue_mng_msg.ue_idx                    = ue_index;
+    ue_mng_msg.msg                       = msg;
+
+    ue_mng_f1c_handler->handle_ul_rrc_message_transfer(ue_mng_msg);
   }
+
+  ue_index_t get_next_ue_index() override { return ue_mng_f1c_handler->get_next_ue_index(); }
 
 private:
-  ue_manager_rrc_message_handler* ue_manager_f1c_handler = nullptr;
+  ue_manager_f1c_handler* ue_mng_f1c_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

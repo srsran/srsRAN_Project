@@ -10,6 +10,7 @@
 
 #include "f1ap_cu_impl.h"
 #include "../../ran/gnb_format.h"
+#include "../lib/f1_interface/common/asn1_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -45,6 +46,10 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
   ue_manager_notifier(ue_manager_notifier_),
   du_management_notifier(f1c_du_management_notifier_)
 {
+  f1ap_ue_context empty_context = {};
+  empty_context.du_ue_f1ap_id   = INVALID_F1AP_UE_ID;
+  empty_context.ue_index        = INVALID_UE_INDEX;
+  std::fill(cu_ue_id_to_f1ap_ue_context.begin(), cu_ue_id_to_f1ap_ue_context.end(), empty_context);
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -196,16 +201,68 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {
       f1ap_initial_ul_rrc_msg ul_transfer = {};
       ul_transfer.msg                     = msg.value.init_ulrrc_msg_transfer();
-      du_processor_notifier.on_initial_ul_rrc_message_transfer_received(ul_transfer);
+      handle_initial_ul_rrc_message(ul_transfer);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
       f1ap_ul_rrc_msg ul_transfer = {};
       ul_transfer.msg             = msg.value.ulrrc_msg_transfer();
-      ue_manager_notifier.on_ul_rrc_message_transfer_received(ul_transfer);
+      handle_ul_rrc_message(ul_transfer);
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
+}
+
+void f1ap_cu_impl::handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& msg)
+{
+  // Reject request without served cells
+  if (not msg.msg->duto_currc_container_present) {
+    logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
+    /// Assume the DU can't serve the UE. Ignoring the message.
+    return;
+  }
+
+  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
+
+  logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
+  logger.debug("plmn={}", cgi.plmn);
+
+  if (msg.msg->sul_access_ind_present) {
+    logger.debug("Ignoring SUL access indicator");
+  }
+
+  du_cell_index_t pcell_index = du_processor_notifier.find_cell(cgi.nci.packed);
+  if (pcell_index == INVALID_DU_CELL_INDEX) {
+    logger.error("Could not find cell with cell_id={}", cgi.nci.packed);
+    return;
+  }
+
+  f1ap_ue_id_t cu_ue_id = get_next_cu_ue_id();
+  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+    logger.error("Maximum number of connected UEs reached.");
+    return;
+  }
+
+  ue_index_t ue_index = ue_manager_notifier.get_next_ue_index();
+  if (ue_index == INVALID_UE_INDEX) {
+    logger.error("No free UE index found");
+    return;
+  }
+
+  f1ap_ue_context ue_ctx = {};
+  ue_ctx.du_ue_f1ap_id   = int_to_f1ap_ue_id(msg.msg->gnb_du_ue_f1_ap_id.value);
+  ue_ctx.ue_index        = ue_index;
+
+  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctx;
+
+  ue_manager_notifier.on_initial_ul_rrc_message_transfer_received(ue_index, pcell_index, msg);
+}
+
+void f1ap_cu_impl::handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg)
+{
+  f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[msg.msg->gnb_cu_ue_f1_ap_id.value];
+
+  ue_manager_notifier.on_ul_rrc_message_transfer_received(ue_ctx.ue_index, msg);
 }
 
 void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)
@@ -213,4 +270,26 @@ void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& 
   // TODO: get real du_index
   du_index_t du_index = int_to_du_index(0);
   du_management_notifier.on_du_remove_request_received(du_index);
+}
+
+f1ap_ue_id_t f1ap_cu_impl::get_next_cu_ue_id()
+{
+  for (int cu_ue_id = 0; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
+    if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == INVALID_UE_INDEX) {
+      return int_to_f1ap_ue_id(cu_ue_id);
+    }
+  }
+  logger.error("No CU UE ID available");
+  return INVALID_F1AP_UE_ID;
+}
+
+f1ap_ue_id_t f1ap_cu_impl::find_cu_ue_id(ue_index_t ue_index)
+{
+  for (int cu_ue_id = 0; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
+    if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == ue_index) {
+      return int_to_f1ap_ue_id(cu_ue_id);
+    }
+  }
+  logger.error("CU UE ID for ue_index={} not found", ue_index);
+  return INVALID_F1AP_UE_ID;
 }

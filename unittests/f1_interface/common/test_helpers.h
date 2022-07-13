@@ -28,10 +28,8 @@ public:
     logger.info("Received F1SetupRequest message.");
     last_f1_setup_request_message = msg;
   }
-  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
-  {
-    logger.info("Received Initial UL RRC Message transfer message.");
-  }
+
+  srs_cu_cp::du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override { return srs_cu_cp::MIN_DU_CELL_INDEX; }
 
 private:
   srslog::basic_logger& logger;
@@ -41,10 +39,21 @@ class dummy_f1c_ue_manager_message_notifier : public srs_cu_cp::f1c_ue_manager_m
 {
 public:
   dummy_f1c_ue_manager_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
-  void on_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_ul_rrc_msg& msg) override
+
+  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::ue_index_t               ue_index,
+                                                   const srs_cu_cp::du_cell_index_t          pcell_index,
+                                                   const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
+  {
+    logger.info("Received Initial UL RRC Message transfer message.");
+  }
+
+  void on_ul_rrc_message_transfer_received(const srs_cu_cp::ue_index_t       ue_index,
+                                           const srs_cu_cp::f1ap_ul_rrc_msg& msg) override
   {
     logger.info("Received UL RRC Message transfer message.");
   }
+
+  srs_cu_cp::ue_index_t get_next_ue_index() override { return srs_cu_cp::MIN_UE_INDEX; }
 
 private:
   srslog::basic_logger& logger;

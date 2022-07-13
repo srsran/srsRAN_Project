@@ -15,17 +15,15 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-ue_creation_procedure::ue_creation_procedure(ue_index_t                     ue_index_candidate,
-                                             du_cell_index_t                pcell_index,
-                                             const f1ap_initial_ul_rrc_msg& init_ul_rrc_msg,
-                                             const cu_cp_manager_config_t&  cfg_,
-                                             ue_manager_ctrl_configurer&    ue_mng_) :
-  cfg(cfg_), logger(cfg.logger), msg(init_ul_rrc_msg), ue_mng(ue_mng_)
+ue_creation_procedure::ue_creation_procedure(const ue_manager_initial_ul_rrc_message& msg_,
+                                             const cu_cp_manager_config_t&            cfg_,
+                                             ue_manager_ctrl_configurer&              ue_mng_) :
+  cfg(cfg_), logger(cfg.logger), msg(msg_), ue_mng(ue_mng_)
 {
-  ue_ctx.ue_index               = ue_index_candidate;
-  ue_ctx.pcell_index            = pcell_index;
-  ue_ctx.c_rnti                 = to_rnti(init_ul_rrc_msg.msg->c_rnti.value);
-  const auto& du_to_cu_rrc_cont = init_ul_rrc_msg.msg->duto_currc_container.value;
+  ue_ctx.ue_index               = msg.ue_index;
+  ue_ctx.pcell_index            = msg.pcell_index;
+  ue_ctx.c_rnti                 = to_rnti(msg.msg.msg->c_rnti.value);
+  const auto& du_to_cu_rrc_cont = msg.msg.msg->duto_currc_container.value;
   ue_ctx.du_to_cu_rrc_container = byte_buffer{du_to_cu_rrc_cont.begin(), du_to_cu_rrc_cont.end()};
 }
 
@@ -61,19 +59,19 @@ void ue_creation_procedure::operator()(coro_context<async_task<void>>& ctx)
   create_srb0();
 
   // 5. Pass container to RRC
-  if (msg.msg->rrc_container_rrc_setup_complete_present) {
+  if (msg.msg.msg->rrc_container_rrc_setup_complete_present) {
     // check that SRB1 is present
     if (ue_ctx.srbs.contains(LCID_SRB0)) {
       ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_pdu(
-          byte_buffer_slice({msg.msg->rrc_container_rrc_setup_complete.value.begin(),
-                             msg.msg->rrc_container_rrc_setup_complete.value.end()}));
+          byte_buffer_slice({msg.msg.msg->rrc_container_rrc_setup_complete.value.begin(),
+                             msg.msg.msg->rrc_container_rrc_setup_complete.value.end()}));
     } else {
       cfg.logger.error("SRB1 not present - dropping PDU");
     }
   } else {
     // pass UL-CCCH to RRC
     ue_ctx.srbs[LCID_SRB0].rx_notifier->on_new_pdu(
-        byte_buffer_slice({msg.msg->rrc_container.value.begin(), msg.msg->rrc_container.value.end()}));
+        byte_buffer_slice({msg.msg.msg->rrc_container.value.begin(), msg.msg.msg->rrc_container.value.end()}));
   }
 
   log_proc_completed(logger, ue_ctx.ue_index, ue_ctx.c_rnti, "UE Create");

@@ -13,6 +13,7 @@
 
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/support/async/async_queue.h"
 #include <memory>
 
@@ -60,11 +61,32 @@ private:
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  /// \brief Notify the CU-CP manager about the reception of an F1 Removal Request
+  /// \brief Notify the UE manager about the reception of an Initial UL RRC Message Transfer message.
+  /// \param[in] msg The F1AP initial UL RRC message.
+  void handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& msg);
+
+  /// \brief Notify the UE manager about the reception of an UL RRC Message Transfer message.
+  /// \param[in] msg The F1AP UL RRC message.
+  void handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg);
+
+  /// \brief Notify the CU-CP manager about the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.
   void handle_f1_removal_resquest(const f1_removal_request_message& msg);
 
-  srslog::basic_logger&              logger;
+  /// \brief Get the next available CU UE ID.
+  /// \return The CU UE ID.
+  f1ap_ue_id_t get_next_cu_ue_id();
+
+  /// \brief Find the CU UE ID by a given UE index.
+  /// \param[in] ue_index The UE index used to find the CU UE ID.
+  /// \return The CU UE ID.
+  f1ap_ue_id_t find_cu_ue_id(ue_index_t ue_index);
+
+  srslog::basic_logger& logger;
+
+  std::array<f1ap_ue_context, MAX_NOF_UES> cu_ue_id_to_f1ap_ue_context;
+
+  // nofifiers
   f1c_message_notifier&              pdu_notifier;
   f1c_du_processor_message_notifier& du_processor_notifier;
   f1c_ue_manager_message_notifier&   ue_manager_notifier;

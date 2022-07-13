@@ -25,12 +25,15 @@ struct f1ap_ul_rrc_msg;
 
 struct f1_setup_request_message;
 
-/// Interface used to handle external events (e.g. UL RRC Message Transfer).
-class du_processor_ccch_handler
+/// Interface used to handle cells
+class du_processor_cell_handler
 {
 public:
-  virtual ~du_processor_ccch_handler()                                                    = default;
-  virtual void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) = 0;
+  virtual ~du_processor_cell_handler() = default;
+
+  /// \brief Lookup the cell based on a given NR cell ID.
+  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
+  virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
 };
 
 class du_processor_f1ap_setup_handler
@@ -40,8 +43,8 @@ public:
   virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
 };
 
-/// Combined interface for all F1C handlers
-class du_processor_f1c_interface : public du_processor_f1ap_setup_handler, public du_processor_ccch_handler
+/// Combined interface for all DU processor handlers
+class du_processor_f1c_interface : public du_processor_f1ap_setup_handler, public du_processor_cell_handler
 {
 public:
   virtual ~du_processor_f1c_interface() = default;

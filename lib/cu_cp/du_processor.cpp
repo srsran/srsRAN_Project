@@ -72,33 +72,6 @@ void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
   send_f1_setup_response(context);
 }
 
-void du_processor::handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg)
-{
-  // Reject request without served cells
-  if (not msg.msg->duto_currc_container_present) {
-    logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
-    /// Assume the DU can't serve the UE. Ignoring the message.
-    return;
-  }
-
-  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
-
-  logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
-  logger.debug("plmn={}", cgi.plmn);
-
-  if (msg.msg->sul_access_ind_present) {
-    logger.debug("Ignoring SUL access indicator");
-  }
-
-  du_cell_index_t pcell_index = find_cell(cgi.nci.packed);
-  if (pcell_index == INVALID_DU_CELL_INDEX) {
-    logger.error("Could not find cell with cell_id={}", cgi.nci.packed);
-    return;
-  }
-
-  ue_mng.handle_initial_ul_rrc_message_transfer(pcell_index, msg);
-}
-
 du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
 {
   for (auto& cell : cell_db) {
@@ -128,9 +101,12 @@ void du_processor::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cau
 
 du_cell_index_t du_processor::get_next_du_cell_index()
 {
-  du_cell_index_t new_index;
-  do {
-    new_index = int_to_du_cell_index(next_du_cell_index.fetch_add(1, std::memory_order_relaxed));
-  } while (cell_db.contains(new_index));
-  return new_index;
+  for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DUS; du_cell_idx_int++) {
+    du_cell_index_t cell_idx = int_to_du_cell_index(du_cell_idx_int);
+    if (!cell_db.contains(cell_idx)) {
+      return cell_idx;
+    }
+  }
+  logger.error("No DU cell index available");
+  return INVALID_DU_CELL_INDEX;
 }

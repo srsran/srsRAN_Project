@@ -76,36 +76,35 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   });
 }
 
-size_t ue_manager::get_nof_ues()
-{
-  return ue_db.size();
-}
-
-void ue_manager::handle_initial_ul_rrc_message_transfer(du_cell_index_t pcell_idx, const f1ap_initial_ul_rrc_msg& msg)
+ue_index_t ue_manager::get_next_ue_index()
 {
   // Search unallocated UE index with no pending events
-  ue_index_t ue_idx_candidate = MAX_NOF_UES;
+  ue_index_t ue_idx_candidate = INVALID_UE_INDEX;
   for (size_t i = 0; i < ue_ctrl_loop.size(); ++i) {
     if (not ue_db.contains(i) and ue_ctrl_loop[i].empty()) {
       ue_idx_candidate = int_to_ue_index(i);
       break;
     }
   }
-
-  if (ue_idx_candidate == MAX_NOF_UES) {
-    logger.error("No free UE index found");
-    return;
-  }
-
-  // Enqueue UE creation procedure
-  ue_ctrl_loop[ue_idx_candidate].schedule<ue_creation_procedure>(ue_idx_candidate, pcell_idx, msg, cfg, *this);
+  return ue_idx_candidate;
 }
 
-void ue_manager::handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg)
+size_t ue_manager::get_nof_ues()
+{
+  return ue_db.size();
+}
+
+void ue_manager::handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg)
+{
+  // Enqueue UE creation procedure
+  ue_ctrl_loop[msg.ue_index].schedule<ue_creation_procedure>(msg, cfg, *this);
+}
+
+void ue_manager::handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg)
 {
   logger.info("Handling UL RRC Message transfer.");
 
   // Convert RRCContainer to byte_buffer
-  byte_buffer pdcp_pdu = make_byte_buffer(msg.msg->rrc_container.value.to_string());
+  byte_buffer pdcp_pdu = make_byte_buffer(msg.msg.msg->rrc_container.value.to_string());
   // TODO: Send pdcp_pdu to PDCP
 }

@@ -32,7 +32,8 @@ public:
 
   // message handlers
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
-  void handle_initial_ul_rrc_message_transfer(const f1ap_initial_ul_rrc_msg& msg) override;
+
+  du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override;
 
   // getter functions
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
@@ -51,10 +52,6 @@ private:
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
-
-  /// \brief Lookup the cell based on a given NR cell ID.
-  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
-  du_cell_index_t find_cell(uint64_t packed_nr_cell_id);
 
   srslog::basic_logger&   logger;
   cu_cp_manager_config_t& cfg;

@@ -23,11 +23,9 @@ namespace srs_cu_cp {
 class ue_creation_procedure
 {
 public:
-  ue_creation_procedure(ue_index_t                     ue_index_candidate,
-                        du_cell_index_t                pcell_index,
-                        const f1ap_initial_ul_rrc_msg& init_ul_rrc_msg,
-                        const cu_cp_manager_config_t&  cfg_,
-                        ue_manager_ctrl_configurer&    ue_mng_);
+  ue_creation_procedure(const ue_manager_initial_ul_rrc_message& msg_,
+                        const cu_cp_manager_config_t&            cfg_,
+                        ue_manager_ctrl_configurer&              ue_mng_);
   void               operator()(coro_context<async_task<void>>& ctx);
   static const char* name() { return "UE Create"; }
 
@@ -42,7 +40,7 @@ private:
   const cu_cp_manager_config_t& cfg;
   srslog::basic_logger&         logger;
 
-  f1ap_initial_ul_rrc_msg msg;
+  ue_manager_initial_ul_rrc_message msg;
 
   ue_manager_ctrl_configurer& ue_mng;
 

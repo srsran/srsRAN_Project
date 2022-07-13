@@ -86,7 +86,7 @@ du_index_t cu_cp_manager_impl::get_next_du_index()
       return du_idx;
     }
   }
-  logger.error("No du index available");
+  logger.error("No DU index available");
   return INVALID_DU_INDEX;
 }
 

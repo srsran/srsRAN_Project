@@ -21,6 +21,22 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// \remark See TS 38.473 Section 9.3.1.4: CU and DU F1AP DU valid values: (0..2^32-1)
+enum f1ap_ue_id_t : uint64_t {
+  INVALID_F1AP_UE_ID = 0x1ffffffff,
+};
+
+/// Convert integer to F1AP UE ID type.
+constexpr inline f1ap_ue_id_t int_to_f1ap_ue_id(std::underlying_type_t<f1ap_ue_id_t> idx)
+{
+  return static_cast<f1ap_ue_id_t>(idx);
+}
+
+struct f1ap_ue_context {
+  f1ap_ue_id_t du_ue_f1ap_id;
+  ue_index_t   ue_index;
+};
+
 struct f1ap_initial_ul_rrc_msg {
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
@@ -131,9 +147,9 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 
-  /// \brief Notifies the DU Processor about the reception of a initial UL RRC message transfer message.
-  /// \param[in] msg The received initial UL RRC message transfer message.
-  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) = 0;
+  /// \brief Lookup the cell based on a given NR cell ID.
+  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
+  virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
 };
 
 /// Methods used by F1AP to notify the UE manager about messages.
@@ -142,9 +158,22 @@ class f1c_ue_manager_message_notifier
 public:
   virtual ~f1c_ue_manager_message_notifier() = default;
 
+  /// \brief Notifies the UE manager about the reception of a initial UL RRC message transfer message.
+  /// \param[in] ue_index The UE index.
+  /// \param[in] pcell_index The DU cell index.
+  /// \param[in] msg The received initial UL RRC message transfer message.
+  virtual void on_initial_ul_rrc_message_transfer_received(const ue_index_t               ue_index,
+                                                           const du_cell_index_t          pcell_index,
+                                                           const f1ap_initial_ul_rrc_msg& msg) = 0;
+
   /// \brief Notifies the UE manager about the reception of a UL RRC message transfer message.
+  /// \param[in] ue_index The UE index.
   /// \param[in] msg The received UL RRC message transfer message.
-  virtual void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_msg& msg) = 0;
+  virtual void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) = 0;
+
+  /// \brief Get the next available UE index from the UE manager.
+  /// \return The UE index.
+  virtual ue_index_t get_next_ue_index() = 0;
 };
 
 /// Methods used by F1AP to notify CU-CP manager about DU specific events.

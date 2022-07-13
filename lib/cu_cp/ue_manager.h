@@ -20,7 +20,7 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_rrc_message_handler
+class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_f1c_handler
 {
 public:
   explicit ue_manager(cu_cp_manager_config_t& cfg_);
@@ -33,8 +33,10 @@ public:
   ue_context* find_rnti(rnti_t rnti) override;
   size_t      get_nof_ues() override;
 
-  void handle_initial_ul_rrc_message_transfer(du_cell_index_t pcell_idx, const f1ap_initial_ul_rrc_msg& msg) override;
-  void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override;
+  ue_index_t get_next_ue_index() override;
+
+  void handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) override;
+  void handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg) override;
 
 private:
   cu_cp_manager_config_t& cfg;
