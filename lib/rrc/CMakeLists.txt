@@ -11,6 +11,7 @@ set(SOURCES
   ue/rrc_ue_entity.cpp
   ue/rrc_ue_message_handlers.cpp
   ue/rrc_ue_message_senders.cpp
+  ue/rrc_ue_helpers.cpp
 )
 
 add_library(srsgnb_rrc STATIC ${SOURCES})

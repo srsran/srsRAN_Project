@@ -25,7 +25,7 @@ rrc_ul_ccch_pdu_handler* rrc_ue_entity::get_ul_ccch_pdu_handler()
 template <class T>
 void rrc_ue_entity::log_rrc_message(const char*       source,
                                     const direction_t dir,
-                                    byte_buffer_slice pdu,
+                                    byte_buffer_view  pdu,
                                     const T&          msg,
                                     const char*       msg_type)
 {
@@ -45,35 +45,35 @@ void rrc_ue_entity::log_rrc_message(const char*       source,
 }
 template void rrc_ue_entity::log_rrc_message<ul_ccch_msg_s>(const char*          source,
                                                             const direction_t    dir,
-                                                            byte_buffer_slice    pdu,
+                                                            byte_buffer_view     pdu,
                                                             const ul_ccch_msg_s& msg,
                                                             const char*          msg_type);
 template void rrc_ue_entity::log_rrc_message<dl_ccch_msg_s>(const char*          source,
                                                             const direction_t    dir,
-                                                            byte_buffer_slice    pdu,
+                                                            byte_buffer_view     pdu,
                                                             const dl_ccch_msg_s& msg,
                                                             const char*          msg_type);
 template void rrc_ue_entity::log_rrc_message<dl_dcch_msg_s>(const char*          source,
                                                             const direction_t    dir,
-                                                            byte_buffer_slice    pdu,
+                                                            byte_buffer_view     pdu,
                                                             const dl_dcch_msg_s& msg,
                                                             const char*          msg_type);
 template void rrc_ue_entity::log_rrc_message<cell_group_cfg_s>(const char*             source,
                                                                const direction_t       dir,
-                                                               byte_buffer_slice       pdu,
+                                                               byte_buffer_view        pdu,
                                                                const cell_group_cfg_s& msg,
                                                                const char*             msg_type);
 template void rrc_ue_entity::log_rrc_message<radio_bearer_cfg_s>(const char*               source,
                                                                  const direction_t         dir,
-                                                                 byte_buffer_slice         pdu,
+                                                                 byte_buffer_view          pdu,
                                                                  const radio_bearer_cfg_s& msg,
                                                                  const char*               msg_type);
 
-void rrc_ue_entity::log_rx_pdu_fail(uint16_t          rnti,
-                                    uint32_t          lcid,
-                                    byte_buffer_slice pdu,
-                                    const char*       cause_str,
-                                    bool              log_hex)
+void rrc_ue_entity::log_rx_pdu_fail(uint16_t         rnti,
+                                    uint32_t         lcid,
+                                    byte_buffer_view pdu,
+                                    const char*      cause_str,
+                                    bool             log_hex)
 {
   if (log_hex) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
