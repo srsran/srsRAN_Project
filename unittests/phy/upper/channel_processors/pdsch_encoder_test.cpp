@@ -24,6 +24,9 @@ int main()
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("generic");
   TESTASSERT(ldpc_encoder_factory);
 
+  std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
+  TESTASSERT(ldpc_rate_matcher_factory);
+
   ldpc_segmenter_tx_factory_sw_configuration segmenter_factory_config;
   segmenter_factory_config.crc_factory = crc_calculator_factory;
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory =
@@ -32,6 +35,7 @@ int main()
 
   pdsch_encoder_factory_sw_configuration encoder_factory_config;
   encoder_factory_config.encoder_factory                 = ldpc_encoder_factory;
+  encoder_factory_config.rate_matcher_factory            = ldpc_rate_matcher_factory;
   encoder_factory_config.segmenter_factory               = segmenter_factory;
   std::shared_ptr<pdsch_encoder_factory> encoder_factory = create_pdsch_encoder_factory_sw(encoder_factory_config);
   TESTASSERT(encoder_factory);
