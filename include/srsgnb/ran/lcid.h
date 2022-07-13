@@ -46,6 +46,39 @@ inline srb_id_t to_srb_id(lcid_t lcid)
   return is_srb(lcid) ? static_cast<srb_id_t>(lcid) : srb_id_t::nulltype;
 }
 
+enum class drb_id_t : uint16_t {
+  drb1 = 1,
+  drb2,
+  drb3,
+  drb4,
+  drb5,
+  drb6,
+  drb7,
+  drb8,
+  drb9,
+  drb10,
+  drb11,
+  drb12,
+  drb13,
+  drb14,
+  drb15,
+  drb16,
+  drb17,
+  drb18,
+  drb19,
+  drb20,
+  drb21,
+  drb22,
+  drb23,
+  drb24,
+  drb25,
+  drb26,
+  drb27,
+  drb28,
+  drb29,
+  invalid
+};
+
 } // namespace srsgnb
 
 #endif // SRSGNB_RAN_LCID_H
