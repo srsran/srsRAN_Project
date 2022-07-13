@@ -26,7 +26,7 @@ struct pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration {
   ///
   /// This value is given by higher layer parameter \c dmrs-AdditionalPosition. Possible values are {0...3}.
   dmrs_additional_positions additional_position;
-  /// \brief Indicates the PDSCH transmission duration in OFDM symbols.
+  /// \brief Indicates the PDSCH transmission duration in OFDM symbols, as per TS 38.211, Section 7.4.1.1.2.
   ///
   /// Possible values are {3...14}.
   unsigned duration;
