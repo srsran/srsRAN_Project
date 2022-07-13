@@ -27,8 +27,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   ssb_helper(cell_cfg_req_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
-{
-}
+{}
 
 async_task<void> mac_cell_processor::start()
 {
@@ -146,7 +145,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Assemble MAC Tx SDU.
-        rlc_byte_buffer sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
+        byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
         if (sdu.empty()) {
           // TODO: Handle.
           continue;

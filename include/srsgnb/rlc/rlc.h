@@ -12,9 +12,9 @@
 #define SRSGNB_RLC_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/rlc/rlc_byte_buffer.h"
 #include "srsgnb/rlc/rlc_config_messages.h"
 
 namespace srsgnb {
@@ -83,7 +83,7 @@ public:
   /// \param nof_bytes Limits the maximum size of the requested PDU.
   /// \return One PDU
   ///
-  virtual rlc_byte_buffer pull_pdu(uint32_t nof_bytes) = 0;
+  virtual byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) = 0;
 
   ///
   /// \brief Get the buffer status information

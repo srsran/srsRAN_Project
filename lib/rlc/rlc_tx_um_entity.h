@@ -66,8 +66,8 @@ public:
   void handle_sdu(rlc_sdu sdu) override;
 
   // Interfaces for lower layers
-  rlc_byte_buffer pull_pdu(uint32_t nof_bytes) override;
-  void            get_buffer_state(uint32_t& bytes) override;
+  byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override;
+  void                    get_buffer_state(uint32_t& bytes) override;
 
 private:
   bool get_si_and_expected_header_size(uint32_t      so,

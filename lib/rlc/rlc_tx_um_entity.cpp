@@ -24,8 +24,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                                                   : rlc_um_pdu_header_size_12bit_sn_no_so),
   head_len_not_first(cfg.sn_field_length == rlc_um_sn_size::size6bits ? rlc_um_pdu_header_size_6bit_sn_with_so
                                                                       : rlc_um_pdu_header_size_12bit_sn_with_so)
-{
-}
+{}
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
@@ -47,7 +46,7 @@ void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
 }
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
-rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 {
   logger.log_debug("PDU requested with up to {} B", nof_bytes);
 
@@ -107,7 +106,7 @@ rlc_byte_buffer rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   logger.log_debug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
 
   // Move data from SDU to PDU
-  rlc_byte_buffer pdu_buf = {};
+  byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.set_header(std::move(header_buf));
   pdu_buf.set_payload(sdu.buf.shared_view(next_so, to_move));
 

@@ -21,10 +21,10 @@ byte_buffer make_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
 }
 
 template <std::size_t N>
-rlc_byte_buffer make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
+byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
 {
-  byte_buffer     buf = {tv};
-  rlc_byte_buffer pdu;
+  byte_buffer             buf = {tv};
+  byte_buffer_slice_chain pdu;
   pdu.set_payload(buf);
   return pdu;
 }
@@ -86,8 +86,8 @@ void test_full_sdus(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1
-  rlc_byte_buffer pdu_bufs[num_pdus];
-  const int       payload_len = 1 + sdu_size; // 1 bytes for header + payload
+  byte_buffer_slice_chain pdu_bufs[num_pdus];
+  const int               payload_len = 1 + sdu_size; // 1 bytes for header + payload
   for (uint32_t i = 0; i < num_pdus; i++) {
     pdu_bufs[i] = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT_EQ(payload_len, pdu_bufs[i].length());
@@ -156,10 +156,10 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t  payload_len  = 25;
-  const uint32_t  max_num_pdus = 10;
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 25;
+  const uint32_t          max_num_pdus = 10;
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -243,10 +243,10 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t  payload_len  = 25;
-  const uint32_t  max_num_pdus = 20;
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 25;
+  const uint32_t          max_num_pdus = 20;
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -339,10 +339,10 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
-  const uint32_t  payload_len  = 25;
-  const uint32_t  max_num_pdus = 10;
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 25;
+  const uint32_t          max_num_pdus = 10;
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -427,10 +427,10 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
-  const uint32_t  payload_len  = 8;
-  const uint32_t  max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 8;
+  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -504,10 +504,10 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
-  const uint32_t  payload_len  = 8;
-  const uint32_t  max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 8;
+  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -590,10 +590,10 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
-  const uint32_t  payload_len  = 8;
-  const uint32_t  max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 8;
+  const uint32_t          max_num_pdus = num_sdus * 2; // we need 2 PDUs for each SDU
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
@@ -676,10 +676,10 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant smaller than SDU size
-  const uint32_t  payload_len  = 10;
-  const uint32_t  max_num_pdus = 10;
-  uint32_t        num_pdus     = 0;
-  rlc_byte_buffer pdu_bufs[max_num_pdus];
+  const uint32_t          payload_len  = 10;
+  const uint32_t          max_num_pdus = 10;
+  uint32_t                num_pdus     = 0;
+  byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
   rlc1_tx_lower->get_buffer_state(buffer_state);
   while (buffer_state > 0 && num_pdus < max_num_pdus) {

@@ -3,7 +3,7 @@
 #define SRSGNB_MAC_SDU_HANDLER_H
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/rlc/rlc_byte_buffer.h" // TODO: We should make this type independent of the RLC to improve decoupling.
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 
 namespace srsgnb {
 
@@ -21,8 +21,8 @@ public:
 class mac_sdu_tx_builder
 {
 public:
-  virtual ~mac_sdu_tx_builder()                             = default;
-  virtual rlc_byte_buffer on_new_tx_sdu(unsigned nof_bytes) = 0;
+  virtual ~mac_sdu_tx_builder()                                     = default;
+  virtual byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) = 0;
 };
 
 } // namespace srsgnb

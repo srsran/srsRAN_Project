@@ -8,21 +8,21 @@
  *
  */
 
-#include "srsgnb/rlc/rlc_byte_buffer.h"
+#include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
 
 void test_empty_rlc_buffer()
 {
-  rlc_byte_buffer buf;
+  byte_buffer_slice_chain buf;
 
   TESTASSERT(buf.empty());
   TESTASSERT_EQ(0, buf.length());
   TESTASSERT(buf.begin() == buf.end());
   TESTASSERT(buf == std::vector<uint8_t>{});
 
-  buf = rlc_byte_buffer{byte_buffer{}};
+  buf = byte_buffer_slice_chain{byte_buffer{}};
 
   TESTASSERT(buf.empty());
   TESTASSERT(buf.begin() == buf.end());
@@ -35,7 +35,7 @@ void test_empty_rlc_buffer()
 
 void test_rlc_buffer_payload_assignment()
 {
-  rlc_byte_buffer buf;
+  byte_buffer_slice_chain buf;
   TESTASSERT(buf.empty());
 
   byte_buffer other_buffer{1, 2, 3, 4, 5};
@@ -64,7 +64,7 @@ void test_rlc_buffer_payload_assignment()
 
 void test_rlc_buffer_prepend()
 {
-  rlc_byte_buffer buf;
+  byte_buffer_slice_chain buf;
   TESTASSERT(buf.empty());
 
   std::vector<uint8_t> bytes = {1, 2, 3};
@@ -93,9 +93,9 @@ void test_rlc_buffer_prepend()
 
 void test_rlc_buffer_header_set()
 {
-  std::vector<uint8_t> vec = {1, 2, 3};
-  rlc_byte_buffer      buf;
-  byte_buffer          buf2{vec};
+  std::vector<uint8_t>    vec = {1, 2, 3};
+  byte_buffer_slice_chain buf;
+  byte_buffer             buf2{vec};
 
   // Set header avoiding ref-count increment and avoiding deep copy.
   buf.set_header(std::move(buf2));
@@ -121,7 +121,7 @@ void test_rlc_buffer_header_set()
 
 void test_rlc_buffer_header_and_payload()
 {
-  rlc_byte_buffer buf;
+  byte_buffer_slice_chain buf;
 
   std::vector<uint8_t> header_bytes = {1, 2, 3};
   byte_buffer          payload      = {4, 5, 6};
@@ -155,7 +155,7 @@ void test_rlc_buffer_header_and_payload()
 
 void test_rlc_buffer_payload_lifetime()
 {
-  rlc_byte_buffer buf;
+  byte_buffer_slice_chain buf;
 
   std::vector<uint8_t> all_bytes;
   {

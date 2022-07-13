@@ -33,7 +33,7 @@ class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 public:
   explicit mac_sdu_tx_adapter(rlc_tx_pdu_transmitter& rlc_tx) : rlc_handler(rlc_tx) {}
 
-  rlc_byte_buffer on_new_tx_sdu(unsigned nof_bytes) override { return rlc_handler.pull_pdu(nof_bytes); }
+  byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override { return rlc_handler.pull_pdu(nof_bytes); }
 
 private:
   rlc_tx_pdu_transmitter& rlc_handler;

@@ -25,8 +25,7 @@ private:
 public:
   rlc_tx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
     rlc_tx_entity(du_index, lcid, upper_cn)
-  {
-  }
+  {}
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override
@@ -46,7 +45,7 @@ public:
   }
 
   // Interfaces for lower layers
-  rlc_byte_buffer pull_pdu(uint32_t nof_bytes) override
+  byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override
   {
     if (sdu_queue.is_empty()) {
       logger.log_info("No data available to be sent. Provided space ({} B)", nof_bytes);
@@ -75,7 +74,7 @@ public:
         sdu_size == front_size, "Tx PDU size different than front size ({} != {})", sdu_size, front_size);
 
     // In TM there is no header, just pass the plain SDU
-    rlc_byte_buffer pdu = {};
+    byte_buffer_slice_chain pdu = {};
     pdu.set_payload(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     metrics_add_pdus(1, pdu.length());

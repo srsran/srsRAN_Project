@@ -20,10 +20,10 @@ byte_buffer make_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
 }
 
 template <std::size_t N>
-rlc_byte_buffer make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
+byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N>& tv)
 {
-  byte_buffer     buf = {tv};
-  rlc_byte_buffer pdu;
+  byte_buffer             buf = {tv};
+  byte_buffer_slice_chain pdu;
   pdu.set_payload(buf);
   return pdu;
 }
@@ -98,7 +98,7 @@ void test_tx()
 
   {
     // read PDU from lower end
-    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    byte_buffer_slice_chain pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT(not pdu.empty());
     TESTASSERT(pdu == tv_pdu);
   }
@@ -107,7 +107,7 @@ void test_tx()
 
   {
     // read another PDU from lower end but there is nothing to read
-    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    byte_buffer_slice_chain pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT(pdu.empty());
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);
@@ -123,8 +123,8 @@ void test_tx()
 
   {
     // read PDU from lower end with insufficient space for the whole SDU
-    const int       shortage = 1;
-    rlc_byte_buffer pdu      = rlc1_tx_lower->pull_pdu(payload_len - shortage);
+    const int               shortage = 1;
+    byte_buffer_slice_chain pdu      = rlc1_tx_lower->pull_pdu(payload_len - shortage);
     TESTASSERT(pdu.empty());
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);
@@ -141,8 +141,8 @@ void test_tx()
 
   {
     // read PDU from lower end with oversized space
-    const int       oversize = 10;
-    rlc_byte_buffer pdu      = rlc1_tx_lower->pull_pdu(payload_len + oversize);
+    const int               oversize = 10;
+    byte_buffer_slice_chain pdu      = rlc1_tx_lower->pull_pdu(payload_len + oversize);
     TESTASSERT_EQ(pdu.length(), payload_len);
     TESTASSERT(pdu == tv_pdu);
   }
@@ -151,7 +151,7 @@ void test_tx()
 
   {
     // read another PDU from lower end. There should still be one SDU in the queue
-    rlc_byte_buffer pdu = rlc1_tx_lower->pull_pdu(payload_len);
+    byte_buffer_slice_chain pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT_EQ(pdu.length(), payload_len);
   }
   rlc1_tx_lower->get_buffer_state(buffer_state);

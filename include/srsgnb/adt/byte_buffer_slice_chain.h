@@ -15,14 +15,15 @@
 
 namespace srsgnb {
 
-class rlc_byte_buffer
+class byte_buffer_slice_chain
 {
   template <typename T>
   class iterator_impl
   {
     using underlying_it_t =
         std::conditional_t<std::is_const<T>::value, byte_buffer_view::const_iterator, byte_buffer_view::iterator>;
-    using parent_t = std::conditional_t<std::is_const<T>::value, const rlc_byte_buffer, rlc_byte_buffer>;
+    using parent_t =
+        std::conditional_t<std::is_const<T>::value, const byte_buffer_slice_chain, byte_buffer_slice_chain>;
 
   public:
     using iterator_type     = iterator_impl<T>;
@@ -97,9 +98,9 @@ public:
   using iterator       = iterator_impl<uint8_t>;
   using const_iterator = iterator_impl<const uint8_t>;
 
-  rlc_byte_buffer() = default;
-  explicit rlc_byte_buffer(const byte_buffer& buf_) : payload(buf_) {}
-  rlc_byte_buffer(const byte_buffer& buf_, size_t start, size_t sz) : payload(buf_, start, sz) {}
+  byte_buffer_slice_chain() = default;
+  explicit byte_buffer_slice_chain(const byte_buffer& buf_) : payload(buf_) {}
+  byte_buffer_slice_chain(const byte_buffer& buf_, size_t start, size_t sz) : payload(buf_, start, sz) {}
 
   void set_header(byte_buffer buf) { header = std::move(buf); }
 
@@ -122,7 +123,7 @@ public:
   /// Prepends bytes to rlc buffer segment. This function may allocate new segments.
   void prepend_header(span<const uint8_t> bytes) { header.prepend(bytes); }
 
-  rlc_byte_buffer& chain_before(byte_buffer before)
+  byte_buffer_slice_chain& chain_before(byte_buffer before)
   {
     header.chain_before(std::move(before));
     return *this;

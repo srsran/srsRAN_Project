@@ -190,9 +190,9 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   }
 
   // Add UE PDUs.
-  const static_vector<rlc_byte_buffer, MAX_DL_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
+  const static_vector<byte_buffer_slice_chain, MAX_DL_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
   for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
-    const rlc_byte_buffer& payload = ue_pdus[i];
+    const byte_buffer_slice_chain& payload = ue_pdus[i];
     builder.add_pdu_custom_payload(
         pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::ue), 1, {&*payload.begin(), &*payload.end()});
   }
