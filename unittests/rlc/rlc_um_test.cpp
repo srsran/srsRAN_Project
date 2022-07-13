@@ -25,7 +25,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 {
   byte_buffer             buf = {tv};
   byte_buffer_slice_chain pdu;
-  pdu.set_payload(buf);
+  pdu.push_back(std::move(buf));
   return pdu;
 }
 
@@ -101,8 +101,9 @@ void test_full_sdus(rlc_um_sn_size sn_size)
   // Write PDUs into RLC2
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[i].header_view());
-    pdu.append(pdu_bufs[i].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   rlc2_tx_lower->get_buffer_state(buffer_state);
@@ -179,16 +180,18 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     // receive PDUs in reverse order
     for (uint32_t i = num_pdus; i > 0; i--) {
       byte_buffer pdu;
-      pdu.append(pdu_bufs[i - 1].header_view());
-      pdu.append(pdu_bufs[i - 1].payload_view());
+      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+        pdu.append(slice);
+      }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   } else {
     // receive PDUs in order
     for (uint32_t i = 0; i < num_pdus; i++) {
       byte_buffer pdu;
-      pdu.append(pdu_bufs[i].header_view());
-      pdu.append(pdu_bufs[i].payload_view());
+      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+        pdu.append(slice);
+      }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   }
@@ -265,8 +268,9 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   for (uint32_t i = 0; i < num_pdus; i++) {
     if (i != 1 && i != 6) {
       byte_buffer pdu;
-      pdu.append(pdu_bufs[i].header_view());
-      pdu.append(pdu_bufs[i].payload_view());
+      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+        pdu.append(slice);
+      }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   }
@@ -274,14 +278,16 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   // write remaining two PDUs in reverse-order (so SN=1 is received first)
   {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[6].header_view());
-    pdu.append(pdu_bufs[6].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[6].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[1].header_view());
-    pdu.append(pdu_bufs[1].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[1].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
 
@@ -362,8 +368,9 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
     for (uint32_t i = 0; i < num_pdus; i++) {
       if (i != last_sn) {
         byte_buffer pdu;
-        pdu.append(pdu_bufs[i].header_view());
-        pdu.append(pdu_bufs[i].payload_view());
+        for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+          pdu.append(slice);
+        }
         rlc2_rx_lower->handle_pdu(std::move(pdu));
       }
     }
@@ -374,8 +381,9 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
   // Write the skipped PDU into RLC2
   {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[last_sn].header_view());
-    pdu.append(pdu_bufs[last_sn].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[last_sn].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
 
@@ -448,8 +456,9 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
   // Write PDUs into RLC2
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[i].header_view());
-    pdu.append(pdu_bufs[i].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
 
@@ -526,8 +535,9 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
   for (uint32_t i = 0; i < num_pdus; i++) {
     if (i != 10) {
       byte_buffer pdu;
-      pdu.append(pdu_bufs[i].header_view());
-      pdu.append(pdu_bufs[i].payload_view());
+      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+        pdu.append(slice);
+      }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   }
@@ -612,8 +622,9 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   for (uint32_t i = 0; i < num_pdus; i++) {
     if (i != 2) {
       byte_buffer pdu;
-      pdu.append(pdu_bufs[i].header_view());
-      pdu.append(pdu_bufs[i].payload_view());
+      for (const byte_buffer_slice& slice : pdu_bufs[i].slices()) {
+        pdu.append(slice);
+      }
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   }
@@ -705,8 +716,9 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
   // Write PDUs into RLC2 (except 2nd)
   for (uint32_t i = 0; i < num_pdus; i++) {
     byte_buffer pdu;
-    pdu.append(pdu_bufs[order[i]].header_view());
-    pdu.append(pdu_bufs[order[i]].payload_view());
+    for (const byte_buffer_slice& slice : pdu_bufs[order[i]].slices()) {
+      pdu.append(slice);
+    }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
   rlc2_tx_lower->get_buffer_state(buffer_state);

@@ -75,7 +75,7 @@ public:
 
     // In TM there is no header, just pass the plain SDU
     byte_buffer_slice_chain pdu = {};
-    pdu.set_payload(std::move(sdu.buf));
+    pdu.push_back(std::move(sdu.buf));
     logger.log_info("Tx PDU ({} B). Provided space ({} B)", sdu_size, nof_bytes);
     metrics_add_pdus(1, pdu.length());
     return pdu;

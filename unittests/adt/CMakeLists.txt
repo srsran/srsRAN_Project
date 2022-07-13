@@ -51,3 +51,7 @@ add_test(unique_function_test unique_function_test)
 add_executable(filter_view_test filter_view_test.cpp)
 target_link_libraries(filter_view_test srslog)
 add_test(filter_view_test filter_view_test)
+
+add_executable(byte_buffer_slice_chain_test byte_buffer_slice_chain_test.cpp)
+target_link_libraries(byte_buffer_slice_chain_test srslog)
+add_test(byte_buffer_slice_chain_test byte_buffer_slice_chain_test)

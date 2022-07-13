@@ -24,7 +24,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 {
   byte_buffer             buf = {tv};
   byte_buffer_slice_chain pdu;
-  pdu.set_payload(buf);
+  pdu.push_back(std::move(buf));
   return pdu;
 }
 
