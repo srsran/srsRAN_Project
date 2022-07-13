@@ -52,6 +52,10 @@ add_executable(filter_view_test filter_view_test.cpp)
 target_link_libraries(filter_view_test srslog)
 add_test(filter_view_test filter_view_test)
 
+add_executable(shared_byte_buffer_slice byte_buffer_slice_test.cpp)
+target_link_libraries(shared_byte_buffer_slice srslog)
+add_test(shared_byte_buffer_slice shared_byte_buffer_slice)
+
 add_executable(byte_buffer_slice_chain_test byte_buffer_slice_chain_test.cpp)
 target_link_libraries(byte_buffer_slice_chain_test srslog)
 add_test(byte_buffer_slice_chain_test byte_buffer_slice_chain_test)

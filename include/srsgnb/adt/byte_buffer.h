@@ -758,7 +758,7 @@ public:
   template <typename Range>
   bool operator!=(const Range& r) const
   {
-    return slice != r.slice;
+    return not(*this == r);
   }
 
 private:
@@ -947,6 +947,16 @@ struct formatter<srsgnb::byte_buffer> {
       return format_to(ctx.out(), "{:0>2x}", fmt::join(buf.begin(), buf.end(), " "));
     }
     return format_to(ctx.out(), "{:0>8b}", fmt::join(buf.begin(), buf.end(), " "));
+  }
+};
+
+/// \brief Custom formatter for byte_buffer_slice
+template <>
+struct formatter<srsgnb::byte_buffer_slice> : public formatter<srsgnb::byte_buffer_view> {
+  template <typename FormatContext>
+  auto format(const srsgnb::byte_buffer_slice& buf, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return formatter<srsgnb::byte_buffer_view>::format(buf.view(), ctx);
   }
 };
 
