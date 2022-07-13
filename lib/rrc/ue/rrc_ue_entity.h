@@ -58,7 +58,7 @@ private:
   typedef enum { Rx = 0, Tx } direction_t;
   template <class T>
   void
-       log_rrc_message(const char* source, const direction_t dir, byte_buffer_slice pdu, const T& msg, const char* msg_type);
+  log_rrc_message(const char* source, const direction_t dir, byte_buffer_slice pdu, const T& msg, const char* msg_type);
   void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_slice pdu, const char* cause_str, bool log_hex = true);
 
   ue_context&         ctxt; // reference to the UE object

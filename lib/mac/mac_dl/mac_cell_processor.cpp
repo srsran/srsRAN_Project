@@ -27,7 +27,8 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   ssb_helper(cell_cfg_req_),
   sched_obj(sched_),
   ue_mng(ue_mng_)
-{}
+{
+}
 
 async_task<void> mac_cell_processor::start()
 {

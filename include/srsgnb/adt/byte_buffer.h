@@ -227,10 +227,12 @@ class byte_buffer
 
     iterator_impl(byte_buffer_segment* start_segment = nullptr, size_t offset_ = 0) :
       current_segment(start_segment), offset(offset_)
-    {}
+    {
+    }
     template <typename U, std::enable_if_t<not std::is_same<U, T>::value, bool> = true>
     iterator_impl(const iterator_impl<U>& other) : current_segment(other.current_segment), offset(other.offset)
-    {}
+    {
+    }
 
     reference operator*() { return *(current_segment->data() + offset); }
     reference operator*() const { return *(current_segment->data() + offset); }
@@ -319,7 +321,7 @@ public:
     other.len  = 0;
   }
   byte_buffer& operator=(const byte_buffer&) noexcept = delete;
-  byte_buffer& operator                               =(byte_buffer&& other) noexcept
+  byte_buffer& operator=(byte_buffer&& other) noexcept
   {
     head       = std::move(other.head);
     tail       = other.tail;
@@ -715,7 +717,8 @@ public:
   explicit byte_buffer_slice(const byte_buffer& buf_) : slice(buf_.begin(), buf_.end()), buf(buf_.copy()) {}
   byte_buffer_slice(const byte_buffer& buf_, size_t offset, size_t length) :
     slice(buf_, offset, length), buf(buf_.copy())
-  {}
+  {
+  }
   byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : slice(view), buf(buf_.copy())
   {
     srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)length(),

@@ -24,7 +24,8 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                                                   : rlc_um_pdu_header_size_12bit_sn_no_so),
   head_len_not_first(cfg.sn_field_length == rlc_um_sn_size::size6bits ? rlc_um_pdu_header_size_6bit_sn_with_so
                                                                       : rlc_um_pdu_header_size_12bit_sn_with_so)
-{}
+{
+}
 
 // TS 38.322 v16.2.0 Sec. 5.2.2.1
 void rlc_tx_um_entity::handle_sdu(rlc_sdu sdu)
