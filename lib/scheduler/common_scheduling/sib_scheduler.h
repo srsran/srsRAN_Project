@@ -67,9 +67,9 @@ private:
   const cell_configuration& cell_cfg;
   pdcch_scheduler&          pdcch_sched;
 
-  /// [Implementation-defined] SIB1 parameters.
-  /// This included in MIB message and defines the CORESET 0 and SearchSpaceSet 0.
-  uint8_t           pdcch_config_sib1;
+  /// Parameters for SIB1 scheduling.
+  uint8_t           coreset0;
+  uint8_t           searchspace0;
   uint8_t           sib1_mcs;
   uint8_t           sib1_rv;
   aggregation_level sib1_dci_aggr_lev;

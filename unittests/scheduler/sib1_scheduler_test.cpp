@@ -266,9 +266,12 @@ int main()
   // The array sib1_slots contains the expected slots n0, at which the SIB1 is scheduled. The i-th element of the array
   // refers to the n0 for the i-th SSB's beam. The slots n0 have been pre-computed based on TS 38.213, Section 13.
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots{5, 7, 9, 11, 13, 15, 17, 19};
+  // pdcch_config_sib1 = 9U => { coreset0 = 0U, searchspace0 = 9U).
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 9U, 0b11111111);
+  // pdcch_config_sib1 = 57U => { coreset0 = 3U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 57U, 0b01010101);
+  // pdcch_config_sib1 = 105U => { coreset0 = 0U, searchspace0 = 9U).
+  test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots, 105U, 0b11111111);
 
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_1{2, 3, 4, 5, 6, 7, 8, 9};
   test_sib1_scheduler(subcarrier_spacing::kHz15, sib1_slots_1, 2U, 0b10101010);
@@ -291,9 +294,12 @@ int main()
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_3, 9U, 0b11111111);
 
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_4{10, 11, 12, 13, 14, 15, 16, 17};
+  // pdcch_config_sib1 = 4U => { coreset0 = 0U, searchspace0 = 4U).
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b10101010);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b01010101);
-  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 4U, 0b11111111);
+  // pdcch_config_sib1 = 68U => { coreset0 = 3U, searchspace0 = 4U).
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 68U, 0b01010101);
+  // pdcch_config_sib1 = 100U => { coreset0 = 6U, searchspace0 = 4U).
+  test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_4, 100U, 0b11111111);
 
   std::array<unsigned, MAX_NUM_BEAMS> sib1_slots_5{4, 5, 6, 7, 8, 9, 10, 11};
   test_sib1_scheduler(subcarrier_spacing::kHz30, sib1_slots_5, 12U, 0b10101010);

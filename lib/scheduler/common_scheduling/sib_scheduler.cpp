@@ -63,7 +63,8 @@ sib1_scheduler::sib1_scheduler(const cell_configuration&                       c
                                const sched_cell_configuration_request_message& msg) :
   cell_cfg{cfg_},
   pdcch_sched{pdcch_sch},
-  pdcch_config_sib1{static_cast<uint8_t>((msg.coreset0 << 4U) + msg.searchspace0)},
+  coreset0{msg.coreset0},
+  searchspace0{msg.searchspace0},
   sib1_mcs{msg.sib1_mcs},
   sib1_rv{msg.sib1_rv},
   sib1_dci_aggr_lev{msg.sib1_dci_aggr_lev},
@@ -101,7 +102,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
     return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
   };
 
-  // For each beam, check if the SIB1 needs to be allocated in this slot .
+  // For each beam, check if the SIB1 needs to be allocated in this slot.
   for (unsigned ssb_idx = 0; ssb_idx < MAX_NUM_BEAMS; ssb_idx++) {
     // Do not schedule the SIB1 for the SSB indices that are not used.
     if (not is_nth_ssb_beam_active(cell_cfg.ssb_cfg.ssb_bitmap, ssb_idx)) {
@@ -124,13 +125,23 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 
 void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 {
-  // TODO: (i) Extend function to all multiplexing patterns
-  // TODO: (ii) Embed is_fr2 in the scheduler configuration
+  // TODO: get minimum channel BW from current BW configuration.
+  srsran_assert(cell_cfg.dl_carrier.carrier_bw_mhz < 40,
+                "Minimum channel BW '{}'MHz not supported for SIB1 scheduling; scheduler only supports 5MHz or "
+                "10MHz min. channel BW.",
+                cell_cfg.dl_carrier.carrier_bw_mhz);
+  // Get Coreset0 num of symbols from Coreset0 config.
+  static const unsigned min_channel_bw = 5;
+  unsigned              nof_symb_coreset0 =
+      pdcch_type0_css_coreset_get(
+          min_channel_bw, cell_cfg.ssb_cfg.scs, scs_common, coreset0, cell_cfg.ssb_cfg.ssb_subcarrier_offset)
+          .nof_rb_coreset;
+
+  // TODO: Extend function to all multiplexing patterns.
+  // TODO: Embed is_fr2 in the scheduler configuration.
   pdcch_type0_css_occasion_pattern1_description ss0_config_occasion_param =
       pdcch_type0_css_occasions_get_pattern1(pdcch_type0_css_occasion_pattern1_configuration{
-          .is_fr2           = false,
-          .ss_zero_index    = static_cast<uint8_t>(pdcch_config_sib1 & 0b00001111U),
-          .nof_symb_coreset = 1});
+          .is_fr2 = false, .ss_zero_index = searchspace0, .nof_symb_coreset = nof_symb_coreset0});
 
   for (size_t i_ssb = 0; i_ssb < MAX_NUM_BEAMS; i_ssb++) {
     sib1_n0_slots.emplace_back(get_sib1_n0(
