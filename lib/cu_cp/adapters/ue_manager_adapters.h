@@ -8,14 +8,15 @@
  *
  */
 
-#ifndef SRSGNB_RRC_ADAPTERS_H
-#define SRSGNB_RRC_ADAPTERS_H
+#ifndef SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H
+#define SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H
 
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// Adapter between UE manager and RRC
 class rrc_ul_ccch_adapter : public srb_pdu_notifier
 {
 public:
@@ -30,4 +31,4 @@ private:
 } // namespace srs_cu_cp
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_ADAPTERS_H
+#endif // SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H

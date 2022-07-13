@@ -11,7 +11,7 @@
 #ifndef SRSGNB_CU_CP_H
 #define SRSGNB_CU_CP_H
 
-#include "adapters/du_adapters.h"
+#include "adapters/f1ap_adapters.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/support/executors/task_worker.h"

@@ -9,7 +9,7 @@
  */
 
 #include "ue_creation_procedure.h"
-#include "../adapters/rrc_adapters.h"
+#include "../adapters/ue_manager_adapters.h"
 #include "srsgnb/rrc/rrc_factory.h"
 
 using namespace srsgnb;
