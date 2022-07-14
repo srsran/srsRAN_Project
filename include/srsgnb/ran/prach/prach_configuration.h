@@ -19,7 +19,7 @@
 
 namespace srsgnb {
 
-/// \brief Contains the PRACH configuration parameters
+/// \brief Contains the PRACH configuration parameters.
 ///
 /// The parameters are used in TS38.211 Section 6.3.3.2 and they are derived from TS38.211 Tables 6.3.3.2-2, 6.3.3.2-3
 /// and 6.3.3.2-4.
@@ -59,7 +59,7 @@ static const prach_configuration PRACH_CONFIG_RESERVED =
 /// \param[in] fr                 Frequency range (see [here](\ref frequency_range) for more information).
 /// \param[in] dm                 Duplex mode (see [here](\ref duplex_mode) for more information).
 /// \param[in] prach_config_index PRACH configuration index with range {0, ..., 255}.
-/// \return A valid PRACH configuration if the provided arguments are valid. Otherwise, PRACH_CONFIG_RESERVED.
+/// \return A valid PRACH configuration if the provided arguments are valid. Otherwise, \ref PRACH_CONFIG_RESERVED.
 prach_configuration prach_configuration_get(frequency_range fr, duplex_mode dm, uint8_t prach_config_index);
 
 } // namespace srsgnb
