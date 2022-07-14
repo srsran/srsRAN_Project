@@ -253,7 +253,7 @@ static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_ce
   return cell;
 }
 
-byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg)
+asn1::rrc_nr::sib1_s make_asn1_rrc_cell_sib1(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
 
@@ -300,9 +300,26 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   sib1.ue_timers_and_consts.n311.value = ue_timers_and_consts_s::n311_opts::n1;
   sib1.ue_timers_and_consts.t319.value = ue_timers_and_consts_s::t319_opts::ms1000;
 
-  byte_buffer       buf;
-  asn1::bit_ref     bref{buf};
-  asn1::SRSASN_CODE ret = sib1.pack(bref);
+  return sib1;
+}
+
+byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg)
+{
+  byte_buffer          buf;
+  asn1::bit_ref        bref{buf};
+  asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
+  asn1::SRSASN_CODE    ret  = sib1.pack(bref);
+  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+  return buf;
+}
+
+byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg)
+{
+  byte_buffer                     buf;
+  asn1::bit_ref                   bref{buf};
+  asn1::rrc_nr::bcch_dl_sch_msg_s msg;
+  msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
+  asn1::SRSASN_CODE ret            = msg.pack(bref);
   srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
   return buf;
 }

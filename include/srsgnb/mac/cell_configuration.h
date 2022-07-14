@@ -47,7 +47,7 @@ struct mac_cell_creation_request {
   bool intra_freq_resel;
 
   /// [Implementation-defined] SIB1 parameters.
-  byte_buffer sib1_payload;
+  byte_buffer bcch_dl_sch_payload;
 
   // TODO: Fill remaining fields
 };

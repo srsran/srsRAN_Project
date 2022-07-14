@@ -90,9 +90,9 @@ inline mac_cell_creation_request make_mac_cell_config(du_cell_index_t cell_index
   mac_cfg.ul_carrier       = du_cfg.ul_carrier;
   mac_cfg.cell_barred      = du_cfg.cell_barred;
   mac_cfg.intra_freq_resel = du_cfg.intra_freq_resel;
-  mac_cfg.sib1_payload.append(srs_du::make_asn1_rrc_cell_sib1_buffer(du_cfg));
+  mac_cfg.bcch_dl_sch_payload.append(srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(du_cfg));
   mac_cfg.sched_req =
-      make_sched_cell_config_req(cell_index, du_cfg, static_cast<unsigned>(mac_cfg.sib1_payload.length()));
+      make_sched_cell_config_req(cell_index, du_cfg, static_cast<unsigned>(mac_cfg.bcch_dl_sch_payload.length()));
   return mac_cfg;
 }
 

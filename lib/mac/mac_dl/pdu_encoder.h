@@ -18,7 +18,7 @@ namespace srsgnb {
 
 inline void encode_sib_pdu(const mac_cell_creation_request& cell_cfg, byte_buffer& pdu)
 {
-  pdu = cell_cfg.sib1_payload.copy();
+  pdu = cell_cfg.bcch_dl_sch_payload.copy();
 }
 
 inline void encode_rar_pdu(const mac_cell_creation_request& cell_cfg, const rar_information& rar, byte_buffer& pdu)

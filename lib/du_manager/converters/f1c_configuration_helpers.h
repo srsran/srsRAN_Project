@@ -29,6 +29,11 @@ byte_buffer make_asn1_rrc_cell_mib_buffer(const du_cell_config& du_cfg);
 /// \return byte buffer with packed cell SIB1.
 byte_buffer make_asn1_rrc_cell_sib1_buffer(const du_cell_config& du_cfg);
 
+/// \brief Derive packed cell BCCH-DL-SCH message from DU cell configuration.
+/// \param[in] du_cfg DU Cell Configuration.
+/// \return byte buffer with packed cell BCCH-DL-SCH message.
+byte_buffer make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_config& du_cfg);
+
 /// \brief Fills ASN.1 F1SetupRequest struct.
 /// \param[out] request The F1 setup request message struct to fill.
 /// \param[in] setup_params DU setup parameters to add to the F1SetupRequest.
