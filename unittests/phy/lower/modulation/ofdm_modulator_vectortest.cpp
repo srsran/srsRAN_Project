@@ -15,7 +15,7 @@
 #include "srsgnb/support/test_utils.h"
 
 /// Defines the maximum allowed error at the OFDM modulator output.
-static constexpr float ASSERT_MAX_ERROR = 1e-5;
+static constexpr float ASSERT_MAX_ERROR = 2e-5;
 
 using namespace srsgnb;
 
