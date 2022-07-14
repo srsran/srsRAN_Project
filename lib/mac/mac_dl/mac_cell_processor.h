@@ -13,6 +13,7 @@
 
 #include "../mac_config.h"
 #include "mac_dl_ue_manager.h"
+#include "pdu_encoder.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "ssb_assembler.h"
@@ -61,9 +62,12 @@ private:
   const mac_cell_creation_request cell_cfg;
   task_executor&                  cell_exec;
   mac_cell_result_notifier&       phy_cell;
+
   /// ssb_helper: contains the SSB-specific parameters that are derived from those passed by the DU interface. These
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
+
+  sib_pdu_encoder sib_encoder;
 
   scheduler_slot_handler& sched_obj;
   mac_dl_ue_manager&      ue_mng;
