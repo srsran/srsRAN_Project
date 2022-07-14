@@ -88,8 +88,8 @@ ue_index_t ue_manager::handle_initial_ul_rrc_message_transfer(const ue_manager_i
   ue_context ue_ctx{};
   ue_ctx.ue_index               = get_next_ue_index();
   ue_ctx.pcell_index            = msg.pcell_index;
-  ue_ctx.c_rnti                 = to_rnti(msg.msg.msg->c_rnti.value);
-  const auto& du_to_cu_rrc_cont = msg.msg.msg->duto_currc_container.value;
+  ue_ctx.c_rnti                 = msg.c_rnti;
+  const auto& du_to_cu_rrc_cont = msg.du_to_cu_rrc_container;
   ue_ctx.du_to_cu_rrc_container = byte_buffer{du_to_cu_rrc_cont.begin(), du_to_cu_rrc_cont.end()};
 
   // 1. Verify if UE index was successfully allocated and params are valid.
@@ -118,19 +118,18 @@ ue_index_t ue_manager::handle_initial_ul_rrc_message_transfer(const ue_manager_i
   create_srb0(ue_ctx);
 
   // 5. Pass container to RRC
-  if (msg.msg.msg->rrc_container_rrc_setup_complete_present) {
+  if (msg.rrc_container_rrc_setup_complete.has_value()) {
     // check that SRB1 is present
     if (ue_ctx.srbs.contains(LCID_SRB0)) {
-      ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_pdu(
-          byte_buffer_slice({msg.msg.msg->rrc_container_rrc_setup_complete.value.begin(),
-                             msg.msg.msg->rrc_container_rrc_setup_complete.value.end()}));
+      ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_pdu(byte_buffer_slice(
+          {msg.rrc_container_rrc_setup_complete.value().begin(), msg.rrc_container_rrc_setup_complete.value().end()}));
     } else {
       cfg.logger.error("SRB1 not present - dropping PDU");
     }
   } else {
     // pass UL-CCCH to RRC
     ue_ctx.srbs[LCID_SRB0].rx_notifier->on_new_pdu(
-        byte_buffer_slice({msg.msg.msg->rrc_container.value.begin(), msg.msg.msg->rrc_container.value.end()}));
+        byte_buffer_slice({msg.rrc_container.begin(), msg.rrc_container.end()}));
   }
 
   logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctx.ue_index, ue_ctx.c_rnti);
@@ -142,7 +141,7 @@ void ue_manager::handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message&
   logger.info("Handling UL RRC Message transfer.");
 
   // Convert RRCContainer to byte_buffer
-  byte_buffer pdcp_pdu = make_byte_buffer(msg.msg.msg->rrc_container.value.to_string());
+  byte_buffer pdcp_pdu = make_byte_buffer(msg.rrc_container.to_string());
   // TODO: Send pdcp_pdu to PDCP
 }
 

@@ -69,7 +69,13 @@ public:
 
     ue_manager_initial_ul_rrc_message ue_mng_msg = {};
     ue_mng_msg.pcell_index                       = pcell_index;
-    ue_mng_msg.msg                               = msg;
+    ue_mng_msg.rrc_container                     = msg.msg->rrc_container.value;
+    ue_mng_msg.c_rnti                            = to_rnti(msg.msg->c_rnti.value);
+    ue_mng_msg.du_to_cu_rrc_container            = msg.msg->duto_currc_container.value;
+
+    if (msg.msg->rrc_container_rrc_setup_complete_present) {
+      ue_mng_msg.rrc_container_rrc_setup_complete = msg.msg->rrc_container_rrc_setup_complete.value;
+    }
 
     return ue_mng_f1c_handler->handle_initial_ul_rrc_message_transfer(ue_mng_msg);
   }
@@ -80,7 +86,7 @@ public:
 
     ue_manager_ul_rrc_message ue_mng_msg = {};
     ue_mng_msg.ue_idx                    = ue_index;
-    ue_mng_msg.msg                       = msg;
+    ue_mng_msg.rrc_container             = msg.msg->rrc_container.value;
 
     ue_mng_f1c_handler->handle_ul_rrc_message_transfer(ue_mng_msg);
   }

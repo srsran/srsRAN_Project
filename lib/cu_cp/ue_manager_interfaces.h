@@ -13,20 +13,22 @@
 
 #include "du_context.h"
 #include "srsgnb/cu_cp/ue_context.h"
-#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 
 namespace srsgnb {
 
 namespace srs_cu_cp {
 
 struct ue_manager_initial_ul_rrc_message {
-  du_cell_index_t         pcell_index;
-  f1ap_initial_ul_rrc_msg msg;
+  du_cell_index_t                           pcell_index;
+  asn1::unbounded_octstring<true>           rrc_container;
+  asn1::unbounded_octstring<true>           du_to_cu_rrc_container;
+  rnti_t                                    c_rnti;
+  optional<asn1::unbounded_octstring<true>> rrc_container_rrc_setup_complete;
 };
 
 struct ue_manager_ul_rrc_message {
-  ue_index_t      ue_idx;
-  f1ap_ul_rrc_msg msg;
+  ue_index_t                      ue_idx;
+  asn1::unbounded_octstring<true> rrc_container;
 };
 
 // Forward declared class
