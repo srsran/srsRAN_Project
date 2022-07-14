@@ -274,8 +274,9 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   rach.rach_cfg_generic.preamb_rx_target_pwr      = -110;
   rach.rach_cfg_generic.preamb_trans_max.value    = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
   rach.rach_cfg_generic.pwr_ramp_step.value       = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
-  srsran_sanity_check(asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window),
-                      "Invalid ra-WindowSize");
+  srsran_always_assert(
+      asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window),
+      "Invalid ra-WindowSize");
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
       asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n8;
