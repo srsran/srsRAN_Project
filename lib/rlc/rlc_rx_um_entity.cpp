@@ -35,8 +35,6 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
 // TS 38.322 v16.2.0 Sec. 5.2.3.2.2
 void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
 {
-  std::lock_guard<std::mutex> lock(mutex);
-
   metrics_add_pdus(1, buf.length());
 
   logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
@@ -243,7 +241,6 @@ void rlc_rx_um_entity::update_total_sdu_length(rlc_umd_pdu_segments& pdu_segment
 // TS 38.322 v16.2.0 Sec. 5.2.2.2.4
 void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
 {
-  std::lock_guard<std::mutex> lock(mutex);
   if (reassembly_timer.id() == timeout_id) {
     logger.log_debug("reassembly timeout expiry for SN={} - updating rx_next_reassembly and reassembling",
                      st.rx_next_reassembly);

@@ -53,9 +53,6 @@ private:
   // Rx state variables
   rlc_rx_um_state st;
 
-  // Mutexes
-  std::mutex mutex;
-
   const uint32_t mod; // Rx counter modulus
   const uint32_t um_window_size;
 
