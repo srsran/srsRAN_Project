@@ -99,8 +99,7 @@ void test_f1_setup()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting F1SetupRequest");
-    TESTASSERT(cu_cp_obj.get_f1c_message_handler(int_to_du_index(0)) != nullptr);
-    cu_cp_obj.get_f1c_message_handler(int_to_du_index(0))->handle_message(f1c_msg);
+    cu_cp_obj.get_f1c_message_handler(int_to_du_index(0)).handle_message(f1c_msg);
 
     // check that DU has been added
     TESTASSERT_EQ(1, cu_cp_obj.get_nof_dus());
@@ -199,8 +198,7 @@ void test_initial_ul_rrc_message_transfer()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting F1SetupRequest");
-    TESTASSERT(cu_cp_obj.get_f1c_message_handler(int_to_du_index(0)) != nullptr);
-    cu_cp_obj.get_f1c_message_handler(int_to_du_index(0))->handle_message(f1setup_msg);
+    cu_cp_obj.get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
     // check that DU has been added
     TESTASSERT_EQ(1, cu_cp_obj.get_nof_dus());
@@ -230,7 +228,6 @@ void test_initial_ul_rrc_message_transfer()
     // TODO: Make tests pass
     // // Pass PDU to CU-CP
     // test_logger.info("Injecting Initial UL RRC message");
-    // TESTASSERT(cu_cp_obj.get_f1c_message_handler(int_to_du_index(0)) != nullptr);
     // cu_cp_obj.get_f1c_message_handler(int_to_du_index(0))->handle_message(init_ul_rrc_msg);
 
     // // check that UE has been added

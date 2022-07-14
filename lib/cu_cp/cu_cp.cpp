@@ -51,7 +51,7 @@ size_t cu_cp::get_nof_ues()
   return manager->get_nof_ues();
 }
 
-f1c_message_handler* cu_cp::get_f1c_message_handler(du_index_t du_index)
+f1c_message_handler& cu_cp::get_f1c_message_handler(du_index_t du_index)
 {
   return manager->get_f1c_message_handler(du_index);
 }

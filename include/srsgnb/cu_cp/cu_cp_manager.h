@@ -46,23 +46,6 @@ class cu_cp_manager_du_interface
 public:
   virtual ~cu_cp_manager_du_interface() = default;
 
-  /// \brief Adds a DU processor object to the CU-CP manager.
-  virtual void add_du() = 0;
-
-  /// \brief Removes the specified DU processor object from the CU-CP manager.
-  /// \param[in] du_index The index of the DU processor to delete.
-  virtual void remove_du(du_index_t du_index) = 0;
-
-  /// \brief Find a DU object.
-  /// \param[in] du_index The index of the DU processor object.
-  /// \return The DU processor object.
-  virtual du_processor* find_du(du_index_t du_index) = 0;
-
-  /// \brief Find a DU object.
-  /// \param[in] packed_nr_cell_id The cell id of a DU processor object.
-  /// \return The DU processor object.
-  virtual du_processor* find_du(uint64_t packed_nr_cell_id) = 0;
-
   /// \brief Get the number of DUs connected to the CU-CP manager.
   /// \return The number of DUs.
   virtual size_t get_nof_dus() const = 0;
@@ -74,7 +57,7 @@ public:
   /// \brief Get the F1C message handler interface of the DU processor object.
   /// \param[in] du_index The index of the DU processor object.
   /// \return The F1C message handler interface of the DU processor object.
-  virtual f1c_message_handler* get_f1c_message_handler(const du_index_t du_index) = 0;
+  virtual f1c_message_handler& get_f1c_message_handler(const du_index_t du_index) = 0;
 };
 
 class cu_cp_manager_interface : public cu_cp_manager_du_connection_notifier,

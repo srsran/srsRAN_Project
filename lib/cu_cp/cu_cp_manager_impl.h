@@ -27,20 +27,31 @@ class cu_cp_manager_impl final : public cu_cp_manager_interface
 public:
   explicit cu_cp_manager_impl(const cu_cp_manager_config_t& cfg);
 
-  void add_du() override;
-  void remove_du(du_index_t du_index) override;
-
-  du_processor* find_du(du_index_t du_index) override;
-  du_processor* find_du(uint64_t packed_nr_cell_id) override;
-
   size_t               get_nof_dus() const override;
   size_t               get_nof_ues() const override;
-  f1c_message_handler* get_f1c_message_handler(const du_index_t du_index) override;
+  f1c_message_handler& get_f1c_message_handler(const du_index_t du_index) override;
 
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
 
 private:
+  /// \brief Adds a DU processor object to the CU-CP manager.
+  void add_du();
+
+  /// \brief Removes the specified DU processor object from the CU-CP manager.
+  /// \param[in] du_index The index of the DU processor to delete.
+  void remove_du(du_index_t du_index);
+
+  /// \brief Find a DU object.
+  /// \param[in] du_index The index of the DU processor object.
+  /// \return The DU processor object.
+  du_processor& find_du(du_index_t du_index);
+
+  /// \brief Find a DU object.
+  /// \param[in] packed_nr_cell_id The cell id of a DU processor object.
+  /// \return The DU processor object.
+  du_processor& find_du(uint64_t packed_nr_cell_id);
+
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
   du_index_t get_next_du_index();

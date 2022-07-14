@@ -94,8 +94,7 @@ void test_f1_setup()
 
   // attach DU msg handler to CU message handler and vice-versa (in this order)
   cu_msg_handler.attach_handler(&cu_cp_obj.get_cu_cp_manager(), &du_obj.get_f1c_message_handler());
-  TESTASSERT(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)) != nullptr);
-  du_msg_handler.attach_handler(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
+  du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
   // start CU and DU
   cu_cp_obj.start();
@@ -148,8 +147,7 @@ void test_rrc_message_transfer_procedure()
 
   // attach DU msg handler to CU message handler and vice-versa (in this order)
   cu_msg_handler.attach_handler(&cu_cp_obj.get_cu_cp_manager(), &du_obj.get_f1c_message_handler());
-  TESTASSERT(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)) != nullptr);
-  du_msg_handler.attach_handler(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
+  du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
   // start CU and DU
   cu_cp_obj.start();

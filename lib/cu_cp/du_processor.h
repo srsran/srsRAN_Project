@@ -38,7 +38,7 @@ public:
   // getter functions
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
   du_context&                                    get_context() { return context; };
-  f1c_message_handler*                           get_f1c_message_handler() { return f1ap.get(); };
+  f1c_message_handler&                           get_f1c_message_handler() { return *f1ap; };
   du_cell_index_t                                get_next_du_cell_index();
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 

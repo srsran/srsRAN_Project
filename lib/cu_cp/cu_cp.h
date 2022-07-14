@@ -29,7 +29,7 @@ public:
   void start();
   void stop();
 
-  f1c_message_handler* get_f1c_message_handler(du_index_t du_index);
+  f1c_message_handler& get_f1c_message_handler(du_index_t du_index);
 
   cu_cp_manager_interface& get_cu_cp_manager();
 

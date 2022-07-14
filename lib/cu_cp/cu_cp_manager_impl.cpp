@@ -25,19 +25,19 @@ cu_cp_manager_impl::cu_cp_manager_impl(const cu_cp_manager_config_t& cfg_) :
   ctx = {}; // make it compile
 }
 
-du_processor* cu_cp_manager_impl::find_du(du_index_t du_index)
+du_processor& cu_cp_manager_impl::find_du(du_index_t du_index)
 {
   srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
-  return du_db.contains(du_index) ? du_db[du_index].get() : nullptr;
+  srsran_assert(du_db.contains(du_index), "DU not found du_index={}", du_index);
+  return *du_db[du_index];
 }
 
-du_processor* cu_cp_manager_impl::find_du(uint64_t packed_nr_cell_id)
+du_processor& cu_cp_manager_impl::find_du(uint64_t packed_nr_cell_id)
 {
   auto du_it = du_dict.find(packed_nr_cell_id);
-  if (du_it != du_dict.end()) {
-    return du_it->second;
-  }
-  return nullptr;
+  srsran_assert(du_it != du_dict.end(), "DU not found packed_nr_cell_id={}", packed_nr_cell_id);
+
+  return *du_it->second;
 }
 
 /// Create DU object with valid index
@@ -99,21 +99,17 @@ size_t cu_cp_manager_impl::get_nof_ues() const
   return nof_ues;
 }
 
-f1c_message_handler* cu_cp_manager_impl::get_f1c_message_handler(const du_index_t du_index)
+f1c_message_handler& cu_cp_manager_impl::get_f1c_message_handler(const du_index_t du_index)
 {
-  auto du_it = cu_cp_manager_impl::find_du(du_index);
-  if (du_it == nullptr) {
-    logger.error("Could not find DU with du_index={}", du_index);
-    return nullptr;
-  }
+  auto& du_it = find_du(du_index);
 
-  return du_it->get_f1c_message_handler();
+  return du_it.get_f1c_message_handler();
 }
 
 void cu_cp_manager_impl::on_new_connection()
 {
   logger.info("New DU connection - adding DU");
-  cu_cp_manager_impl::add_du();
+  add_du();
 }
 
 void cu_cp_manager_impl::handle_du_remove_request(const du_index_t du_index)
