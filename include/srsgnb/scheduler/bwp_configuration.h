@@ -145,7 +145,7 @@ struct rach_config_generic {
 /// Used to specify the cell-specific random-access parameters as per TS38.331, "RACH-ConfigCommon".
 struct rach_config_common {
   rach_config_generic rach_cfg_generic;
-  /// Total number of prambles used for contention based and contention free RA. Values: (1..63).
+  /// Total number of prambles used for contention based and contention free RA. Values: (1..64).
   unsigned total_nof_ra_preambles;
   /// PRACH root sequence index. Values: (1..839).
   /// \remark See TS 38.211, clause 6.3.3.1.

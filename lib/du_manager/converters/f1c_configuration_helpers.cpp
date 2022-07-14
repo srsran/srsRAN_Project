@@ -200,7 +200,8 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
     pdcch.common_coreset = make_asn1_rrc_coreset(cfg.init_dl_bwp.pdcch_common.common_coreset.value());
   }
   pdcch.search_space_zero_present = false; // Sent by MIB.
-  for (const search_space_configuration& ss : cfg.init_dl_bwp.pdcch_common.search_spaces) {
+  for (size_t ss_idx = 1; ss_idx < cfg.init_dl_bwp.pdcch_common.search_spaces.size(); ++ss_idx) {
+    const search_space_configuration& ss = cfg.init_dl_bwp.pdcch_common.search_spaces[ss_idx];
     pdcch.common_search_space_list.push_back(make_asn1_rrc_search_space(ss));
   }
   pdcch.search_space_sib1_present           = true;
@@ -239,11 +240,38 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   return out;
 }
 
+static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul_config_common& cfg)
+{
+  using namespace asn1::rrc_nr;
+
+  ul_cfg_common_sib_s out;
+  out.freq_info_ul.freq_band_list.resize(1);
+  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr_present = true;
+  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr         = 20;
+  out.freq_info_ul.absolute_freq_point_a_present              = true;
+  out.freq_info_ul.absolute_freq_point_a                      = 168464;
+  out.freq_info_ul.scs_specific_carrier_list.resize(cfg.freq_info_ul.scs_carrier_list.size());
+  for (unsigned i = 0; i < cfg.freq_info_ul.scs_carrier_list.size(); ++i) {
+    out.freq_info_ul.scs_specific_carrier_list[i].offset_to_carrier =
+        cfg.freq_info_ul.scs_carrier_list[i].offset_to_carrier;
+    out.freq_info_ul.scs_specific_carrier_list[i].subcarrier_spacing.value =
+        get_asn1_scs(cfg.freq_info_ul.scs_carrier_list[i].scs);
+    out.freq_info_ul.scs_specific_carrier_list[i].carrier_bw = cfg.freq_info_ul.scs_carrier_list[i].carrier_bandwidth;
+  }
+  out.init_ul_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_ul_bwp.generic_params.scs);
+  out.init_ul_bwp.generic_params.location_and_bw =
+      sliv_from_s_and_l(275, cfg.init_ul_bwp.generic_params.crbs.start(), cfg.init_ul_bwp.generic_params.crbs.length());
+  out.time_align_timer_common.value = asn1::rrc_nr::time_align_timer_opts::infinity;
+  return out;
+}
+
 static asn1::rrc_nr::serving_cell_cfg_common_sib_s make_asn1_rrc_cell_serving_cell_common(const du_cell_config& du_cfg)
 {
   using namespace asn1::rrc_nr;
   serving_cell_cfg_common_sib_s cell;
-  cell.dl_cfg_common = make_asn1_rrc_dl_config_common(du_cfg.dl_cfg_common);
+  cell.dl_cfg_common         = make_asn1_rrc_dl_config_common(du_cfg.dl_cfg_common);
+  cell.ul_cfg_common_present = true;
+  cell.ul_cfg_common         = make_asn1_rrc_ul_config_common(du_cfg.ul_cfg_common);
   // SSB params.
   cell.ssb_positions_in_burst.in_one_group.from_number(static_cast<uint64_t>(du_cfg.ssb_cfg.ssb_bitmap) >>
                                                        static_cast<uint64_t>(56U));

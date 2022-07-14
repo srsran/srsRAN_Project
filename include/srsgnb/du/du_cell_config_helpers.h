@@ -112,6 +112,8 @@ inline search_space_configuration make_default_common_search_space_config()
   search_space_configuration cfg = make_default_search_space_zero_config();
   cfg.id                         = to_search_space_id(1);
   cfg.nof_candidates             = {1, 1, 1, 0, 0};
+  cfg.monitoring_symbols_within_slot.emplace();
+  cfg.monitoring_symbols_within_slot->set(0, true);
   return cfg;
 }
 
@@ -163,7 +165,11 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  cfg.init_ul_bwp.generic_params = make_default_init_bwp(params);
+  cfg.freq_info_ul.scs_carrier_list.resize(1);
+  cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
+  cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
+  cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
+  cfg.init_ul_bwp.generic_params                         = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
