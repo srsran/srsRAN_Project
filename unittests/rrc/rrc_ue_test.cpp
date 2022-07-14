@@ -57,13 +57,15 @@ void rrc_setup_test()
 {
   uint8_t rrc_setup_pdu[] = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
 
+  // create RRC entity
+  rrc_cfg_t                                cfg{}; // empty config
+  rrc_entity_creation_message              msg(cfg);
+  std::unique_ptr<rrc_entity_du_interface> rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
+
+  // create single UE context and add RRC user
   ue_context ue_ctxt{};
   ue_ctxt.c_rnti = to_rnti(0x1234);
-
-  rrc_ue_cfg_t cfg{}; // empty config
-
-  rrc_ue_entity_creation_message msg(ue_ctxt, cfg);
-  ue_ctxt.rrc = create_rrc_ue_entity(msg);
+  ue_ctxt.rrc    = rrc->add_user(ue_ctxt);
 
   // Object to handle the generated RRC message
   dummy_tx_pdu_handler tx_pdu_handler;
@@ -92,6 +94,7 @@ int main()
   logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  srslog::flush();
   rrc_setup_test();
+
+  srslog::flush();
 }

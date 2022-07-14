@@ -43,6 +43,9 @@ public:
   du_cell_index_t                                get_next_du_cell_index();
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 
+  ue_index_t handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
+  void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
+
 private:
   // F1AP senders
 
@@ -54,6 +57,9 @@ private:
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
 
+  /// \brief Create SRB0 entry in bearer list and add adapter handle.
+  void create_srb0(ue_context& ue_ctx);
+
   srslog::basic_logger&   logger;
   cu_cp_manager_config_t& cfg;
 
@@ -62,13 +68,12 @@ private:
   std::atomic<uint16_t>                         next_du_cell_index{0};
 
   // Components
-  std::unique_ptr<f1_interface> f1ap;
+  std::unique_ptr<f1_interface>            f1ap;
   std::unique_ptr<rrc_entity_du_interface> rrc;
 
   ue_manager ue_mng;
 
   du_processor_f1ap_event_indicator f1ap_ev_notifier;
-  ue_manager_f1ap_event_indicator   ue_manager_f1ap_ev_notifier;
 };
 
 } // namespace srs_cu_cp

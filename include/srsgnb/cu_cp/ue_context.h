@@ -42,7 +42,7 @@ struct ue_context {
   rnti_t          c_rnti;
   byte_buffer     du_to_cu_rrc_container;
 
-  std::unique_ptr<rrc_ue_entity_interface> rrc;
+  rrc_ue_entity_interface*                 rrc = nullptr;
   slot_vector<cu_srb_context>              srbs;
   slot_vector<cu_drb_context>              drbs;
 };

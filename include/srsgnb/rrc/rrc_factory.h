@@ -34,15 +34,6 @@ struct rrc_entity_creation_message {
 /// Create an instance of an RRC entity
 std::unique_ptr<rrc_entity_du_interface> create_rrc_entity(const rrc_entity_creation_message& msg);
 
-struct rrc_ue_entity_creation_message {
-  rrc_ue_entity_creation_message(ue_context& ue_ctxt_, const rrc_ue_cfg_t& cfg_) : ue_ctxt(ue_ctxt_), cfg(cfg_) {}
-  ue_context&         ue_ctxt; // reference to the UE object
-  const rrc_ue_cfg_t& cfg;
-};
-
-/// Creates an instance of a RRC UE object
-std::unique_ptr<rrc_ue_entity_interface> create_rrc_ue_entity(const rrc_ue_entity_creation_message& msg);
-
 } // namespace srs_cu_cp
 
 } // namespace srsgnb

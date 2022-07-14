@@ -43,8 +43,34 @@ public:
   virtual void handle_f1_setup_request(const f1_setup_request_message& msg) = 0;
 };
 
+struct initial_ul_rrc_message {
+  du_cell_index_t                           pcell_index;
+  asn1::unbounded_octstring<true>           rrc_container;
+  asn1::unbounded_octstring<true>           du_to_cu_rrc_container;
+  rnti_t                                    c_rnti;
+  optional<asn1::unbounded_octstring<true>> rrc_container_rrc_setup_complete;
+};
+
+struct ul_rrc_message {
+  ue_index_t                      ue_idx;
+  uint8_t                         srbid;
+  asn1::unbounded_octstring<true> rrc_container;
+};
+
+/// Interface to forward RRC messages at the DU processor
+class du_processor_rrc_message_handler
+{
+public:
+  virtual ~du_processor_rrc_message_handler() = default;
+
+  virtual ue_index_t handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) = 0;
+  virtual void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg)                 = 0;
+};
+
 /// Combined interface for all DU processor handlers
-class du_processor_f1c_interface : public du_processor_f1ap_setup_handler, public du_processor_cell_handler
+class du_processor_f1c_interface : public du_processor_f1ap_setup_handler,
+                                   public du_processor_cell_handler,
+                                   public du_processor_rrc_message_handler
 {
 public:
   virtual ~du_processor_f1c_interface() = default;

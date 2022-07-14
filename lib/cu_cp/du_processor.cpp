@@ -10,6 +10,7 @@
 
 #include "du_processor.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
+#include "adapters/du_processor_adapters.h"
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 
@@ -19,9 +20,8 @@ using namespace srs_cu_cp;
 du_processor::du_processor(cu_cp_manager_config_t& cfg_) : logger(cfg_.logger), cfg(cfg_), ue_mng(cfg_)
 {
   // create f1ap
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, ue_manager_f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
+  f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect(*this);
-  ue_manager_f1ap_ev_notifier.connect(ue_mng);
 
   // create RRC
   rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg);
@@ -113,4 +113,74 @@ du_cell_index_t du_processor::get_next_du_cell_index()
   }
   logger.error("No DU cell index available");
   return INVALID_DU_CELL_INDEX;
+}
+
+ue_index_t du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg)
+{
+  // 1. Create new UE context
+  ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not create UE context");
+    return INVALID_UE_INDEX;
+  }
+
+  // 2. Set parameters from initiating message
+  ue_ctxt->pcell_index            = msg.pcell_index;
+  ue_ctxt->c_rnti                 = msg.c_rnti;
+  const auto& du_to_cu_rrc_cont   = msg.du_to_cu_rrc_container;
+  ue_ctxt->du_to_cu_rrc_container = byte_buffer{du_to_cu_rrc_cont.begin(), du_to_cu_rrc_cont.end()};
+
+  // 3. Create new RRC entity
+  ue_ctxt->rrc = rrc->add_user(*ue_ctxt);
+  if (ue_ctxt->rrc == nullptr) {
+    logger.error("Could not create RRC entity");
+    return INVALID_UE_INDEX;
+  }
+
+  // 4. Create SRB0 bearer and notifier
+  create_srb0(*ue_ctxt);
+
+  // 5. Pass container to RRC
+  if (msg.rrc_container_rrc_setup_complete.has_value()) {
+    // check that SRB1 is present
+    if (ue_ctxt->srbs.contains(LCID_SRB0)) {
+      ue_ctxt->srbs[LCID_SRB1].rx_notifier->on_new_rrc_message(msg.rrc_container_rrc_setup_complete.value());
+    } else {
+      cfg.logger.error("SRB1 not present - dropping PDU");
+    }
+  } else {
+    // pass UL-CCCH to RRC
+    ue_ctxt->srbs[LCID_SRB0].rx_notifier->on_new_rrc_message(msg.rrc_container);
+  }
+
+  logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
+
+  return ue_ctxt->ue_index;
+}
+
+void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
+{
+  // 1. Find UE context
+  ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_idx);
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not find UE context");
+    return;
+  }
+
+  // 2. Pass to SRB accordingly
+  if (ue_ctxt->srbs.contains(msg.srbid)) {
+    ue_ctxt->srbs[msg.srbid].rx_notifier->on_new_rrc_message(msg.rrc_container);
+  } else {
+    cfg.logger.error("SR {} not present - dropping PDU", msg.srbid);
+  }
+}
+
+void du_processor::create_srb0(ue_context& ue_ctxt)
+{
+  ue_ctxt.srbs.emplace(LCID_SRB0);
+  cu_srb_context& srb0 = ue_ctxt.srbs[LCID_SRB0];
+  srb0.lcid            = LCID_SRB0;
+
+  // create UE manager to RRC adapter
+  srb0.rx_notifier = std::make_unique<rrc_ul_ccch_adapter>(*ue_ctxt.rrc->get_ul_ccch_pdu_handler());
 }

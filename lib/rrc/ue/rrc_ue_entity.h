@@ -23,7 +23,7 @@ namespace srs_cu_cp {
 class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_handler
 {
 public:
-  rrc_ue_entity(ue_context& ctxt_, const rrc_ue_cfg_t& cfg_);
+  rrc_ue_entity(rrc_entity_ue_interface& parent_, ue_context& ctxt_, const rrc_ue_cfg_t& cfg_);
   ~rrc_ue_entity() = default;
 
   // rrc_ul_ccch_pdu_handler
@@ -74,8 +74,9 @@ private:
   log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
   void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
-  ue_context&         ctxt; // reference to the UE object
-  const rrc_ue_cfg_t& cfg;
+  rrc_entity_ue_interface& parent; // reference to the parant RRC object
+  ue_context&              ctxt;   // reference to the UE object
+  const rrc_ue_cfg_t&      cfg;
 
   struct rrc_ctxt_t {
     uint64_t                               setup_ue_id = -1;

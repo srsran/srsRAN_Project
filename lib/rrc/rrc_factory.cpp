@@ -19,9 +19,3 @@ std::unique_ptr<rrc_entity_du_interface> srsgnb::srs_cu_cp::create_rrc_entity(co
 {
   return std::make_unique<rrc_entity>(msg.cfg);
 }
-
-std::unique_ptr<rrc_ue_entity_interface>
-srsgnb::srs_cu_cp::create_rrc_ue_entity(const rrc_ue_entity_creation_message& msg)
-{
-  return std::make_unique<rrc_ue_entity>(msg.ue_ctxt, msg.cfg);
-}

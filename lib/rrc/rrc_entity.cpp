@@ -25,7 +25,7 @@ rrc_ue_entity_interface* rrc_entity::add_user(ue_context& ctxt_)
   }
 
   ue_index_t ue_index = ctxt_.ue_index;
-  ue_db.emplace(ue_index, std::make_unique<rrc_ue_entity>(ctxt_, cfg.ue_default_cfg));
+  ue_db.emplace(ue_index, std::make_unique<rrc_ue_entity>(*this, ctxt_, cfg.ue_default_cfg));
   auto& u = ue_db[ue_index];
   return u.get();
 }

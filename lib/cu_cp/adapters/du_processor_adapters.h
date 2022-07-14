@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H
-#define SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H
+#ifndef SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H
+#define SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H
 
 #include "srsgnb/rrc/rrc.h"
 
@@ -37,4 +37,4 @@ private:
 } // namespace srs_cu_cp
 } // namespace srsgnb
 
-#endif // SRSGNB_CU_CP_UE_MANAGER_ADAPTERS_H
+#endif // SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H

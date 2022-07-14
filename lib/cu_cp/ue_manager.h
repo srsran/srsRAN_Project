@@ -19,21 +19,18 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_rrc_message_handler
+class ue_manager : public ue_manager_ctrl_configurer
 {
 public:
   explicit ue_manager(cu_cp_manager_config_t& cfg_);
 
   const slot_array<ue_context, MAX_NOF_UES>& get_ues() const { return ue_db; }
 
-  ue_context* add_ue(ue_context u) override;
+  ue_context* add_ue(rnti_t rnti) override;
   void        remove_ue(ue_index_t ue_index) override;
   ue_context* find_ue(ue_index_t ue_index) override;
   ue_context* find_rnti(rnti_t rnti) override;
   size_t      get_nof_ues() override;
-
-  ue_index_t handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) override;
-  void       handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg) override;
 
 private:
   /// \brief Get the next available UE index.
@@ -52,8 +49,6 @@ private:
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
   std::array<int, MAX_NOF_UES>        rnti_to_ue_index;
-
-  ue_manager_f1ap_event_indicator f1ap_ev_notifier;
 };
 
 } // namespace srs_cu_cp

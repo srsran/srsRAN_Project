@@ -15,7 +15,10 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_entity::rrc_ue_entity(ue_context& ctxt_, const rrc_ue_cfg_t& cfg_) : ctxt(ctxt_), cfg(cfg_) {}
+rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface& parent_, ue_context& ctxt_, const rrc_ue_cfg_t& cfg_) :
+  parent(parent_), ctxt(ctxt_), cfg(cfg_)
+{
+}
 
 rrc_ul_ccch_pdu_handler* rrc_ue_entity::get_ul_ccch_pdu_handler()
 {
