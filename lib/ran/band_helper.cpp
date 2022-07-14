@@ -17,51 +17,73 @@ using namespace srsgnb;
 
 using namespace band_helper;
 
+// Possible values of delta f_raster in Table 5.4.2.3-1 and Table 5.4.2.3-2
+enum class delta_freq_raster {
+  DEFAULT = 0, // for bands with 2 possible values for delta_f_raster (e.g. 15 and 30 kHz), the lower is chosen
+  KHz15,
+  KHz30,
+  KHz60,
+  KHz100,
+  KHz120
+};
+
 // NR operating band and DL ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 struct nr_band {
-  uint16_t band;
-  // DL ARFCN LB.
-  uint32_t dl_nref_first;
-  // DL ARFCN UB.
-  uint32_t dl_nref_last;
+  uint16_t          band;
+  delta_freq_raster delta_f_rast;
+  uint32_t          ul_nref_first;
+  uint32_t          ul_nref_step;
+  uint32_t          ul_nref_last;
+  uint32_t          dl_nref_first;
+  uint32_t          dl_nref_step;
+  uint32_t          dl_nref_last;
 };
 
 // From Table 5.4.2.3-1 in TS 38.104, this is the number of NR FR1 bands that has a DL allocated band (FDD, TDD or SDL).
 // NOTE: Band 41 has two different Freq raster, we only consider raster 15kHz.
-const uint32_t nof_nr_DL_bands_fr1 = 26;
+const uint32_t nof_nr_DL_bands_fr1 = 36;
 
-// Table with NR operating FR1 band and related DL ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
+// Table with NR operating FR1 band and related ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 // NOTE: It only includes FDD, TDD, and SDL bands.
 // NOTE: Band 2 is a subset of band 25
 static constexpr std::array<nr_band, nof_nr_DL_bands_fr1> nr_band_table_fr1 = {{
     // clang-format off
-    {1,  422000, 434000},
-    // Band 2 is a subset of band 25.
-    {2,  386000, 398000},
-    {3,  361000, 376000},
-    {5,  173800, 178800},
-    {7,  524000, 538000},
-    {8,  185000, 192000},
-    {12, 145800, 149200},
-    {20, 158200, 164200},
-    {25, 386000, 399000},
-    {28, 151600, 160600},
-    {34, 402000, 405000},
-    {38, 514000, 524000},
-    {39, 376000, 384000},
-    {40, 460000, 480000},
-    {41, 499200, 537999},
-    {50, 286400, 303400},
-    {51, 285400, 286400},
-    {66, 422000, 440000},
-    {70, 399000, 404000},
-    {71, 123400, 130400},
-    {74, 295000, 303600},
-    {75, 286400, 303400},
-    {76, 285400, 286400},
-    {77, 620000, 680000},
-    {78, 620000, 653333},
-    {79, 693334, 733333},
+    {1,  delta_freq_raster::KHz100, 384000, 20, 396000, 422000, 20, 434000},
+    {2,  delta_freq_raster::KHz100, 370000, 20, 382000, 386000, 20, 398000},
+    {3,  delta_freq_raster::KHz100, 342000, 20, 357000, 361000, 20, 376000},
+    {5,  delta_freq_raster::KHz100, 164800, 20, 169800, 173800, 20, 178800},
+    {7,  delta_freq_raster::KHz100, 500000, 20, 514000, 524000, 20, 538000},
+    {8,  delta_freq_raster::KHz100, 176000, 20, 183000, 185000, 20, 192000},
+    {12, delta_freq_raster::KHz100, 139800, 20, 143200, 145800, 20, 149200},
+    {20, delta_freq_raster::KHz100, 166400, 20, 172400, 158200, 20, 164200},
+    {25, delta_freq_raster::KHz100, 370000, 20, 383000, 386000, 20, 399000},
+    {28, delta_freq_raster::KHz100, 140600, 20, 149600, 151600, 20, 160600},
+    {34, delta_freq_raster::KHz100, 402000, 20, 405000, 402000, 20, 405000},
+    {38, delta_freq_raster::KHz100, 514000, 20, 524000, 514000, 20, 524000},
+    {39, delta_freq_raster::KHz100, 376000, 20, 384000, 376000, 20, 384000},
+    {40, delta_freq_raster::KHz100, 460000, 20, 480000, 460000, 20, 480000},
+    {41, delta_freq_raster::KHz15,  499200,  3, 537999, 499200,  3, 537999},
+    {41, delta_freq_raster::KHz30,  499200,  6, 537996, 499200,  6, 537996},
+    {50, delta_freq_raster::KHz100, 286400, 20, 303400, 286400, 20, 303400},
+    {51, delta_freq_raster::KHz100, 285400, 20, 286400, 285400, 20, 286400},
+    {66, delta_freq_raster::KHz100, 342000, 20, 356000, 422000, 20, 440000},
+    {70, delta_freq_raster::KHz100, 339000, 20, 342000, 399000, 20, 404000},
+    {71, delta_freq_raster::KHz100, 132600, 20, 139600, 123400, 20, 130400},
+    {74, delta_freq_raster::KHz100, 285400, 20, 294000, 295000, 20, 303600},
+    {75, delta_freq_raster::KHz100,      0,  0,      0, 286400, 20, 303400},
+    {76, delta_freq_raster::KHz100,      0,  0,      0, 285400, 20, 286400},
+    {77, delta_freq_raster::KHz15,  620000,  1, 680000, 620000,  1, 680000},
+    {77, delta_freq_raster::KHz30,  620000,  2, 680000, 620000,  2, 680000},
+    {78, delta_freq_raster::KHz15,  620000,  1, 653333, 620000,  1, 653333},
+    {78, delta_freq_raster::KHz30,  620000,  2, 653332, 620000,  2, 653332},
+    {79, delta_freq_raster::KHz15,  693334,  2, 733333, 693334,  2, 733333},
+    {79, delta_freq_raster::KHz30,  693334,  2, 733332, 693334,  2, 733332},
+    {80, delta_freq_raster::KHz100, 342000,  20, 357000,     0,  0,      0},
+    {81, delta_freq_raster::KHz100, 176000,  20, 183000,     0,  0,      0},
+    {82, delta_freq_raster::KHz100, 166400,  20, 172400,     0,  0,      0},
+    {83, delta_freq_raster::KHz100, 140600,  20, 149600,     0,  0,      0},
+    {84, delta_freq_raster::KHz100, 384000,  20, 396000,     0,  0,      0},
+    {86, delta_freq_raster::KHz100, 342000,  20, 356000,     0,  0,      0}
     // clang-format on
 }};
 
@@ -152,6 +174,68 @@ static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_b
     // clang-format on
 }};
 
+struct nr_raster_params {
+  double   freq_range_start;
+  double   freq_range_end;
+  double   delta_F_global_kHz;
+  double   F_REF_Offs_MHz;
+  uint32_t N_REF_Offs;
+  uint32_t N_REF_min;
+  uint32_t N_REF_max;
+
+  bool operator==(const nr_raster_params& rhs) const
+  {
+    return freq_range_start == rhs.freq_range_start && freq_range_end == rhs.freq_range_end &&
+           delta_F_global_kHz == rhs.delta_F_global_kHz && F_REF_Offs_MHz == rhs.F_REF_Offs_MHz &&
+           N_REF_Offs == rhs.N_REF_Offs && N_REF_min == rhs.N_REF_min && N_REF_max == rhs.N_REF_max;
+  }
+};
+
+static const uint32_t                            max_nr_arfcn = 3279165;
+static constexpr std::array<nr_raster_params, 3> nr_fr_params = {{
+    // clang-format off
+    // Frequency range 0 - 3000 MHz
+    {0, 3000, 5, 0.0, 0, 0, 599999},
+    // Frequency range 3000 - 24250 MHz
+    {3000, 24250, 15, 3000.0, 600000, 600000, 2016666},
+    // Frequency range 24250 - 100000 MHz
+    {24250, 100000, 60, 24250.08, 2016667, 2016667, max_nr_arfcn}
+    // clang-format on
+}};
+
+/// Helper to calculate F_REF according to Table 5.4.2.1-1.
+static nr_raster_params get_raster_params(uint32_t nr_arfcn)
+{
+  for (const nr_raster_params& fr : nr_fr_params) {
+    if (nr_arfcn >= fr.N_REF_min && nr_arfcn <= fr.N_REF_max) {
+      return fr;
+    }
+  }
+  return {}; // return empty params.
+}
+
+static nr_raster_params get_raster_params(double freq)
+{
+  for (const nr_raster_params& fr : nr_fr_params) {
+    if (freq >= fr.freq_range_start * 1e6 && freq <= fr.freq_range_end * 1e6) {
+      return fr;
+    }
+  }
+  return {}; // return empty params
+}
+
+static bool is_valid_raster_param(const nr_raster_params& raster)
+{
+  for (const nr_raster_params& fr : nr_fr_params) {
+    if (fr == raster) {
+      return true;
+    }
+  }
+  return false;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint16_t srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
   for (const nr_band& band : nr_band_table_fr1) {
@@ -161,6 +245,43 @@ uint16_t srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
     }
   }
   return UINT16_MAX;
+}
+
+uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
+{
+  // return same ARFCN for TDD bands
+  if (get_duplex_mode(get_band_from_dl_arfcn(dl_arfcn)) == duplex_mode::TDD) {
+    return dl_arfcn;
+  }
+
+  // derive UL ARFCN for FDD bands
+  for (const auto& band : nr_band_table_fr1) {
+    if (band.band == get_band_from_dl_arfcn(dl_arfcn)) {
+      uint32_t offset = (dl_arfcn - band.dl_nref_first) / band.dl_nref_step;
+      return (band.ul_nref_first + offset * band.ul_nref_step);
+    }
+  }
+
+  return 0;
+}
+
+double srsgnb::band_helper::nr_arfcn_to_freq(uint32_t nr_arfcn)
+{
+  nr_raster_params params = get_raster_params(nr_arfcn);
+  if (not is_valid_raster_param(params)) {
+    return 0.0;
+  }
+  return (params.F_REF_Offs_MHz * 1e6 + params.delta_F_global_kHz * (nr_arfcn - params.N_REF_Offs) * 1e3);
+}
+
+uint32_t srsgnb::band_helper::freq_to_nr_arfcn(double freq)
+{
+  nr_raster_params params = get_raster_params(freq);
+  if (not is_valid_raster_param(params)) {
+    return 0;
+  }
+  return static_cast<uint32_t>(((freq - params.F_REF_Offs_MHz * 1e6) / 1e3 / params.delta_F_global_kHz) +
+                               params.N_REF_Offs);
 }
 
 ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(uint16_t band, subcarrier_spacing scs)
@@ -223,5 +344,28 @@ bool srsgnb::band_helper::is_paired_spectrum(uint16_t band)
 {
   duplex_mode mode = get_duplex_mode(band);
   srsran_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");
-  return mode == duplex_mode::FDD ? true : false;
+  return mode == duplex_mode::FDD;
+}
+
+double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_freq)
+{
+  constexpr static unsigned NRE = 12;
+
+  // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier
+  // TODO: add offset_to_carrier.
+  return center_freq - (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
+}
+
+uint32_t srsgnb::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn)
+{
+  return freq_to_nr_arfcn(get_abs_freq_point_a_from_center_freq(nof_prb, nr_arfcn_to_freq(arfcn)));
+}
+
+double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_point_a_arfcn)
+{
+  constexpr static unsigned NRE = 12;
+  // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
+  // TODO: add offset_to_carrier
+  double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
+  return abs_freq_point_a_freq + (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
 }

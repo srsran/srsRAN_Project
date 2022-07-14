@@ -27,7 +27,7 @@ struct du_cell_config_default_params {
   pci_t              pci               = 1;
   subcarrier_spacing scs_common        = subcarrier_spacing::kHz15;
   unsigned           nof_crbs          = 52;
-  unsigned           arfcn             = 365000;
+  unsigned           dl_arfcn          = 365000;
   unsigned           offset_to_point_a = 12;
   unsigned           coreset0_index    = 6;
 };
@@ -38,7 +38,7 @@ inline carrier_configuration make_default_carrier_configuration(const du_cell_co
 {
   carrier_configuration cfg;
   cfg.carrier_bw_mhz = std::round(params.nof_crbs / (float)5); // TODO: Fix conversion.
-  cfg.arfcn          = params.arfcn;
+  cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
   return cfg;
 }
@@ -165,6 +165,8 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
+  uint32_t         ul_arfcn              = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
+  cfg.freq_info_ul.absolute_freq_point_a = band_helper::get_abs_freq_point_a_arfcn(params.nof_crbs, ul_arfcn);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
@@ -185,7 +187,7 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
 {
   ssb_configuration cfg{};
 
-  cfg.scs                   = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.arfcn));
+  cfg.scs                   = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
   cfg.ssb_offset_to_point_A = params.offset_to_point_a;
   cfg.ssb_period            = ssb_periodicity::ms10;
   cfg.ssb_subcarrier_offset = 0;
