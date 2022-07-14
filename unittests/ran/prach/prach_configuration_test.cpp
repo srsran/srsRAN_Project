@@ -74,8 +74,7 @@ static void test_fr1_paired()
     }
 
     // Assert subframe number.
-    static const std::array<std::array<uint8_t, 1>, 4> repeat_sequence   = {{{1}, {4}, {7}, {9}}};
-    span<uint8_t>                                      expected_subframe = {};
+    static const std::array<std::array<uint8_t, 1>, 4> repeat_sequence = {{{1}, {4}, {7}, {9}}};
     if (prach_config_index < 19) {
       TESTASSERT_EQ(span<const uint8_t>(repeat_sequence[prach_config_index % repeat_sequence.size()]),
                     span<const uint8_t>(config.subframe));
