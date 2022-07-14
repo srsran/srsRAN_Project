@@ -88,6 +88,7 @@ double get_abs_freq_point_a_from_center_freq(uint32_t nof_prb, double center_fre
 uint32_t get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn);
 
 /// \brief Compute the center frequency for a NR carrier from its bandwidth and the absolute pointA.
+/// The center frequency should point to the RB with index = ceil(Nrb / 2), where Nrb is the number of RBs of the cell.
 ///
 /// \param nof_prb Carrier bandwidth in number of RB.
 /// \param freq_point_a_arfcn Absolute Point A frequency ARFCN.
