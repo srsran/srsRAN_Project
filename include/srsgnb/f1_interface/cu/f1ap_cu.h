@@ -152,20 +152,20 @@ public:
   virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
 };
 
-/// Methods used by F1AP to notify the UE manager about messages.
-class f1c_ue_manager_message_notifier
+/// Methods used by F1AP to notify about RRC messages.
+class f1c_rrc_message_notifier
 {
 public:
-  virtual ~f1c_ue_manager_message_notifier() = default;
+  virtual ~f1c_rrc_message_notifier() = default;
 
-  /// \brief Notifies the UE manager about the reception of a initial UL RRC message transfer message.
+  /// \brief Notifies about the reception of a initial UL RRC message transfer message.
   /// \param[in] pcell_index The DU cell index.
   /// \param[in] msg The received initial UL RRC message transfer message.
-  /// \return Returns the index of the UE created at the UE manager.
+  /// \return Returns the index of the created UE.
   virtual ue_index_t on_initial_ul_rrc_message_transfer_received(const du_cell_index_t          pcell_index,
                                                                  const f1ap_initial_ul_rrc_msg& msg) = 0;
 
-  /// \brief Notifies the UE manager about the reception of a UL RRC message transfer message.
+  /// \brief Notifies about the reception of a UL RRC message transfer message.
   /// \param[in] ue_index The UE index.
   /// \param[in] msg The received UL RRC message transfer message.
   virtual void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) = 0;

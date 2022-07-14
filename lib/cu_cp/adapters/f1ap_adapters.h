@@ -57,7 +57,7 @@ private:
 };
 
 /// Adapter between F1AP and UE manager to forward messages to RRC/PDCP
-class ue_manager_f1ap_event_indicator : public f1c_ue_manager_message_notifier
+class ue_manager_f1ap_event_indicator : public f1c_rrc_message_notifier
 {
 public:
   void connect(ue_manager_rrc_message_handler& ue_mng_f1c_handler_) { ue_mng_f1c_handler = &ue_mng_f1c_handler_; }

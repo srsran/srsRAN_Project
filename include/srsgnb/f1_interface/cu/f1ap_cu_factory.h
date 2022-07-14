@@ -20,7 +20,7 @@ namespace srs_cu_cp {
 /// Creates an instance of an F1AP interface, notifying outgoing packets on the specified listener object.
 std::unique_ptr<f1_interface> create_f1ap(f1c_message_notifier&              f1c_pdu_notifier_,
                                           f1c_du_processor_message_notifier& du_processor_notifier_,
-                                          f1c_ue_manager_message_notifier&   ue_manager_notifier_,
+                                          f1c_rrc_message_notifier&          rrc_message_notifier_,
                                           f1c_du_management_notifier&        f1c_du_management_notifier_);
 
 } // namespace srs_cu_cp

@@ -25,7 +25,7 @@ class f1ap_cu_impl final : public f1_interface
 public:
   f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
                f1c_du_processor_message_notifier& du_processor_notifier_,
-               f1c_ue_manager_message_notifier&   ue_manager_notifier_,
+               f1c_rrc_message_notifier&          rrc_message_notifier_,
                f1c_du_management_notifier&        f1c_du_management_notifier_);
   ~f1ap_cu_impl();
 
@@ -89,7 +89,7 @@ private:
   // nofifiers
   f1c_message_notifier&              pdu_notifier;
   f1c_du_processor_message_notifier& du_processor_notifier;
-  f1c_ue_manager_message_notifier&   ue_manager_notifier;
+  f1c_rrc_message_notifier&          rrc_message_notifier;
   f1c_du_management_notifier&        du_management_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;

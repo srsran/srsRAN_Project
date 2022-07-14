@@ -38,12 +38,12 @@ public:
 
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
                            f1c_du_processor_message_notifier& du_processor_notifier_,
-                           f1c_ue_manager_message_notifier&   ue_manager_notifier_,
+                           f1c_rrc_message_notifier&          rrc_message_notifier_,
                            f1c_du_management_notifier&        f1c_du_management_notifier_) :
   logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(du_processor_notifier_),
-  ue_manager_notifier(ue_manager_notifier_),
+  rrc_message_notifier(rrc_message_notifier_),
   du_management_notifier(f1c_du_management_notifier_)
 {
   f1ap_ue_context empty_context = {};
@@ -237,7 +237,7 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& 
     return;
   }
 
-  ue_index_t ue_index = ue_manager_notifier.on_initial_ul_rrc_message_transfer_received(pcell_index, msg);
+  ue_index_t ue_index = rrc_message_notifier.on_initial_ul_rrc_message_transfer_received(pcell_index, msg);
   if (ue_index == INVALID_UE_INDEX) {
     logger.error("No free UE index found, maximum number of connected UEs reached.");
     return;
@@ -263,7 +263,7 @@ void f1ap_cu_impl::handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg)
 {
   f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[msg.msg->gnb_cu_ue_f1_ap_id.value];
 
-  ue_manager_notifier.on_ul_rrc_message_transfer_received(ue_ctx.ue_index, msg);
+  rrc_message_notifier.on_ul_rrc_message_transfer_received(ue_ctx.ue_index, msg);
 }
 
 void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)
