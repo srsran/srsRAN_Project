@@ -36,9 +36,10 @@ static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory   = nullp
 static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory = nullptr;
 static std::shared_ptr<lower_phy_factory>            phy_factory         = nullptr;
 
-static lower_phy_configuration create_phy_config(baseband_gateway_spy&             bb_gateway,
-                                                 lower_phy_rx_symbol_notifier_spy& rx_symbol_notifier,
-                                                 lower_phy_timing_notifier_spy&    timing_notifier)
+static lower_phy_configuration create_phy_config(baseband_gateway_spy&         bb_gateway,
+                                                 lower_phy_error_notifier&     error_notifier,
+                                                 lower_phy_rx_symbol_notifier& rx_symbol_notifier,
+                                                 lower_phy_timing_notifier&    timing_notifier)
 {
   lower_phy_configuration config;
   config.dft_size_15kHz             = static_cast<unsigned>(sampling_rate_Hz / 15e3F);
@@ -51,6 +52,7 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&          
   config.bb_gateway                 = &bb_gateway;
   config.rx_symbol_notifier         = &rx_symbol_notifier;
   config.timing_notifier            = &timing_notifier;
+  config.error_notifier             = &error_notifier;
   config.sectors.emplace_back();
   config.sectors.back().bandwidth_rb = bandwidth_rb;
   config.sectors.back().dl_freq_hz   = dl_freq_hz;
@@ -67,10 +69,12 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&          
 static void test_start_run_stop()
 {
   baseband_gateway_spy             bb_gateway(log_level);
+  lower_phy_error_notifier_spy     error_notifier(log_level);
   lower_phy_rx_symbol_notifier_spy rx_symbol_notifier(log_level);
   lower_phy_timing_notifier_spy    timing_notifier(log_level);
 
-  lower_phy_configuration phy_config = create_phy_config(bb_gateway, rx_symbol_notifier, timing_notifier);
+  lower_phy_configuration phy_config =
+      create_phy_config(bb_gateway, error_notifier, rx_symbol_notifier, timing_notifier);
 
   std::unique_ptr<lower_phy_controller> phy = phy_factory->create(phy_config);
   TESTASSERT(phy);
@@ -169,13 +173,13 @@ static void test_start_run_stop()
         TESTASSERT_EQ(0, modulate_entry.port_index);
 
         // Do not expect any late event.
-        TESTASSERT(timing_notifier.get_late_rg_events().empty());
+        TESTASSERT_EQ(0, error_notifier.get_nof_errors());
       } else {
         // Do NOT expect any modulation entry as it was not send any grid.
         TESTASSERT(modulator->get_modulate_entries().empty());
 
         // Expect a RG late event.
-        TESTASSERT_EQ(1, timing_notifier.get_late_rg_events().size());
+        TESTASSERT_EQ(1, error_notifier.get_nof_errors());
       }
 
       // Verify the transmitted baseband matches the modulator output.
@@ -193,6 +197,7 @@ static void test_start_run_stop()
       // Clear spies.
       modulator->clear_modulate_entries();
       bb_gateway.clear_all_entries();
+      error_notifier.clear_all_errors();
       rx_symbol_notifier.clear_all_events();
       timing_notifier.clear_all_events();
     }

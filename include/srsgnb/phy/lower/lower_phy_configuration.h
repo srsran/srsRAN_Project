@@ -12,6 +12,7 @@
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
@@ -58,12 +59,14 @@ struct lower_phy_configuration {
   float tx_scale;
   /// Indicates the cyclic prefix.
   cyclic_prefix cp;
-  /// Provides the basebabd gateway.
+  /// Provides the baseband gateway.
   baseband_gateway* bb_gateway;
   /// Provides a symbol handler to notify the reception of symbols.
   lower_phy_rx_symbol_notifier* rx_symbol_notifier;
   /// Provides the timing handler to notify the timing boundaries.
   lower_phy_timing_notifier* timing_notifier;
+  /// Provides the error handler to notify runtime errors.
+  lower_phy_error_notifier* error_notifier;
   /// Provides the sectors configuration.
   std::vector<lower_phy_sector_description> sectors;
   /// Indicates the numbers of channels for every baseband stream.

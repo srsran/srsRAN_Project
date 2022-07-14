@@ -16,6 +16,7 @@
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
+#include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_input_gateway.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
@@ -84,6 +85,8 @@ private:
   lower_phy_rx_symbol_notifier& rx_symbol_notifier;
   /// Timing boundary handler.
   lower_phy_timing_notifier& timing_notifier;
+  /// Error handler.
+  lower_phy_error_notifier& error_notifier;
   /// Stores downlink resource grids buffers. Each entry belongs to a slot.
   circular_array<lower_phy_rg_buffer<const resource_grid_reader>, NOF_RG_BUFFER> dl_rg_buffers;
   /// Stores uplink resource grids buffers. Each entry belongs to a slot.

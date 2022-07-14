@@ -11,10 +11,55 @@
 #ifndef SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
 #define SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
 
+#include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 
 namespace srsgnb {
+
+class lower_phy_error_notifier_spy : public lower_phy_error_notifier
+{
+private:
+  srslog::basic_logger&                   logger;
+  std::vector<late_resource_grid_context> late_rg_errors;
+
+public:
+  /// Default constructor.
+  lower_phy_error_notifier_spy(std::string log_level = "warning") : logger(srslog::fetch_basic_logger("Error Notifier"))
+  {
+    logger.set_level(srslog::str_to_basic_level(log_level));
+  }
+
+  // See interface for documentation.
+  void on_late_resource_grid(const late_resource_grid_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug(
+        "Sector {} - Detected late resource grid for symbol {}.", context.sector, context.symbol, context.symbol);
+
+    late_rg_errors.push_back(context);
+  }
+
+  /// \brief Gets the late resource grid event list.
+  ///
+  /// TTI boundaries are notified through lower_phy_timing_notifier::on_late_resource_grid() interface.
+  ///
+  /// \return A constant reference to the event list.
+  const std::vector<late_resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
+
+  /// \brief Gets the total number of errors of any kind.
+  ///
+  /// A use case to ensure no event happened:
+  /// \code
+  /// \endcode
+  /// TESTASSERT_EQ(0, error_notifier.get_nof_errors());
+  ///
+  /// \return The total number of events that have been registered.
+  unsigned get_nof_errors() const { return late_rg_errors.size(); }
+
+  /// Clears all the stored errors.
+  void clear_all_errors() { late_rg_errors.clear(); }
+};
 
 /// \brief Lower PHY receive symbol spy class.
 ///
@@ -105,11 +150,10 @@ public:
 class lower_phy_timing_notifier_spy : public lower_phy_timing_notifier
 {
 private:
-  srslog::basic_logger&                   logger;
-  std::vector<lower_phy_timing_context>   tti_boundaries_events;
-  std::vector<lower_phy_timing_context>   ul_half_slot_events;
-  std::vector<lower_phy_timing_context>   ul_full_slot_events;
-  std::vector<late_resource_grid_context> late_rg_events;
+  srslog::basic_logger&                 logger;
+  std::vector<lower_phy_timing_context> tti_boundaries_events;
+  std::vector<lower_phy_timing_context> ul_half_slot_events;
+  std::vector<lower_phy_timing_context> ul_full_slot_events;
 
 public:
   /// Default constructor.
@@ -142,16 +186,6 @@ public:
     ul_full_slot_events.push_back(context);
   }
 
-  // See interface for documentation.
-  void on_late_resource_grid(const late_resource_grid_context& context) override
-  {
-    logger.set_context(context.slot.system_slot());
-    logger.debug(
-        "Sector {} - Detected late resource grid for symbol {}.", context.sector, context.symbol, context.symbol);
-
-    late_rg_events.push_back(context);
-  }
-
   /// \brief Gets the total number of events of any kind.
   ///
   /// A use case to ensure no event happened:
@@ -162,8 +196,7 @@ public:
   /// \return The total number of events that have been registered.
   unsigned get_nof_events() const
   {
-    return tti_boundaries_events.size() + ul_half_slot_events.size() + ul_full_slot_events.size() +
-           late_rg_events.size();
+    return tti_boundaries_events.size() + ul_half_slot_events.size() + ul_full_slot_events.size();
   }
 
   /// \brief Gets the TTI boundaries event list.
@@ -187,20 +220,12 @@ public:
   /// \return A constant reference to the event list.
   const std::vector<lower_phy_timing_context>& get_ul_full_slot_events() const { return ul_full_slot_events; }
 
-  /// \brief Gets the late resource grid event list.
-  ///
-  /// TTI boundaries are notified through lower_phy_timing_notifier::on_late_resource_grid() interface.
-  ///
-  /// \return A constant reference to the event list.
-  const std::vector<late_resource_grid_context>& get_late_rg_events() const { return late_rg_events; }
-
   /// Clears all the stored events.
   void clear_all_events()
   {
     tti_boundaries_events.clear();
     ul_half_slot_events.clear();
     ul_full_slot_events.clear();
-    late_rg_events.clear();
   }
 };
 

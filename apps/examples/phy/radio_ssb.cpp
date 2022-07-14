@@ -21,6 +21,7 @@
 #include "../radio/radio_notifier_sample.h"
 #include "lower_phy_example_factory.h"
 #include "rx_symbol_handler_example.h"
+#include "srsgnb/phy/adapters/phy_error_adapter.h"
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsgnb/phy/adapters/phy_timing_adapter.h"
@@ -297,6 +298,7 @@ static radio_configuration::radio create_radio_configuration()
 lower_phy_configuration create_lower_phy_configuration(unsigned                      dft_size_15kHz,
                                                        double                        rx_to_tx_delay,
                                                        float                         tx_scale,
+                                                       lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                        lower_phy_timing_notifier*    timing_notifier)
 {
@@ -309,6 +311,7 @@ lower_phy_configuration create_lower_phy_configuration(unsigned                 
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
+  phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;
   phy_config.timing_notifier            = timing_notifier;
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
@@ -379,14 +382,15 @@ int main(int argc, char** argv)
   rx_symbol_handler_example rx_symbol_handler(log_level);
 
   // Create adapters.
+  phy_error_adapter      error_adapter(log_level);
   phy_rx_symbol_adapter  rx_symbol_adapter;
   phy_rg_gateway_adapter rg_gateway_adapter;
   phy_timing_adapter     timing_adapter;
 
   // Create lower physical layer.
   {
-    lower_phy_configuration phy_config =
-        create_lower_phy_configuration(dft_size_15kHz, rx_to_tx_delay, tx_scale, &rx_symbol_adapter, &timing_adapter);
+    lower_phy_configuration phy_config = create_lower_phy_configuration(
+        dft_size_15kHz, rx_to_tx_delay, tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy = create_lower_phy(phy_config);
     srsran_assert(lower_phy, "Failed to create lower physical layer.");
   }

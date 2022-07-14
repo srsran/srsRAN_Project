@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
@@ -41,15 +50,6 @@ public:
     upper_phy_timing_context upper_context;
     upper_context.slot = context.slot;
     timing_handler->handle_ul_full_slot_boundary(upper_context);
-  }
-
-  // See interface for documentation.
-  void on_late_resource_grid(const late_resource_grid_context& context) override
-  {
-    fmt::print("Unavailable data to transmit for sector {}, slot {} and symbol {}.",
-               context.sector,
-               context.slot,
-               context.symbol);
   }
 };
 

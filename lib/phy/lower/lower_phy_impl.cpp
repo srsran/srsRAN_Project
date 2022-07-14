@@ -114,11 +114,11 @@ void lower_phy_impl::process_dl_symbol(unsigned symbol_id, baseband_gateway_time
     // If there is no data available for the sector.
     if (dl_rg == nullptr) {
       // Log warning indicating the sector.
-      lower_phy_timing_notifier::late_resource_grid_context context;
+      lower_phy_error_notifier::late_resource_grid_context context;
       context.sector = sector_id;
       context.slot   = dl_slot_context;
       context.symbol = symbol_id;
-      timing_notifier.on_late_resource_grid(context);
+      error_notifier.on_late_resource_grid(context);
     }
 
     // Iterate for each port in the sector...
@@ -232,6 +232,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   receiver(config.bb_gateway->get_receiver()),
   rx_symbol_notifier(*config.rx_symbol_notifier),
   timing_notifier(*config.timing_notifier),
+  error_notifier(*config.error_notifier),
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
@@ -256,6 +257,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
 
   // Make sure dependencies are valid.
   srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
+  srsran_assert(config.error_notifier != nullptr, "Invalid error notifier.");
   srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
   srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
   srsran_assert(modulators.size() == config.sectors.size(),
