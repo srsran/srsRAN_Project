@@ -261,6 +261,61 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   out.init_ul_bwp.generic_params.subcarrier_spacing.value = get_asn1_scs(cfg.init_ul_bwp.generic_params.scs);
   out.init_ul_bwp.generic_params.location_and_bw =
       sliv_from_s_and_l(275, cfg.init_ul_bwp.generic_params.crbs.start(), cfg.init_ul_bwp.generic_params.crbs.length());
+
+  // RACH-ConfigCommon.
+  const rach_config_common& rach_cfg = *cfg.init_ul_bwp.rach_cfg_common;
+
+  out.init_ul_bwp.rach_cfg_common_present         = true;
+  rach_cfg_common_s& rach                         = out.init_ul_bwp.rach_cfg_common.set_setup();
+  rach.rach_cfg_generic.prach_cfg_idx             = 16;
+  rach.rach_cfg_generic.msg1_fdm.value            = asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
+  rach.rach_cfg_generic.msg1_freq_start           = 0;
+  rach.rach_cfg_generic.zero_correlation_zone_cfg = 15;
+  rach.rach_cfg_generic.preamb_rx_target_pwr      = -110;
+  rach.rach_cfg_generic.preamb_trans_max.value    = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
+  rach.rach_cfg_generic.pwr_ramp_step.value       = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
+  srsran_sanity_check(asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window),
+                      "Invalid ra-WindowSize");
+  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
+  rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
+      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n8;
+  rach.ra_contention_resolution_timer.value =
+      asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
+  if (rach_cfg.prach_root_seq_index_l839_present) {
+    rach.prach_root_seq_idx.set_l839() = rach_cfg.prach_root_seq_index;
+  } else {
+    rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
+  }
+  rach.restricted_set_cfg.value = asn1::rrc_nr::rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
+
+  // PUSCH-ConfigCommon.
+  const pusch_config_common& pusch_cfg     = cfg.init_ul_bwp.pusch_cfg_common.value();
+  out.init_ul_bwp.pusch_cfg_common_present = true;
+  pusch_cfg_common_s& pusch                = out.init_ul_bwp.pusch_cfg_common.set_setup();
+  pusch.pusch_time_domain_alloc_list.resize(pusch_cfg.pusch_td_alloc_list.size());
+  for (unsigned i = 0; i < pusch_cfg.pusch_td_alloc_list.size(); ++i) {
+    pusch.pusch_time_domain_alloc_list[i].k2_present = true;
+    pusch.pusch_time_domain_alloc_list[i].k2         = pusch_cfg.pusch_td_alloc_list[i].k2;
+    pusch.pusch_time_domain_alloc_list[i].map_type.value =
+        pusch_cfg.pusch_td_alloc_list[i].map_type == pusch_time_domain_resource_allocation::mapping_type::typeA
+            ? pusch_time_domain_res_alloc_s::map_type_opts::type_a
+            : pusch_time_domain_res_alloc_s::map_type_opts::type_b;
+    pusch.pusch_time_domain_alloc_list[i].start_symbol_and_len =
+        sliv_from_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                          pusch_cfg.pusch_td_alloc_list[i].symbols.start(),
+                          pusch_cfg.pusch_td_alloc_list[i].symbols.length());
+  }
+  pusch.p0_nominal_with_grant_present = true;
+  pusch.p0_nominal_with_grant         = -76;
+
+  out.init_ul_bwp.pucch_cfg_common_present = true;
+  pucch_cfg_common_s& pucch                = out.init_ul_bwp.pucch_cfg_common.set_setup();
+  pucch.pucch_res_common_present           = true;
+  pucch.pucch_res_common                   = 11;
+  pucch.pucch_group_hop.value              = asn1::rrc_nr::pucch_cfg_common_s::pucch_group_hop_opts::neither;
+  pucch.p0_nominal_present                 = true;
+  pucch.p0_nominal                         = -90;
+
   out.time_align_timer_common.value = asn1::rrc_nr::time_align_timer_opts::infinity;
   return out;
 }

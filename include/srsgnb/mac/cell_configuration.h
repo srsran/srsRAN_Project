@@ -46,7 +46,7 @@ struct mac_cell_creation_request {
   bool cell_barred;
   bool intra_freq_resel;
 
-  /// [Implementation-defined] SIB1 parameters.
+  /// BCCH-DL-SCH Message payload containing the SIB1 to be broadcast.
   byte_buffer bcch_dl_sch_payload;
 
   // TODO: Fill remaining fields

@@ -179,7 +179,10 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window   = 10;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
-  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 2;
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 4;
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].map_type =
+      pusch_time_domain_resource_allocation::mapping_type::typeA;
+  cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].symbols = {0, 14};
   return cfg;
 }
 

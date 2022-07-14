@@ -29,15 +29,18 @@ public:
   {
     srsran_assert(tbs_bytes >= min_payload_size, "The TBS for SIB1 cannot be smaller than the SIB1 payload");
     int diff_bytes = tbs_bytes - bcch_payload.length();
+    // The allocated TBS is different from the stored BCCH-DL-SCH message length. We need to set padding.
     if (diff_bytes != 0) {
-      // Reassign new byte_buffer (Copy-on-write).
+      // Reassign new byte_buffer (Copy-on-write), to avoid concurrency with any other place that is sharing
+      // this byte_buffer.
       bcch_payload = bcch_payload.deep_copy();
       if (diff_bytes > 0) {
-        // Append padding bytes.
+        // Append more padding bytes.
         for (int i = 0; i < diff_bytes; ++i) {
           bcch_payload.append(0);
         }
       } else {
+        // Remove some of the existing padding bytes.
         bcch_payload.trim_tail(-diff_bytes);
       }
     }
@@ -45,9 +48,9 @@ public:
   }
 
 private:
-  /// Holds the original BCCH-DL-SCH message, received via MAC cell configuration, plus extra padding bytes.
+  /// Holds the original BCCH-DL-SCH message, defined in the MAC cell configuration, plus extra padding bytes.
   byte_buffer bcch_payload;
-  /// Length of the original BCCH-DL-SCH message, received via MAC cell configuration.
+  /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
   unsigned min_payload_size;
 };
 

@@ -124,7 +124,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
                                                   const dl_sched_result& dl_res)
 {
   data_res.slot = sl_tx;
-  // Assemble scheduled SIBs' payload.
+  // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
     data_res.sib1_pdus.emplace_back(sib_encoder.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes).copy());
