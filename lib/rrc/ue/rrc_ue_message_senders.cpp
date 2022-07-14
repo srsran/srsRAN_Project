@@ -40,7 +40,6 @@ void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   send_srb0_pdu(std::move(pdu));
 }
 
-/// TS 38.331, RRCReject message
 void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
 {
   dl_ccch_msg_s     dl_ccch_msg;

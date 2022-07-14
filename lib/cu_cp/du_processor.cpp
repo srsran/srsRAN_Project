@@ -22,6 +22,10 @@ du_processor::du_processor(cu_cp_manager_config_t& cfg_) : logger(cfg_.logger), 
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, ue_manager_f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect(*this);
   ue_manager_f1ap_ev_notifier.connect(ue_mng);
+
+  // create RRC
+  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg);
+  rrc = create_rrc_entity(rrc_creation_msg);
 }
 
 void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)

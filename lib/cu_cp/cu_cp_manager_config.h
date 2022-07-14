@@ -13,6 +13,7 @@
 
 #include "adapters/f1ap_adapters.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/rrc/rrc_config.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 
@@ -28,6 +29,7 @@ struct cu_cp_manager_config_t {
   f1c_message_notifier*       f1c_notifier;
   timer_manager*              timers;
   task_executor*              cu_cp_mng_exec;
+  rrc_cfg_t                   rrc_cfg; // TODO: do we put subcomponent configs here?
 };
 
 } // namespace srs_cu_cp

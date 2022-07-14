@@ -11,9 +11,11 @@
 #ifndef SRSGNB_RRC_FACTORY_H
 #define SRSGNB_RRC_FACTORY_H
 
+#include "rrc_config.h"
 #include "rrc_ue_config.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/rrc/rrc.h"
+#include "srsgnb/rrc/rrc_entity_interface.h"
 #include "srsgnb/rrc/rrc_ue_entity_interface.h"
 #include <map>
 #include <memory>
@@ -23,6 +25,14 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct ue_context;
+
+struct rrc_entity_creation_message {
+  rrc_entity_creation_message(const rrc_cfg_t& cfg_) : cfg(cfg_) {}
+  const rrc_cfg_t& cfg;
+};
+
+/// Create an instance of an RRC entity
+std::unique_ptr<rrc_entity_du_interface> create_rrc_entity(const rrc_entity_creation_message& msg);
 
 struct rrc_ue_entity_creation_message {
   rrc_ue_entity_creation_message(ue_context& ue_ctxt_, const rrc_ue_cfg_t& cfg_) : ue_ctxt(ue_ctxt_), cfg(cfg_) {}

@@ -37,13 +37,21 @@ private:
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
 
-  // senders
-  void send_srb0_pdu(byte_buffer pdu);
-  void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
+  // message senders
+  /// \remark Send RRC Setup, see section 5.3.3 in TS 36.331
   void send_rrc_setup();
+
+  /// \remark Send RRC Reject, see section 5.3.15 in TS 38.331
   void send_rrc_reject(uint8_t reject_wait_time_secs);
 
   // helpers
+  /// Packs a DL-DCCH message and logs the message
+  void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
+
+  /// Sends a packed PDU on SRB0
+  void send_srb0_pdu(byte_buffer pdu);
+
+  /// allocates PUCCH resources at the cell resource manager
   bool init_pucch();
 
   // Helper to create PDU from RRC message

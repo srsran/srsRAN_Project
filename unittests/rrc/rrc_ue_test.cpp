@@ -17,6 +17,15 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
+class rrc_entity_dummy : public rrc_entity_ue_interface
+{
+public:
+  rrc_entity_dummy() = default;
+
+  int  get_pucch_resources() override { return 0; }
+  bool is_amf_connected() override { return false; }
+};
+
 class dummy_tx_pdu_handler
 {
 public:

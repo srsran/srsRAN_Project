@@ -18,6 +18,7 @@
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
+#include "srsgnb/rrc/rrc_factory.h"
 #include "ue_manager.h"
 #include <string>
 
@@ -62,6 +63,7 @@ private:
 
   // Components
   std::unique_ptr<f1_interface> f1ap;
+  std::unique_ptr<rrc_entity_du_interface> rrc;
 
   ue_manager ue_mng;
 
