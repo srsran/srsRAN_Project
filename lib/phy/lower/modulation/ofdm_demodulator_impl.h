@@ -11,6 +11,7 @@
 #ifndef LIB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_IMPL_H
 #define LIB_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_IMPL_H
 
+#include "phase_compensation_lut.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include <memory>
@@ -37,22 +38,12 @@ private:
   unsigned numerology;
   /// Indicates the scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
+  /// Phase compensation table.
+  phase_compensation_lut phase_compensation_table;
   /// Internal buffer aimed at storing the phase compensated DFT outputs.
   std::vector<cf_t> compensated_output;
-
-  /// \brief Gets the offset to a symbol including the cyclic prefixes.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The number of samples to the start of the given symbol.
-  unsigned get_symbol_offset(unsigned symbol_index) const;
-
-  /// \brief Computes the phase compensation (TS 138.211, Section 5.4) for a given symbol.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The phase compensation to be applied to the given symbol.
-  cf_t get_phase_compensation(unsigned symbol_index) const;
 
 public:
   /// \brief Constructs an OFDM symbol demodulator.

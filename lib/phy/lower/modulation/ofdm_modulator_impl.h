@@ -11,6 +11,7 @@
 #ifndef LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
 #define LIB_PHY_LOWER_MODULATION_OFDM_MODULATOR_IMPL_H
 
+#include "phase_compensation_lut.h"
 #include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
@@ -39,20 +40,10 @@ private:
   unsigned numerology;
   /// Indicates the scaling factor at the DFT output.
   float scale;
-  /// Indicates the center frequency of the carrier in Hz.
-  double center_freq_hz;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
-
-  /// \brief Gets the offset to a symbol including the cyclic prefixes.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The number of samples to the start of the given symbol.
-  unsigned get_symbol_offset(unsigned symbol_index) const;
-
-  /// \brief Computes the phase compensation (TS 138.211, Section 5.4) for a given symbol.
-  /// \param[in] symbol_index Indicates the symbol index within the subframe.
-  /// \return The phase compensation to be applied to the given symbol.
-  cf_t get_phase_compensation(unsigned symbol_index) const;
+  /// Phase compensation look-up table.
+  phase_compensation_lut phase_compensation_table;
 
 public:
   /// \brief Constructs an OFDM symbol modulator.
@@ -78,6 +69,8 @@ class ofdm_slot_modulator_impl : public ofdm_slot_modulator
 private:
   /// Indicates the cyclic prefix length.
   cyclic_prefix cp;
+  /// Resource grid numerology.
+  unsigned numerology;
   /// Instance of symbol modulator.
   ofdm_symbol_modulator_impl symbol_modulator;
 
@@ -87,7 +80,7 @@ public:
   /// \param[in] ofdm_config Provides generic OFDM configuration parameters.
   ofdm_slot_modulator_impl(ofdm_modulator_common_configuration& common_config,
                            const ofdm_modulator_configuration&  ofdm_config) :
-    cp(ofdm_config.cp), symbol_modulator(common_config, ofdm_config)
+    cp(ofdm_config.cp), numerology(ofdm_config.numerology), symbol_modulator(common_config, ofdm_config)
   {
     // Do nothing.
   }

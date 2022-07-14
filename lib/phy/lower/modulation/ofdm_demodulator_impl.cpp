@@ -23,8 +23,12 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
   cp(ofdm_config.cp),
   numerology(ofdm_config.numerology),
   scale(ofdm_config.scale),
-  center_freq_hz(ofdm_config.center_freq_hz),
-  dft(std::move(common_config.dft))
+  dft(std::move(common_config.dft)),
+  phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
+                           ofdm_config.cp,
+                           ofdm_config.dft_size,
+                           ofdm_config.center_freq_hz,
+                           false)
 {
   srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
   srsran_always_assert(
@@ -35,32 +39,6 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
 
   // Set the right size to the internal phase compensation buffer.
   compensated_output.resize(dft_size);
-}
-
-unsigned ofdm_symbol_demodulator_impl::get_symbol_offset(unsigned symbol_index) const
-{
-  // Calculate the offset in samples to the start of the symbol including the CPs
-  unsigned phase_freq_offset = 0;
-  for (unsigned symb_idx = 0; symb_idx != symbol_index; ++symb_idx) {
-    phase_freq_offset += cp.get_length(symb_idx, numerology, dft_size) + dft_size;
-  }
-  phase_freq_offset += cp.get_length(symbol_index, numerology, dft_size);
-
-  return phase_freq_offset;
-}
-
-cf_t ofdm_symbol_demodulator_impl::get_phase_compensation(unsigned symbol_index) const
-{
-  // Calculate the phase compensation (TS 138.211, Section 5.4)
-  unsigned             nsymb         = get_nsymb_per_slot(cp);
-  unsigned             symbol_offset = get_symbol_offset(symbol_index % nsymb);
-  double               scs           = scs_to_khz(subcarrier_spacing(numerology)) * 1e3;
-  double               srate_hz      = scs * dft_size;
-  double               phase_rad     = -2.0 * M_PI * center_freq_hz * (symbol_offset / srate_hz);
-  std::complex<double> i(0.0, 1.0);
-
-  // Calculate compensation phase in double precision and then convert to single
-  return (cf_t)std::conj(std::exp(i * phase_rad));
 }
 
 unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsigned slot_index) const
@@ -105,7 +83,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   span<const cf_t> dft_output = dft->run();
 
   // Get phase correction (TS 138.211, Section 5.4)
-  cf_t phase_compensation = get_phase_compensation(symbol_index);
+  cf_t phase_compensation = phase_compensation_table.get_coefficient(symbol_index);
 
   // Apply scaling and phase compensation.
   srsvec::sc_prod(dft_output, phase_compensation * scale, compensated_output);
