@@ -33,6 +33,12 @@ public:
 
   void on_new_pdu(byte_buffer_slice pdu) override { handler.handle_pdu(std::move(pdu)); }
 
+  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  {
+    byte_buffer_slice pdu({rrc_container.begin(), rrc_container.end()});
+    handler.handle_pdu(std::move(pdu));
+  }
+
 private:
   dummy_tx_pdu_handler& handler;
 };

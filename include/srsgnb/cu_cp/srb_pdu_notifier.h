@@ -11,6 +11,7 @@
 #define SRSGNB_CU_CP_SRB_PDU_NOTIFIER_H
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/asn1/asn1_utils.h"
 
 namespace srsgnb {
 
@@ -22,6 +23,9 @@ public:
 
   /// This callback is invoked on each received PDU.
   virtual void on_new_pdu(byte_buffer_slice pdu) = 0;
+
+  /// This callback is invoked on each received RRC message.
+  virtual void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) = 0;
 };
 
 } // namespace srsgnb

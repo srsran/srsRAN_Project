@@ -121,15 +121,13 @@ ue_index_t ue_manager::handle_initial_ul_rrc_message_transfer(const ue_manager_i
   if (msg.rrc_container_rrc_setup_complete.has_value()) {
     // check that SRB1 is present
     if (ue_ctx.srbs.contains(LCID_SRB0)) {
-      ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_pdu(byte_buffer_slice(
-          {msg.rrc_container_rrc_setup_complete.value().begin(), msg.rrc_container_rrc_setup_complete.value().end()}));
+      ue_ctx.srbs[LCID_SRB1].rx_notifier->on_new_rrc_message(msg.rrc_container_rrc_setup_complete.value());
     } else {
       cfg.logger.error("SRB1 not present - dropping PDU");
     }
   } else {
     // pass UL-CCCH to RRC
-    ue_ctx.srbs[LCID_SRB0].rx_notifier->on_new_pdu(
-        byte_buffer_slice({msg.rrc_container.begin(), msg.rrc_container.end()}));
+    ue_ctx.srbs[LCID_SRB0].rx_notifier->on_new_rrc_message(msg.rrc_container);
   }
 
   logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctx.ue_index, ue_ctx.c_rnti);
