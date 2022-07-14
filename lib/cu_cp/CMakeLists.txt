@@ -12,7 +12,6 @@ set(SOURCES
       cu_cp_manager_factory.cpp
       du_processor.cpp
       ue_manager.cpp
-      procedures/ue_creation_procedure.cpp
       )
 
 add_library(srsgnb_cu_cp STATIC ${SOURCES})

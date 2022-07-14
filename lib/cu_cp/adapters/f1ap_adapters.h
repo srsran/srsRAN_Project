@@ -60,20 +60,18 @@ private:
 class ue_manager_f1ap_event_indicator : public f1c_ue_manager_message_notifier
 {
 public:
-  void connect(ue_manager_f1c_handler& ue_mng_f1c_handler_) { ue_mng_f1c_handler = &ue_mng_f1c_handler_; }
+  void connect(ue_manager_rrc_message_handler& ue_mng_f1c_handler_) { ue_mng_f1c_handler = &ue_mng_f1c_handler_; }
 
-  void on_initial_ul_rrc_message_transfer_received(const ue_index_t               ue_index,
-                                                   const du_cell_index_t          pcell_index,
-                                                   const f1ap_initial_ul_rrc_msg& msg) override
+  ue_index_t on_initial_ul_rrc_message_transfer_received(const du_cell_index_t          pcell_index,
+                                                         const f1ap_initial_ul_rrc_msg& msg) override
   {
     srsran_assert(ue_mng_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     ue_manager_initial_ul_rrc_message ue_mng_msg = {};
-    ue_mng_msg.ue_index                          = ue_index;
     ue_mng_msg.pcell_index                       = pcell_index;
     ue_mng_msg.msg                               = msg;
 
-    ue_mng_f1c_handler->handle_initial_ul_rrc_message_transfer(ue_mng_msg);
+    return ue_mng_f1c_handler->handle_initial_ul_rrc_message_transfer(ue_mng_msg);
   }
 
   void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) override
@@ -87,10 +85,8 @@ public:
     ue_mng_f1c_handler->handle_ul_rrc_message_transfer(ue_mng_msg);
   }
 
-  ue_index_t get_next_ue_index() override { return ue_mng_f1c_handler->get_next_ue_index(); }
-
 private:
-  ue_manager_f1c_handler* ue_mng_f1c_handler = nullptr;
+  ue_manager_rrc_message_handler* ue_mng_f1c_handler = nullptr;
 };
 
 } // namespace srs_cu_cp

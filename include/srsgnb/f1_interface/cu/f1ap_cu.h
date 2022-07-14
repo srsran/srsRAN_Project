@@ -159,21 +159,16 @@ public:
   virtual ~f1c_ue_manager_message_notifier() = default;
 
   /// \brief Notifies the UE manager about the reception of a initial UL RRC message transfer message.
-  /// \param[in] ue_index The UE index.
   /// \param[in] pcell_index The DU cell index.
   /// \param[in] msg The received initial UL RRC message transfer message.
-  virtual void on_initial_ul_rrc_message_transfer_received(const ue_index_t               ue_index,
-                                                           const du_cell_index_t          pcell_index,
-                                                           const f1ap_initial_ul_rrc_msg& msg) = 0;
+  /// \return Returns the index of the UE created at the UE manager.
+  virtual ue_index_t on_initial_ul_rrc_message_transfer_received(const du_cell_index_t          pcell_index,
+                                                                 const f1ap_initial_ul_rrc_msg& msg) = 0;
 
   /// \brief Notifies the UE manager about the reception of a UL RRC message transfer message.
   /// \param[in] ue_index The UE index.
   /// \param[in] msg The received UL RRC message transfer message.
   virtual void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) = 0;
-
-  /// \brief Get the next available UE index from the UE manager.
-  /// \return The UE index.
-  virtual ue_index_t get_next_ue_index() = 0;
 };
 
 /// Methods used by F1AP to notify CU-CP manager about DU specific events.

@@ -237,15 +237,15 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& 
     return;
   }
 
-  f1ap_ue_id_t cu_ue_id = get_next_cu_ue_id();
-  if (cu_ue_id == INVALID_F1AP_UE_ID) {
-    logger.error("Maximum number of connected UEs reached.");
+  ue_index_t ue_index = ue_manager_notifier.on_initial_ul_rrc_message_transfer_received(pcell_index, msg);
+  if (ue_index == INVALID_UE_INDEX) {
+    logger.error("No free UE index found, maximum number of connected UEs reached.");
     return;
   }
 
-  ue_index_t ue_index = ue_manager_notifier.get_next_ue_index();
-  if (ue_index == INVALID_UE_INDEX) {
-    logger.error("No free UE index found");
+  f1ap_ue_id_t cu_ue_id = get_next_cu_ue_id();
+  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+    logger.error("No CU UE F1AP ID available.");
     return;
   }
 
@@ -253,9 +253,10 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& 
   ue_ctx.du_ue_f1ap_id   = int_to_f1ap_ue_id(msg.msg->gnb_du_ue_f1_ap_id.value);
   ue_ctx.ue_index        = ue_index;
 
-  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctx;
+  logger.debug(
+      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}.", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
 
-  ue_manager_notifier.on_initial_ul_rrc_message_transfer_received(ue_index, pcell_index, msg);
+  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctx;
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg)

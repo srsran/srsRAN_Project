@@ -40,11 +40,12 @@ class dummy_f1c_ue_manager_message_notifier : public srs_cu_cp::f1c_ue_manager_m
 public:
   dummy_f1c_ue_manager_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::ue_index_t               ue_index,
-                                                   const srs_cu_cp::du_cell_index_t          pcell_index,
-                                                   const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
+  srs_cu_cp::ue_index_t
+  on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::du_cell_index_t          pcell_index,
+                                              const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
   {
     logger.info("Received Initial UL RRC Message transfer message.");
+    return srs_cu_cp::MIN_UE_INDEX;
   }
 
   void on_ul_rrc_message_transfer_received(const srs_cu_cp::ue_index_t       ue_index,
@@ -52,8 +53,6 @@ public:
   {
     logger.info("Received UL RRC Message transfer message.");
   }
-
-  srs_cu_cp::ue_index_t get_next_ue_index() override { return srs_cu_cp::MIN_UE_INDEX; }
 
 private:
   srslog::basic_logger& logger;

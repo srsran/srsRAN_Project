@@ -20,7 +20,6 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct ue_manager_initial_ul_rrc_message {
-  ue_index_t              ue_index;
   du_cell_index_t         pcell_index;
   f1ap_initial_ul_rrc_msg msg;
 };
@@ -45,32 +44,14 @@ public:
   virtual size_t      get_nof_ues()                  = 0;
 };
 
-/// Interface to support UE creation
-class ue_manager_ue_index_handler
-{
-public:
-  virtual ~ue_manager_ue_index_handler() = default;
-
-  /// \brief Get the next available UE index.
-  /// \return The UE index.
-  virtual ue_index_t get_next_ue_index() = 0;
-};
-
 /// Interface to forward RRC messages at the UE manager
 class ue_manager_rrc_message_handler
 {
 public:
   virtual ~ue_manager_rrc_message_handler() = default;
 
-  virtual void handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) = 0;
-  virtual void handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg)                 = 0;
-};
-
-/// Combined interface for all UE manager f1c handlers
-class ue_manager_f1c_handler : public ue_manager_ue_index_handler, public ue_manager_rrc_message_handler
-{
-public:
-  virtual ~ue_manager_f1c_handler() = default;
+  virtual ue_index_t handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) = 0;
+  virtual void       handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg)                 = 0;
 };
 
 } // namespace srs_cu_cp

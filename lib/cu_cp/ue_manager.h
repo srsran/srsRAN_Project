@@ -13,14 +13,13 @@
 
 #include "cu_cp_manager_config.h"
 #include "srsgnb/adt/slot_array.h"
-#include "srsgnb/support/async/async_task_loop.h"
 #include "ue_manager_interfaces.h"
 
 namespace srsgnb {
 
 namespace srs_cu_cp {
 
-class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_f1c_handler
+class ue_manager : public ue_manager_ctrl_configurer, public ue_manager_rrc_message_handler
 {
 public:
   explicit ue_manager(cu_cp_manager_config_t& cfg_);
@@ -33,20 +32,26 @@ public:
   ue_context* find_rnti(rnti_t rnti) override;
   size_t      get_nof_ues() override;
 
-  ue_index_t get_next_ue_index() override;
-
-  void handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) override;
-  void handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg) override;
+  ue_index_t handle_initial_ul_rrc_message_transfer(const ue_manager_initial_ul_rrc_message& msg) override;
+  void       handle_ul_rrc_message_transfer(const ue_manager_ul_rrc_message& msg) override;
 
 private:
+  /// \brief Get the next available UE index.
+  /// \return The UE index.
+  ue_index_t get_next_ue_index();
+
+  void clear_ue()
+  {
+    // TODO
+  }
+
+  void create_srb0(ue_context& ue_ctx);
+
   cu_cp_manager_config_t& cfg;
   srslog::basic_logger&   logger;
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
   std::array<int, MAX_NOF_UES>        rnti_to_ue_index;
-
-  // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
 
   ue_manager_f1ap_event_indicator f1ap_ev_notifier;
 };
