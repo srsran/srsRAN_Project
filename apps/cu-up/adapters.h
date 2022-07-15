@@ -23,7 +23,7 @@ namespace cu_up {
 /// touch a single line of code of the RLC or PDCP layers. They are agnostic to the deployment scenario.
 
 /// Adapter interface from PDCP to SDAP.
-class sdap_packet_handler : public srsgnb::pdcp_sdu_rx_notifier
+class sdap_packet_handler : public srsgnb::pdcp_rx_upper_layer_data_notifier
 {
   srsgnb::sdap_pdu_handler& sdap;
 

@@ -10,7 +10,10 @@
 
 #pragma once
 
+#include "pdcp_entity_rx.h"
+#include "pdcp_entity_tx.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include <cstdio>
 
 namespace srsgnb {
@@ -18,13 +21,14 @@ namespace srsgnb {
 class pdcp_entity_impl : public pdcp_entity
 {
 public:
-  bool decapsulate(byte_buffer& data) override
-  {
-    std::printf("[PDCP-ENTITY] Removing PDCP header from packet of size = %u\n", (unsigned)data.length());
-    data.trim_head(2);
-    std::printf("[PDCP-ENTITY] New size after removing PDCP header is %u bytes\n", (unsigned)data.length());
-    return true;
-  }
-};
+  pdcp_tx_sdu_handler*              get_tx_sdu_handler() final { return tx.get(); };
+  pdcp_tx_lower_layer_data_handler* get_tx_lower_layer_data_handler() final { return tx.get(); };
+  pdcp_rx_pdu_handler*              get_rx_pdu_handler() final { return rx.get(); };
 
+private:
+  bearer_logger logger;
+
+  std::unique_ptr<pdcp_entity_tx> tx = {};
+  std::unique_ptr<pdcp_entity_rx> rx = {};
+};
 } // namespace srsgnb

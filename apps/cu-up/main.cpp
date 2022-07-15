@@ -20,10 +20,10 @@ namespace {
 /// No concrete class dependencies.
 class fake_receiver
 {
-  srsgnb::pdcp_pdu_handler& notifier;
+  srsgnb::pdcp_rx_pdu_handler& notifier;
 
 public:
-  explicit fake_receiver(srsgnb::pdcp_pdu_handler& notifier) : notifier(notifier) {}
+  explicit fake_receiver(srsgnb::pdcp_rx_pdu_handler* notifier) : notifier(*notifier) {}
 
   void receive()
   {
@@ -55,12 +55,13 @@ int main()
   /// Creation order is from upper to lower layer. Dependency injection is done at object construction, in case of
   /// further flexibility, setters can be implemented instead.
 
-  fake_sdap_to_ngu_relay ngap_tx;
-  auto                   sdap = srsgnb::create_sdap(ngap_tx);
-  sdap_packet_handler    pdcp_sdap_adapter(*sdap);
-  auto                   pdcp = srsgnb::create_pdcp(pdcp_sdap_adapter);
+  fake_sdap_to_ngu_relay                    ngap_tx;
+  std::unique_ptr<srsgnb::sdap_pdu_handler> sdap = srsgnb::create_sdap(ngap_tx);
+  sdap_packet_handler                       pdcp_sdap_adapter(*sdap);
+  srsgnb::pdcp_entity_creation_message      pdcp_msg = {};
+  std::unique_ptr<srsgnb::pdcp_entity>      pdcp     = srsgnb::create_pdcp_entity(pdcp_msg);
 
-  fake_receiver rx(*pdcp);
+  fake_receiver rx(pdcp->get_rx_pdu_handler());
   rx.receive();
 
   return 0;
