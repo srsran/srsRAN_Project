@@ -29,6 +29,10 @@ add_executable(prbs_calculator_test support/prbs_calculator_test.cpp)
 target_link_libraries(prbs_calculator_test srsgnb_sched srslog)
 add_test(prbs_calculator_test prbs_calculator_test)
 
+add_executable(dmrs_helpers_test support/dmrs_helpers_test.cpp)
+target_link_libraries(dmrs_helpers_test srsgnb_sched srslog)
+add_test(dmrs_helpers_test dmrs_helpers_test)
+
 add_executable(sched_prb_test sched_prb_test.cpp)
 target_link_libraries(sched_prb_test srsgnb_sched srslog)
 add_test(sched_prb_test sched_prb_test)
