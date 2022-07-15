@@ -41,7 +41,8 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 
 /// \brief Fills PHY full information for the given \c fapi_pdu.
 /// \return Packed BCH payload, as per TS38.212 Section 7.1.1.
-static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf)
+static uint32_t
+generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, uint32_t hrf, subcarrier_spacing scs_common)
 {
   const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
   uint32_t                  payload = 0;
@@ -53,10 +54,7 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
   payload |= (((sfn >> 4u) & 0x3f) << 25u);
 
   // subCarrierSpacingCommon - 1 bit.
-  uint32_t scs_flag = (fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz15 ||
-                       fapi_pdu.ssb_maintenance_v3.scs == subcarrier_spacing::kHz60)
-                          ? 0
-                          : 1;
+  uint32_t scs_flag = (scs_common == subcarrier_spacing::kHz15 || scs_common == subcarrier_spacing::kHz60) ? 0 : 1;
   payload |= ((scs_flag & 0x1) << 24u);
 
   // ssb-SubcarrierOffset - 4 bits.
@@ -95,7 +93,11 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, u
 }
 
 /// Fills the BCH payload.
-static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, unsigned sfn, unsigned hrf)
+static void fill_bch_payload(span<uint8_t>      dest,
+                             const dl_ssb_pdu&  fapi_pdu,
+                             unsigned           sfn,
+                             unsigned           hrf,
+                             subcarrier_spacing scs_common)
 {
   uint32_t payload = 0;
   switch (fapi_pdu.bch_payload_flag) {
@@ -106,7 +108,7 @@ static void fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uns
       payload = fill_phy_timing_info_in_bch_payload(fapi_pdu, sfn, hrf);
       break;
     case bch_payload_type::phy_full:
-      payload = generate_bch_payload(fapi_pdu, sfn, hrf);
+      payload = generate_bch_payload(fapi_pdu, sfn, hrf, scs_common);
       break;
     default:
       srsran_assert(0, "Invalid BCH payload flag");
@@ -135,7 +137,8 @@ static float get_beta_pss(const dl_ssb_pdu& fapi_pdu)
 void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pdu,
                                                    const dl_ssb_pdu&     fapi_pdu,
                                                    uint16_t              sfn,
-                                                   uint16_t              slot)
+                                                   uint16_t              slot,
+                                                   subcarrier_spacing    scs_common)
 {
   proc_pdu.slot              = slot_point(static_cast<uint32_t>(fapi_pdu.ssb_maintenance_v3.scs), sfn, slot);
   proc_pdu.phys_cell_id      = fapi_pdu.phys_cell_id;
@@ -145,12 +148,13 @@ void srsgnb::fapi_adaptor::convert_ssb_fapi_to_phy(ssb_processor::pdu_t& proc_pd
   proc_pdu.subcarrier_offset = fapi_pdu.ssb_subcarrier_offset;
   proc_pdu.offset_to_pointA  = fapi_pdu.ssb_offset_pointA;
   proc_pdu.pattern_case      = fapi_pdu.ssb_maintenance_v3.case_type;
+  proc_pdu.common_scs        = scs_common;
 
   // Calculate half radio frame.
   unsigned hrf = proc_pdu.slot.is_odd_hrf() ? 1 : 0;
 
   // Get the BCH payload.
-  fill_bch_payload(proc_pdu.bch_payload, fapi_pdu, sfn, hrf);
+  fill_bch_payload(proc_pdu.bch_payload, fapi_pdu, sfn, hrf, scs_common);
 
   // :TODO: Implement the ports array when the beamforming is added.
   proc_pdu.ports = {0};

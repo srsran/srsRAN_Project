@@ -63,7 +63,7 @@ static void ssb_conversion_benchmark()
     // Conversion block.
     auto start = std::chrono::high_resolution_clock::now();
     convert_ssb_mac_to_fapi(fapi_pdu, mac_pdu);
-    convert_ssb_fapi_to_phy(pdu, fapi_pdu, sfn_dist(gen), slot_dist(gen));
+    convert_ssb_fapi_to_phy(pdu, fapi_pdu, sfn_dist(gen), slot_dist(gen), subcarrier_spacing::kHz15);
     auto end = std::chrono::high_resolution_clock::now();
 
     // Print how much time it took.

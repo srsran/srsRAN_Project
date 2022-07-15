@@ -77,7 +77,8 @@ static void ssb_conversion_test()
             ssb_processor::pdu_t pdu;
 
             // Conversion block.
-            convert_ssb_fapi_to_phy(pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot);
+            convert_ssb_fapi_to_phy(
+                pdu, msg.pdus[0].ssb_pdu, msg.sfn, msg.slot, static_cast<subcarrier_spacing>(numerology));
 
             // Assert contents.
             TESTASSERT_EQ(pdu.slot.sfn(), sfn);

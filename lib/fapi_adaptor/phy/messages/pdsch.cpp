@@ -85,7 +85,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
     // Otherwise, determines the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
     srsran_assert(fapi_pdu.num_dmrs_cdm_grps_no_data > 0 && fapi_pdu.num_dmrs_cdm_grps_no_data < 4,
                   "Invalid number of DMRS CDM groups without data.");
-    static const std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
+    static constexpr std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
 
     proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
         proc_pdu.ratio_pdsch_data_to_sss_dB + beta_dmrs_values[fapi_pdu.num_dmrs_cdm_grps_no_data];

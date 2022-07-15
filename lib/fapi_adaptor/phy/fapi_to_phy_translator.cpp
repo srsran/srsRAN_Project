@@ -104,7 +104,9 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
       }
       case dl_pdu_type::SSB: {
         ssb_processor::pdu_t ssb_pdu;
-        convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot);
+        // :TODO: this property should be retrieved from the cell configuration.
+        static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+        convert_ssb_fapi_to_phy(ssb_pdu, pdu.ssb_pdu, msg.sfn, msg.slot, scs_common);
         current_slot_controller->process_ssb(ssb_pdu);
         break;
       }

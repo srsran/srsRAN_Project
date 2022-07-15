@@ -16,11 +16,18 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Helper function that converts from a SSB fapi pdu to a SSB processor pdu.
+/// \brief Helper function that converts from a SSB FAPI PDU to a SSB processor PDU.
+///
+/// \param[out] proc_pdu SSB processor PDU.
+/// \param[in] fapi_pdu FAPI PDU received that contains all the SSB parameters.
+/// \param[in] sfn SFN when the FAPI PDU was received.
+/// \param[in] slot Slot when the FAPI PDU was received.
+/// \param[] scs_common Parameter subCarrierSpacingCommon as per TS38.331, Section 6.2.2 \c MIB message.
 void convert_ssb_fapi_to_phy(ssb_processor::pdu_t&   proc_pdu,
                              const fapi::dl_ssb_pdu& fapi_pdu,
                              uint16_t                sfn,
-                             uint16_t                slot);
+                             uint16_t                slot,
+                             subcarrier_spacing      scs_common);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb
