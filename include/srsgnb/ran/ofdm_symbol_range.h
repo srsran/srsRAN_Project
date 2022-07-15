@@ -32,3 +32,18 @@ inline ofdm_symbol_range sliv_to_ofdm_symbols(uint32_t sliv)
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// Format intervals with the notation [start, stop)
+template <>
+struct formatter<srsgnb::ofdm_symbol_range> : public formatter<srsgnb::interval<uint8_t>> {
+  template <typename FormatContext>
+  auto format(const srsgnb::ofdm_symbol_range& symbols, FormatContext& ctx)
+  {
+    return formatter<srsgnb::interval<uint8_t>>::format(symbols, ctx);
+  }
+};
+
+} // namespace fmt
+

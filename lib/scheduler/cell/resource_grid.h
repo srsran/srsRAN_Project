@@ -38,7 +38,7 @@ struct bwp_sch_grant_info {
 
 /// Parameters of a grant allocation in the cell resource grid.
 struct grant_info {
-  enum class channel { cch, sch, ssb };
+  enum class channel { cch, sch, ssb, prach };
   channel            ch;
   subcarrier_spacing scs;
   ofdm_symbol_range  symbols;

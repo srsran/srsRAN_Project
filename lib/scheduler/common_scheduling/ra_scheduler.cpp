@@ -65,6 +65,18 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
     prach_subframe_occasion_bitmap.set(pos, true);
   }
 
+  // Compute CRBs reserved for PRACHs.
+  static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
+  uint8_t      prb_start = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
+  prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
+  crb_interval prach_crbs       = prb_to_crb(cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
+  prach_grant_resources.ch      = grant_info::channel::prach;
+  prach_grant_resources.scs     = cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  prach_grant_resources.symbols = {
+      prach_cfg.starting_symbol,
+      static_cast<uint8_t>(prach_cfg.starting_symbol + prach_cfg.duration * prach_cfg.nof_occasions_within_slot)};
+  prach_grant_resources.crbs = prach_crbs;
+
   if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
     // See 38.213 - If a UE is not provided initialDownlinkBWP, an initial active DL BWP is defined by a location
     // and number of contiguous PRBs, starting from a PRB with the lowest index and ending at a PRB with the highest
@@ -251,6 +263,17 @@ void ra_scheduler::schedule_prach_occasions(cell_resource_allocator& res_alloc)
 
   const rach_config_common&  rrc_rach_cfg         = *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
   const rach_config_generic& rrc_rach_cfg_generic = rrc_rach_cfg.rach_cfg_generic;
+
+  // Reserve RB-symbol resources for PRACH.
+  if (sl_res.ul_res_grid.collides(prach_grant_resources)) {
+    logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: CRBs={},symbols={} already used.",
+                   prach_grant_resources.crbs,
+                   prach_grant_resources.symbols);
+    return;
+  }
+  sl_res.ul_res_grid.fill(prach_grant_resources);
+
+  // Add new PRACH occasion in slot scheduler result.
   sl_res.result.ul.prachs.emplace_back();
   prach_occasion_info& prach_occ = sl_res.result.ul.prachs.back();
   prach_occ.format               = prach_cfg.format;

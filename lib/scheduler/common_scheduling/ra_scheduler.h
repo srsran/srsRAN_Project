@@ -29,7 +29,7 @@ unsigned get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_re
 /// \remark See 38.321, 5.1.3 - Random Access Preamble transmission
 uint16_t get_ra_rnti(const rach_indication_message& rach_ind, bool is_sul = false);
 
-/// Scheduler for RAR and Msg3
+/// Scheduler for PRACH occasions, RAR PDSCHs and Msg3 PUSCH grants.
 class ra_scheduler
 {
   /// Implementation-defined limit for maximum Msg3s to be allocated in a given RAR.
@@ -101,6 +101,7 @@ private:
   bwp_configuration                    initial_active_dl_bwp;
   prach_configuration                  prach_cfg;
   std::bitset<NOF_SUBFRAMES_PER_FRAME> prach_subframe_occasion_bitmap;
+  grant_info                           prach_grant_resources;
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;

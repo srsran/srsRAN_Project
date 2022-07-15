@@ -691,9 +691,8 @@ void test_ra_sched_rach_occassion_scheduling()
     return true;
   };
 
-  static const unsigned nof_test_slots = 1000;
+  static const unsigned nof_test_slots = 100;
   for (unsigned t = 0; t < nof_test_slots; ++t) {
-    slot_point slot_rx{0, t};
     slot_point slot_tx{0, t + gnb_tx_delay};
 
     bench.slot_indication(slot_tx);
@@ -703,11 +702,15 @@ void test_ra_sched_rach_occassion_scheduling()
 
     // Test: PRACH occasions only allocated in slots set by cell configuration.
     const ul_sched_result& ulres = bench.res_grid[0].result.ul;
-    if (is_prach_slot(slot_tx)) {
-      TESTASSERT(not ulres.prachs.empty());
-    } else {
+    if (not is_prach_slot(slot_tx)) {
       TESTASSERT(ulres.prachs.empty());
+      continue;
     }
+
+    // Test: PRACH occasion parameters are correctly set.
+    TESTASSERT(not ulres.prachs.empty());
+    TESTASSERT(ulres.prachs[0].format == prach_cfg.format);
+    TESTASSERT(ulres.prachs[0].start_preamble_index == rrc_rach_cfg.prach_root_seq_index);
   }
 }
 
