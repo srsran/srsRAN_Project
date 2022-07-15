@@ -32,8 +32,8 @@ static void test_conversion_ok()
   TESTASSERT_EQ(mac_pdu.bwp_cfg->cp_extended ? cyclic_prefix_type::extended : cyclic_prefix_type::normal,
                 fapi_pdu.cyclic_prefix);
   TESTASSERT_EQ(mac_pdu.bwp_cfg->scs, fapi_pdu.scs);
-  TESTASSERT_EQ(mac_pdu.bwp_cfg->crbs.start(), fapi_pdu.coreset_bwp_start);
-  TESTASSERT_EQ(mac_pdu.bwp_cfg->crbs.length(), fapi_pdu.coreset_bwp_size);
+  TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().start(), fapi_pdu.coreset_bwp_start);
+  TESTASSERT_EQ(mac_pdu.coreset_cfg->coreset0_crbs().length(), fapi_pdu.coreset_bwp_size);
 
   // CORESET.
   TESTASSERT_EQ(0U, fapi_pdu.start_symbol_index);
