@@ -20,7 +20,7 @@ namespace srsgnb {
 /// \brief Phase compensation as per TS38.211 Section 5.4.
 ///
 /// Implements the phase compensation for OFDM modulation and demodulation as described in TS38.211 Section 5.4. The
-/// phase compensation is implemented as a look-up table populated in construction time.
+/// phase compensation is implemented as a look-up table populated at construction time.
 class phase_compensation_lut
 {
 private:
@@ -29,8 +29,8 @@ private:
 
 public:
   /// \brief Constructs the phase compensation look-up table.
-  /// \param[in] scs                 Subcarrier spacing (see [here](\ref subcarrier_spacing) for more information).
-  /// \param[in] cp                  Cyclic Prefix (see [here](\ref cyclic_prefix) for more information).
+  /// \param[in] scs                 Subcarrier spacing.
+  /// \param[in] cp                  Cyclic Prefix.
   /// \param[in] dft_size            DFT size.
   /// \param[in] center_frequency_Hz Center frequency in Hz.
   /// \param[in] is_tx               Set to true if the phase correction table is for transmission.
