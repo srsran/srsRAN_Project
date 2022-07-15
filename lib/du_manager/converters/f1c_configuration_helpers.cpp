@@ -175,7 +175,7 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   // freq info DL
   out.freq_info_dl.freq_band_list.resize(1);
   out.freq_info_dl.freq_band_list[0].freq_band_ind_nr_present = true;
-  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr         = 20;
+  out.freq_info_dl.freq_band_list[0].freq_band_ind_nr         = 7;
   out.freq_info_dl.offset_to_point_a                          = cfg.freq_info_dl.offset_to_point_a;
   out.freq_info_dl.scs_specific_carrier_list.resize(cfg.freq_info_dl.scs_carrier_list.size());
   for (unsigned i = 0; i < cfg.freq_info_dl.scs_carrier_list.size(); ++i) {
@@ -247,7 +247,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   ul_cfg_common_sib_s out;
   out.freq_info_ul.freq_band_list.resize(1);
   out.freq_info_ul.freq_band_list[0].freq_band_ind_nr_present = true;
-  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr         = 20;
+  out.freq_info_ul.freq_band_list[0].freq_band_ind_nr         = 7;
   out.freq_info_ul.absolute_freq_point_a_present              = true;
   out.freq_info_ul.absolute_freq_point_a                      = cfg.freq_info_ul.absolute_freq_point_a;
   out.freq_info_ul.scs_specific_carrier_list.resize(cfg.freq_info_ul.scs_carrier_list.size());
