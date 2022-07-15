@@ -47,9 +47,9 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   builder.set_basic_parameters(mac_pdu.pdsch_cfg.rnti);
 
   // BWP parameters.
-  // :TODO: As it is a sib1, size and start can be the parameters from the CORESET0. Check it.
-  builder.set_bwp_parameters(mac_pdu.pdsch_cfg.bwp_cfg->crbs.length(),
-                             mac_pdu.pdsch_cfg.bwp_cfg->crbs.start(),
+  // NOTE: as it is a SIB1 PDU, use the CORESET BWP parameters.
+  builder.set_bwp_parameters(mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().length(),
+                             mac_pdu.pdcch_cfg->ctx.coreset_cfg->coreset0_crbs().start(),
                              mac_pdu.pdsch_cfg.bwp_cfg->scs,
                              mac_pdu.pdsch_cfg.bwp_cfg->cp_extended ? cyclic_prefix_type::extended
                                                                     : cyclic_prefix_type::normal);
