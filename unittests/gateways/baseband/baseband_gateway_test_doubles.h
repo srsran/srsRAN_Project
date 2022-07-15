@@ -16,6 +16,9 @@
 
 namespace srsgnb {
 
+/// \brief Read-only baseband buffer.
+///
+/// Records all the baseband samples that pass through the baseband gateway spy classes.
 class baseband_gateway_buffer_read_only : public baseband_gateway_buffer
 {
 private:
@@ -50,11 +53,13 @@ public:
     return span<const radio_sample_type>(data).subspan(offset, nof_samples);
   }
 
+  /// Creates a default empty buffer.
   baseband_gateway_buffer_read_only() : nof_channels(0), nof_samples(0)
   {
     // Do nothing.
   }
 
+  /// Move constructor.
   baseband_gateway_buffer_read_only(baseband_gateway_buffer_read_only&& other) noexcept :
     nof_channels(other.nof_channels), nof_samples(other.nof_samples), data(std::move(other.data))
   {
@@ -63,12 +68,14 @@ public:
     other.nof_samples  = 0;
   }
 
+  /// Copy constructor.
   baseband_gateway_buffer_read_only(const baseband_gateway_buffer_read_only& other) noexcept :
     nof_channels(other.nof_channels), nof_samples(other.nof_samples), data(std::move(other.data))
   {
     // Do nothing.
   }
 
+  /// Constructor from a parent class.
   baseband_gateway_buffer_read_only(const baseband_gateway_buffer& other) noexcept :
     nof_channels(other.get_nof_channels()), nof_samples(other.get_nof_samples()), data(nof_channels * nof_samples)
   {
@@ -78,6 +85,7 @@ public:
     }
   }
 
+  /// Overloads assign operator.
   baseband_gateway_buffer_read_only operator=(const baseband_gateway_buffer_read_only& other)
   {
     nof_channels = other.nof_channels;
@@ -87,6 +95,10 @@ public:
   }
 };
 
+/// \brief Baseband gateway spy class.
+///
+/// Records all interactions from a lower physical layer with a baseband gateway. The receive method generates random
+/// baseband samples and metadata.
 class baseband_gateway_spy : public baseband_gateway,
                              private baseband_gateway_transmitter,
                              private baseband_gateway_receiver
@@ -111,6 +123,7 @@ private:
   };
   std::vector<receive_entry> receive_entries;
 
+  // See interface for documentation.
   void transmit(unsigned int                                  stream_id,
                 const baseband_gateway_transmitter::metadata& metadata,
                 baseband_gateway_buffer&                      data) override
@@ -123,6 +136,7 @@ private:
     entry.data            = baseband_gateway_buffer_read_only(data);
   }
 
+  // See interface for documentation.
   baseband_gateway_receiver::metadata receive(baseband_gateway_buffer& data, unsigned stream_id) override
   {
     logger.debug("Receive - stream {}, {} samples", stream_id, data.get_nof_samples());
@@ -144,6 +158,7 @@ private:
   }
 
 public:
+  /// Constructs an instance with a log level.
   baseband_gateway_spy(std::string log_level) :
     logger(srslog::fetch_basic_logger("BB Gateway", false)),
     rgen(456),
@@ -152,12 +167,21 @@ public:
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
-  baseband_gateway_transmitter& get_transmitter() override { return *this; }
-  baseband_gateway_receiver&    get_receiver() override { return *this; }
 
+  // See interface for documentation.
+  baseband_gateway_transmitter& get_transmitter() override { return *this; }
+
+  // See interface for documentation.
+  baseband_gateway_receiver& get_receiver() override { return *this; }
+
+  /// Gets all transmit entries.
   const std::vector<transmit_entry>& get_transmit_entries() const { return transmit_entries; }
-  const std::vector<receive_entry>&  get_receive_entries() const { return receive_entries; }
-  void                               clear_all_entries()
+
+  /// Gets all receive entries.
+  const std::vector<receive_entry>& get_receive_entries() const { return receive_entries; }
+
+  /// Clears all types of entries.
+  void clear_all_entries()
   {
     transmit_entries.clear();
     receive_entries.clear();

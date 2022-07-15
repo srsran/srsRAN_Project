@@ -19,7 +19,7 @@ public:
 
   /// \brief Notifies a new TTI boundary event.
   ///
-  /// Notifies that it started processing a new slot. It indicates in \c context the next slot available for
+  /// Notifies that the processing of a new slot has started. It indicates in \c context the next slot available for
   /// transmission.
   ///
   /// \param [in] context Provides the notification context.

@@ -14,14 +14,14 @@
 
 namespace srsgnb {
 
-/// Lower physical layer's interface to notify errors.
+/// Lower physical layer interface to notify errors.
 class lower_phy_error_notifier
 {
 public:
   /// Default destructor.
   virtual ~lower_phy_error_notifier() = default;
 
-  /// Contains the context of the event of a late resource grid.
+  /// Contains the context in which on_late_resource_grid() is notified.
   struct late_resource_grid_context {
     /// Sector identifier.
     unsigned sector;
@@ -31,12 +31,17 @@ public:
     unsigned symbol;
   };
 
-  /// \brief Notifies the event of a missing downlink resource grid for a given context.
+  /// \brief Notifies the unavailability of a downlink resource grid.
   ///
-  /// An event of a late resource grid event happens when the lower physical layer is not provided in time with a
-  /// resource grid to transmit in a given slot.
+  /// This error happens in a sector when the resource grid for the processing slot is not available at the time when a
+  /// symbol is modulated.
   ///
-  /// \param[in] context Provides the resource grid context.
+  /// The time window the lower physical layer can receive a resource grid for a slot starts with
+  /// lower_phy_timing_notifier::on_tti_boundary() and finishes with the beginning of the processing of the first symbol
+  /// within the slot.
+  ///
+  /// \param[in] context Provides the context in which the resource grid is not available.
+  /// \sa lower_phy_input_gateway::send
   virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
 };
 

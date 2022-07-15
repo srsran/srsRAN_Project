@@ -17,6 +17,9 @@
 
 namespace srsgnb {
 
+/// \brief Lower PHY error notification spy class.
+///
+/// This class stores all errors notified by a lower PHY for a later inspection from an external entity.
 class lower_phy_error_notifier_spy : public lower_phy_error_notifier
 {
 private:
@@ -24,8 +27,9 @@ private:
   std::vector<late_resource_grid_context> late_rg_errors;
 
 public:
-  /// Default constructor.
-  lower_phy_error_notifier_spy(std::string log_level = "warning") : logger(srslog::fetch_basic_logger("Error Notifier"))
+  /// Constructor: creates the logger and sets the log level (default log level is "warning").
+  explicit lower_phy_error_notifier_spy(const std::string& log_level = "warning") :
+    logger(srslog::fetch_basic_logger("Error Notifier"))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }
@@ -40,10 +44,7 @@ public:
     late_rg_errors.push_back(context);
   }
 
-  /// \brief Gets the late resource grid event list.
-  ///
-  /// TTI boundaries are notified through lower_phy_timing_notifier::on_late_resource_grid() interface.
-  ///
+  /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_late_resource_grid() interface.
   /// \return A constant reference to the event list.
   const std::vector<late_resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
 
@@ -51,13 +52,13 @@ public:
   ///
   /// A use case to ensure no event happened:
   /// \code
-  /// \endcode
   /// TESTASSERT_EQ(0, error_notifier.get_nof_errors());
+  /// \endcode
   ///
   /// \return The total number of events that have been registered.
   unsigned get_nof_errors() const { return late_rg_errors.size(); }
 
-  /// Clears all the stored errors.
+  /// Clears all the recorded errors.
   void clear_all_errors() { late_rg_errors.clear(); }
 };
 
@@ -83,8 +84,8 @@ private:
   std::vector<rx_prach_event> rx_prach_events;
 
 public:
-  /// Default constructor.
-  lower_phy_rx_symbol_notifier_spy(std::string log_level = "warning") :
+  /// Constructor: creates the logger and sets the log level (default log level is "warning").
+  explicit lower_phy_rx_symbol_notifier_spy(const std::string& log_level = "warning") :
     logger(srslog::fetch_basic_logger("Rx Notifier"))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
@@ -156,8 +157,9 @@ private:
   std::vector<lower_phy_timing_context> ul_full_slot_events;
 
 public:
-  /// Default constructor.
-  lower_phy_timing_notifier_spy(std::string log_level) : logger(srslog::fetch_basic_logger("Timing Notifier"))
+  /// Constructor: creates the logger and sets the log level (default log level is "warning").
+  explicit lower_phy_timing_notifier_spy(const std::string& log_level) :
+    logger(srslog::fetch_basic_logger("Timing Notifier"))
   {
     logger.set_level(srslog::str_to_basic_level(log_level));
   }

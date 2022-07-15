@@ -107,6 +107,7 @@ static void test_start_run_stop()
     slot_point expected_dl_slot(to_numerology_value(scs),
                                 slot_count + ul_to_dl_slot_offset + max_processing_delay_slots);
     slot_point expected_ul_slot(to_numerology_value(scs), slot_count);
+    slot_point expected_late_slot(to_numerology_value(scs), slot_count + ul_to_dl_slot_offset);
 
     // Run all symbols in the slot.
     for (unsigned symbol_count = 0; symbol_count != get_nsymb_per_slot(cp); ++symbol_count) {
@@ -180,6 +181,11 @@ static void test_start_run_stop()
 
         // Expect a RG late event.
         TESTASSERT_EQ(1, error_notifier.get_nof_errors());
+
+        const auto& error_notifier_late_entry = error_notifier.get_late_rg_errors().front();
+        TESTASSERT_EQ(0, error_notifier_late_entry.sector);
+        TESTASSERT_EQ(expected_late_slot, error_notifier_late_entry.slot);
+        TESTASSERT_EQ(symbol_count, error_notifier_late_entry.symbol);
       }
 
       // Verify the transmitted baseband matches the modulator output.
