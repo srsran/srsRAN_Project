@@ -11,9 +11,9 @@
 #ifndef SRSGNB_RLC_BASE_ENTITY_H
 #define SRSGNB_RLC_BASE_ENTITY_H
 
-#include "rlc_logger.h"
 #include "rlc_rx_entity.h"
 #include "rlc_tx_entity.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc_entity.h"
 #include "srsgnb/rlc/rlc_metrics.h"
 
@@ -28,7 +28,7 @@ namespace srsgnb {
 class rlc_base_entity : public rlc_entity
 {
 public:
-  rlc_base_entity(du_ue_index_t du_index, lcid_t lcid) : logger(du_index, lcid) {}
+  rlc_base_entity(du_ue_index_t du_index, lcid_t lcid) : logger("RLC", du_index, lcid) {}
   ~rlc_base_entity() override = default;
 
   rlc_tx_sdu_handler*     get_tx_sdu_handler() final { return tx.get(); };
@@ -50,7 +50,7 @@ public:
   }
 
 protected:
-  rlc_logger logger;
+  bearer_logger logger;
 
   std::unique_ptr<rlc_tx_entity> tx = {};
   std::unique_ptr<rlc_rx_entity> rx = {};

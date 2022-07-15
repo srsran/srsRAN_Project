@@ -11,7 +11,7 @@
 #ifndef SRSGNB_RLC_RX_ENTITY_H
 #define SRSGNB_RLC_RX_ENTITY_H
 
-#include "rlc_logger.h"
+#include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_metrics.h"
 
@@ -23,11 +23,11 @@ class rlc_rx_entity : public rlc_rx_pdu_handler, public rlc_bearer_rx_metrics
 {
 protected:
   rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
-    logger(du_index, lcid), upper_dn(upper_dn)
+    logger("RLC", du_index, lcid), upper_dn(upper_dn)
   {
   }
 
-  rlc_logger                        logger;
+  bearer_logger                     logger;
   rlc_rx_upper_layer_data_notifier& upper_dn;
 };
 

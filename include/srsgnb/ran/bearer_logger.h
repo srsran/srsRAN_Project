@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_RLC_LOGGER_H
-#define SRSGNB_RLC_LOGGER_H
+#pragma once
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
@@ -20,14 +19,16 @@ namespace srsgnb {
 /// Class used to store common logging parameters for all types RLC entities.
 /// It provides logging helpers, so that the UE index and LCID are always logged.
 ///
+/// \param log_name name of the logger we want to use (e.g. RLC, PDCP, etc.)
 /// \param du_index UE identifier within the DU
 /// \param lcid LCID for the bearer
-class rlc_logger
+class bearer_logger
 {
 public:
-  rlc_logger(du_ue_index_t du_index, lcid_t lcid) :
-    du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger("RLC", false))
-  {}
+  bearer_logger(const std::string& log_name, du_ue_index_t du_index, lcid_t lcid) :
+    du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger(log_name, false))
+  {
+  }
 
   template <typename... Args>
   void log_debug(const char* fmt, Args&&... args)
@@ -95,5 +96,3 @@ private:
 };
 
 } // namespace srsgnb
-#endif
-
