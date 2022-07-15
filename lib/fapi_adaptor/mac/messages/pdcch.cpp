@@ -25,15 +25,19 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   const static_vector<dci_info, MAX_DL_PDUS_PER_SLOT>& dcis = mac_pdu.dcis;
   srsran_assert(!dcis.empty(), "No DL_DCI to add to the PDCCH PDU");
 
-  const bwp_configuration& bwp_cfg = *mac_pdu.bwp_cfg;
+  const bwp_configuration&     bwp_cfg     = *mac_pdu.bwp_cfg;
+  const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
+
+  // For CORESET0 cbrs is provided by the CORESET, instead of BWP.
+  const crb_interval& cbrs = (coreset_cfg.id == to_coreset_id(0)) ? coreset_cfg.coreset0_crbs() : bwp_cfg.crbs;
+
   // Fill BWP parameters.
-  builder.set_bwp_parameters(bwp_cfg.crbs.length(),
-                             bwp_cfg.crbs.start(),
+  builder.set_bwp_parameters(cbrs.length(),
+                             cbrs.start(),
                              bwp_cfg.scs,
                              (bwp_cfg.cp_extended) ? cyclic_prefix_type::extended : cyclic_prefix_type::normal);
 
   // Fill Coreset parameters.
-  const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
   // :TODO: change the start symbol index in the future.
   unsigned start_symbol_index = 0;
   builder.set_coreset_parameters(
