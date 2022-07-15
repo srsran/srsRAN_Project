@@ -75,6 +75,9 @@ no-binaries-added:
   needs: []
   variables:
     check_flags: "false"
+    run_tests: "true"
+    enable_coverage: "true"
+    coverage_full: "false"
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
@@ -86,8 +89,6 @@ alternative builds:
       variables:
         run_tests: "false"
     - if: $ON_SCHEDULE
-      variables:
-        run_tests: "true"
   needs: []
   trigger:
     include: .gitlab/ci/build.yml
@@ -113,7 +114,6 @@ alternative builds uhd:
   rules:
     - if: $ON_SCHEDULE
       variables:
-        run_tests: "false"
         enable_coverage: "false"
   parallel:
     matrix:

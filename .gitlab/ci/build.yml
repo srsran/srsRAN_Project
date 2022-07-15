@@ -19,7 +19,7 @@ variables:
   # Tests
   run_tests: "true"
   enable_coverage: "true"
-  coverage_full: "false"
+  coverage_full: $ON_SCHEDULE
 
 stages:
   - build
@@ -73,8 +73,6 @@ build [clean and update cache]:
   extends: .build
   rules:
     - if: $ON_SCHEDULE
-      variables:
-        coverage_full: "true"
   cache:
     <<: *build_cache
     policy: push
@@ -90,6 +88,8 @@ cmake flag check:
   stage: build
   extends: .build_and_unit
   rules:
+    - if: $ON_DEFAULT_BRANCH
+      when: never
     - if: $check_flags == "true"
   script:
     - CC=/usr/bin/gcc
@@ -124,7 +124,7 @@ cmake flag check:
   script:
     # Launch ctest
     - cd build/${test_folder}
-    - ctest -j "$(nproc --all)" --schedule-random --output-junit xunit.xml
+    - ctest -j "$(nproc --all)" --schedule-random --output-on-failure --output-junit xunit.xml
     # Launch coverage
     - cd ${CI_PROJECT_DIR}/build
     - GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
