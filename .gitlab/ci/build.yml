@@ -137,7 +137,7 @@ cmake flag check:
       fi
     - |
       if [ $enable_coverage = "true" ]; then 
-        if [ $coverage_full = "true" ]; then
+        if [[ $coverage_full && $coverage_full = "true" ]]; then
           gcovr --html --html-details $GCOVR_ARGS -o coverage.html
         else
           gcovr --html                $GCOVR_ARGS -o coverage.html
