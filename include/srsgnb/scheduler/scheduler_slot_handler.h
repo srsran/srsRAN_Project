@@ -20,6 +20,7 @@
 #include "srsgnb/ran/modulation.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -225,9 +226,29 @@ struct ul_sched_info {
   rnti_t crnti;
 };
 
+struct prach_info {
+  /// Number of time-domain PRACH occasions (N^{RAslot}_t). See TS38.211, sec 6.3.3.2.
+  uint8_t nof_prach_occasions;
+  /// RACH format information for the PRACH occasions.
+  preamble_format format;
+  /// Frequency domain occasion index, which ranges from 0 to M-1, where M is the higher-layer parameter msg1-FDM,
+  /// which can take the values {1,2,4,8}. Possible values: {0,...7}.
+  /// \remark See TS 38.211, sec 6.3.3.2.
+  uint8_t index_fd_ra;
+  /// Starting symbol for the first PRACH TD occasion.
+  /// \remark See TS38.211, sec 6.3.3.2 and Tables 6.3.3.2-2 and 6.3.3.2-4. Possible values: {0,...,13}.
+  uint8_t start_symbol;
+  /// Zero-correlation zone configuration number (N_{CS}), defined in RRC via parameter zeroCorrelationZoneConfig.
+  /// Possible values: {0,...,419}.
+  /// \remark See TS38.211, sec 6.3.3.1 and Table 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
+  uint16_t nof_cs;
+};
+
 struct ul_sched_result {
   /// Allocation of PUSCHs
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
+  /// Slot PRACH opportunities.
+  static_vector<prach_info, MAX_GRANTS> prachs;
 };
 
 struct sched_result {
