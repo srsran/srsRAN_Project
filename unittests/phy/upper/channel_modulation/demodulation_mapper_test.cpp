@@ -16,7 +16,7 @@
 /// also provided by test vectors.
 
 #include "demodulation_mapper_test_data.h"
-#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
+#include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 #include <random>
@@ -25,7 +25,11 @@ using namespace srsgnb;
 
 int main()
 {
-  std::unique_ptr<demodulation_mapper> demodulator = create_demodulation_mapper();
+  std::shared_ptr<channel_modulation_factory> factory = create_channel_modulation_sw_factory();
+  TESTASSERT(factory);
+
+  std::unique_ptr<demodulation_mapper> demodulator = factory->create_demodulation_mapper();
+  TESTASSERT(demodulator);
 
   for (const auto& test_case : demodulation_mapper_test_data) {
     const modulation_scheme mod = test_case.scheme;

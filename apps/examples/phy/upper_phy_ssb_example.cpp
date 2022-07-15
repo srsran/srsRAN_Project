@@ -198,7 +198,7 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UpperPHY", false);
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
-  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
   ASSERT_FACTORY(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();

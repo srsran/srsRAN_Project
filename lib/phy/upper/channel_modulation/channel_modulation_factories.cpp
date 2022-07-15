@@ -9,21 +9,29 @@
  */
 
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
+#include "demodulation_mapper_impl.h"
 #include "modulation_mapper_impl.h"
 
 using namespace srsgnb;
 
 namespace {
 
-class modulation_mapper_sw_factory : public modulation_mapper_factory
+class channel_modulation_sw_factory : public channel_modulation_factory
 {
 public:
-  std::unique_ptr<modulation_mapper> create() override { return std::make_unique<modulation_mapper_impl>(); }
+  std::unique_ptr<modulation_mapper> create_modulation_mapper() override
+  {
+    return std::make_unique<modulation_mapper_impl>();
+  }
+  std::unique_ptr<demodulation_mapper> create_demodulation_mapper() override
+  {
+    return std::make_unique<demodulation_mapper_impl>();
+  }
 };
 
 } // namespace
 
-std::shared_ptr<modulation_mapper_factory> srsgnb::create_modulation_mapper_sw_factory()
+std::shared_ptr<channel_modulation_factory> srsgnb::create_channel_modulation_sw_factory()
 {
-  return std::make_shared<modulation_mapper_sw_factory>();
+  return std::make_shared<channel_modulation_sw_factory>();
 }

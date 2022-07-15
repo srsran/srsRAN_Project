@@ -125,7 +125,7 @@ int main()
       create_pdsch_encoder_factory_sw(pdsch_encoder_factory_config);
   TESTASSERT(ldpc_encoder_factory);
 
-  std::shared_ptr<modulation_mapper_factory> modulator_factory = create_modulation_mapper_sw_factory();
+  std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
   TESTASSERT(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();

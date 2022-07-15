@@ -369,8 +369,3 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
       assert(false);
   }
 }
-
-std::unique_ptr<demodulation_mapper> srsgnb::create_demodulation_mapper()
-{
-  return std::make_unique<demodulation_mapper_impl>();
-}

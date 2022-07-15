@@ -17,7 +17,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -54,7 +53,5 @@ public:
                                span<const float>          noise_vars,
                                modulation_scheme          mod) = 0;
 };
-
-std::unique_ptr<demodulation_mapper> create_demodulation_mapper();
 
 } // namespace srsgnb

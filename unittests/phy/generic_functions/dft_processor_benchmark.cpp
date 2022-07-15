@@ -23,7 +23,7 @@ static std::string dft_factory_str = "generic";
 static unsigned    nof_repetitions = 1000;
 static bool        silent          = false;
 
-void usage(const char* prog)
+static void usage(const char* prog)
 {
   fmt::print("Usage: {} [-F DFT factory] [-R repetitions]\n", prog);
   fmt::print("\t-F Select DFT factory [Default {}]\n", dft_factory_str);
@@ -32,7 +32,7 @@ void usage(const char* prog)
   fmt::print("\t-h Show this message\n");
 }
 
-void parse_args(int argc, char** argv)
+static void parse_args(int argc, char** argv)
 {
   int opt = 0;
   while ((opt = getopt(argc, argv, "F:R:h")) != -1) {

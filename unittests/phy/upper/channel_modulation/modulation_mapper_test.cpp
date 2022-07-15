@@ -29,10 +29,10 @@ static void assert_symbols(const srsgnb::srsvec::aligned_vec<cf_t>& symbols, spa
 
 int main()
 {
-  std::shared_ptr<modulation_mapper_factory> factory = create_modulation_mapper_sw_factory();
+  std::shared_ptr<channel_modulation_factory> factory = create_channel_modulation_sw_factory();
   TESTASSERT(factory);
 
-  std::unique_ptr<modulation_mapper> modulator = factory->create();
+  std::unique_ptr<modulation_mapper> modulator = factory->create_modulation_mapper();
   TESTASSERT(modulator);
 
   for (const test_case_t& test_case : modulation_mapper_test_data) {

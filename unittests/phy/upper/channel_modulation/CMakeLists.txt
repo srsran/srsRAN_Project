@@ -23,6 +23,10 @@ add_custom_command(
         DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/modulation_mapper_test_data.tar.gz
         VERBATIM)
 
+add_executable(modulation_chain_benchmark modulation_chain_benchmark.cpp)
+target_link_libraries(modulation_chain_benchmark srsgnb_channel_modulation srsvec srslog)
+add_test(modulation_chain_benchmark modulation_chain_benchmark -F generic -s -R 1)
+
 add_executable(demodulation_mapper_test demodulation_mapper_test.cpp)
 target_link_libraries(demodulation_mapper_test srsgnb_channel_modulation srsvec srslog)
 

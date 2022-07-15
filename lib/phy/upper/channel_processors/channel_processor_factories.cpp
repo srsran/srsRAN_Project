@@ -28,11 +28,11 @@ namespace {
 class pbch_modulator_factory_sw : public pbch_modulator_factory
 {
 private:
-  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
+  std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
 
 public:
-  pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
+  pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
@@ -42,18 +42,18 @@ public:
 
   std::unique_ptr<pbch_modulator> create() override
   {
-    return std::make_unique<pbch_modulator_impl>(modulator_factory->create(), prg_factory->create());
+    return std::make_unique<pbch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
   }
 };
 
 class pdcch_modulator_factory_sw : public pdcch_modulator_factory
 {
 private:
-  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
+  std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
 
 public:
-  pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
+  pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
@@ -63,7 +63,7 @@ public:
 
   std::unique_ptr<pdcch_modulator> create() override
   {
-    return std::make_unique<pdcch_modulator_impl>(modulator_factory->create(), prg_factory->create());
+    return std::make_unique<pdcch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
   }
 };
 
@@ -180,11 +180,11 @@ public:
 class pdsch_modulator_factory_sw : public pdsch_modulator_factory
 {
 private:
-  std::shared_ptr<modulation_mapper_factory>       modulator_factory;
+  std::shared_ptr<channel_modulation_factory>      modulator_factory;
   std::shared_ptr<pseudo_random_generator_factory> prg_factory;
 
 public:
-  pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory_,
+  pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
@@ -194,7 +194,7 @@ public:
 
   std::unique_ptr<pdsch_modulator> create() override
   {
-    return std::make_unique<pdsch_modulator_impl>(modulator_factory->create(), prg_factory->create());
+    return std::make_unique<pdsch_modulator_impl>(modulator_factory->create_modulation_mapper(), prg_factory->create());
   }
 };
 
@@ -260,14 +260,14 @@ std::unique_ptr<pbch_encoder> srsgnb::create_pbch_encoder()
 }
 
 std::shared_ptr<pbch_modulator_factory>
-srsgnb::create_pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
+srsgnb::create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pbch_modulator_factory_sw>(modulator_factory, prg_factory);
 }
 
 std::shared_ptr<pdcch_modulator_factory>
-srsgnb::create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
+srsgnb::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pdcch_modulator_factory_sw>(modulator_factory, prg_factory);
@@ -285,7 +285,7 @@ srsgnb::create_pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& 
 }
 
 std::shared_ptr<pdsch_modulator_factory>
-srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>       modulator_factory,
+srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
   return std::make_shared<pdsch_modulator_factory_sw>(modulator_factory, prg_factory);

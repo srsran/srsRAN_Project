@@ -41,7 +41,7 @@ public:
 };
 
 std::shared_ptr<pbch_modulator_factory>
-    create_pbch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+    create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
                                      std::shared_ptr<pseudo_random_generator_factory>);
 
 class pdcch_modulator_factory
@@ -52,7 +52,7 @@ public:
 };
 
 std::shared_ptr<pdcch_modulator_factory>
-    create_pdcch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+    create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
                                       std::shared_ptr<pseudo_random_generator_factory>);
 
 class pdcch_encoder_factory
@@ -79,7 +79,7 @@ public:
 };
 
 std::shared_ptr<pdsch_modulator_factory>
-    create_pdsch_modulator_factory_sw(std::shared_ptr<modulation_mapper_factory>,
+    create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>,
                                       std::shared_ptr<pseudo_random_generator_factory>);
 
 /// Describes the software PDSCH encoder factory configuration.

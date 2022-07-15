@@ -58,7 +58,7 @@ extern std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_c
 class pdcch_processor_factory
 {
   std::shared_ptr<pdcch_modulator_factory> mod_factory = {
-      create_pdcch_modulator_factory_sw(create_modulation_mapper_sw_factory(),
+      create_pdcch_modulator_factory_sw(create_channel_modulation_sw_factory(),
                                         create_pseudo_random_generator_sw_factory())};
   std::shared_ptr<pdcch_encoder_factory> enc_factory = {create_pdcch_encoder_factory_sw()};
 
@@ -97,7 +97,7 @@ public:
 
     std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
 
-    pdsch_mod_factory = create_pdsch_modulator_factory_sw(create_modulation_mapper_sw_factory(), prg_factory);
+    pdsch_mod_factory = create_pdsch_modulator_factory_sw(create_channel_modulation_sw_factory(), prg_factory);
     dmrs_pdsch_fac    = create_dmrs_pdsch_processor_factory_sw(prg_factory);
   }
 
@@ -114,7 +114,7 @@ public:
 class ssb_processor_factory
 {
   std::shared_ptr<pbch_modulator_factory> pbch_mod_factory = {
-      create_pbch_modulator_factory_sw(create_modulation_mapper_sw_factory(),
+      create_pbch_modulator_factory_sw(create_channel_modulation_sw_factory(),
                                        create_pseudo_random_generator_sw_factory())};
 
 public:
@@ -150,6 +150,7 @@ downlink_processor_single_executor_factory::downlink_processor_single_executor_f
   ssb_proc_factory(std::make_shared<ssb_processor_factory>()),
   executor(executor)
 {
+  // Do nothing.
 }
 
 std::unique_ptr<downlink_processor>

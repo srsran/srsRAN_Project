@@ -10,18 +10,20 @@
 
 #pragma once
 
+#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include <memory>
 
 namespace srsgnb {
 
-class modulation_mapper_factory
+class channel_modulation_factory
 {
 public:
-  virtual ~modulation_mapper_factory()                = default;
-  virtual std::unique_ptr<modulation_mapper> create() = 0;
+  virtual ~channel_modulation_factory()                                     = default;
+  virtual std::unique_ptr<modulation_mapper>   create_modulation_mapper()   = 0;
+  virtual std::unique_ptr<demodulation_mapper> create_demodulation_mapper() = 0;
 };
 
-std::shared_ptr<modulation_mapper_factory> create_modulation_mapper_sw_factory();
+std::shared_ptr<channel_modulation_factory> create_channel_modulation_sw_factory();
 
 } // namespace srsgnb

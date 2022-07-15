@@ -13,6 +13,8 @@
 
 #pragma once
 
+#include <string>
+
 namespace srsgnb {
 
 /// \brief Modulation schemes as described in TS38.211 Section 5.1.
@@ -30,6 +32,23 @@ enum class modulation_scheme {
   /// 256-point Quadrature Amplitude Modulation (256-QAM).
   QAM256 = 8
 };
+
+inline std::string to_string(modulation_scheme mod)
+{
+  switch (mod) {
+    case modulation_scheme::BPSK:
+      return "BPSK";
+    case modulation_scheme::QPSK:
+      return "QPSK";
+    case modulation_scheme::QAM16:
+      return "16QAM";
+    case modulation_scheme::QAM64:
+      return "64QAM";
+    case modulation_scheme::QAM256:
+    default:
+      return "256QAM";
+  }
+}
 
 /// \brief Bits per symbol for a given modulation scheme.
 /// \param[in] mod Modulation scheme.

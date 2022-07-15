@@ -10,204 +10,134 @@
 
 #include "modulation_mapper_impl.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/sc_prod.h"
+
+#ifdef HAVE_SSE
+#include <immintrin.h>
+#endif // HAVE_SSE
 
 using namespace srsgnb;
 
-#define BPSK_LEVEL M_SQRT1_2
+// Generic optimized modulator for any modulation order QM > 2 and QM % 2 == 0.
+template <unsigned QM>
+struct modulator_table_s {
+  // The indexing provides the complex symbol corresponding to the binary expansion of the index.
+  std::array<cf_t, pow2(QM)> table;
 
-#define QPSK_LEVEL M_SQRT1_2
+  // Constructs the Look-up table.
+  constexpr modulator_table_s()
+  {
+    // see TS38.211 Section 5.1.
+    for (uint32_t i = 0; i < pow2(QM); i++) {
+      float offset = -1;
+      float real   = 0;
+      float imag   = 0;
+      for (uint32_t j = 0; j < QM / 2; j++) {
+        real += offset;
+        imag += offset;
+        offset *= 2;
 
-#define QAM16_LEVEL_1 (1.0f / sqrtf(10.0f))
-#define QAM16_LEVEL_2 (3.0f / sqrtf(10.0f))
-
-#define QAM64_LEVEL_1 (1.0f / sqrtf(42.0f))
-#define QAM64_LEVEL_2 (3.0f / sqrtf(42.0f))
-#define QAM64_LEVEL_3 (5.0f / sqrtf(42.0f))
-#define QAM64_LEVEL_4 (7.0f / sqrtf(42.0f))
-
-modulation_mapper_impl::bpsk_table_s::bpsk_table_s()
-{
-  // BPSK constellation:
-  //    Q
-  //    |  0
-  //---------> I
-  // 1  |
-  //
-  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.2]
-  table.resize(2);
-  table[0] = {BPSK_LEVEL, BPSK_LEVEL};
-  table[1] = {-BPSK_LEVEL, -BPSK_LEVEL};
-  Qm       = 1;
-}
-
-modulation_mapper_impl::qpsk_table_s::qpsk_table_s()
-{
-  // QPSK constellation:
-  //     Q
-  // 10  |  00
-  //-----------> I
-  // 11  |  01
-  //
-  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.3]
-  table.resize(4);
-  table[0] = {QPSK_LEVEL, +QPSK_LEVEL};
-  table[1] = {QPSK_LEVEL, -QPSK_LEVEL};
-  table[2] = {-QPSK_LEVEL, +QPSK_LEVEL};
-  table[3] = {-QPSK_LEVEL, -QPSK_LEVEL};
-  Qm       = 2;
-}
-
-modulation_mapper_impl::qam16_table_s::qam16_table_s()
-{
-  // 16QAM constellation:
-  //                Q
-  //  1011  1001  |   0001  0011
-  //  1010  1000  |   0000  0010
-  //---------------------------------> I
-  //  1110    1100  |  0100  0110
-  //  1111    1101  |  0101  0111
-  //
-  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.4]
-  table.resize(16);
-  table[0]  = {QAM16_LEVEL_1, +QAM16_LEVEL_1};
-  table[1]  = {QAM16_LEVEL_1, +QAM16_LEVEL_2};
-  table[2]  = {QAM16_LEVEL_2, +QAM16_LEVEL_1};
-  table[3]  = {QAM16_LEVEL_2, +QAM16_LEVEL_2};
-  table[4]  = {QAM16_LEVEL_1, -QAM16_LEVEL_1};
-  table[5]  = {QAM16_LEVEL_1, -QAM16_LEVEL_2};
-  table[6]  = {QAM16_LEVEL_2, -QAM16_LEVEL_1};
-  table[7]  = {QAM16_LEVEL_2, -QAM16_LEVEL_2};
-  table[8]  = {-QAM16_LEVEL_1, +QAM16_LEVEL_1};
-  table[9]  = {-QAM16_LEVEL_1, +QAM16_LEVEL_2};
-  table[10] = {-QAM16_LEVEL_2, +QAM16_LEVEL_1};
-  table[11] = {-QAM16_LEVEL_2, +QAM16_LEVEL_2};
-  table[12] = {-QAM16_LEVEL_1, -QAM16_LEVEL_1};
-  table[13] = {-QAM16_LEVEL_1, -QAM16_LEVEL_2};
-  table[14] = {-QAM16_LEVEL_2, -QAM16_LEVEL_1};
-  table[15] = {-QAM16_LEVEL_2, -QAM16_LEVEL_2};
-  Qm        = 4;
-}
-
-modulation_mapper_impl::qam64_table_s::qam64_table_s()
-{
-  // 64QAM constellation:
-  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.5]
-  table.resize(64);
-  table[0]  = {QAM64_LEVEL_2, +QAM64_LEVEL_2};
-  table[1]  = {QAM64_LEVEL_2, +QAM64_LEVEL_1};
-  table[2]  = {QAM64_LEVEL_1, +QAM64_LEVEL_2};
-  table[3]  = {QAM64_LEVEL_1, +QAM64_LEVEL_1};
-  table[4]  = {QAM64_LEVEL_2, +QAM64_LEVEL_3};
-  table[5]  = {QAM64_LEVEL_2, +QAM64_LEVEL_4};
-  table[6]  = {QAM64_LEVEL_1, +QAM64_LEVEL_3};
-  table[7]  = {QAM64_LEVEL_1, +QAM64_LEVEL_4};
-  table[8]  = {QAM64_LEVEL_3, +QAM64_LEVEL_2};
-  table[9]  = {QAM64_LEVEL_3, +QAM64_LEVEL_1};
-  table[10] = {QAM64_LEVEL_4, +QAM64_LEVEL_2};
-  table[11] = {QAM64_LEVEL_4, +QAM64_LEVEL_1};
-  table[12] = {QAM64_LEVEL_3, +QAM64_LEVEL_3};
-  table[13] = {QAM64_LEVEL_3, +QAM64_LEVEL_4};
-  table[14] = {QAM64_LEVEL_4, +QAM64_LEVEL_3};
-  table[15] = {QAM64_LEVEL_4, +QAM64_LEVEL_4};
-  table[16] = {QAM64_LEVEL_2, -QAM64_LEVEL_2};
-  table[17] = {QAM64_LEVEL_2, -QAM64_LEVEL_1};
-  table[18] = {QAM64_LEVEL_1, -QAM64_LEVEL_2};
-  table[19] = {QAM64_LEVEL_1, -QAM64_LEVEL_1};
-  table[20] = {QAM64_LEVEL_2, -QAM64_LEVEL_3};
-  table[21] = {QAM64_LEVEL_2, -QAM64_LEVEL_4};
-  table[22] = {QAM64_LEVEL_1, -QAM64_LEVEL_3};
-  table[23] = {QAM64_LEVEL_1, -QAM64_LEVEL_4};
-  table[24] = {QAM64_LEVEL_3, -QAM64_LEVEL_2};
-  table[25] = {QAM64_LEVEL_3, -QAM64_LEVEL_1};
-  table[26] = {QAM64_LEVEL_4, -QAM64_LEVEL_2};
-  table[27] = {QAM64_LEVEL_4, -QAM64_LEVEL_1};
-  table[28] = {QAM64_LEVEL_3, -QAM64_LEVEL_3};
-  table[29] = {QAM64_LEVEL_3, -QAM64_LEVEL_4};
-  table[30] = {QAM64_LEVEL_4, -QAM64_LEVEL_3};
-  table[31] = {QAM64_LEVEL_4, -QAM64_LEVEL_4};
-  table[32] = {-QAM64_LEVEL_2, +QAM64_LEVEL_2};
-  table[33] = {-QAM64_LEVEL_2, +QAM64_LEVEL_1};
-  table[34] = {-QAM64_LEVEL_1, +QAM64_LEVEL_2};
-  table[35] = {-QAM64_LEVEL_1, +QAM64_LEVEL_1};
-  table[36] = {-QAM64_LEVEL_2, +QAM64_LEVEL_3};
-  table[37] = {-QAM64_LEVEL_2, +QAM64_LEVEL_4};
-  table[38] = {-QAM64_LEVEL_1, +QAM64_LEVEL_3};
-  table[39] = {-QAM64_LEVEL_1, +QAM64_LEVEL_4};
-  table[40] = {-QAM64_LEVEL_3, +QAM64_LEVEL_2};
-  table[41] = {-QAM64_LEVEL_3, +QAM64_LEVEL_1};
-  table[42] = {-QAM64_LEVEL_4, +QAM64_LEVEL_2};
-  table[43] = {-QAM64_LEVEL_4, +QAM64_LEVEL_1};
-  table[44] = {-QAM64_LEVEL_3, +QAM64_LEVEL_3};
-  table[45] = {-QAM64_LEVEL_3, +QAM64_LEVEL_4};
-  table[46] = {-QAM64_LEVEL_4, +QAM64_LEVEL_3};
-  table[47] = {-QAM64_LEVEL_4, +QAM64_LEVEL_4};
-  table[48] = {-QAM64_LEVEL_2, -QAM64_LEVEL_2};
-  table[49] = {-QAM64_LEVEL_2, -QAM64_LEVEL_1};
-  table[50] = {-QAM64_LEVEL_1, -QAM64_LEVEL_2};
-  table[51] = {-QAM64_LEVEL_1, -QAM64_LEVEL_1};
-  table[52] = {-QAM64_LEVEL_2, -QAM64_LEVEL_3};
-  table[53] = {-QAM64_LEVEL_2, -QAM64_LEVEL_4};
-  table[54] = {-QAM64_LEVEL_1, -QAM64_LEVEL_3};
-  table[55] = {-QAM64_LEVEL_1, -QAM64_LEVEL_4};
-  table[56] = {-QAM64_LEVEL_3, -QAM64_LEVEL_2};
-  table[57] = {-QAM64_LEVEL_3, -QAM64_LEVEL_1};
-  table[58] = {-QAM64_LEVEL_4, -QAM64_LEVEL_2};
-  table[59] = {-QAM64_LEVEL_4, -QAM64_LEVEL_1};
-  table[60] = {-QAM64_LEVEL_3, -QAM64_LEVEL_3};
-  table[61] = {-QAM64_LEVEL_3, -QAM64_LEVEL_4};
-  table[62] = {-QAM64_LEVEL_4, -QAM64_LEVEL_3};
-  table[63] = {-QAM64_LEVEL_4, -QAM64_LEVEL_4};
-  Qm        = 6;
-}
-
-modulation_mapper_impl::qam256_table_s::qam256_table_s()
-{
-  // 256QAM constellation:
-  // see [3GPP TS 38.211 version 15.8.0, Section 5.1.6]
-  table.resize(256);
-  for (uint32_t i = 0; i < 256; i++) {
-    float offset = -1;
-    float real   = 0;
-    float imag   = 0;
-    for (uint32_t j = 0; j < 4; j++) {
-      real += offset;
-      imag += offset;
-      offset *= 2;
-
-      real *= ((i & (1 << (2 * j + 1)))) ? +1 : -1;
-      imag *= ((i & (1 << (2 * j + 0)))) ? +1 : -1;
+        real *= ((i & (1U << (2U * j + 1U))) != 0) ? +1 : -1;
+        imag *= ((i & (1U << (2U * j + 0U))) != 0) ? +1 : -1;
+      }
+      table[i] = {real, imag};
     }
-    table[i] = {real / sqrtf(170), imag / sqrtf(170)};
-  }
-  Qm = 8;
-}
 
-const std::map<modulation_scheme, modulation_mapper_impl::modulator_table_s> modulation_mapper_impl::modulation_tables =
-    {
-        {modulation_scheme::BPSK, modulation_mapper_impl::bpsk_table_s()},
-        {modulation_scheme::QPSK, modulation_mapper_impl::qpsk_table_s()},
-        {modulation_scheme::QAM16, modulation_mapper_impl::qam16_table_s()},
-        {modulation_scheme::QAM64, modulation_mapper_impl::qam64_table_s()},
-        {modulation_scheme::QAM256, modulation_mapper_impl::qam256_table_s()},
+    // Calculate average power to calculate scaling for having a power average of one.
+    float avg_power = 0;
+    for (unsigned i = 0; i != table.size(); ++i) {
+      avg_power += std::real(table[i] * std::conj(table[i]));
+    }
+    avg_power /= table.size();
+    srsran_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
+
+    // Perform scaling.
+    float scaling = std::sqrt(1 / avg_power);
+    srsvec::sc_prod(table, scaling, table);
+  }
+
+  // Modulates the input bits.
+  constexpr void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  {
+    for (cf_t& symbol : symbols) {
+#ifdef HAVE_SSE
+      // Get 8 Bit in an MMX register.
+      __m64 mask = _mm_cmpgt_pi8(*((__m64*)input.data()), _mm_set1_pi8(0));
+
+      // Get mask and write
+      unsigned index = _mm_movemask_pi8(mask);
+
+      // Reverse bits.
+      index = reverse_byte(index);
+
+      // Advance input pointer
+      input = input.last(input.size() - QM);
+
+      // Mask the bits of interest.
+      index = index >> (8 - QM);
+#else
+      // Packs the next QM bits.
+      unsigned index = 0;
+      for (unsigned i = 0; i < QM; ++i) {
+        index |= (unsigned)input[i] << (QM - i - 1U);
+      }
+
+      // Advance pointer
+      input = input.last(input.size() - QM);
+#endif // HAVE_SSE
+
+      // Assign symbol from table
+      symbol = table[index];
+    }
+    srsran_assert(input.empty(), "Expected full consumption of the input data.");
+  }
 };
+
+// Generic optimized modulator for modulation order 1.
+template <>
+struct modulator_table_s<1> {
+  // The indexing provides the complex symbol corresponding to the binary expansion of the index.
+  const std::array<cf_t, 2> table = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
+
+  // Modulates the input bits.
+  void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  {
+    std::transform(input.begin(), input.end(), symbols.begin(), [this](uint8_t bit) { return table[bit]; });
+  }
+};
+
+// Modulation tables.
+static const modulator_table_s<1> bpsk_modulator;
+static const modulator_table_s<2> qpsk_modulator;
+static const modulator_table_s<4> qam16_modulator;
+static const modulator_table_s<6> qam64_modulator;
+static const modulator_table_s<8> qam256_modulator;
 
 void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
                                       srsgnb::span<srsgnb::cf_t>  symbols,
                                       srsgnb::modulation_scheme   scheme)
 {
-  const modulator_table_s& modulator = modulation_tables.at(scheme);
-  const cf_t*              table     = modulator.table.data();
-  unsigned                 Qm        = modulator.Qm;
+  srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
+                "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
+                input.size(),
+                symbols.size(),
+                scheme);
 
-  assert(input.size() == Qm * symbols.size());
-
-  for (cf_t& symbol : symbols) {
-    // Pack input bits
-    unsigned idx = srsvec::bit_pack(input, Qm);
-
-    // Assign symbol from table
-    symbol = table[idx];
+  switch (scheme) {
+    case modulation_scheme::BPSK:
+      bpsk_modulator.modulate(input, symbols);
+      break;
+    case modulation_scheme::QPSK:
+      qpsk_modulator.modulate(input, symbols);
+      break;
+    case modulation_scheme::QAM16:
+      qam16_modulator.modulate(input, symbols);
+      break;
+    case modulation_scheme::QAM64:
+      qam64_modulator.modulate(input, symbols);
+      break;
+    case modulation_scheme::QAM256:
+      qam256_modulator.modulate(input, symbols);
+      break;
   }
-
-  assert(input.size() == 0);
 }
