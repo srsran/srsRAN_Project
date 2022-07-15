@@ -16,3 +16,5 @@ set(SOURCES_ZMQ
 add_library(srsgnb_radio_zmq STATIC ${SOURCES_ZMQ})
 
 target_link_libraries(srsgnb_radio_zmq ${ZEROMQ_LIBRARIES})
+
+install(TARGETS srsgnb_radio_zmq EXPORT srsgnb_export)

@@ -25,3 +25,5 @@ endif (ZEROMQ_FOUND AND ENABLE_ZEROMQ)
 
 add_definitions(${SRSGNB_RADIO_DEFINITIONS})
 target_link_libraries(srsgnb_radio ${SRSGNB_RADIO_LIBRARIES} srslog)
+
+install(TARGETS srsgnb_radio EXPORT srsgnb_export)
