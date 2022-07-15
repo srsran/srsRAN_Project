@@ -226,15 +226,15 @@ struct ul_sched_info {
   rnti_t crnti;
 };
 
-struct prach_info {
+struct prach_occasion_info {
   /// Number of time-domain PRACH occasions (N^{RAslot}_t). See TS38.211, sec 6.3.3.2.
   uint8_t nof_prach_occasions;
   /// RACH format information for the PRACH occasions.
   preamble_format format;
-  /// Frequency domain occasion index, which ranges from 0 to M-1, where M is the higher-layer parameter msg1-FDM,
+  /// Frequency domain occasion indexes, which ranges from 0 to M-1, where M is the higher-layer parameter msg1-FDM,
   /// which can take the values {1,2,4,8}. Possible values: {0,...7}.
   /// \remark See TS 38.211, sec 6.3.3.2.
-  uint8_t index_fd_ra;
+  interval<uint8_t> fd_ra_resources;
   /// Starting symbol for the first PRACH TD occasion.
   /// \remark See TS38.211, sec 6.3.3.2 and Tables 6.3.3.2-2 and 6.3.3.2-4. Possible values: {0,...,13}.
   uint8_t start_symbol;
@@ -242,13 +242,19 @@ struct prach_info {
   /// Possible values: {0,...,419}.
   /// \remark See TS38.211, sec 6.3.3.1 and Table 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
   uint16_t nof_cs;
+  /// Values: {0,...,255}.
+  uint8_t prach_config_index;
+  /// Start of preamble logical index to monitor the PRACH occasions in this slot. Values: {0,...63}.
+  uint8_t start_preamble_index;
+  /// Number of preamble logical indices. Values: {1,...,64}.
+  uint8_t nof_preamble_indexes;
 };
 
 struct ul_sched_result {
   /// Allocation of PUSCHs
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
   /// Slot PRACH opportunities.
-  static_vector<prach_info, MAX_GRANTS> prachs;
+  static_vector<prach_occasion_info, MAX_GRANTS> prachs;
 };
 
 struct sched_result {

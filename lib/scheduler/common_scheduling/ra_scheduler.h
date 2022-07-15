@@ -14,6 +14,7 @@
 #include "../pdcch_scheduling/pdcch_scheduler.h"
 #include "../support/slot_event_list.h"
 #include "../ue_scheduling/harq_process.h"
+#include "srsgnb/ran/prach/prach_configuration.h"
 #include <deque>
 
 namespace srsgnb {
@@ -63,10 +64,12 @@ private:
     crb_interval crbs;
   };
 
-  const bwp_configuration&          get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
+  const bwp_configuration&   get_dl_bwp_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.generic_params; }
   const pdsch_config_common& get_pdsch_cfg() const { return cfg.dl_cfg_common.init_dl_bwp.pdsch_common; }
-  const bwp_configuration&          get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
-  const pusch_config_common&        get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
+  const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
+  const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
+
+  void schedule_prach_occasions(cell_resource_allocator& res_alloc);
 
   bool handle_rach_indication_impl(const rach_indication_message& msg);
 
@@ -93,9 +96,11 @@ private:
   pdcch_scheduler&          pdcch_sch;
 
   // derived from args
-  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
-  const unsigned        ra_win_nof_slots;
-  bwp_configuration     initial_active_dl_bwp;
+  srslog::basic_logger&                logger = srslog::fetch_basic_logger("MAC");
+  const unsigned                       ra_win_nof_slots;
+  bwp_configuration                    initial_active_dl_bwp;
+  prach_configuration                  prach_cfg;
+  std::bitset<NOF_SUBFRAMES_PER_FRAME> prach_subframe_occasion_bitmap;
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;

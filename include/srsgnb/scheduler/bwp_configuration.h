@@ -137,8 +137,17 @@ struct bwp_downlink_common {
 
 /// \remark See TS 38.331, RACH-ConfigGeneric.
 struct rach_config_generic {
+  /// Values: {0,...,255}.
+  uint8_t prach_config_index;
   /// Msg2 RAR window length in #slots. Network configures a value < 10msec. Values: (1, 2, 4, 8, 10, 20, 40, 80).
   unsigned ra_resp_window;
+  /// Number of PRACH occasions FDMed in one time instance as per TS38.211, clause 6.3.3.2.
+  unsigned msg1_fdm;
+  /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0,
+  /// as per TS38.211, clause 6.3.3.2. Possible values: {0,...,MAX_NOF_PRB - 1}.
+  unsigned msg1_frequency_start;
+  /// N-CS configuration as per TS38.211, Table 6.3.3.1-5. Possible values: {0,...,419}.
+  uint16_t zero_correlation_zone_config;
 };
 
 /// Used to specify the cell-specific random-access parameters as per TS38.331, "RACH-ConfigCommon".

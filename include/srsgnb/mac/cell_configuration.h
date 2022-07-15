@@ -1,3 +1,12 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #pragma once
 
@@ -17,7 +26,7 @@
 
 namespace srsgnb {
 
-struct prach_configuration {
+struct mac_prach_configuration {
   // TODO
 };
 
@@ -34,10 +43,10 @@ struct mac_cell_creation_request {
   /// subcarrierSpacing for common, used for initial access and broadcast message.
   subcarrier_spacing scs_common;
 
-  carrier_configuration dl_carrier;
-  carrier_configuration ul_carrier;
-  ssb_configuration     ssb_cfg;
-  prach_configuration   prach_cfg;
+  carrier_configuration   dl_carrier;
+  carrier_configuration   ul_carrier;
+  ssb_configuration       ssb_cfg;
+  mac_prach_configuration prach_cfg;
 
   /// Embedded scheduler cell configuration request.
   sched_cell_configuration_request_message sched_req;

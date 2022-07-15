@@ -172,10 +172,14 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
   cfg.init_ul_bwp.generic_params                         = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
-  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window   = 10;
+  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles                        = 64;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present             = true;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index                          = 1;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 0;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.zero_correlation_zone_config = 15;
+  cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window               = 10;
   cfg.init_ul_bwp.pusch_cfg_common.emplace();
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list.resize(1);
   cfg.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0].k2 = 4;
