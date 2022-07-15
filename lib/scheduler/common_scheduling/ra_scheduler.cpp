@@ -56,7 +56,7 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
   initial_active_dl_bwp(cfg.dl_cfg_common.init_dl_bwp.generic_params),
   prach_cfg(
       prach_configuration_get(frequency_range::FR1,
-                              cfg.paired_spectrum ? duplex_mode::TDD : duplex_mode::FDD,
+                              cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                               cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)),
   pending_msg3s(MAX_NOF_MSG3)
 {
@@ -240,7 +240,7 @@ void ra_scheduler::schedule_prach_occasions(cell_resource_allocator& res_alloc)
   cell_slot_resource_allocator& sl_res = res_alloc[0];
   slot_point                    sl     = sl_res.slot;
 
-  if (sl.sfn() % prach_cfg.x == prach_cfg.y) {
+  if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
     // PRACH is not enabled in this SFN.
     return;
   }
