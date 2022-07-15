@@ -1,12 +1,12 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "6"
+    ref: "7"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "6"
+    ref: "7"
     file: .gitlab/ci-shared/scheduler.yml
   - project: softwareradiosystems/testing-tools
-    ref: "6"
+    ref: "7"
     file: .gitlab/versions.yml
   - local: .gitlab/ci/build.yml
 
@@ -24,12 +24,9 @@ stages:
 ################################################################################
 check-ci-versions:
   stage: ci check
-  image: $SRS_TOOLS_IMAGE
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   rules:
     - if: $ON_MR
-  before_script:
-    - !reference [.srs_tools_setup_job, before_script]
-    - srs_tools_setup
   script:
     - ci-version-check --check-main .gitlab-ci.yml --check-directory .gitlab
   dependencies: []
@@ -38,10 +35,8 @@ auto rebaser:
   stage: ci check
   rules:
     - if: $ON_DEFAULT_BRANCH
-  image: $SRS_TOOLS_IMAGE
-  extends: .srs_tools_setup_job
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   script:
-    - srs_tools_setup
     - gitlab-rebaser --token ${CODEBOT_TOKEN} --namespace ${CI_PROJECT_NAMESPACE} --project ${CI_PROJECT_NAME} --target dev
 
 ################################################################################
@@ -161,10 +156,7 @@ requirements-report:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
-  image: $SRS_TOOLS_IMAGE
-  before_script:
-    - !reference [.srs_tools_setup_job, before_script]
-    - srs_tools_setup
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   script:
     - test-reporter --input unittests --output ./requirement_report.html
   dependencies: []
@@ -219,15 +211,13 @@ pages:
 ################################################################################
 .notifier:
   stage: notify status
-  image: $SRS_TOOLS_IMAGE
+  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   before_script:
     - |
       if [ -z ${SLACK_CHANNEL+x} ]; then
         echo "Variable SLACK_CHANNEL is unset"
         exit 1
       fi
-    - !reference [.srs_tools_setup_job, before_script]
-    - srs_tools_setup
     - MSG="Pipeline <${CI_PIPELINE_URL}|#${CI_PIPELINE_IID}> for commit <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}."
   dependencies: []
 

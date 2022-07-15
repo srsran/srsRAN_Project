@@ -1,10 +1,10 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "6"
+    ref: "7"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "6"
-    file: .gitlab/ci-shared/srs_tools.yml
+    ref: "7"
+    file: .gitlab/versions.yml
 
 variables:
   # Input variables
