@@ -45,6 +45,7 @@ option(ENABLE_ZEROMQ         "Enable ZeroMQ"                            ON)
 option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
+option(BUILD_TESTS           "Compile tests"                            ON)
 
 if (ASSERTS_ENABLED)
     add_definitions(-DASSERTS_ENABLED)
@@ -141,6 +142,11 @@ if (ENABLE_ZEROMQ)
     endif (ZEROMQ_FOUND)
 endif (ENABLE_ZEROMQ)
 
+# Google Tests
+if (BUILD_TESTS)
+    find_package(GTest)
+endif (BUILD_TESTS)
+
 ########################################################################
 # Instruction Set Architecture setup
 ########################################################################
@@ -217,8 +223,11 @@ add_custom_target(all_srsgnb_headers SOURCES ${ALL_HEADER_FILES})
 add_subdirectory(apps)
 add_subdirectory(docs)
 add_subdirectory(lib)
-add_subdirectory(unittests)
-add_subdirectory(integrationtests)
+
+if (BUILD_TESTS)
+    add_subdirectory(unittests)
+    add_subdirectory(integrationtests)
+endif (BUILD_TESTS)
 
 ########################################################################
 # Export (selected) libraries

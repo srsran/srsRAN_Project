@@ -9,7 +9,6 @@ and centralized unit (CU). The CU is further disaggregated into control plan (CU
 srsGNB further follows O-RAN architecture principles, supports all external interfaces (F1, E1, E2, A1, O1, N2 and N3) and allows split 7.2a/b as well as split 8 deployments
 for the fronthaul connection.
 
-
 License
 -------
 
@@ -19,24 +18,26 @@ Build Instructions
 ------------------
 
 * Mandatory requirements:
-  * cmake:               https://cmake.org/
-  * libfftw:             https://www.fftw.org/
-  * git-lfs:             https://git-lfs.github.com/
-  * googletest:          https://github.com/google/googletest/
+  * cmake:               <https://cmake.org/>
+  * libfftw:             <https://www.fftw.org/>
+  * git-lfs:             <https://git-lfs.github.com/>
+  * googletest:          <https://github.com/google/googletest/>
+    * You can skip test building by using the cmake option `-DBUILD_TESTS=False`. GoogleTest is not mandatory when building without tests.
 
 For example, on Ubuntu 22.04, one can install the required libraries with:
-```
+
+```bash
 sudo apt-get install cmake libfftw3-dev git-lfs libgtest-dev
 git lfs install
 ```
 
 * Optional requirements
-  * UHD:                 https://github.com/EttusResearch/uhd
-  * ZeroMQ:              https://github.com/zeromq
-
+  * UHD:                 <https://github.com/EttusResearch/uhd>
+  * ZeroMQ:              <https://github.com/zeromq>
 
 Download and build srsGNB:
-```
+
+```bash
 git clone https://github.com/softwareradiosystems/srsgnb.git
 cd srsGNB
 mkdir build

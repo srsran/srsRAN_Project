@@ -94,10 +94,17 @@ cmake flag check:
   script:
     - CC=/usr/bin/gcc
     - CXX=/usr/bin/g++
-    - mkdir build && cd build && cmake -G Ninja -D${flag}=True ..
+    - mkdir build && cd build && cmake -G Ninja ${flag} ..
   parallel:
     matrix:
-      - flag: [STOP_ON_WARNING, ENABLE_TSAN, ENABLE_ASAN, ENABLE_EXPORT]
+      - flag:
+          [
+            -DSTOP_ON_WARNING=True,
+            -DENABLE_TSAN=True,
+            -DENABLE_ASAN=True,
+            -DENABLE_EXPORT=True,
+            -DBUILD_TESTS=False,
+          ]
   dependencies: []
 
 # Unit tests
