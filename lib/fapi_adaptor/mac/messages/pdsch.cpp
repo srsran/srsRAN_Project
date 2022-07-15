@@ -10,6 +10,7 @@
 
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsgnb/mac/mac_cell_result.h"
+#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -64,10 +65,9 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                     cw.tb_size_bytes);
   }
 
-  // :TODO: Check this parameters
   static const unsigned transmision_scheme = 0;
   static const unsigned num_layers         = 1;
-  // :TODO: nid_pdsch is pci for now.
+  // Set nid_pdsch to pci.
   static const unsigned nid_pdsch = 1;
   builder.set_codeword_information_parameters(
       nid_pdsch, num_layers, transmision_scheme, pdsch_ref_point_type::subcarrier_0);
@@ -87,18 +87,14 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   if (mac_pdu.pdsch_cfg.prbs.is_alloc_type0()) {
     static_vector<uint8_t, dl_pdsch_pdu::MAX_SIZE_RB_BITMAP> rb_map;
     rb_map.resize(dl_pdsch_pdu::MAX_SIZE_RB_BITMAP, 0U);
-    // :TODO: check conversion and if LSB of byte 0 of the bitmap represents the VRB 0.
     const rbg_bitmap& mac_rbg_map = mac_pdu.pdsch_cfg.prbs.rbgs();
     for (unsigned i = 0, e = mac_rbg_map.size(); i != e; ++i) {
       rb_map[i / 8] |= uint8_t(mac_rbg_map.test(i) ? 1U : 0U) << i % 8;
     }
-
-    // :TODO: check vrb_to_prb.
     builder.set_pdsch_allocation_in_frequency_type_0({rb_map}, vrb_to_prb_mapping_type::non_interleaved);
 
   } else {
     const prb_interval& prb_int = mac_pdu.pdsch_cfg.prbs.prbs();
-    // :TODO: check vrb_to_prb.
     builder.set_pdsch_allocation_in_frequency_type_1(
         prb_int.start(), prb_int.length(), vrb_to_prb_mapping_type::non_interleaved);
   }
@@ -107,20 +103,20 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                                   mac_pdu.pdsch_cfg.symbols.length());
 
   // Power values.
-  // :TODO: ask for these values, now they're hardcoded.
   builder.set_tx_power_info_parameters({0}, nzp_csi_rs_epre_to_ssb::dB0);
 
-  // TODO: for now, we're only using pdsch_trans_type 0.
   const coreset_configuration& coreset_cfg = *mac_pdu.pdcch_cfg->ctx.coreset_cfg;
   builder.set_maintenance_v3_bwp_parameters(pdsch_trans_type::non_interleaved_common_ss,
                                             coreset_cfg.coreset0_crbs().start(),
                                             coreset_cfg.coreset0_crbs().length());
 
-  // :TODO: ask these values.
-  unsigned              tb_size_lbrm_bytes = 11525;
+  unsigned              tb_size_lbrm_bytes = ldpc::MAX_CODEBLOCK_SIZE / 8;
   const pdsch_codeword& cw                 = mac_pdu.pdsch_cfg.codewords.front();
+
+  // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
+  unsigned R = cw.target_code_rate * 0.0009765625F;
   builder.set_maintenance_v3_codeword_parameters(
-      get_ldpc_base_graph(cw.target_code_rate, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);
+      get_ldpc_base_graph(R, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);
 
   // :TODO Rate-Matching related parameters, not used now.
 
