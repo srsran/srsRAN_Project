@@ -14,7 +14,7 @@
 #include <random>
 
 static std::mt19937 rgen(0);
-static const float  ASSERT_MAX_ERROR = 2e-6;
+static const float  ASSERT_MAX_ERROR = 3e-6;
 
 using namespace srsgnb;
 
