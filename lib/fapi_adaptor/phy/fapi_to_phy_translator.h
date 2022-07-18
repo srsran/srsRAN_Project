@@ -71,7 +71,7 @@ public:
   /// \param sector_id Sector identifier.
   /// \param dl_processor_pool Downlink processor pool that will be used to process PDUs.
   /// \param rg_pool Resource grid pool that will be used to process PDUs.
-  /// \param scs_common subcarrier spacing common, as per TS 331, Section 6.2.2,
+  /// \param scs_common subcarrier spacing common, as per TS 38.331, Section 6.2.2,
   fapi_to_phy_translator(unsigned                 sector_id,
                          downlink_processor_pool& dl_processor_pool,
                          resource_grid_pool&      rg_pool,

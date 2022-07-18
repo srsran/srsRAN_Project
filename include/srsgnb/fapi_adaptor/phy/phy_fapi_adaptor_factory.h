@@ -23,7 +23,7 @@ namespace fapi_adaptor {
 
 struct phy_fapi_adaptor_factory_config {
   unsigned sector_id;
-  /// Subcarrier spacing common, as per TS 331, Section 6.2.2,
+  /// Subcarrier spacing common, as per TS 38.331, Section 6.2.2,
   subcarrier_spacing scs_common;
 };
 
