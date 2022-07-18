@@ -41,7 +41,7 @@ stages:
       if [ $enable_coverage = "true" ]; then
         EXTRA_BUILD_ARGS="-DENABLE_GCOV=True"
       fi
-    - builder.sh -c $compiler -u $uhd_version $EXTRA_BUILD_ARGS .
+    - builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $EXTRA_BUILD_ARGS .
   cache: &build_cache
     key: ${os_type}-${os_version}-${docker_version}-${compiler}
     paths:
