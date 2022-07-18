@@ -391,19 +391,11 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   cell_slot_resource_allocator& rar_alloc   = res_alloc[get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].k0];
   prb_interval                  rar_prbs    = crb_to_prb(initial_active_dl_bwp, rar_crbs);
 
-  // Allocate RBs and space for RAR.
-  rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch,
-                                        get_dl_bwp_cfg().scs,
-                                        get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols,
-                                        rar_crbs});
-  rar_alloc.result.dl.rar_grants.emplace_back();
-  rar_information& rar = rar_alloc.result.dl.rar_grants.back();
-
   // Fill RAR DCI.
-  rar.pdcch_cfg                      = &pdcch_alloc.result.dl.dl_pdcchs.back();
-  rar.pdcch_cfg->dci.type            = dci_dl_rnti_config_type::ra_f1_0;
-  rar.pdcch_cfg->dci.ra_f1_0         = {};
-  dci_1_0_ra_rnti_configuration& dci = rar.pdcch_cfg->dci.ra_f1_0;
+  pdcch_dl_information& pdcch        = pdcch_alloc.result.dl.dl_pdcchs.back();
+  pdcch.dci.type                     = dci_dl_rnti_config_type::ra_f1_0;
+  pdcch.dci.ra_f1_0                  = {};
+  dci_1_0_ra_rnti_configuration& dci = pdcch.dci.ra_f1_0;
   dci.N_rb_dl_bwp                    = initial_active_dl_bwp.crbs.length();
   dci.frequency_resource             = ra_frequency_type1_get_riv(
       ra_frequency_type1_configuration{dci.N_rb_dl_bwp, rar_prbs.start(), rar_prbs.length()});
@@ -412,7 +404,16 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   dci.modulation_coding_scheme = 0;
   dci.tb_scaling               = 0; // TODO.
 
+  // Allocate RBs and space for RAR.
+  rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch,
+                                        get_dl_bwp_cfg().scs,
+                                        get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols,
+                                        rar_crbs});
+
   // Fill RAR PDSCH.
+  rar_alloc.result.dl.rar_grants.emplace_back();
+  rar_information& rar  = rar_alloc.result.dl.rar_grants.back();
+  rar.pdcch_cfg         = &pdcch;
   rar.pdsch_cfg.rnti    = rar.pdcch_cfg->ctx.rnti;
   rar.pdsch_cfg.bwp_cfg = rar.pdcch_cfg->ctx.bwp_cfg;
   rar.pdsch_cfg.prbs    = rar_prbs;
@@ -450,13 +451,18 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.tpc                      = 0;
     msg3_info.csi_req                  = false;
 
-    // Allocate and fill PUSCH for Msg3.
+    // Allocate Msg3 RBs.
     const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
     msg3_alloc.ul_res_grid.fill(
         grant_info{grant_info::channel::sch, get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
     msg3_alloc.result.ul.puschs.emplace_back();
-    ul_sched_info& pusch = msg3_alloc.result.ul.puschs.back();
-    pusch.crnti          = pending_msg3.ind_msg.crnti;
+
+    // Fill PUSCH for Msg3.
+    ul_sched_info& pusch    = msg3_alloc.result.ul.puschs.back();
+    pusch.crnti             = pending_msg3.ind_msg.crnti;
+    pusch.pusch_cfg.bwp_cfg = &get_ul_bwp_cfg();
+    pusch.pusch_cfg.prbs    = prbs;
+    pusch.pusch_cfg.symbols = symbols;
     // TODO
 
     // Allocate Msg3 UL HARQ

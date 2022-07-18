@@ -157,7 +157,15 @@ struct dl_msg_tb_info {
 /// Dedicated DL Grant for UEs
 struct dl_msg_alloc {
   rnti_t                                        crnti;
+  pdsch_information                             pdsch_cfg;
   static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tbs;
+};
+
+struct pusch_information {
+  rnti_t                   rnti;
+  const bwp_configuration* bwp_cfg;
+  prb_grant                prbs;
+  ofdm_symbol_range        symbols;
 };
 
 /// RAR grant.
@@ -225,7 +233,8 @@ struct dl_sched_result {
 };
 
 struct ul_sched_info {
-  rnti_t crnti;
+  rnti_t            crnti;
+  pusch_information pusch_cfg;
 };
 
 struct prach_occasion_info {

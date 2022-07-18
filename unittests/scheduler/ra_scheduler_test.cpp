@@ -12,6 +12,7 @@
 #include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_scheduler.h"
 #include "lib/scheduler/support/config_helpers.h"
+#include "scheduler_test_suite.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/srslog/bundled/fmt/ranges.h"
 #include "srsgnb/support/test_utils.h"
@@ -42,7 +43,11 @@ public:
   {
     TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id);
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
-    slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti = rnti;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.coreset_cfg =
+        &*slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.cces = {get_ncce(slot_alloc.slot), srsgnb::aggregation_level::n4};
     return &slot_alloc.result.dl.dl_pdcchs[0];
   }
 
@@ -69,6 +74,22 @@ public:
     srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
+
+private:
+  unsigned get_ncce(slot_point pdcch_sl)
+  {
+    if (not last_sl.valid() or pdcch_sl != last_sl) {
+      next_ncce = to_nof_cces(srsgnb::aggregation_level::n4);
+      last_sl   = pdcch_sl;
+      return 0;
+    }
+    unsigned ret = next_ncce;
+    next_ncce += to_nof_cces(srsgnb::aggregation_level::n4);
+    return ret;
+  }
+
+  unsigned   next_ncce = 0;
+  slot_point last_sl;
 };
 
 /// Tests whether the fields in a list of RAR grant are consistent. Current tests:
@@ -415,6 +436,9 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
     // Run RA scheduler
     ra_sch.run_slot(bench.res_grid);
 
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
+
     // Test whether the scheduler has allocated the expected number of MSG3 grants
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_grid);
 
@@ -509,6 +533,9 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
     // Run RA scheduler
     ra_sch.run_slot(bench.res_grid);
 
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
+
     // Test whether the scheduler has allocated the expected number of MSG3 grants
     unsigned nof_msg3_allocation = test_expected_nof_allocation(bench.cfg, slot_rx, rach_ind_list, bench.res_grid);
 
@@ -558,6 +585,9 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
 
     // Run RA scheduler
     ra_sch.run_slot(bench.res_grid);
+
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
 
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
@@ -616,6 +646,9 @@ void test_ra_sched_tdd_single_rach()
 
     // Run RA scheduler
     ra_sch.run_slot(bench.res_grid);
+
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
 
     // In case slot_tx corresponds to a TDD UL slot, ensure no RARs are allocated.
     bool is_dl_slot = slot_is_dl(*bench.cfg.tdd_cfg_common, sl_tx);
@@ -699,6 +732,12 @@ void test_ra_sched_rach_occassion_scheduling()
 
     // Run RA scheduler.
     ra_sch.run_slot(bench.res_grid);
+
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
+
+    // Test scheduler result consistency.
+    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
 
     // Test: PRACH occasions only allocated in slots set by cell configuration.
     const ul_sched_result& ulres = bench.res_grid[0].result.ul;

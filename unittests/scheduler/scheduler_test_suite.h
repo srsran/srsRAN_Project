@@ -34,6 +34,12 @@ void test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
                                 span<const sib_information> sibs,
                                 prb_bitmap*                 used_rbs = nullptr);
 
+/// \brief Detects collisions in the "RB x symbol" DL resource grid.
+void test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result);
+
+/// \brief Detects collisions in the "RB x symbol" UL resource grid.
+void test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result);
+
 /// \brief Run all consistency checks for the scheduler result.
 void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result);
 

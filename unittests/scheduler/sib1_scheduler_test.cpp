@@ -26,7 +26,11 @@ public:
   {
     TESTASSERT_EQ(ss_id, slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id);
     slot_alloc.result.dl.dl_pdcchs.emplace_back();
-    slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti = rnti;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.rnti    = rnti;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.bwp_cfg = &slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.coreset_cfg =
+        &*slot_alloc.cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
+    slot_alloc.result.dl.dl_pdcchs.back().ctx.cces = {0, srsgnb::aggregation_level::n4};
     return &slot_alloc.result.dl.dl_pdcchs[0];
   }
 

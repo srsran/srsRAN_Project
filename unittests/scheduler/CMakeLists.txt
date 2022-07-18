@@ -58,7 +58,7 @@ target_link_libraries(resource_allocator_test srsgnb_sched du_manager_converters
 add_test(resource_allocator_test resource_allocator_test)
 
 add_executable(ra_scheduler_test ra_scheduler_test.cpp)
-target_link_libraries(ra_scheduler_test srsgnb_sched du_manager_converters srslog rrc_nr_asn1 mac_configuration_helpers)
+target_link_libraries(ra_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
 add_test(ra_scheduler_test ra_scheduler_test)
 
 add_executable(pdcch_scheduler_test pdcch_scheduler_test.cpp)

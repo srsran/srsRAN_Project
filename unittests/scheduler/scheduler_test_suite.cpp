@@ -10,6 +10,7 @@
 
 #include "scheduler_test_suite.h"
 #include "lib/scheduler/cell/resource_grid.h"
+#include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -67,8 +68,95 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
   }
 }
 
+void srsgnb::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result)
+{
+  cell_slot_resource_grid grid(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list);
+
+  // Register SSB.
+  // TODO.
+
+  // Fill DL PDCCHs.
+  for (const pdcch_dl_information& pdcch : result.dl_pdcchs) {
+    const bwp_configuration&     bwp_cfg = *pdcch.ctx.bwp_cfg;
+    const coreset_configuration& cs_cfg  = *pdcch.ctx.coreset_cfg;
+    prb_index_list               pdcch_prbs =
+        cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
+    for (unsigned prb : pdcch_prbs) {
+      unsigned   crb = prb_to_crb(bwp_cfg, prb);
+      grant_info grant{
+          grant_info::channel::cch, bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}};
+      TESTASSERT(not grid.collides(grant));
+      grid.fill(grant);
+    }
+  }
+
+  // Fill UL PDCCHs.
+  for (const pdcch_ul_information& pdcch : result.ul_pdcchs) {
+    const bwp_configuration&     bwp_cfg = *pdcch.ctx.bwp_cfg;
+    const coreset_configuration& cs_cfg  = *pdcch.ctx.coreset_cfg;
+    prb_index_list               pdcch_prbs =
+        cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
+    for (unsigned prb : pdcch_prbs) {
+      unsigned   crb = prb_to_crb(bwp_cfg, prb);
+      grant_info grant{
+          grant_info::channel::cch, bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}};
+      TESTASSERT(not grid.collides(grant));
+      grid.fill(grant);
+    }
+  }
+
+  // Register SIB1 PDSCH.
+  for (const sib_information& sib : result.bc.sibs) {
+    bwp_configuration effective_init_bwp_cfg = *sib.pdsch_cfg.bwp_cfg;
+    effective_init_bwp_cfg.crbs              = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+
+    prb_interval prbs = sib.pdsch_cfg.prbs.prbs();
+    crb_interval crbs = prb_to_crb(effective_init_bwp_cfg, prbs);
+    grant_info   grant{grant_info::channel::sch, sib.pdsch_cfg.bwp_cfg->scs, sib.pdsch_cfg.symbols, crbs};
+    TESTASSERT(not grid.collides(grant));
+    grid.fill(grant);
+  }
+
+  // Register RAR PDSCHs.
+  for (const rar_information& rar : result.rar_grants) {
+    crb_interval crbs = prb_to_crb(*rar.pdsch_cfg.bwp_cfg, rar.pdsch_cfg.prbs.prbs());
+    grant_info   grant{grant_info::channel::sch, rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
+    TESTASSERT(not grid.collides(grant));
+    grid.fill(grant);
+  }
+
+  // Register UE PDSCHs.
+  for (const dl_msg_alloc& ue_pdsch : result.ue_grants) {
+    crb_interval crbs = prb_to_crb(*ue_pdsch.pdsch_cfg.bwp_cfg, ue_pdsch.pdsch_cfg.prbs.prbs());
+    grant_info   grant{grant_info::channel::sch, ue_pdsch.pdsch_cfg.bwp_cfg->scs, ue_pdsch.pdsch_cfg.symbols, crbs};
+    TESTASSERT(not grid.collides(grant));
+    grid.fill(grant);
+  }
+}
+
+void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result)
+{
+  cell_slot_resource_grid grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
+
+  // Fill PRACHs.
+  //  for (const prach_occasion_info& prach : result.prachs) {
+  //    // TODO.
+  //  }
+
+  // Fill PUSCHs.
+  for (const ul_sched_info& pusch : result.puschs) {
+    const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
+    crb_interval             crbs    = prb_to_crb(bwp_cfg, pusch.pusch_cfg.prbs.prbs());
+    grant_info grant{grant_info::channel::sch, pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
+    TESTASSERT(not grid.collides(grant));
+    grid.fill(grant);
+  }
+}
+
 void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result)
 {
   prb_bitmap used_crbs(cell_cfg.nof_dl_prbs);
   test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs, &used_crbs);
+  test_dl_resource_grid_collisions(cell_cfg, result.dl);
+  test_ul_resource_grid_collisions(cell_cfg, result.ul);
 }
