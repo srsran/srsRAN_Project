@@ -1,13 +1,16 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "8"
+    ref: "9"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "8"
+    ref: "9"
     file: .gitlab/ci-shared/scheduler.yml
   - project: softwareradiosystems/testing-tools
-    ref: "8"
-    file: .gitlab/versions.yml
+    ref: "9"
+    file: .gitlab/ci-shared/versions.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "9"
+    file: .gitlab/ci-shared/default.yml
   - local: .gitlab/ci/build.yml
 
 stages:
@@ -77,7 +80,7 @@ no-binaries-added:
     check_flags: "false"
     run_tests: "true"
     enable_coverage: "true"
-    coverage_full: "false"
+    coverage_full_report: "false"
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
@@ -89,10 +92,6 @@ alternative builds:
       variables:
         run_tests: "false"
     - if: $ON_SCHEDULE
-  needs: []
-  trigger:
-    include: .gitlab/ci/build.yml
-    strategy: depend
   parallel:
     matrix:
       - os_type: ubuntu
@@ -110,11 +109,12 @@ alternative builds:
         compiler: [gcc, clang]
 
 alternative builds uhd:
-  extends: alternative builds
+  extends: .alternative builds
   rules:
     - if: $ON_SCHEDULE
       variables:
         enable_coverage: "false"
+        CI_MERGE_REQUEST_LABELS: no-cache
   parallel:
     matrix:
       - os_type: ubuntu

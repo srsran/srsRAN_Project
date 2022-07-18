@@ -1,10 +1,13 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "8"
+    ref: "9"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "8"
-    file: .gitlab/versions.yml
+    ref: "9"
+    file: .gitlab/ci-shared/default.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "9"
+    file: .gitlab/ci-shared/versions.yml
 
 variables:
   # Input variables
@@ -19,7 +22,7 @@ variables:
   # Tests
   run_tests: "true"
   enable_coverage: "true"
-  coverage_full: $ON_SCHEDULE
+  coverage_full_report: $ON_SCHEDULE
 
 stages:
   - build
@@ -63,7 +66,7 @@ build [cached]:
   rules:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
       when: never
-    - if: $ON_MR == "true"
+    - if: $ON_MR
   cache:
     <<: *build_cache
     policy: pull
@@ -72,6 +75,8 @@ build [clean and update cache]:
   # A clean build will be done and the job will push a new fresh cache
   extends: .build
   rules:
+    - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
+      when: never
     - if: $ON_SCHEDULE
   cache:
     <<: *build_cache
@@ -144,7 +149,7 @@ cmake flag check:
       fi
     - |
       if [ $enable_coverage = "true" ]; then 
-        if [[ $coverage_full && $coverage_full = "true" ]]; then
+        if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
           gcovr --html --html-details $GCOVR_ARGS -o coverage.html
         else
           gcovr --html                $GCOVR_ARGS -o coverage.html
