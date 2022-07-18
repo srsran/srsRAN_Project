@@ -21,7 +21,7 @@ enum class ldpc_base_graph_type : uint8_t { BG1, BG2 };
 /// section 7.2.2.
 ///
 /// \param R Target code rate.
-/// \param A  Size in bytes of the payload.
+/// \param A Size in bytes of the payload.
 /// \return
 constexpr ldpc_base_graph_type get_ldpc_base_graph(float R, unsigned A)
 {

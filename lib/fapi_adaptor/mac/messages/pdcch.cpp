@@ -28,12 +28,12 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder&
   const bwp_configuration&     bwp_cfg     = *mac_pdu.bwp_cfg;
   const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;
 
-  // For CORESET0 cbrs is provided by the CORESET, instead of BWP.
-  const crb_interval& cbrs = (coreset_cfg.id == to_coreset_id(0)) ? coreset_cfg.coreset0_crbs() : bwp_cfg.crbs;
+  // For CORESET0 CRBs is provided by the CORESET, instead of BWP.
+  const crb_interval& crbs = (coreset_cfg.id == to_coreset_id(0)) ? coreset_cfg.coreset0_crbs() : bwp_cfg.crbs;
 
   // Fill BWP parameters.
-  builder.set_bwp_parameters(cbrs.length(),
-                             cbrs.start(),
+  builder.set_bwp_parameters(crbs.length(),
+                             crbs.start(),
                              bwp_cfg.scs,
                              (bwp_cfg.cp_extended) ? cyclic_prefix_type::extended : cyclic_prefix_type::normal);
 

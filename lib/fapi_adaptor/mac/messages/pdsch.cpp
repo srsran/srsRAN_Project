@@ -114,7 +114,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   const pdsch_codeword& cw                 = mac_pdu.pdsch_cfg.codewords.front();
 
   // NOTE: MAC uses the value of the target code rate x[1024], as per TS 38.214, Section 5.1.3.1, table 5.1.3.1-1.
-  unsigned R = cw.target_code_rate * 0.0009765625F;
+  float R = cw.target_code_rate * (1.F / 1024);
   builder.set_maintenance_v3_codeword_parameters(
       get_ldpc_base_graph(R, cw.tb_size_bytes), tb_size_lbrm_bytes, false, false);
 
