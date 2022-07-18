@@ -56,19 +56,19 @@ public:
 private:
   class f1ap_event_manager;
 
-  /// \brief Notify the CU about the reception of an initiating message.
+  /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
-  /// \brief Notify the UE manager about the reception of an Initial UL RRC Message Transfer message.
+  /// \brief Notify about the reception of an Initial UL RRC Message Transfer message.
   /// \param[in] msg The F1AP initial UL RRC message.
   void handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& msg);
 
-  /// \brief Notify the UE manager about the reception of an UL RRC Message Transfer message.
+  /// \brief Notify about the reception of an UL RRC Message Transfer message.
   /// \param[in] msg The F1AP UL RRC message.
   void handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg);
 
-  /// \brief Notify the CU-CP manager about the reception of an F1 Removal Request.
+  /// \brief Notify about the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.
   void handle_f1_removal_resquest(const f1_removal_request_message& msg);
 

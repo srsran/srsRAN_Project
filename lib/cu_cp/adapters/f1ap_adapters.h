@@ -19,7 +19,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between F1AP and CU-CP manager, to handle DU specific procedure outcomes (e.g. F1 Remove)
+/// Adapter between F1AP and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
 class cu_cp_f1ap_event_indicator : public f1c_du_management_notifier
 {
 public:

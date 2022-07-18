@@ -142,7 +142,7 @@ class f1c_du_processor_message_notifier
 public:
   virtual ~f1c_du_processor_message_notifier() = default;
 
-  /// \brief Notifies the DU processor about the reception of a F1 Setup Request message.
+  /// \brief Notifies about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 
@@ -170,12 +170,12 @@ public:
   virtual void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) = 0;
 };
 
-/// Methods used by F1AP to notify CU-CP manager about DU specific events.
+/// Methods used by F1AP to notify about DU specific events.
 class f1c_du_management_notifier
 {
 public:
   virtual ~f1c_du_management_notifier() = default;
-  /// \brief Notifies the CU-CP manager about a successful F1 Removal procedure.
+  /// \brief Notifies about a successful F1 Removal procedure.
   /// The corresponding DU processor will be removed now.
   /// \param[in] du_index The index of the DU processor to delete.
   virtual void on_du_remove_request_received(const du_index_t du_index) = 0;
