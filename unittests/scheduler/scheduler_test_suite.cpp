@@ -12,6 +12,7 @@
 #include "lib/scheduler/cell/resource_grid.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
+#include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;
@@ -40,9 +41,7 @@ void srsgnb::test_pdcch_pdsch_common_consistency(const cell_configuration&   cel
   TESTASSERT(symbols == pdsch.symbols, "Mismatch of time-domain resource assignment and PDSCH symbols");
 }
 
-void srsgnb::test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
-                                        span<const sib_information> sibs,
-                                        prb_bitmap*                 used_rbs)
+void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs)
 {
   bool has_coreset0 = cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value();
   if (not has_coreset0) {
@@ -57,11 +56,6 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
     TESTASSERT(sib.pdsch_cfg.prbs.is_alloc_type1());
     prb_interval prbs = sib.pdsch_cfg.prbs.prbs();
     TESTASSERT(prbs.stop() <= effective_init_bwp_cfg.crbs.length(), "PRB grant falls outside CORESET#0 RB boundaries");
-    if (used_rbs != nullptr) {
-      crb_interval crbs = prb_to_crb(effective_init_bwp_cfg, prbs);
-      TESTASSERT(not used_rbs->any(crbs.start(), crbs.stop()), "RB Collision detected between SIB1 and another alloc");
-      used_rbs->fill(crbs.start(), crbs.stop());
-    }
     if (sib.pdcch_cfg != nullptr) {
       test_pdcch_pdsch_common_consistency(cell_cfg, *sib.pdcch_cfg, sib.pdsch_cfg);
     }
@@ -139,9 +133,22 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
   cell_slot_resource_grid grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
 
   // Fill PRACHs.
-  //  for (const prach_occasion_info& prach : result.prachs) {
-  //    // TODO.
-  //  }
+  if (not result.prachs.empty()) {
+    prach_configuration prach_cfg = prach_configuration_get(
+        frequency_range::FR1,
+        cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
+        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
+
+    for (const prach_occasion_info& prach : result.prachs) {
+      ofdm_symbol_range symbols{prach.start_symbol, (uint8_t)(prach.start_symbol + prach_cfg.duration)};
+      unsigned prb_start = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
+      prb_interval prbs{prb_start, prb_start + 6}; // TODO: Derive nof RBs.
+      crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prbs);
+      grant_info grant{grant_info::channel::sch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
+      TESTASSERT(not grid.collides(grant));
+      grid.fill(grant);
+    }
+  }
 
   // Fill PUSCHs.
   for (const ul_sched_info& pusch : result.puschs) {
@@ -155,8 +162,7 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 
 void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result)
 {
-  prb_bitmap used_crbs(cell_cfg.nof_dl_prbs);
-  test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs, &used_crbs);
+  test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs);
   test_dl_resource_grid_collisions(cell_cfg, result.dl);
   test_ul_resource_grid_collisions(cell_cfg, result.ul);
 }

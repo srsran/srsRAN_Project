@@ -26,13 +26,9 @@ void test_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
 /// - If CORESET#0 is not defined, SIB1 cannot be scheduled.
 /// - SIB must use alloc_type_1.
 /// - SIB PRBs must fall within CORESET#0 RB boundaries.
-/// - SIB PRBs do not collide with other PDSCH allocations.
 /// \param cell_cfg Cell configuration.
 /// \param sibs Scheduled SIBs in a given slot.
-/// \param[in/out] used_rbs optional parameter of currently used CRBs in the cell. It is used to detect collisions.
-void test_pdsch_sib_consistency(const cell_configuration&   cell_cfg,
-                                span<const sib_information> sibs,
-                                prb_bitmap*                 used_rbs = nullptr);
+void test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs);
 
 /// \brief Detects collisions in the "RB x symbol" DL resource grid.
 void test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result);
