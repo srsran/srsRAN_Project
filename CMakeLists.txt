@@ -35,7 +35,6 @@ set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "")
 # Options
 ########################################################################
 
-option(ASSERTS_ENABLED       "Enable srsRAN asserts"                    ON)
 option(STOP_ON_WARNING       "Interrupt application on warning"         OFF)
 option(ENABLE_TSAN           "Enable clang thread sanitizer"            OFF)
 option(ENABLE_ASAN           "Enable clang address sanitizer"           OFF)
@@ -46,10 +45,9 @@ option(ENABLE_FFTW           "Enable FFTW"                              ON)
 option(ENABLE_EXPORT         "Enable PIC and export libraries"          OFF)
 option(AUTO_DETECT_ISA       "Enable automatic ISA detection"           ON)
 option(BUILD_TESTS           "Compile tests"                            ON)
-
-if (ASSERTS_ENABLED)
-    add_definitions(-DASSERTS_ENABLED)
-endif()
+# Set assertion level options and default value.
+set(ASSERT_LEVEL "AUTO" CACHE STRING "Assertion paranoia level")
+set_property(CACHE ASSERT_LEVEL PROPERTY STRINGS AUTO MINIMAL NORMAL PARANOID)
 
 if (ENABLE_ASAN AND ENABLE_TSAN)
     message(FATAL_ERROR "ASAN and TSAN cannot be enabled at the same time.")
@@ -111,6 +109,18 @@ if (ENABLE_GCOV)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fprofile-arcs -ftest-coverage")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
 endif (ENABLE_GCOV)
+
+if(NOT ASSERT_LEVEL STREQUAL "MINIMAL")
+    # asserts are enabled.
+    add_definitions(-DASSERTS_ENABLED)
+    if((ASSERT_LEVEL STREQUAL "PARANOID") OR
+       ((ASSERT_LEVEL STREQUAL "AUTO") AND (${CMAKE_BUILD_TYPE} STREQUAL "Debug")))
+        add_definitions(-DPARANOID_ASSERTS_ENABLED)
+        message(STATUS "Assertion level set to PARANOID")
+    else()
+        message(STATUS "Assertion level set to NORMAL")
+    endif()
+endif()
 
 ########################################################################
 # Find dependencies

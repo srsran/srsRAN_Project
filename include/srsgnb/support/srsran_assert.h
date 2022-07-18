@@ -90,12 +90,9 @@ template <typename... Args>
 #define srsran_assert_ifdef(enable_check, condition, fmtstr, ...)                                                      \
   (void)((not SRSRAN_IS_DEFINED(enable_check)) || (srsran_always_assert(condition, fmtstr, ##__VA_ARGS__), 0))
 
-/// Specialization of "srsran_assert_ifdef" for the ASSERTS_ENABLED flag
+/// Specialization of "srsran_assert_ifdef" for the ASSERTS_ENABLED flag.
 #define srsran_assert(condition, fmtstr, ...) srsran_assert_ifdef(ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
 
-/// Specialization of "srsran_assert_ifdef" for the SANITY_CHECKS_ENABLED flag
-#ifndef NDEBUG
-#define SANITY_CHECKS_ENABLED
-#endif
-#define srsran_sanity_check(condition, fmt, ...)                                                                       \
-  srsran_assert_ifdef(SANITY_CHECKS_ENABLED, condition, fmt, ##__VA_ARGS__)
+/// Specialization of "srsran_assert_ifdef" for the SANITY_CHECKS_ENABLED flag.
+#define srsran_sanity_check(condition, fmtstr, ...)                                                                    \
+  srsran_assert_ifdef(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
