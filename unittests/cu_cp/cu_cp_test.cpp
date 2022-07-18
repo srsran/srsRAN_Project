@@ -38,8 +38,7 @@ void test_f1_setup()
   cu_cp_obj.start();
 
   // Connect DU
-  cu_cp_manager_interface& cu_cp_manager = cu_cp_obj.get_cu_cp_manager();
-  cu_cp_manager.on_new_connection();
+  cu_cp_obj.on_new_connection();
 
   // Handling of F1SetupRequest
   {
@@ -136,8 +135,7 @@ void test_initial_ul_rrc_message_transfer()
   cu_cp_obj.start();
 
   // Connect DU
-  cu_cp_manager_interface& cu_cp_manager = cu_cp_obj.get_cu_cp_manager();
-  cu_cp_manager.on_new_connection();
+  cu_cp_obj.on_new_connection();
 
   // TODO: Add this to fixture
   // Handling of F1SetupRequest

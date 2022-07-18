@@ -8,8 +8,6 @@
  *
  */
 
-#include "lib/cu_cp/cu_cp_manager_config.h"
-#include "lib/cu_cp/cu_cp_manager_context.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"

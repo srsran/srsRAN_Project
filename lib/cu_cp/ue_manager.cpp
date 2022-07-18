@@ -14,7 +14,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager(cu_cp_manager_config_t& cfg_) : cfg(cfg_), logger(cfg.logger)
+ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_)
 {
   std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), -1);
 }

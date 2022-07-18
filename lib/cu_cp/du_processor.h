@@ -12,6 +12,7 @@
 
 #include "adapters/f1ap_adapters.h"
 #include "du_context.h"
+#include "du_processor_config.h"
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
@@ -27,7 +28,7 @@ namespace srs_cu_cp {
 class du_processor : public du_processor_f1c_interface
 {
 public:
-  du_processor(cu_cp_manager_config_t& cfg);
+  du_processor(const du_processor_config_t& cfg);
   ~du_processor() = default;
 
   // message handlers
@@ -59,8 +60,8 @@ private:
   /// \brief Create SRB0 entry in bearer list and add adapter handle.
   void create_srb0(ue_context& ue_ctx);
 
-  srslog::basic_logger&   logger;
-  cu_cp_manager_config_t& cfg;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
+  du_processor_config_t cfg;
 
   du_context                                    context;
   slot_array<du_cell_context, MAX_NOF_DU_CELLS> cell_db; /// flattened version of served cells list provided by DU/F1AP

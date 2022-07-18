@@ -17,7 +17,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-du_processor::du_processor(cu_cp_manager_config_t& cfg_) : logger(cfg_.logger), cfg(cfg_), ue_mng(cfg_)
+du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mng(cfg_.logger)
 {
   // create f1ap
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
@@ -31,11 +31,11 @@ du_processor::du_processor(cu_cp_manager_config_t& cfg_) : logger(cfg_.logger), 
 void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
 {
   // TODO: add handling
-  cfg.logger.debug("Received F1 setup request");
+  logger.debug("Received F1 setup request");
 
   // Reject request without served cells
   if (not msg.request->gnb_du_served_cells_list_present) {
-    cfg.logger.error("Not handling F1 setup without served cells");
+    logger.error("Not handling F1 setup without served cells");
     send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
     return;
   }
@@ -54,7 +54,7 @@ void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
     du_cell.cgi        = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
 
     if (not cell_item.gnb_du_sys_info_present) {
-      cfg.logger.error("Not handling served cells without system information");
+      logger.error("Not handling served cells without system information");
       send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
       return;
     }
@@ -146,7 +146,7 @@ ue_index_t du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul
     if (ue_ctxt->srbs.contains(LCID_SRB0)) {
       ue_ctxt->srbs[LCID_SRB1].rx_notifier->on_new_rrc_message(msg.rrc_container_rrc_setup_complete.value());
     } else {
-      cfg.logger.error("SRB1 not present - dropping PDU");
+      logger.error("SRB1 not present - dropping PDU");
     }
   } else {
     // pass UL-CCCH to RRC
@@ -171,7 +171,7 @@ void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
   if (ue_ctxt->srbs.contains(msg.srbid)) {
     ue_ctxt->srbs[msg.srbid].rx_notifier->on_new_rrc_message(msg.rrc_container);
   } else {
-    cfg.logger.error("SR {} not present - dropping PDU", msg.srbid);
+    logger.error("SR {} not present - dropping PDU", msg.srbid);
   }
 }
 

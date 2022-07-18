@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/cu_cp/cu_cp_manager.h"
+#include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -104,14 +104,14 @@ private:
 class dummy_cu_cp_f1c_pdu_notifier : public f1c_message_notifier
 {
 public:
-  dummy_cu_cp_f1c_pdu_notifier(srs_cu_cp::cu_cp_manager_interface* manager_, f1c_message_handler* handler_) :
-    logger(srslog::fetch_basic_logger("TEST")), manager(manager_), handler(handler_){};
+  dummy_cu_cp_f1c_pdu_notifier(srs_cu_cp::cu_cp_interface* cu_cp_, f1c_message_handler* handler_) :
+    logger(srslog::fetch_basic_logger("TEST")), cu_cp(cu_cp_), handler(handler_){};
 
-  void attach_handler(srs_cu_cp::cu_cp_manager_interface* manager_, f1c_message_handler* handler_)
+  void attach_handler(srs_cu_cp::cu_cp_interface* cu_cp_, f1c_message_handler* handler_)
   {
-    manager = manager_;
+    cu_cp   = cu_cp_;
     handler = handler_;
-    manager->on_new_connection();
+    cu_cp->on_new_connection();
   };
   void on_new_message(const f1c_msg& msg) override
   {
@@ -126,9 +126,9 @@ public:
   f1c_msg last_f1c_msg;
 
 private:
-  srslog::basic_logger&               logger;
-  srs_cu_cp::cu_cp_manager_interface* manager = nullptr;
-  f1c_message_handler*                handler = nullptr;
+  srslog::basic_logger&       logger;
+  srs_cu_cp::cu_cp_interface* cu_cp   = nullptr;
+  f1c_message_handler*        handler = nullptr;
 };
 
 /// Reusable notifier class that a) stores the received du_index for test inspection and b)
@@ -137,10 +137,10 @@ private:
 class dummy_f1c_du_management_notifier : public srs_cu_cp::f1c_du_management_notifier
 {
 public:
-  dummy_f1c_du_management_notifier(srs_cu_cp::cu_cp_manager_du_handler* handler_) :
+  dummy_f1c_du_management_notifier(srs_cu_cp::cu_cp_du_handler* handler_) :
     logger(srslog::fetch_basic_logger("TEST")), handler(handler_){};
 
-  void attach_handler(srs_cu_cp::cu_cp_manager_du_handler* handler_) { handler = handler_; };
+  void attach_handler(srs_cu_cp::cu_cp_du_handler* handler_) { handler = handler_; };
   void on_du_remove_request_received(const srs_cu_cp::du_index_t idx) override
   {
     logger.info("Received a du remove request for du {}", idx);
@@ -154,8 +154,8 @@ public:
   srs_cu_cp::du_index_t last_du_idx;
 
 private:
-  srslog::basic_logger&                logger;
-  srs_cu_cp::cu_cp_manager_du_handler* handler = nullptr;
+  srslog::basic_logger&        logger;
+  srs_cu_cp::cu_cp_du_handler* handler = nullptr;
 };
 
 /// Dummy handler just printing the received PDU.

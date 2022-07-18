@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "cu_cp_manager_config.h"
 #include "srsgnb/adt/slot_array.h"
 #include "ue_manager_interfaces.h"
 
@@ -21,7 +20,7 @@ namespace srs_cu_cp {
 class ue_manager : public ue_manager_ctrl_configurer
 {
 public:
-  explicit ue_manager(cu_cp_manager_config_t& cfg_);
+  explicit ue_manager(srslog::basic_logger& logger_);
 
   const slot_array<ue_context, MAX_NOF_UES>& get_ues() const { return ue_db; }
 
@@ -43,8 +42,7 @@ private:
 
   void create_srb0(ue_context& ue_ctx);
 
-  cu_cp_manager_config_t& cfg;
-  srslog::basic_logger&   logger;
+  srslog::basic_logger& logger;
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
   std::array<int, MAX_NOF_UES>        rnti_to_ue_index;

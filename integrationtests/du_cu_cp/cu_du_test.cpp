@@ -11,7 +11,7 @@
 #include "../../lib/cu_cp/cu_cp.h"
 #include "../../lib/du_high/du_high.h"
 #include "../../lib/du_high/du_high_executor_strategies.h"
-#include "srsgnb/cu_cp/cu_cp_manager.h"
+#include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/du/du_cell_config_helpers.h"
@@ -93,7 +93,7 @@ void test_f1_setup()
   srsgnb::srs_du::du_high du_obj(du_cfg);
 
   // attach DU msg handler to CU message handler and vice-versa (in this order)
-  cu_msg_handler.attach_handler(&cu_cp_obj.get_cu_cp_manager(), &du_obj.get_f1c_message_handler());
+  cu_msg_handler.attach_handler(&cu_cp_obj, &du_obj.get_f1c_message_handler());
   du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
   // start CU and DU
@@ -146,7 +146,7 @@ void test_rrc_message_transfer_procedure()
   srsgnb::srs_du::du_high du_obj(du_cfg);
 
   // attach DU msg handler to CU message handler and vice-versa (in this order)
-  cu_msg_handler.attach_handler(&cu_cp_obj.get_cu_cp_manager(), &du_obj.get_f1c_message_handler());
+  cu_msg_handler.attach_handler(&cu_cp_obj, &du_obj.get_f1c_message_handler());
   du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
   // start CU and DU
