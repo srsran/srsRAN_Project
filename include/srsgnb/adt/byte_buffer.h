@@ -736,7 +736,7 @@ public:
   }
   byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : sliced_view(view), buf(buf_.copy())
   {
-    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)length(),
+    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
   }
 
