@@ -38,11 +38,7 @@ public:
   T        result() && { return std::move(ev)->get(); }
 
   /// awaiter interface
-  awaiter_type get_awaiter()
-  {
-    srsran_assert(not ev->is_set(), "Transaction cannot be reused");
-    return ev->get_awaiter();
-  }
+  awaiter_type get_awaiter() { return ev->get_awaiter(); }
 
 private:
   template <typename U, size_t N>
@@ -90,6 +86,7 @@ public:
     }
     running_timers[t.id()].set(
         time_to_cancel, [this, transaction_id = t.id()](timer_id_t tid) { slot_ar[transaction_id].set(cancel_value); });
+    running_timers[t.id()].run();
     return t;
   }
 
