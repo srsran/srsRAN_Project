@@ -146,7 +146,7 @@ struct rach_config_generic {
   /// Offset of lowest PRACH transmission occasion in frequency domain respective to PRB 0,
   /// as per TS38.211, clause 6.3.3.2. Possible values: {0,...,MAX_NOF_PRB - 1}.
   unsigned msg1_frequency_start;
-  /// N-CS configuration as per TS38.211, Table 6.3.3.1-5. Possible values: {0,...,419}.
+  /// Zero-correlation zone configuration number as per TS38.331 "zeroCorrelationZoneConfig", used to derive N_{CS}.
   uint16_t zero_correlation_zone_config;
 };
 

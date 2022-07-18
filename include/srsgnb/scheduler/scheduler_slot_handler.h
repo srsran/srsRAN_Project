@@ -40,6 +40,8 @@ const size_t MAX_SSB_PER_SLOT = 2;
 constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
 /// [Implementation defined] This corresponds to maximum number of RARs that can be scheduled per slot.
 constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
+/// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4].
+const static size_t MAX_NOF_PRACHS_PER_SLOT = 7;
 
 struct beamforming_info {
   // TODO
@@ -227,7 +229,7 @@ struct ul_sched_info {
 };
 
 struct prach_occasion_info {
-  /// Number of time-domain PRACH occasions (N^{RAslot}_t). See TS38.211, sec 6.3.3.2.
+  /// Number of time-domain PRACH occasions (N^{RAslot}_t), as per TS38.211 Tables 6.3.3.2-[2-4].
   uint8_t nof_prach_occasions;
   /// RACH format information for the PRACH occasions.
   preamble_format format;
@@ -238,9 +240,7 @@ struct prach_occasion_info {
   /// Starting symbol for the first PRACH TD occasion.
   /// \remark See TS38.211, sec 6.3.3.2 and Tables 6.3.3.2-2 and 6.3.3.2-4. Possible values: {0,...,13}.
   uint8_t start_symbol;
-  /// Zero-correlation zone configuration number (N_{CS}), defined in RRC via parameter zeroCorrelationZoneConfig.
-  /// Possible values: {0,...,419}.
-  /// \remark See TS38.211, sec 6.3.3.1 and Table 6.3.3.1-5, 6.3.3.1-6 and 6.3.3.1-7.
+  /// N-CS configuration as per TS38.211, Table 6.3.3.1-5. Possible values: {0,...,419}.
   uint16_t nof_cs;
   /// Values: {0,...,255}.
   uint8_t prach_config_index;
@@ -251,12 +251,13 @@ struct prach_occasion_info {
 };
 
 struct ul_sched_result {
-  /// Allocation of PUSCHs
+  /// PUSCH grants allocated in the current slot.
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
-  /// Slot PRACH opportunities.
-  static_vector<prach_occasion_info, MAX_GRANTS> prachs;
+  /// PRACH occasions within the given slot.
+  static_vector<prach_occasion_info, MAX_NOF_PRACHS_PER_SLOT> prachs;
 };
 
+/// Scheduler decision made for DL and UL in a given slot.
 struct sched_result {
   dl_sched_result dl;
   ul_sched_result ul;
