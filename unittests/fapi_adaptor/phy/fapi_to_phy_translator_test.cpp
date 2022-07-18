@@ -21,6 +21,8 @@ using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittest;
 
+static constexpr subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+
 namespace {
 static resource_grid_spy grid;
 
@@ -62,7 +64,7 @@ static void test_downlink_processor_is_configured_on_new_slot()
   resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -84,7 +86,7 @@ static void test_current_grid_is_send_on_new_slot()
   resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -113,7 +115,7 @@ static void test_dl_ssb_pdu_is_processed()
   resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -150,7 +152,7 @@ static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
   resource_grid_pool_dummy      rg_pool(grid);
   unsigned                      sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());

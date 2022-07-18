@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 #include <memory>
 
 namespace srsgnb {
@@ -22,6 +23,8 @@ namespace fapi_adaptor {
 
 struct phy_fapi_adaptor_factory_config {
   unsigned sector_id;
+  /// Subcarrier spacing common, as per TS 331, Section 6.2.2,
+  subcarrier_spacing scs_common;
 };
 
 /// Factory that creates phy_fapi adaptors.

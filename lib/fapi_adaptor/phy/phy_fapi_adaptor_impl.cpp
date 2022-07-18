@@ -16,8 +16,9 @@ using namespace fapi_adaptor;
 
 phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int             sector_id,
                                              downlink_processor_pool& dl_processor_pool,
-                                             resource_grid_pool&      rg_pool) :
-  fapi_translator(sector_id, dl_processor_pool, rg_pool), slot_dispatcher(phy_translator, fapi_translator)
+                                             resource_grid_pool&      rg_pool,
+                                             subcarrier_spacing       scs_common) :
+  fapi_translator(sector_id, dl_processor_pool, rg_pool, scs_common), slot_dispatcher(phy_translator, fapi_translator)
 {
 }
 

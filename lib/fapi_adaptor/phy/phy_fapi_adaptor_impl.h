@@ -25,7 +25,10 @@ namespace fapi_adaptor {
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
-  phy_fapi_adaptor_impl(unsigned sector_id, downlink_processor_pool& dl_processor_pool, resource_grid_pool& rg_pool);
+  phy_fapi_adaptor_impl(unsigned                 sector_id,
+                        downlink_processor_pool& dl_processor_pool,
+                        resource_grid_pool&      rg_pool,
+                        subcarrier_spacing       scs_common);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_upper_phy_timing_notifier() override;

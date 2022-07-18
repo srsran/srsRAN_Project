@@ -66,8 +66,17 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  fapi_to_phy_translator(unsigned sector_id, downlink_processor_pool& dl_processor_pool, resource_grid_pool& rg_pool) :
-    sector_id(sector_id), dl_processor_pool(dl_processor_pool), rg_pool(rg_pool)
+  /// \brief Constructor for the FAPI to PHY translator.
+  ///
+  /// \param sector_id Sector identifier.
+  /// \param dl_processor_pool Downlink processor pool that will be used to process PDUs.
+  /// \param rg_pool Resource grid pool that will be used to process PDUs.
+  /// \param scs_common subcarrier spacing common, as per TS 331, Section 6.2.2,
+  fapi_to_phy_translator(unsigned                 sector_id,
+                         downlink_processor_pool& dl_processor_pool,
+                         resource_grid_pool&      rg_pool,
+                         subcarrier_spacing       scs_common) :
+    sector_id(sector_id), dl_processor_pool(dl_processor_pool), rg_pool(rg_pool), scs_common(scs_common)
   {
   }
 
@@ -106,6 +115,9 @@ private:
   // Protects current_slot_controller and pdsch_pdus.
   //: TODO: make this lock free.
   std::mutex mutex;
+
+  // :TODO: this variable should be asked to the cell configuration. Remove it when it's available.
+  const subcarrier_spacing scs_common;
 };
 
 } // namespace fapi_adaptor
