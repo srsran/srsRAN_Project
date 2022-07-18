@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_METRICS_H
-#define SRSGNB_RLC_METRICS_H
+#ifndef SRSGNB_RLC_RLC_METRICS_H
+#define SRSGNB_RLC_RLC_METRICS_H
 
 #include <iostream>
 #include <mutex>
@@ -146,4 +146,4 @@ struct rlc_bearer_metrics_container {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RLC_METRICS_H
+#endif // SRSGNB_RLC_RLC_METRICS_H

@@ -8,7 +8,8 @@
  *
  */
 
-#pragma once
+#ifndef SRSGNB_LIB_PHY_LOWER_MODULATION_PHASE_COMPENSATION_LUT_H
+#define SRSGNB_LIB_PHY_LOWER_MODULATION_PHASE_COMPENSATION_LUT_H
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/cyclic_prefix.h"
@@ -85,3 +86,4 @@ public:
 };
 
 } // namespace srsgnb
+#endif // SRSGNB_LIB_PHY_LOWER_MODULATION_PHASE_COMPENSATION_LUT_H

@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RLC_BUFFER_SEGMENT_H
-#define SRSGNB_RLC_BUFFER_SEGMENT_H
+#ifndef SRSGNB_ADT_BYTE_BUFFER_SLICE_CHAIN_H
+#define SRSGNB_ADT_BYTE_BUFFER_SLICE_CHAIN_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include <deque>
@@ -225,4 +225,4 @@ struct formatter<srsgnb::byte_buffer_slice_chain> : public formatter<srsgnb::byt
 
 } // namespace fmt
 
-#endif // SRSGNB_RLC_BUFFER_SEGMENT_H
+#endif // SRSGNB_ADT_BYTE_BUFFER_SLICE_CHAIN_H

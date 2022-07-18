@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_ENTITY_INTERFACE_H
-#define SRSGNB_RRC_ENTITY_INTERFACE_H
+#ifndef SRSGNB_RRC_RRC_ENTITY_INTERFACE_H
+#define SRSGNB_RRC_RRC_ENTITY_INTERFACE_H
 
 #include "srsgnb/cu_cp/ue_context.h"
 
@@ -48,4 +48,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_ENTITY_INTERFACE_H
+#endif // SRSGNB_RRC_RRC_ENTITY_INTERFACE_H

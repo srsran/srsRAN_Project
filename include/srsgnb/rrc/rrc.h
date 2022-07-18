@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_H
-#define SRSGNB_RRC_H
+#ifndef SRSGNB_RRC_RRC_H
+#define SRSGNB_RRC_RRC_H
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/ran/lcid.h"
@@ -33,4 +33,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_H
+#endif // SRSGNB_RRC_RRC_H

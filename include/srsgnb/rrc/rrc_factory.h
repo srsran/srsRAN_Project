@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_FACTORY_H
-#define SRSGNB_RRC_FACTORY_H
+#ifndef SRSGNB_RRC_RRC_FACTORY_H
+#define SRSGNB_RRC_RRC_FACTORY_H
 
 #include "rrc_config.h"
 #include "rrc_ue_config.h"
@@ -38,4 +38,4 @@ std::unique_ptr<rrc_entity_du_interface> create_rrc_entity(const rrc_entity_crea
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_FACTORY_H
+#endif // SRSGNB_RRC_RRC_FACTORY_H

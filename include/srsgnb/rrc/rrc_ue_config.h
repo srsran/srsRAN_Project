@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_UE_CONFIG_H
-#define SRSGNB_RRC_UE_CONFIG_H
+#ifndef SRSGNB_RRC_RRC_UE_CONFIG_H
+#define SRSGNB_RRC_RRC_UE_CONFIG_H
 
 #include "srsgnb/srslog/srslog.h"
 
@@ -25,4 +25,4 @@ struct rrc_ue_cfg_t {
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_UE_CONFIG_H
+#endif // SRSGNB_RRC_RRC_UE_CONFIG_H

@@ -8,8 +8,13 @@
  *
  */
 
-#ifndef SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H
-#define SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H
+<<<<<<< HEAD:lib/cu_cp/adapters/du_processor_adapters.h
+#ifndef SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H
+#define SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H
+=======
+#ifndef SRSGNB_LIB_CU_CP_ADAPTERS_RRC_ADAPTERS_H
+#define SRSGNB_LIB_CU_CP_ADAPTERS_RRC_ADAPTERS_H
+>>>>>>> 97b6eb3c4 (harmonize include guards in apps,lib,unittests (manual fixup 2)):lib/cu_cp/adapters/rrc_adapters.h
 
 #include "srsgnb/rrc/rrc.h"
 
@@ -37,4 +42,8 @@ private:
 } // namespace srs_cu_cp
 } // namespace srsgnb
 
-#endif // SRSGNB_LIB_CU_CP_ADAPTERS_DU_PROCESSOR_ADAPTERS_H
+<<<<<<< HEAD:lib/cu_cp/adapters/du_processor_adapters.h
+#endif // SRSGNB_CU_CP_DU_PROCESSOR_ADAPTERS_H
+=======
+#endif // SRSGNB_LIB_CU_CP_ADAPTERS_RRC_ADAPTERS_H
+>>>>>>> 97b6eb3c4 (harmonize include guards in apps,lib,unittests (manual fixup 2)):lib/cu_cp/adapters/rrc_adapters.h

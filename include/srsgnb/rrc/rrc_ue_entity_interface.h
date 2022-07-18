@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_UE_ENTITY_INTERFACE_H
-#define SRSGNB_RRC_UE_ENTITY_INTERFACE_H
+#ifndef SRSGNB_RRC_RRC_UE_ENTITY_INTERFACE_H
+#define SRSGNB_RRC_RRC_UE_ENTITY_INTERFACE_H
 
 #include "srsgnb/rrc/rrc.h"
 
@@ -32,4 +32,4 @@ public:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_UE_ENTITY_INTERFACE_H
+#endif // SRSGNB_RRC_RRC_UE_ENTITY_INTERFACE_H

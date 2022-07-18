@@ -8,8 +8,8 @@
  *
  */
 
-#ifndef SRSGNB_RRC_ENTITY_H
-#define SRSGNB_RRC_ENTITY_H
+#ifndef SRSGNB_LIB_RRC_RRC_ENTITY_H
+#define SRSGNB_LIB_RRC_RRC_ENTITY_H
 
 #include "srsgnb/rrc/rrc_config.h"
 #include "srsgnb/rrc/rrc_entity_interface.h"
@@ -47,4 +47,4 @@ private:
 
 } // namespace srsgnb
 
-#endif // SRSGNB_RRC_ENTITY_H
+#endif // SRSGNB_LIB_RRC_RRC_ENTITY_H
