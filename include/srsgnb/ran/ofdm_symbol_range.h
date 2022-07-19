@@ -46,4 +46,3 @@ struct formatter<srsgnb::ofdm_symbol_range> : public formatter<srsgnb::interval<
 };
 
 } // namespace fmt
-
