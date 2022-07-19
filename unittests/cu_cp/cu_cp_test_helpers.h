@@ -15,7 +15,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-f1c_msg generate_f1_setup_request()
+f1c_msg generate_f1_setup_request_base()
 {
   f1c_msg f1c_msg = {};
 
@@ -29,6 +29,14 @@ f1c_msg generate_f1_setup_request()
   setup_req->gnb_du_name.value.from_string("srsDU");
   setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(1);
 
+  return f1c_msg;
+}
+
+f1c_msg generate_successful_f1_setup_request()
+{
+  f1c_msg f1c_msg = generate_f1_setup_request_base();
+
+  auto& setup_req                             = f1c_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = true;
   setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
   setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
@@ -66,8 +74,7 @@ f1c_msg generate_f1_setup_request()
   served_cells_item.gnb_du_sys_info_present = true;
   served_cells_item.gnb_du_sys_info.mib_msg.from_string("01c586");
   served_cells_item.gnb_du_sys_info.sib1_msg.from_string(
-      "92002808241099000001000000000a4213407800008c98d6d8d7f616e0804000020107e28180008000088a0dc7008000088a0007141a"
-      "22"
+      "92002808241099000001000000000a4213407800008c98d6d8d7f616e0804000020107e28180008000088a0dc7008000088a0007141a22"
       "81c874cc00020000232d5c6b6c65462001ec4cc5fc9c0493946a98d4d1e99355c00a1aba010580ec024646f62180");
 
   setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
