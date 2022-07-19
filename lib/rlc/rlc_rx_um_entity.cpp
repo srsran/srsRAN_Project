@@ -19,8 +19,8 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
                                    timer_manager&                    timers) :
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
-  mod((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 64 : 4096),
-  um_window_size((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 32 : 2048),
+  mod(cardinality(to_number(cfg.sn_field_length))),
+  um_window_size(cardinality(to_number(cfg.sn_field_length) - 1)),
   reassembly_timer(timers.create_unique_timer())
 {
   // check timer

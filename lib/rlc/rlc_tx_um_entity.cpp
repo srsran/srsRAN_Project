@@ -18,12 +18,10 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                    rlc_tx_upper_layer_control_notifier& upper_cn) :
   rlc_tx_entity(du_index, lcid, upper_cn),
   cfg(config),
-  mod((cfg.sn_field_length == rlc_um_sn_size::size6bits) ? 64 : 4096),
+  mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
-  head_len_first(cfg.sn_field_length == rlc_um_sn_size::size6bits ? rlc_um_pdu_header_size_6bit_sn_no_so
-                                                                  : rlc_um_pdu_header_size_12bit_sn_no_so),
-  head_len_not_first(cfg.sn_field_length == rlc_um_sn_size::size6bits ? rlc_um_pdu_header_size_6bit_sn_with_so
-                                                                      : rlc_um_pdu_header_size_12bit_sn_with_so)
+  head_len_first(rlc_um_pdu_header_size_no_so(cfg.sn_field_length)),
+  head_len_not_first(rlc_um_pdu_header_size_with_so(cfg.sn_field_length))
 {
 }
 
