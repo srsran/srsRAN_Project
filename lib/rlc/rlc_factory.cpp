@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/rlc/rlc_factory.h"
+#include "rlc_am_entity.h"
 #include "rlc_tm_entity.h"
 #include "rlc_um_entity.h"
 
@@ -27,6 +28,8 @@ std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_
       return std::make_unique<rlc_um_entity>(
           msg.ue_index, msg.lcid, *msg.config.um, *msg.upper_dn, *msg.upper_cn, *msg.bsr_update_notifier, *msg.timers);
     case rlc_mode::am:
+      return std::make_unique<rlc_am_entity>(
+          msg.ue_index, msg.lcid, *msg.config.am, *msg.upper_dn, *msg.upper_cn, *msg.bsr_update_notifier, *msg.timers);
     default:
       srsgnb_terminate("RLC mode not supported");
   }

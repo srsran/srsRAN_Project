@@ -8,6 +8,10 @@
 
 set_directory_properties(PROPERTIES LABELS "rlc")
 
+add_executable(rlc_am_test rlc_am_test.cpp)
+target_link_libraries(rlc_am_test srsgnb_rlc srsgnb_support srslog)
+add_test(rlc_am_test rlc_am_test)
+
 add_executable(rlc_tm_test rlc_tm_test.cpp)
 target_link_libraries(rlc_tm_test srsgnb_rlc srsgnb_support srslog)
 add_test(rlc_tm_test rlc_tm_test)

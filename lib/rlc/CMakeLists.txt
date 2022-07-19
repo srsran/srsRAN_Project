@@ -9,8 +9,10 @@
 set(SOURCES
   rlc_am_pdu.cpp
   rlc_factory.cpp
+  rlc_tx_am_entity.cpp
   rlc_tx_tm_entity.cpp
   rlc_tx_um_entity.cpp
+  rlc_rx_am_entity.cpp
   rlc_rx_tm_entity.cpp
   rlc_rx_um_entity.cpp
 )
