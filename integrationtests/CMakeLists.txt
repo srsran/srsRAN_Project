@@ -7,3 +7,4 @@
 #
 
 add_subdirectory(du_cu_cp)
+add_subdirectory(rlc)
