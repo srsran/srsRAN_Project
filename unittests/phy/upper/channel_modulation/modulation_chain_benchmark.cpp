@@ -64,7 +64,6 @@ int main(int argc, char** argv)
 
   std::uniform_int_distribution<uint8_t> bit_dist(0, 1);
 
-  // Test for the most common DFT sizes
   for (modulation_scheme modulation : {modulation_scheme::BPSK,
                                        modulation_scheme::QPSK,
                                        modulation_scheme::QAM16,
@@ -91,17 +90,17 @@ int main(int argc, char** argv)
       std::vector<log_likelihood_ratio> soft_bits(nof_bits);
 
       // Measure performance of the modulation mapper.
-      perf_meas_modulator.new_measure(std::to_string(nof_symbols),
-                                      [&]() { modulator->modulate(data, symbols, modulation); });
+      perf_meas_modulator.new_measure(
+          std::to_string(nof_symbols), nof_bits, [&]() { modulator->modulate(data, symbols, modulation); });
 
       // Measure performance of the demodulation mapper.
-      perf_meas_demodulator.new_measure(std::to_string(nof_symbols), [&]() {
+      perf_meas_demodulator.new_measure(std::to_string(nof_symbols), nof_bits, [&]() {
         demodulator->demodulate_soft(soft_bits, symbols, noise_var, modulation);
       });
     }
     if (!silent) {
-      perf_meas_modulator.print_percentiles();
-      perf_meas_demodulator.print_percentiles();
+      perf_meas_modulator.print_percentiles_throughput("bits");
+      perf_meas_demodulator.print_percentiles_throughput("bits");
     }
   }
 }

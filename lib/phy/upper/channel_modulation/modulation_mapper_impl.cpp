@@ -10,6 +10,7 @@
 
 #include "modulation_mapper_impl.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 #ifdef HAVE_SSE
@@ -28,11 +29,11 @@ struct modulator_table_s {
   constexpr modulator_table_s()
   {
     // see TS38.211 Section 5.1.
-    for (uint32_t i = 0; i < pow2(QM); i++) {
+    for (uint32_t i = 0, i_end = pow2(QM); i != i_end; ++i) {
       float offset = -1;
       float real   = 0;
       float imag   = 0;
-      for (uint32_t j = 0; j < QM / 2; j++) {
+      for (uint32_t j = 0, j_end = QM / 2; j != j_end; ++j) {
         real += offset;
         imag += offset;
         offset *= 2;
@@ -44,11 +45,7 @@ struct modulator_table_s {
     }
 
     // Calculate average power to calculate scaling for having a power average of one.
-    float avg_power = 0;
-    for (unsigned i = 0; i != table.size(); ++i) {
-      avg_power += std::real(table[i] * std::conj(table[i]));
-    }
-    avg_power /= table.size();
+    float avg_power = srsvec::average_power(table);
     srsran_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
 
     // Perform scaling.
@@ -78,7 +75,7 @@ struct modulator_table_s {
 #else
       // Packs the next QM bits.
       unsigned index = 0;
-      for (unsigned i = 0; i < QM; ++i) {
+      for (unsigned i = 0; i != QM; ++i) {
         index |= (unsigned)input[i] << (QM - i - 1U);
       }
 

@@ -108,12 +108,12 @@ int main(int argc, char** argv)
       }
 
       // Measure performance.
-      perf_meas.new_measure(meas_descr, [&]() { dft->run(); });
+      perf_meas.new_measure(meas_descr, size, [&]() { dft->run(); });
     }
   }
 
   if (!silent) {
-    perf_meas.print_percentiles();
+    perf_meas.print_percentiles_throughput("samples");
   }
 
   return 0;
