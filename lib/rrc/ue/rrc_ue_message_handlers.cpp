@@ -51,8 +51,8 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
 void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg)
 {
   const uint8_t max_wait_time_secs = 16;
-  if (not parent.is_amf_connected()) {
-    cfg.logger.error("AMF isn't connected. Sending Connection Reject");
+  if (not parent.is_rrc_connect_allowed()) {
+    cfg.logger.error("RRC connections not allowed. Sending Connection Reject");
     send_rrc_reject(max_wait_time_secs);
     return;
   }

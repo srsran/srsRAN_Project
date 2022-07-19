@@ -16,6 +16,7 @@
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_configuration.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/executors/task_worker.h"
@@ -39,6 +40,10 @@ public:
 
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
+
+  // ngap_connection_notifier
+  void on_amf_connection() override;
+  void on_amf_connection_drop() override;
 
   // CU-CP statistics
   size_t get_nof_dus() const override;
@@ -73,9 +78,10 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   // Components
-  slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
+  std::unique_ptr<ngap> ngap_entity;
 
-  std::unordered_map<uint64_t, du_processor*> du_dict; // Hash-table to find DU by cell_id
+  slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
+  std::unordered_map<uint64_t, du_processor*>            du_dict; // Hash-table to find DU by cell_id
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;

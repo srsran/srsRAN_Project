@@ -10,6 +10,7 @@
 
 #include "cu_cp.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
+#include "srsgnb/ngap/ngap_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -28,6 +29,9 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
   for (size_t i = 0; i < MAX_NOF_DUS; ++i) {
     du_ctrl_loop.emplace(i, number_of_pending_procedures);
   }
+
+  // Create layers
+  ngap_entity = create_ngap();
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect(*this);
@@ -73,6 +77,22 @@ size_t cu_cp::get_nof_ues() const
     nof_ues += du->get_nof_ues();
   }
   return nof_ues;
+}
+
+void cu_cp::on_amf_connection()
+{
+  // inform all connected DU objects about the new connection
+  for (auto& du : du_db) {
+    du->get_amf_connection_handler().handle_amf_connection();
+  }
+}
+
+void cu_cp::on_amf_connection_drop()
+{
+  // inform all DU objects about the AMF connection drop
+  for (auto& du : du_db) {
+    du->get_amf_connection_handler().handle_amf_connection_drop();
+  }
 }
 
 // private

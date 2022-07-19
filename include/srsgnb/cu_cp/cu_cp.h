@@ -20,6 +20,19 @@ namespace srs_cu_cp {
 /// Forward declared messages.
 class du_processor;
 
+/// Interface to notify about NGAP connections to the CU-CP
+class cu_cp_ngap_connection_notifier
+{
+public:
+  virtual ~cu_cp_ngap_connection_notifier() = default;
+
+  /// \brief Notifies the CU-CP about a successful AMF connection.
+  virtual void on_amf_connection() = 0;
+
+  /// \brief Notifies the CU-CP about a dropped AMF connection.
+  virtual void on_amf_connection_drop() = 0;
+};
+
 /// Interface to notify about DU connections to the CU-CP
 class cu_cp_du_connection_notifier
 {
@@ -60,7 +73,10 @@ public:
   virtual f1c_message_handler& get_f1c_message_handler(const du_index_t du_index) = 0;
 };
 
-class cu_cp_interface : public cu_cp_du_connection_notifier, public cu_cp_du_handler, public cu_cp_du_interface
+class cu_cp_interface : public cu_cp_du_connection_notifier,
+                        public cu_cp_du_handler,
+                        public cu_cp_du_interface,
+                        public cu_cp_ngap_connection_notifier
 
 {
 public:

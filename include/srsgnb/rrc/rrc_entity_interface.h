@@ -25,12 +25,12 @@ public:
 
   /// Request the allocation of PUCCH resources for the UE.
   virtual int get_pucch_resources() = 0;
-  /// Check if the CU is connected to the AMF.
-  virtual bool is_amf_connected() = 0;
+  /// Check if the parent allows RRC connections.
+  virtual bool is_rrc_connect_allowed() = 0;
 };
 
 /// Interface class to the main RRC object of the DU used by the DU itself.
-class rrc_entity_du_interface
+class rrc_entity_du_interface : public rrc_amf_connection_handler
 {
 public:
   rrc_entity_du_interface()          = default;

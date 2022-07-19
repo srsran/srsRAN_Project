@@ -17,13 +17,11 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-class rrc_entity_dummy : public rrc_entity_ue_interface
+class ngap_dummy : public ngap
 {
 public:
-  rrc_entity_dummy() = default;
-
-  int  get_pucch_resources() override { return 0; }
-  bool is_amf_connected() override { return false; }
+  ngap_dummy(){};
+  ~ngap_dummy() override = default;
 };
 
 class dummy_tx_pdu_handler
@@ -53,14 +51,21 @@ private:
 };
 
 // When a RRC setup request PDU is received on UL-CCCH, a RRC setup PDU is generated and sent down to the UE.
-void rrc_setup_test()
+void rrc_setup_test(bool connect_amf)
 {
   uint8_t rrc_setup_pdu[] = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
 
+  ngap_dummy ngap;
+
   // create RRC entity
   rrc_cfg_t                                cfg{}; // empty config
-  rrc_entity_creation_message              msg(cfg);
+  rrc_entity_creation_message              msg(cfg, &ngap);
   std::unique_ptr<rrc_entity_du_interface> rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
+
+  // Notify RRC about successful AMF connection
+  if (connect_amf) {
+    rrc->handle_amf_connection();
+  }
 
   // create single UE context and add RRC user
   ue_context ue_ctxt{};
@@ -94,7 +99,8 @@ int main()
   logger.set_level(srslog::basic_levels::debug);
   srslog::init();
 
-  rrc_setup_test();
+  rrc_setup_test(false);
+  rrc_setup_test(true);
 
   srslog::flush();
 }

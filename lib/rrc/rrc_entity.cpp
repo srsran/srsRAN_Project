@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_entity::rrc_entity(const rrc_cfg_t& cfg_) : cfg(cfg_) {}
+rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_) : cfg(cfg_), ngap_handle(ngap_handle_) {}
 
 rrc_ue_entity_interface* rrc_entity::add_user(ue_context& ctxt_)
 {
@@ -40,7 +40,17 @@ int rrc_entity::get_pucch_resources()
   return 0;
 }
 
-bool rrc_entity::is_amf_connected()
+bool rrc_entity::is_rrc_connect_allowed()
 {
-  return false;
+  return !reject_users;
+}
+
+void rrc_entity::handle_amf_connection()
+{
+  reject_users = false;
+}
+
+void rrc_entity::handle_amf_connection_drop()
+{
+  reject_users = true;
 }

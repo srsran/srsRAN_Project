@@ -24,7 +24,7 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   f1ap_ev_notifier.connect(*this);
 
   // create RRC
-  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg);
+  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity);
   rrc = create_rrc_entity(rrc_creation_msg);
 }
 
@@ -74,6 +74,11 @@ void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
 
   // send setup response
   send_f1_setup_response(context);
+}
+
+rrc_amf_connection_handler& du_processor::get_amf_connection_handler()
+{
+  return *rrc;
 }
 
 du_cell_index_t du_processor::find_cell(uint64_t packed_nr_cell_id)
@@ -171,7 +176,7 @@ void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
   if (ue_ctxt->srbs.contains(msg.srbid)) {
     ue_ctxt->srbs[msg.srbid].rx_notifier->on_new_rrc_message(msg.rrc_container);
   } else {
-    logger.error("SR {} not present - dropping PDU", msg.srbid);
+    logger.error("SRB{} not present - dropping PDU", msg.srbid);
   }
 }
 

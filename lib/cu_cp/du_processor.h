@@ -43,8 +43,11 @@ public:
   du_cell_index_t                                get_next_du_cell_index();
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 
+  // du_processor_rrc_message_handler
   ue_index_t handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
   void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
+
+  rrc_amf_connection_handler& get_amf_connection_handler(); /// Pass handle to AMF connection handler within RRC
 
 private:
   // F1AP senders
