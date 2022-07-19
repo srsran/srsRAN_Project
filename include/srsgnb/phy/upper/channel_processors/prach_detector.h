@@ -33,7 +33,8 @@ public:
   struct slot_configuration {
     /// Root sequence index {0...837}.
     unsigned root_sequence_index;
-    /// Frequency offset between Point A and the PRB overlapping with the lowest RE of the PRACH signal in PRB.
+    /// \brief Frequency offset between Point A and the PRB overlapping with the lowest RE of the PRACH signal in RB
+    /// with \c pusch_scs SCS.
     unsigned frequency_offset;
     /// Preamble format.
     preamble_format format;

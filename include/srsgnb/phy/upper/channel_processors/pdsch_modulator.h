@@ -42,7 +42,7 @@ public:
     uint16_t rnti;
     /// Number of contiguous PRBs allocated to the BWP.
     unsigned bwp_size_rb;
-    /// BWP start RB index from reference CRB.
+    /// BWP start RB index from Point A.
     unsigned bwp_start_rb;
     /// Modulation of codeword 1 (q = 0).
     modulation_scheme modulation1;

@@ -67,9 +67,9 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
   return codeword;
 }
 
-void pdsch_processor_impl::modulate(resource_grid_writer&            grid,
-                                    span<const span<const uint8_t> > temp_codewords,
-                                    const pdu_t&                     pdu)
+void pdsch_processor_impl::modulate(resource_grid_writer&           grid,
+                                    span<const span<const uint8_t>> temp_codewords,
+                                    const pdu_t&                    pdu)
 {
   unsigned nof_codewords = temp_codewords.size();
 
@@ -96,9 +96,15 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
 {
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
+  // Select the DMRS reference point. Denote that for PRB0, the BWP start and size matches the CORESET0 start and size.
+  unsigned dmrs_reference_point_k_rb = 0;
+  if (pdu.ref_point == pdu_t::PRB0) {
+    dmrs_reference_point_k_rb = pdu.bwp_start_rb;
+  }
+
   dmrs_pdsch_processor::config_t dmrs_config;
   dmrs_config.slot                 = pdu.slot;
-  dmrs_config.reference_point_k_rb = (pdu.ref_point == pdu_t::CRB0 ? pdu.bwp_start_rb : 0);
+  dmrs_config.reference_point_k_rb = dmrs_reference_point_k_rb;
   dmrs_config.type                 = pdu.dmrs;
   dmrs_config.scrambling_id        = pdu.scrambling_id;
   dmrs_config.n_scid               = pdu.n_scid;

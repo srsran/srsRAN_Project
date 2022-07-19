@@ -185,7 +185,7 @@ int main()
           auto&       entry   = entries.front();
           TESTASSERT_EQ(entry.config.slot, pdu.slot);
           TESTASSERT_EQ(entry.config.reference_point_k_rb,
-                        (pdu.ref_point == pdsch_processor::pdu_t::CRB0) ? pdu.bwp_start_rb : 0);
+                        (pdu.ref_point == pdsch_processor::pdu_t::PRB0) ? pdu.bwp_start_rb : 0);
           TESTASSERT(entry.config.type == pdu.dmrs);
           TESTASSERT_EQ(entry.config.scrambling_id, pdu.scrambling_id);
           TESTASSERT_EQ(entry.config.n_scid, pdu.n_scid);

@@ -41,8 +41,12 @@ public:
   /// Implemented as per TS38.211 section 7.3.1.6 Case 1:
   /// - A virtual resource \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
   ///
-  /// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
-  /// \f$n + N_{start}^{CORESET}\f$.
+  /// If the corresponding PDCCH is associated with CORESET0 and Type0-PDCCH common SS and is addressed to SI-RNTI, the
+  /// BWP start and size must match with the CORESET0 start and size. Consequently, \f$N_{start}^{CORESET}\f$ must be
+  /// zero.
+  ///
+  /// \param[in] N_start_coreset \brief VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission
+  /// as \f$N_{start}^{CORESET}\f$.
   /// \return A VRB-to-PRB mapper instance.
   static vrb_to_prb_mapper make_non_interleaved_common_ss(unsigned N_start_coreset);
 
@@ -69,7 +73,7 @@ public:
   /// \f$N_{start}^{CORESET}\f$.
   /// \param[in] N_bwp_init_size The size in RBs of CORESET0 as \f$N_{BWP,init}^{size}\f$.
   /// \return A VRB-to-PRB mapper instance.
-  static vrb_to_prb_mapper make_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size);
+  static vrb_to_prb_mapper make_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size);
 
   /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI format 1_0 in any common SS except
   /// Type0-PDCCH common SS in CORESET0.
@@ -84,7 +88,7 @@ public:
   /// if \f$(N_{BWP,init}^{size} + N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L > 0\f$ and \f$L\f$ RB otherwise, and
   /// - all other resource block bundles consists of \f$L\f$ RBs.
   ///
-  /// \param[in] N_start_coreset PRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
+  /// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
   /// \f$N_{start}^{CORESET}\f$.
   /// \param[in] N_bwp_i_start BWP \f$i\f$ starting position \f$N_{BWP,i}^{start}\f$.
   /// \param[in] N_bwp_init_size The size in RBs of CORESET0 if available, otherwise the initial bandwidth part size as

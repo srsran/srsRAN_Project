@@ -47,7 +47,11 @@ static reg_index_list cce_to_reg_mapping_interleaved(unsigned N_rb_coreset,
 
   // Validate parameters.
   srsran_assert(N_reg_coreset > 0 && (N_reg_coreset % (L * R) == 0) && (L % N_symb_coreset == 0),
-                "Invalid CORESET configuration.");
+                "Invalid CORESET configuration N_reg_coreset={}, L={}, R={}, Nsymb_coreset={}.",
+                N_reg_coreset,
+                L,
+                R,
+                N_symb_coreset);
 
   // Number of REG bundles in a CCE.
   unsigned nof_reg_bundle_in_cce = pdcch_constants::NOF_REG_PER_CCE / L;

@@ -70,9 +70,9 @@ public:
   /// - \c shift_index shall be equal to the physical cell identifier {0...1007}.
   /// - \c cce_to_reg_mapping_type, \c frequency_resources, \c reg_bundle_size, \c interleaver_size are ignored.
   struct coreset_description {
-    /// Number of contiguous PRBs allocated to the BWP {1...275}.
+    /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;
-    /// BWP start RB index from reference CRB {0...274}.
+    /// BWP start RB index from Point A {0, ..., 274}.
     unsigned bwp_start_rb;
     /// Starting OFDM symbol for the CORESET.
     unsigned start_symbol_index;

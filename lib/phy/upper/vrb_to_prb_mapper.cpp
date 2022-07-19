@@ -82,7 +82,7 @@ vrb_to_prb_mapper vrb_to_prb_mapper::make_non_interleaved_other()
   return vrb_to_prb_mapper();
 }
 
-vrb_to_prb_mapper vrb_to_prb_mapper::make_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size)
+vrb_to_prb_mapper vrb_to_prb_mapper::make_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size)
 {
   vrb_to_prb_mapper mapper;
 
@@ -95,12 +95,12 @@ vrb_to_prb_mapper vrb_to_prb_mapper::make_coreset0(unsigned N_start_coreset, uns
   // Set bundle size as interleaved.
   mapper.nof_bundles = divide_ceil(N_bwp_init_size, L);
 
-  // Set the size of the first bundle.
-  mapper.first_bundle_size = (N_bwp_init_size % L > 0) ? (N_bwp_init_size % L) : L;
+  // Set the size of the last bundle.
+  mapper.last_bundle_size = (N_bwp_init_size % L > 0) ? (N_bwp_init_size % L) : L;
 
   // All other RBs are set to L.
+  mapper.first_bundle_size = L;
   mapper.other_bundle_size = L;
-  mapper.last_bundle_size  = L;
 
   return mapper;
 }

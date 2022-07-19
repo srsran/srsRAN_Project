@@ -76,19 +76,19 @@ static rb_allocation make_freq_allocation(pdsch_trans_type         trasn_type,
   vrb_to_prb_mapper mapper;
   switch (trasn_type) {
     case pdsch_trans_type::non_interleaved_common_ss:
-      mapper = vrb_to_prb_mapper::make_non_interleaved_common_ss(coreset_start);
+      mapper = vrb_to_prb_mapper::make_non_interleaved_common_ss(coreset_start - bwp_start);
       break;
     case pdsch_trans_type::non_interleaved_other:
       mapper = vrb_to_prb_mapper::make_non_interleaved_other();
       break;
     case pdsch_trans_type::interleaved_common_type0_coreset0:
-      mapper = vrb_to_prb_mapper::make_coreset0(coreset_start, initial_bwp_size);
+      mapper = vrb_to_prb_mapper::make_interleaved_coreset0(coreset_start - bwp_start, initial_bwp_size);
       break;
     case pdsch_trans_type::interleaved_common_any_coreset0_present:
-      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start, bwp_start, initial_bwp_size);
+      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start - bwp_start, bwp_start, initial_bwp_size);
       break;
     case pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start, bwp_start, bwp_size);
+      mapper = vrb_to_prb_mapper::make_interleaved_common(coreset_start - bwp_start, bwp_start, bwp_size);
       break;
     case pdsch_trans_type::interleaved_other:
       mapper = vrb_to_prb_mapper::make_interleaved_other(
