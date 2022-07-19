@@ -31,16 +31,16 @@ private:
   /// Default linger timeout in milliseconds.
   static constexpr unsigned DEFAULT_LINGER_TIMEOUT_MS = 0;
   /// Default buffer size in samples.
-  static constexpr unsigned DEFAULT_BUFFER_SIZE_SAMPLES = 61440;
+  static constexpr unsigned DEFAULT_BUFFER_SIZE_SAMPLES = 614400;
 
   /// Radio session logger.
   srslog::basic_logger& logger;
   /// ZMQ context.
   void* zmq_context;
   /// Stores transmit streams.
-  std::vector<std::unique_ptr<radio_zmq_tx_stream> > tx_streams;
+  std::vector<std::unique_ptr<radio_zmq_tx_stream>> tx_streams;
   /// Stores receive streams.
-  std::vector<std::unique_ptr<radio_zmq_rx_stream> > rx_streams;
+  std::vector<std::unique_ptr<radio_zmq_rx_stream>> rx_streams;
   /// Indicates the session has been created succesfully.
   bool successful = false;
 

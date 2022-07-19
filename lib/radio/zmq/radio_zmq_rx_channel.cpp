@@ -129,7 +129,7 @@ void radio_zmq_rx_channel::receive_response()
 {
   // Otherwise, send samples over socket.
   int sample_size = sizeof(radio_sample_type);
-  int nbytes      = buffer.size() * sample_size;
+  int nbytes      = buffer.size();
   int n           = zmq_recv(sock, (void*)buffer.data(), nbytes, ZMQ_DONTWAIT);
 
   // Check if an error occurred.
