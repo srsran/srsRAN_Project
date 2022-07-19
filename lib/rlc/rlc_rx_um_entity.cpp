@@ -98,7 +98,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     handle_rx_buffer_update(header.sn);
   }
 
-  debug_state();
+  log_state(srslog::basic_levels::debug);
 }
 
 // TS 38.322 v16.2.0 Sec 5.2.2.2.3
@@ -250,7 +250,7 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
     st.rx_next_reassembly = st.rx_timer_trigger;
     while (rx_mod_base(st.rx_next_reassembly) < rx_mod_base(st.rx_next_highest)) {
       st.rx_next_reassembly = (st.rx_next_reassembly + 1) % mod;
-      debug_state();
+      log_state(srslog::basic_levels::debug);
     }
 
     // discard all segments with SN < updated RX_Next_Reassembly
@@ -271,7 +271,7 @@ void rlc_rx_um_entity::timer_expired(uint32_t timeout_id)
       st.rx_timer_trigger = st.rx_next_highest;
     }
 
-    debug_state();
+    log_state(srslog::basic_levels::debug);
   }
 }
 

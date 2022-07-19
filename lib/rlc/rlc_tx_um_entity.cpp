@@ -140,7 +140,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
 
   metrics_add_pdus(1, pdu_buf.length());
 
-  debug_state();
+  log_state(srslog::basic_levels::debug);
 
   return pdu_buf;
 }

@@ -75,7 +75,7 @@ private:
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
 
-  void debug_state() { logger.log_debug("tx_next={}, next_so={}", st.tx_next, next_so); }
+  void log_state(srslog::basic_levels level) { logger.log(level, "tx_next={}, next_so={}", st.tx_next, next_so); }
 };
 
 } // namespace srsgnb

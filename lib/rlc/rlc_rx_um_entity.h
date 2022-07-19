@@ -76,13 +76,14 @@ private:
 
   constexpr uint32_t rx_mod_base(uint32_t x) { return (x - st.rx_next_highest - um_window_size) % mod; }
 
-  void debug_state()
+  void log_state(srslog::basic_levels level)
   {
-    logger.log_debug("rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}, t_reassembly={}",
-                     st.rx_next_reassembly,
-                     st.rx_timer_trigger,
-                     st.rx_next_highest,
-                     reassembly_timer.is_running() ? "running" : "stopped");
+    logger.log(level,
+               "rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}, t_reassembly={}",
+               st.rx_next_reassembly,
+               st.rx_timer_trigger,
+               st.rx_next_highest,
+               reassembly_timer.is_running() ? "running" : "stopped");
   }
 
 public:

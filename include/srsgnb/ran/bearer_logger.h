@@ -51,6 +51,31 @@ public:
     log_helper(logger.error, fmt, std::forward<Args>(args)...);
   }
 
+  template <typename... Args>
+  void log(const srslog::basic_levels level, const char* fmt, Args&&... args)
+  {
+    switch (level) {
+      case srslog::basic_levels::debug:
+        log_debug(fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::info:
+        log_info(fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::warning:
+        log_warning(fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::error:
+        log_error(fmt, std::forward<Args>(args)...);
+        break;
+      case srslog::basic_levels::none:
+        // skip
+        break;
+      default:
+        log_warning("Unsupported log level: {}", basic_level_to_string(level));
+        break;
+    }
+  }
+
   template <typename It, typename... Args>
   void log_debug(It it_begin, It it_end, const char* fmt, Args&&... args)
   {
