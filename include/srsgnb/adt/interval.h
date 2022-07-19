@@ -52,18 +52,21 @@ public:
   }
 
   /// Increase the interval length, maintaining the same starting point.
-  void extend(T len)
+  /// \param length_increment Length increment/decrement to apply to current interval size. In case
+  /// length_increment < 0, the condition -length_increment <= length() must be met.
+  void extend(T length_increment)
   {
     // Detect length overflows
-    srsran_assert(std::is_unsigned<T>::value or (len >= 0 or length() >= -len), "Resulting interval would be invalid");
-    stop_ += len;
+    srsran_assert(std::is_unsigned<T>::value or (length_increment >= 0 or length() >= -length_increment),
+                  "Resulting interval would be invalid");
+    stop_ += length_increment;
   }
 
   /// Set the interval length, maintaining the same starting point.
-  void resize(T len)
+  void resize(T new_length)
   {
-    srsran_assert(std::is_unsigned<T>::value or len >= 0, "Interval width must be positive");
-    stop_ = start_ + len;
+    srsran_assert(std::is_unsigned<T>::value or new_length >= 0, "Interval width must be positive");
+    stop_ = start_ + new_length;
   }
 
   /// Move interval by an offset.
