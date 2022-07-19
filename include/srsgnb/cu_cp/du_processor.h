@@ -33,6 +33,10 @@ public:
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
   virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
+
+  /// \brief Get the DU index.
+  /// \return The DU index.
+  virtual du_index_t get_du_index() = 0;
 };
 
 class du_processor_f1ap_setup_handler

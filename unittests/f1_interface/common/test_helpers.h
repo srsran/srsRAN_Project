@@ -30,6 +30,8 @@ public:
 
   srs_cu_cp::du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override { return srs_cu_cp::MIN_DU_CELL_INDEX; }
 
+  srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
+
 private:
   srslog::basic_logger& logger;
 };

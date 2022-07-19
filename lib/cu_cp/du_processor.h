@@ -35,6 +35,7 @@ public:
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
 
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override;
+  du_index_t      get_du_index() override;
 
   // getter functions
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };

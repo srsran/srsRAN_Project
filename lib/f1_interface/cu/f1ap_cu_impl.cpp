@@ -69,6 +69,9 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
 
     // set values handled by F1
     f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->transaction_id.value = 99;
+
+    // send response
+    pdu_notifier.on_new_message(f1c_msg);
   } else {
     logger.info("Transmitting F1SetupFailure message");
     f1c_msg.pdu.set_unsuccessful_outcome();
@@ -80,10 +83,14 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
     setup_fail->transaction_id.value = 99;
     setup_fail->cause.value.set_radio_network();
     setup_fail->cause.value.radio_network() = asn1::f1ap::cause_radio_network_opts::options::no_radio_res_available;
-  }
 
-  // send response
-  pdu_notifier.on_new_message(f1c_msg);
+    // send response
+    pdu_notifier.on_new_message(f1c_msg);
+
+    // send DU remove request
+    du_index_t du_index = du_processor_notifier.get_du_index();
+    du_management_notifier.on_du_remove_request_received(du_index);
+  }
 }
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg)

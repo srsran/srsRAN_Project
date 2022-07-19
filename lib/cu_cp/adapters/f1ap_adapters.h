@@ -24,6 +24,7 @@ class cu_cp_f1ap_event_indicator : public f1c_du_management_notifier
 {
 public:
   void connect(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
+
   void on_du_remove_request_received(const du_index_t du_index) override
   {
     srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
@@ -44,6 +45,8 @@ public:
   {
     return du_f1c_handler->find_cell(packed_nr_cell_id);
   }
+
+  du_index_t get_du_index() override { return du_f1c_handler->get_du_index(); }
 
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
