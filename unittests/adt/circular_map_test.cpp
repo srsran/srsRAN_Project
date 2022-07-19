@@ -59,33 +59,11 @@ void test_id_map()
   TESTASSERT(myobj.size() == 0 and myobj.empty());
 }
 
-void test_id_map_wraparound()
-{
-  circular_map<uint32_t, std::string, 4> mymap;
-
-  // Fill map
-  TESTASSERT(mymap.insert(0, "0"));
-  TESTASSERT(mymap.insert(1, "1"));
-  TESTASSERT(mymap.insert(2, "2"));
-  TESTASSERT(mymap.insert(3, "3"));
-  TESTASSERT(mymap.full());
-
-  // TEST: Ensure that insertion fails when map is full
-  TESTASSERT(not mymap.insert(4, "4"));
-  TESTASSERT(not mymap.erase(4));
-
-  // TEST: Ensure that insertion works once the element with matching map index is removed
-  TESTASSERT(mymap.erase(0));
-  TESTASSERT(not mymap.full());
-  TESTASSERT(mymap.insert(4, "4"));
-  TESTASSERT(mymap.full());
-}
-
 struct C {
   C() { count++; }
   ~C() { count--; }
   C(C&&) { count++; }
-  C(const C&) = delete;
+  C(const C&)       = delete;
   C& operator=(C&&) = default;
 
   static size_t count;
@@ -139,7 +117,6 @@ int main()
   test_log.set_level(srslog::basic_levels::info);
 
   srsgnb::test_id_map();
-  srsgnb::test_id_map_wraparound();
   srsgnb::test_correct_destruction();
 
   printf("Success\n");

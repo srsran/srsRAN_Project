@@ -24,6 +24,10 @@ add_executable(circular_map_test circular_map_test.cpp)
 target_link_libraries(circular_map_test srslog)
 add_test(circular_map_test circular_map_test)
 
+add_executable(circular_map_test_alt circular_map_test_alt.cpp)
+target_link_libraries(circular_map_test_alt srslog gtest gtest_main)
+gtest_discover_tests(circular_map_test_alt)
+
 add_executable(expected_test expected_test.cpp)
 target_link_libraries(expected_test srslog)
 add_test(expected_test expected_test)
