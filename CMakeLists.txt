@@ -154,7 +154,7 @@ endif (ENABLE_ZEROMQ)
 
 # Google Tests
 if (BUILD_TESTS)
-    find_package(GTest)
+    find_package(GTest REQUIRED)
 endif (BUILD_TESTS)
 
 ########################################################################
