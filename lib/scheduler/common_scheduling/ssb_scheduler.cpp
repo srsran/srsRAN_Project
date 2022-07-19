@@ -37,8 +37,8 @@ subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
 static ofdm_symbol_range ssb_symbols_to_slot_symbols(ofdm_symbol_range ssb_symbols)
 {
   // TODO: Account for mixed numerologies.
-  ofdm_symbol_range symbols{static_cast<uint8_t>(ssb_symbols.start() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP),
-                            static_cast<uint8_t>(ssb_symbols.stop() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP)};
+  ofdm_symbol_range symbols{ssb_symbols.start() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                            ssb_symbols.stop() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
   return symbols;
 }
 

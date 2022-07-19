@@ -266,7 +266,7 @@ void test_dl_harq_proc(test_mode tmode)
   if (tmode == invalid_retx_params) {
     // reTxs should always keep the same TBS, and, therefore, the same number of PRBs
     prb_grant grant2 = prbgrant;
-    grant2.prbs().resize_by(2);
+    grant2.prbs().extend(2);
     TESTASSERT(not dl_proc.new_retx(sl_tx, sl_tx + harq_delay, grant2));
     return;
   }

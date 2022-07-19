@@ -26,9 +26,17 @@ class interval
 
 public:
   interval() : start_(T{}), stop_(T{}) {}
-  interval(T start_point, T stop_point) : start_(start_point), stop_(stop_point) { assert(start_ <= stop_); }
+
+  template <typename U, typename V>
+  interval(U start_point, V stop_point) : start_(start_point), stop_(stop_point)
+  {
+    static_assert(std::is_convertible<U, T>::value, "Invalid interval start point type");
+    static_assert(std::is_convertible<V, T>::value, "Invalid interval stop point type");
+    srsran_assert(start_ <= stop_, "Invalid interval [{}, {})", start_, stop_);
+  }
 
   T start() const { return start_; }
+
   T stop() const { return stop_; }
 
   bool empty() const { return stop_ == start_; }
@@ -44,7 +52,7 @@ public:
   }
 
   /// Increase the interval length, maintaining the same starting point.
-  void resize_by(T len)
+  void extend(T len)
   {
     // Detect length overflows
     srsran_assert(std::is_unsigned<T>::value or (len >= 0 or length() >= -len), "Resulting interval would be invalid");
@@ -52,7 +60,7 @@ public:
   }
 
   /// Set the interval length, maintaining the same starting point.
-  void resize_to(T len)
+  void resize(T len)
   {
     srsran_assert(std::is_unsigned<T>::value or len >= 0, "Interval width must be positive");
     stop_ = start_ + len;
@@ -153,7 +161,7 @@ namespace fmt {
 
 /// Format intervals with the notation [start, stop)
 template <typename T>
-struct formatter<srsgnb::interval<T> > : public formatter<T> {
+struct formatter<srsgnb::interval<T>> : public formatter<T> {
   template <typename FormatContext>
   auto format(const srsgnb::interval<T>& interv, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {

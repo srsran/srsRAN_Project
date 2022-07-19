@@ -360,7 +360,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     }
   }
   max_nof_allocs = msg3_candidates.size();
-  rar_crbs.resize_to(nof_prbs_per_rar * max_nof_allocs);
+  rar_crbs.resize(nof_prbs_per_rar * max_nof_allocs);
 
   // 7. Find space in PDCCH for RAR.
   const static aggregation_level aggr_lvl = aggregation_level::n4;

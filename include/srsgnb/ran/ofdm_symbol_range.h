@@ -28,7 +28,7 @@ inline ofdm_symbol_range sliv_to_ofdm_symbols(uint32_t sliv)
 {
   uint8_t symbol_S, symbol_L;
   sliv_to_s_and_l(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, sliv, symbol_S, symbol_L);
-  return {symbol_S, static_cast<uint8_t>(symbol_S + symbol_L)};
+  return {symbol_S, symbol_S + symbol_L};
 }
 
 } // namespace srsgnb
