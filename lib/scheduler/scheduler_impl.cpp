@@ -58,15 +58,7 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
   cell.slot_indication(sl_tx);
 
   // 2. SSB scheduling.
-  auto& ssb_cfg = cell.cell_cfg.ssb_cfg;
-  schedule_ssb(cell.res_grid[0],
-               sl_tx,
-               ssb_periodicity_to_value(ssb_cfg.ssb_period),
-               ssb_cfg.ssb_offset_to_point_A,
-               cell.cell_cfg.dl_carrier.arfcn,
-               ssb_cfg.ssb_bitmap,
-               cell.cell_cfg.ssb_case,
-               cell.cell_cfg.paired_spectrum);
+  schedule_ssb(cell.res_grid[0], sl_tx, cell.cell_cfg);
 
   // 3. Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);
