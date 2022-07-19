@@ -54,7 +54,7 @@ static void fill_ssb_parameters(ssb_information_list& ssb_list,
   ssb_msg.symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
   // As per TS 38.211, Section 7.4.3.1, the SSB occupies 240 subcarriers, or 20 PRBs. In the case of FR1, and SSB SCS ==
   // SCScommon, if k_SSB > 1, the SSB PRBs will be shifted with respect to the Common RBs grid; this means that the SSB
-  // will overlap over 1 additional CRB.
+  // will overlap over 1 additional CRB (at the end of the SS/PBCH Block).
   uint32_t last_ssb_crb =
       ssb_subcarrier_offset > 0 ? offset_to_point_A + NOF_SSB_PRBS + 1 : offset_to_point_A + NOF_SSB_PRBS;
   ssb_msg.crbs.set(offset_to_point_A, last_ssb_crb);
