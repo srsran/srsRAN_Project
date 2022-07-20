@@ -97,49 +97,4 @@ public:
   virtual void on_max_hfn_reached()  = 0;
 };
 
-/// This interface represents the data entry point of the receiving side of a PDCP entity.
-/// The lower-layers will use this class to pass PDUs into the PDCP.
-class pdcp_rx_lower_interface
-{
-public:
-  pdcp_rx_lower_interface()                                           = default;
-  virtual ~pdcp_rx_lower_interface()                                  = default;
-  pdcp_rx_lower_interface(const pdcp_rx_lower_interface&)             = delete;
-  pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&)  = delete;
-  pdcp_rx_lower_interface(const pdcp_rx_lower_interface&&)            = delete;
-  pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&&) = delete;
-
-  virtual void handle_pdu(byte_buffer pdu) = 0; ///> Handle the incoming PDU.
-};
-
-/// This interface represents the data exit point of the receiving side of a PDCP entity.
-/// The PDCP will use this class to pass SDUs to the upper-layers.
-class pdcp_rx_upper_data_notifier
-{
-public:
-  pdcp_rx_upper_data_notifier()                                               = default;
-  virtual ~pdcp_rx_upper_data_notifier()                                      = default;
-  pdcp_rx_upper_data_notifier(const pdcp_rx_upper_data_notifier&)             = delete;
-  pdcp_rx_upper_data_notifier& operator=(const pdcp_rx_upper_data_notifier&)  = delete;
-  pdcp_rx_upper_data_notifier(const pdcp_rx_upper_data_notifier&&)            = delete;
-  pdcp_rx_upper_data_notifier& operator=(const pdcp_rx_upper_data_notifier&&) = delete;
-
-  /// Pass SDU to higher layers.
-  virtual void on_new_sdu(byte_buffer sdu) = 0;
-};
-
-/// This interface represents the control upper layer that the
-/// RX PDCP bearer must notify in case of integrity errors or protocol failures.
-class pdcp_rx_upper_control_notifier
-{
-public:
-  virtual ~pdcp_rx_upper_control_notifier()                                         = default;
-  pdcp_rx_upper_control_notifier(const pdcp_rx_upper_control_notifier&)             = delete;
-  pdcp_rx_upper_control_notifier& operator=(const pdcp_rx_upper_control_notifier&)  = delete;
-  pdcp_rx_upper_control_notifier(const pdcp_rx_upper_control_notifier&&)            = delete;
-  pdcp_rx_upper_control_notifier& operator=(const pdcp_rx_upper_control_notifier&&) = delete;
-
-  virtual void on_protocol_failure()  = 0;
-  virtual void on_integrity_failure() = 0;
-};
 } // namespace srsgnb

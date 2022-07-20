@@ -11,7 +11,8 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/pdcp/pdcp.h"
+#include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 
 namespace srsgnb {
 

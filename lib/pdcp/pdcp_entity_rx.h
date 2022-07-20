@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
-#include "srsgnb/pdcp/pdcp.h"
+#include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/ran/bearer_logger.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"

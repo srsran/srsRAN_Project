@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/pdcp/pdcp.h"
+#include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/sdap/sdap.h"
 #include <cstdio>
 

@@ -10,9 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/pdcp/pdcp.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
+#include "srsgnb/pdcp/pdcp_rx.h"
+#include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/timers.h"
