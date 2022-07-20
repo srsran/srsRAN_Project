@@ -72,6 +72,27 @@ TEST_F(cu_cp_f1_successful_test, F1_Setup_Successful)
   EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::successful_outcome);
   EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.successful_outcome().value.type(),
             f1_ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp);
+
+  cu_cp_obj->stop();
+}
+
+/// Test exeeding the maximum number of connected DUs
+TEST_F(cu_cp_f1_successful_test, F1_Max_DUs)
+{
+  // One DU is already added in the fixture
+  for (int it = 1; it < MAX_NOF_DUS; it++) {
+    cu_cp_obj->on_new_connection();
+  }
+
+  // check that MAX_NOF_DUS are connected
+  EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
+
+  cu_cp_obj->on_new_connection();
+
+  // check that MAX_NOF_DUS are connected
+  EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
+
+  cu_cp_obj->stop();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
