@@ -164,8 +164,8 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   }
 
   // Perform measurements.
-  float rsrp = 0.0f;
-  float epre = 0.0f;
+  float rsrp = 0.0F;
+  float epre = 0.0F;
   for (unsigned m = 0; m < n_pucch_sum; ++m) {
     // Compute RSRP.
     cf_t correlation = std::accumulate(std::begin(ce[m]), std::end(ce[m]), cf_t(0));
@@ -191,7 +191,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   estimate.rsrp_dB[0]           = convert_power_to_dB(rsrp);
   estimate.epre[0]              = epre;
   estimate.epre_dB[0]           = convert_power_to_dB(epre);
-  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6f);
+  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6F);
   estimate.noise_variance_dB[0] = convert_power_to_dB(estimate.noise_variance[0]);
   estimate.snr[0]               = rsrp / estimate.noise_variance[0];
   estimate.snr_dB[0]            = convert_power_to_dB(estimate.snr[0]);
@@ -203,14 +203,14 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     if (m != n_pucch_sum - 1) {
       // If it is not the last symbol with DMRS, average between.
       srsvec::add(ce[m], ce[m + 1], ce_span);
-      srsvec::sc_prod(ce_span, 0.5f, ce_span);
+      srsvec::sc_prod(ce_span, 0.5F, ce_span);
     } else if (m != 0) {
       // Extrapolate for the last if more than 1 are provided.
-      srsvec::sc_prod(ce[m], 3.0f, ce_span);
+      srsvec::sc_prod(ce[m], 3.0F, ce_span);
       // Subtraction ce[m] - ce[m - 1].
       std::transform(
           std::begin(ce_span), std::end(ce_span), std::begin(ce[m - 1]), std::begin(ce_span), std::minus<>());
-      srsvec::sc_prod(ce_span, 0.5f, ce_span);
+      srsvec::sc_prod(ce_span, 0.5F, ce_span);
     } else {
       // Simply copy the estimated channel.
       srsvec::copy(ce_span, ce[m]);

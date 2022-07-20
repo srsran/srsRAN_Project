@@ -73,7 +73,7 @@ public:
                   dims.nof_rx_antennas,
                   16);
     // todo(david): if I write MAX_RX_ANTENNAS instead of 16 I get a compile error from "fmt/core.h:1885: undefined
-    // reference to `srsgnb::channel_estimate::MAX_TX_LAYERS'
+    // reference to `srsgnb::channel_estimate::MAX_RX_ANTENNAS'
     // same thing with 4 in the next instruction.
     srsran_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
                   "Requested {} transmission layers, but at most {} are supported.",

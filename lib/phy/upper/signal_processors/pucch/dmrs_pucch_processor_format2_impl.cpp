@@ -89,8 +89,8 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   }
 
   // Perform measurements
-  float rsrp = 0.0f;
-  float epre = 0.0f;
+  float rsrp = 0.0F;
+  float epre = 0.0F;
   for (unsigned i = 0; i < nof_symbols; ++i) {
     // Compute RSRP.
     cf_t correlation = std::accumulate(std::begin(ce[i]), std::end(ce[i]), cf_t(0));
@@ -116,7 +116,7 @@ void dmrs_pucch_processor_format2_impl::estimate(channel_estimate&              
   estimate.rsrp_dB[0]           = convert_power_to_dB(rsrp);
   estimate.epre[0]              = epre;
   estimate.epre_dB[0]           = convert_power_to_dB(epre);
-  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6f);
+  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6F);
   estimate.noise_variance_dB[0] = convert_power_to_dB(estimate.noise_variance[0]);
   estimate.snr[0]               = rsrp / estimate.noise_variance[0];
   estimate.snr_dB[0]            = convert_power_to_dB(estimate.snr[0]);

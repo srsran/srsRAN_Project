@@ -15,9 +15,9 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 
 namespace srsgnb {
 
