@@ -35,6 +35,7 @@ target_link_libraries(srsgnb_pdsch_processor srsgnb_upper_phy_support)
 add_library(srsgnb_prach_detector STATIC
         prach_detector_simple_impl.cpp
         prach_generator_impl.cpp)
+target_link_libraries(srsgnb_prach_detector srsgnb_ran srsvec)
 
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsgnb_pusch_decoder srsgnb_channel_coding srsvec)

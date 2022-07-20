@@ -12,6 +12,8 @@
 
 #include "srsgnb/support/srsran_assert.h"
 
+namespace srsgnb {
+
 class prach_subcarrier_spacing
 {
 public:
@@ -47,10 +49,12 @@ public:
     }
   }
 
-  /// Equality operator overload.
-  bool operator==(const prach_subcarrier_spacing& other) const { return other.value == value; }
+  /// Implicit cast to an enum.
+  operator values() const { return value; }
 
 private:
   /// Actual value.
   values value;
 };
+
+} // namespace srsgnb

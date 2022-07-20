@@ -46,24 +46,6 @@ private:
   /// Temporal sequence storage.
   srsvec::aligned_vec<cf_t> temp;
 
-  /// \brief Calculates the number of cyclic shifts \f$N_{CS}\f$ used in the sequence generation as per TS38.211
-  /// Section 6.3.3.1.
-  ///
-  /// The number of cyclic shifts \f$N_{CS}\f$ extracted from:
-  /// - TS38.211 Table 6.3.3.1-5 for preambles 0, 1 and 2
-  /// - TS38.211 Table 6.3.3.1-6 for preamble 3, and
-  /// - TS38.211 Table 6.3.3.1-7 for the remaining preambles.
-  ///
-  /// \param[in] prach_scs             \brief PRACH subcarrier spacing (parameter \f$\Delta f^{RA}\f$ as defined in
-  ///                                  TS38.211 Section 6.3.3.1).
-  /// \param[in] restricted_set        \brief Restricted set (parameter \c restrictedSetConfig defined in TS38.331
-  ///                                  RACH-ConfigCommon).
-  /// \param[in] zero_correlation_zone \brief Zero correlation zone (parameter \c zeroCorrelationZoneConfig defined in
-  ///                                  TS38.331 RACH-ConfigGeneric).
-  /// \return The number of cyclic shifts if the input parameters are valid. Otherwise, RESERVED.
-  static unsigned
-  get_nof_cyclic_shifts(unsigned prach_scs, restricted_set_config restricted_set, unsigned zero_correlation_zone);
-
   /// Determines the sequence length \f$L_{RA}\f$ as per TS38.211 Table 6.3.3.1-1.
   static unsigned get_sequence_length(preamble_format format);
 
