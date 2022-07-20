@@ -21,6 +21,7 @@ template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
 class bounded_integer
 {
   static_assert(std::is_integral<Integer>::value, "Template argument must be an integer");
+  static_assert(MIN_VALUE <= MAX_VALUE, "Provided bounds for bounded_integer are not valid");
 
 public:
   using value_type = Integer;
@@ -52,12 +53,12 @@ public:
   /// Cast operator to primitive integer type.
   explicit operator Integer() const { return value; }
 
-  bool operator==(const bounded_integer& other) const { return value == other.value; }
-  bool operator!=(const bounded_integer& other) const { return value != other.value; }
-  bool operator<(const bounded_integer& other) const { return value < other.value; }
-  bool operator<=(const bounded_integer& other) const { return value <= other.value; }
-  bool operator>(const bounded_integer& other) const { return value > other.value; }
-  bool operator>=(const bounded_integer& other) const { return value >= other.value; }
+  bool operator==(bounded_integer other) const { return value == other.value; }
+  bool operator!=(bounded_integer other) const { return value != other.value; }
+  bool operator<(bounded_integer other) const { return value < other.value; }
+  bool operator<=(bounded_integer other) const { return value <= other.value; }
+  bool operator>(bounded_integer other) const { return value > other.value; }
+  bool operator>=(bounded_integer other) const { return value >= other.value; }
 
 protected:
   void assert_bounds(Integer v) const
