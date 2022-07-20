@@ -59,10 +59,6 @@ struct ul_rrc_message {
   asn1::unbounded_octstring<true> rrc_container;
 };
 
-struct dl_rrc_message {
-  asn1::unbounded_octstring<true> rrc_container;
-};
-
 /// Interface to forward RRC messages at the DU processor
 class du_processor_rrc_message_handler
 {
@@ -71,15 +67,6 @@ public:
 
   virtual void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) = 0;
   virtual void handle_ul_rrc_message_transfer(const ul_rrc_message& msg)                 = 0;
-};
-
-/// Interface to receive RRC messages at the DU processor
-class du_processor_dl_rrc_message_handler
-{
-public:
-  virtual ~du_processor_dl_rrc_message_handler() = default;
-
-  virtual void handle_dl_rrc_message_transfer(const dl_rrc_message& msg) = 0;
 };
 
 /// Interface to notify the reception of an new RRC message.
@@ -107,8 +94,7 @@ public:
 /// Combined interface for all DU processor handlers
 class du_processor_f1c_interface : public du_processor_f1ap_setup_handler,
                                    public du_processor_cell_handler,
-                                   public du_processor_rrc_message_handler,
-                                   public du_processor_dl_rrc_message_handler
+                                   public du_processor_rrc_message_handler
 {
 public:
   virtual ~du_processor_f1c_interface() = default;

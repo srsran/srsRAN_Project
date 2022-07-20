@@ -95,21 +95,30 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg)
 {
+  f1ap_ue_id_t    cu_ue_id = find_cu_ue_id(msg.ue_index);
+  f1ap_ue_context ue_ctxt  = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+
+  asn1::f1ap::dlrrc_msg_transfer_s dlrrc_msg = {};
+  dlrrc_msg->gnb_cu_ue_f1_ap_id.value        = cu_ue_id;
+  dlrrc_msg->gnb_du_ue_f1_ap_id.value        = ue_ctxt.du_ue_f1ap_id;
+  dlrrc_msg->srbid.value                     = (uint8_t)msg.srb_id;
+  dlrrc_msg->rrc_container.value             = msg.rrc_container;
+
   logger.info("Transmitting DL RRC message");
   // Pack message into PDU
-  f1c_msg f1c_msg;
-  f1c_msg.pdu.set_init_msg();
-  f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
-  f1c_msg.pdu.init_msg().value.dlrrc_msg_transfer() = msg.msg;
+  f1c_msg f1c_dl_rrc_msg;
+  f1c_dl_rrc_msg.pdu.set_init_msg();
+  f1c_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
+  f1c_dl_rrc_msg.pdu.init_msg().value.dlrrc_msg_transfer() = dlrrc_msg;
 
   if (logger.debug.enabled()) {
     asn1::json_writer js;
-    f1c_msg.pdu.to_json(js);
+    f1c_dl_rrc_msg.pdu.to_json(js);
     logger.debug("Containerized DL RRC message: {}", js.to_string());
   }
 
   // send DL RRC message
-  pdu_notifier.on_new_message(f1c_msg);
+  pdu_notifier.on_new_message(f1c_dl_rrc_msg);
 }
 
 async_task<f1ap_ue_context_setup_response_message>

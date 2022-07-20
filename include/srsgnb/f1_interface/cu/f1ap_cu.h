@@ -15,6 +15,7 @@
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
+#include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
 
 namespace srsgnb {
@@ -47,7 +48,9 @@ struct f1ap_ul_rrc_msg {
 };
 
 struct f1ap_dl_rrc_msg {
-  asn1::f1ap::dlrrc_msg_transfer_s msg;
+  ue_index_t                      ue_index;
+  srb_id_t                        srb_id;
+  asn1::unbounded_octstring<true> rrc_container;
 };
 
 class f1ap_rrc_message_transfer_procedure_handler

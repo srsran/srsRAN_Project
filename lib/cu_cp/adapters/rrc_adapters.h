@@ -10,7 +10,9 @@
 
 #pragma once
 
+#include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {
@@ -20,21 +22,24 @@ namespace srs_cu_cp {
 class du_processor_dl_message_indicator : public rrc_pdu_notifier
 {
 public:
-  explicit du_processor_dl_message_indicator(du_processor_dl_rrc_message_handler& du_processor_handler_) :
-    du_processor_handler(du_processor_handler_)
+  explicit du_processor_dl_message_indicator(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_) :
+    f1c_handler(f1c_handler_)
   {
   }
 
   void on_new_pdu(const rrc_pdu_message msg) override
   {
-    dl_rrc_message dl_msg = {};
-    dl_msg.rrc_container.resize(msg.pdu.length());
-    std::copy(msg.pdu.begin(), msg.pdu.end(), dl_msg.rrc_container.begin());
-    du_processor_handler.handle_dl_rrc_message_transfer(dl_msg);
+    f1ap_dl_rrc_msg f1ap_msg = {};
+    f1ap_msg.ue_index        = msg.ue_index;
+    f1ap_msg.srb_id          = msg.srb_id;
+
+    f1ap_msg.rrc_container.resize(msg.pdu.length());
+    std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
+    f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
   }
 
 private:
-  du_processor_dl_rrc_message_handler& du_processor_handler;
+  f1ap_rrc_message_transfer_procedure_handler& f1c_handler;
 };
 
 } // namespace srs_cu_cp
