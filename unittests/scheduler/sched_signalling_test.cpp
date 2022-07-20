@@ -535,8 +535,8 @@ void test_freq_domain_sched_ssb()
   //                   TEST CASE B
   // ##########################################################
   // TEST Case B, frequency < 3GHz.
-  freq_arfcn = 176000;
-  ssb_scs    = subcarrier_spacing::kHz30;
+  freq_arfcn      = 176000;
+  ssb_scs         = subcarrier_spacing::kHz30;
   in_burst_bitmap = static_cast<uint64_t>(0b11110000U) << static_cast<uint64_t>(56U);
 
   // Test different offset_to_point_A and different k_SSB.
@@ -551,7 +551,7 @@ void test_freq_domain_sched_ssb()
   //                   TEST CASE C
   // ##########################################################
   // TEST Case C, Unpaired spectrum, frequency < 1.88GHz.
-  freq_arfcn = 292000;
+  freq_arfcn      = 292000;
   in_burst_bitmap = static_cast<uint64_t>(0b11110000U) << static_cast<uint64_t>(56U);
 
   // Test different offset_to_point_A and different k_SSB.
@@ -566,7 +566,7 @@ void test_freq_domain_sched_ssb()
   //                   TEST CASE C
   // ##########################################################
   // TEST Case C, Unpaired spectrum, frequency > 1.88GHz.
-  freq_arfcn = 518000;
+  freq_arfcn      = 518000;
   in_burst_bitmap = static_cast<uint64_t>(0b11111111U) << static_cast<uint64_t>(56U);
 
   // Try offset_to_point_A, different k_SSB.
