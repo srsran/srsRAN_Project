@@ -308,8 +308,8 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
   cell_cfg_msg.ssb_config.offset_to_point_A             = ssb_offset_to_pointA{offset_to_point_A};
   cell_cfg_msg.ssb_config.scs                           = ssb_scs;
   // Mixed numerology is not supported yet.
-  cell_cfg_msg.scs_common                       = ssb_scs;
-  cell_cfg_msg.ssb_config.k_ssb                 = k_ssb;
+  cell_cfg_msg.scs_common       = ssb_scs;
+  cell_cfg_msg.ssb_config.k_ssb = k_ssb;
   test_bench bench{cell_cfg_msg};
 
   bench.new_slot();
