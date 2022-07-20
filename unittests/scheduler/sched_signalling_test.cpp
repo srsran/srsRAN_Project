@@ -142,12 +142,12 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
         TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.ssb_offset_to_point_A,
+        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
                       ssb_item.crbs.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
         unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0
-                                    ? static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS + 1)
-                                    : static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS);
+                                    ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
+                                    : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
         TESTASSERT_EQ(ssb_crb_stop,
                       ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -163,11 +163,10 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
     grant_info empty_space{grant_info::channel::ssb,
                            slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                            {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
-                           {0, ssb_cfg.ssb_offset_to_point_A}};
+                           {0, ssb_cfg.offset_to_point_A.to_uint()}};
     TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "CRBs {} should be empty", empty_space.crbs);
-    unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0
-                                ? static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS + 1)
-                                : static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS);
+    unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
+                                                              : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
     empty_space.crbs = {ssb_crb_stop, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
     TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
     // FIXME: Check the non-empty PRBs.
@@ -230,12 +229,12 @@ void test_ssb_case_B(const slot_point&             slot_tx,
         TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.ssb_offset_to_point_A,
+        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
                       ssb_item.crbs.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
         unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0
-                                    ? static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS + 1)
-                                    : static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS);
+                                    ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
+                                    : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
         TESTASSERT_EQ(ssb_crb_stop,
                       ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -265,12 +264,12 @@ void test_ssb_case_B(const slot_point&             slot_tx,
         TESTASSERT_EQ(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
                       ssb_item.symbols.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.ssb_offset_to_point_A,
+        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
                       ssb_item.crbs.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
         unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0
-                                    ? static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS + 1)
-                                    : static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS);
+                                    ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
+                                    : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
         TESTASSERT_EQ(ssb_crb_stop,
                       ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -286,11 +285,10 @@ void test_ssb_case_B(const slot_point&             slot_tx,
     grant_info empty_space{grant_info::channel::ssb,
                            slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                            {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
-                           {0, ssb_cfg.ssb_offset_to_point_A}};
+                           {0, ssb_cfg.offset_to_point_A.to_uint()}};
     TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
-    unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0
-                                ? static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS + 1)
-                                : static_cast<unsigned>(ssb_cfg.ssb_offset_to_point_A + NOF_SSB_PRBS);
+    unsigned ssb_crb_stop = ssb_cfg.ssb_subcarrier_offset > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
+                                                              : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
     empty_space.crbs = {ssb_crb_stop, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
     TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
     // FIXME: Check the non-empty PRBs.
@@ -310,7 +308,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
   cell_cfg_msg.dl_carrier.arfcn                         = freq_arfcn;
   cell_cfg_msg.ssb_config.ssb_period                    = ssb_period;
   cell_cfg_msg.ssb_config.ssb_bitmap                    = in_burst_bitmap;
-  cell_cfg_msg.ssb_config.ssb_offset_to_point_A         = offset_to_point_A;
+  cell_cfg_msg.ssb_config.offset_to_point_A             = ssb_offset_to_pointA{offset_to_point_A};
   cell_cfg_msg.ssb_config.scs                           = ssb_scs;
   // Mixed numerology is not supported yet.
   cell_cfg_msg.scs_common                       = ssb_scs;

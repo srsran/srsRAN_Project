@@ -194,7 +194,7 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
   ssb_configuration cfg{};
 
   cfg.scs                   = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
-  cfg.ssb_offset_to_point_A = params.offset_to_point_a;
+  cfg.offset_to_point_A     = ssb_offset_to_pointA{params.offset_to_point_a};
   cfg.ssb_period            = ssb_periodicity::ms10;
   cfg.ssb_subcarrier_offset = 0;
 

@@ -162,7 +162,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     unsigned offset_p_A_upper_bound =
         ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs - NOF_SSB_PRBS - 1 : nof_crbs - NOF_SSB_PRBS;
     CHECK_EQ_OR_BELOW(
-        ssb_cfg.ssb_offset_to_point_A,
+        ssb_cfg.offset_to_point_A.to_uint(),
         offset_p_A_upper_bound,
         "Offset to PointA must be such that the SSB is located inside the Initial DL BWP, i.e, offset_to_point_A <= {}",
         offset_p_A_upper_bound);
@@ -179,7 +179,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     unsigned offset_p_A_upper_bound =
         ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs * 2 - NOF_SSB_PRBS - 1 : nof_crbs * 2 - NOF_SSB_PRBS;
     CHECK_EQ_OR_BELOW(
-        ssb_cfg.ssb_offset_to_point_A,
+        ssb_cfg.offset_to_point_A.to_uint(),
         offset_p_A_upper_bound,
         "Offset to PointA must be such that the SSB is located inside the Initial DL BWP, i.e, offset_to_point_A <= {}",
         offset_p_A_upper_bound);

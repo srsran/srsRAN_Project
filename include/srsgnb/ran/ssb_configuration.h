@@ -24,7 +24,7 @@ struct ssb_configuration {
   subcarrier_spacing scs;
   /// Represents the offset to Point A in PRBs as per TS38.331 Section 6.3.2 IE offsetToPointA.
   /// Possible values: {0, ..., 2199}.
-  uint16_t ssb_offset_to_point_A;
+  ssb_offset_to_pointA offset_to_point_A;
   /// SSB periodicity.
   ssb_periodicity ssb_period;
   /// SSB SubcarrierOffest or k_ssb as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.

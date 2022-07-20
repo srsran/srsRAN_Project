@@ -34,7 +34,7 @@ void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb
   ssb_pdu.ssb_index             = ssb_info.ssb_index;
   ssb_pdu.scs                   = ssb_cfg.scs;
   ssb_pdu.ssb_subcarrier_offset = ssb_cfg.ssb_subcarrier_offset;
-  ssb_pdu.offset_to_point_A     = ssb_cfg.ssb_offset_to_point_A;
+  ssb_pdu.offset_to_point_A     = static_cast<uint16_t>(ssb_cfg.offset_to_point_A.to_uint());
   ssb_pdu.ssb_case              = ssb_case;
   ssb_pdu.L_max                 = L_max;
 
