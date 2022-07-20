@@ -62,11 +62,6 @@ private:
   /// \return The DU processor object.
   du_processor& find_du(du_index_t du_index);
 
-  /// \brief Find a DU object.
-  /// \param[in] packed_nr_cell_id The cell id of a DU processor object.
-  /// \return The DU processor object.
-  du_processor& find_du(uint64_t packed_nr_cell_id);
-
   /// \brief Get the next available index from the DU processor database.
   /// \return The DU index.
   du_index_t get_next_du_index();
@@ -81,7 +76,6 @@ private:
   std::unique_ptr<ngap> ngap_entity;
 
   slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
-  std::unordered_map<uint64_t, du_processor*>            du_dict; // Hash-table to find DU by cell_id
 
   // task event loops indexed by du_index
   slot_array<async_task_sequencer, MAX_NOF_DUS> du_ctrl_loop;

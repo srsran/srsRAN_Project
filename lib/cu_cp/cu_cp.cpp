@@ -147,14 +147,6 @@ du_processor& cu_cp::find_du(du_index_t du_index)
   return *du_db[du_index];
 }
 
-du_processor& cu_cp::find_du(uint64_t packed_nr_cell_id)
-{
-  auto du_it = du_dict.find(packed_nr_cell_id);
-  srsran_assert(du_it != du_dict.end(), "DU not found packed_nr_cell_id={}", packed_nr_cell_id);
-
-  return *du_it->second;
-}
-
 du_index_t cu_cp::get_next_du_index()
 {
   for (int du_idx_int = MIN_DU_INDEX; du_idx_int < MAX_NOF_DUS; du_idx_int++) {
