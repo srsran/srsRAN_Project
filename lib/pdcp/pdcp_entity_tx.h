@@ -20,19 +20,19 @@
 namespace srsgnb {
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
-class pdcp_entity_tx : public pdcp_tx_sdu_handler, public pdcp_tx_lower_layer_data_handler
+class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower_interface
 {
 protected:
-  pdcp_entity_tx(du_ue_index_t                         du_index,
-                 lcid_t                                lcid,
-                 pdcp_tx_lower_layer_data_notifier&    lower_dn,
-                 pdcp_tx_upper_layer_control_notifier& upper_cn) :
+  pdcp_entity_tx(du_ue_index_t                   du_index,
+                 lcid_t                          lcid,
+                 pdcp_tx_lower_notifier&         lower_dn,
+                 pdcp_tx_upper_control_notifier& upper_cn) :
     logger("PDCP", du_index, lcid), lower_dn(lower_dn), upper_cn(upper_cn)
   {
   }
 
-  bearer_logger                         logger;
-  pdcp_tx_lower_layer_data_notifier&    lower_dn;
-  pdcp_tx_upper_layer_control_notifier& upper_cn;
+  bearer_logger                   logger;
+  pdcp_tx_lower_notifier&         lower_dn;
+  pdcp_tx_upper_control_notifier& upper_cn;
 };
 } // namespace srsgnb

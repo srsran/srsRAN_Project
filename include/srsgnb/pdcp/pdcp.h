@@ -12,51 +12,42 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 
+/*
+ * This file will hold the interfaces and notifiers for the PDCP entity.
+ * They follow the following nomenclature:
+ *
+ *   pdcp_{tx/rx}_{lower/upper}_{[control/data]}_{interface/notifier}
+ *
+ * 1. TX/RX indicates whether the interface is intended for the
+ *    TX or RX side of the entity
+ * 2. Lower/Upper indicates whether the interface/notifier interacts
+ *    with the upper or lower layers.
+ * 3. Control/Data: indicates whether this interface is necessary for "control"
+ *    purposes (e.g., notifying the RRC of an integrity failure, or that we are
+ *    near max HFN) or "data" purposes (e.g. handling SDUs).
+ *    This distinction is only necessary when interfacing with the upper layers,
+ *    and as such, we omit it in the interfaces with the lower layers.
+ * 4. Interface/Notifier: whether this is an interface the PDCP entity will
+ *    inherit or if a notifier that the PDCP will keep as a member.
+ *
+ */
 namespace srsgnb {
-
-/// This interface represents the data entry point of the transmitting side of a PDCP entity.
-/// The upper-layers will use this call to pass RLC SDUs into the TX entity.
-class pdcp_tx_sdu_handler
-{
-public:
-  pdcp_tx_sdu_handler()                                       = default;
-  virtual ~pdcp_tx_sdu_handler()                              = default;
-  pdcp_tx_sdu_handler(const pdcp_tx_sdu_handler&)             = delete;
-  pdcp_tx_sdu_handler& operator=(const pdcp_tx_sdu_handler&)  = delete;
-  pdcp_tx_sdu_handler(const pdcp_tx_sdu_handler&&)            = delete;
-  pdcp_tx_sdu_handler& operator=(const pdcp_tx_sdu_handler&&) = delete;
-
-  /// Handle the incoming SDU.
-  virtual void handle_sdu(byte_buffer sdu) = 0;
-};
 
 /// This interface represents the data exit point of the transmitting side of a PDCP entity.
 /// The PDCP will push PDUs to the lower layers using this interface.
 /// The PDCP will also use this interface to order the lower layer to discard PDUs if necessary.
-class pdcp_tx_lower_layer_data_notifier
+class pdcp_tx_lower_notifier
 {
 public:
-  virtual ~pdcp_tx_lower_layer_data_notifier()                                            = default;
-  pdcp_tx_lower_layer_data_notifier(const pdcp_tx_lower_layer_data_notifier&)             = delete;
-  pdcp_tx_lower_layer_data_notifier& operator=(const pdcp_tx_lower_layer_data_notifier&)  = delete;
-  pdcp_tx_lower_layer_data_notifier(const pdcp_tx_lower_layer_data_notifier&&)            = delete;
-  pdcp_tx_lower_layer_data_notifier& operator=(const pdcp_tx_lower_layer_data_notifier&&) = delete;
+  pdcp_tx_lower_notifier()                                          = default;
+  virtual ~pdcp_tx_lower_notifier()                                 = default;
+  pdcp_tx_lower_notifier(const pdcp_tx_lower_notifier&)             = delete;
+  pdcp_tx_lower_notifier& operator=(const pdcp_tx_lower_notifier&)  = delete;
+  pdcp_tx_lower_notifier(const pdcp_tx_lower_notifier&&)            = delete;
+  pdcp_tx_lower_notifier& operator=(const pdcp_tx_lower_notifier&&) = delete;
 
   virtual void on_new_pdu(byte_buffer pdu)    = 0; ///> Pass PDU to the lower layers.
   virtual void on_discard_pdu(uint32_t count) = 0; ///> Order lower layers to discard PDU
-};
-
-/// This interface represents the control upper layer that the
-/// TX PDCP bearer must notify in case of reaching max HFN,
-/// so that keys can be re-negotiated. Other protocol failures
-/// will also be notified through this interface.
-class pdcp_tx_upper_layer_control_notifier
-{
-public:
-  virtual ~pdcp_tx_upper_layer_control_notifier() = default;
-
-  virtual void on_protocol_failure() = 0;
-  virtual void on_max_hfn_reached()  = 0;
 };
 
 /// This interface represents the interface through which
@@ -64,40 +55,74 @@ public:
 /// of relevant events, namely that it can stop the discard timer.
 /// On RLC AM, this is done when a PDCP SDU is ACK'ed, on UM
 /// it is when transmission of a PDCP SDU begins.
-class pdcp_tx_lower_layer_data_handler
+class pdcp_tx_lower_interface
 {
 public:
-  virtual ~pdcp_tx_lower_layer_data_handler() = default;
+  pdcp_tx_lower_interface()                                           = default;
+  virtual ~pdcp_tx_lower_interface()                                  = default;
+  pdcp_tx_lower_interface(const pdcp_tx_lower_interface&)             = delete;
+  pdcp_tx_lower_interface& operator=(const pdcp_tx_lower_interface&)  = delete;
+  pdcp_tx_lower_interface(const pdcp_tx_lower_interface&&)            = delete;
+  pdcp_tx_lower_interface& operator=(const pdcp_tx_lower_interface&&) = delete;
 
   virtual void stop_discard_timer(uint32_t count) = 0;
 };
 
-/// This interface represents the data entry point of the receiving side of a PDCP entity.
-/// The lower-layers will use this class to pass PDUs into the PDCP.
-class pdcp_rx_pdu_handler
+/// This interface represents the data entry point of the transmitting side of a PDCP entity.
+/// The upper-layers will use this call to pass RLC SDUs into the TX entity.
+class pdcp_tx_upper_data_interface
 {
 public:
-  pdcp_rx_pdu_handler()                                       = default;
-  virtual ~pdcp_rx_pdu_handler()                              = default;
-  pdcp_rx_pdu_handler(const pdcp_rx_pdu_handler&)             = delete;
-  pdcp_rx_pdu_handler& operator=(const pdcp_rx_pdu_handler&)  = delete;
-  pdcp_rx_pdu_handler(const pdcp_rx_pdu_handler&&)            = delete;
-  pdcp_rx_pdu_handler& operator=(const pdcp_rx_pdu_handler&&) = delete;
+  pdcp_tx_upper_data_interface()                                                = default;
+  virtual ~pdcp_tx_upper_data_interface()                                       = default;
+  pdcp_tx_upper_data_interface(const pdcp_tx_upper_data_interface&)             = delete;
+  pdcp_tx_upper_data_interface& operator=(const pdcp_tx_upper_data_interface&)  = delete;
+  pdcp_tx_upper_data_interface(const pdcp_tx_upper_data_interface&&)            = delete;
+  pdcp_tx_upper_data_interface& operator=(const pdcp_tx_upper_data_interface&&) = delete;
+
+  /// Handle the incoming SDU.
+  virtual void handle_sdu(byte_buffer sdu) = 0;
+};
+
+/// This interface represents the control upper layer that the
+/// TX PDCP bearer must notify in case of reaching max HFN,
+/// so that keys can be re-negotiated. Other protocol failures
+/// will also be notified through this interface.
+class pdcp_tx_upper_control_notifier
+{
+public:
+  virtual ~pdcp_tx_upper_control_notifier() = default;
+
+  virtual void on_protocol_failure() = 0;
+  virtual void on_max_hfn_reached()  = 0;
+};
+
+/// This interface represents the data entry point of the receiving side of a PDCP entity.
+/// The lower-layers will use this class to pass PDUs into the PDCP.
+class pdcp_rx_lower_interface
+{
+public:
+  pdcp_rx_lower_interface()                                           = default;
+  virtual ~pdcp_rx_lower_interface()                                  = default;
+  pdcp_rx_lower_interface(const pdcp_rx_lower_interface&)             = delete;
+  pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&)  = delete;
+  pdcp_rx_lower_interface(const pdcp_rx_lower_interface&&)            = delete;
+  pdcp_rx_lower_interface& operator=(const pdcp_rx_lower_interface&&) = delete;
 
   virtual void handle_pdu(byte_buffer pdu) = 0; ///> Handle the incoming PDU.
 };
 
 /// This interface represents the data exit point of the receiving side of a PDCP entity.
 /// The PDCP will use this class to pass SDUs to the upper-layers.
-class pdcp_rx_upper_layer_data_notifier
+class pdcp_rx_upper_data_notifier
 {
 public:
-  pdcp_rx_upper_layer_data_notifier()                                                     = default;
-  virtual ~pdcp_rx_upper_layer_data_notifier()                                            = default;
-  pdcp_rx_upper_layer_data_notifier(const pdcp_rx_upper_layer_data_notifier&)             = delete;
-  pdcp_rx_upper_layer_data_notifier& operator=(const pdcp_rx_upper_layer_data_notifier&)  = delete;
-  pdcp_rx_upper_layer_data_notifier(const pdcp_rx_upper_layer_data_notifier&&)            = delete;
-  pdcp_rx_upper_layer_data_notifier& operator=(const pdcp_rx_upper_layer_data_notifier&&) = delete;
+  pdcp_rx_upper_data_notifier()                                               = default;
+  virtual ~pdcp_rx_upper_data_notifier()                                      = default;
+  pdcp_rx_upper_data_notifier(const pdcp_rx_upper_data_notifier&)             = delete;
+  pdcp_rx_upper_data_notifier& operator=(const pdcp_rx_upper_data_notifier&)  = delete;
+  pdcp_rx_upper_data_notifier(const pdcp_rx_upper_data_notifier&&)            = delete;
+  pdcp_rx_upper_data_notifier& operator=(const pdcp_rx_upper_data_notifier&&) = delete;
 
   /// Pass SDU to higher layers.
   virtual void on_new_sdu(byte_buffer sdu) = 0;
@@ -105,14 +130,14 @@ public:
 
 /// This interface represents the control upper layer that the
 /// RX PDCP bearer must notify in case of integrity errors or protocol failures.
-class pdcp_rx_upper_layer_control_notifier
+class pdcp_rx_upper_control_notifier
 {
 public:
-  virtual ~pdcp_rx_upper_layer_control_notifier()                                               = default;
-  pdcp_rx_upper_layer_control_notifier(const pdcp_rx_upper_layer_control_notifier&)             = delete;
-  pdcp_rx_upper_layer_control_notifier& operator=(const pdcp_rx_upper_layer_control_notifier&)  = delete;
-  pdcp_rx_upper_layer_control_notifier(const pdcp_rx_upper_layer_control_notifier&&)            = delete;
-  pdcp_rx_upper_layer_control_notifier& operator=(const pdcp_rx_upper_layer_control_notifier&&) = delete;
+  virtual ~pdcp_rx_upper_control_notifier()                                         = default;
+  pdcp_rx_upper_control_notifier(const pdcp_rx_upper_control_notifier&)             = delete;
+  pdcp_rx_upper_control_notifier& operator=(const pdcp_rx_upper_control_notifier&)  = delete;
+  pdcp_rx_upper_control_notifier(const pdcp_rx_upper_control_notifier&&)            = delete;
+  pdcp_rx_upper_control_notifier& operator=(const pdcp_rx_upper_control_notifier&&) = delete;
 
   virtual void on_protocol_failure()  = 0;
   virtual void on_integrity_failure() = 0;

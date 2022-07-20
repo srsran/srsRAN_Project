@@ -21,9 +21,9 @@ namespace srsgnb {
 class pdcp_entity_impl : public pdcp_entity
 {
 public:
-  pdcp_tx_sdu_handler*              get_tx_sdu_handler() final { return tx.get(); };
-  pdcp_tx_lower_layer_data_handler* get_tx_lower_layer_data_handler() final { return tx.get(); };
-  pdcp_rx_pdu_handler*              get_rx_pdu_handler() final { return rx.get(); };
+  pdcp_tx_upper_data_interface* get_tx_upper_data_interface() final { return tx.get(); };
+  pdcp_tx_lower_interface*      get_tx_lower_interface() final { return tx.get(); };
+  pdcp_rx_lower_interface*      get_rx_lower_interface() final { return rx.get(); };
 
 private:
   bearer_logger logger;

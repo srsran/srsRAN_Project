@@ -22,9 +22,9 @@ class pdcp_entity
 public:
   virtual ~pdcp_entity() = default;
 
-  virtual pdcp_tx_sdu_handler*              get_tx_sdu_handler()              = 0;
-  virtual pdcp_tx_lower_layer_data_handler* get_tx_lower_layer_data_handler() = 0;
-  virtual pdcp_rx_pdu_handler*              get_rx_pdu_handler()              = 0;
+  virtual pdcp_tx_lower_interface*      get_tx_lower_interface()      = 0;
+  virtual pdcp_tx_upper_data_interface* get_tx_upper_data_interface() = 0;
+  virtual pdcp_rx_lower_interface*      get_rx_lower_interface()      = 0;
 };
 
 } // namespace srsgnb

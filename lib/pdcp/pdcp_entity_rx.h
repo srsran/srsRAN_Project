@@ -20,15 +20,15 @@
 namespace srsgnb {
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
-class pdcp_entity_rx : public pdcp_rx_pdu_handler
+class pdcp_entity_rx : public pdcp_rx_lower_interface
 {
 protected:
-  pdcp_entity_rx(du_ue_index_t du_index, lcid_t lcid, pdcp_rx_upper_layer_data_notifier& upper_dn) :
+  pdcp_entity_rx(du_ue_index_t du_index, lcid_t lcid, pdcp_rx_upper_data_notifier& upper_dn) :
     logger("PDCP", du_index, lcid), upper_dn(upper_dn)
   {
   }
 
-  bearer_logger                      logger;
-  pdcp_rx_upper_layer_data_notifier& upper_dn;
+  bearer_logger                logger;
+  pdcp_rx_upper_data_notifier& upper_dn;
 };
 } // namespace srsgnb

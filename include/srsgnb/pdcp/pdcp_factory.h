@@ -24,14 +24,14 @@
 namespace srsgnb {
 
 struct pdcp_entity_creation_message {
-  du_ue_index_t                         ue_index;
-  lcid_t                                lcid;
-  pdcp_config                           config;
-  pdcp_tx_lower_layer_data_notifier*    tx_lower_dn;
-  pdcp_tx_upper_layer_control_notifier* tx_upper_cn;
-  pdcp_rx_upper_layer_data_notifier*    rx_upper_dn;
-  pdcp_rx_upper_layer_control_notifier* rx_upper_cn;
-  timer_manager*                        timers;
+  du_ue_index_t                   ue_index;
+  lcid_t                          lcid;
+  pdcp_config                     config;
+  pdcp_tx_lower_notifier*         tx_lower;
+  pdcp_tx_upper_control_notifier* tx_upper_cn;
+  pdcp_rx_upper_data_notifier*    rx_upper_dn;
+  pdcp_rx_upper_control_notifier* rx_upper_cn;
+  timer_manager*                  timers;
 };
 
 /// Creates an instance of a PDCP entity.

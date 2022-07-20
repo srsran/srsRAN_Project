@@ -20,10 +20,10 @@ namespace {
 /// No concrete class dependencies.
 class fake_receiver
 {
-  srsgnb::pdcp_rx_pdu_handler& notifier;
+  srsgnb::pdcp_rx_lower_interface& pdcp_if;
 
 public:
-  explicit fake_receiver(srsgnb::pdcp_rx_pdu_handler* notifier) : notifier(*notifier) {}
+  explicit fake_receiver(srsgnb::pdcp_rx_lower_interface* pdcp_if) : pdcp_if(*pdcp_if) {}
 
   void receive()
   {
@@ -34,7 +34,7 @@ public:
     std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)v.length());
 
     // Send the packet to the PDCP interface.
-    notifier.handle_pdu(std::move(v));
+    pdcp_if.handle_pdu(std::move(v));
   }
 };
 
@@ -61,7 +61,7 @@ int main()
   srsgnb::pdcp_entity_creation_message      pdcp_msg = {};
   std::unique_ptr<srsgnb::pdcp_entity>      pdcp     = srsgnb::create_pdcp_entity(pdcp_msg);
 
-  fake_receiver rx(pdcp->get_rx_pdu_handler());
+  fake_receiver rx(pdcp->get_rx_lower_interface());
   rx.receive();
 
   return 0;
