@@ -34,7 +34,7 @@ const size_t MAX_GRANTS = 16;
 /// Maximum Logical channels per TB. Implementation-specific.
 const size_t MAX_LC_GRANTS = 4;
 /// Maximum SSB opportunity per slot. This can be derived from the candidate ODFM symbols indices within the ranges
-/// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1
+/// 0-13, 14-27, 28-41, 42-55, etc.. from TS 38.213, Section 4.1.
 const size_t MAX_SSB_PER_SLOT = 2;
 /// [Implementation defined] This corresponds to "Number of search space sets per slot" in Table 13-11, TS 38.213.
 constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
@@ -143,18 +143,18 @@ struct pdsch_information {
 };
 
 struct dl_msg_lc_info {
-  /// LCID {0..32}
+  /// LCID {0..32}.
   lcid_t lcid;
-  /// Number of scheduled bytes for this specific logical channel. {0..65535}
+  /// Number of scheduled bytes for this specific logical channel. {0..65535}.
   unsigned sched_bytes;
 };
 
 struct dl_msg_tb_info {
-  /// List of allocated logical channels
+  /// List of allocated logical channels.
   static_vector<dl_msg_lc_info, MAX_LC_GRANTS> lc_lst;
 };
 
-/// Dedicated DL Grant for UEs
+/// Dedicated DL Grant for UEs.
 struct dl_msg_alloc {
   rnti_t                                        crnti;
   pdsch_information                             pdsch_cfg;
@@ -222,13 +222,13 @@ struct dl_sched_result {
   /// Allocated UL PDCCHs.
   static_vector<pdcch_ul_information, MAX_GRANTS> ul_pdcchs;
 
-  /// Allocation of SSB and SIBs
+  /// Allocation of SSB and SIBs.
   dl_broadcast_allocation bc;
 
-  /// Allocation of dedicated RARs
+  /// Allocation of dedicated RARs.
   static_vector<rar_information, MAX_GRANTS> rar_grants;
 
-  /// Allocation of dedicated UE messages
+  /// Allocation of dedicated UE messages.
   static_vector<dl_msg_alloc, MAX_GRANTS> ue_grants;
 };
 
