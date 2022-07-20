@@ -71,8 +71,8 @@ static void test_sched_result_ok()
   TESTASSERT_EQ(pdu.pci, fapi_pdu.phys_cell_id);
   TESTASSERT_EQ(static_cast<unsigned>(pdu.pss_to_sss_epre), static_cast<unsigned>(fapi_pdu.beta_pss_profile_nr));
   TESTASSERT_EQ(pdu.ssb_index, fapi_pdu.ssb_block_index);
-  TESTASSERT_EQ(pdu.ssb_subcarrier_offset, fapi_pdu.ssb_subcarrier_offset);
-  TESTASSERT_EQ(pdu.offset_to_point_A, fapi_pdu.ssb_offset_pointA);
+  TESTASSERT_EQ(pdu.subcarrier_offset.to_uint(), fapi_pdu.ssb_subcarrier_offset);
+  TESTASSERT_EQ(pdu.offset_to_pointA.to_uint(), fapi_pdu.ssb_offset_pointA);
 
   // Maintenance v3 parameters.
   TESTASSERT_EQ(static_cast<unsigned>(pdu.ssb_case), static_cast<unsigned>(fapi_pdu.ssb_maintenance_v3.case_type));

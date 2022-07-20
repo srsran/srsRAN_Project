@@ -47,8 +47,8 @@ static void ssb_conversion_benchmark()
     mac_pdu.pci                        = pci_dist(gen);
     mac_pdu.pss_to_sss_epre            = static_cast<ssb_pss_to_sss_epre>(binary_dist(gen));
     mac_pdu.ssb_index                  = block_index_dist(gen);
-    mac_pdu.ssb_subcarrier_offset      = subcarrier_offset_dist(gen);
-    mac_pdu.offset_to_point_A          = offset_pointA_dist(gen);
+    mac_pdu.subcarrier_offset          = subcarrier_offset_dist(gen);
+    mac_pdu.offset_to_pointA           = offset_pointA_dist(gen);
     mac_pdu.ssb_case                   = static_cast<ssb_pattern_case>(case_dist(gen));
     mac_pdu.L_max                      = 4;
     mac_pdu.scs                        = subcarrier_spacing::kHz240;

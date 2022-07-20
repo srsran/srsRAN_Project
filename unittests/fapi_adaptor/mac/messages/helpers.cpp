@@ -91,8 +91,8 @@ dl_ssb_pdu unittests::build_valid_dl_ssb_pdu()
   pdu.pci                             = generate_pci();
   pdu.pss_to_sss_epre                 = static_cast<srsgnb::ssb_pss_to_sss_epre>(generate_binary());
   pdu.ssb_index                       = generate_block_index();
-  pdu.ssb_subcarrier_offset           = generate_subcarrier_offset();
-  pdu.offset_to_point_A               = generate_offset_point_A();
+  pdu.subcarrier_offset               = generate_subcarrier_offset();
+  pdu.offset_to_pointA                = generate_offset_point_A();
   pdu.ssb_case                        = static_cast<ssb_pattern_case>(generate_case_pattern());
   pdu.L_max                           = 4;
   pdu.scs                             = subcarrier_spacing::kHz240;
@@ -226,7 +226,7 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
   static const static_vector<coreset_configuration, 2> coreset_cfg = {generate_coreset_configuration(),
                                                                       generate_coreset_configuration()};
   static const static_vector<bwp_configuration, 2>     bwp_config  = {generate_bwp_configuration(),
-                                                                      generate_bwp_configuration()};
+                                                                 generate_bwp_configuration()};
 
   if (result_in_mem.dl_pdcchs.empty()) {
     for (unsigned i = 0; i != nof_pdus; ++i) {
@@ -249,7 +249,7 @@ sib_information unittests::build_valid_sib1_information_pdu()
   static const coreset_configuration coreset_cfg = {generate_coreset_configuration()};
   static const bwp_configuration     bwp_config  = {generate_bwp_configuration()};
   static const pdcch_dl_information  pdcch_info  = {generate_dci_context(bwp_config, coreset_cfg),
-                                                    generate_dci_dl_info()};
+                                                  generate_dci_dl_info()};
 
   sib_information info;
   info.si_indicator = sib_information::si_indicator_type::sib1;

@@ -29,16 +29,16 @@ ssb_assembler::ssb_assembler(const mac_cell_creation_request& cell_cfg) :
 
 void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb_info)
 {
-  ssb_pdu.pci                   = pci;
-  ssb_pdu.pss_to_sss_epre       = ssb_pss_to_sss_epre::dB_0;
-  ssb_pdu.ssb_index             = ssb_info.ssb_index;
-  ssb_pdu.scs                   = ssb_cfg.scs;
-  ssb_pdu.ssb_subcarrier_offset = static_cast<uint8_t>(ssb_cfg.k_ssb.to_uint());
-  ssb_pdu.offset_to_point_A     = static_cast<uint16_t>(ssb_cfg.offset_to_point_A.to_uint());
-  ssb_pdu.ssb_case              = ssb_case;
-  ssb_pdu.L_max                 = L_max;
+  ssb_pdu.pci               = pci;
+  ssb_pdu.pss_to_sss_epre   = ssb_pss_to_sss_epre::dB_0;
+  ssb_pdu.ssb_index         = ssb_info.ssb_index;
+  ssb_pdu.scs               = ssb_cfg.scs;
+  ssb_pdu.subcarrier_offset = ssb_cfg.k_ssb;
+  ssb_pdu.offset_to_pointA  = ssb_cfg.offset_to_point_A;
+  ssb_pdu.ssb_case          = ssb_case;
+  ssb_pdu.L_max             = L_max;
 
-  /// Fields required for PBCH payload/MIB generation.
+  // Fields required for PBCH payload/MIB generation.
   // TODO: Understand where these parameters should be taken (They come from RRC MIB msg)
   ssb_pdu.mib_data.cell_barred            = cell_barred;
   ssb_pdu.mib_data.intra_freq_reselection = intra_f_resel;

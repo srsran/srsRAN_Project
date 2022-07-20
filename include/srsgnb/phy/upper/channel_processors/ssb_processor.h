@@ -37,7 +37,7 @@ public:
     unsigned ssb_idx;
     /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
     unsigned L_max;
-    ///  Higher layer parameter \c subCarrierSpacingCommon as per TS38.331 \c MIB.
+    /// Higher layer parameter \c subCarrierSpacingCommon as per TS38.331 \c MIB.
     subcarrier_spacing common_scs;
     /// Alignment offset between the resource grid and the SS/PBCH block. \see ssb_subcarrier_offset for more details.
     ssb_subcarrier_offset subcarrier_offset;
