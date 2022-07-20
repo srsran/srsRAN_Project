@@ -30,4 +30,13 @@ mac_impl::mac_impl(mac_ul_ccch_notifier&     event_notifier,
   sched_cfg_adapter.set_sched(*sched_obj);
 }
 
+void mac_impl::handle_dl_bsr_update_required(const mac_dl_bsr_indication_message& dl_bsr)
+{
+  dl_bsr_indication_message bsr{};
+  bsr.ue_index = dl_bsr.ue_index;
+  bsr.lcid     = dl_bsr.lcid;
+  bsr.bsr      = dl_bsr.bsr;
+  sched_obj->handle_dl_bsr_indication(bsr);
+}
+
 } // namespace srsgnb

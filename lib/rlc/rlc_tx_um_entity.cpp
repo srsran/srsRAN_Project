@@ -15,8 +15,9 @@ using namespace srsgnb;
 rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index,
                                    lcid_t                               lcid,
                                    const rlc_tx_um_config&              config,
-                                   rlc_tx_upper_layer_control_notifier& upper_cn) :
-  rlc_tx_entity(du_index, lcid, upper_cn),
+                                   rlc_tx_upper_layer_control_notifier& upper_cn,
+                                   rlc_tx_buffer_state_update_notifier& buffer_state_notif) :
+  rlc_tx_entity(du_index, lcid, upper_cn, buffer_state_notif),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   head_len_full(rlc_um_pdu_header_size_complete_sdu),
@@ -198,4 +199,6 @@ void rlc_tx_um_entity::get_buffer_state(uint32_t& bytes)
   }
 
   bytes = queue_bytes + segment_bytes;
+
+  buffer_state_notifier.on_buffer_state_update(bytes);
 }

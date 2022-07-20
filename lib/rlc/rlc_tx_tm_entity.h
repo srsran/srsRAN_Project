@@ -20,10 +20,14 @@ class rlc_tx_tm_entity : public rlc_tx_entity
 {
 private:
   rlc_sdu_queue sdu_queue;
+  std::mutex    buffer_state_mutex;
 
 public:
-  rlc_tx_tm_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
-    rlc_tx_entity(du_index, lcid, upper_cn)
+  rlc_tx_tm_entity(du_ue_index_t                        du_index,
+                   lcid_t                               lcid,
+                   rlc_tx_upper_layer_control_notifier& upper_cn,
+                   rlc_tx_buffer_state_update_notifier& buffer_state_notifier) :
+    rlc_tx_entity(du_index, lcid, upper_cn, buffer_state_notifier)
   {
   }
 
@@ -81,7 +85,12 @@ public:
     return pdu;
   }
 
-  void get_buffer_state(uint32_t& bytes) override { bytes = sdu_queue.size_bytes(); }
+  void get_buffer_state(uint32_t& bytes) override
+  {
+    std::lock_guard<std::mutex> lock(buffer_state_mutex);
+    bytes = sdu_queue.size_bytes();
+    buffer_state_notifier.on_buffer_state_update(bytes);
+  }
 };
 
 } // namespace srsgnb

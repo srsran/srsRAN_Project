@@ -23,13 +23,17 @@ namespace srsgnb {
 class rlc_tx_entity : public rlc_tx_sdu_handler, public rlc_tx_pdu_transmitter, public rlc_bearer_tx_metrics
 {
 protected:
-  rlc_tx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_tx_upper_layer_control_notifier& upper_cn) :
-    logger("RLC", du_index, lcid), upper_cn(upper_cn)
+  rlc_tx_entity(du_ue_index_t                        du_index,
+                lcid_t                               lcid,
+                rlc_tx_upper_layer_control_notifier& upper_cn,
+                rlc_tx_buffer_state_update_notifier& buffer_state_notifier_) :
+    logger("RLC", du_index, lcid), upper_cn(upper_cn), buffer_state_notifier(buffer_state_notifier_)
   {
   }
 
   bearer_logger                        logger;
   rlc_tx_upper_layer_control_notifier& upper_cn;
+  rlc_tx_buffer_state_update_notifier& buffer_state_notifier;
 };
 
 } // namespace srsgnb

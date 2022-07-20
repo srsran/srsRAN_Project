@@ -59,7 +59,8 @@ public:
   rlc_tx_um_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
                    const rlc_tx_um_config&              config,
-                   rlc_tx_upper_layer_control_notifier& upper_cn);
+                   rlc_tx_upper_layer_control_notifier& upper_cn,
+                   rlc_tx_buffer_state_update_notifier& buffer_state_notif);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override;

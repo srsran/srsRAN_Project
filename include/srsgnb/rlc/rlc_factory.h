@@ -24,6 +24,7 @@ struct rlc_entity_creation_message {
   rlc_config                           config;
   rlc_rx_upper_layer_data_notifier*    upper_dn;
   rlc_tx_upper_layer_control_notifier* upper_cn;
+  rlc_tx_buffer_state_update_notifier* bsr_update_notifier;
   timer_manager*                       timers;
 };
 

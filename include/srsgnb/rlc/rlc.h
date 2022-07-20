@@ -106,4 +106,14 @@ public:
   virtual void on_max_retx()         = 0;
 };
 
+class rlc_tx_buffer_state_update_notifier
+{
+public:
+  virtual ~rlc_tx_buffer_state_update_notifier() = default;
+
+  /// \brief Method called by RLC bearer whenever its buffer state is updated and the respective result
+  /// needs to be forwarded to lower layers.
+  virtual void on_buffer_state_update(unsigned bsr) = 0;
+};
+
 } // namespace srsgnb

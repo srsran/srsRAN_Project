@@ -24,11 +24,12 @@ public:
                 const rlc_um_config&                 config,
                 rlc_rx_upper_layer_data_notifier&    upper_dn,
                 rlc_tx_upper_layer_control_notifier& upper_cn,
+                rlc_tx_buffer_state_update_notifier& buffer_state_notifier,
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
     if (config.tx != nullptr) {
-      tx = std::unique_ptr<rlc_tx_entity>(new rlc_tx_um_entity(du_index, lcid, *config.tx, upper_cn));
+      tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, *config.tx, upper_cn, buffer_state_notifier);
       logger.log_info("RLC TX UM configured: sn_field_length={}", to_number(config.tx->sn_field_length));
     } else {
       logger.log_info("Configured RLC UM without TX entity");

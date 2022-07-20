@@ -22,7 +22,9 @@
 
 namespace srsgnb {
 
-class mac_impl : public mac_interface, public mac_cell_control_information_handler
+class mac_impl : public mac_interface,
+                 public mac_cell_control_information_handler,
+                 public mac_ue_control_information_handler
 {
 public:
   explicit mac_impl(mac_ul_ccch_notifier&     event_notifier,
@@ -37,7 +39,7 @@ public:
 
   mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) override { return *this; }
 
-  void handle_crc(const crc_indication_message& msg) override {}
+  mac_ue_control_information_handler& get_ue_control_info_handler() override { return *this; }
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index) override
   {
@@ -47,6 +49,10 @@ public:
   mac_cell_manager& get_cell_manager() override { return ctrl_unit; }
 
   mac_pdu_handler& get_pdu_handler(du_cell_index_t cell_index) override { return ul_unit; }
+
+  void handle_crc(const crc_indication_message& msg) override {}
+
+  void handle_dl_bsr_update_required(const mac_dl_bsr_indication_message& dl_bsr) override;
 
 private:
   mac_common_config_t cfg;

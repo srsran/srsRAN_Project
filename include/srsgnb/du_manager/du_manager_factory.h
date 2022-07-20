@@ -16,6 +16,7 @@ namespace srs_du {
 std::unique_ptr<du_manager_interface> create_du_manager(timer_manager&                               timers,
                                                         mac_ue_configurator&                         mac_ue_mng,
                                                         mac_cell_manager&                            mac_cell_mng,
+                                                        mac_ue_control_information_handler&          mac_ue_ctrl_ind,
                                                         f1ap_connection_manager&                     f1ap_conn_mng,
                                                         f1ap_ue_context_manager&                     f1ap_ue_ctx_mng,
                                                         f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc,

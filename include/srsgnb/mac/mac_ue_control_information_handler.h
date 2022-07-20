@@ -16,21 +16,21 @@
 namespace srsgnb {
 
 /// DL Buffer state update for a given RLC bearer.
-struct dl_bsr_indication_message {
+struct mac_dl_bsr_indication_message {
   du_ue_index_t ue_index;
-  rnti_t        rnti;
   lcid_t        lcid;
   unsigned      bsr;
 };
 
-/// Scheduler interface to push DL Buffer State Reports for a given RLC bearer.
-class scheduler_dl_buffer_state_indicator
+class mac_ue_control_information_handler
 {
 public:
-  virtual ~scheduler_dl_buffer_state_indicator() = default;
+  virtual ~mac_ue_control_information_handler() = default;
 
-  /// Forward DL buffer state update to scheduler.
-  virtual void handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) = 0;
+  /// Marks that the DL buffer state for a given UE logical channel needs to be recomputed.
+  /// \param ue_index UE identification.
+  /// \param lcid LCID of the logical channel for which the buffer state needs to be recomputed.
+  virtual void handle_dl_bsr_update_required(const mac_dl_bsr_indication_message& dl_bsr) = 0;
 };
 
 } // namespace srsgnb

@@ -51,5 +51,28 @@ public:
   }
 };
 
+class rlc_tx_mac_buffer_state_updater : public rlc_tx_buffer_state_update_notifier
+{
+public:
+  rlc_tx_mac_buffer_state_updater(du_ue_index_t ue_index_, lcid_t lcid_, mac_ue_control_information_handler& mac_) :
+    ue_index(ue_index_), lcid(lcid_), mac(mac_)
+  {
+  }
+
+  void on_buffer_state_update(unsigned bsr) override
+  {
+    mac_dl_bsr_indication_message msg{};
+    msg.ue_index = ue_index;
+    msg.lcid     = lcid;
+    msg.bsr      = bsr;
+    mac.handle_dl_bsr_update_required(msg);
+  }
+
+private:
+  du_ue_index_t                       ue_index;
+  lcid_t                              lcid;
+  mac_ue_control_information_handler& mac;
+};
+
 } // namespace srs_du
 } // namespace srsgnb
