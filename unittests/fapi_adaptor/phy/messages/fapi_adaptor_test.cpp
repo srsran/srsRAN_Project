@@ -31,7 +31,7 @@ static void ssb_conversion_test()
   std::uniform_int_distribution<uint8_t>  binary_1bit_dist(0, 1);
   std::uniform_int_distribution<uint8_t>  binary_8bit_dist(0, UINT8_MAX);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
-  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 31);
+  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 23);
   std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 2199);
   std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
   std::uniform_real_distribution<float>   power_scaling_ss_pbch_dist(-110, 120);

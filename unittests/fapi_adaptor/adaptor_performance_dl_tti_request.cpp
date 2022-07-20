@@ -36,8 +36,8 @@ static void ssb_conversion_benchmark()
   std::uniform_int_distribution<unsigned> pci_dist(0, 3000);
   std::uniform_int_distribution<unsigned> binary_dist(0, 1);
   std::uniform_int_distribution<unsigned> block_index_dist(0, 3000);
-  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 3000);
-  std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 3000);
+  std::uniform_int_distribution<unsigned> subcarrier_offset_dist(0, 23);
+  std::uniform_int_distribution<unsigned> offset_pointA_dist(0, 2199);
   std::uniform_int_distribution<unsigned> case_dist(0, 4);
   std::uniform_int_distribution<unsigned> sib1_dist(0, 255);
   std::uniform_real_distribution<>        power_dist(-30.8, 30.5);
@@ -45,7 +45,7 @@ static void ssb_conversion_benchmark()
   for (unsigned i = 0; i != iterations; ++i) {
     srsgnb::dl_ssb_pdu mac_pdu;
     mac_pdu.pci                        = pci_dist(gen);
-    mac_pdu.pss_to_sss_epre                 = static_cast<ssb_pss_to_sss_epre>(binary_dist(gen));
+    mac_pdu.pss_to_sss_epre            = static_cast<ssb_pss_to_sss_epre>(binary_dist(gen));
     mac_pdu.ssb_index                  = block_index_dist(gen);
     mac_pdu.ssb_subcarrier_offset      = subcarrier_offset_dist(gen);
     mac_pdu.offset_to_point_A          = offset_pointA_dist(gen);

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_integer.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
@@ -88,35 +89,10 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 /// page](http://nrexplained.com/rbs) for more details about resource block indexing.
 ///
 /// \sa ssb_subcarrier_offset
-class ssb_offset_to_pointA
+class ssb_offset_to_pointA : public bounded_integer<uint16_t, 0, 2199>
 {
-private:
-  /// Data type for the value.
-  using type = uint16_t;
-  /// Maximum possible value.
-  static constexpr type MAX_VALUE = 2199;
-  /// Actual value.
-  type value;
-
 public:
-  /// Returns the maximum value.
-  static constexpr unsigned max() { return static_cast<unsigned>(MAX_VALUE); }
-
-  /// Default constructor: sets an invalid value.
-  ssb_offset_to_pointA() : value(MAX_VALUE + 1) {}
-
-  /// Constructs the object from a value.
-  template <typename T>
-  ssb_offset_to_pointA(T value_) : value(static_cast<type>(value_))
-  {
-    static_assert(std::is_convertible<T, type>::value && std::is_literal_type<T>::value, "Invalid value type.");
-  }
-
-  /// Copy constructor.
-  ssb_offset_to_pointA(const ssb_offset_to_pointA& other) : value(other.value) {}
-
-  /// Returns true if the value is within the range.
-  bool is_valid() const { return value <= max(); }
+  using bounded_integer<uint16_t, 0, 2199>::bounded_integer;
 
   /// Gets the value as an unsigned integer.
   unsigned to_uint() const { return static_cast<unsigned>(value); }
@@ -141,40 +117,29 @@ public:
 /// page](http://nrexplained.com/rbs) for a more details about resource block indexing.
 ///
 /// \sa ssb_offset_to_pointA
-class ssb_subcarrier_offset
+class ssb_subcarrier_offset : private bounded_integer<uint8_t, 0, 23>
 {
 private:
-  /// Data type for the value.
-  using type = uint8_t;
   /// Maximum possible value for FR1.
-  static constexpr type MAX_VALUE_FR1 = 23;
+  static constexpr value_type MAX_VALUE_FR1 = 23;
   /// Maximum possible value for FR2.
-  static constexpr type MAX_VALUE_FR2 = 11;
-  /// Actual value.
-  type value;
+  static constexpr value_type MAX_VALUE_FR2 = 11;
 
 public:
+  using bounded_integer<uint8_t, 0, 23>::bounded_integer;
+  using bounded_integer<uint8_t, 0, 23>::operator=;
+
   /// Returns the maximum value for the given frequency range.
   static constexpr unsigned max(frequency_range fr)
   {
     return static_cast<unsigned>((fr == frequency_range::FR1) ? MAX_VALUE_FR1 : MAX_VALUE_FR2);
   }
 
-  /// Default constructor: sets an invalid value.
-  ssb_subcarrier_offset() : value(MAX_VALUE_FR1 + 1) {}
-
-  /// Constructs the object from a value.
-  template <typename T>
-  ssb_subcarrier_offset(T value_) : value(static_cast<type>(value_))
-  {
-    static_assert(std::is_convertible<T, type>::value, "Invalid value type.");
-  }
-
   /// Returns true if the value is within the range.
   bool is_valid(frequency_range fr) const { return value <= max(fr); }
 
   /// Gets the value as an unsigned integer.
-  unsigned to_uint() const { return static_cast<unsigned>(value); }
+  unsigned to_uint() const { return static_cast<unsigned>(this->value); }
 };
 
 } // namespace srsgnb
