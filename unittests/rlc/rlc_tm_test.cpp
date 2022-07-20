@@ -98,7 +98,7 @@ void test_tx()
     rlc_sdu sdu = {0, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(payload_len, buffer_state);
 
   {
@@ -107,7 +107,7 @@ void test_tx()
     TESTASSERT(not pdu.empty());
     TESTASSERT(pdu == tv_pdu);
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   {
@@ -115,7 +115,7 @@ void test_tx()
     byte_buffer_slice_chain pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT(pdu.empty());
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   {
@@ -123,7 +123,7 @@ void test_tx()
     rlc_sdu sdu = {1, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(payload_len, buffer_state);
 
   {
@@ -132,7 +132,7 @@ void test_tx()
     byte_buffer_slice_chain pdu      = rlc1_tx_lower->pull_pdu(payload_len - shortage);
     TESTASSERT(pdu.empty());
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(payload_len, buffer_state);
 
   {
@@ -141,7 +141,7 @@ void test_tx()
     rlc_sdu sdu = {2, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(2 * payload_len, buffer_state);
 
   {
@@ -151,7 +151,7 @@ void test_tx()
     TESTASSERT_EQ(pdu.length(), payload_len);
     TESTASSERT(pdu == tv_pdu);
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(payload_len, buffer_state);
 
   {
@@ -159,7 +159,7 @@ void test_tx()
     byte_buffer_slice_chain pdu = rlc1_tx_lower->pull_pdu(payload_len);
     TESTASSERT_EQ(pdu.length(), payload_len);
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 }
 

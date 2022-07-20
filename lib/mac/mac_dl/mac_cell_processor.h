@@ -14,6 +14,7 @@
 #include "mac_dl_ue_manager.h"
 #include "pdu_encoder.h"
 #include "srsgnb/mac/mac.h"
+#include "srsgnb/scheduler/scheduler_dl_buffer_state_indicator.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 #include "ssb_assembler.h"
 
@@ -22,10 +23,11 @@ namespace srsgnb {
 class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
 {
 public:
-  mac_cell_processor(mac_common_config_t&             cfg_,
-                     const mac_cell_creation_request& cell_cfg_req_,
-                     scheduler_slot_handler&          sched_,
-                     mac_dl_ue_manager&               ue_mng);
+  mac_cell_processor(mac_common_config_t&                 cfg_,
+                     const mac_cell_creation_request&     cell_cfg_req_,
+                     scheduler_slot_handler&              sched_,
+                     scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
+                     mac_dl_ue_manager&                   ue_mng);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -56,6 +58,9 @@ private:
                                 du_cell_index_t        cell_index,
                                 const dl_sched_result& dl_res);
 
+  /// Update DL buffer states of the allocated DL bearers.
+  void update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res);
+
   mac_common_config_t&            cfg;
   srslog::basic_logger&           logger;
   const mac_cell_creation_request cell_cfg;
@@ -68,8 +73,9 @@ private:
 
   sib_pdu_encoder sib_encoder;
 
-  scheduler_slot_handler& sched_obj;
-  mac_dl_ue_manager&      ue_mng;
+  scheduler_slot_handler&              sched_obj;
+  scheduler_dl_buffer_state_indicator& sched_bsr_updater;
+  mac_dl_ue_manager&                   ue_mng;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

@@ -85,10 +85,12 @@ public:
     return pdu;
   }
 
-  void get_buffer_state(uint32_t& bytes) override
+  uint32_t get_buffer_state() override { return sdu_queue.size_bytes(); }
+
+  void handle_buffer_state_update()
   {
     std::lock_guard<std::mutex> lock(buffer_state_mutex);
-    bytes = sdu_queue.size_bytes();
+    unsigned                    bytes = get_buffer_state();
     buffer_state_notifier.on_buffer_state_update(bytes);
   }
 };

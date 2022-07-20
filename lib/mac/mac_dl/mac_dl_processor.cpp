@@ -12,10 +12,11 @@
 
 using namespace srsgnb;
 
-mac_dl_processor::mac_dl_processor(mac_common_config_t&    cfg_,
-                                   scheduler_slot_handler& sched_,
-                                   du_rnti_table&          rnti_table_) :
-  cfg(cfg_), logger(cfg.logger), ue_mng(rnti_table_), sched_obj(sched_)
+mac_dl_processor::mac_dl_processor(mac_common_config_t&                 cfg_,
+                                   scheduler_slot_handler&              sched_,
+                                   scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
+                                   du_rnti_table&                       rnti_table_) :
+  cfg(cfg_), logger(cfg.logger), ue_mng(rnti_table_), sched_obj(sched_), sched_bsr_updater(sched_bsr_updater_)
 {
   (void)logger;
 }
@@ -30,7 +31,8 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
   srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
   // Create MAC cell and add it to list.
-  cells[cell_cfg_req.cell_index] = std::make_unique<mac_cell_processor>(cfg, cell_cfg_req, sched_obj, ue_mng);
+  cells[cell_cfg_req.cell_index] =
+      std::make_unique<mac_cell_processor>(cfg, cell_cfg_req, sched_obj, sched_bsr_updater, ue_mng);
 }
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
@@ -43,7 +45,7 @@ void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
 
 async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
+  return launch_async([this, request](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
@@ -61,7 +63,7 @@ async_task<bool> mac_dl_processor::add_ue(const mac_ue_create_request_message& r
 
 async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<void> >& ctx) {
+  return launch_async([this, request](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor
@@ -79,7 +81,7 @@ async_task<void> mac_dl_processor::remove_ue(const mac_ue_delete_request_message
 
 async_task<bool> mac_dl_processor::reconfigure_ue(const mac_ue_reconfiguration_request_message& request)
 {
-  return launch_async([this, request](coro_context<async_task<bool> >& ctx) {
+  return launch_async([this, request](coro_context<async_task<bool>>& ctx) {
     CORO_BEGIN(ctx);
 
     // 1. Change to respective DL executor

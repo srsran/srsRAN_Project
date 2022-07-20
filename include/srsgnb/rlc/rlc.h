@@ -89,9 +89,8 @@ public:
   /// This function provides the current buffer state of the RLC TX entity.
   /// This is the gross total size required to fully flush the TX entity (potentially by multiple calls to pull_pdu).
   ///
-  /// \param[out] bytes Provides the current buffer state
-  ///
-  virtual void get_buffer_state(uint32_t& bytes) = 0;
+  /// \return Provides the current buffer state
+  virtual uint32_t get_buffer_state() = 0;
 };
 
 /// This interface represents the control upper layer that the

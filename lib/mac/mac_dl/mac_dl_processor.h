@@ -25,7 +25,10 @@ namespace srsgnb {
 class mac_dl_processor final : public mac_dl_configurator
 {
 public:
-  explicit mac_dl_processor(mac_common_config_t& cfg_, scheduler_slot_handler& sched_, du_rnti_table& rnti_table_);
+  explicit mac_dl_processor(mac_common_config_t&                 cfg_,
+                            scheduler_slot_handler&              sched_,
+                            scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
+                            du_rnti_table&                       rnti_table_);
 
   bool has_cell(du_cell_index_t cell_index) const;
 
@@ -56,7 +59,8 @@ private:
 
   mac_dl_ue_manager ue_mng;
 
-  scheduler_slot_handler& sched_obj;
+  scheduler_slot_handler&              sched_obj;
+  scheduler_dl_buffer_state_indicator& sched_bsr_updater;
 };
 
 } // namespace srsgnb

@@ -67,7 +67,7 @@ public:
 
   // Interfaces for lower layers
   byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) override;
-  void                    get_buffer_state(uint32_t& bytes) override;
+  uint32_t                get_buffer_state() override;
 
 private:
   bool get_si_and_expected_header_size(uint32_t      so,
@@ -75,6 +75,11 @@ private:
                                        uint32_t      nof_bytes,
                                        rlc_si_field& si,
                                        uint32_t&     head_len) const;
+
+  /// Called when buffer state needs to be updated and forwarded to lower layers.
+  void handle_buffer_state_update();
+
+  uint32_t get_buffer_state_nolock();
 
   void log_state(srslog::basic_levels level) { logger.log(level, "tx_next={}, next_so={}", st.tx_next, next_so); }
 };

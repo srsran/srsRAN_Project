@@ -20,8 +20,14 @@ public:
 class mac_sdu_tx_builder
 {
 public:
-  virtual ~mac_sdu_tx_builder()                                     = default;
+  virtual ~mac_sdu_tx_builder() = default;
+
+  /// Called by MAC to generate an MAC Tx SDU for the respective logical channel.
+  /// \return Generated MAC SDU.
   virtual byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) = 0;
+
+  /// Called by MAC to obtain the DL BSR  for the respective logical channel.
+  virtual unsigned on_buffer_state_update() = 0;
 };
 
 } // namespace srsgnb

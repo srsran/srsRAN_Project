@@ -87,7 +87,7 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1
@@ -100,7 +100,7 @@ void test_full_sdus(rlc_um_sn_size sn_size)
 
     // TODO: write PCAP
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Write PDUs into RLC2
@@ -111,7 +111,7 @@ void test_full_sdus(rlc_um_sn_size sn_size)
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
@@ -158,7 +158,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
@@ -167,7 +167,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -176,7 +176,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -200,7 +200,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
       rlc2_rx_lower->handle_pdu(std::move(pdu));
     }
   }
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
@@ -247,7 +247,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
@@ -256,7 +256,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -265,7 +265,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -296,7 +296,7 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
 
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
@@ -346,7 +346,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 25 Bytes each
@@ -355,7 +355,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -364,7 +364,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -380,7 +380,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
       }
     }
   }
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Write the skipped PDU into RLC2
@@ -436,7 +436,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
@@ -445,7 +445,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -454,7 +454,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -467,7 +467,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
 
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
@@ -514,7 +514,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
@@ -523,7 +523,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -532,7 +532,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -547,7 +547,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     }
   }
 
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer
@@ -601,7 +601,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant of 8 Bytes each
@@ -610,7 +610,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -619,7 +619,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(0, buffer_state);
 
@@ -634,7 +634,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
     }
   }
 
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // let t-reassembly expire
@@ -688,7 +688,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     rlc_sdu sdu = {0, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   TESTASSERT_EQ(num_sdus * (sdu_size + 1), buffer_state);
 
   // Read PDUs from RLC1 with grant smaller than SDU size
@@ -697,7 +697,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
   uint32_t                num_pdus     = 0;
   byte_buffer_slice_chain pdu_bufs[max_num_pdus];
 
-  rlc1_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc1_tx_lower->get_buffer_state();
   while (buffer_state > 0 && num_pdus < max_num_pdus) {
     pdu_bufs[num_pdus] = rlc1_tx_lower->pull_pdu(payload_len);
 
@@ -706,7 +706,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     }
     // TODO: write PCAP
     num_pdus++;
-    rlc1_tx_lower->get_buffer_state(buffer_state);
+    buffer_state = rlc1_tx_lower->get_buffer_state();
   }
   TESTASSERT_EQ(6, num_pdus);
   TESTASSERT_EQ(0, buffer_state);
@@ -726,7 +726,7 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
     }
     rlc2_rx_lower->handle_pdu(std::move(pdu));
   }
-  rlc2_tx_lower->get_buffer_state(buffer_state);
+  buffer_state = rlc2_tx_lower->get_buffer_state();
   TESTASSERT_EQ(0, buffer_state);
 
   // Read SDUs from RLC2's upper layer

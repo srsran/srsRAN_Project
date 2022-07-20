@@ -15,10 +15,11 @@
 
 using namespace srsgnb;
 
-mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
-                                       const mac_cell_creation_request& cell_cfg_req_,
-                                       scheduler_slot_handler&          sched_,
-                                       mac_dl_ue_manager&               ue_mng_) :
+mac_cell_processor::mac_cell_processor(mac_common_config_t&                 cfg_,
+                                       const mac_cell_creation_request&     cell_cfg_req_,
+                                       scheduler_slot_handler&              sched_,
+                                       scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
+                                       mac_dl_ue_manager&                   ue_mng_) :
   cfg(cfg_),
   logger(cfg.logger),
   cell_cfg(cell_cfg_req_),
@@ -27,6 +28,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
   ssb_helper(cell_cfg_req_),
   sib_encoder(cell_cfg_req_.bcch_dl_sch_payload),
   sched_obj(sched_),
+  sched_bsr_updater(sched_bsr_updater_),
   ue_mng(ue_mng_)
 {
 }
@@ -81,6 +83,9 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
   mac_ul_sched_result mac_ul_res{};
   mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
+
+  // Update DL buffer state for the allocated logical channels.
+  update_logical_channel_dl_buffer_states(sl_res->dl);
 }
 
 /// Encodes DL DCI.
@@ -123,6 +128,8 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
                                                   du_cell_index_t        cell_index,
                                                   const dl_sched_result& dl_res)
 {
+  static const unsigned MIN_MAC_SDU_SIZE = 3;
+
   data_res.slot = sl_tx;
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
@@ -145,13 +152,38 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
         mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
         srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
-        // Assemble MAC Tx SDU.
-        byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
-        if (sdu.empty()) {
-          // TODO: Handle.
-          continue;
+        unsigned rem_bytes = bearer_alloc.sched_bytes;
+        while (rem_bytes >= MIN_MAC_SDU_SIZE) {
+          // Assemble MAC Tx SDU.
+          byte_buffer_slice_chain sdu = bearer->on_new_tx_sdu(bearer_alloc.sched_bytes);
+          if (sdu.empty()) {
+            // TODO: Handle.
+            break;
+          }
+          data_res.ue_pdus.emplace_back(std::move(sdu));
+          rem_bytes -= sdu.length();
         }
-        data_res.ue_pdus.emplace_back(std::move(sdu));
+      }
+    }
+  }
+}
+
+void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res)
+{
+  for (const dl_msg_alloc& grant : dl_res.ue_grants) {
+    for (const dl_msg_tb_info& tb_info : grant.tbs) {
+      for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
+        // Fetch RLC Bearer.
+        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
+        srsran_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
+
+        // Update DL BSR for the allocated logical channel.
+        dl_bsr_indication_message bsr{};
+        bsr.ue_index = ue_mng.get_ue_index(grant.crnti);
+        bsr.rnti     = grant.crnti;
+        bsr.lcid     = bearer_alloc.lcid;
+        bsr.bsr      = bearer->on_buffer_state_update();
+        sched_bsr_updater.handle_dl_bsr_indication(bsr);
       }
     }
   }

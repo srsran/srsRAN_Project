@@ -34,6 +34,8 @@ public:
 
   byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override { return rlc_handler.pull_pdu(nof_bytes); }
 
+  unsigned on_buffer_state_update() override { return rlc_handler.get_buffer_state(); }
+
 private:
   rlc_tx_pdu_transmitter& rlc_handler;
 };

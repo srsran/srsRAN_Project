@@ -47,6 +47,15 @@ public:
     return false;
   }
 
+  du_ue_index_t get_ue_index(rnti_t rnti) const
+  {
+    du_ue_index_t ue_index = rnti_table[rnti];
+    if (not is_du_ue_index_valid(ue_index)) {
+      return MAX_NOF_DU_UES;
+    }
+    return ue_index;
+  }
+
   mac_sdu_tx_builder* get_bearer(rnti_t rnti, lcid_t lcid)
   {
     du_ue_index_t ue_index = rnti_table[rnti];
