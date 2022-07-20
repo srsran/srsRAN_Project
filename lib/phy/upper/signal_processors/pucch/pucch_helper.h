@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"

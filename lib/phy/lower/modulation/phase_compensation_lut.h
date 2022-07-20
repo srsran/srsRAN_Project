@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 

@@ -12,12 +12,12 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -84,7 +84,7 @@ public:
   /// \note The codeword length shall be consistent with the resource mapping, considering the reserved resource
   /// elements.
   virtual void
-  modulate(resource_grid_writer& grid, span<const span<const uint8_t> > codewords, const config_t& config) = 0;
+  modulate(resource_grid_writer& grid, span<const span<const uint8_t>> codewords, const config_t& config) = 0;
 };
 
 } // namespace srsgnb

@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_modulator.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 
 namespace srsgnb {
 
@@ -84,8 +84,7 @@ public:
   }
 
   // See interface for the documentation.
-  void
-  modulate(resource_grid_writer& grid, span<const span<const uint8_t> > codewords, const config_t& config) override;
+  void modulate(resource_grid_writer& grid, span<const span<const uint8_t>> codewords, const config_t& config) override;
 };
 
 } // namespace srsgnb

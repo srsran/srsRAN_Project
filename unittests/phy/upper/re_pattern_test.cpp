@@ -8,8 +8,8 @@
  *
  */
 
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;

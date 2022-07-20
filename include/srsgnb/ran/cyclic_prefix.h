@@ -42,11 +42,8 @@ public:
   /// Construct from another cyclic prefix type.
   constexpr cyclic_prefix(const cyclic_prefix& other) : value(other.value) {}
 
-  /// Comparison to value.
-  constexpr bool operator==(options opt) const { return value == opt; }
-
-  /// Comparison to other instance.
-  constexpr bool operator==(const cyclic_prefix& other) const { return value == other.value; }
+  /// Implicit conversion to enumerate.
+  constexpr operator options() const { return value; }
 
   /// Get the string value.
   std::string to_string() const

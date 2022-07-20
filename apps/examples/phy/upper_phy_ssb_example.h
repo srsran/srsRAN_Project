@@ -10,9 +10,9 @@
 
 #pragma once
 
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include <memory>

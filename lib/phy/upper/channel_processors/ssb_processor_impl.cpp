@@ -9,7 +9,7 @@
  */
 
 #include "ssb_processor_impl.h"
-#include "srsgnb/phy/cyclic_prefix.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;

@@ -11,13 +11,13 @@
 #pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {

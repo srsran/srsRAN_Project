@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
-#include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/cyclic_prefix.h"
-#include "srsgnb/support/srsran_assert.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/constants.h"
+#include "srsgnb/ran/cyclic_prefix.h"
+#include "srsgnb/support/srsran_assert.h"
 
 namespace srsgnb {
 
@@ -22,7 +22,8 @@ namespace srsgnb {
 class channel_estimate
 {
 private:
-    static constexpr unsigned MAX_SLOT_LEN_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT;
+  static constexpr unsigned MAX_SLOT_LEN_RE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT;
+
 public:
   /// Noise estimate (represented as linear value and in dB).
   float noise_estimate      = 0.0f;

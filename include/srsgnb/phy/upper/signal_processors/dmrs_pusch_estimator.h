@@ -11,10 +11,10 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimate.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {

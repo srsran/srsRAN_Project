@@ -12,8 +12,8 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 
 namespace srsgnb {
 

@@ -11,10 +11,10 @@
 #pragma once
 
 #include "phase_compensation_lut.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
 #include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
 namespace srsgnb {

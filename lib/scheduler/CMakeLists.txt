@@ -17,6 +17,7 @@ set(SOURCES
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
         support/pdcch/pdcch_type0_css_occasions.cpp
+        support/pdsch/pdsch_default_time_allocation.cpp
         support/pdsch/pdsch_dmrs_symbol_mask.cpp
         support/tbs_calculator.cpp
         support/prbs_calculator.cpp

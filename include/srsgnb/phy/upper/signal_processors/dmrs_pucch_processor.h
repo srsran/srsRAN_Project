@@ -10,12 +10,12 @@
 
 #pragma once
 
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimate.h"
+#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/ran/slot_point.h"
-#include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/cyclic_prefix.h"
 #include <memory>
 
 namespace srsgnb {
@@ -75,7 +75,7 @@ public:
   /// \param[out] estimate Channel estimation results.
   /// \param[in]  grid     Provides the source resource grid.
   /// \param[in]  config   Provides the required configuration to estimate channel.
-  virtual void estimate(channel_estimate &estimate, const resource_grid_reader& grid, const config_t& config) = 0;
+  virtual void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) = 0;
 };
 
 /// Creates a generic DMRS for PUCCH instance.
