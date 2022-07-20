@@ -20,7 +20,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu& fapi_pd
 {
   dl_pdsch_pdu_builder builder(fapi_pdu);
 
-  return convert_pdsch_mac_to_fapi(builder, mac_pdu);
+  convert_pdsch_mac_to_fapi(builder, mac_pdu);
 }
 
 static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_type type)
