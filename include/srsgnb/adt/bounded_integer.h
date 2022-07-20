@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/srslog/bundled/fmt/format.h"
 #include "srsgnb/support/srsran_assert.h"
 #include <type_traits>
 
@@ -36,8 +37,8 @@ public:
   template <typename U>
   bounded_integer& operator=(U v)
   {
-    static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
     assert_bounds(v);
+    static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
     value = v;
     return *this;
   }
@@ -45,18 +46,18 @@ public:
   constexpr static Integer min() { return MIN_VALUE; }
   constexpr static Integer max() { return MAX_VALUE; }
 
-  /// Cast operator to primitive integer type.
-  explicit operator Integer() const { return value; }
-
   /// Checks whether the value is within the defined boundaries.
   bool is_valid() const { return value >= MIN_VALUE and value <= MAX_VALUE; }
 
-  bool operator==(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value == other.value; }
-  bool operator!=(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value != other.value; }
-  bool operator<(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value < other.value; }
-  bool operator<=(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value <= other.value; }
-  bool operator>(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value > other.value; }
-  bool operator>=(const bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& other) const { return value >= other.value; }
+  /// Cast operator to primitive integer type.
+  explicit operator Integer() const { return value; }
+
+  bool operator==(const bounded_integer& other) const { return value == other.value; }
+  bool operator!=(const bounded_integer& other) const { return value != other.value; }
+  bool operator<(const bounded_integer& other) const { return value < other.value; }
+  bool operator<=(const bounded_integer& other) const { return value <= other.value; }
+  bool operator>(const bounded_integer& other) const { return value > other.value; }
+  bool operator>=(const bounded_integer& other) const { return value >= other.value; }
 
 protected:
   void assert_bounds(Integer v) const
@@ -69,3 +70,21 @@ protected:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+
+/// Formatter for bounded_integer<...> types.
+template <typename Integer, Integer MIN_VALUE, Integer MAX_VALUE>
+struct formatter<srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>> : public formatter<Integer> {
+  template <typename FormatContext>
+  auto format(const srsgnb::bounded_integer<Integer, MIN_VALUE, MAX_VALUE>& s, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (s.is_valid()) {
+      return fmt::format_to(ctx.out(), "{}", static_cast<Integer>(s));
+    }
+    return fmt::format_to(ctx.out(), "INVALID");
+  }
+};
+
+} // namespace fmt

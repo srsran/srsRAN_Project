@@ -59,3 +59,7 @@ add_test(shared_byte_buffer_slice shared_byte_buffer_slice)
 add_executable(byte_buffer_slice_chain_test byte_buffer_slice_chain_test.cpp)
 target_link_libraries(byte_buffer_slice_chain_test srslog)
 add_test(byte_buffer_slice_chain_test byte_buffer_slice_chain_test)
+
+add_executable(bounded_integer_test bounded_integer_test.cpp)
+target_link_libraries(bounded_integer_test srslog)
+add_test(bounded_integer_test bounded_integer_test)
