@@ -59,7 +59,11 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
 void rrc_ue_entity::send_srb0_pdu(byte_buffer pdu)
 {
   if (ctxt.srbs.contains(LCID_SRB0)) {
-    ctxt.srbs[LCID_SRB0].tx_notifier->on_new_pdu(byte_buffer_slice{pdu});
+    rrc_pdu_message msg = {};
+    msg.srb_id          = to_srb_id(LCID_SRB0);
+    msg.ue_index        = ctxt.ue_index;
+    msg.pdu             = byte_buffer_slice{pdu};
+    ctxt.srbs[LCID_SRB0].tx_notifier->on_new_pdu(msg);
   } else {
     cfg.logger.error("Can't send RRC PDU - no SRB0 configured");
   }

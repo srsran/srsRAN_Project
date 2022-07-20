@@ -11,11 +11,18 @@
 #pragma once
 
 #include "srsgnb/adt/byte_buffer.h"
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
 
 namespace srs_cu_cp {
+
+struct rrc_pdu_message {
+  byte_buffer_slice pdu;
+  ue_index_t        ue_index;
+  srb_id_t          srb_id;
+};
 
 /// Interface to inform about changes to the AMF state.
 class rrc_amf_connection_handler

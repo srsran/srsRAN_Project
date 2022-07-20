@@ -25,12 +25,12 @@ public:
   {
   }
 
-  void on_new_pdu(byte_buffer_slice pdu) override
+  void on_new_pdu(const rrc_pdu_message msg) override
   {
-    dl_rrc_message msg = {};
-    msg.rrc_container.resize(pdu.length());
-    std::copy(pdu.begin(), pdu.end(), msg.rrc_container.begin());
-    du_processor_handler.handle_dl_rrc_message_transfer(msg);
+    dl_rrc_message dl_msg = {};
+    dl_msg.rrc_container.resize(msg.pdu.length());
+    std::copy(msg.pdu.begin(), msg.pdu.end(), dl_msg.rrc_container.begin());
+    du_processor_handler.handle_dl_rrc_message_transfer(dl_msg);
   }
 
 private:

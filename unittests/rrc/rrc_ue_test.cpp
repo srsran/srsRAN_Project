@@ -38,7 +38,7 @@ class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 public:
   dummy_rrc_pdu_notifier(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
 
-  void on_new_pdu(byte_buffer_slice pdu) override { handler.handle_pdu(std::move(pdu)); }
+  void on_new_pdu(const rrc_pdu_message msg) override { handler.handle_pdu(std::move(msg.pdu)); }
 
 private:
   dummy_tx_pdu_handler& handler;
