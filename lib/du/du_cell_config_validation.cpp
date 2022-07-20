@@ -10,6 +10,9 @@
 
 #include "srsgnb/du/du_cell_config_validation.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/ssb_mapping.h"
+#include "srsgnb/scheduler/sched_consts.h"
 
 using namespace srsgnb;
 
@@ -133,12 +136,92 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   return {};
 }
 
+static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
+{
+  const ssb_configuration& ssb_cfg = cell_cfg.ssb_cfg;
+
+  // No mixed numerologies supported (yet).
+  CHECK_EQ(
+      ssb_cfg.scs, cell_cfg.scs_common, "SSB SCS must be equal to SCS common. Mixed numerologies are not supported.");
+
+  // Only FR1 SCS supported (for now).
+  CHECK_EQ_OR_BELOW(ssb_cfg.scs,
+                    subcarrier_spacing::kHz30,
+                    "SSB SCS must be kHz15 or kHz30.  FR2 frequencies are not supported yet in the SSB scheduler.");
+
+  // Checks that SSB does not get located outside the band.
+  if (cell_cfg.scs_common == subcarrier_spacing::kHz15) {
+    // Check if k_SSB is within limits, according to the SCScommon.
+    CHECK_EQ_OR_BELOW(
+        ssb_cfg.ssb_subcarrier_offset, 11, "For SCS common 15kHz, k_SSB must be within the range [0, 11].");
+
+    // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
+    // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
+    // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
+    unsigned nof_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+    unsigned offset_p_A_upper_bound =
+        ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs - NOF_SSB_PRBS - 1 : nof_crbs - NOF_SSB_PRBS;
+    CHECK_EQ_OR_BELOW(
+        ssb_cfg.ssb_offset_to_point_A,
+        offset_p_A_upper_bound,
+        "Offset to PointA must be such that the SSB is located inside the Initial DL BWP, i.e, offset_to_point_A <= {}",
+        offset_p_A_upper_bound);
+
+  } else if (cell_cfg.scs_common == subcarrier_spacing::kHz30) {
+    // Check if k_SSB is within limits, according to the SCScommon.
+    CHECK_EQ_OR_BELOW(
+        ssb_cfg.ssb_subcarrier_offset, 23, "For SCS common 30kHz, k_SSB must be within the range [0, 23].");
+
+    // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
+    // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
+    // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
+    unsigned nof_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
+    unsigned offset_p_A_upper_bound =
+        ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs * 2 - NOF_SSB_PRBS - 1 : nof_crbs * 2 - NOF_SSB_PRBS;
+    CHECK_EQ_OR_BELOW(
+        ssb_cfg.ssb_offset_to_point_A,
+        offset_p_A_upper_bound,
+        "Offset to PointA must be such that the SSB is located inside the Initial DL BWP, i.e, offset_to_point_A <= {}",
+        offset_p_A_upper_bound);
+  }
+
+  ssb_pattern_case ssb_case   = ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
+  uint8_t          ssb_bitmap = static_cast<uint64_t>(ssb_cfg.ssb_bitmap) << static_cast<uint64_t>(56U);
+  bool    is_paired   = band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn));
+  uint8_t L_max       = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
+  double  dl_freq_mhz = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+
+  // Check whether the SSB beam bitmap and L_max are compatible with SSB case and DL band.
+  if (ssb_case == ssb_pattern_case::C and not is_paired) {
+    if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED) {
+      CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
+      CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
+                 "For SSB case C and frequency <= {}MHz, only the 4 MSB of SSB bitmap can be set",
+                 dl_freq_mhz);
+    } else {
+      CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
+    }
+  } else {
+    if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
+      CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
+      CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
+                 "For SSB case C and frequency <= {}MHz, only the 4 MSB of SSB bitmap can be set",
+                 dl_freq_mhz);
+    } else {
+      CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
+    }
+  }
+
+  return {};
+}
+
 check_outcome srsgnb::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");
   HANDLE_RETURN(is_coreset0_idx_valid(cell_cfg));
   HANDLE_RETURN(check_dl_config_common(cell_cfg));
+  HANDLE_RETURN(check_ssb_configuration(cell_cfg));
   // TODO: Remaining.
   return {};
 }
