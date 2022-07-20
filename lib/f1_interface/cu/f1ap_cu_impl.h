@@ -36,6 +36,8 @@ public:
 
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) override;
 
+  void add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index) override;
+
   // f1ap ue context manager functions
 
   async_task<f1ap_ue_context_setup_response_message>
@@ -62,7 +64,7 @@ private:
 
   /// \brief Notify about the reception of an Initial UL RRC Message Transfer message.
   /// \param[in] msg The F1AP initial UL RRC message.
-  void handle_initial_ul_rrc_message(const f1ap_initial_ul_rrc_msg& msg);
+  void handle_initial_ul_rrc_message(f1ap_initial_ul_rrc_msg& msg);
 
   /// \brief Notify about the reception of an UL RRC Message Transfer message.
   /// \param[in] msg The F1AP UL RRC message.
@@ -80,6 +82,10 @@ private:
   /// \param[in] ue_index The UE index used to find the CU UE ID.
   /// \return The CU UE ID.
   f1ap_ue_id_t find_cu_ue_id(ue_index_t ue_index);
+
+  /// \brief Remove a UE context from the F1AP.
+  /// \param[in] cu_ue_id The ID of the UE.
+  void remove_ue(f1ap_ue_id_t cu_ue_id);
 
   srslog::basic_logger& logger;
 

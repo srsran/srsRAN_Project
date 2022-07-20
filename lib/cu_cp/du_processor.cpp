@@ -24,6 +24,9 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect(*this);
 
+  // Connect DU processor to F1AP adapter
+  du_processor_ev_notifier.connect(*f1ap);
+
   // create RRC
   rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity);
   rrc = create_rrc_entity(rrc_creation_msg);
@@ -126,13 +129,14 @@ du_cell_index_t du_processor::get_next_du_cell_index()
   return INVALID_DU_CELL_INDEX;
 }
 
-ue_index_t du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg)
+void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg)
 {
   // 1. Create new UE context
   ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
-    return INVALID_UE_INDEX;
+    du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, INVALID_UE_INDEX);
+    return;
   }
 
   // 2. Set parameters from initiating message
@@ -145,8 +149,12 @@ ue_index_t du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul
   ue_ctxt->rrc = rrc->add_user(*ue_ctxt);
   if (ue_ctxt->rrc == nullptr) {
     logger.error("Could not create RRC entity");
-    return INVALID_UE_INDEX;
+    du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, INVALID_UE_INDEX);
+    return;
   }
+
+  logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
+  du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, ue_ctxt->ue_index);
 
   // 4. Create SRB0 bearer and notifier
   create_srb0(*ue_ctxt);
@@ -164,15 +172,13 @@ ue_index_t du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul
     ue_ctxt->srbs[LCID_SRB0].rx_notifier->on_new_rrc_message(msg.rrc_container);
   }
 
-  logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
-
-  return ue_ctxt->ue_index;
+  return;
 }
 
 void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
 {
   // 1. Find UE context
-  ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_idx);
+  ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
   if (ue_ctxt == nullptr) {
     logger.error("Could not find UE context");
     return;

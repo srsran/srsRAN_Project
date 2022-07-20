@@ -54,13 +54,13 @@ public:
     du_f1c_handler->handle_f1_setup_request(msg);
   }
 
-  ue_index_t on_initial_ul_rrc_message_transfer_received(const du_cell_index_t          pcell_index,
-                                                         const f1ap_initial_ul_rrc_msg& msg) override
+  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) override
   {
     srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     initial_ul_rrc_message du_proc_msg = {};
-    du_proc_msg.pcell_index            = pcell_index;
+    du_proc_msg.tmp_ue_id              = msg.cu_ue_id;
+    du_proc_msg.pcell_index            = msg.pcell_index;
     du_proc_msg.rrc_container          = msg.msg->rrc_container.value;
     du_proc_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
     du_proc_msg.du_to_cu_rrc_container = msg.msg->duto_currc_container.value;
@@ -69,7 +69,9 @@ public:
       du_proc_msg.rrc_container_rrc_setup_complete = msg.msg->rrc_container_rrc_setup_complete.value;
     }
 
-    return du_f1c_handler->handle_initial_ul_rrc_message_transfer(du_proc_msg);
+    du_f1c_handler->handle_initial_ul_rrc_message_transfer(du_proc_msg);
+
+    return;
   }
 
   void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) override
@@ -77,7 +79,7 @@ public:
     srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     ul_rrc_message du_proc_msg = {};
-    du_proc_msg.ue_idx         = ue_index;
+    du_proc_msg.ue_index       = ue_index;
     du_proc_msg.rrc_container  = msg.msg->rrc_container.value;
     du_proc_msg.srbid          = msg.msg->srbid.value;
 

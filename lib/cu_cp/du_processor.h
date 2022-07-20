@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "adapters/du_processor_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "du_context.h"
 #include "du_processor_config.h"
@@ -45,9 +46,9 @@ public:
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 
   // du_processor_rrc_message_handler
-  ue_index_t handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
-  void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
-  void       handle_dl_rrc_message_transfer(const dl_rrc_message& msg) override;
+  void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
+  void handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
+  void handle_dl_rrc_message_transfer(const dl_rrc_message& msg) override;
 
   rrc_amf_connection_handler& get_amf_connection_handler(); /// Pass handle to AMF connection handler within RRC
 
@@ -78,7 +79,11 @@ private:
 
   ue_manager ue_mng;
 
+  // F1AP to DU processor adapter
   du_processor_f1ap_event_indicator f1ap_ev_notifier;
+
+  // DU processor to F1AP adapter
+  f1ap_du_processor_event_indicator du_processor_ev_notifier;
 };
 
 } // namespace srs_cu_cp

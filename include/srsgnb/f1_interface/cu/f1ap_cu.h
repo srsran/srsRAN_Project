@@ -37,6 +37,8 @@ struct f1ap_ue_context {
 };
 
 struct f1ap_initial_ul_rrc_msg {
+  du_cell_index_t                       pcell_index;
+  f1ap_ue_id_t                          cu_ue_id;
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
 
@@ -56,6 +58,11 @@ public:
   /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
   /// \param[in] msg The DL RRC message transfer message to transmit.
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) = 0;
+
+  /// \brief Adds the UE index of a newly created UE to the corresponding UE context.
+  /// \param[in] cu_ue_id The CU UE ID of the already created UE context.
+  /// \param[in] ue_index The index of the newly created UE.
+  virtual void add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index) = 0;
 };
 
 struct f1_setup_response_message {
@@ -162,11 +169,8 @@ public:
   virtual ~f1c_rrc_message_notifier() = default;
 
   /// \brief Notifies about the reception of a initial UL RRC message transfer message.
-  /// \param[in] pcell_index The DU cell index.
   /// \param[in] msg The received initial UL RRC message transfer message.
-  /// \return Returns the index of the created UE.
-  virtual ue_index_t on_initial_ul_rrc_message_transfer_received(const du_cell_index_t          pcell_index,
-                                                                 const f1ap_initial_ul_rrc_msg& msg) = 0;
+  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) = 0;
 
   /// \brief Notifies about the reception of a UL RRC message transfer message.
   /// \param[in] ue_index The UE index.
