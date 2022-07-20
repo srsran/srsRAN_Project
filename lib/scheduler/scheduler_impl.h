@@ -42,7 +42,15 @@ public:
   void handle_sr_indication(const sr_indication_message& sr) override { feedback_handler.handle_sr_indication(sr); }
 
   /// UE UL Buffer Status Report.
-  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override { feedback_handler.handle_ul_bsr_indication(bsr); }
+  void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override
+  {
+    feedback_handler.handle_ul_bsr_indication(bsr);
+  }
+
+  /// UE DL Buffer Status Report.
+  void handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) override
+  { // TODO
+  }
 
 private:
   sched_configuration_notifier& mac_notifier;

@@ -27,7 +27,7 @@ public:
   srslog::basic_logger&         logger = srslog::fetch_basic_logger("TEST");
   sched_configuration_notifier& notifier;
 
-  dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
+  explicit dummy_sched(sched_configuration_notifier& notifier_) : notifier(notifier_) {}
 
   bool handle_cell_configuration_request(const sched_cell_configuration_request_message& msg) override { return true; }
   void handle_rach_indication(const rach_indication_message& msg) override {}
@@ -50,6 +50,7 @@ public:
   const sched_result* slot_indication(slot_point sl_tx, du_cell_index_t cell_index) override { return nullptr; }
   void                handle_sr_indication(const sr_indication_message& sr) override {}
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
+  void                handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) override {}
 };
 
 /// Enum used to track the progress of the test task

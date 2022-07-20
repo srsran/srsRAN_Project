@@ -16,13 +16,14 @@ namespace srsgnb {
 
 /// Logical Channel Identity used to associate one logical channel to the corresponding RLC bearer. Values (0..32)
 enum lcid_t : uint16_t {
-  LCID_SRB0    = 0,
-  LCID_SRB1    = 1,
-  LCID_SRB2    = 2,
-  LCID_SRB3    = 3,
-  LCID_MIN_DRB = 4,
-  LCID_MAX_DRB = 32,
-  INVALID_LCID = 64
+  LCID_SRB0        = 0,
+  LCID_SRB1        = 1,
+  LCID_SRB2        = 2,
+  LCID_SRB3        = 3,
+  LCID_MIN_DRB     = 4,
+  LCID_MAX_DRB     = 32,
+  MAX_NOF_RB_LCIDS = 33,
+  INVALID_LCID     = 64
 };
 
 /// Maximum value of Logical Channel ID.

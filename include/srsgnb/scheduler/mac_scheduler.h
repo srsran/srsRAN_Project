@@ -11,6 +11,7 @@
 #pragma once
 
 #include "scheduler_configurator.h"
+#include "scheduler_dl_buffer_state_indicator.h"
 #include "scheduler_feedback_handler.h"
 #include "scheduler_slot_handler.h"
 
@@ -19,7 +20,8 @@ namespace srsgnb {
 class mac_scheduler : public scheduler_configurator,
                       public scheduler_ue_configurator,
                       public scheduler_feedback_handler,
-                      public scheduler_slot_handler
+                      public scheduler_slot_handler,
+                      public scheduler_dl_buffer_state_indicator
 {
 public:
   virtual ~mac_scheduler() = default;
