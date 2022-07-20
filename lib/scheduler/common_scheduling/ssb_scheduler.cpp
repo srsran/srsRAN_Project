@@ -70,7 +70,7 @@ static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
   uint32_t slot_idx = sl_point_mod.to_uint();
 
   // The OFDM symbols allocations for Case A and case C are identical; the only difference is the cutoff frequency,
-  // which is 3GHz for case A and C paired, rbut 1.88GHz for case C unpaired.
+  // which is 3GHz for case A and C paired, but 1.88GHz for case C unpaired.
   // For frequency lower than cutoff, SSB is allocated in slot 0 and 1 only.
   if (cell_cfg.dl_carrier.arfcn <= freq_arfcn_cut_off and slot_idx > 1) {
     return;
@@ -177,15 +177,14 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
     return;
   }
 
-  // Only FR1 are supported in this implementation
+  // Only FR1 are supported in this implementation.
   uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
   srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
                 "Frenquencies in the range FR2 not supported");
 
   // Perform mod operation of slot index by ssb_periodicity;
   // "ssb_periodicity * nof_slots_per_subframe" gives the number of slots in 1 ssb_periodicity time interval.
-  uint8_t ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
-  sl_point.nof_slots_per_subframe();
+  uint8_t    ssb_period = ssb_periodicity_to_value(cell_cfg.ssb_cfg.ssb_period);
   slot_point sl_point_mod(sl_point.numerology(), sl_point.to_uint() % (ssb_period * sl_point.nof_slots_per_subframe()));
 
   // Select SSB case with reference to TS 38.213, Section 4.1.

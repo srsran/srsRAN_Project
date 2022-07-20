@@ -196,19 +196,19 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED) {
       CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
       CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
-                 "For SSB case C and frequency <= {}MHz, only the 4 MSB of SSB bitmap can be set",
+                 "For SSB case C and frequency <= {}MHz, only the 4 MSBs of SSB bitmap can be set",
                  dl_freq_mhz);
     } else {
       CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
     }
   } else {
     if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
-      CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
+      CHECK_EQ(L_max, 4, "For SSB case A and B and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
       CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
-                 "For SSB case C and frequency <= {}MHz, only the 4 MSB of SSB bitmap can be set",
+                 "For SSB case C and frequency <= {}MHz, only the 4 MSBs of SSB bitmap can be set",
                  dl_freq_mhz);
     } else {
-      CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
+      CHECK_EQ(L_max, 8, "For SSB case A and B and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
     }
   }
 

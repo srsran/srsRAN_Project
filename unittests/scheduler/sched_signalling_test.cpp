@@ -121,7 +121,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
   }
 
   const ssb_information_list& ssb_list = slot_alloc.result.dl.bc.ssb_info;
-  // Check the SSB list size
+  // Check the SSB list size.
   TESTASSERT_EQ(
       ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
 
@@ -258,7 +258,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check OFDM symbols and frequency allocation
+        // Check OFDM symbols and frequency allocation.
         TESTASSERT_EQ(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                       ssb_item.symbols.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
