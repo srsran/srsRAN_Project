@@ -27,8 +27,8 @@ struct ssb_configuration {
   ssb_offset_to_pointA offset_to_point_A;
   /// SSB periodicity.
   ssb_periodicity ssb_period;
-  /// SSB SubcarrierOffest or k_ssb as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
-  uint8_t ssb_subcarrier_offset;
+  /// k_ssb or SSB SubcarrierOffest, as per TS38.211 Section 7.4.3.1. Possible values: {0, ..., 23}.
+  ssb_subcarrier_offset k_ssb;
   /// Each bit in this bitmap represents if a beam is active or not as per TS38.331 Section 6.3.2 IE
   /// ssb-PositionsInBurst.
   uint64_t ssb_bitmap;

@@ -152,15 +152,14 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   // Checks that SSB does not get located outside the band.
   if (cell_cfg.scs_common == subcarrier_spacing::kHz15) {
     // Check if k_SSB is within limits, according to the SCScommon.
-    CHECK_EQ_OR_BELOW(
-        ssb_cfg.ssb_subcarrier_offset, 11, "For SCS common 15kHz, k_SSB must be within the range [0, 11].");
+    CHECK_EQ_OR_BELOW(ssb_cfg.k_ssb.to_uint(), 11, "For SCS common 15kHz, k_SSB must be within the range [0, 11].");
 
     // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
     // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
     // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
     unsigned nof_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
     unsigned offset_p_A_upper_bound =
-        ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs - NOF_SSB_PRBS - 1 : nof_crbs - NOF_SSB_PRBS;
+        ssb_cfg.k_ssb.to_uint() > 0 ? nof_crbs - NOF_SSB_PRBS - 1 : nof_crbs - NOF_SSB_PRBS;
     CHECK_EQ_OR_BELOW(
         ssb_cfg.offset_to_point_A.to_uint(),
         offset_p_A_upper_bound,
@@ -169,15 +168,14 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
 
   } else if (cell_cfg.scs_common == subcarrier_spacing::kHz30) {
     // Check if k_SSB is within limits, according to the SCScommon.
-    CHECK_EQ_OR_BELOW(
-        ssb_cfg.ssb_subcarrier_offset, 23, "For SCS common 30kHz, k_SSB must be within the range [0, 23].");
+    CHECK_EQ_OR_BELOW(ssb_cfg.k_ssb.to_uint(), 23, "For SCS common 30kHz, k_SSB must be within the range [0, 23].");
 
     // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
     // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
     // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
     unsigned nof_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
     unsigned offset_p_A_upper_bound =
-        ssb_cfg.ssb_subcarrier_offset > 0 ? nof_crbs * 2 - NOF_SSB_PRBS - 1 : nof_crbs * 2 - NOF_SSB_PRBS;
+        ssb_cfg.k_ssb.to_uint() > 0 ? nof_crbs * 2 - NOF_SSB_PRBS - 1 : nof_crbs * 2 - NOF_SSB_PRBS;
     CHECK_EQ_OR_BELOW(
         ssb_cfg.offset_to_point_A.to_uint(),
         offset_p_A_upper_bound,

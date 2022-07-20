@@ -33,7 +33,7 @@ void ssb_assembler::assemble_ssb(dl_ssb_pdu& ssb_pdu, const ssb_information& ssb
   ssb_pdu.pss_to_sss_epre       = ssb_pss_to_sss_epre::dB_0;
   ssb_pdu.ssb_index             = ssb_info.ssb_index;
   ssb_pdu.scs                   = ssb_cfg.scs;
-  ssb_pdu.ssb_subcarrier_offset = ssb_cfg.ssb_subcarrier_offset;
+  ssb_pdu.ssb_subcarrier_offset = static_cast<uint8_t>(ssb_cfg.k_ssb.to_uint());
   ssb_pdu.offset_to_point_A     = static_cast<uint16_t>(ssb_cfg.offset_to_point_A.to_uint());
   ssb_pdu.ssb_case              = ssb_case;
   ssb_pdu.L_max                 = L_max;

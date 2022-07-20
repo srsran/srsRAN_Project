@@ -131,11 +131,13 @@ void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
                 "10MHz min. channel BW.",
                 cell_cfg.dl_carrier.carrier_bw_mhz);
   // Get Coreset0 num of symbols from Coreset0 config.
-  static const unsigned min_channel_bw = 5;
-  unsigned              nof_symb_coreset0 =
-      pdcch_type0_css_coreset_get(
-          min_channel_bw, cell_cfg.ssb_cfg.scs, scs_common, coreset0, cell_cfg.ssb_cfg.ssb_subcarrier_offset)
-          .nof_rb_coreset;
+  static const unsigned min_channel_bw    = 5;
+  unsigned              nof_symb_coreset0 = pdcch_type0_css_coreset_get(min_channel_bw,
+                                                           cell_cfg.ssb_cfg.scs,
+                                                           scs_common,
+                                                           coreset0,
+                                                           static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()))
+                                   .nof_rb_coreset;
 
   // TODO: Extend function to all multiplexing patterns.
   // TODO: Embed is_fr2 in the scheduler configuration.
