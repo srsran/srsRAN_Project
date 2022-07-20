@@ -101,13 +101,17 @@ void cu_cp::on_amf_connection_drop()
 void cu_cp::add_du()
 {
   du_processor_config_t du_cfg = {};
-
-  du_cfg.f1c_du_mgmt_notifier = &f1ap_ev_notifier;
-  du_cfg.f1c_notifier         = cfg.f1c_notifier;
+  du_cfg.f1c_du_mgmt_notifier  = &f1ap_ev_notifier;
+  du_cfg.f1c_notifier          = cfg.f1c_notifier;
 
   std::unique_ptr<du_processor> du = std::make_unique<du_processor>(std::move(du_cfg));
 
-  du_index_t du_index        = get_next_du_index();
+  du_index_t du_index = get_next_du_index();
+  if (du_index == INVALID_DU_INDEX) {
+    logger.error("DU connection failed - maximum number of DUs connected ({})", MAX_NOF_DUS);
+    return;
+  }
+
   du->get_context().du_index = du_index;
 
   srsran_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
