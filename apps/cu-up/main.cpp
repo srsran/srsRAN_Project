@@ -23,18 +23,18 @@ class fake_receiver
   srsgnb::pdcp_rx_lower_interface& pdcp_if;
 
 public:
-  explicit fake_receiver(srsgnb::pdcp_rx_lower_interface* pdcp_if) : pdcp_if(*pdcp_if) {}
+  explicit fake_receiver(srsgnb::pdcp_rx_lower_interface& pdcp_if) : pdcp_if(pdcp_if) {}
 
   void receive()
   {
     // Create a fake data packet.
-    srsgnb::byte_buffer v;
-    v.append(std::array<uint8_t, 22>{0});
+    srsgnb::byte_buffer buf;
+    buf.append(std::array<uint8_t, 22>{0});
 
-    std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)v.length());
+    std::printf("[Network] Receiving a fake packet of size = %u\n", (unsigned)buf.length());
 
     // Send the packet to the PDCP interface.
-    pdcp_if.handle_pdu(std::move(v));
+    pdcp_if.handle_pdu(std::move(buf));
   }
 };
 
@@ -59,7 +59,8 @@ int main()
   std::unique_ptr<srsgnb::sdap_pdu_handler> sdap = srsgnb::create_sdap(ngap_tx);
   sdap_packet_handler                       pdcp_sdap_adapter(*sdap);
   srsgnb::pdcp_entity_creation_message      pdcp_msg = {};
-  std::unique_ptr<srsgnb::pdcp_entity>      pdcp     = srsgnb::create_pdcp_entity(pdcp_msg);
+  pdcp_msg.rx_upper_dn                               = &pdcp_sdap_adapter;
+  std::unique_ptr<srsgnb::pdcp_entity> pdcp          = srsgnb::create_pdcp_entity(pdcp_msg);
 
   fake_receiver rx(pdcp->get_rx_lower_interface());
   rx.receive();

@@ -21,12 +21,20 @@ namespace srsgnb {
 class pdcp_entity_impl : public pdcp_entity
 {
 public:
-  pdcp_tx_upper_data_interface* get_tx_upper_data_interface() final { return tx.get(); };
-  pdcp_tx_lower_interface*      get_tx_lower_interface() final { return tx.get(); };
-  pdcp_rx_lower_interface*      get_rx_lower_interface() final { return rx.get(); };
+  pdcp_entity_impl(pdcp_tx_lower_notifier&         tx_lower_dn,
+                   pdcp_tx_upper_control_notifier& tx_upper_cn,
+                   pdcp_rx_upper_data_notifier&    rx_upper_dn)
+  {
+    tx = std::unique_ptr<pdcp_entity_tx>(new pdcp_entity_tx(tx_lower_dn, tx_upper_cn));
+    rx = std::unique_ptr<pdcp_entity_rx>(new pdcp_entity_rx(rx_upper_dn));
+  }
+  ~pdcp_entity_impl() override = default;
+  pdcp_tx_upper_data_interface& get_tx_upper_data_interface() final { return (*tx); };
+  pdcp_tx_lower_interface&      get_tx_lower_interface() final { return (*tx); };
+  pdcp_rx_lower_interface&      get_rx_lower_interface() final { return (*rx); };
 
 private:
-  bearer_logger logger;
+  // bearer_logger logger;
 
   std::unique_ptr<pdcp_entity_tx> tx = {};
   std::unique_ptr<pdcp_entity_rx> rx = {};

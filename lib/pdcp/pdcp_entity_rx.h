@@ -14,21 +14,18 @@
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/ran/bearer_logger.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
 class pdcp_entity_rx : public pdcp_rx_lower_interface
 {
-protected:
-  pdcp_entity_rx(du_ue_index_t du_index, lcid_t lcid, pdcp_rx_upper_data_notifier& upper_dn) :
-    logger("PDCP", du_index, lcid), upper_dn(upper_dn)
-  {
-  }
+public:
+  pdcp_entity_rx(pdcp_rx_upper_data_notifier& upper_dn) : upper_dn(upper_dn) {}
 
-  bearer_logger                logger;
+private:
   pdcp_rx_upper_data_notifier& upper_dn;
+
+  void handle_pdu(byte_buffer buf) final { upper_dn.on_new_sdu(std::move(buf)); }
 };
 } // namespace srsgnb

@@ -21,11 +21,12 @@ namespace srsgnb {
 class pdcp_entity
 {
 public:
+  pdcp_entity()          = default;
   virtual ~pdcp_entity() = default;
 
-  virtual pdcp_tx_lower_interface*      get_tx_lower_interface()      = 0;
-  virtual pdcp_tx_upper_data_interface* get_tx_upper_data_interface() = 0;
-  virtual pdcp_rx_lower_interface*      get_rx_lower_interface()      = 0;
+  virtual pdcp_tx_lower_interface&      get_tx_lower_interface()      = 0;
+  virtual pdcp_tx_upper_data_interface& get_tx_upper_data_interface() = 0;
+  virtual pdcp_rx_lower_interface&      get_rx_lower_interface()      = 0;
 };
 
 } // namespace srsgnb

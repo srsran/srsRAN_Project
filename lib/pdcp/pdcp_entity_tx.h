@@ -14,25 +14,23 @@
 #include "srsgnb/adt/byte_buffer_slice_chain.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
 #include "srsgnb/ran/bearer_logger.h"
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/lcid.h"
 
 namespace srsgnb {
 /// Base class used for transmitting PDCP bearers.
 /// It provides interfaces for the PDCP bearers, for the higher and lower layers
 class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower_interface
 {
-protected:
-  pdcp_entity_tx(du_ue_index_t                   du_index,
-                 lcid_t                          lcid,
-                 pdcp_tx_lower_notifier&         lower_dn,
-                 pdcp_tx_upper_control_notifier& upper_cn) :
-    logger("PDCP", du_index, lcid), lower_dn(lower_dn), upper_cn(upper_cn)
+public:
+  pdcp_entity_tx(pdcp_tx_lower_notifier& lower_dn, pdcp_tx_upper_control_notifier& upper_cn) :
+    lower_dn(lower_dn), upper_cn(upper_cn)
   {
   }
 
-  bearer_logger                   logger;
+private:
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
+
+  void handle_sdu(byte_buffer buf) final {}
+  void stop_discard_timer(uint32_t count) final {}
 };
 } // namespace srsgnb
