@@ -153,6 +153,9 @@ void test_rrc_message_transfer_procedure()
   cu_cp_obj.start();
   du_obj.start();
 
+  // Connect AMF
+  cu_cp_obj.on_amf_connection();
+
   // Handling of Initial UL RRC message transfer
   {
     f1c_msg f1c_msg = {};
@@ -176,12 +179,10 @@ void test_rrc_message_transfer_procedure()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting Initial UL RRC message");
-    // TODO: Make tests pass
-    // TESTASSERT(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)) != nullptr);
-    // cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0))->handle_message(f1c_msg);
+    cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)).handle_message(f1c_msg);
 
-    // // check that UE has been added
-    // TESTASSERT_EQ(1, cu_cp_obj.get_nof_ues());
+    // check that UE has been added
+    TESTASSERT_EQ(cu_cp_obj.get_nof_ues(), 1);
   }
 
   // TODO: check that DU has received the RRCSetup
@@ -194,7 +195,7 @@ void test_rrc_message_transfer_procedure()
     f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
 
     auto& ul_rrc                     = f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer();
-    ul_rrc->gnb_cu_ue_f1_ap_id.value = 22;
+    ul_rrc->gnb_cu_ue_f1_ap_id.value = 0;
     ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
     ul_rrc->srbid.value              = 1;
     ul_rrc->rrc_container.value.from_string(
@@ -204,9 +205,7 @@ void test_rrc_message_transfer_procedure()
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting UL RRC message");
-    // TODO: Make tests pass
-    // TESTASSERT(cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)) != nullptr);
-    // cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0))->handle_message(f1c_msg);
+    cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)).handle_message(f1c_msg);
   }
 
   // TODO: check that CU has received the RRCSetupComplete

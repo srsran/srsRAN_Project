@@ -154,6 +154,9 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
   // Connect DU
   cu_cp_obj->on_new_connection();
 
+  // Connect AMF
+  cu_cp_obj->on_amf_connection();
+
   // Generate F1SetupRequest
   f1c_msg f1setup_msg = generate_successful_f1_setup_request();
 
@@ -181,14 +184,11 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
         "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
         "c400");
 
-    // TODO: Make tests pass
-    // // Pass PDU to CU-CP
-    // test_logger.info("Injecting Initial UL RRC message");
-    // cu_cp_obj->get_f1c_message_handler(int_to_du_index(0))->handle_message(init_ul_rrc_msg);
+    // Pass PDU to CU-CP
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // // check that UE has been added
-    // EXPECT_EQ(cu_cp_obj.get_nof_ues(), 1);
-
-    // TODO: add checks
+    // check that UE has been added
+    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
   }
 }

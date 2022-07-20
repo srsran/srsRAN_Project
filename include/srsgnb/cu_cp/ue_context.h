@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/slot_array.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
-#include "srsgnb/cu_cp/srb_pdu_notifier.h"
+#include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
@@ -23,10 +23,10 @@ namespace srs_cu_cp {
 
 /// Holds context for one SRB that is processed within the CU-CP.
 struct cu_srb_context {
-  lcid_t                            lcid;
-  std::unique_ptr<srb_pdu_notifier> rx_notifier;
-  std::unique_ptr<srb_pdu_notifier> tx_notifier;
-  std::unique_ptr<pdcp_entity>      pdcp_bearer;
+  lcid_t                                             lcid;
+  std::unique_ptr<du_processor_rrc_message_notifier> rx_notifier;
+  std::unique_ptr<rrc_pdu_notifier>                  tx_notifier;
+  std::unique_ptr<pdcp_entity>                       pdcp_bearer;
 };
 
 /// Holds the context of an DRB that is processed outside of the CU-CP.
@@ -41,9 +41,9 @@ struct ue_context {
   rnti_t          c_rnti;
   byte_buffer     du_to_cu_rrc_container;
 
-  rrc_ue_entity_interface*                 rrc = nullptr;
-  slot_vector<cu_srb_context>              srbs;
-  slot_vector<cu_drb_context>              drbs;
+  rrc_ue_entity_interface*    rrc = nullptr;
+  slot_vector<cu_srb_context> srbs;
+  slot_vector<cu_drb_context> drbs;
 };
 
 } // namespace srs_cu_cp

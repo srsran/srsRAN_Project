@@ -47,6 +47,7 @@ public:
   // du_processor_rrc_message_handler
   ue_index_t handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
   void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
+  void       handle_dl_rrc_message_transfer(const dl_rrc_message& msg) override;
 
   rrc_amf_connection_handler& get_amf_connection_handler(); /// Pass handle to AMF connection handler within RRC
 

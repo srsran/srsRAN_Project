@@ -15,13 +15,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between UE manager and RRC
-class rrc_ul_ccch_adapter : public srb_pdu_notifier
+/// Adapter between DU processor and RRC
+class rrc_ul_ccch_message_indicator : public du_processor_rrc_message_notifier
 {
 public:
-  explicit rrc_ul_ccch_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
-
-  void on_new_pdu(byte_buffer_slice pdu) override { rrc_handler.handle_ul_ccch_pdu(std::move(pdu)); }
+  explicit rrc_ul_ccch_message_indicator(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {

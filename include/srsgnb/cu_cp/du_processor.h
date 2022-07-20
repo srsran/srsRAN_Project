@@ -12,6 +12,7 @@
 
 #include "cu_cp_types.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/ran/rnti.h"
 #include <string>
 
 namespace srsgnb {
@@ -60,6 +61,10 @@ struct ul_rrc_message {
   asn1::unbounded_octstring<true> rrc_container;
 };
 
+struct dl_rrc_message {
+  asn1::unbounded_octstring<true> rrc_container;
+};
+
 /// Interface to forward RRC messages at the DU processor
 class du_processor_rrc_message_handler
 {
@@ -70,10 +75,30 @@ public:
   virtual void       handle_ul_rrc_message_transfer(const ul_rrc_message& msg)                 = 0;
 };
 
+/// Interface to receive RRC messages at the DU processor
+class du_processor_dl_rrc_message_handler
+{
+public:
+  virtual ~du_processor_dl_rrc_message_handler() = default;
+
+  virtual void handle_dl_rrc_message_transfer(const dl_rrc_message& msg) = 0;
+};
+
+/// Interface to notify the reception of an new RRC message.
+class du_processor_rrc_message_notifier
+{
+public:
+  virtual ~du_processor_rrc_message_notifier() = default;
+
+  /// This callback is invoked on each received RRC message.
+  virtual void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) = 0;
+};
+
 /// Combined interface for all DU processor handlers
 class du_processor_f1c_interface : public du_processor_f1ap_setup_handler,
                                    public du_processor_cell_handler,
-                                   public du_processor_rrc_message_handler
+                                   public du_processor_rrc_message_handler,
+                                   public du_processor_dl_rrc_message_handler
 {
 public:
   virtual ~du_processor_f1c_interface() = default;

@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/adt/byte_buffer.h"
-#include "srsgnb/cu_cp/srb_pdu_notifier.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_factory.h"
 #include "srsgnb/support/test_utils.h"
@@ -34,18 +33,12 @@ public:
   byte_buffer_slice last_pdu;
 };
 
-class dummy_adapter : public srb_pdu_notifier
+class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 {
 public:
-  dummy_adapter(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
+  dummy_rrc_pdu_notifier(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
 
   void on_new_pdu(byte_buffer_slice pdu) override { handler.handle_pdu(std::move(pdu)); }
-
-  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
-  {
-    byte_buffer_slice pdu({rrc_container.begin(), rrc_container.end()});
-    handler.handle_pdu(std::move(pdu));
-  }
 
 private:
   dummy_tx_pdu_handler& handler;
@@ -72,7 +65,7 @@ protected:
     ue_ctxt.srbs.emplace(LCID_SRB0);
     cu_srb_context& srb0 = ue_ctxt.srbs[LCID_SRB0];
     srb0.lcid            = LCID_SRB0;
-    srb0.tx_notifier     = std::make_unique<dummy_adapter>(tx_pdu_handler);
+    srb0.tx_notifier     = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
   }
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()

@@ -27,6 +27,16 @@ public:
   virtual rrc_ul_ccch_pdu_handler* get_ul_ccch_pdu_handler() = 0;
 };
 
+/// Interface to notify the reception of an new SRB PDU.
+class rrc_pdu_notifier
+{
+public:
+  virtual ~rrc_pdu_notifier() = default;
+
+  /// This callback is invoked on each received PDU.
+  virtual void on_new_pdu(byte_buffer_slice pdu) = 0;
+};
+
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
