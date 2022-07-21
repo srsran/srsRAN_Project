@@ -27,6 +27,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&                 cfg_
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
   ssb_helper(cell_cfg_req_),
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
+  rar_assembler(cell_cfg_req_),
   sched_obj(sched_),
   sched_bsr_updater(sched_bsr_updater_),
   ue_mng(ue_mng_)
@@ -138,11 +139,9 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
     data_res.sib1_pdus.emplace_back(payload);
   }
 
-  // Assemble scheduled RARs' payload.
+  // Assemble scheduled RARs' subheaders and payloads.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.rar_pdus.emplace_back();
-    // call MAC encoder.
-    encode_rar_pdu(cell_cfg, rar, data_res.rar_pdus.back());
+    data_res.rar_pdus.emplace_back(rar_assembler.encode_rar_pdu(sl_tx, rar));
   }
 
   // Assemble data grants.

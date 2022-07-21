@@ -129,12 +129,17 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
     total_dl_prbs.fill(rar_crbs.start(), rar_crbs.stop());
 
     for (const rar_ul_grant& msg3 : rar.grants) {
-      TESTASSERT(not msg3.prbs.empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3.temp_crnti);
-      TESTASSERT(not total_ul_prbs.any(msg3.prbs.start(), msg3.prbs.stop()), "Msg3 UL PRB collision");
+      ra_s_l                 = ra_frequency_type1_from_riv(cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                                           msg3.freq_resource_assignment);
+      prb_interval msg3_prbs = {ra_s_l.start_vrb, ra_s_l.start_vrb + ra_s_l.length_vrb};
+      TESTASSERT(not msg3_prbs.empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3.temp_crnti);
+      TESTASSERT(msg3_prbs.length() <= cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
+                 "Msg3 PRBs outside PUSCH resource grid");
+      TESTASSERT(not total_ul_prbs.any(msg3_prbs.start(), msg3_prbs.stop()), "Msg3 UL PRB collision");
       TESTASSERT(temp_crntis.count(msg3.temp_crnti) == 0, "Repeated C-RNTI={:#x}", msg3.temp_crnti);
       TESTASSERT(msg3.time_resource_assignment < pusch_cfg.pusch_td_alloc_list.size());
 
-      total_ul_prbs.fill(msg3.prbs.start(), msg3.prbs.stop());
+      total_ul_prbs.fill(msg3_prbs.start(), msg3_prbs.stop());
       temp_crntis.insert(msg3.temp_crnti);
     }
   }
@@ -577,9 +582,6 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       ra_sch.handle_rach_indication(rach_ind);
     }
 
-    unsigned msg3_delay = get_msg3_delay(bench.cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list[0],
-                                         bench.cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
-
     // Update slot
     bench.slot_indication(sl_tx);
 
@@ -592,7 +594,6 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
     if (sl_rx == prach_sl_rx) {
       // RAR allocated right after PRACH is detected
       cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
-      cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
 
       TESTASSERT(pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
 
@@ -605,12 +606,6 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // Msg3
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
-      prb_interval prbs = rar.grants[0].prbs;
-
-      TESTASSERT_EQ(
-          prbs.length(),
-          msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
-
     } else {
       TESTASSERT(
           bench.res_grid[0].dl_res_grid.sch_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params).none());
@@ -689,9 +684,6 @@ void test_ra_sched_tdd_single_rach()
     // Msg3
     test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
     TESTASSERT_EQ(1, rar.grants.size());
-    prb_interval prbs = rar.grants[0].prbs;
-    TESTASSERT_EQ(prbs.length(),
-                  msg3_sl_res.ul_res_grid.sch_crbs(pdcch_sl_res.cfg.ul_cfg_common.init_ul_bwp.generic_params).count());
     TESTASSERT_EQ(1, msg3_sl_res.result.ul.puschs.size());
 
     rar_sl = sl_tx;

@@ -446,7 +446,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     msg3_info.ta                       = pending_msg3.ind_msg.timing_advance;
     msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
-    msg3_info.prbs                     = prbs;
+    msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
+        cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
     msg3_info.mcs                      = 0;
     msg3_info.tpc                      = 0;
     msg3_info.csi_req                  = false;

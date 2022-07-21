@@ -13,6 +13,7 @@
 #include "../mac_config.h"
 #include "mac_dl_ue_manager.h"
 #include "pdu_encoder.h"
+#include "rar_pdu_assembler.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/scheduler_dl_buffer_state_indicator.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
@@ -72,6 +73,7 @@ private:
   ssb_assembler ssb_helper;
 
   sib_pdu_assembler sib_assembler;
+  rar_pdu_assembler rar_assembler;
 
   scheduler_slot_handler&              sched_obj;
   scheduler_dl_buffer_state_indicator& sched_bsr_updater;

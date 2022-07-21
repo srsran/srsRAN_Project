@@ -182,9 +182,9 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   }
 
   // Add RAR PDUs.
-  const static_vector<byte_buffer, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
+  const static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
   for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
-    const byte_buffer& payload = rar_pdus[i];
+    byte_buffer payload = rar_pdus[i];
     builder.add_pdu_custom_payload(
         pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::rar), 1, {&*payload.cbegin(), &*payload.cend()});
   }

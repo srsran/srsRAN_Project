@@ -168,8 +168,8 @@ struct pusch_information {
   ofdm_symbol_range        symbols;
 };
 
-/// RAR grant.
-/// \remark See TS 38.213, Table 8.2-1.
+/// \brief RAR grant composed of subheader as per TS38.321 6.2.2, payload as per TS38.321 6.2.3,
+/// with UL grant as per TS38.213, Table 8.2-1.
 struct rar_ul_grant {
   // MAC subheader.
   uint16_t rapid;
@@ -178,13 +178,13 @@ struct rar_ul_grant {
   uint16_t ta;
   rnti_t   temp_crnti;
 
-  // RAR Payload.
-  bool         freq_hop_flag;
-  uint8_t      time_resource_assignment;
-  prb_interval prbs;
-  int8_t       mcs;
-  int8_t       tpc;
-  bool         csi_req;
+  // UL Grant Payload.
+  bool     freq_hop_flag;
+  uint8_t  time_resource_assignment;
+  uint16_t freq_resource_assignment;
+  int8_t   mcs;
+  int8_t   tpc;
+  bool     csi_req;
 };
 
 /// See ORAN WG8, 9.2.3.3.10 - RAR information.
