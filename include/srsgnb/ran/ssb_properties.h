@@ -116,7 +116,7 @@ public:
 /// page](http://nrexplained.com/rbs) for a more details about resource block indexing.
 ///
 /// \sa ssb_offset_to_pointA
-class ssb_subcarrier_offset : private bounded_integer<uint8_t, 0, 23>
+class ssb_subcarrier_offset : public bounded_integer<uint8_t, 0, 23>
 {
 private:
   using base_type = bounded_integer<uint8_t, 0, 23>;
@@ -126,10 +126,12 @@ private:
   /// Maximum possible value for FR2.
   static constexpr value_type MAX_VALUE_FR2 = 11;
 
+  // Deleted base class methods.
+  using base_type::is_valid;
+  using base_type::max;
+
 public:
   using base_type::bounded_integer;
-  using base_type::operator=;
-  using base_type::to_uint;
 
   /// Returns the maximum value for the given frequency range.
   static constexpr unsigned max(frequency_range fr)

@@ -32,10 +32,9 @@ public:
 
   constexpr bounded_integer(bounded_integer&&) noexcept = default;
 
-  template <typename U>
+  template <typename U, std::enable_if_t<std::is_integral<U>::value, int> = 0>
   constexpr bounded_integer(U v) : val(v)
   {
-    static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
     assert_bounds(v);
   }
 
@@ -43,10 +42,9 @@ public:
 
   constexpr bounded_integer& operator=(bounded_integer&&) noexcept = default;
 
-  template <typename U>
+  template <typename U, std::enable_if_t<std::is_integral<U>::value, int> = 0>
   bounded_integer& operator=(U v)
   {
-    static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
     assert_bounds(v);
     val = v;
     return *this;
@@ -81,8 +79,7 @@ public:
 protected:
   constexpr void assert_bounds(Integer v) const
   {
-    srsran_assert(
-        v >= MIN_VALUE and v <= MAX_VALUE, "Passed value={} outside bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
+    srsran_assert(v >= MIN_VALUE and v <= MAX_VALUE, "Value={} out-of-bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
   }
 
   Integer val;

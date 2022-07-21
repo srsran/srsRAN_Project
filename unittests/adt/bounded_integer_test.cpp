@@ -18,6 +18,7 @@ using namespace srsgnb;
 static_assert(bounded_integer<int, 2, 5>(3) == 3, "Constexpr ctor failed");
 static_assert(bounded_integer<int, 2, 5>::min() == 2, "Constexpr max() failed");
 static_assert(bounded_integer<int, 2, 5>::max() == 5, "Constexpr max() failed");
+static_assert(bounded_integer<int, 2, 5>(2) == bounded_integer<int, 2, 5>(2), "Constexpr comparison failed");
 
 void test_bounded_integer_default_ctor_is_invalid_number()
 {
