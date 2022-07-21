@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/ssb_properties.h"
 #include <array>
 #include <memory>
 
@@ -54,7 +55,7 @@ public:
     ///
     /// Corresponds to parameter \f$k_{SSB}\f$ as defined in TS 38.211 Section 7.4.3.1. The value range is {0, ..., 11}
     /// if \f$L_{MAX} = 64\f$, {0, ..., 23} otherwise.
-    unsigned k_ssb;
+    ssb_subcarrier_offset k_ssb;
   };
 
   /// Default destructor

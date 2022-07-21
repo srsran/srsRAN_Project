@@ -156,7 +156,7 @@ int main()
               TESTASSERT(encoder_entry.msg.hrf == pdu.slot.is_odd_hrf());
               TESTASSERT(srsvec::equal(encoder_entry.msg.payload, encoder_entry.msg.payload));
               TESTASSERT(encoder_entry.msg.sfn == pdu.slot.sfn());
-              TESTASSERT(encoder_entry.msg.k_ssb == pdu.subcarrier_offset.to_uint());
+              TESTASSERT(encoder_entry.msg.k_ssb == pdu.subcarrier_offset);
               TESTASSERT(encoder_entry.encoded.size() == pbch_encoder::E);
 
               // Assert modulator.
