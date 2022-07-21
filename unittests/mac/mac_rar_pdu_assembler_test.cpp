@@ -1,0 +1,164 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+#include "lib/mac/mac_dl/rar_pdu_assembler.h"
+#include "mac_test_helpers.h"
+#include "srsgnb/support/bit_encoding.h"
+#include "srsgnb/support/test_utils.h"
+#include <random>
+
+using namespace srsgnb;
+
+std::random_device                      rd;
+std::mt19937                            gen(rd());
+std::uniform_int_distribution<unsigned> rnti_dist(MIN_CRNTI, MAX_CRNTI);
+std::uniform_int_distribution<unsigned> rapid_dist(0, 63);
+std::uniform_int_distribution<unsigned> mcs_dist(0, 15);
+std::uniform_int_distribution<unsigned> time_res_dist(0, 15);
+std::uniform_int_distribution<unsigned> freq_res_dist(0, 16383);
+std::uniform_int_distribution<unsigned> ta_dist(0, 63);
+std::uniform_int_distribution<unsigned> freq_hop_dist(0, 1);
+std::uniform_int_distribution<uint8_t>  tpc_dist(0, 7);
+std::uniform_int_distribution<unsigned> nof_ul_grants_per_rar(1, MAX_GRANTS - 1);
+
+// Check TS38.321 6.2.2 and 6.2.3.
+static const unsigned RAR_PDU_SIZE = 8;
+
+rar_ul_grant make_random_ul_grant()
+{
+  rar_ul_grant grant{};
+  grant.freq_hop_flag            = freq_hop_dist(gen) > 0;
+  grant.rapid                    = rapid_dist(gen);
+  grant.temp_crnti               = to_rnti(rnti_dist(gen));
+  grant.mcs                      = mcs_dist(gen);
+  grant.freq_resource_assignment = freq_res_dist(gen);
+  grant.time_resource_assignment = time_res_dist(gen);
+  grant.tpc                      = tpc_dist(gen);
+  grant.csi_req                  = freq_hop_dist(gen) > 0;
+  grant.ta                       = ta_dist(gen);
+  return grant;
+}
+
+rar_information make_random_rar_info(unsigned nof_ul_grants = 1, unsigned padding_bytes = 0)
+{
+  rar_information rar{};
+  rar.pdsch_cfg.codewords.resize(1);
+  rar.pdsch_cfg.codewords[0].tb_size_bytes = nof_ul_grants * RAR_PDU_SIZE + padding_bytes;
+  rar.grants.resize(nof_ul_grants);
+  for (unsigned i = 0; i < nof_ul_grants; ++i) {
+    rar.grants[i] = make_random_ul_grant();
+  }
+  return rar;
+}
+
+/// \brief Checks whether it is the last subPDU of a MAC RAR PDU. The Extension field "E" should flag this information
+/// according to TS38.321 6.2.2.
+static bool is_last_subpdu(span<const uint8_t> rar_pdu)
+{
+  return (rar_pdu[0] & (1U << 7U)) == 0;
+}
+
+/// \brief Checks whether the MAC RAR PDU contains a RAPID field as per TS38.321 6.2.2.
+static bool is_rapid_subpdu(span<const uint8_t> rar_pdu)
+{
+  return (rar_pdu[0] & (1U << 6U)) > 0;
+}
+
+/// Decode RAR UL PDU as per TS 38.321, Section 6.2.2 and 6.2.3.
+rar_ul_grant decode_ul_grant(span<const uint8_t> rar_subpdu)
+{
+  byte_buffer  buf = rar_subpdu;
+  bit_decoder  dec(buf);
+  rar_ul_grant ret{};
+
+  dec.advance_bits(2);
+  dec.unpack(ret.rapid, 6);
+  dec.advance_bits(1);
+  dec.unpack(ret.ta, 7 + 5);
+  dec.unpack(ret.freq_hop_flag, 1);
+  dec.unpack(ret.freq_resource_assignment, 14);
+  dec.unpack(ret.time_resource_assignment, 4);
+  dec.unpack(ret.mcs, 4);
+  dec.unpack(ret.tpc, 3);
+  dec.unpack(ret.csi_req, 1);
+  uint16_t rnti;
+  dec.unpack(rnti, 16);
+  ret.temp_crnti = to_rnti(rnti);
+
+  TESTASSERT_EQ(RAR_PDU_SIZE, dec.nof_bytes());
+
+  return ret;
+}
+
+bool operator==(const rar_ul_grant& lhs, const rar_ul_grant& rhs)
+{
+  return lhs.ta == rhs.ta and lhs.freq_hop_flag == rhs.freq_hop_flag and
+         lhs.freq_resource_assignment == rhs.freq_resource_assignment and
+         lhs.time_resource_assignment == rhs.time_resource_assignment and lhs.mcs == rhs.mcs and lhs.tpc == rhs.tpc and
+         lhs.csi_req == rhs.csi_req and lhs.temp_crnti == rhs.temp_crnti;
+}
+
+/// Tests if the encoded RAR PDU matches the content in the original RAR.
+void test_encoded_rar(const rar_information& original_rar, span<const uint8_t> rar_pdu)
+{
+  TESTASSERT(not rar_pdu.empty());
+  TESTASSERT_EQ(RAR_PDU_SIZE * original_rar.grants.size(), rar_pdu.size());
+
+  for (unsigned i = 0; i < original_rar.grants.size(); ++i) {
+    span<const uint8_t> subpdu = rar_pdu.subspan(i * RAR_PDU_SIZE, RAR_PDU_SIZE);
+    TESTASSERT_EQ(is_last_subpdu(subpdu), (i == original_rar.grants.size() - 1), "for index={}", i);
+    TESTASSERT(is_rapid_subpdu(subpdu));
+
+    rar_ul_grant grant2 = decode_ul_grant(subpdu);
+    TESTASSERT(original_rar.grants[i] == grant2);
+  }
+}
+
+void test_rar_assembler_multiple_random_ul_grants()
+{
+  test_delimit_logger test_delim{"MAC assembler for multiple UL grants"};
+
+  mac_cell_creation_request cell_cfg = test_helpers::make_default_mac_cell_config();
+  rar_information           rar_info = make_random_rar_info(nof_ul_grants_per_rar(gen));
+
+  rar_pdu_assembler   assembler(cell_cfg);
+  span<const uint8_t> bytes = assembler.encode_rar_pdu(rar_info);
+
+  test_encoded_rar(rar_info, bytes);
+}
+
+/// In this test, we verify that the RAR PDU assembler is able to store past RAR PDUs for a short period of time,
+/// so that the output PDUs can be referenced by lower layers without risking dangling pointers.
+void test_rar_assembler_maintains_old_results()
+{
+  test_delimit_logger test_delim{"MAC assembler maintains previous results"};
+
+  mac_cell_creation_request cell_cfg = test_helpers::make_default_mac_cell_config();
+  rar_pdu_assembler         assembler(cell_cfg);
+
+  // The assembler old result internal storage has to accommodate enough slots allocated with max number of RARs.
+  unsigned                         MIN_OLD_RESULT_MEMORY = MAX_GRANTS * NOF_SUBFRAMES_PER_FRAME;
+  std::vector<span<const uint8_t>> old_rar_pdus;
+  std::vector<rar_information>     old_rars;
+  for (unsigned i = 0; i < MIN_OLD_RESULT_MEMORY; ++i) {
+    old_rars.push_back(make_random_rar_info(nof_ul_grants_per_rar(gen)));
+    old_rar_pdus.push_back(assembler.encode_rar_pdu(old_rars.back()));
+  }
+
+  for (unsigned i = 0; i < old_rars.size(); ++i) {
+    test_encoded_rar(old_rars[i], old_rar_pdus[i]);
+  }
+}
+
+int main()
+{
+  test_rar_assembler_multiple_random_ul_grants();
+  test_rar_assembler_maintains_old_results();
+}

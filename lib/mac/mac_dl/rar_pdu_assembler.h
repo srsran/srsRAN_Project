@@ -20,18 +20,13 @@ class rar_pdu_assembler
 public:
   explicit rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_);
 
-  span<const uint8_t> encode_rar_pdu(slot_point sl_tx, const rar_information& rar);
+  span<const uint8_t> encode_rar_pdu(const rar_information& rar);
 
 private:
-  struct slot_resources {
-    unsigned                                     next_idx = 0;
-    std::array<std::vector<uint8_t>, MAX_GRANTS> payloads;
-  };
-
   const mac_cell_creation_request& cell_cfg;
 
-  slot_point                  last_sl_tx;
-  std::vector<slot_resources> rar_payload_grid;
+  unsigned                          next_index = 0;
+  std::vector<std::vector<uint8_t>> rar_payload_ring_buffer;
 };
 
 } // namespace srsgnb

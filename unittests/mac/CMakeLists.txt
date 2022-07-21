@@ -8,6 +8,8 @@
 
 set_directory_properties(PROPERTIES LABELS "mac")
 
+include_directories(../..)
+
 add_executable(mac_ue_create_test mac_ue_create_test.cpp)
 target_link_libraries(mac_ue_create_test srsgnb_support srslog rrc_nr_asn1)
 add_test(mac_ue_create_test mac_ue_create_test)
@@ -26,5 +28,9 @@ target_link_libraries(mac_dl_cfg_test
 add_test(mac_dl_cfg_test mac_dl_cfg_test)
 
 add_executable(mac_ul_pdu_test mac_ul_pdu_test.cpp)
-target_link_libraries(mac_ul_pdu_test srsgnb_mac srsgnb_support srslog rrc_nr_asn1)
+target_link_libraries(mac_ul_pdu_test srsgnb_mac srsgnb_support srslog)
 add_test(mac_ul_pdu_test mac_ul_pdu_test)
+
+add_executable(mac_rar_pdu_assembler_test mac_rar_pdu_assembler_test.cpp)
+target_link_libraries(mac_rar_pdu_assembler_test srsgnb_mac srsgnb_support srslog du_manager_converters)
+add_test(mac_rar_pdu_assembler_test mac_rar_pdu_assembler_test)

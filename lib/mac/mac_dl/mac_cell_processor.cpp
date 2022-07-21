@@ -141,7 +141,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
   // Assemble scheduled RARs' subheaders and payloads.
   for (const rar_information& rar : dl_res.rar_grants) {
-    data_res.rar_pdus.emplace_back(rar_assembler.encode_rar_pdu(sl_tx, rar));
+    data_res.rar_pdus.emplace_back(rar_assembler.encode_rar_pdu(rar));
   }
 
   // Assemble data grants.

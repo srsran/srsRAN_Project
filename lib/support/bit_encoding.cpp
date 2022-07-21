@@ -114,9 +114,13 @@ bool bit_decoder::unpack(T& val, uint32_t n_bits)
   return true;
 }
 template bool bit_decoder::unpack<bool>(bool&, uint32_t n_bits);
+template bool bit_decoder::unpack<int8_t>(int8_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<uint8_t>(uint8_t&, uint32_t n_bits);
+template bool bit_decoder::unpack<int16_t>(int16_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<uint16_t>(uint16_t&, uint32_t n_bits);
+template bool bit_decoder::unpack<int32_t>(int32_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<uint32_t>(uint32_t&, uint32_t n_bits);
+template bool bit_decoder::unpack<int64_t>(int64_t&, uint32_t n_bits);
 template bool bit_decoder::unpack<uint64_t>(uint64_t&, uint32_t n_bits);
 
 bool bit_decoder::unpack_bytes(srsgnb::span<uint8_t> bytes)

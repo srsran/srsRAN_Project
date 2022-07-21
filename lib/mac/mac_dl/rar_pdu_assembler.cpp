@@ -39,7 +39,7 @@ void rar_pdu_encoder::encode(std::vector<uint8_t>& output_buf)
   // See TS38.321, Section 6.2.3.
   static constexpr unsigned MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH = 8;
   output_buf.clear();
-  output_buf.resize(MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH);
+  output_buf.resize(MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size());
   ptr = output_buf.data();
 
   for (unsigned i = 0; i != rar_info.grants.size(); ++i) {
@@ -105,19 +105,19 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
 
 rar_pdu_assembler::rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_) : cell_cfg(cell_cfg_)
 {
+  // Pre-reserve a pool of byte vectors, where RAR PDUs will be encoded in a round-robin fashion.
+  // Note: The ring has to be large enough to accommodate all the RARs in a given slot, for a sufficiently large
+  // number of slots.
   static const size_t GRID_NOF_SUBFRAMES = 20;
-  rar_payload_grid.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(cell_cfg.scs_common));
+  rar_payload_ring_buffer.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(cell_cfg.scs_common) * MAX_GRANTS);
 }
 
-span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(slot_point sl_tx, const rar_information& rar)
+span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar)
 {
+  srsran_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
+
   // Fetch output vector where RAR grant payload is going to be encoded.
-  slot_resources& sl_res = rar_payload_grid[sl_tx.to_uint() % rar_payload_grid.size()];
-  if (sl_tx != last_sl_tx) {
-    sl_res.next_idx = 0;
-    last_sl_tx      = sl_tx;
-  }
-  std::vector<uint8_t>& payload = sl_res.payloads[sl_res.next_idx++];
+  std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index++];
   payload.reserve(rar.pdsch_cfg.codewords[0].tb_size_bytes);
 
   // Encode RAR PDU.
