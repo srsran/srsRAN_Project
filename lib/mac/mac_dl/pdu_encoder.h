@@ -19,36 +19,26 @@ namespace srsgnb {
 class sib_pdu_encoder
 {
 public:
-  explicit sib_pdu_encoder(const byte_buffer& bcch_dl_sch_payload) :
-    bcch_payload(bcch_dl_sch_payload.copy()), min_payload_size(bcch_payload.length())
+  explicit sib_pdu_encoder(const byte_buffer& bcch_dl_sch_payload) : min_payload_size(bcch_dl_sch_payload.length())
   {
+    // Note: Resizing the bcch_payload after the ctor is forbidden, to avoid vector memory relocations and invalidation
+    // of pointers passed to the lower layers. For this reason, we pre-reserve any potential padding bytes.
+    static constexpr unsigned MAX_PADDING_BYTES_LEN = 64;
+    bcch_payload.resize(min_payload_size + MAX_PADDING_BYTES_LEN, 0);
+    bcch_payload.assign(bcch_dl_sch_payload.begin(), bcch_dl_sch_payload.end());
   }
 
-  const byte_buffer& encode_sib_pdu(unsigned tbs_bytes)
+  span<const uint8_t> encode_sib_pdu(unsigned tbs_bytes) const
   {
     srsran_assert(tbs_bytes >= min_payload_size, "The TBS for SIB1 cannot be smaller than the SIB1 payload");
-    int diff_bytes = tbs_bytes - bcch_payload.length();
-    // The allocated TBS is different from the stored BCCH-DL-SCH message length. We need to set padding.
-    if (diff_bytes != 0) {
-      // Reassign new byte_buffer (Copy-on-write), to avoid concurrency with any other place that is sharing
-      // this byte_buffer.
-      bcch_payload = bcch_payload.deep_copy();
-      if (diff_bytes > 0) {
-        // Append more padding bytes.
-        for (int i = 0; i < diff_bytes; ++i) {
-          bcch_payload.append(0);
-        }
-      } else {
-        // Remove some of the existing padding bytes.
-        bcch_payload.trim_tail(-diff_bytes);
-      }
-    }
-    return bcch_payload;
+    srsran_assert(tbs_bytes <= bcch_payload.capacity(),
+                  "Memory rellocations of the SIB1 payload not allowed. Consider reserving more bytes for PADDING");
+    return span<const uint8_t>(bcch_payload.data(), tbs_bytes);
   }
 
 private:
   /// Holds the original BCCH-DL-SCH message, defined in the MAC cell configuration, plus extra padding bytes.
-  byte_buffer bcch_payload;
+  std::vector<uint8_t> bcch_payload;
   /// Length of the original BCCH-DL-SCH message, without padding, defined in the MAC cell configuration.
   unsigned min_payload_size;
 };

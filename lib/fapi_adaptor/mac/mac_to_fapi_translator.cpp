@@ -174,9 +174,9 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   builder.set_basic_parameters(dl_data.slot.sfn(), dl_data.slot.slot_index());
 
   // Add SIB1 PDUs.
-  const static_vector<byte_buffer, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
+  const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
   for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
-    const byte_buffer& payload = sib1_pdus[i];
+    byte_buffer payload{sib1_pdus[i].begin(), sib1_pdus[i].end()};
     builder.add_pdu_custom_payload(
         pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::sib), 1, {&*payload.cbegin(), &*payload.cend()});
   }
