@@ -64,7 +64,8 @@ int main(int argc, char** argv)
 
   std::uniform_int_distribution<uint8_t> bit_dist(0, 1);
 
-  for (modulation_scheme modulation : {modulation_scheme::BPSK,
+  for (modulation_scheme modulation : {modulation_scheme::PI_2_BPSK,
+                                       modulation_scheme::BPSK,
                                        modulation_scheme::QPSK,
                                        modulation_scheme::QAM16,
                                        modulation_scheme::QAM64,

@@ -11,7 +11,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <numeric>
 
 using namespace srsgnb;
 

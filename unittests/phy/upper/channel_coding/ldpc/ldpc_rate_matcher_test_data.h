@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsLDPCRateMatcherUnittest.m"
 
-#include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/support/file_vector.h"
 
 namespace srsgnb {

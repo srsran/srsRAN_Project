@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/modulation_scheme.h"
+#include "srsgnb/ran/modulation_scheme.h"
 
 namespace srsgnb {
 

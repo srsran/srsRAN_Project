@@ -422,13 +422,14 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   rar.pdsch_cfg.prbs    = rar_prbs;
   rar.pdsch_cfg.symbols = get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols;
   rar.pdsch_cfg.codewords.emplace_back();
-  pdsch_codeword& cw  = rar.pdsch_cfg.codewords.back();
-  cw.mcs_table        = mcs_pdsch_table::qam64;
-  cw.qam_mod          = qam4;
-  cw.mcs_index        = dci.modulation_coding_scheme;
-  cw.rv_index         = 0;
-  cw.target_code_rate = 0; // TODO
-  cw.tb_size_bytes    = 0; // TODO
+  pdsch_codeword& cw             = rar.pdsch_cfg.codewords.back();
+  cw.mcs_table                   = pdsch_mcs_table::qam64;
+  cw.mcs_index                   = dci.modulation_coding_scheme;
+  cw.rv_index                    = 0;
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.qam_mod                     = mcs_config.modulation;
+  cw.target_code_rate            = mcs_config.target_code_rate;
+  cw.tb_size_bytes               = 0; // TODO
   rar.pdsch_cfg.dmrs =
       make_dmrs_info_common(cfg.dl_cfg_common.init_dl_bwp.pdsch_common, dci.time_resource, cfg.pci, cfg.dmrs_typeA_pos);
 

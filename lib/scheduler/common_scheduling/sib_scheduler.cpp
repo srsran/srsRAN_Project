@@ -156,7 +156,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // This is the list of parameters that are hard-coded and will need to be derived from some general config.
   static const ofdm_symbol_range sib1_ofdm_symbols{2, 14};
   static const unsigned          nof_symb_sh      = sib1_ofdm_symbols.length();
-  static const unsigned          mod_order        = to_qam_modulation_order(qam_modulation::qam4);
+  static const unsigned          mod_order        = get_bits_per_symbol(modulation_scheme::QPSK);
   static const float             target_code_rate = 379.0f;
   static const unsigned          nof_layers       = 1;
   // Time resource will be passed to the next function to fill the DCI.
@@ -259,14 +259,13 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   // As per TS 38.211, Section 7.3.1.1, n_ID is set to Physical Cell ID for SIB1.
   pdsch.n_id = cell_cfg.pci;
   pdsch.codewords.emplace_back();
-  pdsch_codeword& cw = pdsch.codewords.back();
-  cw.rv_index        = dci.redundancy_version;
-  cw.mcs_index       = dci.modulation_coding_scheme;
-  cw.mcs_table       = mcs_pdsch_table::qam64;
-  // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
-  cw.qam_mod = qam4; // TODO: Derive QAM from MCS.
-  // This is hard-coded, and corresponds to MCS = 5 in Table 5.1.3.1-1, TS38.214.
-  cw.target_code_rate = 379.0f;
+  pdsch_codeword& cw             = pdsch.codewords.back();
+  cw.rv_index                    = dci.redundancy_version;
+  cw.mcs_index                   = dci.modulation_coding_scheme;
+  cw.mcs_table                   = pdsch_mcs_table::qam64;
+  sch_mcs_description mcs_config = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.qam_mod                     = mcs_config.modulation;
+  cw.target_code_rate            = mcs_config.target_code_rate;
   // This is hard-coded, and derived as per Section 5.1.3.2, TS38.214, with nof PRBs= 5, MCS=5, N_RB_sc = 12,
   // N_sh_symb = 12, N_PRBs_DMRS = 36, N_PRBs_oh = 0.
   cw.tb_size_bytes = static_cast<uint32_t>(tbs);

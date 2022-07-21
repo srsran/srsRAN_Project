@@ -17,9 +17,10 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
-#include "srsgnb/ran/modulation.h"
+#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
@@ -109,23 +110,21 @@ struct pdcch_ul_information {
   dci_ul_info dci;
 };
 
-/// MCS index table for PDSCH.
-/// \remark See TS 38.214, Section 5.1.3.1.
-enum class mcs_pdsch_table { qam64 = 0, qam256 = 1, qam64LowSE = 2 };
-
 /// PDSCH codeword.
 /// \remark See FAPI PDSCH PDU.
 struct pdsch_codeword {
-  /// Information bits per 1024 encoded bits. If the code rate is 379/1024, target_code_rate is set as 379. Refer to
-  /// Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3, TS 38.214.
-  float          target_code_rate;
-  qam_modulation qam_mod;
-  /// MCS index [3GPP TS 38.214, sec 5.1.3.1], should match value sent in DCI. Values (0..31).
-  uint8_t         mcs_index;
-  mcs_pdsch_table mcs_table;
-  /// Redundancy version index [TS 38.212, Table 5.4.2.1-2 and TS 38.214, Table 5.1.2.1-2].
+  /// Target code rate, normalized to 1024 (see TS38.214 Tables 5.1.3.1-1, 5.1.3.1-2, 5.1.3.1-3).
+  float target_code_rate;
+  /// Subcarrier modulation scheme, as per TS38.211 Section 5.1.
+  modulation_scheme qam_mod;
+  /// \brief MCS index, range {0, ..., 31} (See TS38.214 Section 5.1.3.1).
+  /// \note Should match value sent in DCI.
+  sch_mcs_index mcs_index;
+  /// MCS table (See TS38.214 Section 5.1.3.1).
+  pdsch_mcs_table mcs_table;
+  /// Redundancy version index (see TS38.212 Table 5.4.2.1-2, and TS38.214 Table 5.1.2.1-2).
   uint8_t rv_index;
-  /// Transport block size (in bytes) [TS 38.214, sec 5.1.3.2].
+  /// Transport block size, in bytes (see TS38.214 Section 5.1.3.2).
   uint32_t tb_size_bytes;
 };
 

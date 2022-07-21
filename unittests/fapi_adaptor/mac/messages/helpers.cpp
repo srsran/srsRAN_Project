@@ -264,7 +264,7 @@ sib_information unittests::build_valid_sib1_information_pdu()
   info.pdsch_cfg.prbs    = {prb_interval{40, 60}};
   info.pdsch_cfg.symbols = {3, 10};
   info.pdsch_cfg.dmrs    = {dmrs_symbol_mask(14), dmrs_config_type::type1, 2, 3, false, 0, 2, bounded_bitset<12>(12)};
-  info.pdsch_cfg.codewords.push_back(pdsch_codeword{3, qam_modulation::qam16, 5, mcs_pdsch_table::qam64, 2, 128});
+  info.pdsch_cfg.codewords.push_back(pdsch_codeword{3, modulation_scheme::QAM16, 5, pdsch_mcs_table::qam64, 2, 128});
 
   return info;
 }

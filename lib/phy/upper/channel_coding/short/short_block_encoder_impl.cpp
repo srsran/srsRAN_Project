@@ -118,7 +118,7 @@ void short_block_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> 
   unsigned bits_per_symbol = get_bits_per_symbol(mod);
   validate_spans(output, input, bits_per_symbol);
 
-  static_vector<uint8_t, MAX_BLOCK_BITS> tmp = {};
+  static_vector<uint8_t, MAX_BLOCK_BITS> tmp(0);
 
   switch (input.size()) {
     case 1:

@@ -20,6 +20,10 @@ add_executable(pdcch_type0_css_coreset_config_test pdcch/pdcch_type0_css_coreset
 target_link_libraries(pdcch_type0_css_coreset_config_test srsgnb_ran srslog)
 add_test(pdcch_type0_css_coreset_config_test pdcch_type0_css_coreset_config_test)
 
+add_executable(pdsch_mcs_table_test pdsch/pdsch_mcs_table_test.cpp)
+target_link_libraries(pdsch_mcs_table_test srsgnb_ran srslog gtest gtest_main)
+add_test(pdsch_mcs_table_test pdsch_mcs_table_test)
+
 add_executable(prach_configuration_test prach/prach_configuration_test.cpp)
 target_link_libraries(prach_configuration_test srsgnb_ran srslog)
 add_test(prach_configuration_test prach_configuration_test)
@@ -27,6 +31,10 @@ add_test(prach_configuration_test prach_configuration_test)
 add_executable(prach_cyclic_shifts_test prach/prach_cyclic_shifts_test.cpp)
 target_link_libraries(prach_cyclic_shifts_test srsgnb_ran srslog gtest gtest_main)
 add_test(prach_cyclic_shifts_test prach_cyclic_shifts_test)
+
+add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
+target_link_libraries(pusch_mcs_table_test srsgnb_ran srslog gtest gtest_main)
+add_test(pusch_mcs_table_test pusch_mcs_table_test)
 
 add_executable(resource_allocation_frequency_test resource_allocation/resource_allocation_frequency_test.cpp)
 target_link_libraries(resource_allocation_frequency_test srsgnb_support srsgnb_ran)

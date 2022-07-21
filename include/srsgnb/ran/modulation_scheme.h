@@ -21,21 +21,25 @@ namespace srsgnb {
 ///
 /// Each modulation identifier is mapped to the corresponding modulation order.
 enum class modulation_scheme {
-  /// Binary Phase Shift Keying (BPSK) modulation.
+  /// 90-degree shifting Binary Phase Shift Keying (π/2-BPSK) described in TS38.211 Section 5.1.1.
+  PI_2_BPSK = 0,
+  /// Binary Phase Shift Keying (BPSK) modulation described in TS38.211 Section 5.1.2.
   BPSK = 1,
-  /// Quadrature Phase Shift Keying (QPSK) modulation.
+  /// Quadrature Phase Shift Keying (QPSK) modulation described in TS38.211 Section 5.1.3.
   QPSK = 2,
-  /// 16-point Quadrature Amplitude Modulation (16-QAM).
+  /// 16-point Quadrature Amplitude Modulation (16-QAM) described in TS38.211 Section 5.1.4.
   QAM16 = 4,
-  /// 64-point Quadrature Amplitude Modulation (64-QAM).
+  /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
   QAM64 = 6,
-  /// 256-point Quadrature Amplitude Modulation (256-QAM).
+  /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
   QAM256 = 8
 };
 
 inline std::string to_string(modulation_scheme mod)
 {
   switch (mod) {
+    case modulation_scheme::PI_2_BPSK:
+      return "π/2-BPSK";
     case modulation_scheme::BPSK:
       return "BPSK";
     case modulation_scheme::QPSK:
@@ -55,7 +59,7 @@ inline std::string to_string(modulation_scheme mod)
 /// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
 inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
-  return static_cast<unsigned>(mod);
+  return std::max(1U, static_cast<unsigned>(mod));
 }
 
 /// Defines the maximum bits per symbol.

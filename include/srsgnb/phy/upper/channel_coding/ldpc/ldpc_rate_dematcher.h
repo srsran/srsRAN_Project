@@ -13,9 +13,9 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
+#include "srsgnb/ran/modulation_scheme.h"
 
 namespace srsgnb {
 

@@ -60,8 +60,8 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
   for (const auto& cw : mac_pdu.pdsch_cfg.codewords) {
     dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
     cw_builder.set_basic_parameters(cw.target_code_rate,
-                                    to_qam_modulation_order(cw.qam_mod),
-                                    cw.mcs_index,
+                                    get_bits_per_symbol(cw.qam_mod),
+                                    cw.mcs_index.to_uint(),
                                     static_cast<unsigned>(cw.mcs_table),
                                     cw.rv_index,
                                     cw.tb_size_bytes);

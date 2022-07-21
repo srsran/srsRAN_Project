@@ -90,9 +90,8 @@ struct modulator_table_s {
   }
 };
 
-// Generic optimized modulator for modulation order 1.
-template <>
-struct modulator_table_s<1> {
+// Generic optimized modulator for BSPK.
+struct modulator_table_bpsk {
   // The indexing provides the complex symbol corresponding to the binary expansion of the index.
   const std::array<cf_t, 2> table = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
 
@@ -103,12 +102,28 @@ struct modulator_table_s<1> {
   }
 };
 
+// Generic optimized modulator for π/2-BPSK.
+struct modulator_table_pi_2_bpsk {
+  // The indexing provides the complex symbol corresponding to the binary expansion of the index.
+  const std::array<cf_t, 2> table_even = {{{M_SQRT1_2, M_SQRT1_2}, {-M_SQRT1_2, -M_SQRT1_2}}};
+  const std::array<cf_t, 2> table_odd  = {{{-M_SQRT1_2, M_SQRT1_2}, {M_SQRT1_2, -M_SQRT1_2}}};
+
+  // Modulates the input bits.
+  void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
+  {
+    std::transform(input.begin(), input.end(), symbols.begin(), [this, n = 0](uint8_t bit) mutable {
+      return (n++ & 1U) ? table_odd[bit] : table_even[bit];
+    });
+  }
+};
+
 // Modulation tables.
-static const modulator_table_s<1> bpsk_modulator;
-static const modulator_table_s<2> qpsk_modulator;
-static const modulator_table_s<4> qam16_modulator;
-static const modulator_table_s<6> qam64_modulator;
-static const modulator_table_s<8> qam256_modulator;
+static const modulator_table_pi_2_bpsk pi_2_bpsk_modulator;
+static const modulator_table_bpsk      bpsk_modulator;
+static const modulator_table_s<2>      qpsk_modulator;
+static const modulator_table_s<4>      qam16_modulator;
+static const modulator_table_s<6>      qam64_modulator;
+static const modulator_table_s<8>      qam256_modulator;
 
 void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
                                       srsgnb::span<srsgnb::cf_t>  symbols,
@@ -121,6 +136,9 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
                 scheme);
 
   switch (scheme) {
+    case modulation_scheme::PI_2_BPSK:
+      pi_2_bpsk_modulator.modulate(input, symbols);
+      break;
     case modulation_scheme::BPSK:
       bpsk_modulator.modulate(input, symbols);
       break;

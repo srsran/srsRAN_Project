@@ -11,12 +11,12 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
+#include "srsgnb/ran/modulation_scheme.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {

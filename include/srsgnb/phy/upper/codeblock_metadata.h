@@ -15,8 +15,8 @@
 #include "log_likelihood_ratio.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/modulation_scheme.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/ran/modulation_scheme.h"
 // TODO(david,borja): fix dependency.
 
 namespace srsgnb {
