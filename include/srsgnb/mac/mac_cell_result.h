@@ -13,15 +13,15 @@ namespace srsgnb {
 
 constexpr size_t MAX_DL_PDUS_PER_SLOT = 16;
 
-/// \brief Describes the parameters that are encoded in the MIB payload.
+/// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 MIB.
 struct ssb_mib_data_pdu {
   /// Symbol position of the first DM-RS.
   dmrs_typeA_position dmrs_typeA_pos;
-  /// Determines the value used to derive the PDCCH, CORESET and common search space configurations.
+  /// Value used to derive the PDCCH, CORESET and common search space configurations.
   uint8_t pdcch_config_sib1;
-  /// Indicates if this cell is barred.
+  /// Flag: true if the cell is barred, false otherwise.
   bool cell_barred;
-  /// Controls cell selection/reselection to intra-frequency cells.
+  /// Flag: true if doing cell selection/reselection into other intra-frequency cells is permitted, false otherwise.
   bool intra_freq_reselection;
 };
 
@@ -33,13 +33,15 @@ struct dl_ssb_pdu {
   ssb_pss_to_sss_epre pss_to_sss_epre;
   /// SSB opportunity index in a burst.
   uint8_t ssb_index;
-  /// Alignment offset between the resource grid and the SS/PBCH block. \see ssb_subcarrier_offset for more details.
+  /// \brief Alignment offset between the resource grid and the SS/PBCH block.
+  /// \sa ssb_subcarrier_offset for more details.
   ssb_subcarrier_offset subcarrier_offset;
-  /// Start of the SS/PBCH block relative to Point A in PRB. \see ssb_offset_to_pointA for more details.
+  /// \brief Start of the SS/PBCH block relative to Point A in PRB.
+  /// \sa ssb_offset_to_pointA for more details.
   ssb_offset_to_pointA offset_to_pointA;
-  /// SS/PBCH pattern case (A,B,C,D,E).
+  /// SS/PBCH pattern case.
   ssb_pattern_case ssb_case;
-  /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS 38.213 section 4.1.
+  /// Maximum number of SS/PBCH block candidates in a 5ms burst, described in TS38.213 section 4.1.
   uint8_t L_max;
   /// Subcarrier spacing of the SSB.
   subcarrier_spacing scs;

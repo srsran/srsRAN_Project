@@ -16,7 +16,7 @@ using namespace fapi;
 using namespace fapi_adaptor;
 
 /// \brief Adds the PHY timing information to the BCH payload for the given \c fapi_pdu.
-/// \return Packed BCH payload with the timing information as per TS38.212 Section 7.1.1.
+/// \return A packed BCH payload with the timing information, as per TS38.212 Section 7.1.1.
 static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf)
 {
   // Move the BCH payload to the MSB.
@@ -40,7 +40,7 @@ static uint32_t fill_phy_timing_info_in_bch_payload(const dl_ssb_pdu& fapi_pdu, 
 }
 
 /// \brief Encodes the full BCH payload for the given \c fapi_pdu.
-/// \return Packed BCH payload, as per TS38.212 Section 7.1.1.
+/// \return A packed BCH payload, as per TS38.212 Section 7.1.1.
 static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, bool hrf, subcarrier_spacing scs_common)
 {
   const dl_ssb_phy_mib_pdu& mib     = fapi_pdu.bch_payload.phy_mib_pdu;
@@ -93,7 +93,8 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, b
   return payload;
 }
 
-/// Fills the contents of the BCH payload.
+/// Selects between different BCH packing procedures depending on the given \c bch_payload_type, as per TS38.212
+/// Section 7.1.1.
 static void
 fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uint16_t sfn, bool hrf, subcarrier_spacing scs_common)
 {
@@ -115,7 +116,7 @@ fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uint16_t sfn, b
   srsvec::bit_unpack(dest, payload, dest.size());
 }
 
-/// Returns the beta PSS from the given SSB pdu.
+/// Returns the coefficient \f$\beta_{PSS}\f$ from the given SSB PDU (see TS38.213, Section 4.1).
 static float convert_to_beta_pss(const dl_ssb_pdu& fapi_pdu)
 {
   switch (fapi_pdu.beta_pss_profile_nr) {

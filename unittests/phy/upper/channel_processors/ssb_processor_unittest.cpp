@@ -177,7 +177,7 @@ int main()
               TESTASSERT(dmrs_entry.config.L_max == pdu.L_max);
               TESTASSERT(dmrs_entry.config.ssb_first_subcarrier == ssb_first_subcarrier);
               TESTASSERT(dmrs_entry.config.ssb_first_symbol == ssb_first_symbol_slot);
-              TESTASSERT(dmrs_entry.config.n_hf == pdu.slot.is_odd_hrf());
+              TESTASSERT(dmrs_entry.config.hrf == pdu.slot.is_odd_hrf());
               TESTASSERT(dmrs_entry.config.amplitude == 1.0F);
               TESTASSERT(srsvec::equal(dmrs_entry.config.ports, pdu.ports));
 

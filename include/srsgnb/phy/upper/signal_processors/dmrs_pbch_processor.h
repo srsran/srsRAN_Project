@@ -16,36 +16,36 @@
 
 namespace srsgnb {
 
-/// Describes a DMRS for PBCH processor interface
+/// Describes a DMRS for PBCH processor interface.
 class dmrs_pbch_processor
 {
 public:
-  /// Describes the required parameters to generate the signal
+  /// Describes the required parameters to generate the signal.
   struct config_t {
-    /// Physical cell identifier
+    /// Physical cell identifier.
     pci_t phys_cell_id;
-    /// SS/PBCH block index in the burst
+    /// SS/PBCH block index in the burst.
     unsigned ssb_idx;
-    /// Maximum number of SS/PBCH transmissions in a burst (5ms)
+    /// Maximum number of SS/PBCH transmissions in a burst (5ms).
     unsigned L_max;
-    /// First subcarrier in the resource grid
+    /// First subcarrier in the resource grid.
     unsigned ssb_first_subcarrier;
-    /// Denotes the first symbol of the SS/PBCH block within the slot.
+    /// First symbol of the SS/PBCH block within the slot.
     unsigned ssb_first_symbol;
-    /// Half frame flag
-    bool n_hf;
-    /// Linear signal amplitude
+    /// Flag: true if the SS/PBCH block transmission is in an odd half frame, false otherwise.
+    bool hrf;
+    /// Linear signal amplitude.
     float amplitude;
     /// Port indexes to map the signal.
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 
-  /// Default destructor
+  /// Default destructor.
   virtual ~dmrs_pbch_processor() = default;
 
-  /// \brief Generates and maps DMRS for PBCH
-  /// \param [out] grid Provides the destination resource grid
-  /// \param [in] config Provides the required configuration to generate and map the signal
+  /// \brief Generates and maps DM-RS for PBCH.
+  /// \param[out] grid Destination resource grid.
+  /// \param[in]  config Configuration to generate and map the signal.
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 

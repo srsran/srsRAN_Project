@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 using namespace fapi;
 
-/// Fills the DL DCI parameters of the PDCCH processor pdu.
+/// Fills the DL DCI parameters of the PDCCH processor PDU.
 static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_pdu)
 {
   for (unsigned i = 0, e = fapi_pdu.dl_dci.size(); i != e; ++i) {
@@ -52,7 +52,7 @@ static void fill_dci(pdcch_processor::pdu_t& proc_pdu, const dl_pdcch_pdu& fapi_
   }
 }
 
-/// Fills the coreset parameters of the PDCCH processor pdu.
+/// Fills the coreset parameters of the PDCCH processor PDU.
 static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl_pdcch_pdu& fapi_pdu)
 {
   coreset.bwp_size_rb        = fapi_pdu.coreset_bwp_size;

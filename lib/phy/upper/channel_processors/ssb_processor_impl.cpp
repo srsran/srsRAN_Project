@@ -64,7 +64,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   dmrs_config.L_max                         = pdu.L_max;
   dmrs_config.ssb_first_subcarrier          = k_start;
   dmrs_config.ssb_first_symbol              = l_start;
-  dmrs_config.n_hf                          = pdu.slot.is_odd_hrf();
+  dmrs_config.hrf                           = pdu.slot.is_odd_hrf();
   dmrs_config.amplitude                     = 1.0F;
   dmrs_config.ports                         = pdu.ports;
 
