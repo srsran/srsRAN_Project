@@ -40,9 +40,9 @@ public:
   struct config_t {
     /// Provides \f$n_{RNTI}\f$ from TS38.211 section 7.3.1.1 Scrambling.
     uint16_t rnti;
-    /// Number of contiguous PRBs allocated to the BWP.
+    /// Number of contiguous PRBs allocated to the BWP {1, ..., 275}.
     unsigned bwp_size_rb;
-    /// BWP start RB index from Point A.
+    /// BWP start RB index from Point A {0, ..., 274}.
     unsigned bwp_start_rb;
     /// Modulation of codeword 1 (q = 0).
     modulation_scheme modulation1;

@@ -21,7 +21,7 @@ static void test_case1_non_interleaved_common_ss()
 {
   unsigned                N_start_coreset = 123;
   unsigned                N_bwp_size      = 48;
-  const vrb_to_prb_mapper mapper          = vrb_to_prb_mapper::make_non_interleaved_common_ss(N_start_coreset);
+  const vrb_to_prb_mapper mapper          = vrb_to_prb_mapper::create_non_interleaved_common_ss(N_start_coreset);
   TESTASSERT_EQ(mapper.is_interleaved(), false);
   TESTASSERT_EQ(mapper.get_coreset_start(), N_start_coreset);
 
@@ -38,7 +38,7 @@ static void test_case1_non_interleaved_common_ss()
 static void test_case2_non_interleaved_other()
 {
   unsigned                N_bwp_size = 48;
-  const vrb_to_prb_mapper mapper     = vrb_to_prb_mapper::make_non_interleaved_other();
+  const vrb_to_prb_mapper mapper     = vrb_to_prb_mapper::create_non_interleaved_other();
   TESTASSERT_EQ(mapper.is_interleaved(), false);
   TESTASSERT_EQ(mapper.get_coreset_start(), 0);
 

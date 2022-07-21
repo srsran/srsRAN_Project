@@ -112,7 +112,7 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
   unsigned N_bwp_i_start = fapi_pdu.bwp_start;
   // BWP i size.
   unsigned N_bwp_i_size = fapi_pdu.bwp_size;
-  // CORESET start in VRB index. Relative to the beginning of the BWP.
+  // VRB index at where the CORESET starts, relative to the beginning of the BWP.
   unsigned N_start_coreset = fapi_pdu.pdsch_maintenance_v3.coreset_start_point - N_bwp_i_start;
   // Initial BWP size.
   unsigned N_bwp_init_size = fapi_pdu.pdsch_maintenance_v3.initial_dl_bwp_size;
@@ -121,20 +121,20 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
 
   switch (fapi_pdu.pdsch_maintenance_v3.trans_type) {
     case pdsch_trans_type::non_interleaved_common_ss:
-      return vrb_to_prb_mapper::make_non_interleaved_common_ss(N_start_coreset);
+      return vrb_to_prb_mapper::create_non_interleaved_common_ss(N_start_coreset);
     case pdsch_trans_type::interleaved_common_type0_coreset0:
-      return vrb_to_prb_mapper::make_interleaved_coreset0(N_start_coreset, N_bwp_init_size);
+      return vrb_to_prb_mapper::create_interleaved_coreset0(N_start_coreset, N_bwp_init_size);
     case pdsch_trans_type::interleaved_common_any_coreset0_present:
-      return vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
+      return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_init_size);
     case pdsch_trans_type::interleaved_common_any_coreset0_not_present:
-      return vrb_to_prb_mapper::make_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
+      return vrb_to_prb_mapper::create_interleaved_common(N_start_coreset, N_bwp_i_start, N_bwp_i_size);
     case pdsch_trans_type::interleaved_other:
-      return vrb_to_prb_mapper::make_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
+      return vrb_to_prb_mapper::create_interleaved_other(N_bwp_i_start, N_bwp_i_size, L_i);
     default:
     case pdsch_trans_type::non_interleaved_other:
       break;
   }
-  return vrb_to_prb_mapper::make_non_interleaved_other();
+  return vrb_to_prb_mapper::create_non_interleaved_other();
 }
 
 /// Fills the rb_allocation parameter of the PDSCH PDU.

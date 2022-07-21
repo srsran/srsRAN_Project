@@ -96,7 +96,7 @@ void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu
 {
   bounded_bitset<MAX_RB> rb_mask_bitset = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
 
-  // Select the DMRS reference point. Denote that for PRB0, the BWP start and size matches the CORESET0 start and size.
+  // Select the DM-RS reference point.
   unsigned dmrs_reference_point_k_rb = 0;
   if (pdu.ref_point == pdu_t::PRB0) {
     dmrs_reference_point_k_rb = pdu.bwp_start_rb;

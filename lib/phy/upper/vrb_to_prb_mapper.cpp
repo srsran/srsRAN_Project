@@ -63,7 +63,7 @@ static void vrb_to_prb_mapper_get_interleaved_prb(span<uint16_t> prb_indices,
   }
 }
 
-vrb_to_prb_mapper vrb_to_prb_mapper::make_non_interleaved_common_ss(unsigned N_start_coreset)
+vrb_to_prb_mapper vrb_to_prb_mapper::create_non_interleaved_common_ss(unsigned N_start_coreset)
 {
   vrb_to_prb_mapper mapper;
 
@@ -76,13 +76,13 @@ vrb_to_prb_mapper vrb_to_prb_mapper::make_non_interleaved_common_ss(unsigned N_s
   return mapper;
 }
 
-vrb_to_prb_mapper vrb_to_prb_mapper::make_non_interleaved_other()
+vrb_to_prb_mapper vrb_to_prb_mapper::create_non_interleaved_other()
 {
   // Keep default values.
   return vrb_to_prb_mapper();
 }
 
-vrb_to_prb_mapper vrb_to_prb_mapper::make_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size)
+vrb_to_prb_mapper vrb_to_prb_mapper::create_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size)
 {
   vrb_to_prb_mapper mapper;
 
@@ -106,7 +106,7 @@ vrb_to_prb_mapper vrb_to_prb_mapper::make_interleaved_coreset0(unsigned N_start_
 }
 
 vrb_to_prb_mapper
-vrb_to_prb_mapper::make_interleaved_common(unsigned N_start_coreset, unsigned N_bwp_i_start, unsigned N_bwp_init_size)
+vrb_to_prb_mapper::create_interleaved_common(unsigned N_start_coreset, unsigned N_bwp_i_start, unsigned N_bwp_init_size)
 {
   vrb_to_prb_mapper mapper;
 
@@ -134,7 +134,7 @@ vrb_to_prb_mapper::make_interleaved_common(unsigned N_start_coreset, unsigned N_
 }
 
 vrb_to_prb_mapper
-vrb_to_prb_mapper::make_interleaved_other(unsigned int N_bwp_i_start, unsigned int N_bwp_i_size, unsigned int L_i)
+vrb_to_prb_mapper::create_interleaved_other(unsigned int N_bwp_i_start, unsigned int N_bwp_i_size, unsigned int L_i)
 {
   vrb_to_prb_mapper mapper;
 

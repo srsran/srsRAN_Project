@@ -20,7 +20,7 @@ namespace srsgnb {
 ///
 /// This class abstracts the virtual to physical resource mapping for PDSCH.
 ///
-/// The default constructor is equivalent to use make_non_interleaved_other().
+/// The default constructor is equivalent to use create_non_interleaved_other().
 class vrb_to_prb_mapper
 {
 private:
@@ -36,36 +36,37 @@ private:
   unsigned other_bundle_size = 0;
 
 public:
-  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI Format 1_0 in common SS.
+  /// \brief Creates a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI Format 1_0 in common
+  /// SS.
   ///
-  /// Implemented as per TS38.211 section 7.3.1.6 Case 1:
+  /// Implemented as per TS38.211 Section 7.3.1.6 Case 1:
   /// - A virtual resource \f$n\f$ is mapped to the physical block \f$n + N_{start}^{CORESET}\f$.
   ///
-  /// If the corresponding PDCCH is associated with CORESET0 and Type0-PDCCH common SS and is addressed to SI-RNTI, the
-  /// BWP start and size must match with the CORESET0 start and size. Consequently, \f$N_{start}^{CORESET}\f$ must be
-  /// zero.
+  /// If the PDSCH is scheduled with DCI format 1_0 with the CRC scrambled by SI-RNTI in Type0-PDCCH common search space
+  /// in CORESET 0, the BWP start and size must match with the CORESET0 start and size. Consequently,
+  /// \f$N_{start}^{CORESET}\f$ must be zero.
   ///
-  /// \param[in] N_start_coreset \brief VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission
-  /// as \f$N_{start}^{CORESET}\f$.
+  /// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
+  /// \f$N_{start}^{CORESET}\f$.
   /// \return A VRB-to-PRB mapper instance.
-  static vrb_to_prb_mapper make_non_interleaved_common_ss(unsigned N_start_coreset);
+  static vrb_to_prb_mapper create_non_interleaved_common_ss(unsigned N_start_coreset);
 
-  /// \brief Makes a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI other than Format 1_0 in
-  /// common SS.
+  /// \brief Creates a non-interleaved VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI other than Format 1_0
+  /// in common SS.
   ///
-  /// Implemented as per TS38.211 section 7.3.1.6 Case 2:
+  /// Implemented as per TS38.211 Section 7.3.1.6 Case 2:
   /// - A virtual resouce \f$n\f$ is mapped to the physical block \f$n\f$.
   ///
   /// \return A VRB-to-PRB mapper instance.
-  static vrb_to_prb_mapper make_non_interleaved_other();
+  static vrb_to_prb_mapper create_non_interleaved_other();
 
-  /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled with DCI Format 1_0 with the CRC scrambled
+  /// \brief Creates a VRB-to-PRB mapper for PDSCH transmissions scheduled with DCI Format 1_0 with the CRC scrambled
   /// by SI-RNTI in Type0-PDCCH common SS in CORESET0.
   ///
-  /// Implemented as per TS38.211 section 7.3.1.6 Case 3:
-  /// - The number of bundles is calculated as \f$N_{bundle}=\left \lceil N_{BWP,init}^{size}/L \right \rceil\f$,
-  /// - the last RB bundle consist of \f$N_{BWP,init}^{size} \bmod L\f$ if \f$N_{BWP,init}^{size} \bmod L > 0\f$,
-  /// - all other resource block bundles consists of \f$L\f$ RBs, and
+  /// Implemented as per TS38.211 Section 7.3.1.6 Case 3:
+  /// - The number of bundles is calculated as \f$N_{bundle}=\lceil N_{BWP,init}^{size}/L \rceil\f$,
+  /// - the last RB bundle consists of \f$N_{BWP,init}^{size} \bmod L\f$ if \f$N_{BWP,init}^{size} \bmod L > 0\f$,
+  /// - all other resource block bundles consist of \f$L\f$ RBs, and
   /// - the bundle size is \f$L=2\f$.
   ///
   ///
@@ -73,20 +74,20 @@ public:
   /// \f$N_{start}^{CORESET}\f$.
   /// \param[in] N_bwp_init_size The size in RBs of CORESET0 as \f$N_{BWP,init}^{size}\f$.
   /// \return A VRB-to-PRB mapper instance.
-  static vrb_to_prb_mapper make_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size);
+  static vrb_to_prb_mapper create_interleaved_coreset0(unsigned N_start_coreset, unsigned N_bwp_init_size);
 
-  /// \brief Makes a VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI format 1_0 in any common SS except
+  /// \brief Creates a VRB-to-PRB mapper for PDSCH transmissions scheduled by DCI format 1_0 in any common SS except
   /// Type0-PDCCH common SS in CORESET0.
   ///
-  /// Implemented as per TS38.211 section 7.3.1.6 Case 4:
-  /// - the set of \f$N_{BWP,init}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided in
-  /// \f$N_{bundle}=\left \lceil (N_{BWP,init}^{size} + ((N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L))/L \right
+  /// Implemented as per TS38.211 Section 7.3.1.6 Case 4:
+  /// - the set of \f$N_{BWP,init}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided into
+  /// \f$N_{bundle}=\lceil (N_{BWP,init}^{size} + ((N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L))/L
   /// \rceil\f$,
   /// - the bundle size is \f$L=2\f$,
   /// - the first RB bundle consists of \f$L - ((N_{BWP,init}^{size} + N_{start}^{CORESET}) \bmod L)\f$,
   /// - the last RB bundle consists of \f$(N_{BWP,init}^{size} + N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L\f$
   /// if \f$(N_{BWP,init}^{size} + N_{BWP,i}^{start} + N_{start}^{CORESET}) \bmod L > 0\f$ and \f$L\f$ RB otherwise, and
-  /// - all other resource block bundles consists of \f$L\f$ RBs.
+  /// - all other resource block bundles consist of \f$L\f$ RBs.
   ///
   /// \param[in] N_start_coreset VRB index of the lowest-numbered RB in the CORESET used for the DCI transmission as
   /// \f$N_{start}^{CORESET}\f$.
@@ -95,23 +96,23 @@ public:
   /// \f$N_{BWP,init}^{size}\f$.
   /// \return A VRB-to-PRB mapper instance.
   static vrb_to_prb_mapper
-  make_interleaved_common(unsigned N_start_coreset, unsigned N_bwp_i_start, unsigned N_bwp_init_size);
+  create_interleaved_common(unsigned N_start_coreset, unsigned N_bwp_i_start, unsigned N_bwp_init_size);
 
-  /// \brief Makes a VRB-to-PRB mapper for all other PDSCH transmissions with interleaved mapping.
+  /// \brief Creates a VRB-to-PRB mapper for all other PDSCH transmissions with interleaved mapping.
   ///
-  /// Implemented as per TS38.211 section 7.3.1.6 Case 5:
-  /// - the set of \f$N_{BWP,i}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided in
-  /// \f$N_{bundle}=\left \lceil (N_{BWP,i}^{size} + (N_{BWP,i}^{start} \bmod L_i))/L_i \right \rceil\f$,
-  /// - the first RB bundle consist of \f$L_i - N_{BWP,i}^{size} \bmod L_i\f$,
-  /// - the last RB bundle consist of \f$(N_{BWP,i}^{size}+N_{BWP,i}^{start}) \bmod L_i\f$ if
+  /// Implemented as per TS38.211 Section 7.3.1.6 Case 5:
+  /// - the set of \f$N_{BWP,i}^{size}\f$ virtual RBs starting at \f$N_{BWP,i}^{start}\f$ is divided into
+  /// \f$N_{bundle}=\lceil (N_{BWP,i}^{size} + (N_{BWP,i}^{start} \bmod L_i))/L_i \rceil\f$,
+  /// - the first RB bundle consists of \f$L_i - N_{BWP,i}^{size} \bmod L_i\f$,
+  /// - the last RB bundle consists of \f$(N_{BWP,i}^{size}+N_{BWP,i}^{start}) \bmod L_i\f$ if
   /// \f$(N_{BWP,i}^{size}+N_{BWP,i}^{start}) \bmod L_i > 0\f$ and \f$L_i\f$ RBs otherwise,
-  /// - all other resource block bundles consists of \f$L_i\f$ RBs.
+  /// - all other resource block bundles consist of \f$L_i\f$ RBs.
   ///
   /// \param[in] N_bwp_i_start BWP \f$i\f$ starting position \f$N_{BWP,i}^{start}\f$.
   /// \param[in] N_bwp_i_size  BWP \f$i\f$ size\f$N_{BWP,i}^{size}\f$.
   /// \param[in] L_i           RB Bundle size for BWP \f$i\f$ in RBs \f$L_i\f$.
   /// \return A VRB-to-PRB mapper instance.
-  static vrb_to_prb_mapper make_interleaved_other(unsigned N_bwp_i_start, unsigned N_bwp_i_size, unsigned L_i);
+  static vrb_to_prb_mapper create_interleaved_other(unsigned N_bwp_i_start, unsigned N_bwp_i_size, unsigned L_i);
 
   /// \brief Checks whether the resource allocation is interleaved.
   ///

@@ -70,17 +70,19 @@ public:
     static_vector<uint8_t, MAX_PORTS> ports;
     // Ignores the transmission scheme.
     // ...
-    /// \brief Indicates the reference point for PDSCH DMRS \c k as per TS38.211 Section 7.4.1.1.2.
+    /// \brief Reference point for the PDSCH DM-RS subcarrier index \e k, as per TS38.211 Section 7.4.1.1.2.
     ///
     /// Set it to \c PRB0 when the corresponding PDCCH is associated with CORESET 0 and Type0-PDCCH common search space
     /// and is addressed to SI-RNTI.
     ///
     /// Otherwise, set it to \c CRB0.
     enum {
-      /// When the reference point is subcarrier 0 of the common resource block 0 (CRB 0).
+      /// The reference point is subcarrier 0 of the common resource block 0 (CRB 0).
       CRB0,
-      /// When the reference point is subcarrier 0 of the physical resource block 0 of the bandwidth part (BWP). Use
-      /// this option when PDSCH is signalled by CORESET 0. For this case, the BWP parameters must align with CORESET0.
+      /// \brief The reference point is subcarrier 0 of the physical resource block 0 of the bandwidth part (BWP).
+      ///
+      /// Use this option when PDSCH is signalled by CORESET 0. For this case, the BWP parameters must align with
+      /// CORESET0.
       PRB0
     } ref_point;
     /// Indicates which symbol in the slot transmit DMRS.
