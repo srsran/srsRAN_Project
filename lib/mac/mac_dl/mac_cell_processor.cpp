@@ -26,7 +26,7 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&                 cfg_
   cell_exec(cfg.dl_exec_mapper.executor(cell_cfg.cell_index)),
   phy_cell(cfg.phy_notifier.get_cell(cell_cfg.cell_index)),
   ssb_helper(cell_cfg_req_),
-  sib_encoder(cell_cfg_req_.bcch_dl_sch_payload),
+  sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   sched_obj(sched_),
   sched_bsr_updater(sched_bsr_updater_),
   ue_mng(ue_mng_)
@@ -134,7 +134,7 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
   // Assemble scheduled BCCH-DL-SCH message containing SIBs' payload.
   for (const sib_information& sib_info : dl_res.bc.sibs) {
     srsran_assert(not data_res.sib1_pdus.full(), "No SIB1 added as SIB1 list in MAC DL data results is already full");
-    span<const uint8_t> payload = sib_encoder.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
+    span<const uint8_t> payload = sib_assembler.encode_sib_pdu(sib_info.pdsch_cfg.codewords[0].tb_size_bytes);
     data_res.sib1_pdus.emplace_back(payload);
   }
 

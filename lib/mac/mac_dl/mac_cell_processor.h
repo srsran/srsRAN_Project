@@ -71,7 +71,7 @@ private:
   /// parameters are passed to the scheduler and also also to the PHY to generate the SSB PDU and PBCH payload.
   ssb_assembler ssb_helper;
 
-  sib_pdu_encoder sib_encoder;
+  sib_pdu_assembler sib_assembler;
 
   scheduler_slot_handler&              sched_obj;
   scheduler_dl_buffer_state_indicator& sched_bsr_updater;

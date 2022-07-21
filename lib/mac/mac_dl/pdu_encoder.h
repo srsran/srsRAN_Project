@@ -16,14 +16,15 @@
 namespace srsgnb {
 
 /// Class that manages the encoding of BCCH-DL-SCH messages to be fit in a Transport Block.
-class sib_pdu_encoder
+class sib_pdu_assembler
 {
 public:
-  explicit sib_pdu_encoder(const byte_buffer& bcch_dl_sch_payload) : min_payload_size(bcch_dl_sch_payload.length())
+  explicit sib_pdu_assembler(const byte_buffer& bcch_dl_sch_payload) : min_payload_size(bcch_dl_sch_payload.length())
   {
+    // Number of padding bytes to prereserve. This value is implementation-defined.
+    static constexpr unsigned MAX_PADDING_BYTES_LEN = 64;
     // Note: Resizing the bcch_payload after the ctor is forbidden, to avoid vector memory relocations and invalidation
     // of pointers passed to the lower layers. For this reason, we pre-reserve any potential padding bytes.
-    static constexpr unsigned MAX_PADDING_BYTES_LEN = 64;
     bcch_payload.resize(min_payload_size + MAX_PADDING_BYTES_LEN, 0);
     bcch_payload.assign(bcch_dl_sch_payload.begin(), bcch_dl_sch_payload.end());
   }
