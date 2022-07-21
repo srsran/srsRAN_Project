@@ -10,7 +10,6 @@
 
 #include "mac_ul_sch_pdu.h"
 #include "srsgnb/srslog/srslog.h"
-#include "ul_bsr.h"
 
 using namespace srsgnb;
 
@@ -68,52 +67,6 @@ bool mac_ul_sch_subpdu::unpack(byte_buffer_reader& subpdu_reader)
   return true;
 }
 
-std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subpdu)
-{
-  using namespace srsgnb;
-  switch (subpdu.lcid().value()) {
-    case lcid_ul_sch_t::CCCH_SIZE_48:
-      fmt::print(os, "CCCH48: len={}", subpdu.sdu_length());
-      break;
-    case lcid_ul_sch_t::CCCH_SIZE_64:
-      fmt::print(os, "CCCH64: len={}", subpdu.sdu_length());
-      break;
-    case lcid_ul_sch_t::CRNTI:
-      fmt::print(os, "C-RNTI: {:#04x}", decode_crnti_ce(subpdu.payload()));
-      break;
-    case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
-      lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
-      fmt::print(os, "SHORT_TRUNC_BSR: len={} bs={}", subpdu.total_length(), sbsr.buffer_size);
-      break;
-    }
-    case lcid_ul_sch_t::LONG_TRUNC_BSR:
-      fmt::print(os, "LONG_TRUNC_BSR: len={}", subpdu.total_length());
-      break;
-    case lcid_ul_sch_t::SHORT_BSR: {
-      lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
-      fmt::print(os, "SBSR: lcg={} bs={}", sbsr.lcg_id, sbsr.buffer_size);
-    } break;
-    case lcid_ul_sch_t::LONG_BSR: {
-      long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
-      fmt::print(os, "LBSR: bitmap={:#02x} ", lbsr.bitmap);
-      for (const auto& lcg : lbsr.list) {
-        fmt::print(os, "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
-      }
-    } break;
-    case lcid_ul_sch_t::SE_PHR:
-      //      fmt::print(os, " SE_PHR: ph={} pc={}", get_phr(), get_pcmax());
-      fmt::print(os, "SE_PHR: total_len={}", subpdu.total_length());
-      break;
-    case lcid_ul_sch_t::PADDING:
-      fmt::print(os, "PAD: len={}", subpdu.sdu_length());
-      break;
-    default:
-      fmt::print(os, "CE={} total_len={}", subpdu.lcid(), subpdu.total_length());
-      break;
-  }
-  return os;
-}
-
 void mac_ul_sch_pdu::clear()
 {
   subpdus.clear();
@@ -131,10 +84,4 @@ bool mac_ul_sch_pdu::unpack(const byte_buffer& payload)
   }
 
   return true;
-}
-
-std::ostream& srsgnb::operator<<(std::ostream& os, const srsgnb::mac_ul_sch_pdu& pdu)
-{
-  fmt::print(os, "{}", fmt::join(pdu.begin(), pdu.end(), ", "));
-  return os;
 }

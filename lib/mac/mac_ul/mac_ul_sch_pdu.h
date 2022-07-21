@@ -16,8 +16,8 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/srsran_assert.h"
+#include "ul_bsr.h"
 
 namespace srsgnb {
 
@@ -39,9 +39,6 @@ private:
   bool             F_bit         = false;
   byte_buffer_view payload_view;
 };
-
-/// UL subPDU Formatter
-std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_subpdu& subpdu);
 
 class mac_ul_sch_pdu
 {
@@ -70,9 +67,6 @@ private:
   static_vector<mac_ul_sch_subpdu, MAX_PDU_LIST> subpdus;
 };
 
-/// UL PDU Formatter
-std::ostream& operator<<(std::ostream& os, const srsgnb::mac_ul_sch_pdu& subpdu);
-
 /// Decode C-RNTI MAC CE
 inline rnti_t decode_crnti_ce(byte_buffer_view payload)
 {
@@ -88,8 +82,75 @@ inline rnti_t decode_crnti_ce(byte_buffer_view payload)
 
 namespace fmt {
 
-/// fmt::join doesn't work for operator<< user types. See https://github.com/fmtlib/fmt/issues/1283
-template <typename Char>
-struct formatter<srsgnb::mac_ul_sch_subpdu, Char> : detail::fallback_formatter<srsgnb::mac_ul_sch_subpdu, Char> {};
+template <>
+struct formatter<srsgnb::mac_ul_sch_subpdu> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::mac_ul_sch_subpdu& subpdu, FormatContext& ctx) -> decltype(ctx.out())
+  {
+    using namespace srsgnb;
+    switch (subpdu.lcid().value()) {
+      case lcid_ul_sch_t::CCCH_SIZE_48:
+        format_to(ctx.out(), "CCCH48: len={}", subpdu.sdu_length());
+        break;
+      case lcid_ul_sch_t::CCCH_SIZE_64:
+        format_to(ctx.out(), "CCCH64: len={}", subpdu.sdu_length());
+        break;
+      case lcid_ul_sch_t::CRNTI:
+        format_to(ctx.out(), "C-RNTI: {:#04x}", decode_crnti_ce(subpdu.payload()));
+        break;
+      case lcid_ul_sch_t::SHORT_TRUNC_BSR: {
+        lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
+        format_to(ctx.out(), "SHORT_TRUNC_BSR: len={} bs={}", subpdu.total_length(), sbsr.buffer_size);
+        break;
+      }
+      case lcid_ul_sch_t::LONG_TRUNC_BSR:
+        format_to(ctx.out(), "LONG_TRUNC_BSR: len={}", subpdu.total_length());
+        break;
+      case lcid_ul_sch_t::SHORT_BSR: {
+        lcg_bsr_report sbsr = decode_sbsr(subpdu.payload());
+        format_to(ctx.out(), "SBSR: lcg={} bs={}", sbsr.lcg_id, sbsr.buffer_size);
+        break;
+      }
+      case lcid_ul_sch_t::LONG_BSR: {
+        long_bsr_report lbsr = decode_lbsr(bsr_format::LONG_BSR, subpdu.payload());
+        format_to(ctx.out(), "LBSR: bitmap={:#02x} ", lbsr.bitmap);
+        for (const auto& lcg : lbsr.list) {
+          format_to(ctx.out(), "lcg={} bs={} ", lcg.lcg_id, lcg.buffer_size);
+        }
+        break;
+      }
+      case lcid_ul_sch_t::SE_PHR:
+        format_to(ctx.out(), "SE_PHR: total_len={}", subpdu.total_length());
+        break;
+      case lcid_ul_sch_t::PADDING:
+        format_to(ctx.out(), "PAD: len={}", subpdu.sdu_length());
+        break;
+      default:
+        format_to(ctx.out(), "CE={} total_len={}", subpdu.lcid(), subpdu.total_length());
+        break;
+    }
+    return ctx.out();
+  }
+};
+
+template <>
+struct formatter<srsgnb::mac_ul_sch_pdu> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+  template <typename FormatContext>
+  auto format(const srsgnb::mac_ul_sch_pdu& pdu, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", fmt::join(pdu.begin(), pdu.end(), ", "));
+  }
+};
 
 } // namespace fmt

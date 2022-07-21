@@ -33,7 +33,7 @@ public:
   ldpc_encoder_impl(ldpc_encoder_impl&&) = delete;
 
   // no copy and move operators
-  ldpc_encoder_impl& operator=(ldpc_encoder_impl&) = delete;
+  ldpc_encoder_impl& operator=(ldpc_encoder_impl&)  = delete;
   ldpc_encoder_impl& operator=(ldpc_encoder_impl&&) = delete;
 
   ~ldpc_encoder_impl() override = default;

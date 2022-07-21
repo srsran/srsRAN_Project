@@ -30,7 +30,7 @@ void test_move_exec_context()
 
   int                   count = 0;
   eager_async_task<int> t =
-      launch_async([&exec0, exec1, exec2, &count, &worker0](coro_context<eager_async_task<int> >& ctx) mutable {
+      launch_async([&exec0, exec1, exec2, &count, &worker0](coro_context<eager_async_task<int>>& ctx) mutable {
         CORO_BEGIN(ctx);
         count++;
         fmt::print("{}: Running in thread: \"{}\"\n", count, this_thread_name());
@@ -70,7 +70,7 @@ void test_offload_exec()
     return count;
   };
   eager_async_task<int> t =
-      launch_async([&exec0, exec1, exec2, &inc_count, &worker0](coro_context<eager_async_task<int> >& ctx) mutable {
+      launch_async([&exec0, exec1, exec2, &inc_count, &worker0](coro_context<eager_async_task<int>>& ctx) mutable {
         CORO_BEGIN(ctx);
         inc_count();
         CORO_AWAIT(offload_to_executor(exec1, exec0, inc_count));
