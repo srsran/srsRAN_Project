@@ -1,15 +1,15 @@
 include:
   - project: softwareradiosystems/testing-tools
-    ref: "9"
+    ref: "10"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "9"
+    ref: "10"
     file: .gitlab/ci-shared/scheduler.yml
   - project: softwareradiosystems/testing-tools
-    ref: "9"
+    ref: "10"
     file: .gitlab/ci-shared/versions.yml
   - project: softwareradiosystems/testing-tools
-    ref: "9"
+    ref: "10"
     file: .gitlab/ci-shared/default.yml
   - local: .gitlab/ci/build.yml
 
