@@ -1,46 +1,36 @@
 include:
+  # General
   - project: softwareradiosystems/testing-tools
-    ref: "11"
+    ref: "12"
+    file: .gitlab/ci-shared/default.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "12"
     file: .gitlab/ci-shared/workflow.yml
   - project: softwareradiosystems/testing-tools
-    ref: "11"
-    file: .gitlab/ci-shared/scheduler.yml
-  - project: softwareradiosystems/testing-tools
-    ref: "11"
+    ref: "12"
     file: .gitlab/ci-shared/versions.yml
+  # Add features to the ci stage
   - project: softwareradiosystems/testing-tools
-    ref: "11"
-    file: .gitlab/ci-shared/default.yml
+    ref: "12"
+    file: .gitlab/ci-shared/autorebaser.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "12"
+    file: .gitlab/ci-shared/ci_checks.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "12"
+    file: .gitlab/ci-shared/notify_status.yml
+  - project: softwareradiosystems/testing-tools
+    ref: "12"
+    file: .gitlab/ci-shared/scheduler.yml
+  # Local
   - local: .gitlab/ci/build.yml
 
 stages:
-  - ci check
+  - ci
   - static
   - build
   - tests
-  - scheduler
   - build and publish doc
-  - notify status
-
-################################################################################
-## CI check
-################################################################################
-check-ci-versions:
-  stage: ci check
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
-  rules:
-    - if: $ON_MR
-  script:
-    - ci-version-check --check-main .gitlab-ci.yml --check-directory .gitlab
-  dependencies: []
-
-auto rebaser:
-  stage: ci check
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
-  script:
-    - gitlab-rebaser --token ${CODEBOT_TOKEN} --namespace ${CI_PROJECT_NAMESPACE} --project ${CI_PROJECT_NAME} --target dev
 
 ################################################################################
 ## Static
@@ -135,29 +125,6 @@ alternative builds uhd:
         uhd_version: ["4.2.0.0", "4.1.0.5"]
 
 ################################################################################
-## Scheduler
-################################################################################
-.gnb-scheduler:
-  stage: scheduler
-  dependencies: []
-
-scheduler-planer:
-  extends:
-    - .scheduler-planer
-    - .gnb-scheduler
-  rules:
-    - if: $ON_MR
-      changes:
-        - .gitlab/ci/schedules.yml
-
-scheduler:
-  extends:
-    - .scheduler
-    - .gnb-scheduler
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-
-################################################################################
 # Doc generation
 ################################################################################
 requirements-report:
@@ -213,37 +180,3 @@ pages:
   artifacts:
     paths:
       - public
-
-################################################################################
-# Slack notification
-################################################################################
-.notifier:
-  stage: notify status
-  image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
-  before_script:
-    - |
-      if [ -z ${SLACK_CHANNEL+x} ]; then
-        echo "Variable SLACK_CHANNEL is unset"
-        exit 1
-      fi
-    - MSG="Pipeline <${CI_PIPELINE_URL}|#${CI_PIPELINE_IID}> for commit <${CI_PROJECT_URL}/-/commit/${CI_COMMIT_SHA}|${CI_COMMIT_SHORT_SHA}> ${CI_COMMIT_BRANCH}${CI_COMMIT_TAG}."
-  dependencies: []
-
-success ci:
-  extends: .notifier
-  rules:
-    - if: $ON_SCHEDULE == "true" && $NOTIFY_SLACK == "true"
-  script:
-    - notifier --title "$CI_PROJECT_NAME CI success" --msg "${MSG}" --level ok --channel "${SLACK_CHANNEL}" --token "${SLACK_TOKEN}"
-
-failed ci:
-  extends: .notifier
-  rules:
-    - if: $ON_SCHEDULE == "true" && $NOTIFY_SLACK == "true"
-      when: on_failure
-    - if: $ON_DEFAULT_BRANCH == "true"
-      variables:
-        SLACK_CHANNEL: "#ci_gnb"
-      when: on_failure
-  script:
-    - notifier --title "$CI_PROJECT_NAME CI failed" --msg "${MSG}" --level fail --channel "${SLACK_CHANNEL}" --token "${SLACK_TOKEN}"

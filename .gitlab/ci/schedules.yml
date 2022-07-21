@@ -5,8 +5,11 @@ Nightly:
   active: true
   variables:
     - variable_type: env_var
+      key: CI_DESCRIPTION
+      value: "Nightly"
+    - variable_type: env_var
       key: NOTIFY_SLACK
       value: "true"
     - variable_type: env_var
-      key: SLACK_CHANNEL
+      key: SLACK_CHANNEL_OK
       value: "#ci_gnb"
