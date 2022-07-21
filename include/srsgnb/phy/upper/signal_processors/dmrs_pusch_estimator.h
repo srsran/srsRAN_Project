@@ -50,8 +50,8 @@ public:
     unsigned nof_symbols = 0;
     /// Number of transmit layers.
     unsigned nof_tx_layers = 0;
-    /// Number of receive antennas.
-    unsigned nof_rx_antennas = 0;
+    /// List of receive ports.
+    static_vector<uint8_t, DMRS_MAX_NPORTS> rx_ports;
   };
 
   /// Default destructor.

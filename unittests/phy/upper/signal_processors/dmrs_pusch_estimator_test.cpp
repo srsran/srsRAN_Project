@@ -26,9 +26,9 @@ public:
                const configuration& cfg) override
   {
     // For now, channel estimate is a long array with indices that vary with i) subcarriers, ii) OFDM symbols, iii) Rx
-    // antenna, and iv) Tx layer.
+    // port, and iv) Tx layer.
     unsigned re_per_layer_ant = cfg.rb_mask.count() * NRE * cfg.nof_symbols;
-    unsigned re_per_layer     = re_per_layer_ant * cfg.nof_rx_antennas;
+    unsigned re_per_layer     = re_per_layer_ant * cfg.nof_rx_ports;
 
     for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
       float      marker = static_cast<float>(10 * port + i_layer);
@@ -94,10 +94,10 @@ int main()
   // Channel estimation container.
   channel_estimate::channel_estimate_dimensions ch_est_dims = {};
 
-  ch_est_dims.nof_tx_layers   = 2;
-  ch_est_dims.nof_rx_antennas = 4;
-  ch_est_dims.nof_symbols     = 10;
-  ch_est_dims.nof_prb         = 14;
+  ch_est_dims.nof_tx_layers = 2;
+  ch_est_dims.nof_rx_ports  = 4;
+  ch_est_dims.nof_symbols   = 10;
+  ch_est_dims.nof_prb       = 14;
 
   channel_estimate ch_est(ch_est_dims);
 
@@ -113,11 +113,11 @@ int main()
                                              true,  true,  true,  true,  true, true, true, true, false, false};
   srsran_assert(cfg.rb_mask.size() == nof_rb, "Check rm_mask!");
   srsran_assert(cfg.rb_mask.count() == ch_est_dims.nof_prb, "Check rm_mask!");
-  cfg.nof_symbols     = ch_est_dims.nof_symbols;
-  cfg.first_symbol    = 2;
-  cfg.nof_rx_antennas = ch_est_dims.nof_rx_antennas;
-  cfg.nof_tx_layers   = ch_est_dims.nof_tx_layers;
-  cfg.c_prefix        = cp;
+  cfg.nof_symbols  = ch_est_dims.nof_symbols;
+  cfg.first_symbol = 2;
+  cfg.rx_ports.resize(ch_est_dims.nof_rx_ports);
+  cfg.nof_tx_layers = ch_est_dims.nof_tx_layers;
+  cfg.c_prefix      = cp;
 
   unsigned nof_slot_symbols = get_nsymb_per_slot(cp);
   srsran_assert(nof_slot_symbols >= cfg.first_symbol + cfg.nof_symbols, "Check OFDM symbols.");
@@ -128,11 +128,12 @@ int main()
   pusch_est_test->estimate(ch_est, *grid, cfg);
 
   // Check the results. The dummy channel estimator sets all RE elements corresponding to one TX-RX path to a number
-  // equal to 10 * Rx antenna index + layer index.
-  unsigned nof_re_path = ch_est_dims.nof_symbols * ch_est_dims.nof_prb * NRE;
-  unsigned skip        = 0;
+  // equal to 10 * Rx port index + layer index.
+  unsigned nof_rx_ports = cfg.rx_ports.size();
+  unsigned nof_re_path  = ch_est_dims.nof_symbols * ch_est_dims.nof_prb * NRE;
+  unsigned skip         = 0;
   for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
-    for (unsigned i_ant = 0; i_ant != cfg.nof_rx_antennas; ++i_ant) {
+    for (unsigned i_ant = 0; i_ant != nof_rx_ports; ++i_ant) {
       span<cf_t> path   = span<cf_t>(ch_est.ce).subspan(skip, nof_re_path);
       float      marker = static_cast<float>(10 * i_ant + i_layer);
 

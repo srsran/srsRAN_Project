@@ -23,18 +23,18 @@ namespace srsgnb {
 class channel_estimate
 {
 private:
-  /// Maximum supported number of receive antennas.
-  static constexpr unsigned MAX_RX_ANTENNAS = 16;
+  /// Maximum supported number of receive ports.
+  static constexpr unsigned MAX_RX_PORTS = 16;
 
   /// Maximum supported number of transmission layers.
   static constexpr unsigned MAX_TX_LAYERS = pusch_constants::MAX_NOF_LAYERS;
 
 public:
   struct channel_estimate_dimensions {
-    unsigned nof_prb         = 0;
-    unsigned nof_symbols     = 0;
-    unsigned nof_rx_antennas = 0;
-    unsigned nof_tx_layers   = 0;
+    unsigned nof_prb       = 0;
+    unsigned nof_symbols   = 0;
+    unsigned nof_rx_ports  = 0;
+    unsigned nof_tx_layers = 0;
   };
 
   /// Estimated noise variance (linear scale).
@@ -68,20 +68,17 @@ public:
                   "Requested {} OFDM symbols, but at most {} are allowed.",
                   dims.nof_symbols,
                   MAX_NSYMB_PER_SLOT);
-    srsran_assert(dims.nof_rx_antennas <= MAX_RX_ANTENNAS,
-                  "Requested {} receive antennas, but at most {} are supported.",
-                  dims.nof_rx_antennas,
-                  16);
-    // todo(david): if I write MAX_RX_ANTENNAS instead of 16 I get a compile error from "fmt/core.h:1885: undefined
-    // reference to `srsgnb::channel_estimate::MAX_RX_ANTENNAS'
-    // same thing with 4 in the next instruction.
+    srsran_assert(dims.nof_rx_ports <= MAX_RX_PORTS,
+                  "Requested {} receive ports, but at most {} are supported.",
+                  dims.nof_rx_ports,
+                  static_cast<unsigned>(MAX_RX_PORTS));
     srsran_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
                   "Requested {} transmission layers, but at most {} are supported.",
                   dims.nof_tx_layers,
-                  4);
+                  static_cast<unsigned>(MAX_TX_LAYERS));
 
     unsigned slot_len_re = dims.nof_prb * NRE * dims.nof_symbols;
-    unsigned nof_paths   = dims.nof_tx_layers * dims.nof_rx_antennas;
+    unsigned nof_paths   = dims.nof_tx_layers * dims.nof_rx_ports;
 
     // reserve memory for channel estimates and initialize with 1.0
     ce.resize(slot_len_re * nof_paths, 1.0);

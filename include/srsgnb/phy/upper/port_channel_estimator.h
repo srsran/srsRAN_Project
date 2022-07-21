@@ -37,8 +37,8 @@ public:
     unsigned nof_symbols = 0;
     /// Number of transmit layers.
     unsigned nof_tx_layers = 0;
-    /// Number of receive antennas.
-    unsigned nof_rx_antennas = 0;
+    /// Number of receive ports.
+    unsigned nof_rx_ports = 0;
   };
 
   /// Default destructor.

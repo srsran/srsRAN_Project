@@ -62,7 +62,7 @@ int main()
     ch_est_dims.nof_prb                                       = nof_prb;
     ch_est_dims.nof_symbols                                   = get_nsymb_per_slot(test_case.config.cp);
     ch_est_dims.nof_tx_layers                                 = 1;
-    ch_est_dims.nof_rx_antennas                               = 1;
+    ch_est_dims.nof_rx_ports                                  = 1;
     channel_estimate estimate(ch_est_dims);
 
     // Estimate channel
