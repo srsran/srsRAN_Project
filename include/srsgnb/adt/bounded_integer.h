@@ -26,21 +26,29 @@ class bounded_integer
 public:
   using value_type = Integer;
 
-  bounded_integer() : value(MAX_VALUE + 1) {}
+  constexpr bounded_integer() : val(MAX_VALUE + 1) {}
+
+  constexpr bounded_integer(const bounded_integer&) noexcept = default;
+
+  constexpr bounded_integer(bounded_integer&&) noexcept = default;
 
   template <typename U>
-  bounded_integer(U v) : value(v)
+  constexpr bounded_integer(U v) : val(v)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
     assert_bounds(v);
   }
 
+  constexpr bounded_integer& operator=(const bounded_integer&) noexcept = default;
+
+  constexpr bounded_integer& operator=(bounded_integer&&) noexcept = default;
+
   template <typename U>
   bounded_integer& operator=(U v)
   {
-    assert_bounds(v);
     static_assert(std::is_convertible<U, value_type>::value, "Invalid value type.");
-    value = v;
+    assert_bounds(v);
+    val = v;
     return *this;
   }
 
@@ -48,26 +56,36 @@ public:
   constexpr static Integer max() { return MAX_VALUE; }
 
   /// Checks whether the value is within the defined boundaries.
-  bool is_valid() const { return value >= MIN_VALUE and value <= MAX_VALUE; }
+  bool is_valid() const { return val >= MIN_VALUE and val <= MAX_VALUE; }
 
   /// Cast operator to primitive integer type.
-  explicit operator Integer() const { return value; }
+  explicit operator Integer() const { return val; }
+  template <typename U = Integer, std::enable_if_t<std::is_unsigned<U>::value, int> = 0>
+  constexpr Integer to_uint() const
+  {
+    return val;
+  }
+  template <typename U = Integer, std::enable_if_t<std::is_signed<U>::value, int> = 0>
+  constexpr Integer to_int() const
+  {
+    return val;
+  }
 
-  bool operator==(bounded_integer other) const { return value == other.value; }
-  bool operator!=(bounded_integer other) const { return value != other.value; }
-  bool operator<(bounded_integer other) const { return value < other.value; }
-  bool operator<=(bounded_integer other) const { return value <= other.value; }
-  bool operator>(bounded_integer other) const { return value > other.value; }
-  bool operator>=(bounded_integer other) const { return value >= other.value; }
+  constexpr bool operator==(bounded_integer other) const { return val == other.val; }
+  constexpr bool operator!=(bounded_integer other) const { return val != other.val; }
+  constexpr bool operator<(bounded_integer other) const { return val < other.val; }
+  constexpr bool operator<=(bounded_integer other) const { return val <= other.val; }
+  constexpr bool operator>(bounded_integer other) const { return val > other.val; }
+  constexpr bool operator>=(bounded_integer other) const { return val >= other.val; }
 
 protected:
-  void assert_bounds(Integer v) const
+  constexpr void assert_bounds(Integer v) const
   {
     srsran_assert(
         v >= MIN_VALUE and v <= MAX_VALUE, "Passed value={} outside bounds {{{},...,{}}}", v, MIN_VALUE, MAX_VALUE);
   }
 
-  Integer value;
+  Integer val;
 };
 
 } // namespace srsgnb

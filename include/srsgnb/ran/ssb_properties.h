@@ -91,11 +91,10 @@ inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 /// \sa ssb_subcarrier_offset
 class ssb_offset_to_pointA : public bounded_integer<uint16_t, 0, 2199>
 {
-public:
-  using bounded_integer<uint16_t, 0, 2199>::bounded_integer;
+  using base_type = bounded_integer<uint16_t, 0, 2199>;
 
-  /// Gets the value as an unsigned integer.
-  unsigned to_uint() const { return static_cast<unsigned>(value); }
+public:
+  using base_type::bounded_integer;
 };
 
 /// \brief Data type used to represent the offset from subcarrier zero in common resource block \f$N_{CRB}^{SSB}\f$ to
@@ -120,14 +119,17 @@ public:
 class ssb_subcarrier_offset : private bounded_integer<uint8_t, 0, 23>
 {
 private:
+  using base_type = bounded_integer<uint8_t, 0, 23>;
+
   /// Maximum possible value for FR1.
-  static constexpr value_type MAX_VALUE_FR1 = 23;
+  static constexpr value_type MAX_VALUE_FR1 = base_type::max();
   /// Maximum possible value for FR2.
   static constexpr value_type MAX_VALUE_FR2 = 11;
 
 public:
-  using bounded_integer<uint8_t, 0, 23>::bounded_integer;
-  using bounded_integer<uint8_t, 0, 23>::operator=;
+  using base_type::bounded_integer;
+  using base_type::operator=;
+  using base_type::to_uint;
 
   /// Returns the maximum value for the given frequency range.
   static constexpr unsigned max(frequency_range fr)
@@ -136,10 +138,7 @@ public:
   }
 
   /// Returns true if the value is within the range.
-  bool is_valid(frequency_range fr) const { return value <= max(fr); }
-
-  /// Gets the value as an unsigned integer.
-  unsigned to_uint() const { return static_cast<unsigned>(this->value); }
+  bool is_valid(frequency_range fr) const { return to_uint() <= max(fr); }
 };
 
 } // namespace srsgnb
