@@ -46,8 +46,8 @@ public:
   pdcp_tx_lower_notifier(const pdcp_tx_lower_notifier&&)            = delete;
   pdcp_tx_lower_notifier& operator=(const pdcp_tx_lower_notifier&&) = delete;
 
-  virtual void on_new_pdu(byte_buffer pdu)    = 0; ///> Pass PDU to the lower layers.
-  virtual void on_discard_pdu(uint32_t count) = 0; ///> Order lower layers to discard PDU
+  virtual void on_new_pdu(byte_buffer pdu)    = 0; ///< Pass PDU to the lower layers.
+  virtual void on_discard_pdu(uint32_t count) = 0; ///< Order lower layers to discard PDU
 };
 
 /// This interface represents the interface through which
