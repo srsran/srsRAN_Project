@@ -9,7 +9,6 @@
  */
 
 #include "srsgnb/support/bit_encoding.h"
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;

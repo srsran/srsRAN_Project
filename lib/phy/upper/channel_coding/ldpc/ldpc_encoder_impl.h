@@ -16,7 +16,6 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include <array>
-#include <iostream>
 
 namespace srsgnb {
 
@@ -125,6 +124,7 @@ class ldpc_encoder_avx2 : public ldpc_encoder_impl
   void encode_ext_region() override { not_implemented(); }
   void write_codeblock(span<uint8_t> /*out*/) override { not_implemented(); }
 
-  static void not_implemented() { std::cout << "AVX2 Encoder - not implemented yet.\n"; }
+  static void not_implemented() { srsran_terminate("AVX2 Encoder - not implemented yet"); }
 };
+
 } // namespace srsgnb

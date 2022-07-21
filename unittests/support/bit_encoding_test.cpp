@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 

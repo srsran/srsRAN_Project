@@ -12,7 +12,6 @@
 #include "ldpc_luts_impl.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsran_assert.h"
-#include <iostream>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;

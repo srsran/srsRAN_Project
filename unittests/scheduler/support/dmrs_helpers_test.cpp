@@ -12,7 +12,6 @@
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/scheduler/bwp_configuration.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <iostream>
 
 using namespace srsgnb;
 

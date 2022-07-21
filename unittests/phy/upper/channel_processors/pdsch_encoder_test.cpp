@@ -11,7 +11,6 @@
 #include "pdsch_encoder_test_data.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <iostream>
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;

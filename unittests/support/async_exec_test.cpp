@@ -8,7 +8,6 @@
  *
  */
 
-#include "srsgnb/srslog/bundled/fmt/ostream.h"
 #include "srsgnb/support/async/eager_async_task.h"
 #include "srsgnb/support/async/execute_on.h"
 #include "srsgnb/support/executors/blocking_task_worker.h"

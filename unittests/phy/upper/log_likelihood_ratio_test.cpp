@@ -14,7 +14,6 @@
 /// Tests all the operators and functions defined for the type.
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include <iostream>
 
 using namespace srsgnb;
 

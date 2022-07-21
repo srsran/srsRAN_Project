@@ -15,7 +15,6 @@
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include <iostream>
 
 namespace srsgnb {
 namespace ldpc {
@@ -163,7 +162,7 @@ class ldpc_decoder_avx2 : public ldpc_decoder_impl
   void        get_hard_bits(span<uint8_t> /*nn*/) override { not_implemented(__func__); }
   static void not_implemented(const std::string& fn)
   {
-    std::cout << "LDPC AVX2 Decoder -> " << fn << " - not implemented yet.\n";
+    srsran_terminate("LDPC AVX2 Decoder -> {} - not implemented yet.", fn);
   }
 };
 } // namespace srsgnb
