@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include <iostream>
 #include <mutex>
 
 namespace srsgnb {
@@ -32,33 +31,33 @@ class rlc_bearer_tx_metrics
   std::mutex                      metrics_mutex;
 
 public:
-  inline void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
+  void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_sdus += num_sdus_;
     metrics.num_sdu_bytes += num_sdu_bytes_;
   }
 
-  inline void metrics_add_lost_sdus(uint32_t num_sdus_)
+  void metrics_add_lost_sdus(uint32_t num_sdus_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_dropped_sdus += num_sdus_;
   }
 
-  inline void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
+  void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_pdus += num_pdus_;
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
-  inline rlc_bearer_tx_metrics_container get_metrics()
+  rlc_bearer_tx_metrics_container get_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     return metrics;
   }
 
-  inline rlc_bearer_tx_metrics_container get_and_reset_metrics()
+  rlc_bearer_tx_metrics_container get_and_reset_metrics()
   {
     std::lock_guard<std::mutex>     lock(metrics_mutex);
     rlc_bearer_tx_metrics_container ret = metrics;
@@ -66,7 +65,7 @@ public:
     return ret;
   }
 
-  inline void reset_metrics()
+  void reset_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics = {};
@@ -91,39 +90,39 @@ class rlc_bearer_rx_metrics
   std::mutex                      metrics_mutex;
 
 public:
-  inline void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
+  void metrics_add_sdus(uint32_t num_sdus_, size_t num_sdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_sdus += num_sdus_;
     metrics.num_sdu_bytes += num_sdu_bytes_;
   }
 
-  inline void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
+  void metrics_add_pdus(uint32_t num_pdus_, size_t num_pdu_bytes_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_pdus += num_pdus_;
     metrics.num_pdu_bytes += num_pdu_bytes_;
   }
 
-  inline void metrics_add_lost_pdus(uint32_t num_pdus_)
+  void metrics_add_lost_pdus(uint32_t num_pdus_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_lost_pdus += num_pdus_;
   }
 
-  inline void metrics_add_malformed_pdus(uint32_t num_pdus_)
+  void metrics_add_malformed_pdus(uint32_t num_pdus_)
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics.num_malformed_pdus += num_pdus_;
   }
 
-  inline rlc_bearer_rx_metrics_container get_metrics()
+  rlc_bearer_rx_metrics_container get_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     return metrics;
   }
 
-  inline rlc_bearer_rx_metrics_container get_and_reset_metrics()
+  rlc_bearer_rx_metrics_container get_and_reset_metrics()
   {
     std::lock_guard<std::mutex>     lock(metrics_mutex);
     rlc_bearer_rx_metrics_container ret = metrics;
@@ -131,7 +130,7 @@ public:
     return ret;
   }
 
-  inline void reset_metrics()
+  void reset_metrics()
   {
     std::lock_guard<std::mutex> lock(metrics_mutex);
     metrics = {};
