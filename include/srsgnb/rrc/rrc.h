@@ -20,7 +20,6 @@ namespace srs_cu_cp {
 
 struct rrc_pdu_message {
   byte_buffer_slice pdu;
-  ue_index_t        ue_index;
   srb_id_t          srb_id;
 };
 

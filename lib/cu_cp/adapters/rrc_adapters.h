@@ -22,15 +22,16 @@ namespace srs_cu_cp {
 class du_processor_dl_message_indicator : public rrc_pdu_notifier
 {
 public:
-  explicit du_processor_dl_message_indicator(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_) :
-    f1c_handler(f1c_handler_)
+  explicit du_processor_dl_message_indicator(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_,
+                                             ue_index_t                                   ue_index_) :
+    f1c_handler(f1c_handler_), ue_index(ue_index_)
   {
   }
 
   void on_new_pdu(const rrc_pdu_message msg) override
   {
     f1ap_dl_rrc_msg f1ap_msg = {};
-    f1ap_msg.ue_index        = msg.ue_index;
+    f1ap_msg.ue_index        = ue_index;
     f1ap_msg.srb_id          = msg.srb_id;
 
     f1ap_msg.rrc_container.resize(msg.pdu.length());
@@ -40,6 +41,7 @@ public:
 
 private:
   f1ap_rrc_message_transfer_procedure_handler& f1c_handler;
+  ue_index_t                                   ue_index;
 };
 
 } // namespace srs_cu_cp

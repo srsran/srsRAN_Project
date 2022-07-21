@@ -200,5 +200,5 @@ void du_processor::create_srb0(ue_context& ue_ctxt)
 
   // create UE manager to RRC adapter
   srb0.rx_notifier = std::make_unique<rrc_ul_ccch_message_indicator>(*ue_ctxt.rrc->get_ul_ccch_pdu_handler());
-  srb0.tx_notifier = std::make_unique<du_processor_dl_message_indicator>(*f1ap);
+  srb0.tx_notifier = std::make_unique<du_processor_dl_message_indicator>(*f1ap, ue_ctxt.ue_index);
 }
