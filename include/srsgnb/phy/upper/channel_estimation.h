@@ -97,21 +97,26 @@ public:
   ~channel_estimate() = default;
 };
 
-/// \brief Maximum number of DM-RS symbols for one port.
+/// \brief Maximum number of DM-RS symbols for one layer.
 ///
 /// At most half of the total number of subcarriers (i.e., <tt>MAX_RB * NRE / 2</tt>) is assigned a DM-RS symbol.
 /// Moreover, the number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
 /// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.
-static constexpr unsigned MAX_NOF_PORT_DMRS_SYMBOLS = MAX_RB * NRE / 2 * 4 * 2;
+static constexpr unsigned MAX_NOF_LAYER_DMRS_SYMBOLS = MAX_RB * NRE / 2 * 4 * 2;
 
 /// Container for DM-RS symbols.
-using dmrs_symbol_list = static_vector<cf_t, MAX_NOF_PORT_DMRS_SYMBOLS>;
+using dmrs_symbol_list = static_vector<cf_t, MAX_NOF_LAYER_DMRS_SYMBOLS>;
 
-/// Boolean mask to specify the position of DM-RS symbols in the resource grid.
+/// \brief Boolean mask to specify the position of DM-RS symbols in the resource grid.
+///
+/// DM-RS symbols are transmitted with a specific subcarrier pattern that repeats at specific OFDM symbols within the
+/// slot. Therefore, the position of the DM-RS symbols can be univocally characterized by a time mask and a frequency
+/// mask: Resource element \f$(k, l)\f$ contains a DM-RS symbol only if element \f$k\f$ of the frequency mask and
+/// element \f$l\f$ of the time mask are set to true.
 struct dmrs_mask {
   /// Boolean mask to specify the OFDM symbols carrying DM-RS symbols.
   static_vector<bool, MAX_NSYMB_PER_SLOT> symbols = {};
-  /// Boolean mask to specify the resource elements carrying DM-RS symbols.
-  bounded_bitset<MAX_NOF_PORT_DMRS_SYMBOLS / 2> res_elements = {};
+  /// Boolean mask to specify the subcarriers carrying DM-RS symbols.
+  bounded_bitset<MAX_RB* NRE / 2> res_elements = {};
 };
 } // namespace srsgnb
