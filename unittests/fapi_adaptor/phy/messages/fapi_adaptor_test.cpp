@@ -39,7 +39,10 @@ static void ssb_conversion_test()
 
   for (unsigned lmax : {4u, 8u, 64u}) {
     for (unsigned ssb_idx = 0; ssb_idx != lmax; ++ssb_idx) {
-      for (unsigned numerology : {0, 1, 3, 4}) {
+      for (subcarrier_spacing scs : {subcarrier_spacing::kHz15,
+                                     subcarrier_spacing::kHz30,
+                                     subcarrier_spacing::kHz120,
+                                     subcarrier_spacing::kHz240}) {
         for (subcarrier_spacing common_scs : {subcarrier_spacing::kHz15,
                                               subcarrier_spacing::kHz30,
                                               subcarrier_spacing::kHz60,
@@ -52,16 +55,16 @@ static void ssb_conversion_test()
                                                   ssb_pattern_case::C,
                                                   ssb_pattern_case::D,
                                                   ssb_pattern_case::E}) {
-              slot_point         slot(numerology, sfn_dist(gen), slot_dist(gen) % (10 << numerology));
-              unsigned           sfn                    = slot.sfn();
-              unsigned           pci                    = pci_dist(gen);
-              unsigned           ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
-              unsigned           offset_pointA          = offset_pointA_dist(gen);
-              subcarrier_spacing scs                    = static_cast<subcarrier_spacing>(slot.numerology());
-              uint8_t            dmrs_type_a_position   = binary_dist(gen);
-              uint8_t            pdcch_config_sib1      = binary_8bit_dist(gen);
-              bool               cell_barred            = binary_dist(gen);
-              bool               intra_freq_reselection = binary_dist(gen);
+              slot_point slot(
+                  static_cast<uint32_t>(scs), sfn_dist(gen), slot_dist(gen) % (10 << static_cast<uint32_t>(scs)));
+              unsigned sfn                    = slot.sfn();
+              unsigned pci                    = pci_dist(gen);
+              unsigned ssb_subcarrier_offset  = subcarrier_offset_dist(gen);
+              unsigned offset_pointA          = offset_pointA_dist(gen);
+              uint8_t  dmrs_type_a_position   = binary_dist(gen);
+              uint8_t  pdcch_config_sib1      = binary_8bit_dist(gen);
+              bool     cell_barred            = binary_dist(gen);
+              bool     intra_freq_reselection = binary_dist(gen);
 
               // :TODO: Begin with the MAC structure when it is defined.
               dl_tti_request_message         msg = {};

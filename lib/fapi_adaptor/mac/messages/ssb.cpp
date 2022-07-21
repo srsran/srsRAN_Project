@@ -18,7 +18,7 @@ using namespace fapi_adaptor;
 ///
 /// This value corresponds to the "betaPssProfileNR" parameter defined by FAPI.
 /// \remark The MAC/Scheduler uses "pss_to_sss_epre" to prevent misusing 3GPP terminology.
-static beta_pss_profile_type convert_ssb_pss_to_sss_epre(ssb_pss_to_sss_epre value)
+static beta_pss_profile_type convert_to_beta_pss_profile_nr(ssb_pss_to_sss_epre value)
 {
   switch (value) {
     case ssb_pss_to_sss_epre::dB_0:
@@ -41,7 +41,7 @@ void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu& fapi_pdu, c
 void srsgnb::fapi_adaptor::convert_ssb_mac_to_fapi(fapi::dl_ssb_pdu_builder& builder, const srsgnb::dl_ssb_pdu& mac_pdu)
 {
   builder.set_basic_parameters(mac_pdu.pci,
-                               convert_ssb_pss_to_sss_epre(mac_pdu.pss_to_sss_epre),
+                               convert_to_beta_pss_profile_nr(mac_pdu.pss_to_sss_epre),
                                mac_pdu.ssb_index,
                                mac_pdu.subcarrier_offset.to_uint(),
                                mac_pdu.offset_to_pointA.to_uint());
