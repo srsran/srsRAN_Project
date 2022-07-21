@@ -24,7 +24,7 @@ using namespace asn1::f1ap;
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Fixture class for successful F1Setup
-class cu_cp_f1_successful_test : public ::testing::Test
+class cu_cp_test : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -46,15 +46,6 @@ protected:
     // create and start DUT
     cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
     cu_cp_obj->start();
-
-    // Connect DU
-    cu_cp_obj->on_new_connection();
-
-    // Generate F1SetupRequest
-    f1c_msg f1c_msg = generate_successful_f1_setup_request();
-
-    // Pass message to CU-CP
-    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1c_msg);
   }
 
   std::unique_ptr<cu_cp>                  cu_cp_obj;
@@ -63,8 +54,17 @@ protected:
 };
 
 /// Test the f1 setup procedure
-TEST_F(cu_cp_f1_successful_test, F1_Setup_Successful)
+TEST_F(cu_cp_test, when_valid_f1setup_sent_then_du_connected)
 {
+  // Connect DU
+  cu_cp_obj->on_new_connection();
+
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
+
   // check that DU has been added
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1);
 
@@ -77,10 +77,9 @@ TEST_F(cu_cp_f1_successful_test, F1_Setup_Successful)
 }
 
 /// Test exeeding the maximum number of connected DUs
-TEST_F(cu_cp_f1_successful_test, F1_Max_DUs)
+TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
 {
-  // One DU is already added in the fixture
-  for (int it = 1; it < MAX_NOF_DUS; it++) {
+  for (int it = MIN_DU_INDEX; it < MAX_NOF_DUS; it++) {
     cu_cp_obj->on_new_connection();
   }
 
@@ -99,50 +98,19 @@ TEST_F(cu_cp_f1_successful_test, F1_Max_DUs)
 /* F1 Setup Failure                                                                 */
 //////////////////////////////////////////////////////////////////////////////////////
 
-/// Fixture class for F1Setup Failure
-class cu_cp_f1_failure_test : public ::testing::Test
+TEST_F(cu_cp_test, when_du_served_cells_list_missing_then_f1setup_rejected)
 {
-protected:
-  void SetUp() override
-  {
-    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-    srslog::init();
+  // Connect DU
+  cu_cp_obj->on_new_connection();
 
-    // create worker thread and executer
-    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
-    std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_f1_setup_request_base();
 
-    f1c_pdu_notifier = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
-
-    // create CU-CP config
-    cu_cp_configuration cfg;
-    cfg.cu_executor  = task_executor.get();
-    cfg.f1c_notifier = f1c_pdu_notifier.get();
-
-    // create and start DUT
-    cu_cp_obj = std::make_unique<cu_cp>(std::move(cfg));
-    cu_cp_obj->start();
-
-    // Connect DU
-    cu_cp_obj->on_new_connection();
-
-    // Generate F1SetupRequest
-    f1c_msg f1c_msg = generate_f1_setup_request_base();
-  }
-
-  std::unique_ptr<cu_cp>                  cu_cp_obj;
-  std::unique_ptr<dummy_f1c_pdu_notifier> f1c_pdu_notifier;
-  srslog::basic_logger&                   test_logger = srslog::fetch_basic_logger("TEST");
-};
-
-TEST_F(cu_cp_f1_failure_test, F1Setup_Failure_1)
-{
-  f1c_msg f1c_msg                             = generate_f1_setup_request_base();
-  auto&   setup_req                           = f1c_msg.pdu.init_msg().value.f1_setup_request();
+  auto& setup_req                             = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = false;
 
   // Pass message to CU-CP
-  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1c_msg);
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // check that DU has not been added
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0);
@@ -153,15 +121,19 @@ TEST_F(cu_cp_f1_failure_test, F1Setup_Failure_1)
             f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
 }
 
-TEST_F(cu_cp_f1_failure_test, F1Setup_Failure_2)
+TEST_F(cu_cp_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
 {
-  f1c_msg f1c_msg = generate_successful_f1_setup_request();
+  // Connect DU
+  cu_cp_obj->on_new_connection();
 
-  auto& setup_req = f1c_msg.pdu.init_msg().value.f1_setup_request();
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+
+  auto& setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list.value[0].value().gnb_du_served_cells_item().gnb_du_sys_info_present = false;
 
   // Pass message to CU-CP
-  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1c_msg);
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // check that DU has not been added
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0);
@@ -177,8 +149,17 @@ TEST_F(cu_cp_f1_failure_test, F1Setup_Failure_2)
 //////////////////////////////////////////////////////////////////////////////////////
 
 /// Test the f1 initial UL RRC message transfer procedure
-TEST_F(cu_cp_f1_successful_test, Initial_UL_RRC_Message_Transfer)
+TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
 {
+  // Connect DU
+  cu_cp_obj->on_new_connection();
+
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
+
   // Handling of Initial UL RRC message transfer
   {
     f1c_msg init_ul_rrc_msg = {};
