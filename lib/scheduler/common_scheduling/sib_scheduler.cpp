@@ -181,10 +181,10 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
   // 1. Find available RBs in PDSCH for SIB1 grant.
   crb_interval sib1_crbs;
   {
-    // TODO: find a better way to derive the SIB1 PRBs
     unsigned          nof_sib1_rbs = sib1_prbs_tbs.nof_prbs;
-    const prb_bitmap& used_crbs    = res_grid.dl_res_grid.sch_crbs(coreset0_bwp_cfg);
-    sib1_crbs                      = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
+    const prb_bitmap& used_crbs    = res_grid.dl_res_grid.used_crbs(
+        coreset0_bwp_cfg, cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_resource].symbols);
+    sib1_crbs = find_empty_interval_of_length(used_crbs, nof_sib1_rbs, 0);
     if (sib1_crbs.length() < nof_sib1_rbs) {
       // early exit
       logger.error("SCHED: Not enough PDSCH space for SIB1 in beam idx: {}", beam_idx);

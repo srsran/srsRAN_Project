@@ -54,7 +54,7 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
       if (bwp == nullptr) {
         continue;
       }
-      prb_bitmap   used_crbs     = grid.sch_crbs(*bwp);
+      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, {2, 14});
       crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
       if (not ue_grant_crbs.empty()) {
         pdsch_alloc.allocate_pdsch(ue_pdsch_grant{
@@ -85,7 +85,7 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
       if (bwp == nullptr) {
         continue;
       }
-      prb_bitmap   used_crbs     = grid.sch_crbs(*bwp);
+      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, {2, 14});
       crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
       if (not ue_grant_crbs.empty()) {
         pusch_alloc.allocate_pusch(ue_pusch_grant{

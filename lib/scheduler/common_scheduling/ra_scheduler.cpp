@@ -294,6 +294,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   //  static const unsigned rar_payload_size_bytes = 7, rar_subheader_size_bytes = 1;
   // TODO: Make smarter algorithm for RAR size derivation.
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
+  static const unsigned pdsch_time_res_index = 0;
 
   cell_slot_resource_allocator& rar_alloc = res_alloc[0];
 
@@ -310,10 +311,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // 2. Find available RBs in PDSCH for RAR grant.
   crb_interval rar_crbs;
   {
-    unsigned   nof_rar_rbs = nof_prbs_per_rar * max_nof_allocs;
-    prb_bitmap used_crbs   = rar_alloc.dl_res_grid.sch_crbs(initial_active_dl_bwp);
-    rar_crbs               = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
-    max_nof_allocs         = rar_crbs.length() / nof_prbs_per_rar;
+    unsigned          nof_rar_rbs = nof_prbs_per_rar * max_nof_allocs;
+    ofdm_symbol_range symbols =
+        cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].symbols;
+    crb_bitmap used_crbs = rar_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, symbols);
+    rar_crbs             = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
+    max_nof_allocs       = rar_crbs.length() / nof_prbs_per_rar;
     if (max_nof_allocs == 0) {
       // early exit
       log_postponed_rar(rar, "Not enough PRBs for RAR.");
@@ -343,7 +346,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
 
     // 5. Check CRBs available in PUSCH for Msg3.
     unsigned     nof_msg3_prbs = nof_prbs_per_msg3 * pusch_res_max_allocs;
-    prb_bitmap   used_ul_crbs  = msg3_alloc.ul_res_grid.sch_crbs(get_ul_bwp_cfg());
+    prb_bitmap   used_ul_crbs  = msg3_alloc.ul_res_grid.used_crbs(get_ul_bwp_cfg(), pusch_list[puschidx].symbols);
     crb_interval msg3_crbs     = find_empty_interval_of_length(used_ul_crbs, nof_msg3_prbs, 0);
     pusch_res_max_allocs       = msg3_crbs.length() / nof_prbs_per_msg3;
     if (pusch_res_max_allocs == 0) {

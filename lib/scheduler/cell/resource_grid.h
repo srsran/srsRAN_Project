@@ -19,6 +19,9 @@
 
 namespace srsgnb {
 
+/// Bitset of CRBs with size up to 275.
+using crb_bitmap = bounded_bitset<MAX_NOF_PRBS, true>;
+
 /// Parameters of a PDSCH or PUSCH grant allocation within a BWP.
 struct bwp_sch_grant_info {
   const bwp_configuration* bwp_cfg;
@@ -88,6 +91,15 @@ public:
   /// \return true if a collision was detected. False otherwise.
   bool collides(ofdm_symbol_range symbols, crb_interval crbs) const;
 
+  /// \brief Calculates a bitmap where each bit set one represents a CRB that is occupied or unavailable.
+  /// A CRB is considered occupied if it is outside of the provided BWP CRB boundaries or if it is already allocated
+  /// in at least one OFDM symbol of the provided OFDM symbol range.
+  /// \param[in] bwp_crb_lims CRB range where the BWP is located in the frequency domain, and used for the CRB to PRB
+  /// conversion.
+  /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
+  /// \return an CRB bitmap with bits set to one for unavailable CRBs.
+  crb_bitmap used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const;
+
 private:
   /// Represents a matrix of symbol index x carrier RB index. The matrix dimensions get scaled based on the number
   /// of carrier RBs. RB index=0 corresponds to the carrier offset. Resources in the bitset are represented in the
@@ -122,8 +134,16 @@ public:
   bool collides(grant_info grant) const;
   bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
 
-  /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
-  prb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
+  /// \brief Returns a bitmap of the carrier CRBs that are being used by SCH.
+  crb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
+
+  /// \brief Calculates a bitmap where each bit set one represents a CRB that is occupied or unavailable.
+  /// A CRB is considered occupied if it is outside of the provided BWP CRB boundaries or if it is already allocated
+  /// in at least one OFDM symbol of the provided OFDM symbol range.
+  /// \param[in] bwp_cfg Bandwidth configuration for which the allocation is to be made.
+  /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
+  /// \return an CRB bitmap with bits set to one for unavailable CRBs.
+  crb_bitmap used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const;
 
 private:
   friend struct cell_resource_allocator;

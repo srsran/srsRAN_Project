@@ -22,7 +22,8 @@ static subcarrier_spacing get_max_scs(const dl_config_common& dl_cfg)
 
 carrier_subslot_resource_grid::carrier_subslot_resource_grid(const scs_specific_carrier& carrier_cfg_) :
   carrier_cfg(carrier_cfg_), slot_rbs(NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * carrier_cfg.carrier_bandwidth)
-{}
+{
+}
 
 void carrier_subslot_resource_grid::clear()
 {
@@ -56,11 +57,22 @@ bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, crb_inte
   return false;
 }
 
+crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const
+{
+  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  slot_rb_bitmap slot_rbs_selected_symbols = slot_rbs.slice(symbols.start() * nof_rbs(), symbols.stop() * nof_rbs());
+  crb_bitmap     crb_bits = fold_and_accumulate<MAX_NOF_PRBS, true>(slot_rbs_selected_symbols, nof_rbs());
+  crb_bits.fill(0, bwp_crb_lims.start());
+  crb_bits.fill(bwp_crb_lims.stop(), crb_bits.size());
+  return crb_bits;
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cell_slot_resource_grid::carrier_resource_grid::carrier_resource_grid(const scs_specific_carrier& carrier_cfg) :
   sch_crbs(carrier_cfg.carrier_bandwidth), subslot_rbs(carrier_cfg)
-{}
+{
+}
 
 cell_slot_resource_grid::cell_slot_resource_grid(span<const scs_specific_carrier> scs_carriers)
 {
@@ -95,23 +107,30 @@ void cell_slot_resource_grid::fill(grant_info grant)
 
 bool cell_slot_resource_grid::collides(grant_info grant) const
 {
-  const auto& carrier = get_carrier(grant.scs);
+  const carrier_resource_grid& carrier = get_carrier(grant.scs);
   return carrier.subslot_rbs.collides(grant.symbols, grant.crbs);
 }
 
 bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
 {
-  const auto& carrier = get_carrier(scs);
+  const carrier_resource_grid& carrier = get_carrier(scs);
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
 }
 
 prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const
 {
-  prb_bitmap crbs = get_carrier(bwp_cfg.scs).sch_crbs;
+  const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
+  prb_bitmap                   crbs    = carrier.sch_crbs;
   // Set as used (true) the CRBs outside of the BWP.
   crbs.fill(0, bwp_cfg.crbs.start());
   crbs.fill(bwp_cfg.crbs.stop(), crbs.size());
   return crbs;
+}
+
+prb_bitmap cell_slot_resource_grid::used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const
+{
+  const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
+  return carrier.subslot_rbs.used_crbs(bwp_cfg.crbs, symbols);
 }
 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)
@@ -134,13 +153,15 @@ cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configurat
   cfg(cfg_),
   dl_res_grid(cfg.dl_cfg_common.freq_info_dl.scs_carrier_list),
   ul_res_grid(cfg.dl_cfg_common.freq_info_dl.scs_carrier_list)
-{}
+{
+}
 
 cell_slot_resource_allocator::cell_slot_resource_allocator(const cell_configuration&  cfg_,
                                                            span<scs_specific_carrier> dl_scs_carriers,
                                                            span<scs_specific_carrier> ul_scs_carriers) :
   cfg(cfg_), dl_res_grid(dl_scs_carriers), ul_res_grid(ul_scs_carriers)
-{}
+{
+}
 
 void cell_slot_resource_allocator::slot_indication(slot_point new_slot)
 {
