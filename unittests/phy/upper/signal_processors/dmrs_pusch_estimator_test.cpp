@@ -29,6 +29,8 @@ public:
       float marker = static_cast<float>(10 * port + i_layer);
       // Get a view to the RE channel estimate corresponding to the port-i_layer path.
       span<cf_t> ch_est = estimate.get_path_ch_estimate_wr(port, i_layer);
+      srsran_assert(ch_est.size() == cfg.nof_symbols * cfg.rb_mask.count() * NRE,
+                    "The size of the channel estimate view does not match with the configuration parameters.");
       std::fill(ch_est.begin(), ch_est.end(), marker);
     }
   };
@@ -48,18 +50,19 @@ void dmrs_pusch_generator_impl::generate(span<dmrs_symbol_list> symbols, span<dm
                 cfg.first_symbol);
   srsran_assert(cfg.nof_symbols > 4, "For this test, the PUSCH should occupy at least 4 symbols.");
 
-  unsigned n_dmrs_symbols = cfg.rb_mask.count() * NRE;
+  unsigned nof_dmrs_per_symbol = cfg.rb_mask.count() * NRE;
 
-  unsigned nof_rx_ports = symbols.size();
-  srsran_assert(mask.size() == nof_rx_ports, "Sizes of inputs symbols and coordinates do not match.");
+  srsran_assert(symbols.size() == nof_tx_layers,
+                "The number of DM-RS symbol lists do not match the number of Tx layers.");
+  srsran_assert(mask.size() == nof_tx_layers, "The number of DM-RS masks do not match the number of Tx layers.");
 
   for (unsigned layer_ix = 0; layer_ix != nof_tx_layers; ++layer_ix) {
-    symbols[layer_ix].resize(n_dmrs_symbols);
+    symbols[layer_ix].resize(nof_dmrs_per_symbol, -1);
     mask[layer_ix].symbols.resize(cfg.nof_symbols, false);
     // Second and last-but-one symbols are used for DM-RS.
     mask[layer_ix].symbols[1]                   = true;
     mask[layer_ix].symbols[cfg.nof_symbols - 2] = true;
-    mask[layer_ix].res_elements.resize(n_dmrs_symbols / 2);
+    mask[layer_ix].res_elements.resize(nof_dmrs_per_symbol / 2);
     mask[layer_ix].res_elements.reset();
     for (unsigned i_el = 0, max_el = mask[layer_ix].res_elements.size(); i_el < max_el; i_el += 2) {
       mask[layer_ix].res_elements.set(i_el);
