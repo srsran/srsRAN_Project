@@ -12,8 +12,8 @@
 
 #include "../mac_config.h"
 #include "mac_dl_ue_manager.h"
-#include "pdu_encoder.h"
 #include "rar_pdu_assembler.h"
+#include "sib_pdu_assembler.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/scheduler_dl_buffer_state_indicator.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"

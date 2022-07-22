@@ -118,6 +118,7 @@ span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar
 
   // Fetch output vector where RAR grant payload is going to be encoded.
   std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index++];
+  // Pre-reserve space for RAR and padding bits.
   payload.reserve(rar.pdsch_cfg.codewords[0].tb_size_bytes);
 
   // Encode RAR PDU.

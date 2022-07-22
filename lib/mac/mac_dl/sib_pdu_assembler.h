@@ -44,9 +44,4 @@ private:
   unsigned min_payload_size;
 };
 
-inline void encode_rar_pdu(const mac_cell_creation_request& cell_cfg, const rar_information& rar, byte_buffer& pdu)
-{
-  // TODO
-}
-
 } // namespace srsgnb

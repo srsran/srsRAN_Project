@@ -9,7 +9,7 @@
  */
 
 #include "mac_cell_processor.h"
-#include "pdu_encoder.h"
+#include "sib_pdu_assembler.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/execute_on.h"
 
