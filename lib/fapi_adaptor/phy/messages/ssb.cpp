@@ -96,7 +96,7 @@ static uint32_t generate_bch_payload(const dl_ssb_pdu& fapi_pdu, uint32_t sfn, b
 /// \brief Fills the contents of the BCH payload.
 ///
 /// The BCH packing procedure is selected based on the field \c bch_payload_type of \c fapi_pdu, as per TS38.212
-/// Section 7.1.1.
+/// Section 7.1.1 and references therein.
 static void
 fill_bch_payload(span<uint8_t> dest, const dl_ssb_pdu& fapi_pdu, uint16_t sfn, bool hrf, subcarrier_spacing scs_common)
 {

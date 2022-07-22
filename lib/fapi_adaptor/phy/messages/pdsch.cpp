@@ -177,7 +177,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_fapi_to_phy(pdsch_processor::pdu_t& pro
 
   proc_pdu.n_id = fapi_pdu.nid_pdsch;
 
-  // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 section 3.4.2.2, in table PDSCH PDU, DMRS
+  // This value is defined in field DL DMRS symbol position in SCF-222 v4.0 Section 3.4.2.2, in table PDSCH PDU, DMRS
   // subsection.
   static constexpr unsigned DL_DMRS_SYMBOL_POS_SIZE = 14U;
   for (unsigned i = 0; i != DL_DMRS_SYMBOL_POS_SIZE; ++i) {

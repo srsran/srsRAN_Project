@@ -16,7 +16,7 @@ using namespace fapi_adaptor;
 
 /// \brief Converts the given \c ssb_pss_to_sss_epre value into a \c beta_pss_profile_type value.
 ///
-/// This value corresponds to the \e betaPssProfileNR parameter as defined by FAPI in SCF-222 v4.0 section 3.4.2.4.
+/// This value corresponds to the \e betaPssProfileNR parameter as defined by FAPI in SCF-222 v4.0 Section 3.4.2.4.
 /// \remark The MAC/Scheduler uses \c ssb_pss_to_sss_epre to prevent misusing 3GPP terminology.
 static beta_pss_profile_type convert_to_beta_pss_profile_nr(ssb_pss_to_sss_epre value)
 {

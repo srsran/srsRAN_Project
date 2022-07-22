@@ -52,7 +52,7 @@ static unsigned generate_block_index()
 
 static unsigned generate_subcarrier_offset()
 {
-  //:TODO: restore
+  //: TODO: restore
   std::uniform_int_distribution<unsigned> dist(0, 23);
 
   return dist(gen);
@@ -227,7 +227,7 @@ static void add_pdcch_pdus_to_result(mac_dl_sched_result& result)
   static const static_vector<coreset_configuration, 2> coreset_cfg = {generate_coreset_configuration(),
                                                                       generate_coreset_configuration()};
   static const static_vector<bwp_configuration, 2>     bwp_config  = {generate_bwp_configuration(),
-                                                                 generate_bwp_configuration()};
+                                                                      generate_bwp_configuration()};
 
   if (result_in_mem.dl_pdcchs.empty()) {
     for (unsigned i = 0; i != nof_pdus; ++i) {
@@ -250,7 +250,7 @@ sib_information unittests::build_valid_sib1_information_pdu()
   static const coreset_configuration coreset_cfg = {generate_coreset_configuration()};
   static const bwp_configuration     bwp_config  = {generate_bwp_configuration()};
   static const pdcch_dl_information  pdcch_info  = {generate_dci_context(bwp_config, coreset_cfg),
-                                                  generate_dci_dl_info()};
+                                                    generate_dci_dl_info()};
 
   sib_information info;
   info.si_indicator = sib_information::si_indicator_type::sib1;
