@@ -32,14 +32,6 @@ int main()
 
   // Run all defined tests
   for (const test_case_t& test_case : ofdm_modulator_test_data) {
-    // Create FFTW configuration;
-    dft_processor::configuration config;
-    config.size = test_case.test_config.config.dft_size;
-    config.dir  = dft_processor::direction::DIRECT;
-
-    // Create DFT processor
-    std::unique_ptr<dft_processor> dft = dft_factory->create(config);
-
     unsigned nsubc = test_case.test_config.config.bw_rb * NRE;
 
     // Create OFDM modulator.
@@ -73,33 +65,16 @@ int main()
     std::vector<cf_t> output(ofdm->get_slot_size(test_case.test_config.slot_idx));
     ofdm->modulate(output, rg, test_case.test_config.port_idx, test_case.test_config.slot_idx);
 
-    // Iterate all symbols.
-    unsigned offset = 0;
-    for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
-      // Map the read golden data into a symbol-wise vector.
-      unsigned cp_len = test_case.test_config.config.cp.get_length(nsymb * test_case.test_config.slot_idx + symbol_idx,
-                                                                   test_case.test_config.config.numerology,
-                                                                   test_case.test_config.config.dft_size);
-      std::vector<cf_t> expected_output_data(test_case.test_config.config.dft_size + cp_len);
-      for (unsigned idx = 0, nsamples = test_case.test_config.config.dft_size + cp_len; idx != nsamples; ++idx) {
-        expected_output_data[idx] = modulated[offset + idx];
-      }
-      span<cf_t> expected_output = expected_output_data;
-
-      // Select a view of the OFDM modulator output.
-      span<const cf_t> output_symbol(output);
-      output_symbol = output_symbol.subspan(offset, test_case.test_config.config.dft_size + cp_len);
-
-      // Assert generated symbol matches ideal.
-      for (unsigned idx = 0, nsamples = test_case.test_config.config.dft_size + cp_len; idx != nsamples; ++idx) {
-        // Calculate absolute error normalised by the square root of the size.
-        float err =
-            std::abs(expected_output[idx] - output_symbol[idx]) / std::sqrt(test_case.test_config.config.dft_size);
-        TESTASSERT(err < ASSERT_MAX_ERROR);
-      }
-
-      // Increment OFDM symbol offset.
-      offset += test_case.test_config.config.dft_size + cp_len;
+    for (unsigned i = 0; i != modulated.size(); ++i) {
+      float error =
+          std::abs(output[i] - modulated[i]) / std::sqrt(static_cast<float>(test_case.test_config.config.dft_size));
+      TESTASSERT(error < ASSERT_MAX_ERROR,
+                 "Sample index {} error {} exceeds maximum allowed ({}). Expedted symbol {} but got {}.",
+                 i,
+                 error,
+                 ASSERT_MAX_ERROR,
+                 modulated[i],
+                 output[i]);
     }
   }
 

@@ -22,7 +22,8 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
-  numerology(ofdm_config.numerology),
+  scs(to_subcarrier_spacing(ofdm_config.numerology)),
+  sampling_rate_Hz(to_sampling_rate_Hz(scs, dft_size)),
   scale(ofdm_config.scale),
   dft(std::move(common_config.dft)),
   phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
@@ -31,8 +32,8 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
                            ofdm_config.center_freq_hz,
                            true)
 {
-  report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor {}", scale);
-  report_fatal_error_if_not(
+  srsgnb_assert(std::isnormal(scale), "Invalid scaling factor {}", scale);
+  srsgnb_assert(
       dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({})", dft_size, rg_size);
 
   // Fill DFT input with zeros.
@@ -48,18 +49,17 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   unsigned nsymb = get_nsymb_per_slot(cp);
 
   // Calculate cyclic prefix length.
-  unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
+  unsigned cp_len = cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz);
 
   // Make sure output buffer matches the symbol size.
-  report_fatal_error_if_not(
-      output.size() == (cp_len + dft_size),
-      "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
-      output.size(),
-      symbol_index,
-      cp_len,
-      dft_size,
-      cp_len + dft_size,
-      numerology);
+  srsgnb_assert(output.size() == (cp_len + dft_size),
+                "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). SCS={}kHz.",
+                output.size(),
+                symbol_index,
+                cp_len,
+                dft_size,
+                cp_len + dft_size,
+                scs_to_khz(scs));
 
   // Skip modulator if the grid is empty for the given port.
   if (grid.is_empty(port_index)) {

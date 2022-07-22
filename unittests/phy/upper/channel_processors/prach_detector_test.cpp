@@ -79,8 +79,8 @@ static void test_case()
   for (const prach_detector::preamble_indication& preamble : result.preambles) {
     fmt::print("--    Preamble: {}\n", preamble.preamble_index);
     fmt::print("  Time advance: {} us ({} samples)\n",
-               preamble.time_advance_us,
-               preamble.time_advance_us * static_cast<float>(dft_size_15kHz) * 15e3F / 1e6F);
+               preamble.time_advance.to_seconds() / 1e6,
+               preamble.time_advance.to_samples(dft_size_15kHz * 15000));
     fmt::print("         Power: {} dB\n", preamble.power_dB);
     fmt::print("           SNR: {} dB\n", preamble.snr_dB);
   }

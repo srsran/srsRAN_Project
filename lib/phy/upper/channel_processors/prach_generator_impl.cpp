@@ -9,9 +9,9 @@
  */
 
 #include "prach_generator_impl.h"
-#include "prach_preamble_helpers.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
+#include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/srsvec/zero.h"
@@ -152,10 +152,10 @@ unsigned prach_generator_impl::get_k_bar(unsigned prach_scs_Hz, unsigned pusch_s
 span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_modulation_info info         = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
-  unsigned                       prach_scs_Hz = info.scs.to_Hz();
-  unsigned                       pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
-  unsigned                       L_ra         = get_sequence_length(config.format);
+  prach_preamble_information info         = prach_preamble_long_get_info(config.format);
+  unsigned                   prach_scs_Hz = info.scs.to_Hz();
+  unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
+  unsigned                   L_ra         = get_sequence_length(config.format);
 
   // Select DFT to generate the time domain sequence.
   dft_processor* dft = dft_1_25_kHz.get();
@@ -219,23 +219,26 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
   // Calculate DFT.
   span<const cf_t> prach_symbol = dft->run();
 
+  unsigned N_u     = info.symbol_length.to_samples(sampling_rate_Hz);
+  unsigned N_cp_ra = info.cp_length.to_samples(sampling_rate_Hz);
+
   // Calculate total output sequence length. Rounds it to a subframe.
-  unsigned output_length = info.N_u + info.N_cp_ra;
+  unsigned output_length = N_u + N_cp_ra;
   output_length          = (15 * dft_size_15kHz) * divide_ceil(output_length, 15 * dft_size_15kHz);
 
   // Select view of the output sequence.
   span<cf_t> output = temp.first(output_length);
 
   // Copy cyclic prefix.
-  srsvec::copy(output.first(info.N_cp_ra), prach_symbol.last(info.N_cp_ra));
+  srsvec::copy(output.first(N_cp_ra), prach_symbol.last(N_cp_ra));
 
   // Copy PRACH symbol.
-  for (unsigned n = 0; n < info.N_u; n += prach_symbol.size()) {
-    srsvec::copy(output.subspan(info.N_cp_ra + n, prach_symbol.size()), prach_symbol);
+  for (unsigned n = 0; n < N_u; n += prach_symbol.size()) {
+    srsvec::copy(output.subspan(N_cp_ra + n, prach_symbol.size()), prach_symbol);
   }
 
   // Append zeros.
-  srsvec::zero(output.last(output_length - info.N_u - info.N_cp_ra));
+  srsvec::zero(output.last(output_length - N_u - N_cp_ra));
 
   return output;
 }
@@ -243,10 +246,10 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_modulation_info info         = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
-  unsigned                       prach_scs_Hz = info.scs.to_Hz();
-  unsigned                       pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
-  unsigned                       L_ra         = get_sequence_length(config.format);
+  prach_preamble_information info         = prach_preamble_long_get_info(config.format);
+  unsigned                   prach_scs_Hz = info.scs.to_Hz();
+  unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
+  unsigned                   L_ra         = get_sequence_length(config.format);
 
   unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
   srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");

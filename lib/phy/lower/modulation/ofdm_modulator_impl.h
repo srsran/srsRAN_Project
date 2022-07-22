@@ -36,7 +36,9 @@ private:
   /// Indicates the cyclic prefix length.
   cyclic_prefix cp;
   /// Indicates the numerology.
-  unsigned numerology;
+  subcarrier_spacing scs;
+  /// Sampling rate in Hz.
+  unsigned sampling_rate_Hz;
   /// Indicates the scaling factor at the DFT output.
   float scale;
   /// DFT processor.
@@ -54,7 +56,7 @@ public:
   // See interface for documentation.
   unsigned get_symbol_size(unsigned symbol_index) const override
   {
-    return cp.get_length(symbol_index, numerology, dft_size) + dft_size;
+    return cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz) + dft_size;
   }
 
   // See interface for documentation.

@@ -14,6 +14,7 @@ add_library(srsgnb_ran band_helper.cpp
         pdcch/pdcch_type0_css_coreset_config.cpp
         prach/prach_configuration.cpp
         prach/prach_cyclic_shifts.cpp
+        prach/prach_preamble_information.cpp
         resource_allocation/resource_allocation_frequency.cpp)
 target_link_libraries(srsgnb_ran)
 

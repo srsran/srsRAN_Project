@@ -43,7 +43,9 @@ public:
 
   unsigned get_symbol_size(unsigned symbol_index) const override
   {
-    return configuration.cp.get_length(symbol_index, configuration.numerology, configuration.dft_size) +
+    unsigned sampling_rate_Hz = (configuration.dft_size * 15000) << configuration.numerology;
+    return configuration.cp.get_length(symbol_index, to_subcarrier_spacing(configuration.numerology))
+               .to_samples(sampling_rate_Hz) +
            configuration.dft_size;
   }
 

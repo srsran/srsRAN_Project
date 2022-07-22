@@ -13,6 +13,7 @@
 
 #pragma once
 
+#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/support/math_utils.h"
 #include <algorithm>
 
@@ -54,44 +55,43 @@ public:
     return "extended";
   }
 
-  /// \brief Checks the validity of the DFT size for the current cyclic prefix.
-  /// \param[in] numerology Indicates the subcarrier spacing numerology.
+  /// \brief Checks the validity of the DFT size and subcarrier spacing for the current cyclic prefix.
+  ///
+  /// A cyclic prefix is valid if it results in an integer number of samples. Othwerwise, it is not valid.
+  ///
+  /// \param[in] scs      Subcarrier spacing.
   /// \param[in] dft_size Indicates the DFT size.
-  /// \return True if the given cyclic prefix type, numerology and DFT size combination results in a valid cyclic prefix
-  /// length. Otherwise, false.
-  bool is_valid(unsigned numerology, unsigned dft_size)
+  /// \return True if the cyclic prefix is valid for the given SCS and DFT size.
+  bool is_valid(subcarrier_spacing scs, unsigned dft_size) const
   {
-    unsigned N_ref = 2048;
-    unsigned kappa = 64;
-
-    // Calculate cyclic prefix length.
-    unsigned cp_len = 144 * kappa;
+    // All units are in multiples of the constant kappa.
+    unsigned cp_len = 144U >> to_numerology_value(scs);
     if (value == EXTENDED) {
-      cp_len = (512 * kappa);
+      cp_len = 512U >> to_numerology_value(scs);
     }
 
-    // The cyclic prefix lengths must be divisible by the reference DFT size.
-    return ((cp_len * dft_size) % (N_ref * kappa) == 0) && ((16 * dft_size * pow2(numerology)) % (N_ref) == 0);
+    unsigned sampling_rate_Hz = to_sampling_rate_Hz<unsigned>(scs, dft_size);
+
+    // The cyclic prefix lengths must result in an integer number of samples.
+    return phy_time_unit::from_units_of_kappa(cp_len).is_sample_accurate(sampling_rate_Hz) &&
+           phy_time_unit::from_units_of_kappa(16).is_sample_accurate(sampling_rate_Hz);
   }
 
   /// \brief Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
   /// \param[in] symbol_idx Symbol index within the subframe.
   /// \param[in] numerology Indicates the subcarrier spacing numerology.
-  /// \param[in] dft_size Indicates the DFT size.
-  /// \return The number of samples comprising the cyclic prefix.
-  constexpr unsigned get_length(unsigned symbol_idx, unsigned numerology, unsigned dft_size) const
+  /// \return The cyclic prefix length in a PHY time units.
+  constexpr phy_time_unit get_length(unsigned symbol_idx, subcarrier_spacing scs) const
   {
-    unsigned N_ref = 2048;
-    unsigned kappa = 64;
-
-    unsigned cp_len = 144 * kappa;
+    // All units are in multiples of the constant kappa.
+    unsigned cp_len = 144U >> to_numerology_value(scs);
     if (value == EXTENDED) {
-      cp_len = 512 * kappa;
-    } else if (symbol_idx == 0 || symbol_idx == 7 * pow2(numerology)) {
-      cp_len += 16 * kappa * pow2(numerology);
+      cp_len = 512U >> to_numerology_value(scs);
+    } else if (symbol_idx == 0 || symbol_idx == 7 * pow2(to_numerology_value(scs))) {
+      cp_len += 16;
     }
 
-    return (cp_len * dft_size) / (N_ref * kappa);
+    return phy_time_unit::from_units_of_kappa(cp_len);
   }
 };
 

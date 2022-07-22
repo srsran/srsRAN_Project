@@ -33,7 +33,7 @@ class prach_detector_simple_impl : public prach_detector
   std::unique_ptr<dft_processor>   idft_5_kHz;
   std::unique_ptr<prach_generator> generator;
   srsvec::aligned_vec<cf_t>        signal_freq_temp;
-  unsigned                         dft_size_15kHz;
+  unsigned                         sampling_rate_Hz;
 
 public:
   prach_detector_simple_impl(std::unique_ptr<dft_processor>   dft_1_25_kHz_,
@@ -48,20 +48,20 @@ public:
     idft_5_kHz(std::move(idft_5_kHz_)),
     generator(std::move(generator_)),
     signal_freq_temp((dft_size_15kHz_ * 15000) / 1250),
-    dft_size_15kHz(dft_size_15kHz_)
+    sampling_rate_Hz(dft_size_15kHz_ * 15000)
   {
     srsgnb_assert(dft_1_25_kHz, "Invalid DFT processor.");
     srsgnb_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsgnb_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
+    srsgnb_assert(dft_1_25_kHz->get_size() == (sampling_rate_Hz / 1250), "Invalid DFT size.");
     srsgnb_assert(idft_1_25_kHz, "Invalid IDFT processor.");
     srsgnb_assert(idft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsgnb_assert(idft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
+    srsgnb_assert(idft_1_25_kHz->get_size() == (sampling_rate_Hz / 1250), "Invalid DFT size.");
     srsgnb_assert(dft_5_kHz, "Invalid DFT processor.");
     srsgnb_assert(dft_5_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsgnb_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
+    srsgnb_assert(dft_5_kHz->get_size() == (sampling_rate_Hz / 5000), "Invalid DFT size.");
     srsgnb_assert(idft_5_kHz, "Invalid IDFT processor.");
     srsgnb_assert(idft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsgnb_assert(idft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
+    srsgnb_assert(idft_5_kHz->get_size() == (sampling_rate_Hz / 5000), "Invalid DFT size.");
   };
 
   // See interface for documentation.

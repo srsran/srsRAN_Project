@@ -40,8 +40,8 @@ public:
                          double             center_frequency_Hz,
                          bool               is_tx)
   {
-    double sample_rate_Hz = static_cast<double>(scs_to_khz(scs) * dft_size) * 1e3;
-    srsgnb_assert(std::isnormal(sample_rate_Hz),
+    double sampling_rate_Hz = to_sampling_rate_Hz(scs, dft_size);
+    srsgnb_assert(std::isnormal(sampling_rate_Hz),
                   "Invalid sampling rate from SCS {} kHz and DFT size {}.",
                   scs_to_khz(scs),
                   dft_size);
@@ -54,10 +54,10 @@ public:
     // For each symbol in a subframe.
     for (unsigned symbol = 0, symbol_offset = 0; symbol != nslot_per_subframe * nsymb_per_slot; ++symbol) {
       // Add cyclic prefix length to the symbol offset.
-      symbol_offset += cp.get_length(symbol, to_numerology_value(scs), dft_size);
+      symbol_offset += cp.get_length(symbol, scs).to_samples(sampling_rate_Hz);
 
       // Calculate the time between the start of the subframe and the start of the symbol.
-      double start_time_s = static_cast<double>(symbol_offset) / sample_rate_Hz;
+      double start_time_s = static_cast<double>(symbol_offset) / sampling_rate_Hz;
 
       // Calculate the phase in radians.
       double symbol_phase = sign_two_pi * center_frequency_Hz * start_time_s;

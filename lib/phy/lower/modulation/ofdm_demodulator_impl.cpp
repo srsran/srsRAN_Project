@@ -21,7 +21,8 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
   dft_size(ofdm_config.dft_size),
   rg_size(ofdm_config.bw_rb * NRE),
   cp(ofdm_config.cp),
-  numerology(ofdm_config.numerology),
+  scs(to_subcarrier_spacing(ofdm_config.numerology)),
+  sampling_rate_Hz(to_sampling_rate_Hz(scs, dft_size)),
   scale(ofdm_config.scale),
   dft(std::move(common_config.dft)),
   phase_compensation_table(to_subcarrier_spacing(ofdm_config.numerology),
@@ -30,9 +31,9 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
                            ofdm_config.center_freq_hz,
                            false)
 {
-  report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor %f", scale);
+  report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor {}.", scale);
   report_fatal_error_if_not(
-      dft_size > rg_size, "The DFT size (%d) must be greater than the resource grid size (%d)", dft_size, rg_size);
+      dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({}).", dft_size, rg_size);
 
   // Fill DFT input with zeros.
   srsvec::zero(dft->get_input());
@@ -49,7 +50,7 @@ unsigned ofdm_symbol_demodulator_impl::get_cp_offset(unsigned symbol_index, unsi
   // Calculate the offset in samples to the start of the symbol CP within the current slot
   unsigned cp_offset = 0;
   for (unsigned symb_idx = 0; symb_idx != symbol_index; ++symb_idx) {
-    cp_offset += cp.get_length(nsymb * slot_index + symb_idx, numerology, dft_size) + dft_size;
+    cp_offset += cp.get_length(nsymb * slot_index + symb_idx, scs).to_samples(sampling_rate_Hz) + dft_size;
   }
 
   return cp_offset;
@@ -64,18 +65,17 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   unsigned nsymb = get_nsymb_per_slot(cp);
 
   // Calculate cyclic prefix length.
-  unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
+  unsigned cp_len = cp.get_length(symbol_index, scs).to_samples(sampling_rate_Hz);
 
   // Make sure output buffer matches the symbol size.
-  report_fatal_error_if_not(
-      input.size() == (cp_len + dft_size),
-      "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
-      input.size(),
-      symbol_index,
-      cp_len,
-      dft_size,
-      cp_len + dft_size,
-      numerology);
+  srsgnb_assert(input.size() == (cp_len + dft_size),
+                "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). SCS={}kHz.",
+                input.size(),
+                symbol_index,
+                cp_len,
+                dft_size,
+                cp_len + dft_size,
+                scs_to_khz(scs));
 
   // Prepare the DFT inputs, while skipping the cyclic prefix.
   srsvec::copy(dft->get_input().first(dft_size), input.last(dft_size));
@@ -123,10 +123,9 @@ void ofdm_slot_demodulator_impl::demodulate(resource_grid_writer& grid,
     // Get the current symbol size.
     unsigned symbol_sz = symbol_demodulator.get_symbol_size(nsymb * slot_index + symbol_idx);
 
-    // Get the offset to the start of the (CP of the) current symbol within the slot.
-    unsigned offset = symbol_demodulator.get_cp_offset(symbol_idx, slot_index);
-
     // Demodulate symbol.
-    symbol_demodulator.demodulate(grid, input.subspan(offset, symbol_sz), port_index, nsymb * slot_index + symbol_idx);
+    symbol_demodulator.demodulate(grid, input.first(symbol_sz), port_index, nsymb * slot_index + symbol_idx);
+
+    input = input.last(input.size() - symbol_sz);
   }
 }

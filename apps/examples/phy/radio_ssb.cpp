@@ -255,7 +255,8 @@ static void parse_args(int argc, char** argv)
     }
     if (!found) {
       usage(argv[0]);
-      srsgnb_terminate("Invalid profile {}.", profile_name);
+      fmt::print("Invalid profile {}.\n", profile_name);
+      std::exit(0);
     }
   }
 }
@@ -351,7 +352,7 @@ int main(int argc, char** argv)
                             "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
                             sampling_rate_hz / 1e6);
   report_fatal_error_if_not(
-      cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
+      cp.is_valid(scs, dft_size_15kHz / pow2(to_numerology_value(scs))),
       "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
       cp.to_string(),
       to_numerology_value(scs),
@@ -367,7 +368,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  report_fatal_error_if_not(factory, "Driver %s is not available.", driver_name.c_str());
+  report_fatal_error_if_not(factory, "Driver {} is not available.", driver_name.c_str());
 
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = create_radio_configuration();

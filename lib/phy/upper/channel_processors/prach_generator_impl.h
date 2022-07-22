@@ -33,6 +33,8 @@ private:
   unsigned nof_prb_ul_grid;
   /// DFT size for 15kHz subcarrier spacing.
   unsigned dft_size_15kHz;
+  /// Sampling rate in Hz.
+  unsigned sampling_rate_Hz;
   /// DFT for long frequency-domain sequence generation.
   std::unique_ptr<dft_processor> dft_l839;
   /// DFT for short frequency-domain sequence generation.
@@ -97,6 +99,7 @@ public:
                        std::unique_ptr<dft_processor> dft_short_) :
     nof_prb_ul_grid(nof_prb_ul_grid_),
     dft_size_15kHz(dft_size_15kHz_),
+    sampling_rate_Hz(dft_size_15kHz * 15000),
     dft_l839(std::move(dft_l839_)),
     dft_l139(std::move(dft_l139_)),
     dft_1_25_kHz(std::move(dft_1_25_kHz_)),
@@ -114,11 +117,11 @@ public:
 
     srsgnb_assert(dft_1_25_kHz, "Invalid 1k25 DFT pointer");
     srsgnb_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
-    srsgnb_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
+    srsgnb_assert(dft_1_25_kHz->get_size() == (sampling_rate_Hz) / 1250, "Invalid 1k25 DFT size");
 
     srsgnb_assert(dft_5_kHz, "Invalid 5k DFT pointer");
     srsgnb_assert(dft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 5k DFT direction");
-    srsgnb_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000) / 5000, "Invalid 5k DFT size");
+    srsgnb_assert(dft_5_kHz->get_size() == (sampling_rate_Hz) / 5000, "Invalid 5k DFT size");
   }
 
   // See interface for documentation.

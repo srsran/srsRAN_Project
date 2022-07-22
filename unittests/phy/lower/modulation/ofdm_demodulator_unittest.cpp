@@ -39,22 +39,29 @@ int main()
   TESTASSERT(ofdm_factory);
 
   // Iterate all possible numerologies.
-  for (unsigned numerology : {0, 1, 2, 3, 4}) {
+  for (subcarrier_spacing scs : {subcarrier_spacing::kHz15,
+                                 subcarrier_spacing::kHz30,
+                                 subcarrier_spacing::kHz60,
+                                 subcarrier_spacing::kHz120,
+                                 subcarrier_spacing::kHz240}) {
     // Iterate all possible FFT sizes.
     for (unsigned dft_size : {256, 384, 512, 768, 1024, 1536, 2048, 3072, 4096, 6144, 8192, 12288}) {
       // Skip combinations of SCS>15kHz with large DFT sizes.
-      if (numerology > 0 && dft_size > 4096) {
+      if (scs > subcarrier_spacing::kHz15 && dft_size > 4096) {
         continue;
       }
+
+      // Deduce sampling rate from SCS and DFT size.
+      unsigned sampling_rate_Hz = to_sampling_rate_Hz(scs, dft_size);
 
       // Iterate all possible cyclic prefix.
       for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
         // Skip invalid CP, numerology and DFT size combinations that invalid.
-        if (!cp.is_valid(numerology, dft_size)) {
-          printf("Unsupported cyclic prefix (%s), numerology (%d) and DFT size (%d) combination. Skipping.\n",
-                 cp.to_string().c_str(),
-                 numerology,
-                 dft_size);
+        if (!cp.is_valid(scs, dft_size)) {
+          fmt::print("Unsupported cyclic prefix ({}), SCS ({} KHz) and DFT size ({}) combination. Skipping.\n",
+                     cp.to_string().c_str(),
+                     scs_to_khz(scs),
+                     dft_size);
           continue;
         }
 
@@ -63,7 +70,7 @@ int main()
 
         // Create OFDM demodulator configuration. Use minimum number of RB.
         ofdm_demodulator_configuration ofdm_config = {};
-        ofdm_config.numerology                     = numerology;
+        ofdm_config.numerology                     = to_numerology_value(scs);
         ofdm_config.bw_rb                          = 11;
         ofdm_config.dft_size                       = dft_size;
         ofdm_config.cp                             = cp;
@@ -82,7 +89,7 @@ int main()
         TESTASSERT(dft.get_entries().empty());
 
         // Iterate all slots within a subframe.
-        for (unsigned slot_idx = 0, nslot = pow2(numerology); slot_idx != nslot; ++slot_idx) {
+        for (unsigned slot_idx = 0, nslot = get_nof_slots_per_subframe(scs); slot_idx != nslot; ++slot_idx) {
           // Select a random port.
           unsigned port_idx = dist_port(rgen);
 
@@ -92,7 +99,8 @@ int main()
           // Iterate all symbols in the slot.
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             // Get the size of the current time-domain symbol.
-            unsigned nsamples = cp.get_length(nsymb * slot_idx + symbol_idx, numerology, dft_size) + dft_size;
+            unsigned nsamples =
+                cp.get_length(nsymb * slot_idx + symbol_idx, scs).to_samples(sampling_rate_Hz) + dft_size;
             for (unsigned sample_idx = 0; sample_idx != nsamples; ++sample_idx) {
               cf_t random_value = {dist_rg(rgen), dist_rg(rgen)};
               time_data.push_back(random_value);
@@ -115,7 +123,8 @@ int main()
           auto                                                    dft_entries = dft.get_entries();
           for (unsigned symbol_idx = 0; symbol_idx != nsymb; ++symbol_idx) {
             // Get the size of the current time-domain symbol.
-            unsigned symb_size = cp.get_length(nsymb * slot_idx + symbol_idx, numerology, dft_size) + dft_size;
+            unsigned symb_size =
+                cp.get_length(nsymb * slot_idx + symbol_idx, scs).to_samples(sampling_rate_Hz) + dft_size;
 
             // Get input time data.
             span<cf_t> time_data_symbol(&time_data[offset], symb_size);

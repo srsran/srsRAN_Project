@@ -14,6 +14,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -54,8 +55,8 @@ public:
   struct preamble_indication {
     /// Indicates the detected preamble index.
     unsigned preamble_index;
-    /// Optional timing advance measured for the UE between the observed arrival and the reference uplink time.
-    float time_advance_us;
+    /// Timing advance measured for the UE between the observed arrival and the reference uplink time.
+    phy_time_unit time_advance;
     /// Average RSRP value in dB, relative to 1.
     float power_dB;
     /// Average SNR value in dB.

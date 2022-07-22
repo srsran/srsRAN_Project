@@ -14,6 +14,7 @@
 #include "modulation/ofdm_demodulator_test_doubles.h"
 #include "modulation/ofdm_modulator_test_doubles.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
+#include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/srsvec/sc_prod.h"
 
 using namespace srsgnb;
@@ -113,7 +114,7 @@ static void test_start_run_stop()
     for (unsigned symbol_count = 0; symbol_count != get_nsymb_per_slot(cp); ++symbol_count) {
       // Derive the expected symbol size including the cyclic prefix.
       unsigned expected_symbol_sz = phy_config.dft_size_15kHz / pow2(to_numerology_value(scs));
-      expected_symbol_sz += cp.get_length(symbol_count, to_numerology_value(scs), expected_symbol_sz);
+      expected_symbol_sz += cp.get_length(symbol_count, scs).to_samples(sampling_rate_Hz);
 
       // Run a single symbol.
       TESTASSERT(manual_task_executor.try_run_next());

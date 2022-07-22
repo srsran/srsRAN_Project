@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
-
 namespace srsgnb {
 
 /// \brief PRACH preamble formats.

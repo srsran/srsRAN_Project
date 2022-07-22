@@ -9,7 +9,7 @@
  */
 
 #include "prach_detector_simple_impl.h"
-#include "prach_preamble_helpers.h"
+#include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/dot_prod.h"
@@ -22,7 +22,7 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
                                                                     const prach_detector::slot_configuration& config)
 {
   // Retrieve preamble configuration.
-  prach_preamble_modulation_info preamble_info = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
+  prach_preamble_information preamble_info = prach_preamble_long_get_info(config.format);
 
   // Select DFT and IDFT.
   dft_processor* dft  = dft_1_25_kHz.get();
@@ -32,8 +32,11 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
     idft = idft_5_kHz.get();
   }
 
+  unsigned N_cp_ra = preamble_info.cp_length.to_samples(sampling_rate_Hz);
+  unsigned N_u     = preamble_info.symbol_length.to_samples(sampling_rate_Hz);
+
   // Select PRACH window.
-  unsigned prach_window_offset = preamble_info.N_cp_ra + preamble_info.N_u - dft->get_size();
+  unsigned prach_window_offset = N_cp_ra + N_u - dft->get_size();
   unsigned prach_window_length = dft->get_size();
 
   // Copy PRACH window into window.
@@ -104,9 +107,10 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
     result.preambles.emplace_back();
     preamble_indication& info = result.preambles.back();
     info.preamble_index       = preamble_index;
-    info.time_advance_us      = static_cast<float>(delay_n) / (15e3F * static_cast<float>(dft_size_15kHz) * 1e-6F);
-    info.power_dB             = convert_power_to_dB(max_power);
-    info.snr_dB               = 0.0F;
+    info.time_advance =
+        phy_time_unit::from_seconds(static_cast<double>(delay_n) / static_cast<double>(sampling_rate_Hz));
+    info.power_dB = convert_power_to_dB(max_power);
+    info.snr_dB   = 0.0F;
   }
 
   return result;
