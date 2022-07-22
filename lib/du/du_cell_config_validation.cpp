@@ -11,6 +11,7 @@
 #include "srsgnb/du/du_cell_config_validation.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
 
@@ -69,18 +70,42 @@ static check_outcome is_coreset0_idx_valid(const du_cell_config& cell_cfg)
 }
 
 /// Checks whether CORESET#0 configuration matches the values specified in TS38.211-7.3.2.2.
-static check_outcome is_coreset0_params_valid(const coreset_configuration& cs_cfg, pci_t pci)
+static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
 {
+  const coreset_configuration& cs_cfg = *cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0;
   CHECK_TRUE(cs_cfg.duration >= 1, "Invalid CORESET#0 slot duration ({})", cs_cfg.duration);
   // Implicit, invariant values for CORESET#0 as per TS38.211-7.3.2.2.
   CHECK_EQ(cs_cfg.id, 0, "CORESET#0 ID");
   CHECK_TRUE(cs_cfg.interleaved.has_value(), "CORESET#0 must be interleaved");
   CHECK_EQ(cs_cfg.interleaved->interleaver_sz, 2, "CORESET#0 interleaver size (R)");
   CHECK_EQ(cs_cfg.interleaved->reg_bundle_sz, 6, "CORESET#0 REG Bundle size (L)");
-  CHECK_EQ(cs_cfg.interleaved->shift_index, pci, "CORESET#0 shift index should be equal to PCI");
+  CHECK_EQ(cs_cfg.interleaved->shift_index, cell_cfg.pci, "CORESET#0 shift index should be equal to PCI");
   CHECK_EQ(cs_cfg.precoder_granurality,
            coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
            "CORESET#0 Precoder Granularity");
+
+  static const unsigned               min_channel_bw = 5;
+  pdcch_type0_css_coreset_description coreset0_param =
+      pdcch_type0_css_coreset_get(min_channel_bw,
+                                  cell_cfg.ssb_cfg.scs,
+                                  cell_cfg.scs_common,
+                                  cell_cfg.coreset0_idx,
+                                  static_cast<uint8_t>(cell_cfg.ssb_cfg.k_ssb.to_uint()));
+
+  // CRB (with reference to SCScommon carrier) pointed to by offset_to_point_A.
+  unsigned crb_ssb = cell_cfg.scs_common == subcarrier_spacing::kHz15
+                         ? cell_cfg.ssb_cfg.offset_to_point_A.to_uint()
+                         : cell_cfg.ssb_cfg.offset_to_point_A.to_uint() / 2;
+
+  // Check if Coreset0 is within the Initial DL BWP CRBs.
+  crb_interval initial_bwp_crbs{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs};
+  CHECK_TRUE(static_cast<unsigned>(coreset0_param.offset) <= crb_ssb, "Coreset0 falls outside the Initial DL BWP.");
+  CHECK_TRUE(crb_ssb - static_cast<unsigned>(coreset0_param.offset) >= initial_bwp_crbs.start(),
+             "Coreset0 falls outside the Initial DL BWP.");
+  CHECK_TRUE(crb_ssb - static_cast<unsigned>(coreset0_param.offset) +
+                     static_cast<unsigned>(coreset0_param.nof_rb_coreset) <=
+                 initial_bwp_crbs.stop(),
+             "Coreset0 falls outside the Initial DL BWP.");
   return {};
 }
 
@@ -105,7 +130,7 @@ static check_outcome check_dl_config_common(const du_cell_config& cell_cfg)
   const bwp_downlink_common& bwp = cell_cfg.dl_cfg_common.init_dl_bwp;
   // PDCCH
   if (bwp.pdcch_common.coreset0.has_value()) {
-    HANDLE_RETURN(is_coreset0_params_valid(*bwp.pdcch_common.coreset0, cell_cfg.pci));
+    HANDLE_RETURN(is_coreset0_params_valid(cell_cfg));
   }
   if (bwp.pdcch_common.sib1_search_space_id != srsgnb::MAX_NOF_SEARCH_SPACES) {
     CHECK_EQ(bwp.pdcch_common.sib1_search_space_id, 0, "SearchSpaceSIB1 must be equal to 0 for initial DL BWP");
@@ -148,6 +173,10 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   CHECK_EQ_OR_BELOW(ssb_cfg.scs,
                     subcarrier_spacing::kHz30,
                     "SSB SCS must be kHz15 or kHz30.  FR2 frequencies are not supported yet in the SSB scheduler.");
+
+  CHECK_EQ(ssb_cfg.ssb_bitmap,
+           static_cast<uint64_t>(1U) << static_cast<uint64_t>(63U),
+           "Multiple beams not supported for SSB.");
 
   // Checks that SSB does not get located outside the band.
   if (cell_cfg.scs_common == subcarrier_spacing::kHz15) {

@@ -10,6 +10,7 @@
 
 #include "config_generators.h"
 #include "lib/scheduler/common_scheduling/sib_scheduler.h"
+#include "lib/scheduler/common_scheduling/ssb_scheduler.h"
 #include "scheduler_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 
@@ -71,6 +72,7 @@ struct test_bench {
   dummy_pdcch_scheduler                    pdcch_sch;
   slot_point                               sl_tx;
 
+  // Test bench ctor for SIB1 scheduler test use. It allows us to set single parameters.
   test_bench(subcarrier_spacing   init_bwp_scs,
              uint8_t              pdcch_config_sib1,
              uint8_t              ssb_bitmap,
@@ -83,6 +85,27 @@ struct test_bench {
   {
     res_grid.slot_indication(sl_tx);
   };
+
+  // Test bench ctor for SSB/SIB1 scheduler collision test.
+  test_bench(uint32_t           freq_arfcn,
+             uint16_t           offset_to_point_A,
+             uint8_t            k_ssb,
+             uint8_t            ssb_bitmap,
+             subcarrier_spacing init_bwp_scs,
+             uint8_t            pdcch_config_sib1) :
+    cfg_msg{make_cell_cfg_req_for_sib_sched(freq_arfcn,
+                                            offset_to_point_A,
+                                            k_ssb,
+                                            ssb_bitmap,
+                                            init_bwp_scs,
+                                            pdcch_config_sib1)},
+    cfg{cfg_msg},
+    res_grid{cfg},
+    sl_tx{to_numerology_value(init_bwp_scs), 0}
+  {
+    test_logger.set_context(0);
+    mac_logger.set_context(0);
+  }
 
   cell_slot_resource_allocator& get_slot_res_grid() { return res_grid[0]; };
 
@@ -111,6 +134,46 @@ struct test_bench {
     msg.sib1_retx_period      = sib1_rtx_period;
     msg.ssb_config.ssb_bitmap = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
     msg.ssb_config.ssb_period = ssb_period;
+    return msg;
+  }
+
+  // Create default configuration and change specific parameters based on input args.
+  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(uint32_t           freq_arfcn,
+                                                                           uint16_t           offset_to_point_A,
+                                                                           uint8_t            k_ssb,
+                                                                           uint8_t            ssb_bitmap,
+                                                                           subcarrier_spacing init_bwp_scs,
+                                                                           uint8_t            pdcch_config_sib1)
+  {
+    sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
+    msg.dl_carrier.arfcn                             = freq_arfcn;
+    msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
+    msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
+    msg.ssb_config.scs                               = init_bwp_scs;
+    msg.scs_common                                   = init_bwp_scs;
+    msg.ssb_config.ssb_bitmap                        = static_cast<uint64_t>(ssb_bitmap) << static_cast<uint64_t>(56U);
+    msg.ssb_config.ssb_period                        = ssb_periodicity::ms10;
+    msg.ssb_config.offset_to_point_A                 = ssb_offset_to_pointA{offset_to_point_A};
+    msg.ssb_config.k_ssb                             = k_ssb;
+    msg.sib1_retx_period                             = sib1_rtx_periodicity::ms10;
+    // Change Carrier parameters when SCS is 15kHz.
+    if (init_bwp_scs == subcarrier_spacing::kHz15) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs                         = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+    }
+    // Change Carrier parameters when SCS is 30kHz.
+    else if (init_bwp_scs == subcarrier_spacing::kHz30) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
+          scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
+    }
+    msg.coreset0                  = (pdcch_config_sib1 >> 4U) & 0b00001111;
+    msg.searchspace0              = pdcch_config_sib1 & 0b00001111;
+    msg.dl_carrier.carrier_bw_mhz = 20;
+    msg.dl_carrier.nof_ant        = 1;
+
     return msg;
   }
 
@@ -258,6 +321,93 @@ void test_sib1_periodicity(sib1_rtx_periodicity sib1_rtx_period, ssb_periodicity
   }
 }
 
+/// \brief Tests if the any potential collision occurs between SIB1 PDCCH/PDSCH and SSB.
+///
+/// \param[in] freq_arfcn ARFCN of point A for DL carrier.
+/// \param[in] offset_to_point_A as per TS38.211, Section 4.4.4.2.
+/// \param[in] k_ssb or ssb-SubcarrierOffset, as per TS38.211, Section 7.4.3.1.
+/// \param[in] ssb_bitmap is \c ssb-PositionsInBurst.inOneGroup, as per TS38.331, \c ServingCellConfigCommonSIB.
+/// \param[in] scs subcarrier spacing of SSB and SCScommon.
+/// \param[in] pdcch_config_sib1 is \c pdcch-ConfigSIB1, as per TS38.213, Section 13.
+void test_ssb_sib1_collision(uint32_t           freq_arfcn,
+                             uint16_t           offset_to_point_A,
+                             uint8_t            k_ssb,
+                             uint8_t            ssb_bitmap,
+                             subcarrier_spacing scs,
+                             uint8_t            pdcch_config_sib1)
+{
+  // Instantiate the test_bench and the SIB1 scheduler.
+  test_bench     t_bench{freq_arfcn, offset_to_point_A, k_ssb, ssb_bitmap, scs, pdcch_config_sib1};
+  sib1_scheduler sib1_sched{t_bench.cfg, t_bench.pdcch_sch, t_bench.cfg_msg};
+
+  // Run the test for 10000 slots.
+  const size_t test_length_slots = 100;
+  for (size_t sl_idx = 0; sl_idx < test_length_slots; sl_idx++) {
+    // Clear the SSB list of it is not empty.
+    auto& ssb_list = t_bench.get_slot_res_grid().result.dl.bc.ssb_info;
+    if (ssb_list.size() > 0) {
+      ssb_list.clear();
+    }
+
+    // Run SSB scheduler.
+    schedule_ssb(t_bench.get_slot_res_grid(), t_bench.sl_tx, t_bench.cfg);
+
+    // Run SIB1 scheduler.
+    sib1_sched.schedule_sib1(t_bench.get_slot_res_grid(), t_bench.sl_tx);
+
+    auto& res_slot_grid = t_bench.get_slot_res_grid();
+
+    test_scheduler_result_consistency(t_bench.cfg, res_slot_grid.result);
+
+    test_dl_resource_grid_collisions(t_bench.cfg, res_slot_grid.result.dl);
+
+    // Update SLOT.
+    t_bench.slot_indication();
+  }
+}
+
+// Test for potential collision between SIB1 PDCCH/PDSCH and SSB.
+void test_sib_1_pdsch_collsion(unsigned freq_arfcn, subcarrier_spacing scs)
+{
+  // NOTE: We only test 1 beam, as we don't have resource grids for multiple beams implemented yet.
+  uint8_t ssb_bitmap = 0b10000000;
+  // Allocate SIB1 in the same slot as SSB - searchspace0 = 0U.
+  uint8_t  searchspace0 = 0U;
+  unsigned nof_rbs_bpw  = scs == subcarrier_spacing::kHz15 ? 106 : 52;
+  uint8_t  coreset0_max = scs == subcarrier_spacing::kHz15 ? 15 : 16;
+
+  // Test different combinations of offsetToPointA and k_SSB.
+  unsigned max_offset_to_point_A = nof_rbs_bpw - NOF_SSB_PRBS;
+  // Consider a +2 increment for both offsetToPointA and k_SSB, to be compliant with 30kHz SCS.
+  for (unsigned offset_to_point_A = 0; offset_to_point_A < max_offset_to_point_A; offset_to_point_A += 2) {
+    for (uint8_t k_ssb_val = 0; k_ssb_val < 12; k_ssb_val += 2) {
+      // Test all possible combinations of coreset0 position.
+      for (uint8_t coreset0 = 0; coreset0 < coreset0_max; ++coreset0) {
+        static const unsigned               min_channel_bw = 5;
+        pdcch_type0_css_coreset_description coreset0_param =
+            pdcch_type0_css_coreset_get(min_channel_bw, scs, scs, coreset0, k_ssb_val);
+
+        // If the Coreset 0 exceeds the BPW limit, skip this configuration.
+        TESTASSERT(coreset0_param.offset >= 0, "FR2 not supported in this test");
+
+        // CRB (with reference to SCScommon carrier) pointed to by offset_to_point_A.
+        unsigned crb_ssb = scs == subcarrier_spacing::kHz15 ? offset_to_point_A : offset_to_point_A / 2;
+
+        // If the Coreset 0 exceeds the Initial DL BPW limits, skip this configuration.
+        if (crb_ssb - static_cast<unsigned>(coreset0_param.offset) +
+                    static_cast<unsigned>(coreset0_param.nof_rb_coreset) >=
+                nof_rbs_bpw or
+            static_cast<unsigned>(coreset0_param.offset) > crb_ssb) {
+          continue;
+        }
+
+        uint8_t pdcch_config_sib1 = static_cast<uint8_t>((coreset0 << 4U) + searchspace0);
+        test_ssb_sib1_collision(freq_arfcn, offset_to_point_A, k_ssb_val, ssb_bitmap, scs, pdcch_config_sib1);
+      }
+    }
+  }
+}
+
 int main()
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
@@ -320,6 +470,19 @@ int main()
   test_sib1_periodicity(sib1_rtx_periodicity::ms40, ssb_periodicity::ms10);
   test_sib1_periodicity(sib1_rtx_periodicity::ms160, ssb_periodicity::ms80);
   test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms160);
+
+  // TEST SIB1/SSB collision on the resource grid.
+  // TEST Case A, frequency < 3GHz.
+  uint32_t           freq_arfcn = 500000;
+  subcarrier_spacing scs        = subcarrier_spacing::kHz15;
+
+  test_sib_1_pdsch_collsion(freq_arfcn, scs);
+
+  // TEST Case B, frequency < 3GHz.
+  freq_arfcn = 176000;
+  scs        = subcarrier_spacing::kHz30;
+
+  test_sib_1_pdsch_collsion(freq_arfcn, scs);
 
   return 0;
 }
