@@ -363,6 +363,21 @@ public:
     return *this;
   }
 
+  /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset.
+  /// \param[in] startpos The bit index where the subview starts.
+  /// \param[in] endpos The bit index where the subview stops.
+  template <size_t N2 = N, bool reversed2 = reversed>
+  bounded_bitset<N2, reversed2> slice(size_t startpos, size_t endpos) const
+  {
+    // NOTE: can be optimized.
+    assert_range_bounds_(startpos, endpos);
+    bounded_bitset<N2, reversed2> crbs(endpos - startpos);
+    for (size_t i = startpos; i != endpos; ++i) {
+      crbs.set(i - startpos, test_(i));
+    }
+    return crbs;
+  }
+
   /// \brief Finds the lowest bit with value set to the value passed as argument.
   /// \param[in] value The bit value to find, either true (1) or false (0).
   /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.
@@ -808,13 +823,47 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
   return ret;
 }
 
+/// \brief Folds bitset of a certain size S into M bitset slices, where each slice has size S / M, and
+/// applies bitwise-or between all the folds.
+/// \param[in] other original bitset from where folds are generated.
+/// \param[in] fold_length length of each fold bitset.
+/// \param[in] slice_offset offset from where to slice each fold.
+/// \param[in] slice_length length of the slice taken from each fold.
+/// \return bitset of size slice_length with the accumulated folds.
+template <size_t N2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                        size_t                             fold_length,
+                                                        size_t                             slice_offset,
+                                                        size_t                             slice_length) noexcept
+{
+  srsran_assert(
+      other.size() % fold_length == 0, "Invalid fold length={} for bitset of size={}", fold_length, other.size());
+  bounded_bitset<N2, reversed> ret(slice_length);
+  for (size_t i = 0; i != other.size(); i += fold_length) {
+    ret |= other.template slice<N2, reversed>(i + slice_offset, i + slice_offset + slice_length);
+  }
+  return ret;
+}
+
+/// \brief Folds bitset of a certain size S into M bitset slices, where each slice has size S / M, and
+/// applies bitwise-or between all the folds.
+/// \param[in] other original bitset from where folds are generated.
+/// \param[in] fold_length length of each fold bitset.
+/// \return bitset of size fold_length with the accumulated folds.
+template <size_t N2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                        size_t                             fold_length) noexcept
+{
+  return fold_and_accumulate<N2, N, reversed>(other, fold_length, 0, fold_length);
+}
+
 } // namespace srsgnb
 
 namespace fmt {
 
 /// \brief Custom formatter for bounded_bitset<N, reversed>
 template <size_t N, bool reversed>
-struct formatter<srsgnb::bounded_bitset<N, reversed> > {
+struct formatter<srsgnb::bounded_bitset<N, reversed>> {
   enum { hexadecimal, binary } mode = binary;
 
   template <typename ParseContext>

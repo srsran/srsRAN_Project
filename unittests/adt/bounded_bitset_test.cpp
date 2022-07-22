@@ -377,6 +377,33 @@ void test_bitset_push_back()
   }
 }
 
+void test_bitset_slice()
+{
+  bounded_bitset<100> big_bitmap(95);
+  big_bitmap.fill(5, 70);
+
+  bounded_bitset<35> small_bitmap = big_bitmap.slice<35>(50, 80);
+  TESTASSERT_EQ(30, small_bitmap.size());
+  TESTASSERT_EQ(20, small_bitmap.count());
+  TESTASSERT_EQ(1048575, small_bitmap.to_uint64());
+}
+
+void test_bitset_fold_and_accumulate()
+{
+  size_t fold_size = 20;
+
+  bounded_bitset<105> big_bitmap(100);
+  for (size_t i = 0; i < big_bitmap.size(); i += fold_size + 1) {
+    big_bitmap.set(i);
+  }
+
+  bounded_bitset<6> fold_bitset = fold_and_accumulate<6>(big_bitmap, fold_size);
+  TESTASSERT_EQ(big_bitmap.size() / fold_size, fold_bitset.count());
+  TESTASSERT_EQ(fold_bitset.count(), big_bitmap.count());
+  TESTASSERT(fold_bitset.is_contiguous());
+  TESTASSERT_EQ(0, fold_bitset.find_lowest());
+}
+
 int main()
 {
   test_bit_operations();
@@ -391,6 +418,8 @@ int main()
   test_bitset_find<true>();
   test_bitset_contiguous();
   test_bitset_push_back();
+  test_bitset_slice();
+  test_bitset_fold_and_accumulate();
   printf("Success\n");
   return 0;
 }
