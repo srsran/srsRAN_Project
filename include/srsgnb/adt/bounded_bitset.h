@@ -198,11 +198,12 @@ int count_ones(Integer value)
 /// This class also offers many standard logic manipulation methods, like ::any(), operators &=, &, |=, |, etc. and
 /// utility methods to convert the bitset into strings or integers.
 /// \tparam N Upper bound for bitset size in number of bits.
-/// \tparam reversed Bit index order in memory.
+/// \tparam reversed Bit index order in memory. If set to false, the LSB of the first word corresponds to bit index 0.
+/// If set to true, the MSB of the last word corresponds to bit index 0.
 template <size_t N, bool reversed = false>
 class bounded_bitset
 {
-  typedef uint64_t    word_t;
+  using word_t                      = uint64_t;
   static const size_t bits_per_word = 8 * sizeof(word_t);
 
 public:
@@ -363,7 +364,8 @@ public:
     return *this;
   }
 
-  /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset.
+  /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset. Unless
+  /// it is specified, the returned slice has the same template parameters "N" and "reversed" of this.
   /// \param[in] startpos The bit index where the subview starts.
   /// \param[in] endpos The bit index where the subview stops.
   template <size_t N2 = N, bool reversed2 = reversed>
@@ -823,13 +825,25 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
   return ret;
 }
 
-/// \brief Folds bitset of a certain size S into M bitset slices, where each slice has size S / M, and
-/// applies bitwise-or between all the folds.
-/// \param[in] other original bitset from where folds are generated.
-/// \param[in] fold_length length of each fold bitset.
-/// \param[in] slice_offset offset from where to slice each fold.
-/// \param[in] slice_length length of the slice taken from each fold.
-/// \return bitset of size slice_length with the accumulated folds.
+/// \brief Divides a bitset of size "S" into "M" smaller bitsets, where each bitset has length "L=S/M". A bitwise-or
+/// operation is performed across bitsets. At the end, a slice with an offset "O" and length "K" is taken from the
+/// bitset of length "L" that resulted from the bitwise-or operation.
+/// This operation is equivalent to reshaping an array of bits of size "S" into a matrix of dimensions "(M, L)" and
+/// applying an "or" operation across all bits of each column. The resulting array of "L" bits, is then sliced with
+/// an offset "O" and length "K".
+/// The operation asserts if "S % L != 0".
+/// E.g. Consider the bitset 1000 0100 0000 1001 (S=16), L=4, O=1, K=2. This function performs the following steps:
+/// 1. Break the bitset into M=S/L=4 parts: {1000, 0100, 0000, 1001}.
+/// 2. Bitwise-or all the M parts: 1101.
+/// 3. Slice the bitset obtained in 2. with offset O=1 and slice length K=2: 10.
+///
+/// \tparam N2 maximum bitset size for returned bitset.
+/// \tparam reversed2 internal bit order representation of returned bitset.
+/// \param[in] other original bitset of length "S".
+/// \param[in] fold_length length of each folded bitset "L".
+/// \param[in] slice_offset offset from where to slice each fold "O".
+/// \param[in] slice_length length of the slice taken from each fold "K".
+/// \return bitset of size slice_length with the or-accumulated folds.
 template <size_t N2, bool reversed2, size_t N, bool reversed>
 inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
                                                          size_t                             fold_length,
@@ -845,8 +859,10 @@ inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N,
   return ret;
 }
 
-/// \brief Folds bitset of a certain size S into M bitset slices, where each slice has size S / M, and
-/// applies bitwise-or between all the folds.
+/// \brief Performs the fold and accumulate operation, but without slicing at the end.
+///
+/// \tparam N2 maximum bitset size for returned bitset.
+/// \tparam reversed2 internal bit order representation of returned bitset.
 /// \param[in] other original bitset from where folds are generated.
 /// \param[in] fold_length length of each fold bitset.
 /// \return bitset of size fold_length with the accumulated folds.
