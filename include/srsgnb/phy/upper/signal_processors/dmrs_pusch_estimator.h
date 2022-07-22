@@ -19,6 +19,7 @@
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
 
@@ -40,6 +41,8 @@ public:
     bool n_scid;
     /// Generated signal linear amplitude.
     float amplitude;
+    /// Subcarrier spacing of the PUSCH.
+    subcarrier_spacing scs = subcarrier_spacing::kHz15;
     /// Cyclic prefix.
     cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
     /// Allocation RB list: the entries set to true are used for transmission.
