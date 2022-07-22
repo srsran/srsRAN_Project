@@ -89,7 +89,7 @@ no-binaries-added:
   variables:
     check_flags: "false"
     run_tests: "true"
-    enable_coverage: "true"
+    enable_coverage: "false"
     coverage_full_report: "false"
   trigger:
     include: .gitlab/ci/build.yml
@@ -112,7 +112,6 @@ alternative builds:
         os_version: "20.04"
         uhd_version: "3.15.0.0"
         compiler: [gcc, clang]
-        enable_coverage: "false" # Ignore old warnings
       - os_type: archlinux
         os_version: latest
         uhd_version: "4.2.0.0"
@@ -123,7 +122,6 @@ alternative builds uhd:
   rules:
     - if: $ON_SCHEDULE
       variables:
-        enable_coverage: "false"
         CI_MERGE_REQUEST_LABELS: no-cache
   parallel:
     matrix:
