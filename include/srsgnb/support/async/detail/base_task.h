@@ -41,7 +41,7 @@ public:
 
   /// Called to get result of task once it is complete
   template <typename Res = std::decay_t<result_type>, std::enable_if_t<not std::is_same<Res, void>::value, bool> = true>
-  const Res& get() &
+  const Res& get() const&
   {
     srsran_assert(not empty() and derived().handle.promise().ready(), "Called task::get() for task that is not ready");
     return derived().handle.promise().get();
