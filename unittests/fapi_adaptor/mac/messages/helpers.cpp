@@ -52,7 +52,8 @@ static unsigned generate_block_index()
 
 static unsigned generate_subcarrier_offset()
 {
-  std::uniform_int_distribution<unsigned> dist(0, 31);
+  //:TODO: restore
+  std::uniform_int_distribution<unsigned> dist(0, 23);
 
   return dist(gen);
 }

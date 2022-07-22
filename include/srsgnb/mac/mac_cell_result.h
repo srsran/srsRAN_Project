@@ -13,7 +13,7 @@ namespace srsgnb {
 
 constexpr size_t MAX_DL_PDUS_PER_SLOT = 16;
 
-/// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 MIB.
+/// \brief Describes part of the parameters that are encoded in the MIB payload as per TS38.331 Section 6.2.2 - MIB.
 struct ssb_mib_data_pdu {
   /// Symbol position of the first DM-RS.
   dmrs_typeA_position dmrs_typeA_pos;
