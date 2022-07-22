@@ -18,7 +18,7 @@ class rar_pdu_encoder
 public:
   explicit rar_pdu_encoder(const rar_information& rar_info_) : rar_info(rar_info_) {}
 
-  void encode(std::vector<uint8_t>& output_buf);
+  void encode(span<uint8_t> output_buf);
 
 private:
   /// Encodes RAR UL Grant into provided payload as per TS38.321 6.1.5 and 6.2.
@@ -34,12 +34,12 @@ private:
   uint8_t*               ptr = nullptr;
 };
 
-void rar_pdu_encoder::encode(std::vector<uint8_t>& output_buf)
+void rar_pdu_encoder::encode(span<uint8_t> output_buf)
 {
   // See TS38.321, Section 6.2.3.
   static constexpr unsigned MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH = 8;
-  output_buf.clear();
-  output_buf.resize(MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size());
+  srsran_assert(output_buf.size() >= MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size(),
+                "Output buffer is too small to fit encoded RAR");
   ptr = output_buf.data();
 
   for (unsigned i = 0; i != rar_info.grants.size(); ++i) {
@@ -117,18 +117,15 @@ span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar
   srsran_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
 
   // Fetch output vector where RAR grant payload is going to be encoded.
-  std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index++];
-  // Pre-reserve space for RAR and padding bits.
-  payload.reserve(rar.pdsch_cfg.codewords[0].tb_size_bytes);
+  std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index];
+  next_index                    = (next_index + 1) % rar_payload_ring_buffer.size();
+
+  // Dimension output buffer to accommodate RAR and padding bits.
+  payload.resize(rar.pdsch_cfg.codewords[0].tb_size_bytes, 0);
 
   // Encode RAR PDU.
   rar_pdu_encoder pdu_encoder{rar};
   pdu_encoder.encode(payload);
-
-  // Encode Padding.
-  if (payload.size() < rar.pdsch_cfg.codewords[0].tb_size_bytes) {
-    payload.resize(rar.pdsch_cfg.codewords[0].tb_size_bytes, 0);
-  }
 
   return {payload};
 }
