@@ -351,7 +351,7 @@ public:
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
     assert_range_bounds_(startpos, endpos);
-    // NOTE: can be optimized
+    // NOTE: can be optimized.
     if (value) {
       for (size_t i = startpos; i < endpos; ++i) {
         set_(i);
@@ -475,7 +475,7 @@ public:
   {
     assert_within_bounds_(start, false);
     assert_within_bounds_(stop, false);
-    // NOTE: can be optimized
+    // NOTE: can be optimized.
     for (size_t i = start; i < stop; ++i) {
       if (!test_(i)) {
         return false;

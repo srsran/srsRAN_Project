@@ -120,7 +120,7 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
   // Slot 0 has OFDM symbols 4,8; Slot 2 has symbols 32, 36.
   if (slot_idx == 0 or slot_idx == 2) {
     // The SSB mask is used to choose only the SSB indices corresponding to the current slot.
-    uint8_t                ssb_idx_mask = 0b10000000 >> (slot_idx * 2);
+    uint8_t                ssb_idx_mask        = 0b10000000 >> (slot_idx * 2);
     std::array<uint8_t, 2> ssb_burst_ofdm_symb = {4, 8};
 
     for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
@@ -142,7 +142,7 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
   // Slot 0 has OFDM symbols 4,8; Slot 1 has symbols 16, 20; Slot 3 has symbols 32, 36; Slot 3 has symbols 44, 48.
   if (slot_idx == 1 or slot_idx == 3) {
     // The SSB mask is used to choose only the SSB indices corresponding to the current slot.
-    uint8_t                ssb_idx_mask = 0b00100000 >> ((slot_idx - 1) * 2);
+    uint8_t                ssb_idx_mask        = 0b00100000 >> ((slot_idx - 1) * 2);
     std::array<uint8_t, 2> ssb_burst_ofdm_symb = {16, 20};
 
     for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {

@@ -167,6 +167,12 @@ ssb_pattern_case ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arf
 /// \return L_max value.
 uint8_t ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn);
 
+/// \brief Calculate the CRBs (with reference to SCS common grid) where the SSB is allocated.
+/// \param[in] ssb_scs      is the SSB Sub-Carrier Spacing, as per TS 38.213, Section 4.1.
+/// \param[in] scs_common   is the Sub-Carrier Spacing of the Initial DL BWP.
+/// \param[in] offset_to_pA is the OffsetToPointA, , as per TS 38.211, Section 4.4.4.2.
+/// \param[in] k_ssb        is the SSB subcarrier offset, or k_ssb, as per TS 38.211, Section 7.4.3.1.
+/// \return The CRB interval (with reference to SCS common grid) where the SSB is allocated.
 crb_interval get_ssb_crbs(subcarrier_spacing    ssb_scs,
                           subcarrier_spacing    scs_common,
                           ssb_offset_to_pointA  offset_to_pA,

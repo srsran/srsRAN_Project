@@ -181,6 +181,9 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
         offset_p_A_upper_bound,
         "Offset to PointA must be such that the SSB is located inside the Initial DL BWP, i.e, offset_to_point_A <= {}",
         offset_p_A_upper_bound);
+    CHECK_TRUE(ssb_cfg.offset_to_point_A.to_uint() % 2 == 0,
+               "With SCScommon 30kHz, Offset to PointA must be an even number",
+               offset_p_A_upper_bound);
   }
 
   ssb_pattern_case ssb_case   = ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);

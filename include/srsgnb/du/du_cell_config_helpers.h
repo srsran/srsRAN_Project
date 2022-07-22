@@ -193,10 +193,10 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
 {
   ssb_configuration cfg{};
 
-  cfg.scs                   = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
-  cfg.offset_to_point_A     = ssb_offset_to_pointA{params.offset_to_point_a};
-  cfg.ssb_period            = ssb_periodicity::ms10;
-  cfg.k_ssb                 = 0;
+  cfg.scs               = band_helper::get_lowest_ssb_scs(band_helper::get_band_from_dl_arfcn(params.dl_arfcn));
+  cfg.offset_to_point_A = ssb_offset_to_pointA{params.offset_to_point_a};
+  cfg.ssb_period        = ssb_periodicity::ms10;
+  cfg.k_ssb             = 0;
 
   const unsigned beam_index = 63;
   cfg.ssb_bitmap            = uint64_t(1) << beam_index;
