@@ -12,6 +12,8 @@
 
 using namespace srsgnb;
 
+namespace {
+
 /// Encoder of RAR PDUs.
 class rar_pdu_encoder
 {
@@ -27,7 +29,7 @@ private:
   /// \brief Encodes RAR subPDU subheader as per TS38.321 6.1.5 and 6.2.2.
   void encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu);
 
-  /// Encodes RAR UL Grant into provided payload as per TS38.321 6.2.3. and as per TS38.213 8.2.
+  /// Encodes RAR UL Grant into provided payload as per TS38.321 6.2.3. and TS38.213 8.2.
   void encode_rar_grant_payload(const rar_ul_grant& grant);
 
   const rar_information& rar_info;
@@ -100,6 +102,8 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   *ptr = grant.temp_crnti & 0xffU;
   ++ptr;
 }
+
+} // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
