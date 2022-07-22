@@ -8,10 +8,6 @@
 
 set_directory_properties(PROPERTIES LABELS "adt")
 
-add_executable(bounded_bitset_benchmark bounded_bitset_benchmark.cpp)
-target_link_libraries(bounded_bitset_benchmark srslog)
-add_test(bounded_bitset_benchmark bounded_bitset_benchmark)
-
 add_executable(bounded_bitset_test bounded_bitset_test.cpp)
 target_link_libraries(bounded_bitset_test srslog)
 add_test(bounded_bitset_test bounded_bitset_test)

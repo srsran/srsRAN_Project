@@ -237,6 +237,7 @@ add_subdirectory(lib)
 if (BUILD_TESTS)
     add_subdirectory(unittests)
     add_subdirectory(integrationtests)
+    add_subdirectory(benchmarks)
 endif (BUILD_TESTS)
 
 ########################################################################

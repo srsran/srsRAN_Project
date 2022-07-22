@@ -109,7 +109,8 @@ private:
 public:
   bounded_bitset_iterator(const bounded_bitset<N>& bitset_) :
     bitset(bitset_), value(true), current_pos(bitset.size()), burst_end(bitset.size())
-  {}
+  {
+  }
 
   bounded_bitset_iterator(const bounded_bitset<N>& bitset_, bool value_) :
     bitset(bitset_), value(value_), current_pos(0), burst_end(0)
@@ -228,7 +229,7 @@ static void run_benchmark(const srsgnb::bounded_bitset<N>& bitset, std::array<bo
   benchmark_bounded_bitset_test<N>(bitset, "bitset:" + description + ":test");
   benchmark_bounded_bitset_iterator<N>(bitset, "bitset:" + description + ":iterator");
   benchmark_bounded_bitset_foreach<N>(bitset, "bitset:" + description + ":foreach");
-  benchmark_array_count<N>(array, "bitset:" + description + ":count");
+  benchmark_array_count<N>(array, "array:" + description + ":count");
   fmt::print("\n");
 }
 
