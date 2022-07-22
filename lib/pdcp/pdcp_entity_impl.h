@@ -34,8 +34,6 @@ public:
   pdcp_rx_lower_interface&      get_rx_lower_interface() final { return (*rx); };
 
 private:
-  // bearer_logger logger;
-
   std::unique_ptr<pdcp_entity_tx> tx = {};
   std::unique_ptr<pdcp_entity_rx> rx = {};
 };

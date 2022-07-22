@@ -10,11 +10,11 @@
 
 #pragma once
 
+#include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/pdcp/pdcp_rx.h"
 #include "srsgnb/pdcp/pdcp_tx.h"
-#include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/timers.h"
 #include <memory>
@@ -25,7 +25,7 @@
 namespace srsgnb {
 
 struct pdcp_entity_creation_message {
-  du_ue_index_t                   ue_index;
+  srs_cu_cp::ue_index_t           ue_index;
   lcid_t                          lcid;
   pdcp_config                     config;
   pdcp_tx_lower_notifier*         tx_lower;
