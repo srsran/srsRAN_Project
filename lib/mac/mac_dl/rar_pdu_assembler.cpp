@@ -62,7 +62,7 @@ void rar_pdu_encoder::encode_rapid_subheader(uint16_t rapid, bool is_last_subpdu
   static const unsigned RAPID_FLAG = 1;
 
   // write E/T/RAPID MAC subheader.
-  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | ((uint8_t)rapid & 0x3FU);
+  *ptr = (uint8_t)((not is_last_subpdu ? 1U : 0U) << 7U) | (RAPID_FLAG << 6U) | ((uint8_t)rapid & 0x3fU);
   ptr++;
 }
 
@@ -70,9 +70,9 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
 {
   // Encode TA (12 bits).
   // high 7 bits of TA go into first octet.
-  *ptr = ((grant.ta >> 5U) & 0x7FU);
+  *ptr = ((grant.ta >> 5U) & 0x7fU);
   ptr++;
-  *ptr = ((grant.ta & 0x1FU) << 3U);
+  *ptr = ((grant.ta & 0x1fU) << 3U);
 
   // Encode UL grant (27 bits) as per TS38.213 Table 8.2-1.
   // encode Frequency hopping flag (1 bit).
@@ -80,14 +80,14 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   // encode PUSCH frequency resource allocation (14 bits).
   *ptr |= (grant.freq_resource_assignment >> (14U - 2U) & 0x3U); // first 2 bits.
   ++ptr;
-  *ptr = ((grant.freq_resource_assignment >> (14U - 2U - 8U)) & 0xFFU); // middle 8 bits.
+  *ptr = ((grant.freq_resource_assignment >> (14U - 2U - 8U)) & 0xffU); // middle 8 bits.
   ++ptr;
-  *ptr = (grant.freq_resource_assignment & 0xFU) << 4U; // last 4 bits.
+  *ptr = (grant.freq_resource_assignment & 0xfU) << 4U; // last 4 bits.
   // encode PUSCH time resource allocation (4 bits).
-  *ptr |= (grant.time_resource_assignment & 0xFU);
+  *ptr |= (grant.time_resource_assignment & 0xfU);
   ++ptr;
   // encode MCS (4 bits).
-  *ptr = (grant.mcs & 0xFU) << 4U;
+  *ptr = (grant.mcs & 0xfU) << 4U;
   // encode TPC command for PUSCH (3 bits).
   *ptr |= (grant.tpc & 0x7U) << 1U;
   // encode CSI request (1 bit).
@@ -95,9 +95,9 @@ void rar_pdu_encoder::encode_rar_grant_payload(const rar_ul_grant& grant)
   ++ptr;
 
   // Encode Temporary C-RNTI (2 Octets).
-  *ptr = (grant.temp_crnti >> 8U) & 0xFFU;
+  *ptr = (grant.temp_crnti >> 8U) & 0xffU;
   ++ptr;
-  *ptr = grant.temp_crnti & 0xFFU;
+  *ptr = grant.temp_crnti & 0xffU;
   ++ptr;
 }
 
