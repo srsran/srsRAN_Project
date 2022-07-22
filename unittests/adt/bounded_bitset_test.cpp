@@ -397,7 +397,7 @@ void test_bitset_fold_and_accumulate()
     big_bitmap.set(i);
   }
 
-  bounded_bitset<6> fold_bitset = fold_and_accumulate<6>(big_bitmap, fold_size);
+  bounded_bitset<6> fold_bitset = fold_and_accumulate<6, false>(big_bitmap, fold_size);
   TESTASSERT_EQ(big_bitmap.size() / fold_size, fold_bitset.count());
   TESTASSERT_EQ(fold_bitset.count(), big_bitmap.count());
   TESTASSERT(fold_bitset.is_contiguous());

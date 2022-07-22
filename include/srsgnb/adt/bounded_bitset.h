@@ -830,17 +830,17 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
 /// \param[in] slice_offset offset from where to slice each fold.
 /// \param[in] slice_length length of the slice taken from each fold.
 /// \return bitset of size slice_length with the accumulated folds.
-template <size_t N2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                        size_t                             fold_length,
-                                                        size_t                             slice_offset,
-                                                        size_t                             slice_length) noexcept
+template <size_t N2, bool reversed2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                         size_t                             fold_length,
+                                                         size_t                             slice_offset,
+                                                         size_t                             slice_length) noexcept
 {
   srsran_assert(
       other.size() % fold_length == 0, "Invalid fold length={} for bitset of size={}", fold_length, other.size());
-  bounded_bitset<N2, reversed> ret(slice_length);
+  bounded_bitset<N2, reversed2> ret(slice_length);
   for (size_t i = 0; i != other.size(); i += fold_length) {
-    ret |= other.template slice<N2, reversed>(i + slice_offset, i + slice_offset + slice_length);
+    ret |= other.template slice<N2, reversed2>(i + slice_offset, i + slice_offset + slice_length);
   }
   return ret;
 }
@@ -850,11 +850,11 @@ inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, 
 /// \param[in] other original bitset from where folds are generated.
 /// \param[in] fold_length length of each fold bitset.
 /// \return bitset of size fold_length with the accumulated folds.
-template <size_t N2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                        size_t                             fold_length) noexcept
+template <size_t N2, bool reversed2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                         size_t                             fold_length) noexcept
 {
-  return fold_and_accumulate<N2, N, reversed>(other, fold_length, 0, fold_length);
+  return fold_and_accumulate<N2, reversed2, N, reversed>(other, fold_length, 0, fold_length);
 }
 
 } // namespace srsgnb
