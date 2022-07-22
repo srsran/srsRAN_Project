@@ -34,26 +34,21 @@ subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
   return subcarrier_spacing::invalid;
 }
 
-static ofdm_symbol_range ssb_symbols_to_slot_symbols(ofdm_symbol_range ssb_symbols)
-{
-  // TODO: Account for mixed numerologies.
-  ofdm_symbol_range symbols{ssb_symbols.start() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                            ssb_symbols.stop() % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP};
-  return symbols;
-}
-
 static void fill_ssb_parameters(ssb_information_list& ssb_list,
                                 ssb_offset_to_pointA  offset_to_point_A,
                                 ssb_subcarrier_offset ssb_subc_offset,
                                 subcarrier_spacing    ssb_scs,
                                 subcarrier_spacing    scs_common,
-                                uint8_t               ofdm_sym_idx,
+                                uint8_t               ssb_burst_symb_idx,
                                 uint8_t               ssb_idx)
 {
   ssb_information ssb_msg = {};
 
   ssb_msg.ssb_index = ssb_idx;
-  ssb_msg.symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
+  // As per TS38.213, Section 4.1, the symbols that are passed refer to SSB burst, and can range from 0 up until 56. We
+  // need to convert these into slot symbols, that range within [0, 14).
+  ssb_msg.symbols.set(ssb_burst_symb_idx % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                      (ssb_burst_symb_idx + NOF_SSB_OFDM_SYMBOLS) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
   ssb_msg.crbs = get_ssb_crbs(ssb_scs, scs_common, offset_to_point_A, ssb_subc_offset);
   ssb_list.push_back(ssb_msg);
   srslog::fetch_basic_logger("MAC").debug("SCHED: SSB scheduling complete.");
@@ -77,27 +72,26 @@ static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
   // Extract the 8 MSB bits from 64-bit ssb_in_burst_bitmap - Currently only L_max = 4 or 8 are supported.
   uint8_t in_burst_bitmap = static_cast<uint8_t>(cell_cfg.ssb_cfg.ssb_bitmap >> 56U);
 
-  // In case A and C, the candidate OFDM symbols where to allocate the SSB within its period are indexed as follows:
-  // n = 2, 8, 16, 22  for frequencies <= cutoff frequency
-  // n = 2, 8, 16, 22, 30, 36, 44, 50  for frequencies > cutoff frequency
-  // Cutoff frequency is: 3GHz for Case A and Case C paired, 1.88GHz for Case C unpaired.
+  // In case A and C, the candidate OFDM symbols (within the SSB burst) where to allocate the SSB within its period are
+  // indexed as follows: n = 2, 8, 16, 22  for frequencies <= cutoff frequency n = 2, 8, 16, 22, 30, 36, 44, 50  for
+  // frequencies > cutoff frequency Cutoff frequency is: 3GHz for Case A and Case C paired, 1.88GHz for Case C unpaired.
   // Slot 0 has OFDM symbols 2,8; Slot n has symbols {2,8} + 14 * n;
   // TS 38.213 Section 4.1.
   if (slot_idx == 0 or slot_idx == 1 or slot_idx == 2 or slot_idx == 3) {
     // The SSB mask is used to choose only the SSB indices corresponding to the current slot.
-    uint8_t                ssb_idx_mask = 0b10000000 >> (slot_idx * 2);
-    std::array<uint8_t, 2> ofdm_symbols = {2, 8};
+    uint8_t                ssb_idx_mask        = 0b10000000 >> (slot_idx * 2);
+    std::array<uint8_t, 2> ssb_burst_ofdm_symb = {2, 8};
 
-    for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
+    for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
+        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
                             cell_cfg.ssb_cfg.scs,
                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                            ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                            ssb_burst_ofdm_symb[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
@@ -119,28 +113,26 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
   // Extract the 8 MSB bits from 64-bit ssb_in_burst_bitmap - Currently only L_max = 4 or 8 are supported.
   uint8_t in_burst_bitmap = static_cast<uint8_t>(cell_cfg.ssb_cfg.ssb_bitmap >> 56U);
 
-  // In case B, the candidate OFDM symbols where to allocate the SSB within its period are indexed as follows:
-  // n = 4, 8, 16, 20  for frequencies <= cutoff frequency
-  // n = 4, 8, 16, 20, 32, 36, 44, 48  for frequencies > cutoff frequency
-  // Cutoff frequency is: 3GHz for Case B.
-  // TS 38.213 Section 4.1.
+  // In case B, the candidate OFDM symbols  (within the SSB burst) where to allocate the SSB within its period are
+  // indexed as follows: n = 4, 8, 16, 20  for frequencies <= cutoff frequency n = 4, 8, 16, 20, 32, 36, 44, 48  for
+  // frequencies > cutoff frequency Cutoff frequency is: 3GHz for Case B. TS 38.213 Section 4.1.
 
   // Slot 0 has OFDM symbols 4,8; Slot 2 has symbols 32, 36.
   if (slot_idx == 0 or slot_idx == 2) {
     // The SSB mask is used to choose only the SSB indices corresponding to the current slot.
     uint8_t                ssb_idx_mask = 0b10000000 >> (slot_idx * 2);
-    std::array<uint8_t, 2> ofdm_symbols = {4, 8};
+    std::array<uint8_t, 2> ssb_burst_ofdm_symb = {4, 8};
 
-    for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
+    for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
+        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
                             cell_cfg.ssb_cfg.scs,
                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                            ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                            ssb_burst_ofdm_symb[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
@@ -151,18 +143,18 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
   if (slot_idx == 1 or slot_idx == 3) {
     // The SSB mask is used to choose only the SSB indices corresponding to the current slot.
     uint8_t                ssb_idx_mask = 0b00100000 >> ((slot_idx - 1) * 2);
-    std::array<uint8_t, 2> ofdm_symbols = {16, 20};
+    std::array<uint8_t, 2> ssb_burst_ofdm_symb = {16, 20};
 
-    for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
+    for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ofdm_symbols), "SSB index exceeding OFDM symbols array size");
+        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
                             cell_cfg.ssb_cfg.scs,
                             cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                            ofdm_symbols[n] + (slot_idx - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                            ssb_burst_ofdm_symb[n] + (slot_idx - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
       ssb_idx_mask = ssb_idx_mask >> 1;
@@ -209,10 +201,8 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
 
   // Update the used DL PRBs with those allocated to the SSBs.
   for (auto& ssb : ssb_list) {
-    grant_info grant{grant_info::channel::ssb,
-                     cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                     ssb_symbols_to_slot_symbols(ssb.symbols),
-                     ssb.crbs};
+    grant_info grant{
+        grant_info::channel::ssb, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
     res_grid.dl_res_grid.fill(grant);
   }
 }

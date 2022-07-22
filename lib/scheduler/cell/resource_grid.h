@@ -151,7 +151,7 @@ public:
   /// \return a CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const;
 
-  /// Checks whether the provided symbol x RB range in the cell resource grid are set.
+  /// Checks whether all the provided symbol x RB range in the cell resource grid are set.
   /// \param grant contains the symbol x RB range to be tested.
   /// \return true if all symbols x RBs of grant are currently set in the resource grid.
   bool is_set(grant_info grant) const;

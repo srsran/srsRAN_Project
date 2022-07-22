@@ -44,7 +44,14 @@ struct test_bench {
 
   const slot_difference tx_delay = 4;
 
-  test_bench(sched_cell_configuration_request_message cell_cfg_msg) : cfg(cell_cfg_msg), cell_res_grid(cfg)
+  test_bench(ssb_periodicity    ssb_period,
+             uint32_t           freq_arfcn,
+             uint16_t           offset_to_point_A,
+             uint64_t           in_burst_bitmap,
+             subcarrier_spacing ssb_scs,
+             uint8_t            k_ssb) :
+    cfg(make_cell_cfg_req_for_sib_sched(ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb)),
+    cell_res_grid(cfg)
   {
     // Set numerology for slot_point depending on the SSB case.
     uint8_t numerology = 0;
@@ -82,28 +89,66 @@ private:
   slot_point                   t;
   const cell_configuration     cfg;
   cell_slot_resource_allocator cell_res_grid;
+
+  // Create default configuration and change specific parameters based on input args.
+  sched_cell_configuration_request_message make_cell_cfg_req_for_sib_sched(ssb_periodicity    ssb_period,
+                                                                           uint32_t           freq_arfcn,
+                                                                           uint16_t           offset_to_point_A,
+                                                                           uint64_t           in_burst_bitmap,
+                                                                           subcarrier_spacing init_bwp_scs,
+                                                                           uint8_t            k_ssb)
+  {
+    sched_cell_configuration_request_message msg     = make_default_sched_cell_configuration_request();
+    msg.dl_carrier.arfcn                             = freq_arfcn;
+    msg.dl_cfg_common.freq_info_dl.offset_to_point_a = offset_to_point_A;
+    msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
+    msg.ssb_config.scs                               = init_bwp_scs;
+    msg.scs_common                                   = init_bwp_scs;
+    msg.ssb_config.ssb_bitmap                        = in_burst_bitmap;
+    msg.ssb_config.ssb_period                        = ssb_period;
+    msg.ssb_config.offset_to_point_A                 = ssb_offset_to_pointA{offset_to_point_A};
+    msg.ssb_config.k_ssb                             = k_ssb;
+    // Change Carrier parameters when SCS is 15kHz.
+    if (init_bwp_scs == subcarrier_spacing::kHz15) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs                         = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+    }
+    // Change Carrier parameters when SCS is 30kHz.
+    else if (init_bwp_scs == subcarrier_spacing::kHz30) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
+          scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
+    }
+    msg.dl_carrier.carrier_bw_mhz = 20;
+    msg.dl_carrier.nof_ant        = 1;
+
+    return msg;
+  }
 };
 
-// Helper function
+// Helper function to test the SSB symbols and CRBs are correctly registered in the resource grid.
 void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
                               subcarrier_spacing             scs,
                               ssb_offset_to_pointA           offset_pA,
                               unsigned                       nof_CRBs,
                               ssb_subcarrier_offset          k_ssb,
-                              ofdm_symbol_range              ssb_symbols,
-                              crb_interval                   ssb_crbs)
+                              const ofdm_symbol_range&       ssb_symbols,
+                              const crb_interval&            ssb_crbs)
 {
+  unsigned ssb_crb_start = scs == subcarrier_spacing::kHz15 ? offset_pA.to_uint() : offset_pA.to_uint() / 2;
+  unsigned ssb_crb_stop  = k_ssb.to_uint() > 0 ? ssb_crb_start + NOF_SSB_PRBS + 1 : ssb_crb_start + NOF_SSB_PRBS;
+
   // Verify resources on the left-side of SSB (lower CRBs) are unused.
-  grant_info empty_space{grant_info::channel::ssb, scs, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}, {0, offset_pA.to_uint()}};
+  grant_info empty_space{grant_info::channel::ssb, scs, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}, {0, ssb_crb_start}};
   TESTASSERT(not res_grid.collides(empty_space),
              "PRBs {} over symbols {} should be empty",
              empty_space.crbs,
              empty_space.symbols);
 
   // Verify resources on the left-side of SSB (lower CRBs) are unused.
-  unsigned ssb_crb_stop =
-      k_ssb.to_uint() > 0 ? offset_pA.to_uint() + NOF_SSB_PRBS + 1 : offset_pA.to_uint() + NOF_SSB_PRBS;
-  TESTASSERT(ssb_crb_stop > nof_CRBs, "SSB falls outside the BWP");
+  TESTASSERT(ssb_crb_stop <= nof_CRBs, "SSB falls outside the BWP");
   empty_space.crbs = {ssb_crb_stop, nof_CRBs};
   TESTASSERT(not res_grid.collides(empty_space),
              "PRBs {} over symbols {} should be empty",
@@ -116,6 +161,24 @@ void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
              "PRBs {} over symbols {} should be set",
              ssb_resources.crbs,
              ssb_resources.symbols);
+}
+
+// Helper function to test the symbols and CRBs in the SSB information struct.
+void test_ssb_information(uint8_t                expected_sym,
+                          uint32_t               expected_slot_shift,
+                          crb_interval           expected_crbs,
+                          const ssb_information& ssb_info)
+{
+  // Check OFDM symbols and frequency allocation in the ssb_information struct.
+  // con
+  unsigned slot_symbol_start =
+      (expected_sym + expected_slot_shift * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  TESTASSERT_EQ(slot_symbol_start, ssb_info.symbols.start(), "Start symbol check failed in SSB information");
+  unsigned slot_symbol_stop =
+      (expected_sym + expected_slot_shift * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4) % NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  TESTASSERT_EQ(slot_symbol_stop, ssb_info.symbols.stop(), "Stop symbol check failed in SSB information");
+  TESTASSERT_EQ(expected_crbs.start(), ssb_info.crbs.start(), "Start CRB check failed in SSB information");
+  TESTASSERT_EQ(expected_crbs.stop(), ssb_info.crbs.stop(), "Stop CRB check failed in SSB information");
 }
 
 /// This function tests SSB case A and C (both paired and unpaired spectrum).
@@ -156,7 +219,9 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
   TESTASSERT_EQ(
       ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
 
+  unsigned expected_ssb_per_slot;
   if (sl_point_mod == 0 or sl_point_mod == 1 or sl_point_mod == 2 or sl_point_mod == 3) {
+    expected_ssb_per_slot               = 0;
     std::array<uint8_t, 2> ofdm_symbols = {2, 8};
     uint8_t                ssb_idx_mask = 0b10000000 >> (sl_point_mod * 2);
     auto                   it           = ssb_list.begin();
@@ -165,41 +230,38 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
     for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
+        ++expected_ssb_per_slot;
 
-        // Check OFDM symbols and frequency allocation in the ssb_information struct.
-        TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                      ssb_item.symbols.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
-                      ssb_item.symbols.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
-                      ssb_item.crbs.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        unsigned ssb_crb_stop = ssb_cfg.k_ssb.to_uint() > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                            : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-        TESTASSERT_EQ(ssb_crb_stop,
-                      ssb_item.crbs.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
+        unsigned ssb_crb_start = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs == subcarrier_spacing::kHz15
+                                     ? ssb_cfg.offset_to_point_A.to_uint()
+                                     : ssb_cfg.offset_to_point_A.to_uint() / 2;
+        unsigned ssb_crb_stop =
+            ssb_cfg.k_ssb.to_uint() > 0 ? ssb_crb_start + NOF_SSB_PRBS + 1 : ssb_crb_start + NOF_SSB_PRBS;
+        test_ssb_information(ofdm_symbols[n], sl_point_mod, crb_interval{ssb_crb_start, ssb_crb_stop}, ssb_item);
+
+        // Verify there is no collision in the SSB
+        test_ssb_grid_allocation(slot_alloc.dl_res_grid,
+                                 ssb_cfg.scs,
+                                 ssb_cfg.offset_to_point_A,
+                                 cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth,
+                                 ssb_cfg.k_ssb,
+                                 ssb_item.symbols,
+                                 ssb_item.crbs);
+
         it++;
       }
 
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
-  }
 
-  // Check if DL CRB allocation is correct.
-  if (ssb_list.size() > 0) {
-    grant_info empty_space{grant_info::channel::ssb,
-                           slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                           {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
-                           {0, ssb_cfg.offset_to_point_A.to_uint()}};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "CRBs {} should be empty", empty_space.crbs);
-    unsigned ssb_crb_stop = ssb_cfg.k_ssb.to_uint() > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                        : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-    empty_space.crbs = {ssb_crb_stop, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
-    // FIXME: Check the non-empty PRBs.
+    // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
+    if (expected_ssb_per_slot == 0) {
+      grant_info empty_space{grant_info::channel::ssb,
+                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                             {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                             {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
+      TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
+    }
   }
 }
 
@@ -241,52 +303,37 @@ void test_ssb_case_B(const slot_point&             slot_tx,
       ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
 
   unsigned expected_ssb_per_slot;
-  // This block targets SSB occation at ofdm_symbols = {4, 8, 32, 36}.
+  // This block targets SSB occasions at ssb_burst_ofdm_symbols = {4, 8, 32, 36}.
   if (sl_point_mod == 0 or sl_point_mod == 2) {
     expected_ssb_per_slot = 0;
     // For frequency less than the CUTOFF freq, list cannot have more than 4 elements.
-    std::array<uint8_t, 2> ofdm_symbols = {4, 8};
-    uint8_t                ssb_idx_mask = 0b10000000 >> (sl_point_mod * 2);
-    auto                   it           = ssb_list.begin();
+    std::array<uint8_t, 2> ssb_burst_ofdm_symb = {4, 8};
+    uint8_t                ssb_idx_mask        = 0b10000000 >> (sl_point_mod * 2);
+    auto                   it                  = ssb_list.begin();
 
     // Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list.
-    for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
+    for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
         ++expected_ssb_per_slot;
 
         // Check OFDM symbols and frequency allocation in the ssb_information struct.
-        TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                      ssb_item.symbols.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
-                      ssb_item.symbols.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
-                      ssb_item.crbs.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        unsigned ssb_crb_stop = ssb_cfg.k_ssb.to_uint() > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                            : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-        TESTASSERT_EQ(ssb_crb_stop,
-                      ssb_item.crbs.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-#if 0
+        unsigned ssb_crb_start = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs == subcarrier_spacing::kHz15
+                                     ? ssb_cfg.offset_to_point_A.to_uint()
+                                     : ssb_cfg.offset_to_point_A.to_uint() / 2;
+        unsigned ssb_crb_stop =
+            ssb_cfg.k_ssb.to_uint() > 0 ? ssb_crb_start + NOF_SSB_PRBS + 1 : ssb_crb_start + NOF_SSB_PRBS;
+        test_ssb_information(ssb_burst_ofdm_symb[n], sl_point_mod, crb_interval{ssb_crb_start, ssb_crb_stop}, ssb_item);
+
         // Verify there is no collision in the SSB
         test_ssb_grid_allocation(slot_alloc.dl_res_grid,
                                  ssb_cfg.scs,
-                                 cell_cfg.dl_cfg_common.freq_info_dl.offset_to_point_a,
+                                 ssb_cfg.offset_to_point_A,
                                  cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth,
                                  ssb_cfg.k_ssb,
-                                 {ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                                  ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4},
-                                 {
-                                     ssb_cfg.offset_to_point_A.to_uint(),
-                                 });
+                                 ssb_item.symbols,
+                                 ssb_item.crbs);
 
-         ssb_subcarrier_offset          k_ssb,
-         ofdm_symbol_range              ssb_symbols,
-         crb_interval                   ssb_crbs)
-#endif
         it++;
       }
 
@@ -303,53 +350,53 @@ void test_ssb_case_B(const slot_point&             slot_tx,
     }
   }
 
-  // This block targets SSB occation at ofdm_symbols = {16, 20, 44, 48}.
+  // This block targets SSB occasions at ssb_burst_ofdm_symbols = {16, 20, 44, 48}.
   if (sl_point_mod == 1 or sl_point_mod == 3) {
     expected_ssb_per_slot = 0;
     // For frequency less than the CUTOFF freq, list cannot have more than 4 elements
-    std::array<uint8_t, 2> ofdm_symbols = {16, 20};
-    uint8_t                ssb_idx_mask = 0b00100000 >> ((sl_point_mod - 1) * 2);
-    auto                   it           = ssb_list.begin();
+    std::array<uint8_t, 2> ssb_burst_ofdm_symb = {16, 20};
+    uint8_t                ssb_idx_mask        = 0b00100000 >> ((sl_point_mod - 1) * 2);
+    auto                   it                  = ssb_list.begin();
 
     // Check if, for each OFDM symbols in the bitmap, there is a corresponding SSB from the list.
-    for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
+    for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
+        ++expected_ssb_per_slot;
 
         // Check OFDM symbols and frequency allocation in the ssb_information struct.
-        TESTASSERT_EQ(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
-                      ssb_item.symbols.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4,
-                      ssb_item.symbols.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        TESTASSERT_EQ(ssb_cfg.offset_to_point_A.to_uint(),
-                      ssb_item.crbs.start(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
-        unsigned ssb_crb_stop = ssb_cfg.k_ssb.to_uint() > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                            : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-        TESTASSERT_EQ(ssb_crb_stop,
-                      ssb_item.crbs.stop(),
-                      TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
+        crb_interval expected_ssb_crbs{};
+        unsigned     ssb_crb_start = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs == subcarrier_spacing::kHz15
+                                         ? ssb_cfg.offset_to_point_A.to_uint()
+                                         : ssb_cfg.offset_to_point_A.to_uint() / 2;
+        unsigned     ssb_crb_stop =
+            ssb_cfg.k_ssb.to_uint() > 0 ? ssb_crb_start + NOF_SSB_PRBS + 1 : ssb_crb_start + NOF_SSB_PRBS;
+        test_ssb_information(
+            ssb_burst_ofdm_symb[n], sl_point_mod - 1, crb_interval{ssb_crb_start, ssb_crb_stop}, ssb_item);
+
+        // Verify there is no collision in the SSB
+        test_ssb_grid_allocation(slot_alloc.dl_res_grid,
+                                 ssb_cfg.scs,
+                                 ssb_cfg.offset_to_point_A,
+                                 cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth,
+                                 ssb_cfg.k_ssb,
+                                 ssb_item.symbols,
+                                 ssb_item.crbs);
+
         it++;
       }
 
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
-  }
 
-  // Check if DL PRB allocation is correct.
-  if (ssb_list.size() > 0) {
-    grant_info empty_space{grant_info::channel::ssb,
-                           slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
-                           {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
-                           {0, ssb_cfg.offset_to_point_A.to_uint()}};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
-    unsigned ssb_crb_stop = ssb_cfg.k_ssb.to_uint() > 0 ? ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                        : ssb_cfg.offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-    empty_space.crbs = {ssb_crb_stop, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth};
-    TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
-    // FIXME: Check the non-empty PRBs.
+    // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
+    if (expected_ssb_per_slot == 0) {
+      grant_info empty_space{grant_info::channel::ssb,
+                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                             {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                             {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
+      TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
+    }
   }
 }
 
@@ -362,16 +409,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
 {
   const size_t NUM_OF_TEST_SLOTS = 1000;
 
-  sched_cell_configuration_request_message cell_cfg_msg = make_default_sched_cell_configuration_request();
-  cell_cfg_msg.dl_carrier.arfcn                         = freq_arfcn;
-  cell_cfg_msg.ssb_config.ssb_period                    = ssb_period;
-  cell_cfg_msg.ssb_config.ssb_bitmap                    = in_burst_bitmap;
-  cell_cfg_msg.ssb_config.offset_to_point_A             = ssb_offset_to_pointA{offset_to_point_A};
-  cell_cfg_msg.ssb_config.scs                           = ssb_scs;
-  // Mixed numerology is not supported yet.
-  cell_cfg_msg.scs_common       = ssb_scs;
-  cell_cfg_msg.ssb_config.k_ssb = k_ssb;
-  test_bench bench{cell_cfg_msg};
+  test_bench bench{ssb_period, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb};
 
   bench.new_slot();
 
@@ -581,9 +619,11 @@ void test_freq_domain_sched_ssb()
 
   // Test different offset_to_point_A and different k_SSB.
   periodicity = ssb_periodicity::ms10;
-  for (uint16_t offset_to_point_A_val = 0; offset_to_point_A_val < 32; offset_to_point_A_val++) {
+  // For case A (20MHz, SCS 15kHz), there are 106 within the Initial DL BWP.
+  unsigned max_offset_to_point_A = 106 - NOF_SSB_PRBS;
+  for (uint16_t offset_to_point_A = 0; offset_to_point_A < max_offset_to_point_A; offset_to_point_A++) {
     for (uint8_t k_ssb_val = 0; k_ssb_val < 12; k_ssb_val++) {
-      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A_val, in_burst_bitmap, ssb_scs, k_ssb_val);
+      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb_val);
     }
   }
 
@@ -597,9 +637,11 @@ void test_freq_domain_sched_ssb()
 
   // Test different offset_to_point_A and different k_SSB.
   periodicity = ssb_periodicity::ms10;
-  for (uint16_t offset_to_point_A_val = 0; offset_to_point_A_val < 28; offset_to_point_A_val++) {
+  // For case B (20MHz, SCS 30kHz), there are 52 within the Initial DL BWP.
+  max_offset_to_point_A = 52 - NOF_SSB_PRBS;
+  for (uint16_t offset_to_point_A = 0; offset_to_point_A < 28; offset_to_point_A += 2) {
     for (uint8_t k_ssb_val = 0; k_ssb_val < 24; k_ssb_val++) {
-      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A_val, in_burst_bitmap, ssb_scs, k_ssb_val);
+      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb_val);
     }
   }
 
@@ -612,9 +654,11 @@ void test_freq_domain_sched_ssb()
 
   // Test different offset_to_point_A and different k_SSB.
   periodicity = ssb_periodicity::ms10;
-  for (uint16_t offset_to_point_A_val = 0; offset_to_point_A_val < 28; offset_to_point_A_val++) {
+  // For case C (20MHz, SCS 30kHz), there are 52 within the Initial DL BWP.
+  max_offset_to_point_A = 52 - NOF_SSB_PRBS;
+  for (uint16_t offset_to_point_A = 0; offset_to_point_A < max_offset_to_point_A; offset_to_point_A += 2) {
     for (uint8_t k_ssb_val = 0; k_ssb_val < 24; k_ssb_val++) {
-      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A_val, in_burst_bitmap, ssb_scs, k_ssb_val);
+      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb_val);
     }
   }
 
@@ -627,9 +671,9 @@ void test_freq_domain_sched_ssb()
 
   // Test different offset_to_point_A and different k_SSB.
   periodicity = ssb_periodicity::ms10;
-  for (uint16_t offset_to_point_A_val = 0; offset_to_point_A_val < 28; offset_to_point_A_val++) {
+  for (uint16_t offset_to_point_A = 0; offset_to_point_A < max_offset_to_point_A; offset_to_point_A += 2) {
     for (uint8_t k_ssb_val = 0; k_ssb_val < 24; k_ssb_val++) {
-      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A_val, in_burst_bitmap, ssb_scs, k_ssb_val);
+      test_ssb_allocation(periodicity, freq_arfcn, offset_to_point_A, in_burst_bitmap, ssb_scs, k_ssb_val);
     }
   }
 }

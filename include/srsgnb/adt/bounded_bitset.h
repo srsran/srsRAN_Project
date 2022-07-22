@@ -469,7 +469,7 @@ public:
     return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
   }
 
-  /// \brief Checks if at least one bit in the bitset is set to 1 within a bit index range.
+  /// \brief Checks if all bits within a bit index range are set to 1.
   /// \return Returns true if all the bits within the range are 1.
   bool all(size_t start, size_t stop) const
   {
