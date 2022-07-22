@@ -12,6 +12,7 @@
 
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/frequency_range.h"
+#include "srsgnb/ran/resource_allocation/rb_interval.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -165,5 +166,10 @@ ssb_pattern_case ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arf
 /// \param dl_arfcn DL ARFCN.
 /// \return L_max value.
 uint8_t ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn);
+
+crb_interval get_ssb_crbs(subcarrier_spacing    ssb_scs,
+                          subcarrier_spacing    scs_common,
+                          ssb_offset_to_pointA  offset_to_pA,
+                          ssb_subcarrier_offset k_ssb);
 
 } // namespace srsgnb

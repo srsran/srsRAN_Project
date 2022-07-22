@@ -48,3 +48,31 @@ uint8_t srsgnb::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 
   return L_max;
 }
+
+crb_interval srsgnb::get_ssb_crbs(subcarrier_spacing    ssb_scs,
+                                  subcarrier_spacing    scs_common,
+                                  ssb_offset_to_pointA  offset_to_pA,
+                                  ssb_subcarrier_offset k_ssb)
+{
+  srsran_always_assert(ssb_scs == scs_common, "Mixed numerology not supported");
+
+  // As per TS 38.211, Section 7.4.3.1, the SSB occupies 240 subcarriers, or 20 PRBs. In the case of FR1, and SSB SCS ==
+  // SCScommon, if k_SSB > 1, the SSB PRBs will be shifted with respect to the Common RBs grid; this means that the SSB
+  // will overlap over 1 additional CRB (at the end of the SS/PBCH Block).
+  unsigned ssb_crbs_start;
+  if (scs_common == subcarrier_spacing::kHz15) {
+    ssb_crbs_start = offset_to_pA.to_uint();
+  } else if (scs_common == subcarrier_spacing::kHz30) {
+    srsran_sanity_check(offset_to_pA.to_uint() % 2 == 0,
+                        "With SCScommon with 30kHz OffsetToPointA must be an even number");
+    ssb_crbs_start = offset_to_pA.to_uint() / 2;
+  } else {
+    srsran_terminate("FR2 frequency not supported");
+  }
+
+  // TODO: Extent this function to cover mixed numerologies. Depending on the reference grid, NOF_SSB_PRBS might be
+  //       multiplied or divided by 2.
+  unsigned ssb_crbs_stop = k_ssb.to_uint() > 0 ? ssb_crbs_start + NOF_SSB_PRBS + 1 : ssb_crbs_start + NOF_SSB_PRBS;
+
+  return crb_interval{ssb_crbs_start, ssb_crbs_stop};
+}

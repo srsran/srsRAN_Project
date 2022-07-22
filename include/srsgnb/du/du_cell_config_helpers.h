@@ -74,10 +74,10 @@ inline coreset_configuration make_default_coreset0_config(const du_cell_config_d
 {
   coreset_configuration cfg = make_default_coreset_config(params);
   cfg.id                    = to_coreset_id(0);
-  cfg.duration              = 1;
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(5, params.scs_common, params.scs_common, params.coreset0_index, 0);
 
+  cfg.duration      = static_cast<unsigned>(desc.nof_symb_coreset);
   unsigned rb_start = params.offset_to_point_a - desc.offset;
   cfg.set_coreset0_crbs({rb_start, rb_start + desc.nof_rb_coreset});
   // Implicit CORESET#0 parameters as per TS38.211-7.3.2.2.

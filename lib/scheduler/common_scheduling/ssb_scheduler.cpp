@@ -45,6 +45,8 @@ static ofdm_symbol_range ssb_symbols_to_slot_symbols(ofdm_symbol_range ssb_symbo
 static void fill_ssb_parameters(ssb_information_list& ssb_list,
                                 ssb_offset_to_pointA  offset_to_point_A,
                                 ssb_subcarrier_offset ssb_subc_offset,
+                                subcarrier_spacing    ssb_scs,
+                                subcarrier_spacing    scs_common,
                                 uint8_t               ofdm_sym_idx,
                                 uint8_t               ssb_idx)
 {
@@ -52,13 +54,9 @@ static void fill_ssb_parameters(ssb_information_list& ssb_list,
 
   ssb_msg.ssb_index = ssb_idx;
   ssb_msg.symbols.set(ofdm_sym_idx, ofdm_sym_idx + NOF_SSB_OFDM_SYMBOLS);
-  // As per TS 38.211, Section 7.4.3.1, the SSB occupies 240 subcarriers, or 20 PRBs. In the case of FR1, and SSB SCS ==
-  // SCScommon, if k_SSB > 1, the SSB PRBs will be shifted with respect to the Common RBs grid; this means that the SSB
-  // will overlap over 1 additional CRB (at the end of the SS/PBCH Block).
-  unsigned last_ssb_crb = ssb_subc_offset.to_uint() > 0 ? offset_to_point_A.to_uint() + NOF_SSB_PRBS + 1
-                                                        : offset_to_point_A.to_uint() + NOF_SSB_PRBS;
-  ssb_msg.crbs.set(offset_to_point_A.to_uint(), last_ssb_crb);
+  ssb_msg.crbs = get_ssb_crbs(ssb_scs, scs_common, offset_to_point_A, ssb_subc_offset);
   ssb_list.push_back(ssb_msg);
+  srslog::fetch_basic_logger("MAC").debug("SCHED: SSB scheduling complete.");
 }
 
 /// Perform allocation for case A and C (both paired and unpaired spectrum) - TS 38.213, Section 4.1.
@@ -97,6 +95,8 @@ static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
+                            cell_cfg.ssb_cfg.scs,
+                            cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                             ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
@@ -138,6 +138,8 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
+                            cell_cfg.ssb_cfg.scs,
+                            cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                             ofdm_symbols[n] + slot_idx * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
@@ -158,6 +160,8 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
                             cell_cfg.ssb_cfg.k_ssb,
+                            cell_cfg.ssb_cfg.scs,
+                            cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                             ofdm_symbols[n] + (slot_idx - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                             ssb_idx);
       }
@@ -173,7 +177,7 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
   ssb_information_list& ssb_list = res_grid.result.dl.bc.ssb_info;
 
   if (ssb_list.full()) {
-    srslog::fetch_basic_logger("MAC-NR").error("SCHED: Failed to allocate SSB");
+    srslog::fetch_basic_logger("MAC").error("SCHED: Failed to allocate SSB");
     return;
   }
 

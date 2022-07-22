@@ -57,6 +57,7 @@ bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, crb_inte
   return false;
 }
 
+
 crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const
 {
   srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
@@ -65,6 +66,20 @@ crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, o
   crb_bits.fill(0, bwp_crb_lims.start());
   crb_bits.fill(bwp_crb_lims.stop(), crb_bits.size());
   return crb_bits;
+
+bool carrier_subslot_resource_grid::is_set(ofdm_symbol_range symbols, crb_interval crbs) const
+{
+  srsran_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
+  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+
+  // carrier bitmap RB bit=0 corresponds to CRB=carrier offset. Thus, we need to shift the CRB interval.
+  crbs.displace_by(-(int)offset());
+  for (unsigned i = symbols.start(); i < symbols.stop(); ++i) {
+    if (!slot_rbs.all(crbs.start() + i * nof_rbs(), crbs.stop() + i * nof_rbs())) {
+      return false;
+    }
+  }
+  return true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,6 +130,18 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
 {
   const carrier_resource_grid& carrier = get_carrier(scs);
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
+}
+
+bool cell_slot_resource_grid::is_set(grant_info grant) const
+{
+  const auto& carrier = get_carrier(grant.scs);
+  return carrier.subslot_rbs.is_set(grant.symbols, grant.crbs);
+}
+
+bool cell_slot_resource_grid::is_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
+{
+  const auto& carrier = get_carrier(scs);
+  return carrier.subslot_rbs.is_set(ofdm_symbols, crbs);
 }
 
 prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const

@@ -39,8 +39,8 @@ const char* ssb_case_to_str(ssb_pattern_case ssb_case)
 
 /// Helper struct to test HARQs and update loggers slot context.
 struct test_bench {
-  static srslog::basic_logger& test_logger;
-  static srslog::basic_logger& mac_logger;
+  srslog::basic_logger& mac_logger  = srslog::fetch_basic_logger("MAC");
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
   const slot_difference tx_delay = 4;
 
@@ -84,8 +84,39 @@ private:
   cell_slot_resource_allocator cell_res_grid;
 };
 
-srslog::basic_logger& test_bench::test_logger = srslog::fetch_basic_logger("TEST");
-srslog::basic_logger& test_bench::mac_logger  = srslog::fetch_basic_logger("MAC-NR");
+// Helper function
+void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
+                              subcarrier_spacing             scs,
+                              ssb_offset_to_pointA           offset_pA,
+                              unsigned                       nof_CRBs,
+                              ssb_subcarrier_offset          k_ssb,
+                              ofdm_symbol_range              ssb_symbols,
+                              crb_interval                   ssb_crbs)
+{
+  // Verify resources on the left-side of SSB (lower CRBs) are unused.
+  grant_info empty_space{grant_info::channel::ssb, scs, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}, {0, offset_pA.to_uint()}};
+  TESTASSERT(not res_grid.collides(empty_space),
+             "PRBs {} over symbols {} should be empty",
+             empty_space.crbs,
+             empty_space.symbols);
+
+  // Verify resources on the left-side of SSB (lower CRBs) are unused.
+  unsigned ssb_crb_stop =
+      k_ssb.to_uint() > 0 ? offset_pA.to_uint() + NOF_SSB_PRBS + 1 : offset_pA.to_uint() + NOF_SSB_PRBS;
+  TESTASSERT(ssb_crb_stop > nof_CRBs, "SSB falls outside the BWP");
+  empty_space.crbs = {ssb_crb_stop, nof_CRBs};
+  TESTASSERT(not res_grid.collides(empty_space),
+             "PRBs {} over symbols {} should be empty",
+             empty_space.crbs,
+             empty_space.symbols);
+
+  // Verify resources for SSB in the grid are set.
+  grant_info ssb_resources{grant_info::channel::ssb, scs, ssb_symbols, ssb_crbs};
+  TESTASSERT(res_grid.is_set(ssb_resources),
+             "PRBs {} over symbols {} should be set",
+             ssb_resources.crbs,
+             ssb_resources.symbols);
+}
 
 /// This function tests SSB case A and C (both paired and unpaired spectrum).
 void test_ssb_case_A_C(const slot_point&             slot_tx,
@@ -135,7 +166,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check OFDM symbols and frequency allocation.
+        // Check OFDM symbols and frequency allocation in the ssb_information struct.
         TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                       ssb_item.symbols.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -209,8 +240,10 @@ void test_ssb_case_B(const slot_point&             slot_tx,
   TESTASSERT_EQ(
       ssb_list_size, ssb_list.size(), TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
 
+  unsigned expected_ssb_per_slot;
   // This block targets SSB occation at ofdm_symbols = {4, 8, 32, 36}.
   if (sl_point_mod == 0 or sl_point_mod == 2) {
+    expected_ssb_per_slot = 0;
     // For frequency less than the CUTOFF freq, list cannot have more than 4 elements.
     std::array<uint8_t, 2> ofdm_symbols = {4, 8};
     uint8_t                ssb_idx_mask = 0b10000000 >> (sl_point_mod * 2);
@@ -220,8 +253,9 @@ void test_ssb_case_B(const slot_point&             slot_tx,
     for (uint8_t n = 0; n < ofdm_symbols.size(); n++) {
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
+        ++expected_ssb_per_slot;
 
-        // Check OFDM symbols and frequency allocation.
+        // Check OFDM symbols and frequency allocation in the ssb_information struct.
         TESTASSERT_EQ(ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                       ssb_item.symbols.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -236,15 +270,42 @@ void test_ssb_case_B(const slot_point&             slot_tx,
         TESTASSERT_EQ(ssb_crb_stop,
                       ssb_item.crbs.stop(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
+#if 0
+        // Verify there is no collision in the SSB
+        test_ssb_grid_allocation(slot_alloc.dl_res_grid,
+                                 ssb_cfg.scs,
+                                 cell_cfg.dl_cfg_common.freq_info_dl.offset_to_point_a,
+                                 cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth,
+                                 ssb_cfg.k_ssb,
+                                 {ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
+                                  ofdm_symbols[n] + sl_point_mod * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP + 4},
+                                 {
+                                     ssb_cfg.offset_to_point_A.to_uint(),
+                                 });
+
+         ssb_subcarrier_offset          k_ssb,
+         ofdm_symbol_range              ssb_symbols,
+         crb_interval                   ssb_crbs)
+#endif
         it++;
       }
 
       ssb_idx_mask = ssb_idx_mask >> 1;
     }
+
+    // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
+    if (expected_ssb_per_slot == 0) {
+      grant_info empty_space{grant_info::channel::ssb,
+                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+                             {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
+                             {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
+      TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
+    }
   }
 
   // This block targets SSB occation at ofdm_symbols = {16, 20, 44, 48}.
   if (sl_point_mod == 1 or sl_point_mod == 3) {
+    expected_ssb_per_slot = 0;
     // For frequency less than the CUTOFF freq, list cannot have more than 4 elements
     std::array<uint8_t, 2> ofdm_symbols = {16, 20};
     uint8_t                ssb_idx_mask = 0b00100000 >> ((sl_point_mod - 1) * 2);
@@ -255,7 +316,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
       if ((in_burst_bitmap & ssb_idx_mask) > 0) {
         auto ssb_item = *it;
 
-        // Check OFDM symbols and frequency allocation.
+        // Check OFDM symbols and frequency allocation in the ssb_information struct.
         TESTASSERT_EQ(ofdm_symbols[n] + (sl_point_mod - 1) * NOF_OFDM_SYM_PER_SLOT_NORMAL_CP,
                       ssb_item.symbols.start(),
                       TEST_HARQ_ASSERT_MSG(sl_point_mod, ssb_cfg.ssb_period, cell_cfg.ssb_case));
@@ -576,6 +637,8 @@ void test_freq_domain_sched_ssb()
 int main()
 {
   // Initialize logger.
+  srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);
+  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::info);
   srslog::init();
 
   // Test SSB scheduling over time.

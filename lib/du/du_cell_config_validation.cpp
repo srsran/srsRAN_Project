@@ -175,7 +175,7 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
     // We assume the Initial DL BWP ranges over the whole Transmission Bandwidth Configuration.
     unsigned nof_crbs = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs.length();
     unsigned offset_p_A_upper_bound =
-        ssb_cfg.k_ssb.to_uint() > 0 ? nof_crbs * 2 - NOF_SSB_PRBS - 1 : nof_crbs * 2 - NOF_SSB_PRBS;
+        ssb_cfg.k_ssb.to_uint() > 0 ? (nof_crbs - NOF_SSB_PRBS - 1) * 2 : (nof_crbs - NOF_SSB_PRBS) * 2;
     CHECK_EQ_OR_BELOW(
         ssb_cfg.offset_to_point_A.to_uint(),
         offset_p_A_upper_bound,

@@ -100,6 +100,12 @@ public:
   /// \return an CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const;
 
+  /// Checks whether the provided symbol x CRB range in the carrier resource grid is set.
+  /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
+  /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
+  /// \return true if all symbols and CRBs  of the provided range are set. False otherwise.
+  bool is_set(ofdm_symbol_range symbols, crb_interval crbs) const;
+
 private:
   /// Represents a matrix of symbol index x carrier RB index. The matrix dimensions get scaled based on the number
   /// of carrier RBs. RB index=0 corresponds to the carrier offset. Resources in the bitset are represented in the
@@ -144,6 +150,15 @@ public:
   /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
   /// \return a CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const;
+
+  /// Checks whether the provided symbol x RB range in the cell resource grid are set.
+  /// \param grant contains the symbol x RB range to be tested.
+  /// \return true if all symbols x RBs of grant are currently set in the resource grid.
+  bool is_set(grant_info grant) const;
+  bool is_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
+
+  /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
+  prb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
 
 private:
   friend struct cell_resource_allocator;

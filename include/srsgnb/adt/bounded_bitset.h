@@ -469,6 +469,21 @@ public:
     return buffer[nw - 1] == (allset >> (nw * bits_per_word - size()));
   }
 
+  /// \brief Checks if at least one bit in the bitset is set to 1 within a bit index range.
+  /// \return Returns true if all the bits within the range are 1.
+  bool all(size_t start, size_t stop) const
+  {
+    assert_within_bounds_(start, false);
+    assert_within_bounds_(stop, false);
+    // NOTE: can be optimized
+    for (size_t i = start; i < stop; ++i) {
+      if (!test_(i)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   /// \brief Finds the highest bit with value set to the value passed as argument.
   /// \param[in] value The bit value to find, either true (1) or false (0).
   /// \return Returns the lowest found bit index or -1 in case no bit was found with the provided value argument.

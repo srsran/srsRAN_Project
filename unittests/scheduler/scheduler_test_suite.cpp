@@ -67,7 +67,12 @@ void srsgnb::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg
   cell_slot_resource_grid grid(cell_cfg.dl_cfg_common.freq_info_dl.scs_carrier_list);
 
   // Register SSB.
-  // TODO.
+  for (const ssb_information& ssb : result.bc.ssb_info) {
+    crb_interval crbs = ssb.crbs;
+    grant_info   grant{grant_info::channel::ssb, cell_cfg.ssb_cfg.scs, ssb.symbols, crbs};
+    TESTASSERT(not grid.collides(grant));
+    grid.fill(grant);
+  }
 
   // Fill DL PDCCHs.
   for (const pdcch_dl_information& pdcch : result.dl_pdcchs) {
