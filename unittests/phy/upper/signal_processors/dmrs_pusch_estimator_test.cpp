@@ -25,15 +25,10 @@ public:
                span<const dmrs_mask> /**/,
                const configuration& cfg) override
   {
-    // For now, channel estimate is a long array with indices that vary with i) subcarriers, ii) OFDM symbols, iii) Rx
-    // port, and iv) Tx layer.
-    unsigned re_per_layer_ant = cfg.rb_mask.count() * NRE * cfg.nof_symbols;
-    unsigned re_per_layer     = re_per_layer_ant * cfg.nof_rx_ports;
-
     for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
-      float      marker = static_cast<float>(10 * port + i_layer);
-      unsigned   skip   = re_per_layer * i_layer + re_per_layer_ant * port;
-      span<cf_t> ch_est = span<cf_t>(estimate.ce).subspan(skip, re_per_layer_ant);
+      float marker = static_cast<float>(10 * port + i_layer);
+      // Get a view to the RE channel estimate corresponding to the port-i_layer path.
+      span<cf_t> ch_est = estimate.get_path_ch_estimate_wr(port, i_layer);
       std::fill(ch_est.begin(), ch_est.end(), marker);
     }
   };
@@ -101,8 +96,13 @@ int main()
 
   channel_estimate ch_est(ch_est_dims);
 
-  TESTASSERT(std::all_of(ch_est.ce.begin(), ch_est.ce.end(), [](cf_t a) { return (a == 1.0F); }),
-             "Channel estimate not properly initialized.");
+  for (unsigned i_layer = 0; i_layer != ch_est_dims.nof_tx_layers; ++i_layer) {
+    for (unsigned i_port = 0; i_port != ch_est_dims.nof_rx_ports; ++i_port) {
+      span<const cf_t> path_ch_est = ch_est.get_path_ch_estimate_r(i_port, i_layer);
+      TESTASSERT(std::all_of(path_ch_est.begin(), path_ch_est.end(), [](cf_t a) { return (a == 1.0F); }),
+                 "Channel estimate not properly initialized.");
+    }
+  }
 
   // PUSCH channel estimator instance.
   std::unique_ptr<dmrs_pusch_estimator> pusch_est_test = create_dmrs_pusch_estimator();
@@ -130,18 +130,13 @@ int main()
   // Check the results. The dummy channel estimator sets all RE elements corresponding to one TX-RX path to a number
   // equal to 10 * Rx port index + layer index.
   unsigned nof_rx_ports = cfg.rx_ports.size();
-  unsigned nof_re_path  = ch_est_dims.nof_symbols * ch_est_dims.nof_prb * NRE;
-  unsigned skip         = 0;
   for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
-    for (unsigned i_ant = 0; i_ant != nof_rx_ports; ++i_ant) {
-      span<cf_t> path   = span<cf_t>(ch_est.ce).subspan(skip, nof_re_path);
-      float      marker = static_cast<float>(10 * i_ant + i_layer);
-
+    for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
+      span<const cf_t> path   = ch_est.get_path_ch_estimate_r(i_port, i_layer);
+      float            marker = static_cast<float>(10 * i_port + i_layer);
       TESTASSERT(
           std::all_of(path.begin(), path.end(), [marker](cf_t a) { return ((a.real() == marker) && (a.imag() == 0)); }),
           "Something went wrong with the channel estimation.");
-
-      skip += nof_re_path;
     }
   }
 }

@@ -186,34 +186,32 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   epre /= n_pucch_sum;
 
   // Set power measures.
-  rsrp                          = std::min(rsrp, epre);
-  estimate.rsrp[0]              = rsrp;
-  estimate.rsrp_dB[0]           = convert_power_to_dB(rsrp);
-  estimate.epre[0]              = epre;
-  estimate.epre_dB[0]           = convert_power_to_dB(epre);
-  estimate.noise_variance[0]    = std::max(epre - rsrp, 1e-6F);
-  estimate.noise_variance_dB[0] = convert_power_to_dB(estimate.noise_variance[0]);
-  estimate.snr[0]               = rsrp / estimate.noise_variance[0];
-  estimate.snr_dB[0]            = convert_power_to_dB(estimate.snr[0]);
+  rsrp = std::min(rsrp, epre);
+  estimate.set_rsrp(rsrp, 0);
+  estimate.set_epre(epre, 0);
+  float noise_var = std::max(epre - rsrp, 1e-6F);
+  estimate.set_noise_variance(noise_var, 0);
+  estimate.set_snr(rsrp / noise_var, 0);
 
+  span<cf_t> ce_span = estimate.get_path_ch_estimate_wr(0);
   // Interpolates between DMRS symbols.
   for (uint32_t m = 0; m < n_pucch_sum; ++m) {
-    span<cf_t> ce_span(&estimate.ce[m * NRE], NRE);
+    span<cf_t> ce_span_rb = ce_span.subspan(m * NRE, NRE);
 
     if (m != n_pucch_sum - 1) {
       // If it is not the last symbol with DMRS, average between.
-      srsvec::add(ce[m], ce[m + 1], ce_span);
-      srsvec::sc_prod(ce_span, 0.5F, ce_span);
+      srsvec::add(ce[m], ce[m + 1], ce_span_rb);
+      srsvec::sc_prod(ce_span_rb, 0.5F, ce_span_rb);
     } else if (m != 0) {
       // Extrapolate for the last if more than 1 are provided.
-      srsvec::sc_prod(ce[m], 3.0F, ce_span);
+      srsvec::sc_prod(ce[m], 3.0F, ce_span_rb);
       // Subtraction ce[m] - ce[m - 1].
       std::transform(
-          std::begin(ce_span), std::end(ce_span), std::begin(ce[m - 1]), std::begin(ce_span), std::minus<>());
-      srsvec::sc_prod(ce_span, 0.5F, ce_span);
+          std::begin(ce_span_rb), std::end(ce_span_rb), std::begin(ce[m - 1]), std::begin(ce_span_rb), std::minus<>());
+      srsvec::sc_prod(ce_span_rb, 0.5F, ce_span_rb);
     } else {
       // Simply copy the estimated channel.
-      srsvec::copy(ce_span, ce[m]);
+      srsvec::copy(ce_span_rb, ce[m]);
     }
   }
 }
