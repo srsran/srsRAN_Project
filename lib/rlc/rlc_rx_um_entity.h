@@ -66,7 +66,11 @@ private:
 
   void update_total_sdu_length(rlc_umd_pdu_segments& pdu_segments, const rlc_um_pdu& rx_pdu);
 
-  // TS 38.322 Sec. 7.3
+  /// \brief t-Reassembly
+  /// This timer is used by [...] the receiving side of an UM RLC entity in order to detect loss of RLC PDUs at lower
+  /// layer (see sub clauses 5.2.2.2 and 5.2.3.2). If t-Reassembly is running, t-Reassembly shall not be started
+  /// additionally, i.e.only one t-Reassembly per RLC entity is running at a given time.
+  /// Ref: TS 38.322 Sec. 7.3
   unique_timer reassembly_timer; // to detect loss of RLC PDUs at lower layers
 
   bool sn_in_reassembly_window(const uint32_t sn);

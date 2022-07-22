@@ -27,6 +27,33 @@ constexpr uint32_t rlc_am_nr_status_pdu_sizeof_nack_range           = 1; ///< NA
 /// Expected number of NACKs in status PDU before needing to realloc
 constexpr uint32_t RLC_AM_NR_TYP_NACKS = 512;
 
+constexpr size_t rlc_am_pdu_header_so_size        = 2;
+constexpr size_t rlc_am_pdu_header_min_size_12bit = 2;
+constexpr size_t rlc_am_pdu_header_min_size_18bit = 3;
+constexpr size_t rlc_am_pdu_header_min_size(rlc_am_sn_size sn_size)
+{
+  switch (sn_size) {
+    case rlc_am_sn_size::size12bits:
+      return rlc_am_pdu_header_min_size_12bit;
+    case rlc_am_sn_size::size18bits:
+      return rlc_am_pdu_header_min_size_18bit;
+  }
+  srsgnb_assertion_failure("Cannot determine RLC AM PDU header minimum size: unsupported sn_size {}",
+                           to_number(sn_size));
+  return rlc_am_pdu_header_min_size_12bit;
+}
+constexpr size_t rlc_am_pdu_header_max_size(rlc_am_sn_size sn_size)
+{
+  switch (sn_size) {
+    case rlc_am_sn_size::size12bits:
+    case rlc_am_sn_size::size18bits:
+      return rlc_am_pdu_header_min_size(sn_size) + rlc_am_pdu_header_so_size;
+  }
+  srsgnb_assertion_failure("Cannot determine RLC AM PDU header maximum size: unsupported sn_size {}",
+                           to_number(sn_size));
+  return rlc_am_pdu_header_min_size_12bit + rlc_am_pdu_header_so_size;
+}
+
 /// AM PDU header
 struct rlc_am_pdu_header {
   rlc_dc_field   dc;      ///< Data/Control (D/C) field

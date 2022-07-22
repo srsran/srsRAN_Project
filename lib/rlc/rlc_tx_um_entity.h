@@ -48,9 +48,10 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  const uint32_t mod; // Tx counter modulus
+  // Tx counter modulus
+  const uint32_t mod;
 
-  // Header sizes are computed during configure based on SN length
+  // Header sizes are computed upon construction based on SN length
   const uint32_t head_len_full      = 0;
   const uint32_t head_len_first     = 0;
   const uint32_t head_len_not_first = 0;

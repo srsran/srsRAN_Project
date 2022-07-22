@@ -65,6 +65,8 @@ public:
   /// \param sdu SDU to be handled
   ///
   virtual void handle_sdu(rlc_sdu sdu) = 0;
+
+  // TODO: discard_sdu(uint32_t pdcp_sn)
 };
 
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
