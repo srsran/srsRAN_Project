@@ -10,6 +10,7 @@
 
 #include "lib/mac/mac_dl/rar_pdu_assembler.h"
 #include "mac_test_helpers.h"
+#include "srsgnb/adt/circular_array.h"
 #include "srsgnb/support/bit_encoding.h"
 #include "srsgnb/support/test_utils.h"
 #include <random>
@@ -143,17 +144,21 @@ void test_rar_assembler_maintains_old_results()
   mac_cell_creation_request cell_cfg = test_helpers::make_default_mac_cell_config();
   rar_pdu_assembler         assembler(cell_cfg);
 
-  // The assembler old result internal storage has to accommodate enough slots allocated with max number of RARs.
-  unsigned                         MIN_OLD_RESULT_MEMORY = MAX_GRANTS * NOF_SUBFRAMES_PER_FRAME;
-  std::vector<span<const uint8_t>> old_rar_pdus;
-  std::vector<rar_information>     old_rars;
-  for (unsigned i = 0; i < MIN_OLD_RESULT_MEMORY; ++i) {
-    old_rars.push_back(make_random_rar_info(nof_ul_grants_per_rar(gen)));
-    old_rar_pdus.push_back(assembler.encode_rar_pdu(old_rars.back()));
-  }
+  // The RAR assembler has to internally store previous slot results. This variable defines a reasonable slot duration
+  // that the RAR assembler has to keep these results stored.
+  static constexpr unsigned MEMORY_RESULT_IN_SLOTS = MAX_GRANTS * NOF_SUBFRAMES_PER_FRAME;
 
-  for (unsigned i = 0; i < old_rars.size(); ++i) {
-    test_encoded_rar(old_rars[i], old_rar_pdus[i]);
+  circular_array<span<const uint8_t>, MEMORY_RESULT_IN_SLOTS> previous_pdus;
+  circular_array<rar_information, MEMORY_RESULT_IN_SLOTS>     previous_rars;
+
+  unsigned nof_slots_tests = MEMORY_RESULT_IN_SLOTS * 64;
+  for (unsigned i = 0; i < nof_slots_tests; ++i) {
+    if (i >= MEMORY_RESULT_IN_SLOTS) {
+      // Test old results to check if they are still valid.
+      test_encoded_rar(previous_rars[i], previous_pdus[i]);
+    }
+    previous_rars[i] = make_random_rar_info(nof_ul_grants_per_rar(gen));
+    previous_pdus[i] = assembler.encode_rar_pdu(previous_rars[i]);
   }
 }
 
