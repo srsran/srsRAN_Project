@@ -176,25 +176,8 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   // Add SIB1 PDUs.
   const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
   for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
-    byte_buffer payload{sib1_pdus[i].begin(), sib1_pdus[i].end()};
     builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::sib), 1, {&*payload.cbegin(), &*payload.cend()});
-  }
-
-  // Add RAR PDUs.
-  const static_vector<span<const uint8_t>, MAX_RAR_PDUS_PER_SLOT>& rar_pdus = dl_data.rar_pdus;
-  for (unsigned i = 0, e = rar_pdus.size(); i != e; ++i) {
-    byte_buffer payload = rar_pdus[i];
-    builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::rar), 1, {&*payload.cbegin(), &*payload.cend()});
-  }
-
-  // Add UE PDUs.
-  const static_vector<byte_buffer_slice_chain, MAX_DL_PDUS_PER_SLOT>& ue_pdus = dl_data.ue_pdus;
-  for (unsigned i = 0, e = ue_pdus.size(); i != e; ++i) {
-    const byte_buffer_slice_chain& payload = ue_pdus[i];
-    builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::ue), 1, {&*payload.begin(), &*payload.end()});
+        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::sib), 1, {sib1_pdus[i].data(), sib1_pdus[i].size()});
   }
 
   // Send the message.

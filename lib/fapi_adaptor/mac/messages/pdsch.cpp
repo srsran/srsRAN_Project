@@ -55,6 +55,8 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                                                     : cyclic_prefix_type::normal);
 
   // Codewords.
+  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1,
+                "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : mac_pdu.pdsch_cfg.codewords) {
     dl_pdsch_codeword_builder cw_builder = builder.add_codeword();
     cw_builder.set_basic_parameters(cw.target_code_rate,
