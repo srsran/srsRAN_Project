@@ -70,9 +70,13 @@ public:
   /// with the most significant bit being the leftmost (in this case a0 in position 24 of the uint32_t).
   dl_ssb_pdu_builder& set_bch_payload_phy_timing_info(uint32_t bch_payload)
   {
+    static constexpr unsigned MAX_SIZE_IN_BITS = 24U;
+
+    srsran_assert(bch_payload < (1U << MAX_SIZE_IN_BITS), "BCH payload value out of bounds");
+
     pdu.bch_payload_flag = bch_payload_type::phy_timing_info;
     // Only use the 24 least significant bits.
-    pdu.bch_payload.bch_payload = (bch_payload & 0xffffff);
+    pdu.bch_payload.bch_payload = (bch_payload & ((1U << MAX_SIZE_IN_BITS) - 1));
 
     return *this;
   }

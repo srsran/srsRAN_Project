@@ -16,13 +16,17 @@ add_executable(dl_csi_pdu_builder_test dl_csi_pdu_test.cpp)
 target_link_libraries(dl_csi_pdu_builder_test srsgnb_support srslog)
 add_test(dl_csi_pdu_builder_test dl_csi_pdu_builder_test)
 
-add_executable(dl_pdcch_builder_test pdcch_test.cpp)
+add_executable(dl_pdcch_builder_test dl_pdcch_pdu_test.cpp)
 target_link_libraries(dl_pdcch_builder_test srsgnb_support srslog)
 add_test(dl_pdcch_builder_test dl_pdcch_builder_test)
 
-add_executable(dl_pdsch_builder_test pdsch_test.cpp)
+add_executable(dl_pdsch_builder_test dl_pdsch_pdu_test.cpp)
 target_link_libraries(dl_pdsch_builder_test srsgnb_support srslog)
 add_test(dl_pdsch_builder_test dl_pdsch_builder_test)
+
+add_executable(dl_ssb_builder_test dl_ssb_pdu_test.cpp)
+target_link_libraries(dl_ssb_builder_test srsgnb_support srslog)
+add_test(dl_ssb_builder_test dl_ssb_builder_test)
 
 add_executable(error_indication_builder_test error_indication_test.cpp)
 target_link_libraries(error_indication_builder_test srsgnb_support srslog)
@@ -52,15 +56,15 @@ add_executable(ul_dci_request_builder_test ul_dci_request_test.cpp)
 target_link_libraries(ul_dci_request_builder_test srsgnb_support srslog)
 add_test(ul_dci_request_builder_test ul_dci_request_builder_test)
 
-add_executable(ul_prach_builder_test ul_prach_test.cpp)
+add_executable(ul_prach_builder_test ul_prach_pdu_test.cpp)
 target_link_libraries(ul_prach_builder_test srsgnb_support srslog)
 add_test(ul_prach_builder_test ul_prach_builder_test)
 
-add_executable(ul_pucch_builder_test ul_pucch_test.cpp)
+add_executable(ul_pucch_builder_test ul_pucch_pdu_test.cpp)
 target_link_libraries(ul_pucch_builder_test srsgnb_support srslog)
 add_test(ul_pucch_builder_test ul_pucch_builder_test)
 
-add_executable(ul_pusch_builder_test ul_pusch_test.cpp)
+add_executable(ul_pusch_builder_test ul_pusch_pdu_test.cpp)
 target_link_libraries(ul_pusch_builder_test srsgnb_support srslog)
 add_test(ul_pusch_builder_test ul_pusch_builder_test)
 
