@@ -295,3 +295,20 @@ mac_dl_sched_result unittests::build_valid_mac_dl_sched_result()
 
   return result;
 }
+
+prach_occasion_info unittests::build_valid_prach_occassion()
+{
+  prach_occasion_info prach;
+
+  // NOTE: Used random values from the property range, FAPI document SCF-222 v4.0 section 3.4.3.1 in table PRACH PDU.
+  prach.nof_preamble_indexes = 12;
+  prach.start_preamble_index = 11;
+  prach.prach_config_index   = 0;
+  prach.nof_cs               = 3;
+  prach.start_symbol         = 2;
+  prach.fd_ra_resources      = {2, 4};
+  prach.nof_prach_occasions  = 5;
+  prach.format               = preamble_format(preamble_format::values::FORMAT1);
+
+  return prach;
+}

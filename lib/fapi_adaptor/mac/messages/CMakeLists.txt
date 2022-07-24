@@ -9,7 +9,8 @@
 set(SOURCES
         pdcch.cpp
         pdsch.cpp
+        prach.cpp
         ssb.cpp)
 
 add_library(srsgnb_mac_fapi_adaptors STATIC ${SOURCES})
-target_link_libraries(srsgnb_mac_fapi_adaptors srsvec)
+target_link_libraries(srsgnb_mac_fapi_adaptors srslog)

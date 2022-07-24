@@ -12,6 +12,7 @@
 #include "srsgnb/fapi/message_validators.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
+#include "srsgnb/fapi_adaptor/mac/messages/prach.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
 
 using namespace srsgnb;
@@ -184,4 +185,29 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   gateway.tx_data_request(msg);
 }
 
-void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res) {}
+void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)
+{
+  ul_tti_request_message         msg;
+  ul_tti_request_message_builder builder(msg);
+
+  // :TODO:
+  unsigned sfn  = 0;
+  unsigned slot = 0;
+  builder.set_basic_parameters(sfn, slot);
+
+  for (const auto& pdu : ul_res.ul_res->prachs) {
+    ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
+    convert_prach_mac_to_fapi(pdu_builder, pdu);
+  }
+
+  // Validate that the UL_TTI.request message is correct.
+  error_type<validator_report> result = validate_ul_tti_request(msg);
+
+  if (!result) {
+    // :TODO: log errors,
+
+    return;
+  }
+
+  gateway.ul_tti_request(msg);
+}

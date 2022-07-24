@@ -2432,6 +2432,16 @@ public:
                                      uint8_t           prach_start_symbol,
                                      uint16_t          num_cs)
   {
+    ul_prach_pdu_builder builder = add_prach_pdu();
+    builder.set_basic_parameters(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
+
+    return builder;
+  }
+
+  /// Adds a PRACH PDU to the message and returns a builder that helps to fill the parameters.
+  /// \note These parameters are specified in SCF-222 v4.0 section 3.4.3.1 in table PRACH PDU.
+  ul_prach_pdu_builder add_prach_pdu()
+  {
     msg.pdus.emplace_back();
     auto& pdu    = msg.pdus.back();
     pdu.pdu_type = ul_pdu_type::PRACH;
@@ -2439,7 +2449,6 @@ public:
     ++msg.num_pdus_of_each_type[static_cast<unsigned>(pdu_type::PRACH)];
 
     ul_prach_pdu_builder builder(pdu.prach_pdu);
-    builder.set_basic_parameters(pci, num_occasions, format_type, index_fd_ra, prach_start_symbol, num_cs);
 
     return builder;
   }
