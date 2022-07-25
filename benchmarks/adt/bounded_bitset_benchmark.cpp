@@ -11,13 +11,41 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
+#include <getopt.h>
 #include <random>
 
 using namespace srsgnb;
 
-static constexpr unsigned iterations = 10000;
+unsigned nof_repetitions = 100000;
 
-benchmarker bm("bounded_bitset count ones", iterations);
+static void usage(const char* prog)
+{
+  fmt::print("Usage: {} [-R repetitions] [-s silent]\n", prog);
+  fmt::print("\t-R Repetitions [Default {}]\n", nof_repetitions);
+  fmt::print("\t-h Show this message\n");
+}
+
+static void parse_args(int argc, char** argv)
+{
+  int opt = 0;
+  while ((opt = getopt(argc, argv, "R:h")) != -1) {
+    switch (opt) {
+      case 'R':
+        nof_repetitions = std::strtol(optarg, nullptr, 10);
+        break;
+      case 'h':
+      default:
+        usage(argv[0]);
+        exit(0);
+    }
+  }
+}
+
+static benchmarker& get_benchmarker()
+{
+  static benchmarker bm("bounded_bitset count ones", nof_repetitions);
+  return bm;
+}
 
 template <unsigned N>
 static void benchmark_bounded_bitset_count(const srsgnb::bounded_bitset<N>& bitset, std::string description)
@@ -25,9 +53,9 @@ static void benchmark_bounded_bitset_count(const srsgnb::bounded_bitset<N>& bits
   unsigned expected  = bitset.count();
   unsigned count_sum = 0;
 
-  bm.new_measure(description, iterations, [&count_sum, &bitset]() { count_sum += bitset.count(); });
+  get_benchmarker().new_measure(description, nof_repetitions, [&count_sum, &bitset]() { count_sum += bitset.count(); });
 
-  TESTASSERT_EQ(expected, count_sum / iterations);
+  TESTASSERT_EQ(expected, count_sum / nof_repetitions);
 }
 
 template <unsigned N>
@@ -36,7 +64,7 @@ static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitse
   unsigned expected  = bitset.count();
   unsigned count_sum = 0;
 
-  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
+  get_benchmarker().new_measure(description, nof_repetitions, [&count_sum, &bitset]() {
     unsigned count = 0;
     for (unsigned i = 0; i != N; ++i) {
       if (bitset.test(i)) {
@@ -46,7 +74,7 @@ static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitse
     count_sum += count;
   });
 
-  TESTASSERT_EQ(expected, count_sum / iterations);
+  TESTASSERT_EQ(expected, count_sum / nof_repetitions);
 }
 
 template <size_t N>
@@ -130,13 +158,13 @@ static void benchmark_bounded_bitset_foreach(const srsgnb::bounded_bitset<N>& bi
   unsigned expected  = bitset.count();
   unsigned count_sum = 0;
 
-  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
+  get_benchmarker().new_measure(description, nof_repetitions, [&count_sum, &bitset]() {
     unsigned count = 0;
     bitset.for_each(0, bitset.size(), [&count](size_t i) { count++; });
     count_sum += count;
   });
 
-  TESTASSERT_EQ(expected, count_sum / iterations);
+  TESTASSERT_EQ(expected, count_sum / nof_repetitions);
 }
 
 template <unsigned N>
@@ -145,7 +173,7 @@ static void benchmark_bounded_bitset_iterator(const srsgnb::bounded_bitset<N>& b
   unsigned expected  = bitset.count();
   unsigned count_sum = 0;
 
-  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
+  get_benchmarker().new_measure(description, nof_repetitions, [&count_sum, &bitset]() {
     unsigned                   count = 0;
     bounded_bitset_iterable<N> iterable(bitset);
     for (bounded_bitset_iterator<N> it = iterable.begin(), end = iterable.end(); it != end; ++it) {
@@ -154,7 +182,7 @@ static void benchmark_bounded_bitset_iterator(const srsgnb::bounded_bitset<N>& b
     count_sum += count;
   });
 
-  TESTASSERT_EQ(expected, count_sum / iterations);
+  TESTASSERT_EQ(expected, count_sum / nof_repetitions);
 }
 
 template <unsigned N>
@@ -163,11 +191,11 @@ static void benchmark_array_count(const std::array<bool, N>& array, std::string 
   unsigned expected  = std::count(array.begin(), array.end(), true);
   unsigned count_sum = 0;
 
-  bm.new_measure(description, iterations, [&count_sum, &array]() {
+  get_benchmarker().new_measure(description, nof_repetitions, [&count_sum, &array]() {
     unsigned count = std::count(array.begin(), array.end(), true);
     count_sum += count;
   });
-  TESTASSERT_EQ(expected, count_sum / iterations);
+  TESTASSERT_EQ(expected, count_sum / nof_repetitions);
 }
 
 template <unsigned N>
@@ -238,11 +266,13 @@ static void benchmark_count_random_set()
   run_benchmark<N>(bitset, array, "random");
 }
 
-int main()
+int main(int argc, char** argv)
 {
+  parse_args(argc, argv);
+
   benchmark_count_contiguous<275 * 12>();
   benchmark_count_all_set<275 * 12>();
   benchmark_count_none_set<275 * 12>();
   benchmark_count_random_set<275 * 12>();
-  bm.print_percentiles_time();
+  get_benchmarker().print_percentiles_time();
 }

@@ -8,3 +8,4 @@
 
 add_executable(bounded_bitset_benchmark bounded_bitset_benchmark.cpp)
 target_link_libraries(bounded_bitset_benchmark srslog)
+add_test(bounded_bitset_benchmark bounded_bitset_benchmark -R 100)
