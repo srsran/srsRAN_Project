@@ -60,7 +60,7 @@ include-guards:
     - |
       EXIT_CODE=0
       AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="include/srsgnb" INPUT_IGNORE="/bundled/" include-guards-check.sh || EXIT_CODE=$?
-      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="." INPUT_IGNORE="^include/.*" include-guards-check.sh || EXIT_CODE=$?
+      AUTOCORRECTION=1 PRAGMA=1 TARGET_BRANCH=origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME INPUT_PATH="." INPUT_IGNORE="^\(include\|docs\)/.*" include-guards-check.sh || EXIT_CODE=$?
       is-pristine-repo.sh || EXIT_CODE=$?
       exit $EXIT_CODE
 
@@ -131,6 +131,7 @@ requirements-report:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
+      when: always # Even if previous stages/required jobs fail
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   script:
     - test-reporter --input unittests --output ./requirement_report.html
@@ -143,6 +144,7 @@ tests-report:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
+      when: always # Even if previous stages/required jobs fail
   image: python:3.9-alpine # sh entrypoint
   before_script:
     - pip install junit2html
@@ -159,6 +161,7 @@ pages:
   stage: build and publish doc
   rules:
     - if: $ON_SCHEDULE
+      when: always # Even if previous stages/required jobs fail
   image: registry.gitlab.com/softwareradiosystems/testing-tools/doxygen:$DOCKER_DOXYGEN_VERSION
   script:
     - doxygen_generator.sh
@@ -168,6 +171,12 @@ pages:
     - mv requirement_report.html public/
     - mv public/index.html public/index_doxygen.html
     - mv docs/index.html public/index.html
+  after_script:
+    - |
+      if [ $CI_JOB_STATUS = "failed" ]; then
+        mkdir -p public
+        mv docs/fail.html public/index.html
+      fi
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:

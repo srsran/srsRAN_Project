@@ -136,7 +136,7 @@ cmake flag check:
   script:
     # Launch ctest
     - cd build/${test_folder}
-    - ctest -j "$(nproc --all)" --schedule-random --output-on-failure --output-junit xunit.xml
+    - ctest -j "$(nproc --all)" --schedule-random --output-on-failure --output-junit xunit.xml && ret=0 || ret=1
     # Launch coverage
     - cd ${CI_PROJECT_DIR}/build
     - GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
@@ -155,6 +155,7 @@ cmake flag check:
           gcovr --html                $GCOVR_ARGS -o coverage.html
         fi
       fi
+    - exit $ret
   after_script:
     # Move files to upload to root so no intermiddle folders will be created in the artifact
     - mkdir coverage_html
@@ -162,6 +163,7 @@ cmake flag check:
     - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}
     - mv ${CI_PROJECT_DIR}/build/coverage.*               ${CI_PROJECT_DIR}/coverage_html
   artifacts:
+    when: always
     reports:
       junit: xunit.xml
       coverage_report:
@@ -170,7 +172,7 @@ cmake flag check:
     paths:
       - coverage_html
       - xunit.xml
-    expire_in: 7 days
+    expire_in: 8 hours
 
 unit tests:
   extends: .ctest
