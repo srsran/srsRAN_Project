@@ -88,7 +88,7 @@ private:
   /// \param[in] units            Units displayed in the header.
   void print_percentile_header(unsigned descr_width, unsigned percentile_width, const std::string& units) const
   {
-    fmt::print("{} performance. All values in {}.\n"
+    fmt::print("\"{}\" performance. All values in {}.\n"
                " {:<{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|{:^{}}|\n",
                title,
                units,

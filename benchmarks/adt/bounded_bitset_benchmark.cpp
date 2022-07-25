@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/adt/bounded_bitset.h"
+#include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
 
@@ -16,67 +17,36 @@ using namespace srsgnb;
 
 static constexpr unsigned iterations = 10000;
 
-static void print_percentiles_header()
-{
-  fmt::print("{:>50} | 50th | 75th | 90th | 99th | 99.9th | Worst |\n", "Percentiles");
-}
-
-static void print_percentiles(const std::string& description, const std::vector<unsigned>& results)
-{
-  fmt::print("{:>50} |{:6}|{:6}|{:6}|{:6}|{:8}|{:7}|\n",
-             description,
-             results[static_cast<size_t>(results.size() * 0.5)],
-             results[static_cast<size_t>(results.size() * 0.75)],
-             results[static_cast<size_t>(results.size() * 0.9)],
-             results[static_cast<size_t>(results.size() * 0.99)],
-             results[static_cast<size_t>(results.size() * 0.999)],
-             results.back());
-}
+benchmarker bm("bounded_bitset count ones", iterations);
 
 template <unsigned N>
 static void benchmark_bounded_bitset_count(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  std::vector<unsigned> results;
-  results.reserve(iterations);
+  unsigned expected  = bitset.count();
+  unsigned count_sum = 0;
 
-  unsigned expected = bitset.count();
+  bm.new_measure(description, iterations, [&count_sum, &bitset]() { count_sum += bitset.count(); });
 
-  for (unsigned iteration = 0; iteration != iterations; ++iteration) {
-    auto start = std::chrono::high_resolution_clock::now();
-    TESTASSERT_EQ(expected, bitset.count());
-    auto end = std::chrono::high_resolution_clock::now();
-    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-  }
-
-  std::sort(results.begin(), results.end());
-
-  print_percentiles(description, results);
+  TESTASSERT_EQ(expected, count_sum / iterations);
 }
 
 template <unsigned N>
 static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  std::vector<unsigned> results;
-  results.reserve(iterations);
+  unsigned expected  = bitset.count();
+  unsigned count_sum = 0;
 
-  unsigned expected = bitset.count();
-
-  for (unsigned iteration = 0; iteration != iterations; ++iteration) {
-    auto     start = std::chrono::high_resolution_clock::now();
+  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
     unsigned count = 0;
     for (unsigned i = 0; i != N; ++i) {
       if (bitset.test(i)) {
         count++;
       }
     }
-    TESTASSERT_EQ(expected, count);
-    auto end = std::chrono::high_resolution_clock::now();
-    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-  }
+    count_sum += count;
+  });
 
-  std::sort(results.begin(), results.end());
-
-  print_percentiles(description, results);
+  TESTASSERT_EQ(expected, count_sum / iterations);
 }
 
 template <size_t N>
@@ -157,69 +127,47 @@ public:
 template <unsigned N>
 static void benchmark_bounded_bitset_foreach(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  std::vector<unsigned> results;
-  results.reserve(iterations);
+  unsigned expected  = bitset.count();
+  unsigned count_sum = 0;
 
-  unsigned expected = bitset.count();
-
-  for (unsigned iteration = 0; iteration != iterations; ++iteration) {
-    auto     start = std::chrono::high_resolution_clock::now();
+  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
     unsigned count = 0;
     bitset.for_each(0, bitset.size(), [&count](size_t i) { count++; });
-    TESTASSERT_EQ(expected, count);
-    auto end = std::chrono::high_resolution_clock::now();
-    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-  }
+    count_sum += count;
+  });
 
-  std::sort(results.begin(), results.end());
-
-  print_percentiles(description, results);
+  TESTASSERT_EQ(expected, count_sum / iterations);
 }
 
 template <unsigned N>
 static void benchmark_bounded_bitset_iterator(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  std::vector<unsigned> results;
-  results.reserve(iterations);
+  unsigned expected  = bitset.count();
+  unsigned count_sum = 0;
 
-  unsigned expected = bitset.count();
-
-  for (unsigned iteration = 0; iteration != iterations; ++iteration) {
-    auto                       start = std::chrono::high_resolution_clock::now();
+  bm.new_measure(description, iterations, [&count_sum, &bitset]() {
     unsigned                   count = 0;
     bounded_bitset_iterable<N> iterable(bitset);
     for (bounded_bitset_iterator<N> it = iterable.begin(), end = iterable.end(); it != end; ++it) {
       count++;
     }
-    TESTASSERT_EQ(expected, count);
-    auto end = std::chrono::high_resolution_clock::now();
-    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-  }
+    count_sum += count;
+  });
 
-  std::sort(results.begin(), results.end());
-
-  print_percentiles(description, results);
+  TESTASSERT_EQ(expected, count_sum / iterations);
 }
 
 template <unsigned N>
 static void benchmark_array_count(const std::array<bool, N>& array, std::string description)
 {
-  std::vector<unsigned> results;
-  results.reserve(iterations);
+  unsigned expected  = std::count(array.begin(), array.end(), true);
+  unsigned count_sum = 0;
 
-  unsigned expected = std::count(array.begin(), array.end(), true);
-
-  for (unsigned iteration = 0; iteration != iterations; ++iteration) {
-    auto start = std::chrono::high_resolution_clock::now();
-
-    TESTASSERT_EQ(expected, std::count(array.begin(), array.end(), true));
-    auto end = std::chrono::high_resolution_clock::now();
-    results.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
-  }
-
-  std::sort(results.begin(), results.end());
-
-  print_percentiles(description, results);
+  bm.new_measure(description, iterations, [&count_sum, &array]() {
+    unsigned count = std::count(array.begin(), array.end(), true);
+    count_sum += count;
+  });
+  TESTASSERT_EQ(expected, count_sum / iterations);
 }
 
 template <unsigned N>
@@ -230,7 +178,6 @@ static void run_benchmark(const srsgnb::bounded_bitset<N>& bitset, std::array<bo
   benchmark_bounded_bitset_iterator<N>(bitset, "bitset:" + description + ":iterator");
   benchmark_bounded_bitset_foreach<N>(bitset, "bitset:" + description + ":foreach");
   benchmark_array_count<N>(array, "array:" + description + ":count");
-  fmt::print("\n");
 }
 
 template <unsigned N>
@@ -293,10 +240,9 @@ static void benchmark_count_random_set()
 
 int main()
 {
-  print_percentiles_header();
-
   benchmark_count_contiguous<275 * 12>();
   benchmark_count_all_set<275 * 12>();
   benchmark_count_none_set<275 * 12>();
   benchmark_count_random_set<275 * 12>();
+  bm.print_percentiles_time();
 }
