@@ -16,6 +16,30 @@
 
 namespace srsgnb {
 
+/// This function forbids the compiler from optimizing away expressions without side-effects.
+template <typename T>
+inline std::enable_if_t<std::is_trivially_copyable<T>::value && (sizeof(T) <= sizeof(T*))>
+do_not_optimize(T const& value)
+{
+  asm volatile("" : : "r,m"(value) : "memory");
+}
+template <typename T>
+inline std::enable_if_t<!std::is_trivially_copyable<T>::value || (sizeof(T) > sizeof(T*))>
+do_not_optimize(T const& value)
+{
+  asm volatile("" : : "m"(value) : "memory");
+}
+template <typename T>
+inline std::enable_if_t<std::is_trivially_copyable<T>::value && (sizeof(T) <= sizeof(T*))> do_not_optimize(T& value)
+{
+  asm volatile("" : "+m,r"(value) : : "memory");
+}
+template <typename T>
+inline std::enable_if_t<!std::is_trivially_copyable<T>::value || (sizeof(T) > sizeof(T*))> do_not_optimize(T& value)
+{
+  asm volatile("" : "+m"(value) : : "memory");
+}
+
 /// \brief Describes a class for performing benchmarks.
 class benchmarker
 {
@@ -126,7 +150,9 @@ public:
   /// \param[in] nof_repetitions_ Indicates the number of repetitions of the function to measure the performance.
   benchmarker(const std::string& title_, unsigned nof_repetitions_) : title(title_), nof_repetitions(nof_repetitions_)
   {
-    // Do nothing.
+#if ASSERTS_ENABLED
+    fmt::print(stderr, "Warning: Assertions are enabled. Performance might be negatively affected.\n");
+#endif
   }
 
   /// Prints the time execution measurements in nanoseconds.
