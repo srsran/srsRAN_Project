@@ -169,6 +169,8 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
   } else if (cell_cfg.scs_common == subcarrier_spacing::kHz30) {
     // Check if k_SSB is within limits, according to the SCScommon.
     CHECK_EQ_OR_BELOW(ssb_cfg.k_ssb.to_uint(), 23, "For SCS common 30kHz, k_SSB must be within the range [0, 23].");
+    // Check if k_SSB is an even number, as this is a requirement coming from PHY implementation limitation.
+    CHECK_TRUE(ssb_cfg.k_ssb.to_uint() % 2 == 0, "For SCS common 30kHz, k_SSB must be an even number.");
 
     // In the following, we assume the SSB is located inside the Transmission Bandwidth Configuration of the specified
     // band. Refer to TS38.104, Section 5.3.1 for the definition of Transmission Bandwidth Configuration.
