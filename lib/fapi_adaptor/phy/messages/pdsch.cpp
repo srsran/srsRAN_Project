@@ -112,7 +112,7 @@ static vrb_to_prb_mapper make_vrb_to_prb_mapper(const dl_pdsch_pdu& fapi_pdu)
   unsigned N_bwp_i_start = fapi_pdu.bwp_start;
   // BWP i size.
   unsigned N_bwp_i_size = fapi_pdu.bwp_size;
-  // VRB index at where the CORESET starts, relative to the beginning of the BWP.
+  // CORESET first VRB index.
   unsigned N_start_coreset = fapi_pdu.pdsch_maintenance_v3.coreset_start_point - N_bwp_i_start;
   // Initial BWP size.
   unsigned N_bwp_init_size = fapi_pdu.pdsch_maintenance_v3.initial_dl_bwp_size;

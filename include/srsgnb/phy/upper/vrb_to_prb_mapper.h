@@ -64,7 +64,7 @@ public:
   /// by SI-RNTI in Type0-PDCCH common SS in CORESET0.
   ///
   /// Implemented as per TS38.211 Section 7.3.1.6 Case 3:
-  /// - The number of bundles is calculated as \f$N_{bundle}=\lceil N_{BWP,init}^{size}/L \rceil\f$,
+  /// - the number of bundles is calculated as \f$N_{bundle}=\lceil N_{BWP,init}^{size}/L \rceil\f$,
   /// - the last RB bundle consists of \f$N_{BWP,init}^{size} \bmod L\f$ if \f$N_{BWP,init}^{size} \bmod L > 0\f$,
   /// - all other resource block bundles consist of \f$L\f$ RBs, and
   /// - the bundle size is \f$L=2\f$.
