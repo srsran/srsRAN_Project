@@ -112,12 +112,48 @@ void test_bitset_set()
   mask.set(10);
 
   TESTASSERT(mask.any());
+  TESTASSERT(mask.all(10, 11));
+  TESTASSERT(not mask.all(10, 12));
   TESTASSERT(not mask.all());
   TESTASSERT(not mask.test(0));
   TESTASSERT(mask.test(10));
   mask.flip();
   TESTASSERT(not mask.test(10));
   TESTASSERT(mask.test(0));
+
+  bounded_bitset<25> mask1(25);
+  mask1.set(10);
+  mask1.set(11);
+  mask1.set(12);
+  mask1.set(13);
+  mask1.set(14);
+  TESTASSERT(mask1.all(10, 15));
+  TESTASSERT(not mask1.all(10, 16));
+  TESTASSERT(not mask1.all(9, 15));
+  TESTASSERT(mask1.any(10, 15));
+  TESTASSERT(mask1.any());
+
+  bounded_bitset<25> mask2(25);
+  mask2.set(0);
+  mask2.set(1);
+  mask2.set(2);
+  mask2.set(3);
+  mask2.set(4);
+  TESTASSERT(mask2.all(0, 5));
+  TESTASSERT(not mask2.all(0, 6));
+  TESTASSERT(mask2.any(0, 5));
+  TESTASSERT(mask2.any());
+
+  bounded_bitset<25> mask3(25);
+  mask3.set(20);
+  mask3.set(21);
+  mask3.set(22);
+  mask3.set(23);
+  mask3.set(24);
+  TESTASSERT(mask3.all(20, 25));
+  TESTASSERT(not mask3.all(19, 25));
+  TESTASSERT(mask3.any(20, 25));
+  TESTASSERT(mask3.any());
 }
 
 void test_bitset_bitwise_oper()

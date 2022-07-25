@@ -44,11 +44,22 @@ void test_carrier_subslot_resource_grid()
     TESTASSERT(carrier_grid.rb_dims() == lims);
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 14}, lims));
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 5}, crb_interval{2, 5}));
+    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
 
     carrier_grid.fill({2, 5}, crb_interval{2, 4});
     TESTASSERT(carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 2}));
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{0, 1}, crb_interval{1, 3}));
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{2, 5}, crb_interval{2, 4}));
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{2, 4}, crb_interval{2, 3}));
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{3, 5}, crb_interval{3, 4}));
+    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{1, 5}, crb_interval{1, 4}));
+    TESTASSERT(not carrier_grid.all_set(ofdm_symbol_range{2, 6}, crb_interval{2, 5}));
+
+    carrier_grid.fill(ofdm_symbol_range{0, 14}, lims);
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{0, 14}, lims));
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{0, 13}, {0, 51}));
+    TESTASSERT(carrier_grid.all_set(ofdm_symbol_range{1, 14}, {1, 52}));
 
     carrier_grid.clear();
     TESTASSERT(not carrier_grid.collides(ofdm_symbol_range{2, 3}, crb_interval{1, 3}));
