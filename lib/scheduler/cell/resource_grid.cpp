@@ -57,7 +57,6 @@ bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, crb_inte
   return false;
 }
 
-
 crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const
 {
   srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
@@ -67,7 +66,7 @@ crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, o
   crb_bits.fill(bwp_crb_lims.stop(), crb_bits.size());
   return crb_bits;
 
-bool carrier_subslot_resource_grid::is_set(ofdm_symbol_range symbols, crb_interval crbs) const
+bool carrier_subslot_resource_grid::all_set(ofdm_symbol_range symbols, crb_interval crbs) const
 {
   srsran_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
   srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
@@ -135,13 +134,13 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
 bool cell_slot_resource_grid::is_set(grant_info grant) const
 {
   const auto& carrier = get_carrier(grant.scs);
-  return carrier.subslot_rbs.is_set(grant.symbols, grant.crbs);
+  return carrier.subslot_rbs.all_set(grant.symbols, grant.crbs);
 }
 
 bool cell_slot_resource_grid::is_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
 {
   const auto& carrier = get_carrier(scs);
-  return carrier.subslot_rbs.is_set(ofdm_symbols, crbs);
+  return carrier.subslot_rbs.all_set(ofdm_symbols, crbs);
 }
 
 prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const

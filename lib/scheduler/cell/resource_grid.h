@@ -104,7 +104,7 @@ public:
   /// \param symbols OFDM symbol interval of the allocation. Interval must fall within [0, 14).
   /// \param crbs CRB interval, where CRB=0 corresponds to the CRB closest to pointA.
   /// \return true if all symbols and CRBs  of the provided range are set. False otherwise.
-  bool is_set(ofdm_symbol_range symbols, crb_interval crbs) const;
+  bool all_set(ofdm_symbol_range symbols, crb_interval crbs) const;
 
 private:
   /// Represents a matrix of symbol index x carrier RB index. The matrix dimensions get scaled based on the number
