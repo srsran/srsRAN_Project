@@ -48,7 +48,7 @@ void get_ssb_crbs()
                                            ssb_offset_to_pointA{0},
                                            ssb_subcarrier_offset{0}));
 
-  // Test case with subcarrier_spacing::kHz15 with k_SSB > 0.
+  // Test case with subcarrier_spacing::kHz30 with k_SSB > 0.
   expected_crbs = crb_interval{0, 21};
   TESTASSERT(expected_crbs == get_ssb_crbs(subcarrier_spacing::kHz30 /*ssb_scs*/,
                                            subcarrier_spacing::kHz30 /*scs_common*/,

@@ -157,7 +157,7 @@ void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
 
   // Verify resources for SSB in the grid are set.
   grant_info ssb_resources{grant_info::channel::ssb, scs, ssb_symbols, ssb_crbs};
-  TESTASSERT(res_grid.is_set(ssb_resources),
+  TESTASSERT(res_grid.all_set(ssb_resources),
              "PRBs {} over symbols {} should be set",
              ssb_resources.crbs,
              ssb_resources.symbols);

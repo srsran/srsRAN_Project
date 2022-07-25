@@ -65,6 +65,7 @@ crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, o
   crb_bits.fill(0, bwp_crb_lims.start());
   crb_bits.fill(bwp_crb_lims.stop(), crb_bits.size());
   return crb_bits;
+}
 
 bool carrier_subslot_resource_grid::all_set(ofdm_symbol_range symbols, crb_interval crbs) const
 {
@@ -131,18 +132,6 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
 }
 
-bool cell_slot_resource_grid::all_set(grant_info grant) const
-{
-  const auto& carrier = get_carrier(grant.scs);
-  return carrier.subslot_rbs.all_set(grant.symbols, grant.crbs);
-}
-
-bool cell_slot_resource_grid::all_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
-{
-  const auto& carrier = get_carrier(scs);
-  return carrier.subslot_rbs.all_set(ofdm_symbols, crbs);
-}
-
 prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const
 {
   const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
@@ -157,6 +146,18 @@ prb_bitmap cell_slot_resource_grid::used_crbs(const bwp_configuration& bwp_cfg, 
 {
   const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
   return carrier.subslot_rbs.used_crbs(bwp_cfg.crbs, symbols);
+}
+
+bool cell_slot_resource_grid::all_set(grant_info grant) const
+{
+  const auto& carrier = get_carrier(grant.scs);
+  return carrier.subslot_rbs.all_set(grant.symbols, grant.crbs);
+}
+
+bool cell_slot_resource_grid::all_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
+{
+  const auto& carrier = get_carrier(scs);
+  return carrier.subslot_rbs.all_set(ofdm_symbols, crbs);
 }
 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)

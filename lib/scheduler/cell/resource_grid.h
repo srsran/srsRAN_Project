@@ -157,9 +157,6 @@ public:
   bool all_set(grant_info grant) const;
   bool all_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
 
-  /// Returns the carrier CRBs currently being used for PDSCH or PUSCH.
-  prb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
-
 private:
   friend struct cell_resource_allocator;
 
