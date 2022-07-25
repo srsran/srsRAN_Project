@@ -131,13 +131,13 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
 }
 
-bool cell_slot_resource_grid::is_set(grant_info grant) const
+bool cell_slot_resource_grid::all_set(grant_info grant) const
 {
   const auto& carrier = get_carrier(grant.scs);
   return carrier.subslot_rbs.all_set(grant.symbols, grant.crbs);
 }
 
-bool cell_slot_resource_grid::is_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
+bool cell_slot_resource_grid::all_set(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const
 {
   const auto& carrier = get_carrier(scs);
   return carrier.subslot_rbs.all_set(ofdm_symbols, crbs);
