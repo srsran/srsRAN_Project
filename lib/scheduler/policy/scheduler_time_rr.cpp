@@ -38,6 +38,8 @@ bool round_robin_apply(const ue_list& ue_db, uint32_t rr_count, const Predicate&
 /// Allocate UE PDSCH grant.
 bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 {
+  ofdm_symbol_range pdsch_symbols{2, 14};
+
   // Prioritize PCell over SCells.
   for (const ue_carrier* ue_cc : u.ue_carriers()) {
     const dl_harq_process* h = nullptr;
@@ -54,11 +56,11 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
       if (bwp == nullptr) {
         continue;
       }
-      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, {2, 14});
+      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, pdsch_symbols);
       crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
       if (not ue_grant_crbs.empty()) {
         pdsch_alloc.allocate_pdsch(ue_pdsch_grant{
-            &u, ue_cc->cell_index, h, ue_grant_crbs, {2, 14}, 0, dci_dl_format::f1_0, aggregation_level::n4});
+            &u, ue_cc->cell_index, h, ue_grant_crbs, pdsch_symbols, 0, dci_dl_format::f1_0, aggregation_level::n4});
       }
     }
   }
@@ -68,6 +70,8 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
 /// Allocate UE PDSCH grant.
 bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
 {
+  ofdm_symbol_range pusch_symbols{2, 14};
+
   // Prioritize PCell over SCells.
   for (const ue_carrier* ue_cc : u.ue_carriers()) {
     const ul_harq_process* h = nullptr;
@@ -85,11 +89,11 @@ bool alloc_ul_ue(const ue& u, ue_pusch_allocator& pusch_alloc, bool is_retx)
       if (bwp == nullptr) {
         continue;
       }
-      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, {2, 14});
+      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, pusch_symbols);
       crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
       if (not ue_grant_crbs.empty()) {
         pusch_alloc.allocate_pusch(ue_pusch_grant{
-            &u, ue_cc->cell_index, h, ue_grant_crbs, {2, 14}, k2, to_search_space_id(1), aggregation_level::n4});
+            &u, ue_cc->cell_index, h, ue_grant_crbs, pusch_symbols, k2, to_search_space_id(1), aggregation_level::n4});
       }
     }
   }

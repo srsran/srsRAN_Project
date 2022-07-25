@@ -137,12 +137,12 @@ public:
   /// \brief Returns a bitmap of the carrier CRBs that are being used by SCH.
   crb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
 
-  /// \brief Calculates a bitmap where each bit set one represents a CRB that is occupied or unavailable.
+  /// \brief Calculates a bitmap where each bit set to one represents a CRB that is occupied or unavailable.
   /// A CRB is considered occupied if it is outside of the provided BWP CRB boundaries or if it is already allocated
   /// in at least one OFDM symbol of the provided OFDM symbol range.
   /// \param[in] bwp_cfg Bandwidth configuration for which the allocation is to be made.
   /// \param[in] symbols Range of OFDM symbols, where the search for available CRBs is carrier out.
-  /// \return an CRB bitmap with bits set to one for unavailable CRBs.
+  /// \return a CRB bitmap with bits set to one for unavailable CRBs.
   crb_bitmap used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const;
 
 private:
