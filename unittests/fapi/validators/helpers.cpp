@@ -508,7 +508,7 @@ static uint8_t generate_is_msga_prach()
 
 static prach_format_type generate_prach_format()
 {
-  std::uniform_int_distribution<unsigned> dist(0, 13);
+  std::uniform_int_distribution<unsigned> dist(0, 3);
 
   return static_cast<prach_format_type>(dist(gen));
 }

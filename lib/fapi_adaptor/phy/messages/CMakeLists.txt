@@ -9,6 +9,7 @@
 set(SOURCES
         pdcch.cpp
         pdsch.cpp
+        prach.cpp
         ssb.cpp)
 
 add_library(srsgnb_fapi_phy_message_adaptors STATIC ${SOURCES})

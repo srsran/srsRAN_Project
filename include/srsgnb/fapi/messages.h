@@ -14,6 +14,7 @@
 #include "srsgnb/ran/ldpc_base_graph.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/ssb_properties.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -1628,13 +1629,12 @@ struct prach_fd_occasion_config {
   /// Maximum number of unused root sequences allowed.
   static constexpr unsigned MAX_NUM_UNUSED_ROOT_SEQ = 63;
 
-  uint16_t                                      prach_root_sequence_index;
-  uint8_t                                       num_root_sequences;
-  int16_t                                       prach_freq_offset;
-  uint16_t                                      prach_guardband_offset;
-  uint8_t                                       prach_zero_corr_conf;
-  uint16_t                                      num_unused_root_sequences;
-  std::array<uint16_t, MAX_NUM_UNUSED_ROOT_SEQ> unused_root_sequences;
+  uint16_t                                         prach_root_sequence_index;
+  uint8_t                                          num_root_sequences;
+  int16_t                                          prach_freq_offset;
+  uint16_t                                         prach_guardband_offset;
+  uint8_t                                          prach_zero_corr_conf;
+  static_vector<uint16_t, MAX_NUM_UNUSED_ROOT_SEQ> unused_root_sequences;
 };
 
 /// Encodes the PRACH configuration.
@@ -1642,19 +1642,18 @@ struct prach_config {
   /// Maximum number of PRACH Fd occasions allowed.
   static constexpr unsigned MAX_NUM_PRACH_FD_OCCASIONS = 64;
 
-  uint16_t                                                         prach_res_config_index;
-  uint8_t                                                          prach_sequence_length;
-  uint8_t                                                          prach_subcarrier_spacing;
-  uint8_t                                                          prach_ul_bwp_pusch_scs;
-  uint8_t                                                          restricted_set_config;
-  uint8_t                                                          num_prach_fd_occasions;
-  uint8_t                                                          prach_config_index;
-  uint8_t                                                          prach_format;
-  uint8_t                                                          num_prach_td_occasions;
-  uint8_t                                                          num_preambles;
-  uint8_t                                                          start_preamble_index;
-  std::array<prach_fd_occasion_config, MAX_NUM_PRACH_FD_OCCASIONS> fd_occasions;
-  uint8_t                                                          ssb_per_rach;
+  uint16_t                                                            prach_res_config_index;
+  uint8_t                                                             prach_sequence_length;
+  uint8_t                                                             prach_subcarrier_spacing;
+  subcarrier_spacing                                                  prach_ul_bwp_pusch_scs;
+  restricted_set_config                                               restricted_set;
+  uint8_t                                                             prach_config_index;
+  prach_format_type                                                   prach_format;
+  uint8_t                                                             num_prach_td_occasions;
+  uint8_t                                                             num_preambles;
+  uint8_t                                                             start_preamble_index;
+  static_vector<prach_fd_occasion_config, MAX_NUM_PRACH_FD_OCCASIONS> fd_occasions;
+  uint8_t                                                             ssb_per_rach;
 };
 
 /// Encodes the Multi-PRACH configuration.
@@ -1662,8 +1661,7 @@ struct multi_prach_config {
   /// Maximum number of PRACH configurations supported.
   static constexpr unsigned MAX_NUM_PRACH_CONFIGURATIONS = 128;
 
-  uint16_t                                               num_prachs;
-  std::array<prach_config, MAX_NUM_PRACH_CONFIGURATIONS> prachs;
+  static_vector<prach_config, MAX_NUM_PRACH_CONFIGURATIONS> prachs;
 };
 
 /// PRACH preamble group structure.
