@@ -28,7 +28,7 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   du_processor_ev_notifier.connect(*f1ap);
 
   // create RRC
-  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity);
+  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity, *this);
   rrc = create_rrc_entity(rrc_creation_msg);
 }
 
@@ -140,13 +140,11 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   }
 
   // 2. Set parameters from initiating message
-  ue_ctxt->pcell_index            = msg.pcell_index;
-  ue_ctxt->c_rnti                 = msg.c_rnti;
-  const auto& du_to_cu_rrc_cont   = msg.du_to_cu_rrc_container;
-  ue_ctxt->du_to_cu_rrc_container = byte_buffer{du_to_cu_rrc_cont.begin(), du_to_cu_rrc_cont.end()};
+  ue_ctxt->pcell_index = msg.pcell_index;
+  ue_ctxt->c_rnti      = msg.c_rnti;
 
   // 3. Create new RRC entity
-  ue_ctxt->rrc = rrc->add_user(*ue_ctxt);
+  ue_ctxt->rrc = rrc->add_user(*ue_ctxt, msg.du_to_cu_rrc_container);
   if (ue_ctxt->rrc == nullptr) {
     logger.error("Could not create RRC entity");
     du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, INVALID_UE_INDEX);
@@ -157,7 +155,10 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, ue_ctxt->ue_index);
 
   // 4. Create SRB0 bearer and notifier
-  create_srb0(*ue_ctxt);
+  srb_creation_message srb0_msg{};
+  srb0_msg.ue_index = ue_ctxt->ue_index;
+  srb0_msg.srb_id   = srb_id_t::srb0;
+  create_srb(srb0_msg);
 
   // 5. Pass container to RRC
   if (msg.rrc_container_rrc_setup_complete.has_value()) {
@@ -192,13 +193,24 @@ void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
   }
 }
 
-void du_processor::create_srb0(ue_context& ue_ctxt)
+void du_processor::create_srb(const srb_creation_message& msg)
 {
-  ue_ctxt.srbs.emplace(LCID_SRB0);
-  cu_srb_context& srb0 = ue_ctxt.srbs[LCID_SRB0];
-  srb0.lcid            = LCID_SRB0;
+  ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
+  srsran_assert(ue_ctxt != nullptr, "Could not find UE context");
 
-  // create UE manager to RRC adapter
-  srb0.rx_notifier = std::make_unique<rrc_ul_ccch_message_indicator>(*ue_ctxt.rrc->get_ul_ccch_pdu_handler());
-  srb0.tx_notifier = std::make_unique<du_processor_dl_message_indicator>(*f1ap, ue_ctxt.ue_index);
+  const lcid_t lcid = srb_id_to_lcid(msg.srb_id);
+  srsran_assert(!ue_ctxt->srbs.contains(lcid), "SRB already present");
+
+  ue_ctxt->srbs.emplace(lcid);
+  cu_srb_context& srb = ue_ctxt->srbs[lcid];
+  srb.lcid            = lcid;
+
+  if (lcid == LCID_SRB0) {
+    // create direct connection with UE manager to RRC adapter
+    srb.rx_notifier = std::make_unique<rrc_ul_ccch_message_indicator>(*ue_ctxt->rrc->get_ul_ccch_pdu_handler());
+    srb.tx_notifier = std::make_unique<du_processor_dl_message_indicator>(*f1ap, ue_ctxt->ue_index);
+  } else {
+    logger.error("Couldn't create notifier for SRB{}. Removing entry again.", lcid);
+    ue_ctxt->srbs.erase(lcid);
+  }
 }

@@ -45,7 +45,7 @@ private:
 };
 
 /// Fixture class RRC Setup tests preparation
-class rrc_setup : public ::testing::Test
+class rrc_setup : public du_processor_rrc_ue_interface, public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -54,12 +54,12 @@ protected:
     srslog::init();
 
     // create RRC entity
-    rrc_entity_creation_message msg(cfg, &ngap);
+    rrc_entity_creation_message msg(cfg, &ngap, *this);
     rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
 
     // create single UE context and add RRC user
     ue_ctxt.c_rnti = to_rnti(0x1234);
-    ue_ctxt.rrc    = rrc->add_user(ue_ctxt);
+    ue_ctxt.rrc    = rrc->add_user(ue_ctxt, {});
 
     // create SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs.emplace(LCID_SRB0);
@@ -93,6 +93,21 @@ protected:
     ue_ctxt.rrc->get_ul_ccch_pdu_handler()->handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
+  void receive_setup_complete()
+  {
+    // inject RRC setup complete
+    ue_ctxt.rrc->get_ul_ccch_pdu_handler()->handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
+  }
+
+  // RRC UE entity calls this method to create an SRB object
+  void create_srb(const srb_creation_message& msg) override
+  {
+    EXPECT_FALSE(ue_ctxt.srbs.contains(srb_id_to_lcid(msg.srb_id)));
+    ue_ctxt.srbs.emplace(srb_id_to_lcid(msg.srb_id));
+  }
+
+  void check_srb1_exists() { EXPECT_TRUE(ue_ctxt.srbs.contains(LCID_SRB1)); }
+
 private:
   ngap_dummy                               ngap;
   rrc_cfg_t                                cfg{}; // empty config
@@ -102,9 +117,29 @@ private:
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
-  // canned RRC setup message from UE
+  // UL-CCCH with RRC setup message
   std::array<uint8_t, 6> rrc_setup_pdu = {0x1d, 0xec, 0x89, 0xd0, 0x57, 0x66};
+
+  // UL-DCCH with RRC setup complete message
+  std::array<uint8_t, 121> rrc_setup_complete_pdu = {
+      0x10, 0xc0, 0x10, 0x00, 0x08, 0x27, 0x27, 0xe0, 0x1c, 0x3f, 0xf1, 0x00, 0xc0, 0x47, 0xe0, 0x04, 0x13, 0x90,
+      0x00, 0xbf, 0x20, 0x2f, 0x89, 0x98, 0x00, 0x04, 0x10, 0x00, 0x00, 0x00, 0xf2, 0xe0, 0x4f, 0x07, 0x0f, 0x07,
+      0x07, 0x10, 0x05, 0x17, 0xe0, 0x04, 0x13, 0x90, 0x00, 0xbf, 0x20, 0x2f, 0x89, 0x98, 0x00, 0x04, 0x10, 0x00,
+      0x00, 0x00, 0xf1, 0x00, 0x10, 0x32, 0xe0, 0x4f, 0x07, 0x0f, 0x07, 0x02, 0xf1, 0xb0, 0x80, 0x10, 0x02, 0x7d,
+      0xb0, 0x00, 0x00, 0x00, 0x00, 0x80, 0x10, 0x1b, 0x66, 0x90, 0x00, 0x00, 0x00, 0x00, 0x80, 0x10, 0x00, 0x00,
+      0x10, 0x00, 0x00, 0x00, 0x05, 0x20, 0x2f, 0x89, 0x90, 0x00, 0x00, 0x11, 0x70, 0x7f, 0x07, 0x0c, 0x04, 0x01,
+      0x98, 0x0b, 0x01, 0x80, 0x10, 0x17, 0x40, 0x00, 0x09, 0x05, 0x30, 0x10, 0x10,
+  };
 };
+
+/// Test the RRC setup with disconnected AMF
+TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
+{
+  receive_setup_request();
+
+  // check if the RRC setup message was generated
+  EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
+}
 
 /// Test the RRC setup with connected AMF
 TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
@@ -114,13 +149,9 @@ TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
 
   // check if the RRC setup message was generated
   EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_setup);
-}
 
-/// Test the RRC setup with disconnected AMF
-TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
-{
-  receive_setup_request();
+  // check if SRB1 was created
+  check_srb1_exists();
 
-  // check if the RRC setup message was generated
-  EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
+  receive_setup_complete();
 }

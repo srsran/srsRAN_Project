@@ -81,10 +81,39 @@ void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_reque
   }
   rrc_ctxt.connection_cause.value = ies.establishment_cause.value;
 
+  // create SRB1
+  srb_creation_message srb1_msg{};
+  srb1_msg.ue_index = ctxt.ue_index;
+  srb1_msg.srb_id   = srb_id_t::srb1;
+  srb1_msg.pdcp_cfg = cfg.srb1_pdcp_cfg;
+  du_proc.create_srb(srb1_msg);
+
   send_rrc_setup();
 }
 
 void rrc_ue_entity::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
 {
   // TODO: handle RRC reestablishment request
+}
+
+void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
+{
+  // Parse UL-CCCH
+  ul_dcch_msg_s ul_dcch_msg;
+  {
+    asn1::cbit_ref bref({pdu.begin(), pdu.end()});
+    if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
+        ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
+      log_rx_pdu_fail(ctxt.c_rnti, LCID_SRB1, pdu.view(), "Failed to unpack UL-DCCH message", true);
+      return;
+    }
+  }
+
+  // Log Rx message
+  fmt::memory_buffer fmtbuf, fmtbuf2;
+  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", ctxt.c_rnti);
+  fmt::format_to(fmtbuf2, "UL-DCCH.{}", ul_dcch_msg.msg.c1().type().to_string());
+  log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
+
+  // TODO: Handle message
 }

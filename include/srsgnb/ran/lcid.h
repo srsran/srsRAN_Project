@@ -41,9 +41,16 @@ inline bool is_lcid_valid(lcid_t lcid)
 {
   return lcid <= MAX_LCID;
 }
+
 inline srb_id_t to_srb_id(lcid_t lcid)
 {
   return is_srb(lcid) ? static_cast<srb_id_t>(lcid) : srb_id_t::nulltype;
+}
+
+/// Convert SRB ID to LCID.
+inline lcid_t srb_id_to_lcid(srb_id_t srb_id)
+{
+  return static_cast<lcid_t>(srb_id);
 }
 
 enum class drb_id_t : uint16_t {

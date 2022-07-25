@@ -44,6 +44,7 @@ public:
 
   /// Handle the incoming PDU.
   virtual void handle_ul_ccch_pdu(byte_buffer_slice pdu) = 0;
+  virtual void handle_ul_dcch_pdu(byte_buffer_slice pdu) = 0;
 };
 
 } // namespace srs_cu_cp

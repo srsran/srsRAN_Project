@@ -37,7 +37,7 @@ public:
   virtual ~rrc_entity_du_interface() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_entity_interface* add_user(ue_context& ctxt_) = 0;
+  virtual rrc_ue_entity_interface* add_user(ue_context& ctxt_, asn1::unbounded_octstring<true> du_to_cu_container) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;

@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/rrc/rrc_config.h"
 #include <string>
 
 namespace srsgnb {
@@ -98,6 +99,24 @@ class du_processor_f1c_interface : public du_processor_f1ap_setup_handler,
 {
 public:
   virtual ~du_processor_f1c_interface() = default;
+};
+
+struct srb_creation_message {
+  ue_index_t               ue_index;
+  srb_id_t                 srb_id;
+  asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
+};
+
+/// Interface for an RRU UE entity to communicate with the DU processor.
+class du_processor_rrc_ue_interface
+{
+public:
+  virtual ~du_processor_rrc_ue_interface() = default;
+
+  /// \brief Instruct the DU processor to create a new SRB for a given UE. Depending on the config it creates all
+  /// required intermediate objects (e.g. PDCP) and connects them with one another.
+  /// \param[in] msg The UE index, SRB ID and config.
+  virtual void create_srb(const srb_creation_message& msg) = 0;
 };
 
 } // namespace srs_cu_cp

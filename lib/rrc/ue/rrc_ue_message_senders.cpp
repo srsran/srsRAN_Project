@@ -21,7 +21,7 @@ void rrc_ue_entity::send_rrc_setup()
   dl_ccch_msg_s dl_ccch_msg;
   dl_ccch_msg.msg.set_c1().set_rrc_setup();
   rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
-  fill_asn1_rrc_setup_msg(rrc_setup, ctxt.du_to_cu_rrc_container);
+  fill_asn1_rrc_setup_msg(rrc_setup, du_to_cu_container);
 
   send_dl_ccch(dl_ccch_msg);
 }

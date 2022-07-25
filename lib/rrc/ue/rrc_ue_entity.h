@@ -22,11 +22,16 @@ namespace srs_cu_cp {
 class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_handler
 {
 public:
-  rrc_ue_entity(rrc_entity_ue_interface& parent_, ue_context& ctxt_, const rrc_ue_cfg_t& cfg_);
+  rrc_ue_entity(rrc_entity_ue_interface&               parent_,
+                du_processor_rrc_ue_interface&         du_proc_,
+                const ue_context&                      ctxt_,
+                const rrc_ue_cfg_t&                    cfg_,
+                const asn1::unbounded_octstring<true>& du_to_cu_container);
   ~rrc_ue_entity() = default;
 
   // rrc_ul_ccch_pdu_handler
   void handle_ul_ccch_pdu(byte_buffer_slice pdu) override;
+  void handle_ul_dcch_pdu(byte_buffer_slice pdu) override;
 
   // rrc_ue_entity_interface
   rrc_ul_ccch_pdu_handler* get_ul_ccch_pdu_handler() override;
@@ -73,9 +78,11 @@ private:
   log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
   void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
-  rrc_entity_ue_interface& parent; // reference to the parant RRC object
-  ue_context&              ctxt;   // reference to the UE object
-  const rrc_ue_cfg_t&      cfg;
+  rrc_entity_ue_interface&       parent;  // reference to the parant RRC object
+  du_processor_rrc_ue_interface& du_proc; // reference to the DU processor object
+  const ue_context&              ctxt;    // reference to the UE object
+  const rrc_ue_cfg_t&            cfg;
+  byte_buffer                    du_to_cu_container; // initial RRC message from DU to CU
 
   struct rrc_ctxt_t {
     uint64_t                               setup_ue_id = -1;

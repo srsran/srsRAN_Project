@@ -26,7 +26,7 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class du_processor : public du_processor_f1c_interface
+class du_processor : public du_processor_f1c_interface, public du_processor_rrc_ue_interface
 {
 public:
   du_processor(const du_processor_config_t& cfg);
@@ -51,6 +51,10 @@ public:
 
   rrc_amf_connection_handler& get_amf_connection_handler(); /// Pass handle to AMF connection handler within RRC
 
+  // du_processor_rrc_ue_interface
+  /// \brief Create SRB entry in bearer list and add adapter handle.
+  void create_srb(const srb_creation_message& msg) override;
+
 private:
   // F1AP senders
 
@@ -61,9 +65,6 @@ private:
   /// \brief Create and transmit the F1 Setup failure message.
   /// \param[in] cause The cause of the failure.
   void send_f1_setup_failure(asn1::f1ap::cause_c::types::options cause);
-
-  /// \brief Create SRB0 entry in bearer list and add adapter handle.
-  void create_srb0(ue_context& ue_ctx);
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
   du_processor_config_t cfg;

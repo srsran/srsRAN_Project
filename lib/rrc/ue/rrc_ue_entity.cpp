@@ -15,8 +15,12 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface& parent_, ue_context& ctxt_, const rrc_ue_cfg_t& cfg_) :
-  parent(parent_), ctxt(ctxt_), cfg(cfg_)
+rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
+                             du_processor_rrc_ue_interface&         du_proc_,
+                             const ue_context&                      ctxt_,
+                             const rrc_ue_cfg_t&                    cfg_,
+                             const asn1::unbounded_octstring<true>& du_to_cu_container_) :
+  parent(parent_), du_proc(du_proc_), ctxt(ctxt_), cfg(cfg_), du_to_cu_container(du_to_cu_container_)
 {
 }
 
@@ -50,6 +54,11 @@ template void rrc_ue_entity::log_rrc_message<ul_ccch_msg_s>(const char*         
                                                             const direction_t    dir,
                                                             byte_buffer_view     pdu,
                                                             const ul_ccch_msg_s& msg,
+                                                            const char*          msg_type);
+template void rrc_ue_entity::log_rrc_message<ul_dcch_msg_s>(const char*          source,
+                                                            const direction_t    dir,
+                                                            byte_buffer_view     pdu,
+                                                            const ul_dcch_msg_s& msg,
                                                             const char*          msg_type);
 template void rrc_ue_entity::log_rrc_message<dl_ccch_msg_s>(const char*          source,
                                                             const direction_t    dir,

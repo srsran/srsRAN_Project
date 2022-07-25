@@ -39,7 +39,6 @@ struct ue_context {
   ue_index_t      ue_index;
   du_cell_index_t pcell_index;
   rnti_t          c_rnti;
-  byte_buffer     du_to_cu_rrc_container;
 
   rrc_ue_entity_interface*    rrc = nullptr;
   slot_vector<cu_srb_context> srbs;
