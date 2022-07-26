@@ -13,7 +13,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/gateways/baseband/baseband_gateway_base.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <complex>
 #include <vector>
 

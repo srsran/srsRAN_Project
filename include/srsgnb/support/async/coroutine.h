@@ -12,7 +12,7 @@
 
 #include "awaiter_memory_storage.h"
 #include "srsgnb/support/async/detail/function_signature.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 

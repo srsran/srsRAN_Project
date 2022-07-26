@@ -16,7 +16,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include "ul_bsr.h"
 
 namespace srsgnb {

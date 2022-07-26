@@ -2,7 +2,7 @@
 #pragma once
 
 #include "detail/type_storage.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <iterator>
 #include <memory>
 

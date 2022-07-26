@@ -3,7 +3,7 @@
 
 #include "optional.h"
 #include "span.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
 /// \file Definitions of slot_array<T, N>, slot_vector<T>, slot_span<T>, split_slot_span<T> used to manage

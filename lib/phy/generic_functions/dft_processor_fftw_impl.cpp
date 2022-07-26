@@ -9,7 +9,7 @@
  */
 
 #include "dft_processor_fftw_impl.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <pwd.h>
 #include <unistd.h>
 

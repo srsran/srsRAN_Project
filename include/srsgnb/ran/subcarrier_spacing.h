@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/ran/frequency_range.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 

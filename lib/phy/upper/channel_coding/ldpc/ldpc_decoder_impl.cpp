@@ -10,7 +10,7 @@
 
 #include "ldpc_decoder_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <cmath>
 
 using namespace srsgnb;

@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 /// Number of prime numbers between 2 and 3299 (both included).
 constexpr unsigned NOF_PRIME_NUMBERS = 463;

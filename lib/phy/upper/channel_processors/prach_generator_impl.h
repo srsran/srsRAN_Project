@@ -13,7 +13,7 @@
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
 #include "srsgnb/srsvec/aligned_vec.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 

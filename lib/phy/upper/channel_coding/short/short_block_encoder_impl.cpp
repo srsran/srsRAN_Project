@@ -11,7 +11,7 @@
 #include "short_block_encoder_impl.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/srsvec/binary.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 

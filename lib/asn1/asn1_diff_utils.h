@@ -2,7 +2,7 @@
 #pragma once
 
 #include "srsgnb/support/async/detail/function_signature.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <algorithm>
 
 /// \brief In this file, we implement several algorithms used to add/mod/release asn.1 objects in lists

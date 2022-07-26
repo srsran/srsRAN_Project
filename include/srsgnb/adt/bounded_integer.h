@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/srslog/bundled/fmt/format.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <type_traits>
 
 namespace srsgnb {

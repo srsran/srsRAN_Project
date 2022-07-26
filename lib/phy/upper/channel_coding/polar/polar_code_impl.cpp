@@ -10,7 +10,7 @@
 
 #include "polar_code_impl.h"
 #include "srsgnb/srsvec/copy.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 

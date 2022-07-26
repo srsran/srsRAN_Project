@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
-#include "srsran_assert.h"
+#include "srsgnb_assert.h"
 #include <cassert>
 #include <cmath>
 

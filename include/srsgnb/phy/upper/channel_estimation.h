@@ -19,7 +19,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 

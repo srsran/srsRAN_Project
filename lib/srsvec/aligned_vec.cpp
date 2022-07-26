@@ -10,7 +10,7 @@
 
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "simd.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <cstdlib>
 
 void* srsgnb::srsvec::detail::mem_alloc(std::size_t size)

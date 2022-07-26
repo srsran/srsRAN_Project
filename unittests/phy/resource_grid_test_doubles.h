@@ -12,8 +12,8 @@
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include "srsgnb/support/srsgnb_test.h"
-#include "srsgnb/support/srsran_assert.h"
 #include <map>
 #include <random>
 #include <tuple>

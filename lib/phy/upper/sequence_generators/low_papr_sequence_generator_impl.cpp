@@ -13,7 +13,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 

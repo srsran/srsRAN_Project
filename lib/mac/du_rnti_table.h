@@ -12,7 +12,7 @@
 
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/rnti.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <atomic>
 #include <limits>
 #include <vector>

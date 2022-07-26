@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/srslog/srslog.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 #include <cmath>
 #include <cstdint>

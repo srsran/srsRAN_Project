@@ -11,7 +11,7 @@
 #include "ldpc_rate_dematcher_impl.h"
 #include "ldpc_graph_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;

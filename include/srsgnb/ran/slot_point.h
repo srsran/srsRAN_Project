@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/interval.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 namespace srsgnb {
 

@@ -13,7 +13,7 @@
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <map>
 
 namespace srsgnb {

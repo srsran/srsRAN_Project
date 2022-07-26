@@ -3,7 +3,7 @@
 
 #include "detail/type_storage.h"
 #include "expected.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <array>
 
 namespace srsgnb {

@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsran_assert.h"
+#include "srsgnb_assert.h"
 
 namespace srsgnb {
 

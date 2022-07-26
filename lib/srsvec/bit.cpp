@@ -10,7 +10,7 @@
 
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 #if HAVE_SSE
 #include <immintrin.h>

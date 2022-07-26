@@ -13,7 +13,7 @@
 #include "srsgnb/adt/detail/operator.h"
 #include "srsgnb/adt/detail/type_storage.h"
 #include "srsgnb/adt/expected.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 #include <array>
 #include <cassert>

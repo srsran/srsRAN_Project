@@ -10,7 +10,7 @@
 
 #include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
-#include "srsgnb/support/srsran_assert.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 using namespace srsgnb::ldpc;
