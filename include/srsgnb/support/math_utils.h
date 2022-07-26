@@ -33,7 +33,7 @@ static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);
 /// \return The result of the operation.
 inline constexpr unsigned divide_ceil(unsigned num, unsigned den)
 {
-  srsran_sanity_check(den != 0, "Denominator cannot be zero.");
+  srsgnb_sanity_check(den != 0, "Denominator cannot be zero.");
   return (num + (den - 1)) / den;
 }
 

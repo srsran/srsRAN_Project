@@ -74,12 +74,12 @@ public:
   const T& operator*() const noexcept { return value(); }
   T&       value() noexcept
   {
-    srsran_assert(has_val_, "Invalid optional<T> access");
+    srsgnb_assert(has_val_, "Invalid optional<T> access");
     return storage.get();
   }
   const T& value() const noexcept
   {
-    srsran_assert(has_val_, "Invalid optional<T> access");
+    srsgnb_assert(has_val_, "Invalid optional<T> access");
     return storage.get();
   }
 

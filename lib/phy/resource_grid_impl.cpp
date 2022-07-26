@@ -27,20 +27,20 @@ resource_grid_impl::resource_grid_impl(unsigned nof_ports_, unsigned nof_symb_, 
 
 void resource_grid_impl::put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols)
 {
-  srsran_assert(coordinates.size() == symbols.size(),
+  srsgnb_assert(coordinates.size() == symbols.size(),
                 "The number of coordinates {} is not equal to the number of symbols {}.",
                 coordinates.size(),
                 symbols.size());
 
   // Select buffer from the port index
-  srsran_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
+  srsgnb_assert(port < nof_ports, "The port index {} is out of range (max {}).", port, nof_ports - 1);
   span<cf_t> buffer = port_buffers[port];
 
   unsigned count = 0;
   for (const resource_grid_coordinate& coordinate : coordinates) {
-    srsran_assert(
+    srsgnb_assert(
         coordinate.symbol < nof_symb, "Symbol index {} is out of range (max {}).", coordinate.symbol, nof_symb);
-    srsran_assert(coordinate.subcarrier < nof_subc,
+    srsgnb_assert(coordinate.subcarrier < nof_subc,
                   "Subcarrier index {} is out of range (max {}).",
                   coordinate.subcarrier,
                   nof_subc);
@@ -80,13 +80,13 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  srsran_always_assert(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
-  srsran_always_assert(k_init + symbols.size() <= nof_subc,
-                       "Subcarrier indexes ({},{}) are out-of-range (max. {})",
-                       k_init,
-                       symbols.size(),
-                       nof_subc);
-  srsran_always_assert(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
+  SRSGNB_ALWAYS_ASSERT__(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
+  SRSGNB_ALWAYS_ASSERT__(k_init + symbols.size() <= nof_subc,
+                         "Subcarrier indexes ({},{}) are out-of-range (max. {})",
+                         k_init,
+                         symbols.size(),
+                         nof_subc);
+  SRSGNB_ALWAYS_ASSERT__(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
 
   // Select buffer from the port index
   span<cf_t> buffer = port_buffers[port];
@@ -163,7 +163,7 @@ void resource_grid_impl::get(span<cf_t> symbols, unsigned port, unsigned l, unsi
 
 bool resource_grid_impl::is_empty(unsigned port) const
 {
-  srsran_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
+  srsgnb_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
   return empty[port];
 }
 

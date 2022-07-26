@@ -17,8 +17,8 @@ using namespace srs_cu_cp;
 
 void assert_cu_cp_configuration_valid(const cu_cp_configuration& cfg)
 {
-  srsran_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
-  srsran_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
+  srsgnb_assert(cfg.cu_executor != nullptr, "Invalid CU-CP executor");
+  srsgnb_assert(cfg.f1c_notifier != nullptr, "Invalid F1C notifier");
 }
 
 cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(128)
@@ -114,7 +114,7 @@ void cu_cp::add_du()
 
   du->get_context().du_index = du_index;
 
-  srsran_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
+  srsgnb_assert(du->get_context().du_index < MAX_NOF_DUS, "Invalid du_index={}", du->get_context().du_index);
 
   // Create DU object
   du_db.emplace(du_index, std::move(du));
@@ -127,13 +127,13 @@ void cu_cp::remove_du(du_index_t du_index)
   // Note: The caller of this function can be a DU procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the DU. This is achieved via a scheduled async task
 
-  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
   logger.debug("Scheduling du_index={} deletion", du_index);
 
   // Schedule DU removal task
   du_ctrl_loop[du_index].schedule([this, du_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    srsran_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
+    srsgnb_assert(du_db.contains(du_index), "Remove DU called for inexistent du_index={}", du_index);
     du_db.erase(du_index);
     logger.info("Removed du_index={}", du_index);
     CORO_RETURN();
@@ -142,8 +142,8 @@ void cu_cp::remove_du(du_index_t du_index)
 
 du_processor& cu_cp::find_du(du_index_t du_index)
 {
-  srsran_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
-  srsran_assert(du_db.contains(du_index), "DU not found du_index={}", du_index);
+  srsgnb_assert(du_index < MAX_NOF_DUS, "Invalid du_index={}", du_index);
+  srsgnb_assert(du_db.contains(du_index), "DU not found du_index={}", du_index);
   return *du_db[du_index];
 }
 

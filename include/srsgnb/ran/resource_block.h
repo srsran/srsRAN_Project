@@ -72,7 +72,7 @@ constexpr inline std::size_t channel_bw_mhz_to_index(unsigned dl_bw_mhz)
 /// \remark See TS 38.101-1/2, 5.3.2 - Maximum transmission bandwidth configuration.
 inline std::size_t get_max_Nprb(unsigned dl_bw_mhz, subcarrier_spacing scs, frequency_range fr)
 {
-  srsran_sanity_check(is_scs_valid(scs, fr), "Invalid SCS");
+  srsgnb_sanity_check(is_scs_valid(scs, fr), "Invalid SCS");
   static constexpr std::array<std::size_t, 3> rb_table_fr1[] = {
       // clang-format off
       // SCS

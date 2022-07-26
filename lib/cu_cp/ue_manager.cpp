@@ -21,7 +21,7 @@ ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_)
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
+  srsgnb_assert(ue_index < MAX_NOF_UES, "Invalid ue_index={}", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
@@ -53,7 +53,7 @@ ue_context* ue_manager::add_ue(rnti_t rnti)
   auto& u = ue_db[new_idx];
 
   // Update RNTI -> UE index map
-  srsran_sanity_check(rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] < 0, "Invalid RNTI=0x{:x}", u.c_rnti);
+  srsgnb_sanity_check(rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] < 0, "Invalid RNTI=0x{:x}", u.c_rnti);
   rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] = new_idx;
 
   return &u;
@@ -61,10 +61,10 @@ ue_context* ue_manager::add_ue(rnti_t rnti)
 
 void ue_manager::remove_ue(ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
+  srsgnb_assert(ue_index < MAX_NOF_UES, "Invalid ueId={}", ue_index);
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
-  srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
+  srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
   ue_db.erase(ue_index);
   logger.info("Removed ueId={}", ue_index);
   return;

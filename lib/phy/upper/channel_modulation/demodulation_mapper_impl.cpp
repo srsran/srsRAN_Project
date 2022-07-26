@@ -104,15 +104,15 @@ static log_likelihood_ratio demod_64QAM_symbol_01(float x, float noise_var, floa
 {
   constexpr unsigned                            NOF_INTERVALS = 8;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {16 * M_SQRT1_42,
-                                                         12 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         12 * M_SQRT1_42,
-                                                         16 * M_SQRT1_42};
+                                                                 12 * M_SQRT1_42,
+                                                                 8 * M_SQRT1_42,
+                                                                 4 * M_SQRT1_42,
+                                                                 4 * M_SQRT1_42,
+                                                                 8 * M_SQRT1_42,
+                                                                 12 * M_SQRT1_42,
+                                                                 16 * M_SQRT1_42};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {
-      24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
+          24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
 
   unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_42, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -124,15 +124,15 @@ static log_likelihood_ratio demod_64QAM_symbol_23(float x, float noise_var, floa
 {
   constexpr unsigned                            NOF_INTERVALS = 8;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {8 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         -8 * M_SQRT1_42,
-                                                         -4 * M_SQRT1_42,
-                                                         -4 * M_SQRT1_42,
-                                                         -8 * M_SQRT1_42};
+                                                                 4 * M_SQRT1_42,
+                                                                 4 * M_SQRT1_42,
+                                                                 8 * M_SQRT1_42,
+                                                                 -8 * M_SQRT1_42,
+                                                                 -4 * M_SQRT1_42,
+                                                                 -4 * M_SQRT1_42,
+                                                                 -8 * M_SQRT1_42};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {
-      20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
+          20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
 
   unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_42, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -144,7 +144,7 @@ static log_likelihood_ratio demod_64QAM_symbol_45(float x, float noise_var, floa
 {
   constexpr unsigned                            NOF_INTERVALS = 4;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {
-      4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42};
+              4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42};
   static const std::array<float, NOF_INTERVALS> INTERCEPT = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21};
 
   unsigned idx     = compute_interval_idx(x, 4 * M_SQRT1_42, NOF_INTERVALS);
@@ -176,37 +176,37 @@ static log_likelihood_ratio demod_256QAM_symbol_01(float x, float noise_var, flo
 {
   constexpr unsigned                            NOF_INTERVALS = 16;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {32 * M_SQRT1_170,
-                                                         28 * M_SQRT1_170,
-                                                         24 * M_SQRT1_170,
-                                                         20 * M_SQRT1_170,
-                                                         16 * M_SQRT1_170,
-                                                         12 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         12 * M_SQRT1_170,
-                                                         16 * M_SQRT1_170,
-                                                         20 * M_SQRT1_170,
-                                                         24 * M_SQRT1_170,
-                                                         28 * M_SQRT1_170,
-                                                         32 * M_SQRT1_170};
+                                                                 28 * M_SQRT1_170,
+                                                                 24 * M_SQRT1_170,
+                                                                 20 * M_SQRT1_170,
+                                                                 16 * M_SQRT1_170,
+                                                                 12 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 12 * M_SQRT1_170,
+                                                                 16 * M_SQRT1_170,
+                                                                 20 * M_SQRT1_170,
+                                                                 24 * M_SQRT1_170,
+                                                                 28 * M_SQRT1_170,
+                                                                 32 * M_SQRT1_170};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {112.0F / 85,
-                                                             84.0F / 85,
-                                                             60.0F / 85,
-                                                             40.0F / 85,
-                                                             24.0F / 85,
-                                                             12.0F / 85,
-                                                             4.0F / 85,
-                                                             0.0F,
-                                                             0.0F,
-                                                             -4.0F / 85,
-                                                             -12.0F / 85,
-                                                             -24.0F / 85,
-                                                             -40.0F / 85,
-                                                             -60.0F / 85,
-                                                             -84.0F / 85,
-                                                             -112.0F / 85};
+                                                                 84.0F / 85,
+                                                                 60.0F / 85,
+                                                                 40.0F / 85,
+                                                                 24.0F / 85,
+                                                                 12.0F / 85,
+                                                                 4.0F / 85,
+                                                                 0.0F,
+                                                                 0.0F,
+                                                                 -4.0F / 85,
+                                                                 -12.0F / 85,
+                                                                 -24.0F / 85,
+                                                                 -40.0F / 85,
+                                                                 -60.0F / 85,
+                                                                 -84.0F / 85,
+                                                                 -112.0F / 85};
 
   unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_170, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -218,37 +218,37 @@ static log_likelihood_ratio demod_256QAM_symbol_23(float x, float noise_var, flo
 {
   constexpr unsigned                            NOF_INTERVALS = 16;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {16 * M_SQRT1_170,
-                                                         12 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         12 * M_SQRT1_170,
-                                                         16 * M_SQRT1_170,
-                                                         -16 * M_SQRT1_170,
-                                                         -12 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170,
-                                                         -12 * M_SQRT1_170,
-                                                         -16 * M_SQRT1_170};
+                                                                 12 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 12 * M_SQRT1_170,
+                                                                 16 * M_SQRT1_170,
+                                                                 -16 * M_SQRT1_170,
+                                                                 -12 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170,
+                                                                 -12 * M_SQRT1_170,
+                                                                 -16 * M_SQRT1_170};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {88.0F / 85,
-                                                             60.0F / 85,
-                                                             36.0F / 85,
-                                                             16.0F / 85,
-                                                             16.0F / 85,
-                                                             28.0F / 85,
-                                                             36.0F / 85,
-                                                             40.0F / 85,
-                                                             40.0F / 85,
-                                                             36.0F / 85,
-                                                             28.0F / 85,
-                                                             16.0F / 85,
-                                                             16.0F / 85,
-                                                             36.0F / 85,
-                                                             60.0F / 85,
-                                                             88.0F / 85};
+                                                                 60.0F / 85,
+                                                                 36.0F / 85,
+                                                                 16.0F / 85,
+                                                                 16.0F / 85,
+                                                                 28.0F / 85,
+                                                                 36.0F / 85,
+                                                                 40.0F / 85,
+                                                                 40.0F / 85,
+                                                                 36.0F / 85,
+                                                                 28.0F / 85,
+                                                                 16.0F / 85,
+                                                                 16.0F / 85,
+                                                                 36.0F / 85,
+                                                                 60.0F / 85,
+                                                                 88.0F / 85};
 
   unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_170, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -260,37 +260,37 @@ static log_likelihood_ratio demod_256QAM_symbol_45(float x, float noise_var, flo
 {
   constexpr unsigned                            NOF_INTERVALS = 16;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {8 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         8 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         -8 * M_SQRT1_170};
+                                                                 4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 8 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 -8 * M_SQRT1_170};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {52.0F / 85,
-                                                             24.0F / 85,
-                                                             24.0F / 85,
-                                                             44.0F / 85,
-                                                             -20.0F / 85,
-                                                             -8.0F / 85,
-                                                             -8.0F / 85,
-                                                             -12.0F / 85,
-                                                             -12.0F / 85,
-                                                             -8.0F / 85,
-                                                             -8.0F / 85,
-                                                             -20.0F / 85,
-                                                             44.0F / 85,
-                                                             24.0F / 85,
-                                                             24.0F / 85,
-                                                             52.0F / 85};
+                                                                 24.0F / 85,
+                                                                 24.0F / 85,
+                                                                 44.0F / 85,
+                                                                 -20.0F / 85,
+                                                                 -8.0F / 85,
+                                                                 -8.0F / 85,
+                                                                 -12.0F / 85,
+                                                                 -12.0F / 85,
+                                                                 -8.0F / 85,
+                                                                 -8.0F / 85,
+                                                                 -20.0F / 85,
+                                                                 44.0F / 85,
+                                                                 24.0F / 85,
+                                                                 24.0F / 85,
+                                                                 52.0F / 85};
 
   unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_170, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -302,15 +302,15 @@ static log_likelihood_ratio demod_256QAM_symbol_67(float x, float noise_var, flo
 {
   constexpr unsigned                            NOF_INTERVALS = 8;
   static const std::array<float, NOF_INTERVALS> SLOPE         = {4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170,
-                                                         4 * M_SQRT1_170,
-                                                         -4 * M_SQRT1_170};
+                                                                 -4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170,
+                                                                 4 * M_SQRT1_170,
+                                                                 -4 * M_SQRT1_170};
   static const std::array<float, NOF_INTERVALS> INTERCEPT     = {
-      28.0F / 85, -20.0F / 85, 12.0F / 85, -4.0F / 85, -4.0F / 85, 12.0F / 85, -20.0F / 85, 28.0F / 85};
+          28.0F / 85, -20.0F / 85, 12.0F / 85, -4.0F / 85, -4.0F / 85, 12.0F / 85, -20.0F / 85, 28.0F / 85};
 
   unsigned idx     = compute_interval_idx(x, 4 * M_SQRT1_170, NOF_INTERVALS);
   float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
@@ -344,9 +344,9 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
                                                span<const float>          noise_vars,
                                                modulation_scheme          mod)
 {
-  srsran_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
-  srsran_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
-  srsran_assert(std::all_of(noise_vars.begin(), noise_vars.end(), [](float f) { return f > 0; }),
+  srsgnb_assert(symbols.size() == noise_vars.size(), "Inputs symbols and noise_vars must have the same length.");
+  srsgnb_assert(symbols.size() * get_bits_per_symbol(mod) == llrs.size(), "Input and output lengths are incompatible.");
+  srsgnb_assert(std::all_of(noise_vars.begin(), noise_vars.end(), [](float f) { return f > 0; }),
                 "Input noise_vars must have positive entries.");
 
   switch (mod) {

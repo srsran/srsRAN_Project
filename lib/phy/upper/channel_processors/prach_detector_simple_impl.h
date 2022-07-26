@@ -50,18 +50,18 @@ public:
     signal_freq_temp((dft_size_15kHz_ * 15000) / 1250),
     dft_size_15kHz(dft_size_15kHz_)
   {
-    srsran_assert(dft_1_25_kHz, "Invalid DFT processor.");
-    srsran_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsran_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
-    srsran_assert(idft_1_25_kHz, "Invalid IDFT processor.");
-    srsran_assert(idft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsran_assert(idft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
-    srsran_assert(dft_5_kHz, "Invalid DFT processor.");
-    srsran_assert(dft_5_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsran_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
-    srsran_assert(idft_5_kHz, "Invalid IDFT processor.");
-    srsran_assert(idft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsran_assert(idft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
+    srsgnb_assert(dft_1_25_kHz, "Invalid DFT processor.");
+    srsgnb_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
+    srsgnb_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
+    srsgnb_assert(idft_1_25_kHz, "Invalid IDFT processor.");
+    srsgnb_assert(idft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+    srsgnb_assert(idft_1_25_kHz->get_size() == (dft_size_15kHz * 15000 / 1250), "Invalid DFT size.");
+    srsgnb_assert(dft_5_kHz, "Invalid DFT processor.");
+    srsgnb_assert(dft_5_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
+    srsgnb_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
+    srsgnb_assert(idft_5_kHz, "Invalid IDFT processor.");
+    srsgnb_assert(idft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+    srsgnb_assert(idft_5_kHz->get_size() == (dft_size_15kHz * 15000 / 5000), "Invalid DFT size.");
   };
 
   // See interface for documentation.

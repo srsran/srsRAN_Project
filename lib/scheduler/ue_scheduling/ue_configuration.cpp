@@ -94,7 +94,7 @@ void ue_cell_configuration::addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlin
 
 void ue_cell_configuration::rel_bwp_ded_cfg(bwp_id_t bwpid)
 {
-  srsran_sanity_check(dl_bwps_cfg.contains(bwpid), "BWP-id={} does not exist", bwpid);
+  srsgnb_sanity_check(dl_bwps_cfg.contains(bwpid), "BWP-id={} does not exist", bwpid);
   bwp_downlink_dedicated& self_bwp_ded = dl_bwps_cfg[bwpid].bwp_dl_ded;
   for (const coreset_configuration& cs_cfg : self_bwp_ded.pdcch_cfg->coreset_to_addmod_list) {
     dl_coresets[cs_cfg.id] = nullptr;

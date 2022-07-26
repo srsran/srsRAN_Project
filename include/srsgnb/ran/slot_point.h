@@ -43,17 +43,17 @@ public:
   /// Takes a numerology and total count value.
   slot_point(uint32_t numerology, uint32_t count) : numerology_val(numerology), count_val(count)
   {
-    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
-    srsran_assert(count < nof_slots_per_system_frame(), "Invalid slot count={} passed", count);
+    srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
+    srsgnb_assert(count < nof_slots_per_system_frame(), "Invalid slot count={} passed", count);
   }
 
   /// Takes a numerology, SFN and slot index in radio frame.
   slot_point(uint32_t numerology, uint32_t sfn_val, uint32_t slot_radio_frame_idx_) :
     numerology_val(numerology), count_val(slot_radio_frame_idx_ + sfn_val * nof_slots_per_frame())
   {
-    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
-    srsran_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
-    srsran_assert(slot_radio_frame_idx_ < nof_slots_per_frame(),
+    srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
+    srsgnb_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
+    srsgnb_assert(slot_radio_frame_idx_ < nof_slots_per_frame(),
                   "Slot index={} exceeds maximum number of slots={}",
                   slot_radio_frame_idx_,
                   nof_slots_per_frame());
@@ -64,10 +64,10 @@ public:
     numerology_val(numerology),
     count_val(slot_subframe_index_ + subframe_index_ * nof_slots_per_subframe() + sfn_val * nof_slots_per_frame())
   {
-    srsran_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
-    srsran_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
-    srsran_assert(subframe_index_ < NOF_SUBFRAMES_PER_FRAME, "Invalid Subframe index={} provided", subframe_index_);
-    srsran_assert(slot_subframe_index_ < nof_slots_per_subframe(),
+    srsgnb_assert(numerology < NOF_NUMEROLOGIES, "Invalid numerology idx={} passed", numerology);
+    srsgnb_assert(sfn_val < NOF_SFNS, "Invalid SFN={} provided", sfn_val);
+    srsgnb_assert(subframe_index_ < NOF_SUBFRAMES_PER_FRAME, "Invalid Subframe index={} provided", subframe_index_);
+    srsgnb_assert(slot_subframe_index_ < nof_slots_per_subframe(),
                   "Slot index={} exceeds maximum number of slots in subframe={}",
                   slot_subframe_index_,
                   nof_slots_per_subframe());
@@ -133,7 +133,7 @@ public:
   /// is equal to half of the total number of slots in a hyperframe.
   bool operator<(const slot_point& other) const
   {
-    srsran_assert(numerology() == other.numerology(), "Comparing slots of different numerologies");
+    srsgnb_assert(numerology() == other.numerology(), "Comparing slots of different numerologies");
     int v = static_cast<int>(other.count_val) - static_cast<int>(count_val);
     if (v > 0) {
       return (v < (int)nof_slots_per_system_frame() / 2);

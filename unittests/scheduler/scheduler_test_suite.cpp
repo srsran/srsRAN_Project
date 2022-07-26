@@ -34,7 +34,7 @@ void srsgnb::test_pdcch_pdsch_common_consistency(const cell_configuration&   cel
       time_assignment = pdcch.dci.ra_f1_0.time_resource;
     } break;
     default:
-      srsran_terminate("not supported");
+      srsgnb_terminate("not supported");
   }
   ofdm_symbol_range symbols =
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_assignment].symbols;

@@ -29,7 +29,7 @@ subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
     case ssb_pattern_case::E:
       return subcarrier_spacing::kHz240;
     default:
-      srsran_terminate("Invalid SSB pattern");
+      srsgnb_terminate("Invalid SSB pattern");
   }
   return subcarrier_spacing::invalid;
 }
@@ -84,7 +84,7 @@ static void ssb_alloc_case_A_C(ssb_information_list&     ssb_list,
 
     for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
+        srsgnb_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
@@ -125,7 +125,7 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
 
     for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
+        srsgnb_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
@@ -147,7 +147,7 @@ ssb_alloc_case_B(ssb_information_list& ssb_list, const slot_point& sl_point_mod,
 
     for (uint8_t n = 0; n < ssb_burst_ofdm_symb.size(); n++) {
       if (in_burst_bitmap & ssb_idx_mask) {
-        srsran_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
+        srsgnb_assert(n < sizeof(ssb_burst_ofdm_symb), "SSB index exceeding OFDM symbols array size");
         uint8_t ssb_idx = n + slot_idx * 2;
         fill_ssb_parameters(ssb_list,
                             cell_cfg.ssb_cfg.offset_to_point_A,
@@ -175,7 +175,7 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
 
   // Only FR1 are supported in this implementation.
   uint32_t freq_arfcn = cell_cfg.dl_carrier.arfcn;
-  srsran_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
+  srsgnb_assert(freq_arfcn < static_cast<uint32_t>(FR1_MAX_FREQUENCY_ARFCN),
                 "Frenquencies in the range FR2 not supported");
 
   // Perform mod operation of slot index by ssb_periodicity;
@@ -196,7 +196,7 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
       ssb_alloc_case_B(ssb_list, sl_point_mod, cell_cfg);
       break;
     default:
-      srsran_assert(cell_cfg.ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
+      srsgnb_assert(cell_cfg.ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
   }
 
   // Update the used DL PRBs with those allocated to the SSBs.

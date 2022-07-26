@@ -76,13 +76,13 @@ public:
 
   bool contains(IdType id) const
   {
-    srsran_sanity_check(id < MAX_SIZE, "Invalid Id={}", id);
+    srsgnb_sanity_check(id < MAX_SIZE, "Invalid Id={}", id);
     return elems[id] != nullptr;
   }
 
   void insert(IdType id_value, std::unique_ptr<T> u)
   {
-    srsran_sanity_check(not contains(id_value), "Id={} already exists", id_value);
+    srsgnb_sanity_check(not contains(id_value), "Id={} already exists", id_value);
     elems[id_value] = std::move(u);
     ++nof_elems;
   }
@@ -90,7 +90,7 @@ public:
   template <typename... Args>
   void emplace(IdType id_value, Args&&... args)
   {
-    srsran_sanity_check(not contains(id_value), "Id={} already exists", id_value);
+    srsgnb_sanity_check(not contains(id_value), "Id={} already exists", id_value);
     elems[id_value] = std::make_unique<T>(std::forward<Args>(args)...);
     ++nof_elems;
   }
@@ -115,13 +115,13 @@ public:
 
   T& operator[](IdType id_value)
   {
-    srsran_sanity_check(contains(id_value), "Id={} does not exist", id_value);
+    srsgnb_sanity_check(contains(id_value), "Id={} does not exist", id_value);
     return *elems[id_value];
   }
 
   const T& operator[](IdType id_value) const
   {
-    srsran_sanity_check(contains(id_value), "Id={} does not exist", id_value);
+    srsgnb_sanity_check(contains(id_value), "Id={} does not exist", id_value);
     return *elems[id_value];
   }
 
@@ -133,7 +133,7 @@ public:
   const_iterator begin() const { return {elems.begin(), elems.end()}; }
   const_iterator end() const { return {elems.end(), elems.end()}; }
 
-  iterator lower_bound(IdType id) { return {elems.begin() + id, elems.end()}; }
+  iterator       lower_bound(IdType id) { return {elems.begin() + id, elems.end()}; }
   const_iterator lower_bound(IdType id) const { return {elems.begin() + id, elems.end()}; }
 
 private:

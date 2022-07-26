@@ -67,7 +67,7 @@ log_likelihood_ratio log_likelihood_ratio::promotion_sum(log_likelihood_ratio a,
 
 log_likelihood_ratio log_likelihood_ratio::quantize(float value, float range_limit)
 {
-  srsran_assert(range_limit > 0, "Second input must be positive.");
+  srsgnb_assert(range_limit > 0, "Second input must be positive.");
 
   float clipped = value;
   if (std::abs(value) > range_limit) {

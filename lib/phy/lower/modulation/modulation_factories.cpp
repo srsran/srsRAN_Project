@@ -23,7 +23,7 @@ private:
 public:
   ofdm_modulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
   {
-    srsran_assert(config.dft_factory, "Invalid DFT factory.");
+    srsgnb_assert(config.dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_modulator>
@@ -50,7 +50,7 @@ private:
 public:
   ofdm_demodulator_factory_generic(const ofdm_factory_generic_configuration& config) : dft_factory(config.dft_factory)
   {
-    srsran_assert(config.dft_factory, "Invalid DFT factory.");
+    srsgnb_assert(config.dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<ofdm_symbol_demodulator>

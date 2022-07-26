@@ -42,7 +42,8 @@ class mac_ul_ue_manager
 public:
   mac_ul_ue_manager(mac_common_config_t& cfg_, du_rnti_table& rnti_table_) :
     cfg(cfg_), logger(cfg.logger), rnti_table(rnti_table_)
-  {}
+  {
+  }
 
   /// Checks whether RNTI exists.
   bool contains_rnti(rnti_t rnti) const { return ue_db.contains(rnti_table[rnti]); }
@@ -50,7 +51,7 @@ public:
   /// Adds UE in MAC UL UE repository
   bool add_ue(const mac_ue_create_request_message& request)
   {
-    srsran_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
+    srsgnb_sanity_check(is_crnti(request.crnti), "Invalid C-RNTI={:#x}", request.crnti);
 
     // 1. Insert UE
     if (ue_db.contains(request.ue_index)) {

@@ -64,7 +64,7 @@ struct test_bench {
         numerology = 1;
         break;
       default:
-        srsran_assert(cfg.ssb_case < ssb_pattern_case::invalid,
+        srsgnb_assert(cfg.ssb_case < ssb_pattern_case::invalid,
                       "Invalid SSB case. Only case A, B, and C are supported");
     }
     test_logger.set_context(0);
@@ -442,7 +442,7 @@ void test_ssb_allocation(ssb_periodicity    ssb_period,
         test_ssb_case_A_C(bench.slot_tx(), f_cutoff_arfnc, bench.get_cell_sched_config(), bench.get_slot_allocator());
       } break;
       default:
-        srsran_assert(ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
+        srsgnb_assert(ssb_case < ssb_pattern_case::invalid, "Only SSB case A, B and C are currently supported");
     }
   }
 }

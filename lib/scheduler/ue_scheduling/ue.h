@@ -31,7 +31,8 @@ public:
     harqs(crnti_val, 52, 16, srslog::fetch_basic_logger("MAC")),
     crnti_(crnti_val),
     ue_cfg(cell_cfg_common_, ue_serv_cell)
-  {}
+  {
+  }
 
   const du_ue_index_t   ue_index;
   const du_cell_index_t cell_index;
@@ -59,10 +60,10 @@ public:
     cells[0] = std::make_unique<ue_carrier>(ue_index, req.crnti, req.pcell_index, cell_cfg_common, req.serv_cell_cfg);
     ue_cells.push_back(cells[0].get());
   }
-  ue(const ue&) = delete;
-  ue(ue&&)      = delete;
+  ue(const ue&)            = delete;
+  ue(ue&&)                 = delete;
   ue& operator=(const ue&) = delete;
-  ue& operator=(ue&&) = delete;
+  ue& operator=(ue&&)      = delete;
 
   const du_ue_index_t ue_index;
   const rnti_t        crnti;
@@ -71,13 +72,13 @@ public:
 
   ue_carrier* find_cc(du_cell_index_t cell_index)
   {
-    srsran_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
+    srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
     return cells[cell_index].get();
   }
 
   const ue_carrier* find_cc(du_cell_index_t cell_index) const
   {
-    srsran_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
+    srsgnb_assert(cell_index < MAX_CELLS, "Invalid cell_index={}", cell_index);
     return cells[cell_index].get();
   }
 

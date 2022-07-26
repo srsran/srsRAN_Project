@@ -47,7 +47,7 @@ private:
   template <typename U>
   void set(U&& u)
   {
-    srsran_assert(not ev->is_set(), "Transaction result cannot be overwritten.");
+    srsgnb_assert(not ev->is_set(), "Transaction result cannot be overwritten.");
     ev->set(std::forward<U>(u));
   }
 

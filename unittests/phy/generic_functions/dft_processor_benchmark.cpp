@@ -70,7 +70,7 @@ int main(int argc, char** argv)
     fmt::print("Invalid DFT factory.");
     return -1;
   }
-  srsran_assert(dft_factory, "DFT factory of type {} is not available.", dft_factory_str);
+  srsgnb_assert(dft_factory, "DFT factory of type {} is not available.", dft_factory_str);
 
   benchmarker perf_meas("DFT " + dft_factory_str, nof_repetitions);
 

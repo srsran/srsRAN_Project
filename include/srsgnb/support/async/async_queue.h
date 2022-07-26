@@ -21,7 +21,7 @@ class async_queue
 {
 public:
   async_queue(size_t queue_size) : queue(queue_size) {}
-  async_queue(const async_queue&) = delete;
+  async_queue(const async_queue&)            = delete;
   async_queue& operator=(const async_queue&) = delete;
 
   // Pushing interface
@@ -63,7 +63,7 @@ public:
     }
     T await_resume()
     {
-      srsran_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
+      srsgnb_sanity_check(not parent->queue.empty(), "Callback being resumed but queue is still empty");
       T ret = std::move(parent->queue.top());
       parent->queue.pop();
       return ret;

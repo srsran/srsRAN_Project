@@ -28,7 +28,7 @@ private:
 public:
   pucch_helper(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsran_assert(prg, "Invalid PRG.");
+    srsgnb_assert(prg, "Invalid PRG.");
   }
 
   /// Computes the NR-PUCCH group sequence (TS 38.211 clause 6.3.2.2.1 Group and sequence hopping).
@@ -42,10 +42,10 @@ public:
         f_ss = n_id % low_papr_sequence_collection::NOF_GROUPS;
         break;
       case pucch_group_hopping::ENABLE:
-        srsran_terminate("Group hopping is not implemented");
+        srsgnb_terminate("Group hopping is not implemented");
         return;
       case pucch_group_hopping::DISABLE:
-        srsran_terminate("Hopping is not implemented");
+        srsgnb_terminate("Hopping is not implemented");
         return;
     }
 

@@ -36,8 +36,8 @@ public:
   // See interface for documentation.
   span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
   {
-    srsran_always_assert(!data.empty(), "Data is empty. Was the buffer moved?");
-    srsran_always_assert(
+    SRSGNB_ALWAYS_ASSERT__(!data.empty(), "Data is empty. Was the buffer moved?");
+    SRSGNB_ALWAYS_ASSERT__(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<radio_sample_type>(data).subspan(offset, nof_samples);
@@ -46,8 +46,8 @@ public:
   // See interface for documentation.
   span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
   {
-    srsran_always_assert(!data.empty(), "Data is empty. Was the buffer moved?");
-    srsran_always_assert(
+    SRSGNB_ALWAYS_ASSERT__(!data.empty(), "Data is empty. Was the buffer moved?");
+    SRSGNB_ALWAYS_ASSERT__(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<const radio_sample_type>(data).subspan(offset, nof_samples);

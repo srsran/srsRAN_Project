@@ -245,8 +245,8 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
   // Assert parameters.
-  srsran_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
-  srsran_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
+  srsgnb_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
+  srsgnb_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
 
   logger.info(
       "Initialized with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
@@ -256,23 +256,23 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
       config.max_processing_delay_slots);
 
   // Make sure dependencies are valid.
-  srsran_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
-  srsran_assert(config.error_notifier != nullptr, "Invalid error notifier.");
-  srsran_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
-  srsran_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
-  srsran_assert(modulators.size() == config.sectors.size(),
+  srsgnb_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
+  srsgnb_assert(config.error_notifier != nullptr, "Invalid error notifier.");
+  srsgnb_assert(config.rx_symbol_notifier != nullptr, "Invalid symbol notifier pointer.");
+  srsgnb_assert(config.timing_notifier != nullptr, "Invalid timing notifier pointer.");
+  srsgnb_assert(modulators.size() == config.sectors.size(),
                 "The number of sectors ({}) and modulators ({}) do not match.",
                 config.sectors.size(),
                 modulators.size());
-  srsran_assert(demodulators.size() == config.sectors.size(),
+  srsgnb_assert(demodulators.size() == config.sectors.size(),
                 "The number of sectors ({}) and demodulators ({}) do not match.",
                 config.sectors.size(),
                 demodulators.size());
   for (auto& modulator : modulators) {
-    srsran_assert(modulator, "Invalid modulator.");
+    srsgnb_assert(modulator, "Invalid modulator.");
   }
   for (auto& demodulator : demodulators) {
-    srsran_assert(demodulator, "Invalid demodulator.");
+    srsgnb_assert(demodulator, "Invalid demodulator.");
   }
 
   // Create radio buffers and receive metadata.

@@ -24,7 +24,7 @@ inline unsigned calculate_nof_dmrs_per_rb(const dmrs_information& dmrs)
 
   // Calculate the maximum number of CDM groups without data and make sure the number does not exceed the maximum.
   unsigned max_nof_cdm_groups_without_data = (dmrs.config_type == dmrs_config_type::type1) ? 2 : 3;
-  srsran_assert(dmrs.num_dmrs_cdm_grps_no_data >= 1 &&
+  srsgnb_assert(dmrs.num_dmrs_cdm_grps_no_data >= 1 &&
                     dmrs.num_dmrs_cdm_grps_no_data <= max_nof_cdm_groups_without_data,
                 "Invalid number of CDM groups without data {}.",
                 dmrs.num_dmrs_cdm_grps_no_data);
@@ -42,7 +42,7 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
                                               pci_t                      pci,
                                               dmrs_typeA_position        dmrs_typeA_pos)
 {
-  srsran_assert(pdsch_cfg.pdsch_td_alloc_list.size() > time_resource, "Invalid time resource");
+  srsgnb_assert(pdsch_cfg.pdsch_td_alloc_list.size() > time_resource, "Invalid time resource");
   const pdsch_time_domain_resource_allocation& pdsch_time_res = pdsch_cfg.pdsch_td_alloc_list[time_resource];
 
   dmrs_information dmrs{};
@@ -58,7 +58,7 @@ inline dmrs_information make_dmrs_info_common(const pdsch_config_common& pdsch_c
     dmrs.dmrs_symb_pos                        = pdsch_dmrs_symbol_mask_mapping_type_A_single_get(dmrscfg);
 
   } else {
-    srsran_terminate("Mapping type B not supported");
+    srsgnb_terminate("Mapping type B not supported");
   }
 
   dmrs.config_type        = dmrs_config_type::type1;

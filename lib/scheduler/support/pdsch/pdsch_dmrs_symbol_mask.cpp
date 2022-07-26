@@ -15,10 +15,10 @@ using namespace srsgnb;
 dmrs_symbol_mask srsgnb::pdsch_dmrs_symbol_mask_mapping_type_A_single_get(
     const pdsch_dmrs_symbol_mask_mapping_type_A_single_configuration& config)
 {
-  srsran_assert(config.typeA_pos == dmrs_typeA_position::pos2 || config.typeA_pos == dmrs_typeA_position::pos3,
+  srsgnb_assert(config.typeA_pos == dmrs_typeA_position::pos2 || config.typeA_pos == dmrs_typeA_position::pos3,
                 "Invalid TypeA position {}",
                 config.typeA_pos);
-  srsran_assert(config.duration > 2 && config.duration <= 14, "Invalid transmission duration {}", config.duration);
+  srsgnb_assert(config.duration > 2 && config.duration <= 14, "Invalid transmission duration {}", config.duration);
   unsigned l0 = static_cast<unsigned>(config.typeA_pos);
   unsigned l1 =
       (config.lte_crs_match_around && (config.additional_position == dmrs_additional_positions::pos1 && l0 == 3) &&

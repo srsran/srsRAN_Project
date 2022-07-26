@@ -83,7 +83,7 @@ static unsigned dmrs_pucch_symbols(const dmrs_pucch_processor::config_t& config,
       default:; // Do nothing
     }
   }
-  srsran_assert(false, "Invalid case nof_symbols={} and m_prime={}", config.nof_symbols, m_prime);
+  srsgnb_assert(false, "Invalid case nof_symbols={} and m_prime={}", config.nof_symbols, m_prime);
   return 0;
 }
 
@@ -98,7 +98,7 @@ void dmrs_pucch_processor_format1_impl::sequence_generation(span<srsgnb::cf_t>  
 
   // Get r_uv sequence from the sequence collection.
   span<const cf_t> r_uv = sequence_collection->get(cfg.u, cfg.v, alpha_idx);
-  srsran_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
+  srsgnb_assert(!r_uv.empty(), "low PAPR sequence not implemented for the specified u, v and alpha");
 
   // Get orthogonal sequence.
   cf_t w_i_m = occ->get_sequence_value(cfg.n_pucch, pucch_config.time_domain_occ, cfg.m);
@@ -138,7 +138,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
     // Get number of symbols carrying DMRS
     unsigned n_pucch = dmrs_pucch_symbols(config, m_prime);
 
-    srsran_assert(n_pucch > 0, "Error getting number of symbols");
+    srsgnb_assert(n_pucch > 0, "Error getting number of symbols");
 
     // Get the starting PRB.
     unsigned starting_prb = (m_prime == 0) ? config.starting_prb : config.second_hop_prb;

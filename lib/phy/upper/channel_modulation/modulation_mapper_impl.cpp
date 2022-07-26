@@ -46,7 +46,7 @@ struct modulator_table_s {
 
     // Calculate average power to calculate scaling for having a power average of one.
     float avg_power = srsvec::average_power(table);
-    srsran_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
+    srsgnb_assert(std::isnormal(avg_power), "Corrupted modulation average power.");
 
     // Perform scaling.
     float scaling = std::sqrt(1 / avg_power);
@@ -86,7 +86,7 @@ struct modulator_table_s {
       // Assign symbol from table
       symbol = table[index];
     }
-    srsran_assert(input.empty(), "Expected full consumption of the input data.");
+    srsgnb_assert(input.empty(), "Expected full consumption of the input data.");
   }
 };
 
@@ -114,7 +114,7 @@ void modulation_mapper_impl::modulate(srsgnb::span<const uint8_t> input,
                                       srsgnb::span<srsgnb::cf_t>  symbols,
                                       srsgnb::modulation_scheme   scheme)
 {
-  srsran_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
+  srsgnb_assert(input.size() == get_bits_per_symbol(scheme) * symbols.size(),
                 "The number of bits {} is not consistent with the number of symbols {} for modulation scheme {}.",
                 input.size(),
                 symbols.size(),

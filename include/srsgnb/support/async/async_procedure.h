@@ -29,7 +29,7 @@ struct base_resumable_procedure {
   void operator()(detail::base_coro_frame<promise_type>& ctx)
   {
     if (frame_ptr == nullptr) {
-      srsran_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
+      srsgnb_sanity_check(ctx.state_index == detail::tag_init, "Invalid coro state");
       ctx.state_index = 10;
       frame_ptr       = &ctx;
       async_await(suspend_always{}, &base_resumable_procedure<FutureType>::start);
@@ -47,9 +47,9 @@ protected:
       if (this->frame_ptr->state_index > 0) {
         await_resume_helper<Awaitable>(action);
       } else {
-        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_cancelled,
+        srsgnb_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_cancelled,
                             "Calling resume on cancelled task");
-        srsran_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_final_suspend,
+        srsgnb_sanity_check(frame_ptr->state_index != detail::coro_state_tag_t::tag_final_suspend,
                             "Calling on task on suspended point");
         // cancelled
         frame_ptr->template on_await_cancel<Awaitable>();
@@ -112,7 +112,7 @@ private:
 
   /// Called when Awaitable returns void
   template <typename Awaitable, typename Derived>
-  detail::enable_if_void<detail::awaitable_result_t<Awaitable> > await_resume_helper(void (Derived::*action)())
+  detail::enable_if_void<detail::awaitable_result_t<Awaitable>> await_resume_helper(void (Derived::*action)())
   {
     frame_ptr->template on_await_resume<Awaitable>();
     (static_cast<Derived*>(this)->*action)();
@@ -124,6 +124,6 @@ private:
 
 /// Base class of non-coroutine resumable tasks
 template <typename R>
-using async_procedure = base_resumable_procedure<async_task<R> >;
+using async_procedure = base_resumable_procedure<async_task<R>>;
 
 } // namespace srsgnb

@@ -39,11 +39,11 @@ void ldpc_encoder_impl::encode(span<uint8_t>                                 out
 
   uint16_t message_length    = bg_K * lifting_size;
   uint16_t max_output_length = bg_N_short * lifting_size;
-  srsran_assert(input.size() == message_length,
+  srsgnb_assert(input.size() == message_length,
                 "Input size (%d) and message length (%d) must be equal",
                 input.size(),
                 message_length);
-  srsran_assert(output.size() <= max_output_length,
+  srsgnb_assert(output.size() <= max_output_length,
                 "Output size (%d) must be equal to or greater than %d",
                 output.size(),
                 max_output_length);

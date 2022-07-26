@@ -18,9 +18,9 @@ namespace srsgnb {
 /// Defines the structure to configure the downlink processor pool.
 struct downlink_processor_pool_config_impl {
   struct info {
-    unsigned                                          sector;
-    unsigned                                          numerology;
-    std::vector<std::unique_ptr<downlink_processor> > procs;
+    unsigned                                         sector;
+    unsigned                                         numerology;
+    std::vector<std::unique_ptr<downlink_processor>> procs;
   };
 
   std::vector<info> procs;
@@ -32,7 +32,7 @@ class downlink_processor_pool_impl : public downlink_processor_pool
 {
   static constexpr unsigned MAX_NUM_NUMEROLOGIES = 5U;
 
-  using processor_pool       = std::vector<std::unique_ptr<downlink_processor> >;
+  using processor_pool       = std::vector<std::unique_ptr<downlink_processor>>;
   using numerology_container = circular_map<uint32_t, processor_pool, MAX_NUM_NUMEROLOGIES>;
 
   /// \brief Represents a sector in the container of the pool.
@@ -58,7 +58,7 @@ class downlink_processor_pool_impl : public downlink_processor_pool
     processor_pool& operator[](unsigned numerology)
     {
       auto iter = numerologies.find(numerology);
-      srsran_assert(iter != numerologies.end(), "Invalid numerology ({}) in sector ({}).", numerology, sector_id);
+      srsgnb_assert(iter != numerologies.end(), "Invalid numerology ({}) in sector ({}).", numerology, sector_id);
 
       return iter->second;
     }

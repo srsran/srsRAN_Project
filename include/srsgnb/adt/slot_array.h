@@ -137,7 +137,7 @@ public:
     other.nof_elems = 0;
   }
   base_slot_array& operator=(const base_slot_array&) = default;
-  base_slot_array& operator                          =(base_slot_array&& other) noexcept
+  base_slot_array& operator=(base_slot_array&& other) noexcept
   {
     this->vec       = std::move(other.vec);
     this->nof_elems = other.nof_elems;
@@ -158,7 +158,7 @@ public:
   /// \param idx Position of the erased element in the array
   void erase(size_t idx) noexcept
   {
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     if (this->contains(idx)) {
       this->nof_elems--;
       this->vec[idx].reset();
@@ -176,7 +176,7 @@ public:
   void insert(size_t idx, U&& u)
   {
     static_assert(std::is_convertible<U, value_type>::value, "Ctor T(U&&) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx] = std::forward<U>(u);
   }
@@ -188,7 +188,7 @@ public:
   void emplace(size_t idx, Args&&... args)
   {
     static_assert(std::is_constructible<value_type, Args&&...>::value, "Ctor T(Args...) does not exist.");
-    srsran_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
+    srsgnb_assert(idx < this->vec.size(), "Out-of-bounds access to array: {}>={}", idx, this->vec.size());
     this->nof_elems += this->contains(idx) ? 0 : 1;
     this->vec[idx].emplace(std::forward<Args>(args)...);
   }
@@ -202,9 +202,9 @@ public:
 /// @tparam T type of objects
 /// @tparam N static size of max nof items
 template <typename T, size_t N>
-class slot_array : private detail::base_slot_array<std::array<optional<T>, N> >
+class slot_array : private detail::base_slot_array<std::array<optional<T>, N>>
 {
-  using base_t = detail::base_slot_array<std::array<optional<T>, N> >;
+  using base_t = detail::base_slot_array<std::array<optional<T>, N>>;
 
 public:
   using value_type     = typename base_t::value_type;
@@ -230,9 +230,9 @@ public:
 /// However, the indexes will remain valid.
 /// @tparam T
 template <typename T>
-class slot_vector : private detail::base_slot_array<std::vector<optional<T> > >
+class slot_vector : private detail::base_slot_array<std::vector<optional<T>>>
 {
-  using base_t = detail::base_slot_array<std::vector<optional<T> > >;
+  using base_t = detail::base_slot_array<std::vector<optional<T>>>;
 
 public:
   using value_type     = typename base_t::value_type;
@@ -276,14 +276,15 @@ public:
 /// interface.
 /// \tparam T type of elements
 template <typename T>
-class slot_span : public detail::base_slot_array_view<srsgnb::span<optional<T> > >
+class slot_span : public detail::base_slot_array_view<srsgnb::span<optional<T>>>
 {
-  using base_t = detail::base_slot_array_view<srsgnb::span<optional<T> > >;
+  using base_t = detail::base_slot_array_view<srsgnb::span<optional<T>>>;
 
 public:
   template <size_t N>
   slot_span(const slot_array<T, N>& ar) : base_t::vec(ar)
-  {}
+  {
+  }
   slot_span(const slot_vector<T>& ar) : base_t::vec(ar) {}
 };
 
@@ -304,7 +305,7 @@ protected:
   {
     using It     = iterator_impl<Obj>;
     using Parent = typename std::
-        conditional<std::is_const<Obj>::value, const base_split_slot_span<T>, base_split_slot_span<T> >::type;
+        conditional<std::is_const<Obj>::value, const base_split_slot_span<T>, base_split_slot_span<T>>::type;
 
   public:
     using iterator_category = std::forward_iterator_tag;
@@ -354,13 +355,14 @@ public:
 
   constexpr base_split_slot_span() = default;
   template <std::size_t N>
-  constexpr base_split_slot_span(value_type (&arr)[N], presence_type (&present)[N]) noexcept : ptr(arr),
-                                                                                               present_ptr(present),
-                                                                                               len(N)
-  {}
+  constexpr base_split_slot_span(value_type (&arr)[N], presence_type (&present)[N]) noexcept :
+    ptr(arr), present_ptr(present), len(N)
+  {
+  }
   constexpr base_split_slot_span(value_type* arr, presence_type* present, size_t N) :
     ptr(arr), present_ptr(present), len(N)
-  {}
+  {
+  }
 
   bool contains(size_t idx) const { return idx < len and present_ptr[idx]; }
   bool empty() const
@@ -386,12 +388,12 @@ public:
   T&       operator[](size_t idx) { return ptr[idx]; }
   const T& at(size_t idx) const
   {
-    srsran_assert(contains(idx), "Access to inexistent element of index={}", idx);
+    srsgnb_assert(contains(idx), "Access to inexistent element of index={}", idx);
     return ptr[idx];
   }
   T& at(size_t idx)
   {
-    srsran_assert(this->contains(idx), "Access to inexistent element of index={}", idx);
+    srsgnb_assert(this->contains(idx), "Access to inexistent element of index={}", idx);
     return this->ptr[idx];
   }
 
@@ -421,13 +423,13 @@ public:
   template <typename U>
   void insert(size_t idx, U&& u)
   {
-    srsran_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
+    srsgnb_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
     this->present_ptr[idx] = true;
     this->ptr[idx]         = std::forward<U>(u);
   }
   void erase(size_t idx)
   {
-    srsran_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
+    srsgnb_assert(idx < this->len, "Out-of-bounds access to array: {}>={}", idx, this->len);
     this->present_ptr[idx] = false;
   }
   void erase(iterator it) { erase(it.get_idx()); }

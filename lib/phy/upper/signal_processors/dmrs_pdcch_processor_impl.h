@@ -71,7 +71,7 @@ private:
 public:
   dmrs_pdcch_processor_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsran_assert(prg, "Invalid PRG.");
+    srsgnb_assert(prg, "Invalid PRG.");
   }
 
   void map(resource_grid_writer& grid, const config_t& config) override;

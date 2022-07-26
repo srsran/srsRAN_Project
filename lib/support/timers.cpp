@@ -80,7 +80,7 @@ timer_manager::timer_handle& timer_manager::create_timer()
   timer_handle* t;
   if (!free_list.empty()) {
     t = &free_list.front();
-    srsran_assert(!t->allocated, "Invalid timer id=%" PRIu32 " state", t->id);
+    srsgnb_assert(!t->allocated, "Invalid timer id=%" PRIu32 " state", t->id);
     free_list.pop_front();
     --nof_free_timers;
   } else {

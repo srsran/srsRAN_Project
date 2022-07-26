@@ -36,7 +36,7 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
   unsigned nbytes = packed.size();
   unsigned i;
 
-  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
+  srsgnb_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
   for (i = 0; i < nbytes; i++) {
     unpacked = bit_unpack(unpacked, packed[i], 8);
@@ -48,7 +48,7 @@ void srsgnb::srsvec::bit_unpack(span<uint8_t> unpacked, span<const uint8_t> pack
 
 unsigned srsgnb::srsvec::bit_pack(span<const uint8_t>& bits, unsigned nof_bits)
 {
-  srsran_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
+  srsgnb_assert(nof_bits <= 32U, "Number of bits ({}) exceeds maximum (32).", nof_bits);
 
   unsigned value = 0;
 
@@ -70,7 +70,7 @@ void srsgnb::srsvec::bit_pack(span<uint8_t> packed, span<const uint8_t> unpacked
 
   span<const uint8_t> unpack_tmp = unpacked;
 
-  srsran_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
+  srsgnb_assert(divide_ceil(nbits, 8) == nbytes, "Inconsistent input sizes");
 
 #ifdef HAVE_SSE
   const uint8_t* unpacked_ptr = unpacked.data();

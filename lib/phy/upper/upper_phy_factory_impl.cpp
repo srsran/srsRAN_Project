@@ -26,7 +26,7 @@ static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const up
 
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     std::unique_ptr<downlink_processor> dl_proc = factory.create({});
-    srsran_assert(dl_proc, "Invalid downlink processor");
+    srsgnb_assert(dl_proc, "Invalid downlink processor");
     info.procs.push_back(std::move(dl_proc));
   }
 
@@ -53,9 +53,9 @@ static std::unique_ptr<resource_grid_pool> build_dl_resource_grid_pool(const upp
 std::unique_ptr<upper_phy> upper_phy_factory_impl::create(const upper_phy_config& config)
 {
   std::unique_ptr<resource_grid_pool> rg_pool = build_dl_resource_grid_pool(config);
-  srsran_assert(rg_pool, "Invalid resource grid pool");
+  srsgnb_assert(rg_pool, "Invalid resource grid pool");
   std::unique_ptr<downlink_processor_pool> dl_pool = build_dl_processor_pool(config);
-  srsran_assert(dl_pool, "Invalid downlink processor pool");
+  srsgnb_assert(dl_pool, "Invalid downlink processor pool");
 
   return std::make_unique<upper_phy_impl>(config.sector_id, std::move(dl_pool), std::move(rg_pool));
 }

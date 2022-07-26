@@ -26,7 +26,8 @@ pdcch_encoder_impl::pdcch_encoder_impl() :
   code(create_polar_code()),
   encoder(create_polar_encoder_pipelined(polar_code::NMAX_LOG)),
   rm(create_polar_rate_matcher())
-{}
+{
+}
 
 void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)
 {
@@ -77,7 +78,7 @@ void pdcch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 
 void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config)
 {
-  srsran_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
+  srsgnb_assert(encoded.size() >= config.E, "Output data vector is too small to store encoded bits");
 
   // Configure Polar encoder
   uint16_t K = data.size() + CRC_LEN;

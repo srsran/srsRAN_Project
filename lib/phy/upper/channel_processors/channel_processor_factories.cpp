@@ -36,8 +36,8 @@ public:
                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
-    srsran_assert(modulator_factory, "Invalid modulator factory.");
-    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pbch_modulator> create() override
@@ -57,8 +57,8 @@ public:
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
-    srsran_assert(modulator_factory, "Invalid modulator factory.");
-    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pdcch_modulator> create() override
@@ -86,9 +86,9 @@ public:
     rate_matcher_factory(config.rate_matcher_factory),
     segmenter_factory(config.segmenter_factory)
   {
-    srsran_assert(config.encoder_factory, "Invalid LDPC encoder factory.");
-    srsran_assert(config.rate_matcher_factory, "Invalid LDPC RM factory.");
-    srsran_assert(config.segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsgnb_assert(config.encoder_factory, "Invalid LDPC encoder factory.");
+    srsgnb_assert(config.rate_matcher_factory, "Invalid LDPC RM factory.");
+    srsgnb_assert(config.segmenter_factory, "Invalid LDPC segmenter factory.");
   }
 
   std::unique_ptr<pdsch_encoder> create() override
@@ -188,8 +188,8 @@ public:
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     modulator_factory(modulator_factory_), prg_factory(prg_factory_)
   {
-    srsran_assert(modulator_factory, "Invalid modulator factory.");
-    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsgnb_assert(modulator_factory, "Invalid modulator factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<pdsch_modulator> create() override
@@ -213,10 +213,10 @@ public:
     dematcher_factory(config.dematcher_factory),
     segmenter_factory(config.segmenter_factory)
   {
-    srsran_assert(config.crc_factory, "Invalid CRC calculator factory.");
-    srsran_assert(config.decoder_factory, "Invalid LDPC decoder factory.");
-    srsran_assert(config.dematcher_factory, "Invalid LDPC dematcher factory.");
-    srsran_assert(config.segmenter_factory, "Invalid LDPC segmenter factory.");
+    srsgnb_assert(config.crc_factory, "Invalid CRC calculator factory.");
+    srsgnb_assert(config.decoder_factory, "Invalid LDPC decoder factory.");
+    srsgnb_assert(config.dematcher_factory, "Invalid LDPC dematcher factory.");
+    srsgnb_assert(config.segmenter_factory, "Invalid LDPC segmenter factory.");
   }
 
   std::unique_ptr<pusch_decoder> create() override

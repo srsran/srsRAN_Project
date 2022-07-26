@@ -37,9 +37,9 @@ std::unique_ptr<dmrs_pucch_processor> srsgnb::create_dmrs_pucch_processor(const 
                                                                           const low_papr_sequence_collection* c,
                                                                           const pucch_orthogonal_sequence*    occ)
 {
-  srsran_assert(format < pucch_format::NOF_FORMATS, "Incorrect PUCCH format requested");
+  srsgnb_assert(format < pucch_format::NOF_FORMATS, "Incorrect PUCCH format requested");
   auto make_fn = dmrs_pucch_factory[static_cast<std::size_t>(format)];
 
-  srsran_assert(make_fn != nullptr, "Requested PUCCH Format not implemented");
+  srsgnb_assert(make_fn != nullptr, "Requested PUCCH Format not implemented");
   return make_fn(c, occ);
 }

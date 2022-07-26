@@ -17,7 +17,7 @@ bounded_bitset<MAX_RB> rb_allocation::get_contiguous_prb_mask(unsigned bwp_start
   unsigned offset = vrb_to_prb_map.get_coreset_start();
 
   // Make sure the VRB-to-PRB allocation does not exceed the BWP region.
-  srsran_assert(offset + vrb_mask.count() <= bwp_size_rb,
+  srsgnb_assert(offset + vrb_mask.count() <= bwp_size_rb,
                 "The contiguous VRB allocation {}:{} with CORESET start {} does not fit in BWP of size {}.",
                 vrb_mask.find_lowest(0, vrb_mask.size()),
                 vrb_mask.find_highest(0, vrb_mask.size()),
@@ -112,13 +112,13 @@ rb_allocation srsgnb::rb_allocation::make_custom(std::initializer_list<const uns
 
 bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsran_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
+  srsgnb_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
                 "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
                 bwp_start_rb,
                 bwp_size_rb,
                 bwp_start_rb + bwp_size_rb,
                 MAX_RB);
-  srsran_assert(
+  srsgnb_assert(
       vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
 
   if (vrb_mask.is_contiguous() && !vrb_to_prb_map.is_interleaved()) {
@@ -130,13 +130,13 @@ bounded_bitset<MAX_RB> rb_allocation::get_prb_mask(unsigned bwp_start_rb, unsign
 
 static_vector<uint16_t, MAX_RB> rb_allocation::get_prb_indices(unsigned bwp_start_rb, unsigned bwp_size_rb) const
 {
-  srsran_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
+  srsgnb_assert(bwp_start_rb + bwp_size_rb <= MAX_RB,
                 "The sum of the BWP start and size ({}+{}={}) exceeds the maximum number RB ({}).",
                 bwp_start_rb,
                 bwp_size_rb,
                 bwp_start_rb + bwp_size_rb,
                 MAX_RB);
-  srsran_assert(
+  srsgnb_assert(
       vrb_mask.size() <= bwp_size_rb, "The VRB mask ({}) exceeds the BWP size ({}).", vrb_mask.size(), bwp_size_rb);
 
   static_vector<uint16_t, MAX_RB> result;

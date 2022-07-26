@@ -54,7 +54,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
   // Depending on the profile to use.
   if (use_profileNR) {
     // Load Data to SSS ratio from NR profile.
-    srsran_assert(fapi_pdu.power_control_offset_profile_nr != std::numeric_limits<uint8_t>::max(),
+    srsgnb_assert(fapi_pdu.power_control_offset_profile_nr != std::numeric_limits<uint8_t>::max(),
                   "Expected SSS profile.");
 
     // Calculate the power offset between NZP-CSI-RS to PDSCH data.
@@ -66,11 +66,11 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
     proc_pdu.ratio_pdsch_data_to_sss_dB = power_control_offset_dB + power_control_offset_ss_dB;
   } else {
     // Load Data to SSS ratio from SSS profile.
-    srsran_assert(fapi_pdu.power_control_offset_profile_nr == std::numeric_limits<uint8_t>::max(),
+    srsgnb_assert(fapi_pdu.power_control_offset_profile_nr == std::numeric_limits<uint8_t>::max(),
                   "Expected SSS profile.");
-    srsran_assert(fapi_pdu.power_control_offset_ss_profile_nr == nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
+    srsgnb_assert(fapi_pdu.power_control_offset_ss_profile_nr == nzp_csi_rs_epre_to_ssb::L1_use_profile_sss,
                   "Expected SSS profile.");
-    srsran_assert(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
+    srsgnb_assert(fapi_pdu.pdsch_maintenance_v3.pdsch_data_power_offset_profile_sss !=
                       std::numeric_limits<int16_t>::min(),
                   "Expected SSS profile.");
     proc_pdu.ratio_pdsch_data_to_sss_dB =
@@ -83,7 +83,7 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
         static_cast<float>(fapi_pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss) * 0.001F;
   } else {
     // Otherwise, determines the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
-    srsran_assert(fapi_pdu.num_dmrs_cdm_grps_no_data > 0 && fapi_pdu.num_dmrs_cdm_grps_no_data < 4,
+    srsgnb_assert(fapi_pdu.num_dmrs_cdm_grps_no_data > 0 && fapi_pdu.num_dmrs_cdm_grps_no_data < 4,
                   "Invalid number of DMRS CDM groups without data.");
     static constexpr std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
 

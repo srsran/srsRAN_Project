@@ -196,10 +196,10 @@ void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
 void du_processor::create_srb(const srb_creation_message& msg)
 {
   ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
-  srsran_assert(ue_ctxt != nullptr, "Could not find UE context");
+  srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
   const lcid_t lcid = srb_id_to_lcid(msg.srb_id);
-  srsran_assert(!ue_ctxt->srbs.contains(lcid), "SRB already present");
+  srsgnb_assert(!ue_ctxt->srbs.contains(lcid), "SRB already present");
 
   ue_ctxt->srbs.emplace(lcid);
   cu_srb_context& srb = ue_ctxt->srbs[lcid];

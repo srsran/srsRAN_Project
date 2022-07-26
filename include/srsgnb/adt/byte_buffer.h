@@ -103,14 +103,14 @@ public:
     static_assert(
         std::is_same<typename std::iterator_traits<It>::iterator_category, std::random_access_iterator_tag>::value,
         "Only random access iterators allowed.");
-    srsran_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
+    srsgnb_sanity_check((size_t)(it_end - it_begin) <= tailroom(), "There is not enough tailroom for append.");
     payload_data_end_ = std::copy(it_begin, it_end, end());
   }
 
   /// Appends single byte at the tail of the segment.
   void append(uint8_t byte)
   {
-    srsran_assert(tailroom() >= 1, "There is not enough tailroom space.");
+    srsgnb_assert(tailroom() >= 1, "There is not enough tailroom space.");
     buffer[tailroom_start()] = byte;
     payload_data_end_++;
   }
@@ -118,7 +118,7 @@ public:
   /// Prepends segment with provided span of bytes.
   void prepend(span<const uint8_t> bytes)
   {
-    srsran_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
+    srsgnb_assert(headroom() >= bytes.size(), "There is not enough headroom space.");
     payload_data_ -= bytes.size();
     std::copy(bytes.begin(), bytes.end(), begin());
   }
@@ -127,39 +127,39 @@ public:
   /// \param nof_bytes Number of bytes to reserve.
   void reserve_prepend(size_t nof_bytes)
   {
-    srsran_assert(headroom() >= nof_bytes, "There is not enough headroom space.");
+    srsgnb_assert(headroom() >= nof_bytes, "There is not enough headroom space.");
     payload_data_ -= nof_bytes;
   }
 
   /// Removes "nof_bytes" from the head of the segment.
   void trim_head(size_t nof_bytes)
   {
-    srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
+    srsgnb_assert(nof_bytes <= length(), "There is not enough headroom space.");
     payload_data_ += nof_bytes;
   }
 
   /// Removes "nof_bytes" from the tail of the segment.
   void trim_tail(size_t nof_bytes)
   {
-    srsran_assert(nof_bytes <= length(), "There is not enough headroom space.");
+    srsgnb_assert(nof_bytes <= length(), "There is not enough headroom space.");
     payload_data_end_ -= nof_bytes;
   }
 
   /// Resizes payload of segment.
   void resize(size_t nof_bytes)
   {
-    srsran_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
+    srsgnb_assert(nof_bytes <= capacity() - headroom(), "There is not enough space for provided size");
     payload_data_end_ = payload_data_ + nof_bytes;
   }
 
   uint8_t& operator[](size_t idx)
   {
-    srsran_sanity_check(idx < length(), "Out-of-bound access");
+    srsgnb_sanity_check(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
   const uint8_t& operator[](size_t idx) const
   {
-    srsran_sanity_check(idx < length(), "Out-of-bound access");
+    srsgnb_sanity_check(idx < length(), "Out-of-bound access");
     return *(begin() + idx);
   }
 
@@ -168,12 +168,12 @@ public:
 
   uint8_t& back()
   {
-    srsran_sanity_check(not empty(), "back() called for empty segment.");
+    srsgnb_sanity_check(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
   const uint8_t& back() const
   {
-    srsran_sanity_check(not empty(), "back() called for empty segment.");
+    srsgnb_sanity_check(not empty(), "back() called for empty segment.");
     return *(payload_data_end_ - 1);
   }
 
@@ -269,7 +269,7 @@ class byte_buffer
         offset -= current_segment->length();
         current_segment = current_segment->next();
       }
-      srsran_sanity_check(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
+      srsgnb_sanity_check(current_segment != nullptr or offset == 0, "Out-of-bounds Access");
       return *this;
     }
 
@@ -479,7 +479,7 @@ public:
   /// Removes "nof_bytes" from the head of the byte_buffer.
   void trim_head(size_t nof_bytes)
   {
-    srsran_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
+    srsgnb_sanity_check(length() >= nof_bytes, "Trying to trim more bytes than those available");
     for (size_t trimmed = 0; trimmed != nof_bytes;) {
       size_t to_trim = std::min(nof_bytes - trimmed, head->length());
       head->trim_head(to_trim);
@@ -672,7 +672,7 @@ public:
   /// Returns another sub-view with dimensions specified in arguments.
   byte_buffer_view view(size_t offset, size_t size) const
   {
-    srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
+    srsgnb_sanity_check(offset + size <= length(), "Invalid view dimensions.");
     return {it + offset, it + offset + size};
   }
 
@@ -735,7 +735,7 @@ public:
   }
   byte_buffer_slice(const byte_buffer& buf_, byte_buffer_view view) : sliced_view(view), buf(buf_.copy())
   {
-    srsran_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
+    srsgnb_sanity_check(view.begin() - byte_buffer_view{buf}.begin() < (int)buf.length(),
                         "byte_buffer_view is not part of the owned byte_buffer");
   }
 
@@ -752,7 +752,7 @@ public:
   /// Returns another owning sub-view with dimensions specified in arguments.
   byte_buffer_slice make_slice(size_t offset, size_t size)
   {
-    srsran_sanity_check(offset + size <= length(), "Invalid view dimensions.");
+    srsgnb_sanity_check(offset + size <= length(), "Invalid view dimensions.");
     return {buf, sliced_view.view(offset, size)};
   }
 
@@ -904,7 +904,7 @@ inline byte_buffer_view byte_buffer::reserve_prepend(size_t nof_bytes)
 /// Converts a hex string (e.g. 01FA02) to a byte buffer.
 inline byte_buffer make_byte_buffer(std::string hex_str)
 {
-  srsran_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
+  srsgnb_assert(hex_str.size() % 2 == 0, "The number of hex digits must be even");
   byte_buffer ret;
   for (size_t i = 0; i < hex_str.size(); i += 2) {
     uint8_t val;

@@ -76,7 +76,7 @@ error_type<validator_report> srsgnb::fapi::validate_dl_tti_request(const dl_tti_
         success &= validate_dl_csi_pdu(pdu.csi_rs_pdu, report);
         break;
       default:
-        srsran_assert(0, "Invalid pdu_type");
+        srsgnb_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "DL_TTI.request PDU type", message_type_id::dl_tti_request);
         break;
     }
@@ -107,7 +107,7 @@ error_type<validator_report> srsgnb::fapi::validate_ul_dci_request(const ul_dci_
         break;
         // :TODO: Implement the rest of the PDUs when their validators exist.
       default:
-        srsran_assert(0, "Invalid pdu_type");
+        srsgnb_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UL_DCI.request PDU type", message_type_id::ul_dci_request);
         break;
     }
@@ -482,7 +482,7 @@ error_type<validator_report> srsgnb::fapi::validate_uci_indication(const uci_ind
         success &= validate_uci_pucch_format234_pdu(pdu.pucch_pdu_f234, report);
         break;
       default:
-        srsran_assert(0, "Invalid pdu_type");
+        srsgnb_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UCI.indication PDU type", message_type_id::uci_indication);
         break;
     }
@@ -694,7 +694,7 @@ error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_
         success &= validate_ul_pusch_pdu(pdu.pusch_pdu, report);
         break;
       default:
-        srsran_assert(0, "Invalid pdu_type");
+        srsgnb_assert(0, "Invalid pdu_type");
         report.append(static_cast<int>(pdu.pdu_type), "UL_TTI.request PDU type", msg_type);
         break;
     }

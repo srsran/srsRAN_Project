@@ -23,12 +23,12 @@ std::unique_ptr<rlc_entity> srsgnb::create_rlc_entity(const rlc_entity_creation_
     case rlc_mode::um_unidir_dl:
     case rlc_mode::um_unidir_ul:
     case rlc_mode::um_bidir:
-      srsran_assert(msg.config.um != nullptr, "RLC UM selected, but msg.config.um is nullptr");
+      srsgnb_assert(msg.config.um != nullptr, "RLC UM selected, but msg.config.um is nullptr");
       return std::make_unique<rlc_um_entity>(
           msg.ue_index, msg.lcid, *msg.config.um, *msg.upper_dn, *msg.upper_cn, *msg.bsr_update_notifier, *msg.timers);
     case rlc_mode::am:
     default:
-      srsran_terminate("RLC mode not supported");
+      srsgnb_terminate("RLC mode not supported");
   }
   return nullptr;
 }

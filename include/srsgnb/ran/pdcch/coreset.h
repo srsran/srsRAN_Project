@@ -58,22 +58,22 @@ struct coreset_configuration {
 
   void set_coreset0_crbs(crb_interval crbs)
   {
-    srsran_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    srsgnb_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     coreset0_rbs = crbs;
   }
   const crb_interval& coreset0_crbs() const
   {
-    srsran_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    srsgnb_assert(id == to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     return coreset0_rbs;
   }
   void set_freq_domain_resources(freq_resource_bitmap res_bitmap)
   {
-    srsran_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    srsgnb_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     other_coreset_freq_resources = res_bitmap;
   }
   const freq_resource_bitmap& freq_domain_resources() const
   {
-    srsran_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
+    srsgnb_assert(id != to_coreset_id(0), "Invalid access to CORESET#0 RBs for a coresetId>0");
     return other_coreset_freq_resources;
   }
 

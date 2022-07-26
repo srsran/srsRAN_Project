@@ -50,16 +50,16 @@ public:
   explicit channel_estimate(const channel_estimate_dimensions& dims) :
     nof_subcarriers(dims.nof_prb * NRE), nof_symbols(dims.nof_symbols), nof_rx_ports(dims.nof_rx_ports)
   {
-    srsran_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
-    srsran_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
+    srsgnb_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
+    srsgnb_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
                   "Requested {} OFDM symbols, but at most {} are allowed.",
                   dims.nof_symbols,
                   MAX_NSYMB_PER_SLOT);
-    srsran_assert(dims.nof_rx_ports <= MAX_RX_PORTS,
+    srsgnb_assert(dims.nof_rx_ports <= MAX_RX_PORTS,
                   "Requested {} receive ports, but at most {} are supported.",
                   dims.nof_rx_ports,
                   static_cast<unsigned>(MAX_RX_PORTS));
-    srsran_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
+    srsgnb_assert(dims.nof_tx_layers <= MAX_TX_LAYERS,
                   "Requested {} transmission layers, but at most {} are supported.",
                   dims.nof_tx_layers,
                   static_cast<unsigned>(MAX_TX_LAYERS));

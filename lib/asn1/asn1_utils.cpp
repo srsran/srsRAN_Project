@@ -30,7 +30,7 @@ void invalid_enum_number(int value, const char* name)
 
 void assert_choice_type(uint32_t val, uint32_t choice_id)
 {
-  if (srsran_unlikely(val != choice_id)) {
+  if (srsgnb_unlikely(val != choice_id)) {
     log_invalid_access_choice_id(val, choice_id);
   }
 }
@@ -114,7 +114,7 @@ int bit_ref::distance() const
 
 SRSASN_CODE bit_ref::pack(uint64_t val, uint32_t n_bits)
 {
-  srsran_assert(n_bits < 64, "Invalid number of bits passed to pack()");
+  srsgnb_assert(n_bits < 64, "Invalid number of bits passed to pack()");
   while (n_bits > 0) {
     if (offset == 0) {
       writer.append(0);
@@ -194,7 +194,7 @@ int cbit_ref::distance(const cbit_ref& other) const
 template <class T>
 SRSASN_CODE cbit_ref::unpack(T& val, uint32_t n_bits)
 {
-  srsran_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
+  srsgnb_assert(n_bits <= sizeof(T) * 8, "unpack_bits() only supports up to {} bits", sizeof(T) * 8);
   val = 0;
   while (n_bits > 0) {
     if ((uint32_t)(8 - offset) > n_bits) {
@@ -776,7 +776,7 @@ pack_integer<uint16_t>(bit_ref& bref, uint16_t n, uint16_t lb, uint16_t ub, bool
 template SRSASN_CODE
 pack_integer<uint32_t>(bit_ref& bref, uint32_t n, uint32_t lb, uint32_t ub, bool has_ext, bool aligned);
 template SRSASN_CODE
-                     pack_integer<uint64_t>(bit_ref& bref, uint64_t n, uint64_t lb, uint64_t ub, bool has_ext, bool aligned);
+pack_integer<uint64_t>(bit_ref& bref, uint64_t n, uint64_t lb, uint64_t ub, bool has_ext, bool aligned);
 template SRSASN_CODE pack_integer<int8_t>(bit_ref& bref, int8_t n, int8_t lb, int8_t ub, bool has_ext, bool aligned);
 template SRSASN_CODE
 pack_integer<int16_t>(bit_ref& bref, int16_t n, int16_t lb, int16_t ub, bool has_ext, bool aligned);
@@ -861,7 +861,8 @@ template SRSASN_CODE unpack_unconstrained_integer<int64_t>(int64_t& n, cbit_ref&
 template <class IntType>
 integer_packer<IntType>::integer_packer(IntType lb_, IntType ub_, bool has_ext_, bool aligned_) :
   lb(lb_), ub(ub_), has_ext(has_ext_), aligned(aligned_)
-{}
+{
+}
 
 template <class IntType>
 SRSASN_CODE integer_packer<IntType>::pack(bit_ref& bref, IntType n)
@@ -1379,7 +1380,8 @@ varlength_field_unpack_guard::varlength_field_unpack_guard(cbit_ref& bref, bool 
   }()),
   bref0(bref),
   bref_tracker(&bref)
-{}
+{
+}
 
 varlength_field_unpack_guard::~varlength_field_unpack_guard()
 {

@@ -28,7 +28,7 @@ public:
   // See interface for documentation.
   void on_tti_boundary(const lower_phy_timing_context& context) override
   {
-    srsran_always_assert(timing_handler, "Adapter is not connected.");
+    SRSGNB_ALWAYS_ASSERT__(timing_handler, "Adapter is not connected.");
     upper_phy_timing_context upper_context;
     upper_context.slot = context.slot;
     timing_handler->handle_tti_boundary(upper_context);
@@ -37,7 +37,7 @@ public:
   // See interface for documentation.
   void on_ul_half_slot_boundary(const lower_phy_timing_context& context) override
   {
-    srsran_always_assert(timing_handler, "Adapter is not connected.");
+    SRSGNB_ALWAYS_ASSERT__(timing_handler, "Adapter is not connected.");
     upper_phy_timing_context upper_context;
     upper_context.slot = context.slot;
     timing_handler->handle_ul_half_slot_boundary(upper_context);
@@ -46,7 +46,7 @@ public:
   // See interface for documentation.
   void on_ul_full_slot_boundary(const lower_phy_timing_context& context) override
   {
-    srsran_always_assert(timing_handler, "Adapter is not connected.");
+    SRSGNB_ALWAYS_ASSERT__(timing_handler, "Adapter is not connected.");
     upper_phy_timing_context upper_context;
     upper_context.slot = context.slot;
     timing_handler->handle_ul_full_slot_boundary(upper_context);

@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include <array>
 #include "srsgnb/ran/pucch_mapping.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
+#include <array>
 
 namespace srsgnb {
 
@@ -50,9 +50,9 @@ public:
 
   cf_t get_sequence_value(unsigned n_pucch, unsigned i, unsigned m) const
   {
-    srsran_assert(n_pucch >= 1 && n_pucch <= PUCCH_FORMAT1_N_MAX, "Invalid n_pucch");
-    srsran_assert(i < PUCCH_FORMAT1_N_MAX, "Invalid i");
-    srsran_assert(m < PUCCH_FORMAT1_N_MAX, "Invalid m");
+    srsgnb_assert(n_pucch >= 1 && n_pucch <= PUCCH_FORMAT1_N_MAX, "Invalid n_pucch");
+    srsgnb_assert(i < PUCCH_FORMAT1_N_MAX, "Invalid i");
+    srsgnb_assert(m < PUCCH_FORMAT1_N_MAX, "Invalid m");
     // Get value
     return orthogonal_sequence[i][n_pucch - 1][m];
   }

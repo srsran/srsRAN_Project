@@ -47,7 +47,7 @@ inline const char* get_message_type_str(const asn1::f1ap::f1_ap_pdu_c& pdu)
     default:
       break;
   }
-  srsran_terminate("Invalid F1AP PDU type \"{}\"", pdu.type().to_string());
+  srsgnb_terminate("Invalid F1AP PDU type \"{}\"", pdu.type().to_string());
 }
 
 /// Extracts transaction id of Initiating message.

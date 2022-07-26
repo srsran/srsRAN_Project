@@ -31,8 +31,8 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
                            ofdm_config.center_freq_hz,
                            true)
 {
-  srsran_always_assert(std::isnormal(scale), "Invalid scaling factor {}", scale);
-  srsran_always_assert(
+  SRSGNB_ALWAYS_ASSERT__(std::isnormal(scale), "Invalid scaling factor {}", scale);
+  SRSGNB_ALWAYS_ASSERT__(
       dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({})", dft_size, rg_size);
 
   // Fill DFT input with zeros.
@@ -51,14 +51,15 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
 
   // Make sure output buffer matches the symbol size.
-  srsran_always_assert(output.size() == (cp_len + dft_size),
-                       "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
-                       output.size(),
-                       symbol_index,
-                       cp_len,
-                       dft_size,
-                       cp_len + dft_size,
-                       numerology);
+  SRSGNB_ALWAYS_ASSERT__(
+      output.size() == (cp_len + dft_size),
+      "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
+      output.size(),
+      symbol_index,
+      cp_len,
+      dft_size,
+      cp_len + dft_size,
+      numerology);
 
   // Skip modulator if the grid is empty for the given port.
   if (grid.is_empty(port_index)) {
@@ -106,7 +107,7 @@ void ofdm_slot_modulator_impl::modulate(span<cf_t>                  output,
   unsigned nsymb = get_nsymb_per_slot(cp);
 
   unsigned nslots_per_subframe = get_nof_slots_per_subframe(to_subcarrier_spacing(numerology));
-  srsran_assert(slot_index < nslots_per_subframe,
+  srsgnb_assert(slot_index < nslots_per_subframe,
                 "Slot index within the subframe {} exceeds the number of slots per subframe {}.",
                 slot_index,
                 nslots_per_subframe);

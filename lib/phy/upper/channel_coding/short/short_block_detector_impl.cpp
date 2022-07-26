@@ -47,9 +47,9 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
-  srsran_assert((out_size > 0) && (out_size <= MAX_MSG_LENGTH), "The output length should be between 1 and 11 bits.");
+  srsgnb_assert((out_size > 0) && (out_size <= MAX_MSG_LENGTH), "The output length should be between 1 and 11 bits.");
   if (out_size > 2) {
-    srsran_assert(in_size >= MAX_BLOCK_LENGTH, "Invalid output length.");
+    srsgnb_assert(in_size >= MAX_BLOCK_LENGTH, "Invalid output length.");
   } else {
     unsigned min_in_length = 0;
     if (out_size == 1) {
@@ -59,7 +59,7 @@ static void validate_spans(span<uint8_t> output, span<const log_likelihood_ratio
       // Output length must be no less than three times the number of bits per symbol of the block modulation.
       min_in_length = 3 * bits_per_symbol;
     }
-    srsran_assert(in_size >= min_in_length, "Invalid input length.");
+    srsgnb_assert(in_size >= min_in_length, "Invalid input length.");
   }
 }
 
@@ -139,7 +139,7 @@ static void rate_dematch(span<log_likelihood_ratio> output, span<const log_likel
 {
   unsigned output_size = output.size();
   unsigned input_size  = input.size();
-  srsran_assert(output_size <= input_size, "Output size cannot be larger than input size.");
+  srsgnb_assert(output_size <= input_size, "Output size cannot be larger than input size.");
 
   std::fill(output.begin(), output.end(), 0);
   for (unsigned idx = 0; idx != input_size; ++idx) {

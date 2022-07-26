@@ -220,7 +220,8 @@ public:
   bool is_empty(unsigned port) const override { return entries.empty(); }
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
-    srsran_always_assert(symbols.size() == coordinates.size(), "Number of symbols and coordinates must be the equal.");
+    SRSGNB_ALWAYS_ASSERT__(symbols.size() == coordinates.size(),
+                           "Number of symbols and coordinates must be the equal.");
     for (unsigned idx = 0; idx != coordinates.size(); ++idx) {
       symbols[idx] = get(static_cast<uint8_t>(port), coordinates[idx].symbol, coordinates[idx].subcarrier);
     }
@@ -276,7 +277,7 @@ private:
     entry_key_t key{port, symbol, subcarrier};
 
     // Ensure the resource element exist.
-    srsran_assert(entries.count(key) == 1,
+    srsgnb_assert(entries.count(key) == 1,
                   "Resource grid for port=%d, symbol=%d and subcarrier=%d does not exist.",
                   port,
                   symbol,
@@ -358,7 +359,7 @@ private:
   /// Throws a assertion failure due to an overridden method call.
   void failure() const
   {
-    srsran_assertion_failure(
+    srsgnb_assertion_failure(
         "Components using resource grid dummy are not allowed to call any method from the interface.");
   }
 

@@ -30,7 +30,7 @@ void pdsch_encoder_impl::encode(span<uint8_t>           codeword,
     encoder->encode(tmp, descr_seg.first, descr_seg.second.tb_common);
     // Select the correct chunk of the output codeword.
     unsigned rm_length = descr_seg.second.cb_specific.rm_length;
-    srsran_assert(offset + rm_length <= codeword.size(), "Wrong codeword length.");
+    srsgnb_assert(offset + rm_length <= codeword.size(), "Wrong codeword length.");
     span<uint8_t> codeblock = span<uint8_t>(codeword).subspan(offset, rm_length);
     offset += rm_length;
     // Rate match the codeblock.

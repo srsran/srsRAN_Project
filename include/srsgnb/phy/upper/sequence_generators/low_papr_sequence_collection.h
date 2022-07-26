@@ -10,10 +10,10 @@
 
 #pragma once
 
+#include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_generator.h"
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsran_assert.h"
-#include "srsgnb/phy/constants.h"
 #include <map>
 
 namespace srsgnb {
@@ -28,7 +28,7 @@ class low_papr_sequence_collection
 {
 private:
   /// Stores generated signals indexed by \c u, \c v and \f$\alpha\f$ index.
-  std::map<std::tuple<unsigned, unsigned, unsigned>, std::vector<cf_t> > pregen_signals;
+  std::map<std::tuple<unsigned, unsigned, unsigned>, std::vector<cf_t>> pregen_signals;
 
 public:
   /// Defines the number of sequence groups (u).
@@ -87,7 +87,7 @@ public:
     std::tuple<unsigned, unsigned, unsigned> key{u, v, alpha_idx};
 
     // Make sure the sequence exists.
-    srsran_assert(pregen_signals.count(key),
+    srsgnb_assert(pregen_signals.count(key),
                   "The sequence collection was not initialized with u=%d, v=%d and alpha_idx=%d",
                   u,
                   v,

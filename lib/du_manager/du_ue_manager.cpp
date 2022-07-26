@@ -48,7 +48,7 @@ void du_ue_manager::handle_ue_delete_request(const du_ue_delete_message& msg)
 
 du_ue_context* du_ue_manager::find_ue(du_ue_index_t ue_index)
 {
-  srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
+  srsgnb_assert(ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_index);
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
@@ -62,8 +62,8 @@ du_ue_context* du_ue_manager::find_rnti(rnti_t rnti)
 
 du_ue_context* du_ue_manager::add_ue(du_ue_context ue_ctx)
 {
-  srsran_assert(ue_ctx.rnti != INVALID_RNTI, "Invalid RNTI");
-  srsran_assert(ue_ctx.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx.ue_index);
+  srsgnb_assert(ue_ctx.rnti != INVALID_RNTI, "Invalid RNTI");
+  srsgnb_assert(ue_ctx.ue_index < MAX_NOF_DU_UES, "Invalid ue_index={}", ue_ctx.ue_index);
 
   if (ue_db.contains(ue_ctx.ue_index) or rnti_to_ue_index[ue_ctx.rnti % MAX_NOF_DU_UES] >= 0) {
     // UE already existed with same ue_index
@@ -76,7 +76,7 @@ du_ue_context* du_ue_manager::add_ue(du_ue_context ue_ctx)
   auto& u = ue_db[ue_index];
 
   // Update RNTI -> UE index map
-  srsran_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] < 0, "Invalid RNTI=0x{:x}", u.rnti);
+  srsgnb_sanity_check(rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] < 0, "Invalid RNTI=0x{:x}", u.rnti);
   rnti_to_ue_index[u.rnti % MAX_NOF_DU_UES] = ue_index;
 
   return &u;
@@ -87,13 +87,13 @@ void du_ue_manager::remove_ue(du_ue_index_t ue_index)
   // Note: The caller of this function can be a UE procedure. Thus, we have to wait for the procedure to finish
   // before safely removing the UE. This achieved via a scheduled async task
 
-  srsran_assert(ue_index < MAX_NOF_DU_UES, "Invalid ueId={}", ue_index);
+  srsgnb_assert(ue_index < MAX_NOF_DU_UES, "Invalid ueId={}", ue_index);
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
   // Schedule UE removal task
-  ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void> >& ctx) {
+  ue_ctrl_loop[ue_index].schedule([this, ue_index](coro_context<async_task<void>>& ctx) {
     CORO_BEGIN(ctx);
-    srsran_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
+    srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
     rnti_to_ue_index[ue_db[ue_index].rnti % MAX_NOF_DU_UES] = -1;
     ue_db.erase(ue_index);
     logger.info("Removed ueId={}", ue_index);

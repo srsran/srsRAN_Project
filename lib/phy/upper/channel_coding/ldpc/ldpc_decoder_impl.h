@@ -162,7 +162,7 @@ class ldpc_decoder_avx2 : public ldpc_decoder_impl
   void        get_hard_bits(span<uint8_t> /*nn*/) override { not_implemented(__func__); }
   static void not_implemented(const std::string& fn)
   {
-    srsran_terminate("LDPC AVX2 Decoder -> {} - not implemented yet.", fn);
+    srsgnb_terminate("LDPC AVX2 Decoder -> {} - not implemented yet.", fn);
   }
 };
 } // namespace srsgnb

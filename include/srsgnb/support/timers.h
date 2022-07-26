@@ -83,11 +83,11 @@ class timer_manager
 
   public:
     explicit timer_handle(timer_manager& parent, timer_id_t id) : parent(parent), id(id) {}
-    timer_handle(const timer_handle&) = delete;
-    timer_handle(timer_handle&&)      = delete;
+    timer_handle(const timer_handle&)            = delete;
+    timer_handle(timer_handle&&)                 = delete;
     timer_handle& operator=(const timer_handle&) = delete;
-    timer_handle& operator=(timer_handle&&) = delete;
-    ~timer_handle()                         = default;
+    timer_handle& operator=(timer_handle&&)      = delete;
+    ~timer_handle()                              = default;
 
     /// Returns true if the timer is currently running, otherwise returns false.
     bool is_running() const { return decode_is_running_flag(state.load(std::memory_order_relaxed)); }
@@ -116,7 +116,7 @@ class timer_manager
     /// Configures the duration of the timer.
     void set(timer_tick_difference_t duration)
     {
-      srsran_assert(duration <= MAX_TIMER_DURATION,
+      srsgnb_assert(duration <= MAX_TIMER_DURATION,
                     "Invalid timer duration={}>{}",
                     duration,
                     (timer_tick_difference_t)MAX_TIMER_DURATION);
@@ -127,7 +127,7 @@ class timer_manager
     /// Configures the duration of the timer calling the provided callback upon timer expiration.
     void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> cb)
     {
-      srsran_assert(duration <= MAX_TIMER_DURATION,
+      srsgnb_assert(duration <= MAX_TIMER_DURATION,
                     "Invalid timer duration={}>{}",
                     duration,
                     (timer_tick_difference_t)MAX_TIMER_DURATION);
@@ -245,7 +245,7 @@ private:
 
   /// Timer wheel, which is circularly indexed via a running timer timeout. Collisions are resolved via an intrusive
   /// list in timer_impl.
-  std::vector<srsgnb::intrusive_double_linked_list<timer_handle> > time_wheel;
+  std::vector<srsgnb::intrusive_double_linked_list<timer_handle>> time_wheel;
 
   /// Protects the addition/modification/removal of timers in timer_manager.
   mutable std::mutex mutex;
@@ -262,7 +262,7 @@ public:
   unique_timer() = default;
   explicit unique_timer(timer_manager::timer_handle* pimpl) : handle(pimpl) {}
 
-  unique_timer(const unique_timer&) = delete;
+  unique_timer(const unique_timer&)            = delete;
   unique_timer& operator=(const unique_timer&) = delete;
 
   unique_timer(unique_timer&& other) noexcept : handle(other.handle) { other.handle = nullptr; }
@@ -307,21 +307,21 @@ public:
   /// Configures the duration of the timer calling the provided callback upon timer expiration.
   void set(timer_tick_difference_t duration, unique_function<void(timer_id_t)> callback)
   {
-    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
+    srsgnb_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration, std::move(callback));
   }
 
   /// Configures the duration of the timer.
   void set(timer_tick_difference_t duration)
   {
-    srsran_assert(is_valid(), "Trying to setup empty timer pimpl");
+    srsgnb_assert(is_valid(), "Trying to setup empty timer pimpl");
     handle->set(duration);
   }
 
   /// Activates the timer to start ticking.
   void run()
   {
-    srsran_assert(is_valid(), "Starting invalid timer");
+    srsgnb_assert(is_valid(), "Starting invalid timer");
     handle->run();
   }
 

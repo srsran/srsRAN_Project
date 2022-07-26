@@ -69,8 +69,8 @@ public:
     encoder(create_polar_encoder_pipelined(POLAR_N_MAX_LOG)),
     rm(create_polar_rate_matcher())
   {
-    srsran_assert(crc24c, "Invalid CRC24C.");
-    srsran_assert(scrambler, "Invalid scrambler.");
+    srsgnb_assert(crc24c, "Invalid CRC24C.");
+    srsgnb_assert(scrambler, "Invalid scrambler.");
     code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
   }
 

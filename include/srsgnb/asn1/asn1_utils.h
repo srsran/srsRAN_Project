@@ -80,7 +80,7 @@ void assert_choice_type(uint32_t val, uint32_t choice_id);
 template <typename Enumerated>
 void assert_choice_type(typename Enumerated::options access_type, Enumerated& current_type, const char* choice_type)
 {
-  if (srsran_unlikely(current_type.value != access_type)) {
+  if (srsgnb_unlikely(current_type.value != access_type)) {
     log_error("Invalid field access for choice type \"{}\" (\"{}\"!=\"{}\")",
               choice_type,
               Enumerated(access_type).to_string(),
@@ -222,7 +222,7 @@ public:
     if (cap_ > 0) {
       data_ = new T[cap_];
       if (old_data != NULL) {
-        srsran_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
+        srsgnb_assert(cap_ > size_, "Old size larger than new capacity in dyn_array\n");
         std::copy(&old_data[0], &old_data[size_], data_);
       }
     } else {
@@ -1275,7 +1275,8 @@ struct choice_buffer_base_t {
 
 template <typename... Ts>
 struct choice_buffer_t : public choice_buffer_base_t<static_max<sizeof(alignment_t), sizeof(Ts)...>::value,
-                                                     static_max<alignof(alignment_t), alignof(Ts)...>::value> {};
+                                                     static_max<alignof(alignment_t), alignof(Ts)...>::value> {
+};
 
 using pod_choice_buffer_t = choice_buffer_t<>;
 
@@ -1639,15 +1640,18 @@ struct base_ie_field : public IEItem {
 
 // ProtocolIE-Field{LAYER-PROTOCOL-IES : IEsSetParam} ::= SEQUENCE{{IEsSetParam}}
 template <class IEsSetParam>
-struct protocol_ie_field_s : public detail::base_ie_field<detail::ie_field_value_item<IEsSetParam> > {};
+struct protocol_ie_field_s : public detail::base_ie_field<detail::ie_field_value_item<IEsSetParam>> {
+};
 
 // ProtocolIE-SingleContainer{LAYER-PROTOCOL-IES : IEsSetParam} ::= SEQUENCE{{IEsSetParam}}
 template <class ies_set_paramT_>
-struct protocol_ie_single_container_s : public protocol_ie_field_s<ies_set_paramT_> {};
+struct protocol_ie_single_container_s : public protocol_ie_field_s<ies_set_paramT_> {
+};
 
 // ProtocolExtensionField{LAYER-PROTOCOL-EXTENSION : ExtensionSetParam} ::= SEQUENCE{{LAYER-PROTOCOL-EXTENSION}}
 template <class ExtensionSetParam>
-struct protocol_ext_field_s : public detail::base_ie_field<detail::ie_field_ext_item<ExtensionSetParam> > {};
+struct protocol_ext_field_s : public detail::base_ie_field<detail::ie_field_ext_item<ExtensionSetParam>> {
+};
 
 namespace detail {
 
@@ -1731,14 +1735,14 @@ struct base_ie_container_item : public IEItem {
 } // namespace detail
 
 template <typename T>
-struct protocol_ie_container_item_s : public detail::base_ie_container_item<detail::ie_value_item<T> > {
-  using base_type = detail::base_ie_container_item<detail::ie_value_item<T> >;
+struct protocol_ie_container_item_s : public detail::base_ie_container_item<detail::ie_value_item<T>> {
+  using base_type = detail::base_ie_container_item<detail::ie_value_item<T>>;
   using base_type::base_type;
 };
 
 template <typename T>
-struct protocol_ext_container_item_s : public detail::base_ie_container_item<detail::ie_ext_item<T> > {
-  using base_type = detail::base_ie_container_item<detail::ie_ext_item<T> >;
+struct protocol_ext_container_item_s : public detail::base_ie_container_item<detail::ie_ext_item<T>> {
+  using base_type = detail::base_ie_container_item<detail::ie_ext_item<T>>;
   using base_type::base_type;
 };
 

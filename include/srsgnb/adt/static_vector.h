@@ -85,22 +85,22 @@ public:
   // Element access
   T& operator[](std::size_t i) noexcept
   {
-    srsran_assert(i < size_, "Array index is out of bounds");
+    srsgnb_assert(i < size_, "Array index is out of bounds");
     return buffer[i].get();
   }
   const T& operator[](std::size_t i) const noexcept
   {
-    srsran_assert(i < size_, "Array index is out of bounds");
+    srsgnb_assert(i < size_, "Array index is out of bounds");
     return buffer[i].get();
   }
   T& back()
   {
-    srsran_assert(size_ > 0, "Trying to get back of empty array");
+    srsgnb_assert(size_ > 0, "Trying to get back of empty array");
     return *(begin() + size_ - 1);
   }
   const T& back() const
   {
-    srsran_assert(size_ > 0, "Trying to get back of empty array");
+    srsgnb_assert(size_ > 0, "Trying to get back of empty array");
     return *(begin() + size_ - 1);
   }
   T&       front() { return (*this)[0]; }
@@ -115,9 +115,9 @@ public:
   const_iterator end() const noexcept { return begin() + size_; }
 
   // Size/Capacity
-  bool             empty() const noexcept { return size_ == 0; }
-  std::size_t      size() const noexcept { return size_; }
-  bool             full() const noexcept { return size_ == MAX_N; }
+  bool                         empty() const noexcept { return size_ == 0; }
+  std::size_t                  size() const noexcept { return size_; }
+  bool                         full() const noexcept { return size_ == MAX_N; }
   static constexpr std::size_t capacity() noexcept { return MAX_N; }
 
   // modifiers
@@ -128,8 +128,8 @@ public:
   }
   iterator erase(iterator pos)
   {
-    srsran_assert(pos >= this->begin(), "Iterator to erase is out of bounds");
-    srsran_assert(pos < this->end(), "Erasing at past-the-end iterator");
+    srsgnb_assert(pos >= this->begin(), "Iterator to erase is out of bounds");
+    srsgnb_assert(pos < this->end(), "Erasing at past-the-end iterator");
     iterator ret = pos;
     std::move(pos + 1, end(), pos);
     pop_back();
@@ -137,9 +137,9 @@ public:
   }
   iterator erase(iterator it_start, iterator it_end)
   {
-    srsran_assert(it_start >= begin(), "Range to erase is out of bounds");
-    srsran_assert(it_start <= it_end, "Trying to erase invalid range");
-    srsran_assert(it_end <= end(), "Trying to erase past the end");
+    srsgnb_assert(it_start >= begin(), "Range to erase is out of bounds");
+    srsgnb_assert(it_start <= it_end, "Trying to erase invalid range");
+    srsgnb_assert(it_end <= end(), "Trying to erase past the end");
 
     iterator ret = it_start;
     // Shift all elts down.
@@ -152,14 +152,14 @@ public:
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
     size_++;
-    srsran_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     new (&back()) T(value);
   }
   void push_back(T&& value)
   {
     static_assert(std::is_move_constructible<T>::value, "T must be move-constructible");
     size_++;
-    srsran_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     new (&back()) T(std::move(value));
   }
   template <typename... Args>
@@ -167,25 +167,25 @@ public:
   {
     static_assert(std::is_constructible<T, Args&&...>::value, "Passed arguments to emplace_back are invalid");
     size_++;
-    srsran_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     new (&back()) T(std::forward<Args>(args)...);
   }
   void pop_back()
   {
-    srsran_assert(size_ > 0, "Trying to erase element from empty vector");
+    srsgnb_assert(size_ > 0, "Trying to erase element from empty vector");
     back().~T();
     size_--;
   }
   void resize(size_type count)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default constructible");
-    srsran_assert(count <= MAX_N, "Provided static vector size is too high");
+    srsgnb_assert(count <= MAX_N, "Provided static vector size is too high");
     resize(count, T());
   }
   void resize(size_type count, const T& value)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy constructible");
-    srsran_assert(count <= MAX_N, "Provided static vector size is too high");
+    srsgnb_assert(count <= MAX_N, "Provided static vector size is too high");
     if (size_ > count) {
       destroy(begin() + count, end());
       size_ = count;
@@ -235,21 +235,21 @@ private:
   void append(const_iterator it_begin, const_iterator it_end)
   {
     size_type N = std::distance(it_begin, it_end);
-    srsran_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     std::uninitialized_copy(it_begin, it_end, end());
     size_ += N;
   }
   void append(size_type N, const T& element)
   {
     static_assert(std::is_copy_constructible<T>::value, "T must be copy-constructible");
-    srsran_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     std::uninitialized_fill_n(end(), N, element);
     size_ += N;
   }
   void append(size_type N)
   {
     static_assert(std::is_default_constructible<T>::value, "T must be default-constructible");
-    srsran_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
+    srsgnb_assert(N + size_ <= MAX_N, "static vector maximum size={} was exceeded", MAX_N);
     for (size_type i = size_; i < size_ + N; ++i) {
       buffer[i].emplace();
     }

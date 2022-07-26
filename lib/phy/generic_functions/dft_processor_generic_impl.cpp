@@ -304,7 +304,7 @@ dft_processor_generic_impl::dft_processor_generic_impl(const configuration& dft_
 
 span<const cf_t> dft_processor_generic_impl::run()
 {
-  srsran_assert(generic_dft, "DFT was not created.");
+  srsgnb_assert(generic_dft, "DFT was not created.");
 
   generic_dft->run(output.data(), input.data());
 

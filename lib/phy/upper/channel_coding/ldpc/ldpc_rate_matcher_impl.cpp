@@ -17,7 +17,7 @@ using namespace srsgnb::ldpc;
 
 void ldpc_rate_matcher_impl::init(const codeblock_metadata::tb_common_metadata& cfg)
 {
-  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
+  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
 
   modulation_order = static_cast<uint8_t>(cfg.mod);
@@ -38,7 +38,7 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
   }
 
   // The output size must be a multiple of the modulation order.
-  srsran_assert(output.size() % modulation_order == 0,
+  srsgnb_assert(output.size() % modulation_order == 0,
                 "The output length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2
@@ -53,9 +53,9 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
     shift_factor = {0, 13, 25, 43};
     lifting_size = block_length / BG2_N_SHORT;
   } else {
-    srsran_assert(false, "LDPC rate matching: invalid input length.");
+    srsgnb_assert(false, "LDPC rate matching: invalid input length.");
   }
-  srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
+  srsgnb_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
                 "LDPC rate matching: invalid input length.");
   double tmp = (shift_factor[rv] * buffer_length) / block_length;
   shift_k0   = static_cast<uint16_t>(floor(tmp)) * lifting_size;

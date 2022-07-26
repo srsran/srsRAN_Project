@@ -31,8 +31,8 @@ public:
 
   span<const uint8_t> encode_sib_pdu(unsigned tbs_bytes) const
   {
-    srsran_assert(tbs_bytes >= min_payload_size, "The TBS for SIB1 cannot be smaller than the SIB1 payload");
-    srsran_assert(tbs_bytes <= bcch_payload.capacity(),
+    srsgnb_assert(tbs_bytes >= min_payload_size, "The TBS for SIB1 cannot be smaller than the SIB1 payload");
+    srsgnb_assert(tbs_bytes <= bcch_payload.capacity(),
                   "Memory rellocations of the SIB1 payload not allowed. Consider reserving more bytes for PADDING");
     return span<const uint8_t>(bcch_payload.data(), tbs_bytes);
   }

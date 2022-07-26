@@ -22,7 +22,8 @@ mac_controller::mac_controller(mac_common_config_t&        cfg_,
                                du_rnti_table&              rnti_table_,
                                mac_scheduler_configurator& sched_cfg_) :
   cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_), rnti_table(rnti_table_), sched_cfg(sched_cfg_)
-{}
+{
+}
 
 void mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 {
@@ -67,7 +68,7 @@ mac_controller::handle_ue_reconfiguration_request(const mac_ue_reconfiguration_r
 
 bool mac_controller::add_ue(du_ue_index_t ue_index, rnti_t crnti, du_cell_index_t cell_index)
 {
-  srsran_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);
+  srsgnb_assert(is_du_ue_index_valid(ue_index), "Invalid ue_index={}", ue_index);
 
   if (ue_db.contains(ue_index)) {
     // UE already existed with same rnti.

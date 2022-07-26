@@ -41,7 +41,7 @@ public:
                          bool               is_tx)
   {
     double sample_rate_Hz = static_cast<double>(scs_to_khz(scs) * dft_size) * 1e3;
-    srsran_assert(std::isnormal(sample_rate_Hz),
+    srsgnb_assert(std::isnormal(sample_rate_Hz),
                   "Invalid sampling rate from SCS {} kHz and DFT size {}.",
                   scs_to_khz(scs),
                   dft_size);
@@ -76,7 +76,7 @@ public:
   /// \remark An assertion is triggered if the symbol index exceeds the number of symbols in a subframe.
   cf_t get_coefficient(unsigned symbol_index) const
   {
-    srsran_assert(symbol_index < coefficients.size(),
+    srsgnb_assert(symbol_index < coefficients.size(),
                   "The symbol index within a subframe {} exceeds the number of symbols in the subframe {}.",
                   symbol_index,
                   coefficients.size());

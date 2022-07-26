@@ -16,9 +16,9 @@ using namespace srsgnb;
 
 unsigned int srsgnb::ra_frequency_type1_get_riv(const ra_frequency_type1_configuration& config)
 {
-  srsran_assert(config.length_vrb >= 1,
+  srsgnb_assert(config.length_vrb >= 1,
                 "The number of contiguous allocated blocks must be greater than or equal to 1.");
-  srsran_assert(config.length_vrb <= (config.N_bwp_size - config.start_vrb),
+  srsgnb_assert(config.length_vrb <= (config.N_bwp_size - config.start_vrb),
                 "The number of contiguous allocated blocks exceeds the maximum ({}).",
                 config.N_bwp_size - config.start_vrb);
 
@@ -47,8 +47,8 @@ unsigned srsgnb::ra_frequency_type1_special_get_riv(const ra_frequency_type1_spe
   unsigned start_vrb  = config.start_vrb / K;
   unsigned length_vrb = config.length_vrb / K;
 
-  srsran_assert(length_vrb >= 1, "The number of contiguous allocated blocks must be greater than or equal to 1.");
-  srsran_assert(length_vrb <= (config.N_bwp_initial - start_vrb),
+  srsgnb_assert(length_vrb >= 1, "The number of contiguous allocated blocks must be greater than or equal to 1.");
+  srsgnb_assert(length_vrb <= (config.N_bwp_initial - start_vrb),
                 "The number of contiguous allocated blocks ({}) exceeds the maximum ({}). K={} RB_start={} L_RBs={} "
                 "N_bwp_initial={} N_bwp_active={}.",
                 length_vrb,

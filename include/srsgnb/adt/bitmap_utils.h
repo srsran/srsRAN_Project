@@ -25,7 +25,7 @@ template <typename Integer>
 void set_bitmap_bit(Integer& bitmap, unsigned bit, bool enable)
 {
   static_assert(std::is_integral<Integer>::value, "Integral required");
-  srsran_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
+  srsgnb_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
 
   if (enable) {
     bitmap |= (1U << bit);
@@ -43,7 +43,7 @@ template <typename Integer>
 bool check_bitmap_bit(Integer bitmap, unsigned bit)
 {
   static_assert(std::is_integral<Integer>::value, "Integral required");
-  srsran_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
+  srsgnb_assert(sizeof(bitmap) * 8 > bit, "Requested bit ({}), exceeds the bitmap size({})", bit, sizeof(bitmap) * 8);
 
   return (bitmap & (1U << bit));
 }

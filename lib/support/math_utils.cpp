@@ -51,12 +51,12 @@ unsigned srsgnb::prime_greater_than(unsigned n)
     }
   }
 
-  srsran_terminate("n=%d exceeds the maximum prime.", n);
+  srsgnb_terminate("n=%d exceeds the maximum prime.", n);
 }
 
 unsigned srsgnb::prime_lower_than(unsigned n)
 {
-  srsran_assert(n < prime_numbers[NOF_PRIME_NUMBERS - 1], "n=%d exceeds the maximum prime.", n);
+  srsgnb_assert(n < prime_numbers[NOF_PRIME_NUMBERS - 1], "n=%d exceeds the maximum prime.", n);
 
   for (uint32_t i = NOF_PRIME_NUMBERS - 1; i > 0; i--) {
     if (prime_numbers[i] < n) {

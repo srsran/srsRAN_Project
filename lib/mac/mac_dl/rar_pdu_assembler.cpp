@@ -40,14 +40,14 @@ void rar_pdu_encoder::encode(span<uint8_t> output_buf)
 {
   // See TS38.321, Section 6.2.3.
   static constexpr unsigned MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH = 8;
-  srsran_assert(output_buf.size() >= MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size(),
+  srsgnb_assert(output_buf.size() >= MAC_RAR_SUBHEADER_AND_PAYLOAD_LENGTH * rar_info.grants.size(),
                 "Output buffer is too small to fit encoded RAR");
   ptr = output_buf.data();
 
   for (unsigned i = 0; i != rar_info.grants.size(); ++i) {
     encode_rar_subpdu(rar_info.grants[i], i == rar_info.grants.size() - 1);
   }
-  srsran_sanity_check(ptr == output_buf.data() + output_buf.size(), "Encoded RAR PDU length differs from expected");
+  srsgnb_sanity_check(ptr == output_buf.data() + output_buf.size(), "Encoded RAR PDU length differs from expected");
 }
 
 void rar_pdu_encoder::encode_rar_subpdu(const rar_ul_grant& grant, bool is_last_subpdu)
@@ -118,7 +118,7 @@ rar_pdu_assembler::rar_pdu_assembler(const mac_cell_creation_request& cell_cfg_)
 
 span<const uint8_t> rar_pdu_assembler::encode_rar_pdu(const rar_information& rar)
 {
-  srsran_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
+  srsgnb_assert(not rar.grants.empty(), "Cannot encode RAR without UL grants");
 
   // Fetch output vector where RAR grant payload is going to be encoded.
   std::vector<uint8_t>& payload = rar_payload_ring_buffer[next_index];

@@ -32,8 +32,8 @@ void carrier_subslot_resource_grid::clear()
 
 void carrier_subslot_resource_grid::fill(ofdm_symbol_range symbols, crb_interval crbs)
 {
-  srsran_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
-  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  srsgnb_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
+  srsgnb_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
 
   // carrier bitmap RB bit=0 corresponds to CRB=carrier offset. Thus, we need to shift the CRB interval.
   crbs.displace_by(-(int)offset());
@@ -44,8 +44,8 @@ void carrier_subslot_resource_grid::fill(ofdm_symbol_range symbols, crb_interval
 
 bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, crb_interval crbs) const
 {
-  srsran_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
-  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  srsgnb_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
+  srsgnb_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
 
   // carrier bitmap RB bit=0 corresponds to CRB=carrier offset. Thus, we need to shift the CRB interval.
   crbs.displace_by(-(int)offset());
@@ -59,7 +59,7 @@ bool carrier_subslot_resource_grid::collides(ofdm_symbol_range symbols, crb_inte
 
 crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, ofdm_symbol_range symbols) const
 {
-  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  srsgnb_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
   slot_rb_bitmap slot_rbs_selected_symbols = slot_rbs.slice(symbols.start() * nof_rbs(), symbols.stop() * nof_rbs());
   crb_bitmap     crb_bits = fold_and_accumulate<MAX_NOF_PRBS, true>(slot_rbs_selected_symbols, nof_rbs());
   crb_bits.fill(0, bwp_crb_lims.start());
@@ -69,8 +69,8 @@ crb_bitmap carrier_subslot_resource_grid::used_crbs(crb_interval bwp_crb_lims, o
 
 bool carrier_subslot_resource_grid::all_set(ofdm_symbol_range symbols, crb_interval crbs) const
 {
-  srsran_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
-  srsran_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
+  srsgnb_sanity_check(rb_dims().contains(crbs), "CRB interval out-of-bounds");
+  srsgnb_sanity_check(symbols.stop() <= NOF_OFDM_SYM_PER_SLOT_NORMAL_CP, "OFDM symbols out-of-bounds");
 
   // carrier bitmap RB bit=0 corresponds to CRB=carrier offset. Thus, we need to shift the CRB interval.
   crbs.displace_by(-(int)offset());
@@ -163,14 +163,14 @@ bool cell_slot_resource_grid::all_set(subcarrier_spacing scs, ofdm_symbol_range 
 cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs)
 {
   size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
+  srsgnb_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
   return carrier_grids[idx];
 }
 
 const cell_slot_resource_grid::carrier_resource_grid& cell_slot_resource_grid::get_carrier(subcarrier_spacing scs) const
 {
   size_t idx = numerology_to_grid_idx[to_numerology_value(scs)];
-  srsran_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
+  srsgnb_sanity_check(idx < carrier_grids.size(), "Invalid numerology={}", scs);
   return carrier_grids[idx];
 }
 
@@ -226,11 +226,11 @@ cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_)
 
 void cell_resource_allocator::slot_indication(slot_point sl_tx)
 {
-  srsran_sanity_check(not last_slot_ind.valid() or last_slot_ind + 1 == sl_tx, "Slot indication was skipped");
-  srsran_sanity_check(sl_tx.numerology() == to_numerology_value(get_max_scs(cfg.dl_cfg_common)),
+  srsgnb_sanity_check(not last_slot_ind.valid() or last_slot_ind + 1 == sl_tx, "Slot indication was skipped");
+  srsgnb_sanity_check(sl_tx.numerology() == to_numerology_value(get_max_scs(cfg.dl_cfg_common)),
                       "Invalid slot numerology");
 
-  if (srsran_unlikely(not last_slot_ind.valid())) {
+  if (srsgnb_unlikely(not last_slot_ind.valid())) {
     // First call to slot_indication. Set slot of all slot cell resource grids.
     for (unsigned i = 0; i < slots.size(); ++i) {
       slots[(sl_tx + i).to_uint() % slots.size()]->slot_indication(sl_tx + i);

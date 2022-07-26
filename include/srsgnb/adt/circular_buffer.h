@@ -65,7 +65,7 @@ class base_circular_buffer
 
     iterator_impl(parent_type& parent_, size_t i) : parent(&parent_), idx(i)
     {
-      srsran_assert(linearlize_index() <= parent->count, "Invalid iterator state");
+      srsgnb_assert(linearlize_index() <= parent->count, "Invalid iterator state");
     }
 
   public:
@@ -119,7 +119,7 @@ class base_circular_buffer
 
     void assert_idx_within_bounds()
     {
-      srsran_assert(
+      srsgnb_assert(
           linearlize_index() < parent->count, "index={} is out-of-bounds [{}, {})", idx, parent->rpos, parent->count);
     }
 
@@ -140,7 +140,7 @@ class base_circular_buffer
 
     void inc_()
     {
-      srsran_assert(*this != parent->end(), "Incrementing iterator beyond end()");
+      srsgnb_assert(*this != parent->end(), "Incrementing iterator beyond end()");
       ++idx;
       if (idx == parent->max_size()) {
         // Reached the end of circular_buffer container. Wrapping index around.
@@ -155,13 +155,13 @@ class base_circular_buffer
     void inc_(difference_type n)
     {
       if (n > 0) {
-        srsran_assert(parent->end() - *this >= n, "Incrementing iterator beyond end()");
+        srsgnb_assert(parent->end() - *this >= n, "Incrementing iterator beyond end()");
         idx += n;
         if (idx == parent->get_wpos()) {
           idx = parent->max_size();
         }
       } else if (n < 0) {
-        srsran_assert(*this - parent->begin() >= -n, "Decrementing iterator beyond begin()");
+        srsgnb_assert(*this - parent->begin() >= -n, "Decrementing iterator beyond begin()");
         if (is_virtual_end()) {
           idx = parent->get_wpos();
         }
@@ -197,7 +197,7 @@ public:
   template <typename U>
   typename std::enable_if<std::is_constructible<T, U>::value>::type push(U&& t)
   {
-    srsran_assert(not full(), "Circular buffer is full.");
+    srsgnb_assert(not full(), "Circular buffer is full.");
     size_t wpos = get_wpos();
     buffer[wpos].emplace(std::forward<U>(t));
     count++;
@@ -222,19 +222,19 @@ public:
   }
   void pop()
   {
-    srsran_assert(not empty(), "Cannot call pop() in empty circular buffer");
+    srsgnb_assert(not empty(), "Cannot call pop() in empty circular buffer");
     buffer[rpos].destroy();
     rpos = (rpos + 1) % max_size();
     count--;
   }
   T& top()
   {
-    srsran_assert(not empty(), "Cannot call top() in empty circular buffer");
+    srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
     return buffer[rpos].get();
   }
   const T& top() const
   {
-    srsran_assert(not empty(), "Cannot call top() in empty circular buffer");
+    srsgnb_assert(not empty(), "Cannot call top() in empty circular buffer");
     return buffer[rpos].get();
   }
   void clear()
@@ -253,12 +253,12 @@ public:
   /// Random Access
   T& operator[](size_t i)
   {
-    srsran_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
+    srsgnb_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
     return buffer[(rpos + i) % max_size()].get();
   }
   const T& operator[](size_t i) const
   {
-    srsran_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
+    srsgnb_assert(i < count, "Out-of-bounds access to circular buffer ({} >= {})", i, count);
     return buffer[(rpos + i) % max_size()].get();
   }
 
@@ -605,7 +605,7 @@ public:
 
   void set_size(size_t sz)
   {
-    srsran_assert(base_t::empty() or sz == base_t::size(),
+    srsgnb_assert(base_t::empty() or sz == base_t::size(),
                   "Dynamic resizes not supported when circular buffer is not empty");
     base_t::buffer.resize(sz);
   }

@@ -61,7 +61,7 @@ private:
 public:
   dmrs_pucch_processor_format2_impl(std::unique_ptr<pseudo_random_generator> prg_) : prg(std::move(prg_))
   {
-    srsran_assert(prg, "Invalid pseudo random generator.");
+    srsgnb_assert(prg, "Invalid pseudo random generator.");
   }
 
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const config_t& config) override;

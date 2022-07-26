@@ -25,7 +25,7 @@ inline unsigned get_rg_subc_mask_reference(const bounded_bitset<MAX_RB>& prb_mas
   unsigned prb_index_begin;
   {
     int ret = prb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB found to transmit");
+    srsgnb_assert(ret != -1, "No RB found to transmit");
     prb_index_begin = static_cast<unsigned>(ret);
   }
 
@@ -51,14 +51,14 @@ inline static_vector<bool, MAX_RB * NRE> get_rg_subc_mask(const bounded_bitset<M
   unsigned prb_index_begin;
   {
     int ret = prb_mask.find_lowest();
-    srsran_assert(ret != -1, "No RB found to transmit");
+    srsgnb_assert(ret != -1, "No RB found to transmit");
     prb_index_begin = static_cast<unsigned>(ret);
   }
 
   unsigned prb_index_end;
   {
     int ret = prb_mask.find_highest();
-    srsran_assert(ret != -1, "No RB found to transmit");
+    srsgnb_assert(ret != -1, "No RB found to transmit");
     prb_index_end = static_cast<unsigned>(ret + 1);
   }
 

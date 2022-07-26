@@ -67,7 +67,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
       logger.log_info("No data available to be sent");
       return {};
     }
-    srsran_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so = {})", next_so);
+    srsgnb_sanity_check(next_so == 0, "New Tx SDU, but next_so is not 0 (next_so = {})", next_so);
   }
 
   rlc_um_pdu_header header = {};
@@ -88,7 +88,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
     logger.log_error("Could not pack RLC UM header. {} B available", nof_bytes);
     return {};
   }
-  srsran_sanity_check(head_len == header_buf.length(),
+  srsgnb_sanity_check(head_len == header_buf.length(),
                       "Header length and expected header length do not match ({} != {})",
                       header_buf.length(),
                       head_len);
@@ -125,7 +125,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   }
 
   // Assert number of bytes
-  srsran_assert(pdu_buf.length() <= nof_bytes,
+  srsgnb_assert(pdu_buf.length() <= nof_bytes,
                 "Error while packing MAC PDU (more bytes written ({}) than expected ({})!",
                 pdu_buf.length(),
                 nof_bytes);

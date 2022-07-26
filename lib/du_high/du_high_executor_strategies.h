@@ -26,7 +26,7 @@ public:
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
     // Static lookup
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     return executor(ue_index);
   }
 
@@ -57,7 +57,7 @@ public:
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
-    srsran_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
+    srsgnb_sanity_check(is_du_ue_index_valid(ue_index), "Invalid ueId={}", ue_index);
     ue_idx_to_exec[ue_index] = execs[pcell_index % execs.size()];
     return *ue_idx_to_exec[ue_index];
   }
@@ -80,7 +80,7 @@ public:
   explicit cell_dl_executor_mapper(const std::initializer_list<task_executor*>& execs_) :
     dl_execs(execs_.begin(), execs_.end())
   {
-    srsran_assert(not dl_execs.empty(), "The number of DL executors must be higher than 1");
+    srsgnb_assert(not dl_execs.empty(), "The number of DL executors must be higher than 1");
   }
 
   task_executor& executor(du_cell_index_t cell_index) override { return *dl_execs[cell_index % dl_execs.size()]; }

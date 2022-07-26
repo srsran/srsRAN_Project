@@ -31,7 +31,7 @@ static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_
     case srsgnb::dmrs_config_type::type2:
       return fapi::dmrs_config_type::type_2;
     default:
-      srsran_assert(0, "Unexpected DMRS type ({})", static_cast<unsigned>(type));
+      srsgnb_assert(0, "Unexpected DMRS type ({})", static_cast<unsigned>(type));
       break;
   }
   // Fallback value.
@@ -41,7 +41,7 @@ static fapi::dmrs_config_type convert_dmrs_type_mac_to_fapi(srsgnb::dmrs_config_
 void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder& builder,
                                                      const sib_information&      mac_pdu)
 {
-  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
+  srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1, "This version only supports one transport block");
 
   // Basic parameters.
   builder.set_basic_parameters(mac_pdu.pdsch_cfg.rnti);
@@ -55,7 +55,7 @@ void srsgnb::fapi_adaptor::convert_pdsch_mac_to_fapi(fapi::dl_pdsch_pdu_builder&
                                                                     : cyclic_prefix_type::normal);
 
   // Codewords.
-  srsran_assert(mac_pdu.pdsch_cfg.codewords.size() == 1,
+  srsgnb_assert(mac_pdu.pdsch_cfg.codewords.size() == 1,
                 "Current FAPI implementation only supports 1 transport block per PDU");
   for (const auto& cw : mac_pdu.pdsch_cfg.codewords) {
     dl_pdsch_codeword_builder cw_builder = builder.add_codeword();

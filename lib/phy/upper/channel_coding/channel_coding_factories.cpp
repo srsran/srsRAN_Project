@@ -94,7 +94,7 @@ public:
   explicit ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config) :
     crc_factory(*config.crc_factory)
   {
-    srsran_assert(config.crc_factory, "Invalid CRC calculator factory.");
+    srsgnb_assert(config.crc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<ldpc_segmenter_tx> create() override

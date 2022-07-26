@@ -128,7 +128,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   segmenter->segment(codeblock_llrs, llrs, tb_size, cfg.segmenter_cfg);
 
   unsigned nof_cbs = codeblock_llrs.size();
-  srsran_assert(nof_cbs == soft_codeword->get_nof_codeblocks(), "Wrong number of codeblocks.");
+  srsgnb_assert(nof_cbs == soft_codeword->get_nof_codeblocks(), "Wrong number of codeblocks.");
 
   unsigned tb_and_crc_size = get_tb_and_crc_size(tb_size, nof_cbs);
 
@@ -145,7 +145,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
   for (unsigned cb_id = 0; cb_id != nof_cbs; ++cb_id) {
     const auto& cb_llrs = codeblock_llrs[cb_id].first;
     const auto& cb_meta = codeblock_llrs[cb_id].second;
-    srsran_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
+    srsgnb_assert(cb_llrs.size() == cb_meta.cb_specific.rm_length, "Wrong rate-matched codeblock length.");
 
     // Get codeblock length, without rate matching, the message length and the number of data bits (no CRC, no filler
     // bits - may contain zero-padding).
@@ -185,7 +185,7 @@ void pusch_decoder_impl::decode(span<uint8_t>                    transport_block
     }
     tb_offset += nof_new_bits;
   }
-  srsran_assert(tb_offset == tb_and_crc_size, "All TB bits should be filled at this point.");
+  srsgnb_assert(tb_offset == tb_and_crc_size, "All TB bits should be filled at this point.");
 
   stats.tb_crc_ok = false;
   if (nof_cbs == 1) {

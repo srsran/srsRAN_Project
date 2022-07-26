@@ -200,7 +200,7 @@ static unsigned get_alpha_scaling_value(float alpha_scaling)
   if (std::fabs(alpha_scaling - 1.F) < 0.001)
     return 3U;
 
-  srsran_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
+  srsgnb_assert(0, "Invalid alpha scaling value ({})", alpha_scaling);
   return 0U;
 }
 

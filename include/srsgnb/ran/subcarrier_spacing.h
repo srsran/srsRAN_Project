@@ -51,7 +51,7 @@ constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
     default:
       break;
   }
-  srsran_terminate("Invalid SCS");
+  srsgnb_terminate("Invalid SCS");
   return 0;
 }
 

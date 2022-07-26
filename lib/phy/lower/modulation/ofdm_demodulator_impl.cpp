@@ -30,8 +30,8 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
                            ofdm_config.center_freq_hz,
                            false)
 {
-  srsran_always_assert(std::isnormal(scale), "Invalid scaling factor %f", scale);
-  srsran_always_assert(
+  SRSGNB_ALWAYS_ASSERT__(std::isnormal(scale), "Invalid scaling factor %f", scale);
+  SRSGNB_ALWAYS_ASSERT__(
       dft_size > rg_size, "The DFT size (%d) must be greater than the resource grid size (%d)", dft_size, rg_size);
 
   // Fill DFT input with zeros.
@@ -67,14 +67,15 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
 
   // Make sure output buffer matches the symbol size.
-  srsran_always_assert(input.size() == (cp_len + dft_size),
-                       "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
-                       input.size(),
-                       symbol_index,
-                       cp_len,
-                       dft_size,
-                       cp_len + dft_size,
-                       numerology);
+  SRSGNB_ALWAYS_ASSERT__(
+      input.size() == (cp_len + dft_size),
+      "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
+      input.size(),
+      symbol_index,
+      cp_len,
+      dft_size,
+      cp_len + dft_size,
+      numerology);
 
   // Prepare the DFT inputs, while skipping the cyclic prefix.
   srsvec::copy(dft->get_input().first(dft_size), input.last(dft_size));

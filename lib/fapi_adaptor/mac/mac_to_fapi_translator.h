@@ -32,7 +32,7 @@ public:
   /// \param type PDSCH PDU type.
   void register_pdu(unsigned fapi_pdu_index, pdsch_pdu_type type)
   {
-    srsran_assert(type < last, "Invalid PDSCH PDU data type");
+    srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
     pdus[type].push_back(fapi_pdu_index);
   }
 
@@ -42,7 +42,7 @@ public:
   /// \return Number of PDUs of the given PDU type present in the registry.
   unsigned get_nof_pdus(pdsch_pdu_type type) const
   {
-    srsran_assert(type < last, "Invalid PDSCH PDU data type");
+    srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
     return pdus[type].size();
   }
 
@@ -53,8 +53,8 @@ public:
   /// \return Index of the FAPI PDU associated to the MAC PDU.
   unsigned get_fapi_pdu_index(unsigned mac_pdu_index, pdsch_pdu_type type) const
   {
-    srsran_assert(type < last, "Invalid PDSCH PDU data type");
-    srsran_assert(mac_pdu_index < pdus[type].size(), "MAC PDU index is not registered");
+    srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
+    srsgnb_assert(mac_pdu_index < pdus[type].size(), "MAC PDU index is not registered");
 
     return pdus[type][mac_pdu_index];
   }

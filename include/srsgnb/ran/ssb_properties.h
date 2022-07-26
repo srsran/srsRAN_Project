@@ -65,7 +65,7 @@ inline subcarrier_spacing to_subcarrier_spacing(ssb_pattern_case pattern_case)
 /// Returns the frequency range corresponding to an SS/PBCH block pattern.
 inline frequency_range to_frequency_range(ssb_pattern_case pattern_case)
 {
-  srsran_assert(pattern_case != ssb_pattern_case::invalid, "Invalid pattern case.");
+  srsgnb_assert(pattern_case != ssb_pattern_case::invalid, "Invalid pattern case.");
 
   if (pattern_case < ssb_pattern_case::D) {
     return frequency_range::FR1;

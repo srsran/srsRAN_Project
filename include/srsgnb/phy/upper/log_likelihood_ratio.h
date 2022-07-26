@@ -50,7 +50,7 @@ public:
   constexpr log_likelihood_ratio(T val)
   {
     static_assert(std::is_integral<T>::value, "LLRs must be initialized with integer values.");
-    srsran_assert(((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY),
+    srsgnb_assert(((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY),
                   "Invalid LLR value.");
     value = static_cast<value_type>(val);
   };
@@ -249,8 +249,8 @@ struct is_llr_span_compatible : std::false_type {
 /// Checks if \c T is compatible with a span of log_likelihood_ratios.
 template <typename T>
 struct is_llr_span_compatible<T,
-                              std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio> >::value ||
-                                               std::is_convertible<T, span<const log_likelihood_ratio> >::value> >
+                              std::enable_if_t<std::is_convertible<T, span<log_likelihood_ratio>>::value ||
+                                               std::is_convertible<T, span<const log_likelihood_ratio>>::value>>
   : std::true_type {
 };
 

@@ -35,7 +35,7 @@ static prach_generator_cexp_table<839U> prach_generator_cexp_table_l839;
 
 unsigned prach_generator_impl::get_sequence_length(preamble_format format)
 {
-  srsran_assert(format.is_long_preamble(), "Short format not implemented.");
+  srsgnb_assert(format.is_long_preamble(), "Short format not implemented.");
 
   return 839;
 }
@@ -151,7 +151,7 @@ unsigned prach_generator_impl::get_k_bar(unsigned prach_scs_Hz, unsigned pusch_s
 
 span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const configuration& config)
 {
-  srsran_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
+  srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
   prach_preamble_modulation_info info         = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
   unsigned                       prach_scs_Hz = info.scs.to_Hz();
   unsigned                       pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
@@ -166,7 +166,7 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 
   unsigned K               = pusch_scs_Hz / prach_scs_Hz;
   unsigned prach_grid_size = nof_prb_ul_grid * K * NRE;
-  srsran_assert(dft->get_size() > prach_grid_size,
+  srsgnb_assert(dft->get_size() > prach_grid_size,
                 "DFT size {} for PRACH SCS {} is not sufficient for K={}, N_RB={}. It requires {}.",
                 dft->get_size(),
                 prach_scs_Hz,
@@ -175,10 +175,10 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
                 prach_grid_size);
 
   unsigned k_bar = get_k_bar(prach_scs_Hz, pusch_scs_Hz);
-  srsran_assert(k_bar != RESERVED, "Configuration leads to a reserved value.");
+  srsgnb_assert(k_bar != RESERVED, "Configuration leads to a reserved value.");
 
   unsigned k_start = K * NRE * config.rb_offset + k_bar;
-  srsran_assert(k_start + L_ra < prach_grid_size,
+  srsgnb_assert(k_start + L_ra < prach_grid_size,
                 "Start subcarrier {} plus sequence length {} exceeds PRACH grid size {}.",
                 k_start,
                 L_ra,
@@ -186,7 +186,7 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 
   float gain = std::sqrt(1.0F / static_cast<float>(dft_input.size() * L_ra * dft_size_15kHz /
                                                    pow2(to_numerology_value(config.pusch_scs))));
-  srsran_assert(std::isnormal(gain), "Invalid gain.");
+  srsgnb_assert(std::isnormal(gain), "Invalid gain.");
 
   // Set DFT input to zero.
   srsvec::zero(dft_input);
@@ -242,17 +242,17 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
-  srsran_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
+  srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
   prach_preamble_modulation_info info         = prach_preamble_modulation_info_get_long(config.format, dft_size_15kHz);
   unsigned                       prach_scs_Hz = info.scs.to_Hz();
   unsigned                       pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
   unsigned                       L_ra         = get_sequence_length(config.format);
 
   unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
-  srsran_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
+  srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
 
   unsigned N_rb_ra = get_N_rb_ra(prach_scs_Hz, pusch_scs_Hz);
-  srsran_assert(N_rb_ra != RESERVED, "Configuration leads to a reserved number of resource blocks.");
+  srsgnb_assert(N_rb_ra != RESERVED, "Configuration leads to a reserved number of resource blocks.");
 
   unsigned root_sequence_index = config.root_sequence_index + config.preamble_index;
   unsigned cyclic_shift        = 0;

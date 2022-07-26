@@ -22,7 +22,7 @@ unsigned srsgnb::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
                                 subcarrier_spacing                           pusch_scs)
 {
   // In TS 38.214, Table 6.1.2.1.1-5, Delta is only defined for PUSCH SCS within [kHz15, kHz120kHz].
-  srsran_sanity_check(to_numerology_value(pusch_scs) <= to_numerology_value(subcarrier_spacing::kHz120),
+  srsgnb_sanity_check(to_numerology_value(pusch_scs) <= to_numerology_value(subcarrier_spacing::kHz120),
                       "PUSCH subcarrier spacing not supported for MSG3 delay");
 
   // The array represents Table 6.1.2.1.1-5, in TS 38.214.
@@ -142,7 +142,7 @@ bool ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
           break;
         }
       }
-      srsran_sanity_check(rar_req.rar_window.length() != 0, "Invalid configuration");
+      srsgnb_sanity_check(rar_req.rar_window.length() != 0, "Invalid configuration");
     } else {
       // FDD case.
       rar_req.rar_window = {rar_req.prach_slot_rx + prach_duration,
@@ -221,7 +221,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
     // Try to schedule DCIs + RBGs for RAR Grants
     size_t nof_allocs = schedule_rar(rar_req, res_alloc);
-    srsran_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
+    srsgnb_sanity_check(nof_allocs <= rar_req.tc_rntis.size(), "Invalid number of RAR allocs");
 
     if (nof_allocs > 0) {
       // If RAR allocation was successful:
@@ -440,7 +440,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     prb_interval                  prbs       = crb_to_prb(get_ul_bwp_cfg(), msg3_candidate.crbs);
 
     auto& pending_msg3 = pending_msg3s[rar_request.tc_rntis[i] % MAX_NOF_MSG3];
-    srsran_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
+    srsgnb_sanity_check(pending_msg3.harq.empty(), "Pending Msg3 should not have been added if HARQ is busy.");
 
     // Add MAC SDU with UL grant (Msg3) in RAR PDU.
     rar.grants.emplace_back();
@@ -471,7 +471,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
     // Allocate Msg3 UL HARQ
     bool success = pending_msg3.harq.new_tx(msg3_alloc.slot, prbs, msg3_mcs, max_msg3_retxs);
-    srsran_sanity_check(success, "Unexpected HARQ allocation return");
+    srsgnb_sanity_check(success, "Unexpected HARQ allocation return");
   }
 }
 

@@ -43,8 +43,8 @@ public:
   pbch_modulator_impl(std::unique_ptr<modulation_mapper> modulator_, std::unique_ptr<pseudo_random_generator> prg_) :
     modulator(std::move(modulator_)), scrambler(std::move(prg_))
   {
-    srsran_assert(modulator, "Invalid modulator.");
-    srsran_assert(scrambler, "Invalid scrambler.");
+    srsgnb_assert(modulator, "Invalid modulator.");
+    srsgnb_assert(scrambler, "Invalid scrambler.");
   }
 
   void put(span<const uint8_t> bits, resource_grid_writer& grid, const config_t& config) override;

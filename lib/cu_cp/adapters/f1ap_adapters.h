@@ -27,7 +27,7 @@ public:
 
   void on_du_remove_request_received(const du_index_t du_index) override
   {
-    srsran_assert(du_handler != nullptr, "DU handler must not be nullptr");
+    srsgnb_assert(du_handler != nullptr, "DU handler must not be nullptr");
     du_handler->handle_du_remove_request(du_index);
   }
 
@@ -50,13 +50,13 @@ public:
 
   void on_f1_setup_request_received(const f1_setup_request_message& msg) override
   {
-    srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
     du_f1c_handler->handle_f1_setup_request(msg);
   }
 
   void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) override
   {
-    srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     initial_ul_rrc_message du_proc_msg = {};
     du_proc_msg.tmp_ue_id              = msg.cu_ue_id;
@@ -76,7 +76,7 @@ public:
 
   void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) override
   {
-    srsran_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
+    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     ul_rrc_message du_proc_msg = {};
     du_proc_msg.ue_index       = ue_index;

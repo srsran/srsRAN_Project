@@ -255,7 +255,7 @@ static void parse_args(int argc, char** argv)
     }
     if (!found) {
       usage(argv[0]);
-      srsran_terminate("Invalid profile {}.", profile_name);
+      srsgnb_terminate("Invalid profile {}.", profile_name);
     }
   }
 }
@@ -347,14 +347,14 @@ int main(int argc, char** argv)
   double   rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
 
   // Make sure parameters are valid.
-  srsran_always_assert(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
-                       "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
-                       sampling_rate_hz / 1e6);
-  srsran_always_assert(cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
-                       "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
-                       cp.to_string(),
-                       to_numerology_value(scs),
-                       sampling_rate_hz);
+  SRSGNB_ALWAYS_ASSERT__(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
+                         "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
+                         sampling_rate_hz / 1e6);
+  SRSGNB_ALWAYS_ASSERT__(cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
+                         "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
+                         cp.to_string(),
+                         to_numerology_value(scs),
+                         sampling_rate_hz);
 
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
@@ -366,7 +366,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  srsran_always_assert(factory, "Driver %s is not available.", driver_name.c_str());
+  SRSGNB_ALWAYS_ASSERT__(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = create_radio_configuration();
@@ -376,7 +376,7 @@ int main(int argc, char** argv)
 
   // Create radio.
   radio = factory->create(radio_config, *async_task_executor, notification_handler);
-  srsran_assert(radio, "Failed to create radio.");
+  srsgnb_assert(radio, "Failed to create radio.");
 
   // Create symbol handler.
   rx_symbol_handler_example rx_symbol_handler(log_level);
@@ -392,7 +392,7 @@ int main(int argc, char** argv)
     lower_phy_configuration phy_config = create_lower_phy_configuration(
         dft_size_15kHz, rx_to_tx_delay, tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy = create_lower_phy(phy_config);
-    srsran_assert(lower_phy, "Failed to create lower physical layer.");
+    srsgnb_assert(lower_phy, "Failed to create lower physical layer.");
   }
 
   double scs_Hz = static_cast<double>(1000U * scs_to_khz(scs));
@@ -408,7 +408,7 @@ int main(int argc, char** argv)
   // Frequency offset from Point A to the lowest SS/PBCH block subcarrier in 15kHz subcarriers (only valid for FR1).
   unsigned ssb_offset_pointA_subc_15kHz = static_cast<unsigned>(ssb_offset_pointA_Hz / 15e3);
   // Make sure it is possible to map the SS/PBCH block in the grid.
-  srsran_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
+  srsgnb_assert(ssb_offset_pointA_subc_15kHz % ratio_scs_over_15kHz == 0,
                 "The combination of DL center frequency {} MHz and SSB center frequency {} MHz results in a fractional "
                 "offset of {}kHz SCS between Point A and the lowest SS/PBCH block lowest subcarrier.",
                 dl_center_freq,
@@ -438,7 +438,7 @@ int main(int argc, char** argv)
   upper_phy_sample_config.ssb_config.offset_pointA     = ssb_offset_pointA_subc_rb;
   upper_phy_sample_config.ssb_config.pattern_case      = ssb_pattern;
   upper_phy                                            = upper_phy_ssb_example::create(upper_phy_sample_config);
-  srsran_assert(upper_phy, "Failed to create upper physical layer.");
+  srsgnb_assert(upper_phy, "Failed to create upper physical layer.");
 
   // Connect adapters.
   rx_symbol_adapter.connect(&rx_symbol_handler);

@@ -18,7 +18,7 @@ using namespace srsgnb::ldpc;
 
 void ldpc_rate_dematcher_impl::init(bool new_data, const codeblock_metadata::tb_common_metadata& cfg)
 {
-  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
+  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "RV should an integer between 0 and 3.");
   rv = cfg.rv;
 
   modulation_order = get_bits_per_symbol(cfg.mod);
@@ -35,7 +35,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
 
   unsigned block_length = output.size();
 
-  srsran_assert(block_length >= cfg.tb_common.Nref, "N_ref should be smaller than the output length.");
+  srsgnb_assert(block_length >= cfg.tb_common.Nref, "N_ref should be smaller than the output length.");
   if (cfg.tb_common.Nref > 0) {
     buffer_length = cfg.tb_common.Nref;
   } else {
@@ -43,7 +43,7 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
   }
 
   // The input size must be a multiple of the modulation order.
-  srsran_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
+  srsgnb_assert(input.size() % modulation_order == 0, "The input length should be a multiple of the modulation order.");
 
   // Compute shift_k0 according to TS38.212 Table 5.4.2.1-2.
   std::array<double, 4> shift_factor = {};
@@ -60,15 +60,15 @@ void ldpc_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       out
     BG_N_short   = BG2_N_SHORT;
     BG_K         = BG2_N_FULL - BG2_M;
   } else {
-    srsran_assert(false, "LDPC rate dematching: invalid input length.");
+    srsgnb_assert(false, "LDPC rate dematching: invalid input length.");
   }
   uint16_t lifting_size = block_length / BG_N_short;
-  srsran_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
+  srsgnb_assert(get_lifting_index(static_cast<lifting_size_t>(lifting_size)) != VOID_LIFTSIZE,
                 "LDPC rate dematching: invalid input length.");
 
   // Recall that 2 * lifting_size systematic bits are shortened out of the codeblock.
   nof_systematic_bits = (BG_K - 2) * lifting_size;
-  srsran_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
+  srsgnb_assert(cfg.cb_specific.nof_filler_bits < nof_systematic_bits,
                 "LDPC rate dematching: invalid number of filler bits.");
   nof_filler_bits = cfg.cb_specific.nof_filler_bits;
 

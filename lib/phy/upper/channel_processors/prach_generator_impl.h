@@ -104,21 +104,21 @@ public:
     dft_short(std::move(dft_short_)),
     temp(MAX_PRACH_LENGTH_SF * 15 * dft_size_15kHz)
   {
-    srsran_assert(dft_l839, "Invalid L839 DFT pointer");
-    srsran_assert(dft_l839->get_direction() == dft_processor::direction::DIRECT, "Invalid L839 DFT direction");
-    srsran_assert(dft_l839->get_size() == 839U, "Invalid L839 DFT size");
+    srsgnb_assert(dft_l839, "Invalid L839 DFT pointer");
+    srsgnb_assert(dft_l839->get_direction() == dft_processor::direction::DIRECT, "Invalid L839 DFT direction");
+    srsgnb_assert(dft_l839->get_size() == 839U, "Invalid L839 DFT size");
 
-    srsran_assert(dft_l139, "Invalid L139 DFT pointer");
-    srsran_assert(dft_l139->get_direction() == dft_processor::direction::DIRECT, "Invalid L139 DFT direction");
-    srsran_assert(dft_l139->get_size() == 139U, "Invalid L139 DFT size");
+    srsgnb_assert(dft_l139, "Invalid L139 DFT pointer");
+    srsgnb_assert(dft_l139->get_direction() == dft_processor::direction::DIRECT, "Invalid L139 DFT direction");
+    srsgnb_assert(dft_l139->get_size() == 139U, "Invalid L139 DFT size");
 
-    srsran_assert(dft_1_25_kHz, "Invalid 1k25 DFT pointer");
-    srsran_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
-    srsran_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
+    srsgnb_assert(dft_1_25_kHz, "Invalid 1k25 DFT pointer");
+    srsgnb_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 1k25 DFT direction");
+    srsgnb_assert(dft_1_25_kHz->get_size() == (dft_size_15kHz * 15000) / 1250, "Invalid 1k25 DFT size");
 
-    srsran_assert(dft_5_kHz, "Invalid 5k DFT pointer");
-    srsran_assert(dft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 5k DFT direction");
-    srsran_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000) / 5000, "Invalid 5k DFT size");
+    srsgnb_assert(dft_5_kHz, "Invalid 5k DFT pointer");
+    srsgnb_assert(dft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Invalid 5k DFT direction");
+    srsgnb_assert(dft_5_kHz->get_size() == (dft_size_15kHz * 15000) / 5000, "Invalid 5k DFT size");
   }
 
   // See interface for documentation.

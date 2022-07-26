@@ -28,7 +28,7 @@ bool mac_dl_processor::has_cell(du_cell_index_t cell_index) const
 
 void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
 {
-  srsran_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
+  srsgnb_assert(not has_cell(cell_cfg_req.cell_index), "Overwriting existing cell is invalid.");
 
   // Create MAC cell and add it to list.
   cells[cell_cfg_req.cell_index] =
@@ -37,7 +37,7 @@ void mac_dl_processor::add_cell(const mac_cell_creation_request& cell_cfg_req)
 
 void mac_dl_processor::remove_cell(du_cell_index_t cell_index)
 {
-  srsran_assert(has_cell(cell_index), "Accessing non-existing cell.");
+  srsgnb_assert(has_cell(cell_index), "Accessing non-existing cell.");
 
   // Remove cell from cell manager.
   cells[cell_index].reset();

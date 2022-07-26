@@ -53,9 +53,9 @@ class empty_table_t final : public oper_table_t<R, Args...>
 {
 public:
   constexpr empty_table_t() = default;
-  R         call(void* src, Args... args) const override
+  R call(void* src, Args... args) const override
   {
-    srsran_terminate("bad function call (cause: function ptr is empty)");
+    srsgnb_terminate("bad function call (cause: function ptr is empty)");
   }
   void move(void* src, void* dest) const override {}
   void dtor(void* src) const override {}
@@ -97,9 +97,11 @@ public:
 
 /// Metafunction to check if a type is an instantiation of unique_function<R(Args...)>
 template <class>
-struct is_unique_function : std::false_type {};
+struct is_unique_function : std::false_type {
+};
 template <class Sig, size_t Capacity>
-struct is_unique_function<unique_function<Sig, Capacity> > : std::true_type {};
+struct is_unique_function<unique_function<Sig, Capacity>> : std::true_type {
+};
 
 /// Metafunctions to enable different ctor implementations depending on whether the callback fits the small buffer
 template <typename T, size_t Cap, typename FunT = typename std::decay<T>::type>

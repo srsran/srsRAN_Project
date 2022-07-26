@@ -153,17 +153,17 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   std::lock_guard<std::mutex> lock(mutex);
 
   // Sanity checks.
-  srsran_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
+  srsgnb_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
                 "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
                 dl_data.sib1_pdus.size());
 
-  srsran_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
+  srsgnb_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
                 "Number of PDUs ({}) and Payloads ({}) for RAR PDUs doesn't match",
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
                 dl_data.rar_pdus.size());
 
-  srsran_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
+  srsgnb_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
                 "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
                 pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
                 dl_data.ue_pdus.size());

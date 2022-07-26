@@ -217,7 +217,7 @@ pdcch_scheduler_impl::~pdcch_scheduler_impl() = default;
 
 void pdcch_scheduler_impl::slot_indication(slot_point sl_tx)
 {
-  srsran_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected skipped slot");
+  srsgnb_sanity_check(not last_sl_ind.valid() or sl_tx == last_sl_ind + 1, "Detected skipped slot");
 
   // Update Slot.
   last_sl_ind = sl_tx;
@@ -254,11 +254,11 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
                                                               dci_dl_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  srsran_sanity_check(user.dl_bwps[bwpid] != nullptr, "Invalid BWP-Id");
+  srsgnb_sanity_check(user.dl_bwps[bwpid] != nullptr, "Invalid BWP-Id");
   const bwp_configuration& bwp_cfg = *user.dl_bwps[bwpid];
-  srsran_sanity_check(user.dl_search_spaces[ss_id] != nullptr, "Invalid SearchSpaceId");
+  srsgnb_sanity_check(user.dl_search_spaces[ss_id] != nullptr, "Invalid SearchSpaceId");
   const search_space_configuration& ss_cfg = *user.dl_search_spaces[ss_id];
-  srsran_sanity_check(user.dl_coresets[ss_cfg.cs_id] != nullptr, "Invalid CoresetId");
+  srsgnb_sanity_check(user.dl_coresets[ss_cfg.cs_id] != nullptr, "Invalid CoresetId");
   const coreset_configuration& cs_cfg = *user.dl_coresets[ss_cfg.cs_id];
 
   return alloc_dl_pdcch_helper(slot_alloc, rnti, bwp_cfg, cs_cfg, ss_cfg, aggr_lvl, dci_fmt);
@@ -338,6 +338,6 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_helper(cell_slot_reso
 
 pdcch_scheduler_impl::pdcch_slot_allocator& pdcch_scheduler_impl::get_pdcch_slot_alloc(slot_point sl)
 {
-  srsran_sanity_check(sl < last_sl_ind + SLOT_ALLOCATOR_RING_SIZE, "PDCCH being allocated to far into the future");
+  srsgnb_sanity_check(sl < last_sl_ind + SLOT_ALLOCATOR_RING_SIZE, "PDCCH being allocated to far into the future");
   return *slot_records[sl.to_uint() % slot_records.size()];
 }

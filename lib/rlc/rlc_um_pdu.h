@@ -27,7 +27,7 @@ constexpr size_t rlc_um_pdu_header_size_no_so(rlc_um_sn_size sn_size)
     case rlc_um_sn_size::size12bits:
       return rlc_um_pdu_header_size_12bit_sn_no_so;
   }
-  srsran_assertion_failure("Cannot determine RLC UM PDU header size without SO: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size without SO: unsupported sn_size {}",
                            to_number(sn_size));
   return rlc_um_pdu_header_size_6bit_sn_no_so;
 }
@@ -42,7 +42,7 @@ constexpr size_t rlc_um_pdu_header_size_with_so(rlc_um_sn_size sn_size)
     case rlc_um_sn_size::size12bits:
       return rlc_um_pdu_header_size_12bit_sn_with_so;
   }
-  srsran_assertion_failure("Cannot determine RLC UM PDU header size with SO: unsupported sn_size {}",
+  srsgnb_assertion_failure("Cannot determine RLC UM PDU header size with SO: unsupported sn_size {}",
                            to_number(sn_size));
   return rlc_um_pdu_header_size_6bit_sn_no_so;
 }

@@ -52,14 +52,14 @@ private:
 
   void assert_cell_exists(du_cell_index_t cell_index) const
   {
-    srsran_assert(has_cell(cell_index), "cell_index={} does not exist", cell_index);
+    srsgnb_assert(has_cell(cell_index), "cell_index={} does not exist", cell_index);
   }
 
   void add_cell(const du_cell_config& cfg);
 
   const du_manager_config_t& cfg;
 
-  std::vector<std::unique_ptr<cell_t> > cells;
+  std::vector<std::unique_ptr<cell_t>> cells;
 };
 
 } // namespace srs_du

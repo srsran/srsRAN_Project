@@ -29,7 +29,7 @@ public:
       float marker = static_cast<float>(10 * port + i_layer);
       // Get a view to the RE channel estimate corresponding to the port-i_layer path.
       span<cf_t> ch_est = estimate.get_path_ch_estimate(port, i_layer);
-      srsran_assert(ch_est.size() == cfg.nof_symbols * cfg.rb_mask.count() * NRE,
+      srsgnb_assert(ch_est.size() == cfg.nof_symbols * cfg.rb_mask.count() * NRE,
                     "The size of the channel estimate view does not match with the configuration parameters.");
       std::fill(ch_est.begin(), ch_est.end(), marker);
     }
@@ -40,21 +40,21 @@ public:
 void dmrs_pusch_generator_impl::generate(span<dmrs_symbol_list> symbols, span<dmrs_mask> mask, const configuration& cfg)
 {
   unsigned nof_tx_layers = cfg.nof_tx_layers;
-  srsran_assert(nof_tx_layers <= pusch_constants::MAX_NOF_LAYERS, "Too many layers.");
+  srsgnb_assert(nof_tx_layers <= pusch_constants::MAX_NOF_LAYERS, "Too many layers.");
 
   unsigned slot_syms = get_nsymb_per_slot(cfg.c_prefix);
-  srsran_assert(cfg.first_symbol + cfg.nof_symbols <= slot_syms,
+  srsgnb_assert(cfg.first_symbol + cfg.nof_symbols <= slot_syms,
                 "The slot has {} total symbols, requested {} symbols starting from symbol {}.",
                 slot_syms,
                 cfg.nof_symbols,
                 cfg.first_symbol);
-  srsran_assert(cfg.nof_symbols > 4, "For this test, the PUSCH should occupy at least 4 symbols.");
+  srsgnb_assert(cfg.nof_symbols > 4, "For this test, the PUSCH should occupy at least 4 symbols.");
 
   unsigned nof_dmrs_per_symbol = cfg.rb_mask.count() * NRE;
 
-  srsran_assert(symbols.size() == nof_tx_layers,
+  srsgnb_assert(symbols.size() == nof_tx_layers,
                 "The number of DM-RS symbol lists do not match the number of Tx layers.");
-  srsran_assert(mask.size() == nof_tx_layers, "The number of DM-RS masks do not match the number of Tx layers.");
+  srsgnb_assert(mask.size() == nof_tx_layers, "The number of DM-RS masks do not match the number of Tx layers.");
 
   for (unsigned layer_ix = 0; layer_ix != nof_tx_layers; ++layer_ix) {
     symbols[layer_ix].resize(nof_dmrs_per_symbol, -1);
@@ -114,8 +114,8 @@ int main()
   dmrs_pusch_estimator::configuration cfg = {};
   cfg.rb_mask                             = {false, false, false, false, true, true, true, true, true,  true,
                                              true,  true,  true,  true,  true, true, true, true, false, false};
-  srsran_assert(cfg.rb_mask.size() == nof_rb, "Check rm_mask!");
-  srsran_assert(cfg.rb_mask.count() == ch_est_dims.nof_prb, "Check rm_mask!");
+  srsgnb_assert(cfg.rb_mask.size() == nof_rb, "Check rm_mask!");
+  srsgnb_assert(cfg.rb_mask.count() == ch_est_dims.nof_prb, "Check rm_mask!");
   cfg.nof_symbols  = ch_est_dims.nof_symbols;
   cfg.first_symbol = 2;
   cfg.rx_ports.resize(ch_est_dims.nof_rx_ports);
@@ -123,7 +123,7 @@ int main()
   cfg.c_prefix      = cp;
 
   unsigned nof_slot_symbols = get_nsymb_per_slot(cp);
-  srsran_assert(nof_slot_symbols >= cfg.first_symbol + cfg.nof_symbols, "Check OFDM symbols.");
+  srsgnb_assert(nof_slot_symbols >= cfg.first_symbol + cfg.nof_symbols, "Check OFDM symbols.");
 
   std::unique_ptr<resource_grid_reader> grid = create_rg_reader();
 

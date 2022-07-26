@@ -41,8 +41,8 @@ public:
     coro_handle<>        suspended_handle;
   };
 
-  manual_event_common()                                  = default;
-  manual_event_common(const manual_event_common& event_) = delete;
+  manual_event_common()                                             = default;
+  manual_event_common(const manual_event_common& event_)            = delete;
   manual_event_common& operator=(const manual_event_common& event_) = delete;
   ~manual_event_common() {}
 
@@ -119,7 +119,7 @@ public:
   /// Called to object stored value when event is set
   const Data& get()
   {
-    srsran_sanity_check(is_set(), "trying to get manual_event<Data> data for non-set event");
+    srsgnb_sanity_check(is_set(), "trying to get manual_event<Data> data for non-set event");
     return data;
   }
 

@@ -34,8 +34,8 @@ upper_phy_impl::upper_phy_impl(unsigned int                             sector_i
   rg_pool(std::move(rg_pool_)),
   timing_handler((notifier_dummy))
 {
-  srsran_assert(dl_processor_pool, "Invalid downlink processor pool");
-  srsran_assert(rg_pool, "Invalid downlink resource grid pool");
+  srsgnb_assert(dl_processor_pool, "Invalid downlink processor pool");
+  srsgnb_assert(rg_pool, "Invalid downlink resource grid pool");
 
   // :TODO: Add a logger here.
   (void)sector_id;

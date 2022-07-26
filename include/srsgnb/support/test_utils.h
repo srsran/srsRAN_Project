@@ -85,7 +85,8 @@ class log_sink_message_spy : public srslog::sink
 public:
   explicit log_sink_message_spy(std::unique_ptr<srslog::log_formatter> f) :
     srslog::sink(std::move(f)), s(srslog::get_default_sink())
-  {}
+  {
+  }
 
   /// Identifier of this custom sink.
   static const char* name() { return "log_sink_message_spy"; }
@@ -140,10 +141,10 @@ public:
     double      nof_repeats = (delimiter_length - name_str.size()) / 2.0;
     fmt::print("{0:=>{1}}{2}{0:=>{3}}\n", "", (int)floor(nof_repeats), name_str, (int)ceil(nof_repeats));
   }
-  test_delimit_logger(const test_delimit_logger&) = delete;
-  test_delimit_logger(test_delimit_logger&&)      = delete;
+  test_delimit_logger(const test_delimit_logger&)            = delete;
+  test_delimit_logger(test_delimit_logger&&)                 = delete;
   test_delimit_logger& operator=(const test_delimit_logger&) = delete;
-  test_delimit_logger& operator=(test_delimit_logger&&) = delete;
+  test_delimit_logger& operator=(test_delimit_logger&&)      = delete;
   ~test_delimit_logger()
   {
     srslog::flush();
@@ -163,14 +164,14 @@ struct moveonly_test_object {
   {
     object_count_impl()++;
   }
-  moveonly_test_object(const moveonly_test_object& other) = delete;
-  moveonly_test_object& operator=(moveonly_test_object&&) noexcept = default;
+  moveonly_test_object(const moveonly_test_object& other)            = delete;
+  moveonly_test_object& operator=(moveonly_test_object&&) noexcept   = default;
   moveonly_test_object& operator=(const moveonly_test_object& other) = delete;
 
   bool has_value() const { return val_ptr != nullptr; }
   int  value() const
   {
-    srsran_assert(has_value(), "Invalid access");
+    srsgnb_assert(has_value(), "Invalid access");
     return *val_ptr;
   }
   bool operator==(const moveonly_test_object& other) const
@@ -197,9 +198,9 @@ struct copyonly_test_object {
   explicit copyonly_test_object(int v) : val(v) { object_count_impl()++; }
   ~copyonly_test_object() { object_count_impl()--; }
   copyonly_test_object(const copyonly_test_object& other) noexcept : val(other.val) { object_count_impl()++; }
-  copyonly_test_object(copyonly_test_object&& other) = delete;
+  copyonly_test_object(copyonly_test_object&& other)                    = delete;
   copyonly_test_object& operator=(const copyonly_test_object&) noexcept = default;
-  copyonly_test_object& operator=(copyonly_test_object&&) = delete;
+  copyonly_test_object& operator=(copyonly_test_object&&)               = delete;
 
   int  value() const { return val; }
   bool operator==(const copyonly_test_object& other) const { return val == other.val; }
@@ -216,7 +217,7 @@ private:
   int val;
 };
 
-#define CONDERROR(cond, fmt, ...) srsran_assert(not(cond), fmt, ##__VA_ARGS__)
+#define CONDERROR(cond, fmt, ...) srsgnb_assert(not(cond), fmt, ##__VA_ARGS__)
 
 #define TESTERROR(fmt, ...) CONDERROR(true, fmt, ##__VA_ARGS__)
 

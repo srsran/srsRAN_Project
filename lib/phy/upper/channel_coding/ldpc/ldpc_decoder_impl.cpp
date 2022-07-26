@@ -36,7 +36,7 @@ void ldpc_decoder_impl::init(const configuration& cfg)
   assert((scaling_factor > 0) && (scaling_factor < 1));
 
   unsigned nof_crc_bits = cfg.block_conf.cb_specific.nof_crc_bits;
-  srsran_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
+  srsgnb_assert((nof_crc_bits == 16) || (nof_crc_bits == 24), "Invalid number of CRC bits.");
 
   nof_significant_bits = bg_K * lifting_size - cfg.block_conf.cb_specific.nof_filler_bits;
 
@@ -57,7 +57,7 @@ optional<unsigned> ldpc_decoder_impl::decode(span<uint8_t>                    ou
 
   // The minimum input length is message_length + two times the lifting size.
   uint16_t min_input_length = message_length + 2 * lifting_size;
-  srsran_assert(input.size() >= min_input_length,
+  srsgnb_assert(input.size() >= min_input_length,
                 "The input length (%d) does not reach miminum (%d)",
                 input.size(),
                 max_input_length);
@@ -160,7 +160,7 @@ void ldpc_decoder_generic::compute_var_to_check_msgs(span<const log_likelihood_r
 
 static log_likelihood_ratio scale_llr(log_likelihood_ratio llr, float scaling_factor)
 {
-  srsran_assert((scaling_factor > 0) && (scaling_factor < 1), "Scaling factor should be in the interval (0, 1).");
+  srsgnb_assert((scaling_factor > 0) && (scaling_factor < 1), "Scaling factor should be in the interval (0, 1).");
   if (log_likelihood_ratio::isinf(llr)) {
     return llr;
   }

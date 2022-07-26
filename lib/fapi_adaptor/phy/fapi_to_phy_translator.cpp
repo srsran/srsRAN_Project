@@ -109,7 +109,7 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
         break;
       }
       default:
-        srsran_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+        srsgnb_assert(0, "DL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
     }
   }
 }
@@ -123,7 +123,7 @@ void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
   std::lock_guard<std::mutex> lock(mutex);
 
   // Sanity check.
-  srsran_assert(msg.pdus.size() == pdsch_pdus.size(),
+  srsgnb_assert(msg.pdus.size() == pdsch_pdus.size(),
                 "Invalid TX_data.request received. Message contains ({}) payload PDUs but it expects ({})",
                 msg.pdus.size(),
                 pdsch_pdus.size());

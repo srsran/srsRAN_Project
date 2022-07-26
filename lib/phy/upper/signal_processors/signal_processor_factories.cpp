@@ -26,7 +26,7 @@ public:
   dmrs_pdsch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
     prg_factory(prg_factory_)
   {
-    srsran_assert(prg_factory, "Invalid PRG factory.");
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
 
   std::unique_ptr<dmrs_pdsch_processor> create() override

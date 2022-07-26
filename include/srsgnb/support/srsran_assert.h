@@ -14,11 +14,11 @@
 #include <cstdio>
 
 /// Provides a hint to the compiler that a condition is likely false.
-#define srsran_unlikely(expr) __builtin_expect(!!(expr), 0)
+#define srsgnb_unlikely(expr) __builtin_expect(!!(expr), 0)
 
 /// Verifies if compile-time symbol is defined.
-#define SRSRAN_IS_DEFINED(x) SRSRAN_IS_DEFINED2(x)
-#define SRSRAN_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
+#define SRSGNB_IS_DEFINED(x) SRSGNB_IS_DEFINED2(x)
+#define SRSGNB_IS_DEFINED2(x) (#x[0] == 0 || (#x[0] >= '1' && #x[0] <= '9'))
 
 namespace srsgnb {
 
@@ -63,7 +63,7 @@ namespace detail {
 /// Attribute noinline is used to signal to the compiler that this path should rarely occur and therefore doesn't need
 /// to get optimized.
 template <typename... Args>
-[[gnu::noinline, noreturn]] inline bool srsran_terminate(const char* fmt, Args&&... args) noexcept
+[[gnu::noinline, noreturn]] inline bool srsgnb_terminate(const char* fmt, Args&&... args) noexcept
 {
   srslog::flush();
   fprintf(stderr, "%s", fmt::format(fmt, std::forward<Args>(args)...).c_str());
@@ -73,26 +73,27 @@ template <typename... Args>
 } // namespace srsgnb
 
 /// Helper macro to log assertion message and terminate program.
-#define srsran_assertion_failure__(condmessage, fmtstr, ...)                                                           \
+#define SRSGNB_ASSERT_FAILURE__(condmessage, fmtstr, ...)                                                              \
   (void)(srsgnb::detail::assert_print_helper(                                                                          \
              __FILE__, __LINE__, __PRETTY_FUNCTION__, condmessage, fmt::format(FMT_STRING(fmtstr), ##__VA_ARGS__)) ||  \
          (std::abort(), 0))
 
-/// Terminates program with an assertion failure. No condition message is provided.
-#define srsran_assertion_failure(fmtstr, ...) srsran_assertion_failure__(nullptr, fmtstr, ##__VA_ARGS__)
+/// \brief Terminates program with an assertion failure. No condition message is provided.
+#define srsgnb_assertion_failure(fmtstr, ...) SRSGNB_ASSERT_FAILURE__(nullptr, fmtstr, ##__VA_ARGS__)
 
-/// \brief Macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log, prints
-/// the backtrace (if it was activated) and closes the application.
-#define srsran_always_assert(condition, fmtstr, ...)                                                                   \
-  (void)((condition) || (srsran_assertion_failure__((#condition), fmtstr, ##__VA_ARGS__), 0))
+/// \brief Helper macro that asserts condition is true. If false, it logs the remaining macro args, flushes the log,
+/// prints the backtrace (if it was activated) and closes the application.
+#define SRSGNB_ALWAYS_ASSERT__(condition, fmtstr, ...)                                                                 \
+  (void)((condition) || (SRSGNB_ASSERT_FAILURE__((#condition), fmtstr, ##__VA_ARGS__), 0))
 
-/// Same as "srsran_always_assert" but it is only active when "enable_check" flag is defined
-#define srsran_assert_ifdef(enable_check, condition, fmtstr, ...)                                                      \
-  (void)((not SRSRAN_IS_DEFINED(enable_check)) || (srsran_always_assert(condition, fmtstr, ##__VA_ARGS__), 0))
+/// Same as "SRSGNB_ALWAYS_ASSERT__" but it is only active when "enable_check" flag is defined
+#define SRSGNB_ALWAYS_ASSERT_IFDEF__(enable_check, condition, fmtstr, ...)                                             \
+  (void)((not SRSGNB_IS_DEFINED(enable_check)) || (SRSGNB_ALWAYS_ASSERT__(condition, fmtstr, ##__VA_ARGS__), 0))
 
-/// Specialization of "srsran_assert_ifdef" for the ASSERTS_ENABLED flag.
-#define srsran_assert(condition, fmtstr, ...) srsran_assert_ifdef(ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
+/// Specialization of "SRSGNB_ALWAYS_ASSERT_IFDEF__" for the ASSERTS_ENABLED flag.
+#define srsgnb_assert(condition, fmtstr, ...)                                                                          \
+  SRSGNB_ALWAYS_ASSERT_IFDEF__(ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
 
-/// Specialization of "srsran_assert_ifdef" for the SANITY_CHECKS_ENABLED flag.
-#define srsran_sanity_check(condition, fmtstr, ...)                                                                    \
-  srsran_assert_ifdef(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)
+/// Specialization of "SRSGNB_ALWAYS_ASSERT_IFDEF__" for the PARANOID_ASSERTS_ENABLED flag.
+#define srsgnb_sanity_check(condition, fmtstr, ...)                                                                    \
+  SRSGNB_ALWAYS_ASSERT_IFDEF__(PARANOID_ASSERTS_ENABLED, condition, fmtstr, ##__VA_ARGS__)

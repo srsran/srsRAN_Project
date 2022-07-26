@@ -26,7 +26,7 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
                                      pdu.subcarrier_offset);
 
   // Make sure the slot matches with the SS/PBCH transmission slot
-  srsran_assert((l_start_in_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL)) == pdu.slot.hrf_slot_index(),
+  srsgnb_assert((l_start_in_burst / get_nsymb_per_slot(cyclic_prefix::NORMAL)) == pdu.slot.hrf_slot_index(),
                 "Invalid slot index ({}) for SSB index {}",
                 pdu.slot.hrf_slot_index(),
                 l_start_in_burst);

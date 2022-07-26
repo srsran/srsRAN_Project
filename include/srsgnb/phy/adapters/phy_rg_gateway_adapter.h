@@ -28,7 +28,7 @@ public:
   // See interface for documentation.
   void send(const resource_grid_context& context, const resource_grid_reader& grid) override
   {
-    srsran_always_assert(gateway, "Adapter is not connected.");
+    SRSGNB_ALWAYS_ASSERT__(gateway, "Adapter is not connected.");
     gateway->send(context, grid);
   }
 };

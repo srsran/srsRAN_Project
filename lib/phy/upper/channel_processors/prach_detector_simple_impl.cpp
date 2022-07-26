@@ -37,7 +37,7 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
   unsigned prach_window_length = dft->get_size();
 
   // Copy PRACH window into window.
-  srsran_assert(signal.size() >= prach_window_offset + prach_window_length,
+  srsgnb_assert(signal.size() >= prach_window_offset + prach_window_length,
                 "The PRACH window with offset {} and length {} exceeds the signal buffer size {}.",
                 prach_window_offset,
                 prach_window_length,

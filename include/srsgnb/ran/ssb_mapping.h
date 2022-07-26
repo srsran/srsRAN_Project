@@ -76,7 +76,7 @@ inline unsigned ssb_get_l_first(ssb_pattern_case pattern_case, unsigned ssb_idx)
   }
 
   // Impossible!
-  srsran_assert(false, "Invalid SSB pattern case");
+  srsgnb_assert(false, "Invalid SSB pattern case");
   return {};
 }
 
@@ -107,21 +107,21 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                                 ssb_subcarrier_offset subcarrier_offset)
 {
   // Verify the SCS are valid for the frequency range.
-  srsran_assert(is_scs_valid(ssb_scs, fr),
+  srsgnb_assert(is_scs_valid(ssb_scs, fr),
                 "Unsupported combination of FR{} and SSB SCS {}kHz.",
                 fr == frequency_range::FR1 ? 1 : 2,
                 scs_to_khz(ssb_scs));
-  srsran_assert(is_scs_valid(common_scs, fr),
+  srsgnb_assert(is_scs_valid(common_scs, fr),
                 "Unsupported combination of FR{} and  Common SCS {}kHz.",
                 fr == frequency_range::FR1 ? 1 : 2,
                 scs_to_khz(common_scs));
 
   // Verify the offset to Point A and the subcarrier offset are valid.
-  srsran_assert(offset_to_pointA.is_valid(),
+  srsgnb_assert(offset_to_pointA.is_valid(),
                 "Invalid offset to Point A {} (max {})",
                 offset_to_pointA.to_uint(),
                 ssb_offset_to_pointA::max());
-  srsran_assert(subcarrier_offset.is_valid(fr),
+  srsgnb_assert(subcarrier_offset.is_valid(fr),
                 "Invalid subcarrier offset {} for FR{} (max {})",
                 subcarrier_offset.to_uint(),
                 fr == frequency_range::FR1 ? 1 : 2,
@@ -144,7 +144,7 @@ inline unsigned ssb_get_k_first(frequency_range       fr,
                            15;
 
   // Make sure the above conversion is exact and has no remainder.
-  srsran_assert((k_first_15kHz * 15) % ssb_scs_kHz == 0,
+  srsgnb_assert((k_first_15kHz * 15) % ssb_scs_kHz == 0,
                 "Unsupported combination of FR{}, SSB SCS {}kHz, Common SCS {}kHz, offsetToPointA {} and "
                 "ssb-SubcarrierOffset {}.",
                 fr == frequency_range::FR1 ? 1 : 2,

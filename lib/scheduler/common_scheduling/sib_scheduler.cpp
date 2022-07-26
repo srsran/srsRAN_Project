@@ -97,7 +97,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
   // Helper function that determines from SSB bitmap whether n-th beam is used.
   auto is_nth_ssb_beam_active = [](uint64_t ssb_bitmap, unsigned ssb_index) {
     // In the current implementation state, only SSB indices within the interval [0, 7] are allowed.
-    srsran_sanity_check(
+    srsgnb_sanity_check(
         ssb_index >= 0 and ssb_index < MAX_NUM_BEAMS, "SSB index must be within the interval [0, '{}')", MAX_NUM_BEAMS);
     return (ssb_bitmap & (static_cast<uint64_t>(0b1U) << static_cast<uint64_t>(63U - ssb_index))) > 0;
   };
@@ -126,7 +126,7 @@ void sib1_scheduler::schedule_sib1(cell_slot_resource_allocator& res_grid, slot_
 void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
 {
   // TODO: get minimum channel BW from current BW configuration.
-  srsran_assert(cell_cfg.dl_carrier.carrier_bw_mhz < 40,
+  srsgnb_assert(cell_cfg.dl_carrier.carrier_bw_mhz < 40,
                 "Minimum channel BW '{}'MHz not supported for SIB1 scheduling; scheduler only supports 5MHz or "
                 "10MHz min. channel BW.",
                 cell_cfg.dl_carrier.carrier_bw_mhz);
@@ -226,7 +226,7 @@ void sib1_scheduler::fill_sib1_grant(cell_slot_resource_allocator& res_grid,
   static const unsigned sib1_si_indicator = 0;
 
   // Add DCI to list to dl_pdcch.
-  srsran_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
+  srsgnb_assert(res_grid.result.dl.dl_pdcchs.size() > 0, "No DL PDCCH grant found in the DL sched results.");
   auto&        sib1_pdcch = res_grid.result.dl.dl_pdcchs.back();
   prb_interval sib1_prbs  = crb_to_prb(coreset0_bwp_cfg, sib1_crbs_grant);
 

@@ -21,11 +21,11 @@ namespace srsgnb {
 class slot_sync_point
 {
 public:
-  slot_sync_point()                       = default;
-  slot_sync_point(const slot_sync_point&) = delete;
-  slot_sync_point(slot_sync_point&&)      = delete;
+  slot_sync_point()                                  = default;
+  slot_sync_point(const slot_sync_point&)            = delete;
+  slot_sync_point(slot_sync_point&&)                 = delete;
   slot_sync_point& operator=(const slot_sync_point&) = delete;
-  slot_sync_point& operator=(slot_sync_point&&) = delete;
+  slot_sync_point& operator=(slot_sync_point&&)      = delete;
 
   /// \brief Called when thread enters synchronization point. Steps:
   /// 1. If the current thread is the first to call wait(), the count is set to the number of workers.
@@ -39,7 +39,7 @@ public:
   void wait(slot_point sl, size_t nof_workers, const CompletionFunction& func)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    srsran_sanity_check(nof_workers > 0, "Invalid count");
+    srsgnb_sanity_check(nof_workers > 0, "Invalid count");
     if (sl != last_sl) {
       // Initialize barrier.
       count   = nof_workers;

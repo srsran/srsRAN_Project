@@ -73,7 +73,7 @@ dft_processor_fftx_impl::dft_processor_fftx_impl(const configuration& dft_config
 
 span<const cf_t> dft_processor_fftx_impl::run()
 {
-  srsran_always_assert(function, "Invalid function of size {}.", input.size());
+  SRSGNB_ALWAYS_ASSERT__(function, "Invalid function of size {}.", input.size());
   std::fill(output.begin(), output.end(), 0);
   function();
 

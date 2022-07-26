@@ -30,7 +30,7 @@ unsigned int pdsch_processor_impl::compute_nof_data_re(const pdu_t& pdu)
   unsigned nof_reserved_re = reserved_re.get_inclusion_count(pdu.start_symbol_index, pdu.nof_symbols, prb_mask);
 
   // Subtract the number of reserved RE to the number of allocated RE.
-  srsran_assert(nof_grid_re > nof_reserved_re,
+  srsgnb_assert(nof_grid_re > nof_reserved_re,
                 "The number of reserved RE ({}) exceeds the number of RE allocated in the transmission ({})",
                 nof_grid_re,
                 nof_reserved_re);
@@ -125,20 +125,20 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   unsigned nof_codewords = (pdu.ports.size() > 4) ? 2 : 1;
 
   // Validate configuration.
-  srsran_assert(pdu.codewords.size() == nof_codewords,
+  srsgnb_assert(pdu.codewords.size() == nof_codewords,
                 "Expected {} codewords and got {} for {} ports",
                 nof_codewords,
                 pdu.codewords.size(),
                 pdu.ports.size());
-  srsran_assert(pdu.codewords.size() == data.size(),
+  srsgnb_assert(pdu.codewords.size() == data.size(),
                 "The number of codewords ({}) does not match the number of transport blocks ({})",
                 pdu.codewords.size(),
                 data.size());
-  srsran_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
+  srsgnb_assert(pdu.tbs_lbrm_bytes > 0 && pdu.tbs_lbrm_bytes <= ldpc::MAX_CODEBLOCK_SIZE / 8,
                 "Invalid LBRM size ({} bytes). It must be non-zero, lesser than or equal to {} bytes",
                 pdu.tbs_lbrm_bytes,
                 ldpc::MAX_CODEBLOCK_SIZE / 8);
-  srsran_assert(pdu.nof_cdm_groups_without_data >= 1 && pdu.nof_cdm_groups_without_data <= 3,
+  srsgnb_assert(pdu.nof_cdm_groups_without_data >= 1 && pdu.nof_cdm_groups_without_data <= 3,
                 "Invalid number of CDM groups without data ({})",
                 pdu.nof_cdm_groups_without_data);
 

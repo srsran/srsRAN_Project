@@ -18,8 +18,8 @@ static void interleaver_rm_rx_c(span<log_likelihood_ratio>       output,
                                 span<const log_likelihood_ratio> input,
                                 span<const uint16_t>             indices)
 {
-  srsran_assert(input.size() == indices.size(), "Input spans must have the same size.");
-  srsran_assert(input.size() == output.size(), "Input and output spans must have the same size.");
+  srsgnb_assert(input.size() == indices.size(), "Input spans must have the same size.");
+  srsgnb_assert(input.size() == output.size(), "Input and output spans must have the same size.");
 
   for (uint32_t j = 0, len = output.size(); j != len; ++j) {
     output[indices[j]] = input[j];
@@ -62,7 +62,7 @@ bit_selection_rm_rx_c(log_likelihood_ratio* e, const uint32_t E, const uint32_t 
 /// Channel deinterleaver.
 static void ch_interleaver_rm_rx_c(span<log_likelihood_ratio> e, span<const log_likelihood_ratio> f)
 {
-  srsran_assert(e.size() == f.size(), "Input and output span must have the same size.");
+  srsgnb_assert(e.size() == f.size(), "Input and output span must have the same size.");
   unsigned E = e.size();
   // Compute T, i.e., th smallest integer such that T(T+1)/2 >= E. Use the fact that 1+2+,..,+T = T(T+1)/2.
   unsigned S = 1;

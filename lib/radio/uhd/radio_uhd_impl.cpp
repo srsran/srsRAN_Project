@@ -567,10 +567,10 @@ void radio_session_uhd_impl::transmit(unsigned int                              
                                       const baseband_gateway_transmitter::metadata& metadata,
                                       baseband_gateway_buffer&                      data)
 {
-  srsran_always_assert(stream_id < tx_streams.size(),
-                       "Stream identifier (%d) exceeds the number of transmit streams  (%d).",
-                       stream_id,
-                       (int)rx_streams.size());
+  SRSGNB_ALWAYS_ASSERT__(stream_id < tx_streams.size(),
+                         "Stream identifier (%d) exceeds the number of transmit streams  (%d).",
+                         stream_id,
+                         (int)rx_streams.size());
 
   uhd::time_spec_t time_spec = time_spec.from_ticks(metadata.ts, sampling_rate_hz);
   tx_streams[stream_id]->transmit(data, time_spec);
@@ -580,10 +580,10 @@ void radio_session_uhd_impl::transmit(unsigned int                              
 baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
 {
   baseband_gateway_receiver::metadata ret = {};
-  srsran_always_assert(stream_id < rx_streams.size(),
-                       "Stream identifier (%d) exceeds the number of receive streams  (%d).",
-                       stream_id,
-                       (int)rx_streams.size());
+  SRSGNB_ALWAYS_ASSERT__(stream_id < rx_streams.size(),
+                         "Stream identifier (%d) exceeds the number of receive streams  (%d).",
+                         stream_id,
+                         (int)rx_streams.size());
 
   if (!start_rx_stream()) {
     return ret;

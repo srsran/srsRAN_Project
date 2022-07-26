@@ -54,17 +54,17 @@ public:
     gateway(gateway_),
     ssb_config(ssb_config_)
   {
-    srsran_assert(dl_rg_pool, "Invalid RG pool.");
-    srsran_assert(ssb, "Invalid SSB processor.");
-    srsran_assert(gateway, "Invalid RG gateway.");
-    srsran_assert(ssb_config.period_ms, "SSB period cannot be 0 ms.");
-    srsran_assert(ssb_config.period_ms % 5 == 0, "SSB period ({}) must be multiple of 5 ms.", ssb_config.period_ms);
+    srsgnb_assert(dl_rg_pool, "Invalid RG pool.");
+    srsgnb_assert(ssb, "Invalid SSB processor.");
+    srsgnb_assert(gateway, "Invalid RG gateway.");
+    srsgnb_assert(ssb_config.period_ms, "SSB period cannot be 0 ms.");
+    srsgnb_assert(ssb_config.period_ms % 5 == 0, "SSB period ({}) must be multiple of 5 ms.", ssb_config.period_ms);
   }
 
   void handle_tti_boundary(const upper_phy_timing_context& context) override
   {
     std::unique_lock<std::mutex> lock(mutex);
-    srsran_assert(gateway, "Upper PHY is not connected to a gateway.");
+    srsgnb_assert(gateway, "Upper PHY is not connected to a gateway.");
 
     // Set logger context.
     logger.set_context(context.slot.system_slot());

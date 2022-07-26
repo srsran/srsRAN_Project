@@ -64,7 +64,7 @@ tbs_calculator_step2(float scaling, unsigned nof_re, float tcr, unsigned modulat
 
 float srsgnb::tbs_calculator_pdsch_get_scaling_factor(unsigned scaling)
 {
-  srsran_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
+  srsgnb_assert(scaling < 3, "Invalid scaling value ({}, max 2).", scaling);
   return 1.0F / static_cast<float>(pow2(scaling));
 }
 
@@ -101,7 +101,7 @@ unsigned srsgnb::tbs_calculator_table_find_smallest_not_less_than(unsigned nof_i
       3824, 3824, 3824, 3824};
 
   unsigned index = divide_ceil(nof_info_prime, 8);
-  srsran_assert(index < table_valid_tbs.size(),
+  srsgnb_assert(index < table_valid_tbs.size(),
                 "The number of information bits exceeds {} the maximum {}.",
                 nof_info_prime,
                 3824);

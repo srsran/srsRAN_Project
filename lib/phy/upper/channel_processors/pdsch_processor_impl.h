@@ -58,7 +58,7 @@ private:
   /// \param[out] grid          Provides the destination resource grid.
   /// \param[in] temp_codewords Provides the encoded codewords.
   /// \param[in] pdu            Provides the PDSCH processor PDU.
-  void modulate(resource_grid_writer& grid, span<const span<const uint8_t> > temp_codewords, const pdu_t& pdu);
+  void modulate(resource_grid_writer& grid, span<const span<const uint8_t>> temp_codewords, const pdu_t& pdu);
 
   /// \brief Generates and maps DMRS for the PDSCH transmission as per TS 38.211 section 7.4.1.1.
   /// \param[out] grid   Provides the destination resource grid.
@@ -71,9 +71,9 @@ public:
   pdsch_processor_impl(pdsch_processor_configuration& config) :
     encoder(std::move(config.encoder)), modulator(std::move(config.modulator)), dmrs(std::move(config.dmrs))
   {
-    srsran_assert(encoder != nullptr, "Invalid encoder pointer.");
-    srsran_assert(modulator != nullptr, "Invalid modulator pointer.");
-    srsran_assert(dmrs != nullptr, "Invalid dmrs pointer.");
+    srsgnb_assert(encoder != nullptr, "Invalid encoder pointer.");
+    srsgnb_assert(modulator != nullptr, "Invalid modulator pointer.");
+    srsgnb_assert(dmrs != nullptr, "Invalid dmrs pointer.");
   }
 
   // See interface for documentation.

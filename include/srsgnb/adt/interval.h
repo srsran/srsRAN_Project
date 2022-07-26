@@ -32,7 +32,7 @@ public:
   {
     static_assert(std::is_convertible<U, T>::value, "Invalid interval start point type");
     static_assert(std::is_convertible<V, T>::value, "Invalid interval stop point type");
-    srsran_assert(start_ <= stop_, "Invalid interval [{}, {})", start_, stop_);
+    srsgnb_assert(start_ <= stop_, "Invalid interval [{}, {})", start_, stop_);
   }
 
   T start() const { return start_; }
@@ -46,7 +46,7 @@ public:
 
   void set(T start_point, T stop_point)
   {
-    srsran_assert(stop_point >= start_point, "interval::set called for invalid range points");
+    srsgnb_assert(stop_point >= start_point, "interval::set called for invalid range points");
     start_ = start_point;
     stop_  = stop_point;
   }
@@ -57,7 +57,7 @@ public:
   void extend(T length_increment)
   {
     // Detect length overflows
-    srsran_assert(std::is_unsigned<T>::value or (length_increment >= 0 or length() >= -length_increment),
+    srsgnb_assert(std::is_unsigned<T>::value or (length_increment >= 0 or length() >= -length_increment),
                   "Resulting interval would be invalid");
     stop_ += length_increment;
   }
@@ -65,14 +65,14 @@ public:
   /// Set the interval length, maintaining the same starting point.
   void resize(T new_length)
   {
-    srsran_assert(std::is_unsigned<T>::value or new_length >= 0, "Interval width must be positive");
+    srsgnb_assert(std::is_unsigned<T>::value or new_length >= 0, "Interval width must be positive");
     stop_ = start_ + new_length;
   }
 
   /// Move interval by an offset.
   void displace_by(int offset)
   {
-    srsran_assert(
+    srsgnb_assert(
         std::is_signed<T>::value or static_cast<int64_t>(start_) >= -offset,
         "Cannot have negative starting_points in case interval<T> underlying type is unsigned. Start={} < offset={}",
         start_,

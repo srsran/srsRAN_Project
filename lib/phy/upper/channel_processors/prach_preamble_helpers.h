@@ -35,8 +35,8 @@ struct prach_preamble_modulation_info {
 inline prach_preamble_modulation_info prach_preamble_modulation_info_get_long(preamble_format format,
                                                                               unsigned        dft_size_15kHz)
 {
-  srsran_assert(format.is_long_preamble(), "Preamble format is not long.");
-  srsran_assert(dft_size_15kHz, "DFT size for 15kHz must not be zero.");
+  srsgnb_assert(format.is_long_preamble(), "Preamble format is not long.");
+  srsgnb_assert(dft_size_15kHz, "DFT size for 15kHz must not be zero.");
 
   unsigned N_u     = 0;
   unsigned N_cp_ra = 0;

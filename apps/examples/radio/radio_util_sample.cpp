@@ -221,7 +221,7 @@ static void parse_args(int argc, char** argv)
     }
     if (!found) {
       usage(argv[0]);
-      srsran_terminate("Invalid profile {}.", profile_name);
+      srsgnb_terminate("Invalid profile {}.", profile_name);
     }
   }
 }
@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  srsran_always_assert(factory, "Driver %s is not available.", driver_name.c_str());
+  SRSGNB_ALWAYS_ASSERT__(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration.
   radio_configuration::radio config = {};
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
 
   // Create radio.
   radio = factory->create(config, *async_task_executor, notification_handler);
-  srsran_always_assert(radio, "Failed to create radio.");
+  SRSGNB_ALWAYS_ASSERT__(radio, "Failed to create radio.");
 
   // Get transmitter data plane
   baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter();

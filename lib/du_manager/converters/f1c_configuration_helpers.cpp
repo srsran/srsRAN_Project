@@ -28,7 +28,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
       mib.sub_carrier_spacing_common.value = mib_s::sub_carrier_spacing_common_opts::scs30or120;
       break;
     default:
-      srsran_terminate("Invalid SCS common");
+      srsgnb_terminate("Invalid SCS common");
   }
   /// As per TS 38.331, MIB, the field "ssb-SubcarrierOffset" in the MIB only encodes the 4 LSB of k_SSB.
   mib.ssb_subcarrier_offset            = static_cast<uint8_t>(du_cfg.ssb_cfg.k_ssb.to_uint() & 0b00001111U);
@@ -44,7 +44,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
   byte_buffer       buf;
   asn1::bit_ref     bref{buf};
   asn1::SRSASN_CODE ret = mib.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack MIB");
+  srsgnb_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack MIB");
   return buf;
 }
 
@@ -87,7 +87,7 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
   ss.coreset_id                                     = cfg.cs_id;
   ss.monitoring_slot_periodicity_and_offset_present = true;
   search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
-  srsran_always_assert(asn1::number_to_enum(period, cfg.monitoring_slot_period), "Invalid slot period");
+  SRSGNB_ALWAYS_ASSERT__(asn1::number_to_enum(period, cfg.monitoring_slot_period), "Invalid slot period");
   ss.monitoring_slot_periodicity_and_offset.set(period);
   switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
@@ -135,7 +135,7 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
       ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset;
       break;
     default:
-      srsran_terminate("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
+      srsgnb_terminate("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
   }
   if (cfg.duration != 1) {
     ss.dur_present = true;
@@ -275,7 +275,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   rach.rach_cfg_generic.preamb_rx_target_pwr      = -110;
   rach.rach_cfg_generic.preamb_trans_max.value    = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
   rach.rach_cfg_generic.pwr_ramp_step.value       = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
-  srsran_always_assert(
+  SRSGNB_ALWAYS_ASSERT__(
       asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window),
       "Invalid ra-WindowSize");
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
@@ -394,7 +394,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_sib1_buffer(const du_cell_config&
   asn1::bit_ref        bref{buf};
   asn1::rrc_nr::sib1_s sib1 = make_asn1_rrc_cell_sib1(du_cfg);
   asn1::SRSASN_CODE    ret  = sib1.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+  srsgnb_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
   return buf;
 }
 
@@ -405,7 +405,7 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_bcch_dl_sch_msg(const du_cell_con
   asn1::rrc_nr::bcch_dl_sch_msg_s msg;
   msg.msg.set_c1().set_sib_type1() = make_asn1_rrc_cell_sib1(du_cfg);
   asn1::SRSASN_CODE ret            = msg.pack(bref);
-  srsran_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
+  srsgnb_assert(ret == asn1::SRSASN_SUCCESS, "Failed to pack SIB1");
   return buf;
 }
 

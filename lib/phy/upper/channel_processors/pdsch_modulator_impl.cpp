@@ -96,7 +96,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
+  srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
@@ -153,7 +153,7 @@ void pdsch_modulator_impl::map_to_contiguous_prb(resource_grid_writer&          
     }
 
     // Verify all the resource elements for the layer have been mapped.
-    srsran_assert(x_buffer.empty(), "{} elements are not mapped in layer {}.", x_buffer.size(), layer_idx);
+    srsgnb_assert(x_buffer.empty(), "{} elements are not mapped in layer {}.", x_buffer.size(), layer_idx);
   }
 }
 
@@ -173,7 +173,7 @@ void pdsch_modulator_impl::map_to_prb_other(resource_grid_writer&               
 
   // Calculate the end symbol index (excluded) and assert it does not exceed the slot boundary.
   unsigned end_symbol_index = config.start_symbol_index + config.nof_symbols;
-  srsran_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
+  srsgnb_assert(end_symbol_index <= MAX_NSYMB_PER_SLOT,
                 "The time allocation of the transmission (%d:%d) exceeds the slot boundary.",
                 start_symbol_index,
                 end_symbol_index);
@@ -237,11 +237,11 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
 {
   // Deduce the number of layers from the number of ports
   unsigned nof_layers = config.ports.size();
-  srsran_assert(nof_layers > 0, "Number of layers is zero.");
+  srsgnb_assert(nof_layers > 0, "Number of layers is zero.");
 
   // Deduce the number of codewords and assert it is coherent with the number of layers.
   unsigned nof_codewords = (nof_layers >= 4 ? 2 : 1);
-  srsran_assert(
+  srsgnb_assert(
       codewords.size() == nof_codewords, "For %d layers, %d codewords are required", nof_layers, codewords.size());
 
   // Setup temporal buffers

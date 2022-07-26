@@ -57,7 +57,7 @@ class byte_buffer_slice_chain
 
     iterator_type& operator++()
     {
-      srsran_assert(frag_it != parent->fragments.end(), "Out-of-bound access");
+      srsgnb_assert(frag_it != parent->fragments.end(), "Out-of-bound access");
       ++it;
       if (it == frag_it->end()) {
         ++frag_it;
@@ -84,7 +84,7 @@ class byte_buffer_slice_chain
         if (remaining <= n) {
           n -= remaining;
           ++frag_it;
-          srsran_assert(frag_it != parent->fragments.end(), "Operator+= out-of-bounds access");
+          srsgnb_assert(frag_it != parent->fragments.end(), "Operator+= out-of-bounds access");
           it = frag_it->begin();
         } else {
           it += n;
@@ -165,7 +165,7 @@ public:
       }
       rem_pos -= v.length();
     }
-    srsran_terminate("Out-of-bounds access ({} >= {})", i, length());
+    srsgnb_terminate("Out-of-bounds access ({} >= {})", i, length());
   }
 
   const fragment_container_t& slices() const { return fragments; }

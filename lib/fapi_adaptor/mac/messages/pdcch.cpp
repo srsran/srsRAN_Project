@@ -23,7 +23,7 @@ void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu& fapi_pd
 void srsgnb::fapi_adaptor::convert_pdcch_mac_to_fapi(fapi::dl_pdcch_pdu_builder& builder, const mac_pdcch_pdu& mac_pdu)
 {
   const static_vector<dci_info, MAX_DL_PDUS_PER_SLOT>& dcis = mac_pdu.dcis;
-  srsran_assert(!dcis.empty(), "No DL_DCI to add to the PDCCH PDU");
+  srsgnb_assert(!dcis.empty(), "No DL_DCI to add to the PDCCH PDU");
 
   const bwp_configuration&     bwp_cfg     = *mac_pdu.bwp_cfg;
   const coreset_configuration& coreset_cfg = *mac_pdu.coreset_cfg;

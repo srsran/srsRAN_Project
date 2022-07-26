@@ -15,15 +15,15 @@ downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_po
   processors(dl_processors.num_sectors)
 {
   for (auto& proc : dl_processors.procs) {
-    srsran_assert(!proc.procs.empty(), "Cannot store an empty processor pool.");
+    srsgnb_assert(!proc.procs.empty(), "Cannot store an empty processor pool.");
     processors[proc.sector].insert(proc.numerology, std::move(proc.procs));
   }
 }
 
 downlink_processor& downlink_processor_pool_impl::get_processor(const slot_point& slot, unsigned int sector_id)
 {
-  srsran_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting a downlink processor.", sector_id);
-  srsran_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor.", slot);
+  srsgnb_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting a downlink processor.", sector_id);
+  srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor.", slot);
 
   sector&         sector_proc = processors[sector_id];
   processor_pool& proc_pool   = sector_proc[slot.numerology()];

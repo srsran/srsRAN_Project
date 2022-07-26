@@ -24,8 +24,8 @@ public:
   lower_phy_factory_generic(lower_phy_factory_generic_configuration config) :
     modulator_factory(*config.modulator_factory), demodulator_factory(*config.demodulator_factory)
   {
-    srsran_assert(config.modulator_factory, "Invalid modulator factory.");
-    srsran_assert(config.demodulator_factory, "Invalid demodulator factory.");
+    srsgnb_assert(config.modulator_factory, "Invalid modulator factory.");
+    srsgnb_assert(config.demodulator_factory, "Invalid demodulator factory.");
   }
 
   std::unique_ptr<srsgnb::lower_phy_controller> create(lower_phy_configuration& config) override
@@ -49,7 +49,7 @@ public:
       common_config.modulators.emplace_back(modulator_factory.create_ofdm_symbol_modulator(configuration));
 
       // Make sure the modulator creation is successful.
-      srsran_assert(common_config.modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
+      srsgnb_assert(common_config.modulators.back() != nullptr, "Error: failed to create OFDM modulator.");
     }
 
     // For each sector, create a demodulator.
@@ -67,7 +67,7 @@ public:
       common_config.demodulators.emplace_back(demodulator_factory.create_ofdm_symbol_demodulator(configuration));
 
       // Make sure the demodulator creation is successful.
-      srsran_assert(common_config.demodulators.back() != nullptr, "Error: failed to create OFDM demodulator.");
+      srsgnb_assert(common_config.demodulators.back() != nullptr, "Error: failed to create OFDM demodulator.");
     }
 
     return std::make_unique<lower_phy_impl>(common_config, config);

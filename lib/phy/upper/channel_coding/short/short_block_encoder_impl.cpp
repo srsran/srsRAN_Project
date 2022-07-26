@@ -37,10 +37,10 @@ static void validate_spans(span<uint8_t> output, span<const uint8_t> input, unsi
 {
   unsigned in_size  = input.size();
   unsigned out_size = output.size();
-  srsran_assert((in_size > 0) && (in_size <= MAX_IN_BITS), "The input length should be between 1 and 11 bits.");
+  srsgnb_assert((in_size > 0) && (in_size <= MAX_IN_BITS), "The input length should be between 1 and 11 bits.");
   if (in_size > 2) {
     // Output length should be no less than MAX_OUT_BITS.
-    srsran_assert(out_size >= MAX_BLOCK_BITS, "Invalid output length.");
+    srsgnb_assert(out_size >= MAX_BLOCK_BITS, "Invalid output length.");
   } else {
     unsigned min_out_length = 0;
     if (in_size == 1) {
@@ -50,7 +50,7 @@ static void validate_spans(span<uint8_t> output, span<const uint8_t> input, unsi
       // Output length must be equal to three times the number of bits per symbol of the block modulation.
       min_out_length = 3 * bits_per_symbol;
     }
-    srsran_assert(out_size >= min_out_length, "Invalid output length.");
+    srsgnb_assert(out_size >= min_out_length, "Invalid output length.");
   }
 }
 
@@ -106,7 +106,7 @@ static void rate_match(span<uint8_t> output, span<const uint8_t> input)
 {
   unsigned output_size = output.size();
   unsigned input_size  = input.size();
-  srsran_assert(output_size >= input_size, "Output size cannot be smaller than input size.");
+  srsgnb_assert(output_size >= input_size, "Output size cannot be smaller than input size.");
 
   for (unsigned idx = 0; idx != output_size; ++idx) {
     output[idx] = input[idx % input_size];

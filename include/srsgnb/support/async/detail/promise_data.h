@@ -20,11 +20,11 @@ namespace detail {
 /// Class that holds promise result value
 template <typename R, typename Base>
 struct promise_data : public Base {
-  promise_data()                          = default;
-  promise_data(const promise_data& other) = delete;
-  promise_data(promise_data&& other)      = delete;
+  promise_data()                                     = default;
+  promise_data(const promise_data& other)            = delete;
+  promise_data(promise_data&& other)                 = delete;
   promise_data& operator=(const promise_data& other) = delete;
-  promise_data& operator=(promise_data&& other) = delete;
+  promise_data& operator=(promise_data&& other)      = delete;
   ~promise_data()
   {
     if (Base::has_value) {
@@ -36,7 +36,7 @@ struct promise_data : public Base {
   template <typename U>
   void return_value(U&& u)
   {
-    srsran_sanity_check(not Base::has_value, "Return called more than once.");
+    srsgnb_sanity_check(not Base::has_value, "Return called more than once.");
     new (&mem) R(std::forward<U>(u));
     Base::has_value = true;
   }
@@ -44,12 +44,12 @@ struct promise_data : public Base {
   /// Get Return value
   const R& get() const&
   {
-    srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
+    srsgnb_assert(Base::has_value, "Trying to extract result from unset Promise");
     return *reinterpret_cast<const R*>(&mem);
   }
   R get() &&
   {
-    srsran_assert(Base::has_value, "Trying to extract result from unset Promise");
+    srsgnb_assert(Base::has_value, "Trying to extract result from unset Promise");
     return std::move(*reinterpret_cast<R*>(&mem));
   }
 

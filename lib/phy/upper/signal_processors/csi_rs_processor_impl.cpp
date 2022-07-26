@@ -63,12 +63,12 @@ static void mapping_row_1(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 1;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 1: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 1: 1 k_ref is needed");
-  srsran_assert(k_ref[0] <= 3, "CSI-RS Mapping Row 1: k_0 must be in the range 0..3 for row 1 mapping");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 1: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::THREE, "CSI-RS Mapping Row 1: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::NO_CDM, "CSI-RS Mapping Row 1: invalid CDM type");
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 1: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 1: 1 k_ref is needed");
+  srsgnb_assert(k_ref[0] <= 3, "CSI-RS Mapping Row 1: k_0 must be in the range 0..3 for row 1 mapping");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 1: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::THREE, "CSI-RS Mapping Row 1: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::NO_CDM, "CSI-RS Mapping Row 1: invalid CDM type");
 
   // Define parameters for the first port.
   k_bar[0] = k_ref[0];
@@ -87,15 +87,15 @@ static void mapping_row_2(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 1;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 2: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 2: 1 k_ref is needed");
-  srsran_assert(k_ref[0] < NRE, "CSI-RS Mapping Row 2: k_0 outside the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 2: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE ||
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 2: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 2: 1 k_ref is needed");
+  srsgnb_assert(k_ref[0] < NRE, "CSI-RS Mapping Row 2: k_0 outside the valid range");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 2: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE ||
                     config.freq_density == csi_rs_freq_density::DOT5_EVEN_RB ||
                     config.freq_density == csi_rs_freq_density::DOT5_ODD_RB,
                 "CSI-RS Mapping Row 2: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::NO_CDM, "CSI-RS Mapping Row 2: invalid CDM type");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::NO_CDM, "CSI-RS Mapping Row 2: invalid CDM type");
 
   // Define parameters for the first port.
   k_bar[0] = k_ref[0];
@@ -114,15 +114,15 @@ static void mapping_row_3(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 2;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 3: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 3: one k_ref is needed");
-  srsran_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 3: k_0 outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 3: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE ||
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 3: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 3: one k_ref is needed");
+  srsgnb_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 3: k_0 outside of the valid range");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 3: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE ||
                     config.freq_density == csi_rs_freq_density::DOT5_EVEN_RB ||
                     config.freq_density == csi_rs_freq_density::DOT5_ODD_RB,
                 "CSI-RS Mapping Row 3: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 3: invalid CDM type");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 3: invalid CDM type");
 
   // Define parameters for the first port.
   k_bar[0] = k_ref[0];
@@ -145,12 +145,12 @@ static void mapping_row_4(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 4;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 4: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 4: 1 k_ref is needed");
-  srsran_assert(k_ref[0] < NRE - 3, "CSI-RS Mapping Row 4: k_0 outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 4: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 4: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 4: invalid CDM type ");
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 4: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 4: 1 k_ref is needed");
+  srsgnb_assert(k_ref[0] < NRE - 3, "CSI-RS Mapping Row 4: k_0 outside of the valid range");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 4: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 4: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 4: invalid CDM type ");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -174,12 +174,12 @@ static void mapping_row_5(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 4;
   constexpr unsigned NOF_K_REF = 1;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 5: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 5: 1 k_ref is needed");
-  srsran_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 5: k_0 outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 5: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 5: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 5: invalid CDM type ");
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 5: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 5: 1 k_ref is needed");
+  srsgnb_assert(k_ref[0] < NRE - 1, "CSI-RS Mapping Row 5: k_0 outside of the valid range");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 5: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 5: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 5: invalid CDM type ");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -203,13 +203,13 @@ static void mapping_row_6(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 6: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 6: 4 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 6: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 6: 4 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 6: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 6: l_0 outside the valid range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 6: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 6: invalid CDM type");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 6: l_0 outside the valid range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 6: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 6: invalid CDM type");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -233,13 +233,13 @@ static void mapping_row_7(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 2;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 7: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 7: 2 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 7: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 7: 2 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 7: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 7: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 7: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 7: invalid CDM type");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 7: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 7: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 7: invalid CDM type");
 
   // CDM group size and number of CDM groups.
   constexpr unsigned CDM_SIZE       = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -267,13 +267,13 @@ static void mapping_row_8(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 8;
   constexpr unsigned NOF_K_REF = 2;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 8: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 8: 2 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 8: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 8: 2 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 8: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 8: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 8: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 8: invalid CDM type");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 8: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 8: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 8: invalid CDM type");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::CDM4_FD2_TD2);
@@ -297,13 +297,13 @@ static void mapping_row_9(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 12;
   constexpr unsigned NOF_K_REF = 6;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 9: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 9: 6 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 9: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 9: 6 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 9: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 9: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 9: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 9: invalid CDM type");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp), "CSI-RS Mapping Row 9: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 9: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 9: invalid CDM type");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -327,13 +327,13 @@ static void mapping_row_10(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 12;
   constexpr unsigned NOF_K_REF = 3;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 10: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 10: 3 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 10: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 10: 3 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 10: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 10: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 10: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 10: invalid CDM type");
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 10: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE, "CSI-RS Mapping Row 10: invalid density");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 10: invalid CDM type");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::CDM4_FD2_TD2);
@@ -357,16 +357,16 @@ static void mapping_row_11(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 16;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 11: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 11: 4 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 11: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 11: 4 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 11: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 11: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE ||
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 11: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE ||
                     config.freq_density == csi_rs_freq_density::DOT5_EVEN_RB ||
                     config.freq_density == csi_rs_freq_density::DOT5_ODD_RB,
                 "CSI-RS Mapping Row 11: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 11: invalid CDM type");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::FD_CDM2, "CSI-RS Mapping Row 11: invalid CDM type");
 
   // CDM group size and number of CDM groups.
   constexpr unsigned CDM_SIZE       = get_cdm_group_size(csi_rs_cdm_type::FD_CDM2);
@@ -394,16 +394,16 @@ static void mapping_row_12(span<unsigned>                    k_bar,
   constexpr unsigned NOF_PORTS = 16;
   constexpr unsigned NOF_K_REF = 4;
 
-  srsran_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 12: invalid number of ports");
-  srsran_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 12: 4 k_ref are needed");
-  srsran_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
+  srsgnb_assert(config.ports.size() == NOF_PORTS, "CSI-RS Mapping Row 12: invalid number of ports");
+  srsgnb_assert(NOF_K_REF == k_ref.size(), "CSI-RS Mapping Row 12: 4 k_ref are needed");
+  srsgnb_assert(*std::max_element(k_ref.begin(), k_ref.end()) < NRE - 1,
                 "CSI-RS Mapping Row 12: k references outside of the valid range");
-  srsran_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 12: l_0 outside the allowed range.");
-  srsran_assert(config.freq_density == csi_rs_freq_density::ONE ||
+  srsgnb_assert(l_0 < get_nsymb_per_slot(config.cp) - 1, "CSI-RS Mapping Row 12: l_0 outside the allowed range.");
+  srsgnb_assert(config.freq_density == csi_rs_freq_density::ONE ||
                     config.freq_density == csi_rs_freq_density::DOT5_EVEN_RB ||
                     config.freq_density == csi_rs_freq_density::DOT5_ODD_RB,
                 "CSI-RS Mapping Row 12: invalid density");
-  srsran_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 12: invalid CDM type");
+  srsgnb_assert(config.cdm == csi_rs_cdm_type::CDM4_FD2_TD2, "CSI-RS Mapping Row 12: invalid CDM type");
 
   // CDM group size.
   constexpr unsigned CDM_SIZE = get_cdm_group_size(csi_rs_cdm_type::CDM4_FD2_TD2);
@@ -487,8 +487,8 @@ void srsgnb::csi_rs_processor_impl::build_grid_allocation(span<re_pattern> patte
   static_vector<unsigned, MAX_PORTS> l_bar(config.ports.size());
 
   // Assert that the mapping table row is valid and currently supported.
-  srsran_assert(row <= 18 && row > 0, "Invalid mapping table row.");
-  srsran_assert(row <= 12, "Unsupported mapping table row");
+  srsgnb_assert(row <= 18 && row > 0, "Invalid mapping table row.");
+  srsgnb_assert(row <= 12, "Unsupported mapping table row");
 
   // Frequency and symbol allocation references from the config.
   span<const unsigned> k_ref(config.freq_allocation_ref_idx.begin(), config.freq_allocation_ref_idx.end());
@@ -537,7 +537,7 @@ void srsgnb::csi_rs_processor_impl::build_grid_allocation(span<re_pattern> patte
   }
 
   // Assert that the provided pattern list has the correct size.
-  srsran_assert(pattern_list.size() == nof_ports,
+  srsgnb_assert(pattern_list.size() == nof_ports,
                 "CSI-RS: The pattern_list size and the configured number of ports do not match.");
 
   // Generate the RE patterns for each port.
@@ -668,7 +668,7 @@ void srsgnb::csi_rs_processor_impl::map(resource_grid_writer& grid, const config
 
   // Precoding not currently supported.
   if (config.pmi != 0) {
-    srsran_assertion_failure("Precoding is not currently supported\n");
+    srsgnb_assertion_failure("Precoding is not currently supported\n");
   }
 
   for (unsigned p = 0; p != nof_ports; ++p) {
@@ -735,14 +735,14 @@ void csi_rs_processor_impl::apply_cdm(span<cf_t>            seq_out,
   // Apply CDM4-FD2-TD2 or CDM8-FD2-TD4.
   else if (cdm == csi_rs_cdm_type::CDM4_FD2_TD2 || cdm == csi_rs_cdm_type::CDM8_FD2_TD4) {
     if (cdm == csi_rs_cdm_type::CDM4_FD2_TD2) {
-      srsran_assert(
+      srsgnb_assert(
           l_idx <= L_PRIME_MAX_TD2, "l_idx value: {} outside of range: 0..{} for CDM4-FD2-TD2", l_idx, L_PRIME_MAX_TD2);
 
       // Get the CDM table.
       table = span<const cdm_sequence>(cdm4_fd2_td2_table);
 
     } else {
-      srsran_assert(
+      srsgnb_assert(
           l_idx <= L_PRIME_MAX_TD4, "l_idx value: %d outside of range: 0..%d for CDM8-FD2-TD4", l_idx, L_PRIME_MAX_TD4);
 
       // Get the CDM table.

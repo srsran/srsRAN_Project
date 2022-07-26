@@ -13,7 +13,8 @@ using namespace srsgnb;
 
 ue_cell_grid_allocator::ue_cell_grid_allocator(ue_list& ues_, srslog::basic_logger& logger_) :
   ues(ues_), logger(logger_)
-{}
+{
+}
 
 void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
                                       pdcch_scheduler&         pdcch_sched,
@@ -24,8 +25,8 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
 
 bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
 {
-  srsran_sanity_check(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
-  srsran_sanity_check(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
+  srsgnb_sanity_check(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
+  srsgnb_sanity_check(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   ue& u = ues[grant.user->ue_index];
 
   // Verify UE carrier is active.

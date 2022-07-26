@@ -19,11 +19,12 @@ class srsgnb::event_logger
 public:
   event_logger(du_cell_index_t cell_index_, srslog::basic_logger& logger_) :
     cell_index(cell_index_), enabled(logger_.info.enabled()), logger(logger_)
-  {}
-  event_logger(const event_logger&) = delete;
-  event_logger(event_logger&&)      = delete;
+  {
+  }
+  event_logger(const event_logger&)            = delete;
+  event_logger(event_logger&&)                 = delete;
   event_logger& operator=(const event_logger&) = delete;
-  event_logger& operator=(event_logger&&) = delete;
+  event_logger& operator=(event_logger&&)      = delete;
   ~event_logger()
   {
     if (enabled and fmtbuf.size() > 0) {
@@ -57,7 +58,8 @@ private:
 
 ue_event_manager::ue_event_manager(ue_list& ue_db_, sched_configuration_notifier& mac_notifier_) :
   ue_db(ue_db_), mac_notifier(mac_notifier_), logger(srslog::fetch_basic_logger("MAC"))
-{}
+{
+}
 
 void ue_event_manager::handle_add_ue_request(const sched_ue_creation_request_message& ue_request)
 {
@@ -113,7 +115,7 @@ void ue_event_manager::handle_ue_delete_request(du_ue_index_t ue_index)
 
 void ue_event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
 {
-  srsran_sanity_check(cell_exists(sr_ind.cell_index), "Invalid cell index");
+  srsgnb_sanity_check(cell_exists(sr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(sr_ind.ue_index, [this, sr_ind](event_logger& ev_logger) {
     ev_logger.enqueue("sr_ind(ueId={})", sr_ind.ue_index);
@@ -123,7 +125,7 @@ void ue_event_manager::handle_sr_indication(const sr_indication_message& sr_ind)
 
 void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message& bsr_ind)
 {
-  srsran_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
+  srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind](event_logger& ev_logger) {
     ev_logger.enqueue("handle_ul_bsr_indication(ueId={})", bsr_ind.ue_index);
@@ -192,7 +194,7 @@ void ue_event_manager::process_cell_specific(du_cell_index_t cell_index)
 
 void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 {
-  srsran_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
+  srsgnb_sanity_check(cell_exists(cell_index), "Invalid cell index {}", cell_index);
 
   // Process common events.
   process_common(sl, cell_index);
@@ -203,7 +205,7 @@ void ue_event_manager::run(slot_point sl, du_cell_index_t cell_index)
 
 void ue_event_manager::add_cell_config(const cell_configuration& cell_cfg_)
 {
-  srsran_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
+  srsgnb_assert(not cell_exists(cell_cfg_.cell_index), "Overwriting cell configurations not supported");
 
   cells[cell_cfg_.cell_index] = &cell_cfg_;
 }

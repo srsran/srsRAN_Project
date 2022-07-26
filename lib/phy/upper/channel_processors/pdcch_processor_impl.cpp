@@ -56,7 +56,7 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdc
   const coreset_description& coreset = pdu.coreset;
 
   // Verify CORESET.
-  srsran_assert(coreset.duration > 0 && coreset.duration <= MAX_CORESET_DURATION,
+  srsgnb_assert(coreset.duration > 0 && coreset.duration <= MAX_CORESET_DURATION,
                 "Invalid CORESET duration (%d)",
                 coreset.duration);
 
@@ -70,8 +70,8 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdc
 
     // Populate PDCCH encoder configuration.
     pdcch_encoder::config_t encoder_config = {};
-    encoder_config.E    = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
-    encoder_config.rnti = dci.rnti;
+    encoder_config.E                       = dci.aggregation_level * NOF_REG_PER_CCE * NOF_RE_PDCCH_PER_RB * 2;
+    encoder_config.rnti                    = dci.rnti;
 
     // Encode.
     static_vector<uint8_t, MAX_NOF_BITS> encoded(nof_encoded_bits(dci.aggregation_level));

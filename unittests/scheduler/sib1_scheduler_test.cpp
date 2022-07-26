@@ -42,7 +42,7 @@ public:
                                           aggregation_level             aggr_lvl,
                                           dci_dl_format                 dci_fmt) override
   {
-    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 
@@ -54,7 +54,7 @@ public:
                                           aggregation_level             aggr_lvl,
                                           dci_ul_format                 dci_fmt) override
   {
-    srsran_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
+    srsgnb_terminate("UE-dedicated PDCCHs should not be called while allocating RARs");
     return nullptr;
   }
 };

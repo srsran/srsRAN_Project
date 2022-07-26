@@ -157,11 +157,11 @@ std::unique_ptr<downlink_processor>
 downlink_processor_single_executor_factory::create(const downlink_processor_config& config)
 {
   std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
-  srsran_assert(pdcch, "Invalid PDCCH processor");
+  srsgnb_assert(pdcch, "Invalid PDCCH processor");
   std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
-  srsran_assert(pdsch, "Invalid PDSCH processor");
+  srsgnb_assert(pdsch, "Invalid PDSCH processor");
   std::unique_ptr<ssb_processor> ssb = ssb_proc_factory->create();
-  srsran_assert(ssb, "Invalid SSB processor");
+  srsgnb_assert(ssb, "Invalid SSB processor");
 
   return std::make_unique<downlink_processor_single_executor_impl>(gateway,
                                                                    std::move(pdcch),

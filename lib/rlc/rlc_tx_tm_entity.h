@@ -74,7 +74,7 @@ public:
     }
 
     size_t sdu_size = sdu.buf.length();
-    srsran_sanity_check(
+    srsgnb_sanity_check(
         sdu_size == front_size, "Tx PDU size different than front size ({} != {})", sdu_size, front_size);
 
     // In TM there is no header, just pass the plain SDU

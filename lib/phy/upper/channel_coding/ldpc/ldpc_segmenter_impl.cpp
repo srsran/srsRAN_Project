@@ -25,12 +25,12 @@ static constexpr unsigned BITS_PER_BYTE = 8;
 
 std::unique_ptr<ldpc_segmenter_tx> ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(ldpc_segmenter_impl::sch_crc& c)
 {
-  srsran_assert(c.crc16, "Invalid CRC16 calculator.");
-  srsran_assert(c.crc24A, "Invalid CRC24A calculator.");
-  srsran_assert(c.crc24B, "Invalid CRC24B calculator.");
-  srsran_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
-  srsran_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
-  srsran_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
+  srsgnb_assert(c.crc16, "Invalid CRC16 calculator.");
+  srsgnb_assert(c.crc24A, "Invalid CRC24A calculator.");
+  srsgnb_assert(c.crc24B, "Invalid CRC24B calculator.");
+  srsgnb_assert(c.crc16->get_generator_poly() == crc_generator_poly::CRC16, "Not a CRC generator of type CRC16.");
+  srsgnb_assert(c.crc24A->get_generator_poly() == crc_generator_poly::CRC24A, "Not a CRC generator of type CRC24A.");
+  srsgnb_assert(c.crc24B->get_generator_poly() == crc_generator_poly::CRC24B, "Not a CRC generator of type CRC24B.");
 
   return std::unique_ptr<ldpc_segmenter_impl>(new ldpc_segmenter_impl(std::move(c)));
 }
@@ -115,17 +115,17 @@ static void check_inputs_tx(const static_vector<described_segment, MAX_NOF_SEGME
                             span<const uint8_t>                                       transport_block,
                             const segmenter_config&                                   cfg)
 {
-  srsran_assert(segments.empty(), "Argument segments should be empty.");
-  srsran_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
-  srsran_assert(transport_block.size() * 8 + 24 <= MAX_TBS,
+  srsgnb_assert(segments.empty(), "Argument segments should be empty.");
+  srsgnb_assert(!transport_block.empty(), "Argument transport_block should not be empty.");
+  srsgnb_assert(transport_block.size() * 8 + 24 <= MAX_TBS,
                 "Transport block too long. The admissible size, including CRC, is %d bytes.",
                 MAX_TBS / BITS_PER_BYTE);
 
-  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
+  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
-  srsran_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
+  srsgnb_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
 
-  srsran_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
+  srsgnb_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
@@ -210,14 +210,14 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
 
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
 {
-  srsran_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
-  srsran_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod), "Wrong number of LLRs.");
+  srsgnb_assert(!codeword_llrs.empty(), "Argument transport_block should not be empty.");
+  srsgnb_assert(codeword_llrs.size() == cfg.nof_ch_symbols * get_bits_per_symbol(cfg.mod), "Wrong number of LLRs.");
 
-  srsran_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
+  srsgnb_assert((cfg.rv >= 0) && (cfg.rv <= 3), "Invalid redundancy version.");
 
-  srsran_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
+  srsgnb_assert((cfg.nof_layers >= 1) && (cfg.nof_layers <= 4), "Invalid number of layers.");
 
-  srsran_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
+  srsgnb_assert(cfg.nof_ch_symbols % (cfg.nof_layers) == 0,
                 "The number of channel symbols should be a multiple of the product between the number of layers.");
 }
 
