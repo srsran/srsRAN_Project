@@ -47,8 +47,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
   du_management_notifier(f1c_du_management_notifier_)
 {
   f1ap_ue_context empty_context = {};
-  empty_context.du_ue_f1ap_id   = INVALID_F1AP_UE_ID;
-  empty_context.ue_index        = INVALID_UE_INDEX;
   std::fill(cu_ue_id_to_f1ap_ue_context.begin(), cu_ue_id_to_f1ap_ue_context.end(), empty_context);
 }
 

@@ -33,8 +33,8 @@ constexpr inline f1ap_ue_id_t int_to_f1ap_ue_id(std::underlying_type_t<f1ap_ue_i
 }
 
 struct f1ap_ue_context {
-  f1ap_ue_id_t du_ue_f1ap_id;
-  ue_index_t   ue_index;
+  f1ap_ue_id_t du_ue_f1ap_id = INVALID_F1AP_UE_ID;
+  ue_index_t   ue_index      = INVALID_UE_INDEX;
 };
 
 struct f1ap_initial_ul_rrc_msg {
