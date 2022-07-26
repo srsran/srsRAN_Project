@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/f1_interface/common/f1c_common.h"
 
 namespace srsgnb {
 namespace srs_cu_cp {
@@ -32,7 +33,7 @@ f1c_msg generate_f1_setup_request_base()
   return f1c_msg;
 }
 
-f1c_msg generate_successful_f1_setup_request()
+f1c_msg generate_valid_f1_setup_request()
 {
   f1c_msg f1c_msg = generate_f1_setup_request_base();
 
@@ -80,6 +81,42 @@ f1c_msg generate_successful_f1_setup_request()
   setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
 
   return f1c_msg;
+}
+
+f1c_msg generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
+{
+  f1c_msg init_ul_rrc_msg = {};
+
+  init_ul_rrc_msg.pdu.set_init_msg();
+  init_ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
+
+  auto& init_ul_rrc                     = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
+  init_ul_rrc->gnb_du_ue_f1_ap_id.value = c_rnti; // same as C-RNTI
+
+  init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
+  init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
+  init_ul_rrc->c_rnti.value = c_rnti;
+
+  init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
+  init_ul_rrc->duto_currc_container_present = true;
+  init_ul_rrc->duto_currc_container.value.from_string(
+      "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
+      "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
+      "c400");
+
+  return init_ul_rrc_msg;
+}
+
+f1c_msg generate_f1_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+{
+  f1c_msg ue_ctxt_rel_complete_msg = {};
+  ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();
+  ue_ctxt_rel_complete_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
+  auto& rel_complete_msg = ue_ctxt_rel_complete_msg.pdu.successful_outcome().value.ue_context_release_complete();
+  rel_complete_msg->gnb_cu_ue_f1_ap_id.value = cu_ue_id;
+  rel_complete_msg->gnb_du_ue_f1_ap_id.value = c_rnti;
+
+  return ue_ctxt_rel_complete_msg;
 }
 
 } // namespace srs_cu_cp

@@ -9,7 +9,7 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
-#include "cu_cp_test_helpers.h"
+#include "../common_test_helpers/f1_cu_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/test_helpers.h"
@@ -60,7 +60,7 @@ TEST_F(cu_cp_test, when_valid_f1setup_sent_then_du_connected)
   cu_cp_obj->on_new_connection();
 
   // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
 
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
@@ -127,7 +127,7 @@ TEST_F(cu_cp_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
   cu_cp_obj->on_new_connection();
 
   // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
 
   auto& setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list.value[0].value().gnb_du_served_cells_item().gnb_du_sys_info_present = false;
@@ -158,31 +158,14 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
   cu_cp_obj->on_amf_connection();
 
   // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_successful_f1_setup_request();
+  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
 
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
   // Handling of Initial UL RRC message transfer
   {
-    f1c_msg init_ul_rrc_msg = {};
-
-    init_ul_rrc_msg.pdu.set_init_msg();
-    init_ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
-
-    auto& init_ul_rrc                     = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
-    init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
-
-    init_ul_rrc->nrcgi.value.nrcell_id.from_string("000000000000101111000110000101001110"); // 12345678 in decimal
-    init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
-    init_ul_rrc->c_rnti.value = 41255;
-
-    init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
-    init_ul_rrc->duto_currc_container_present = true;
-    init_ul_rrc->duto_currc_container.value.from_string(
-        "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
-        "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
-        "c400");
+    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
 
     // Pass PDU to CU-CP
     test_logger.info("Injecting Initial UL RRC message");
