@@ -30,7 +30,7 @@ stages:
   - static
   - build
   - tests
-  - build and publish doc
+  - documentation
 
 ################################################################################
 ## Static
@@ -127,8 +127,8 @@ alternative builds uhd:
 ################################################################################
 # Doc generation
 ################################################################################
-requirements-report:
-  stage: build and publish doc
+unit requirements:
+  stage: documentation
   rules:
     - if: $ON_SCHEDULE
       when: always # Even if previous stages/required jobs fail
@@ -139,26 +139,31 @@ requirements-report:
   artifacts:
     paths:
       - requirement_report.html
+    expire_in: 10 minutes
 
-tests-report:
-  stage: build and publish doc
+unit tests web:
+  stage: documentation
   rules:
     - if: $ON_SCHEDULE
       when: always # Even if previous stages/required jobs fail
   image: python:3.9-alpine # sh entrypoint
+  variables:
+    GIT_STRATEGY: none
   before_script:
     - pip install junit2html
   script:
-    - junit2html xunit.xml ./test_report.html
+    - junit2html *xunit.xml --merge merged_xunit.xml
+    - junit2html merged_xunit.xml ./test_report.html
   needs:
     - job: unit tests
       artifacts: true
   artifacts:
     paths:
       - test_report.html
+    expire_in: 10 minutes
 
 pages:
-  stage: build and publish doc
+  stage: documentation
   rules:
     - if: $ON_SCHEDULE
       when: always # Even if previous stages/required jobs fail
@@ -180,12 +185,13 @@ pages:
     - mv docs/*.png public/
     - sed -i 's/commit_hash/'$CI_COMMIT_SHA'/' public/index.html
   needs:
-    - job: unit tests
+    - job: unit coverage
       artifacts: true
-    - job: requirements-report
+    - job: unit requirements
       artifacts: true
-    - job: tests-report
+    - job: unit tests web
       artifacts: true
   artifacts:
     paths:
       - public
+    expire_in: 10 minutes

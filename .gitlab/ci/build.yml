@@ -27,13 +27,16 @@ variables:
 stages:
   - build
   - tests
+  - documentation
 
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
   tags:
     - srs-rfci-docker
 
+################################################################################
 # Build
+################################################################################
 
 .build:
   stage: build
@@ -112,7 +115,9 @@ cmake flag check:
           ]
   dependencies: []
 
-# Unit tests
+################################################################################
+# Test execution
+################################################################################
 
 .ctest:
   stage: tests
@@ -139,48 +144,110 @@ cmake flag check:
     - ctest -j "$(nproc --all)" --schedule-random --output-on-failure --output-junit xunit.xml && ret=0 || ret=1
     # Launch coverage
     - cd ${CI_PROJECT_DIR}/build
-    - GCOVR_ARGS="-j "$(nproc --all)" --exclude-unreachable-branches --exclude-directories unittests --exclude-directories integrationtests  --exclude-directories apps/examples --root ${CI_PROJECT_DIR}"
     - |
       if [ $enable_coverage = "true" ]; then 
-        gcovr --xml --print-summary $GCOVR_ARGS -o coverage.xml
+        gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
+          --exclude-directories unittests \
+          --exclude-directories integrationtests  \
+          --exclude-directories benchmarks \
+          --exclude-directories apps/examples \
+          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/e1ap.h" \
+          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/f1ap.h" \
+          --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
+          --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap.cpp" \
+          --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
+          --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
+          --root ${CI_PROJECT_DIR} -o coverage.xml
+        
         filesize=$(stat -c%s coverage.xml)
         maxsize=$((10*1204*1024))
         (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
       fi
-    - |
-      if [ $enable_coverage = "true" ]; then 
-        if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
-          gcovr --html --html-details $GCOVR_ARGS -o coverage.html
-        else
-          gcovr --html                $GCOVR_ARGS -o coverage.html
-        fi
-      fi
     - exit $ret
   after_script:
     # Move files to upload to root so no intermiddle folders will be created in the artifact
-    - mkdir coverage_html
-    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml ${CI_PROJECT_DIR}
-    - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}
-    - mv ${CI_PROJECT_DIR}/build/coverage.*               ${CI_PROJECT_DIR}/coverage_html
+    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
+    - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
   artifacts:
     when: always
     reports:
-      junit: xunit.xml
+      junit: ${CI_JOB_ID}_xunit.xml
       coverage_report:
         coverage_format: cobertura
-        path: coverage.xml
+        path: ${CI_JOB_ID}_coverage.xml
     paths:
-      - coverage_html
-      - xunit.xml
-    expire_in: 8 hours
+      - ${CI_JOB_ID}_xunit.xml
+      - ${CI_JOB_ID}_coverage.xml
+    expire_in: 10 minutes
 
 unit tests:
   extends: .ctest
   variables:
     test_folder: unittests
-  coverage: /^\s*lines:\s*\d+.\d+\%/
 
 integration tests:
   extends: .ctest
   variables:
     test_folder: integrationtests
+
+################################################################################
+# Test report
+################################################################################
+
+unit coverage:
+  image:
+    name: jorturfer/report-generator
+    entrypoint: ["/bin/sh", "-c"]
+  stage: documentation
+  rules:
+    - if: $ON_DEFAULT_BRANCH
+      when: never
+    - if: $run_tests == "true" && $enable_coverage == "true"
+      when: always # Even if previous stages/required jobs fail
+  before_script:
+    - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
+    # Download coverage history from the registry
+    - |
+      download_from_registry() {
+        apk add --update curl
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${PACKAGE_URL}" -o output.tar.gz)
+        if [[ $http_code == "200" ]]; then
+          tar -xf output.tar.gz
+        fi
+      }
+    # Publish coverage history folder to the registry
+    - |
+      publish_to_registry() {
+        cd ${CI_PROJECT_DIR}
+        tar -czf coverage_history.tar.gz coverage_history
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file coverage_history.tar.gz "${PACKAGE_URL}"
+      }
+  script:
+    - |
+      if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
+        download_from_registry
+        HTML_TYPE=Html
+        HISTORY=-historydir:coverage_history
+      else
+        HTML_TYPE=HtmlSummary
+        HISTORY=
+      fi
+    - |
+      /app/ReportGenerator -reports:*coverage.xml -targetdir:coverage_html ${HISTORY} \
+        -title:${CI_PROJECT_NAME} -tag:${CI_COMMIT_SHA} \
+        -reporttypes:"${HTML_TYPE};TextSummary"
+    - cat coverage_html/Summary.txt
+    - |
+      if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
+        publish_to_registry
+      fi
+  coverage: /^\s*Line coverage:\s*\d+.\d+\%/
+  needs:
+    - job: unit tests
+      artifacts: true
+  artifacts:
+    paths:
+      - coverage_html
+    expire_in: 10 minutes
