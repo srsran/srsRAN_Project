@@ -75,7 +75,7 @@ static check_outcome is_coreset0_ss0_idx_valid(const du_cell_config& cell_cfg)
   }
   // The remaining cases will trigger an assert in the SSB checks.
 
-  // This constraint is implementation-defined and comes from the fact that our PDCCH schedule only schedules PDCCH
+  // This constraint is implementation-defined and comes from the fact that our PDCCH scheduler only schedules PDCCH
   // starting from the symbol index 0.
   if (cell_cfg.scs_common == subcarrier_spacing::kHz15 and cell_cfg.ssb_cfg.scs == subcarrier_spacing::kHz15) {
     // As per TS38.213, Table 13-11.
@@ -113,15 +113,18 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
                          ? cell_cfg.ssb_cfg.offset_to_point_A.to_uint()
                          : cell_cfg.ssb_cfg.offset_to_point_A.to_uint() / 2;
 
+  // Verify that Coreset0 does not start before pointA.
+  CHECK_TRUE(static_cast<unsigned>(coreset0_param.offset) <= crb_ssb, "CORESET#0 starts before pointA.");
   // Check if Coreset0 is within the Initial DL BWP CRBs.
   crb_interval initial_bwp_crbs{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs};
-  CHECK_TRUE(static_cast<unsigned>(coreset0_param.offset) <= crb_ssb, "Coreset0 falls outside the Initial DL BWP.");
-  CHECK_TRUE(crb_ssb - static_cast<unsigned>(coreset0_param.offset) >= initial_bwp_crbs.start(),
-             "Coreset0 falls outside the Initial DL BWP.");
-  CHECK_TRUE(crb_ssb - static_cast<unsigned>(coreset0_param.offset) +
-                     static_cast<unsigned>(coreset0_param.nof_rb_coreset) <=
-                 initial_bwp_crbs.stop(),
-             "Coreset0 falls outside the Initial DL BWP.");
+  crb_interval coreset0_crbs{crb_ssb - coreset0_param.offset,
+                             crb_ssb - coreset0_param.offset + coreset0_param.nof_rb_coreset};
+  CHECK_TRUE(initial_bwp_crbs.contains(coreset0_crbs),
+             "The CORESET#0 CRBs [{}, {}) falls outside of the initial DL BWP CRBs [{}, {})",
+             coreset0_crbs.start(),
+             coreset0_crbs.stop(),
+             initial_bwp_crbs.start(),
+             initial_bwp_crbs.stop());
 
   return {};
 }
@@ -236,28 +239,29 @@ static check_outcome check_ssb_configuration(const du_cell_config& cell_cfg)
 
   ssb_pattern_case ssb_case   = ssb_get_ssb_pattern(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
   uint8_t          ssb_bitmap = static_cast<uint64_t>(ssb_cfg.ssb_bitmap) << static_cast<uint64_t>(56U);
-  bool    is_paired   = band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn));
-  uint8_t L_max       = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
-  double  dl_freq_mhz = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  bool    is_paired = band_helper::is_paired_spectrum(band_helper::get_band_from_dl_arfcn(cell_cfg.dl_carrier.arfcn));
+  uint8_t L_max     = ssb_get_L_max(ssb_cfg.scs, cell_cfg.dl_carrier.arfcn);
+  double  cutoff_freq_mhz_case_a_b_c      = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
+  double  cutoff_freq_mhz_case_c_unpaired = band_helper::nr_arfcn_to_freq(cell_cfg.dl_carrier.arfcn) / 1e6;
 
   // Check whether the SSB beam bitmap and L_max are compatible with SSB case and DL band.
   if (ssb_case == ssb_pattern_case::C and not is_paired) {
     if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED) {
-      CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
+      CHECK_EQ(L_max, 4, "For SSB case C and frequency <= {}MHz, L_max must be 4", cutoff_freq_mhz_case_c_unpaired);
       CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
                  "For SSB case C and frequency <= {}MHz, only the 4 MSBs of SSB bitmap can be set",
-                 dl_freq_mhz);
+                 cutoff_freq_mhz_case_c_unpaired);
     } else {
-      CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
+      CHECK_EQ(L_max, 8, "For SSB case C and frequency > {}MHz, L_max must be 8", cutoff_freq_mhz_case_c_unpaired);
     }
   } else {
     if (cell_cfg.dl_carrier.arfcn <= CUTOFF_FREQ_ARFCN_CASE_A_B_C) {
-      CHECK_EQ(L_max, 4, "For SSB case A and B and frequency <= {}MHz, L_max must be 4", dl_freq_mhz);
+      CHECK_EQ(L_max, 4, "For SSB case A and B and frequency <= {}MHz, L_max must be 4", cutoff_freq_mhz_case_a_b_c);
       CHECK_TRUE((ssb_bitmap & 0b00001111) == 0,
                  "For SSB case C and frequency <= {}MHz, only the 4 MSBs of SSB bitmap can be set",
-                 dl_freq_mhz);
+                 cutoff_freq_mhz_case_a_b_c);
     } else {
-      CHECK_EQ(L_max, 8, "For SSB case A and B and frequency > {}MHz, L_max must be 8", dl_freq_mhz);
+      CHECK_EQ(L_max, 8, "For SSB case A and B and frequency > {}MHz, L_max must be 8", cutoff_freq_mhz_case_a_b_c);
     }
   }
 

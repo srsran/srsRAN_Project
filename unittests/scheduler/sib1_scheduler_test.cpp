@@ -120,10 +120,18 @@ struct test_bench {
     msg.dl_cfg_common.init_dl_bwp.generic_params.scs = init_bwp_scs;
     msg.ssb_config.scs                               = init_bwp_scs;
     msg.scs_common                                   = init_bwp_scs;
+    // Change Carrier parameters when SCS is 15kHz.
+    if (init_bwp_scs == subcarrier_spacing::kHz15) {
+      msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth = 106;
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs                         = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list.front().carrier_bandwidth};
+    }
     // Change Carrier parameters when SCS is 30kHz.
-    if (init_bwp_scs == subcarrier_spacing::kHz30) {
+    else if (init_bwp_scs == subcarrier_spacing::kHz30) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
-          scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+          scs_specific_carrier{0, subcarrier_spacing::kHz30, 51});
+      msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
+          0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
       // Random ARFCN that must be in FR1 and > 3GHz.
       msg.dl_carrier.arfcn          = 700000;
       msg.dl_carrier.carrier_bw_mhz = 20;
@@ -165,7 +173,7 @@ struct test_bench {
     // Change Carrier parameters when SCS is 30kHz.
     else if (init_bwp_scs == subcarrier_spacing::kHz30) {
       msg.dl_cfg_common.freq_info_dl.scs_carrier_list.emplace_back(
-          scs_specific_carrier{0, subcarrier_spacing::kHz30, 52});
+          scs_specific_carrier{0, subcarrier_spacing::kHz30, 51});
       msg.dl_cfg_common.init_dl_bwp.generic_params.crbs = {
           0, msg.dl_cfg_common.freq_info_dl.scs_carrier_list[1].carrier_bandwidth};
     }
@@ -366,14 +374,14 @@ void test_ssb_sib1_collision(uint32_t           freq_arfcn,
   }
 }
 
-// Test for potential collision between SIB1 PDCCH/PDSCH and SSB.
-void test_sib_1_pdsch_collsion(unsigned freq_arfcn, subcarrier_spacing scs)
+// Test for potential collisions between SIB1 PDCCH/PDSCH and SSB.
+void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
 {
   // NOTE: We only test 1 beam, as we don't have resource grids for multiple beams implemented yet.
   uint8_t ssb_bitmap = 0b10000000;
   // Allocate SIB1 in the same slot as SSB - searchspace0 = 0U.
   uint8_t  searchspace0 = 0U;
-  unsigned nof_rbs_bpw  = scs == subcarrier_spacing::kHz15 ? 106 : 52;
+  unsigned nof_rbs_bpw  = scs == subcarrier_spacing::kHz15 ? 106 : 51;
   uint8_t  coreset0_max = scs == subcarrier_spacing::kHz15 ? 15 : 16;
 
   // Test different combinations of offsetToPointA and k_SSB.
@@ -471,18 +479,20 @@ int main()
   test_sib1_periodicity(sib1_rtx_periodicity::ms160, ssb_periodicity::ms80);
   test_sib1_periodicity(sib1_rtx_periodicity::ms80, ssb_periodicity::ms160);
 
-  // TEST SIB1/SSB collision on the resource grid.
-  // TEST Case A, frequency < 3GHz.
-  uint32_t           freq_arfcn = 500000;
-  subcarrier_spacing scs        = subcarrier_spacing::kHz15;
+  // TEST SIB1/SSB collision on the resource grid. Test both SCS 15kHz and SCS 30kHz.
+  // SCS 15kHz.
+  subcarrier_spacing scs = subcarrier_spacing::kHz15;
+  // This can be any frequency such that the DL band has SSB SCS 15kHz (case A, in this case).
+  uint32_t freq_arfcn = 500000;
 
-  test_sib_1_pdsch_collsion(freq_arfcn, scs);
+  test_sib_1_pdsch_collisions(freq_arfcn, scs);
 
-  // TEST Case B, frequency < 3GHz.
+  // SCS 30kHz.
+  scs = subcarrier_spacing::kHz30;
+  // This can be any frequency such that the DL band has SSB SCS 30kHz (case B, in this case).
   freq_arfcn = 176000;
-  scs        = subcarrier_spacing::kHz30;
 
-  test_sib_1_pdsch_collsion(freq_arfcn, scs);
+  test_sib_1_pdsch_collisions(freq_arfcn, scs);
 
   return 0;
 }
