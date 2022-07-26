@@ -17,6 +17,7 @@
 #include "srsgnb/ran/frame_types.h"
 #include "srsgnb/ran/ofdm_symbol_range.h"
 #include "srsgnb/ran/pdcch/coreset.h"
+#include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/resource_block.h"
 #include <bitset>
 
@@ -161,7 +162,8 @@ struct rach_config_common {
   unsigned prach_root_seq_index;
   /// \brief Subcarrier spacing of PRACH as per TS38.211, clause 5.3.2. If invalid, the UE applies the SCS as derived
   /// from the prach-ConfigurationIndex in RACH-ConfigGeneric.
-  subcarrier_spacing msg1_scs;
+  subcarrier_spacing    msg1_scs;
+  restricted_set_config restricted_set;
 };
 
 struct pusch_time_domain_resource_allocation {

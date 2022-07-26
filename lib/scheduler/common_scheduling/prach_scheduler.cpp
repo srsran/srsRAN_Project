@@ -51,19 +51,24 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
         prach_scs = prach_subcarrier_spacing::kHz120;
         break;
       default:
-        srsran_terminate("Invalid msg1-SCS");
+        srsgnb_terminate("Invalid msg1-SCS");
     }
   }
 
   // Compute CRBs reserved for PRACHs.
   static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
-  uint8_t      prb_start = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
-  prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
-  crb_interval prach_crbs       = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
-  prach_grant_resources.ch      = grant_info::channel::prach;
-  prach_grant_resources.scs     = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  prach_grant_resources.symbols = {
-      prach_cfg.starting_symbol, prach_cfg.starting_symbol + prach_cfg.duration * prach_cfg.nof_occasions_within_slot};
+  uint8_t               prb_start      = rach_cfg_common().rach_cfg_generic.msg1_frequency_start;
+  prb_interval          prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
+  crb_interval          prach_crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
+  prach_grant_resources.ch         = grant_info::channel::prach;
+  prach_grant_resources.scs        = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+  if (prach_cfg.duration == 0) {
+    prach_grant_resources.symbols = {prach_cfg.starting_symbol, prach_cfg.starting_symbol + 1};
+  } else {
+    prach_grant_resources.symbols = {prach_cfg.starting_symbol,
+                                     prach_cfg.starting_symbol +
+                                         prach_cfg.duration * prach_cfg.nof_occasions_within_slot};
+  }
   prach_grant_resources.crbs = prach_crbs;
 }
 
@@ -99,7 +104,7 @@ void prach_scheduler::run_slot(cell_slot_resource_allocator& slot_res_grid)
   prach_occ.start_symbol         = prach_cfg.starting_symbol;
   prach_occ.nof_prach_occasions  = prach_cfg.nof_occasions_within_slot;
   prach_occ.nof_cs               = prach_cyclic_shifts_get(
-      prach_scs, restricted_set_config::TYPE_A, rrc_rach_cfg_generic.zero_correlation_zone_config);
+      prach_scs, rach_cfg_common().restricted_set, rrc_rach_cfg_generic.zero_correlation_zone_config);
   // TODO: How to derive indexFdRa.
   prach_occ.fd_ra_resources      = {0, rrc_rach_cfg_generic.msg1_fdm};
   prach_occ.prach_config_index   = rrc_rach_cfg_generic.prach_config_index;

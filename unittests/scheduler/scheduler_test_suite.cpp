@@ -155,6 +155,7 @@ void srsgnb::test_prach_opportunity_validity(const cell_configuration& cell_cfg,
     ASSERT_EQ(rach_cfg_common.total_nof_ra_preambles, prach.nof_preamble_indexes);
     ASSERT_EQ(prach_cfg.nof_occasions_within_slot, prach.nof_prach_occasions);
     ASSERT_EQ(prach_cfg.starting_symbol, prach.start_symbol);
+    ASSERT_EQ(rach_cfg_common.rach_cfg_generic.prach_config_index, prach.prach_config_index);
   }
 }
 

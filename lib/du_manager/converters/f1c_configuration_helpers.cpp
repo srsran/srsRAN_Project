@@ -266,8 +266,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
       sliv_from_s_and_l(275, cfg.init_ul_bwp.generic_params.crbs.start(), cfg.init_ul_bwp.generic_params.crbs.length());
 
   // RACH-ConfigCommon.
-  const rach_config_common& rach_cfg = *cfg.init_ul_bwp.rach_cfg_common;
-
+  const rach_config_common& rach_cfg              = *cfg.init_ul_bwp.rach_cfg_common;
   out.init_ul_bwp.rach_cfg_common_present         = true;
   rach_cfg_common_s& rach                         = out.init_ul_bwp.rach_cfg_common.set_setup();
   rach.rach_cfg_generic.prach_cfg_idx             = 16;
@@ -289,7 +288,17 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   } else {
     rach.prach_root_seq_idx.set_l139() = rach_cfg.prach_root_seq_index;
   }
-  rach.restricted_set_cfg.value = asn1::rrc_nr::rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
+  rach.msg1_subcarrier_spacing = get_asn1_scs(rach_cfg.msg1_scs);
+  switch (rach_cfg.restricted_set) {
+    case srsgnb::restricted_set_config::UNRESTRICTED:
+      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
+    case srsgnb::restricted_set_config::TYPE_A:
+      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_a;
+    case srsgnb::restricted_set_config::TYPE_B:
+      rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_b;
+    default:
+      report_fatal_error("Invalid restricted set");
+  }
 
   // PUSCH-ConfigCommon.
   const pusch_config_common& pusch_cfg     = cfg.init_ul_bwp.pusch_cfg_common.value();
