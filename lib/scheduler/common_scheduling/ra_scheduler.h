@@ -69,8 +69,6 @@ private:
   const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
 
-  void schedule_prach_occasions(cell_resource_allocator& res_alloc);
-
   bool handle_rach_indication_impl(const rach_indication_message& msg);
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
@@ -96,12 +94,9 @@ private:
   pdcch_scheduler&          pdcch_sch;
 
   // derived from args
-  srslog::basic_logger&                logger = srslog::fetch_basic_logger("MAC");
-  const unsigned                       ra_win_nof_slots;
-  bwp_configuration                    initial_active_dl_bwp;
-  prach_configuration                  prach_cfg;
-  std::bitset<NOF_SUBFRAMES_PER_FRAME> prach_subframe_occasion_bitmap;
-  grant_info                           prach_grant_resources;
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("MAC");
+  const unsigned        ra_win_nof_slots;
+  bwp_configuration     initial_active_dl_bwp;
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;

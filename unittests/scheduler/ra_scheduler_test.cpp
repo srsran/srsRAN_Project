@@ -692,59 +692,6 @@ void test_ra_sched_tdd_single_rach()
   TESTASSERT_EQ(expected_rar_sl, rar_sl);
 }
 
-void test_ra_sched_rach_occassion_scheduling()
-{
-  test_delimit_logger delimiter{"RA SCHEDULER - FDD - PRACH occasion scheduling"};
-
-  ra_sched_param params{.is_tdd = true, .k2_list{1, 3}}; // Msg3 delays 3 and 5.
-  test_bench     bench{params};
-
-  ra_scheduler ra_sch{bench.cfg, bench.pdcch_sch};
-
-  const rach_config_common& rrc_rach_cfg = *bench.cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-  prach_configuration       prach_cfg =
-      prach_configuration_get(frequency_range::FR1, duplex_mode::FDD, rrc_rach_cfg.rach_cfg_generic.prach_config_index);
-
-  auto is_prach_slot = [&prach_cfg](slot_point sl) {
-    if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
-      return false;
-    }
-    if (std::find(prach_cfg.subframe.begin(), prach_cfg.subframe.end(), sl.subframe_index()) ==
-        prach_cfg.subframe.end()) {
-      return false;
-    }
-    return true;
-  };
-
-  static const unsigned nof_test_slots = 100;
-  for (unsigned t = 0; t < nof_test_slots; ++t) {
-    slot_point slot_tx{0, t + gnb_tx_delay};
-
-    bench.slot_indication(slot_tx);
-
-    // Run RA scheduler.
-    ra_sch.run_slot(bench.res_grid);
-
-    // Test scheduler result consistency.
-    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
-
-    // Test scheduler result consistency.
-    test_scheduler_result_consistency(bench.cfg, bench.res_grid[0].result);
-
-    // Test: PRACH occasions only allocated in slots set by cell configuration.
-    const ul_sched_result& ulres = bench.res_grid[0].result.ul;
-    if (not is_prach_slot(slot_tx)) {
-      TESTASSERT(ulres.prachs.empty());
-      continue;
-    }
-
-    // Test: PRACH occasion parameters are correctly set.
-    TESTASSERT(not ulres.prachs.empty());
-    TESTASSERT(ulres.prachs[0].format == prach_cfg.format);
-    TESTASSERT(ulres.prachs[0].start_preamble_index == rrc_rach_cfg.prach_root_seq_index);
-  }
-}
-
 int main()
 {
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::debug);
@@ -772,11 +719,6 @@ int main()
   for (uint8_t k2 : {1, 2, 3, 4}) {
     ra_sched_param parameters{.k2_list{k2}};
     test_ra_sched_fdd_multiple_rar_multiple_msg3(parameters);
-  }
-
-  {
-    // Test PRACH occasion scheduling.
-    test_ra_sched_rach_occassion_scheduling();
   }
 
   return 0;

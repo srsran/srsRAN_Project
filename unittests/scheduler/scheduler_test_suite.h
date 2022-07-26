@@ -30,6 +30,12 @@ void test_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
 /// \param sibs Scheduled SIBs in a given slot.
 void test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs);
 
+/// \brief Current checks:
+/// - PRACH occasions parameters match RACH-ConfigCommon present in cell_cfg.
+/// \param cell_cfg Cell configuration.
+/// \param prachs Scheduled PRACH opportunities in a given slot.
+void test_prach_opportunity_validity(const cell_configuration& cell_cfg, span<const prach_occasion_info> prachs);
+
 /// \brief Detects collisions in the "RB x symbol" DL resource grid.
 void test_dl_resource_grid_collisions(const cell_configuration& cell_cfg, const dl_sched_result& result);
 

@@ -54,29 +54,8 @@ ra_scheduler::ra_scheduler(const cell_configuration& cfg_, pdcch_scheduler& pdcc
   pdcch_sch(pdcch_sch_),
   ra_win_nof_slots(cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.ra_resp_window),
   initial_active_dl_bwp(cfg.dl_cfg_common.init_dl_bwp.generic_params),
-  prach_cfg(
-      prach_configuration_get(frequency_range::FR1,
-                              cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
-                              cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index)),
   pending_msg3s(MAX_NOF_MSG3)
 {
-  // Convert list of PRACH subframe occasions to bitmap.
-  for (unsigned pos : prach_cfg.subframe) {
-    prach_subframe_occasion_bitmap.set(pos, true);
-  }
-
-  // Compute CRBs reserved for PRACHs.
-  static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
-  uint8_t      prb_start = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
-  prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
-  crb_interval prach_crbs       = prb_to_crb(cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
-  prach_grant_resources.ch      = grant_info::channel::prach;
-  prach_grant_resources.scs     = cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-  prach_grant_resources.symbols = {
-      prach_cfg.starting_symbol,
-      static_cast<uint8_t>(prach_cfg.starting_symbol + prach_cfg.duration * prach_cfg.nof_occasions_within_slot)};
-  prach_grant_resources.crbs = prach_crbs;
-
   if (cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0.has_value()) {
     // See 38.213 - If a UE is not provided initialDownlinkBWP, an initial active DL BWP is defined by a location
     // and number of contiguous PRBs, starting from a PRB with the lowest index and ending at a PRB with the highest
@@ -161,8 +140,6 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   slot_point pdcch_slot = res_alloc.slot_tx();
 
-  schedule_prach_occasions(res_alloc);
-
   // Pop pending RACHs and process them.
   pending_rachs.slot_indication();
   span<const rach_indication_message> new_rachs = pending_rachs.get_events();
@@ -245,47 +222,6 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 
   // Log allocated RARs.
   log_rars(res_alloc);
-}
-
-void ra_scheduler::schedule_prach_occasions(cell_resource_allocator& res_alloc)
-{
-  cell_slot_resource_allocator& sl_res = res_alloc[0];
-  slot_point                    sl     = sl_res.slot;
-
-  if (sl.sfn() % prach_cfg.x != prach_cfg.y) {
-    // PRACH is not enabled in this SFN.
-    return;
-  }
-  if (not prach_subframe_occasion_bitmap.test(sl.subframe_index())) {
-    // PRACH is not enabled in this subframe.
-    return;
-  }
-
-  const rach_config_common&  rrc_rach_cfg         = *cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
-  const rach_config_generic& rrc_rach_cfg_generic = rrc_rach_cfg.rach_cfg_generic;
-
-  // Reserve RB-symbol resources for PRACH.
-  if (sl_res.ul_res_grid.collides(prach_grant_resources)) {
-    logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: CRBs={},symbols={} already used.",
-                   prach_grant_resources.crbs,
-                   prach_grant_resources.symbols);
-    return;
-  }
-  sl_res.ul_res_grid.fill(prach_grant_resources);
-
-  // Add new PRACH occasion in slot scheduler result.
-  sl_res.result.ul.prachs.emplace_back();
-  prach_occasion_info& prach_occ = sl_res.result.ul.prachs.back();
-  prach_occ.format               = prach_cfg.format;
-  prach_occ.start_symbol         = prach_cfg.starting_symbol;
-  prach_occ.nof_prach_occasions  = prach_cfg.nof_occasions_within_slot;
-  // TODO: Use tables 6.3.3.1-[4-7] to derive N_CS.
-  prach_occ.nof_cs = rrc_rach_cfg_generic.zero_correlation_zone_config;
-  // TODO: How to derive indexFdRa.
-  prach_occ.fd_ra_resources      = {(uint8_t)0, (uint8_t)(0 + rrc_rach_cfg_generic.msg1_fdm)};
-  prach_occ.prach_config_index   = rrc_rach_cfg_generic.prach_config_index;
-  prach_occ.start_preamble_index = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
-  prach_occ.nof_preamble_indexes = cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles;
 }
 
 unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allocator& res_alloc)

@@ -15,6 +15,7 @@
 #include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -134,6 +135,29 @@ void srsgnb::test_dl_resource_grid_collisions(const cell_configuration& cell_cfg
   }
 }
 
+void srsgnb::test_prach_opportunity_validity(const cell_configuration& cell_cfg, span<const prach_occasion_info> prachs)
+{
+  if (prachs.empty()) {
+    return;
+  }
+  const rach_config_common& rach_cfg_common = *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common;
+  const prach_configuration prach_cfg =
+      prach_configuration_get(frequency_range::FR1,
+                              cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
+                              rach_cfg_common.rach_cfg_generic.prach_config_index);
+
+  for (const prach_occasion_info& prach : prachs) {
+    // Check if the PRACH matches cell configuration.
+    ASSERT_EQ(prach_cfg.format, prach.format);
+    if (prach.start_preamble_index != 255) {
+      ASSERT_EQ(prach.start_preamble_index, rach_cfg_common.prach_root_seq_index);
+    }
+    ASSERT_EQ(rach_cfg_common.total_nof_ra_preambles, prach.nof_preamble_indexes);
+    ASSERT_EQ(prach_cfg.nof_occasions_within_slot, prach.nof_prach_occasions);
+    ASSERT_EQ(prach_cfg.starting_symbol, prach.start_symbol);
+  }
+}
+
 void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const ul_sched_result& result)
 {
   cell_slot_resource_grid grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
@@ -169,6 +193,7 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result)
 {
   test_pdsch_sib_consistency(cell_cfg, result.dl.bc.sibs);
+  test_prach_opportunity_validity(cell_cfg, result.ul.prachs);
   test_dl_resource_grid_collisions(cell_cfg, result.dl);
   test_ul_resource_grid_collisions(cell_cfg, result.ul);
 }

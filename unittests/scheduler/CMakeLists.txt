@@ -11,7 +11,7 @@ set_directory_properties(PROPERTIES LABELS "sched")
 include_directories(../..)
 
 add_library(scheduler_test_suite scheduler_test_suite.cpp)
-target_link_libraries(scheduler_test_suite srsgnb_sched srslog)
+target_link_libraries(scheduler_test_suite srsgnb_sched srslog gtest)
 
 add_executable(pdcch_type0_css_occassions_test support/pdcch/pdcch_type0_css_occassions_test.cpp)
 target_link_libraries(pdcch_type0_css_occassions_test srsgnb_sched srslog)
@@ -72,3 +72,7 @@ add_test(ue_configuration_test ue_configuration_test)
 add_executable(sib1_scheduler_test sib1_scheduler_test.cpp)
 target_link_libraries(sib1_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
 add_test(sib1_scheduler_test sib1_scheduler_test)
+
+add_executable(prach_scheduler_test prach_scheduler_test.cpp)
+target_link_libraries(prach_scheduler_test srsgnb_sched du_manager_converters srslog scheduler_test_suite gtest gtest_main)
+gtest_discover_tests(prach_scheduler_test)

@@ -6,13 +6,13 @@
 # the distribution.
 #
 
+add_subdirectory(common_scheduling)
+
 set(SOURCES
         cell/cell_configuration.cpp
         cell/resource_block_group.cpp
         cell/prb_grant.cpp
-        common_scheduling/ra_scheduler.cpp
         cell/resource_grid.cpp
-        common_scheduling/sib_scheduler.cpp
         pdcch_scheduling/pdcch_scheduler_impl.cpp
         policy/scheduler_policy_factory.cpp
         policy/scheduler_time_rr.cpp
@@ -29,8 +29,7 @@ set(SOURCES
         ue_scheduling/ue_scheduler_impl.cpp
         scheduler_factory.cpp
         scheduler_impl.cpp
-        cell/scheduler_prb.cpp
-        common_scheduling/ssb_scheduler.cpp)
+        cell/scheduler_prb.cpp)
 
-add_library(srsgnb_sched STATIC ${SOURCES})
+add_library(srsgnb_sched STATIC ${SOURCES} $<TARGET_OBJECTS:common_sched>)
 target_link_libraries(srsgnb_sched srsgnb_ran rrc_nr_asn1_helpers)
