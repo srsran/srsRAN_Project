@@ -43,7 +43,8 @@ class dmrs_pusch_estimator_impl : public dmrs_pusch_estimator
 public:
   /// Constructor - sets the channel estimator.
   explicit dmrs_pusch_estimator_impl(std::unique_ptr<port_channel_estimator> ch_est) : ch_estimator(std::move(ch_est))
-  {}
+  {
+  }
 
   // See interface for the documentation.
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override;
