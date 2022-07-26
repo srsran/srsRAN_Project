@@ -12,7 +12,7 @@
 
 using namespace srsgnb;
 
-prach_preamble_information srsgnb::prach_preamble_long_get_info(preamble_format format)
+prach_preamble_information srsgnb::get_prach_preamble_long_info(preamble_format format)
 {
   srsgnb_assert(format.is_long_preamble(), "Invalid preamble format. It must be a long preamble.");
   switch (format) {
@@ -21,21 +21,18 @@ prach_preamble_information srsgnb::prach_preamble_long_get_info(preamble_format 
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(24576),
               phy_time_unit::from_units_of_kappa(3168),
-              true,
               true};
     case preamble_format::FORMAT1:
       return {839U,
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(2 * 24576),
               phy_time_unit::from_units_of_kappa(21024),
-              true,
               true};
     case preamble_format::FORMAT2:
       return {839U,
               prach_subcarrier_spacing::kHz1_25,
               phy_time_unit::from_units_of_kappa(4 * 24576),
               phy_time_unit::from_units_of_kappa(4688),
-              true,
               true};
     case preamble_format::FORMAT3:
     default:
@@ -43,7 +40,6 @@ prach_preamble_information srsgnb::prach_preamble_long_get_info(preamble_format 
               prach_subcarrier_spacing::kHz5,
               phy_time_unit::from_units_of_kappa(4 * 6144),
               phy_time_unit::from_units_of_kappa(3168),
-              true,
               true};
   }
 }

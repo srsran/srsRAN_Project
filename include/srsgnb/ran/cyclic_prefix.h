@@ -60,7 +60,7 @@ public:
   /// A cyclic prefix is valid if it results in an integer number of samples. Othwerwise, it is not valid.
   ///
   /// \param[in] scs      Subcarrier spacing.
-  /// \param[in] dft_size Indicates the DFT size.
+  /// \param[in] dft_size DFT size.
   /// \return True if the cyclic prefix is valid for the given SCS and DFT size.
   bool is_valid(subcarrier_spacing scs, unsigned dft_size) const
   {
@@ -77,10 +77,10 @@ public:
            phy_time_unit::from_units_of_kappa(16).is_sample_accurate(sampling_rate_Hz);
   }
 
-  /// \brief Calculates the cyclic prefix length in samples as per TS38.211 section 5.3.1.
+  /// \brief Calculates the cyclic prefix length in samples as per TS38.211 Section 5.3.1.
   /// \param[in] symbol_idx Symbol index within the subframe.
-  /// \param[in] numerology Indicates the subcarrier spacing numerology.
-  /// \return The cyclic prefix length in a PHY time units.
+  /// \param[in] scs        Subcarrier spacing numerology.
+  /// \return The cyclic prefix length in PHY time units.
   constexpr phy_time_unit get_length(unsigned symbol_idx, subcarrier_spacing scs) const
   {
     // All units are in multiples of the constant kappa.

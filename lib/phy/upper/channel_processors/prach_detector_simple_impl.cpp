@@ -22,7 +22,7 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
                                                                     const prach_detector::slot_configuration& config)
 {
   // Retrieve preamble configuration.
-  prach_preamble_information preamble_info = prach_preamble_long_get_info(config.format);
+  prach_preamble_information preamble_info = get_prach_preamble_long_info(config.format);
 
   // Select DFT and IDFT.
   dft_processor* dft  = dft_1_25_kHz.get();

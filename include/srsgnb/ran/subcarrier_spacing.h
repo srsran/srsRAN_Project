@@ -34,20 +34,20 @@ constexpr inline bool is_scs_valid(subcarrier_spacing scs, frequency_range fr)
                                 ((fr == frequency_range::FR1) and scs <= subcarrier_spacing::kHz60));
 }
 
-/// Convert SCS to numerology index (mu).
+/// Convert SCS to numerology index (\f$\mu\f$).
 constexpr inline unsigned to_numerology_value(subcarrier_spacing scs)
 {
   return static_cast<unsigned>(scs);
 }
 
-/// Convert SCS into integer in kHz
+/// Converts SCS into integer in kHz.
 constexpr inline unsigned scs_to_khz(subcarrier_spacing scs)
 {
   srsgnb_assert(is_scs_valid(scs), "Invalid SCS.");
   return 15U << to_numerology_value(scs);
 }
 
-/// Convert numerology index (mu) to SCS.
+/// Convert numerology index (\f$\mu\f$) to SCS.
 constexpr inline subcarrier_spacing to_subcarrier_spacing(unsigned numerology)
 {
   return static_cast<subcarrier_spacing>(numerology);

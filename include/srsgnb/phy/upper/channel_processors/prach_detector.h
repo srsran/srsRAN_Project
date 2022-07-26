@@ -55,7 +55,7 @@ public:
   struct preamble_indication {
     /// Indicates the detected preamble index.
     unsigned preamble_index;
-    /// Timing advance measured for the UE between the observed arrival and the reference uplink time.
+    /// Timing advance between the observed arrival time (for the considered UE) and the reference uplink time.
     phy_time_unit time_advance;
     /// Average RSRP value in dB, relative to 1.
     float power_dB;

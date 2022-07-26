@@ -20,24 +20,22 @@ namespace srsgnb {
 class phy_time_unit
 {
 private:
-  /// Internal value type. It uses 64-bit to avoid intermediate multiplications to overflow.
-  using value_type = uint64_t;
+  /// Internal value type. It uses 64-bit word to avoid intermediate multiplications to overflow.
+  using value_type = int64_t;
   /// Maximum subcarrier spacing in Hz, constant \f$\Delta f_{max}\f$.
-  static constexpr value_type MAX_SCS_HZ = 480UL * 1000UL;
+  static constexpr value_type MAX_SCS_HZ = 480 * 1000;
   /// Constant \f$N_f\f$.
-  static constexpr value_type N_F = 4096UL;
+  static constexpr value_type N_F = 4096;
   /// Reference chip time in seconds, constant \f$T_c = 1/(\Delta f_{max} \times N_f)\f$.
   static constexpr double T_C = 1.0 / static_cast<double>(MAX_SCS_HZ * N_F);
   /// Reference subcarrier spacing, constant \f$\Delta f_{ref}\f$
-  static constexpr value_type SCS_REF_HZ = 15UL * 1000;
+  static constexpr value_type SCS_REF_HZ = 15 * 1000;
   /// DFT size for the reference subcarrier spacing, constant \f$N_{f,ref}\f$
-  static constexpr value_type N_F_REF = 2048UL;
-  // Reference sample time, constant \f$T_s = 1/(\Delta f_{ref} \times N_{f,ref})\f$
-  //  static constexpr double T_S = 1.0 / static_cast<double>(SCS_REF_HZ * N_F_REF);
+  static constexpr value_type N_F_REF = 2048;
   /// Constant \f$\kappa=T_s/T_c=64\f$.
-  static constexpr value_type KAPPA = 64UL;
+  static constexpr value_type KAPPA = 64;
 
-  /// Actual value in counts of \f$T_c\f$.
+  /// Actual value as multiple of \f$T_c\f$.
   value_type value = 0;
 
   /// Private constructor from a value in units of \f$\kappa\f$.
@@ -51,7 +49,7 @@ public:
   phy_time_unit() = default;
 
   /// \brief Get the time in seconds.
-  /// \tparam U Output type, it must be floating point and it is set to double by default.
+  /// \tparam U Return type. Must be a floating point type (default: double).
   template <class U = double>
   constexpr U to_seconds() const
   {
@@ -64,7 +62,7 @@ public:
   /// The time value is sample accurate if the time is equivalent to an integer number of samples for the given sampling
   /// rate.
   ///
-  /// \tparam U Any data type that be converted to \c value_type.
+  /// \tparam U Any data type that can be converted to \c value_type.
   /// \param[in] sampling_rate_Hz Sample rate in Hz.
   /// \return True if the time is equivalent to an integer number of samples. Otherwise, false.
   template <class U>
@@ -75,11 +73,11 @@ public:
     return ((value * sampling_rate_Hz) % (SCS_REF_HZ * N_F_REF * KAPPA)) == 0;
   }
 
-  /// \brief Get the time expressed in a number of samples from the sampling rate in Hz.
+  /// \brief Gets the time expressed in a number of samples from the sampling rate in Hz.
   ///
-  /// An assertion is triggered if the result would be non-integer number of samples.
+  /// An assertion is triggered if the result would be a non-integer number of samples.
   ///
-  /// \tparam U Any data type that be converted to \c value_type.
+  /// \tparam U Any data type that can be converted to \c value_type.
   /// \param[in] scs      Subcarrier spacing.
   /// \param[in] dft_size DFT size corresponding to the subcarrier spacing.
   /// \return The time value in samples.
@@ -102,7 +100,7 @@ public:
     return phy_time_unit(static_cast<value_type>(units_of_kappa) * KAPPA);
   }
 
-  /// Creates time from seconds.
+  /// Creates a physical layer time from seconds.
   static constexpr inline phy_time_unit from_seconds(double seconds)
   {
     return phy_time_unit(static_cast<value_type>(seconds / T_C));
@@ -110,7 +108,7 @@ public:
 };
 
 /// \brief Gets the sampling rate from a subcarrier spacing and a DFT size combination.
-/// \tparam U Return data type if given, otherwise it returns double.
+/// \tparam U       Return data type. Must be convertible to unsigned (default: double).
 /// \param[in] scs  Subcarrier spacing.
 /// \param dft_size DFT size.
 /// \return The sampling rate in Hz from the given SCS and DFT size.

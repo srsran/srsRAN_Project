@@ -152,7 +152,7 @@ unsigned prach_generator_impl::get_k_bar(unsigned prach_scs_Hz, unsigned pusch_s
 span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_information info         = prach_preamble_long_get_info(config.format);
+  prach_preamble_information info         = get_prach_preamble_long_info(config.format);
   unsigned                   prach_scs_Hz = info.scs.to_Hz();
   unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
   unsigned                   L_ra         = get_sequence_length(config.format);
@@ -246,7 +246,7 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_information info         = prach_preamble_long_get_info(config.format);
+  prach_preamble_information info         = get_prach_preamble_long_info(config.format);
   unsigned                   prach_scs_Hz = info.scs.to_Hz();
   unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
   unsigned                   L_ra         = get_sequence_length(config.format);

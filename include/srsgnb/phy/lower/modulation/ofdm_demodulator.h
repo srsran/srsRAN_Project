@@ -27,7 +27,7 @@ struct ofdm_demodulator_configuration {
   unsigned dft_size;
   /// Indicates the cyclic prefix.
   cyclic_prefix cp;
-  /// Indicates the scaling factor at the DFT output.
+  /// Scaling factor at the DFT output.
   float scale;
   /// Indicates the center frequency of the carrier in Hz.
   double center_freq_hz;

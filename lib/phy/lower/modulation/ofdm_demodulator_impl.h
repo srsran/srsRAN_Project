@@ -31,13 +31,13 @@ private:
   unsigned dft_size;
   /// Indicates the resource grid bandwidth in resource elements.
   unsigned rg_size;
-  /// Indicates the cyclic prefix length.
+  /// Cyclic prefix type.
   cyclic_prefix cp;
-  /// Indicates the numerology.
+  /// Numerology.
   subcarrier_spacing scs;
   /// Sampling rate in Hz.
   unsigned sampling_rate_Hz;
-  /// Indicates the scaling factor at the DFT output.
+  /// Scaling factor at the DFT output.
   float scale;
   /// DFT processor.
   std::unique_ptr<dft_processor> dft;
@@ -78,7 +78,7 @@ public:
 class ofdm_slot_demodulator_impl : public ofdm_slot_demodulator
 {
 private:
-  /// Indicates the cyclic prefix length.
+  /// Cyclic prefix type.
   cyclic_prefix cp;
   /// Instance of symbol demodulator.
   ofdm_symbol_demodulator_impl symbol_demodulator;

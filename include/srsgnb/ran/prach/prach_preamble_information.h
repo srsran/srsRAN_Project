@@ -16,11 +16,11 @@
 
 namespace srsgnb {
 
-/// \brief Collects PRACH Preamble information parameters.
+/// \brief Collects PRACH preamble information parameters.
 ///
 /// The parameters are used and described in TS38.211 Section 6.3.3.1.
 struct prach_preamble_information {
-  /// Parameter \f$L_{RA}\f$.
+  /// Sequence length in frequency domain, parameter \f$L_{RA}\f$.
   unsigned sequence_length;
   /// Parameter \f$\Delta f^{RA}\f$.
   prach_subcarrier_spacing scs;
@@ -28,10 +28,8 @@ struct prach_preamble_information {
   phy_time_unit symbol_length;
   /// Parameter \f$N_{CP}^{RA}\f$. Expressed in units of the reference symbol time \f$\kappa\f$.
   phy_time_unit cp_length;
-  /// Set to true if the preamble supports the restricted set A.
-  bool support_restricted_set_A;
-  /// Set to true if the preamble supports the restricted set B.
-  bool support_restricted_set_B;
+  /// Flag: true if the preamble supports the restricted sets A and B.
+  bool support_restricted_sets;
 };
 
 /// \brief Get long PRACH preamble information as per TS38.211 Table 6.3.3.1-1.
@@ -40,6 +38,6 @@ struct prach_preamble_information {
 ///
 /// \param[in] format PRACH preamble format.
 /// \return PRACH preamble information.
-prach_preamble_information prach_preamble_long_get_info(preamble_format format);
+prach_preamble_information get_prach_preamble_long_info(preamble_format format);
 
 } // namespace srsgnb
