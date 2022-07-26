@@ -37,13 +37,11 @@ public:
 };
 
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
-                           f1c_du_processor_message_notifier& du_processor_notifier_,
-                           f1c_rrc_message_notifier&          rrc_message_notifier_,
+                           f1c_du_processor_message_notifier& f1c_du_processor_notifier_,
                            f1c_du_management_notifier&        f1c_du_management_notifier_) :
   logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
-  du_processor_notifier(du_processor_notifier_),
-  rrc_message_notifier(rrc_message_notifier_),
+  du_processor_notifier(f1c_du_processor_notifier_),
   du_management_notifier(f1c_du_management_notifier_)
 {
   f1ap_ue_context empty_context = {};
@@ -91,7 +89,7 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
   }
 }
 
-void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg)
+void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
   f1ap_ue_id_t    cu_ue_id = find_cu_ue_id(msg.ue_index);
   f1ap_ue_context ue_ctxt  = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
@@ -213,35 +211,31 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
       du_processor_notifier.on_f1_setup_request_received(req_msg);
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::init_ulrrc_msg_transfer: {
-      f1ap_initial_ul_rrc_msg ul_transfer = {};
-      ul_transfer.msg                     = msg.value.init_ulrrc_msg_transfer();
-      handle_initial_ul_rrc_message(ul_transfer);
+      handle_initial_ul_rrc_message(msg.value.init_ulrrc_msg_transfer());
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
-      f1ap_ul_rrc_msg ul_transfer = {};
-      ul_transfer.msg             = msg.value.ulrrc_msg_transfer();
-      handle_ul_rrc_message(ul_transfer);
+      handle_ul_rrc_message(msg.value.ulrrc_msg_transfer());
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
   }
 }
 
-void f1ap_cu_impl::handle_initial_ul_rrc_message(f1ap_initial_ul_rrc_msg& msg)
+void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s& msg)
 {
   // Reject request without served cells
-  if (not msg.msg->duto_currc_container_present) {
+  if (not msg->duto_currc_container_present) {
     logger.error("Not handling Initial UL RRC message transfer without DU to CU container");
     /// Assume the DU can't serve the UE. Ignoring the message.
     return;
   }
 
-  nr_cell_global_identity cgi = cgi_from_asn1(msg.msg->nrcgi.value);
+  nr_cell_global_identity cgi = cgi_from_asn1(msg->nrcgi.value);
 
-  logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg.msg->c_rnti.value);
+  logger.info("Received Initial UL RRC message transfer nr_cgi={}, crnti={}", cgi.nci.packed, msg->c_rnti.value);
   logger.debug("plmn={}", cgi.plmn);
 
-  if (msg.msg->sul_access_ind_present) {
+  if (msg->sul_access_ind_present) {
     logger.debug("Ignoring SUL access indicator");
   }
 
@@ -259,14 +253,16 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(f1ap_initial_ul_rrc_msg& msg)
 
   // create UE context and store it
   f1ap_ue_context ue_ctx = {};
-  ue_ctx.du_ue_f1ap_id   = int_to_f1ap_ue_id(msg.msg->gnb_du_ue_f1_ap_id.value);
+  ue_ctx.du_ue_f1ap_id   = int_to_f1ap_ue_id(msg->gnb_du_ue_f1_ap_id.value);
 
   cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctx;
 
-  msg.pcell_index = pcell_index;
-  msg.cu_ue_id    = cu_ue_id;
+  f1ap_initial_ul_rrc_message f1ap_init_ul_rrc_msg = {};
+  f1ap_init_ul_rrc_msg.cu_ue_id                    = cu_ue_id;
+  f1ap_init_ul_rrc_msg.pcell_index                 = pcell_index;
+  f1ap_init_ul_rrc_msg.msg                         = msg;
 
-  rrc_message_notifier.on_initial_ul_rrc_message_transfer_received(msg);
+  du_processor_notifier.on_initial_ul_rrc_message_transfer_received(f1ap_init_ul_rrc_msg);
 }
 
 void f1ap_cu_impl::add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index)
@@ -284,11 +280,15 @@ void f1ap_cu_impl::add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_
       "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}.", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
 }
 
-void f1ap_cu_impl::handle_ul_rrc_message(const f1ap_ul_rrc_msg& msg)
+void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)
 {
-  f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[msg.msg->gnb_cu_ue_f1_ap_id.value];
+  f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[msg->gnb_cu_ue_f1_ap_id.value];
 
-  rrc_message_notifier.on_ul_rrc_message_transfer_received(ue_ctx.ue_index, msg);
+  f1ap_ul_rrc_message ul_rrc_msg = {};
+  ul_rrc_msg.ue_index            = ue_ctx.ue_index;
+  ul_rrc_msg.msg                 = msg;
+
+  du_processor_notifier.on_ul_rrc_message_transfer_received(ul_rrc_msg);
 }
 
 void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)

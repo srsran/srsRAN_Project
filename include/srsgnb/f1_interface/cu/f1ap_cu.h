@@ -37,17 +37,18 @@ struct f1ap_ue_context {
   ue_index_t   ue_index      = INVALID_UE_INDEX;
 };
 
-struct f1ap_initial_ul_rrc_msg {
+struct f1ap_initial_ul_rrc_message {
   du_cell_index_t                       pcell_index;
   f1ap_ue_id_t                          cu_ue_id;
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
 
-struct f1ap_ul_rrc_msg {
+struct f1ap_ul_rrc_message {
+  ue_index_t                       ue_index;
   asn1::f1ap::ulrrc_msg_transfer_s msg;
 };
 
-struct f1ap_dl_rrc_msg {
+struct f1ap_dl_rrc_message {
   ue_index_t                      ue_index;
   srb_id_t                        srb_id;
   asn1::unbounded_octstring<true> rrc_container;
@@ -60,7 +61,7 @@ public:
 
   /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
   /// \param[in] msg The DL RRC message transfer message to transmit.
-  virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_msg& msg) = 0;
+  virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
 
   /// \brief Adds the UE index of a newly created UE to the corresponding UE context.
   /// \param[in] cu_ue_id The CU UE ID of the already created UE context.
@@ -156,6 +157,14 @@ public:
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 
+  /// \brief Notifies about the reception of a initial UL RRC message transfer message.
+  /// \param[in] msg The received initial UL RRC message transfer message.
+  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_message& msg) = 0;
+
+  /// \brief Notifies about the reception of a UL RRC message transfer message.
+  /// \param[in] msg The received UL RRC message transfer message.
+  virtual void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_message& msg) = 0;
+
   /// \brief Lookup the cell based on a given NR cell ID.
   /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
   virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
@@ -163,22 +172,6 @@ public:
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;
-};
-
-/// Methods used by F1AP to notify about RRC messages.
-class f1c_rrc_message_notifier
-{
-public:
-  virtual ~f1c_rrc_message_notifier() = default;
-
-  /// \brief Notifies about the reception of a initial UL RRC message transfer message.
-  /// \param[in] msg The received initial UL RRC message transfer message.
-  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) = 0;
-
-  /// \brief Notifies about the reception of a UL RRC message transfer message.
-  /// \param[in] ue_index The UE index.
-  /// \param[in] msg The received UL RRC message transfer message.
-  virtual void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) = 0;
 };
 
 /// Methods used by F1AP to notify about DU specific events.

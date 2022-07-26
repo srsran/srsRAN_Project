@@ -21,37 +21,32 @@ class dummy_f1c_du_processor_message_notifier : public srs_cu_cp::f1c_du_process
 {
 public:
   dummy_f1c_du_processor_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
-  srs_cu_cp::f1_setup_request_message last_f1_setup_request_message;
-  void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
-  {
-    logger.info("Received F1SetupRequest message.");
-    last_f1_setup_request_message = msg;
-  }
 
   srs_cu_cp::du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override { return srs_cu_cp::MIN_DU_CELL_INDEX; }
 
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
 
-private:
-  srslog::basic_logger& logger;
-};
+  void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
+  {
+    logger.info("Received F1SetupRequest message.");
+    last_f1_setup_request_msg = msg;
+  }
 
-class dummy_f1c_rrc_message_notifier : public srs_cu_cp::f1c_rrc_message_notifier
-{
-public:
-  dummy_f1c_rrc_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
-
-  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_initial_ul_rrc_msg& msg) override
+  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
   {
     logger.info("Received Initial UL RRC Message transfer message.");
-    return;
+    last_f1ap_init_ul_rrc_msg = msg;
   }
 
-  void on_ul_rrc_message_transfer_received(const srs_cu_cp::ue_index_t       ue_index,
-                                           const srs_cu_cp::f1ap_ul_rrc_msg& msg) override
+  void on_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_ul_rrc_message& msg) override
   {
     logger.info("Received UL RRC Message transfer message.");
+    last_f1ap_ul_rrc_msg = msg;
   }
+
+  srs_cu_cp::f1_setup_request_message    last_f1_setup_request_msg;
+  srs_cu_cp::f1ap_initial_ul_rrc_message last_f1ap_init_ul_rrc_msg;
+  srs_cu_cp::f1ap_ul_rrc_message         last_f1ap_ul_rrc_msg;
 
 private:
   srslog::basic_logger& logger;

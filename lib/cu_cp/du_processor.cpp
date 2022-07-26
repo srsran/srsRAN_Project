@@ -21,7 +21,7 @@ using namespace srs_cu_cp;
 du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mng(cfg_.logger)
 {
   // create f1ap
-  f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
+  f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect(*this);
 
   // create RRC
@@ -31,7 +31,6 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
 
 void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
 {
-  // TODO: add handling
   logger.debug("Received F1 setup request");
 
   // Reject request without served cells

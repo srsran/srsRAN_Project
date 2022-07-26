@@ -29,9 +29,9 @@ public:
 
   void on_new_pdu(const rrc_pdu_message msg) override
   {
-    f1ap_dl_rrc_msg f1ap_msg = {};
-    f1ap_msg.ue_index        = ue_index;
-    f1ap_msg.srb_id          = msg.srb_id;
+    f1ap_dl_rrc_message f1ap_msg = {};
+    f1ap_msg.ue_index            = ue_index;
+    f1ap_msg.srb_id              = msg.srb_id;
 
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());

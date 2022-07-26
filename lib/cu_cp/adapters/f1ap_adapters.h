@@ -36,7 +36,7 @@ private:
 };
 
 /// Adapter between F1AP and DU processor
-class du_processor_f1ap_event_indicator : public f1c_du_processor_message_notifier, public f1c_rrc_message_notifier
+class du_processor_f1ap_event_indicator : public f1c_du_processor_message_notifier
 {
 public:
   void connect(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
@@ -54,7 +54,7 @@ public:
     du_f1c_handler->handle_f1_setup_request(msg);
   }
 
-  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_msg& msg) override
+  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_message& msg) override
   {
     srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
@@ -74,12 +74,12 @@ public:
     return;
   }
 
-  void on_ul_rrc_message_transfer_received(const ue_index_t ue_index, const f1ap_ul_rrc_msg& msg) override
+  void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_message& msg) override
   {
     srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
     ul_rrc_message du_proc_msg = {};
-    du_proc_msg.ue_index       = ue_index;
+    du_proc_msg.ue_index       = msg.ue_index;
     du_proc_msg.rrc_container  = msg.msg->rrc_container.value;
     du_proc_msg.srbid          = msg.msg->srbid.value;
 
