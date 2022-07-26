@@ -33,20 +33,5 @@ private:
   rrc_ul_ccch_pdu_handler& rrc_handler;
 };
 
-/// Adapter between DU processor and F1AP
-class f1ap_du_processor_event_indicator : public du_processor_f1c_message_notifier
-{
-public:
-  void connect(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_) { f1c_handler = &f1c_handler_; }
-
-  void on_ue_creation(unsigned int tmp_ue_id, ue_index_t ue_index) override
-  {
-    f1c_handler->add_ue_index_to_context(int_to_f1ap_ue_id(tmp_ue_id), ue_index);
-  }
-
-private:
-  f1ap_rrc_message_transfer_procedure_handler* f1c_handler;
-};
-
 } // namespace srs_cu_cp
 } // namespace srsgnb

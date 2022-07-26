@@ -24,9 +24,6 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect(*this);
 
-  // Connect DU processor to F1AP adapter
-  du_processor_ev_notifier.connect(*f1ap);
-
   // create RRC
   rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity, *this);
   rrc = create_rrc_entity(rrc_creation_msg);
@@ -135,7 +132,7 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
   if (ue_ctxt == nullptr) {
     logger.error("Could not create UE context");
-    du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, INVALID_UE_INDEX);
+    f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(msg.tmp_ue_id), INVALID_UE_INDEX);
     return;
   }
 
@@ -147,12 +144,12 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   ue_ctxt->rrc = rrc->add_user(*ue_ctxt, msg.du_to_cu_rrc_container);
   if (ue_ctxt->rrc == nullptr) {
     logger.error("Could not create RRC entity");
-    du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, INVALID_UE_INDEX);
+    f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(msg.tmp_ue_id), INVALID_UE_INDEX);
     return;
   }
 
   logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
-  du_processor_ev_notifier.on_ue_creation(msg.tmp_ue_id, ue_ctxt->ue_index);
+  f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(msg.tmp_ue_id), ue_ctxt->ue_index);
 
   // 4. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};

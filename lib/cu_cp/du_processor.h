@@ -81,9 +81,6 @@ private:
 
   // F1AP to DU processor adapter
   du_processor_f1ap_event_indicator f1ap_ev_notifier;
-
-  // DU processor to F1AP adapter
-  f1ap_du_processor_event_indicator du_processor_ev_notifier;
 };
 
 } // namespace srs_cu_cp
