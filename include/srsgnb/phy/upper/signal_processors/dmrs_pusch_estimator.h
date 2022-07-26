@@ -23,7 +23,7 @@
 
 namespace srsgnb {
 
-/// DM-RS-based PUSCH channel estimator: interface.
+/// DM-RS-based PUSCH channel estimator interface.
 class dmrs_pusch_estimator
 {
 public:

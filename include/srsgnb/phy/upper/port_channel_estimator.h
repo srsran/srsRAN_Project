@@ -29,7 +29,7 @@ public:
   /// Estimator configuration parameters.
   struct configuration {
     /// Resource blocks for which the channel should be estimated (binary mask).
-    bounded_bitset<MAX_RB> rb_mask = {};
+    bounded_bitset<MAX_RB> rb_mask;
     /// Subcarrier spacing of the estimated channel.
     subcarrier_spacing scs = subcarrier_spacing::kHz15;
     /// Cyclic prefix.

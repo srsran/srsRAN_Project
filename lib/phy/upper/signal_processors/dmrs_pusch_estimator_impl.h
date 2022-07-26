@@ -42,8 +42,8 @@ class dmrs_pusch_estimator_impl : public dmrs_pusch_estimator
 {
 public:
   /// Constructor - sets the channel estimator.
-  explicit dmrs_pusch_estimator_impl(std::unique_ptr<port_channel_estimator> ch_est) :
-    ch_estimator(std::move(ch_est)){};
+  explicit dmrs_pusch_estimator_impl(std::unique_ptr<port_channel_estimator> ch_est) : ch_estimator(std::move(ch_est))
+  {}
 
   // See interface for the documentation.
   void estimate(channel_estimate& estimate, const resource_grid_reader& grid, const configuration& config) override;
@@ -57,9 +57,9 @@ private:
   /// DM-RS generator.
   dmrs_pusch_generator_impl dmrs_gen = {};
   /// Buffer for DM-RS symbols.
-  static_vector<dmrs_symbol_list, MAX_TX_LAYERS> symbols = {};
+  static_vector<dmrs_symbol_list, MAX_TX_LAYERS> symbols;
   /// Buffer for DM-RS symbol coordinates.
-  static_vector<dmrs_mask, MAX_TX_LAYERS> coordinates = {};
+  static_vector<dmrs_mask, MAX_TX_LAYERS> coordinates;
 };
 
 } // namespace srsgnb

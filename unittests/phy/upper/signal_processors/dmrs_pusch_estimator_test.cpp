@@ -28,7 +28,7 @@ public:
     for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
       float marker = static_cast<float>(10 * port + i_layer);
       // Get a view to the RE channel estimate corresponding to the port-i_layer path.
-      span<cf_t> ch_est = estimate.get_path_ch_estimate_wr(port, i_layer);
+      span<cf_t> ch_est = estimate.get_path_ch_estimate(port, i_layer);
       srsran_assert(ch_est.size() == cfg.nof_symbols * cfg.rb_mask.count() * NRE,
                     "The size of the channel estimate view does not match with the configuration parameters.");
       std::fill(ch_est.begin(), ch_est.end(), marker);
@@ -101,7 +101,7 @@ int main()
 
   for (unsigned i_layer = 0; i_layer != ch_est_dims.nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != ch_est_dims.nof_rx_ports; ++i_port) {
-      span<const cf_t> path_ch_est = ch_est.get_path_ch_estimate_r(i_port, i_layer);
+      span<const cf_t> path_ch_est = ch_est.get_path_ch_estimate(i_port, i_layer);
       TESTASSERT(std::all_of(path_ch_est.begin(), path_ch_est.end(), [](cf_t a) { return (a == 1.0F); }),
                  "Channel estimate not properly initialized.");
     }
@@ -135,7 +135,7 @@ int main()
   unsigned nof_rx_ports = cfg.rx_ports.size();
   for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-      span<const cf_t> path   = ch_est.get_path_ch_estimate_r(i_port, i_layer);
+      span<const cf_t> path   = ch_est.get_path_ch_estimate(i_port, i_layer);
       float            marker = static_cast<float>(10 * i_port + i_layer);
       TESTASSERT(
           std::all_of(path.begin(), path.end(), [marker](cf_t a) { return ((a.real() == marker) && (a.imag() == 0)); }),

@@ -121,10 +121,10 @@ public:
     return convert_power_to_dB(get_snr(rx_port, tx_layer));
   }
 
-  /// \brief Returns a read-write view to the RE channel estimates  of the path between the given Rx port and Tx layer.
+  /// \brief Returns a read-write view to the RE channel estimates of the path between the given Rx port and Tx layer.
   ///
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
-  span<cf_t> get_path_ch_estimate_wr(unsigned rx_port, unsigned tx_layer = 0)
+  span<cf_t> get_path_ch_estimate(unsigned rx_port, unsigned tx_layer = 0)
   {
     unsigned view_size  = nof_subcarriers * nof_symbols;
     unsigned view_start = view_size * (rx_port + nof_rx_ports * tx_layer);
@@ -134,7 +134,7 @@ public:
   /// \brief Returns a read-only view to the RE channel estimates  of the path between the given Rx port and Tx layer.
   ///
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
-  span<const cf_t> get_path_ch_estimate_r(unsigned rx_port, unsigned tx_layer = 0) const
+  span<const cf_t> get_path_ch_estimate(unsigned rx_port, unsigned tx_layer = 0) const
   {
     unsigned view_size  = nof_subcarriers * nof_symbols;
     unsigned view_start = view_size * (rx_port + nof_rx_ports * tx_layer);
@@ -239,8 +239,8 @@ using dmrs_symbol_list = static_vector<cf_t, MAX_NOF_LAYER_DMRS_SYMBOLS>;
 /// element \f$l\f$ of the time mask are set to true.
 struct dmrs_mask {
   /// Boolean mask to specify the OFDM symbols carrying DM-RS symbols.
-  static_vector<bool, MAX_NSYMB_PER_SLOT> symbols = {};
+  static_vector<bool, MAX_NSYMB_PER_SLOT> symbols;
   /// Boolean mask to specify the subcarriers carrying DM-RS symbols.
-  bounded_bitset<MAX_RB* NRE / 2> res_elements = {};
+  bounded_bitset<MAX_RB * NRE / 2> res_elements;
 };
 } // namespace srsgnb

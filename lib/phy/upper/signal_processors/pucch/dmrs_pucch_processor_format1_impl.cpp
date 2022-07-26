@@ -193,7 +193,7 @@ void dmrs_pucch_processor_format1_impl::estimate(channel_estimate&              
   estimate.set_noise_variance(noise_var, 0);
   estimate.set_snr(rsrp / noise_var, 0);
 
-  span<cf_t> ce_span = estimate.get_path_ch_estimate_wr(0);
+  span<cf_t> ce_span = estimate.get_path_ch_estimate(0);
   // Interpolates between DMRS symbols.
   for (uint32_t m = 0; m < n_pucch_sum; ++m) {
     span<cf_t> ce_span_rb = ce_span.subspan(m * NRE, NRE);

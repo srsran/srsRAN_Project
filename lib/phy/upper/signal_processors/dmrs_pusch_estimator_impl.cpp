@@ -1,5 +1,4 @@
 #include "dmrs_pusch_estimator_impl.h"
-#include <iostream>
 
 using namespace srsgnb;
 
@@ -26,8 +25,6 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   est_cfg.nof_symbols   = config.nof_symbols;
 
   for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
-    std::cout << "Just a test version of dmrs_pusch_estimate!\n";
-
     ch_estimator->compute(estimate, grid, i_port, symbols, coordinates, est_cfg);
   }
 }
