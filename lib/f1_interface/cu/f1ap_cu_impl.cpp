@@ -279,8 +279,8 @@ void f1ap_cu_impl::add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_
     return;
   }
 
-  f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
-  ue_ctx.ue_index        = ue_index;
+  f1ap_ue_context& ue_ctx = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+  ue_ctx.ue_index         = ue_index;
 
   logger.debug(
       "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}.", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
@@ -302,7 +302,7 @@ void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& 
 
 f1ap_ue_id_t f1ap_cu_impl::get_next_cu_ue_id()
 {
-  for (int cu_ue_id = 0; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
+  for (int cu_ue_id = MIN_UE_INDEX; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
     if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == INVALID_UE_INDEX) {
       return int_to_f1ap_ue_id(cu_ue_id);
     }
@@ -313,7 +313,7 @@ f1ap_ue_id_t f1ap_cu_impl::get_next_cu_ue_id()
 
 f1ap_ue_id_t f1ap_cu_impl::find_cu_ue_id(ue_index_t ue_index)
 {
-  for (int cu_ue_id = 0; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
+  for (int cu_ue_id = MIN_UE_INDEX; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
     if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == ue_index) {
       return int_to_f1ap_ue_id(cu_ue_id);
     }

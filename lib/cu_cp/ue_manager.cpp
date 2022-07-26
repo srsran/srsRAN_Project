@@ -50,7 +50,9 @@ ue_context* ue_manager::add_ue(rnti_t rnti)
   // Create UE object
   ue_context new_ctx{};
   ue_db.emplace(new_idx, std::move(new_ctx));
-  auto& u = ue_db[new_idx];
+  auto& u    = ue_db[new_idx];
+  u.c_rnti   = rnti;
+  u.ue_index = new_idx;
 
   // Update RNTI -> UE index map
   srsgnb_sanity_check(rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] < 0, "Invalid RNTI=0x{:x}", u.c_rnti);
