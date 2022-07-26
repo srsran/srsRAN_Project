@@ -29,7 +29,7 @@ public:
   /// Constructs a file sink using a file name.
   file_sink(std::string file_name) : binary_file(file_name, std::ios::out | std::ios::binary)
   {
-    SRSGNB_ALWAYS_ASSERT__(binary_file.is_open(), "Failed to open file.");
+    REPORT_FATAL_ERROR_IF_NOT(binary_file.is_open(), "Failed to open file.");
   }
 
   /// Checks if the file is open.
@@ -38,7 +38,7 @@ public:
   /// Writes
   void write(span<const T> data)
   {
-    SRSGNB_ALWAYS_ASSERT__(binary_file.is_open(), "File not opened.");
+    REPORT_FATAL_ERROR_IF_NOT(binary_file.is_open(), "File not opened.");
 
     binary_file.write(reinterpret_cast<const char*>(data.data()), sizeof(T) * data.size());
   }

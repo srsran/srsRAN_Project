@@ -153,7 +153,7 @@ void pbch_encoder_impl::rate_matching(span<uint8_t> f, span<const uint8_t> d)
 
 void pbch_encoder_impl::encode(span<uint8_t> encoded, const srsgnb::pbch_encoder::pbch_msg_t& pbch_msg)
 {
-  SRSGNB_ALWAYS_ASSERT__(
+  REPORT_FATAL_ERROR_IF_NOT(
       encoded.size() == E, "Invalid encoded size ({}), expected {}.", encoded.size(), static_cast<unsigned>(E));
 
   // PBCH payload generation.

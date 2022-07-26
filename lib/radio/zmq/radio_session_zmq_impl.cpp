@@ -120,10 +120,10 @@ void radio_session_zmq_impl::transmit(unsigned                                  
                                       const baseband_gateway_transmitter::metadata& metadata,
                                       baseband_gateway_buffer&                      data)
 {
-  SRSGNB_ALWAYS_ASSERT__(stream_id < tx_streams.size(),
-                         "Stream identifier ({}) exceeds the number of transmit streams ({})",
-                         stream_id,
-                         tx_streams.size());
+  REPORT_FATAL_ERROR_IF_NOT(stream_id < tx_streams.size(),
+                            "Stream identifier ({}) exceeds the number of transmit streams ({})",
+                            stream_id,
+                            tx_streams.size());
 
   // Align stream to the new timestamp.
   tx_streams[stream_id]->align(metadata.ts);
@@ -134,10 +134,10 @@ void radio_session_zmq_impl::transmit(unsigned                                  
 
 baseband_gateway_receiver::metadata radio_session_zmq_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
 {
-  SRSGNB_ALWAYS_ASSERT__(stream_id < rx_streams.size(),
-                         "Stream identifier ({}) exceeds the number of receive streams ({})",
-                         stream_id,
-                         rx_streams.size());
+  REPORT_FATAL_ERROR_IF_NOT(stream_id < rx_streams.size(),
+                            "Stream identifier ({}) exceeds the number of receive streams ({})",
+                            stream_id,
+                            rx_streams.size());
 
   // Prepare return metadata.
   baseband_gateway_receiver::metadata ret;

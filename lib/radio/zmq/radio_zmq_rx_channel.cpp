@@ -159,10 +159,10 @@ void radio_zmq_rx_channel::receive_response()
   logger.debug("Socket received {} samples.", nsamples);
 
   // Make sure the buffer size has not been exceeded.
-  SRSGNB_ALWAYS_ASSERT__(nsamples <= buffer.size(),
-                         "Buffer overflow. Buffer size ({}) is not enough for the received number of samples ({})",
-                         buffer.size(),
-                         nsamples);
+  REPORT_FATAL_ERROR_IF_NOT(nsamples <= buffer.size(),
+                            "Buffer overflow. Buffer size ({}) is not enough for the received number of samples ({})",
+                            buffer.size(),
+                            nsamples);
 
   for (unsigned count = 0; count != nsamples; ++count) {
     while (state_fsm.is_running() && !circular_buffer.try_push(buffer[count])) {

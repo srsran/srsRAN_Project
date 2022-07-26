@@ -80,13 +80,13 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
-  SRSGNB_ALWAYS_ASSERT__(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
-  SRSGNB_ALWAYS_ASSERT__(k_init + symbols.size() <= nof_subc,
-                         "Subcarrier indexes ({},{}) are out-of-range (max. {})",
-                         k_init,
-                         symbols.size(),
-                         nof_subc);
-  SRSGNB_ALWAYS_ASSERT__(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
+  REPORT_FATAL_ERROR_IF_NOT(l < nof_symb, "Symbol index ({}) is out-of-range (max. {})", l, nof_symb);
+  REPORT_FATAL_ERROR_IF_NOT(k_init + symbols.size() <= nof_subc,
+                            "Subcarrier indexes ({},{}) are out-of-range (max. {})",
+                            k_init,
+                            symbols.size(),
+                            nof_subc);
+  REPORT_FATAL_ERROR_IF_NOT(port < nof_ports, "Port index ({}) is out-of-range (max. {})", port, nof_ports);
 
   // Select buffer from the port index
   span<cf_t> buffer = port_buffers[port];

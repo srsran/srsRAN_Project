@@ -89,8 +89,9 @@ public:
       return;
     }
 
-    SRSGNB_ALWAYS_ASSERT__(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
-    SRSGNB_ALWAYS_ASSERT__(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
+    REPORT_FATAL_ERROR_IF_NOT(
+        cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    REPORT_FATAL_ERROR_IF_NOT(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     entries[cb_id].reserved = false;
   }
 
@@ -99,8 +100,9 @@ public:
   /// \return A view to the codeblock soft-bit buffer.
   span<log_likelihood_ratio> get_soft_bits(unsigned cb_id)
   {
-    SRSGNB_ALWAYS_ASSERT__(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
-    SRSGNB_ALWAYS_ASSERT__(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
+    REPORT_FATAL_ERROR_IF_NOT(
+        cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    REPORT_FATAL_ERROR_IF_NOT(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].soft_bits;
   }
 
@@ -109,8 +111,9 @@ public:
   /// \return A view to the codeblock data-bit buffer.
   span<uint8_t> get_data_bits(unsigned cb_id)
   {
-    SRSGNB_ALWAYS_ASSERT__(cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
-    SRSGNB_ALWAYS_ASSERT__(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
+    REPORT_FATAL_ERROR_IF_NOT(
+        cb_id < entries.size(), "Codeblock index ({}) is out-of-range ({}).", cb_id, entries.size());
+    REPORT_FATAL_ERROR_IF_NOT(entries[cb_id].reserved, "Codeblock index ({}) is not reserved.", cb_id);
     return entries[cb_id].data_bits;
   }
 };
@@ -215,14 +218,14 @@ public:
   // See interface for documentation.
   unsigned get_nof_codeblocks() const override
   {
-    SRSGNB_ALWAYS_ASSERT__(is_reserved(), "Softbuffer is not reserved.");
+    REPORT_FATAL_ERROR_IF_NOT(is_reserved(), "Softbuffer is not reserved.");
     return crc.size();
   }
 
   // See interface for documentation.
   void reset_codeblocks_crc() override
   {
-    SRSGNB_ALWAYS_ASSERT__(is_reserved(), "Softbuffer is not reserved.");
+    REPORT_FATAL_ERROR_IF_NOT(is_reserved(), "Softbuffer is not reserved.");
     // Set all codeblock CRC to false.
     for (bool& cb_crc : crc) {
       cb_crc = false;
@@ -232,18 +235,18 @@ public:
   // See interface for documentation.
   span<bool> get_codeblocks_crc() override
   {
-    SRSGNB_ALWAYS_ASSERT__(is_reserved(), "Softbuffer is not reserved.");
+    REPORT_FATAL_ERROR_IF_NOT(is_reserved(), "Softbuffer is not reserved.");
     return crc;
   }
 
   // See interface for documentation.
   span<log_likelihood_ratio> get_codeblock_soft_bits(unsigned codeblock_id, unsigned codeblock_size) override
   {
-    SRSGNB_ALWAYS_ASSERT__(is_reserved(), "Softbuffer is not reserved.");
-    SRSGNB_ALWAYS_ASSERT__(codeblock_id < codeblock_ids.size(),
-                           "Codeblock index ({}) is out of range ({}).",
-                           codeblock_id,
-                           codeblock_ids.size());
+    REPORT_FATAL_ERROR_IF_NOT(is_reserved(), "Softbuffer is not reserved.");
+    REPORT_FATAL_ERROR_IF_NOT(codeblock_id < codeblock_ids.size(),
+                              "Codeblock index ({}) is out of range ({}).",
+                              codeblock_id,
+                              codeblock_ids.size());
     unsigned cb_id       = codeblock_ids[codeblock_id];
     unsigned cb_max_size = codeblock_pool.get_soft_bits(cb_id).size();
     srsgnb_assert(
@@ -254,11 +257,11 @@ public:
   // See interface for documentation.
   span<uint8_t> get_codeblock_data_bits(unsigned codeblock_id, unsigned data_size) override
   {
-    SRSGNB_ALWAYS_ASSERT__(is_reserved(), "Softbuffer is not reserved.");
-    SRSGNB_ALWAYS_ASSERT__(codeblock_id < codeblock_ids.size(),
-                           "Codeblock index ({}) is out of range ({}).",
-                           codeblock_id,
-                           codeblock_ids.size());
+    REPORT_FATAL_ERROR_IF_NOT(is_reserved(), "Softbuffer is not reserved.");
+    REPORT_FATAL_ERROR_IF_NOT(codeblock_id < codeblock_ids.size(),
+                              "Codeblock index ({}) is out of range ({}).",
+                              codeblock_id,
+                              codeblock_ids.size());
     unsigned cb_id         = codeblock_ids[codeblock_id];
     unsigned data_max_size = codeblock_pool.get_data_bits(cb_id).size();
     srsgnb_assert(

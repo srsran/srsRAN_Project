@@ -61,10 +61,10 @@ void radio_zmq_rx_stream::wait_stop()
 void radio_zmq_rx_stream::receive(baseband_gateway_buffer& data)
 {
   // Make sure the number of data channels is coherent with the number of the stream channels.
-  SRSGNB_ALWAYS_ASSERT__(data.get_nof_channels() == channels.size(),
-                         "Invalid number of channels ({}) expected {}.",
-                         data.get_nof_channels(),
-                         channels.size());
+  REPORT_FATAL_ERROR_IF_NOT(data.get_nof_channels() == channels.size(),
+                            "Invalid number of channels ({}) expected {}.",
+                            data.get_nof_channels(),
+                            channels.size());
 
   // Receive samples for each channel.
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {

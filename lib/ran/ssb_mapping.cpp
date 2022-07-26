@@ -54,8 +54,8 @@ crb_interval srsgnb::get_ssb_crbs(subcarrier_spacing    ssb_scs,
                                   ssb_offset_to_pointA  offset_to_pA,
                                   ssb_subcarrier_offset k_ssb)
 {
-  SRSGNB_ALWAYS_ASSERT__(ssb_scs == scs_common, "Mixed numerology not supported");
-  SRSGNB_ALWAYS_ASSERT__(scs_common <= subcarrier_spacing::kHz30, "Only FR1 frequency supported");
+  REPORT_FATAL_ERROR_IF_NOT(ssb_scs == scs_common, "Mixed numerology not supported");
+  REPORT_FATAL_ERROR_IF_NOT(scs_common <= subcarrier_spacing::kHz30, "Only FR1 frequency supported");
 
   // With SCScommon kHz30, offset_to_pointA must be a multiple of 2. This is because it is measured in 15kHz RB, while
   // it points at a CRB which is based on 30kHz.

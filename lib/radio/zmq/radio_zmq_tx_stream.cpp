@@ -67,10 +67,10 @@ void radio_zmq_tx_stream::align(uint64_t timestamp)
 
 void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data)
 {
-  SRSGNB_ALWAYS_ASSERT__(data.get_nof_channels() == channels.size(),
-                         "Invalid number of channels ({}) expected {}.",
-                         data.get_nof_channels(),
-                         channels.size());
+  REPORT_FATAL_ERROR_IF_NOT(data.get_nof_channels() == channels.size(),
+                            "Invalid number of channels ({}) expected {}.",
+                            data.get_nof_channels(),
+                            channels.size());
 
   for (unsigned channel_id = 0; channel_id != channels.size(); ++channel_id) {
     channels[channel_id]->transmit(data.get_channel_buffer(channel_id));

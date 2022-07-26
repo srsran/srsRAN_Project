@@ -30,7 +30,7 @@ bool radio_uhd_rx_stream::receive_block(unsigned&                nof_rxd_samples
   }
 
   // Make sure the number of channels is equal.
-  SRSGNB_ALWAYS_ASSERT__(data.get_nof_channels() == nof_channels, "Number of channels does not match.");
+  REPORT_FATAL_ERROR_IF_NOT(data.get_nof_channels() == nof_channels, "Number of channels does not match.");
 
   // Flatten buffers.
   static_vector<void*, RADIO_MAX_NOF_CHANNELS> buffs_flat_ptr(nof_channels);

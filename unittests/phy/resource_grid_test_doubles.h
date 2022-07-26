@@ -220,8 +220,8 @@ public:
   bool is_empty(unsigned port) const override { return entries.empty(); }
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
-    SRSGNB_ALWAYS_ASSERT__(symbols.size() == coordinates.size(),
-                           "Number of symbols and coordinates must be the equal.");
+    REPORT_FATAL_ERROR_IF_NOT(symbols.size() == coordinates.size(),
+                              "Number of symbols and coordinates must be the equal.");
     for (unsigned idx = 0; idx != coordinates.size(); ++idx) {
       symbols[idx] = get(static_cast<uint8_t>(port), coordinates[idx].symbol, coordinates[idx].subcarrier);
     }

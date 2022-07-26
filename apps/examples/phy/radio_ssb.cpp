@@ -347,14 +347,15 @@ int main(int argc, char** argv)
   double   rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
 
   // Make sure parameters are valid.
-  SRSGNB_ALWAYS_ASSERT__(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
-                         "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
-                         sampling_rate_hz / 1e6);
-  SRSGNB_ALWAYS_ASSERT__(cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
-                         "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
-                         cp.to_string(),
-                         to_numerology_value(scs),
-                         sampling_rate_hz);
+  REPORT_FATAL_ERROR_IF_NOT(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
+                            "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
+                            sampling_rate_hz / 1e6);
+  REPORT_FATAL_ERROR_IF_NOT(
+      cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
+      "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
+      cp.to_string(),
+      to_numerology_value(scs),
+      sampling_rate_hz);
 
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
@@ -366,7 +367,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  SRSGNB_ALWAYS_ASSERT__(factory, "Driver %s is not available.", driver_name.c_str());
+  REPORT_FATAL_ERROR_IF_NOT(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = create_radio_configuration();

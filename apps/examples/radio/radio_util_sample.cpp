@@ -243,7 +243,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  SRSGNB_ALWAYS_ASSERT__(factory, "Driver %s is not available.", driver_name.c_str());
+  REPORT_FATAL_ERROR_IF_NOT(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration.
   radio_configuration::radio config = {};
@@ -305,7 +305,7 @@ int main(int argc, char** argv)
 
   // Create radio.
   radio = factory->create(config, *async_task_executor, notification_handler);
-  SRSGNB_ALWAYS_ASSERT__(radio, "Failed to create radio.");
+  REPORT_FATAL_ERROR_IF_NOT(radio, "Failed to create radio.");
 
   // Get transmitter data plane
   baseband_gateway_transmitter& transmitter = radio->get_baseband_gateway().get_transmitter();

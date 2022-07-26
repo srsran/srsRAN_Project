@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "error_handling.h"
 #include "srsgnb/srslog/srslog.h"
 #include <cstdio>
 
@@ -58,17 +59,6 @@ namespace detail {
 }
 
 } // namespace detail
-
-/// \brief Command to terminate application with an error message, ensuring first that the log is flushed.
-/// Attribute noinline is used to signal to the compiler that this path should rarely occur and therefore doesn't need
-/// to get optimized.
-template <typename... Args>
-[[gnu::noinline, noreturn]] inline bool srsgnb_terminate(const char* fmt, Args&&... args) noexcept
-{
-  srslog::flush();
-  fprintf(stderr, "%s", fmt::format(fmt, std::forward<Args>(args)...).c_str());
-  std::abort();
-}
 
 } // namespace srsgnb
 
