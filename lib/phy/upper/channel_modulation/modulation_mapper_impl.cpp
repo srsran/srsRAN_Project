@@ -56,36 +56,47 @@ struct modulator_table_s {
   // Modulates the input bits.
   constexpr void modulate(span<const uint8_t>& input, span<cf_t> symbols) const
   {
-    for (cf_t& symbol : symbols) {
 #ifdef HAVE_SSE
-      // Get 8 Bit in an MMX register.
-      __m64 mask = _mm_cmpgt_pi8(*((__m64*)input.data()), _mm_set1_pi8(0));
+    unsigned nof_symbols_sse = symbols.size() - divide_ceil(8, QM);
+    for (cf_t& symbol : symbols.first(nof_symbols_sse)) {
+      // Get 8 bytes in an MMX register.
+      __m64 mask = *((__m64*)input.data());
 
-      // Get mask and write
+      // Set all ones if greater than 0.
+      mask = _mm_cmpgt_pi8(mask, _mm_setzero_si64());
+
+      // Pack all bytes MSB into a single byte.
       unsigned index = _mm_movemask_pi8(mask);
 
       // Reverse bits.
       index = reverse_byte(index);
 
-      // Advance input pointer
-      input = input.last(input.size() - QM);
-
       // Mask the bits of interest.
       index = index >> (8 - QM);
-#else
+
+      // Advance input pointer.
+      input = input.last(input.size() - QM);
+
+      // Assign symbol from table.
+      symbol = table[index];
+    }
+    symbols = symbols.last(symbols.size() - nof_symbols_sse);
+#endif // HAVE_SSE
+
+    for (cf_t& symbol : symbols) {
       // Packs the next QM bits.
       unsigned index = 0;
       for (unsigned i = 0; i != QM; ++i) {
         index |= (unsigned)input[i] << (QM - i - 1U);
       }
 
-      // Advance pointer
+      // Advance input pointer.
       input = input.last(input.size() - QM);
-#endif // HAVE_SSE
 
-      // Assign symbol from table
+      // Assign symbol from table.
       symbol = table[index];
     }
+
     srsgnb_assert(input.empty(), "Expected full consumption of the input data.");
   }
 };
