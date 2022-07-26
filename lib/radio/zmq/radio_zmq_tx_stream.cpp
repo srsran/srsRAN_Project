@@ -67,7 +67,7 @@ void radio_zmq_tx_stream::align(uint64_t timestamp)
 
 void radio_zmq_tx_stream::transmit(baseband_gateway_buffer& data)
 {
-  REPORT_FATAL_ERROR_IF_NOT(data.get_nof_channels() == channels.size(),
+  report_fatal_error_if_not(data.get_nof_channels() == channels.size(),
                             "Invalid number of channels ({}) expected {}.",
                             data.get_nof_channels(),
                             channels.size());

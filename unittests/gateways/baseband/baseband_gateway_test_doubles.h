@@ -35,8 +35,8 @@ public:
   // See interface for documentation.
   span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(!data.empty(), "Data is empty. Was the buffer moved?");
-    REPORT_FATAL_ERROR_IF_NOT(
+    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
+    report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<radio_sample_type>(data).subspan(offset, nof_samples);
@@ -45,8 +45,8 @@ public:
   // See interface for documentation.
   span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
   {
-    REPORT_FATAL_ERROR_IF_NOT(!data.empty(), "Data is empty. Was the buffer moved?");
-    REPORT_FATAL_ERROR_IF_NOT(
+    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
+    report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<const radio_sample_type>(data).subspan(offset, nof_samples);

@@ -159,7 +159,7 @@ void radio_zmq_rx_channel::receive_response()
   logger.debug("Socket received {} samples.", nsamples);
 
   // Make sure the buffer size has not been exceeded.
-  REPORT_FATAL_ERROR_IF_NOT(nsamples <= buffer.size(),
+  report_fatal_error_if_not(nsamples <= buffer.size(),
                             "Buffer overflow. Buffer size ({}) is not enough for the received number of samples ({})",
                             buffer.size(),
                             nsamples);

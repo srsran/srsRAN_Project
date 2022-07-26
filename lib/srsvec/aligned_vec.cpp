@@ -17,7 +17,7 @@ void* srsgnb::srsvec::detail::mem_alloc(std::size_t size)
 {
   void* ptr = nullptr;
   int   ret = posix_memalign(&ptr, SIMD_BYTE_ALIGN * 8, size);
-  REPORT_FATAL_ERROR_IF_NOT(ret == 0 && ptr, "Failed posix_memalign.");
+  report_fatal_error_if_not(ret == 0 && ptr, "Failed posix_memalign.");
   return ptr;
 }
 

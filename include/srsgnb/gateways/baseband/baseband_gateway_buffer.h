@@ -67,8 +67,8 @@ public:
   // See interface for documentation.
   span<radio_sample_type> get_channel_buffer(unsigned channel_idx) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(!data.empty(), "Data is empty. Was the buffer moved?");
-    REPORT_FATAL_ERROR_IF_NOT(
+    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
+    report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<radio_sample_type>(data).subspan(offset, nof_samples);
@@ -77,8 +77,8 @@ public:
   // See interface for documentation.
   span<const radio_sample_type> get_channel_buffer(unsigned channel_idx) const override
   {
-    REPORT_FATAL_ERROR_IF_NOT(!data.empty(), "Data is empty. Was the buffer moved?");
-    REPORT_FATAL_ERROR_IF_NOT(
+    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
+    report_fatal_error_if_not(
         channel_idx < nof_channels, "Channel index ({}) is out-of-range ({}).", channel_idx, nof_channels);
     unsigned offset = nof_samples * channel_idx;
     return span<const radio_sample_type>(data).subspan(offset, nof_samples);
@@ -89,8 +89,8 @@ public:
   /// \note The new number of samples must be greater than 0 and must not exceed the maximum number of samples.
   void resize(unsigned new_nof_samples)
   {
-    REPORT_FATAL_ERROR_IF_NOT(!data.empty(), "Data is empty. Was the buffer moved?");
-    REPORT_FATAL_ERROR_IF_NOT(new_nof_samples > 0 && new_nof_samples * nof_channels <= data.size(),
+    report_fatal_error_if_not(!data.empty(), "Data is empty. Was the buffer moved?");
+    report_fatal_error_if_not(new_nof_samples > 0 && new_nof_samples * nof_channels <= data.size(),
                               "Invalid new size ({}). Maximum size ({}).",
                               new_nof_samples,
                               data.size() / nof_channels);
@@ -103,8 +103,8 @@ public:
   baseband_gateway_buffer_dynamic(unsigned nof_channels_, unsigned max_nof_samples_) :
     nof_channels(nof_channels_), nof_samples(max_nof_samples_), data(nof_channels_ * max_nof_samples_)
   {
-    REPORT_FATAL_ERROR_IF_NOT(nof_channels > 0, "Invalid number of channels ({}).", nof_channels);
-    REPORT_FATAL_ERROR_IF_NOT(nof_samples > 0, "Invalid maximum number of samples ({}).", nof_samples);
+    report_fatal_error_if_not(nof_channels > 0, "Invalid number of channels ({}).", nof_channels);
+    report_fatal_error_if_not(nof_samples > 0, "Invalid maximum number of samples ({}).", nof_samples);
   }
 
   /// Move constructor.

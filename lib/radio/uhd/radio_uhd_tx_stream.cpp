@@ -87,7 +87,7 @@ bool radio_uhd_tx_stream::transmit_block(unsigned&                nof_txd_sample
   unsigned num_samples = buffs[0].size() - buffer_offset;
 
   // Make sure the number of channels is equal.
-  REPORT_FATAL_ERROR_IF_NOT(buffs.get_nof_channels() == nof_channels, "Number of channels does not match.");
+  report_fatal_error_if_not(buffs.get_nof_channels() == nof_channels, "Number of channels does not match.");
 
   // Run states
   if (!state_fsm.transmit_block(metadata, time_spec)) {

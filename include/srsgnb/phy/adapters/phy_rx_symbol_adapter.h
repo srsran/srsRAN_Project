@@ -28,7 +28,7 @@ public:
   // See interface for documentation.
   void on_rx_symbol(const lower_phy_rx_symbol_context& context, const resource_grid_reader& grid) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(rx_symbol_handler, "Adapter is not connected.");
+    report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
     upper_phy_rx_symbol_context upper_context;
     upper_context.slot   = context.slot;
     upper_context.sector = context.sector;
@@ -39,14 +39,14 @@ public:
   // See interface for documentation.
   void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(rx_symbol_handler, "Adapter is not connected.");
+    report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
     rx_symbol_handler->handle_rx_prach_window(context, buffer);
   }
 
   // See interface for documentation.
   void on_rx_srs_symbol(const lower_phy_rx_symbol_context& context) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(rx_symbol_handler, "Adapter is not connected.");
+    report_fatal_error_if_not(rx_symbol_handler, "Adapter is not connected.");
     upper_phy_rx_symbol_context upper_context;
     upper_context.slot   = context.slot;
     upper_context.sector = context.sector;

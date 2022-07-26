@@ -567,7 +567,7 @@ void radio_session_uhd_impl::transmit(unsigned int                              
                                       const baseband_gateway_transmitter::metadata& metadata,
                                       baseband_gateway_buffer&                      data)
 {
-  REPORT_FATAL_ERROR_IF_NOT(stream_id < tx_streams.size(),
+  report_fatal_error_if_not(stream_id < tx_streams.size(),
                             "Stream identifier (%d) exceeds the number of transmit streams  (%d).",
                             stream_id,
                             (int)rx_streams.size());
@@ -580,7 +580,7 @@ void radio_session_uhd_impl::transmit(unsigned int                              
 baseband_gateway_receiver::metadata radio_session_uhd_impl::receive(baseband_gateway_buffer& data, unsigned stream_id)
 {
   baseband_gateway_receiver::metadata ret = {};
-  REPORT_FATAL_ERROR_IF_NOT(stream_id < rx_streams.size(),
+  report_fatal_error_if_not(stream_id < rx_streams.size(),
                             "Stream identifier (%d) exceeds the number of receive streams  (%d).",
                             stream_id,
                             (int)rx_streams.size());

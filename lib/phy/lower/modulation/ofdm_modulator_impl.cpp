@@ -31,8 +31,8 @@ ofdm_symbol_modulator_impl::ofdm_symbol_modulator_impl(ofdm_modulator_common_con
                            ofdm_config.center_freq_hz,
                            true)
 {
-  REPORT_FATAL_ERROR_IF_NOT(std::isnormal(scale), "Invalid scaling factor {}", scale);
-  REPORT_FATAL_ERROR_IF_NOT(
+  report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor {}", scale);
+  report_fatal_error_if_not(
       dft_size > rg_size, "The DFT size ({}) must be greater than the resource grid size ({})", dft_size, rg_size);
 
   // Fill DFT input with zeros.
@@ -51,7 +51,7 @@ void ofdm_symbol_modulator_impl::modulate(span<cf_t>                  output,
   unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
 
   // Make sure output buffer matches the symbol size.
-  REPORT_FATAL_ERROR_IF_NOT(
+  report_fatal_error_if_not(
       output.size() == (cp_len + dft_size),
       "The output buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
       output.size(),

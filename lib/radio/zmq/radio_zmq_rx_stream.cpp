@@ -61,7 +61,7 @@ void radio_zmq_rx_stream::wait_stop()
 void radio_zmq_rx_stream::receive(baseband_gateway_buffer& data)
 {
   // Make sure the number of data channels is coherent with the number of the stream channels.
-  REPORT_FATAL_ERROR_IF_NOT(data.get_nof_channels() == channels.size(),
+  report_fatal_error_if_not(data.get_nof_channels() == channels.size(),
                             "Invalid number of channels ({}) expected {}.",
                             data.get_nof_channels(),
                             channels.size());

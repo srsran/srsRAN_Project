@@ -30,8 +30,8 @@ ofdm_symbol_demodulator_impl::ofdm_symbol_demodulator_impl(ofdm_demodulator_comm
                            ofdm_config.center_freq_hz,
                            false)
 {
-  REPORT_FATAL_ERROR_IF_NOT(std::isnormal(scale), "Invalid scaling factor %f", scale);
-  REPORT_FATAL_ERROR_IF_NOT(
+  report_fatal_error_if_not(std::isnormal(scale), "Invalid scaling factor %f", scale);
+  report_fatal_error_if_not(
       dft_size > rg_size, "The DFT size (%d) must be greater than the resource grid size (%d)", dft_size, rg_size);
 
   // Fill DFT input with zeros.
@@ -67,7 +67,7 @@ void ofdm_symbol_demodulator_impl::demodulate(resource_grid_writer& grid,
   unsigned cp_len = cp.get_length(symbol_index, numerology, dft_size);
 
   // Make sure output buffer matches the symbol size.
-  REPORT_FATAL_ERROR_IF_NOT(
+  report_fatal_error_if_not(
       input.size() == (cp_len + dft_size),
       "The input buffer size ({}) does not match the symbol index {} size ({}+{}={}). Numerology={}.",
       input.size(),

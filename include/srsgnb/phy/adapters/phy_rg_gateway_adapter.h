@@ -28,7 +28,7 @@ public:
   // See interface for documentation.
   void send(const resource_grid_context& context, const resource_grid_reader& grid) override
   {
-    REPORT_FATAL_ERROR_IF_NOT(gateway, "Adapter is not connected.");
+    report_fatal_error_if_not(gateway, "Adapter is not connected.");
     gateway->send(context, grid);
   }
 };

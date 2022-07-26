@@ -34,7 +34,7 @@ template <typename... Args>
 }
 
 /// \brief Verifies if condition is true. If not, report a fatal error and close application.
-#define REPORT_FATAL_ERROR_IF_NOT(condition, fmtstr, ...)                                                              \
+#define report_fatal_error_if_not(condition, fmtstr, ...)                                                              \
   (void)((condition) || (report_fatal_error(fmtstr, ##__VA_ARGS__), 0))
 
 } // namespace srsgnb

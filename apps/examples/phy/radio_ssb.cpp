@@ -347,10 +347,10 @@ int main(int argc, char** argv)
   double   rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
 
   // Make sure parameters are valid.
-  REPORT_FATAL_ERROR_IF_NOT(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
+  report_fatal_error_if_not(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
                             "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
                             sampling_rate_hz / 1e6);
-  REPORT_FATAL_ERROR_IF_NOT(
+  report_fatal_error_if_not(
       cp.is_valid(to_numerology_value(scs), dft_size_15kHz / pow2(to_numerology_value(scs))),
       "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
       cp.to_string(),
@@ -367,7 +367,7 @@ int main(int argc, char** argv)
 
   // Create radio factory.
   std::unique_ptr<radio_factory> factory = create_radio_factory(driver_name);
-  REPORT_FATAL_ERROR_IF_NOT(factory, "Driver %s is not available.", driver_name.c_str());
+  report_fatal_error_if_not(factory, "Driver %s is not available.", driver_name.c_str());
 
   // Create radio configuration. Assume 1 sector per stream.
   radio_configuration::radio radio_config = create_radio_configuration();
