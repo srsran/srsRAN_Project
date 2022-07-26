@@ -62,10 +62,26 @@ bool is_valid_enum_number(Number number)
 }
 
 /// Checks whether CORESET#0 table index is valid as per TS38.213, Table 13-{1,...,10}.
-static check_outcome is_coreset0_idx_valid(const du_cell_config& cell_cfg)
+static check_outcome is_coreset0_ss0_idx_valid(const du_cell_config& cell_cfg)
 {
-  CHECK_BELOW(cell_cfg.coreset0_idx, 15, "CORESET#0 index table");
   // TODO: Check which table to use.
+  // TODO: Add checks on minimum bandwidth.
+  if (cell_cfg.scs_common == subcarrier_spacing::kHz15 and cell_cfg.ssb_cfg.scs == subcarrier_spacing::kHz15) {
+    // As per TS38.213, Table 13-1.
+    CHECK_BELOW(cell_cfg.coreset0_idx, 15, "CORESET#0 index table");
+  } else if (cell_cfg.scs_common == subcarrier_spacing::kHz30 and cell_cfg.ssb_cfg.scs == subcarrier_spacing::kHz30) {
+    // As per TS38.213, Table 13-4.
+    CHECK_BELOW(cell_cfg.coreset0_idx, 16, "CORESET#0 index table");
+  }
+  // The remaining cases will trigger an assert in the SSB checks.
+
+  // This constraint is implementation-defined and comes from the fact that our PDCCH schedule only schedules PDCCH
+  // starting from the symbol index 0.
+  if (cell_cfg.scs_common == subcarrier_spacing::kHz15 and cell_cfg.ssb_cfg.scs == subcarrier_spacing::kHz15) {
+    // As per TS38.213, Table 13-11.
+    CHECK_EQ_OR_BELOW(cell_cfg.searchspace0_idx, 9, "SearchSpaceZero index table");
+  }
+
   return {};
 }
 
@@ -106,6 +122,7 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
                      static_cast<unsigned>(coreset0_param.nof_rb_coreset) <=
                  initial_bwp_crbs.stop(),
              "Coreset0 falls outside the Initial DL BWP.");
+
   return {};
 }
 
@@ -251,7 +268,7 @@ check_outcome srsgnb::is_du_cell_config_valid(const du_cell_config& cell_cfg)
 {
   CHECK_EQ_OR_BELOW(cell_cfg.pci, MAX_PCI, "cell PCI");
   CHECK_EQ_OR_BELOW(cell_cfg.scs_common, subcarrier_spacing::kHz120, "SCS common");
-  HANDLE_RETURN(is_coreset0_idx_valid(cell_cfg));
+  HANDLE_RETURN(is_coreset0_ss0_idx_valid(cell_cfg));
   HANDLE_RETURN(check_dl_config_common(cell_cfg));
   HANDLE_RETURN(check_ssb_configuration(cell_cfg));
   // TODO: Remaining.
