@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
@@ -232,5 +231,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_LOWER_LOWER_PHY_TEST_DOUBLES_H

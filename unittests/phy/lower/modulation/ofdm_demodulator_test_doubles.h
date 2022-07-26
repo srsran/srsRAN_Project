@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/srsvec/copy.h"
@@ -91,5 +90,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_PHY_LOWER_MODULATION_OFDM_DEMODULATOR_TEST_DOUBLES_H
