@@ -8,8 +8,7 @@
  *
  */
 
-#ifndef SRSGNB_UNITTESTS_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_TEST_DOUBLES_H
-#define SRSGNB_UNITTESTS_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_TEST_DOUBLES_H
+#pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
 #include <random>
@@ -189,5 +188,3 @@ public:
 };
 
 } // namespace srsgnb
-
-#endif // SRSGNB_UNITTESTS_GATEWAYS_BASEBAND_BASEBAND_GATEWAY_TEST_DOUBLES_H
