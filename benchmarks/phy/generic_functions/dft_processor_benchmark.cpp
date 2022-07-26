@@ -35,7 +35,7 @@ static void usage(const char* prog)
 static void parse_args(int argc, char** argv)
 {
   int opt = 0;
-  while ((opt = getopt(argc, argv, "F:R:h")) != -1) {
+  while ((opt = getopt(argc, argv, "F:R:sh")) != -1) {
     switch (opt) {
       case 'F':
         dft_factory_str = std::string(optarg);
