@@ -10,14 +10,19 @@
 
 #pragma once
 
+#include "procedures/f1ap_ue_context_release_procedure.h"
+#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/support/async/async_queue.h"
+#include "srsgnb/support/async/async_task_loop.h"
 #include <memory>
 
 namespace srsgnb {
 namespace srs_cu_cp {
+
+class f1ap_event_manager;
 
 class f1ap_cu_impl final : public f1_interface
 {
@@ -42,8 +47,7 @@ public:
   async_task<f1ap_ue_context_setup_response_message>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
 
-  async_task<f1ap_ue_context_release_complete_message>
-  handle_ue_context_release(const f1ap_ue_context_release_command_message& msg) override;
+  void handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) override;
 
   async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) override;
@@ -54,9 +58,10 @@ public:
 
   void handle_connection_loss() override {}
 
-private:
-  class f1ap_event_manager;
+  // F1AP statistics
+  int get_nof_ues() override;
 
+private:
   /// \brief Notify about the reception of an initiating message.
   /// \param[in] msg The received initiating message.
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
@@ -68,6 +73,10 @@ private:
   /// \brief Notify about the reception of an UL RRC Message Transfer message.
   /// \param[in] msg The F1AP UL RRC message.
   void handle_ul_rrc_message(const asn1::f1ap::ulrrc_msg_transfer_s& msg);
+
+  /// \brief Notify about the reception of an successful outcome.
+  /// \param[in] msg The received successful outcome message.
+  void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
 
   /// \brief Notify about the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.
@@ -97,6 +106,9 @@ private:
   f1c_du_management_notifier&        du_management_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;
+
+  // task event loops indexed by ue_index
+  slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

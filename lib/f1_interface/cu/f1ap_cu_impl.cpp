@@ -12,29 +12,10 @@
 #include "../../ran/gnb_format.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
 #include "srsgnb/asn1/f1ap.h"
-#include "srsgnb/support/async/event_signal.h"
 
 using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
-
-class srsgnb::srs_cu_cp::f1ap_cu_impl::f1ap_event_manager
-{
-public:
-  /// F1 Context Release Complete
-  // FIXME handle static return value (only returns f1ap_ue_context_release_complete)
-  using f1ap_ue_context_release_outcome_t =
-      expected<const ue_context_release_complete_s*, const ue_context_setup_fail_s*>;
-  event_signal<f1ap_ue_context_release_outcome_t> f1ap_ue_context_release_complete;
-
-  /// F1 UE context setup procedure outcome.
-  using f1ap_ue_context_setup_outcome_t = expected<const ue_context_setup_resp_s*, const ue_context_setup_fail_s*>;
-  event_signal<f1ap_ue_context_setup_outcome_t> f1ap_ue_context_setup_response;
-
-  /// F1 UE Context Modification procedure outcome.
-  using f1ap_ue_context_modification_outcome_t = expected<const ue_context_mod_resp_s*, const ue_context_mod_fail_s*>;
-  event_signal<f1ap_ue_context_modification_outcome_t> f1ap_ue_context_modification_response_message;
-};
 
 f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
                            f1c_du_processor_message_notifier& f1c_du_processor_notifier_,
@@ -42,10 +23,16 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
   logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
-  du_management_notifier(f1c_du_management_notifier_)
+  du_management_notifier(f1c_du_management_notifier_),
+  events(std::make_unique<f1ap_event_manager>())
 {
   f1ap_ue_context empty_context = {};
   std::fill(cu_ue_id_to_f1ap_ue_context.begin(), cu_ue_id_to_f1ap_ue_context.end(), empty_context);
+
+  const size_t number_of_pending_procedures = 1;
+  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
+    ue_ctrl_loop.emplace(i, number_of_pending_procedures);
+  }
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -143,22 +130,24 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
   });
 }
 
-async_task<f1ap_ue_context_release_complete_message>
-f1ap_cu_impl::handle_ue_context_release(const f1ap_ue_context_release_command_message& msg)
+void f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg)
 {
-  // TODO: send msg
+  f1ap_ue_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
 
-  f1ap_event_manager::f1ap_ue_context_release_outcome_t f1ap_ue_ctxt_rel_complete;
+  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+    logger.error("Can't find UE to release (ue_index={})", msg.ue_index);
+    return;
+  }
 
-  return launch_async([this, f1ap_ue_ctxt_rel_complete, res = f1ap_ue_context_release_complete_message{}, msg](
-                          coro_context<async_task<f1ap_ue_context_release_complete_message>>& ctx) mutable {
-    CORO_BEGIN(ctx);
+  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
 
-    CORO_AWAIT_VALUE(f1ap_ue_ctxt_rel_complete, events->f1ap_ue_context_release_complete);
-    res.msg = *f1ap_ue_ctxt_rel_complete.value();
+  asn1::f1ap::ue_context_release_cmd_s ue_ctxt_rel_cmd = {};
+  ue_ctxt_rel_cmd->gnb_cu_ue_f1_ap_id.value            = cu_ue_id;
+  ue_ctxt_rel_cmd->gnb_du_ue_f1_ap_id.value            = ue_ctxt.du_ue_f1ap_id;
+  ue_ctxt_rel_cmd->cause.value                         = msg.cause;
 
-    CORO_RETURN(res);
-  });
+  ue_ctrl_loop[ue_ctxt.ue_index].schedule<f1ap_ue_context_release_procedure>(
+      ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
 }
 
 async_task<f1ap_ue_context_modification_response_message>
@@ -196,10 +185,24 @@ void f1ap_cu_impl::handle_message(const f1c_msg& msg)
     case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
       handle_initiating_message(msg.pdu.init_msg());
       break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
+      handle_successful_outcome(msg.pdu.successful_outcome());
+      break;
     default:
       logger.error("Invalid PDU type");
       break;
   }
+}
+
+int f1ap_cu_impl::get_nof_ues()
+{
+  int nof_ues = 0;
+  for (auto ue_context : cu_ue_id_to_f1ap_ue_context) {
+    if (ue_context.ue_index != INVALID_UE_INDEX) {
+      nof_ues++;
+    }
+  }
+  return nof_ues;
 }
 
 void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
@@ -277,7 +280,7 @@ void f1ap_cu_impl::add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_
   ue_ctx.ue_index         = ue_index;
 
   logger.debug(
-      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}.", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
+      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)
@@ -289,6 +292,17 @@ void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)
   ul_rrc_msg.msg                 = msg;
 
   du_processor_notifier.on_ul_rrc_message_transfer_received(ul_rrc_msg);
+}
+
+void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)
+{
+  switch (outcome.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
+      events->f1ap_ue_context_release_complete.set(&outcome.value.ue_context_release_complete());
+    } break;
+    default:
+      logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  }
 }
 
 void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)

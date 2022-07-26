@@ -106,7 +106,8 @@ struct f1ap_ue_context_setup_response_message {
 };
 
 struct f1ap_ue_context_release_command_message {
-  asn1::f1ap::ue_context_release_complete_s msg;
+  ue_index_t          ue_index;
+  asn1::f1ap::cause_c cause;
 };
 
 struct f1ap_ue_context_release_complete_message {
@@ -135,9 +136,7 @@ public:
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
-  /// \return Returns a UE Context Release Complete message.
-  virtual async_task<f1ap_ue_context_release_complete_message>
-  handle_ue_context_release(const f1ap_ue_context_release_command_message& msg) = 0;
+  virtual void handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) = 0;
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.
@@ -185,12 +184,24 @@ public:
   virtual void on_du_remove_request_received(const du_index_t du_index) = 0;
 };
 
+/// Methods to get statistics of the F1AP.
+class f1c_statistics_interface
+{
+public:
+  virtual ~f1c_statistics_interface() = default;
+
+  /// \brief Returns the number of connected UEs at the F1AP
+  /// \return The number of connected UEs.
+  virtual int get_nof_ues() = 0;
+};
+
 /// Combined entry point for F1C/U handling.
 class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
                      public f1ap_rrc_message_transfer_procedure_handler,
                      public f1ap_connection_manager,
-                     public f1ap_ue_context_manager
+                     public f1ap_ue_context_manager,
+                     public f1c_statistics_interface
 {
 public:
   virtual ~f1_interface() = default;
