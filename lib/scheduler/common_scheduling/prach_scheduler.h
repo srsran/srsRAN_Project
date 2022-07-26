@@ -26,8 +26,13 @@ public:
   void run_slot(cell_slot_resource_allocator& res_grid);
 
 private:
+  const rach_config_common& rach_cfg_common() const { return *cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common; }
+
   const cell_configuration& cell_cfg;
   srslog::basic_logger&     logger;
+
+  /// PRACH subcarrier spacing.
+  prach_subcarrier_spacing prach_scs;
 
   /// PRACH Configuration parameters derived from the cell configuration.
   prach_configuration prach_cfg;

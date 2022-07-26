@@ -182,6 +182,7 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles                        = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present             = true;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index                          = 1;
+  cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_fdm                     = 1;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start         = 0;

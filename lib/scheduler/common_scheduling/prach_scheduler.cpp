@@ -9,6 +9,7 @@
  */
 
 #include "prach_scheduler.h"
+#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 
 using namespace srsgnb;
 
@@ -23,6 +24,35 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   // Convert list of PRACH subframe occasions to bitmap.
   for (unsigned pos : prach_cfg.subframe) {
     prach_subframe_occasion_bitmap.set(pos, true);
+  }
+
+  // Derive PRACH subcarrier spacing.
+  if (prach_cfg.format < preamble_format::OTHER) {
+    if (prach_cfg.format < preamble_format::FORMAT3) {
+      prach_scs = prach_subcarrier_spacing::kHz1_25;
+    } else {
+      prach_scs = prach_subcarrier_spacing::kHz5;
+    }
+  } else {
+    subcarrier_spacing scs = rach_cfg_common().msg1_scs != subcarrier_spacing::invalid
+                                 ? rach_cfg_common().msg1_scs
+                                 : cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+    switch (scs) {
+      case subcarrier_spacing::kHz15:
+        prach_scs = prach_subcarrier_spacing::kHz15;
+        break;
+      case subcarrier_spacing::kHz30:
+        prach_scs = prach_subcarrier_spacing::kHz30;
+        break;
+      case subcarrier_spacing::kHz60:
+        prach_scs = prach_subcarrier_spacing::kHz60;
+        break;
+      case subcarrier_spacing::kHz120:
+        prach_scs = prach_subcarrier_spacing::kHz120;
+        break;
+      default:
+        srsran_terminate("Invalid msg1-SCS");
+    }
   }
 
   // Compute CRBs reserved for PRACHs.
@@ -68,8 +98,8 @@ void prach_scheduler::run_slot(cell_slot_resource_allocator& slot_res_grid)
   prach_occ.format               = prach_cfg.format;
   prach_occ.start_symbol         = prach_cfg.starting_symbol;
   prach_occ.nof_prach_occasions  = prach_cfg.nof_occasions_within_slot;
-  // TODO: Use tables 6.3.3.1-[4-7] to derive N_CS.
-  prach_occ.nof_cs = rrc_rach_cfg_generic.zero_correlation_zone_config;
+  prach_occ.nof_cs               = prach_cyclic_shifts_get(
+      prach_scs, restricted_set_config::TYPE_A, rrc_rach_cfg_generic.zero_correlation_zone_config);
   // TODO: How to derive indexFdRa.
   prach_occ.fd_ra_resources      = {0, rrc_rach_cfg_generic.msg1_fdm};
   prach_occ.prach_config_index   = rrc_rach_cfg_generic.prach_config_index;
