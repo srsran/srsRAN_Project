@@ -6,4 +6,7 @@
 # the distribution.
 #
 
+remove_definitions(-DASSERTS_ENABLED)
+remove_definitions(-DPARANOID_ASSERTS_ENABLED)
+
 add_subdirectory(adt)
