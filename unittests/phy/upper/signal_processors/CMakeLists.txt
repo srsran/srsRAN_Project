@@ -81,3 +81,4 @@ add_custom_command(
 
 add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
 target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsvec srslog)
+add_test(dmrs_pusch_estimator_test dmrs_pusch_estimator_test)
