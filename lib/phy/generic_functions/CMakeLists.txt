@@ -34,7 +34,7 @@ link_directories(${SRSGNB_DFT_LIBRARY_DIRS})
 message(STATUS "FFT_LIBRARIES: " ${SRSGNB_DFT_LIBRARIES})
 
 add_library(srsgnb_generic_funcs_dft STATIC ${SRSGNB_DFT_SOURCES})
-target_link_libraries(srsgnb_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec)
+target_link_libraries(srsgnb_generic_funcs_dft ${SRSGNB_DFT_LIBRARIES} srsvec srslog)
 
 # Set specific compilation options for certain FFTX implementations.
 foreach (FFTX_SOURCE_FILE ${FFTX_DFT_SOURCES} ${FFTX_IDFT_SOURCES})
