@@ -205,7 +205,7 @@ void du_processor::create_srb(const srb_creation_message& msg)
   if (lcid == LCID_SRB0) {
     // create direct connection with UE manager to RRC adapter
     srb.rx_notifier = std::make_unique<rrc_ul_ccch_message_indicator>(*ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.tx_notifier = std::make_unique<du_processor_dl_message_indicator>(*f1ap, ue_ctxt->ue_index);
+    srb.tx_notifier = std::make_unique<f1ap_dl_message_indicator>(*f1ap, ue_ctxt->ue_index);
   } else {
     logger.error("Couldn't create notifier for SRB{}. Removing entry again.", lcid);
     ue_ctxt->srbs.erase(lcid);

@@ -18,12 +18,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between RRC and DU processor
-class du_processor_dl_message_indicator : public rrc_pdu_notifier
+/// Adapter between RRC and F1AP
+class f1ap_dl_message_indicator : public rrc_pdu_notifier
 {
 public:
-  explicit du_processor_dl_message_indicator(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_,
-                                             ue_index_t                                   ue_index_) :
+  explicit f1ap_dl_message_indicator(f1ap_rrc_message_transfer_procedure_handler& f1c_handler_, ue_index_t ue_index_) :
     f1c_handler(f1c_handler_), ue_index(ue_index_)
   {
   }
