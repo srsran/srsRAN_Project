@@ -56,7 +56,13 @@ public:
     last_srb = msg;
   }
 
-  srb_creation_message last_srb;
+  void handle_ue_context_release_command(const ue_context_release_command_message& msg) override
+  {
+    last_ue_ctxt_rel_cmd = msg;
+  }
+
+  ue_context_release_command_message last_ue_ctxt_rel_cmd;
+  srb_creation_message               last_srb;
 
 private:
   ue_context& ue_ctxt;
@@ -71,6 +77,11 @@ public:
   }
 
   void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
+
+  void on_ue_context_release_command(const ue_context_release_command_message& msg) override
+  {
+    du_processor_rrc_ue_handler->handle_ue_context_release_command(msg);
+  }
 
 private:
   dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;

@@ -14,6 +14,7 @@
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/rrc/rrc.h"
 #include "srsgnb/rrc/rrc_config.h"
 #include <string>
 
@@ -81,7 +82,7 @@ struct srb_creation_message {
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
-/// Interface for an RRU UE entity to communicate with the DU processor.
+/// Interface for an RRU UE notifier to communicate with the DU processor.
 class du_processor_rrc_ue_interface
 {
 public:
@@ -91,6 +92,10 @@ public:
   /// required intermediate objects (e.g. PDCP) and connects them with one another.
   /// \param[in] msg The UE index, SRB ID and config.
   virtual void create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Handle a UE Context Release Command and notify F1AP.
+  /// \param[in] msg The UE Context Release Command Message.
+  virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
 } // namespace srs_cu_cp

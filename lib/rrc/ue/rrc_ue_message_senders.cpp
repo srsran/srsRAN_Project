@@ -53,6 +53,9 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
 
   send_dl_ccch(dl_ccch_msg);
 
+  // Send UE Context Release Command message
+  send_ue_context_release_command();
+
   // TODO: remove user?
 }
 
@@ -66,4 +69,13 @@ void rrc_ue_entity::send_srb0_pdu(byte_buffer pdu)
   } else {
     cfg.logger.error("Can't send RRC PDU - no SRB0 configured");
   }
+}
+
+void rrc_ue_entity::send_ue_context_release_command()
+{
+  ue_context_release_command_message msg = {};
+  msg.ue_index                           = ctxt.ue_index;
+  // TODO: Set cause
+
+  du_processor_notifier.on_ue_context_release_command(msg);
 }

@@ -185,10 +185,10 @@ public:
 };
 
 /// Methods to get statistics of the F1AP.
-class f1c_statistics_interface
+class f1c_statistics_handler
 {
 public:
-  virtual ~f1c_statistics_interface() = default;
+  virtual ~f1c_statistics_handler() = default;
 
   /// \brief Returns the number of connected UEs at the F1AP
   /// \return The number of connected UEs.
@@ -201,7 +201,7 @@ class f1_interface : public f1c_message_handler,
                      public f1ap_rrc_message_transfer_procedure_handler,
                      public f1ap_connection_manager,
                      public f1ap_ue_context_manager,
-                     public f1c_statistics_interface
+                     public f1c_statistics_handler
 {
 public:
   virtual ~f1_interface() = default;

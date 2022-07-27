@@ -211,3 +211,16 @@ void du_processor::create_srb(const srb_creation_message& msg)
     ue_ctxt->srbs.erase(lcid);
   }
 }
+
+void du_processor::handle_ue_context_release_command(const ue_context_release_command_message& msg)
+{
+  f1ap_ue_context_release_command_message f1ap_msg = {};
+  f1ap_msg.ue_index                                = msg.ue_index;
+  f1ap_msg.cause.set_radio_network();
+
+  f1ap->handle_ue_context_release_command(f1ap_msg);
+
+  // Remove UE from UE database
+  logger.info("Removing UE (id={})", msg.ue_index);
+  ue_mng.remove_ue(msg.ue_index);
+}

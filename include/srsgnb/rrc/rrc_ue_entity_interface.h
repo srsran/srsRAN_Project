@@ -47,6 +47,10 @@ public:
   /// \brief Notify about hte need to create an SRB
   /// \param[in] msg The SRB creation message
   virtual void on_create_srb(const srb_creation_message& msg) = 0;
+
+  /// \brief Notify about a UE Context Release Command
+  /// \param[in] msg The UE Context Release Command message
+  virtual void on_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
 } // namespace srs_cu_cp

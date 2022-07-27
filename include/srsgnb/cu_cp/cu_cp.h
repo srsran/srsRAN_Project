@@ -71,6 +71,11 @@ public:
   /// \param[in] du_index The index of the DU processor object.
   /// \return The F1C message handler interface of the DU processor object.
   virtual f1c_message_handler& get_f1c_message_handler(const du_index_t du_index) = 0;
+
+  /// \brief Get the F1C statistics handler interface of the DU processor object.
+  /// \param[in] du_index The index of the DU processor object.
+  /// \return The F1C statistics handler interface of the DU processor object.
+  virtual f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) = 0;
 };
 
 class cu_cp_interface : public cu_cp_du_connection_notifier,

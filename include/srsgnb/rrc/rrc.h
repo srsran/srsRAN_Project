@@ -18,9 +18,23 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+enum ue_context_release_cause : uint16_t {
+  radio_network = 0,
+  transport     = 1,
+  protocol      = 2,
+  misc          = 3,
+  choice_ext    = 4,
+  nulltype      = 5
+};
+
 struct rrc_pdu_message {
   byte_buffer_slice pdu;
   srb_id_t          srb_id;
+};
+
+struct ue_context_release_command_message {
+  ue_index_t               ue_index;
+  ue_context_release_cause cause;
 };
 
 /// Interface to inform about changes to the AMF state.

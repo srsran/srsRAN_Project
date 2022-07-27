@@ -43,6 +43,7 @@ public:
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
   du_context&                                    get_context() { return context; };
   f1c_message_handler&                           get_f1c_message_handler() { return *f1ap; };
+  f1c_statistics_handler&                        get_f1c_statistics_handler() { return *f1ap; };
   du_cell_index_t                                get_next_du_cell_index();
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 
@@ -55,6 +56,7 @@ public:
   // du_processor_rrc_ue_interface
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
+  void handle_ue_context_release_command(const ue_context_release_command_message& msg) override;
 
 private:
   // F1AP senders

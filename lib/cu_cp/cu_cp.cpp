@@ -53,6 +53,13 @@ f1c_message_handler& cu_cp::get_f1c_message_handler(du_index_t du_index)
   return du_it.get_f1c_message_handler();
 }
 
+f1c_statistics_handler& cu_cp::get_f1c_statistics_handler(du_index_t du_index)
+{
+  auto& du_it = find_du(du_index);
+
+  return du_it.get_f1c_statistics_handler();
+}
+
 void cu_cp::on_new_connection()
 {
   logger.info("New DU connection - adding DU");

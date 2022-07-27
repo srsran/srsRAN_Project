@@ -55,6 +55,9 @@ private:
   /// Sends a packed PDU on SRB0
   void send_srb0_pdu(byte_buffer pdu);
 
+  /// Sends a UE Context Release Request
+  void send_ue_context_release_command();
+
   /// allocates PUCCH resources at the cell resource manager
   bool init_pucch();
 

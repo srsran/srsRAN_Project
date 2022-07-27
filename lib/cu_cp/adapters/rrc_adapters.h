@@ -54,6 +54,11 @@ public:
 
   void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
 
+  void on_ue_context_release_command(const ue_context_release_command_message& msg) override
+  {
+    du_processor_rrc_ue_handler->handle_ue_context_release_command(msg);
+  }
+
 private:
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };

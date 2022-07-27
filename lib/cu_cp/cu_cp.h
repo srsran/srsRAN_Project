@@ -38,6 +38,8 @@ public:
 
   f1c_message_handler& get_f1c_message_handler(du_index_t du_index) override;
 
+  f1c_statistics_handler& get_f1c_statistics_handler(du_index_t du_index) override;
+
   void on_new_connection() override;
   void handle_du_remove_request(const du_index_t du_index) override;
 
