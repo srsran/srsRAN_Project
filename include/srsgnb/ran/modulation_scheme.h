@@ -17,6 +17,9 @@
 
 namespace srsgnb {
 
+/// Maximum number of bits per symbol.
+static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = 8;
+
 /// \brief Modulation schemes as described in TS38.211 Section 5.1.
 ///
 /// Each modulation identifier is mapped to the corresponding modulation order.
@@ -32,7 +35,7 @@ enum class modulation_scheme {
   /// 64-point Quadrature Amplitude Modulation (64-QAM) described in TS38.211 Section 5.1.5.
   QAM64 = 6,
   /// 256-point Quadrature Amplitude Modulation (256-QAM) described in TS38.211 Section 5.1.6.
-  QAM256 = 8
+  QAM256 = MODULATION_MAX_BITS_PER_SYMBOL
 };
 
 inline std::string to_string(modulation_scheme mod)
@@ -59,10 +62,17 @@ inline std::string to_string(modulation_scheme mod)
 /// \returns The number of bits per modulated symbol (sometimes referred to as modulation order).
 inline constexpr unsigned get_bits_per_symbol(modulation_scheme mod)
 {
-  return std::max(1U, static_cast<unsigned>(mod));
-}
+  unsigned ret = static_cast<unsigned>(mod);
+  if (mod == modulation_scheme::PI_2_BPSK) {
+    ret = 1;
+  }
 
-/// Defines the maximum bits per symbol.
-static constexpr unsigned MODULATION_MAX_BITS_PER_SYMBOL = get_bits_per_symbol(modulation_scheme::QAM256);
+  // Give a hint to the compiler that the returned bits per symbol will not be greater than 8 under any circumstance.
+  if (ret > MODULATION_MAX_BITS_PER_SYMBOL) {
+    __builtin_unreachable();
+  }
+
+  return ret;
+}
 
 } // namespace srsgnb
