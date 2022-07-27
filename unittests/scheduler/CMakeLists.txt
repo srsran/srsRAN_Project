@@ -10,7 +10,7 @@ set_directory_properties(PROPERTIES LABELS "sched")
 
 include_directories(../..)
 
-add_library(scheduler_test_suite scheduler_test_suite.cpp)
+add_library(scheduler_test_suite scheduler_test_suite.cpp scheduler_output_test_helpers.cpp)
 target_link_libraries(scheduler_test_suite srsgnb_sched srslog gtest)
 
 add_executable(pdcch_type0_css_occassions_test support/pdcch/pdcch_type0_css_occassions_test.cpp)
