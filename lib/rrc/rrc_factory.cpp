@@ -17,5 +17,5 @@ using namespace srs_cu_cp;
 
 std::unique_ptr<rrc_entity_du_interface> srsgnb::srs_cu_cp::create_rrc_entity(const rrc_entity_creation_message& msg)
 {
-  return std::make_unique<rrc_entity>(msg.cfg, msg.ngap_entity, msg.du_proc_rrc_ue_handle);
+  return std::make_unique<rrc_entity>(msg.cfg, msg.ngap_entity, msg.rrc_ue_du_proc_notifier);
 }

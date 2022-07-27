@@ -86,7 +86,7 @@ void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_reque
   srb1_msg.ue_index = ctxt.ue_index;
   srb1_msg.srb_id   = srb_id_t::srb1;
   srb1_msg.pdcp_cfg = cfg.srb1_pdcp_cfg;
-  du_proc.create_srb(srb1_msg);
+  du_processor_notifier.on_create_srb(srb1_msg);
 
   send_rrc_setup();
 }

@@ -16,11 +16,15 @@ using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
 rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
-                             du_processor_rrc_ue_interface&         du_proc_,
+                             rrc_ue_du_processor_notifier&          du_proc_notif_,
                              const ue_context&                      ctxt_,
                              const rrc_ue_cfg_t&                    cfg_,
                              const asn1::unbounded_octstring<true>& du_to_cu_container_) :
-  parent(parent_), du_proc(du_proc_), ctxt(ctxt_), cfg(cfg_), du_to_cu_container(du_to_cu_container_)
+  parent(parent_),
+  du_processor_notifier(du_proc_notif_),
+  ctxt(ctxt_),
+  cfg(cfg_),
+  du_to_cu_container(du_to_cu_container_)
 {
 }
 

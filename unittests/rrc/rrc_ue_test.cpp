@@ -44,8 +44,40 @@ private:
   dummy_tx_pdu_handler& handler;
 };
 
+class dummy_du_processor_rrc_ue_interface : public du_processor_rrc_ue_interface
+{
+public:
+  dummy_du_processor_rrc_ue_interface(ue_context& ue_ctxt_) : ue_ctxt(ue_ctxt_){};
+
+  void create_srb(const srb_creation_message& msg) override
+  {
+    EXPECT_FALSE(ue_ctxt.srbs.contains(srb_id_to_lcid(msg.srb_id)));
+    ue_ctxt.srbs.emplace(srb_id_to_lcid(msg.srb_id));
+    last_srb = msg;
+  }
+
+  srb_creation_message last_srb;
+
+private:
+  ue_context& ue_ctxt;
+};
+
+class dummy_du_processor_rrc_ue_event_indicator : public rrc_ue_du_processor_notifier
+{
+public:
+  void connect(dummy_du_processor_rrc_ue_interface& du_processor_rrc_ue_)
+  {
+    du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
+  }
+
+  void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
+
+private:
+  dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
+};
+
 /// Fixture class RRC Setup tests preparation
-class rrc_setup : public du_processor_rrc_ue_interface, public ::testing::Test
+class rrc_setup : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -54,8 +86,11 @@ protected:
     srslog::init();
 
     // create RRC entity
-    rrc_entity_creation_message msg(cfg, &ngap, *this);
+    du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
+
+    rrc_entity_creation_message msg(cfg, &ngap, rrc_ue_ev_notifier);
     rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
+    rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
     // create single UE context and add RRC user
     ue_ctxt.c_rnti = to_rnti(0x1234);
@@ -99,21 +134,16 @@ protected:
     ue_ctxt.rrc->get_ul_ccch_pdu_handler()->handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
-  // RRC UE entity calls this method to create an SRB object
-  void create_srb(const srb_creation_message& msg) override
-  {
-    EXPECT_FALSE(ue_ctxt.srbs.contains(srb_id_to_lcid(msg.srb_id)));
-    ue_ctxt.srbs.emplace(srb_id_to_lcid(msg.srb_id));
-  }
-
   void check_srb1_exists() { EXPECT_TRUE(ue_ctxt.srbs.contains(LCID_SRB1)); }
 
 private:
-  ngap_dummy                               ngap;
-  rrc_cfg_t                                cfg{}; // empty config
-  std::unique_ptr<rrc_entity_du_interface> rrc;
-  ue_context                               ue_ctxt{};
-  dummy_tx_pdu_handler                     tx_pdu_handler; // Object to handle the generated RRC message
+  ngap_dummy                                           ngap;
+  rrc_cfg_t                                            cfg{}; // empty config
+  std::unique_ptr<rrc_entity_du_interface>             rrc;
+  ue_context                                           ue_ctxt{};
+  dummy_tx_pdu_handler                                 tx_pdu_handler; // Object to handle the generated RRC message
+  std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
+  dummy_du_processor_rrc_ue_event_indicator            rrc_ue_ev_notifier;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

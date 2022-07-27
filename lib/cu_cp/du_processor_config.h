@@ -20,10 +20,10 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct du_processor_config_t {
-  std::string                 name        = "srs_cu_cp";
-  uint8_t                     rrc_version = 2;
-  srslog::basic_logger&       logger      = srslog::fetch_basic_logger("CU-CP");
-  f1c_du_management_notifier* f1c_du_mgmt_notifier;
+  std::string                 name                 = "srs_cu_cp";
+  uint8_t                     rrc_version          = 2;
+  srslog::basic_logger&       logger               = srslog::fetch_basic_logger("CU-CP");
+  f1c_du_management_notifier* f1c_du_mgmt_notifier = nullptr;
   f1c_message_notifier*       f1c_notifier;
   rrc_cfg_t                   rrc_cfg; // TODO: do we put subcomponent configs here?
   ngap*                       ngap_entity;

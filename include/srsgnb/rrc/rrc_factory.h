@@ -27,15 +27,13 @@ namespace srs_cu_cp {
 struct ue_context;
 
 struct rrc_entity_creation_message {
-  rrc_entity_creation_message(const rrc_cfg_t&               cfg_,
-                              ngap*                          ngap_,
-                              du_processor_rrc_ue_interface& du_proc_rrc_ue_handle_) :
-    cfg(cfg_), ngap_entity(ngap_), du_proc_rrc_ue_handle(du_proc_rrc_ue_handle_)
+  rrc_entity_creation_message(const rrc_cfg_t& cfg_, ngap* ngap_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
+    cfg(cfg_), ngap_entity(ngap_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
   {
   }
-  const rrc_cfg_t&               cfg;
-  ngap*                          ngap_entity;
-  du_processor_rrc_ue_interface& du_proc_rrc_ue_handle;
+  const rrc_cfg_t&              cfg;
+  ngap*                         ngap_entity;
+  rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier;
 };
 
 /// Create an instance of an RRC entity

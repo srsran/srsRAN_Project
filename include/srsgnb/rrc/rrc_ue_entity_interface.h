@@ -38,6 +38,17 @@ public:
   virtual void on_new_pdu(const rrc_pdu_message msg) = 0;
 };
 
+/// Interface to notify about RRC UE Context messages.
+class rrc_ue_du_processor_notifier
+{
+public:
+  virtual ~rrc_ue_du_processor_notifier() = default;
+
+  /// \brief Notify about hte need to create an SRB
+  /// \param[in] msg The SRB creation message
+  virtual void on_create_srb(const srb_creation_message& msg) = 0;
+};
+
 } // namespace srs_cu_cp
 
 } // namespace srsgnb

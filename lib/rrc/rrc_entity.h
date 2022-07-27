@@ -22,7 +22,7 @@ namespace srs_cu_cp {
 class rrc_entity : public rrc_entity_du_interface, public rrc_entity_ue_interface
 {
 public:
-  rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, du_processor_rrc_ue_interface& du_proc_rrc_ue_handle_);
+  rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_);
   ~rrc_entity() = default;
 
   // rrc_entity_du_interface
@@ -42,8 +42,8 @@ private:
 
   bool reject_users = true; ///< Reject all connection attempts, i.e. when AMF is not connected.
 
-  ngap*                          ngap_handle = nullptr;
-  du_processor_rrc_ue_interface& du_proc_rrc_ue_handle;
+  ngap*                         ngap_handle = nullptr;
+  rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier;
 
   // RRC-internal user database indexed by ue_index
   slot_array<std::unique_ptr<rrc_ue_entity>, MAX_NOF_UES> ue_db;

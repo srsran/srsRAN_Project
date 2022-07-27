@@ -23,7 +23,7 @@ class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_han
 {
 public:
   rrc_ue_entity(rrc_entity_ue_interface&               parent_,
-                du_processor_rrc_ue_interface&         du_proc_,
+                rrc_ue_du_processor_notifier&          du_proc_notif_,
                 const ue_context&                      ctxt_,
                 const rrc_ue_cfg_t&                    cfg_,
                 const asn1::unbounded_octstring<true>& du_to_cu_container);
@@ -78,11 +78,11 @@ private:
   log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
   void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
-  rrc_entity_ue_interface&       parent;  // reference to the parant RRC object
-  du_processor_rrc_ue_interface& du_proc; // reference to the DU processor object
-  const ue_context&              ctxt;    // reference to the UE object
-  const rrc_ue_cfg_t&            cfg;
-  byte_buffer                    du_to_cu_container; // initial RRC message from DU to CU
+  rrc_entity_ue_interface&      parent;                // reference to the parant RRC object
+  rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
+  const ue_context&             ctxt;                  // reference to the UE object
+  const rrc_ue_cfg_t&           cfg;
+  byte_buffer                   du_to_cu_container; // initial RRC message from DU to CU
 
   struct rrc_ctxt_t {
     uint64_t                               setup_ue_id = -1;

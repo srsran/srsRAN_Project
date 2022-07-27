@@ -43,5 +43,20 @@ private:
   ue_index_t                                   ue_index;
 };
 
+/// Adapter between RRC and DU processor
+class du_processor_rrc_ue_event_indicator : public rrc_ue_du_processor_notifier
+{
+public:
+  void connect(du_processor_rrc_ue_interface& du_processor_rrc_ue_)
+  {
+    du_processor_rrc_ue_handler = &du_processor_rrc_ue_;
+  }
+
+  void on_create_srb(const srb_creation_message& msg) override { du_processor_rrc_ue_handler->create_srb(msg); }
+
+private:
+  du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

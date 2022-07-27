@@ -15,10 +15,8 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_entity::rrc_entity(const rrc_cfg_t&               cfg_,
-                       ngap*                          ngap_handle_,
-                       du_processor_rrc_ue_interface& du_proc_rrc_ue_handle_) :
-  cfg(cfg_), ngap_handle(ngap_handle_), du_proc_rrc_ue_handle(du_proc_rrc_ue_handle_)
+rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
+  cfg(cfg_), ngap_handle(ngap_handle_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
 {
 }
 
@@ -34,7 +32,7 @@ rrc_ue_entity_interface* rrc_entity::add_user(ue_context& ctxt_, asn1::unbounded
   ue_index_t ue_index = ctxt_.ue_index;
   ue_db.emplace(
       ue_index,
-      std::make_unique<rrc_ue_entity>(*this, du_proc_rrc_ue_handle, ctxt_, cfg.ue_default_cfg, du_to_cu_container));
+      std::make_unique<rrc_ue_entity>(*this, rrc_ue_du_proc_notifier, ctxt_, cfg.ue_default_cfg, du_to_cu_container));
   auto& u = ue_db[ue_index];
   return u.get();
 }
