@@ -165,7 +165,8 @@ public:
       }
       rem_pos -= v.length();
     }
-    srsgnb_terminate("Out-of-bounds access ({} >= {})", i, length());
+    srsgnb_assertion_failure("Out-of-bounds access ({} >= {})", i, length());
+    return (*fragments.begin())[0];
   }
 
   const fragment_container_t& slices() const { return fragments; }

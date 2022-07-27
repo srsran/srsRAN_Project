@@ -13,6 +13,7 @@
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
 #include "srsgnb/srsvec/zero.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 

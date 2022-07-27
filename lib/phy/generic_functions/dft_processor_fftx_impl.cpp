@@ -1,5 +1,6 @@
 
 #include "dft_processor_fftx_impl.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;

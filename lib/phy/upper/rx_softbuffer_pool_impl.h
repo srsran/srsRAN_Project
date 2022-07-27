@@ -13,6 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/rx_softbuffer_pool.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 #include <mutex>
 

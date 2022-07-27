@@ -28,7 +28,8 @@ byte_buffer srsgnb::srs_du::make_asn1_rrc_cell_mib_buffer(const du_cell_config& 
       mib.sub_carrier_spacing_common.value = mib_s::sub_carrier_spacing_common_opts::scs30or120;
       break;
     default:
-      srsgnb_terminate("Invalid SCS common");
+      srsgnb_assertion_failure("Invalid SCS common");
+      mib.sub_carrier_spacing_common.value = asn1::rrc_nr::mib_s::sub_carrier_spacing_common_opts::scs15or60;
   }
   /// As per TS 38.331, MIB, the field "ssb-SubcarrierOffset" in the MIB only encodes the 4 LSB of k_SSB.
   mib.ssb_subcarrier_offset            = static_cast<uint8_t>(du_cfg.ssb_cfg.k_ssb.to_uint() & 0b00001111U);
@@ -87,7 +88,8 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
   ss.coreset_id                                     = cfg.cs_id;
   ss.monitoring_slot_periodicity_and_offset_present = true;
   search_space_s::monitoring_slot_periodicity_and_offset_c_::types period;
-  srsgnb_assert(asn1::number_to_enum(period, cfg.monitoring_slot_period), "Invalid slot period");
+  bool success = asn1::number_to_enum(period, cfg.monitoring_slot_period);
+  srsgnb_assert(success, "Invalid slot period");
   ss.monitoring_slot_periodicity_and_offset.set(period);
   switch (ss.monitoring_slot_periodicity_and_offset.type().value) {
     case search_space_s::monitoring_slot_periodicity_and_offset_c_::types_opts::sl1:
@@ -135,7 +137,7 @@ static asn1::rrc_nr::search_space_s make_asn1_rrc_search_space(const search_spac
       ss.monitoring_slot_periodicity_and_offset.sl2560() = cfg.monitoring_slot_offset;
       break;
     default:
-      srsgnb_terminate("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
+      srsgnb_assertion_failure("Invalid PDCCH slot offset={}", cfg.monitoring_slot_offset);
   }
   if (cfg.duration != 1) {
     ss.dur_present = true;
@@ -275,8 +277,8 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   rach.rach_cfg_generic.preamb_rx_target_pwr      = -110;
   rach.rach_cfg_generic.preamb_trans_max.value    = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
   rach.rach_cfg_generic.pwr_ramp_step.value       = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
-  srsgnb_assert(asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window),
-                "Invalid ra-WindowSize");
+  bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
+  srsgnb_assert(success, "Invalid ra-WindowSize");
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
       asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n8;

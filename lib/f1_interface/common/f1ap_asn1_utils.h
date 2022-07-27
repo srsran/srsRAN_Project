@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 
@@ -47,7 +48,7 @@ inline const char* get_message_type_str(const asn1::f1ap::f1_ap_pdu_c& pdu)
     default:
       break;
   }
-  srsgnb_terminate("Invalid F1AP PDU type \"{}\"", pdu.type().to_string());
+  report_fatal_error("Invalid F1AP PDU type \"{}\"", pdu.type().to_string());
 }
 
 /// Extracts transaction id of Initiating message.

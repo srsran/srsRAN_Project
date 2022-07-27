@@ -29,7 +29,7 @@ subcarrier_spacing srsgnb::ssb_case_to_scs(ssb_pattern_case ssb_case)
     case ssb_pattern_case::E:
       return subcarrier_spacing::kHz240;
     default:
-      srsgnb_terminate("Invalid SSB pattern");
+      srsgnb_assertion_failure("Invalid SSB pattern");
   }
   return subcarrier_spacing::invalid;
 }

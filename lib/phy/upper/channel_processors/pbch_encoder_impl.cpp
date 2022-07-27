@@ -13,6 +13,7 @@
 #include "srsgnb/phy/upper/sequence_generators/sequence_generator_factories.h"
 #include "srsgnb/srsvec/bit.h"
 #include "srsgnb/srsvec/copy.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 

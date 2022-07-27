@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/support/math_utils.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 /// Number of prime numbers between 2 and 3299 (both included).

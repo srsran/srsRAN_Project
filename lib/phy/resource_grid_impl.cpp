@@ -11,6 +11,7 @@
 #include "resource_grid_impl.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cassert>
 

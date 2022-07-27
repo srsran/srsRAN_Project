@@ -15,6 +15,7 @@
 
 #include "ldpc_graph_impl.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 namespace ldpc {

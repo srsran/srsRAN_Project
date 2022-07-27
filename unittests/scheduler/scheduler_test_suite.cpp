@@ -13,6 +13,7 @@
 #include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/test_utils.h"
 
 using namespace srsgnb;

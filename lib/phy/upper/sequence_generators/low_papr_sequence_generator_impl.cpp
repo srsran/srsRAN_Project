@@ -12,8 +12,8 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/srsvec/sc_prod.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
-#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 
@@ -177,7 +177,7 @@ void low_papr_sequence_generator_impl::r_uv_arg(span<float> tmp_arg, uint32_t u,
   } else if (M_zc >= 36) {
     r_uv_arg_mprb(tmp_arg, u, v);
   } else {
-    srsgnb_terminate("Invalid sequence length %d", M_zc);
+    srsgnb_terminate("Invalid sequence length {}", M_zc);
   }
 }
 

@@ -13,6 +13,7 @@
 #include "../cell/cell_configuration.h"
 #include "pdsch/pdsch_dmrs_symbol_mask.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 

@@ -11,6 +11,7 @@
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/scheduler/sched_consts.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 

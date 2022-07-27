@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/detail/type_storage.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include <cstddef>
 #include <cstdint>
