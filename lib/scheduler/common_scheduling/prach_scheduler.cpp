@@ -67,14 +67,10 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     cached_prachs.emplace_back();
     cached_prach_occasion& cached_prach = cached_prachs.back();
 
-    // Compute PRACH CRB x symbols resources.
-    static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
-    uint8_t               prb_start      = rach_cfg_common().rach_cfg_generic.msg1_frequency_start;
-    prb_interval          prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
-    crb_interval          prach_crbs  = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
-    cached_prach.grant_resources.ch   = grant_info::channel::prach;
-    cached_prach.grant_resources.scs  = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-    cached_prach.grant_resources.crbs = prach_crbs;
+    // Compute PRACH symbols (Note: CRBs are calculated later, in a dynamic fashion, depending on Resource Grid
+    // availability).
+    cached_prach.grant_resources.ch  = grant_info::channel::prach;
+    cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
     if (prach_cfg.format < preamble_format::OTHER) {
       double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
       unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
@@ -91,8 +87,9 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
     cached_prach.occasion.nof_prach_occasions = prach_cfg.nof_occasions_within_slot;
     cached_prach.occasion.nof_cs              = prach_cyclic_shifts_get(
         info.scs, rach_cfg_common().restricted_set, rach_cfg_common().rach_cfg_generic.zero_correlation_zone_config);
-    // TODO: How to derive indexFdRa.
-    cached_prach.occasion.fd_ra_resources    = {0, rach_cfg_common().rach_cfg_generic.msg1_fdm};
+    // Note: The frequency position of the PRACH may be recalculated depending on RB availability.
+    cached_prach.occasion.index_fd_ra        = 0;
+    cached_prach.occasion.nof_fd_ra          = rach_cfg_common().rach_cfg_generic.msg1_fdm;
     cached_prach.occasion.prach_config_index = rach_cfg_common().rach_cfg_generic.prach_config_index;
     cached_prach.occasion.start_preamble_index =
         cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
@@ -115,16 +112,26 @@ void prach_scheduler::run_slot(cell_slot_resource_allocator& slot_res_grid)
   }
 
   for (cached_prach_occasion& cached_prach : cached_prachs) {
-    // Reserve RB vs symbol resources for PRACH in cell resource grid.
-    if (slot_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
-      logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: CRBs={},symbols={} already used.",
-                     cached_prach.grant_resources.crbs,
-                     cached_prach.grant_resources.symbols);
-      continue;
-    }
-    slot_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
+    unsigned id_ra_fd = 0;
+    for (; id_ra_fd != cached_prach.occasion.nof_fd_ra; ++id_ra_fd) {
+      // Compute CRBs for the given Frequency domain occasion index.
+      static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
+      uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_ra_fd * PRACH_NOF_PRBS;
+      prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
+      cached_prach.grant_resources.crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
-    // Add PRACH occasion to scheduler slot output.
-    slot_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
+      // Reserve RB vs symbol resources for PRACH in cell resource grid.
+      if (not slot_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
+        slot_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
+
+        // Add PRACH occasion to scheduler slot output.
+        cached_prach.occasion.index_fd_ra = id_ra_fd;
+        slot_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
+        break;
+      }
+    }
+    if (id_ra_fd == cached_prach.occasion.nof_fd_ra) {
+      logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
+    }
   }
 }

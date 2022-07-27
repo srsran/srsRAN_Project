@@ -237,14 +237,13 @@ struct ul_sched_info {
 };
 
 struct prach_occasion_info {
-  /// Number of time-domain PRACH occasions (N^{RAslot}_t), as per TS38.211 Tables 6.3.3.2-[2-4].
+  /// Number of time-domain PRACH occasions (\f$N^{RAslot}_t\f$), as per TS38.211 Tables 6.3.3.2-[2-4].
   uint8_t nof_prach_occasions;
   /// RACH format information for the PRACH occasions.
   preamble_format format;
-  /// Frequency domain occasion indexes, which ranges from 0 to M-1, where M is the higher-layer parameter msg1-FDM,
-  /// which can take the values {1,2,4,8}. Possible values: {0,...7}.
-  /// \remark See TS 38.211, sec 6.3.3.2.
-  interval<uint8_t> fd_ra_resources;
+  /// Frequency domain occasion index \f$n \in \{0,...,M-1\}\f$, where \f$M\f$ is the higher-layer parameter msg1-FDM,
+  /// which can take the values \f$\{1,2,4,8\}\f$. See TS38.211, sec 6.3.3.2. Possible values {0,...,7}.
+  uint8_t index_fd_ra;
   /// Starting symbol for the first PRACH TD occasion.
   /// \remark See TS38.211, sec 6.3.3.2 and Tables 6.3.3.2-2 and 6.3.3.2-4. Possible values: {0,...,13}.
   uint8_t start_symbol;
@@ -252,6 +251,8 @@ struct prach_occasion_info {
   uint16_t nof_cs;
   /// Values: {0,...,255}.
   uint8_t prach_config_index;
+  /// Number of frequency domain occasions starting with index_fd_ra. Possible values: {1,...,8}.
+  uint8_t nof_fd_ra;
   /// Start of preamble logical index to monitor the PRACH occasions in this slot. Values: {0,...63}.
   uint8_t start_preamble_index;
   /// Number of preamble logical indices. Values: {1,...,64}.
