@@ -20,9 +20,9 @@ class upper_phy_uplink_results_notifier
 public:
   virtual ~upper_phy_uplink_results_notifier() = default;
 
-  /// \brief Notifies new PRACH results.
+  /// \brief Notifies the results of a PRACH detection.
   ///
-  /// \param result Contains the detected PRACHs.
+  /// \param result Contains the results of the detected PRACH preambles.
   virtual void on_prach_results(const prach_detector::detection_result& result) = 0;
 };
 
