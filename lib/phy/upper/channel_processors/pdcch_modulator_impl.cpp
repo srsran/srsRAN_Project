@@ -23,7 +23,7 @@ void pdcch_modulator_impl::scramble(span<uint8_t> b_hat, span<const uint8_t> b, 
   scrambler->init(c_init);
 
   // Apply sequence as unpacked XOR.
-  scrambler->apply_xor_bit(b, b_hat);
+  scrambler->apply_xor_bit(b_hat, b);
 }
 
 void pdcch_modulator_impl::modulate(span<cf_t> d_pdcch, span<const uint8_t> b_hat, float scaling)

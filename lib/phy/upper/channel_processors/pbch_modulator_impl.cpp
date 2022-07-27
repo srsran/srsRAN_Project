@@ -22,7 +22,7 @@ void pbch_modulator_impl::scramble(span<const uint8_t> b, span<uint8_t> b_hat, c
   scrambler->advance((config.ssb_idx & 0x7) * M_bit);
 
   // Apply XOR
-  scrambler->apply_xor_bit(b, b_hat);
+  scrambler->apply_xor_bit(b_hat, b);
 }
 
 void pbch_modulator_impl::modulate(span<const uint8_t> b_hat, span<cf_t> d_pbch)

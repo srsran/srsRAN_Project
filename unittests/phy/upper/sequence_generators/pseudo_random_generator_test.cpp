@@ -111,7 +111,7 @@ void test_apply_xor_byte(std::shared_ptr<pseudo_random_generator_factory> factor
 
   // Apply sequence
   std::vector<uint8_t> data_xor(N / 8);
-  generator->apply_xor_byte(data, data_xor);
+  generator->apply_xor_byte(data_xor, data);
 
   // Assert
   for (unsigned i = 0; i != N / 8; ++i) {
@@ -147,7 +147,7 @@ void test_apply_xor_bit(std::shared_ptr<pseudo_random_generator_factory> factory
 
   // Apply sequence
   srsvec::aligned_vec<uint8_t> data_xor(N);
-  generator->apply_xor_bit(data, data_xor);
+  generator->apply_xor_bit(data_xor, data);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {
@@ -184,7 +184,7 @@ void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> factory,
 
   // Apply sequence
   srsvec::aligned_vec<log_likelihood_ratio> data_xor(N);
-  generator->apply_xor(data, data_xor);
+  generator->apply_xor(data_xor, data);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {

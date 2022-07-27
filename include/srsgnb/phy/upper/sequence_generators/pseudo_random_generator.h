@@ -52,21 +52,21 @@ public:
 
   /// \brief Apply XOR sequence to a byte buffer.
   ///
-  /// \param [in] in Provides the input data.
   /// \param [out] out Provides the ouput data destination.
-  virtual void apply_xor_byte(span<const uint8_t> in, span<uint8_t> out) = 0;
+  /// \param [in] in Provides the input data.
+  virtual void apply_xor_byte(span<uint8_t> out, span<const uint8_t> in) = 0;
 
   /// \brief Apply XOR sequence to a bit buffer.
   ///
-  /// \param [in] in Provides the input data.
   /// \param [out] out Provides the ouput data destination.
-  virtual void apply_xor_bit(span<const uint8_t> in, span<uint8_t> out) = 0;
+  /// \param [in] in Provides the input data.
+  virtual void apply_xor_bit(span<uint8_t> out, span<const uint8_t> in) = 0;
 
   /// \brief Apply XOR sequence to a signed 8-bit buffer.
   ///
-  /// \param [in] in Provides the input data.
   /// \param [out] out Provides the ouput data destination.
-  virtual void apply_xor(span<const log_likelihood_ratio> in, span<log_likelihood_ratio> out) = 0;
+  /// \param [in] in Provides the input data.
+  virtual void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) = 0;
 
   /// \brief Generate a floating point pseudo random sequence based on the internal state and the amplitude in \c
   /// value.

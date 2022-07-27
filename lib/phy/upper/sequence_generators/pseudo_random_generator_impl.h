@@ -160,9 +160,9 @@ public:
   void    init(const state_s& c_init) override;
   state_s get_state() const override;
   void    advance(unsigned count) override;
-  void    apply_xor_byte(span<const uint8_t> in, span<uint8_t> out) override;
-  void    apply_xor_bit(span<const uint8_t> in, span<uint8_t> out) override;
-  void    apply_xor(span<const log_likelihood_ratio> in, span<log_likelihood_ratio> out) override;
+  void    apply_xor_byte(span<uint8_t> out, span<const uint8_t> in) override;
+  void    apply_xor_bit(span<uint8_t> out, span<const uint8_t> in) override;
+  void    apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;
   void    generate(span<float> buffer, float value) override;
 };
 } // namespace srsgnb
