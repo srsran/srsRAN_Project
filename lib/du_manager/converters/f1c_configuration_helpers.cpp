@@ -292,10 +292,13 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   switch (rach_cfg.restricted_set) {
     case srsgnb::restricted_set_config::UNRESTRICTED:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::unrestricted_set;
+      break;
     case srsgnb::restricted_set_config::TYPE_A:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_a;
+      break;
     case srsgnb::restricted_set_config::TYPE_B:
       rach.restricted_set_cfg.value = rach_cfg_common_s::restricted_set_cfg_opts::restricted_set_type_b;
+      break;
     default:
       report_fatal_error("Invalid restricted set");
   }
