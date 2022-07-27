@@ -62,39 +62,43 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
   }
 
   // Pre-compute and store potential PRACH occasions.
-  unsigned nof_occasions = prach_cfg.format < preamble_format::OTHER ? 1 : prach_cfg.nof_occasions_within_slot;
-  for (unsigned i = 0; i != nof_occasions; ++i) {
-    cached_prachs.emplace_back();
-    cached_prach_occasion& cached_prach = cached_prachs.back();
+  unsigned nof_td_occasions = prach_cfg.format < preamble_format::OTHER ? 1 : prach_cfg.nof_occasions_within_slot;
+  for (unsigned i = 0; i != nof_td_occasions; ++i) {
+    for (unsigned id_fd_ra = 0; id_fd_ra != rach_cfg_common().rach_cfg_generic.msg1_fdm; ++id_fd_ra) {
+      cached_prachs.emplace_back();
+      cached_prach_occasion& cached_prach = cached_prachs.back();
 
-    // Compute PRACH symbols (Note: CRBs are calculated later, in a dynamic fashion, depending on Resource Grid
-    // availability).
-    cached_prach.grant_resources.ch  = grant_info::channel::prach;
-    cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
-    if (prach_cfg.format < preamble_format::OTHER) {
-      double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
-      unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
-      cached_prach.grant_resources.symbols = {prach_cfg.starting_symbol, prach_cfg.starting_symbol + nof_symbols};
-    } else {
-      srsgnb_sanity_check(prach_cfg.duration > 0, "Invalid duration for short preamble");
-      unsigned start                       = prach_cfg.starting_symbol + i * prach_cfg.duration;
-      cached_prach.grant_resources.symbols = {start, start + prach_cfg.duration};
+      // Pre-compute PRACH symbol x RB resources.
+      cached_prach.grant_resources.ch  = grant_info::channel::prach;
+      cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
+      if (prach_cfg.format < preamble_format::OTHER) {
+        double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
+        unsigned nof_symbols                 = ceil(length_msecs / symbol_duration_msec);
+        cached_prach.grant_resources.symbols = {prach_cfg.starting_symbol, prach_cfg.starting_symbol + nof_symbols};
+      } else {
+        srsgnb_sanity_check(prach_cfg.duration > 0, "Invalid duration for short preamble");
+        unsigned start                       = prach_cfg.starting_symbol + i * prach_cfg.duration;
+        cached_prach.grant_resources.symbols = {start, start + prach_cfg.duration};
+      }
+      static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
+      uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * PRACH_NOF_PRBS;
+      prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
+      cached_prach.grant_resources.crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
+
+      // Pre-compute PRACH occasion parameters.
+      cached_prach.occasion.format              = prach_cfg.format;
+      cached_prach.occasion.start_symbol        = prach_cfg.starting_symbol;
+      cached_prach.occasion.nof_prach_occasions = prach_cfg.nof_occasions_within_slot;
+      cached_prach.occasion.nof_cs              = prach_cyclic_shifts_get(
+          info.scs, rach_cfg_common().restricted_set, rach_cfg_common().rach_cfg_generic.zero_correlation_zone_config);
+      cached_prach.occasion.index_fd_ra        = id_fd_ra;
+      cached_prach.occasion.nof_fd_ra          = rach_cfg_common().rach_cfg_generic.msg1_fdm;
+      cached_prach.occasion.prach_config_index = rach_cfg_common().rach_cfg_generic.prach_config_index;
+      cached_prach.occasion.start_preamble_index =
+          cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
+      cached_prach.occasion.nof_preamble_indexes =
+          cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles;
     }
-
-    // Pre-compute PRACH occasion parameters.
-    cached_prach.occasion.format              = prach_cfg.format;
-    cached_prach.occasion.start_symbol        = prach_cfg.starting_symbol;
-    cached_prach.occasion.nof_prach_occasions = prach_cfg.nof_occasions_within_slot;
-    cached_prach.occasion.nof_cs              = prach_cyclic_shifts_get(
-        info.scs, rach_cfg_common().restricted_set, rach_cfg_common().rach_cfg_generic.zero_correlation_zone_config);
-    // Note: The frequency position of the PRACH may be recalculated depending on RB availability.
-    cached_prach.occasion.index_fd_ra        = 0;
-    cached_prach.occasion.nof_fd_ra          = rach_cfg_common().rach_cfg_generic.msg1_fdm;
-    cached_prach.occasion.prach_config_index = rach_cfg_common().rach_cfg_generic.prach_config_index;
-    cached_prach.occasion.start_preamble_index =
-        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
-    cached_prach.occasion.nof_preamble_indexes =
-        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles;
   }
 }
 
@@ -112,26 +116,14 @@ void prach_scheduler::run_slot(cell_slot_resource_allocator& slot_res_grid)
   }
 
   for (cached_prach_occasion& cached_prach : cached_prachs) {
-    unsigned id_ra_fd = 0;
-    for (; id_ra_fd != cached_prach.occasion.nof_fd_ra; ++id_ra_fd) {
-      // Compute CRBs for the given Frequency domain occasion index.
-      static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
-      uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_ra_fd * PRACH_NOF_PRBS;
-      prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
-      cached_prach.grant_resources.crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
-
-      // Reserve RB vs symbol resources for PRACH in cell resource grid.
-      if (not slot_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
-        slot_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
-
-        // Add PRACH occasion to scheduler slot output.
-        cached_prach.occasion.index_fd_ra = id_ra_fd;
-        slot_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
-        break;
-      }
-    }
-    if (id_ra_fd == cached_prach.occasion.nof_fd_ra) {
+    // Reserve RBs and symbols of the PRACH occasion in the resource grid.
+    if (slot_res_grid.ul_res_grid.collides(cached_prach.grant_resources)) {
       logger.warning("SCHED: Cannot allocate PRACH occasion. Cause: Lack of space in resource grid.");
+      continue;
     }
+    slot_res_grid.ul_res_grid.fill(cached_prach.grant_resources);
+
+    // Add PRACH occasion to scheduler slot output.
+    slot_res_grid.result.ul.prachs.push_back(cached_prach.occasion);
   }
 }
