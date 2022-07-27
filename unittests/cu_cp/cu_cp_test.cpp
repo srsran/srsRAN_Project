@@ -175,3 +175,57 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
     EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
   }
 }
+
+/// Test the f1 initial UL RRC message transfer procedure
+TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
+{
+  // Connect DU
+  cu_cp_obj->on_new_connection();
+
+  // Connect AMF
+  cu_cp_obj->on_amf_connection();
+
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Handling of Initial UL RRC message transfer
+  {
+    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+
+    // Pass PDU to CU-CP
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
+    // check that UE has been added
+    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
+  }
+
+  // Disconnect AMF
+  cu_cp_obj->on_amf_connection_drop();
+
+  // Handling of Initial UL RRC message transfer
+  {
+    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41256);
+
+    // Pass PDU to CU-CP
+    test_logger.info("Injecting Initial UL RRC message");
+    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
+
+    // check that UE has been added
+    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
+
+    // Check that UE has been added to F1AP
+    EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
+
+    // Inject UE Context Release Complete message
+    f1c_msg ue_context_release_complete_msg = generate_f1_ue_context_release_complete_msg(1, 41256);
+
+    test_logger.info("Injecting UE Context Release Complete message");
+    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
+
+    // Check that UE has been removed from F1AP
+    EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);
+  }
+}
