@@ -40,6 +40,8 @@ target_link_libraries(srsgnb_prach_detector srsgnb_ran srsvec)
 add_library(srsgnb_pusch_decoder STATIC pusch_decoder_impl.cpp)
 target_link_libraries(srsgnb_pusch_decoder srsgnb_channel_coding srsvec)
 
+add_library(srsgnb_pusch_demodulator STATIC pusch_demodulator_impl.cpp)
+
 add_library(srsgnb_pusch_processor STATIC pusch_processor_impl.cpp)
 target_link_libraries(srsgnb_pusch_processor srsgnb_upper_phy_support)
 

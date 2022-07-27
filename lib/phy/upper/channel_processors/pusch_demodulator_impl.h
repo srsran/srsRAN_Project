@@ -1,0 +1,98 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
+/// \file
+/// \brief PUSCH demodulator implementation declaration.
+
+#pragma once
+
+#include "srsgnb/phy/upper/channel_processors/pusch_demodulator.h"
+#include "srsgnb/phy/upper/equalization/channel_equalizer.h"
+#include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+
+namespace srsgnb {
+
+class pusch_demodulator_impl : public pusch_demodulator
+{
+public:
+  /// Constructor: sets up internal components and acquires their ownership.
+  pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       eq,
+                         std::unique_ptr<demodulation_mapper>     demap,
+                         std::unique_ptr<pseudo_random_generator> dscr) :
+    equalizer(std::move(eq)), demapper(std::move(demap)), descrambler(std::move(dscr))
+  {
+    srsgnb_assert(equalizer, "Invalid pointer to channel_equalizer object.");
+    srsgnb_assert(demapper, "Invalid pointer to demodulation_mapper object.");
+    srsgnb_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
+  }
+
+  // See documentation for the documentation.
+  void demodulate(data_llr_buffer&            data,
+                  harq_ack_llr_buffer&        harq_ack,
+                  csi_part1_llr&              csi_part1,
+                  csi_part2_llr&              csi_part2,
+                  const resource_grid_reader& grid,
+                  const channel_estimate&     estimates,
+                  const configuration&        config) override;
+
+private:
+  /// \brief Extracts HARQ-ACK soft bits from the sequence of multiplexed data and control bits.
+  ///
+  /// See TS38.212 Section 6.2.7.
+  /// \param[out]    harq_ack Sequence of HARQ-ACK soft bits.
+  /// \param[in/out] data     Sequence of data soft bits (possibly multiplexed with control ones).
+  /// \param[in]     config   Configuration parameters.
+  /// \remark The elements of \c data corresponding to HARQ-ACK bits will be set to zero (i.e., fully indeterminate data
+  /// soft bit).
+  void extract_harq_ack(harq_ack_llr_buffer& harq_ack, data_llr_buffer& data, const configuration& config)
+  {
+    // For now, do nothing.
+  }
+
+  /// \brief Extracts CSI Part1 soft bits from the sequence of multiplexed data and control bits.
+  ///
+  /// See TS38.212 Section 6.2.7.
+  /// \param[out]    csi_part1 Sequence of CSI Part1 soft bits.
+  /// \param[in/out] data      Sequence of data soft bits (possibly multiplexed with control ones).
+  /// \param[in]     config    Configuration parameters.
+  /// \remark The elements of \c data corresponding to CSI Part1 bits will be set to zero (i.e., fully indeterminate
+  /// data soft bit).
+  void extract_csi_part1(csi_part1_llr& csi_part1, data_llr_buffer& data, const configuration& config)
+  {
+    // For now, do nothing.
+  }
+
+  /// \brief Extracts CSI Part2 soft bits from the sequence of multiplexed data and control bits.
+  ///
+  /// See TS38.212 Section 6.2.7.
+  /// \param[out]    csi_part1 Sequence of CSI Part2 soft bits.
+  /// \param[in/out] data      Sequence of data soft bits (possibly multiplexed with control ones).
+  /// \param[in]     config    Configuration parameters.
+  /// \remark The elements of \c data corresponding to CSI Part2 bits will be set to zero (i.e., fully indeterminate
+  /// data soft bit).
+  void extract_csi_part2(csi_part2_llr& csi_part2, data_llr_buffer& data, const configuration& config)
+  {
+    // For now, do nothing.
+  }
+
+  /// Channel equalization component, also in charge of combining contributions of all receive antenna ports.
+  std::unique_ptr<channel_equalizer> equalizer;
+  /// Demodulation mapper component: transforms channel symbols into log-likelihood ratios (i.e., soft bits).
+  std::unique_ptr<demodulation_mapper> demapper;
+  /// Descrambler component.
+  std::unique_ptr<pseudo_random_generator> descrambler;
+
+  /// Buffer used to transfer channel modulation symbols from the equalizer to the demapper.
+  static_vector<cf_t, MAX_NOF_DATA_LLR / 2> mod_symbols;
+  /// Buffer used to transfer symbol noise variances from the equalizer to the demapper.
+  static_vector<float, MAX_NOF_DATA_LLR / 2> noise_vars;
+};
+
+} // namespace srsgnb

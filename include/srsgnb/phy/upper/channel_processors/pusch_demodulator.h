@@ -13,16 +13,14 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
-#include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
+#include "srsgnb/phy/upper/channel_modulation/demodulation_mapper.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
-#include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
 #include "srsgnb/ran/uci/uci_constants.h"
 
@@ -113,8 +111,10 @@ public:
     float scaling;
     /// Reserved RE pattern where PUSCH is not mapped.
     re_pattern_list reserved;
-    /// Port indices the PUSCH transmission is mapped to.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Number of transmit layers.
+    unsigned nof_tx_layers;
+    /// Number of receive ports.
+    unsigned nof_rx_ports;
   };
 
   /// Default destructor.
