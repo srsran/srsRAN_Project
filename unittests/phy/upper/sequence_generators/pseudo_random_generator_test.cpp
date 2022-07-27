@@ -161,13 +161,14 @@ void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> factory,
                        unsigned                                         N,
                        unsigned                                         offset)
 {
-  std::uniform_int_distribution<int8_t> dist(INT8_MIN, INT8_MAX);
+  std::uniform_int_distribution<int8_t> dist(log_likelihood_ratio::min().to_value_type(),
+                                             log_likelihood_ratio::max().to_value_type());
 
   // Create data buffer
-  srsvec::aligned_vec<int8_t> data(N);
+  srsvec::aligned_vec<log_likelihood_ratio> data(N);
 
   // Fill buffer with random data
-  for (int8_t& v : data) {
+  for (log_likelihood_ratio& v : data) {
     v = dist(rgen);
   }
 
@@ -182,12 +183,12 @@ void test_apply_xor_i8(std::shared_ptr<pseudo_random_generator_factory> factory,
   generator->advance(offset);
 
   // Apply sequence
-  srsvec::aligned_vec<int8_t> data_xor(N);
+  srsvec::aligned_vec<log_likelihood_ratio> data_xor(N);
   generator->apply_xor(data, data_xor);
 
   // Assert
   for (unsigned i = 0; i != N; ++i) {
-    int8_t gold = c_char[i] * data[i];
+    log_likelihood_ratio gold = c_char[i] * data[i].to_value_type();
     TESTASSERT_EQ(gold, data_xor[i]);
   }
 }

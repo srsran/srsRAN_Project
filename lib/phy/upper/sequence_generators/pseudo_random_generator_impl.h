@@ -162,7 +162,7 @@ public:
   void    advance(unsigned count) override;
   void    apply_xor_byte(span<const uint8_t> in, span<uint8_t> out) override;
   void    apply_xor_bit(span<const uint8_t> in, span<uint8_t> out) override;
-  void    apply_xor(span<const int8_t> in, span<int8_t> out) override;
+  void    apply_xor(span<const log_likelihood_ratio> in, span<log_likelihood_ratio> out) override;
   void    generate(span<float> buffer, float value) override;
 };
 } // namespace srsgnb

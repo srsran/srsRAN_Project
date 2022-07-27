@@ -49,12 +49,8 @@ void pusch_demodulator_impl::demodulate(data_llr_buffer&            data,
   // Descramble.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;
   descrambler->init(c_init);
-  // To descramble, LLRs should be seen as int8_t. Note that descrambling only changes the sign of some elements and,
-  // thus, this operation is safe.
-  span<int8_t> data_tmp((int8_t*)data.begin(), data.size());
-  // The following operation changes data_tmp and, in turn, data.
   // Temporarily, UCI placeholders for 1-bit HARQ-ACK transmissions are not considered.
-  descrambler->apply_xor(data_tmp, data_tmp);
+  descrambler->apply_xor(data, data);
 
   // Extract HARQ ACK soft bits.
   extract_harq_ack(harq_ack, data, config);

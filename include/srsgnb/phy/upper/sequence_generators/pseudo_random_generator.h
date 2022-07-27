@@ -13,6 +13,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/log_likelihood_ratio.h"
 
 namespace srsgnb {
 
@@ -65,7 +66,7 @@ public:
   ///
   /// \param [in] in Provides the input data.
   /// \param [out] out Provides the ouput data destination.
-  virtual void apply_xor(span<const int8_t> in, span<int8_t> out) = 0;
+  virtual void apply_xor(span<const log_likelihood_ratio> in, span<log_likelihood_ratio> out) = 0;
 
   /// \brief Generate a floating point pseudo random sequence based on the internal state and the amplitude in \c
   /// value.

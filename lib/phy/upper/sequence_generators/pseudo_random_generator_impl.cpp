@@ -294,7 +294,7 @@ void pseudo_random_generator_impl::apply_xor_bit(span<const uint8_t> in, span<ui
     x2 = step_x2(x2);
   }
 }
-void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t> out)
+void pseudo_random_generator_impl::apply_xor(span<const log_likelihood_ratio> in, span<log_likelihood_ratio> out)
 {
   assert(in.size() == out.size());
 
@@ -336,7 +336,7 @@ void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t>
       }
 #endif
       for (; j < SEQUENCE_PAR_BITS; j++) {
-        out[i + j] = in[i + j] * (((c >> j) & 1U) ? -1 : +1);
+        out[i + j] = in[i + j].to_value_type() * (((c >> j) & 1U) ? -1 : +1);
       }
 
       // Step sequences
@@ -346,7 +346,7 @@ void pseudo_random_generator_impl::apply_xor(span<const int8_t> in, span<int8_t>
   }
 
   for (; i < length; i++) {
-    out[i] = in[i] * (((x1 ^ x2) & 1U) ? -1 : +1);
+    out[i] = in[i].to_value_type() * (((x1 ^ x2) & 1U) ? -1 : 1);
 
     // Step sequences
     x1 = step_x1(x1);
