@@ -35,7 +35,7 @@ public:
     srsgnb_assert(descrambler, "Invalid pointer to pseudo_random_generator object.");
   }
 
-  // See documentation for the documentation.
+  // See interface for the documentation.
   void demodulate(data_llr_buffer&            data,
                   harq_ack_llr_buffer&        harq_ack,
                   csi_part1_llr&              csi_part1,

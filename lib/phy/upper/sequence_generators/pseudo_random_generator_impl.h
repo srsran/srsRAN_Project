@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Pseudo-random generator implementation declaration.
+
 #pragma once
 
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
@@ -15,73 +18,88 @@
 #include <memory>
 
 namespace srsgnb {
+
+/// SSE-optimized implementation of the pseudo-random generator.
 class pseudo_random_generator_impl : public pseudo_random_generator
 {
 private:
-  /**
-   * Length of the seed, used for the feedback delay. Do not change.
-   */
-  static const unsigned SEQUENCE_SEED_LEN = 31;
+  /// Length of the generator seed in bits.
+  static constexpr unsigned SEQUENCE_SEED_LEN = 31;
 
-  /**
-   * Nc parameter defined in 3GPP. Do not change.
-   */
-  static const unsigned SEQUENCE_NC = 1600;
+  /// \brief Parameter \f$N_{\mathrm{C}}\f$, as defined in TS38.211 Section 5.2.1.
+  ///
+  /// Corresponds to the delay between the state sequences \f$x_1(n), x_2(n)\f$ and the output sequence \f$c(n) =
+  /// x_1(n + N_{\mathrm{C}}) \oplus x_2(n + N_{\mathrm{C}})\f$.
+  static constexpr unsigned SEQUENCE_NC = 1600;
 
-  /**
-   * Parallel bit generation for x1/x2 sequences parameters. Exploits the fact that the sequence generation is 31 chips
-   * ahead and the maximum register shift is 3 (for x2). The maximum number of parallel bits is 28, 16 is optimal for
-   * SSE.
-   */
-  static const unsigned SEQUENCE_PAR_BITS = 24;
-  static const unsigned SEQUENCE_MASK     = ((1U << SEQUENCE_PAR_BITS) - 1U);
+  /// \name Parameters for parallel generation of the state sequences.
+  ///
+  /// The parallel generation of the state sequences \f$x_1(n)\f$ and \f$x_2(n)\f$, as defined in
+  /// TS38.211 Section 5.2.1, exploits the fact that these sequences have a memory of 31 terms, but only the four
+  /// oldest terms contribute to the the generation of the next one.
+  ///@{
+  /// Number of bits generated in parallel.
+  static constexpr unsigned SEQUENCE_PAR_BITS = 24;
+  /// Bitmask for the parallelized bits.
+  static constexpr unsigned SEQUENCE_MASK = ((1U << SEQUENCE_PAR_BITS) - 1U);
+  ///@}
 
-  /**
-   * Static precomputed x1 and x2 states after Nc shifts
-   * -------------------------------------------------------
-   *
-   * The pre-computation of the Pseudo-Random sequences is based in their linearity properties.
-   *
-   * Having two seeds seed_1 and seed_2 generate x2_1 and x2_2 respectively:
-   *     seed_1 -> x2_1
-   *     seed_2 -> x2_2
-   *
-   * Then, the linearity property satisfies:
-   *     seed_1 ^ seed_2 -> x2_1 ^ x2_2
-   *
-   * Because of this, a different x2 can be pre-computed for each bit of the seed.
-   *
-   */
+  /// State sequence \f$x_1(n)\f$ initializer.
   class x1_init_s
   {
   private:
+    /// Memory register for sequence \f$x_1(n)\f$.
     unsigned x1;
 
   public:
+    /// Initializes the first 31 elements of \f$x_1(n)\f$ and advances to position \f$N_{\mathrm{C}}\f$.
     x1_init_s();
+    /// Returns the \f$x_1(n)\f$ state register after initialization.
     unsigned get() const;
   };
 
+  /// \brief State sequence \f$x_2(n)\f$ initializer.
+  ///
+  /// Similarly to x1_init_s, this class is used to initialize the sequence \f$x_2(n)\f$ and advance it until position
+  /// \f$n = N_{\mathrm{C}}\f$. Here, however, the process is carried out simultaneously for all possible seeds of the
+  /// form \f$c_{\mathrm{init}} = 2^k\f$ for \f$k=0,1,\dots,30\f$. The initial state corresponding to any other seed can
+  /// easily be computed from these basic ones after noticing that the map sending a seed to the corresponding sequence
+  /// defines a group isomorphism between the set of seeds and the set of sequences (both groups under bitwise XOR).
+  /// That is, if
+  /// \f{align*}
+  /// c_{\mathrm{init}}^{(1)} &\mapsto x_2^{(1)}(n) &&\text{and} &
+  /// c_{\mathrm{init}}^{(2)} &\mapsto x_2^{(2)}(n)
+  /// \f}
+  /// then
+  /// \f[
+  /// c_{\mathrm{init}}^{(1)} \oplus c_{\mathrm{init}}^{(2)} \mapsto x_2^{(1)}(n) \oplus x_2^{(2)}(n)
+  /// \f]
+  /// with the XOR operator acting bitwise between seeds and for all \f$n\f$ between sequences.
   struct x2_init_s {
   private:
+    /// Memory register for sequence \f$x_2(n)\f$, for all basic seeds.
     std::array<unsigned, SEQUENCE_SEED_LEN> x2;
 
   public:
+    /// Initializes the first 31 elements of \f$x_2(n)\f$ and advances to position \f$N_{\mathrm{C}}\f$.
     x2_init_s();
+    /// For the given seed, returns the \f$x_2(n)\f$ state register after initialization.
     unsigned get(unsigned c_init) const;
   };
 
+  /// Sequence \f$x_1(n)\f$ initializer object.
   static const x1_init_s x1_init;
+  /// Sequence \f$x_2(n)\f$ initializer object.
   static const x2_init_s x2_init;
 
+  /// Memory register for sequence \f$x_1(n)\f$.
   uint32_t x1;
+  /// Memory register for sequence \f$x_2(n)\f$.
   uint32_t x2;
 
-  /**
-   * Computes one step of the X1 sequence for SEQUENCE_PAR_BITS simultaneously
-   * @param state 32 bit current state
-   * @return new 32 bit state
-   */
+  /// \brief Advances sequence \f$x_1(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
+  /// \param[in] state Current 32-bit long state.
+  /// \return New 32-bit long state.
   static inline uint32_t step_par_x1(uint32_t state)
   {
     // Perform XOR
@@ -96,11 +114,9 @@ private:
     return state;
   }
 
-  /**
-   * Computes one step of the X1 sequence for 1bit
-   * @param state 32 bit current state
-   * @return new 32 bit state
-   */
+  /// \brief Advances sequence \f$x_1(n)\f$ one steps.
+  /// \param[in] state Current 32-bit long state.
+  /// \return New 32-bit long state.
   static inline uint32_t step_x1(uint32_t state)
   {
     // Perform XOR
@@ -115,11 +131,9 @@ private:
     return state;
   }
 
-  /**
-   * Computes one step of the X2 sequence for SEQUENCE_PAR_BITS simultaneously
-   * @param state 32 bit current state
-   * @return new 32 bit state
-   */
+  /// \brief Advances sequence \f$x_2(n)\f$ SEQUENCE_PAR_BITS steps simultaneously.
+  /// \param[in] state Current 32-bit long state.
+  /// \return New 32-bit long state.
   static inline uint32_t step_par_x2(uint32_t state)
   {
     // Perform XOR
@@ -134,11 +148,9 @@ private:
     return state;
   }
 
-  /**
-   * Computes one step of the X2 sequence for 1bit
-   * @param state 32 bit current state
-   * @return new 32 bit state
-   */
+  /// \brief Advances sequence \f$x_2(n)\f$ one steps.
+  /// \param[in] state Current 32-bit long state.
+  /// \return New 32-bit long state.
   static inline uint32_t step_x2(uint32_t state)
   {
     // Perform XOR
@@ -154,15 +166,31 @@ private:
   }
 
 public:
-  pseudo_random_generator_impl()  = default;
-  ~pseudo_random_generator_impl() = default;
-  void    init(unsigned c_init) override;
-  void    init(const state_s& c_init) override;
+  /// Default constructor.
+  pseudo_random_generator_impl() = default;
+
+  // See interface for the documentation.
+  void init(unsigned c_init) override;
+
+  // See interface for the documentation.
+  void init(const state_s& c_init) override;
+
+  // See interface for the documentation.
   state_s get_state() const override;
-  void    advance(unsigned count) override;
-  void    apply_xor_byte(span<uint8_t> out, span<const uint8_t> in) override;
-  void    apply_xor_bit(span<uint8_t> out, span<const uint8_t> in) override;
-  void    apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;
-  void    generate(span<float> buffer, float value) override;
+
+  // See interface for the documentation.
+  void advance(unsigned count) override;
+
+  // See interface for the documentation.
+  void apply_xor_byte(span<uint8_t> out, span<const uint8_t> in) override;
+
+  // See interface for the documentation.
+  void apply_xor_bit(span<uint8_t> out, span<const uint8_t> in) override;
+
+  // See interface for the documentation.
+  void apply_xor(span<log_likelihood_ratio> out, span<const log_likelihood_ratio> in) override;
+
+  // See interface for the documentation.
+  void generate(span<float> buffer, float value) override;
 };
 } // namespace srsgnb
