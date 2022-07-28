@@ -176,3 +176,22 @@ inline bool rlc_um_write_data_pdu_header(const rlc_um_pdu_header& header, byte_b
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+
+template <>
+struct formatter<srsgnb::rlc_um_sn_size> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_um_sn_size& sn_size, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_number(sn_size));
+  }
+};
+} // namespace fmt
