@@ -11,6 +11,7 @@
 #include "prach_scheduler.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -58,7 +59,7 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
         info.scs = prach_subcarrier_spacing::kHz120;
         break;
       default:
-        srsgnb_terminate("Invalid msg1-SCS");
+        report_fatal_error("Invalid msg1-SCS");
     }
   }
 

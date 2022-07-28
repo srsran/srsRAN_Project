@@ -10,6 +10,7 @@
 
 #include "f1c_configuration_helpers.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
