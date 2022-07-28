@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/srslog/formatter.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -46,7 +47,7 @@ constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 
 ///
 /// \brief Returns the value range of the sequence numbers
-/// \param sn_size Length of the serial number field in bits
+/// \param sn_size Length of the sequence number field in bits
 /// \return cardinality of sn_size
 ///
 constexpr uint32_t cardinality(const uint16_t sn_size)
@@ -54,11 +55,28 @@ constexpr uint32_t cardinality(const uint16_t sn_size)
   return (1 << sn_size);
 }
 
+///
+/// \brief Returns the UM_Window_Size and AM_Window_Size
+/// Ref: 3GPP TS 38.322 Sec. 7.2
+/// \param sn_size Length of the sequence number field in bits
+/// \return size of the window
+///
+constexpr uint32_t window_size(const uint16_t sn_size)
+{
+  return cardinality(sn_size - 1);
+}
+
 /// RLC AM NR segmentation info
 enum class rlc_dc_field : unsigned { control = 0b00, data = 0b01 };
 constexpr unsigned to_number(const rlc_dc_field& dc)
 {
   return static_cast<unsigned>(dc);
+}
+
+inline std::string to_string(const rlc_dc_field& dc)
+{
+  constexpr static const char* options[] = {"Control PDU", "Data PDU"};
+  return options[to_number(dc)];
 }
 
 /// RLC AM NR segmentation info
@@ -86,10 +104,10 @@ constexpr uint16_t to_number(const rlc_control_pdu_type& type)
   return static_cast<uint16_t>(type);
 }
 
-inline std::string to_string(const rlc_control_pdu_type& type)
+inline std::string to_string(const rlc_control_pdu_type& cpt)
 {
   constexpr static const char* options[] = {"Control PDU"};
-  return options[to_number(type)];
+  return options[to_number(cpt)];
 }
 
 ///
@@ -169,3 +187,51 @@ struct rlc_config {
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_dc_field> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_dc_field& dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_string(dc));
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_si_field> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_si_field& si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_string(si));
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_control_pdu_type> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_control_pdu_type& cpt, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_string(cpt));
+  }
+};
+} // namespace fmt

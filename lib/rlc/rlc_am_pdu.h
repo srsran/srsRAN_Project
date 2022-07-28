@@ -11,7 +11,6 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_config.h"
-#include "srsgnb/srslog/srslog.h"
 
 namespace srsgnb {
 
@@ -239,3 +238,37 @@ inline bool rlc_am_write_data_pdu_header(const rlc_am_pdu_header& header, byte_b
 }
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_am_sn_size> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_am_sn_size& sn_size, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "{}", to_number(sn_size));
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_am_pdu_header> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_am_pdu_header& hdr, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(
+        ctx.out(), "[{}, P={}, SI={}, SN_SIZE={}, SN={}, SO={}]", hdr.dc, hdr.p, hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+  }
+};
+} // namespace fmt

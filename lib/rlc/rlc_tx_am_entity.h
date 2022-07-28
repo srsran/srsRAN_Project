@@ -12,12 +12,23 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
+#include "rlc_retx_queue.h"
+#include "rlc_ringbuffer.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include "srsgnb/support/timers.h"
 
 namespace srsgnb {
+
+struct rlc_tx_amd_pdu_box {
+  const uint32_t    rlc_sn     = INVALID_RLC_SN;
+  uint32_t          pdcp_sn    = INVALID_RLC_SN;
+  rlc_am_pdu_header header     = {};
+  byte_buffer_slice sdu        = {};
+  uint32_t          retx_count = RETX_COUNT_NOT_STARTED;
+  explicit rlc_tx_amd_pdu_box(uint32_t sn) : rlc_sn(sn) {}
+};
 
 ///
 /// \brief Tx state variables
@@ -78,12 +89,19 @@ private:
   rlc_sdu_queue sdu_queue;
   uint32_t      sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
 
+  // ReTx buffers
+  pdu_retx_queue_list<rlc_tx_amd_retx> retx_queue;
+
   // Mutexes
   std::mutex mutex;
 
   // Tx counter modulus
   const uint32_t     mod;
   constexpr uint32_t tx_mod_base(uint32_t x) { return (x - st.tx_next_ack) % mod; }
+
+  // Tx window
+  const uint32_t                                           tx_window_size;
+  std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
@@ -120,13 +138,58 @@ public:
     // TODO
   }
 
+  ///
+  /// \brief Determines whether the polling bit in a PDU header has to be set or not
+  /// Ref: TS 38.322, Sec. 5.3.3.2
+  /// \param sn Sequence number of PDU to be transmitted
+  /// \param is_retx Flags whether this PDU is a retransmission or not
+  /// \param payload_size Length of the data field mapped to the AMD PDU
+  /// \return 1 if the polling bit has to be set, otherwise 0
+  ///
+  uint8_t get_polling_bit(uint32_t sn, bool is_retx, uint32_t payload_size);
+
+  // Timers
   void timer_expired(uint32_t timeout_id);
 
 private:
+  ///
+  /// \brief Builds a new RLC PDU.
+  /// This will be called after checking whether control, retransmission,
+  /// or segment PDUs needed to be transmitted first.
+  /// It will read an SDU from the SDU queue, build a new PDU, and add it to the tx_window.
+  /// SDU segmentation is applied if necessary.
+  ///
+  /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
+  ///
+  /// \param nof_bytes Limits the maximum size of the requested PDU.
+  /// \return One PDU
+  ///
+  byte_buffer_slice_chain build_new_pdu(uint32_t nof_bytes);
+
+  ///
+  /// \brief Builds a new RLC PDU segment, from a RLC SDU.
+  /// \param tx_pdu the tx_pdu info contained in the tx_window.
+  /// \param nof_bytes Limits the maximum size of the requested PDU.
+  /// \return One PDU segment
+  ///
+  byte_buffer_slice_chain build_new_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+
+  byte_buffer_slice_chain build_continuation_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+  byte_buffer_slice_chain build_retx_pdu(uint32_t nof_bytes);
+  byte_buffer_slice_chain build_retx_pdu_without_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes);
+  byte_buffer_slice_chain build_retx_pdu_with_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes);
+
   /// Called when buffer state needs to be updated and forwarded to lower layers.
   void handle_buffer_state_update();
 
   uint32_t get_buffer_state_nolock();
+
+  ///
+  /// Creates the tx_window according to sn_size
+  /// \param sn_size Size of the sequence number (SN)
+  /// \return unique pointer to tx_window instance
+  ///
+  static std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> create_tx_window(rlc_am_sn_size sn_size);
 };
 
 } // namespace srsgnb
