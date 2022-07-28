@@ -14,16 +14,16 @@
 
 namespace srsgnb {
 
-/// \brief Upper PHY interface to notify uplink decoding results events.
-class upper_phy_uplink_results_notifier
+/// \brief Upper PHY interface to notify rx decoding results events.
+class upper_phy_rx_results_notifier
 {
 public:
-  virtual ~upper_phy_uplink_results_notifier() = default;
+  virtual ~upper_phy_rx_results_notifier() = default;
 
   /// \brief Notifies the results of a PRACH detection.
   ///
   /// \param result Contains the results of the detected PRACH preambles.
-  virtual void on_prach_results(const prach_detector::detection_result& result) = 0;
+  virtual void on_new_prach_results(const prach_detector::detection_result& result) = 0;
 };
 
 } // namespace srsgnb

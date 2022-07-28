@@ -36,7 +36,7 @@ public:
   /// \brief Handles the arrival of PRACH buffers for given sector.
   /// \param [in] context Provides the PRACH context.
   /// \param [in] buffer  Read-only PRACH buffer.
-  virtual void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
+  virtual void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
 
   /// Handles the arrival of SRS packets for given CC
   ///

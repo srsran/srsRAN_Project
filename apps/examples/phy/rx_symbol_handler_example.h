@@ -35,7 +35,7 @@ public:
     logger.debug("Rx symbol {} received for sector {}", context.symbol, context.sector);
   }
 
-  void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) override
+  void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer* buffer) override
   {
     std::unique_lock<std::mutex> lock(mutex);
     logger.set_context(context.slot.system_slot());
