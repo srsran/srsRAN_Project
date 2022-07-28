@@ -40,6 +40,7 @@ stages:
   stage: static
   rules:
     - if: $ON_MR
+  needs: []
   variables:
     GIT_DEPTH: 0
 
@@ -73,20 +74,33 @@ no-binaries-added:
 ################################################################################
 ## Build + Unit Tests + Integration tests
 ################################################################################
-.alternative builds:
+cmake flag check:
   stage: build
+  extends: .build_and_unit
+  rules:
+    - if: $ON_MR
+    - if: $ON_SCHEDULE
+  script:
+    - CC=/usr/bin/gcc
+    - CXX=/usr/bin/g++
+    - mkdir build && cd build && cmake -G Ninja ${flag} ..
+  parallel:
+    matrix:
+      - flag:
+          [-DSTOP_ON_WARNING=True, -DENABLE_EXPORT=True, -DBUILD_TESTS=False]
   needs: []
-  variables:
-    check_flags: "false"
-    run_tests: "true"
-    enable_coverage: "false"
-    coverage_full_report: "false"
+
+.trigger build:
+  stage: build
   trigger:
     include: .gitlab/ci/build.yml
     strategy: depend
+  variables:
+    mode: default
+  needs: []
 
-alternative builds:
-  extends: .alternative builds
+alt:
+  extends: .trigger build
   rules:
     - if: $ON_MR
       variables:
@@ -107,8 +121,35 @@ alternative builds:
         uhd_version: "4.2.0.0"
         compiler: [gcc, clang]
 
-alternative builds uhd:
-  extends: .alternative builds
+sanitizers [tsan]:
+  extends: .trigger build
+  rules:
+    - if: $ON_SCHEDULE
+  variables:
+    compiler: clang
+    mode: tsan
+    CI_MERGE_REQUEST_LABELS: no-cache
+
+sanitizers [asan]:
+  extends: .trigger build
+  rules:
+    - if: $ON_SCHEDULE
+  variables:
+    compiler: gcc
+    mode: asan
+    CI_MERGE_REQUEST_LABELS: no-cache
+
+sanitizers [valgrind]:
+  extends: .trigger build
+  rules:
+    - if: $ON_SCHEDULE
+  variables:
+    compiler: gcc
+    mode: valgrind
+    CI_MERGE_REQUEST_LABELS: no-cache
+
+alt uhd:
+  extends: .trigger build
   rules:
     - if: $ON_SCHEDULE
       variables:
@@ -127,6 +168,13 @@ alternative builds uhd:
 ################################################################################
 # Doc generation
 ################################################################################
+.dependes on unit test jobs:
+  # Here we handled how jobs in .gitlab-ci.yml depends on jobs inside build.yml
+  # If unit tests related jobs change in build.yml, we'll need to change this one too
+  needs:
+    - job: unit tests
+      artifacts: true
+
 unit requirements:
   stage: documentation
   rules:
@@ -135,14 +183,75 @@ unit requirements:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-tools:$SRS_TOOLS_VERSION
   script:
     - test-reporter --input unittests --output ./requirement_report.html
-  dependencies: []
+  needs: []
   artifacts:
     paths:
       - requirement_report.html
     expire_in: 10 minutes
 
+unit coverage:
+  stage: documentation
+  extends: .dependes on unit test jobs
+  image:
+    name: jorturfer/report-generator
+    entrypoint: ["/bin/sh", "-c"]
+  rules:
+    - if: $ON_MR
+      variables:
+        coverage_report: summary
+      when: always # Even if previous stages/required jobs fail
+    - if: $ON_SCHEDULE
+      variables:
+        coverage_report: full
+      when: always # Even if previous stages/required jobs fail
+  before_script:
+    - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
+    # Download coverage history from the registry
+    - |
+      download_from_registry() {
+        apk add --update curl
+        
+        cd ${CI_PROJECT_DIR}
+        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${PACKAGE_URL}" -o output.tar.gz)
+        if [[ $http_code == "200" ]]; then
+          tar -xf output.tar.gz
+        fi
+      }
+    # Publish coverage history folder to the registry
+    - |
+      publish_to_registry() {
+        cd ${CI_PROJECT_DIR}
+        tar -czf coverage_history.tar.gz coverage_history
+        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file coverage_history.tar.gz "${PACKAGE_URL}"
+      }
+  script:
+    - |
+      if [[ $coverage_report = "full" ]]; then
+        download_from_registry
+        HTML_TYPE=Html
+        HISTORY=-historydir:coverage_history
+      else
+        HTML_TYPE=HtmlSummary
+        HISTORY=
+      fi
+    - |
+      /app/ReportGenerator -reports:*coverage.xml -targetdir:coverage_html ${HISTORY} \
+        -title:${CI_PROJECT_NAME} -tag:${CI_COMMIT_SHA} \
+        -reporttypes:"${HTML_TYPE};TextSummary"
+    - cat coverage_html/Summary.txt
+    - |
+      if [[ $coverage_report = "full" ]]; then
+        publish_to_registry
+      fi
+  coverage: /^\s*Line coverage:\s*\d+.\d+\%/
+  artifacts:
+    paths:
+      - coverage_html
+    expire_in: 10 minutes
+
 unit tests web:
   stage: documentation
+  extends: .dependes on unit test jobs
   rules:
     - if: $ON_SCHEDULE
       when: always # Even if previous stages/required jobs fail
@@ -154,9 +263,6 @@ unit tests web:
   script:
     - junit2html *xunit.xml --merge merged_xunit.xml
     - junit2html merged_xunit.xml ./test_report.html
-  needs:
-    - job: unit tests
-      artifacts: true
   artifacts:
     paths:
       - test_report.html

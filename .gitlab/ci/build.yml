@@ -18,16 +18,14 @@ variables:
   # Build
   compiler: gcc
   uhd_version: "4.1.0.5"
-  check_flags: "true"
   # Tests
   run_tests: "true"
-  enable_coverage: "true"
-  coverage_full_report: $ON_SCHEDULE
+  # Modes
+  mode: coverage # default, coverage, tsan, asan, valgrind
 
 stages:
   - build
   - tests
-  - documentation
 
 .build_and_unit:
   image: registry.gitlab.com/softwareradiosystems/testing-tools/srs-builder-gnb-${os_type}-${os_version}:$docker_version
@@ -37,19 +35,33 @@ stages:
 ################################################################################
 # Build
 ################################################################################
-
 .build:
   stage: build
   extends: .build_and_unit
   needs: []
   script:
     - |
-      if [ $enable_coverage = "true" ]; then
-        EXTRA_BUILD_ARGS="-DENABLE_GCOV=True"
-      fi
-    - builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $EXTRA_BUILD_ARGS .
+      case $mode in
+        coverage)
+          build_extra="-DENABLE_GCOV=True"
+          ;;
+        tsan)
+          build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_TSAN=True"
+          ;;
+        asan)
+          build_extra="-DCMAKE_BUILD_TYPE=Debug -DENABLE_ASAN=True"
+          ;;
+        valgrind)
+          build_extra="-DCMAKE_BUILD_TYPE=Debug -DAUTO_DETECT_ISA=False"
+          ;;
+      esac
+    - |
+      BUILD_CMD="builder.sh -c $compiler -u $uhd_version -DASSERT_LEVEL=PARANOID $build_extra ."
+      echo "${BUILD_CMD}"
+      echo "============================================================================================="
+      $BUILD_CMD
   cache: &build_cache
-    key: ${os_type}-${os_version}-${docker_version}-${compiler}
+    key: ${os_type}-${os_version}-${docker_version}-${compiler}-${mode}
     paths:
       - ccache
   artifacts:
@@ -58,6 +70,7 @@ stages:
       - build/apps/cu-up/cu-up
       # Ctest
       - build/CTestTestfile.cmake
+      - build/DartConfiguration.tcl
       - build/unittests
       - build/integrationtests
       - build/**/*.gcno
@@ -92,29 +105,6 @@ build [clean]:
     - if: $CI_MERGE_REQUEST_LABELS =~ /no-cache/
   cache: []
 
-cmake flag check:
-  stage: build
-  extends: .build_and_unit
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-      when: never
-    - if: $check_flags == "true"
-  script:
-    - CC=/usr/bin/gcc
-    - CXX=/usr/bin/g++
-    - mkdir build && cd build && cmake -G Ninja ${flag} ..
-  parallel:
-    matrix:
-      - flag:
-          [
-            -DSTOP_ON_WARNING=True,
-            -DENABLE_TSAN=True,
-            -DENABLE_ASAN=True,
-            -DENABLE_EXPORT=True,
-            -DBUILD_TESTS=False,
-          ]
-  dependencies: []
-
 ################################################################################
 # Test execution
 ################################################################################
@@ -140,12 +130,29 @@ cmake flag check:
     test_folder: ""
   script:
     # Launch ctest
-    - cd build/${test_folder}
-    - ctest -j "$(nproc --all)" --schedule-random --output-on-failure --output-junit xunit.xml && ret=0 || ret=1
-    # Launch coverage
-    - cd ${CI_PROJECT_DIR}/build
+    - cd build
     - |
-      if [ $enable_coverage = "true" ]; then
+      case $mode in
+        tsan)
+          ctest_extra="-L tsan"
+          ;;
+        valgrind)
+          cp DartConfiguration.tcl ${test_folder}/
+          sed -i "s/${CI_PROJECT_DIR//\//\\/}\/build/${CI_PROJECT_DIR//\//\\/}\/build\/${test_folder//\//\\/}/" ${test_folder}/DartConfiguration.tcl
+          sed -i "s/MemoryCheckCommandOptions: /MemoryCheckCommandOptions: --verbose --trace-children=yes --time-stamp=yes --leak-check=full --show-leak-kinds=all --show-reachable=yes/" ${test_folder}/DartConfiguration.tcl
+          G_DEBUG=gc-friendly G_SLICE=always-malloc
+          ctest_extra="-T memcheck --timeout 10800"
+          ;;
+      esac
+    - |
+      CTEST_CMD="ctest -j "$(nproc --all)" $ctest_extra --test-dir ${test_folder} --schedule-random --output-on-failure --output-junit xunit.xml"
+      echo "${CTEST_CMD}"
+      echo "============================================================================================="
+      $CTEST_CMD && ret=0 || ret=1
+
+    # Launch coverage
+    - |
+      if [[ $mode = "coverage" ]]; then 
         gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
           --exclude-directories unittests \
           --exclude-directories integrationtests  \
@@ -168,8 +175,9 @@ cmake flag check:
     - exit $ret
   after_script:
     # Move files to upload to root so no intermiddle folders will be created in the artifact
-    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
-    - mv ${CI_PROJECT_DIR}/build/coverage.xml             ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
+    - mv ${CI_PROJECT_DIR}/build/${test_folder}/xunit.xml         ${CI_PROJECT_DIR}/${CI_JOB_ID}_xunit.xml
+    - mv ${CI_PROJECT_DIR}/build/coverage.xml                     ${CI_PROJECT_DIR}/${CI_JOB_ID}_coverage.xml
+    - mv ${CI_PROJECT_DIR}/build/${test_folder}/Testing/Temporary ${CI_PROJECT_DIR}/build/Testing/Temporary_${CI_JOB_ID}
   artifacts:
     when: always
     reports:
@@ -180,76 +188,17 @@ cmake flag check:
     paths:
       - ${CI_JOB_ID}_xunit.xml
       - ${CI_JOB_ID}_coverage.xml
+      - build/Testing/Temporary
+      - build/Testing/Temporary_${CI_JOB_ID}
     expire_in: 10 minutes
 
 unit tests:
   extends: .ctest
   variables:
     test_folder: unittests
+  timeout: 4 hours # valgrind mode
 
 integration tests:
   extends: .ctest
   variables:
     test_folder: integrationtests
-
-################################################################################
-# Test report
-################################################################################
-
-unit coverage:
-  image:
-    name: jorturfer/report-generator
-    entrypoint: ["/bin/sh", "-c"]
-  stage: documentation
-  rules:
-    - if: $ON_DEFAULT_BRANCH
-      when: never
-    - if: $run_tests == "true" && $enable_coverage == "true"
-      when: always # Even if previous stages/required jobs fail
-  before_script:
-    - PACKAGE_URL=${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/packages/generic/coverage/${CI_COMMIT_BRANCH}${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME}/coverage_history.tar.gz
-    # Download coverage history from the registry
-    - |
-      download_from_registry() {
-        apk add --update curl
-
-        cd ${CI_PROJECT_DIR}
-        http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${PACKAGE_URL}" -o output.tar.gz)
-        if [[ $http_code == "200" ]]; then
-          tar -xf output.tar.gz
-        fi
-      }
-    # Publish coverage history folder to the registry
-    - |
-      publish_to_registry() {
-        cd ${CI_PROJECT_DIR}
-        tar -czf coverage_history.tar.gz coverage_history
-        curl --fail --header "JOB-TOKEN: $CI_JOB_TOKEN" --upload-file coverage_history.tar.gz "${PACKAGE_URL}"
-      }
-  script:
-    - |
-      if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
-        download_from_registry
-        HTML_TYPE=Html
-        HISTORY=-historydir:coverage_history
-      else
-        HTML_TYPE=HtmlSummary
-        HISTORY=
-      fi
-    - |
-      /app/ReportGenerator -reports:*coverage.xml -targetdir:coverage_html ${HISTORY} \
-        -title:${CI_PROJECT_NAME} -tag:${CI_COMMIT_SHA} \
-        -reporttypes:"${HTML_TYPE};TextSummary"
-    - cat coverage_html/Summary.txt
-    - |
-      if [[ $coverage_full_report && $coverage_full_report = "true" ]]; then
-        publish_to_registry
-      fi
-  coverage: /^\s*Line coverage:\s*\d+.\d+\%/
-  needs:
-    - job: unit tests
-      artifacts: true
-  artifacts:
-    paths:
-      - coverage_html
-    expire_in: 10 minutes
