@@ -11,6 +11,7 @@
 #pragma once
 
 #include "du_cell_config.h"
+#include "include/srsgnb/ran/channel_bandwidth.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
@@ -23,9 +24,10 @@ namespace srsgnb {
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
 /// in this struct.
 struct du_cell_config_default_params {
-  pci_t              pci        = 1;
-  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
-  unsigned           nof_crbs   = 52;
+  pci_t              pci            = 1;
+  subcarrier_spacing scs_common     = subcarrier_spacing::kHz15;
+  bs_channel_bw_fr1  channel_bw_mhz = bs_channel_bw_fr1::MHz10;
+  unsigned           nof_crbs       = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
   // TODO: we should decide whether this represents "f_ref" or pointA.
   unsigned dl_arfcn          = 365000;
   unsigned offset_to_point_a = 12;
@@ -37,7 +39,7 @@ namespace du_config_helpers {
 inline carrier_configuration make_default_carrier_configuration(const du_cell_config_default_params& params = {})
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = std::round(params.nof_crbs / (float)5); // TODO: Fix conversion.
+  cfg.carrier_bw_mhz = bs_ch_bw_to_uint(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
   return cfg;
