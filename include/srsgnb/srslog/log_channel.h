@@ -164,7 +164,7 @@ public:
     (void)std::initializer_list<int>{(store->push_back(std::forward<Args>(args)), 0)...};
 
     // Calculate the length to capture in the buffer.
-    if (hex_max_size > std::distance(it_begin, it_end)) {
+    if (hex_max_size > 0 && hex_max_size < std::distance(it_begin, it_end)) {
       it_end = it_begin + hex_max_size;
     }
 
