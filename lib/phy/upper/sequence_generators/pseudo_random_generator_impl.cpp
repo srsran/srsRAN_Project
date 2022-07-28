@@ -28,7 +28,7 @@ const pseudo_random_generator_impl::x2_init_s pseudo_random_generator_impl::x2_i
 pseudo_random_generator_impl::x1_init_s::x1_init_s() : x1(1)
 {
   // Compute transition step
-  for (uint32_t n = 0; n < SEQUENCE_NC; n++) {
+  for (uint32_t n = 0; n != SEQUENCE_NC; ++n) {
     x1 = step_x1(x1);
   }
 }
@@ -41,10 +41,10 @@ unsigned pseudo_random_generator_impl::x1_init_s::get() const
 pseudo_random_generator_impl::x2_init_s::x2_init_s() : x2()
 {
   // For each bit of the seed
-  for (uint32_t i = 0; i < SEQUENCE_SEED_LEN; ++i) {
+  for (uint32_t i = 0; i != SEQUENCE_SEED_LEN; ++i) {
     // Compute transition step
     x2[i] = 1U << i;
-    for (uint32_t n = 0; n < SEQUENCE_NC; ++n) {
+    for (uint32_t n = 0; n != SEQUENCE_NC; ++n) {
       x2[i] = step_x2(x2[i]);
     }
   }
@@ -54,7 +54,7 @@ unsigned pseudo_random_generator_impl::x2_init_s::get(unsigned c_init) const
 {
   unsigned ret = 0;
 
-  for (unsigned i = 0; i < SEQUENCE_SEED_LEN; ++i) {
+  for (unsigned i = 0; i != SEQUENCE_SEED_LEN; ++i) {
     if ((c_init >> i) & 1UL) {
       ret ^= x2[i];
     }
@@ -89,7 +89,7 @@ void pseudo_random_generator_impl::advance(unsigned count)
   }
 
   // Advance in single steps
-  for (; i < count; i++) {
+  for (; i != count; ++i) {
     // Step sequences
     x1 = step_x1(x1);
     x2 = step_x2(x2);
@@ -138,7 +138,7 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
       }
 #endif
       // Finish the parallel bits with generic code
-      for (; j < SEQUENCE_PAR_BITS; j++) {
+      for (; j != SEQUENCE_PAR_BITS; ++j) {
         FLOAT_U32_XOR(out[i + j], value, (c << (31U - j)) & 0x80000000);
       }
 
@@ -148,7 +148,7 @@ void pseudo_random_generator_impl::generate(span<float> out, float value)
     }
   }
 
-  for (; i < length; i++) {
+  for (; i != length; ++i) {
     FLOAT_U32_XOR(out[i], value, (x1 ^ x2) << 31U);
 
     // Step sequences
@@ -167,7 +167,7 @@ void pseudo_random_generator_impl::apply_xor_byte(span<uint8_t> out, span<const 
   uint64_t buffer = 0;
   uint32_t count  = 0;
 
-  for (; i < length / 8; i++) {
+  for (; i < length / 8; ++i) {
     // Generate sequence bits
     while (count < 8) {
       uint32_t c = (uint32_t)(x1 ^ x2);
@@ -209,10 +209,10 @@ void pseudo_random_generator_impl::apply_xor_byte(span<uint8_t> out, span<const 
   while (i < (length / 8 - (SEQUENCE_PAR_BITS - 1) / 8)) {
     uint32_t c = (uint32_t)(x1 ^ x2);
 
-    for (uint32_t j = 0; j < SEQUENCE_PAR_BITS / 8; j++) {
+    for (uint32_t j = 0, max_j = SEQUENCE_PAR_BITS / 8; j != max_j; ++j) {
       out[i] = in[i] ^ reverse_byte(c & 255U);
       c      = c >> 8U;
-      i++;
+      ++i;
     }
 
     // Step sequences
@@ -225,7 +225,7 @@ void pseudo_random_generator_impl::apply_xor_byte(span<uint8_t> out, span<const 
   while (i < length / 8) {
     out[i] = in[i] ^ reverse_byte(c & 255U);
     c      = c >> 8U;
-    i++;
+    ++i;
   }
 
   // Process spare bits
@@ -244,7 +244,7 @@ void pseudo_random_generator_impl::apply_xor_bit(span<uint8_t> out, span<const u
   unsigned length = in.size();
 
   if (length >= SEQUENCE_PAR_BITS) {
-    for (; i < length - (SEQUENCE_PAR_BITS - 1); i += SEQUENCE_PAR_BITS) {
+    for (unsigned max_i = length - (SEQUENCE_PAR_BITS - 1); i < max_i; i += SEQUENCE_PAR_BITS) {
       uint32_t c = (uint32_t)(x1 ^ x2);
 
       uint32_t j = 0;
@@ -286,7 +286,7 @@ void pseudo_random_generator_impl::apply_xor_bit(span<uint8_t> out, span<const u
     }
   }
 
-  for (; i < length; i++) {
+  for (; i != length; ++i) {
     out[i] = in[i] ^ ((x1 ^ x2) & 1U);
 
     // Step sequences
@@ -302,7 +302,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
   unsigned length = in.size();
 
   if (length >= SEQUENCE_PAR_BITS) {
-    for (; i < length - (SEQUENCE_PAR_BITS - 1); i += SEQUENCE_PAR_BITS) {
+    for (unsigned max_i = length - (SEQUENCE_PAR_BITS - 1); i < max_i; i += SEQUENCE_PAR_BITS) {
       uint32_t c = (uint32_t)(x1 ^ x2);
 
       uint32_t j = 0;
@@ -335,7 +335,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
         j += 16;
       }
 #endif
-      for (; j < SEQUENCE_PAR_BITS; j++) {
+      for (; j != SEQUENCE_PAR_BITS; ++j) {
         out[i + j] = in[i + j].to_value_type() * (((c >> j) & 1U) ? -1 : +1);
       }
 
@@ -345,7 +345,7 @@ void pseudo_random_generator_impl::apply_xor(span<log_likelihood_ratio> out, spa
     }
   }
 
-  for (; i < length; i++) {
+  for (; i != length; ++i) {
     out[i] = in[i].to_value_type() * (((x1 ^ x2) & 1U) ? -1 : 1);
 
     // Step sequences

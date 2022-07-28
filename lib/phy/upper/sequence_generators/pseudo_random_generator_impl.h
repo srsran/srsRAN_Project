@@ -75,7 +75,8 @@ private:
   /// c_{\mathrm{init}}^{(1)} \oplus c_{\mathrm{init}}^{(2)} \mapsto x_2^{(1)}(n) \oplus x_2^{(2)}(n)
   /// \f]
   /// with the XOR operator acting bitwise between seeds and for all \f$n\f$ between sequences.
-  struct x2_init_s {
+  class x2_init_s
+  {
   private:
     /// Memory register for sequence \f$x_2(n)\f$, for all basic seeds.
     std::array<unsigned, SEQUENCE_SEED_LEN> x2;
