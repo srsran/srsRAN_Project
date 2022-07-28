@@ -21,6 +21,7 @@
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
 #include "srsgnb/rrc/rrc_factory.h"
+#include "srsgnb/support/async/async_task_loop.h"
 #include "ue_manager.h"
 #include <string>
 
@@ -87,6 +88,9 @@ private:
 
   // RRC UE to DU processor adapter
   rrc_ue_du_processor_adapter rrc_ue_ev_notifier;
+
+  // task event loops indexed by ue_index
+  slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

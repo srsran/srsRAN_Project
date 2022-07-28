@@ -20,6 +20,11 @@ using namespace srs_cu_cp;
 
 du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mng(cfg_.logger)
 {
+  const size_t number_of_pending_procedures = 16;
+  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
+    ue_ctrl_loop.emplace(i, number_of_pending_procedures);
+  }
+
   // create f1ap
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
   f1ap_ev_notifier.connect_du_processor(*this);
@@ -218,7 +223,21 @@ void du_processor::handle_ue_context_release_command(const ue_context_release_co
   f1ap_msg.ue_index                                = msg.ue_index;
   f1ap_msg.cause.set_radio_network();
 
-  f1ap->handle_ue_context_release_command(f1ap_msg);
+  ue_ctrl_loop[msg.ue_index].schedule([this, f1ap_msg](coro_context<async_task<void>>& ctx) {
+    CORO_BEGIN(ctx);
+
+    ue_index_t result_idx;
+
+    CORO_AWAIT_VALUE(result_idx, f1ap->handle_ue_context_release_command(f1ap_msg));
+
+    if (result_idx == f1ap_msg.ue_index) {
+      logger.info("Removed UE(ue_index={}) from F1AP.", f1ap_msg.ue_index);
+    }
+
+    // TODO: remove UE from RRC
+
+    CORO_RETURN();
+  });
 
   // Remove UE from UE database
   logger.info("Removing UE (id={})", msg.ue_index);

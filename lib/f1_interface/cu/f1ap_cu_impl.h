@@ -11,12 +11,9 @@
 #pragma once
 
 #include "procedures/f1ap_ue_context_release_procedure.h"
-#include "srsgnb/adt/slot_array.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
-#include "srsgnb/support/async/async_queue.h"
-#include "srsgnb/support/async/async_task_loop.h"
 #include <memory>
 
 namespace srsgnb {
@@ -47,7 +44,7 @@ public:
   async_task<f1ap_ue_context_setup_response_message>
   handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request) override;
 
-  void handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) override;
+  async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) override;
 
   async_task<f1ap_ue_context_modification_response_message>
   handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) override;
@@ -106,9 +103,6 @@ private:
   f1c_du_management_notifier&        du_management_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;
-
-  // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_cu_cp

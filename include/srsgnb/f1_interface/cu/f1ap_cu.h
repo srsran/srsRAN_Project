@@ -136,7 +136,9 @@ public:
 
   /// \brief Initiates the UE Context Release procedure as per TS 38.473 section 8.3.3.
   /// \param[in] msg The UE Context Release message to transmit.
-  virtual void handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) = 0;
+  /// \return Retruns the index of the released UE.
+  virtual async_task<ue_index_t>
+  handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) = 0;
 
   /// \brief Initiates the UE Context Modification procedure as per TS 38.473 section 8.3.4.
   /// \param[in] request The UE Context Modification message to transmit.

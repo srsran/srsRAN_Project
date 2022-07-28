@@ -28,11 +28,6 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
 {
   f1ap_ue_context empty_context = {};
   std::fill(cu_ue_id_to_f1ap_ue_context.begin(), cu_ue_id_to_f1ap_ue_context.end(), empty_context);
-
-  const size_t number_of_pending_procedures = 1;
-  for (size_t i = 0; i < MAX_NOF_UES; ++i) {
-    ue_ctrl_loop.emplace(i, number_of_pending_procedures);
-  }
 }
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
@@ -130,13 +125,18 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
   });
 }
 
-void f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg)
+async_task<ue_index_t>
+f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg)
 {
   f1ap_ue_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
 
   if (cu_ue_id == INVALID_F1AP_UE_ID) {
     logger.error("Can't find UE to release (ue_index={})", msg.ue_index);
-    return;
+
+    return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
+      CORO_BEGIN(ctx);
+      CORO_RETURN(INVALID_UE_INDEX);
+    });
   }
 
   f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
@@ -146,8 +146,7 @@ void f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_relea
   ue_ctxt_rel_cmd->gnb_du_ue_f1_ap_id.value            = ue_ctxt.du_ue_f1ap_id;
   ue_ctxt_rel_cmd->cause.value                         = msg.cause;
 
-  ue_ctrl_loop[ue_ctxt.ue_index].schedule<f1ap_ue_context_release_procedure>(
-      ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
+  return launch_async<f1ap_ue_context_release_procedure>(ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
 }
 
 async_task<f1ap_ue_context_modification_response_message>

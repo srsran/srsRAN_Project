@@ -29,14 +29,14 @@ public:
                                     f1ap_event_manager&                         ev_mng_,
                                     srslog::basic_logger&                       logger_);
 
-  void operator()(coro_context<async_task<void>>& ctx);
+  void operator()(coro_context<async_task<ue_index_t>>& ctx);
 
 private:
   /// Send F1 UE Context Release Command to DU.
   void send_f1_ue_context_release_command();
 
   /// Creates procedure result to send back to procedure caller.
-  void handle_f1ap_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s msg);
+  ue_index_t handle_f1ap_ue_context_release_complete(const asn1::f1ap::ue_context_release_complete_s msg);
 
   f1ap_ue_context&                           ue_ctxt;
   const asn1::f1ap::ue_context_release_cmd_s command;

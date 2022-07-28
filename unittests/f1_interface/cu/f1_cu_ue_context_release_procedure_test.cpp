@@ -58,12 +58,21 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
   f1ap_ue_context_release_command_message f1ap_ue_ctxt_rel_cmd_msg;
   f1ap_ue_ctxt_rel_cmd_msg.ue_index = MIN_UE_INDEX;
   f1ap_ue_ctxt_rel_cmd_msg.cause.set_radio_network();
-  f1ap->handle_ue_context_release_command(f1ap_ue_ctxt_rel_cmd_msg);
+
+  // launch F1 UE context release procedure
+  async_task<ue_index_t>         t = f1ap->handle_ue_context_release_command(f1ap_ue_ctxt_rel_cmd_msg);
+  lazy_task_launcher<ue_index_t> t_launcher(t);
+
+  // Status: Procedure not yet ready.
+  EXPECT_FALSE(t.ready());
 
   // Action 3: Inject UE Context Release Complete message
   test_logger.info("Injecting UE Context Release Complete message");
   f1c_msg ue_ctxt_rel_complete_msg = generate_f1_ue_context_release_complete_msg(0, 41255);
   f1ap->handle_message(ue_ctxt_rel_complete_msg);
 
-  EXPECT_EQ(0, f1ap->get_nof_ues());
+  EXPECT_TRUE(t.ready());
+  EXPECT_EQ(t.get(), MIN_UE_INDEX);
+
+  EXPECT_EQ(f1ap->get_nof_ues(), 0);
 }
