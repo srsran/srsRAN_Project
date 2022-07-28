@@ -11,6 +11,7 @@
 #include "scheduler_output_test_helpers.h"
 #include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "srsgnb/ran/pdcch/cce_to_prb_mapping.h"
+#include "srsgnb/ran/prach/prach_configuration.h"
 
 using namespace srsgnb;
 
@@ -94,7 +95,7 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
     std::vector<grant_info> grant_res_list = get_pdcch_grant_info(pdcch);
     for (const grant_info& grant : grant_res_list) {
       grants.emplace_back();
-      grants.back().type  = test_grant_info::DL_PDCCH;
+      grants.back().type  = test_grant_info::UL_PDCCH;
       grants.back().rnti  = pdcch.ctx.rnti;
       grants.back().grant = grant;
     }
@@ -111,7 +112,7 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
   // Register RAR PDSCHs.
   for (const rar_information& rar : dl_res.rar_grants) {
     grants.emplace_back();
-    grants.back().type  = test_grant_info::SIB;
+    grants.back().type  = test_grant_info::RAR;
     grants.back().rnti  = rar.pdsch_cfg.rnti;
     grants.back().grant = get_pdsch_grant_info(rar);
   }
@@ -119,9 +120,47 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
   // Register UE PDSCHs.
   for (const dl_msg_alloc& ue_pdsch : dl_res.ue_grants) {
     grants.emplace_back();
-    grants.back().type  = test_grant_info::SIB;
+    grants.back().type  = test_grant_info::UE_DL;
     grants.back().rnti  = ue_pdsch.pdsch_cfg.rnti;
     grants.back().grant = get_pdsch_grant_info(ue_pdsch);
+  }
+
+  return grants;
+}
+
+std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cell_cfg, const ul_sched_result& ul_res)
+{
+  std::vector<test_grant_info> grants;
+
+  // Fill PRACHs.
+  if (not ul_res.prachs.empty()) {
+    prach_configuration prach_cfg = prach_configuration_get(
+        frequency_range::FR1,
+        cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
+        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
+
+    for (const prach_occasion_info& prach : ul_res.prachs) {
+      ofdm_symbol_range symbols{prach.start_symbol, (uint8_t)(prach.start_symbol + prach_cfg.duration)};
+      unsigned prb_start = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
+      prb_interval prbs{prb_start, prb_start + 6}; // TODO: Derive nof RBs.
+      crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prbs);
+      grants.emplace_back();
+      grants.back().type = test_grant_info::PRACH;
+      grants.back().rnti = INVALID_RNTI;
+      grants.back().grant =
+          grant_info{grant_info::channel::sch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
+    }
+  }
+
+  // Fill PUSCHs.
+  for (const ul_sched_info& pusch : ul_res.puschs) {
+    const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
+    crb_interval             crbs    = prb_to_crb(bwp_cfg, pusch.pusch_cfg.prbs.prbs());
+    grants.emplace_back();
+    grants.back().type = test_grant_info::UE_UL;
+    grants.back().rnti = INVALID_RNTI;
+    grants.back().grant =
+        grant_info{grant_info::channel::sch, pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
   }
 
   return grants;

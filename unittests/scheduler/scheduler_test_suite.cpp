@@ -10,7 +10,6 @@
 
 #include "scheduler_test_suite.h"
 #include "lib/scheduler/cell/resource_grid.h"
-#include "lib/scheduler/pdcch_scheduling/pdcch_config_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "scheduler_output_test_helpers.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
@@ -103,31 +102,10 @@ void srsgnb::test_ul_resource_grid_collisions(const cell_configuration& cell_cfg
 {
   cell_slot_resource_grid grid(cell_cfg.ul_cfg_common.freq_info_ul.scs_carrier_list);
 
-  // Fill PRACHs.
-  if (not result.prachs.empty()) {
-    prach_configuration prach_cfg = prach_configuration_get(
-        frequency_range::FR1,
-        cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
-        cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index);
-
-    for (const prach_occasion_info& prach : result.prachs) {
-      ofdm_symbol_range symbols{prach.start_symbol, (uint8_t)(prach.start_symbol + prach_cfg.duration)};
-      unsigned prb_start = cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->rach_cfg_generic.msg1_frequency_start;
-      prb_interval prbs{prb_start, prb_start + 6}; // TODO: Derive nof RBs.
-      crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prbs);
-      grant_info grant{grant_info::channel::sch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
-      TESTASSERT(not grid.collides(grant));
-      grid.fill(grant);
-    }
-  }
-
-  // Fill PUSCHs.
-  for (const ul_sched_info& pusch : result.puschs) {
-    const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
-    crb_interval             crbs    = prb_to_crb(bwp_cfg, pusch.pusch_cfg.prbs.prbs());
-    grant_info grant{grant_info::channel::sch, pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
-    TESTASSERT(not grid.collides(grant));
-    grid.fill(grant);
+  std::vector<test_grant_info> ul_grants = get_ul_grants(cell_cfg, result);
+  for (const test_grant_info& test_grant : ul_grants) {
+    TESTASSERT(not grid.collides(test_grant.grant), "Resource collision for grant with rnti={:#x}", test_grant.rnti);
+    grid.fill(test_grant.grant);
   }
 }
 

@@ -16,7 +16,7 @@
 namespace srsgnb {
 
 struct test_grant_info {
-  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE } type;
+  enum type_t { SSB, DL_PDCCH, UL_PDCCH, SIB, RAR, UE_DL, UE_UL, PRACH } type;
   rnti_t     rnti;
   grant_info grant;
 };
@@ -55,5 +55,9 @@ grant_info get_pdsch_grant_info(const dl_msg_alloc& ue_grant);
 
 /// \brief Creates a list with the grants allocated in a cell DL resource grid. This includes PDCCHs, PDSCHs and SSB.
 std::vector<test_grant_info> get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res);
+
+/// \brief Creates a list with the grants allocated in a cell UL resource grid. This includes PUSCHs, PUCCHs and PRACH
+/// PDUs.
+std::vector<test_grant_info> get_ul_grants(const cell_configuration& cell_cfg, const ul_sched_result& ul_res);
 
 } // namespace srsgnb
