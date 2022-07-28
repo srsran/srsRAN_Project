@@ -54,7 +54,7 @@ static void test_u8_hex()
 
 static void test_cf_long()
 {
-  std::array<cf_t, 5> data = {COMPLEX_I * 0.0F, COMPLEX_I * 1.0F, COMPLEX_I * 2.0F, COMPLEX_I * 3.0F, COMPLEX_I * 4.0F};
+  std::array<cf_t, 5> data = {COMPLEX_J * 0.0F, COMPLEX_J * 1.0F, COMPLEX_J * 2.0F, COMPLEX_J * 3.0F, COMPLEX_J * 4.0F};
   fmt::memory_buffer  buffer;
   fmt::format_to(buffer, "{}", span<cf_t>(data));
 
@@ -67,7 +67,7 @@ static void test_cf_long()
 
 static void test_cf_short()
 {
-  std::array<cf_t, 5> data = {COMPLEX_I * 0.0F, COMPLEX_I * 1.0F, COMPLEX_I * 2.0F, COMPLEX_I * 3.0F, COMPLEX_I * 4.0F};
+  std::array<cf_t, 5> data = {COMPLEX_J * 0.0F, COMPLEX_J * 1.0F, COMPLEX_J * 2.0F, COMPLEX_J * 3.0F, COMPLEX_J * 4.0F};
   fmt::memory_buffer  buffer;
   fmt::format_to(buffer, "{:+.1f}", span<cf_t>(data));
 

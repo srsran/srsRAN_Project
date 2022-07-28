@@ -26,7 +26,7 @@ public:
   prach_generator_cexp_table()
   {
     std::generate(this->begin(), this->end(), [n = 0]() mutable {
-      return std::exp(-COMPLEX_I * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(L));
+      return std::exp(-COMPLEX_J * static_cast<float>(M_PI) * static_cast<float>(n++) / static_cast<float>(L));
     });
   }
 };

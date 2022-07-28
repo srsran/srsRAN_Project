@@ -21,7 +21,7 @@
 namespace srsgnb {
 
 /// Defines the complex imaginary unit.
-static constexpr cf_t COMPLEX_I(0, 1);
+static constexpr cf_t COMPLEX_J(0, 1);
 
 /// Defines two times Pi.
 static constexpr float TWOPI = 2.0F * static_cast<float>(M_PI);

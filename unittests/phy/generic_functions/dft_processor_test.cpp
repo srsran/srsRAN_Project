@@ -66,7 +66,7 @@ static void run_expected_dft(span<cf_t> output, dft_processor::direction directi
   // Create exponential to avoid abusing std::exp.
   std::vector<cf_t> exp(size);
   for (unsigned idx = 0; idx != size; ++idx) {
-    exp[idx] = std::exp(COMPLEX_I * sign * TWOPI * static_cast<float>(idx) / N);
+    exp[idx] = std::exp(COMPLEX_J * sign * TWOPI * static_cast<float>(idx) / N);
   }
 
   // Compute theoretical discrete fourier transform.
