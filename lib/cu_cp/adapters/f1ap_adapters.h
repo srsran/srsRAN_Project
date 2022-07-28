@@ -20,10 +20,10 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Adapter between F1AP and CU-CP, to handle DU specific procedure outcomes (e.g. F1 Remove)
-class cu_cp_f1ap_event_indicator : public f1c_du_management_notifier
+class f1ap_cu_cp_adapter : public f1c_du_management_notifier
 {
 public:
-  void connect(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
+  void connect_cu_cp(cu_cp_du_handler& cu_cp_mng_) { du_handler = &cu_cp_mng_; }
 
   void on_du_remove_request_received(const du_index_t du_index) override
   {
@@ -36,10 +36,10 @@ private:
 };
 
 /// Adapter between F1AP and DU processor
-class du_processor_f1ap_event_indicator : public f1c_du_processor_message_notifier
+class f1ap_du_processor_adapter : public f1c_du_processor_message_notifier
 {
 public:
-  void connect(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
+  void connect_du_processor(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
 
   du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override
   {

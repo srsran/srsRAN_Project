@@ -85,7 +85,7 @@ private:
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;
 
-  cu_cp_f1ap_event_indicator f1ap_ev_notifier;
+  f1ap_cu_cp_adapter f1ap_ev_notifier;
 };
 
 } // namespace srs_cu_cp

@@ -17,11 +17,11 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Adapter between DU processor and RRC
-class rrc_ul_ccch_message_indicator : public du_processor_rrc_message_notifier
+/// Adapter between DU processor and RRC UE
+class du_processor_rrc_ue_adapter : public du_processor_rrc_message_notifier
 {
 public:
-  explicit rrc_ul_ccch_message_indicator(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
+  explicit du_processor_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
 
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {

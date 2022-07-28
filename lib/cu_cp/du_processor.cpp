@@ -11,7 +11,7 @@
 #include "du_processor.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
 #include "adapters/du_processor_adapters.h"
-#include "adapters/rrc_adapters.h"
+#include "adapters/rrc_ue_adapters.h"
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 
@@ -22,12 +22,12 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
 {
   // create f1ap
   f1ap = create_f1ap(*cfg.f1c_notifier, f1ap_ev_notifier, *cfg.f1c_du_mgmt_notifier);
-  f1ap_ev_notifier.connect(*this);
+  f1ap_ev_notifier.connect_du_processor(*this);
 
   // create RRC
   rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity, rrc_ue_ev_notifier);
   rrc = create_rrc_entity(rrc_creation_msg);
-  rrc_ue_ev_notifier.connect(*this);
+  rrc_ue_ev_notifier.connect_du_processor(*this);
 }
 
 void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
@@ -204,8 +204,8 @@ void du_processor::create_srb(const srb_creation_message& msg)
 
   if (lcid == LCID_SRB0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier = std::make_unique<rrc_ul_ccch_message_indicator>(*ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.tx_notifier = std::make_unique<f1ap_dl_message_indicator>(*f1ap, ue_ctxt->ue_index);
+    srb.rx_notifier = std::make_unique<du_processor_rrc_ue_adapter>(*ue_ctxt->rrc->get_ul_ccch_pdu_handler());
+    srb.tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1ap, ue_ctxt->ue_index);
   } else {
     logger.error("Couldn't create notifier for SRB{}. Removing entry again.", lcid);
     ue_ctxt->srbs.erase(lcid);

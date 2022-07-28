@@ -12,7 +12,7 @@
 
 #include "adapters/du_processor_adapters.h"
 #include "adapters/f1ap_adapters.h"
-#include "adapters/rrc_adapters.h"
+#include "adapters/rrc_ue_adapters.h"
 #include "du_context.h"
 #include "du_processor_config.h"
 #include "srsgnb/adt/slot_array.h"
@@ -83,10 +83,10 @@ private:
   ue_manager ue_mng;
 
   // F1AP to DU processor adapter
-  du_processor_f1ap_event_indicator f1ap_ev_notifier;
+  f1ap_du_processor_adapter f1ap_ev_notifier;
 
   // RRC UE to DU processor adapter
-  du_processor_rrc_ue_event_indicator rrc_ue_ev_notifier;
+  rrc_ue_du_processor_adapter rrc_ue_ev_notifier;
 };
 
 } // namespace srs_cu_cp

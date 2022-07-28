@@ -68,7 +68,7 @@ private:
   ue_context& ue_ctxt;
 };
 
-class dummy_du_processor_rrc_ue_event_indicator : public rrc_ue_du_processor_notifier
+class dummy_rrc_ue_du_processor_adapter : public rrc_ue_du_processor_notifier
 {
 public:
   void connect(dummy_du_processor_rrc_ue_interface& du_processor_rrc_ue_)
@@ -154,7 +154,7 @@ private:
   ue_context                                           ue_ctxt{};
   dummy_tx_pdu_handler                                 tx_pdu_handler; // Object to handle the generated RRC message
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
-  dummy_du_processor_rrc_ue_event_indicator            rrc_ue_ev_notifier;
+  dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
