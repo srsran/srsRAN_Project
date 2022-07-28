@@ -20,7 +20,7 @@ rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
-  um_window_size(cardinality(to_number(cfg.sn_field_length) - 1)),
+  um_window_size(window_size(to_number(cfg.sn_field_length))),
   reassembly_timer(timers.create_unique_timer())
 {
   // check timer
