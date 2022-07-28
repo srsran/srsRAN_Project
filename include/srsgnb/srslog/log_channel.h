@@ -22,7 +22,8 @@ struct log_channel_config {
   log_channel_config() = default;
   log_channel_config(std::string n, char tag, bool should_print_context) :
     name(std::move(n)), tag(tag), should_print_context(should_print_context)
-  {}
+  {
+  }
 
   /// Optional log channel name. If set, will get printed for each log entry.
   /// Disabled by default.
@@ -57,9 +58,10 @@ public:
     ctx_value(0),
     hex_max_size(0),
     is_enabled(true)
-  {}
+  {
+  }
 
-  log_channel(const log_channel& other) = delete;
+  log_channel(const log_channel& other)            = delete;
   log_channel& operator=(const log_channel& other) = delete;
 
   /// Controls when the channel accepts incoming log entries.
@@ -98,15 +100,15 @@ public:
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
     detail::log_entry entry     = {&log_sink,
-                               [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
                                  formatter.format(std::move(metadata), buffer);
                                },
-                               {std::chrono::high_resolution_clock::now(),
-                                {ctx_value, should_print_context},
-                                fmtstr,
-                                store,
-                                log_name,
-                                log_tag}};
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag}};
     backend.push(std::move(entry));
   }
 
@@ -134,16 +136,16 @@ public:
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
     detail::log_entry entry     = {&log_sink,
-                               [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                   [&formatter](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
                                  formatter.format(std::move(metadata), buffer);
                                },
-                               {std::chrono::high_resolution_clock::now(),
-                                {ctx_value, should_print_context},
-                                fmtstr,
-                                store,
-                                log_name,
-                                log_tag,
-                                std::vector<uint8_t>(buffer, buffer + len)}};
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag,
+                                    std::vector<uint8_t>(buffer, buffer + len)}};
     backend.push(std::move(entry));
   }
 
@@ -196,15 +198,15 @@ public:
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
     detail::log_entry entry     = {&log_sink,
-                               [&formatter, ctx](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                   [&formatter, ctx](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
                                  formatter.format_ctx(ctx, std::move(metadata), buffer);
                                },
-                               {std::chrono::high_resolution_clock::now(),
-                                {ctx_value, should_print_context},
-                                nullptr,
-                                nullptr,
-                                log_name,
-                                log_tag}};
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value, should_print_context},
+                                    nullptr,
+                                    nullptr,
+                                    log_name,
+                                    log_tag}};
     backend.push(std::move(entry));
   }
 
@@ -227,15 +229,15 @@ public:
     // Send the log entry to the backend.
     log_formatter&    formatter = log_sink.get_formatter();
     detail::log_entry entry     = {&log_sink,
-                               [&formatter, ctx](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
+                                   [&formatter, ctx](detail::log_entry_metadata&& metadata, fmt::memory_buffer& buffer) {
                                  formatter.format_ctx(ctx, std::move(metadata), buffer);
                                },
-                               {std::chrono::high_resolution_clock::now(),
-                                {ctx_value, should_print_context},
-                                fmtstr,
-                                store,
-                                log_name,
-                                log_tag}};
+                                   {std::chrono::high_resolution_clock::now(),
+                                    {ctx_value, should_print_context},
+                                    fmtstr,
+                                    store,
+                                    log_name,
+                                    log_tag}};
     backend.push(std::move(entry));
   }
 
