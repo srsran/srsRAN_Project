@@ -45,7 +45,7 @@ public:
 
 } // namespace
 
-static void test_sched_result_ok()
+static void test_valid_dl_sched_results_generate_correct_dl_tti_request()
 {
   slot_message_gateway_spy gateway_spy;
   mac_to_fapi_translator   translator(gateway_spy);
@@ -92,5 +92,5 @@ static void test_sched_result_ok()
 
 int main()
 {
-  test_sched_result_ok();
+  test_valid_dl_sched_results_generate_correct_dl_tti_request();
 }
