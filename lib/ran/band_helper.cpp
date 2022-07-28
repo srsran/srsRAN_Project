@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/channel_bandwidth.h"
 #include "srsgnb/ran/duplex_mode.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -94,7 +95,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {1,  duplex_mode::FDD},
     {2,  duplex_mode::FDD},
     {3,  duplex_mode::FDD},
@@ -200,6 +201,45 @@ static constexpr std::array<nr_raster_params, 3> nr_fr_params = {{
     {3000, 24250, 15, 3000.0, 600000, 600000, 2016666},
     // Frequency range 24250 - 100000 MHz
     {24250, 100000, 60, 24250.08, 2016667, 2016667, max_nr_arfcn}
+    // clang-format on
+}};
+
+struct n_rb_per_scs {
+  bs_channel_bw_fr1 bw;
+  unsigned          n_rb_15kHz;
+  unsigned          n_rb_30kHz;
+  unsigned          n_rb_60kHz;
+};
+
+// This implements Table 5.3.2-1 in TS 38.104. Value N_RB = 0 represent N/A.
+static std::array<n_rb_per_scs, 13> tx_bw_config_fr1 = {{
+    // clang-format off
+    // BW = 5MHz.
+    {bs_channel_bw_fr1::MHz5, 25, 11, 0},
+    // BW = 10MHz.
+    {bs_channel_bw_fr1::MHz10, 52, 24, 11},
+    // BW = 15MHz.
+    {bs_channel_bw_fr1::MHz15, 79, 38, 18},
+    // BW = 20MHz.
+    {bs_channel_bw_fr1::MHz20, 106, 51, 24},
+    // BW = 25MHz.
+    {bs_channel_bw_fr1::MHz25, 133, 65, 31},
+    // BW = 30MHz.
+    {bs_channel_bw_fr1::MHz30, 160, 78, 38},
+    // BW = 40MHz.
+    {bs_channel_bw_fr1::MHz40, 216, 106, 51},
+    // BW = 50MHz.
+    {bs_channel_bw_fr1::MHz50, 270, 133, 65},
+    // BW = 60MHz.
+    {bs_channel_bw_fr1::MHz60, 0, 162, 79},
+    // BW = 70MHz.
+    {bs_channel_bw_fr1::MHz70, 0, 189, 93},
+    // BW = 80MHz.
+    {bs_channel_bw_fr1::MHz80, 0, 217, 107},
+    // BW = 90MHz.
+    {bs_channel_bw_fr1::MHz90, 0, 245, 121},
+    // BW = 100MHz.
+    {bs_channel_bw_fr1::MHz100, 0, 273, 135}
     // clang-format on
 }};
 
@@ -368,4 +408,47 @@ double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_p
   // TODO: add offset_to_carrier
   double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
   return abs_freq_point_a_freq + (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
+}
+
+double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
+{
+  // Half of the number of subcarriers in a RE.
+  constexpr static unsigned NRE_half = 6;
+  // The procedure, which is explained in TS 38.104, Section 5.4.2.2, gives the position of f_ref in terms of subcarrier
+  // and CRB index, depending on the size of N_RB. Below we compute the value in unit of subcarriers, meaning we don't
+  // need to separate the cases of even and odd N_RB.
+  unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
+  return f_ref - static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * 1000U);
+}
+
+double
+srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs)
+{
+  // Half of the number of subcarriers in a RE.
+  constexpr static unsigned NRE_half = 6;
+  // The procedure used in this function is the inverse of what explained in TS 38.104, Section 5.4.2.2.
+  unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
+  return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * 1000U);
+}
+
+unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1 bw, subcarrier_spacing scs, frequency_range fr)
+{
+  // Return an invalid value in case the input parameters are not valid.
+  if (fr != frequency_range::FR1 or scs > subcarrier_spacing::kHz60)
+    return 0;
+
+  // Search on the table \ref tx_bw_config_fr1 for the BS channel bandwidth and return the N_RB corresponding to SCS.
+  for (unsigned bw_idx = 0; bw_idx < tx_bw_config_fr1.size(); ++bw_idx) {
+    if (tx_bw_config_fr1[bw_idx].bw == bw) {
+      if (scs == subcarrier_spacing::kHz15) {
+        return tx_bw_config_fr1[bw_idx].n_rb_15kHz;
+      } else if (scs == subcarrier_spacing::kHz30) {
+        return tx_bw_config_fr1[bw_idx].n_rb_30kHz;
+      } else {
+        return tx_bw_config_fr1[bw_idx].n_rb_60kHz;
+      }
+    }
+  }
+
+  return 0;
 }
