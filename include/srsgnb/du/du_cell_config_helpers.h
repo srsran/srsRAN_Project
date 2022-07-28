@@ -179,9 +179,10 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.freq_info_ul.scs_carrier_list[0].carrier_bandwidth = params.nof_crbs;
   cfg.init_ul_bwp.generic_params                         = make_default_init_bwp(params);
   cfg.init_ul_bwp.rach_cfg_common.emplace();
-  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles                        = 64;
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present             = true;
-  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index                          = 1;
+  cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
+  cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
+  // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
   cfg.init_ul_bwp.rach_cfg_common->restricted_set                                = restricted_set_config::TYPE_A;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;

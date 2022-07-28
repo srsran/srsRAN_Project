@@ -18,6 +18,9 @@ namespace srsgnb {
 /// Number of subframers per frame. This constant doesn't depend on the numerology used
 constexpr uint32_t NOF_SUBFRAMES_PER_FRAME = 10;
 
+/// Duration of a subframe in milliseconds.
+constexpr uint32_t SUBFRAME_DURATION_MSEC = 1;
+
 /// Represents the difference between two slot points.
 using slot_difference = int;
 

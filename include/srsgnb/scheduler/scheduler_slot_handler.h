@@ -41,8 +41,9 @@ const size_t MAX_SSB_PER_SLOT = 2;
 constexpr size_t MAX_SIB1_PDUS_PER_SLOT = 2;
 /// [Implementation defined] This corresponds to maximum number of RARs that can be scheduled per slot.
 constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
-/// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4].
-const static size_t MAX_NOF_PRACHS_PER_SLOT = 7;
+/// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4] and maximum msg1-FDM of 8
+/// according to TS 38.331.
+const static size_t MAX_NOF_PRACHS_PER_SLOT = 56;
 
 struct beamforming_info {
   // TODO
@@ -249,8 +250,6 @@ struct prach_occasion_info {
   uint8_t start_symbol;
   /// N-CS configuration as per TS38.211, Table 6.3.3.1-5. Possible values: {0,...,419}.
   uint16_t nof_cs;
-  /// Values: {0,...,255}.
-  uint8_t prach_config_index;
   /// Number of frequency domain occasions starting with index_fd_ra. Possible values: {1,...,8}.
   uint8_t nof_fd_ra;
   /// Start of preamble logical index to monitor the PRACH occasions in this slot. Values: {0,...63}.

@@ -160,8 +160,8 @@ struct rach_config_common {
   /// \remark See TS 38.211, clause 6.3.3.1.
   bool     prach_root_seq_index_l839_present;
   unsigned prach_root_seq_index;
-  /// \brief Subcarrier spacing of PRACH as per TS38.211, clause 5.3.2. If invalid, the UE applies the SCS as derived
-  /// from the prach-ConfigurationIndex in RACH-ConfigGeneric.
+  /// \brief Subcarrier spacing of PRACH as per TS38.331, "RACH-ConfigCommon". If invalid, the UE applies the SCS as
+  /// derived from the prach-ConfigurationIndex in RACH-ConfigGeneric as per TS38.211 Tables 6.3.3.1-[1-3].
   subcarrier_spacing    msg1_scs;
   restricted_set_config restricted_set;
 };

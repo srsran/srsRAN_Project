@@ -21,11 +21,12 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
                                     cell_cfg.paired_spectrum ? duplex_mode::FDD : duplex_mode::TDD,
                                     rach_cfg_common().rach_cfg_generic.prach_config_index))
 {
-  static constexpr unsigned SUBFRAME_DURATION_MSEC = 1;
-  static const double       symbol_duration_msec =
+  static const unsigned nof_symbols_per_slot = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended
+                                                   ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
+                                                   : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP;
+  static const double   symbol_duration_msec =
       SUBFRAME_DURATION_MSEC * get_nof_slots_per_subframe(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs) /
-      (double)(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.cp_extended ? NOF_OFDM_SYM_PER_SLOT_EXTENDED_CP
-                                                                             : NOF_OFDM_SYM_PER_SLOT_NORMAL_CP);
+      (double)nof_symbols_per_slot;
 
   // Convert list of PRACH subframe occasions to bitmap.
   for (unsigned pos : prach_cfg.subframe) {
@@ -80,6 +81,8 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
         unsigned start                       = prach_cfg.starting_symbol + i * prach_cfg.duration;
         cached_prach.grant_resources.symbols = {start, start + prach_cfg.duration};
       }
+      srsgnb_sanity_check(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
+                          "Invalid PRACH preamble position");
       static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
       uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * PRACH_NOF_PRBS;
       prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
@@ -91,9 +94,8 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       cached_prach.occasion.nof_prach_occasions = prach_cfg.nof_occasions_within_slot;
       cached_prach.occasion.nof_cs              = prach_cyclic_shifts_get(
           info.scs, rach_cfg_common().restricted_set, rach_cfg_common().rach_cfg_generic.zero_correlation_zone_config);
-      cached_prach.occasion.index_fd_ra        = id_fd_ra;
-      cached_prach.occasion.nof_fd_ra          = rach_cfg_common().rach_cfg_generic.msg1_fdm;
-      cached_prach.occasion.prach_config_index = rach_cfg_common().rach_cfg_generic.prach_config_index;
+      cached_prach.occasion.index_fd_ra = id_fd_ra;
+      cached_prach.occasion.nof_fd_ra   = rach_cfg_common().rach_cfg_generic.msg1_fdm;
       cached_prach.occasion.start_preamble_index =
           cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
       cached_prach.occasion.nof_preamble_indexes =
