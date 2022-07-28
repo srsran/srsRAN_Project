@@ -11,8 +11,8 @@
 #pragma once
 
 #include "du_cell_config.h"
-#include "include/srsgnb/ran/channel_bandwidth.h"
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 
