@@ -23,12 +23,13 @@ namespace srsgnb {
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
 /// in this struct.
 struct du_cell_config_default_params {
-  pci_t              pci               = 1;
-  subcarrier_spacing scs_common        = subcarrier_spacing::kHz15;
-  unsigned           nof_crbs          = 52;
-  unsigned           dl_arfcn          = 365000;
-  unsigned           offset_to_point_a = 12;
-  unsigned           coreset0_index    = 6;
+  pci_t              pci        = 1;
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  unsigned           nof_crbs   = 52;
+  // TODO: we should decide whether this represents "f_ref" or pointA.
+  unsigned dl_arfcn          = 365000;
+  unsigned offset_to_point_a = 12;
+  unsigned coreset0_index    = 6;
 };
 
 namespace du_config_helpers {
@@ -171,7 +172,9 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  uint32_t         ul_arfcn              = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
+  // TODO: This way of computing the UL-ARFCN is not entirely correct. We should derive ul_arfcn from f_ref for DL, and
+  // then computing cfg.freq_info_ul.absolute_freq_point_a from f_ref_UL.
+  uint32_t ul_arfcn                      = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
   cfg.freq_info_ul.absolute_freq_point_a = band_helper::get_abs_freq_point_a_arfcn(params.nof_crbs, ul_arfcn);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
