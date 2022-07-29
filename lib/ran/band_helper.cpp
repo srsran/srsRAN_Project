@@ -251,7 +251,8 @@ static nr_raster_params get_raster_params(uint32_t nr_arfcn)
       return fr;
     }
   }
-  return {}; // return empty params.
+  // Return empty params.
+  return {};
 }
 
 static nr_raster_params get_raster_params(double freq)
@@ -261,7 +262,8 @@ static nr_raster_params get_raster_params(double freq)
       return fr;
     }
   }
-  return {}; // return empty params
+  // Return empty params.
+  return {};
 }
 
 static bool is_valid_raster_param(const nr_raster_params& raster)
@@ -289,12 +291,14 @@ uint16_t srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 
 uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
 {
-  // return same ARFCN for TDD bands
+  // NOTE: The procedure implemented in this function is implementation-defined.
+
+  // Return same ARFCN for TDD bands.
   if (get_duplex_mode(get_band_from_dl_arfcn(dl_arfcn)) == duplex_mode::TDD) {
     return dl_arfcn;
   }
 
-  // derive UL ARFCN for FDD bands
+  // Derive UL ARFCN for FDD bands.
   for (const auto& band : nr_band_table_fr1) {
     if (band.band == get_band_from_dl_arfcn(dl_arfcn)) {
       uint32_t offset = (dl_arfcn - band.dl_nref_first) / band.dl_nref_step;

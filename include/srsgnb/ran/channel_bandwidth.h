@@ -30,7 +30,7 @@ enum class bs_channel_bw_fr1 {
 };
 
 /// Converts SCS into integer in kHz.
-constexpr inline unsigned bs_ch_bw_to_uint(bs_channel_bw_fr1 bw)
+constexpr inline unsigned bs_channel_bw_to_uint(bs_channel_bw_fr1 bw)
 {
   return static_cast<unsigned>(bw);
 }

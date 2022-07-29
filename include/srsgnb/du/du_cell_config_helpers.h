@@ -28,7 +28,7 @@ struct du_cell_config_default_params {
   subcarrier_spacing scs_common     = subcarrier_spacing::kHz15;
   bs_channel_bw_fr1  channel_bw_mhz = bs_channel_bw_fr1::MHz10;
   unsigned           nof_crbs       = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
-  // TODO: we should decide whether this represents "f_ref" or pointA.
+  // This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn          = 365000;
   unsigned offset_to_point_a = 12;
   unsigned coreset0_index    = 6;
@@ -39,7 +39,7 @@ namespace du_config_helpers {
 inline carrier_configuration make_default_carrier_configuration(const du_cell_config_default_params& params = {})
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = bs_ch_bw_to_uint(params.channel_bw_mhz);
+  cfg.carrier_bw_mhz = bs_channel_bw_to_uint(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
   return cfg;
@@ -174,10 +174,10 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  // TODO: This way of computing the UL-ARFCN is not entirely correct. We should derive ul_arfcn from f_ref for DL, and
-  // then computing cfg.freq_info_ul.absolute_freq_point_a from f_ref_UL.
+  // This is the ARFCN of the UL f_ref, as perTS 38.211, Section 5.4.2.1.
   uint32_t ul_arfcn                      = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
-  cfg.freq_info_ul.absolute_freq_point_a = band_helper::get_abs_freq_point_a_arfcn(params.nof_crbs, ul_arfcn);
+  cfg.freq_info_ul.absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
+      band_helper::nr_arfcn_to_freq(ul_arfcn), params.nof_crbs, params.scs_common);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;

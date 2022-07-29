@@ -46,7 +46,7 @@ uint16_t get_band_from_dl_arfcn(uint32_t arfcn);
 uint32_t get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn);
 
 /// \brief Return frequency of given NR-ARFCN in Hz as per TS38.104 5.4.2.1.
-/// \param[in] nr_arfcn Given NR-AFCN.
+/// \param[in] nr_arfcn Given NR-ARFCN.
 /// \return The frequency in Hz.
 double nr_arfcn_to_freq(uint32_t nr_arfcn);
 
