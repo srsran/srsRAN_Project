@@ -145,8 +145,15 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   ue_ctxt->pcell_index = msg.pcell_index;
   ue_ctxt->c_rnti      = msg.c_rnti;
 
+  // 3. Create a UE task scheduler notifier.
+  ue_ctxt->task_sched = std::make_unique<rrc_to_du_ue_task_scheduler>(ue_ctxt->ue_index, *this);
+
   // 3. Create new RRC entity
-  ue_ctxt->rrc = rrc->add_user(*ue_ctxt, msg.du_to_cu_rrc_container);
+  ue_creation_message ue_create_msg{};
+  ue_create_msg.ctxt               = ue_ctxt;
+  ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
+  ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
+  ue_ctxt->rrc                     = rrc->add_user(std::move(ue_create_msg));
   if (ue_ctxt->rrc == nullptr) {
     logger.error("Could not create RRC entity");
     f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(msg.tmp_ue_id), INVALID_UE_INDEX);

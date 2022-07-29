@@ -105,7 +105,9 @@ protected:
 
     // create single UE context and add RRC user
     ue_ctxt.c_rnti = to_rnti(0x1234);
-    ue_ctxt.rrc    = rrc->add_user(ue_ctxt, {});
+    ue_creation_message ue_create_msg{};
+    ue_create_msg.ctxt = &ue_ctxt;
+    ue_ctxt.rrc        = rrc->add_user(std::move(ue_create_msg));
 
     // create SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs.emplace(LCID_SRB0);

@@ -26,7 +26,7 @@ public:
   ~rrc_entity() = default;
 
   // rrc_entity_du_interface
-  rrc_ue_entity_interface* add_user(ue_context& ctxt_, asn1::unbounded_octstring<true> du_to_cu_container) override;
+  rrc_ue_entity_interface* add_user(ue_creation_message msg) override;
   void                     release_ues() override;
   void                     handle_amf_connection() override;
   void                     handle_amf_connection_drop() override;

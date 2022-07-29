@@ -28,7 +28,9 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-class du_processor : public du_processor_f1c_interface, public du_processor_rrc_ue_interface
+class du_processor : public du_processor_f1c_interface,
+                     public du_processor_rrc_ue_interface,
+                     public du_processor_ue_task_scheduler
 {
 public:
   du_processor(const du_processor_config_t& cfg);
@@ -58,6 +60,11 @@ public:
   /// \brief Create SRB entry in bearer list and add adapter handle.
   void create_srb(const srb_creation_message& msg) override;
   void handle_ue_context_release_command(const ue_context_release_command_message& msg) override;
+
+  void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) override
+  {
+    ue_ctrl_loop[ue_index].schedule(std::move(task));
+  }
 
 private:
   // F1AP senders

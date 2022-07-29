@@ -19,13 +19,17 @@ rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                              rrc_ue_du_processor_notifier&          du_proc_notif_,
                              const ue_context&                      ctxt_,
                              const rrc_ue_cfg_t&                    cfg_,
-                             const asn1::unbounded_octstring<true>& du_to_cu_container_) :
+                             const asn1::unbounded_octstring<true>& du_to_cu_container_,
+                             rrc_ue_task_scheduler&                 task_sched_) :
   parent(parent_),
   du_processor_notifier(du_proc_notif_),
   ctxt(ctxt_),
   cfg(cfg_),
-  du_to_cu_container(du_to_cu_container_)
+  du_to_cu_container(du_to_cu_container_),
+  task_sched(task_sched_)
 {
+  // TODO: Use task_sched to schedule RRC procedures.
+  (void)task_sched;
 }
 
 rrc_ul_ccch_pdu_handler* rrc_ue_entity::get_ul_ccch_pdu_handler()

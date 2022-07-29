@@ -16,6 +16,15 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
+struct ue_creation_message {
+  // TODO: Remove this. Do not share DU processor stateful variables with other layers.
+  rnti_t                          c_rnti;
+  ue_index_t                      tmp_ue_id;
+  ue_context*                     ctxt;
+  asn1::unbounded_octstring<true> du_to_cu_container;
+  rrc_ue_task_scheduler*          ue_task_sched;
+};
+
 /// Interface class for the main RRC object of the DU used by the RRC UE objects.
 class rrc_entity_ue_interface
 {
@@ -37,7 +46,7 @@ public:
   virtual ~rrc_entity_du_interface() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_entity_interface* add_user(ue_context& ctxt_, asn1::unbounded_octstring<true> du_to_cu_container) = 0;
+  virtual rrc_ue_entity_interface* add_user(ue_creation_message msg) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;

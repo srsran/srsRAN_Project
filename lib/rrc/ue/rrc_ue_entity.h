@@ -26,7 +26,8 @@ public:
                 rrc_ue_du_processor_notifier&          du_proc_notif_,
                 const ue_context&                      ctxt_,
                 const rrc_ue_cfg_t&                    cfg_,
-                const asn1::unbounded_octstring<true>& du_to_cu_container);
+                const asn1::unbounded_octstring<true>& du_to_cu_container,
+                rrc_ue_task_scheduler&                 task_sched);
   ~rrc_ue_entity() = default;
 
   // rrc_ul_ccch_pdu_handler
@@ -86,6 +87,7 @@ private:
   const ue_context&             ctxt;                  // reference to the UE object
   const rrc_ue_cfg_t&           cfg;
   byte_buffer                   du_to_cu_container; // initial RRC message from DU to CU
+  rrc_ue_task_scheduler&        task_sched;
 
   struct rrc_ctxt_t {
     uint64_t                               setup_ue_id = -1;

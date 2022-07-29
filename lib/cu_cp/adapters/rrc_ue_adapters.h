@@ -63,5 +63,23 @@ private:
   du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
+class rrc_to_du_ue_task_scheduler : public rrc_ue_task_scheduler
+{
+public:
+  rrc_to_du_ue_task_scheduler(ue_index_t ue_index_, du_processor_ue_task_scheduler& du_processor_task_sched_) :
+    ue_index(ue_index_), du_processor_task_sched(du_processor_task_sched_)
+  {
+  }
+
+  void schedule_async_task(async_task<void>&& task) override
+  {
+    du_processor_task_sched.handle_ue_async_task(ue_index, std::move(task));
+  }
+
+private:
+  ue_index_t                      ue_index;
+  du_processor_ue_task_scheduler& du_processor_task_sched;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

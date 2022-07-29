@@ -98,5 +98,13 @@ public:
   virtual void handle_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
+/// \brief Service provided by DU processor to schedule async tasks for a given UE.
+class du_processor_ue_task_scheduler
+{
+public:
+  virtual ~du_processor_ue_task_scheduler()                                       = default;
+  virtual void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

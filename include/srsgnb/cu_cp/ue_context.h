@@ -43,6 +43,8 @@ struct ue_context {
   rrc_ue_entity_interface*    rrc = nullptr;
   slot_vector<cu_srb_context> srbs;
   slot_vector<cu_drb_context> drbs;
+
+  std::unique_ptr<rrc_ue_task_scheduler> task_sched;
 };
 
 } // namespace srs_cu_cp

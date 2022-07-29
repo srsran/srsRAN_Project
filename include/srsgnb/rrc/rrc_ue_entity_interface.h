@@ -53,6 +53,14 @@ public:
   virtual void on_ue_context_release_command(const ue_context_release_command_message& msg) = 0;
 };
 
+/// Schedules asynchronous tasks associated with an UE.
+class rrc_ue_task_scheduler
+{
+public:
+  virtual ~rrc_ue_task_scheduler()                          = default;
+  virtual void schedule_async_task(async_task<void>&& task) = 0;
+};
+
 } // namespace srs_cu_cp
 
 } // namespace srsgnb
