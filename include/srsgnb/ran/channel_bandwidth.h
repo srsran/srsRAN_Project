@@ -12,7 +12,7 @@
 
 namespace srsgnb {
 
-/// Labels for the BS Channel Bandwidth for FR1, described in TS38.104 Table Table 5.3.2-1.
+/// Labels for the BS Channel Bandwidth for FR1, described in TS38.104, Table 5.3.2-1.
 enum class bs_channel_bandwidth_fr1 {
   MHz5   = 5,
   MHz10  = 10,

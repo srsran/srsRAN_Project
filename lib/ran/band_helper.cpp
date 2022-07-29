@@ -95,7 +95,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-    // clang-format off
+       // clang-format off
     {1,  duplex_mode::FDD},
     {2,  duplex_mode::FDD},
     {3,  duplex_mode::FDD},
@@ -206,9 +206,9 @@ static constexpr std::array<nr_raster_params, 3> nr_fr_params = {{
 
 struct n_rb_per_scs {
   bs_channel_bandwidth_fr1 bw;
-  unsigned          n_rb_15kHz;
-  unsigned          n_rb_30kHz;
-  unsigned          n_rb_60kHz;
+  unsigned                 n_rb_15kHz;
+  unsigned                 n_rb_30kHz;
+  unsigned                 n_rb_60kHz;
 };
 
 // This implements Table 5.3.2-1 in TS 38.104. Value N_RB = 0 represent N/A.
