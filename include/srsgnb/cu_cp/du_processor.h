@@ -83,7 +83,7 @@ struct srb_creation_message {
   asn1::rrc_nr::pdcp_cfg_s pdcp_cfg;
 };
 
-/// Interface for an RRU UE notifier to communicate with the DU processor.
+/// Interface for an RRC UE entity to communicate with the DU processor.
 class du_processor_rrc_ue_interface
 {
 public:

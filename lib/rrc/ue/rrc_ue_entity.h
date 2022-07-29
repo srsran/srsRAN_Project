@@ -19,13 +19,15 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_handler
+class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_handler, public rrc_ul_dcch_pdu_handler
 {
 public:
   rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                 rrc_ue_du_processor_notifier&          du_proc_notif_,
-                const ue_context&                      ctxt_,
+                const ue_index_t                       ue_index_,
+                const rnti_t                           c_rnti_,
                 const rrc_ue_cfg_t&                    cfg_,
+                const srb_notifiers&                   srbs_,
                 const asn1::unbounded_octstring<true>& du_to_cu_container,
                 rrc_ue_task_scheduler&                 task_sched);
   ~rrc_ue_entity() = default;
@@ -35,7 +37,9 @@ public:
   void handle_ul_dcch_pdu(byte_buffer_slice pdu) override;
 
   // rrc_ue_entity_interface
-  rrc_ul_ccch_pdu_handler* get_ul_ccch_pdu_handler() override;
+  rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler() override;
+  rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler() override;
+  void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) override;
 
 private:
   // message handlers
@@ -53,8 +57,8 @@ private:
   /// Packs a DL-DCCH message and logs the message
   void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
 
-  /// Sends a packed PDU on SRB0
-  void send_srb0_pdu(byte_buffer pdu);
+  /// Sends a packed PDU on an SRB
+  void send_srb_pdu(srb_id_t srb_id, byte_buffer pdu);
 
   /// Sends a UE Context Release Request
   void send_ue_context_release_command();
@@ -80,12 +84,15 @@ private:
   template <class T>
   void
   log_rrc_message(const char* source, const direction_t dir, byte_buffer_view pdu, const T& msg, const char* msg_type);
-  void log_rx_pdu_fail(uint16_t rnti, uint32_t lcid, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
+  void
+  log_rx_pdu_fail(uint16_t rnti, const char* source, byte_buffer_view pdu, const char* cause_str, bool log_hex = true);
 
   rrc_entity_ue_interface&      parent;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  const ue_context&             ctxt;                  // reference to the UE object
+  const ue_index_t              ue_index;              // UE index assigned by the DU processor
+  const rnti_t                  c_rnti;                // current C-RNTI
   const rrc_ue_cfg_t&           cfg;
+  srb_notifiers                 srbs;               // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container; // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;
 

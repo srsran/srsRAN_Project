@@ -21,11 +21,19 @@ namespace srsgnb {
 class pdcp_entity_rx : public pdcp_rx_lower_interface
 {
 public:
-  pdcp_entity_rx(pdcp_rx_upper_data_notifier& upper_dn) : upper_dn(upper_dn) {}
+  pdcp_entity_rx(pdcp_rx_upper_data_notifier& upper_dn_) : upper_dn(upper_dn_) {}
 
 private:
-  pdcp_rx_upper_data_notifier& upper_dn;
+  void handle_pdu(byte_buffer buf) final
+  {
+    std::printf("[PDCP] RX PDU of %zd B\n", buf.length());
 
-  void handle_pdu(byte_buffer buf) final { upper_dn.on_new_sdu(std::move(buf)); }
+    // strip away the first two bytes containing the PDCP header
+    byte_buffer sdu(buf.begin() + 2, buf.end());
+    upper_dn.on_new_sdu(std::move(sdu));
+  }
+
+  pdcp_rx_upper_data_notifier& upper_dn;
 };
+
 } // namespace srsgnb

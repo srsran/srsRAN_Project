@@ -27,12 +27,11 @@ public:
   {
   }
 
-  void on_new_pdu(const rrc_pdu_message msg) override
+  void on_new_pdu(const rrc_pdu_message& msg) override
   {
     f1ap_dl_rrc_message f1ap_msg = {};
     f1ap_msg.ue_index            = ue_index;
-    f1ap_msg.srb_id              = msg.srb_id;
-
+    f1ap_msg.srb_id              = srb_id_t::srb0;
     f1ap_msg.rrc_container.resize(msg.pdu.length());
     std::copy(msg.pdu.begin(), msg.pdu.end(), f1ap_msg.rrc_container.begin());
     f1c_handler.handle_dl_rrc_message_transfer(f1ap_msg);
@@ -40,7 +39,7 @@ public:
 
 private:
   f1ap_rrc_message_transfer_procedure_handler& f1c_handler;
-  ue_index_t                                   ue_index;
+  const ue_index_t                             ue_index;
 };
 
 /// Adapter between RRC UE and DU processor
@@ -81,6 +80,18 @@ public:
 private:
   ue_index_t                      ue_index;
   du_processor_ue_task_scheduler& du_processor_task_sched;
+};
+
+/// Adapter between RRC and PDCP in DL direction (Tx)
+class rrc_ue_pdcp_adapter : public rrc_pdu_notifier
+{
+public:
+  explicit rrc_ue_pdcp_adapter(pdcp_tx_upper_data_interface& pdcp_handler_) : pdcp_handler(pdcp_handler_) {}
+
+  void on_new_pdu(const rrc_pdu_message& msg) override { pdcp_handler.handle_sdu({msg.pdu.begin(), msg.pdu.end()}); }
+
+private:
+  pdcp_tx_upper_data_interface& pdcp_handler;
 };
 
 } // namespace srs_cu_cp

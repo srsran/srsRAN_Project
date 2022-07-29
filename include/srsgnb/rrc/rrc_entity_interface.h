@@ -17,9 +17,9 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 struct ue_creation_message {
-  // TODO: Remove this. Do not share DU processor stateful variables with other layers.
+  ue_index_t                      ue_index;
   rnti_t                          c_rnti;
-  ue_context*                     ctxt;
+  srb_notifiers                   srbs;
   asn1::unbounded_octstring<true> du_to_cu_container;
   rrc_ue_task_scheduler*          ue_task_sched;
 };

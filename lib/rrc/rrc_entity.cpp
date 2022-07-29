@@ -22,18 +22,24 @@ rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, rrc_ue_du_proc
 
 rrc_ue_entity_interface* rrc_entity::add_user(ue_creation_message msg)
 {
-  if (ue_db.contains(msg.ctxt->ue_index)) {
+  if (ue_db.contains(msg.ue_index)) {
     // UE already exists with same ue_index
     return nullptr;
   }
 
   // TODO: check if du_to_cu_container is valid, reject if not
 
-  ue_index_t ue_index = msg.ctxt->ue_index;
-  ue_db.emplace(
-      ue_index,
-      std::make_unique<rrc_ue_entity>(
-          *this, rrc_ue_du_proc_notifier, *msg.ctxt, cfg.ue_default_cfg, msg.du_to_cu_container, *msg.ue_task_sched));
+  // create UE object
+  ue_index_t ue_index = msg.ue_index;
+  ue_db.emplace(ue_index,
+                std::make_unique<rrc_ue_entity>(*this,
+                                                rrc_ue_du_proc_notifier,
+                                                msg.ue_index,
+                                                msg.c_rnti,
+                                                cfg.ue_default_cfg,
+                                                msg.srbs,
+                                                msg.du_to_cu_container,
+                                                *msg.ue_task_sched));
   auto& u = ue_db[ue_index];
   return u.get();
 }

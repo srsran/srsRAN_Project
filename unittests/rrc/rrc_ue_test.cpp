@@ -39,7 +39,7 @@ class dummy_rrc_pdu_notifier : public rrc_pdu_notifier
 public:
   dummy_rrc_pdu_notifier(dummy_tx_pdu_handler& handler_) : handler(handler_) {}
 
-  void on_new_pdu(const rrc_pdu_message msg) override { handler.handle_pdu(std::move(msg.pdu)); }
+  void on_new_pdu(const rrc_pdu_message& msg) override { handler.handle_pdu(std::move(msg.pdu)); }
 
 private:
   dummy_tx_pdu_handler& handler;
@@ -52,8 +52,8 @@ public:
 
   void create_srb(const srb_creation_message& msg) override
   {
-    EXPECT_FALSE(ue_ctxt.srbs.contains(srb_id_to_lcid(msg.srb_id)));
-    ue_ctxt.srbs.emplace(srb_id_to_lcid(msg.srb_id));
+    // set notifier to a known value (i.e. nullptr) to be able to check if it was called
+    ue_ctxt.srbs[msg.srb_id].rrc_tx_notifier.reset();
     last_srb = msg;
   }
 
@@ -102,11 +102,10 @@ private:
 class rrc_setup : public ::testing::Test
 {
 protected:
+  static void SetUpTestSuite() { srslog::init(); }
+
   void SetUp() override
   {
-    logger.set_level(srslog::basic_levels::debug);
-    srslog::init();
-
     // create RRC entity
     du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
 
@@ -119,16 +118,13 @@ protected:
     ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>();
     ue_creation_message ue_create_msg{};
     ue_create_msg.c_rnti = ue_ctxt.c_rnti;
-    ue_create_msg.ctxt   = &ue_ctxt;
     ue_create_msg.du_to_cu_container.resize(1);
     ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
     ue_ctxt.rrc                 = rrc->add_user(std::move(ue_create_msg));
 
-    // create SRB0 with RRC to "F1" adapter
-    ue_ctxt.srbs.emplace(LCID_SRB0);
-    cu_srb_context& srb0 = ue_ctxt.srbs[LCID_SRB0];
-    srb0.lcid            = LCID_SRB0;
-    srb0.tx_notifier     = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
+    // connect SRB0 with RRC to "F1" adapter
+    ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
+    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0, *ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier.get());
   }
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()
@@ -153,16 +149,16 @@ protected:
   void receive_setup_request()
   {
     // inject RRC setup into UE object
-    ue_ctxt.rrc->get_ul_ccch_pdu_handler()->handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
+    ue_ctxt.rrc->get_ul_ccch_pdu_handler().handle_ul_ccch_pdu(byte_buffer{rrc_setup_pdu});
   }
 
   void receive_setup_complete()
   {
     // inject RRC setup complete
-    ue_ctxt.rrc->get_ul_ccch_pdu_handler()->handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
+    ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void check_srb1_exists() { EXPECT_TRUE(ue_ctxt.srbs.contains(LCID_SRB1)); }
+  void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_t::srb1].rrc_tx_notifier, nullptr); }
 
 private:
   ngap_dummy                                           ngap;

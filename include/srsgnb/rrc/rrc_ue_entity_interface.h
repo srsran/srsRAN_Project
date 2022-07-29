@@ -16,15 +16,9 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-/// Interface class for an RRC UE object.
-/// It will contain getters for the interfaces for the various logical channels handled by RRC.
-class rrc_ue_entity_interface
-{
-public:
-  rrc_ue_entity_interface()          = default;
-  virtual ~rrc_ue_entity_interface() = default;
-
-  virtual rrc_ul_ccch_pdu_handler* get_ul_ccch_pdu_handler() = 0;
+struct rrc_pdu_message {
+  rrc_pdu_message(byte_buffer_slice pdu_) : pdu(std::move(pdu_)) {}
+  byte_buffer_slice pdu;
 };
 
 /// Interface to notify about a new SRB PDU.
@@ -35,7 +29,39 @@ public:
 
   /// \brief Notify about a new PDU.
   /// \param[in] msg The RRC PDU message.
-  virtual void on_new_pdu(const rrc_pdu_message msg) = 0;
+  virtual void on_new_pdu(const rrc_pdu_message& msg) = 0;
+};
+
+/// Non-owning handlers to PDU notifiers.
+using srb_notifiers = std::array<rrc_pdu_notifier*, MAX_NOF_SRBS>;
+
+/// Dummy notifier that just logs the PDU.
+/// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.
+class rrc_pdu_null_notifier : public rrc_pdu_notifier
+{
+public:
+  rrc_pdu_null_notifier() = default;
+  void on_new_pdu(const rrc_pdu_message& msg) override
+  {
+    srsgnb_assertion_failure("Received PDU on unconnected notifier. Discarding.");
+    logger.error("Received PDU on unconnected notifier. Discarding.");
+  };
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("RRC");
+};
+
+/// Interface class for an RRC UE object.
+/// It will contain getters for the interfaces for the various logical channels handled by RRC.
+class rrc_ue_entity_interface
+{
+public:
+  rrc_ue_entity_interface()          = default;
+  virtual ~rrc_ue_entity_interface() = default;
+
+  virtual rrc_ul_ccch_pdu_handler& get_ul_ccch_pdu_handler()                                         = 0;
+  virtual rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler()                                         = 0;
+  virtual void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) = 0;
 };
 
 /// Interface to notify about RRC UE Context messages.

@@ -11,9 +11,11 @@
 #include "du_processor.h"
 #include "../lib/f1_interface/common/asn1_helpers.h"
 #include "adapters/du_processor_adapters.h"
+#include "adapters/pdcp_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "f1c_asn1_helpers.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
+#include "srsgnb/pdcp/pdcp_factory.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
@@ -148,9 +150,13 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   // 3. Create a UE task scheduler notifier.
   ue_ctxt->task_sched = std::make_unique<rrc_to_du_ue_task_scheduler>(ue_ctxt->ue_index, *this);
 
-  // 3. Create new RRC entity
+  // 4. Create new RRC entity
   ue_creation_message ue_create_msg{};
-  ue_create_msg.ctxt               = ue_ctxt;
+  ue_create_msg.ue_index = ue_ctxt->ue_index;
+  ue_create_msg.c_rnti   = ue_ctxt->c_rnti;
+  for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+    ue_create_msg.srbs[i] = ue_ctxt->srbs[i].rrc_tx_notifier.get();
+  }
   ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
   ue_ctxt->rrc                     = rrc->add_user(std::move(ue_create_msg));
@@ -163,24 +169,23 @@ void du_processor::handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_m
   logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
   f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(msg.tmp_ue_id), ue_ctxt->ue_index);
 
-  // 4. Create SRB0 bearer and notifier
+  // 5. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};
   srb0_msg.ue_index = ue_ctxt->ue_index;
   srb0_msg.srb_id   = srb_id_t::srb0;
   create_srb(srb0_msg);
 
-  // 5. Pass container to RRC
+  // 6. Determine LCID and payload
+  lcid_t                                 srb_lcid      = LCID_SRB0;
+  const asn1::unbounded_octstring<true>* rrc_container = &msg.rrc_container;
   if (msg.rrc_container_rrc_setup_complete.has_value()) {
-    // check that SRB1 is present
-    if (ue_ctxt->srbs.contains(LCID_SRB0)) {
-      ue_ctxt->srbs[LCID_SRB1].rx_notifier->on_new_rrc_message(msg.rrc_container_rrc_setup_complete.value());
-    } else {
-      logger.error("SRB1 not present - dropping PDU");
-    }
-  } else {
-    // pass UL-CCCH to RRC
-    ue_ctxt->srbs[LCID_SRB0].rx_notifier->on_new_rrc_message(msg.rrc_container);
+    // RRC setup complete over SRB1
+    srb_lcid      = LCID_SRB1;
+    rrc_container = &msg.rrc_container_rrc_setup_complete.value();
   }
+
+  // 7. Pass container to RRC
+  ue_ctxt->srbs[srb_lcid].rx_notifier->on_new_rrc_message({*rrc_container});
 
   return;
 }
@@ -194,12 +199,8 @@ void du_processor::handle_ul_rrc_message_transfer(const ul_rrc_message& msg)
     return;
   }
 
-  // 2. Pass to SRB accordingly
-  if (ue_ctxt->srbs.contains(msg.srbid)) {
-    ue_ctxt->srbs[msg.srbid].rx_notifier->on_new_rrc_message(msg.rrc_container);
-  } else {
-    logger.error("SRB{} not present - dropping PDU", msg.srbid);
-  }
+  // 2. Notify upper layers about reception
+  ue_ctxt->srbs[msg.srbid].rx_notifier->on_new_rrc_message({msg.rrc_container});
 }
 
 void du_processor::create_srb(const srb_creation_message& msg)
@@ -207,20 +208,51 @@ void du_processor::create_srb(const srb_creation_message& msg)
   ue_context* ue_ctxt = ue_mng.find_ue(msg.ue_index);
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
-  const lcid_t lcid = srb_id_to_lcid(msg.srb_id);
-  srsgnb_assert(!ue_ctxt->srbs.contains(lcid), "SRB already present");
+  // create entry for SRB
+  cu_srb_context& srb = ue_ctxt->srbs[msg.srb_id];
 
-  ue_ctxt->srbs.emplace(lcid);
-  cu_srb_context& srb = ue_ctxt->srbs[lcid];
-  srb.lcid            = lcid;
-
-  if (lcid == LCID_SRB0) {
+  // create adapter objects and PDCP bearer as needed
+  if (msg.srb_id == srb_id_t::srb0) {
     // create direct connection with UE manager to RRC adapter
-    srb.rx_notifier = std::make_unique<du_processor_rrc_ue_adapter>(*ue_ctxt->rrc->get_ul_ccch_pdu_handler());
-    srb.tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1ap, ue_ctxt->ue_index);
+    srb.rx_notifier     = std::make_unique<du_processor_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_ccch_pdu_handler());
+    srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1ap, ue_ctxt->ue_index);
+
+    // update notifier in RRC
+    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier.get());
+    // TODO: update notifier in F1AP
+  } else if (msg.srb_id <= srb_id_t::srb2) {
+    // create PDCP context for this SRB
+    srb.pdcp_context.emplace();
+
+    // add adapter for PDCP to talk to F1AP (Tx) and RRC (Rx)
+    srb.pdcp_context->pdcp_tx_notifier =
+        std::make_unique<pdcp_du_processor_adapter>(*f1ap, ue_ctxt->ue_index, msg.srb_id);
+    srb.pdcp_context->rrc_rx_notifier = std::make_unique<pdcp_rrc_ue_adapter>(ue_ctxt->rrc->get_ul_dcch_pdu_handler());
+
+    // prepare PDCP creation message
+    pdcp_entity_creation_message srb_pdcp{};
+    srb_pdcp.ue_index    = msg.ue_index;
+    srb_pdcp.lcid        = srb_id_to_lcid(msg.srb_id);
+    srb_pdcp.config      = {}; // TODO: writer converter from ASN1 for msg.pdcp_cfg;
+    srb_pdcp.tx_lower    = srb.pdcp_context->pdcp_tx_notifier.get();
+    srb_pdcp.tx_upper_cn = nullptr; // TODO: add CN handler
+    srb_pdcp.rx_upper_dn = srb.pdcp_context->rrc_rx_notifier.get();
+    srb_pdcp.rx_upper_cn = nullptr; // TODO: add CN handler
+    srb_pdcp.timers      = nullptr; // TODO: add timers
+
+    // create PDCP entity
+    srb.pdcp_context->pdcp_bearer = create_pdcp_entity(srb_pdcp);
+
+    // created adapters between F1AP to PDCP (Rx) and RRC to PDCP (Tx)
+    srb.rx_notifier = std::make_unique<f1ap_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_rx_lower_interface());
+    srb.rrc_tx_notifier =
+        std::make_unique<rrc_ue_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
+
+    // update notifier in RRC
+    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier.get());
+    // TODO: update notifier in F1AP
   } else {
-    logger.error("Couldn't create notifier for SRB{}. Removing entry again.", lcid);
-    ue_ctxt->srbs.erase(lcid);
+    logger.error("Couldn't create SRB{}.", msg.srb_id);
   }
 }
 

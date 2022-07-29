@@ -21,12 +21,18 @@
 namespace srsgnb {
 namespace srs_cu_cp {
 
-/// Holds context for one SRB that is processed within the CU-CP.
+/// Additional context of a SRB containing PDCP, i.e. SRB1 and SRB2.
+struct cu_srb_pdcp_context {
+  std::unique_ptr<pdcp_entity>                 pdcp_bearer;
+  std::unique_ptr<pdcp_tx_lower_notifier>      pdcp_tx_notifier;
+  std::unique_ptr<pdcp_rx_upper_data_notifier> rrc_rx_notifier;
+};
+
+/// Context for a SRB with adapters between DU processor, F1AP, RRC and optinally PDCP.
 struct cu_srb_context {
-  lcid_t                                             lcid;
   std::unique_ptr<du_processor_rrc_message_notifier> rx_notifier;
-  std::unique_ptr<rrc_pdu_notifier>                  tx_notifier;
-  std::unique_ptr<pdcp_entity>                       pdcp_bearer;
+  std::unique_ptr<rrc_pdu_notifier>                  rrc_tx_notifier = std::make_unique<rrc_pdu_null_notifier>();
+  optional<cu_srb_pdcp_context>                      pdcp_context;
 };
 
 /// Holds the context of an DRB that is processed outside of the CU-CP.
@@ -40,9 +46,9 @@ struct ue_context {
   du_cell_index_t pcell_index;
   rnti_t          c_rnti;
 
-  rrc_ue_entity_interface*    rrc = nullptr;
-  slot_vector<cu_srb_context> srbs;
-  slot_vector<cu_drb_context> drbs;
+  rrc_ue_entity_interface*                 rrc = nullptr;
+  std::array<cu_srb_context, MAX_NOF_SRBS> srbs;
+  slot_vector<cu_drb_context>              drbs;
 
   std::unique_ptr<rrc_ue_task_scheduler> task_sched;
 };

@@ -23,14 +23,14 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(ctxt.c_rnti, LCID_SRB0, pdu.view(), "Failed to unpack UL-CCCH message", true);
+      log_rx_pdu_fail(c_rnti, "UL-CCCH", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB0", ctxt.c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}, ", c_rnti);
   fmt::format_to(fmtbuf2, "UL-CCCH.{}", ul_ccch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_ccch_msg, to_c_str(fmtbuf2));
 
@@ -43,7 +43,7 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
       handle_rrc_reest_request(ul_ccch_msg.msg.c1().rrc_reest_request());
       break;
     default:
-      log_rx_pdu_fail(ctxt.c_rnti, LCID_SRB0, pdu.view(), "Unsupported UL-CCCH message type");
+      log_rx_pdu_fail(c_rnti, "UL-CCCH", pdu.view(), "Unsupported message type");
       // TODO Remove user
   }
 }
@@ -59,7 +59,7 @@ void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_reque
 
   // Allocate PUCCH resources and reject if not available
   if (not init_pucch()) {
-    cfg.logger.warning("Could not allocate PUCCH resources for rnti=0x{}. Sending Connection Reject", ctxt.c_rnti);
+    cfg.logger.warning("Could not allocate PUCCH resources for rnti=0x{}. Sending Connection Reject", c_rnti);
     send_rrc_reject(max_wait_time_secs);
     return;
   }
@@ -83,7 +83,7 @@ void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_reque
 
   // create SRB1
   srb_creation_message srb1_msg{};
-  srb1_msg.ue_index = ctxt.ue_index;
+  srb1_msg.ue_index = ue_index;
   srb1_msg.srb_id   = srb_id_t::srb1;
   srb1_msg.pdcp_cfg = cfg.srb1_pdcp_cfg;
   du_processor_notifier.on_create_srb(srb1_msg);
@@ -104,14 +104,14 @@ void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(ctxt.c_rnti, LCID_SRB1, pdu.view(), "Failed to unpack UL-DCCH message", true);
+      log_rx_pdu_fail(c_rnti, "UL-DCCH", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", ctxt.c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", c_rnti);
   fmt::format_to(fmtbuf2, "UL-DCCH.{}", ul_dcch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
 

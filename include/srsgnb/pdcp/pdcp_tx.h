@@ -69,7 +69,7 @@ public:
 };
 
 /// This interface represents the data entry point of the transmitting side of a PDCP entity.
-/// The upper-layers will use this call to pass RLC SDUs into the TX entity.
+/// The upper-layers will use this call to pass PDUs into the TX entity.
 class pdcp_tx_upper_data_interface
 {
 public:

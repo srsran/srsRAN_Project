@@ -90,5 +90,21 @@ private:
   du_processor_f1c_interface* du_f1c_handler = nullptr;
 };
 
+/// Adapter between F1AP and PDCP in UL direction (Rx)
+class f1ap_pdcp_adapter : public du_processor_rrc_message_notifier
+{
+public:
+  explicit f1ap_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
+
+  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  {
+    byte_buffer pdu(rrc_container.begin(), rrc_container.end());
+    pdcp_rx.handle_pdu(std::move(pdu));
+  }
+
+private:
+  pdcp_rx_lower_interface& pdcp_rx;
+};
+
 } // namespace srs_cu_cp
 } // namespace srsgnb

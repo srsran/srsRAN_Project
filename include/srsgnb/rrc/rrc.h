@@ -27,11 +27,6 @@ enum ue_context_release_cause : uint16_t {
   nulltype      = 5
 };
 
-struct rrc_pdu_message {
-  byte_buffer_slice pdu;
-  srb_id_t          srb_id;
-};
-
 struct ue_context_release_command_message {
   ue_index_t               ue_index;
   ue_context_release_cause cause;
@@ -56,8 +51,18 @@ class rrc_ul_ccch_pdu_handler
 public:
   virtual ~rrc_ul_ccch_pdu_handler() = default;
 
-  /// Handle the incoming PDU.
+  /// Handle the incoming PDU on the UL-CCCH logical channel.
   virtual void handle_ul_ccch_pdu(byte_buffer_slice pdu) = 0;
+};
+
+/// This interface represents the data entry point for the RRC receiving PDUs on the UL-DCCH logical channel.
+/// The lower-layers will use this class to pass PDUs into the RRC.
+class rrc_ul_dcch_pdu_handler
+{
+public:
+  virtual ~rrc_ul_dcch_pdu_handler() = default;
+
+  /// Handle the incoming PDU on the UL-DCCH logical channel.
   virtual void handle_ul_dcch_pdu(byte_buffer_slice pdu) = 0;
 };
 

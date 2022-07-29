@@ -8,5 +8,5 @@
 
 set(SOURCES pdcp_factory.cpp)
 
-add_library(srsran_pdcp STATIC ${SOURCES})
-target_link_libraries(srsran_pdcp)
+add_library(srsgnb_pdcp STATIC ${SOURCES})
+target_link_libraries(srsgnb_pdcp)

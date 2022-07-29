@@ -17,14 +17,18 @@ using namespace asn1::rrc_nr;
 
 rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                              rrc_ue_du_processor_notifier&          du_proc_notif_,
-                             const ue_context&                      ctxt_,
+                             const ue_index_t                       ue_index_,
+                             const rnti_t                           c_rnti_,
                              const rrc_ue_cfg_t&                    cfg_,
+                             const srb_notifiers&                   srbs_,
                              const asn1::unbounded_octstring<true>& du_to_cu_container_,
                              rrc_ue_task_scheduler&                 task_sched_) :
   parent(parent_),
   du_processor_notifier(du_proc_notif_),
-  ctxt(ctxt_),
+  ue_index(ue_index_),
+  c_rnti(c_rnti_),
   cfg(cfg_),
+  srbs(srbs_),
   du_to_cu_container(du_to_cu_container_),
   task_sched(task_sched_)
 {
@@ -32,9 +36,22 @@ rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
   (void)task_sched;
 }
 
-rrc_ul_ccch_pdu_handler* rrc_ue_entity::get_ul_ccch_pdu_handler()
+rrc_ul_ccch_pdu_handler& rrc_ue_entity::get_ul_ccch_pdu_handler()
 {
-  return this;
+  return *this;
+}
+
+rrc_ul_dcch_pdu_handler& rrc_ue_entity::get_ul_dcch_pdu_handler()
+{
+  return *this;
+}
+
+void rrc_ue_entity::connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier)
+{
+  if (srb_id >= MAX_NOF_SRBS) {
+    cfg.logger.error("Couldn't connect notifier for SRB{}", srb_id);
+  }
+  srbs[srb_id] = &notifier;
 }
 
 template <class T>
@@ -90,7 +107,7 @@ template void rrc_ue_entity::log_rrc_message<radio_bearer_cfg_s>(const char*    
                                                                  const char*               msg_type);
 
 void rrc_ue_entity::log_rx_pdu_fail(uint16_t         rnti,
-                                    uint32_t         lcid,
+                                    const char*      source,
                                     byte_buffer_view pdu,
                                     const char*      cause_str,
                                     bool             log_hex)
@@ -98,8 +115,8 @@ void rrc_ue_entity::log_rx_pdu_fail(uint16_t         rnti,
   if (log_hex) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
     cfg.logger.error(
-        bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x}} - Discarding. Cause: {}", lcid, rnti, cause_str);
+        bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x}} - Discarding. Cause: {}", source, rnti, cause_str);
   } else {
-    cfg.logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", lcid, rnti, cause_str);
+    cfg.logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
   }
 }

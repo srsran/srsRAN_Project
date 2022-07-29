@@ -32,12 +32,12 @@ void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
 
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB0", ctxt.c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB0", c_rnti);
   fmt::format_to(fmtbuf2, "DL-CCCH.{}", dl_ccch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_ccch_msg, to_c_str(fmtbuf2));
 
   // send down the stack
-  send_srb0_pdu(std::move(pdu));
+  send_srb_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
 void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
@@ -59,22 +59,15 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
   // TODO: remove user?
 }
 
-void rrc_ue_entity::send_srb0_pdu(byte_buffer pdu)
+void rrc_ue_entity::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
 {
-  if (ctxt.srbs.contains(LCID_SRB0)) {
-    rrc_pdu_message msg = {};
-    msg.srb_id          = to_srb_id(LCID_SRB0);
-    msg.pdu             = byte_buffer_slice{pdu};
-    ctxt.srbs[LCID_SRB0].tx_notifier->on_new_pdu(msg);
-  } else {
-    cfg.logger.error("Can't send RRC PDU - no SRB0 configured");
-  }
+  srbs[srb_id]->on_new_pdu({std::move(pdu)});
 }
 
 void rrc_ue_entity::send_ue_context_release_command()
 {
   ue_context_release_command_message msg = {};
-  msg.ue_index                           = ctxt.ue_index;
+  msg.ue_index                           = ue_index;
   // TODO: Set cause
 
   du_processor_notifier.on_ue_context_release_command(msg);
