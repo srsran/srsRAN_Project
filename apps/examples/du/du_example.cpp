@@ -306,11 +306,11 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
   return phy_config;
 }
 
-static std::unique_ptr<lower_phy_controller> build_lower_phy(baseband_gateway&             bb_gateway,
-                                                             lower_phy_rx_symbol_notifier& rx_symbol_notifier,
-                                                             lower_phy_timing_notifier&    timing_notifier,
-                                                             lower_phy_error_notifier&     error_notifier,
-                                                             resource_grid_pool&           ul_resource_grid_pool)
+static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             bb_gateway,
+                                                  lower_phy_rx_symbol_notifier& rx_symbol_notifier,
+                                                  lower_phy_timing_notifier&    timing_notifier,
+                                                  lower_phy_error_notifier&     error_notifier,
+                                                  resource_grid_pool&           ul_resource_grid_pool)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
   // based factory.
@@ -555,7 +555,7 @@ int main(int argc, char** argv)
 
   // Create lower PHY.
   test_logger.info("Creating lower PHY object...");
-  std::unique_ptr<lower_phy_controller> lower =
+  std::unique_ptr<lower_phy> lower =
       build_lower_phy(radio->get_baseband_gateway(), rx_symbol_adapter, timing_adapter, error_adapter, *ul_rg_pool);
   if (!lower) {
     test_logger.error("Failed to create Lower PHY");
@@ -574,7 +574,7 @@ int main(int argc, char** argv)
   // Connections between lower-upper PHYs.
   rx_symbol_adapter.connect(&upper->get_upper_phy_rx_symbol_handler());
   timing_adapter.connect(&upper->get_upper_phy_timing_handler());
-  rg_gateway_adapter.connect(lower.get());
+  rg_gateway_adapter.connect(&lower->get_rg_handler());
 
   // Create FAPI adaptors.
   test_logger.info("Creating FAPI adaptors...");
@@ -646,7 +646,7 @@ int main(int argc, char** argv)
 
   // Start processing.
   test_logger.info("Starting lower PHY...");
-  lower->start(workers.rt_task_executor);
+  lower->get_controller().start(workers.rt_task_executor);
   test_logger.info("Lower PHY start --> OK");
 
   while (is_running) {
@@ -654,7 +654,7 @@ int main(int argc, char** argv)
   }
 
   test_logger.info("Stopping lower PHY...");
-  lower->stop();
+  lower->get_controller().stop();
   test_logger.info("Lower PHY successfully stopped");
 
   test_logger.info("Stopping workers...");

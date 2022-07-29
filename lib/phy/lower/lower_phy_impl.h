@@ -14,10 +14,12 @@
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
+#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
-#include "srsgnb/phy/lower/lower_phy_input_gateway.h"
+#include "srsgnb/phy/lower/lower_phy_request_handler.h"
+#include "srsgnb/phy/lower/lower_phy_rg_handler.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
@@ -69,7 +71,11 @@ public:
 };
 
 /// Describes a generic lower physical layer.
-class lower_phy_impl : public lower_phy_controller
+//: TODO: split this class into smaller pieces
+class lower_phy_impl : public lower_phy,
+                       public lower_phy_controller,
+                       public lower_phy_rg_handler,
+                       public lower_phy_request_handler
 {
 private:
   /// Number of resource grid buffers.
@@ -127,20 +133,11 @@ private:
   /// \param[out] timestamp Indicates the radio timestamp for transmitting the symbol.
   void process_dl_symbol(unsigned symbol_idx, baseband_gateway_timestamp timestamp);
 
-  /// \brief Processes uplink and downlink slot.
+  /// \brief Processes uplink and downlink slots.
   void process_symbol();
 
   /// Runs the lower physical layer.
   void realtime_process_loop(task_executor& realtime_task_executor);
-
-  // See interface for documentation.
-  void request_prach_window(const prach_buffer_context& context, prach_buffer* buffer) override;
-
-  // See interface for documentation.
-  void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
-
-  // See interface for documentation.
-  void send(const resource_grid_context& context, const resource_grid_reader& grid) override;
 
 public:
   /// \brief Constructs a generic lower physical layer.
@@ -154,6 +151,24 @@ public:
 
   // See interface for documentation.
   void stop() override;
+
+  // See interface for documentation.
+  void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) override;
+
+  // See interface for documentation.
+  void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) override;
+
+  // See interface for documentation.
+  void handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid) override;
+
+  // See interface for documentation.
+  lower_phy_request_handler& get_request_handler() override { return *this; }
+
+  // See interface for documentation.
+  lower_phy_rg_handler& get_rg_handler() override { return *this; }
+
+  // See interface for documentation.
+  lower_phy_controller& get_controller() override { return *this; }
 };
 
 } // namespace srsgnb

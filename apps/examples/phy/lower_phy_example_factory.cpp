@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<lower_phy_controller> srsgnb::create_lower_phy(lower_phy_configuration& config)
+std::unique_ptr<lower_phy> srsgnb::create_lower_phy(const lower_phy_configuration& config)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
   // based factory.

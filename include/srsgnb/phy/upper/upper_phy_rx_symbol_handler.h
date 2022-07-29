@@ -17,6 +17,8 @@
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
+
+
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
   /// Identifier of the sector the symbol is received from.
@@ -42,11 +44,11 @@ public:
   /// \brief Handles the arrival of PRACH sequences at a given symbol.
   /// \param[in] context PRACH context: specifies sector, slot and window.
   /// \param[in] buffer  Read-only buffer containing the PRACH sequence.
-  virtual void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
+  virtual void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
 
   /// \brief Handles the arrival of SRS packets at a given symbol.
-  ///
   /// \param[in] context Notification context: specifies sector, slot and symbol.
   virtual void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) = 0;
 };
+
 } // namespace srsgnb

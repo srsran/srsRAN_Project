@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "srsgnb/phy/prach_buffer.h"
@@ -16,21 +17,23 @@
 
 namespace srsgnb {
 
-/// Describes the lower physical layer input gateway.
-class lower_phy_input_gateway
+/// \brief Describes the lower physical request handler.
+///
+/// Handles incoming requests and notifies their completion through the \c phy_rx_symbol_notifier interface.
+class lower_phy_request_handler
 {
 public:
   /// Default destructor.
-  virtual ~lower_phy_input_gateway() = default;
+  virtual ~lower_phy_request_handler() = default;
 
-  /// \brief Requests to the lower PHY to capture PRACH window.
+  /// \brief Requests the lower PHY to capture a PRACH window.
   ///
   /// The lower PHY must capture a PHY window identified by \c context. The capture must start at slot \c context.slot
   /// and symbol \c context.start_symbol. The capture must finish once \c buffer.is_full() returns true.
   ///
-  /// \param[in] context Provides the PRACH window context.
-  /// \param[in] buffer  Provides the PRACH buffer used to write the PRACH window.
-  virtual void request_prach_window(const prach_buffer_context& context, prach_buffer* buffer) = 0;
+  /// \param[in] context PRACH window context.
+  /// \param[in] buffer  PRACH buffer used to write the PRACH window.
+  virtual void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) = 0;
 
   /// \brief Requests to the lower PHY an uplink slot.
   ///
@@ -42,10 +45,6 @@ public:
   /// \param[in] context Resource grid context.
   /// \param[in] buffer  Resource grid to store the processed slot.
   virtual void request_uplink_slot(const resource_grid_context& context, resource_grid& grid) = 0;
-
-  /// \brief Sends resource grid through the gateway.
-  /// \param[in] context Indicates the resource grid context.
-  /// \param[in] grid Provides the resource grid to transmit.
-  virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
+
 } // namespace srsgnb

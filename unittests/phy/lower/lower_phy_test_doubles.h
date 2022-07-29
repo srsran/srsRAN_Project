@@ -98,7 +98,7 @@ public:
   }
 
   // See interface for documentation.
-  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer* buffer) override
+  void on_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override
   {
     logger.set_context(context.slot.system_slot());
     logger.debug("Sector {} - On Rx PRACH Window.", context.sector);

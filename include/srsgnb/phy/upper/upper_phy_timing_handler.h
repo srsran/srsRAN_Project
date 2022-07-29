@@ -20,7 +20,7 @@ struct upper_phy_timing_context {
   slot_point slot;
 };
 
-/// Upper physical layer's handle to align timing boundaries.
+/// Upper physical layer handler to align timing boundaries.
 class upper_phy_timing_handler
 {
 public:
@@ -28,14 +28,17 @@ public:
   virtual ~upper_phy_timing_handler() = default;
 
   /// \brief Handles a new TTI boundary event.
+  ///
   /// \param [in] context Provides the notification context.
   virtual void handle_tti_boundary(const upper_phy_timing_context& context) = 0;
 
   /// \brief Handles a half slot (sym 7) packet arrival.
+  ///
   /// \param [in] context Provides the notification context.
   virtual void handle_ul_half_slot_boundary(const upper_phy_timing_context& context) = 0;
 
   /// \brief Handles a full slot (sym 14) packet arrival.
+  ///
   /// \param [in] context Provides the notification context.
   virtual void handle_ul_full_slot_boundary(const upper_phy_timing_context& context) = 0;
 };

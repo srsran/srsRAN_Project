@@ -77,8 +77,9 @@ static void test_start_run_stop()
   lower_phy_configuration phy_config =
       create_phy_config(bb_gateway, error_notifier, rx_symbol_notifier, timing_notifier);
 
-  std::unique_ptr<lower_phy_controller> phy = phy_factory->create(phy_config);
-  TESTASSERT(phy);
+  std::unique_ptr<lower_phy> phy_instance = phy_factory->create(phy_config);
+  TESTASSERT(phy_instance);
+  lower_phy_controller& phy = phy_instance->get_controller();
 
   ofdm_symbol_modulator_spy*   modulator   = modulator_factory->get_modulators().back();
   ofdm_symbol_demodulator_spy* demodulator = demodulator_factory->get_demodulators().back();
@@ -87,7 +88,7 @@ static void test_start_run_stop()
   TESTASSERT(!manual_task_executor.has_pending_tasks());
 
   // Start PHY.
-  phy->start(manual_task_executor);
+  phy.start(manual_task_executor);
 
   // Assert internal components.
   TESTASSERT(manual_task_executor.has_pending_tasks());
@@ -213,7 +214,7 @@ static void test_start_run_stop()
   // Signal stop (and joint) asynchronously.
   std::atomic<bool> joined = {false};
   std::thread       async([&phy, &joined]() {
-    phy->stop();
+    phy.stop();
     joined = true;
   });
   while (!joined) {

@@ -15,7 +15,7 @@
 
 namespace srsgnb {
 
-/// Describes the upper physical layer output gateway.
+/// Describes the upper physical layer resource grid gateway.
 class upper_phy_rg_gateway
 {
 public:

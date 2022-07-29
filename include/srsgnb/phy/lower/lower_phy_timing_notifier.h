@@ -1,3 +1,13 @@
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
+
 #pragma once
 
 #include "srsgnb/ran/slot_point.h"
@@ -36,4 +46,5 @@ public:
   /// \param[in] context Provides the notification context
   virtual void on_ul_full_slot_boundary(const lower_phy_timing_context& context) = 0;
 };
+
 } // namespace srsgnb

@@ -218,7 +218,7 @@ void lower_phy_impl::realtime_process_loop(task_executor& realtime_task_executor
   logger.debug("Realtime process finished.");
 }
 
-void lower_phy_impl::send(const resource_grid_context& context, const resource_grid_reader& grid)
+void lower_phy_impl::handle_resource_grid(const resource_grid_context& context, const resource_grid_reader& grid)
 {
   logger.debug("Writing DL resource grid for sector {} and slot {}.", context.sector, context.slot.system_slot());
 
@@ -317,7 +317,7 @@ void lower_phy_impl::stop()
   logger.debug("Stopped successfully.");
 }
 
-void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer* buffer)
+void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer& buffer)
 {
   // Not implemented.
 }

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
+#include "srsgnb/adt/span.h"
 
 namespace srsgnb {
 

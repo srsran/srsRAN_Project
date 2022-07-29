@@ -14,7 +14,7 @@
 
 namespace srsgnb {
 
-/// Upper physical layer's timing notifier.
+/// Upper physical layer timing notifier.
 class upper_phy_timing_notifier
 {
 public:
@@ -25,4 +25,5 @@ public:
   /// \param [in] slot Provides the notification context.
   virtual void on_tti_boundary(slot_point slot) = 0;
 };
+
 } // namespace srsgnb

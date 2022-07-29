@@ -14,14 +14,14 @@
 
 namespace srsgnb {
 
-/// Lower physical layer interface to notify errors.
+/// Lower physical layer interface used to notify miscellaneous types of error events.
 class lower_phy_error_notifier
 {
 public:
   /// Default destructor.
   virtual ~lower_phy_error_notifier() = default;
 
-  /// Contains the context in which on_late_resource_grid() is notified.
+  /// Contains the context in which \c on_late_resource_grid is notified.
   struct late_resource_grid_context {
     /// Sector identifier.
     unsigned sector;

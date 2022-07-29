@@ -25,6 +25,7 @@
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsgnb/phy/adapters/phy_timing_adapter.h"
+#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/radio/radio_factory.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/math_utils.h"
@@ -160,10 +161,10 @@ static const std::vector<configuration_profile> profiles = {
 
 // Global instances.
 static std::mutex                             stop_execution_mutex;
-static std::atomic<bool>                      stop      = {false};
-static std::unique_ptr<lower_phy_controller>  lower_phy = nullptr;
-static std::unique_ptr<radio_session>         radio     = nullptr;
-static std::unique_ptr<upper_phy_ssb_example> upper_phy = nullptr;
+static std::atomic<bool>                      stop               = {false};
+static std::unique_ptr<lower_phy>             lower_phy_instance = nullptr;
+static std::unique_ptr<radio_session>         radio              = nullptr;
+static std::unique_ptr<upper_phy_ssb_example> upper_phy          = nullptr;
 
 static void stop_execution()
 {
@@ -188,8 +189,8 @@ static void stop_execution()
   upper_phy->stop();
 
   // Stop PHY.
-  if (lower_phy != nullptr) {
-    lower_phy->stop();
+  if (lower_phy_instance != nullptr) {
+    lower_phy_instance->get_controller().stop();
   }
 }
 
@@ -393,8 +394,8 @@ int main(int argc, char** argv)
   {
     lower_phy_configuration phy_config = create_lower_phy_configuration(
         dft_size_15kHz, rx_to_tx_delay, tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
-    lower_phy = create_lower_phy(phy_config);
-    srsgnb_assert(lower_phy, "Failed to create lower physical layer.");
+    lower_phy_instance = create_lower_phy(phy_config);
+    srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }
 
   double scs_Hz = static_cast<double>(1000U * scs_to_khz(scs));
@@ -445,7 +446,7 @@ int main(int argc, char** argv)
   // Connect adapters.
   rx_symbol_adapter.connect(&rx_symbol_handler);
   timing_adapter.connect(upper_phy.get());
-  rg_gateway_adapter.connect(lower_phy.get());
+  rg_gateway_adapter.connect(&lower_phy_instance->get_rg_handler());
 
   // Set signal handler.
   signal(SIGINT, signal_handler);
@@ -455,7 +456,7 @@ int main(int argc, char** argv)
   signal(SIGKILL, signal_handler);
 
   // Start processing.
-  lower_phy->start(*rt_task_executor);
+  lower_phy_instance->get_controller().start(*rt_task_executor);
 
   // Receive and transmit per block basis.
   for (unsigned slot_count = 0; slot_count != duration_slots && !stop; ++slot_count) {

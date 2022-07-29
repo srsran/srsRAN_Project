@@ -1,8 +1,16 @@
-
+/*
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 #pragma once
 
+#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
-#include "srsgnb/phy/lower/lower_phy_controller.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include <memory>
 
@@ -17,7 +25,7 @@ public:
 
   /// \brief Creates a generic lower physical layer control.
   /// \param[in] config Provides the required configuration.
-  virtual std::unique_ptr<lower_phy_controller> create(lower_phy_configuration& config) = 0;
+  virtual std::unique_ptr<lower_phy> create(const lower_phy_configuration& config) = 0;
 };
 
 /// Describes the necessary parameters to create a generic lower PHY factory.
