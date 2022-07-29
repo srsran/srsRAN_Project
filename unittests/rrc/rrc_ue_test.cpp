@@ -11,6 +11,7 @@
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/rrc/rrc_factory.h"
+#include "srsgnb/support/async/async_task_loop.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
@@ -87,6 +88,16 @@ private:
   dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
+struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
+public:
+  void         schedule_async_task(async_task<void>&& task) override { ctrl_loop.schedule(std::move(task)); }
+  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(); }
+
+private:
+  async_task_sequencer ctrl_loop{16};
+  timer_manager        timer_db;
+};
+
 /// Fixture class RRC Setup tests preparation
 class rrc_setup : public ::testing::Test
 {
@@ -104,10 +115,12 @@ protected:
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
     // create single UE context and add RRC user
-    ue_ctxt.c_rnti = to_rnti(0x1234);
+    ue_ctxt.c_rnti     = to_rnti(0x1234);
+    ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>();
     ue_creation_message ue_create_msg{};
-    ue_create_msg.ctxt = &ue_ctxt;
-    ue_ctxt.rrc        = rrc->add_user(std::move(ue_create_msg));
+    ue_create_msg.c_rnti = ue_ctxt.c_rnti;
+    ue_create_msg.ctxt   = &ue_ctxt;
+    ue_ctxt.rrc          = rrc->add_user(std::move(ue_create_msg));
 
     // create SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs.emplace(LCID_SRB0);

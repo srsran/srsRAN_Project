@@ -19,7 +19,6 @@ namespace srs_cu_cp {
 struct ue_creation_message {
   // TODO: Remove this. Do not share DU processor stateful variables with other layers.
   rnti_t                          c_rnti;
-  ue_index_t                      tmp_ue_id;
   ue_context*                     ctxt;
   asn1::unbounded_octstring<true> du_to_cu_container;
   rrc_ue_task_scheduler*          ue_task_sched;
