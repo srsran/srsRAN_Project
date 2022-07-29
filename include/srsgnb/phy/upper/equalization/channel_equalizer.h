@@ -123,10 +123,10 @@ public:
 
 private:
   /// Number of subcarriers.
-  unsigned nof_subcarriers;
+  unsigned nof_subcarriers = 0;
 
   /// Number of OFDM symbols.
-  unsigned nof_symbols;
+  unsigned nof_symbols = 0;
 
   /// \name Slice specifications.
   ///
@@ -138,10 +138,10 @@ private:
   static constexpr unsigned MAX_NOF_SLICES = std::max(MAX_PORTS, pusch_constants::MAX_NOF_LAYERS);
 
   /// Number of slices.
-  unsigned nof_slices;
+  unsigned nof_slices = 0;
 
   /// \brief Slice size
-  unsigned slice_size;
+  unsigned slice_size = 0;
   ///@}
 
   /// \brief Container for RE measurements.
