@@ -16,13 +16,16 @@ namespace srsgnb {
 
 /// Describes a PRACH buffer context.
 struct prach_buffer_context {
-  /// Provides the slot context within the system frame.
+  /// Slot context within the system frame.
   slot_point slot;
   /// Provides the sector identifier.
+  // todo(): can we move sector first, so that slot and symbol are close to one another?
   unsigned sector;
-  /// Indicates the index of the first symbol of the PRACH reception window from the given slot.
+  /// Index of the first symbol of the PRACH reception window from the given slot.
+  // todo(): form the given slot? isn't it within the given slot?
   unsigned start_symbol;
-  /// Indicates the number of slots to read.
+  /// Number of slots to read.
+  // todo(): slots or symbols?
   unsigned window_length;
 };
 

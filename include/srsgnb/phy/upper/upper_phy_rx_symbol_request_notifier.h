@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Interface of the upper-PHY notifier in charge of requesting symbol captures.
+
 #pragma once
 
 namespace srsgnb {
@@ -17,7 +20,7 @@ struct prach_buffer_context;
 struct resource_grid_reader;
 struct upper_phy_rx_symbol_context;
 
-/// \brief Interface used to notify uplink symbol capture requests by the upper PHY.
+/// \brief Interface of the upper-PHY notifier in charge of requesting symbol captures.
 class upper_phy_rx_symbol_request_notifier
 {
 public:
@@ -25,14 +28,15 @@ public:
 
   /// \brief Notifies the event of a PRACH capture request.
   ///
-  /// \param[in] context Provides the PRACH window context.
-  /// \param[in] buffer  Provides the PRACH buffer used to write the PRACH window.
+  /// \param[in] context PRACH window context.
+  /// \param[in] buffer  Buffer to be used by the request handler to write the PRACH window.
   virtual void on_prach_capture_request(const prach_buffer_context& context, prach_buffer& buffer) = 0;
 
   /// \brief Notifies the event of an uplink slot request.
   ///
-  /// \param context Context of the capture request.
-  /// \param grid Grid that will store the data of the capture.
+  /// \param[in] context Context of the capture request.
+  /// \param[in] grid    Grid in which to store the captured data.
+  // todo(): is it "const resource_grid_reader& grid" or "resource_grid_writer& grid"?
   virtual void on_uplink_slot_request(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 };
 

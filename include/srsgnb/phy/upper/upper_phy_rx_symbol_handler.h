@@ -8,39 +8,46 @@
  *
  */
 
+/// \file
+/// \brief Interface of the upper-PHY handler in charge of uplink OFDM symbols.
+
 #pragma once
 
 #include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
-/// Describes context of the new received symbol
+/// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
+  /// Describes the current slot.
   slot_point slot;
-  unsigned   sector;
-  unsigned   symbol;
+  /// Identifier of the sector the symbol is received from.
+  unsigned sector;
+  /// Symbol index within the slot.
+  // todo(): can we move sector before slot? Just to have a visual connection between slot and symbol.
+  unsigned symbol;
 };
 
-/// Upper physical layer's handler to process receive symbol
+/// \brief Interface of the upper-PHY handler in charge of uplink OFDM symbols.
 class upper_phy_rx_symbol_handler
 {
 public:
-  /// Default destructor
+  /// Default destructor.
   virtual ~upper_phy_rx_symbol_handler() = default;
 
-  /// \brief Handles the reception of OFDM symbol for given sector.
-  /// \param [in] context Provides the notification context.
-  /// \param [in] grid Provides the resource grids for each port of the given sector.
+  /// \brief Handles the reception of an OFDM symbol at a given symbol.
+  /// \param[in] context Notification context: specifies sector, slot and symbol.
+  /// \param[in] grid    Resource grids for each receive antenna port of the given sector.
   virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
-  /// \brief Handles the arrival of PRACH buffers for given sector.
-  /// \param [in] context Provides the PRACH context.
-  /// \param [in] buffer  Read-only PRACH buffer.
+  /// \brief Handles the arrival of PRACH sequences at a given symbol.
+  /// \param[in] context PRACH context: specifies sector, slot and window.
+  /// \param[in] buffer  Read-only buffer containing the PRACH sequence.
   virtual void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer* buffer) = 0;
 
-  /// Handles the arrival of SRS packets for given CC
+  /// \brief Handles the arrival of SRS packets at a given symbol.
   ///
-  /// \param [in] context Provides the notification context
+  /// \param[in] context Notification context: specifies sector, slot and symbol.
   virtual void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) = 0;
 };
 } // namespace srsgnb

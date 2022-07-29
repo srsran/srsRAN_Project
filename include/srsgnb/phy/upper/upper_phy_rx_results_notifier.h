@@ -8,21 +8,25 @@
  *
  */
 
+/// \file
+/// \brief Interface of the upper-PHY notifier in charge of messages carrying the result of uplink detection and
+/// decoding.
+
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processor/prach_detector.h"
+#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 
 namespace srsgnb {
 
-/// \brief Upper PHY interface to notify rx decoding results events.
+/// \brief Interface of the upper-PHY notifier in charge of messages carrying the result of uplink detection and
+/// decoding.
 class upper_phy_rx_results_notifier
 {
 public:
+  /// Default destructor.
   virtual ~upper_phy_rx_results_notifier() = default;
 
-  /// \brief Notifies the results of a PRACH detection.
-  ///
-  /// \param result Contains the results of the detected PRACH preambles.
+  /// \brief Notifies the results of a PRACH preamble detection.
   virtual void on_new_prach_results(const prach_detector::detection_result& result) = 0;
 };
 
