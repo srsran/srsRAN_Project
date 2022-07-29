@@ -372,88 +372,124 @@ TEST(test_get_f_req_from_f_req_point_a, scs_kHz60)
 
 TEST(test_get_n_rbs_from_bw, scs_15kHz)
 {
-  ASSERT_EQ(25,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz5, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(52,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz10, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(79,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz15, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(106,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz20, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(133,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz25, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(160,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz30, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(216,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz40, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(270,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz50, subcarrier_spacing::kHz15, frequency_range::FR1));
-  ASSERT_EQ(0,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz60, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      25,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz5, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      52,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz10, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      79,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz15, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      106,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz20, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      133,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz25, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      160,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz30, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      216,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz40, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      270,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz50, subcarrier_spacing::kHz15, frequency_range::FR1));
+  ASSERT_EQ(
+      0,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz60, subcarrier_spacing::kHz15, frequency_range::FR1));
 }
 
 TEST(test_get_n_rbs_from_bw, scs_30kHz)
 {
-  ASSERT_EQ(11,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz5, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(24,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz10, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(38,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz15, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(51,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz20, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(65,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz25, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(78,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz30, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(133,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz50, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(162,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz60, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(189,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz70, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(217,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz80, subcarrier_spacing::kHz30, frequency_range::FR1));
-  ASSERT_EQ(245,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz90, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      11,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz5, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      24,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz10, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      38,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz15, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      51,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz20, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      65,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz25, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      78,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz30, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      133,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz50, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      162,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz60, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      189,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz70, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      217,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz80, subcarrier_spacing::kHz30, frequency_range::FR1));
+  ASSERT_EQ(
+      245,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz90, subcarrier_spacing::kHz30, frequency_range::FR1));
   ASSERT_EQ(273,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz100, subcarrier_spacing::kHz30, frequency_range::FR1));
+            band_helper::get_n_rbs_from_bw(
+                bs_channel_bandwidth_fr1::MHz100, subcarrier_spacing::kHz30, frequency_range::FR1));
 }
 
 TEST(test_get_n_rbs_from_bw, scs_60kHz)
 {
-  ASSERT_EQ(0,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz5, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(11,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz10, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(18,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz15, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(24,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz20, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(31,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz25, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(38,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz30, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(51,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz40, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(65,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz50, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(79,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz60, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(93,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz70, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(107,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz80, subcarrier_spacing::kHz60, frequency_range::FR1));
-  ASSERT_EQ(121,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz90, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      0,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz5, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      11,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz10, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      18,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz15, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      24,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz20, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      31,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz25, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      38,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz30, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      51,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz40, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      65,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz50, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      79,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz60, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      93,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz70, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      107,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz80, subcarrier_spacing::kHz60, frequency_range::FR1));
+  ASSERT_EQ(
+      121,
+      band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1::MHz90, subcarrier_spacing::kHz60, frequency_range::FR1));
   ASSERT_EQ(135,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz100, subcarrier_spacing::kHz60, frequency_range::FR1));
+            band_helper::get_n_rbs_from_bw(
+                bs_channel_bandwidth_fr1::MHz100, subcarrier_spacing::kHz60, frequency_range::FR1));
 }
 
 TEST(test_get_n_rbs_from_bw, invalid_cases)
 {
   ASSERT_EQ(0,
-            band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz100, subcarrier_spacing::kHz60, frequency_range::FR2));
-  ASSERT_EQ(
-      0, band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1::MHz100, subcarrier_spacing::kHz120, frequency_range::FR1));
+            band_helper::get_n_rbs_from_bw(
+                bs_channel_bandwidth_fr1::MHz100, subcarrier_spacing::kHz60, frequency_range::FR2));
+  ASSERT_EQ(0,
+            band_helper::get_n_rbs_from_bw(
+                bs_channel_bandwidth_fr1::MHz100, subcarrier_spacing::kHz120, frequency_range::FR1));
 }

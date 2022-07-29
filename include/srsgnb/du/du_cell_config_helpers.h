@@ -24,14 +24,21 @@ namespace srsgnb {
 /// \remark Only fields that may affect many different fields in du_cell_config (e.g. number of PRBs) should be added
 /// in this struct.
 struct du_cell_config_default_params {
-  pci_t              pci            = 1;
-  subcarrier_spacing scs_common     = subcarrier_spacing::kHz15;
-  bs_channel_bw_fr1  channel_bw_mhz = bs_channel_bw_fr1::MHz10;
-  unsigned           nof_crbs       = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
-  // This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
-  unsigned dl_arfcn          = 365000;
+  /// Physical Cell Identity.
+  pci_t pci = 1;
+  /// subCarrierSpacingCommon, as per \c MIB, TS 38.311.
+  subcarrier_spacing scs_common = subcarrier_spacing::kHz15;
+  /// BS Channel Bandwidth, as per TS 38.104, Section 5.3.1.
+  bs_channel_bandwidth_fr1 channel_bw_mhz = bs_channel_bandwidth_fr1::MHz10;
+  /// The number of Common Resource Blocks (nof_crbs) for the main carrier is determined according to TS 38.104,
+  /// Table 5.3.2-1.
+  unsigned nof_crbs = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
+  /// This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
+  unsigned dl_arfcn = 365000;
+  /// offsetToPointA, as per TS 38.211, Section 4.4.4.2.
   unsigned offset_to_point_a = 12;
-  unsigned coreset0_index    = 6;
+  /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
+  unsigned coreset0_index = 6;
 };
 
 namespace du_config_helpers {
@@ -39,7 +46,7 @@ namespace du_config_helpers {
 inline carrier_configuration make_default_carrier_configuration(const du_cell_config_default_params& params = {})
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = bs_channel_bw_to_uint(params.channel_bw_mhz);
+  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_uint(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
   return cfg;
@@ -174,10 +181,14 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  // This is the ARFCN of the UL f_ref, as perTS 38.211, Section 5.4.2.1.
-  uint32_t ul_arfcn                      = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
-  cfg.freq_info_ul.absolute_freq_point_a = band_helper::get_abs_freq_point_a_from_f_ref(
+  /// This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
+  uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
+  /// This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
+  double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), params.nof_crbs, params.scs_common);
+  /// absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
+  /// Section 4.4.4.2.
+  cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_f_ref);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
   cfg.freq_info_ul.scs_carrier_list[0].offset_to_carrier = 0;
@@ -187,7 +198,7 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
-  // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
+  /// Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
   cfg.init_ul_bwp.rach_cfg_common->restricted_set                                = restricted_set_config::TYPE_A;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;

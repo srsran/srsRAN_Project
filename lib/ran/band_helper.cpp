@@ -95,7 +95,7 @@ struct nr_operating_band {
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-       // clang-format off
+    // clang-format off
     {1,  duplex_mode::FDD},
     {2,  duplex_mode::FDD},
     {3,  duplex_mode::FDD},
@@ -205,7 +205,7 @@ static constexpr std::array<nr_raster_params, 3> nr_fr_params = {{
 }};
 
 struct n_rb_per_scs {
-  bs_channel_bw_fr1 bw;
+  bs_channel_bandwidth_fr1 bw;
   unsigned          n_rb_15kHz;
   unsigned          n_rb_30kHz;
   unsigned          n_rb_60kHz;
@@ -215,31 +215,31 @@ struct n_rb_per_scs {
 static std::array<n_rb_per_scs, 13> tx_bw_config_fr1 = {{
     // clang-format off
     // BW = 5MHz.
-    {bs_channel_bw_fr1::MHz5, 25, 11, 0},
+    {bs_channel_bandwidth_fr1::MHz5, 25, 11, 0},
     // BW = 10MHz.
-    {bs_channel_bw_fr1::MHz10, 52, 24, 11},
+    {bs_channel_bandwidth_fr1::MHz10, 52, 24, 11},
     // BW = 15MHz.
-    {bs_channel_bw_fr1::MHz15, 79, 38, 18},
+    {bs_channel_bandwidth_fr1::MHz15, 79, 38, 18},
     // BW = 20MHz.
-    {bs_channel_bw_fr1::MHz20, 106, 51, 24},
+    {bs_channel_bandwidth_fr1::MHz20, 106, 51, 24},
     // BW = 25MHz.
-    {bs_channel_bw_fr1::MHz25, 133, 65, 31},
+    {bs_channel_bandwidth_fr1::MHz25, 133, 65, 31},
     // BW = 30MHz.
-    {bs_channel_bw_fr1::MHz30, 160, 78, 38},
+    {bs_channel_bandwidth_fr1::MHz30, 160, 78, 38},
     // BW = 40MHz.
-    {bs_channel_bw_fr1::MHz40, 216, 106, 51},
+    {bs_channel_bandwidth_fr1::MHz40, 216, 106, 51},
     // BW = 50MHz.
-    {bs_channel_bw_fr1::MHz50, 270, 133, 65},
+    {bs_channel_bandwidth_fr1::MHz50, 270, 133, 65},
     // BW = 60MHz.
-    {bs_channel_bw_fr1::MHz60, 0, 162, 79},
+    {bs_channel_bandwidth_fr1::MHz60, 0, 162, 79},
     // BW = 70MHz.
-    {bs_channel_bw_fr1::MHz70, 0, 189, 93},
+    {bs_channel_bandwidth_fr1::MHz70, 0, 189, 93},
     // BW = 80MHz.
-    {bs_channel_bw_fr1::MHz80, 0, 217, 107},
+    {bs_channel_bandwidth_fr1::MHz80, 0, 217, 107},
     // BW = 90MHz.
-    {bs_channel_bw_fr1::MHz90, 0, 245, 121},
+    {bs_channel_bandwidth_fr1::MHz90, 0, 245, 121},
     // BW = 100MHz.
-    {bs_channel_bw_fr1::MHz100, 0, 273, 135}
+    {bs_channel_bandwidth_fr1::MHz100, 0, 273, 135}
     // clang-format on
 }};
 
@@ -395,7 +395,7 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_p
 {
   constexpr static unsigned NRE = 12;
 
-  // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier
+  // For FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
   // TODO: add offset_to_carrier.
   return center_freq - (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
 }
@@ -416,8 +416,14 @@ double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_p
 
 double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
 {
+  // NOTE (i): It is unclear whether the SCS should always be 15kHz for FR1 (\ref get_abs_freq_point_a_from_center_freq
+  // and see note).
+  // NOTE (ii): TS 38.104, Section 5.4.2.2, reports <em>[...] The mapping must apply to at least one numerology
+  // supported by the BS.<\em>. Therefore, the correct SCS to be used in this procedure still needs to determined.
+
   // Half of the number of subcarriers in a RE.
   constexpr static unsigned NRE_half = 6;
+
   // The procedure, which is explained in TS 38.104, Section 5.4.2.2, gives the position of f_ref in terms of subcarrier
   // and CRB index, depending on the size of N_RB. Below we compute the value in unit of subcarriers, meaning we don't
   // need to separate the cases of even and odd N_RB.
@@ -428,6 +434,8 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32
 double
 srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs, subcarrier_spacing scs)
 {
+  // See notes in \ref get_abs_freq_point_a_from_f_ref.
+
   // Half of the number of subcarriers in a RE.
   constexpr static unsigned NRE_half = 6;
   // The procedure used in this function is the inverse of what explained in TS 38.104, Section 5.4.2.2.
@@ -435,7 +443,7 @@ srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, ui
   return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * 1000U);
 }
 
-unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bw_fr1 bw, subcarrier_spacing scs, frequency_range fr)
+unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr)
 {
   // Return an invalid value in case the input parameters are not valid.
   if (fr != frequency_range::FR1 or scs > subcarrier_spacing::kHz60)

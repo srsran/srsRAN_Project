@@ -12,8 +12,8 @@
 
 namespace srsgnb {
 
-/// Labels for the BS Channel BW for FR, described in TS38.104 Table Table 5.3.2-1.
-enum class bs_channel_bw_fr1 {
+/// Labels for the BS Channel Bandwidth for FR1, described in TS38.104 Table Table 5.3.2-1.
+enum class bs_channel_bandwidth_fr1 {
   MHz5   = 5,
   MHz10  = 10,
   MHz15  = 15,
@@ -29,8 +29,8 @@ enum class bs_channel_bw_fr1 {
   MHz100 = 100,
 };
 
-/// Converts SCS into integer in kHz.
-constexpr inline unsigned bs_channel_bw_to_uint(bs_channel_bw_fr1 bw)
+/// Converts the BS channel bandwidth label into the actual BW value in MHz.
+constexpr inline unsigned bs_channel_bandwidth_to_uint(bs_channel_bandwidth_fr1 bw)
 {
   return static_cast<unsigned>(bw);
 }
