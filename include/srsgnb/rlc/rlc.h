@@ -60,10 +60,8 @@ class rlc_tx_sdu_handler
 public:
   virtual ~rlc_tx_sdu_handler() = default;
 
-  ///
   /// \brief Interface for higher layers to pass SDUs into RLC
   /// \param sdu SDU to be handled
-  ///
   virtual void handle_sdu(rlc_sdu sdu) = 0;
 
   // TODO: discard_sdu(uint32_t pdcp_sn)
@@ -77,20 +75,15 @@ class rlc_tx_pdu_transmitter
 public:
   virtual ~rlc_tx_pdu_transmitter() = default;
 
-  ///
   /// \brief Pulls a PDU from the lower end of the RLC TX entity
   /// An empty PDU is returned if nof_bytes is insufficient or the TX buffer is empty.
-  ///
   /// \param nof_bytes Limits the maximum size of the requested PDU.
   /// \return One PDU
-  ///
   virtual byte_buffer_slice_chain pull_pdu(uint32_t nof_bytes) = 0;
 
-  ///
   /// \brief Get the buffer status information
   /// This function provides the current buffer state of the RLC TX entity.
   /// This is the gross total size required to fully flush the TX entity (potentially by multiple calls to pull_pdu).
-  ///
   /// \return Provides the current buffer state
   virtual uint32_t get_buffer_state() = 0;
 };

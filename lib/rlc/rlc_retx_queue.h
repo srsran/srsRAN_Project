@@ -7,6 +7,7 @@
  * the distribution.
  *
  */
+
 #pragma once
 
 #include "rlc_am_pdu.h"
@@ -17,21 +18,16 @@
 namespace srsgnb {
 
 struct rlc_tx_amd_retx {
-  const static uint32_t invalid_rlc_sn = std::numeric_limits<uint32_t>::max();
-
   uint32_t sn             = INVALID_RLC_SN; ///< sequence number
   bool     is_segment     = false;          ///< flag whether this is a segment or not
   uint32_t so_start       = 0;              ///< offset to first byte of this segment
   uint32_t segment_length = 0;              ///< number of bytes contained in this segment
   uint32_t current_so     = 0;              ///< stores progressing SO during segmentation of this object
 
-  /**
-   * @brief overlaps implements a check whether the range of this retransmission object includes
-   * the given segment offset
-   * @param so the segment offset to check
-   * @return true if the segment offset is covered by the retransmission object. Otherwise false
-   */
-  bool overlaps(uint32_t segment_offset) const
+  /// \brief Implements a check whether the range of this retransmission object includes the given segment offset
+  /// \param segment_offset The segment offset to check
+  /// \return true if the segment offset is covered by the retransmission object. Otherwise false
+  bool includes(uint32_t segment_offset) const
   {
     return (segment_offset >= so_start) && (segment_offset < current_so + segment_length);
   }
@@ -117,11 +113,9 @@ public:
     return false;
   };
 
-  /**
-   * @brief remove_sn removes SN from queue and returns after first match
-   * @param sn sequence number to be removed from queue
-   * @return true if one element was removed, false if no element to remove was found
-   */
+  /// \brief Removes SN from queue and returns after first match
+  /// \param sn sequence number to be removed from queue
+  /// \return true if one element was removed, false if no element to remove was found
   bool remove_sn(uint32_t sn)
   {
     if (queue.empty()) {

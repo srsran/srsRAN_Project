@@ -53,14 +53,12 @@ public:
   void on_buffer_state_update(unsigned bsr) override {}
 };
 
-///
 /// \brief Obtains full RLC AMD PDUs from generated SDUs that are passed through an RLC AM entity
 /// \param[out] out_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDUs
 /// \param[in] n_pdus Length of the out_pdus array
 /// \param[in] rlc RLC entity to produce RLC AMD PDUs
 /// \param[in] sn_size Sequence number size
 /// \param[in] sdu_size Size of SDU that is passed through RLC AM entity
-///
 void tx_full_pdus(byte_buffer_slice_chain* out_pdus,
                   uint32_t                 n_pdus,
                   rlc_am_entity&           rlc,

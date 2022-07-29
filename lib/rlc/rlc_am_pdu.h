@@ -132,25 +132,19 @@ public:
   uint32_t                               get_packed_size() const { return packed_size; }
   bool                                   trim(uint32_t max_packed_size);
 
-  ///
   /// \brief Write the RLC AM status PDU to a PDU buffer and eets the length of the generate PDU accordingly
-  /// \param [out] pdu A reference to a byte_buffer
+  /// \param[out] pdu A reference to a byte_buffer
   /// \return true if PDU was written successfully, false otherwise
-  ///
   bool pack(byte_buffer& pdu) const;
 
-  ///
   /// \brief Read a RLC AM status PDU from a PDU buffer
   /// \param pdu A reference to a byte_buffer
   /// \return true if PDU was read successfully, false otherwise
-  ///
   bool unpack(const byte_buffer& pdu);
 
-  ///
   /// \brief Checks if a PDU buffer contains a control PDU
   /// \param pdu A reference to a byte_buffer
   /// \return true if the byte buffer contains a control PDU, false otherwise
-  ///
   static bool is_control_pdu(const byte_buffer& pdu);
 };
 

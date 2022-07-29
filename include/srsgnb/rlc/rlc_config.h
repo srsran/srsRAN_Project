@@ -35,32 +35,26 @@ constexpr uint16_t to_number(const rlc_um_sn_size& sn_size)
 /// RLC AM NR sequence number field
 enum class rlc_am_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
 
-///
 /// \brief Converts sequence number field to numeric its value
 /// \param sn_size sequence number size
 /// \return numeric value of the sequence number field
-///
 constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
 
-///
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
 /// \return cardinality of sn_size
-///
 constexpr uint32_t cardinality(const uint16_t sn_size)
 {
   return (1 << sn_size);
 }
 
-///
 /// \brief Returns the UM_Window_Size and AM_Window_Size
 /// Ref: 3GPP TS 38.322 Sec. 7.2
 /// \param sn_size Length of the sequence number field in bits
 /// \return size of the window
-///
 constexpr uint32_t window_size(const uint16_t sn_size)
 {
   return cardinality(sn_size - 1);
@@ -110,11 +104,8 @@ inline std::string to_string(const rlc_control_pdu_type& cpt)
   return options[to_number(cpt)];
 }
 
-///
 /// \brief Configurable Rx parameters for RLC AM
-///
 /// Ref: 3GPP TS 38.322 Section 7
-///
 struct rlc_rx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
 
@@ -123,11 +114,8 @@ struct rlc_rx_am_config {
   int32_t t_status_prohibit; ///< Timer used by rx to prohibit tx of status PDU (ms)
 };
 
-///
 /// \brief Configurable Tx parameters for RLC AM
-///
 /// Ref: 3GPP TS 38.322 Section 7
-///
 struct rlc_tx_am_config {
   rlc_am_sn_size sn_field_length; ///< Number of bits used for sequence number
 
@@ -140,40 +128,28 @@ struct rlc_tx_am_config {
   int32_t  poll_byte;       ///< Insert poll bit after this much data (KB)
 };
 
-///
 /// \brief Configurable parameters for RLC AM
-///
 /// Ref: 3GPP TS 38.322 Section 7
-///
 struct rlc_am_config {
   std::unique_ptr<rlc_rx_am_config> rx; ///< Rx configuration
   std::unique_ptr<rlc_tx_am_config> tx; ///< Tx configuration
 };
 
-///
 /// \brief Configurable Rx parameters for RLC UM
-///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
-///
 struct rlc_rx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
   int32_t        t_reassembly_ms; ///< Timer used by rx to detect PDU loss (ms)
 };
 
-///
 /// \brief Configurable Tx parameters for RLC UM
-///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
-///
 struct rlc_tx_um_config {
   rlc_um_sn_size sn_field_length; ///< Number of bits used for sequence number
 };
 
-///
 /// \brief Configurable parameters for RLC UM
-///
 /// Ref: 3GPP TS 38.322 v15.3.0 Section 7
-///
 struct rlc_um_config {
   std::unique_ptr<rlc_rx_um_config> rx; ///< Rx configuration
   std::unique_ptr<rlc_tx_um_config> tx; ///< Tx configuration
