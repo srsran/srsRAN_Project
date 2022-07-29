@@ -92,7 +92,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 
   // Check whether there is something to TX
   if (sdu_queue.is_empty()) {
-    logger.log_info("No data available to be sent");
+    logger.log_debug("No data available to be sent");
     return {};
   }
 
@@ -102,13 +102,13 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
 byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 {
   if (nof_bytes <= head_min_size) {
-    logger.log_info("Not enough bytes for payload plus header. nof_bytes={}", nof_bytes);
+    logger.log_debug("Not enough bytes for payload plus header. nof_bytes={}", nof_bytes);
     return {};
   }
 
   // do not build any more PDU if window is already full
   if (tx_window->full()) {
-    logger.log_info("Cannot build data PDU - Tx window full.");
+    logger.log_warning("Cannot build data PDU - Tx window full.");
     return {};
   }
 
@@ -142,7 +142,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
   tx_pdu.header         = hdr;
-  logger.log_info("AMD PDU header: {}", hdr);
+  logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
   byte_buffer header_buf = {};
