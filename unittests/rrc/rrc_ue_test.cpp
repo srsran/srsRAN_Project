@@ -120,7 +120,9 @@ protected:
     ue_creation_message ue_create_msg{};
     ue_create_msg.c_rnti = ue_ctxt.c_rnti;
     ue_create_msg.ctxt   = &ue_ctxt;
-    ue_ctxt.rrc          = rrc->add_user(std::move(ue_create_msg));
+    ue_create_msg.du_to_cu_container.resize(1);
+    ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
+    ue_ctxt.rrc                 = rrc->add_user(std::move(ue_create_msg));
 
     // create SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs.emplace(LCID_SRB0);
