@@ -84,7 +84,7 @@ public:
 
   /// Parameters defining the demodulation procedure of a PUSCH transmission.
   struct configuration {
-    /// Index \f$n_{RNTI}\f$ from TS38.211 Section 6.3.1.1.
+    /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.1.1.
     uint16_t rnti;
     /// Number of contiguous PRBs allocated to the BWP.
     unsigned bwp_size_rb;
@@ -104,7 +104,7 @@ public:
     dmrs_type dmrs_config_type;
     /// Number of DM-RS CDM groups without data.
     unsigned nof_cdm_groups_without_data;
-    /// Index \f$n_{ID}\f$ as defined in TS38.211 Section 6.3.1.1. Range is {0, ..., 1023}.
+    /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.1.1. Range is {0, ..., 1023}.
     unsigned n_id;
     /// Scaling factor applied to the resource elements according to PUSCH power allocation in TS38.214 Section 6.1
     /// (see also TS38.213 Section 7.1).

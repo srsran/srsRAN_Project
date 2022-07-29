@@ -23,24 +23,28 @@ void pusch_demodulator_impl::demodulate(data_llr_buffer&            data,
                                         const channel_estimate&     estimates,
                                         const configuration&        config)
 {
-  // Configure equalizer.
-  channel_equalizer::configuration eq_cfg;
-  eq_cfg.nof_rx_ports  = config.nof_rx_ports;
-  eq_cfg.nof_tx_layers = config.nof_tx_layers;
-  eq_cfg.rb_mask       = config.freq_allocation.get_prb_mask(config.bwp_start_rb, config.bwp_size_rb);
-  eq_cfg.first_symbol  = config.start_symbol_index;
-  eq_cfg.nof_symbols   = config.nof_symbols;
+  re_measurement_dimensions re_dims = {};
+  re_dims.nof_prb                   = config.freq_allocation.get_nof_rb();
+  re_dims.nof_symbols               = config.nof_symbols;
+  re_dims.nof_slices                = config.nof_rx_ports;
 
-  // Resize internal buffers.
-  unsigned bits_per_symbol = get_bits_per_symbol(config.modulation);
-  mod_symbols.resize(data.size() / bits_per_symbol);
-  noise_vars.resize(mod_symbols.size());
+  // Get REs from the resource grid.
+  ch_symbols.resize(re_dims);
+  get_ch_symbols(ch_symbols, grid, config);
+
+  // Prepare internal buffers.
+  re_dims.nof_slices = config.nof_tx_layers;
+  mod_symbols_eq.resize(re_dims);
+  noise_vars_eq.resize(re_dims);
 
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
-  equalizer->equalize(mod_symbols, noise_vars, grid, estimates, eq_cfg);
+  equalizer->equalize(mod_symbols_eq, noise_vars_eq, ch_symbols, estimates);
+
+  // Remove REs that were assigned to DM-RS symbols or reserved.
+  remove_dmrs(mod_symbols_data, noise_vars_data, mod_symbols_eq, noise_vars_eq, config);
 
   // Build LLRs from channel symbols.
-  demapper->demodulate_soft(data, mod_symbols, noise_vars, config.modulation);
+  demapper->demodulate_soft(data, mod_symbols_data, noise_vars_data, config.modulation);
 
   // Descramble.
   unsigned c_init = config.rnti * pow2(15) + config.n_id;

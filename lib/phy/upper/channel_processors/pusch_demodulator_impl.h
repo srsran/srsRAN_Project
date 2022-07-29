@@ -22,6 +22,9 @@ namespace srsgnb {
 class pusch_demodulator_impl : public pusch_demodulator
 {
 public:
+  template <typename T>
+  using re_container = static_vector<T, MAX_NOF_DATA_LLR / 2>;
+
   /// Constructor: sets up internal components and acquires their ownership.
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       eq,
                          std::unique_ptr<demodulation_mapper>     demap,
@@ -43,6 +46,35 @@ public:
                   const configuration&        config) override;
 
 private:
+  /// \brief Gets channel symbols from the resource grid.
+  ///
+  /// \param[out] symbols PUSCH channel symbols, organized by receive antenna port.
+  /// \param[in]  grid    Resource grid for the current slot.
+  /// \param[in]  config  Configuration parameters.
+  void get_ch_symbols(re_measurement<cf_t>& symbols, const resource_grid_reader& grid, const configuration& config)
+  {
+    // For now, do nothing.
+  }
+
+  /// \brief Removes elements corresponding to DM-RS symbols and reserved positions.
+  ///
+  /// From the equalizer output, removes all estimated modulation symbols and noise variances corresponding to DM-RS
+  /// positions. Also, performs layer demapping, thus returning two one-dimensional sequences.
+  ///
+  /// \param[out] symbols_out     Layer-demapped sequence of estimated modulation symbols.
+  /// \param[out] noise_vars_out  Layer-demapped sequence of equivalent symbol noise variances.
+  /// \param[in]  symbols_in      Equalized modulation and DM-RS symbols, grouped by layer.
+  /// \param[in]  noise_vars_in   Equivalent symbol noise variances, grouped by layer.
+  /// \param[in]  config          Configuration parameters.
+  void remove_dmrs(static_vector<cf_t, MAX_NOF_DATA_LLR / 2>&  symbols_out,
+                   static_vector<float, MAX_NOF_DATA_LLR / 2>& noise_vars_out,
+                   const re_measurement<cf_t>&                 symbols_in,
+                   const re_measurement<float>&                noise_vars_in,
+                   const configuration&                        config)
+  {
+    // For now, do nothing.
+  }
+
   /// \brief Extracts HARQ-ACK soft bits from the sequence of multiplexed data and control bits.
   ///
   /// See TS38.212 Section 6.2.7.
@@ -89,10 +121,16 @@ private:
   /// Descrambler component.
   std::unique_ptr<pseudo_random_generator> descrambler;
 
-  /// Buffer used to transfer channel modulation symbols from the equalizer to the demapper.
-  static_vector<cf_t, MAX_NOF_DATA_LLR / 2> mod_symbols;
-  /// Buffer used to transfer symbol noise variances from the equalizer to the demapper.
-  static_vector<float, MAX_NOF_DATA_LLR / 2> noise_vars;
+  /// Buffer used to transfer channel modulation symbols from the resource grid to the equalizer.
+  re_measurement<cf_t> ch_symbols;
+  /// Buffer used to store channel modulation symbols at the equalizer output.
+  re_measurement<cf_t> mod_symbols_eq;
+  /// Buffer used to transfer symbol noise variances at the equalizer output.
+  re_measurement<float> noise_vars_eq;
+  /// Buffer used to transfer channel modulation symbols to the demodulator.
+  static_vector<cf_t, MAX_NOF_DATA_LLR / 2> mod_symbols_data;
+  /// Buffer used to transfer symbol noise variances to the demodulator.
+  static_vector<float, MAX_NOF_DATA_LLR / 2> noise_vars_data;
 };
 
 } // namespace srsgnb
