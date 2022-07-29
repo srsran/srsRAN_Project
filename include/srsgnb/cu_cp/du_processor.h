@@ -16,6 +16,7 @@
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/rrc/rrc.h"
 #include "srsgnb/rrc/rrc_config.h"
+#include "srsgnb/support/timers.h"
 #include <string>
 
 namespace srsgnb {
@@ -102,8 +103,9 @@ public:
 class du_processor_ue_task_scheduler
 {
 public:
-  virtual ~du_processor_ue_task_scheduler()                                       = default;
-  virtual void handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual ~du_processor_ue_task_scheduler()                                               = default;
+  virtual void         handle_ue_async_task(ue_index_t ue_index, async_task<void>&& task) = 0;
+  virtual unique_timer make_unique_timer()                                                = 0;
 };
 
 } // namespace srs_cu_cp

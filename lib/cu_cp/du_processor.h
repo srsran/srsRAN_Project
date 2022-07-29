@@ -66,6 +66,8 @@ public:
     ue_ctrl_loop[ue_index].schedule(std::move(task));
   }
 
+  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(); }
+
 private:
   // F1AP senders
 
@@ -98,6 +100,9 @@ private:
 
   // task event loops indexed by ue_index
   slot_array<async_task_sequencer, MAX_NOF_UES> ue_ctrl_loop;
+
+  // timers associated with a given DU.
+  timer_manager timer_db;
 };
 
 } // namespace srs_cu_cp
