@@ -19,23 +19,22 @@
 namespace srsgnb {
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
-  /// Describes the current slot.
-  slot_point slot;
   /// Identifier of the sector the symbol is received from.
   unsigned sector;
+  /// Describes the current slot.
+  slot_point slot;
   /// Symbol index within the slot.
-  // todo(): can we move sector before slot? Just to have a visual connection between slot and symbol.
   unsigned symbol;
 };
 
-/// \brief Interface of the upper-PHY handler in charge of uplink OFDM symbols.
+/// \brief Interface of the upper-PHY handler in charge of processing uplink OFDM symbols.
 class upper_phy_rx_symbol_handler
 {
 public:
   /// Default destructor.
   virtual ~upper_phy_rx_symbol_handler() = default;
 
-  /// \brief Handles the reception of an OFDM symbol at a given symbol.
+  /// \brief Handles the reception of an OFDM symbol.
   /// \param[in] context Notification context: specifies sector, slot and symbol.
   /// \param[in] grid    Resource grids for each receive antenna port of the given sector.
   virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;

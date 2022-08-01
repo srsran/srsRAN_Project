@@ -17,7 +17,7 @@ namespace srsgnb {
 
 struct prach_buffer;
 struct prach_buffer_context;
-struct resource_grid_reader;
+struct resource_grid;
 struct upper_phy_rx_symbol_context;
 
 /// \brief Interface of the upper-PHY notifier in charge of requesting symbol captures.
@@ -36,8 +36,7 @@ public:
   ///
   /// \param[in] context Context of the capture request.
   /// \param[in] grid    Grid in which to store the captured data.
-  // todo(): is it "const resource_grid_reader& grid" or "resource_grid_writer& grid"?
-  virtual void on_uplink_slot_request(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
+  virtual void on_uplink_slot_request(const upper_phy_rx_symbol_context& context, resource_grid& grid) = 0;
 };
 
 } // namespace srsgnb

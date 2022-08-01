@@ -23,6 +23,9 @@ struct prach_buffer_context;
 ///
 /// The uplink processor is in charge of handling incoming requests to process the physical uplink channels within a
 /// certain slot.
+///
+/// Requests are dispatched asynchronously as they get enqueued for execution, and generate an event through the \c
+/// upper_phy_rx_results_notifier interface upon completion.
 class uplink_processor
 {
 public:
