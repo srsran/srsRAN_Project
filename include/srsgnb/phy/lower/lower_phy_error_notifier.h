@@ -41,7 +41,7 @@ public:
   /// within the slot.
   ///
   /// \param[in] context Provides the context in which the resource grid is not available.
-  /// \sa lower_phy_input_gateway::send
+  /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
 };
 
