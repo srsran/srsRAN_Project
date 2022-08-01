@@ -12,17 +12,31 @@
 
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
+#include "srsgnb/cu_cp/ue_context.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 
 namespace srsgnb {
 
-class dummy_f1c_du_processor_message_notifier : public srs_cu_cp::f1c_du_processor_message_notifier
+class dummy_f1c_rrc_message_notifier : public srs_cu_cp::f1c_rrc_message_notifier
 {
 public:
-  dummy_f1c_du_processor_message_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+  dummy_f1c_rrc_message_notifier() = default;
+  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  {
+    logger.info("Received RRC message.");
+  };
 
-  srs_cu_cp::du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override { return srs_cu_cp::MIN_DU_CELL_INDEX; }
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
+class dummy_f1c_du_processor_notifier : public srs_cu_cp::f1c_du_processor_notifier
+{
+public:
+  dummy_f1c_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
+
+  void attach_f1ap(srs_cu_cp::f1_interface* f1ap_) { f1ap = f1ap_; };
 
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
 
@@ -32,24 +46,35 @@ public:
     last_f1_setup_request_msg = msg;
   }
 
-  void on_initial_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
+  srs_cu_cp::ue_creation_complete_message on_create_ue(const srs_cu_cp::f1ap_initial_ul_rrc_message& msg) override
   {
-    logger.info("Received Initial UL RRC Message transfer message.");
-    last_f1ap_init_ul_rrc_msg = msg;
+    logger.info("Received UE creation request.");
+    last_ue_creation_request_msg                = msg;
+    srs_cu_cp::ue_creation_complete_message ret = {};
+    ret.ue_index                                = srs_cu_cp::INVALID_UE_INDEX;
+    if (ue_index < srs_cu_cp::MAX_NOF_UES) {
+      ret.ue_index = srs_cu_cp::int_to_ue_index(ue_index);
+      ue_index++;
+      for (uint32_t i = 0; i < MAX_NOF_SRBS; i++) {
+        ret.srbs[i] = rx_notifier.get();
+      }
+    }
+    return ret;
   }
 
-  void on_ul_rrc_message_transfer_received(const srs_cu_cp::f1ap_ul_rrc_message& msg) override
+  void on_create_srb(const srs_cu_cp::f1ap_srb_creation_message& msg) override
   {
-    logger.info("Received UL RRC Message transfer message.");
-    last_f1ap_ul_rrc_msg = msg;
-  }
+    f1ap->connect_srb_notifier(msg.ue_index, msg.srb_id, *rx_notifier.get());
+  };
 
   srs_cu_cp::f1_setup_request_message    last_f1_setup_request_msg;
-  srs_cu_cp::f1ap_initial_ul_rrc_message last_f1ap_init_ul_rrc_msg;
-  srs_cu_cp::f1ap_ul_rrc_message         last_f1ap_ul_rrc_msg;
+  srs_cu_cp::f1ap_initial_ul_rrc_message last_ue_creation_request_msg;
 
 private:
-  srslog::basic_logger& logger;
+  srslog::basic_logger&                                logger;
+  srs_cu_cp::f1_interface*                             f1ap        = nullptr;
+  uint16_t                                             ue_index    = srs_cu_cp::MIN_UE_INDEX;
+  std::unique_ptr<srs_cu_cp::f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
 };
 
 /// Reusable class implementing the notifier interface.

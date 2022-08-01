@@ -16,7 +16,7 @@ namespace srsgnb {
 
 namespace srs_cu_cp {
 
-struct ue_creation_message {
+struct rrc_ue_creation_message {
   ue_index_t                      ue_index;
   rnti_t                          c_rnti;
   srb_notifiers                   srbs;
@@ -45,7 +45,7 @@ public:
   virtual ~rrc_entity_du_interface() = default;
 
   /// Creates a new RRC UE object and returns a handle to it.
-  virtual rrc_ue_entity_interface* add_user(ue_creation_message msg) = 0;
+  virtual rrc_ue_entity_interface* add_user(rrc_ue_creation_message msg) = 0;
 
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;

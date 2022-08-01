@@ -17,10 +17,9 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-std::unique_ptr<f1_interface>
-srsgnb::srs_cu_cp::create_f1ap(f1c_message_notifier&              f1c_pdu_notifier_,
-                               f1c_du_processor_message_notifier& f1c_du_processor_notifier_,
-                               f1c_du_management_notifier&        f1c_du_management_notifier_)
+std::unique_ptr<f1_interface> srsgnb::srs_cu_cp::create_f1ap(f1c_message_notifier&       f1c_pdu_notifier_,
+                                                             f1c_du_processor_notifier&  f1c_du_processor_notifier_,
+                                                             f1c_du_management_notifier& f1c_du_management_notifier_)
 {
   auto f1ap_cu =
       std::make_unique<f1ap_cu_impl>(f1c_pdu_notifier_, f1c_du_processor_notifier_, f1c_du_management_notifier_);

@@ -32,14 +32,7 @@ constexpr inline f1ap_ue_id_t int_to_f1ap_ue_id(std::underlying_type_t<f1ap_ue_i
   return static_cast<f1ap_ue_id_t>(idx);
 }
 
-struct f1ap_ue_context {
-  f1ap_ue_id_t du_ue_f1ap_id = INVALID_F1AP_UE_ID;
-  ue_index_t   ue_index      = INVALID_UE_INDEX;
-};
-
 struct f1ap_initial_ul_rrc_message {
-  du_cell_index_t                       pcell_index;
-  f1ap_ue_id_t                          cu_ue_id;
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
 };
 
@@ -54,19 +47,14 @@ struct f1ap_dl_rrc_message {
   asn1::unbounded_octstring<true> rrc_container;
 };
 
-class f1ap_rrc_message_transfer_procedure_handler
+class f1ap_rrc_message_handler
 {
 public:
-  virtual ~f1ap_rrc_message_transfer_procedure_handler() = default;
+  virtual ~f1ap_rrc_message_handler() = default;
 
   /// \brief Packs and transmits the DL RRC message transfer as per TS 38.473 section 8.4.2.
   /// \param[in] msg The DL RRC message transfer message to transmit.
   virtual void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) = 0;
-
-  /// \brief Adds the UE index of a newly created UE to the corresponding UE context.
-  /// \param[in] cu_ue_id The CU UE ID of the already created UE context.
-  /// \param[in] ue_index The index of the newly created UE.
-  virtual void add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index) = 0;
 };
 
 struct f1_setup_response_message {
@@ -148,27 +136,69 @@ public:
   handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) = 0;
 };
 
-/// Methods used by F1AP to notify the DU processor about messages.
-class f1c_du_processor_message_notifier
+/// Interface to notify the reception of an new RRC message.
+class f1c_rrc_message_notifier
 {
 public:
-  virtual ~f1c_du_processor_message_notifier() = default;
+  virtual ~f1c_rrc_message_notifier() = default;
+
+  /// This callback is invoked on each received RRC message.
+  virtual void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) = 0;
+};
+
+/// Dummy notifier that just logs the RRC message.
+/// An object of this type is instantiated upon creation of the SRB context to avoid nullptr checks.
+class f1c_rrc_null_notifier : public f1c_rrc_message_notifier
+{
+public:
+  f1c_rrc_null_notifier() = default;
+  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  {
+    srsgnb_assertion_failure("Received RRC message on unconnected notifier. Discarding.");
+    logger.error("Received RRC message on unconnected notifier. Discarding.");
+  };
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("F1AP");
+};
+
+/// Non-owning handlers to RRC message notifiers.
+using f1ap_srb_notifiers = std::array<f1c_rrc_message_notifier*, MAX_NOF_SRBS>;
+
+struct f1ap_ue_context {
+  f1ap_ue_id_t       du_ue_f1ap_id = INVALID_F1AP_UE_ID;
+  ue_index_t         ue_index      = INVALID_UE_INDEX;
+  f1ap_srb_notifiers srbs;
+};
+
+struct f1ap_srb_creation_message {
+  ue_index_t ue_index;
+  srb_id_t   srb_id;
+};
+
+struct ue_creation_complete_message {
+  ue_index_t         ue_index;
+  f1ap_srb_notifiers srbs;
+};
+
+/// Methods used by F1AP to notify the DU processor.
+class f1c_du_processor_notifier
+{
+public:
+  virtual ~f1c_du_processor_notifier() = default;
 
   /// \brief Notifies about the reception of a F1 Setup Request message.
   /// \param[in] msg The received F1 Setup Request message.
   virtual void on_f1_setup_request_received(const f1_setup_request_message& msg) = 0;
 
-  /// \brief Notifies about the reception of a initial UL RRC message transfer message.
+  /// \brief Notifies the DU processor to create a UE.
   /// \param[in] msg The received initial UL RRC message transfer message.
-  virtual void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_message& msg) = 0;
+  /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
+  virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
 
-  /// \brief Notifies about the reception of a UL RRC message transfer message.
-  /// \param[in] msg The received UL RRC message transfer message.
-  virtual void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_message& msg) = 0;
-
-  /// \brief Lookup the cell based on a given NR cell ID.
-  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
-  virtual du_cell_index_t find_cell(uint64_t packed_nr_cell_id) = 0;
+  /// \brief Notify about the need to create an SRB
+  /// \param[in] msg The SRB creation message
+  virtual void on_create_srb(const f1ap_srb_creation_message& msg) = 0;
 
   /// \brief Get the DU index.
   /// \return The DU index.
@@ -200,13 +230,19 @@ public:
 /// Combined entry point for F1C/U handling.
 class f1_interface : public f1c_message_handler,
                      public f1c_event_handler,
-                     public f1ap_rrc_message_transfer_procedure_handler,
+                     public f1ap_rrc_message_handler,
                      public f1ap_connection_manager,
                      public f1ap_ue_context_manager,
                      public f1c_statistics_handler
 {
 public:
   virtual ~f1_interface() = default;
+
+  /// \brief Update a notifier to higher layers for a UE.
+  /// \param[in] ue_index The index of the UE.
+  /// \param[in] srb_id The SRB ID to update.
+  /// \param[in] notifier The new notifier.
+  virtual void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier) = 0;
 };
 
 } // namespace srs_cu_cp

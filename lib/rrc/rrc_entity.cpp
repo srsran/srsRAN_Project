@@ -20,7 +20,7 @@ rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, rrc_ue_du_proc
 {
 }
 
-rrc_ue_entity_interface* rrc_entity::add_user(ue_creation_message msg)
+rrc_ue_entity_interface* rrc_entity::add_user(rrc_ue_creation_message msg)
 {
   if (ue_db.contains(msg.ue_index)) {
     // UE already exists with same ue_index

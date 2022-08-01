@@ -29,17 +29,18 @@ protected:
     srslog::init();
 
     f1c_pdu_notifier      = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
-    du_processor_notifier = std::make_unique<dummy_f1c_du_processor_message_notifier>();
+    du_processor_notifier = std::make_unique<dummy_f1c_du_processor_notifier>();
     f1c_du_mgmt_notifier  = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
 
     f1ap = create_f1ap(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
+    du_processor_notifier->attach_f1ap(f1ap.get());
   }
 
-  std::unique_ptr<f1_interface>                            f1ap;
-  std::unique_ptr<dummy_f1c_pdu_notifier>                  f1c_pdu_notifier;
-  std::unique_ptr<dummy_f1c_du_processor_message_notifier> du_processor_notifier;
-  std::unique_ptr<dummy_f1c_du_management_notifier>        f1c_du_mgmt_notifier;
-  srslog::basic_logger&                                    test_logger = srslog::fetch_basic_logger("TEST");
+  std::unique_ptr<f1_interface>                     f1ap;
+  std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
+  std::unique_ptr<dummy_f1c_du_processor_notifier>  du_processor_notifier;
+  std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;
+  srslog::basic_logger&                             test_logger = srslog::fetch_basic_logger("TEST");
 };
 
 /// Test the f1 UE context release procedure (gNB-CU initiated)
@@ -49,7 +50,6 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
   test_logger.info("Injecting Initial UL RRC message");
   f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
   f1ap->handle_message(init_ul_rrc_msg);
-  f1ap->add_ue_index_to_context(int_to_f1ap_ue_id(0), MIN_UE_INDEX);
 
   EXPECT_EQ(f1ap->get_nof_ues(), 1);
 

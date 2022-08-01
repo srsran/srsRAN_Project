@@ -27,10 +27,10 @@ void test_f1_setup(test_outcome outcome)
                                 outcome == test_outcome::success ? "Success" : "Failure"};
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 
-  dummy_f1c_pdu_notifier                  f1c_pdu_notifier(nullptr);
-  dummy_f1c_du_processor_message_notifier du_processor_notifier;
-  dummy_f1c_du_management_notifier        f1c_du_mgmt_notifier(nullptr);
-  auto f1ap = create_f1ap(f1c_pdu_notifier, du_processor_notifier, f1c_du_mgmt_notifier);
+  dummy_f1c_pdu_notifier           f1c_pdu_notifier(nullptr);
+  dummy_f1c_du_processor_notifier  du_processor_notifier;
+  dummy_f1c_du_management_notifier f1c_du_mgmt_notifier(nullptr);
+  auto                             f1ap = create_f1ap(f1c_pdu_notifier, du_processor_notifier, f1c_du_mgmt_notifier);
 
   // Action 1: Receive F1SetupRequest message
   test_logger.info("TEST: Receive F1SetupRequest message...");

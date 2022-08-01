@@ -116,11 +116,11 @@ protected:
     // create single UE context and add RRC user
     ue_ctxt.c_rnti     = to_rnti(0x1234);
     ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>();
-    ue_creation_message ue_create_msg{};
-    ue_create_msg.c_rnti = ue_ctxt.c_rnti;
-    ue_create_msg.du_to_cu_container.resize(1);
-    ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
-    ue_ctxt.rrc                 = rrc->add_user(std::move(ue_create_msg));
+    rrc_ue_creation_message rrc_ue_create_msg{};
+    rrc_ue_create_msg.c_rnti = ue_ctxt.c_rnti;
+    rrc_ue_create_msg.du_to_cu_container.resize(1);
+    rrc_ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
+    ue_ctxt.rrc                     = rrc->add_user(std::move(rrc_ue_create_msg));
 
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);

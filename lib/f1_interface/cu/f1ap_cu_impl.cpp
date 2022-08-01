@@ -17,9 +17,9 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_cu_cp;
 
-f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
-                           f1c_du_processor_message_notifier& f1c_du_processor_notifier_,
-                           f1c_du_management_notifier&        f1c_du_management_notifier_) :
+f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
+                           f1c_du_processor_notifier&  f1c_du_processor_notifier_,
+                           f1c_du_management_notifier& f1c_du_management_notifier_) :
   logger(srslog::fetch_basic_logger("CU-F1AP")),
   pdu_notifier(f1c_pdu_notifier_),
   du_processor_notifier(f1c_du_processor_notifier_),
@@ -32,6 +32,23 @@ f1ap_cu_impl::f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
 
 // Note: For fwd declaration of member types, dtor cannot be trivial.
 f1ap_cu_impl::~f1ap_cu_impl() {}
+
+void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier)
+{
+  if (srb_id >= MAX_NOF_SRBS) {
+    logger.error("Couldn't connect notifier for SRB{}", srb_id);
+  }
+
+  f1ap_ue_id_t cu_ue_id = find_cu_ue_id(ue_index);
+  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+    logger.error("Connection of SRB notifier failed.");
+    return;
+  }
+
+  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+
+  ue_ctxt.srbs[srb_id] = &notifier;
+}
 
 void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
 {
@@ -241,56 +258,56 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
     logger.debug("Ignoring SUL access indicator");
   }
 
-  du_cell_index_t pcell_index = du_processor_notifier.find_cell(cgi.nci.packed);
-  if (pcell_index == INVALID_DU_CELL_INDEX) {
-    logger.error("Could not find cell with cell_id={}", cgi.nci.packed);
-    return;
-  }
-
   f1ap_ue_id_t cu_ue_id = get_next_cu_ue_id();
   if (cu_ue_id == INVALID_F1AP_UE_ID) {
     logger.error("No CU UE F1AP ID available.");
     return;
   }
 
-  // create UE context and store it
-  f1ap_ue_context ue_ctx = {};
-  ue_ctx.du_ue_f1ap_id   = int_to_f1ap_ue_id(msg->gnb_du_ue_f1_ap_id.value);
+  // Request UE creation
+  f1ap_initial_ul_rrc_message f1ap_init_ul_rrc_msg      = {};
+  f1ap_init_ul_rrc_msg.msg                              = msg;
+  ue_creation_complete_message ue_creation_complete_msg = du_processor_notifier.on_create_ue(f1ap_init_ul_rrc_msg);
 
-  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctx;
-
-  f1ap_initial_ul_rrc_message f1ap_init_ul_rrc_msg = {};
-  f1ap_init_ul_rrc_msg.cu_ue_id                    = cu_ue_id;
-  f1ap_init_ul_rrc_msg.pcell_index                 = pcell_index;
-  f1ap_init_ul_rrc_msg.msg                         = msg;
-
-  du_processor_notifier.on_initial_ul_rrc_message_transfer_received(f1ap_init_ul_rrc_msg);
-}
-
-void f1ap_cu_impl::add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index)
-{
-  if (ue_index == INVALID_UE_INDEX) {
-    logger.error("Invalid UE index, removing stored UE context.");
-    remove_ue(cu_ue_id);
+  if (ue_creation_complete_msg.ue_index == INVALID_UE_INDEX) {
+    logger.error("Invalid UE index.");
     return;
   }
 
-  f1ap_ue_context& ue_ctx = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
-  ue_ctx.ue_index         = ue_index;
+  // Create UE context and store it
+  f1ap_ue_context ue_ctxt               = {};
+  ue_ctxt.du_ue_f1ap_id                 = int_to_f1ap_ue_id(msg->gnb_du_ue_f1_ap_id.value);
+  ue_ctxt.ue_index                      = ue_creation_complete_msg.ue_index;
+  ue_ctxt.srbs                          = ue_creation_complete_msg.srbs;
+  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctxt;
+
+  // Request creation of SRB0 bearer and notifier
+  f1ap_srb_creation_message srb0_msg{};
+  srb0_msg.srb_id   = srb_id_t::srb0;
+  srb0_msg.ue_index = ue_creation_complete_msg.ue_index;
+  du_processor_notifier.on_create_srb(srb0_msg);
 
   logger.debug(
-      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctx.du_ue_f1ap_id, ue_ctx.ue_index);
+      "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctxt.du_ue_f1ap_id, ue_ctxt.ue_index);
+
+  // Forward RRC container
+  if (msg->rrc_container_rrc_setup_complete_present) {
+    // RRC setup complete over SRB1
+    cu_ue_id_to_f1ap_ue_context[cu_ue_id].srbs[srb_id_t::srb1]->on_new_rrc_message(
+        msg->rrc_container_rrc_setup_complete.value);
+    return;
+  }
+
+  // Pass container to RRC
+  cu_ue_id_to_f1ap_ue_context[cu_ue_id].srbs[srb_id_t::srb0]->on_new_rrc_message(msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)
 {
-  f1ap_ue_context ue_ctx = cu_ue_id_to_f1ap_ue_context[msg->gnb_cu_ue_f1_ap_id.value];
+  f1ap_ue_context ue_ctxt = cu_ue_id_to_f1ap_ue_context[msg->gnb_cu_ue_f1_ap_id.value];
 
-  f1ap_ul_rrc_message ul_rrc_msg = {};
-  ul_rrc_msg.ue_index            = ue_ctx.ue_index;
-  ul_rrc_msg.msg                 = msg;
-
-  du_processor_notifier.on_ul_rrc_message_transfer_received(ul_rrc_msg);
+  // Notify upper layers about reception
+  ue_ctxt.srbs[msg->srbid.value]->on_new_rrc_message(msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome)

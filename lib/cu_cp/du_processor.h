@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "adapters/du_processor_adapters.h"
 #include "adapters/f1ap_adapters.h"
 #include "adapters/rrc_ue_adapters.h"
 #include "du_context.h"
@@ -39,8 +38,7 @@ public:
   // message handlers
   void handle_f1_setup_request(const f1_setup_request_message& msg) override;
 
-  du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override;
-  du_index_t      get_du_index() override;
+  du_index_t get_du_index() override;
 
   // getter functions
   slot_array<du_cell_context, MAX_NOF_DU_CELLS>& get_cell_db() { return cell_db; };
@@ -51,8 +49,7 @@ public:
   size_t                                         get_nof_ues() { return ue_mng.get_nof_ues(); };
 
   // du_processor_rrc_message_handler
-  void handle_initial_ul_rrc_message_transfer(const initial_ul_rrc_message& msg) override;
-  void handle_ul_rrc_message_transfer(const ul_rrc_message& msg) override;
+  ue_creation_complete_message handle_ue_creation_request(const ue_creation_message& msg) override;
 
   rrc_amf_connection_handler& get_amf_connection_handler(); /// Pass handle to AMF connection handler within RRC
 
@@ -69,6 +66,10 @@ public:
   unique_timer make_unique_timer() override { return timer_db.create_unique_timer(); }
 
 private:
+  /// \brief Lookup the cell based on a given NR cell ID.
+  /// \param[in] packed_nr_cell_id The packed NR cell ID received over F1AP.
+  du_cell_index_t find_cell(uint64_t packed_nr_cell_id);
+
   // F1AP senders
 
   /// \brief Create and transmit the F1 Setup response message.

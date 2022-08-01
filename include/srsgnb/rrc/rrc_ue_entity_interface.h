@@ -70,7 +70,7 @@ class rrc_ue_du_processor_notifier
 public:
   virtual ~rrc_ue_du_processor_notifier() = default;
 
-  /// \brief Notify about hte need to create an SRB
+  /// \brief Notify about the need to create an SRB
   /// \param[in] msg The SRB creation message
   virtual void on_create_srb(const srb_creation_message& msg) = 0;
 

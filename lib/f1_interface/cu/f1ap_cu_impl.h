@@ -24,10 +24,12 @@ class f1ap_event_manager;
 class f1ap_cu_impl final : public f1_interface
 {
 public:
-  f1ap_cu_impl(f1c_message_notifier&              f1c_pdu_notifier_,
-               f1c_du_processor_message_notifier& f1c_du_processor_notifier_,
-               f1c_du_management_notifier&        f1c_du_management_notifier_);
+  f1ap_cu_impl(f1c_message_notifier&       f1c_pdu_notifier_,
+               f1c_du_processor_notifier&  f1c_du_processor_notifier_,
+               f1c_du_management_notifier& f1c_du_management_notifier_);
   ~f1ap_cu_impl();
+
+  void connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier) override;
 
   // f1ap connection manager functions
 
@@ -36,8 +38,6 @@ public:
   // f1ap rrc message transfer procedure functions
 
   void handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg) override;
-
-  void add_ue_index_to_context(f1ap_ue_id_t cu_ue_id, ue_index_t ue_index) override;
 
   // f1ap ue context manager functions
 
@@ -98,9 +98,9 @@ private:
 
   // nofifiers and handles
 
-  f1c_message_notifier&              pdu_notifier;
-  f1c_du_processor_message_notifier& du_processor_notifier;
-  f1c_du_management_notifier&        du_management_notifier;
+  f1c_message_notifier&       pdu_notifier;
+  f1c_du_processor_notifier&  du_processor_notifier;
+  f1c_du_management_notifier& du_management_notifier;
 
   std::unique_ptr<f1ap_event_manager> events;
 };

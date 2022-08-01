@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../f1_interface/common/asn1_helpers.h"
 #include "../ue_manager_interfaces.h"
 #include "srsgnb/cu_cp/cu_cp.h"
 #include "srsgnb/cu_cp/du_processor.h"
@@ -36,15 +37,10 @@ private:
 };
 
 /// Adapter between F1AP and DU processor
-class f1ap_du_processor_adapter : public f1c_du_processor_message_notifier
+class f1ap_du_processor_adapter : public f1c_du_processor_notifier
 {
 public:
   void connect_du_processor(du_processor_f1c_interface& du_processor_f1c_) { du_f1c_handler = &du_processor_f1c_; }
-
-  du_cell_index_t find_cell(uint64_t packed_nr_cell_id) override
-  {
-    return du_f1c_handler->find_cell(packed_nr_cell_id);
-  }
 
   du_index_t get_du_index() override { return du_f1c_handler->get_du_index(); }
 
@@ -54,44 +50,48 @@ public:
     du_f1c_handler->handle_f1_setup_request(msg);
   }
 
-  void on_initial_ul_rrc_message_transfer_received(const f1ap_initial_ul_rrc_message& msg) override
+  ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) override
   {
     srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
 
-    initial_ul_rrc_message du_proc_msg = {};
-    du_proc_msg.tmp_ue_id              = msg.cu_ue_id;
-    du_proc_msg.pcell_index            = msg.pcell_index;
-    du_proc_msg.rrc_container          = msg.msg->rrc_container.value;
-    du_proc_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
-    du_proc_msg.du_to_cu_rrc_container = msg.msg->duto_currc_container.value;
+    ue_creation_message ue_creation_msg    = {};
+    ue_creation_msg.c_rnti                 = to_rnti(msg.msg->c_rnti.value);
+    ue_creation_msg.cgi                    = cgi_from_asn1(msg.msg->nrcgi.value);
+    ue_creation_msg.du_to_cu_rrc_container = msg.msg->duto_currc_container.value;
 
-    if (msg.msg->rrc_container_rrc_setup_complete_present) {
-      du_proc_msg.rrc_container_rrc_setup_complete = msg.msg->rrc_container_rrc_setup_complete.value;
-    }
-
-    du_f1c_handler->handle_initial_ul_rrc_message_transfer(du_proc_msg);
-
-    return;
+    return du_f1c_handler->handle_ue_creation_request(ue_creation_msg);
   }
 
-  void on_ul_rrc_message_transfer_received(const f1ap_ul_rrc_message& msg) override
+  void on_create_srb(const f1ap_srb_creation_message& msg) override
   {
-    srsgnb_assert(du_f1c_handler != nullptr, "F1C handler must not be nullptr");
-
-    ul_rrc_message du_proc_msg = {};
-    du_proc_msg.ue_index       = msg.ue_index;
-    du_proc_msg.rrc_container  = msg.msg->rrc_container.value;
-    du_proc_msg.srbid          = msg.msg->srbid.value;
-
-    du_f1c_handler->handle_ul_rrc_message_transfer(du_proc_msg);
+    srb_creation_message srb_msg{};
+    srb_msg.srb_id   = msg.srb_id;
+    srb_msg.ue_index = msg.ue_index;
+    du_f1c_handler->create_srb(srb_msg);
   }
 
 private:
   du_processor_f1c_interface* du_f1c_handler = nullptr;
 };
 
+/// Adapter between F1AP and RRC UE
+class f1ap_rrc_ue_adapter : public f1c_rrc_message_notifier
+{
+public:
+  explicit f1ap_rrc_ue_adapter(rrc_ul_ccch_pdu_handler& rrc_rx) : rrc_handler(rrc_rx) {}
+
+  void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
+  {
+    byte_buffer_slice pdu({rrc_container.begin(), rrc_container.end()});
+    rrc_handler.handle_ul_ccch_pdu(std::move(pdu));
+  }
+
+private:
+  rrc_ul_ccch_pdu_handler& rrc_handler;
+};
+
 /// Adapter between F1AP and PDCP in UL direction (Rx)
-class f1ap_pdcp_adapter : public du_processor_rrc_message_notifier
+class f1ap_pdcp_adapter : public f1c_rrc_message_notifier
 {
 public:
   explicit f1ap_pdcp_adapter(pdcp_rx_lower_interface& pdcp_rx_) : pdcp_rx(pdcp_rx_) {}
