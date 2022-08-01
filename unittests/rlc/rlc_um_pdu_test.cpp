@@ -92,7 +92,7 @@ void test_rlc_um_6bit_middle_segment()
     byte_buffer buf = make_pdu_and_log(tv_pdu);
     TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size6bits, &hdr) != 0);
 
-    TESTASSERT(hdr.si == rlc_si_field::neither_first_nor_last_segment);
+    TESTASSERT(hdr.si == rlc_si_field::middle_segment);
     TESTASSERT(hdr.so == 258);
     TESTASSERT(hdr.sn == 3);
     TESTASSERT(hdr.sn_size == rlc_um_sn_size::size6bits);
@@ -231,7 +231,7 @@ void test_rlc_um_12bit_middle_segment()
     byte_buffer buf = make_pdu_and_log(tv_pdu);
     TESTASSERT(rlc_um_read_data_pdu_header(buf, rlc_um_sn_size::size12bits, &hdr) != 0);
 
-    TESTASSERT(hdr.si == rlc_si_field::neither_first_nor_last_segment);
+    TESTASSERT(hdr.si == rlc_si_field::middle_segment);
     TESTASSERT(hdr.so == 360);
     TESTASSERT(hdr.sn == 5);
   }

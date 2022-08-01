@@ -191,7 +191,7 @@ inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_
   }
 
   // Read optional part
-  if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::neither_first_nor_last_segment) {
+  if (header->si == rlc_si_field::last_segment || header->si == rlc_si_field::middle_segment) {
     // read SO
     header->so = (*pdu_reader & 0xffU) << 8U;
     ++pdu_reader;

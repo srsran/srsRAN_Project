@@ -178,7 +178,7 @@ bool rlc_tx_um_entity::get_si_and_expected_header_size(uint32_t      so,
       si = rlc_si_field::last_segment;
     } else {
       // We can't transmit the SDU fully
-      si = rlc_si_field::neither_first_nor_last_segment;
+      si = rlc_si_field::middle_segment;
     }
   }
   return true;

@@ -75,10 +75,10 @@ inline const char* to_c_str(const rlc_dc_field& dc)
 
 /// RLC AM NR segmentation info
 enum class rlc_si_field : unsigned {
-  full_sdu                       = 0b00,
-  first_segment                  = 0b01,
-  last_segment                   = 0b10,
-  neither_first_nor_last_segment = 0b11
+  full_sdu       = 0b00,
+  first_segment  = 0b01,
+  last_segment   = 0b10,
+  middle_segment = 0b11
 };
 
 constexpr uint16_t to_number(const rlc_si_field& si_field)
