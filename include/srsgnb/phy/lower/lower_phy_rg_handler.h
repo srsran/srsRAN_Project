@@ -15,9 +15,10 @@
 
 namespace srsgnb {
 
-/// \brief Describes the lower physical layer resource grid handler interface.
+/// \brief Lower physical layer resource grid handler interface.
 ///
-/// This interface modulates and transmits the given downlink resource grid through the underlying radio device.
+/// The resource grid handler modulates and transmits the given downlink resource grid through the underlying radio
+/// device.
 class lower_phy_rg_handler
 {
 public:

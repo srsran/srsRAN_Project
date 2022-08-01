@@ -23,12 +23,12 @@ public:
   /// Default destructor.
   virtual ~lower_phy_factory() = default;
 
-  /// \brief Creates a generic lower physical layer control.
-  /// \param[in] config Provides the required configuration.
+  /// \brief Creates a generic lower physical layer.
+  /// \param[in] config Configuration parameters.
   virtual std::unique_ptr<lower_phy> create(const lower_phy_configuration& config) = 0;
 };
 
-/// Describes the necessary parameters to create a generic lower PHY factory.
+/// Collection of all necessary components to build a lower PHY factory.
 struct lower_phy_factory_generic_configuration {
   /// Provides the OFDM modulation factory.
   std::shared_ptr<ofdm_modulator_factory> modulator_factory;

@@ -16,20 +16,22 @@
 
 namespace srsgnb {
 
-/// This interface describes the lower PHY layer giving access to its components.
+/// \brief Lower PHY main interface.
+///
+/// Provides access to all the lower PHY components.
 class lower_phy
 {
 public:
   /// Default destructor.
   virtual ~lower_phy() = default;
 
-  /// \brief Returns a reference to the request handler interface.
+  /// \brief Returns a reference to the lower PHY request handler.
   virtual lower_phy_request_handler& get_request_handler() = 0;
 
-  /// \brief Returns a reference to the resource grid handler interface.
+  /// \brief Returns a reference to the lower PHY resource grid handler.
   virtual lower_phy_rg_handler& get_rg_handler() = 0;
 
-  /// \brief Returns a reference to the controller interface.
+  /// \brief Returns a reference to the lower PHY controller.
   virtual lower_phy_controller& get_controller() = 0;
 };
 

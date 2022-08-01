@@ -21,7 +21,7 @@ public:
   /// Default destructor.
   virtual ~lower_phy_error_notifier() = default;
 
-  /// Contains the context in which \c on_late_resource_grid is notified.
+  /// Describes the context in which \c on_late_resource_grid is notified.
   struct late_resource_grid_context {
     /// Sector identifier.
     unsigned sector;
@@ -40,7 +40,7 @@ public:
   /// lower_phy_timing_notifier::on_tti_boundary() and finishes with the beginning of the processing of the first symbol
   /// within the slot.
   ///
-  /// \param[in] context Provides the context in which the resource grid is not available.
+  /// \param[in] context Context in which the resource grid is not available.
   /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
 };

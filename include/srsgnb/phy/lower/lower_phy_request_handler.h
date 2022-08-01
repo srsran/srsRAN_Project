@@ -17,7 +17,7 @@
 
 namespace srsgnb {
 
-/// \brief Describes the lower physical request handler.
+/// \brief Describes the lower physical layer request handler.
 ///
 /// Handles incoming requests and notifies their completion through the \c phy_rx_symbol_notifier interface.
 class lower_phy_request_handler
@@ -35,7 +35,7 @@ public:
   /// \param[in] buffer  PRACH buffer used to write the PRACH window.
   virtual void request_prach_window(const prach_buffer_context& context, prach_buffer& buffer) = 0;
 
-  /// \brief Requests to the lower PHY an uplink slot.
+  /// \brief Requests the lower PHY to provide an uplink slot.
   ///
   /// The lower PHY must process the slot described by \c context and notify the demodulation per symbol basis of the
   /// requested slot.

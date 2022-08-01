@@ -70,8 +70,9 @@ public:
   }
 };
 
-/// Describes a generic lower physical layer.
-//: TODO: split this class into smaller pieces
+/// Lower physical layer implementation.
+// TODO: Reduce the inheritance list of this class by splitting it into smaller subcomponents that handle more specific
+// responsabilities.
 class lower_phy_impl : public lower_phy,
                        public lower_phy_controller,
                        public lower_phy_rg_handler,
@@ -93,26 +94,26 @@ private:
   lower_phy_timing_notifier& timing_notifier;
   /// Error handler.
   lower_phy_error_notifier& error_notifier;
-  /// Stores downlink resource grids buffers. Each entry belongs to a slot.
+  /// Container for downlink resource grids buffers. Each entry belongs to a slot.
   circular_array<lower_phy_rg_buffer<const resource_grid_reader>, NOF_RG_BUFFER> dl_rg_buffers;
-  /// Stores uplink resource grids buffers. Each entry belongs to a slot.
+  /// Container for uplink resource grids buffers. Each entry belongs to a slot.
   circular_array<lower_phy_rg_buffer<resource_grid>, NOF_RG_BUFFER> ul_rg_buffers;
-  /// Stores radio baseband buffers for each stream. Common for transmit and receive. The number of entries indicates
-  /// the number of streams.
+  /// Container for radio baseband buffers for each stream. Common for transmit and receive. The number of entries
+  /// indicates the number of streams.
   std::vector<baseband_gateway_buffer_dynamic> radio_buffers;
-  /// Stores radio receive metadata for each stream. The number of entries indicates the number of streams.
+  /// Container for radio receive metadata for each stream. The number of entries indicates the number of streams.
   std::vector<baseband_gateway_receiver::metadata> receive_metadata;
-  /// Stores OFDM modulators. Each entry belongs to a different sector.
+  /// Container for OFDM modulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
-  /// Stores OFDM demodulators. Each entry belongs to a different sector.
+  /// Container for OFDM demodulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
-  /// Indicates the receive to transmit delay in clock ticks.
+  /// Receive-to-transmit delay in clock ticks.
   const baseband_gateway_timestamp rx_to_tx_delay;
-  /// Indicates the maximum allowed processing delay in slots.
+  /// Maximum allowed processing delay in slots.
   const unsigned max_processing_delay_slots;
-  /// Indicates the number of symbols per slot.
+  /// Number of symbols per slot.
   const unsigned nof_symbols_per_slot;
-  /// Provides the sectors configuration.
+  /// Sector configurations.
   const std::vector<lower_phy_sector_description> sectors;
   /// Current uplink processing slot context.
   slot_point ul_slot_context = {};
@@ -120,17 +121,17 @@ private:
   slot_point dl_slot_context = {};
   /// Current symbol index within the processing slot.
   unsigned symbol_slot_idx = 0;
-  /// Indicates the asynchronous processing shall stop.
+  /// State of the lower PHY finite-state machine.
   lower_phy_state_fsm state_fsm;
 
-  /// \brief Processes uplink symbol.
-  /// \param[in] symbol_idx Indicates the symbol index within a subframe.
+  /// \brief Processes an uplink symbol.
+  /// \param[in] symbol_idx Symbol index within a subframe.
   /// \return The radio timestamp of the received block.
   baseband_gateway_timestamp process_ul_symbol(unsigned symbol_idx);
 
-  /// \brief Processes downlink symbol.
-  /// \param[in] symbol_idx Indicates the symbol index within a subframe.
-  /// \param[out] timestamp Indicates the radio timestamp for transmitting the symbol.
+  /// \brief Processes a downlink symbol.
+  /// \param[in] symbol_idx Symbol index within a subframe.
+  /// \param[in] timestamp Radio timestamp for the transmitted symbol.
   void process_dl_symbol(unsigned symbol_idx, baseband_gateway_timestamp timestamp);
 
   /// \brief Processes uplink and downlink slots.

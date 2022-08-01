@@ -22,7 +22,7 @@ public:
 
   /// \brief Notifies a new TTI boundary event.
   ///
-  /// \param [in] slot Provides the notification context.
+  /// \param[in] slot Notification context.
   virtual void on_tti_boundary(slot_point slot) = 0;
 };
 

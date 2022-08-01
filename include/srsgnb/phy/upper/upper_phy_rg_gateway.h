@@ -15,16 +15,17 @@
 
 namespace srsgnb {
 
-/// Describes the upper physical layer resource grid gateway.
+/// Interface of the upper physical layer resource grid gateway.
 class upper_phy_rg_gateway
 {
 public:
   /// Default destructor.
   virtual ~upper_phy_rg_gateway() = default;
 
-  /// \brief Sends resource grid through the gateway.
-  /// \param[in] context Indicates the context the resource grid belongs.
-  /// \param[in] grid Provides the resource grid reader instance.
+  /// \brief Sends the given resource grid through the gateway.
+  ///
+  /// \param[in] context Context the resource grid belongs to.
+  /// \param[in] grid    Resource grid reader instance.
   virtual void send(const resource_grid_context& context, const resource_grid_reader& grid) = 0;
 };
 

@@ -14,7 +14,7 @@
 
 namespace srsgnb {
 
-/// Describes the lower physical layer control interface.
+/// Lower physical layer control interface.
 class lower_phy_controller
 {
 public:
@@ -23,7 +23,7 @@ public:
 
   /// \brief Starts the lower physical layer operation.
   ///
-  /// \param[in] realtime_task_executor Provides a task executor for real time execution.
+  /// \param[in] realtime_task_executor Task executor for real time operation.
   /// \note The real time task executor is exclusively dedicated to the lower physical layer operation.
   virtual void start(task_executor& realtime_task_executor) = 0;
 

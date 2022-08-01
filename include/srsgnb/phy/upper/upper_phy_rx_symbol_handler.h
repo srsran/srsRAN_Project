@@ -18,7 +18,6 @@
 
 namespace srsgnb {
 
-
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
   /// Identifier of the sector the symbol is received from.
