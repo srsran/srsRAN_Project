@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/channel_bandwidth.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/support/test_utils.h"

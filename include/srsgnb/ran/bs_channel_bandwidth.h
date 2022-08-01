@@ -30,7 +30,7 @@ enum class bs_channel_bandwidth_fr1 {
 };
 
 /// Converts the BS channel bandwidth label into the actual BW value in MHz.
-constexpr inline unsigned bs_channel_bandwidth_to_uint(bs_channel_bandwidth_fr1 bw)
+constexpr inline unsigned bs_channel_bandwidth_to_MHz(bs_channel_bandwidth_fr1 bw)
 {
   return static_cast<unsigned>(bw);
 }

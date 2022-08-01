@@ -12,7 +12,7 @@
 
 #include "du_cell_config.h"
 #include "srsgnb/ran/band_helper.h"
-#include "srsgnb/ran/channel_bandwidth.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
 
@@ -35,8 +35,8 @@ struct du_cell_config_default_params {
   unsigned nof_crbs = band_helper::get_n_rbs_from_bw(channel_bw_mhz, scs_common, frequency_range::FR1);
   /// This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn = 365000;
-  /// offsetToPointA, as per TS 38.211, Section 4.4.4.2.
-  unsigned offset_to_point_a = 12;
+  /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA.
+  ssb_offset_to_pointA offset_to_point_a{12};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
   unsigned coreset0_index = 6;
 };
@@ -46,7 +46,7 @@ namespace du_config_helpers {
 inline carrier_configuration make_default_carrier_configuration(const du_cell_config_default_params& params = {})
 {
   carrier_configuration cfg;
-  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_uint(params.channel_bw_mhz);
+  cfg.carrier_bw_mhz = bs_channel_bandwidth_to_MHz(params.channel_bw_mhz);
   cfg.arfcn          = params.dl_arfcn;
   cfg.nof_ant        = 1;
   return cfg;
@@ -91,8 +91,8 @@ inline coreset_configuration make_default_coreset0_config(const du_cell_config_d
 
   cfg.duration = static_cast<unsigned>(desc.nof_symb_coreset);
   int rb_start = params.scs_common == subcarrier_spacing::kHz15
-                     ? static_cast<int>(params.offset_to_point_a) - desc.offset
-                     : static_cast<int>(params.offset_to_point_a / 2) - desc.offset;
+                     ? static_cast<int>(params.offset_to_point_a.to_uint()) - desc.offset
+                     : static_cast<int>(params.offset_to_point_a.to_uint() / 2) - desc.offset;
   if (rb_start < 0) {
     srsgnb_terminate("Coreset#0 CRB starts before point A.");
   }
@@ -155,7 +155,7 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
   dl_config_common cfg{};
 
   // Configure FrequencyInfoDL.
-  cfg.freq_info_dl.offset_to_point_a = params.offset_to_point_a;
+  cfg.freq_info_dl.offset_to_point_a = params.offset_to_point_a.to_uint();
   cfg.freq_info_dl.scs_carrier_list.emplace_back();
   cfg.freq_info_dl.scs_carrier_list.back().scs               = params.scs_common;
   cfg.freq_info_dl.scs_carrier_list.back().offset_to_carrier = 0;
@@ -181,13 +181,13 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
 inline ul_config_common make_default_ul_config_common(const du_cell_config_default_params& params = {})
 {
   ul_config_common cfg{};
-  /// This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
+  // This is the ARFCN of the UL f_ref, as per TS 38.104, Section 5.4.2.1.
   uint32_t ul_arfcn = band_helper::get_ul_arfcn_from_dl_arfcn(params.dl_arfcn);
-  /// This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
+  // This is f_ref frequency for UL, expressed in Hz and obtained from the corresponding ARFCN.
   double ul_f_ref = band_helper::get_abs_freq_point_a_from_f_ref(
       band_helper::nr_arfcn_to_freq(ul_arfcn), params.nof_crbs, params.scs_common);
-  /// absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
-  /// Section 4.4.4.2.
+  // absolute_freq_point_a needs to be expressed as in ARFCN, as per \c absoluteFrequencyPointA definition in 38.211,
+  // Section 4.4.4.2.
   cfg.freq_info_ul.absolute_freq_point_a = band_helper::freq_to_nr_arfcn(ul_f_ref);
   cfg.freq_info_ul.scs_carrier_list.resize(1);
   cfg.freq_info_ul.scs_carrier_list[0].scs               = params.scs_common;
@@ -198,7 +198,7 @@ inline ul_config_common make_default_ul_config_common(const du_cell_config_defau
   cfg.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles            = 64;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index_l839_present = true;
   cfg.init_ul_bwp.rach_cfg_common->prach_root_seq_index              = 1;
-  /// Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
+  // Msg1-SCS invalid in case the PRACH SCS is derived from prach-ConfigurationIndex in RACH-ConfigGeneric.
   cfg.init_ul_bwp.rach_cfg_common->msg1_scs                                      = subcarrier_spacing::invalid;
   cfg.init_ul_bwp.rach_cfg_common->restricted_set                                = restricted_set_config::TYPE_A;
   cfg.init_ul_bwp.rach_cfg_common->rach_cfg_generic.prach_config_index           = 16;
@@ -228,7 +228,7 @@ inline ssb_configuration make_default_ssb_config(const du_cell_config_default_pa
   cfg.ssb_bitmap            = uint64_t(1) << beam_index;
   cfg.beam_ids[beam_index]  = 0;
 
-  /// The values we assign to these parameters are implementation-defined.
+  // The values we assign to these parameters are implementation-defined.
   cfg.ssb_block_power = -16;
   cfg.pss_to_sss_epre = ssb_pss_to_sss_epre::dB_0;
 

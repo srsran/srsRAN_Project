@@ -108,8 +108,7 @@ double get_center_freq_from_abs_freq_point_a(uint32_t nof_prb, uint32_t freq_poi
 /// \param[in] nof_prb corresponds to Transmission bandwidth configuration \f$N_{RB}\f$, as per TS 38.104,
 /// Table 5.3.2-1. Only values in Table 5.3.2-1 should be provided.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
-/// \return absoluteFrequencyPointA as per TS 38.211, Section 4.4.4.2, but measured in Hz instead of being expressed as
-/// in ARFCN.
+/// \return \e absoluteFrequencyPointA as per TS38.211 Section 4.4.4.2, expressed in Hz.
 double get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs);
 
 /// \brief Compute the RF reference frequency for a NR carrier from the nof RBs, SCS and the Absolute frequency pointA.
@@ -117,8 +116,7 @@ double get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrie
 /// <em>Absolute frequency pointA<\em> is defined in TS 38.211, Section 4.4.4.2.
 /// The RF reference frequency is defined in TS 38.104, Section 5.4.2.1.
 ///
-/// \param[in] abs_freq_point_a absoluteFrequencyPointA as per TS 38.211, Section 4.4.4.2, but measured in Hz instead of
-/// being expressed as in ARFCN.
+/// \param[in] abs_freq_point_a \e absoluteFrequencyPointA as per TS38.211 Section 4.4.4.2, expressed in Hz.
 /// \param[in] nof_prb corresponds to Transmission bandwidth configuration \f$N_{RB}\f$, as per TS 38.104,
 /// Table 5.3.2-1. Only values in Table 5.3.2-1 should be provided.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
