@@ -133,6 +133,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
     logger.log_info("Trying to build PDU segment from SDU.");
     return build_new_sdu_segment(tx_pdu, nof_bytes);
   }
+  logger.log_info("Creating PDU. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
   // Prepare header
   rlc_am_pdu_header hdr = {};
@@ -165,8 +166,61 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
-  // TODO
-  return {};
+  logger.log_info("Creating new PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+
+  // Sanity check: can this SDU be sent this in a single PDU?
+  if ((tx_pdu.sdu.length() + head_min_size) <= nof_bytes) {
+    logger.log_error(
+        "Calling build_new_sdu_segment(), but there are enough bytes to tx in a single PDU. Tx SDU ({} B), "
+        "nof_bytes={} B",
+        tx_pdu.sdu.length(),
+        nof_bytes);
+    return {};
+  }
+
+  // Sanity check: can this SDU be sent considering header overhead?
+  if (nof_bytes <= head_min_size) { // Small header, since first segment has no SO field, ref: TS 38.322 Sec. 6.2.2.4
+    logger.log_info(
+        "Cannot build new sdu_segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
+        "head_min_size={}",
+        nof_bytes,
+        head_min_size);
+    return {};
+  }
+
+  uint32_t segment_payload_len = nof_bytes - head_min_size;
+  tx_pdu.next_so += segment_payload_len; // Store segmentation progress
+
+  // Save SN of PDU under segmentation
+  // This needs to be done before calculating the polling bit
+  // To make sure we check correctly that the buffers are empty.
+  sn_under_segmentation = st.tx_next;
+
+  // Prepare header
+  rlc_am_pdu_header hdr = {};
+  hdr.dc                = rlc_dc_field::data;
+  hdr.p                 = get_polling_bit(st.tx_next, false, segment_payload_len);
+  hdr.si                = rlc_si_field::first_segment;
+  hdr.sn_size           = cfg.sn_field_length;
+  hdr.sn                = st.tx_next;
+  hdr.so                = 0;
+  tx_pdu.header         = hdr;
+  logger.log_debug("AMD PDU header: {}", hdr);
+
+  // Pack header
+  byte_buffer header_buf = {};
+  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    // TODO: actually, pack function always returns true, so we never come here
+    logger.log_error("Failed to pack AMD PDU header");
+  }
+
+  // Assemble PDU
+  byte_buffer_slice_chain pdu_buf = {};
+  pdu_buf.push_front(std::move(header_buf));
+  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, hdr.so + segment_payload_len));
+  logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
+
+  return pdu_buf;
 }
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
