@@ -26,13 +26,13 @@ void pusch_demodulator_impl::demodulate(data_llr_buffer&            data,
   re_measurement_dimensions re_dims = {};
   re_dims.nof_prb                   = config.freq_allocation.get_nof_rb();
   re_dims.nof_symbols               = config.nof_symbols;
-  re_dims.nof_slices                = config.nof_rx_ports;
+  re_dims.nof_slices                = config.rx_ports.size();
 
   // Get REs from the resource grid.
   ch_symbols.resize(re_dims);
   get_ch_symbols(ch_symbols, grid, config);
 
-  // Prepare internal buffers.
+  // Prepare internal buffers (the number of PRBs and OFDM symbols is the same as above).
   re_dims.nof_slices = config.nof_tx_layers;
   mod_symbols_eq.resize(re_dims);
   noise_vars_eq.resize(re_dims);
@@ -53,7 +53,7 @@ void pusch_demodulator_impl::demodulate(data_llr_buffer&            data,
   // thus, this operation is safe.
   span<int8_t> data_tmp((int8_t*)data.begin(), data.size());
   // The following operation changes data_tmp and, in turn, data.
-  // todo(david): This is temporary, the true descrambler should take into account the UCI placeholders.
+  // Temporarily, UCI placeholders for 1-bit HARQ-ACK transmissions are not considered.
   descrambler->apply_xor(data_tmp, data_tmp);
 
   // Extract HARQ ACK soft bits.

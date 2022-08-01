@@ -22,9 +22,6 @@ namespace srsgnb {
 class pusch_demodulator_impl : public pusch_demodulator
 {
 public:
-  template <typename T>
-  using re_container = static_vector<T, MAX_NOF_DATA_LLR / 2>;
-
   /// Constructor: sets up internal components and acquires their ownership.
   pusch_demodulator_impl(std::unique_ptr<channel_equalizer>       eq,
                          std::unique_ptr<demodulation_mapper>     demap,
@@ -66,11 +63,11 @@ private:
   /// \param[in]  symbols_in      Equalized modulation and DM-RS symbols, grouped by layer.
   /// \param[in]  noise_vars_in   Equivalent symbol noise variances, grouped by layer.
   /// \param[in]  config          Configuration parameters.
-  void remove_dmrs(static_vector<cf_t, MAX_NOF_DATA_LLR / 2>&  symbols_out,
-                   static_vector<float, MAX_NOF_DATA_LLR / 2>& noise_vars_out,
-                   const re_measurement<cf_t>&                 symbols_in,
-                   const re_measurement<float>&                noise_vars_in,
-                   const configuration&                        config)
+  void remove_dmrs(static_vector<cf_t, MAX_NOF_DATA_LLR>&  symbols_out,
+                   static_vector<float, MAX_NOF_DATA_LLR>& noise_vars_out,
+                   const re_measurement<cf_t>&             symbols_in,
+                   const re_measurement<float>&            noise_vars_in,
+                   const configuration&                    config)
   {
     // For now, do nothing.
   }
@@ -128,9 +125,9 @@ private:
   /// Buffer used to transfer symbol noise variances at the equalizer output.
   re_measurement<float> noise_vars_eq;
   /// Buffer used to transfer channel modulation symbols to the demodulator.
-  static_vector<cf_t, MAX_NOF_DATA_LLR / 2> mod_symbols_data;
+  static_vector<cf_t, MAX_NOF_DATA_LLR> mod_symbols_data;
   /// Buffer used to transfer symbol noise variances to the demodulator.
-  static_vector<float, MAX_NOF_DATA_LLR / 2> noise_vars_data;
+  static_vector<float, MAX_NOF_DATA_LLR> noise_vars_data;
 };
 
 } // namespace srsgnb

@@ -38,7 +38,8 @@ class pusch_demodulator
 {
 public:
   /// Maximum number of REs per codeword in a single transmission.
-  static constexpr unsigned MAX_CODEWORD_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_PORTS / 2;
+  static constexpr unsigned MAX_CODEWORD_SIZE =
+      MAX_RB * pusch_constants::MAX_NRE_PER_RB * pusch_constants::MAX_NOF_LAYERS;
 
   /// Maximum number of LLRs per codeword in a single transmission.
   static constexpr unsigned MAX_NOF_DATA_LLR = MAX_CODEWORD_SIZE * pusch_constants::MAX_MODULATION_ORDER;
@@ -113,8 +114,8 @@ public:
     re_pattern_list reserved;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
-    /// Number of receive ports.
-    unsigned nof_rx_ports;
+    /// Receive antenna port indices the PUSCH transmission is mapped to.
+    static_vector<uint8_t, MAX_PORTS> rx_ports;
   };
 
   /// Default destructor.

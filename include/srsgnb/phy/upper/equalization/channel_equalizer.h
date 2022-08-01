@@ -22,7 +22,7 @@ namespace srsgnb {
 
 /// Describes the data structure containing the RE measurements.
 struct re_measurement_dimensions {
-  /// Number of contiguous PRBs.
+  /// Number of PRBs used for transmission.
   unsigned nof_prb = 0;
   /// Number of contiguous OFDM symbols.
   unsigned nof_symbols = 0;
