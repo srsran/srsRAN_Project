@@ -61,8 +61,3 @@ void polar_allocator_impl::allocate(span<uint8_t> input_encoder, span<const uint
     }
   }
 }
-
-std::unique_ptr<polar_allocator> srsgnb::create_polar_allocator()
-{
-  return std::make_unique<polar_allocator_impl>();
-}

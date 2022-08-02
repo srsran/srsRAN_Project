@@ -17,7 +17,6 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
-#include <memory>
 
 namespace srsgnb {
 
@@ -39,7 +38,5 @@ public:
   virtual void
   rate_dematch(span<log_likelihood_ratio> output, span<const log_likelihood_ratio> input, const polar_code& code) = 0;
 };
-
-std::unique_ptr<polar_rate_dematcher> create_polar_rate_dematcher();
 
 } // namespace srsgnb

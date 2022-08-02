@@ -137,11 +137,14 @@ private:
   void simplified_node(span<uint8_t> data_decoded);
 
 public:
-  /// \brief Constructor.
+  /// \brief Polar decoder initialization.
   ///
-  /// Sets the internal encoder and the maximum codeblock length.
-  /// \param[in] enc_ A polar encoder.
-  /// \param[in] nMax Binary logarithm of the maximum codeblock length.
+  /// Initializes all the polar decoder variables according to the Simplified Successive
+  /// Cancellation (SSC) decoder algorithm and the maximum given code size.
+  ///
+  /// \param[in] enc           A polar encoder.
+  /// \param[in] code_size_log The \f$ log_2\f$ of the number of bits of the decoder input/output vector.
+  /// \return A unique pointer to the initialized SSC polar decoder.
   polar_decoder_impl(std::unique_ptr<polar_encoder> enc_, uint8_t nMax);
 
   // See interface for the documentation.

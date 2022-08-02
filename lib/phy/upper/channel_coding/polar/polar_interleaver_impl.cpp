@@ -42,8 +42,3 @@ void polar_interleaver_impl::interleave(span<uint8_t>               out,
     }
   }
 }
-
-std::unique_ptr<polar_interleaver> srsgnb::create_polar_interleaver()
-{
-  return std::make_unique<polar_interleaver_impl>();
-}

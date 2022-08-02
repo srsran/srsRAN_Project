@@ -12,7 +12,6 @@
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
-#include <memory>
 
 namespace srsgnb {
 
@@ -66,7 +65,5 @@ public:
    */
   virtual void set(uint16_t K, uint16_t E, uint8_t nMax, polar_code_ibil ibil) = 0;
 };
-
-std::unique_ptr<polar_code> create_polar_code();
 
 } // namespace srsgnb

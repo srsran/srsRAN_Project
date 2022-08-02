@@ -62,7 +62,9 @@ public:
   virtual std::unique_ptr<pdcch_encoder> create() = 0;
 };
 
-std::shared_ptr<pdcch_encoder_factory> create_pdcch_encoder_factory_sw();
+std::shared_ptr<pdcch_encoder_factory>
+create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory,
+                                std::shared_ptr<polar_factory>          encoder_factory);
 
 class pdsch_encoder_factory
 {

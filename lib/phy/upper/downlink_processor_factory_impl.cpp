@@ -57,10 +57,13 @@ extern std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_c
 
 class pdcch_processor_factory
 {
+  std::shared_ptr<crc_calculator_factory> crc_factory     = create_crc_calculator_factory_sw();
+  std::shared_ptr<polar_factory>          encoder_factory = create_polar_factory_sw();
+
   std::shared_ptr<pdcch_modulator_factory> mod_factory = {
       create_pdcch_modulator_factory_sw(create_channel_modulation_sw_factory(),
                                         create_pseudo_random_generator_sw_factory())};
-  std::shared_ptr<pdcch_encoder_factory> enc_factory = {create_pdcch_encoder_factory_sw()};
+  std::shared_ptr<pdcch_encoder_factory> enc_factory = {create_pdcch_encoder_factory_sw(crc_factory, encoder_factory)};
 
 public:
   std::unique_ptr<pdcch_processor> create()

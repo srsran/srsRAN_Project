@@ -12,7 +12,6 @@
 
 #include "srsgnb/adt/span.h"
 #include <cstdint>
-#include <memory>
 
 namespace srsgnb {
 
@@ -34,7 +33,5 @@ public:
    */
   virtual void interleave(span<uint8_t> out, span<const uint8_t> in, polar_interleaver_direction direction) = 0;
 };
-
-std::unique_ptr<polar_interleaver> create_polar_interleaver();
 
 } // namespace srsgnb

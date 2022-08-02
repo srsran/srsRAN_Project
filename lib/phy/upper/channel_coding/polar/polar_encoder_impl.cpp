@@ -57,8 +57,3 @@ void polar_encoder_impl::encode(span<uint8_t> output, span<const uint8_t> input,
     }
   }
 }
-
-std::unique_ptr<polar_encoder> srsgnb::create_polar_encoder_pipelined(unsigned code_size_log)
-{
-  return std::make_unique<polar_encoder_impl>(code_size_log);
-}

@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
 #include "srsgnb/ran/pdcch/pdcch_constants.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 
@@ -70,10 +71,27 @@ private:
   void rate_matching(span<uint8_t> f, span<const uint8_t> d);
 
 public:
-  explicit pdcch_encoder_impl();
-
-  /// Default destructor
-  ~pdcch_encoder_impl() = default;
+  pdcch_encoder_impl(std::unique_ptr<crc_calculator>     crc24c_,
+                     std::unique_ptr<polar_interleaver>  interleaver_,
+                     std::unique_ptr<polar_allocator>    alloc_,
+                     std::unique_ptr<polar_code>         code_,
+                     std::unique_ptr<polar_encoder>      encoder_,
+                     std::unique_ptr<polar_rate_matcher> rm_) :
+    crc24c(std::move(crc24c_)),
+    interleaver(std::move(interleaver_)),
+    alloc(std::move(alloc_)),
+    code(std::move(code_)),
+    encoder(std::move(encoder_)),
+    rm(std::move(rm_))
+  {
+    report_fatal_error_if_not(crc24c, "Invalid CRC calculator.");
+    report_fatal_error_if_not(crc24c->get_generator_poly() == crc_generator_poly::CRC24C, "Invalid CRC calculator.");
+    report_fatal_error_if_not(interleaver, "Invalid polar interleaver.");
+    report_fatal_error_if_not(alloc, "Invalid polar allocator.");
+    report_fatal_error_if_not(code, "Invalid polar code.");
+    report_fatal_error_if_not(encoder, "Invalid polar encoder.");
+    report_fatal_error_if_not(rm, "Invalid polar rate matcher.");
+  }
 
   // See interface for the documentation.
   virtual void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) override;

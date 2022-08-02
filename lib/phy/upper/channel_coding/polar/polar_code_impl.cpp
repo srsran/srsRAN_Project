@@ -541,8 +541,3 @@ polar_code_ibil polar_code_impl::get_ibil() const
 {
   return ibil;
 }
-
-std::unique_ptr<polar_code> srsgnb::create_polar_code()
-{
-  return std::make_unique<polar_code_impl>();
-}

@@ -9,7 +9,7 @@
  */
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <numeric>
 
@@ -1047,7 +1047,11 @@ static const std::vector<polar_interleaver_gold_t> polar_interleaver_gold = {
 
 int main(int argc, char** argv)
 {
-  std::unique_ptr<polar_interleaver> interleaver = create_polar_interleaver();
+  std::shared_ptr<polar_factory> factory = create_polar_factory_sw();
+  TESTASSERT(factory);
+
+  std::unique_ptr<polar_interleaver> interleaver = factory->create_interleaver();
+  TESTASSERT(interleaver);
 
   for (const polar_interleaver_gold_t& e : polar_interleaver_gold) {
     uint32_t K = e.K;

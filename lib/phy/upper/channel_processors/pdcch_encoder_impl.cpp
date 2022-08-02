@@ -19,16 +19,6 @@
 using namespace srsgnb;
 using namespace pdcch_constants;
 
-pdcch_encoder_impl::pdcch_encoder_impl() :
-  crc24c(create_crc_calculator_factory_sw()->create(crc_generator_poly::CRC24C)),
-  interleaver(create_polar_interleaver()),
-  alloc(create_polar_allocator()),
-  code(create_polar_code()),
-  encoder(create_polar_encoder_pipelined(polar_code::NMAX_LOG)),
-  rm(create_polar_rate_matcher())
-{
-}
-
 void pdcch_encoder_impl::crc_attach(span<uint8_t>& c, span<const uint8_t> a, unsigned rnti)
 {
   std::array<uint8_t, RNTI_LEN> unpacked_rnti = {};
@@ -96,9 +86,4 @@ void pdcch_encoder_impl::encode(span<uint8_t> encoded, span<const uint8_t> data,
 
   // Rate match
   rate_matching(encoded, d);
-}
-
-std::unique_ptr<pdcch_encoder> srsgnb::create_pdcch_encoder()
-{
-  return std::make_unique<pdcch_encoder_impl>();
 }

@@ -8,13 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_deallocator.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
-#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
+#include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <getopt.h>
@@ -130,26 +124,37 @@ int main(int argc, char** argv)
 
   parse_args(argc, argv);
 
+  // Create factory.
+  std::shared_ptr<polar_factory> factory = create_polar_factory_sw();
+  TESTASSERT(factory);
+
   // Create code
-  std::unique_ptr<polar_code> code = create_polar_code();
+  std::unique_ptr<polar_code> code = factory->create_code();
+  TESTASSERT(code);
 
   // Create encoder
-  std::unique_ptr<polar_encoder> encoder = create_polar_encoder_pipelined(nMax);
+  std::unique_ptr<polar_encoder> encoder = factory->create_encoder(nMax);
+  TESTASSERT(encoder);
 
   // Create allocator
-  std::unique_ptr<polar_allocator> allocator = create_polar_allocator();
+  std::unique_ptr<polar_allocator> allocator = factory->create_allocator();
+  TESTASSERT(allocator);
 
   // Create decoder
-  std::unique_ptr<polar_decoder> decoder = create_polar_decoder_ssc(create_polar_encoder_pipelined(nMax), nMax);
+  std::unique_ptr<polar_decoder> decoder = factory->create_decoder(nMax);
+  TESTASSERT(decoder);
 
   // Create deallocator
-  std::unique_ptr<polar_deallocator> deallocator = create_polar_deallocator();
+  std::unique_ptr<polar_deallocator> deallocator = factory->create_deallocator();
+  TESTASSERT(deallocator);
 
   // Create rate matcher
-  std::unique_ptr<polar_rate_matcher> rate_matcher = create_polar_rate_matcher();
+  std::unique_ptr<polar_rate_matcher> rate_matcher = factory->create_rate_matcher();
+  TESTASSERT(rate_matcher);
 
   // Create rate dematcher
-  std::unique_ptr<polar_rate_dematcher> rate_dematcher = create_polar_rate_dematcher();
+  std::unique_ptr<polar_rate_dematcher> rate_dematcher = factory->create_rate_dematcher();
+  TESTASSERT(rate_dematcher);
 
   // Create Tx data and fill
   srsvec::aligned_vec<uint8_t> data_tx(K);

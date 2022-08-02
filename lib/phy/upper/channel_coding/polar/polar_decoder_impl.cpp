@@ -325,9 +325,3 @@ void polar_decoder_impl::decode(span<uint8_t>                    data_decoded,
 
   simplified_node(data_decoded);
 }
-
-std::unique_ptr<polar_decoder> srsgnb::create_polar_decoder_ssc(std::unique_ptr<polar_encoder> enc,
-                                                                unsigned                       code_size_log)
-{
-  return std::make_unique<polar_decoder_impl>(std::move(enc), code_size_log);
-}

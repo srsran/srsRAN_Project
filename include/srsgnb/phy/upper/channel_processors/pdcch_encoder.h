@@ -41,7 +41,4 @@ public:
   virtual void encode(span<uint8_t> encoded, span<const uint8_t> data, const config_t& config) = 0;
 };
 
-/// Creates a PDCCH encoder instance.
-std::unique_ptr<pdcch_encoder> create_pdcch_encoder();
-
 } // namespace srsgnb

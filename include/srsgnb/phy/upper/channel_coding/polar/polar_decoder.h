@@ -18,7 +18,6 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include <cstdint>
-#include <memory>
 
 namespace srsgnb {
 
@@ -36,14 +35,5 @@ public:
   virtual void
   decode(span<uint8_t> data_decoded, span<const log_likelihood_ratio> input_llr, const polar_code& code) = 0;
 };
-
-/// \brief Polar decoder initialization.
-///
-/// Initializes all the polar decoder variables according to the Simplified Successive
-/// Cancellation (SSC) decoder algorithm and the maximum given code size.
-/// \param[in] enc           A polar encoder.
-/// \param[in] code_size_log The \f$ log_2\f$ of the number of bits of the decoder input/output vector.
-/// \return A unique pointer to the initialized SSC polar decoder.
-std::unique_ptr<polar_decoder> create_polar_decoder_ssc(std::unique_ptr<polar_encoder> enc, unsigned code_size_log);
 
 } // namespace srsgnb

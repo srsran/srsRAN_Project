@@ -106,8 +106,3 @@ void polar_rate_dematcher_impl::rate_dematch(span<log_likelihood_ratio>       ou
   log_likelihood_ratio* y = bit_selection_rm_rx_c(e, E, N, K);
   interleaver_rm_rx_c(output, {y, N}, {blk_interleaver, N});
 }
-
-std::unique_ptr<polar_rate_dematcher> srsgnb::create_polar_rate_dematcher()
-{
-  return std::make_unique<polar_rate_dematcher_impl>();
-}

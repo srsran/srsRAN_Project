@@ -9,7 +9,7 @@
  */
 
 #include "pdcch_encoder_test_data.h"
-#include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 
 using namespace srsgnb;
@@ -20,8 +20,18 @@ int main()
 
   span<uint8_t> encoded_data_span{encoded_data};
 
+  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_factory);
+
+  std::shared_ptr<polar_factory> encoder_factory = create_polar_factory_sw();
+  TESTASSERT(encoder_factory);
+
+  std::shared_ptr<pdcch_encoder_factory> pdcch_factory = create_pdcch_encoder_factory_sw(crc_factory, encoder_factory);
+  TESTASSERT(pdcch_factory);
+
   // Create PDCCH Encoder instance
-  std::unique_ptr<pdcch_encoder> encoder = create_pdcch_encoder();
+  std::unique_ptr<pdcch_encoder> encoder = pdcch_factory->create();
+  TESTASSERT(encoder);
 
   for (const test_case_t& test_case : pdcch_encoder_test_data) {
     // Load input data

@@ -9,7 +9,6 @@
  */
 
 #include "polar_deallocator_impl.h"
-#include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
 
@@ -33,9 +32,4 @@ void polar_deallocator_impl::deallocate(span<uint8_t>       message,
       iK          = iK + 1;
     }
   }
-}
-
-std::unique_ptr<polar_deallocator> srsgnb::create_polar_deallocator()
-{
-  return std::make_unique<polar_deallocator_impl>();
 }

@@ -18,6 +18,7 @@
 #include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 #include "srsgnb/phy/upper/channel_processors/pbch_encoder.h"
 #include "srsgnb/phy/upper/sequence_generators/pseudo_random_generator.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 
@@ -60,17 +61,28 @@ private:
 
 public:
   /// Constructs a generic PBCH encoder.
-  pbch_encoder_impl(std::unique_ptr<crc_calculator> crc24c_, std::unique_ptr<pseudo_random_generator> scrambler_) :
+  pbch_encoder_impl(std::unique_ptr<crc_calculator>          crc24c_,
+                    std::unique_ptr<pseudo_random_generator> scrambler_,
+                    std::unique_ptr<polar_interleaver>       interleaver_,
+                    std::unique_ptr<polar_allocator>         allocator_,
+                    std::unique_ptr<polar_code>              code_,
+                    std::unique_ptr<polar_encoder>           encoder_,
+                    std::unique_ptr<polar_rate_matcher>      rm_) :
     crc24c(std::move(crc24c_)),
     scrambler(std::move(scrambler_)),
-    interleaver(create_polar_interleaver()),
-    alloc(create_polar_allocator()),
-    code(create_polar_code()),
-    encoder(create_polar_encoder_pipelined(POLAR_N_MAX_LOG)),
-    rm(create_polar_rate_matcher())
+    interleaver(std::move(interleaver_)),
+    alloc(std::move(allocator_)),
+    code(std::move(code_)),
+    encoder(std::move(encoder_)),
+    rm(std::move(rm_))
   {
-    srsgnb_assert(crc24c, "Invalid CRC24C.");
-    srsgnb_assert(scrambler, "Invalid scrambler.");
+    report_fatal_error_if_not(crc24c, "Invalid CRC24C.");
+    report_fatal_error_if_not(scrambler, "Invalid scrambler.");
+    report_fatal_error_if_not(interleaver, "Invalid Polar interleaver.");
+    report_fatal_error_if_not(alloc, "Invalid Polar allocator.");
+    report_fatal_error_if_not(code, "Invalid Polar code.");
+    report_fatal_error_if_not(encoder, "Invalid Polar encoder.");
+    report_fatal_error_if_not(rm, "Invalid Polar RM.");
     code->set(B, E, POLAR_N_MAX_LOG, polar_code_ibil::not_present);
   }
 

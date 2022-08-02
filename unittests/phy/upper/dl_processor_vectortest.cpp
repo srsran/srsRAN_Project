@@ -125,6 +125,9 @@ int main()
       create_pdsch_encoder_factory_sw(pdsch_encoder_factory_config);
   TESTASSERT(ldpc_encoder_factory);
 
+  std::shared_ptr<polar_factory> polar_code_factory = create_polar_factory_sw();
+  TESTASSERT(polar_code_factory);
+
   std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
   TESTASSERT(modulator_factory);
 
@@ -143,12 +146,16 @@ int main()
       create_pdsch_modulator_factory_sw(modulator_factory, prg_factory);
   TESTASSERT(pdsch_modulator_factory);
 
+  std::shared_ptr<pdcch_encoder_factory> pdcch_encoder_factory =
+      create_pdcch_encoder_factory_sw(crc_calculator_factory, polar_code_factory);
+  TESTASSERT(pdcch_encoder_factory);
+
   // Create PDCCH processor
   std::unique_ptr<pdcch_processor> pdcch = nullptr;
   {
     pdcch_processor_config_t pdcch_processor_config;
     pdcch_processor_config.dmrs      = create_dmrs_pdcch_processor();
-    pdcch_processor_config.encoder   = create_pdcch_encoder();
+    pdcch_processor_config.encoder   = pdcch_encoder_factory->create();
     pdcch_processor_config.modulator = pdcch_modulator_factory->create();
     pdcch                            = create_pdcch_processor(pdcch_processor_config);
     TESTASSERT(pdcch);

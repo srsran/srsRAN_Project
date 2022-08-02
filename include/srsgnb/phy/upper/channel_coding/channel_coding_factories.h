@@ -16,6 +16,13 @@
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_rate_matcher.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_rx.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_segmenter_tx.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_allocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_deallocator.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_decoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_encoder.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_interleaver.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_dematcher.h"
+#include "srsgnb/phy/upper/channel_coding/polar/polar_rate_matcher.h"
 #include <memory>
 
 namespace srsgnb {
@@ -87,5 +94,21 @@ struct ldpc_segmenter_tx_factory_sw_configuration {
 
 std::shared_ptr<ldpc_segmenter_tx_factory>
 create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config);
+
+class polar_factory
+{
+public:
+  virtual ~polar_factory()                                                             = default;
+  virtual std::unique_ptr<polar_allocator>      create_allocator()                     = 0;
+  virtual std::unique_ptr<polar_code>           create_code()                          = 0;
+  virtual std::unique_ptr<polar_deallocator>    create_deallocator()                   = 0;
+  virtual std::unique_ptr<polar_decoder>        create_decoder(unsigned code_size_log) = 0;
+  virtual std::unique_ptr<polar_encoder>        create_encoder(unsigned code_size_log) = 0;
+  virtual std::unique_ptr<polar_interleaver>    create_interleaver()                   = 0;
+  virtual std::unique_ptr<polar_rate_dematcher> create_rate_dematcher()                = 0;
+  virtual std::unique_ptr<polar_rate_matcher>   create_rate_matcher()                  = 0;
+};
+
+std::shared_ptr<polar_factory> create_polar_factory_sw();
 
 } // namespace srsgnb

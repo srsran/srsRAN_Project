@@ -15,6 +15,15 @@
 #include "ldpc/ldpc_rate_dematcher_impl.h"
 #include "ldpc/ldpc_rate_matcher_impl.h"
 #include "ldpc/ldpc_segmenter_impl.h"
+#include "polar/polar_allocator_impl.h"
+#include "polar/polar_code_impl.h"
+#include "polar/polar_deallocator_impl.h"
+#include "polar/polar_decoder_impl.h"
+#include "polar/polar_encoder_impl.h"
+#include "polar/polar_interleaver_impl.h"
+#include "polar/polar_rate_dematcher_impl.h"
+#include "polar/polar_rate_matcher_impl.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -94,7 +103,7 @@ public:
   explicit ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config) :
     crc_factory(*config.crc_factory)
   {
-    srsgnb_assert(config.crc_factory, "Invalid CRC calculator factory.");
+    report_fatal_error_if_not(config.crc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<ldpc_segmenter_tx> create() override
@@ -112,6 +121,37 @@ class ldpc_segmenter_rx_factory_sw : public ldpc_segmenter_rx_factory
 {
 public:
   std::unique_ptr<ldpc_segmenter_rx> create() override { return ldpc_segmenter_impl::create_ldpc_segmenter_impl_rx(); }
+};
+
+class polar_factory_sw : public polar_factory
+{
+public:
+  std::unique_ptr<polar_allocator>   create_allocator() override { return std::make_unique<polar_allocator_impl>(); }
+  std::unique_ptr<polar_code>        create_code() override { return std::make_unique<polar_code_impl>(); }
+  std::unique_ptr<polar_deallocator> create_deallocator() override
+  {
+    return std::make_unique<polar_deallocator_impl>();
+  }
+  std::unique_ptr<polar_decoder> create_decoder(unsigned code_size_log) override
+  {
+    return std::make_unique<polar_decoder_impl>(create_encoder(code_size_log), code_size_log);
+  }
+  std::unique_ptr<polar_encoder> create_encoder(unsigned code_size_log) override
+  {
+    return std::make_unique<polar_encoder_impl>(code_size_log);
+  }
+  std::unique_ptr<polar_interleaver> create_interleaver() override
+  {
+    return std::make_unique<polar_interleaver_impl>();
+  }
+  std::unique_ptr<polar_rate_dematcher> create_rate_dematcher() override
+  {
+    return std::make_unique<polar_rate_dematcher_impl>();
+  }
+  std::unique_ptr<polar_rate_matcher> create_rate_matcher() override
+  {
+    return std::make_unique<polar_rate_matcher_impl>();
+  }
 };
 
 } // namespace
@@ -150,4 +190,9 @@ std::shared_ptr<ldpc_segmenter_rx_factory> srsgnb::create_ldpc_segmenter_rx_fact
 std::shared_ptr<crc_calculator_factory> srsgnb::create_crc_calculator_factory_sw()
 {
   return std::make_shared<crc_calculator_factory_sw>();
+}
+
+std::shared_ptr<polar_factory> srsgnb::create_polar_factory_sw()
+{
+  return std::make_shared<polar_factory_sw>();
 }

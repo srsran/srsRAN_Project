@@ -12,8 +12,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/polar/polar_code.h"
-#include <memory>
-#include <stdint.h>
+#include <cstdint>
 
 namespace srsgnb {
 
@@ -34,7 +33,5 @@ public:
    */
   virtual void rate_match(span<uint8_t> output, span<const uint8_t> input, const polar_code& code) = 0;
 };
-
-std::unique_ptr<polar_rate_matcher> create_polar_rate_matcher();
 
 } // namespace srsgnb

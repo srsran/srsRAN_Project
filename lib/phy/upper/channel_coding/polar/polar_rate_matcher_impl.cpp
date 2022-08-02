@@ -95,8 +95,3 @@ void polar_rate_matcher_impl::rate_match(span<uint8_t> output, span<const uint8_
     ch_interleaver_rm_tx(e.data(), output.data(), E);
   }
 }
-
-std::unique_ptr<polar_rate_matcher> srsgnb::create_polar_rate_matcher()
-{
-  return std::make_unique<polar_rate_matcher_impl>();
-}
