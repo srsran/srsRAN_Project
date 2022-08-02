@@ -27,25 +27,37 @@ struct re_measurement_dimensions {
   /// Number of contiguous OFDM symbols.
   unsigned nof_symbols = 0;
   /// \brief Number of slices.
+  ///
+  /// A slice corresponds to all the REs associated to a single receive antenna port (before channel equalization) or
+  /// to a single transit layer (after equalization). In other words, it spans \c nof_prb PRBs and \c nof_symbols OFDM
+  /// symbols.
   unsigned nof_slices = 0;
 };
 
 /// \brief Container for RE measurements.
 ///
+/// \anchor slice0be287
 /// This class is used to store measurements/observations for all resource elements (REs) corresponding to a physical
-/// channel. Therefore, they span a number of contiguous PRBs and a number of contiguous OFDM symbols, for all transmit
-/// layers or, alternatively, for all receive antennas ports.
+/// channel. More specifically, the container organizes the REs in \e slices: A slice includes all the REs seen by a
+/// single receive antenna port (before channel equalization) or by a single transmit layer (after channel equalization)
+/// and, hence, spans all allocated resource blocks and OFDM symbols.
 ///
 /// Examples of measurements/observations that may be stored in this container include modulated symbols and noise
 /// variances.
 ///
 /// \tparam measure_type The type of the represented RE measurement (e.g., \c float or \c cf_t).
+/// \warning Instantiating an object of this class entails a heap memory allocation.
 template <typename measure_type>
 class re_measurement
 {
 public:
-  /// Default constructor.
-  re_measurement() = default;
+  /// Constructor: checks template type and reserves internal memory.
+  re_measurement()
+  {
+    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
+                  "At the moment, this template is only available for float and cf_t.");
+    re_meas.reserve(MAX_BUFFER_SIZE);
+  }
 
   /// Constructor: sets the size of the internal buffer.
   explicit re_measurement(const re_measurement_dimensions& dims) :
@@ -54,6 +66,8 @@ public:
     nof_slices(dims.nof_slices),
     slice_size(nof_subcarriers * nof_symbols)
   {
+    static_assert(std::is_same<measure_type, float>::value || std::is_same<measure_type, cf_t>::value,
+                  "At the moment, this template is only available for float and cf_t.");
     srsgnb_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
     srsgnb_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
                   "Requested {} OFDM symbols, but at most {} are allowed.",
@@ -64,28 +78,29 @@ public:
                   dims.nof_slices,
                   static_cast<unsigned>(MAX_NOF_SLICES));
 
-    // Resize the internal buffer.
+    // Reserve memory for the internal buffer and resize it to the given dimensions.
+    re_meas.reserve(MAX_BUFFER_SIZE);
     re_meas.resize(nof_slices * slice_size);
   }
 
   /// Default destructor
   ~re_measurement() = default;
 
-  /// Returns a read-write view over the RE measurements corresponding to the given slice.
+  /// Returns a read-write view over the RE measurements corresponding to the given \ref slice0be287 "slice".
   span<measure_type> get_slice(unsigned i_slice)
   {
     auto first = re_meas.begin() + i_slice * slice_size;
     return span<measure_type>(first, slice_size);
   }
 
-  /// Returns a read-only view over the RE measurements corresponding to the given slice.
+  /// Returns a read-only view over the RE measurements corresponding to the given \ref slice0be287 "slice".
   span<const measure_type> get_slice(unsigned i_slice) const
   {
     auto first = re_meas.begin() + i_slice * slice_size;
     return span<const measure_type>(first, slice_size);
   }
 
-  /// \brief Writes data on a slice.
+  /// \brief Writes data on a \ref slice0be287 "slice".
   ///
   /// \param[in] data     Input data.
   /// \param[in] i_slice  Index of the destination slice.
@@ -99,7 +114,9 @@ public:
     std::copy(data.begin(), data.end(), slice);
   }
 
-  /// Updates the size of the internal buffer to the given dimensions.
+  /// \brief Updates the size of the internal buffer to the given dimensions.
+  /// \remark The amount of memory reserved for a re_measurement object is fixed and set at construction time. This
+  /// method only affects the amount of accessible REs and the \ref slice0be287 "slice" size.
   void resize(const re_measurement_dimensions& dims)
   {
     srsgnb_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
@@ -116,6 +133,12 @@ public:
     nof_symbols     = dims.nof_symbols;
     nof_slices      = dims.nof_slices;
     slice_size      = nof_subcarriers * nof_symbols;
+
+    unsigned total_size = nof_slices * slice_size;
+    srsgnb_assert(total_size <= MAX_BUFFER_SIZE,
+                  "Total requested REs ({}) exceed maximum available ({}).",
+                  total_size,
+                  MAX_BUFFER_SIZE);
 
     // Resize the internal buffer.
     re_meas.resize(nof_slices * slice_size);
@@ -144,13 +167,16 @@ private:
   unsigned slice_size = 0;
   ///@}
 
+  /// Maximum internal buffer size.
+  static constexpr size_t MAX_BUFFER_SIZE = MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_NOF_SLICES;
+
   /// \brief Container for RE measurements.
   ///
   /// RE measurements should be thought as three-dimensional tensor with the first two dimensions representing, in
   /// order, subcarriers and OFDM symbols. Typically, the third dimension is referred to as slice and represents either
   /// receive ports (before channel equalization) or transmit layers (after channel equalization). The underlying data
   /// structure is a single vector, indexed in the same order: i) subcarriers, ii) OFDM symbols, iii) slice.
-  static_vector<measure_type, MAX_RB * NRE * MAX_NSYMB_PER_SLOT * MAX_NOF_SLICES> re_meas;
+  std::vector<measure_type> re_meas;
 };
 
 /// Channel equalizer interface.
