@@ -45,20 +45,19 @@ public:
   /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
 
-  /// \brief Notifies a PRACH outside of the slot window.
+  /// \brief Notifies a PRACH request outside of the slot window.
   ///
-  /// This error occurs when a PRACH request for a slot \f$n\f$ is received after the slot \f$n\f$ started being
+  /// This error occurs when a PRACH request for slot \f$n\f$ is received after slot \f$n\f$ started being
   /// processed.
   ///
-  /// \param[in] context PRACH request context that is not processed.
+  /// \param[in] context Context of the PRACH request raising the error notification.
   virtual void on_prach_request_late(const prach_buffer_context& context) = 0;
 
-  /// \brief Notifies an exceed of PRACH requests.
+  /// \brief Notifies an excess of PRACH requests.
   ///
-  /// This error occurs when the number of PRACH reception pending requests reaches the limit and the indicated PRACH
-  /// context is not processed.
+  /// This error occurs when the number of pending PRACH requests reaches the limit.
   ///
-  /// \param[in] context PRACH request context that is not processed.
+  /// \param[in] context Context of the PRACH request raising the error notification.
   virtual void on_prach_request_overflow(const prach_buffer_context& context) = 0;
 };
 

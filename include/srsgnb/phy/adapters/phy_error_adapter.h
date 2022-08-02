@@ -16,10 +16,11 @@ namespace srsgnb {
 
 /// \brief Implements a generic physical layer error adapter.
 ///
-/// Currently, the adapter only prints in the log the error and the context.
+/// Currently, the adapter only logs the error and the context.
 class phy_error_adapter : public lower_phy_error_notifier
 {
 private:
+  /// Adapter logger.
   srslog::basic_logger& logger;
 
 public:
