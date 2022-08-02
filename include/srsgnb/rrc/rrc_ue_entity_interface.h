@@ -88,6 +88,47 @@ public:
   virtual unique_timer make_unique_timer()                          = 0;
 };
 
+struct initial_ue_message {
+  asn1::dyn_octstring                    ded_nas_msg;
+  nr_cell_global_identity                cgi;
+  asn1::rrc_nr::establishment_cause_opts establishment_cause;
+};
+
+struct ul_nas_transport_message {
+  asn1::dyn_octstring     ded_nas_msg;
+  nr_cell_global_identity cgi;
+};
+
+struct dl_nas_transport_message {
+  asn1::dyn_octstring ded_nas_msg;
+};
+
+/// Interface to notify about NAS messages.
+class rrc_ue_ngap_notifier
+{
+public:
+  virtual ~rrc_ue_ngap_notifier() = default;
+
+  /// \brief Notify about the Initial UE Message.
+  /// \param[in] msg The initial UE message.
+  virtual void on_initial_ue_message(const initial_ue_message& msg) = 0;
+
+  /// \brief Notify about an Uplink NAS Transport message.
+  /// \param[in] msg The Uplink NAS Transport message.
+  virtual void on_ul_nas_transport_message(const ul_nas_transport_message& msg) = 0;
+};
+
+/// Handle downlink NAS transport messages.
+class rrc_ue_dl_nas_message_handler
+{
+public:
+  virtual ~rrc_ue_dl_nas_message_handler() = default;
+
+  /// \brief Handle the received Downlink NAS Transport message.
+  /// \param[in] msg The Downlink NAS Transport message.
+  virtual void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) = 0;
+};
+
 } // namespace srs_cu_cp
 
 } // namespace srsgnb

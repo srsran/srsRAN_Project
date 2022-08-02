@@ -19,7 +19,10 @@ namespace srsgnb {
 namespace srs_cu_cp {
 
 /// Main UE representation in RRC
-class rrc_ue_entity : public rrc_ue_entity_interface, public rrc_ul_ccch_pdu_handler, public rrc_ul_dcch_pdu_handler
+class rrc_ue_entity : public rrc_ue_entity_interface,
+                      public rrc_ul_ccch_pdu_handler,
+                      public rrc_ul_dcch_pdu_handler,
+                      public rrc_ue_dl_nas_message_handler
 {
 public:
   rrc_ue_entity(rrc_entity_ue_interface&               parent_,
@@ -41,6 +44,9 @@ public:
   rrc_ul_dcch_pdu_handler& get_ul_dcch_pdu_handler() override;
   void                     connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier) override;
 
+  // rrc_ue_dl_nas_message_handler
+  void handle_dl_nas_transport_message(const dl_nas_transport_message& msg) override;
+
 private:
   // message handlers
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);
@@ -54,8 +60,11 @@ private:
   void send_rrc_reject(uint8_t reject_wait_time_secs);
 
   // helpers
-  /// Packs a DL-DCCH message and logs the message
+  /// Packs a DL-CCCH message and logs the message
   void send_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg);
+
+  /// Packs a DL-DCCH message and logs the message
+  void send_dl_dcch(const asn1::rrc_nr::dl_dcch_msg_s& dl_dcch_msg);
 
   /// Sends a packed PDU on an SRB
   void send_srb_pdu(srb_id_t srb_id, byte_buffer pdu);

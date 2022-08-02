@@ -15,8 +15,8 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, ngap* ngap_handle_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
-  cfg(cfg_), ngap_handle(ngap_handle_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
+rrc_entity::rrc_entity(const rrc_cfg_t& cfg_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
+  cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
 {
 }
 

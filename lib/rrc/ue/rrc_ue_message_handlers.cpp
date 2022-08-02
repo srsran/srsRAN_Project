@@ -117,3 +117,16 @@ void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
 
   // TODO: Handle message
 }
+
+void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
+{
+  cfg.logger.info("Received DL NAS Transport message");
+
+  dl_dcch_msg_s           dl_dcch_msg;
+  dl_info_transfer_ies_s& dl_info_transfer =
+      dl_dcch_msg.msg.set_c1().set_dl_info_transfer().crit_exts.set_dl_info_transfer();
+  dl_info_transfer.ded_nas_msg.resize(msg.ded_nas_msg.size());
+  dl_info_transfer.ded_nas_msg = msg.ded_nas_msg;
+
+  send_dl_dcch(dl_dcch_msg);
+}

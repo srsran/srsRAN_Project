@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/cu_cp/du_processor.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
@@ -92,6 +93,20 @@ public:
 
 private:
   pdcp_tx_upper_data_interface& pdcp_handler;
+};
+
+// Adapter between RRC UE and NGAP
+class rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
+{
+public:
+  void on_initial_ue_message(const initial_ue_message& msg) override {}
+
+  void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
+  {
+    byte_buffer nas_pdu;
+    nas_pdu.resize(msg.ded_nas_msg.size());
+    std::copy(msg.ded_nas_msg.begin(), msg.ded_nas_msg.end(), nas_pdu.begin());
+  }
 };
 
 } // namespace srs_cu_cp

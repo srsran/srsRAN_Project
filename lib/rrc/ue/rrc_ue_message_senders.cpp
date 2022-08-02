@@ -40,6 +40,20 @@ void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   send_srb_pdu(srb_id_t::srb0, std::move(pdu));
 }
 
+void rrc_ue_entity::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
+{
+  // pack DL CCCH msg
+  byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
+
+  fmt::memory_buffer fmtbuf, fmtbuf2;
+  fmt::format_to(fmtbuf, "rnti=0x{:x}", c_rnti);
+  fmt::format_to(fmtbuf2, "DL-CCCH.{}", dl_dcch_msg.msg.c1().type().to_string());
+  log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_dcch_msg, to_c_str(fmtbuf2));
+
+  // send down the stack
+  send_srb_pdu(srb_id_t::srb1, std::move(pdu));
+}
+
 void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
 {
   dl_ccch_msg_s     dl_ccch_msg;

@@ -18,13 +18,6 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-class ngap_dummy : public ngap
-{
-public:
-  ngap_dummy(){};
-  ~ngap_dummy() override = default;
-};
-
 class dummy_tx_pdu_handler
 {
 public:
@@ -109,7 +102,7 @@ protected:
     // create RRC entity
     du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
 
-    rrc_entity_creation_message msg(cfg, &ngap, rrc_ue_ev_notifier);
+    rrc_entity_creation_message msg(cfg, rrc_ue_ev_notifier);
     rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
@@ -161,7 +154,6 @@ protected:
   void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_t::srb1].rrc_tx_notifier, nullptr); }
 
 private:
-  ngap_dummy                                           ngap;
   rrc_cfg_t                                            cfg{}; // empty config
   std::unique_ptr<rrc_entity_du_interface>             rrc;
   ue_context                                           ue_ctxt{};

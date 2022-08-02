@@ -12,7 +12,6 @@
 
 #include "adapters/f1ap_adapters.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
-#include "srsgnb/ngap/ngap.h"
 #include "srsgnb/rrc/rrc_config.h"
 
 namespace srsgnb {
@@ -26,7 +25,6 @@ struct du_processor_config_t {
   f1c_du_management_notifier* f1c_du_mgmt_notifier = nullptr;
   f1c_message_notifier*       f1c_notifier;
   rrc_cfg_t                   rrc_cfg; // TODO: do we put subcomponent configs here?
-  ngap*                       ngap_entity;
 };
 
 } // namespace srs_cu_cp

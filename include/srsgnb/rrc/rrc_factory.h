@@ -27,12 +27,11 @@ namespace srs_cu_cp {
 struct ue_context;
 
 struct rrc_entity_creation_message {
-  rrc_entity_creation_message(const rrc_cfg_t& cfg_, ngap* ngap_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
-    cfg(cfg_), ngap_entity(ngap_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
+  rrc_entity_creation_message(const rrc_cfg_t& cfg_, rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_) :
+    cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_)
   {
   }
   const rrc_cfg_t&              cfg;
-  ngap*                         ngap_entity;
   rrc_ue_du_processor_notifier& rrc_ue_du_proc_notifier;
 };
 

@@ -31,7 +31,7 @@ du_processor::du_processor(const du_processor_config_t& cfg_) : cfg(cfg_), ue_mn
   f1ap_ev_notifier.connect_du_processor(*this);
 
   // create RRC
-  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, cfg.ngap_entity, rrc_ue_ev_notifier);
+  rrc_entity_creation_message rrc_creation_msg(cfg.rrc_cfg, rrc_ue_ev_notifier);
   rrc = create_rrc_entity(rrc_creation_msg);
   rrc_ue_ev_notifier.connect_du_processor(*this);
 }
