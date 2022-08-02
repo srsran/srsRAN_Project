@@ -35,6 +35,26 @@ public:
                 context.slot,
                 context.symbol);
   }
+
+  // See interface for documentation.
+  void on_prach_request_late(const prach_buffer_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.info("PRACH request late for sector {}, slot {} and start symbol {}.",
+                context.sector,
+                context.slot,
+                context.start_symbol);
+  }
+
+  // See interface for documentation.
+  void on_prach_request_overflow(const prach_buffer_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.info("PRACH request overflow for sector {}, slot {} and start symbol {}.",
+                context.sector,
+                context.slot,
+                context.start_symbol);
+  }
 };
 
 } // namespace srsgnb

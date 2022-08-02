@@ -24,6 +24,8 @@ class lower_phy_error_notifier_spy : public lower_phy_error_notifier
 private:
   srslog::basic_logger&                   logger;
   std::vector<late_resource_grid_context> late_rg_errors;
+  std::vector<prach_buffer_context>       prach_request_late_errors;
+  std::vector<prach_buffer_context>       prach_request_overflow_errors;
 
 public:
   /// Constructor: creates the logger and sets the log level (default log level is "warning").
@@ -43,6 +45,30 @@ public:
     late_rg_errors.push_back(context);
   }
 
+  // See interface for documentation.
+  void on_prach_request_late(const prach_buffer_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Sector {} - Detected PRACH request late for sector {}, slot {} and start symbol {}.",
+                 context.sector,
+                 context.slot,
+                 context.start_symbol);
+
+    prach_request_late_errors.push_back(context);
+  }
+
+  // See interface for documentation.
+  void on_prach_request_overflow(const prach_buffer_context& context) override
+  {
+    logger.set_context(context.slot.system_slot());
+    logger.debug("Sector {} - Detected PRACH request overflow for sector {}, slot {} and start symbol {}.",
+                 context.sector,
+                 context.slot,
+                 context.start_symbol);
+
+    prach_request_overflow_errors.push_back(context);
+  }
+
   /// \brief Gets the errors notified through the lower_phy_timing_notifier::on_late_resource_grid() interface.
   /// \return A constant reference to the event list.
   const std::vector<late_resource_grid_context>& get_late_rg_errors() const { return late_rg_errors; }
@@ -55,10 +81,18 @@ public:
   /// \endcode
   ///
   /// \return The total number of events that have been registered.
-  unsigned get_nof_errors() const { return late_rg_errors.size(); }
+  unsigned get_nof_errors() const
+  {
+    return late_rg_errors.size() + prach_request_late_errors.size() + prach_request_overflow_errors.size();
+  }
 
   /// Clears all the recorded errors.
-  void clear_all_errors() { late_rg_errors.clear(); }
+  void clear_all_errors()
+  {
+    late_rg_errors.clear();
+    prach_request_late_errors.clear();
+    prach_request_overflow_errors.clear();
+  }
 };
 
 /// \brief Lower PHY receive symbol spy class.
