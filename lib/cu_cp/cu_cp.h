@@ -85,7 +85,11 @@ private:
   // Handler for DU tasks.
   async_task_sequencer main_ctrl_loop;
 
+  // F1AP to CU-CP adapter
   f1ap_cu_cp_adapter f1ap_ev_notifier;
+
+  // RRC UE to NGAP adapter
+  rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
 };
 
 } // namespace srs_cu_cp

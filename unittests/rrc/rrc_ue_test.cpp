@@ -81,6 +81,20 @@ private:
   dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
+class dummy_rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
+{
+public:
+  void on_initial_ue_message(const initial_ue_message& msg) override { logger.info("Received Initial UE Message"); }
+
+  void on_ul_nas_transport_message(const ul_nas_transport_message& msg) override
+  {
+    logger.info("Received UL NAS Transport message");
+  }
+
+private:
+  srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
+};
+
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
 public:
   void         schedule_async_task(async_task<void>&& task) override { ctrl_loop.schedule(std::move(task)); }
@@ -102,7 +116,7 @@ protected:
     // create RRC entity
     du_proc_rrc_ue = std::make_unique<dummy_du_processor_rrc_ue_interface>(ue_ctxt);
 
-    rrc_entity_creation_message msg(cfg, rrc_ue_ev_notifier);
+    rrc_entity_creation_message msg(cfg, rrc_ue_ev_notifier, rrc_ue_ngap_ev_notifier);
     rrc = srsgnb::srs_cu_cp::create_rrc_entity(msg);
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
@@ -160,6 +174,7 @@ private:
   dummy_tx_pdu_handler                                 tx_pdu_handler; // Object to handle the generated RRC message
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
+  dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 

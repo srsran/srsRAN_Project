@@ -115,7 +115,26 @@ void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
   fmt::format_to(fmtbuf2, "UL-DCCH.{}", ul_dcch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
 
+  switch (ul_dcch_msg.msg.c1().type()) {
+    case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer: {
+      handle_ul_info_transfer(ul_dcch_msg.msg.c1().ul_info_transfer().crit_exts.ul_info_transfer());
+    } break;
+
+    default:
+      cfg.logger.error("Unsupported UL DCCH Message type: {}", ul_dcch_msg.msg.c1().type().to_string());
+      break;
+  }
   // TODO: Handle message
+}
+
+void rrc_ue_entity::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_info_transfer)
+{
+  ul_nas_transport_message ul_nas_msg = {};
+  ul_nas_msg.ded_nas_msg.resize(ul_info_transfer.ded_nas_msg.size());
+  ul_nas_msg.ded_nas_msg = ul_info_transfer.ded_nas_msg;
+  // TODO: add cgi
+
+  ngap_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
 
 void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)

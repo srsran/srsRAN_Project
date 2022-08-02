@@ -27,6 +27,7 @@ class rrc_ue_entity : public rrc_ue_entity_interface,
 public:
   rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                 rrc_ue_du_processor_notifier&          du_proc_notif_,
+                rrc_ue_ngap_notifier&                  ngap_notif_,
                 const ue_index_t                       ue_index_,
                 const rnti_t                           c_rnti_,
                 const rrc_ue_cfg_t&                    cfg_,
@@ -51,6 +52,8 @@ private:
   // message handlers
   void handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg);
   void handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg);
+
+  void handle_ul_info_transfer(const asn1::rrc_nr::ul_info_transfer_ies_s& ul_info_transfer);
 
   // message senders
   /// \remark Send RRC Setup, see section 5.3.3 in TS 36.331
@@ -98,6 +101,7 @@ private:
 
   rrc_entity_ue_interface&      parent;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
+  rrc_ue_ngap_notifier&         ngap_notifier;         // notifier to the NGAP
   const ue_index_t              ue_index;              // UE index assigned by the DU processor
   const rnti_t                  c_rnti;                // current C-RNTI
   const rrc_ue_cfg_t&           cfg;

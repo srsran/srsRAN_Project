@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rrc/rrc.h"
 
 namespace srsgnb {

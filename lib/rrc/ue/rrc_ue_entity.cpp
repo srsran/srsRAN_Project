@@ -17,6 +17,7 @@ using namespace asn1::rrc_nr;
 
 rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                              rrc_ue_du_processor_notifier&          du_proc_notif_,
+                             rrc_ue_ngap_notifier&                  ngap_notif_,
                              const ue_index_t                       ue_index_,
                              const rnti_t                           c_rnti_,
                              const rrc_ue_cfg_t&                    cfg_,
@@ -25,6 +26,7 @@ rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                              rrc_ue_task_scheduler&                 task_sched_) :
   parent(parent_),
   du_processor_notifier(du_proc_notif_),
+  ngap_notifier(ngap_notif_),
   ue_index(ue_index_),
   c_rnti(c_rnti_),
   cfg(cfg_),

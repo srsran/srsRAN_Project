@@ -107,9 +107,10 @@ void cu_cp::on_amf_connection_drop()
 /// Create DU object with valid index
 void cu_cp::add_du()
 {
-  du_processor_config_t du_cfg = {};
-  du_cfg.f1c_du_mgmt_notifier  = &f1ap_ev_notifier;
-  du_cfg.f1c_notifier          = cfg.f1c_notifier;
+  du_processor_config_t du_cfg   = {};
+  du_cfg.f1c_du_mgmt_notifier    = &f1ap_ev_notifier;
+  du_cfg.f1c_notifier            = cfg.f1c_notifier;
+  du_cfg.rrc_ue_ngap_ev_notifier = &rrc_ue_ngap_ev_notifier;
 
   std::unique_ptr<du_processor> du = std::make_unique<du_processor>(std::move(du_cfg));
 
