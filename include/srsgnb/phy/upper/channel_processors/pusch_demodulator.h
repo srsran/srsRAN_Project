@@ -123,8 +123,8 @@ public:
 
   /// \brief Demodulates a PUSCH transmission.
   ///
-  /// Demodulation reverses all the operations described in TS38.211 Section 6.3.1. The method also extracts control
-  /// bits that were multiplexed with PUSCH data as per TS38.212 Section 6.2.7.
+  /// Computes log-likelihood ratios from channel samples by reversing all the operations described in TS38.211 Section
+  /// 6.3.1. The method also extracts control bits that were multiplexed with PUSCH data as per TS38.212 Section 6.2.7.
   ///
   /// \remarks
   /// - The size of \c data determines the codeword size in LLR.

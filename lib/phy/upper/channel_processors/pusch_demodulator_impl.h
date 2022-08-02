@@ -19,6 +19,8 @@
 
 namespace srsgnb {
 
+/// PUSCH demodulator implementation.
+// todo(david): Evaluate whether it is worth delegating the private methods to specialized subcomponent classes.
 class pusch_demodulator_impl : public pusch_demodulator
 {
 public:
