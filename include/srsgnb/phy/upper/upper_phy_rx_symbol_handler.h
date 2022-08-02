@@ -36,7 +36,7 @@ public:
 
   /// \brief Handles the reception of an OFDM symbol.
   /// \param[in] context Notification context: specifies sector, slot and symbol.
-  /// \param[in] grid    Resource grids for each receive antenna port of the given sector.
+  /// \param[in] grid    Resource grid for the current slot (encompasses all receive antenna ports).
   virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
   /// \brief Handles the arrival of PRACH sequences at a given symbol.
