@@ -11,6 +11,7 @@
 #include "prach_generator_impl.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
+#include "srsgnb/ran/prach/prach_frequency_mapping.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"
@@ -95,60 +96,6 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
   return dft_l839->run();
 }
 
-unsigned prach_generator_impl::get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz)
-{
-  if (prach_scs_Hz == 1250) {
-    if (pusch_scs_Hz == 15000) {
-      return 6;
-    }
-    if (pusch_scs_Hz == 30000) {
-      return 3;
-    }
-    if (pusch_scs_Hz == 60000) {
-      return 2;
-    }
-  }
-  if (prach_scs_Hz == 5000) {
-    if (pusch_scs_Hz == 15000) {
-      return 24;
-    }
-    if (pusch_scs_Hz == 30000) {
-      return 12;
-    }
-    if (pusch_scs_Hz == 60000) {
-      return 6;
-    }
-  }
-  return RESERVED;
-}
-
-unsigned prach_generator_impl::get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz)
-{
-  if (prach_scs_Hz == 1250) {
-    if (pusch_scs_Hz == 15000) {
-      return 7;
-    }
-    if (pusch_scs_Hz == 30000) {
-      return 1;
-    }
-    if (pusch_scs_Hz == 60000) {
-      return 133;
-    }
-  }
-  if (prach_scs_Hz == 5000) {
-    if (pusch_scs_Hz == 15000) {
-      return 12;
-    }
-    if (pusch_scs_Hz == 30000) {
-      return 10;
-    }
-    if (pusch_scs_Hz == 60000) {
-      return 7;
-    }
-  }
-  return RESERVED;
-}
-
 span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
@@ -174,10 +121,11 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
                 nof_prb_ul_grid,
                 prach_grid_size);
 
-  unsigned k_bar = get_k_bar(prach_scs_Hz, pusch_scs_Hz);
-  srsgnb_assert(k_bar != RESERVED, "Configuration leads to a reserved value.");
+  prach_frequency_mapping_information freq_mapping_info = prach_frequency_mapping_get(info.scs, config.pusch_scs);
+  srsgnb_assert(freq_mapping_info.k_bar != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.k_bar,
+                "Configuration leads to a reserved value.");
 
-  unsigned k_start = K * NRE * config.rb_offset + k_bar;
+  unsigned k_start = K * NRE * config.rb_offset + freq_mapping_info.k_bar;
   srsgnb_assert(k_start + L_ra < prach_grid_size,
                 "Start subcarrier {} plus sequence length {} exceeds PRACH grid size {}.",
                 k_start,
@@ -246,16 +194,11 @@ span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const co
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_information info         = get_prach_preamble_long_info(config.format);
-  unsigned                   prach_scs_Hz = info.scs.to_Hz();
-  unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
-  unsigned                   L_ra         = get_sequence_length(config.format);
+  prach_preamble_information info = get_prach_preamble_long_info(config.format);
+  unsigned                   L_ra = get_sequence_length(config.format);
 
   unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
   srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
-
-  unsigned N_rb_ra = get_N_rb_ra(prach_scs_Hz, pusch_scs_Hz);
-  srsgnb_assert(N_rb_ra != RESERVED, "Configuration leads to a reserved number of resource blocks.");
 
   unsigned root_sequence_index = config.root_sequence_index + config.preamble_index;
   unsigned cyclic_shift        = 0;

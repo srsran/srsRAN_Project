@@ -32,6 +32,10 @@ add_executable(prach_cyclic_shifts_test prach/prach_cyclic_shifts_test.cpp)
 target_link_libraries(prach_cyclic_shifts_test srsgnb_ran srslog gtest gtest_main)
 add_test(prach_cyclic_shifts_test prach_cyclic_shifts_test)
 
+add_executable(prach_frequency_mapping_test prach/prach_frequency_mapping_test.cpp)
+target_link_libraries(prach_frequency_mapping_test srsgnb_ran srslog gtest gtest_main)
+add_test(prach_frequency_mapping_test prach_frequency_mapping_test)
+
 add_executable(pusch_mcs_table_test pusch/pusch_mcs_table_test.cpp)
 target_link_libraries(pusch_mcs_table_test srsgnb_ran srslog gtest gtest_main)
 add_test(pusch_mcs_table_test pusch_mcs_table_test)

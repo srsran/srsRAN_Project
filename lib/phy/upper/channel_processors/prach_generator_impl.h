@@ -54,18 +54,6 @@ private:
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);
 
-  /// \brief Gets the parameter \f$N_{RB}^{RA}\f$ as per TS38.211 Table 6.3.3.2-1.
-  /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
-  /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
-  /// \return Return a valid \f$N_{RB}^{RA}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  static unsigned get_N_rb_ra(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
-
-  /// \brief Gets the parameter \f$\bar{k}\f$ as per TS38.211 Table 6.3.3.2-1.
-  /// \param[in] prach_scs_Hz Parameter \f$\Delta f^{RA}\f$ for PRACH.
-  /// \param[in] pusch_scs_Hz Parameter \f$\Delta f\f$ for PUSCH.
-  /// \return Return a valid \f$\bar{k}\f$ if the preamble is implemented. Otherwise, \c RESERVED.
-  static unsigned get_k_bar(unsigned prach_scs_Hz, unsigned pusch_scs_Hz);
-
   /// \brief Generates the \f$y_{u,v}\f$ sequence.
   /// \param[in] u   Sequence number.
   /// \param[in] C_v Sequence shift.

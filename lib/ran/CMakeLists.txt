@@ -15,6 +15,7 @@ add_library(srsgnb_ran band_helper.cpp
         pdsch/pdsch_mcs.cpp
         prach/prach_configuration.cpp
         prach/prach_cyclic_shifts.cpp
+        prach/prach_frequency_mapping.cpp
         prach/prach_preamble_information.cpp
         pusch/pusch_mcs.cpp
         resource_allocation/resource_allocation_frequency.cpp)
