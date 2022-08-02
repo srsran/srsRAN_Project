@@ -24,6 +24,7 @@
 namespace srsgnb {
 
 /// \brief Describes channel estimation results.
+/// \warning Instantiating an object of this class entails a heap memory allocation.
 class channel_estimate
 {
 private:
@@ -32,6 +33,12 @@ private:
 
   /// Maximum supported number of transmission layers.
   static constexpr unsigned MAX_TX_LAYERS = pusch_constants::MAX_NOF_LAYERS;
+
+  /// Maximum number of transmit&ndash;receive paths.
+  static constexpr unsigned MAX_TX_RX_PATHS = MAX_TX_LAYERS * MAX_RX_PORTS;
+
+  /// Maximum total number of REs in a channel estimate.
+  static constexpr unsigned MAX_BUFFER_SIZE = MAX_TX_RX_PATHS * MAX_RB * NRE * MAX_NSYMB_PER_SLOT;
 
 public:
   /// Describes the data structure containing the channel estimate.
@@ -68,12 +75,17 @@ public:
     unsigned nof_paths   = dims.nof_tx_layers * dims.nof_rx_ports;
 
     // Reserve memory for channel estimates and initialize with 1.0.
+    ce.reserve(MAX_BUFFER_SIZE);
     ce.resize(slot_len_re * nof_paths, 1.0F);
 
     // Reserve memory for the rest of channel statistics.
+    noise_variance.reserve(MAX_TX_RX_PATHS);
     noise_variance.resize(nof_paths);
+    epre.reserve(MAX_TX_RX_PATHS);
     epre.resize(nof_paths);
+    rsrp.reserve(MAX_TX_RX_PATHS);
     rsrp.resize(nof_paths);
+    snr.reserve(MAX_TX_RX_PATHS);
     snr.resize(nof_paths);
   }
 
@@ -175,6 +187,30 @@ public:
     ce[index]      = ce_val;
   }
   ///@}
+
+  void resize(const channel_estimate_dimensions& dims)
+  {
+    nof_subcarriers = dims.nof_prb * NRE;
+    nof_symbols     = dims.nof_symbols;
+    nof_rx_ports    = dims.nof_rx_ports;
+
+    unsigned nof_paths = dims.nof_rx_ports * dims.nof_tx_layers;
+    srsgnb_assert(nof_paths <= MAX_TX_RX_PATHS,
+                  "Total requested paths ({}) exceed maximum available ({}).",
+                  nof_paths,
+                  MAX_TX_RX_PATHS);
+    noise_variance.resize(nof_paths);
+    epre.resize(nof_paths);
+    rsrp.resize(nof_paths);
+    snr.resize(nof_paths);
+
+    unsigned nof_res = nof_paths * nof_subcarriers * nof_symbols;
+    srsgnb_assert(nof_res <= MAX_BUFFER_SIZE,
+                  "Total requested REs ({}) exceed maximum available ({}).",
+                  nof_res,
+                  MAX_BUFFER_SIZE);
+    ce.resize(nof_res);
+  }
 
 private:
   /// Number of subcarriers considered for channel estimation.
