@@ -42,3 +42,21 @@ add_custom_command(
   COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_demodulator_test_data.tar.gz
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_demodulator_test_data.tar.gz
   VERBATIM)
+
+add_executable(ofdm_prach_demodulator_test ofdm_prach_demodulator_test.cpp)
+target_link_libraries(ofdm_prach_demodulator_test srslog
+        srsgnb_lower_phy_modulation
+        srsgnb_generic_funcs
+        srsgnb_phy_support
+        gtest
+        gtest_main)
+add_test(ofdm_prach_demodulator_test ofdm_prach_demodulator_test)
+
+
+add_custom_command(
+        TARGET ofdm_prach_demodulator_test
+        POST_BUILD
+        WORKING_DIRECTORY ${TEST_DATA_DIR}
+        COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_prach_demodulator_test_data.tar.gz
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/ofdm_prach_demodulator_test_data.tar.gz
+        VERBATIM)

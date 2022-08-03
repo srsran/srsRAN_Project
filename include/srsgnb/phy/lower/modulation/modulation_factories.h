@@ -13,6 +13,7 @@
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
+#include "srsgnb/phy/lower/modulation/ofdm_prach_demodulator.h"
 
 namespace srsgnb {
 
@@ -56,6 +57,17 @@ public:
   create_ofdm_slot_demodulator(const ofdm_demodulator_configuration& config) = 0;
 };
 
+/// OFDM PRACH demodulator factory.
+class ofdm_prach_demodulator_factory
+{
+public:
+  /// Default destructor.
+  virtual ~ofdm_prach_demodulator_factory() = default;
+
+  /// Creates an OFDM PRACH demodulator.
+  virtual std::unique_ptr<ofdm_prach_demodulator> create() = 0;
+};
+
 /// Describes the necessary parameters for creating generic OFDM modulator and demodulator factories.
 struct ofdm_factory_generic_configuration {
   /// Provides a DFT factory.
@@ -69,5 +81,14 @@ create_ofdm_modulator_factory_generic(ofdm_factory_generic_configuration& config
 /// Creates a generic OFDM demodulator factory.
 std::shared_ptr<ofdm_demodulator_factory>
 create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& config);
+
+/// \brief Creates a software generic PRACH demodulator.
+/// \param[in] dft_factory     DFT factory.
+/// \param[in] dft_size_15kHz  DFT size for 15kHz subcarrier spacing.
+/// \param[in] nof_prb_ul_grid Uplink resource grid size in PRBs.
+std::shared_ptr<ofdm_prach_demodulator_factory>
+create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
+                                         unsigned                               dft_size_15kHz,
+                                         unsigned                               nof_prb_ul_grid);
 
 } // namespace srsgnb
