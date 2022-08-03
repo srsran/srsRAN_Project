@@ -40,5 +40,7 @@ fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_tra
 void fapi_to_mac_time_msg_translator::on_slot_indication(const slot_indication_message& msg)
 {
   translator.handle_new_slot();
+
+  // Delivering the new slot to the MAC layer must always be the last step.
   mac_slot_handler.get().handle_slot_indication(slot_point(to_numerology_value(scs), msg.sfn, msg.slot));
 }

@@ -13,7 +13,6 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
-#include "srsgnb/ran/slot_point.h"
 #include <mutex>
 
 namespace srsgnb {
@@ -25,24 +24,27 @@ class uplink_request_processor;
 
 namespace fapi_adaptor {
 
-/// \brief This class receives FAPI slot based messages and translates them into PHY specific data types, commanding the
-/// upper PHY to process them.
+/// \brief FAPI-to-PHY message translator.
 ///
-/// Translating and processing the FAPI slot based messages involves converting the data structures, checking for
-/// message validity at slot level and selecting and reserving resources in the PHY to process the messages.
+/// This class receives slot-based FAPI messages and translates them into PHY specific data types, which can then be
+/// processed by the upper PHY.
 ///
-/// \note The translator assumes that the contents of the incoming FAPI slot message are valid, ie: it has been
-/// previously validated using the provided FAPI validators.
-/// \note This class has been designed to be thread safe to allow calling the \c set_handle() method and message
-/// handlers from different threads.
-/// \note The translator assumes that only one message of each type can be received for a slot. If multiples messages of
-/// the same type arrives, this will result in undefined behaviour.
+/// Translating and processing slot-based FAPI messages involves converting them to the suitable data types for the PHY
+/// layer, validation of the contents for each incoming message and selecting and reserving resources in the upper PHY
+/// to process the messages.
+///
+/// \note This class is thread safe and allows calling the \ref handle_new_slot method and the message handlers from
+/// different threads.
+/// \note The translator assumes that only one message of each type can be received within a slot. Receiving multiple
+/// messages of the same type in one slot results in undefined behavior.
 class fapi_to_phy_translator : public fapi::slot_message_gateway
 {
-  /// RAII style class which is meant to have a lifetime of a single slot. It executes the preparation and closing
-  /// procedures required by the upper PHY within a slot.
+  /// \brief Slot-based upper PHY controller.
   ///
-  /// \note The lifetime of this object is meant to be a single slot point.
+  /// Takes care of the opening and closing procedures required by the upper PHY within each slot.
+  ///
+  /// \note This class follows the RAII (resource acquisition is initialization) programming principle.
+  /// \note The lifetime of any instantiation of this class is meant to be a single slot.
   class slot_based_upper_phy_controller
   {
     slot_point                                 slot;
@@ -67,12 +69,15 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
   };
 
 public:
-  /// \brief Constructor for the FAPI to PHY translator.
+  /// \brief Constructor for the FAPI-to-PHY translator.
   ///
-  /// \param sector_id Sector identifier.
-  /// \param dl_processor_pool Downlink processor pool that will be used to process PDUs.
-  /// \param rg_pool Resource grid pool that will be used to process PDUs.
-  /// \param scs_common subcarrier spacing common, as per TS 38.331, Section 6.2.2,
+  /// \param[in] sector_id Sector identifier.
+  /// \param[in] dl_processor_pool Downlink processor pool that will be used to process PDUs.
+  /// \param[in] rg_pool Resource grid pool that will be used to process PDUs.
+  /// \param[in] ul_request_processor Uplink request processor.
+  /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
+  /// \param[in] prach_tlv PRACH configuration TLV.
+  /// \param[in] carrier_tlv Carrier configuration TLV.
   fapi_to_phy_translator(unsigned                    sector_id,
                          downlink_processor_pool&    dl_processor_pool,
                          resource_grid_pool&         rg_pool,
@@ -104,32 +109,39 @@ public:
 
   /// \brief Handles a new slot.
   ///
-  /// Handling a new slot consists of the following steps:
-  /// - Finishing processing the PDUs from the previous slot.
-  /// - Updating the current slot.
-  /// - Grabbing a resource grid and a downlink processor.
-  /// - Configuring the downlink processor with the new resource grid.
-  /// - Resetting the pdsch_pdu vector.
+  /// Handling a new slot consists of the following steps.
+  /// - Finish processing the PDUs from the previous slot.
+  /// - Update the current slot value to the new one.
+  /// - Obtain a new resource grid and a new downlink processor from the corresponding pools.
+  /// - Configure the downlink processor with the new resource grid.
+  /// - Reset the contents of the PDSCH PDU repository.
   ///
-  /// \param slot Identifies the new slot.
-  /// \note This method may be called from a different thread compared to the rest of methods.
+  /// \param[in] slot Identifies the new slot.
+  /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot(slot_point slot);
 
 private:
-  const unsigned            sector_id;
-  downlink_processor_pool&  dl_processor_pool;
-  resource_grid_pool&       rg_pool;
+  /// Sector identifier.
+  const unsigned sector_id;
+  /// Downlink processor pool.
+  downlink_processor_pool& dl_processor_pool;
+  /// Resource grid pool.
+  resource_grid_pool& rg_pool;
+  /// Uplink request processor.
   uplink_request_processor& ul_request_processor;
-
-  slot_based_upper_phy_controller                                                   current_slot_controller;
-  static_vector<pdsch_processor::pdu_t, fapi::dl_tti_request_message::MAX_NUM_PDUS> pdsch_pdus;
-  // Protects current_slot_controller and pdsch_pdus.
+  /// Current slot task controller.
+  slot_based_upper_phy_controller current_slot_controller;
+  /// PDSCH PDU repository.
+  static_vector<pdsch_processor::pdu_t, fapi::dl_tti_request_message::MAX_NUM_PDUS> pdsch_pdu_repository;
+  /// Protects concurrent access to shared variables.
   //: TODO: make this lock free.
   std::mutex mutex;
-
   // :TODO: these variables should be asked to the cell configuration. Remove them when they're available.
-  const subcarrier_spacing   scs_common;
-  const fapi::prach_config   prach_tlv;
+  /// Common subcarrier spacing.
+  const subcarrier_spacing scs_common;
+  /// PRACH configuration.
+  const fapi::prach_config prach_tlv;
+  /// Carrier configuration.
   const fapi::carrier_config carrier_tlv;
 };
 

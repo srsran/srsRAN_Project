@@ -623,9 +623,9 @@ int main(int argc, char** argv)
   }
   test_logger.info("FAPI adaptors created successfully");
 
-  phy_adaptor->set_fapi_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
-  phy_adaptor->set_fapi_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
-  upper->set_timing_notifier(phy_adaptor->get_upper_phy_timing_notifier());
+  phy_adaptor->set_slot_time_message_notifier(mac_adaptor->get_slot_time_notifier());
+  phy_adaptor->set_slot_data_message_notifier(mac_adaptor->get_slot_data_notifier());
+  upper->set_timing_notifier(phy_adaptor->get_timing_notifier());
 
   // Configuration for the cell.
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);

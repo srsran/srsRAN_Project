@@ -13,8 +13,8 @@
 namespace srsgnb {
 
 namespace fapi {
-class slot_message_gateway;
 class slot_data_message_notifier;
+class slot_message_gateway;
 class slot_time_message_notifier;
 } // namespace fapi
 
@@ -22,31 +22,28 @@ class upper_phy_timing_notifier;
 
 namespace fapi_adaptor {
 
-/// \brief Interface to the PHY side of the FAPI adaptor object.
+/// \brief PHY&ndash;FAPI bidirectional adaptor interface.
 ///
-/// This interface gives access to the interfaces needed to interconnect the adaptor with the PHY layer.
+/// This adaptor is a collection of interfaces to translate FAPI messages into their PHY layer counterpart and vice
+/// versa.
 ///
-/// \note This object has the ownership of all the components of the adaptor.
+/// \note All implementations of this public interface must hold the ownership of all its internal components.
 class phy_fapi_adaptor
 {
 public:
   virtual ~phy_fapi_adaptor() = default;
 
-  /// Returns the adaptor's upper PHY timing notifier.
-  virtual upper_phy_timing_notifier& get_upper_phy_timing_notifier() = 0;
+  /// \brief Returns a reference to the timing notifier used by the adaptor.
+  virtual upper_phy_timing_notifier& get_timing_notifier() = 0;
 
-  /// Returns the adaptor's slot message gateway.
+  /// \brief Returns a reference to the slot-based message gateway used by the adaptor.
   virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
 
-  /// \brief Configures the adaptor's FAPI slot time message notifier to the given one.
-  ///
-  /// \param fapi_time_notifier FAPI slot time message notifier to set in the adaptor.
-  virtual void set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
+  /// \brief Configures the slot-based, time-specific message notifier to the given one.
+  virtual void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
 
-  /// \brief Configures the adaptor's FAPI slot data message notifier to the given one.
-  ///
-  /// \param fapi_data_notifier FAPI slot data message notifier to set in the adaptor.
-  virtual void set_fapi_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
+  /// \brief Configures the slot-based, data-specific message notifier to the given one.
+  virtual void set_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
 };
 
 } // namespace fapi_adaptor

@@ -8,23 +8,15 @@
  *
  */
 
-#include "phy_to_fapi_translator.h"
+#include "phy_to_fapi_results_event_translator.h"
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi/message_validators.h"
-#include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
 namespace {
-
-/// Dummy implementation of the slot_message_notifier interface.
-class slot_time_message_notifier_dummy : public slot_time_message_notifier
-{
-public:
-  void on_slot_indication(const slot_indication_message& msg) override {}
-};
 
 class slot_data_message_notifier_dummy : public slot_data_message_notifier
 {
@@ -39,35 +31,13 @@ public:
 
 } // namespace
 
-/// Instance used by \c phy_to_fapi_translator until it gets configured through the \c
-/// set_fapi_slot_time_message_notifier method.
-static slot_time_message_notifier_dummy dummy_time_notifier;
-
-/// Instance used by \c phy_to_fapi_translator until it gets configured through the \c
-/// set_fapi_slot_data_message_notifier method.
+/// This dummy object is passed to the constructor of the PHY-to-FAPI data event translator as a placeholder for the
+/// actual, data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
-phy_to_fapi_translator::phy_to_fapi_translator() :
-  time_notifier(dummy_time_notifier), data_notifier(dummy_data_notifier)
-{
-}
+phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() : data_notifier(dummy_data_notifier) {}
 
-void phy_to_fapi_translator::handle_new_slot(slot_point slot)
-{
-  time_notifier.get().on_slot_indication(build_slot_indication_message(slot.sfn(), slot.slot_index()));
-}
-
-void phy_to_fapi_translator::set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier)
-{
-  time_notifier = std::ref(fapi_time_notifier);
-}
-
-void phy_to_fapi_translator::set_fapi_slot_data_message_notifier(slot_data_message_notifier& fapi_data_notifier)
-{
-  data_notifier = std::ref(fapi_data_notifier);
-}
-
-void phy_to_fapi_translator::on_new_prach_results(const ul_prach_results& result)
+void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
   rach_indication_message         msg;
   rach_indication_message_builder builder(msg);
@@ -78,7 +48,8 @@ void phy_to_fapi_translator::on_new_prach_results(const ul_prach_results& result
   // NOTE: Currently not managing handle.
   static constexpr unsigned handle = 0U;
   // NOTE: Currently not supporting PRACH multiplexed in frequency domain.
-  static constexpr unsigned   fd_ra_index = 0U;
+  static constexpr unsigned fd_ra_index = 0U;
+
   rach_indication_pdu_builder builder_pdu = builder.add_pdu(
       handle, result.context.start_symbol, slot.slot_index(), fd_ra_index, result.result.rssi_dB, {}, {});
 
@@ -90,7 +61,6 @@ void phy_to_fapi_translator::on_new_prach_results(const ul_prach_results& result
   error_type<validator_report> validation_result = validate_rach_indication(msg);
   if (!validation_result) {
     log_validator_report(validation_result.error());
-
     return;
   }
 

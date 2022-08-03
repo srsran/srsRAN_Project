@@ -23,11 +23,11 @@ class uplink_request_processor;
 
 namespace fapi_adaptor {
 
-/// Describes the configuration for the PHY-FAPI adaptor factory.
+/// Configuration parameters for the PHY–FAPI adaptor factory.
 struct phy_fapi_adaptor_factory_config {
   /// Base station sector identifier.
   unsigned sector_id;
-  /// Subcarrier spacing common, as per TS38.331 Section 6.2.2.
+  /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
   /// PRACH configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
   fapi::prach_config prach_cfg;
@@ -35,17 +35,17 @@ struct phy_fapi_adaptor_factory_config {
   fapi::carrier_config carrier_cfg;
 };
 
-/// Factory that creates phy_fapi adaptors.
+/// Factory to create \c phy_fapi_adaptor objects.
 class phy_fapi_adaptor_factory
 {
 public:
   virtual ~phy_fapi_adaptor_factory() = default;
 
-  /// Creates and returns a phy_fapi_adaptor using the given configuration.
+  /// Creates a \c phy_fapi_adaptor object using the given configuration.
   virtual std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_factory_config& config) = 0;
 };
 
-/// Creates and returns a phy_fapi_adaptor_factory;
+/// Creates a \c phy_fapi_adaptor_factory object.
 std::unique_ptr<phy_fapi_adaptor_factory>
 create_phy_fapi_adaptor_factory(downlink_processor_pool&  dl_processor_pool,
                                 resource_grid_pool&       rg_pool,

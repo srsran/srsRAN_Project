@@ -9,7 +9,6 @@
  */
 
 #include "fapi_to_phy_translator.h"
-#include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
@@ -25,7 +24,6 @@ using namespace fapi_adaptor;
 
 namespace {
 
-/// Dummy implementation of a downlink processor.
 class downlink_processor_dummy : public downlink_processor
 {
 public:
@@ -42,7 +40,8 @@ public:
 
 } // namespace
 
-/// Instance used by the initial slot based task processor.
+/// This dummy object is passed to the constructor of the FAPI-to-PHY translator as a placeholder for the actual,
+/// downlink processor, which will be later set up using the downlink processor pool.
 static downlink_processor_dummy dummy_dl_processor;
 
 fapi_to_phy_translator::slot_based_upper_phy_controller::slot_based_upper_phy_controller() :
@@ -101,8 +100,8 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
         break;
       }
       case dl_pdu_type::PDSCH: {
-        pdsch_pdus.emplace_back();
-        convert_pdsch_fapi_to_phy(pdsch_pdus.back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
+        pdsch_pdu_repository.emplace_back();
+        convert_pdsch_fapi_to_phy(pdsch_pdu_repository.back(), pdu.pdsch_pdu, msg.sfn, msg.slot);
         break;
       }
       case dl_pdu_type::SSB: {
@@ -147,18 +146,17 @@ void fapi_to_phy_translator::tx_data_request(const tx_data_request_message& msg)
 {
   std::lock_guard<std::mutex> lock(mutex);
 
-  // Sanity check.
-  srsgnb_assert(msg.pdus.size() == pdsch_pdus.size(),
+  srsgnb_assert(msg.pdus.size() == pdsch_pdu_repository.size(),
                 "Invalid TX_data.request received. Message contains ({}) payload PDUs but it expects ({})",
                 msg.pdus.size(),
-                pdsch_pdus.size());
+                pdsch_pdu_repository.size());
 
   for (unsigned i = 0, e = msg.pdus.size(); i != e; ++i) {
     static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data;
     const tx_data_req_pdu&                                                        pdu = msg.pdus[i];
     data.emplace_back(pdu.tlv_custom.payload, pdu.tlv_custom.length);
 
-    current_slot_controller->process_pdsch(data, pdsch_pdus[i]);
+    current_slot_controller->process_pdsch(data, pdsch_pdu_repository[i]);
   }
 }
 
@@ -166,5 +164,5 @@ void fapi_to_phy_translator::handle_new_slot(slot_point slot)
 {
   std::lock_guard<std::mutex> lock(mutex);
   current_slot_controller = slot_based_upper_phy_controller(dl_processor_pool, rg_pool, slot, sector_id);
-  pdsch_pdus.clear();
+  pdsch_pdu_repository.clear();
 }

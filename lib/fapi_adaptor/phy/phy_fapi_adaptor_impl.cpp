@@ -14,34 +14,34 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int                sector_id,
+phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned                    sector_id,
                                              downlink_processor_pool&    dl_processor_pool,
                                              resource_grid_pool&         rg_pool,
-                                             subcarrier_spacing          scs_common,
                                              uplink_request_processor&   ul_request_processor,
+                                             subcarrier_spacing          scs_common,
                                              const fapi::prach_config&   prach_tlv,
                                              const fapi::carrier_config& carrier_tlv) :
   fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, prach_tlv, carrier_tlv),
-  slot_dispatcher(phy_translator, fapi_translator)
+  time_translator(fapi_translator)
 {
 }
 
-upper_phy_timing_notifier& phy_fapi_adaptor_impl::get_upper_phy_timing_notifier()
+upper_phy_timing_notifier& phy_fapi_adaptor_impl::get_timing_notifier()
 {
-  return slot_dispatcher;
+  return time_translator;
 }
 
-void phy_fapi_adaptor_impl::set_fapi_slot_time_message_notifier(slot_time_message_notifier& fapi_time_slot_notifier)
+void phy_fapi_adaptor_impl::set_slot_time_message_notifier(slot_time_message_notifier& fapi_time_slot_notifier)
 {
-  phy_translator.set_fapi_slot_time_message_notifier(fapi_time_slot_notifier);
+  time_translator.set_slot_time_message_notifier(fapi_time_slot_notifier);
+}
+
+void phy_fapi_adaptor_impl::set_slot_data_message_notifier(slot_data_message_notifier& fapi_data_notifier)
+{
+  results_translator.set_slot_data_message_notifier(fapi_data_notifier);
 }
 
 fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()
 {
   return fapi_translator;
-}
-
-void phy_fapi_adaptor_impl::set_fapi_slot_data_message_notifier(slot_data_message_notifier& fapi_data_notifier)
-{
-  phy_translator.set_fapi_slot_data_message_notifier(fapi_data_notifier);
 }
