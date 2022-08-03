@@ -28,16 +28,16 @@ public:
   mac_fapi_adaptor_impl(fapi::slot_message_gateway& msg_gw, unsigned sector_id_, subcarrier_spacing scs);
 
   // See interface for documentation.
-  fapi::slot_data_message_notifier& get_fapi_data_slot_notifier() override;
+  fapi::slot_data_message_notifier& get_slot_data_notifier() override;
 
   // See interface for documentation.
-  fapi::slot_time_message_notifier& get_fapi_time_slot_notifier() override;
+  fapi::slot_time_message_notifier& get_slot_time_notifier() override;
 
   // See interface for documentation.
-  mac_cell_result_notifier& get_mac_cell_result_notifier() override;
+  mac_cell_result_notifier& get_cell_result_notifier() override;
 
   // See interface for documentation.
-  void set_mac_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override;
+  void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override;
 
 private:
   const unsigned                  sector_id;

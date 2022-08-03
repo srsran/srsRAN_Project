@@ -35,7 +35,7 @@ public:
   /// Sets the given \c mac_cell_slot_handler. This handler will be notified for each new slot.
   ///
   /// \param handler Handler to be set.
-  void set_mac_cell_slot_handler(mac_cell_slot_handler& handler) { mac_slot_handler = std::ref(handler); }
+  void set_cell_slot_handler(mac_cell_slot_handler& handler) { mac_slot_handler = std::ref(handler); }
 
 private:
   // :TODO: subcarrier spacing should be retrieved from the cells configuration in the future.

@@ -32,19 +32,19 @@ class mac_fapi_adaptor
 public:
   virtual ~mac_fapi_adaptor() = default;
 
-  /// \brief Returns a reference to the adaptor data slot notifier.
-  virtual fapi::slot_data_message_notifier& get_fapi_data_slot_notifier() = 0;
+  /// \brief Returns a reference to the adaptor slot data notifier.
+  virtual fapi::slot_data_message_notifier& get_slot_data_notifier() = 0;
 
-  /// \brief Returns a reference to the adaptor time slot notifier.
-  virtual fapi::slot_time_message_notifier& get_fapi_time_slot_notifier() = 0;
+  /// \brief Returns a reference to the adaptor slot time notifier.
+  virtual fapi::slot_time_message_notifier& get_slot_time_notifier() = 0;
 
   /// \brief Returns a reference to the adaptor MAC cell result notifier.
-  virtual mac_cell_result_notifier& get_mac_cell_result_notifier() = 0;
+  virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;
 
   /// \brief Configures the MAC cell slot handler to the given one.
   ///
   /// \param[in] mac_slot_handler MAC slot handler.
-  virtual void set_mac_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) = 0;
+  virtual void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) = 0;
 
   // :TODO: add the rest of the MAC handlers.
 
