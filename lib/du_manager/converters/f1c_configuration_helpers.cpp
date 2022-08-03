@@ -244,6 +244,23 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   return out;
 }
 
+static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options set_rach_generic_msg1_fdm(unsigned msg1_fdm_value)
+{
+  switch (msg1_fdm_value) {
+    case 1:
+      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
+    case 2:
+      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::two;
+    case 4:
+      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::four;
+    case 8:
+      return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::eight;
+    default:
+      report_fatal_error("Invalid msg1-fdm field. Set default value 1");
+  }
+  return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
+}
+
 static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul_config_common& cfg)
 {
   using namespace asn1::rrc_nr;
@@ -267,16 +284,16 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
       sliv_from_s_and_l(275, cfg.init_ul_bwp.generic_params.crbs.start(), cfg.init_ul_bwp.generic_params.crbs.length());
 
   // RACH-ConfigCommon.
-  const rach_config_common& rach_cfg              = *cfg.init_ul_bwp.rach_cfg_common;
-  out.init_ul_bwp.rach_cfg_common_present         = true;
-  rach_cfg_common_s& rach                         = out.init_ul_bwp.rach_cfg_common.set_setup();
-  rach.rach_cfg_generic.prach_cfg_idx             = 16;
-  rach.rach_cfg_generic.msg1_fdm.value            = asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
-  rach.rach_cfg_generic.msg1_freq_start           = 0;
-  rach.rach_cfg_generic.zero_correlation_zone_cfg = 15;
-  rach.rach_cfg_generic.preamb_rx_target_pwr      = -110;
-  rach.rach_cfg_generic.preamb_trans_max.value    = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
-  rach.rach_cfg_generic.pwr_ramp_step.value       = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
+  const rach_config_common& rach_cfg      = *cfg.init_ul_bwp.rach_cfg_common;
+  out.init_ul_bwp.rach_cfg_common_present = true;
+  rach_cfg_common_s& rach                 = out.init_ul_bwp.rach_cfg_common.set_setup();
+  rach.rach_cfg_generic.msg1_fdm.value    = set_rach_generic_msg1_fdm(rach_cfg.rach_cfg_generic.msg1_fdm);
+  rach.rach_cfg_generic.msg1_freq_start   = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
+  rach.rach_cfg_generic.zero_correlation_zone_cfg =
+      static_cast<uint8_t>(rach_cfg.rach_cfg_generic.zero_correlation_zone_config);
+  rach.rach_cfg_generic.preamb_rx_target_pwr   = -110;
+  rach.rach_cfg_generic.preamb_trans_max.value = asn1::rrc_nr::rach_cfg_generic_s::preamb_trans_max_opts::n7;
+  rach.rach_cfg_generic.pwr_ramp_step.value    = asn1::rrc_nr::rach_cfg_generic_s::pwr_ramp_step_opts::db4;
   bool success = asn1::number_to_enum(rach.rach_cfg_generic.ra_resp_win, rach_cfg.rach_cfg_generic.ra_resp_window);
   srsgnb_assert(success, "Invalid ra-WindowSize");
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
