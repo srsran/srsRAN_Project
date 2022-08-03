@@ -67,6 +67,7 @@ struct mac_dl_data_result {
 };
 
 struct mac_ul_sched_result {
+  slot_point             slot;
   const ul_sched_result* ul_res;
 };
 

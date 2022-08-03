@@ -82,6 +82,7 @@ void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
 
   // Send UL sched result to PHY.
   mac_ul_sched_result mac_ul_res{};
+  mac_ul_res.slot   = sl_tx;
   mac_ul_res.ul_res = &sl_res->ul;
   phy_cell.on_new_uplink_scheduler_results(mac_ul_res);
 

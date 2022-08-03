@@ -238,6 +238,8 @@ struct ul_sched_info {
 };
 
 struct prach_occasion_info {
+  /// Physical Cell identifier.
+  pci_t pci;
   /// Number of time-domain PRACH occasions (\f$N^{RAslot}_t\f$), as per TS38.211 Tables 6.3.3.2-[2-4].
   uint8_t nof_prach_occasions;
   /// RACH format information for the PRACH occasions.

@@ -10,6 +10,7 @@
 
 #include "prach_scheduler.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
+#include "srsgnb/ran/prach/prach_frequency_mapping.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/support/error_handling.h"
 
@@ -71,7 +72,10 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       cached_prach_occasion& cached_prach = cached_prachs.back();
 
       // Pre-compute PRACH symbol x RB resources.
-      cached_prach.grant_resources.ch  = grant_info::channel::prach;
+      cached_prach.grant_resources.ch = grant_info::channel::prach;
+      // TODO: address the case of SCS for non-initial access PRACH ("\Delta_f is the subcarrier spacing of the initial
+      //       uplink bandwidth part during initial access. Otherwise, \Delta_f is the subcarrier spacing of the active
+      //       uplink bandwidth part", Section 5.3.2, Ts 38.211).
       cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
       if (prach_cfg.format < preamble_format::OTHER) {
         double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;
@@ -84,12 +88,14 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       }
       srsgnb_sanity_check(cached_prach.grant_resources.symbols.stop() <= nof_symbols_per_slot,
                           "Invalid PRACH preamble position");
-      static const unsigned PRACH_NOF_PRBS = 6U; // TODO: Derive this value.
-      uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * PRACH_NOF_PRBS;
-      prb_interval prach_prbs{prb_start, prb_start + PRACH_NOF_PRBS};
+      unsigned prach_nof_prbs =
+          prach_frequency_mapping_get(info.scs, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs).nof_rb_ra;
+      uint8_t      prb_start = rach_cfg_common().rach_cfg_generic.msg1_frequency_start + id_fd_ra * prach_nof_prbs;
+      prb_interval prach_prbs{prb_start, prb_start + prach_nof_prbs};
       cached_prach.grant_resources.crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prach_prbs);
 
       // Pre-compute PRACH occasion parameters.
+      cached_prach.occasion.pci                 = cell_cfg.pci;
       cached_prach.occasion.format              = prach_cfg.format;
       cached_prach.occasion.start_symbol        = prach_cfg.starting_symbol;
       cached_prach.occasion.nof_prach_occasions = prach_cfg.nof_occasions_within_slot;
