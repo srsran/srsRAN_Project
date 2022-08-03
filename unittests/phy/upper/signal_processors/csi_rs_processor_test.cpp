@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "csi_rs_processor_test_data.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 

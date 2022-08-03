@@ -9,7 +9,7 @@
  */
 
 #include "upper_phy_ssb_example.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_modulation/channel_modulation_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_encoder.h"

@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsSSBProcessorUnittest.m"
 
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
 #include "srsgnb/support/file_vector.h"
 

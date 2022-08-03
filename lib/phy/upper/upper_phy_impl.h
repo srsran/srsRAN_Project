@@ -10,13 +10,13 @@
 
 #pragma once
 
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/upper_phy.h"
 
 // :TODO: remove these includes when the objects are created.
-#include "srsgnb/phy/prach_buffer.h"
-#include "srsgnb/phy/prach_buffer_context.h"
+#include "srsgnb/phy/support/prach_buffer.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"

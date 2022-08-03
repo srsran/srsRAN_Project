@@ -18,7 +18,7 @@
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
 #include "srsgnb/phy/adapters/phy_timing_adapter.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/phy/upper/downlink_processor_factory.h"
 #include "srsgnb/phy/upper/upper_phy_factory.h"

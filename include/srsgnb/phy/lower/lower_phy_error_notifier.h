@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/prach_buffer_context.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {

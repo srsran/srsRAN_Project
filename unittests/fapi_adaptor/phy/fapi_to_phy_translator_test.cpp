@@ -10,9 +10,9 @@
 
 #include "../../../lib/fapi_adaptor/phy/fapi_to_phy_translator.h"
 #include "../../fapi/validators/helpers.h"
-#include "../../phy/resource_grid_test_doubles.h"
+#include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/support/srsgnb_test.h"
 

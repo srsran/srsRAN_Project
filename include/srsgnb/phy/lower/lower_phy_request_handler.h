@@ -10,10 +10,10 @@
 
 #pragma once
 
-#include "srsgnb/phy/prach_buffer.h"
-#include "srsgnb/phy/prach_buffer_context.h"
-#include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/phy/resource_grid_context.h"
+#include "srsgnb/phy/support/prach_buffer.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsgnb/phy/support/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid_context.h"
 
 namespace srsgnb {
 

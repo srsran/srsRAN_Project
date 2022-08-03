@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
 namespace srsgnb {

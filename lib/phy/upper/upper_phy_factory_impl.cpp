@@ -10,6 +10,7 @@
 
 #include "upper_phy_factory_impl.h"
 #include "downlink_processor_factory_impl.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/downlink_processor_factory.h"
 #include "upper_phy_impl.h"
 

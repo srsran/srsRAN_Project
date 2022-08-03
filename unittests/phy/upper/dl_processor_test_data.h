@@ -13,7 +13,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsDLProcessor.m"
 
-#include "../resource_grid_test_doubles.h"
+#include "../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/support/file_vector.h"

@@ -9,13 +9,4 @@
 add_subdirectory(generic_functions)
 add_subdirectory(lower)
 add_subdirectory(upper)
-
-set_directory_properties(PROPERTIES LABELS "phy")
-
-add_executable(resource_grid_pool_test resource_grid_pool_test.cpp)
-target_link_libraries(resource_grid_pool_test srsvec resource_grid_pool srslog)
-add_test(resource_grid_pool_test resource_grid_pool_test)
-
-add_executable(resource_grid_test resource_grid_test.cpp)
-target_link_libraries(resource_grid_test srsvec resource_grid_pool srslog)
-add_test(resource_grid_test resource_grid_test)
+add_subdirectory(support)

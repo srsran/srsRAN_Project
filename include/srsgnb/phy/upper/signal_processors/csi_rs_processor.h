@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/slot_point.h"
 

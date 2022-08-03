@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "../signal_processors/dmrs_pdcch_processor_test_doubles.h"
 #include "pdcch_encoder_test_doubles.h"
 #include "pdcch_modulator_test_doubles.h"

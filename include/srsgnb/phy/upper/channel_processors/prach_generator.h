@@ -28,7 +28,7 @@ class prach_generator
 public:
   /// Collects the necessary parameters to generate a PRACH time domain signal.
   struct configuration {
-    /// Indicates the preamble format.
+    /// Preamble format.
     preamble_format format;
     /// \brief Root sequence index.
     ///
@@ -44,7 +44,7 @@ public:
     unsigned zero_correlation_zone;
     /// Offset in PRBs between Point-A and a PRB overlapping with the lowest RE of the PRACH signal.
     unsigned rb_offset;
-    /// Subcarrier spacing for PUSCH.
+    /// PUSCH subcarrier spacing.
     subcarrier_spacing pusch_scs;
     /// \brief Frequency domain flag.
     ///

@@ -9,7 +9,7 @@
  */
 
 #include "../../../../lib/phy/upper/signal_processors/pucch/pucch_orthogonal_sequence.h"
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "dmrs_pucch_processor_test_data.h"
 #include "srsgnb/phy/upper/sequence_generators/low_papr_sequence_collection.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pucch_processor.h"

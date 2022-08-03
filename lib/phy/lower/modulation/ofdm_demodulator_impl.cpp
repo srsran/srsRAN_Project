@@ -9,6 +9,7 @@
  */
 
 #include "ofdm_demodulator_impl.h"
+#include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/sc_prod.h"

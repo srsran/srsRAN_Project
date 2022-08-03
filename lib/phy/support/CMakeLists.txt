@@ -6,7 +6,8 @@
 # the distribution.
 #
 
-add_subdirectory(generic_functions)
-add_subdirectory(lower)
-add_subdirectory(support)
-add_subdirectory(upper)
+add_library(srsgnb_phy_support STATIC
+        prach_buffer.cpp
+        resource_grid_pool_impl.cpp
+        resource_grid_impl.cpp)
+target_link_libraries(srsgnb_phy_support srsvec)

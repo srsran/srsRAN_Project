@@ -9,7 +9,7 @@
  */
 
 #include "resource_grid_test_doubles.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <vector>
 
@@ -22,7 +22,7 @@ void test(unsigned nof_slots, unsigned nof_sectors)
   cfg.nof_sectors               = nof_sectors;
 
   // Create grids
-  std::vector<std::vector<resource_grid*> > grids;
+  std::vector<std::vector<resource_grid*>> grids;
 
   // Generate resource grids
   cfg.grids.reserve(nof_slots * nof_sectors);

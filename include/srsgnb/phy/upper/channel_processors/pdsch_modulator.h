@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_modulation/modulation_mapper.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"

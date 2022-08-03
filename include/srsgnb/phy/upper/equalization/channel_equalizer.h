@@ -15,7 +15,6 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 
 namespace srsgnb {

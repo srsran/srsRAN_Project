@@ -10,7 +10,7 @@
 
 #include "../../../lib/phy/upper/downlink_processor_single_executor_impl.h"
 #include "../../support/task_exdcutor_test_doubles.h"
-#include "../resource_grid_test_doubles.h"
+#include "../support/resource_grid_test_doubles.h"
 #include "channel_processors/pdcch_processor_test_doubles.h"
 #include "channel_processors/pdsch_processor_test_doubles.h"
 #include "channel_processors/ssb_processor_test_doubles.h"

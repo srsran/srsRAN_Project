@@ -13,7 +13,7 @@
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 
 using namespace srsgnb;

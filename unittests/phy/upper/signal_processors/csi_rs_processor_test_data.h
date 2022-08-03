@@ -3,7 +3,7 @@
 // This file was generated using the following MATLAB class:
 //   + "srsCSIRSUnittest.m"
 
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/signal_processors/csi_rs_processor.h"
 #include "srsgnb/support/file_vector.h"
 

@@ -14,7 +14,7 @@
 #pragma once
 
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/ran/cyclic_prefix.h"

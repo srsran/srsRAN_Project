@@ -13,7 +13,7 @@ target_link_libraries(radio_ssb
         srsgnb_radio
         srslog
         srsgnb_support
-        resource_grid_pool
+        srsgnb_phy_support
         srsgnb_lower_phy
         srsgnb_signal_processors
         srsgnb_channel_processors)

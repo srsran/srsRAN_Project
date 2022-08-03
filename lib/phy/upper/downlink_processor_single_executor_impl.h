@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/resource_grid_context.h"
+#include "srsgnb/phy/support/resource_grid_context.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include <mutex>
 

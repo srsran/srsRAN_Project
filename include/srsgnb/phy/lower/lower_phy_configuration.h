@@ -16,7 +16,7 @@
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 

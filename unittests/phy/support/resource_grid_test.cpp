@@ -8,7 +8,7 @@
  *
  */
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/srsgnb_test.h"

@@ -12,8 +12,6 @@
 
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
-#include "srsgnb/phy/constants.h"
-#include <memory>
 
 namespace srsgnb {
 
@@ -151,12 +149,5 @@ public:
   /// Sets all resource elements in the grid to zero.
   virtual void set_all_zero() = 0;
 };
-
-/// \brief Creates a generic resource grid instance for a number of ports, symbols and subcarriers.
-/// \param[in] nof_ports   Number of ports.
-/// \param[in] nof_symbols Number of symbols.
-/// \param[in] nof_subc    Number of subcarriers.
-/// \return A unique pointer to a generic resource grid implementation.
-std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc);
 
 } // namespace srsgnb

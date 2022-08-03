@@ -10,8 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/resource_grid.h"
-#include "srsgnb/phy/resource_grid_context.h"
+#include "srsgnb/phy/support/resource_grid.h"
+#include "srsgnb/phy/support/resource_grid_context.h"
 
 namespace srsgnb {
 

@@ -9,7 +9,7 @@
  */
 
 #include "../../generic_functions/dft_processor_test_doubles.h"
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"

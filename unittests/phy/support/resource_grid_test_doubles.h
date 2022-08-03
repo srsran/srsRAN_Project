@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/resource_grid.h"
+#include "srsgnb/phy/constants.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/support/srsgnb_assert.h"
 #include "srsgnb/support/srsgnb_test.h"

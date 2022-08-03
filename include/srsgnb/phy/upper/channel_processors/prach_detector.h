@@ -43,7 +43,7 @@ public:
     restricted_set_config restricted_set;
     /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1.
     unsigned zero_correlation_zone;
-    /// Subcarrier spacing for PUSCH.
+    /// PUSCH subcarrier spacing.
     subcarrier_spacing pusch_scs;
     /// Start of preamble logical index to monitor in the PRACH occasions signaled in this slot {0...63}.
     unsigned start_preamble_index;

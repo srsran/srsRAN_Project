@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
-#include "srsgnb/phy/resource_grid_pool.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <vector>
 
@@ -23,7 +23,7 @@ private:
   unsigned nof_slots;
   unsigned nof_sectors;
 
-  std::vector<std::unique_ptr<resource_grid> > grids;
+  std::vector<std::unique_ptr<resource_grid>> grids;
 
 public:
   resource_grid_pool_impl(resource_grid_pool_config& config);

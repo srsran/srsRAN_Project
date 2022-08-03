@@ -9,7 +9,7 @@
  */
 
 #include "../../../../lib/phy/upper/signal_processors/dmrs_pusch_estimator_impl.h"
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
 #include "srsgnb/support/srsgnb_test.h"
 

@@ -12,7 +12,7 @@ target_link_libraries(du_example
         srsgnb_gateway
         mac_fapi_adaptor_factory
         phy_fapi_adaptor_factory
-        resource_grid_pool
+        srsgnb_phy_support
         srsgnb_upper_phy
         srsgnb_downlink_processor
         srsgnb_signal_processors

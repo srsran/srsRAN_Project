@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../resource_grid_test_doubles.h"
+#include "../../support/resource_grid_test_doubles.h"
 #include "ofdm_demodulator_test_data.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/srsvec/compare.h"

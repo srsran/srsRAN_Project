@@ -16,7 +16,7 @@ add_library(srsgnb_downlink_processor downlink_processor_single_executor_impl.cp
 target_link_libraries(srsgnb_downlink_processor srsgnb_channel_processors)
 
 add_library(srsgnb_upper_phy upper_phy_factory_impl.cpp upper_phy_impl.cpp)
-target_link_libraries(srsgnb_upper_phy srsgnb_downlink_processor resource_grid_pool)
+target_link_libraries(srsgnb_upper_phy srsgnb_downlink_processor srsgnb_phy_support)
 
 add_library(log_likelihood_ratio log_likelihood_ratio.cpp)
 
