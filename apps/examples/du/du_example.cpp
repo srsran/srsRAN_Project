@@ -591,7 +591,7 @@ int main(int argc, char** argv)
   }
   test_logger.info("FAPI adaptors created successfully");
 
-  phy_adaptor->set_slot_message_notifier(mac_adaptor->get_slot_notifier());
+  phy_adaptor->set_fapi_slot_time_message_notifier(mac_adaptor->get_fapi_time_slot_notifier());
   upper->set_timing_notifier(phy_adaptor->get_upper_phy_timing_notifier());
 
   // Configuration for the cell.
@@ -606,7 +606,7 @@ int main(int argc, char** argv)
   default_config.coreset0_index    = coreset0_index;
 
   fake_cucp_handler notifier;
-  phy_dummy         phy(mac_adaptor->get_cell_result_notifier());
+  phy_dummy         phy(mac_adaptor->get_mac_cell_result_notifier());
 
   du_high_configuration cfg = {};
   cfg.du_mng_executor       = &workers.ul_execs[0];

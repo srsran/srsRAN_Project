@@ -10,34 +10,40 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_message_notifier.h"
-
 namespace srsgnb {
+
+namespace fapi {
+class slot_data_message_notifier;
+class slot_time_message_notifier;
+} // namespace fapi
 
 class mac_cell_result_notifier;
 class mac_cell_slot_handler;
 
 namespace fapi_adaptor {
 
-/// \brief Interface to the MAC side of the FAPI adaptor object.
+/// \brief Adaptation interface between the MAC layer and the FAPI interface.
 ///
-/// This interface gives access to the interfaces needed to interconnect the adaptor with the MAC layer.
+/// Gives access to the interfaces required to interconnect the adaptor with the MAC layer.
 ///
-/// \note This object has the ownership of all the components of the adaptor.
+/// \note This object has the ownership of all the internal components of the adaptor.
 class mac_fapi_adaptor
 {
 public:
   virtual ~mac_fapi_adaptor() = default;
 
-  /// \brief Returns the adaptor's slot_message_notifier.
-  virtual fapi::slot_message_notifier& get_slot_notifier() = 0;
+  /// \brief Returns a reference to the adaptor data slot notifier.
+  virtual fapi::slot_data_message_notifier& get_fapi_data_slot_notifier() = 0;
 
-  /// \brief Returns the adaptor's MAC cell result notifier.
-  virtual mac_cell_result_notifier& get_cell_result_notifier() = 0;
+  /// \brief Returns a reference to the adaptor time slot notifier.
+  virtual fapi::slot_time_message_notifier& get_fapi_time_slot_notifier() = 0;
 
-  /// \brief Configures the adaptor's MAC cell slot handler to the given one.
+  /// \brief Returns a reference to the adaptor MAC cell result notifier.
+  virtual mac_cell_result_notifier& get_mac_cell_result_notifier() = 0;
+
+  /// \brief Configures the MAC cell slot handler to the given one.
   ///
-  /// \param[in] mac_slot_handler MAC slot handler to set in the adaptor.
+  /// \param[in] mac_slot_handler MAC slot handler.
   virtual void set_mac_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) = 0;
 
   // :TODO: add the rest of the MAC handlers.

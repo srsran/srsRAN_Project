@@ -10,6 +10,7 @@
 
 #include "mac_to_fapi_translator.h"
 #include "srsgnb/fapi/message_validators.h"
+#include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/prach.h"
@@ -160,7 +161,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
     return;
   }
 
-  gateway.dl_tti_request(msg);
+  msg_gw.dl_tti_request(msg);
 }
 
 void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_data)
@@ -196,7 +197,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   }
 
   // Send the message.
-  gateway.tx_data_request(msg);
+  msg_gw.tx_data_request(msg);
 }
 
 void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_result& ul_res)

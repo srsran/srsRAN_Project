@@ -37,7 +37,7 @@ public:
   fapi::slot_message_gateway& get_slot_message_gateway() override;
 
   // See interface for documentation.
-  void set_slot_message_notifier(fapi::slot_message_notifier& fapi_slot_notifier) override;
+  void set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_slot_notifier) override;
 
 private:
   phy_to_fapi_translator phy_translator;

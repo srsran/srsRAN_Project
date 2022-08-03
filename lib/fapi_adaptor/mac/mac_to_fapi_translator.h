@@ -10,11 +10,15 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_message_gateway.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include <mutex>
 
 namespace srsgnb {
+
+namespace fapi {
+class slot_message_gateway;
+} // namespace fapi
+
 namespace fapi_adaptor {
 
 /// \brief Registers the PDSCH PDUs that are added in a DL_TTI.request message.
@@ -71,12 +75,12 @@ private:
   std::array<pdu_vector, last> pdus;
 };
 
-/// \brief This class listens to MAC cell result messages converting them to FAPI messages and sending them through the
-/// FAPI \c slot_message_gateway interface.
+/// \brief This class listens to MAC cell result events and translates them to FAPI messages that are sent through the
+/// \c slot_message_gateway interface.
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
-  explicit mac_to_fapi_translator(fapi::slot_message_gateway& gateway) : gateway(gateway) {}
+  explicit mac_to_fapi_translator(fapi::slot_message_gateway& msg_gw) : msg_gw(msg_gw) {}
 
   // See interface for documentation.
   void on_new_downlink_scheduler_results(const mac_dl_sched_result& dl_res) override;
@@ -93,7 +97,7 @@ public:
   /// - Resetting the PDSCH PDU registry.
   ///
   /// \param slot Identifies the new slot.
-  /// \note This method may be called from a different thread compared to the rest of methods.
+  /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot()
   {
     std::lock_guard<std::mutex> lock(mutex);
@@ -101,9 +105,8 @@ public:
   }
 
 private:
-  fapi::slot_message_gateway& gateway;
-
-  pdsch_pdu_registy pdsch_registry;
+  fapi::slot_message_gateway& msg_gw;
+  pdsch_pdu_registy           pdsch_registry;
   // Protects pdsch_registry.
   //: TODO: make this lock free.
   std::mutex mutex;

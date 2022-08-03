@@ -12,8 +12,8 @@ target_link_libraries(srsgnb_mac_to_fapi_translator srsgnb_mac_fapi_adaptors fap
 
 
 set(SOURCES
-        fapi_to_mac_translator.cpp
-        slot_event_dispatcher.cpp)
+        fapi_to_mac_data_msg_translator.cpp
+        fapi_to_mac_time_msg_translator.cpp)
 
 add_library(srsgnb_fapi_to_mac_translator STATIC ${SOURCES})
 

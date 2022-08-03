@@ -27,9 +27,9 @@ upper_phy_timing_notifier& phy_fapi_adaptor_impl::get_upper_phy_timing_notifier(
   return slot_dispatcher;
 }
 
-void phy_fapi_adaptor_impl::set_slot_message_notifier(slot_message_notifier& fapi_slot_notifier)
+void phy_fapi_adaptor_impl::set_fapi_slot_time_message_notifier(slot_time_message_notifier& fapi_time_slot_notifier)
 {
-  phy_translator.set_slot_message_notifier(fapi_slot_notifier);
+  phy_translator.set_fapi_slot_time_message_notifier(fapi_time_slot_notifier);
 }
 
 fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()

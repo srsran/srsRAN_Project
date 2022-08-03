@@ -10,10 +10,12 @@
 
 #pragma once
 
-#include "srsgnb/fapi/slot_message_gateway.h"
-#include "srsgnb/fapi/slot_message_notifier.h"
-
 namespace srsgnb {
+
+namespace fapi {
+class slot_message_gateway;
+class slot_time_message_notifier;
+} // namespace fapi
 
 class upper_phy_timing_notifier;
 
@@ -37,8 +39,8 @@ public:
 
   /// \brief Configures the adaptor's FAPI slot message notifier to the given one.
   ///
-  /// \param fapi_slot_notifier FAPI slot message notifier to set in the adaptor.
-  virtual void set_slot_message_notifier(fapi::slot_message_notifier& fapi_slot_notifier) = 0;
+  /// \param fapi_time_notifier FAPI slot message notifier to set in the adaptor.
+  virtual void set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
 };
 
 } // namespace fapi_adaptor
