@@ -88,7 +88,7 @@ public:
   /// \param slot Slot point.
   /// \param sector_id Sector ID.
   /// \return A downlink processor.
-  virtual downlink_processor& get_processor(const slot_point& slot, unsigned sector_id) = 0;
+  virtual downlink_processor& get_processor(slot_point slot, unsigned sector_id) = 0;
 };
 
 } // namespace srsgnb

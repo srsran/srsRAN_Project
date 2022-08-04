@@ -47,12 +47,12 @@ public:
     dl_processor.emplace_back(1);
   }
 
-  downlink_processor& get_processor(const slot_point& slot, unsigned sector_id) override
+  downlink_processor& get_processor(slot_point slot, unsigned sector_id) override
   {
     return dl_processor[slot.slot_index()];
   }
 
-  const downlink_processor_spy& processor(const slot_point& slot) const { return dl_processor[slot.slot_index()]; }
+  const downlink_processor_spy& processor(slot_point slot) const { return dl_processor[slot.slot_index()]; }
 };
 
 } // namespace

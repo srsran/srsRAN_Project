@@ -8,12 +8,12 @@
  *
  */
 
-#include "downlink_processor_pool_impl.h"
+#include "uplink_processor_pool_impl.h"
 #include "srsgnb/ran/slot_point.h"
 
 using namespace srsgnb;
 
-downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_pool_impl_config dl_processors) :
+uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_impl_config dl_processors) :
   processors(dl_processors.num_sectors)
 {
   for (auto& proc : dl_processors.procs) {
@@ -22,13 +22,13 @@ downlink_processor_pool_impl::downlink_processor_pool_impl(downlink_processor_po
   }
 }
 
-downlink_processor& downlink_processor_pool_impl::get_processor(slot_point slot, unsigned sector_id)
+uplink_processor& uplink_processor_pool_impl::get_processor(slot_point slot, unsigned sector_id)
 {
-  srsgnb_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting a downlink processor.", sector_id);
-  srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor.", slot);
+  srsgnb_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting an uplink processor.", sector_id);
+  srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting a uplink processor.", slot);
 
-  pool_procesor_sector<downlink_processor>&                 sector_proc = processors[sector_id];
-  pool_procesor_sector<downlink_processor>::processor_pool& proc_pool =
+  pool_procesor_sector<uplink_processor>&                 sector_proc = processors[sector_id];
+  pool_procesor_sector<uplink_processor>::processor_pool& proc_pool =
       sector_proc[to_subcarrier_spacing(slot.numerology())];
   unsigned index = slot.system_slot() % proc_pool.size();
   return *proc_pool[index];

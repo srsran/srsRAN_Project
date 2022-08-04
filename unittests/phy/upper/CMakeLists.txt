@@ -48,7 +48,10 @@ add_executable(log_likelihood_ratio_test log_likelihood_ratio_test.cpp)
 target_link_libraries(log_likelihood_ratio_test log_likelihood_ratio srslog)
 add_test(log_likelihood_ratio_test log_likelihood_ratio_test)
 
+add_executable(uplink_processor_test uplink_processor_test.cpp)
+target_link_libraries(uplink_processor_test srsgnb_uplink_processor srslog gtest gtest_main)
+gtest_discover_tests(uplink_processor_test)
+
 add_executable(vrb_to_prb_mapper_test vrb_to_prb_mapper_test.cpp)
 target_link_libraries(vrb_to_prb_mapper_test srsgnb_upper_phy_support srslog)
 add_test(vrb_to_prb_mapper_test vrb_to_prb_mapper_test)
-

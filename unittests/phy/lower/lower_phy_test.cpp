@@ -9,7 +9,7 @@
  */
 
 #include "../../gateways/baseband/baseband_gateway_test_doubles.h"
-#include "../../support/task_exdcutor_test_doubles.h"
+#include "../../support/task_executor_test_doubles.h"
 #include "lower_phy_test_doubles.h"
 #include "modulation/ofdm_demodulator_test_doubles.h"
 #include "modulation/ofdm_modulator_test_doubles.h"

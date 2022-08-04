@@ -10,76 +10,44 @@
 
 #pragma once
 
-#include "srsgnb/adt/circular_map.h"
+#include "processor_pool_helpers.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 
 namespace srsgnb {
 
-/// Defines the structure to configure the downlink processor pool.
-struct downlink_processor_pool_config_impl {
+/// Describes all downlink processors in a pool.
+struct downlink_processor_pool_impl_config {
+  /// Downlink processors for a given sector and numerology.
   struct info {
-    unsigned                                         sector;
-    unsigned                                         numerology;
+    /// Radio sector identifier.
+    unsigned sector;
+    /// Numerology index.
+    unsigned numerology;
+    /// Pointers to the actual downlink processors.
     std::vector<std::unique_ptr<downlink_processor>> procs;
   };
 
+  /// Collection of all downlink processors, organized by radio sector and numerology.
   std::vector<info> procs;
-  unsigned          num_sectors;
+  /// Number of radio sectors.
+  unsigned num_sectors;
 };
 
 /// Implementation of a downlink processor pool.
 class downlink_processor_pool_impl : public downlink_processor_pool
 {
-  static constexpr unsigned MAX_NUM_NUMEROLOGIES = 5U;
-
-  using processor_pool       = std::vector<std::unique_ptr<downlink_processor>>;
-  using numerology_container = circular_map<uint32_t, processor_pool, MAX_NUM_NUMEROLOGIES>;
-
-  /// \brief Represents a sector in the container of the pool.
-  class sector
-  {
-    const unsigned       sector_id;
-    numerology_container numerologies;
-
-  public:
-    /// \brief Default constructor.
-    sector() : sector_id(-1) {}
-
-    /// \brief Builds a sector with the given sector ID and numerology container.
-    ///
-    /// \param[in] sector_id Sector identifier.
-    /// \param[in] cont Contains the numerology container to store.
-    sector(unsigned sector_id, numerology_container cont) : sector_id(sector_id), numerologies(std::move(cont)) {}
-
-    /// \brief Returns the vector of downlink processor associated to the given numerology.
-    ///
-    /// \param numerology Numerology to find in the map.
-    /// \returns The processor pool associated to the given numerology.
-    processor_pool& operator[](unsigned numerology)
-    {
-      auto iter = numerologies.find(numerology);
-      srsgnb_assert(iter != numerologies.end(), "Invalid numerology ({}) in sector ({}).", numerology, sector_id);
-
-      return iter->second;
-    }
-
-    /// \brief Inserts the given key and object into the container.
-    ///
-    /// \param[in] key Key to insert.
-    /// \param[in] obj Object to insert.
-    void insert(unsigned key, processor_pool&& obj) { numerologies.insert(key, std::move(obj)); }
-  };
-
 public:
-  /// \brief Builds a downlink processor pool using the given configuration.
+  /// \brief Constructs a downlink processor pool using the given configuration.
   ///
-  /// \param[in] dl_processors Contains the configuration for the pool.
-  explicit downlink_processor_pool_impl(downlink_processor_pool_config_impl dl_processors);
+  /// \param[in] dl_processors Pool configuration.
+  explicit downlink_processor_pool_impl(downlink_processor_pool_impl_config dl_processors);
 
   // See interface for documentation.
-  downlink_processor& get_processor(const slot_point& slot, unsigned sector_id) override;
+  downlink_processor& get_processor(slot_point slot, unsigned sector_id) override;
 
 private:
-  std::vector<sector> processors;
+  /// Collection of downlink processors managed by the pool.
+  std::vector<pool_procesor_sector<downlink_processor>> processors;
 };
+
 } // namespace srsgnb

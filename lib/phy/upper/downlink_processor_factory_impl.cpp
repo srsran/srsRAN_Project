@@ -11,6 +11,7 @@
 #include "downlink_processor_factory_impl.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
+#include "srsgnb/support/error_handling.h"
 
 // :TODO: remove this include list when the processor factories are moved to the channel_processor folder.
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
@@ -69,9 +70,12 @@ public:
   std::unique_ptr<pdcch_processor> create()
   {
     pdcch_processor_config_t config;
-    config.encoder   = enc_factory->create();
+    config.encoder = enc_factory->create();
+    report_fatal_error_if_not(config.encoder, "Invalid PDCCH encoder.");
     config.modulator = mod_factory->create();
-    config.dmrs      = create_dmrs_pdcch_processor();
+    report_fatal_error_if_not(config.modulator, "Invalid PDCCH modulator.");
+    config.dmrs = create_dmrs_pdcch_processor();
+    report_fatal_error_if_not(config.dmrs, "Invalid DMRS PDCCH processor.");
 
     return create_pdcch_processor(config);
   }
@@ -107,9 +111,13 @@ public:
   std::unique_ptr<pdsch_processor> create()
   {
     pdsch_processor_configuration configuration;
-    configuration.encoder   = pdsch_enc_factory->create();
+    configuration.encoder = pdsch_enc_factory->create();
+    report_fatal_error_if_not(configuration.encoder, "Invalid PDSCH encoder.");
     configuration.modulator = pdsch_mod_factory->create();
-    configuration.dmrs      = dmrs_pdsch_fac->create();
+    report_fatal_error_if_not(configuration.modulator, "Invalid PDSCH modulator.");
+    configuration.dmrs = dmrs_pdsch_fac->create();
+    report_fatal_error_if_not(configuration.dmrs, "Invalid DMRS PDsCH processor.");
+
     return create_pdsch_processor(configuration);
   }
 };
@@ -124,11 +132,17 @@ public:
   std::unique_ptr<ssb_processor> create()
   {
     ssb_processor_config ssb_config;
-    ssb_config.encoder   = create_pbch_encoder();
+    ssb_config.encoder = create_pbch_encoder();
+    report_fatal_error_if_not(ssb_config.encoder, "Invalid PBCH encoder.");
     ssb_config.modulator = pbch_mod_factory->create();
-    ssb_config.dmrs      = create_dmrs_pbch_processor();
-    ssb_config.pss       = create_pss_processor();
-    ssb_config.sss       = create_sss_processor();
+    report_fatal_error_if_not(ssb_config.modulator, "Invalid PBCH modulator.");
+    ssb_config.dmrs = create_dmrs_pbch_processor();
+    report_fatal_error_if_not(ssb_config.dmrs, "Invalid DMRS PBCH processor.");
+    ssb_config.pss = create_pss_processor();
+    report_fatal_error_if_not(ssb_config.pss, "Invalid PSS processor.");
+    ssb_config.sss = create_sss_processor();
+    report_fatal_error_if_not(ssb_config.sss, "Invalid SSS processor.");
+
     return create_ssb_processor(ssb_config);
   }
 };
@@ -160,11 +174,13 @@ std::unique_ptr<downlink_processor>
 downlink_processor_single_executor_factory::create(const downlink_processor_config& config)
 {
   std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
-  srsgnb_assert(pdcch, "Invalid PDCCH processor");
+  report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
+
   std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
-  srsgnb_assert(pdsch, "Invalid PDSCH processor");
+  report_fatal_error_if_not(pdsch, "Invalid PDSCH processor.");
+
   std::unique_ptr<ssb_processor> ssb = ssb_proc_factory->create();
-  srsgnb_assert(ssb, "Invalid SSB processor");
+  report_fatal_error_if_not(ssb, "Invalid SSB processor.");
 
   return std::make_unique<downlink_processor_single_executor_impl>(gateway,
                                                                    std::move(pdcch),
@@ -177,7 +193,7 @@ downlink_processor_single_executor_factory::create(const downlink_processor_conf
 std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downlink_processor_pool_config config)
 {
   // Convert from pool config to pool_impl config.
-  downlink_processor_pool_config_impl dl_processors;
+  downlink_processor_pool_impl_config dl_processors;
   dl_processors.num_sectors = config.num_sectors;
 
   for (auto& proc : config.dl_processors) {
