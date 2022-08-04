@@ -14,6 +14,7 @@
 #include "srsgnb/fapi_adaptor/mac/messages/pdsch.h"
 #include "srsgnb/fapi_adaptor/mac/messages/prach.h"
 #include "srsgnb/fapi_adaptor/mac/messages/ssb.h"
+#include "srsgnb/srslog/logger.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -34,6 +35,8 @@ struct pdcch_group {
 };
 
 } // namespace
+
+static const std::string log_name = "MAC-FAPI adaptor";
 
 static static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>
 find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT>& candidates)
@@ -141,7 +144,18 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   error_type<validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
-    // :TODO: log errors,
+    srslog::fetch_basic_logger(log_name).error(
+        "DL_TTI.request bad-formed in SFN ({}) and slot ({}).", result.error().sfn, result.error().slot);
+    for (const auto& error : result.error().reports) {
+      srslog::fetch_basic_logger(log_name).error(
+          "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
+          error.message_type,
+          error.pdu_type.has_value() ? error.pdu_type.value() : -1,
+          error.property_name,
+          error.value,
+          error.expected_value_range.first,
+          error.expected_value_range.second);
+    }
 
     return;
   }
@@ -190,10 +204,8 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   ul_tti_request_message         msg;
   ul_tti_request_message_builder builder(msg);
 
-  // :TODO:
-  unsigned sfn  = 0;
-  unsigned slot = 0;
-  builder.set_basic_parameters(sfn, slot);
+  // :TODO: Should we check here the numerology matches incoming slot and configured numerology for cell?
+  builder.set_basic_parameters(ul_res.slot.sfn(), ul_res.slot.slot_index());
 
   for (const auto& pdu : ul_res.ul_res->prachs) {
     ul_prach_pdu_builder pdu_builder = builder.add_prach_pdu();
@@ -204,7 +216,18 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   error_type<validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
-    // :TODO: log errors,
+    srslog::fetch_basic_logger(log_name).error(
+        "UL_TTI.request bad-formed in SFN ({}) and slot ({}).", result.error().sfn, result.error().slot);
+    for (const auto& error : result.error().reports) {
+      srslog::fetch_basic_logger(log_name).error(
+          "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
+          error.message_type,
+          error.pdu_type.has_value() ? error.pdu_type.value() : -1,
+          error.property_name,
+          error.value,
+          error.expected_value_range.first,
+          error.expected_value_range.second);
+    }
 
     return;
   }

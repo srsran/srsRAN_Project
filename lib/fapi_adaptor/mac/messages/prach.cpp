@@ -34,7 +34,7 @@ static prach_format_type convert_to_fapi_prach_format(preamble_format format)
     case preamble_format::values::FORMAT3:
       return prach_format_type::three;
     default:
-      srsran_assert(0, "Invalid preamble format {{}}", static_cast<unsigned>(format));
+      srsgnb_assert(0, "Invalid preamble format {{}}", static_cast<unsigned>(format));
       break;
   }
   return prach_format_type::zero;
@@ -43,21 +43,21 @@ static prach_format_type convert_to_fapi_prach_format(preamble_format format)
 void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder,
                                                      const prach_occasion_info&  mac_pdu)
 {
-  // PCI not provided, passing 0.
-  static constexpr pci_t pci = 0;
-  builder.set_basic_parameters(pci,
+  builder.set_basic_parameters(mac_pdu.pci,
                                mac_pdu.nof_prach_occasions,
                                convert_to_fapi_prach_format(mac_pdu.format),
-                               mac_pdu.fd_ra_resources.start(),
+                               mac_pdu.index_fd_ra,
                                mac_pdu.start_symbol,
                                mac_pdu.nof_cs);
 
-  // :TODO: what to to with the handle.
+  // :TODO: should we manage the handle?
   static constexpr unsigned handle = 0;
+  // NOTE: as only one configuration is supported, the prach index is set to 0.
+  static constexpr unsigned prach_config_index = 0;
   builder.set_maintenance_v3_basic_parameters(handle,
                                               prach_config_scope_type::common_context,
-                                              mac_pdu.prach_config_index,
-                                              mac_pdu.fd_ra_resources.length(),
+                                              prach_config_index,
+                                              mac_pdu.nof_fd_ra,
                                               mac_pdu.start_preamble_index,
                                               mac_pdu.nof_preamble_indexes);
 }
