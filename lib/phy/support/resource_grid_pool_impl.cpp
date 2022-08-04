@@ -34,8 +34,3 @@ resource_grid& resource_grid_pool_impl::get_resource_grid(const resource_grid_co
   // Select resource grid and return the reference
   return *grids[slot * nof_sectors + context.sector];
 }
-
-std::unique_ptr<resource_grid_pool> srsgnb::create_resource_grid_pool(resource_grid_pool_config& config)
-{
-  return std::make_unique<resource_grid_pool_impl>(config);
-}

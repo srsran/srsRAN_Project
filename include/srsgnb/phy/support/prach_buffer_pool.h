@@ -33,7 +33,4 @@ public:
   virtual prach_buffer& get_prach_buffer() = 0;
 };
 
-/// Returns a pool for the given PRACH buffers.
-std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements);
-
 } // namespace srsgnb

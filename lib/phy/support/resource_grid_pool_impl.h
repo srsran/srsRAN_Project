@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
-#include "srsgnb/phy/support/support_factories.h"
+#include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include <vector>
 

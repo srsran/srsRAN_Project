@@ -7,7 +7,8 @@
 #
 
 add_library(srsgnb_phy_support STATIC
-        prach_buffer.cpp
+        prach_buffer_pool_impl.cpp
         resource_grid_pool_impl.cpp
-        resource_grid_impl.cpp)
+        resource_grid_impl.cpp
+        support_factories.cpp)
 target_link_libraries(srsgnb_phy_support srsvec)

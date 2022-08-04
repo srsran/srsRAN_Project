@@ -9,7 +9,6 @@
  */
 
 #include "resource_grid_impl.h"
-#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/error_handling.h"
@@ -167,9 +166,4 @@ bool resource_grid_impl::is_empty(unsigned port) const
 {
   srsgnb_assert(port < empty.size(), "Port index {} is out of range (max {})", port, empty.size());
   return empty[port];
-}
-
-std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc)
-{
-  return std::make_unique<resource_grid_impl>(nof_ports, nof_symbols, nof_subc);
 }

@@ -23,9 +23,3 @@ prach_buffer& prach_buffer_pool_impl::get_prach_buffer()
   ++current_index;
   return *pool[index];
 }
-
-std::unique_ptr<prach_buffer_pool>
-srsgnb::create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements)
-{
-  return std::make_unique<prach_buffer_pool_impl>(std::move(elements));
-}

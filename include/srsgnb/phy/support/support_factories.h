@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/support/prach_buffer.h"
+#include "srsgnb/phy/support/prach_buffer_pool.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include <memory>
 #include <vector>
@@ -23,16 +24,6 @@ namespace srsgnb {
 /// \param[in] nof_subc    Number of subcarriers.
 /// \return A resource grid object.
 std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc);
-
-/// Describes a resource grid pool configuration.
-struct resource_grid_pool_config {
-  /// Number of sectors.
-  unsigned nof_sectors = 1;
-  /// Number of slots to be buffered, per sector.
-  unsigned nof_slots = 40;
-  /// Resource grids, ownerships are transferred to the pool.
-  std::vector<std::unique_ptr<resource_grid>> grids;
-};
 
 /// \brief Creates a generic resource grid pool.
 /// \param config Provides the configuration of the resource grid pool.
@@ -48,5 +39,8 @@ std::unique_ptr<prach_buffer> create_prach_buffer_long();
 ///
 /// Short buffers contain 139-element PRACH sequences for up to 12 OFDM symbols.
 std::unique_ptr<prach_buffer> create_prach_buffer_short();
+
+/// \brief Returns a pool for the given PRACH buffers.
+std::unique_ptr<prach_buffer_pool> create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& elements);
 
 } // namespace srsgnb

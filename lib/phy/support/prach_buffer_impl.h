@@ -8,13 +8,15 @@
  *
  */
 
-#include "srsgnb/phy/support/prach_buffer.h"
+#pragma once
+
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/phy/support/support_factories.h"
 
 using namespace srsgnb;
 
-namespace {
+namespace srsgnb {
 
 template <unsigned SEQ_LEN, unsigned MAX_NOF_SYMB>
 class prach_buffer_static : public prach_buffer
@@ -50,14 +52,4 @@ public:
   }
 };
 
-} // namespace
-
-std::unique_ptr<prach_buffer> srsgnb::create_prach_buffer_long()
-{
-  return std::make_unique<prach_buffer_static<839, 4>>();
-}
-
-std::unique_ptr<prach_buffer> srsgnb::create_prach_buffer_short()
-{
-  return std::make_unique<prach_buffer_static<139, 12>>();
-}
+} // namespace srsgnb

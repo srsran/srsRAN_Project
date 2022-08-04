@@ -16,6 +16,16 @@
 
 namespace srsgnb {
 
+/// Describes a resource grid pool configuration.
+struct resource_grid_pool_config {
+  /// Number of sectors.
+  unsigned nof_sectors = 1;
+  /// Number of slots to be buffered, per sector.
+  unsigned nof_slots = 40;
+  /// Resource grids, ownerships are transferred to the pool.
+  std::vector<std::unique_ptr<resource_grid>> grids;
+};
+
 /// Describes a resource grid pool interface
 class resource_grid_pool
 {
