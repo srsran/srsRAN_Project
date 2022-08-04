@@ -29,8 +29,7 @@ void uplink_processor_single_executor_impl::process_prach(const prach_buffer&   
                                                           const prach_buffer_context&               context,
                                                           const prach_detector::slot_configuration& configuration)
 {
-  // :TODO: not sure what data adaptatios goes here. Please review it when the PRACH_detector is updated, to work in
-  // frequency domain.
+  // :TODO: not sure what data adaptation goes here. Please review it when the PRACH_detector is updated.
   executor.execute([samples = buffer.get_symbol(context.start_symbol), configuration, this]() {
     const prach_detector::detection_result& result = detector->detect(samples, configuration);
 
