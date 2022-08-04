@@ -13,10 +13,18 @@
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
-using namespace asn1::rrc_nr;
 
 bool rrc_ue_entity::init_pucch()
 {
   // TODO: add PUCCH allocation
   return true;
+}
+
+void rrc_ue_entity::on_ue_delete_request()
+{
+  // FIXME: this enqueues a new CORO on top of an existing one.
+  ue_context_release_command_message msg = {};
+  msg.ue_index                           = context.ue_index;
+  // TODO: Set cause
+  du_processor_notifier.on_ue_context_release_command(msg);
 }

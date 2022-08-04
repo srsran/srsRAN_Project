@@ -9,22 +9,11 @@
  */
 
 #include "../../ran/gnb_format.h"
-#include "rrc_asn1_helpers.h"
 #include "rrc_ue_entity.h"
 
 using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
-
-void rrc_ue_entity::send_rrc_setup()
-{
-  dl_ccch_msg_s dl_ccch_msg;
-  dl_ccch_msg.msg.set_c1().set_rrc_setup();
-  rrc_setup_s& rrc_setup = dl_ccch_msg.msg.c1().rrc_setup();
-  fill_asn1_rrc_setup_msg(rrc_setup, du_to_cu_container);
-
-  send_dl_ccch(dl_ccch_msg);
-}
 
 void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
 {
@@ -32,7 +21,7 @@ void rrc_ue_entity::send_dl_ccch(const dl_ccch_msg_s& dl_ccch_msg)
   byte_buffer pdu = pack_into_pdu(dl_ccch_msg);
 
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB0", c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}", context.c_rnti);
   fmt::format_to(fmtbuf2, "DL-CCCH.{}", dl_ccch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_ccch_msg, to_c_str(fmtbuf2));
 
@@ -46,8 +35,8 @@ void rrc_ue_entity::send_dl_dcch(const dl_dcch_msg_s& dl_dcch_msg)
   byte_buffer pdu = pack_into_pdu(dl_dcch_msg);
 
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}", c_rnti);
-  fmt::format_to(fmtbuf2, "DL-CCCH.{}", dl_dcch_msg.msg.c1().type().to_string());
+  fmt::format_to(fmtbuf, "rnti=0x{:x}", context.c_rnti);
+  fmt::format_to(fmtbuf2, "DL-DCCH.{}", dl_dcch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Tx, pdu, dl_dcch_msg, to_c_str(fmtbuf2));
 
   // send down the stack
@@ -66,23 +55,9 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
   }
 
   send_dl_ccch(dl_ccch_msg);
-
-  // Send UE Context Release Command message
-  send_ue_context_release_command();
-
-  // TODO: remove user?
 }
 
 void rrc_ue_entity::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
 {
   srbs[srb_id]->on_new_pdu({std::move(pdu)});
-}
-
-void rrc_ue_entity::send_ue_context_release_command()
-{
-  ue_context_release_command_message msg = {};
-  msg.ue_index                           = ue_index;
-  // TODO: Set cause
-
-  du_processor_notifier.on_ue_context_release_command(msg);
 }

@@ -15,7 +15,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::rrc_nr;
 
-rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
+rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               rrc_du_,
                              rrc_ue_du_processor_notifier&          du_proc_notif_,
                              rrc_ue_ngap_notifier&                  ngap_notif_,
                              const ue_index_t                       ue_index_,
@@ -24,15 +24,15 @@ rrc_ue_entity::rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                              const srb_notifiers&                   srbs_,
                              const asn1::unbounded_octstring<true>& du_to_cu_container_,
                              rrc_ue_task_scheduler&                 task_sched_) :
-  parent(parent_),
+  context(ue_index_, c_rnti_, cfg_),
+  rrc_du(rrc_du_),
   du_processor_notifier(du_proc_notif_),
   ngap_notifier(ngap_notif_),
-  ue_index(ue_index_),
-  c_rnti(c_rnti_),
-  cfg(cfg_),
   srbs(srbs_),
   du_to_cu_container(du_to_cu_container_),
-  task_sched(task_sched_)
+  task_sched(task_sched_),
+  logger(cfg_.logger),
+  event_mng(std::make_unique<rrc_ue_event_manager>(task_sched_.get_timer_manager()))
 {
   // TODO: Use task_sched to schedule RRC procedures.
   (void)task_sched;
@@ -51,9 +51,14 @@ rrc_ul_dcch_pdu_handler& rrc_ue_entity::get_ul_dcch_pdu_handler()
 void rrc_ue_entity::connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier)
 {
   if (srb_id >= MAX_NOF_SRBS) {
-    cfg.logger.error("Couldn't connect notifier for SRB{}", srb_id);
+    logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
   srbs[srb_id] = &notifier;
+}
+
+void rrc_ue_entity::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)
+{
+  send_dl_ccch(dl_ccch_msg);
 }
 
 template <class T>
@@ -63,17 +68,17 @@ void rrc_ue_entity::log_rrc_message(const char*       source,
                                     const T&          msg,
                                     const char*       msg_type)
 {
-  if (cfg.logger.debug.enabled()) {
+  if (logger.debug.enabled()) {
     asn1::json_writer json_writer;
     msg.to_json(json_writer);
     // TODO: remove serialization
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    cfg.logger.debug(
+    logger.debug(
         bytes.data(), bytes.size(), "{} - {} {} ({} B)", source, (dir == Rx) ? "Rx" : "Tx", msg_type, pdu.length());
-    cfg.logger.debug("Content: {}", json_writer.to_string().c_str());
-  } else if (cfg.logger.info.enabled()) {
+    logger.debug("Content: {}", json_writer.to_string().c_str());
+  } else if (logger.info.enabled()) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    cfg.logger.info(
+    logger.info(
         bytes.data(), bytes.size(), "{} - {} {} ({} B)", source, (dir == Rx) ? "Rx" : "Tx", msg_type, pdu.length());
   }
 }
@@ -116,9 +121,9 @@ void rrc_ue_entity::log_rx_pdu_fail(uint16_t         rnti,
 {
   if (log_hex) {
     std::vector<uint8_t> bytes{pdu.begin(), pdu.end()};
-    cfg.logger.error(
+    logger.error(
         bytes.data(), bytes.size(), "Rx {} PDU, rnti=0x{:x}} - Discarding. Cause: {}", source, rnti, cause_str);
   } else {
-    cfg.logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
+    logger.error("Rx {} PDU, rnti=0x{:x} - Discarding. Cause: {}", source, rnti, cause_str);
   }
 }

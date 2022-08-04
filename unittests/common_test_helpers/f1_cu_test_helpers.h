@@ -107,6 +107,26 @@ f1c_msg generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
   return init_ul_rrc_msg;
 }
 
+f1c_msg generate_valid_rrc_setup_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+{
+  f1c_msg ul_rrc_msg = {};
+
+  ul_rrc_msg.pdu.set_init_msg();
+  ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
+
+  auto& ul_rrc                     = ul_rrc_msg.pdu.init_msg().value.ulrrc_msg_transfer();
+  ul_rrc->gnb_du_ue_f1_ap_id.value = c_rnti; // same as C-RNTI
+
+  ul_rrc->gnb_cu_ue_f1_ap_id.value = cu_ue_id;
+  ul_rrc->srbid.value              = 1;
+  ul_rrc->rrc_container.value.from_string(
+      "000010c01000082727e01c3ff100c047e004139000bf202f8998000410000000f2e04f070f0707100517e004139000bf202f899800041000"
+      "0000f1001032e04f070f0702f1b08010027db00000000080101b669000000000801000001000000005202f8990000011707f070c0401980b"
+      "018010174000090530101000000000");
+
+  return ul_rrc_msg;
+}
+
 f1c_msg generate_f1_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
 {
   f1c_msg ue_ctxt_rel_complete_msg = {};

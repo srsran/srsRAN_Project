@@ -54,7 +54,8 @@ void rrc_entity::release_ues()
 
 int rrc_entity::get_pucch_resources()
 {
-  return 0;
+  // TODO: add proper allocation, return success for now
+  return 1;
 }
 
 bool rrc_entity::is_rrc_connect_allowed()

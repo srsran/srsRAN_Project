@@ -63,7 +63,8 @@ public:
     ue_ctrl_loop[ue_index].schedule(std::move(task));
   }
 
-  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(); }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
+  timer_manager& get_timer_manager() override { return timer_db; }
 
 private:
   /// \brief Lookup the cell based on a given NR cell ID.

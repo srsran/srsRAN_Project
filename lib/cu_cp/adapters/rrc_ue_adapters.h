@@ -76,7 +76,8 @@ public:
     du_processor_task_sched.handle_ue_async_task(ue_index, std::move(task));
   }
 
-  unique_timer make_unique_timer() override { return du_processor_task_sched.make_unique_timer(); }
+  unique_timer   make_unique_timer() override { return du_processor_task_sched.make_unique_timer(); }
+  timer_manager& get_timer_manager() override { return du_processor_task_sched.get_timer_manager(); }
 
 private:
   ue_index_t                      ue_index;

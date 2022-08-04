@@ -163,17 +163,18 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
-  // Handling of Initial UL RRC message transfer
-  {
-    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  // Inject Initial UL RRC message
+  f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  test_logger.info("Injecting Initial UL RRC message");
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // Pass PDU to CU-CP
-    test_logger.info("Injecting Initial UL RRC message");
-    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
+  // Inject UL RRC message containing RRC Setup Complete
+  f1c_msg ul_rrc_msg = generate_valid_rrc_setup_complete_msg(0, 41255);
+  test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ul_rrc_msg);
 
-    // check that UE has been added
-    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
-  }
+  // check that UE has been added
+  EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
 }
 
 /// Test the f1 initial UL RRC message transfer procedure
@@ -191,13 +192,21 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   // Pass message to CU-CP
   cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
 
-  // Handling of Initial UL RRC message transfer
+  // Attach first UE (successful)
   {
-    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+    unsigned int first_ue_c_rnti   = 41255;
+    unsigned int first_ue_cu_ue_id = 0;
 
-    // Pass PDU to CU-CP
+    // Inject Initial UL RRC message
+    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(first_ue_c_rnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
+
+    // Inject ULL RRC message containing RRC Setup Complete
+    f1c_msg ul_rrc_msg = generate_valid_rrc_setup_complete_msg(first_ue_cu_ue_id, first_ue_c_rnti);
+    test_logger.info("Injecting UL RRC message (RRC Setup Complete)");
+    cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ul_rrc_msg);
+
     // check that UE has been added
     EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
   }
@@ -205,27 +214,32 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
   // Disconnect AMF
   cu_cp_obj->on_amf_connection_drop();
 
-  // Handling of Initial UL RRC message transfer
+  // Attach second UE (failure)
   {
-    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41256);
+    unsigned int second_ue_c_rnti   = 41256;
+    unsigned int second_ue_cu_ue_id = 1;
 
-    // Pass PDU to CU-CP
+    // Inject Initial UL RRC message
+    f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(second_ue_c_rnti);
     test_logger.info("Injecting Initial UL RRC message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
 
-    // check that UE has been added
-    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
-
-    // Check that UE has been added to F1AP
+    // Check that UE has been added to F1AP (the AMF connection drop isn't visible to F1AP)
     EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 2);
 
+    // The UE should not exists in the CU-CP though
+    EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
+
+    // FIXME: release injection should be done automatically by DU processor
+
     // Inject UE Context Release Complete message
-    f1c_msg ue_context_release_complete_msg = generate_f1_ue_context_release_complete_msg(1, 41256);
+    f1c_msg ue_context_release_complete_msg =
+        generate_f1_ue_context_release_complete_msg(second_ue_cu_ue_id, second_ue_c_rnti);
 
     test_logger.info("Injecting UE Context Release Complete message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
 
-    // Check that UE has been removed from F1AP
+    // Check that UE has also been removed from F1AP
     EXPECT_EQ(cu_cp_obj->get_f1c_statistics_handler(int_to_du_index(0)).get_nof_ues(), 1);
   }
 }

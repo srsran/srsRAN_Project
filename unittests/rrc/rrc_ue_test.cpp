@@ -97,8 +97,11 @@ private:
 
 struct dummy_ue_task_scheduler : public rrc_ue_task_scheduler {
 public:
-  void         schedule_async_task(async_task<void>&& task) override { ctrl_loop.schedule(std::move(task)); }
-  unique_timer make_unique_timer() override { return timer_db.create_unique_timer(); }
+  void           schedule_async_task(async_task<void>&& task) override { ctrl_loop.schedule(std::move(task)); }
+  unique_timer   make_unique_timer() override { return timer_db.create_unique_timer(); }
+  timer_manager& get_timer_manager() override { return timer_db; }
+
+  void tick_timer() { timer_db.tick_all(); }
 
 private:
   async_task_sequencer ctrl_loop{16};
@@ -121,10 +124,12 @@ protected:
     rrc_ue_ev_notifier.connect(*du_proc_rrc_ue);
 
     // create single UE context and add RRC user
+    ue_ctxt.ue_index   = ALLOCATED_UE_INDEX;
     ue_ctxt.c_rnti     = to_rnti(0x1234);
     ue_ctxt.task_sched = std::make_unique<dummy_ue_task_scheduler>();
     rrc_ue_creation_message rrc_ue_create_msg{};
-    rrc_ue_create_msg.c_rnti = ue_ctxt.c_rnti;
+    rrc_ue_create_msg.ue_index = ue_ctxt.ue_index;
+    rrc_ue_create_msg.c_rnti   = ue_ctxt.c_rnti;
     rrc_ue_create_msg.du_to_cu_container.resize(1);
     rrc_ue_create_msg.ue_task_sched = ue_ctxt.task_sched.get();
     ue_ctxt.rrc                     = rrc->add_user(std::move(rrc_ue_create_msg));
@@ -132,6 +137,8 @@ protected:
     // connect SRB0 with RRC to "F1" adapter
     ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
     ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0, *ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier.get());
+
+    task_sched_handle = dynamic_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
   }
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()
@@ -167,7 +174,23 @@ protected:
 
   void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_t::srb1].rrc_tx_notifier, nullptr); }
 
+  void tick_timer()
+  {
+    unsigned setup_complete_timeout_ms = 1000;
+    for (unsigned i = 0; i < setup_complete_timeout_ms; ++i) {
+      task_sched_handle->tick_timer();
+    }
+  }
+
+  void check_ue_release_not_requested()
+  {
+    EXPECT_NE(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX);
+  }
+
+  void check_ue_release_requested() { EXPECT_EQ(du_proc_rrc_ue->last_ue_ctxt_rel_cmd.ue_index, ALLOCATED_UE_INDEX); }
+
 private:
+  const ue_index_t                                     ALLOCATED_UE_INDEX = int_to_ue_index(23);
   rrc_cfg_t                                            cfg{}; // empty config
   std::unique_ptr<rrc_entity_du_interface>             rrc;
   ue_context                                           ue_ctxt{};
@@ -175,6 +198,7 @@ private:
   std::unique_ptr<dummy_du_processor_rrc_ue_interface> du_proc_rrc_ue;
   dummy_rrc_ue_du_processor_adapter                    rrc_ue_ev_notifier;
   dummy_rrc_ue_ngap_adapter                            rrc_ue_ngap_ev_notifier;
+  dummy_ue_task_scheduler*                             task_sched_handle = nullptr;
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);
 
@@ -198,7 +222,7 @@ TEST_F(rrc_setup, when_amf_disconnected_then_rrc_reject_sent)
 {
   receive_setup_request();
 
-  // check if the RRC setup message was generated
+  // check if the RRC reject message was generated
   EXPECT_EQ(get_pdu_type(), asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types::rrc_reject);
 }
 
@@ -215,4 +239,20 @@ TEST_F(rrc_setup, when_amf_connected_then_rrc_setup_sent)
   check_srb1_exists();
 
   receive_setup_complete();
+}
+
+/// Test the correct handling of missing RRC setup complete message
+TEST_F(rrc_setup, when_setup_complete_timeout_then_ue_deleted)
+{
+  connect_amf();
+  receive_setup_request();
+
+  // check that UE has been created and was not requested to be released
+  check_ue_release_not_requested();
+
+  // tick timer until RRC setup complete timer fires
+  tick_timer();
+
+  // verify that RRC requested UE context release
+  check_ue_release_requested();
 }

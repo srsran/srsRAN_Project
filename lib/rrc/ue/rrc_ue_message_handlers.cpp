@@ -9,6 +9,8 @@
  */
 
 #include "../../ran/gnb_format.h"
+#include "procedures/rrc_setup_procedure.h"
+#include "rrc_asn1_helpers.h"
 #include "rrc_ue_entity.h"
 
 using namespace srsgnb;
@@ -23,14 +25,14 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_ccch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_ccch_msg.msg.type().value != ul_ccch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(c_rnti, "UL-CCCH", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.c_rnti, "UL-CCCH", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, ", c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}", context.c_rnti);
   fmt::format_to(fmtbuf2, "UL-CCCH.{}", ul_ccch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_ccch_msg, to_c_str(fmtbuf2));
 
@@ -43,52 +45,50 @@ void rrc_ue_entity::handle_ul_ccch_pdu(byte_buffer_slice pdu)
       handle_rrc_reest_request(ul_ccch_msg.msg.c1().rrc_reest_request());
       break;
     default:
-      log_rx_pdu_fail(c_rnti, "UL-CCCH", pdu.view(), "Unsupported message type");
+      log_rx_pdu_fail(context.c_rnti, "UL-CCCH", pdu.view(), "Unsupported message type");
       // TODO Remove user
   }
 }
 
-void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& msg)
+void rrc_ue_entity::handle_rrc_setup_request(const asn1::rrc_nr::rrc_setup_request_s& request_msg)
 {
-  const uint8_t max_wait_time_secs = 16;
-  if (not parent.is_rrc_connect_allowed()) {
-    cfg.logger.error("RRC connections not allowed. Sending Connection Reject");
-    send_rrc_reject(max_wait_time_secs);
+  // 1. Perform various checks to make sure we can serve the RRC Setup Request
+  if (not rrc_du.is_rrc_connect_allowed()) {
+    logger.error("RRC connections not allowed. Sending Connection Reject");
+    send_rrc_reject(rrc_reject_max_wait_time_s);
+    on_ue_delete_request();
     return;
   }
 
-  // Allocate PUCCH resources and reject if not available
-  if (not init_pucch()) {
-    cfg.logger.warning("Could not allocate PUCCH resources for rnti=0x{}. Sending Connection Reject", c_rnti);
-    send_rrc_reject(max_wait_time_secs);
+  // 1.1 Check and allocate PUCCH resources
+  if (not rrc_du.get_pucch_resources()) {
+    logger.warning("Could not allocate PUCCH resources for rnti=0x{}. Sending Connection Reject", context.c_rnti);
+    send_rrc_reject(rrc_reject_max_wait_time_s);
+    on_ue_delete_request();
     return;
   }
 
-  const rrc_setup_request_ies_s& ies = msg.rrc_setup_request;
-
-  switch (ies.ue_id.type().value) {
+  // 1.2 Extract the setup ID and cause
+  const rrc_setup_request_ies_s& request_ies = request_msg.rrc_setup_request;
+  switch (request_ies.ue_id.type().value) {
     case init_ue_id_c::types_opts::ng_minus5_g_s_tmsi_part1:
-      rrc_ctxt.setup_ue_id = ies.ue_id.ng_minus5_g_s_tmsi_part1().to_number();
+      context.setup_ue_id = request_ies.ue_id.ng_minus5_g_s_tmsi_part1().to_number();
       break;
     case asn1::rrc_nr::init_ue_id_c::types_opts::random_value:
-      rrc_ctxt.setup_ue_id = ies.ue_id.random_value().to_number();
+      context.setup_ue_id = request_ies.ue_id.random_value().to_number();
       // TODO: communicate with NGAP
       break;
     default:
-      cfg.logger.error("Unsupported RRCSetupRequest");
-      send_rrc_reject(max_wait_time_secs);
+      logger.error("Unsupported RRCSetupRequest");
+      send_rrc_reject(rrc_reject_max_wait_time_s);
+      on_ue_delete_request();
       return;
   }
-  rrc_ctxt.connection_cause.value = ies.establishment_cause.value;
+  context.connection_cause.value = request_ies.establishment_cause.value;
 
-  // create SRB1
-  srb_creation_message srb1_msg{};
-  srb1_msg.ue_index = ue_index;
-  srb1_msg.srb_id   = srb_id_t::srb1;
-  srb1_msg.pdcp_cfg = cfg.srb1_pdcp_cfg;
-  du_processor_notifier.on_create_srb(srb1_msg);
-
-  send_rrc_setup();
+  // Launch RRC setup procedure
+  task_sched.schedule_async_task(launch_async<rrc_setup_procedure>(
+      context, request_msg, du_to_cu_container, *this, du_processor_notifier, *event_mng, logger));
 }
 
 void rrc_ue_entity::handle_rrc_reest_request(const asn1::rrc_nr::rrc_reest_request_s& msg)
@@ -104,24 +104,26 @@ void rrc_ue_entity::handle_ul_dcch_pdu(byte_buffer_slice pdu)
     asn1::cbit_ref bref({pdu.begin(), pdu.end()});
     if (ul_dcch_msg.unpack(bref) != asn1::SRSASN_SUCCESS or
         ul_dcch_msg.msg.type().value != ul_dcch_msg_type_c::types_opts::c1) {
-      log_rx_pdu_fail(c_rnti, "UL-DCCH", pdu.view(), "Failed to unpack message", true);
+      log_rx_pdu_fail(context.c_rnti, "UL-DCCH", pdu.view(), "Failed to unpack message", true);
       return;
     }
   }
 
   // Log Rx message
   fmt::memory_buffer fmtbuf, fmtbuf2;
-  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", c_rnti);
+  fmt::format_to(fmtbuf, "rnti=0x{:x}, SRB1", context.c_rnti);
   fmt::format_to(fmtbuf2, "UL-DCCH.{}", ul_dcch_msg.msg.c1().type().to_string());
   log_rrc_message(to_c_str(fmtbuf), Rx, pdu.view(), ul_dcch_msg, to_c_str(fmtbuf2));
 
-  switch (ul_dcch_msg.msg.c1().type()) {
-    case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer: {
+  switch (ul_dcch_msg.msg.c1().type().value) {
+    case ul_dcch_msg_type_c::c1_c_::types_opts::options::ul_info_transfer:
       handle_ul_info_transfer(ul_dcch_msg.msg.c1().ul_info_transfer().crit_exts.ul_info_transfer());
-    } break;
-
+      break;
+    case ul_dcch_msg_type_c::c1_c_::types_opts::rrc_setup_complete:
+      handle_rrc_setup_complete(ul_dcch_msg.msg.c1().rrc_setup_complete());
+      break;
     default:
-      cfg.logger.error("Unsupported UL DCCH Message type: {}", ul_dcch_msg.msg.c1().type().to_string());
+      log_rx_pdu_fail(context.c_rnti, "UL-DCCH", pdu.view(), "Unsupported message type");
       break;
   }
   // TODO: Handle message
@@ -139,7 +141,7 @@ void rrc_ue_entity::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_inf
 
 void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)
 {
-  cfg.logger.info("Received DL NAS Transport message");
+  logger.info("Received DL NAS Transport message");
 
   dl_dcch_msg_s           dl_dcch_msg;
   dl_info_transfer_ies_s& dl_info_transfer =
@@ -148,4 +150,12 @@ void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_messa
   dl_info_transfer.ded_nas_msg = msg.ded_nas_msg;
 
   send_dl_dcch(dl_dcch_msg);
+}
+
+void rrc_ue_entity::handle_rrc_setup_complete(const rrc_setup_complete_s& msg)
+{
+  expected<uint8_t> transaction_id = msg.rrc_transaction_id;
+
+  // Set transaction result and resume suspended procedure.
+  event_mng->transactions.set(transaction_id.value(), msg);
 }
