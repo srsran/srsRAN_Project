@@ -12,7 +12,6 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/support_factories.h"
 
 using namespace srsgnb;
 

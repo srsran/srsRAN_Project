@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include <vector>
-
 namespace srsgnb {
 
 class prach_buffer;
