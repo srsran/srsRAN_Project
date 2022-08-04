@@ -244,7 +244,8 @@ static asn1::rrc_nr::dl_cfg_common_sib_s make_asn1_rrc_dl_config_common(const dl
   return out;
 }
 
-static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options set_rach_generic_msg1_fdm(unsigned msg1_fdm_value)
+// Helper function that converts msg1-fdm rach parameter into asn1 type.
+static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options rach_msg1_fdm_convert_to_asn1(unsigned msg1_fdm_value)
 {
   switch (msg1_fdm_value) {
     case 1:
@@ -256,7 +257,7 @@ static asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::options set_rach_generic
     case 8:
       return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::eight;
     default:
-      report_fatal_error("Invalid msg1-fdm field. Set default value 1");
+      report_fatal_error("Invalid msg1-fdm field. Return default value 1");
   }
   return asn1::rrc_nr::rach_cfg_generic_s::msg1_fdm_opts::one;
 }
@@ -287,7 +288,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   const rach_config_common& rach_cfg      = *cfg.init_ul_bwp.rach_cfg_common;
   out.init_ul_bwp.rach_cfg_common_present = true;
   rach_cfg_common_s& rach                 = out.init_ul_bwp.rach_cfg_common.set_setup();
-  rach.rach_cfg_generic.msg1_fdm.value    = set_rach_generic_msg1_fdm(rach_cfg.rach_cfg_generic.msg1_fdm);
+  rach.rach_cfg_generic.msg1_fdm.value    = rach_msg1_fdm_convert_to_asn1(rach_cfg.rach_cfg_generic.msg1_fdm);
   rach.rach_cfg_generic.msg1_freq_start   = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
   rach.rach_cfg_generic.zero_correlation_zone_cfg =
       static_cast<uint8_t>(rach_cfg.rach_cfg_generic.zero_correlation_zone_config);
