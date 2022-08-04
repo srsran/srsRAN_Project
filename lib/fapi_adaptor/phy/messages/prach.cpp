@@ -14,7 +14,7 @@ using namespace srsgnb;
 using namespace fapi_adaptor;
 using namespace fapi;
 
-preamble_format convert_fapi_format_to_phy(prach_format_type format)
+preamble_format convert_fapi_format_to_phy(fapi::prach_format_type format)
 {
   switch (format) {
     case prach_format_type::zero:
@@ -30,7 +30,7 @@ preamble_format convert_fapi_format_to_phy(prach_format_type format)
       break;
   }
 
-  return preamble_format::values::OTHER;
+  return preamble_format::values::FORMAT1;
 }
 
 void srsgnb::fapi_adaptor::convert_prach_fapi_to_phy(prach_detector::slot_configuration& detector_config,

@@ -16,11 +16,11 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Helper function that converts from a UL PRACH FAPI PDU to a PRACH processor PDU.
+/// \brief Helper function that converts from a UL PRACH FAPI PDU to a PRACH processor PDU.
 ///
 /// \param[out] detector_config Configuration for the PRACH detector.
-/// \param fapi_pdu FAPI PRACH PDU.
-/// \param prach_config_tlv Multi-PRACH configuration TLV.
+/// \param[in] fapi_pdu FAPI PRACH PDU.
+/// \param[in] prach_config_tlv Multi-PRACH configuration TLV.
 void convert_prach_fapi_to_phy(prach_detector::slot_configuration& detector_config,
                                const fapi::ul_prach_pdu&           fapi_pdu,
                                const fapi::multi_prach_config&     prach_config_tlv);
