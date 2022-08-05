@@ -15,8 +15,10 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// \brief This class listens to FAPI slot based data specific message events and translates them to the suitable data
-/// types for the MAC layer.
+/// \brief FAPI-to-MAC data message translator.
+///
+/// This class listens to slot-based, data-specific FAPI message events and translates them into the suitable data types
+/// for the MAC layer.
 class fapi_to_mac_data_msg_translator : public fapi::slot_data_message_notifier
 {
 public:

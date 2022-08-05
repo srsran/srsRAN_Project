@@ -22,11 +22,12 @@ class mac_cell_slot_handler;
 
 namespace fapi_adaptor {
 
-/// \brief Adaptation interface between the MAC layer and the FAPI interface.
+/// \brief MAC&ndash;FAPI bidirectional adaptor interface.
 ///
-/// Gives access to the interfaces required to interconnect the adaptor with the MAC layer.
+/// This adaptor is a collection of interfaces to translate FAPI messages into their MAC layer counterpart and vice
+/// versa.
 ///
-/// \note This object has the ownership of all the internal components of the adaptor.
+/// \note All implementations of this public interface must hold the ownership of all its internal components.
 class mac_fapi_adaptor
 {
 public:

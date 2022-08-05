@@ -20,38 +20,40 @@ struct rx_data_indication_message;
 struct srs_indication_message;
 struct uci_indication_message;
 
-/// This interface notifies the reception of FAPI slot based data specific messages from the underlying PHY.
+/// \brief Slot-based, data-specific message notifier interface.
+///
+/// This interface notifies the reception of FAPI slot based, data-specific messages from the underlying PHY.
 class slot_data_message_notifier
 {
 public:
   virtual ~slot_data_message_notifier() = default;
 
-  /// \brief Callback to notify the reception of a downlink TTI response message.
+  /// \brief Notifies the reception of a downlink TTI response message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_dl_tti_response(const dl_tti_response_message& msg) = 0;
 
-  /// \brief Callback to notify the reception of a RX data indication message.
+  /// \brief CNotifies the reception of a RX data indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_rx_data_indication(const rx_data_indication_message& msg) = 0;
 
-  /// \brief Callback to notify the reception of a CRC indication message.
+  /// \brief Notifies the reception of a CRC indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_crc_indication(const crc_indication_message& msg) = 0;
 
-  /// \brief Callback to notify the reception of a UCI indication message.
+  /// \brief Notifies the reception of a UCI indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_uci_indication(const uci_indication_message& msg) = 0;
 
-  /// \brief Callback to notify the reception of a SRS indication message.
+  /// \brief Notifies the reception of a SRS indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_srs_indication(const srs_indication_message& msg) = 0;
 
-  /// \brief Callback to notify the reception of a RACH indication message.
+  /// \brief Notifies the reception of a RACH indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_rach_indication(const rach_indication_message& msg) = 0;

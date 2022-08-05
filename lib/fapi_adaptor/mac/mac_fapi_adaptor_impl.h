@@ -18,10 +18,7 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// \brief MAC-FAPI adaptor implementation.
-///
-/// This class owns all the components of the MAC-FAPI adaptor. It gives access to all the required interfaces so that
-/// the adaptor can be connected with the rest of layers.
+/// \brief MAC&ndash;FAPI bidirectional adaptor implementation.
 class mac_fapi_adaptor_impl : public mac_fapi_adaptor
 {
 public:
@@ -40,9 +37,13 @@ public:
   void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) override;
 
 private:
-  const unsigned                  sector_id;
-  mac_to_fapi_translator          mac_translator;
+  /// Unique sector identifier for the adaptor.
+  const unsigned sector_id;
+  /// MAC-to-FAPI data translator.
+  mac_to_fapi_translator mac_translator;
+  /// FAPI-to-MAC data-specific message translator.
   fapi_to_mac_data_msg_translator fapi_data_translator;
+  /// FAPI-to-MAC time-specific message translator.
   fapi_to_mac_time_msg_translator fapi_time_translator;
 };
 

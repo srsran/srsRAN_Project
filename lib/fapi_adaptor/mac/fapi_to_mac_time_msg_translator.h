@@ -22,7 +22,9 @@ namespace fapi_adaptor {
 
 class mac_to_fapi_translator;
 
-/// \brief This class listens to FAPI slot based time specific message events and translates them to the suitable data
+/// \brief FAPI-to-MAC timing message translator.
+///
+/// This class listens to slot-based, time-specific FAPI message events and translates them to the suitable data
 /// types for the MAC layer.
 class fapi_to_mac_time_msg_translator : public fapi::slot_time_message_notifier
 {
@@ -32,7 +34,7 @@ public:
   // See interface for documentation.
   void on_slot_indication(const fapi::slot_indication_message& msg) override;
 
-  /// Sets the given \c mac_cell_slot_handler. This handler will be notified for each new slot.
+  /// Sets the given cell-specific slot handler. This handler will be used to receive new slot notifications.
   ///
   /// \param handler Handler to be set.
   void set_cell_slot_handler(mac_cell_slot_handler& handler) { mac_slot_handler = std::ref(handler); }

@@ -19,7 +19,6 @@ using namespace fapi_adaptor;
 
 namespace {
 
-/// Dummy implementation of the mac_cell_slot_handler interface.
 class mac_cell_slot_handler_dummy : public mac_cell_slot_handler
 {
 public:
@@ -28,8 +27,8 @@ public:
 
 } // namespace
 
-/// Instance used by \c fapi_to_mac_time_msg_translator until it gets configured through the \c
-/// set_mac_cell_slot_handler() method.
+/// This dummy instance is used by the FAPI-to-MAC translator in construction to be later replaced by the user provided
+/// MAC cell slot handler.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
 fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator,

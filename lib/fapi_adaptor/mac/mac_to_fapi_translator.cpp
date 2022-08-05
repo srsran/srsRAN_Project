@@ -233,5 +233,5 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
     return;
   }
 
-  gateway.ul_tti_request(msg);
+  msg_gw.ul_tti_request(msg);
 }
