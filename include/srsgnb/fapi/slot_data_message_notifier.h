@@ -33,7 +33,7 @@ public:
   /// \param[in] msg Message contents.
   virtual void on_dl_tti_response(const dl_tti_response_message& msg) = 0;
 
-  /// \brief CNotifies the reception of a RX data indication message.
+  /// \brief Notifies the reception of a RX data indication message.
   ///
   /// \param[in] msg Message contents.
   virtual void on_rx_data_indication(const rx_data_indication_message& msg) = 0;
