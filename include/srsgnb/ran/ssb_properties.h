@@ -15,6 +15,8 @@
 
 namespace srsgnb {
 
+const unsigned NOF_SSB_PRBS = 20;
+
 /// \brief SSB periodicity in milliseconds as per TS38.331 Section 6.3.2 IE ssb-periodicityServingCell.
 enum class ssb_periodicity { ms5 = 5, ms10 = 10, ms20 = 20, ms40 = 40, ms80 = 80, ms160 = 160 };
 

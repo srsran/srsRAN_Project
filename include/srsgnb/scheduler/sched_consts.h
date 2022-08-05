@@ -26,7 +26,6 @@ const unsigned CUTOFF_FREQ_ARFCN_CASE_A_B_C = 600000;
 /// The cutoff frequency for case C unpaired is 1.88GHz, corresponding to 376000 ARFCN (TS 38.213, Section 4.1).
 const unsigned CUTOFF_FREQ_ARFCN_CASE_C_UNPAIRED = 376000;
 const unsigned NOF_SSB_OFDM_SYMBOLS              = 4;
-const unsigned NOF_SSB_PRBS                      = 20;
 
 /// SIB1 constants.
 /// SIB1 periodicity, see TS 38.331, Section 5.2.1.
