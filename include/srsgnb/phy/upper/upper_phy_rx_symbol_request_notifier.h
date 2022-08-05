@@ -15,9 +15,9 @@
 
 namespace srsgnb {
 
-struct prach_buffer;
+class prach_buffer;
 struct prach_buffer_context;
-struct resource_grid;
+class resource_grid;
 struct upper_phy_rx_symbol_context;
 
 /// \brief Interface of the upper-PHY notifier in charge of requesting symbol captures.
