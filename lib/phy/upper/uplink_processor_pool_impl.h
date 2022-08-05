@@ -44,7 +44,7 @@ public:
   uplink_processor& get_processor(slot_point slot, unsigned sector_id) override;
 
 private:
-  /// Uplink processor container.
+  /// Container for uplink processor. Each entry belongs to a different sector.
   std::vector<pool_procesor_sector<uplink_processor>> processors;
 };
 

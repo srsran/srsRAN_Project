@@ -27,9 +27,5 @@ downlink_processor& downlink_processor_pool_impl::get_processor(slot_point slot,
   srsgnb_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting a downlink processor.", sector_id);
   srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting a downlink processor.", slot);
 
-  pool_procesor_sector<downlink_processor>&                 sector_proc = processors[sector_id];
-  pool_procesor_sector<downlink_processor>::processor_pool& proc_pool =
-      sector_proc[to_subcarrier_spacing(slot.numerology())];
-  unsigned index = slot.system_slot() % proc_pool.size();
-  return *proc_pool[index];
+  return processors[sector_id].get_processor(slot);
 }
