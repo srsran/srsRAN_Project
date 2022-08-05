@@ -9,13 +9,8 @@
  */
 
 #include "prach_generator_impl.h"
-#include "srsgnb/phy/constants.h"
 #include "srsgnb/ran/prach/prach_cyclic_shifts.h"
-#include "srsgnb/ran/prach/prach_frequency_mapping.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
-#include "srsgnb/srsvec/copy.h"
-#include "srsgnb/srsvec/sc_prod.h"
-#include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
@@ -32,18 +27,11 @@ public:
   }
 };
 
-static prach_generator_cexp_table<839U> prach_generator_cexp_table_l839;
-
-unsigned prach_generator_impl::get_sequence_length(preamble_format format)
-{
-  srsgnb_assert(format.is_long_preamble(), "Short format not implemented.");
-
-  return 839;
-}
+static const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> prach_generator_cexp_table_l839;
 
 unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
 {
-  static const std::array<uint16_t, 838> lut = {
+  static const std::array<uint16_t, LONG - 1> lut = {
       129, 710, 140, 699, 120, 719, 210, 629, 168, 671, 84,  755, 105, 734, 93,  746, 70,  769, 60,  779, 2,   837, 1,
       838, 56,  783, 112, 727, 148, 691, 80,  759, 42,  797, 40,  799, 35,  804, 73,  766, 146, 693, 31,  808, 28,  811,
       30,  809, 27,  812, 29,  810, 24,  815, 48,  791, 68,  771, 74,  765, 178, 661, 136, 703, 86,  753, 78,  761, 43,
@@ -87,115 +75,19 @@ unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_i
 
 span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_number, unsigned cyclic_shift)
 {
-  span<cf_t> x_u_v = dft_l839->get_input();
-  for (unsigned n = 0; n != 839; ++n) {
+  span<cf_t> x_u_v = dft_long->get_input();
+  for (unsigned n = 0; n != LONG; ++n) {
     uint64_t x_u_v_index = (sequence_number * n * (n + 1UL)) % prach_generator_cexp_table_l839.size();
-    x_u_v[(n + (839 - cyclic_shift)) % 839] = prach_generator_cexp_table_l839[x_u_v_index];
+    x_u_v[(n + (LONG - cyclic_shift)) % LONG] = prach_generator_cexp_table_l839[x_u_v_index];
   }
 
-  return dft_l839->run();
-}
-
-span<const cf_t> prach_generator_impl::modulate(span<const cf_t> y_u_v, const configuration& config)
-{
-  srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
-  prach_preamble_information info         = get_prach_preamble_long_info(config.format);
-  unsigned                   prach_scs_Hz = info.scs.to_Hz();
-  unsigned                   pusch_scs_Hz = scs_to_khz(config.pusch_scs) * 1000;
-  unsigned                   L_ra         = get_sequence_length(config.format);
-
-  // Select DFT to generate the time domain sequence.
-  dft_processor* dft = dft_1_25_kHz.get();
-  if (prach_scs_Hz == 5000) {
-    dft = dft_5_kHz.get();
-  }
-  span<cf_t> dft_input = dft->get_input();
-
-  unsigned K               = pusch_scs_Hz / prach_scs_Hz;
-  unsigned prach_grid_size = nof_prb_ul_grid * K * NRE;
-  srsgnb_assert(dft->get_size() > prach_grid_size,
-                "DFT size {} for PRACH SCS {} is not sufficient for K={}, N_RB={}. It requires {}.",
-                dft->get_size(),
-                prach_scs_Hz,
-                K,
-                nof_prb_ul_grid,
-                prach_grid_size);
-
-  prach_frequency_mapping_information freq_mapping_info = prach_frequency_mapping_get(info.scs, config.pusch_scs);
-  srsgnb_assert(freq_mapping_info.k_bar != PRACH_FREQUENCY_MAPPING_INFORMATION_RESERVED.k_bar,
-                "Configuration leads to a reserved value.");
-
-  unsigned k_start = K * NRE * config.rb_offset + freq_mapping_info.k_bar;
-  srsgnb_assert(k_start + L_ra < prach_grid_size,
-                "Start subcarrier {} plus sequence length {} exceeds PRACH grid size {}.",
-                k_start,
-                L_ra,
-                prach_grid_size);
-
-  float gain = std::sqrt(1.0F / static_cast<float>(dft_input.size() * L_ra * dft_size_15kHz /
-                                                   pow2(to_numerology_value(config.pusch_scs))));
-  srsgnb_assert(std::isnormal(gain), "Invalid gain.");
-
-  // Set DFT input to zero.
-  srsvec::zero(dft_input);
-
-  // Create views of the lower and upper grid.
-  span<cf_t> lower_grid = dft_input.last(prach_grid_size / 2);
-  span<cf_t> upper_grid = dft_input.first(prach_grid_size / 2);
-
-  // If the sequence map starts at the lower half.
-  if (k_start < prach_grid_size / 2) {
-    // Number of subcarrier to fill in the lower half of the grid.
-    unsigned N = std::min(prach_grid_size / 2 - k_start, L_ra);
-
-    // Copy first N subcarriers of the sequence in the lower half grid.
-    srsvec::copy(lower_grid.subspan(k_start, N), y_u_v.first(N));
-
-    // Copy the remainder of the sequence in the upper half grid.
-    srsvec::copy(upper_grid.first(L_ra - N), y_u_v.last(L_ra - N));
-  } else {
-    // Copy the sequence in the upper half grid.
-    srsvec::copy(upper_grid.subspan(k_start - prach_grid_size / 2, L_ra), y_u_v);
-  }
-  srsvec::sc_prod(dft_input, gain, dft_input);
-
-  // Return frequency domain signal.
-  if (config.frequency_domain) {
-    return dft_input;
-  }
-
-  // Calculate DFT.
-  span<const cf_t> prach_symbol = dft->run();
-
-  unsigned N_u     = info.symbol_length.to_samples(sampling_rate_Hz);
-  unsigned N_cp_ra = info.cp_length.to_samples(sampling_rate_Hz);
-
-  // Calculate total output sequence length. Rounds it to a subframe.
-  unsigned output_length = N_u + N_cp_ra;
-  output_length          = (15 * dft_size_15kHz) * divide_ceil(output_length, 15 * dft_size_15kHz);
-
-  // Select view of the output sequence.
-  span<cf_t> output = temp.first(output_length);
-
-  // Copy cyclic prefix.
-  srsvec::copy(output.first(N_cp_ra), prach_symbol.last(N_cp_ra));
-
-  // Copy PRACH symbol.
-  for (unsigned n = 0; n < N_u; n += prach_symbol.size()) {
-    srsvec::copy(output.subspan(N_cp_ra + n, prach_symbol.size()), prach_symbol);
-  }
-
-  // Append zeros.
-  srsvec::zero(output.last(output_length - N_u - N_cp_ra));
-
-  return output;
+  return dft_long->run();
 }
 
 span<const cf_t> prach_generator_impl::generate(const prach_generator::configuration& config)
 {
   srsgnb_assert(config.format.is_long_preamble(), "Short preambles are not implemented.");
   prach_preamble_information info = get_prach_preamble_long_info(config.format);
-  unsigned                   L_ra = get_sequence_length(config.format);
 
   unsigned N_cs = prach_cyclic_shifts_get(info.scs, config.restricted_set, config.zero_correlation_zone);
   srsgnb_assert(N_cs != PRACH_CYCLIC_SHIFTS_RESERVED, "Configuration leads to a reserved number of cyclic shifts.");
@@ -204,13 +96,12 @@ span<const cf_t> prach_generator_impl::generate(const prach_generator::configura
   unsigned cyclic_shift        = 0;
 
   if (N_cs != 0) {
-    unsigned nof_sequences_per_root = L_ra / N_cs;
+    unsigned nof_sequences_per_root = info.sequence_length / N_cs;
     root_sequence_index             = config.root_sequence_index + config.preamble_index / nof_sequences_per_root;
     cyclic_shift                    = (config.preamble_index % nof_sequences_per_root) * N_cs;
   }
 
-  unsigned         sequence_number = get_sequence_number_long(root_sequence_index);
-  span<const cf_t> y_u_v           = generate_y_u_v_long(sequence_number, cyclic_shift);
+  unsigned sequence_number = get_sequence_number_long(root_sequence_index);
 
-  return modulate(y_u_v, config);
+  return generate_y_u_v_long(sequence_number, cyclic_shift);
 }

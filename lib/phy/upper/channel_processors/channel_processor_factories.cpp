@@ -124,37 +124,21 @@ class prach_detector_factory_simple : public prach_detector_factory
 private:
   std::shared_ptr<dft_processor_factory>   dft_factory;
   std::shared_ptr<prach_generator_factory> prach_gen_factory;
-  unsigned                                 dft_size_15kHz;
 
 public:
   prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory_,
-                                std::shared_ptr<prach_generator_factory> prach_gen_factory_,
-                                unsigned                                 dft_size_15kHz_) :
-    dft_factory(dft_factory_), prach_gen_factory(prach_gen_factory_), dft_size_15kHz(dft_size_15kHz_)
+                                std::shared_ptr<prach_generator_factory> prach_gen_factory_) :
+    dft_factory(dft_factory_), prach_gen_factory(prach_gen_factory_)
   {
     // Do nothing.
   }
 
   std::unique_ptr<prach_detector> create() override
   {
-    dft_processor::configuration dft_config_1_25_kHz;
-    dft_config_1_25_kHz.size = (dft_size_15kHz * 15000) / 1250;
-    dft_config_1_25_kHz.dir  = dft_processor::direction::DIRECT;
-    dft_processor::configuration idft_config_1_25_kHz;
-    idft_config_1_25_kHz.size = dft_config_1_25_kHz.size;
-    idft_config_1_25_kHz.dir  = dft_processor::direction::INVERSE;
-    dft_processor::configuration dft_config_5_kHz;
-    dft_config_5_kHz.size = (dft_size_15kHz * 15000) / 5000;
-    dft_config_5_kHz.dir  = dft_processor::direction::DIRECT;
-    dft_processor::configuration idft_config_5_kHz;
-    idft_config_5_kHz.size = dft_config_5_kHz.size;
-    idft_config_5_kHz.dir  = dft_processor::direction::INVERSE;
-    return std::make_unique<prach_detector_simple_impl>(dft_factory->create(dft_config_1_25_kHz),
-                                                        dft_factory->create(idft_config_1_25_kHz),
-                                                        dft_factory->create(dft_config_5_kHz),
-                                                        dft_factory->create(idft_config_5_kHz),
-                                                        prach_gen_factory->create(),
-                                                        dft_size_15kHz);
+    dft_processor::configuration idft_config;
+    idft_config.size = 1024;
+    idft_config.dir  = dft_processor::direction::INVERSE;
+    return std::make_unique<prach_detector_simple_impl>(dft_factory->create(idft_config), prach_gen_factory->create());
   }
 };
 
@@ -162,16 +146,11 @@ class prach_generator_factory_sw : public prach_generator_factory
 {
 private:
   std::shared_ptr<dft_processor_factory> dft_factory;
-  unsigned                               nof_prb_ul_grid;
-  unsigned                               dft_size_15kHz;
 
 public:
-  prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_,
-                             unsigned                               nof_prb_ul_grid_,
-                             unsigned                               dft_size_15kHz_) :
-    dft_factory(dft_factory_), nof_prb_ul_grid(nof_prb_ul_grid_), dft_size_15kHz(dft_size_15kHz_)
+  prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_) : dft_factory(dft_factory_)
   {
-    // Do nothing.
+    report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<prach_generator> create() override
@@ -182,19 +161,8 @@ public:
     dft_processor::configuration dft_config_l139;
     dft_config_l139.size = 139;
     dft_config_l139.dir  = dft_processor::direction::DIRECT;
-    dft_processor::configuration dft_config_1_25_kHz;
-    dft_config_1_25_kHz.size = (dft_size_15kHz * 15000) / 1250;
-    dft_config_1_25_kHz.dir  = dft_processor::direction::INVERSE;
-    dft_processor::configuration dft_config_5_kHz;
-    dft_config_5_kHz.size = (dft_size_15kHz * 15000) / 5000;
-    dft_config_5_kHz.dir  = dft_processor::direction::INVERSE;
-    return std::make_unique<prach_generator_impl>(nof_prb_ul_grid,
-                                                  dft_size_15kHz,
-                                                  dft_factory->create(dft_config_l839),
-                                                  dft_factory->create(dft_config_l139),
-                                                  dft_factory->create(dft_config_1_25_kHz),
-                                                  dft_factory->create(dft_config_5_kHz),
-                                                  nullptr);
+    return std::make_unique<prach_generator_impl>(dft_factory->create(dft_config_l839),
+                                                  dft_factory->create(dft_config_l139));
   }
 };
 
@@ -322,18 +290,15 @@ srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_fac
 
 std::shared_ptr<prach_detector_factory>
 srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
-                                             std::shared_ptr<prach_generator_factory> prach_gen_factory,
-                                             unsigned                                 dft_size_15kHz)
+                                             std::shared_ptr<prach_generator_factory> prach_gen_factory)
 {
-  return std::make_shared<prach_detector_factory_simple>(dft_factory, prach_gen_factory, dft_size_15kHz);
+  return std::make_shared<prach_detector_factory_simple>(dft_factory, prach_gen_factory);
 }
 
 std::shared_ptr<prach_generator_factory>
-srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
-                                          unsigned                               nof_prb_ul_grid,
-                                          unsigned                               dft_size_15kHz)
+srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory)
 {
-  return std::make_shared<prach_generator_factory_sw>(dft_factory, nof_prb_ul_grid, dft_size_15kHz);
+  return std::make_shared<prach_generator_factory_sw>(dft_factory);
 }
 
 std::shared_ptr<pusch_decoder_factory>

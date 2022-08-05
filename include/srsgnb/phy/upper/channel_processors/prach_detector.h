@@ -10,10 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/adt/complex.h"
-#include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
-#include "srsgnb/ran/pci.h"
+#include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
@@ -32,28 +30,24 @@ public:
 
   /// Describes the PRACH detector slot configuration for detecting PRACH.
   struct slot_configuration {
-    /// Root sequence index {0...837}.
+    /// Root sequence index. Possibles values are {0, ..., 837} for long preambles and {0, ..., 137} for short
+    /// preambles.
     unsigned root_sequence_index;
-    /// Frequency offset between Point A and the PRB overlapping with the lowest RE of the PRACH signal in RB with \c
-    /// pusch_scs SCS.
-    unsigned frequency_offset;
     /// Preamble format.
     preamble_format format;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
     /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1.
     unsigned zero_correlation_zone;
-    /// PUSCH subcarrier spacing.
-    subcarrier_spacing pusch_scs;
-    /// Start of preamble logical index to monitor in the PRACH occasions signaled in this slot {0...63}.
+    /// Start preamble index to monitor. Possible values are {0, ..., 63}.
     unsigned start_preamble_index;
-    /// Number of preamble indices to monitor {1...64}.
+    /// Number of preamble indices to monitor. Possible values are {1, ..., 64}.
     unsigned nof_preamble_indices;
   };
 
   /// Describes the detection of a single preamble.
   struct preamble_indication {
-    /// Indicates the detected preamble index.
+    /// Indicates the detected preamble index. Possible values are {0, ..., 63}.
     unsigned preamble_index;
     /// Timing advance between the observed arrival time (for the considered UE) and the reference uplink time.
     phy_time_unit time_advance;
@@ -65,14 +59,10 @@ public:
 
   /// Describes a detection result.
   struct detection_result {
-    /// Index of first symbol of the PRACH TD occasion within the slot.
-    unsigned first_symbol_index;
-    /// The index of first slot of the PRACH TD occasion in a system frame.
-    unsigned slot_index;
-    /// The index of the received PRACH frequency domain occasion.
-    unsigned ra_index;
-    /// Optional average RSSI value in dB, relative to 1.
+    /// Average RSSI value in dB, relative to 1.
     float rssi_dB;
+    /// Detector time resolution. This is given by the DFT size of the detector and the PRACH subcarrier spacing.
+    phy_time_unit time_resolution;
     /// List of detected preambles.
     static_vector<preamble_indication, MAX_NOF_PREAMBLES_PER_SLOT> preambles;
   };
@@ -88,7 +78,7 @@ public:
   /// \param[in] signal Provides the baseband signal buffer.
   /// \param[in] config Provides the PRACH configuration for the slot.
   /// \return The detection result.
-  virtual detection_result detect(span<const cf_t> signal, const slot_configuration& config) = 0;
+  virtual detection_result detect(const prach_buffer& input, const slot_configuration& config) = 0;
 };
 
 } // namespace srsgnb

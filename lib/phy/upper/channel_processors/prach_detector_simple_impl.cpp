@@ -11,58 +11,53 @@
 #include "prach_detector_simple_impl.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/compare.h"
-#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/dot_prod.h"
 #include "srsgnb/srsvec/prod.h"
+#include "srsgnb/srsvec/zero.h"
+#include "srsgnb/support/error_handling.h"
 #include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
 
-prach_detector::detection_result prach_detector_simple_impl::detect(span<const cf_t>                          signal,
-                                                                    const prach_detector::slot_configuration& config)
+prach_detector::detection_result prach_detector_simple_impl::detect(const prach_buffer&       input,
+                                                                    const slot_configuration& config)
 {
+  srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= 64,
+                "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
+                config.start_preamble_index,
+                config.nof_preamble_indices);
+
   // Retrieve preamble configuration.
   prach_preamble_information preamble_info = get_prach_preamble_long_info(config.format);
 
-  // Select DFT and IDFT.
-  dft_processor* dft  = dft_1_25_kHz.get();
-  dft_processor* idft = idft_1_25_kHz.get();
-  if (preamble_info.scs == prach_subcarrier_spacing::kHz5) {
-    dft  = dft_5_kHz.get();
-    idft = idft_5_kHz.get();
-  }
+  // Verify sequence lengths match.
+  srsgnb_assert(input.get_sequence_length() == preamble_info.sequence_length,
+                "The input buffer sequence length {} is not equal to the expected preamble sequence length {}.",
+                input.get_sequence_length(),
+                preamble_info.sequence_length);
+  unsigned sequence_length_lower = preamble_info.sequence_length / 2;
+  unsigned sequence_length_upper = preamble_info.sequence_length - sequence_length_lower;
 
-  unsigned N_cp_ra = preamble_info.cp_length.to_samples(sampling_rate_Hz);
-  unsigned N_u     = preamble_info.symbol_length.to_samples(sampling_rate_Hz);
+  // Derive time domain sampling rate in Hz.
+  unsigned sampling_rate_Hz = preamble_info.scs.to_Hz() * idft->get_size();
 
-  // Select PRACH window.
-  unsigned prach_window_offset = N_cp_ra + N_u - dft->get_size();
-  unsigned prach_window_length = dft->get_size();
+  // Segment the IDFT input into lower grid, upper grid and guard.
+  span<cf_t> idft_lower_grid = idft->get_input().last(sequence_length_lower);
+  span<cf_t> idft_upper_grid = idft->get_input().first(sequence_length_upper);
+  span<cf_t> idft_guard      = idft->get_input().subspan(divide_ceil(sequence_length_upper, 2),
+                                                    idft->get_size() - preamble_info.sequence_length);
 
-  // Copy PRACH window into window.
-  srsgnb_assert(signal.size() >= prach_window_offset + prach_window_length,
-                "The PRACH window with offset {} and length {} exceeds the signal buffer size {}.",
-                prach_window_offset,
-                prach_window_length,
-                signal.size());
-  srsvec::copy(dft->get_input(), signal.subspan(prach_window_offset, prach_window_length));
+  // Set the IDFT guard to zero.
+  srsvec::zero(idft_guard);
 
-  // Measure input signal power.
-  float rssi = srsvec::average_power(dft->get_input());
-  if (!std::isnormal(rssi)) {
-    return {};
-  }
+  // Calculate RSSI.
+  float rssi = srsvec::average_power(input.get_symbol(0));
 
-  detection_result result;
-  result.first_symbol_index = 0;
-  result.slot_index         = 0;
-  result.ra_index           = 0;
-  result.rssi_dB            = convert_power_to_dB(rssi);
+  // Prepare results.
+  prach_detector::detection_result result;
+  result.rssi_dB         = convert_power_to_dB(rssi);
+  result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
   result.preambles.clear();
-
-  // Convert signal into frequency domain and copy to temporal vector.
-  span<cf_t> signal_freq = signal_freq_temp.first(dft->get_size());
-  srsvec::copy(signal_freq, dft->run());
 
   // For each preamble to detect...
   for (unsigned preamble_index     = config.start_preamble_index,
@@ -76,19 +71,20 @@ prach_detector::detection_result prach_detector_simple_impl::detect(span<const c
     preamble_config.preamble_index        = preamble_index;
     preamble_config.restricted_set        = config.restricted_set;
     preamble_config.zero_correlation_zone = config.zero_correlation_zone;
-    preamble_config.rb_offset             = config.frequency_offset;
-    preamble_config.pusch_scs             = config.pusch_scs;
-    preamble_config.frequency_domain      = true;
     span<const cf_t> preamble_freq        = generator->generate(preamble_config);
 
-    // Measure input signal power.
+    // Measure input signal power. Make sure an invalid power does not propagate.
     float preamble_power = srsvec::average_power(preamble_freq);
-    if (!std::isnormal(preamble_power)) {
-      return {};
-    }
+    report_fatal_error_if_not(std::isnormal(preamble_power), "Corrupted generated signal.");
+
+    // Select first symbol in the buffer.
+    span<const cf_t> signal_freq = input.get_symbol(0);
 
     // Perform correlation in frequency-domain and store in the IDFT input.
-    srsvec::prod_conj(signal_freq, preamble_freq, idft->get_input());
+    srsvec::prod_conj(
+        signal_freq.first(sequence_length_lower), preamble_freq.first(sequence_length_lower), idft_lower_grid);
+    srsvec::prod_conj(
+        signal_freq.last(sequence_length_upper), preamble_freq.last(sequence_length_upper), idft_upper_grid);
 
     // Convert to correlation to time-domain.
     span<const cf_t> correlation = idft->run();

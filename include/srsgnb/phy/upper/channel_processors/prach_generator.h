@@ -10,19 +10,16 @@
 
 #pragma once
 
+#include "srsgnb/adt/bounded_integer.h"
 #include "srsgnb/adt/complex.h"
-#include "srsgnb/adt/span.h"
+#include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
 namespace srsgnb {
 
-/// \brief PRACH generator interface.
-///
-/// Generates the PRACH frequency-domain sequences as per TS38.211 Section 6.3.3 and modulates the channel as per
-/// TS38.211 Section 5.3.2.
-///
+/// Generates the PRACH frequency-domain sequences as per TS38.211 Section 6.3.3.
 class prach_generator
 {
 public:
@@ -36,30 +33,18 @@ public:
     /// - TS38.211 Table 6.3.3.1-3 with range {0, ..., 837} for long preambles, and
     /// - TS38.211 Table 6.3.3.1-4 with range {0, ..., 137} for short preambles.
     unsigned root_sequence_index;
-    /// Index of the preamble to generate {0, ..., 63}.
+    /// Index of the preamble to generate. Possible values are {0, ..., 63}.
     unsigned preamble_index;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
-    /// Cyclic shift configuration index {0, ..., 15}.
+    /// Cyclic shift configuration index. Possible values are {0, ..., 15}.
     unsigned zero_correlation_zone;
-    /// Offset in PRBs between Point-A and a PRB overlapping with the lowest RE of the PRACH signal.
-    unsigned rb_offset;
-    /// PUSCH subcarrier spacing.
-    subcarrier_spacing pusch_scs;
-    /// \brief Frequency domain flag.
-    ///
-    /// If set to \c true, the PRACH sequences are generated in the frequency domain.
-    bool frequency_domain;
   };
 
   /// Default destructor.
   virtual ~prach_generator() = default;
 
-  /// \brief Generates the PRACH sequence.
-  ///
-  /// If the parameter \c config.frequency_domain is false, it generates the time-domain modulated PRACH sequence.
-  /// Otherwise, it generates the frequency-domain symbols.
-  ///
+  /// \brief Generates the frequency-domain PRACH sequence \f$y_{u,v}(n)\f$.
   /// \param[in] config Parameters describing the generated sequence.
   /// \return A read-only view of the generated sequence.
   virtual span<const cf_t> generate(const configuration& config) = 0;

@@ -13,6 +13,7 @@
 #include "srsgnb/phy/generic_functions/dft_processor.h"
 #include "srsgnb/phy/upper/channel_processors/prach_detector.h"
 #include "srsgnb/phy/upper/channel_processors/prach_generator.h"
+#include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 
 namespace srsgnb {
@@ -27,45 +28,23 @@ class prach_detector_simple_impl : public prach_detector
 {
   static constexpr float DETECTION_THRESHOLD = 0.1F;
 
-  std::unique_ptr<dft_processor>   dft_1_25_kHz;
-  std::unique_ptr<dft_processor>   idft_1_25_kHz;
-  std::unique_ptr<dft_processor>   dft_5_kHz;
-  std::unique_ptr<dft_processor>   idft_5_kHz;
+  std::unique_ptr<dft_processor>   idft;
   std::unique_ptr<prach_generator> generator;
-  srsvec::aligned_vec<cf_t>        signal_freq_temp;
-  unsigned                         sampling_rate_Hz;
 
 public:
-  prach_detector_simple_impl(std::unique_ptr<dft_processor>   dft_1_25_kHz_,
-                             std::unique_ptr<dft_processor>   idft_1_25_kHz_,
-                             std::unique_ptr<dft_processor>   dft_5_kHz_,
-                             std::unique_ptr<dft_processor>   idft_5_kHz_,
-                             std::unique_ptr<prach_generator> generator_,
-                             unsigned                         dft_size_15kHz_) :
-    dft_1_25_kHz(std::move(dft_1_25_kHz_)),
-    idft_1_25_kHz(std::move(idft_1_25_kHz_)),
-    dft_5_kHz(std::move(dft_5_kHz_)),
-    idft_5_kHz(std::move(idft_5_kHz_)),
-    generator(std::move(generator_)),
-    signal_freq_temp((dft_size_15kHz_ * 15000) / 1250),
-    sampling_rate_Hz(dft_size_15kHz_ * 15000)
+  prach_detector_simple_impl(std::unique_ptr<dft_processor> idft_, std::unique_ptr<prach_generator> generator_) :
+    idft(std::move(idft_)), generator(std::move(generator_))
   {
-    srsgnb_assert(dft_1_25_kHz, "Invalid DFT processor.");
-    srsgnb_assert(dft_1_25_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsgnb_assert(dft_1_25_kHz->get_size() == (sampling_rate_Hz / 1250), "Invalid DFT size.");
-    srsgnb_assert(idft_1_25_kHz, "Invalid IDFT processor.");
-    srsgnb_assert(idft_1_25_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsgnb_assert(idft_1_25_kHz->get_size() == (sampling_rate_Hz / 1250), "Invalid DFT size.");
-    srsgnb_assert(dft_5_kHz, "Invalid DFT processor.");
-    srsgnb_assert(dft_5_kHz->get_direction() == dft_processor::direction::DIRECT, "Expected DFT.");
-    srsgnb_assert(dft_5_kHz->get_size() == (sampling_rate_Hz / 5000), "Invalid DFT size.");
-    srsgnb_assert(idft_5_kHz, "Invalid IDFT processor.");
-    srsgnb_assert(idft_5_kHz->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    srsgnb_assert(idft_5_kHz->get_size() == (sampling_rate_Hz / 5000), "Invalid DFT size.");
+    srsgnb_assert(idft, "Invalid IDFT processor.");
+    srsgnb_assert(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
+    srsgnb_assert(idft->get_size() > prach_constants::LONG_SEQUENCE_LENGTH,
+                  "IDFT size {} must be at least {}.",
+                  idft->get_size(),
+                  prach_constants::LONG_SEQUENCE_LENGTH);
   };
 
   // See interface for documentation.
-  detection_result detect(span<const cf_t> signal, const slot_configuration& config) override;
+  detection_result detect(const prach_buffer& input, const slot_configuration& config) override;
 };
 
 } // namespace srsgnb
