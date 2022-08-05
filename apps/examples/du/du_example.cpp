@@ -215,8 +215,8 @@ static const std::vector<configuration_profile> profiles = {
        pci              = 1;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
        dl_center_freq   = 2680.1e6;
-       clock_src        = {radio_configuration::clock_sources::source::INTERNAL,
-                           radio_configuration::clock_sources::source::INTERNAL};
+       clock_src.clock  = radio_configuration::clock_sources::source::INTERNAL;
+       clock_src.sync   = radio_configuration::clock_sources::source::INTERNAL;
      }},
     {"zmq_20MHz_n41", "Single 20MHz TDD in band n41 using ZMQ.", []() {
        driver_name      = "zmq";
