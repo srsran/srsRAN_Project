@@ -50,7 +50,7 @@ void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder&
                                mac_pdu.start_symbol,
                                mac_pdu.nof_cs);
 
-  // :TODO: should we manage the handle?
+  // NOTE: parameter not used for now, setting value to 0.
   static constexpr unsigned handle = 0;
   // NOTE: as only one configuration is supported, the prach index is set to 0.
   static constexpr unsigned prach_config_index = 0;
