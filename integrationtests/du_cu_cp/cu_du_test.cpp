@@ -108,113 +108,6 @@ void test_f1_setup()
   return;
 }
 
-/// Test the f1 initial UL RRC message transfer procedure
-void test_rrc_message_transfer_procedure()
-{
-  test_delimit_logger   delimiter{"Test F1 RRC message transfer procedure between DU and CU-CP"};
-  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
-
-  // create worker thread and executer
-  task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
-  std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
-
-  // create message handler for CU and DU to relay messages back and forth
-  dummy_cu_cp_f1c_pdu_notifier cu_msg_handler(nullptr, nullptr);
-  dummy_f1c_pdu_notifier       du_msg_handler(nullptr);
-
-  // create CU-CP config
-  srs_cu_cp::cu_cp_configuration cu_cfg;
-  cu_cfg.cu_executor  = task_executor.get();
-  cu_cfg.f1c_notifier = &cu_msg_handler;
-
-  // create and start CU
-  srs_cu_cp::cu_cp cu_cp_obj(cu_cfg);
-
-  // create and start DU
-  du_high_worker_manager workers;
-  phy_dummy              phy;
-
-  srsgnb::srs_du::du_high_configuration du_cfg{};
-  du_cfg.du_mng_executor = &workers.ctrl_worker;
-  du_cfg.dl_executors    = &workers.dl_exec_mapper;
-  du_cfg.ul_executors    = &workers.ul_exec_mapper;
-  du_cfg.f1c_notifier    = &du_msg_handler;
-  du_cfg.phy_adapter     = &phy;
-  du_cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
-
-  // create DU object
-  srsgnb::srs_du::du_high du_obj(du_cfg);
-
-  // attach DU msg handler to CU message handler and vice-versa (in this order)
-  cu_msg_handler.attach_handler(&cu_cp_obj, &du_obj.get_f1c_message_handler());
-  du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
-
-  // start CU and DU
-  cu_cp_obj.start();
-  du_obj.start();
-
-  // Connect AMF
-  cu_cp_obj.on_amf_connection();
-
-  // Handling of Initial UL RRC message transfer
-  {
-    f1c_msg f1c_msg = {};
-
-    f1c_msg.pdu.set_init_msg();
-    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
-
-    auto& init_ul_rrc                     = f1c_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
-    init_ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
-
-    init_ul_rrc->nrcgi.value.nrcell_id.from_number(0);
-    init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
-    init_ul_rrc->c_rnti.value = 41255;
-
-    init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
-    init_ul_rrc->duto_currc_container_present = true;
-    init_ul_rrc->duto_currc_container.value.from_string(
-        "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"
-        "00204000400d008013b64b1814400e468acf120000096070820f177e060870000000e25038000040bde802000400000000028201950300"
-        "c400");
-
-    // Pass PDU to CU-CP
-    test_logger.info("Injecting Initial UL RRC message");
-    cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)).handle_message(f1c_msg);
-
-    // check that UE has been added
-    TESTASSERT_EQ(cu_cp_obj.get_nof_ues(), 1);
-  }
-
-  // TODO: check that DU has received the RRCSetup
-
-  // Handling of UL RRC message transfer
-  {
-    f1c_msg f1c_msg = {};
-
-    f1c_msg.pdu.set_init_msg();
-    f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
-
-    auto& ul_rrc                     = f1c_msg.pdu.init_msg().value.ulrrc_msg_transfer();
-    ul_rrc->gnb_cu_ue_f1_ap_id.value = 0;
-    ul_rrc->gnb_du_ue_f1_ap_id.value = 41255; // same as C-RNTI
-    ul_rrc->srbid.value              = 1;
-    ul_rrc->rrc_container.value.from_string(
-        "000010c01000082727e01c3ff100c047e004139000bf202f8998000410000000f2e04f070f0707100517e004139000bf202f8998000410"
-        "000000f1001032e04f070f0702f1b08010027db00000000080101b669000000000801000001000000005202f8990000011707f070c0401"
-        "980b018010174000090530101000000000");
-
-    // Pass PDU to CU-CP
-    test_logger.info("Injecting UL RRC message");
-    cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)).handle_message(f1c_msg);
-  }
-
-  // TODO: check that CU has received the RRCSetupComplete
-
-  workers.stop();
-
-  return;
-}
-
 int main()
 {
   srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
@@ -222,7 +115,6 @@ int main()
   srslog::init();
 
   test_f1_setup();
-  test_rrc_message_transfer_procedure();
 
   return 0;
 }
