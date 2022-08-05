@@ -21,29 +21,29 @@ class slot_message_gateway;
 
 namespace fapi_adaptor {
 
-/// \brief Registers the PDSCH PDUs that are added in a DL_TTI.request message.
+/// \brief PDSCH PDU registry.
+///
+/// This class acts as a repository of the index positions for the PDSCH PDUs carried in the FAPI DL_TTI.request.
 class pdsch_pdu_registy
 {
-  using pdu_vector = static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>;
-
 public:
-  /// Defines the different types of PDSCH PDUs.
+  /// Labels for the different types of PDSCH PDUs.
   enum pdsch_pdu_type { sib = 0, rar, ue, last };
 
-  /// \brief Registers a PDU in the register.
+  /// \brief Records a PDU in the registry.
   ///
-  /// \param fapi_pdu_index Index of the FAPI PDU.
-  /// \param type PDSCH PDU type.
+  /// \param[in] fapi_pdu_index Index of the FAPI PDU.
+  /// \param[in] type PDSCH PDU type.
   void register_pdu(unsigned fapi_pdu_index, pdsch_pdu_type type)
   {
     srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
     pdus[type].push_back(fapi_pdu_index);
   }
 
-  /// \brief Returns the number of PDUs registered for the given PDU type.
+  /// \brief Returns the number of recorded PDUs of the given type.
   ///
-  /// \param type PDSCH PDU type.
-  /// \return Number of PDUs of the given PDU type present in the registry.
+  /// \param[in] type PDSCH PDU type.
+  /// \return Number of PDUs of the given type present in the registry.
   unsigned get_nof_pdus(pdsch_pdu_type type) const
   {
     srsgnb_assert(type < last, "Invalid PDSCH PDU data type");
@@ -52,8 +52,8 @@ public:
 
   /// \brief Returns the FAPI PDU index for the given PDU type and MAC PDU index.
   ///
-  /// \param mac_pdu_index Index of the MAC PDU.
-  /// \param type PDSCH PDU type.
+  /// \param[in] mac_pdu_index Index of the MAC PDU.
+  /// \param[in] type          PDSCH PDU type.
   /// \return Index of the FAPI PDU associated to the MAC PDU.
   unsigned get_fapi_pdu_index(unsigned mac_pdu_index, pdsch_pdu_type type) const
   {
@@ -64,19 +64,17 @@ public:
   }
 
   /// \brief Resets the registry.
-  void reset()
-  {
-    for (auto& pdu : pdus) {
-      pdu.clear();
-    }
-  }
+  void reset() { pdus = {}; }
 
 private:
+  using pdu_vector = static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>;
   std::array<pdu_vector, last> pdus;
 };
 
-/// \brief This class listens to MAC cell result events and translates them to FAPI messages that are sent through the
-/// \c slot_message_gateway interface.
+/// \brief MAC-to-FAPI translator.
+///
+/// This class listens to cell-specific MAC events carrying scheduling results and translates them into FAPI messages
+/// that are sent through the FAPI message gateway.
 class mac_to_fapi_translator : public mac_cell_result_notifier
 {
 public:
@@ -93,10 +91,10 @@ public:
 
   /// \brief Handles a new slot.
   ///
-  /// Handling a new slot consists of the following steps:
-  /// - Resetting the PDSCH PDU registry.
+  /// When a new slot is notified, the PDSCH PDUs from the previous slot should be discarded, in turn, the PDSCH PDU
+  /// registry has to be reset.
   ///
-  /// \param slot Identifies the new slot.
+  /// \param[in] slot Identifies the new slot.
   /// \note This method is thread safe and may be called from different threads.
   void handle_new_slot()
   {
@@ -105,8 +103,10 @@ public:
   }
 
 private:
+  /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
-  pdsch_pdu_registy           pdsch_registry;
+  /// PDSCH PDU registry helper object.
+  pdsch_pdu_registy pdsch_registry;
   // Protects pdsch_registry.
   //: TODO: make this lock free.
   std::mutex mutex;

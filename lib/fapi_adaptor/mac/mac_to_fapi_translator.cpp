@@ -23,7 +23,7 @@ using namespace fapi_adaptor;
 
 namespace {
 
-/// Auxiliary struct to group PDCCH PDUs.
+/// Helper struct to group PDCCH PDUs.
 struct pdcch_group {
   const pdcch_dl_information* info;
   const dci_payload*          payload;
