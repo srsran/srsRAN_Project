@@ -94,6 +94,13 @@ public:
     return static_cast<unsigned>((value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA));
   }
 
+  /// Overload sum operator.
+  constexpr phy_time_unit operator+(phy_time_unit other)
+  {
+    value += other.value;
+    return *this;
+  }
+
   /// Creates a physical layer time from multiples of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
   {
