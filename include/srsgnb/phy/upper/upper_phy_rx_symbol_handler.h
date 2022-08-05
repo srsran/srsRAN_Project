@@ -18,6 +18,9 @@
 
 namespace srsgnb {
 
+class prach_buffer;
+struct prach_buffer_context;
+
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
   /// Identifier of the sector the symbol is received from.

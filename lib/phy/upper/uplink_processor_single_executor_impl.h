@@ -31,9 +31,7 @@ public:
                                         upper_phy_rx_results_notifier&  results_notifier);
 
   // See interface for documentation.
-  void process_prach(const prach_buffer&                       buffer,
-                     const prach_buffer_context&               context,
-                     const prach_detector::slot_configuration& configuration) override;
+  void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) override;
 
 private:
   /// PRACH detector.

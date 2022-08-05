@@ -40,10 +40,7 @@ public:
   ///
   /// \param[in] buffer        Channel symbols the PRACH detection is performed on.
   /// \param[in] context       Context used by the underlying PRACH detector.
-  /// \param[in] configuration Configuration parameters to detect any potential PRACH preambles.
-  virtual void process_prach(const prach_buffer&                       buffer,
-                             const prach_buffer_context&               context,
-                             const prach_detector::slot_configuration& configuration) = 0;
+  virtual void process_prach(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
 };
 
 /// \brief Pool of uplink processors.
