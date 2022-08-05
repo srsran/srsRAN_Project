@@ -240,7 +240,7 @@ static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const up
 
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     std::unique_ptr<downlink_processor> dl_proc = factory.create({});
-    srsgnb_assert(dl_proc, "Invalid downlink processor");
+    report_fatal_error_if_not(dl_proc, "Invalid downlink processor.");
     info.procs.push_back(std::move(dl_proc));
   }
 
@@ -251,17 +251,20 @@ static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const up
 
 static std::unique_ptr<resource_grid_pool> build_dl_resource_grid_pool(const upper_phy_config& config)
 {
-  resource_grid_pool_config rg_pool_config = {};
   // Configure one pool per upper PHY.
-  rg_pool_config.nof_sectors = 1;
-  rg_pool_config.nof_slots   = config.nof_slots_dl_rg;
-  for (unsigned sector_idx = 0; sector_idx != rg_pool_config.nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
-      rg_pool_config.grids.push_back(create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE));
+  unsigned                                    nof_sectors = 1;
+  unsigned                                    nof_slots   = config.nof_slots_dl_rg;
+  std::vector<std::unique_ptr<resource_grid>> grids;
+  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
+    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
+      std::unique_ptr<resource_grid> grid =
+          create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE);
+      report_fatal_error_if_not(grid, "Invalid resource grid.");
+      grids.push_back(std::move(grid));
     }
   }
 
-  return create_resource_grid_pool(rg_pool_config);
+  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
 class upper_phy_factory_impl : public upper_phy_factory

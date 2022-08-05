@@ -25,7 +25,7 @@ uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_imp
 uplink_processor& uplink_processor_pool_impl::get_processor(slot_point slot, unsigned sector_id)
 {
   srsgnb_assert(sector_id < processors.size(), "Invalid sector ({}) when requesting an uplink processor.", sector_id);
-  srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting a uplink processor.", slot);
+  srsgnb_assert(slot.valid(), "Invalid slot ({}) when requesting an uplink processor.", slot);
 
   return processors[sector_id].get_processor(slot);
 }
