@@ -11,6 +11,7 @@
 #include "srsgnb/du/du_cell_config_validation.h"
 #include "srsgnb/asn1/rrc_nr/rrc_nr.h"
 #include "srsgnb/ran/band_helper.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/ssb_mapping.h"
 #include "srsgnb/scheduler/sched_consts.h"
@@ -100,7 +101,8 @@ static check_outcome is_coreset0_params_valid(const du_cell_config& cell_cfg)
            coreset_configuration::precoder_granularity_type::same_as_reg_bundle,
            "CORESET#0 Precoder Granularity");
 
-  static const unsigned               min_channel_bw = 5;
+  min_channel_bandwidth min_channel_bw =
+      band_helper::get_min_channel_bw(cell_cfg.dl_carrier.nr_band, cell_cfg.scs_common);
   pdcch_type0_css_coreset_description coreset0_param =
       pdcch_type0_css_coreset_get(min_channel_bw,
                                   cell_cfg.ssb_cfg.scs,

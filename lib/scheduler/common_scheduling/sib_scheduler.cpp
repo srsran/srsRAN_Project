@@ -13,6 +13,7 @@
 #include "../support/dmrs_helpers.h"
 #include "../support/pdcch/pdcch_type0_css_occasions.h"
 #include "../support/prbs_calculator.h"
+#include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/resource_allocation/resource_allocation_frequency.h"
 #include "srsgnb/ran/sib_configuration.h"
@@ -131,7 +132,7 @@ void sib1_scheduler::precompute_sib1_n0(subcarrier_spacing scs_common)
                 "10MHz min. channel BW.",
                 cell_cfg.dl_carrier.carrier_bw_mhz);
   // Get Coreset0 num of symbols from Coreset0 config.
-  static const unsigned min_channel_bw    = 5;
+  min_channel_bandwidth min_channel_bw    = band_helper::get_min_channel_bw(cell_cfg.dl_carrier.nr_band, scs_common);
   unsigned              nof_symb_coreset0 = pdcch_type0_css_coreset_get(min_channel_bw,
                                                            cell_cfg.ssb_cfg.scs,
                                                            scs_common,

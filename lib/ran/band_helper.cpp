@@ -464,3 +464,76 @@ unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, sub
 
   return 0;
 }
+
+min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(unsigned nr_band, subcarrier_spacing scs)
+{
+  switch (nr_band) {
+    case 1:
+    case 2:
+    case 3:
+    case 7:
+    case 25:
+    case 34:
+    case 38:
+    case 39:
+    case 40:
+    case 50:
+    case 66:
+    case 70:
+    case 74:
+    case 75:
+    case 80:
+    case 84:
+    case 86: {
+      if (scs == subcarrier_spacing::kHz15) {
+        return min_channel_bandwidth::MHz5;
+      } else if (scs == subcarrier_spacing::kHz30 or scs == subcarrier_spacing::kHz60) {
+        return min_channel_bandwidth::MHz10;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    case 5:
+    case 8:
+    case 12:
+    case 20:
+    case 28:
+    case 71:
+    case 81:
+    case 82:
+    case 83: {
+      if (scs == subcarrier_spacing::kHz15) {
+        return min_channel_bandwidth::MHz5;
+      } else if (scs == subcarrier_spacing::kHz30) {
+        return min_channel_bandwidth::MHz10;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    case 41: {
+      if (scs <= subcarrier_spacing::kHz60) {
+        return min_channel_bandwidth::MHz10;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    case 51:
+    case 76: {
+      if (scs == subcarrier_spacing::kHz15) {
+        return min_channel_bandwidth::MHz5;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    case 79: {
+      if (scs <= subcarrier_spacing::kHz60) {
+        return min_channel_bandwidth::MHz40;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
+    default:
+      return min_channel_bandwidth::invalid;
+  }
+  return min_channel_bandwidth::invalid;
+}

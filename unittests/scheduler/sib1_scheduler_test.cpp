@@ -391,7 +391,7 @@ void test_sib_1_pdsch_collisions(unsigned freq_arfcn, subcarrier_spacing scs)
     for (uint8_t k_ssb_val = 0; k_ssb_val < 12; k_ssb_val += 2) {
       // Test all possible combinations of coreset0 position.
       for (uint8_t coreset0 = 0; coreset0 < coreset0_max; ++coreset0) {
-        static const unsigned               min_channel_bw = 5;
+        static const min_channel_bandwidth  min_channel_bw = min_channel_bandwidth::MHz5;
         pdcch_type0_css_coreset_description coreset0_param =
             pdcch_type0_css_coreset_get(min_channel_bw, scs, scs, coreset0, k_ssb_val);
 

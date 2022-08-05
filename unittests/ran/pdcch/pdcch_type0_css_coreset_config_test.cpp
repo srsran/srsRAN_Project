@@ -8,6 +8,7 @@
  *
  */
 
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/support/srsgnb_test.h"
 
@@ -15,7 +16,7 @@ using namespace srsgnb;
 
 static void test_table_13_1()
 {
-  for (unsigned minimum_bandwidth : {5, 10}) {
+  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           minimum_bandwidth, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15, config_index, 0);
@@ -65,7 +66,7 @@ static void test_table_13_1()
 
 static void test_table_13_2()
 {
-  for (unsigned minimum_bandwidth : {5, 10}) {
+  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           minimum_bandwidth, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30, config_index, 0);
@@ -111,7 +112,7 @@ static void test_table_13_2()
 
 static void test_table_13_3()
 {
-  for (unsigned minimum_bandwidth : {5, 10}) {
+  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           minimum_bandwidth, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
@@ -157,7 +158,7 @@ static void test_table_13_3()
 
 static void test_table_13_4()
 {
-  for (unsigned minimum_bandwidth : {5, 10}) {
+  for (min_channel_bandwidth minimum_bandwidth : {min_channel_bandwidth::MHz5, min_channel_bandwidth::MHz10}) {
     for (unsigned config_index = 0; config_index != 16; ++config_index) {
       pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
           minimum_bandwidth, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
@@ -196,8 +197,8 @@ static void test_table_13_4()
 static void test_table_13_5()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    pdcch_type0_css_coreset_description description =
-        pdcch_type0_css_coreset_get(40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
+    pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+        min_channel_bandwidth::MHz40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15, config_index, 0);
 
     // Assert pattern.
     if (config_index < 9) {
@@ -238,8 +239,8 @@ static void test_table_13_5()
 static void test_table_13_6()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
-    pdcch_type0_css_coreset_description description =
-        pdcch_type0_css_coreset_get(40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
+    pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
+        min_channel_bandwidth::MHz40, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30, config_index, 0);
 
     // Assert pattern.
     if (config_index < 10) {
@@ -279,8 +280,11 @@ static void test_table_13_7()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          40, subcarrier_spacing::kHz120, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
+                                                                                    subcarrier_spacing::kHz120,
+                                                                                    subcarrier_spacing::kHz60,
+                                                                                    config_index,
+                                                                                    subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 8) {
@@ -337,8 +341,11 @@ static void test_table_13_8()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          40, subcarrier_spacing::kHz120, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
+                                                                                    subcarrier_spacing::kHz120,
+                                                                                    subcarrier_spacing::kHz120,
+                                                                                    config_index,
+                                                                                    subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {
@@ -387,8 +394,11 @@ static void test_table_13_9()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          40, subcarrier_spacing::kHz240, subcarrier_spacing::kHz60, config_index, subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
+                                                                                    subcarrier_spacing::kHz240,
+                                                                                    subcarrier_spacing::kHz60,
+                                                                                    config_index,
+                                                                                    subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {
@@ -425,8 +435,11 @@ static void test_table_13_10()
 {
   for (unsigned config_index = 0; config_index != 16; ++config_index) {
     for (uint8_t subcarrier_offset = 0; subcarrier_offset != 2; ++subcarrier_offset) {
-      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(
-          40, subcarrier_spacing::kHz240, subcarrier_spacing::kHz120, config_index, subcarrier_offset);
+      pdcch_type0_css_coreset_description description = pdcch_type0_css_coreset_get(min_channel_bandwidth::MHz40,
+                                                                                    subcarrier_spacing::kHz240,
+                                                                                    subcarrier_spacing::kHz120,
+                                                                                    config_index,
+                                                                                    subcarrier_offset);
 
       // Assert pattern.
       if (config_index < 4) {

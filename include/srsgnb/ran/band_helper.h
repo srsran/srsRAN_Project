@@ -22,6 +22,7 @@ enum class subcarrier_spacing;
 enum class ssb_pattern_case;
 enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
+enum class min_channel_bandwidth;
 
 /// \brief NR operating bands in FR1 and FR2.
 ///
@@ -175,6 +176,8 @@ double get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs
 /// \param[in] fr is frequency range FR1 or FR2.
 /// \return \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr);
+
+min_channel_bandwidth get_min_channel_bw(unsigned nr_band, subcarrier_spacing scs);
 
 } // namespace band_helper
 

@@ -14,6 +14,8 @@
 
 namespace srsgnb {
 
+enum class min_channel_bandwidth;
+
 /// Refer to "SS/PBCH block and CORESET multiplexing pattern", TS 38.213, Section 13.
 enum class ssb_coreset0_mplex_pattern { mplx_pattern1 = 0, mplx_pattern2, mplx_pattern3, mplex_invalid };
 
@@ -47,10 +49,10 @@ static constexpr pdcch_type0_css_coreset_description PDCCH_TYPE0_CSS_CORESET_RES
 /// \param[in] coreset_zero_index         Parameter \c controlResourceSetZero as per TS38.331 PDCCH-ConfigSIB1.
 /// \param[in] subcarrier_offset          Offset between the CRB and the beginning of the SS/PBCH block.
 /// \return A valid CORESET description if \c config is valid. Otherwise, \c PDCCH_TYPE0_CSS_CORESET_RESERVED.
-pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(uint8_t            minimum_bandwidth_MHz,
-                                                                subcarrier_spacing ssb_scs,
-                                                                subcarrier_spacing pdcch_scs,
-                                                                uint8_t            coreset_zero_index,
-                                                                uint8_t            subcarrier_offset);
+pdcch_type0_css_coreset_description pdcch_type0_css_coreset_get(min_channel_bandwidth minimum_bandwidth_MHz,
+                                                                subcarrier_spacing    ssb_scs,
+                                                                subcarrier_spacing    pdcch_scs,
+                                                                uint8_t               coreset_zero_index,
+                                                                uint8_t               subcarrier_offset);
 
 } // namespace srsgnb

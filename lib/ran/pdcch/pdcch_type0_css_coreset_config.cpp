@@ -10,14 +10,15 @@
 
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/ran/bs_channel_bandwidth.h"
 
 using namespace srsgnb;
 
-pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t            minimum_bandwidth_MHz,
-                                                                        subcarrier_spacing ssb_scs,
-                                                                        subcarrier_spacing pdcch_scs,
-                                                                        uint8_t            coreset_zero_index,
-                                                                        uint8_t            subcarrier_offset)
+pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(min_channel_bandwidth minimum_bandwidth_MHz,
+                                                                        subcarrier_spacing    ssb_scs,
+                                                                        subcarrier_spacing    pdcch_scs,
+                                                                        uint8_t               coreset_zero_index,
+                                                                        uint8_t               subcarrier_offset)
 {
   // TS38.213 Table 13-1. {SS/PBCH block, PDCCH} SCS is {15, 15} kHz and minimum channel bandwidth 5 MHz or 10 MHz.
   static const std::array<pdcch_type0_css_coreset_description, 15> TABLE_13_1 = {{
@@ -157,22 +158,25 @@ pdcch_type0_css_coreset_description srsgnb::pdcch_type0_css_coreset_get(uint8_t 
 
   span<const pdcch_type0_css_coreset_description> table = {};
   if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz15 &&
-      (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
+      (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 || minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_1;
   } else if (ssb_scs == subcarrier_spacing::kHz15 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
+              minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_2;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz15 &&
-             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
+              minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_3;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             (minimum_bandwidth_MHz == 5 || minimum_bandwidth_MHz == 10)) {
+             (minimum_bandwidth_MHz == min_channel_bandwidth::MHz5 ||
+              minimum_bandwidth_MHz == min_channel_bandwidth::MHz10)) {
     table = TABLE_13_4;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz15 &&
-             minimum_bandwidth_MHz == 40) {
+             minimum_bandwidth_MHz == min_channel_bandwidth::MHz40) {
     table = TABLE_13_5;
   } else if (ssb_scs == subcarrier_spacing::kHz30 && pdcch_scs == subcarrier_spacing::kHz30 &&
-             minimum_bandwidth_MHz == 40) {
+             minimum_bandwidth_MHz == min_channel_bandwidth::MHz40) {
     table = TABLE_13_6;
   } else if (ssb_scs == subcarrier_spacing::kHz120 && pdcch_scs == subcarrier_spacing::kHz60) {
     table = TABLE_13_7;
