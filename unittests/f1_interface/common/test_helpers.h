@@ -36,8 +36,6 @@ class dummy_f1c_du_processor_notifier : public srs_cu_cp::f1c_du_processor_notif
 public:
   dummy_f1c_du_processor_notifier() : logger(srslog::fetch_basic_logger("TEST")) {}
 
-  void attach_f1ap(srs_cu_cp::f1_interface* f1ap_) { f1ap = f1ap_; };
-
   srs_cu_cp::du_index_t get_du_index() override { return srs_cu_cp::MIN_DU_INDEX; }
 
   void on_f1_setup_request_received(const srs_cu_cp::f1_setup_request_message& msg) override
@@ -62,17 +60,11 @@ public:
     return ret;
   }
 
-  void on_create_srb(const srs_cu_cp::f1ap_srb_creation_message& msg) override
-  {
-    f1ap->connect_srb_notifier(msg.ue_index, msg.srb_id, *rx_notifier.get());
-  };
-
   srs_cu_cp::f1_setup_request_message    last_f1_setup_request_msg;
   srs_cu_cp::f1ap_initial_ul_rrc_message last_ue_creation_request_msg;
 
 private:
   srslog::basic_logger&                                logger;
-  srs_cu_cp::f1_interface*                             f1ap        = nullptr;
   uint16_t                                             ue_index    = srs_cu_cp::MIN_UE_INDEX;
   std::unique_ptr<srs_cu_cp::f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
 };

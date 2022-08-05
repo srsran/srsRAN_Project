@@ -172,6 +172,12 @@ ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_c
     return ue_creation_complete_msg;
   }
 
+  // 5. Create SRB0 bearer and notifier
+  srb_creation_message srb0_msg{};
+  srb0_msg.srb_id   = srb_id_t::srb0;
+  srb0_msg.ue_index = ue_ctxt->ue_index;
+  create_srb(srb0_msg);
+
   logger.info("UE Created (ue_index={}, c-rnti={})", ue_ctxt->ue_index, ue_ctxt->c_rnti);
 
   ue_creation_complete_msg.ue_index = ue_ctxt->ue_index;
@@ -198,9 +204,6 @@ void du_processor::create_srb(const srb_creation_message& msg)
 
     // update notifier in RRC
     ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier.get());
-
-    // update notifier in F1AP
-    f1ap->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rx_notifier.get());
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();

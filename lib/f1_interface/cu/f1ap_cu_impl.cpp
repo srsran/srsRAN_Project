@@ -281,12 +281,6 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
   ue_ctxt.srbs                          = ue_creation_complete_msg.srbs;
   cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctxt;
 
-  // Request creation of SRB0 bearer and notifier
-  f1ap_srb_creation_message srb0_msg{};
-  srb0_msg.srb_id   = srb_id_t::srb0;
-  srb0_msg.ue_index = ue_creation_complete_msg.ue_index;
-  du_processor_notifier.on_create_srb(srb0_msg);
-
   logger.debug(
       "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctxt.du_ue_f1ap_id, ue_ctxt.ue_index);
 

@@ -196,10 +196,6 @@ public:
   /// \return Returns a UE creation complete message containing the index of the created UE and its SRB notifiers.
   virtual ue_creation_complete_message on_create_ue(const f1ap_initial_ul_rrc_message& msg) = 0;
 
-  /// \brief Notify about the need to create an SRB
-  /// \param[in] msg The SRB creation message
-  virtual void on_create_srb(const f1ap_srb_creation_message& msg) = 0;
-
   /// \brief Get the DU index.
   /// \return The DU index.
   virtual du_index_t get_du_index() = 0;

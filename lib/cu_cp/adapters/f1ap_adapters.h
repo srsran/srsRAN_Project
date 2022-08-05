@@ -62,14 +62,6 @@ public:
     return du_f1c_handler->handle_ue_creation_request(ue_creation_msg);
   }
 
-  void on_create_srb(const f1ap_srb_creation_message& msg) override
-  {
-    srb_creation_message srb_msg{};
-    srb_msg.srb_id   = msg.srb_id;
-    srb_msg.ue_index = msg.ue_index;
-    du_f1c_handler->create_srb(srb_msg);
-  }
-
 private:
   du_processor_f1c_interface* du_f1c_handler = nullptr;
 };

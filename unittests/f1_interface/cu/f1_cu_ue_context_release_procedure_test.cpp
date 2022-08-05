@@ -33,7 +33,6 @@ protected:
     f1c_du_mgmt_notifier  = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
 
     f1ap = create_f1ap(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
-    du_processor_notifier->attach_f1ap(f1ap.get());
   }
 
   std::unique_ptr<f1_interface>                     f1ap;
