@@ -12,16 +12,12 @@
 
 using namespace srsgnb;
 
-resource_grid_pool_impl::resource_grid_pool_impl(resource_grid_pool_config& config) :
-  nof_slots(config.nof_slots), nof_sectors(config.nof_sectors)
+resource_grid_pool_impl::resource_grid_pool_impl(unsigned                                      nof_sectors,
+                                                 unsigned                                      nof_slots,
+                                                 std::vector<std::unique_ptr<resource_grid>>&& grids_) :
+  nof_slots(nof_slots), nof_sectors(nof_sectors), grids(std::move(grids_))
 {
-  assert(config.nof_slots * config.nof_sectors == config.grids.size());
-
-  // Reserve and move ownership of the resource grids to the pool
-  grids.reserve(config.grids.size());
-  for (auto& g : config.grids) {
-    grids.emplace_back(std::move(g));
-  }
+  assert(nof_slots * nof_sectors == grids.size());
 }
 
 resource_grid& resource_grid_pool_impl::get_resource_grid(const resource_grid_context& context)

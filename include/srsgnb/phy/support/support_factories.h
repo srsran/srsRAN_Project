@@ -26,9 +26,13 @@ namespace srsgnb {
 std::unique_ptr<resource_grid> create_resource_grid(unsigned nof_ports, unsigned nof_symbols, unsigned nof_subc);
 
 /// \brief Creates a generic resource grid pool.
-/// \param config Provides the configuration of the resource grid pool.
+/// \param[in] nof_sectors Number of radio sectors.
+/// \param[in] nof_slots umber of slots to be buffered, per sector.
+/// \param[in] grids Resource grids, ownerships are transferred to the pool.
 /// \return A generic resource grid pool.
-std::unique_ptr<resource_grid_pool> create_resource_grid_pool(resource_grid_pool_config& config);
+std::unique_ptr<resource_grid_pool> create_resource_grid_pool(unsigned                                      nof_sectors,
+                                                              unsigned                                      nof_slots,
+                                                              std::vector<std::unique_ptr<resource_grid>>&& grids);
 
 /// \brief Creates a long PRACH sequence buffer.
 ///

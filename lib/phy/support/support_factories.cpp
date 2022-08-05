@@ -21,9 +21,12 @@ std::unique_ptr<resource_grid> srsgnb::create_resource_grid(unsigned nof_ports, 
   return std::make_unique<resource_grid_impl>(nof_ports, nof_symbols, nof_subc);
 }
 
-std::unique_ptr<resource_grid_pool> srsgnb::create_resource_grid_pool(resource_grid_pool_config& config)
+std::unique_ptr<resource_grid_pool>
+srsgnb::create_resource_grid_pool(unsigned                                      nof_sectors,
+                                  unsigned                                      nof_slots,
+                                  std::vector<std::unique_ptr<resource_grid>>&& grids)
 {
-  return std::make_unique<resource_grid_pool_impl>(config);
+  return std::make_unique<resource_grid_pool_impl>(nof_sectors, nof_slots, std::move(grids));
 }
 
 std::unique_ptr<prach_buffer_pool>

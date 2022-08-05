@@ -26,7 +26,9 @@ private:
   std::vector<std::unique_ptr<resource_grid>> grids;
 
 public:
-  resource_grid_pool_impl(resource_grid_pool_config& config);
+  resource_grid_pool_impl(unsigned                                      nof_sectors,
+                          unsigned                                      nof_slots,
+                          std::vector<std::unique_ptr<resource_grid>>&& grids_);
   resource_grid& get_resource_grid(const resource_grid_context& context) override;
 };
 } // namespace srsgnb

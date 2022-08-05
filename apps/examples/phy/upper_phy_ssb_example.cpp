@@ -224,19 +224,20 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
   // Create DL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> dl_rg_pool = nullptr;
   {
-    resource_grid_pool_config rg_pool_config = {};
-    rg_pool_config.nof_sectors               = 1;
-    rg_pool_config.nof_slots                 = config.rg_pool_size;
-    for (unsigned sector_id = 0; sector_id != rg_pool_config.nof_sectors; ++sector_id) {
-      for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
-        rg_pool_config.grids.push_back(
-            create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, config.max_nof_prb * NRE));
-        ASSERT_FACTORY(rg_pool_config.grids.back());
+    unsigned                                    nof_sectors = 1;
+    unsigned                                    nof_slots   = config.rg_pool_size;
+    std::vector<std::unique_ptr<resource_grid>> grids;
+    grids.reserve(nof_sectors * nof_slots);
+
+    for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
+      for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
+        grids.push_back(create_resource_grid(config.max_nof_ports, MAX_NSYMB_PER_SLOT, config.max_nof_prb * NRE));
+        ASSERT_FACTORY(grids.back());
       }
     }
 
     // Create UL resource grid pool.
-    dl_rg_pool = create_resource_grid_pool(rg_pool_config);
+    dl_rg_pool = create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
     ASSERT_FACTORY(dl_rg_pool);
   }
 

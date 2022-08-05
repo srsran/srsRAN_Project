@@ -243,24 +243,23 @@ static const std::vector<configuration_profile> profiles = {
 
 static std::unique_ptr<resource_grid_pool> build_ul_resource_grid_pool()
 {
-  resource_grid_pool_config rg_pool_config;
+  unsigned                                    nof_slots = max_processing_delay_slots * 2;
+  std::vector<std::unique_ptr<resource_grid>> grids;
+  grids.reserve(nof_sectors * nof_slots);
 
-  rg_pool_config.nof_sectors = 1;
-  rg_pool_config.nof_slots   = max_processing_delay_slots * 2;
-
-  for (unsigned sector_idx = 0; sector_idx != rg_pool_config.nof_sectors; ++sector_idx) {
-    for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
+  for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
+    for (unsigned slot_id = 0; slot_id != nof_slots; ++slot_id) {
       std::unique_ptr<resource_grid> grid = create_resource_grid(1, get_nsymb_per_slot(cp), bw_rb * NRE);
       if (!grid) {
         srslog::fetch_basic_logger("TEST").error("Failed to create UL resource grid");
         return nullptr;
       }
-      rg_pool_config.grids.push_back(std::move(grid));
+      grids.emplace_back(std::move(grid));
     }
   }
 
   // Create UL resource grid pool.
-  return create_resource_grid_pool(rg_pool_config);
+  return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
 static lower_phy_configuration create_lower_phy_config(baseband_gateway&             bb_gateway,
