@@ -18,7 +18,7 @@ uplink_processor_pool_impl::uplink_processor_pool_impl(uplink_processor_pool_imp
 {
   for (auto& proc : dl_processors.procs) {
     srsgnb_assert(!proc.procs.empty(), "Cannot store an empty processor pool.");
-    processors[proc.sector].insert(proc.numerology, std::move(proc.procs));
+    processors[proc.sector].insert(proc.scs, std::move(proc.procs));
   }
 }
 

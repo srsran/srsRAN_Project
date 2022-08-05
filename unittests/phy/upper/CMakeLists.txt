@@ -33,7 +33,7 @@ target_link_libraries(downlink_processor_test srsgnb_downlink_processor srslog s
 add_test(downlink_processor_test downlink_processor_test)
 
 add_executable(downlink_processor_pool_test downlink_processor_pool_test.cpp)
-target_link_libraries(downlink_processor_pool_test srsgnb_downlink_processor srslog)
+target_link_libraries(downlink_processor_pool_test srsgnb_upper_phy srslog)
 add_test(downlink_processor_pool_test downlink_processor_pool_test)
 
 add_executable(re_pattern_test re_pattern_test.cpp)

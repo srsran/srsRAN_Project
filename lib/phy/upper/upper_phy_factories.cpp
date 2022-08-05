@@ -8,16 +8,18 @@
  *
  */
 
-#include "downlink_processor_factory_impl.h"
+#include "srsgnb/phy/upper/upper_phy_factories.h"
 #include "downlink_processor_pool_impl.h"
 #include "downlink_processor_single_executor_impl.h"
+#include "srsgnb/phy/support/support_factories.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/support/error_handling.h"
+#include "uplink_processor_pool_impl.h"
+#include "uplink_processor_single_executor_impl.h"
+#include "upper_phy_impl.h"
 
 // :TODO: remove this include list when the processor factories are moved to the channel_processor folder.
-#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
-#include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/downlink_processor_factory.h"
 #include "srsgnb/phy/upper/signal_processors/pss_processor.h"
 #include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
@@ -150,6 +152,7 @@ public:
 } // namespace srsgnb
 
 namespace {
+
 /// Dummy NZP CSI RS processor.
 class csi_rs_processor_dummy : public csi_rs_processor
 {
@@ -157,37 +160,137 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override {}
 };
 
-} // namespace
-
-downlink_processor_single_executor_factory::downlink_processor_single_executor_factory(upper_phy_rg_gateway& gateway,
-                                                                                       task_executor&        executor) :
-  gateway(gateway),
-  pdcch_proc_factory(std::make_shared<pdcch_processor_factory>()),
-  pdsch_proc_factory(std::make_shared<pdsch_processor_factory>()),
-  ssb_proc_factory(std::make_shared<ssb_processor_factory>()),
-  executor(executor)
+/// \brief Factory to create single executor uplink processors.
+class uplink_processor_single_executor_factory : public uplink_processor_factory
 {
-  // Do nothing.
+public:
+  uplink_processor_single_executor_factory(std::shared_ptr<prach_detector_factory> prach_factory_,
+                                           task_executor&                          executor,
+                                           upper_phy_rx_results_notifier&          results_notifier) :
+    prach_factory(prach_factory_), executor(executor), results_notifier(results_notifier)
+  {
+    report_fatal_error_if_not(prach_factory, "Invalid PRACH factory.");
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<uplink_processor> create(const uplink_processor_config& config) override
+  {
+    std::unique_ptr<prach_detector> detector = prach_factory->create();
+    report_fatal_error_if_not(detector, "Invalid PRACH detector.");
+
+    return std::make_unique<uplink_processor_single_executor_impl>(std::move(detector), executor, results_notifier);
+  }
+
+private:
+  std::shared_ptr<prach_detector_factory> prach_factory;
+  task_executor&                          executor;
+  upper_phy_rx_results_notifier&          results_notifier;
+};
+
+/// \brief Factory to create single executor downlink processors.
+class downlink_processor_single_executor_factory : public downlink_processor_factory
+{
+public:
+  downlink_processor_single_executor_factory(upper_phy_rg_gateway& gateway, task_executor& executor) :
+    gateway(gateway),
+    pdcch_proc_factory(std::make_shared<pdcch_processor_factory>()),
+    pdsch_proc_factory(std::make_shared<pdsch_processor_factory>()),
+    ssb_proc_factory(std::make_shared<ssb_processor_factory>()),
+    executor(executor)
+  {
+    // Do nothing.
+  }
+
+  // See interface for documentation.
+  std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) override
+  {
+    std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
+    report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
+
+    std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
+    report_fatal_error_if_not(pdsch, "Invalid PDSCH processor.");
+
+    std::unique_ptr<ssb_processor> ssb = ssb_proc_factory->create();
+    report_fatal_error_if_not(ssb, "Invalid SSB processor.");
+
+    return std::make_unique<downlink_processor_single_executor_impl>(gateway,
+                                                                     std::move(pdcch),
+                                                                     std::move(pdsch),
+                                                                     std::move(ssb),
+                                                                     std::make_unique<csi_rs_processor_dummy>(),
+                                                                     executor);
+  }
+
+private:
+  upper_phy_rg_gateway&                    gateway;
+  std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory;
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory;
+  std::shared_ptr<ssb_processor_factory>   ssb_proc_factory;
+  task_executor&                           executor;
+};
+
+static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const upper_phy_config& config)
+{
+  downlink_processor_single_executor_factory factory(*config.gateway, *config.dl_executor);
+
+  downlink_processor_pool_config config_pool;
+  config_pool.num_sectors = 1;
+  // :TODO: Change how to manage the numerologies in the future.
+  downlink_processor_pool_config::sector_dl_processor info = {0, subcarrier_spacing::kHz15, {}};
+
+  for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
+    std::unique_ptr<downlink_processor> dl_proc = factory.create({});
+    srsgnb_assert(dl_proc, "Invalid downlink processor");
+    info.procs.push_back(std::move(dl_proc));
+  }
+
+  config_pool.dl_processors.push_back(std::move(info));
+
+  return create_dl_processor_pool(std::move(config_pool));
 }
 
-std::unique_ptr<downlink_processor>
-downlink_processor_single_executor_factory::create(const downlink_processor_config& config)
+static std::unique_ptr<resource_grid_pool> build_dl_resource_grid_pool(const upper_phy_config& config)
 {
-  std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
-  report_fatal_error_if_not(pdcch, "Invalid PDCCH processor.");
+  resource_grid_pool_config rg_pool_config = {};
+  // Configure one pool per upper PHY.
+  rg_pool_config.nof_sectors = 1;
+  rg_pool_config.nof_slots   = config.nof_slots_dl_rg;
+  for (unsigned sector_idx = 0; sector_idx != rg_pool_config.nof_sectors; ++sector_idx) {
+    for (unsigned slot_id = 0; slot_id != rg_pool_config.nof_slots; ++slot_id) {
+      rg_pool_config.grids.push_back(create_resource_grid(config.nof_ports, MAX_NSYMB_PER_SLOT, config.dl_bw_rb * NRE));
+    }
+  }
 
-  std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
-  report_fatal_error_if_not(pdsch, "Invalid PDSCH processor.");
+  return create_resource_grid_pool(rg_pool_config);
+}
 
-  std::unique_ptr<ssb_processor> ssb = ssb_proc_factory->create();
-  report_fatal_error_if_not(ssb, "Invalid SSB processor.");
+class upper_phy_factory_impl : public upper_phy_factory
+{
+public:
+  std::unique_ptr<upper_phy> create(const upper_phy_config& config) override
+  {
+    std::unique_ptr<resource_grid_pool> rg_pool = build_dl_resource_grid_pool(config);
+    srsgnb_assert(rg_pool, "Invalid resource grid pool");
+    std::unique_ptr<downlink_processor_pool> dl_pool = build_dl_processor_pool(config);
+    srsgnb_assert(dl_pool, "Invalid downlink processor pool");
 
-  return std::make_unique<downlink_processor_single_executor_impl>(gateway,
-                                                                   std::move(pdcch),
-                                                                   std::move(pdsch),
-                                                                   std::move(ssb),
-                                                                   std::make_unique<csi_rs_processor_dummy>(),
-                                                                   executor);
+    return std::make_unique<upper_phy_impl>(config.sector_id, std::move(dl_pool), std::move(rg_pool));
+  }
+};
+
+} // namespace
+
+std::unique_ptr<uplink_processor_pool> srsgnb::create_uplink_processor_pool(uplink_processor_pool_config config)
+{
+  // Convert from pool config to pool_impl config.
+  uplink_processor_pool_impl_config ul_processors;
+  ul_processors.num_sectors = config.num_sectors;
+
+  for (auto& proc : config.ul_processors) {
+    ul_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});
+  }
+
+  return std::make_unique<uplink_processor_pool_impl>(std::move(ul_processors));
 }
 
 std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downlink_processor_pool_config config)
@@ -197,8 +300,13 @@ std::unique_ptr<downlink_processor_pool> srsgnb::create_dl_processor_pool(downli
   dl_processors.num_sectors = config.num_sectors;
 
   for (auto& proc : config.dl_processors) {
-    dl_processors.procs.push_back({proc.sector, proc.numerology, std::move(proc.procs)});
+    dl_processors.procs.push_back({proc.sector, proc.scs, std::move(proc.procs)});
   }
 
   return std::make_unique<downlink_processor_pool_impl>(std::move(dl_processors));
+}
+
+std::unique_ptr<upper_phy_factory> srsgnb::create_upper_phy_factory()
+{
+  return std::make_unique<upper_phy_factory_impl>();
 }

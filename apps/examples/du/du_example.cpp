@@ -20,8 +20,7 @@
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
-#include "srsgnb/phy/upper/downlink_processor_factory.h"
-#include "srsgnb/phy/upper/upper_phy_factory.h"
+#include "srsgnb/phy/upper/upper_phy_factories.h"
 #include "srsgnb/phy/upper/upper_phy_rg_gateway.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 #include "srsgnb/radio/radio_factory.h"
@@ -440,11 +439,11 @@ static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway& gateway, tas
   upper_phy_config upper_config;
   upper_config.sector_id         = 1;
   upper_config.nof_ports         = 1;
-  upper_config.nof_slots         = 40;
+  upper_config.nof_slots_dl_rg   = 40;
   upper_config.nof_dl_processors = 10;
-  upper_config.bw_rb             = bw_rb;
+  upper_config.dl_bw_rb          = bw_rb;
   upper_config.gateway           = &gateway;
-  upper_config.executor          = &executor;
+  upper_config.dl_executor       = &executor;
 
   return up_phy_factory->create(upper_config);
 }

@@ -18,17 +18,17 @@ namespace srsgnb {
 /// Defines the structure to configure the uplink processor pool.
 struct uplink_processor_pool_impl_config {
   /// Helper structure that defines a set of uplink processors for a sector and numerology.
-  struct info {
+  struct sector_ul_processor {
     /// Sector identifier.
     unsigned sector;
-    /// Numerology (subcarrier spacing index).
-    unsigned numerology;
+    /// Subcarrier spacing.
+    subcarrier_spacing scs;
     /// Vector of uplink processors for this sector and numerology.
     std::vector<std::unique_ptr<uplink_processor>> procs;
   };
 
   /// Vector of \c info objects, which contains the uplink processors for a given sector and numerology.
-  std::vector<info> procs;
+  std::vector<sector_ul_processor> procs;
   /// Number of sector that will support this configuration.
   unsigned num_sectors;
 };

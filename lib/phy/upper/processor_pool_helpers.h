@@ -56,13 +56,15 @@ public:
 
   /// \brief Associates the given processor pool with this sector.
   ///
-  /// \param[in] key Label of the new processor pool.
+  /// \param[in] scs Subcarrier spacing.
   /// \param[in] obj New processor pool for the current sector.
-  void insert(unsigned key, processor_pool&& obj)
+  void insert(subcarrier_spacing scs, processor_pool&& obj)
   {
-    srsgnb_assert(!numerologies.contains(key), "Key ({}) already present in the pool", key);
+    unsigned numerology = to_numerology_value(scs);
+    srsgnb_assert(
+        !numerologies.contains(numerology), "Subcarrier spacing ({}) already present in the pool", numerology);
 
-    numerologies.insert(key, std::move(obj));
+    numerologies.insert(numerology, std::move(obj));
   }
 };
 

@@ -14,7 +14,6 @@ target_link_libraries(du_example
         phy_fapi_adaptor_factory
         srsgnb_phy_support
         srsgnb_upper_phy
-        srsgnb_downlink_processor
         srsgnb_signal_processors
         srsgnb_channel_processors
         srsgnb_lower_phy

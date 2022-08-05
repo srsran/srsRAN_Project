@@ -18,17 +18,17 @@ namespace srsgnb {
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_impl_config {
   /// Downlink processors for a given sector and numerology.
-  struct info {
+  struct sector_dl_processor {
     /// Radio sector identifier.
     unsigned sector;
-    /// Numerology index.
-    unsigned numerology;
+    /// Subcarrier spacing.
+    subcarrier_spacing scs;
     /// Pointers to the actual downlink processors.
     std::vector<std::unique_ptr<downlink_processor>> procs;
   };
 
   /// Collection of all downlink processors, organized by radio sector and numerology.
-  std::vector<info> procs;
+  std::vector<sector_dl_processor> procs;
   /// Number of radio sectors.
   unsigned num_sectors;
 };
