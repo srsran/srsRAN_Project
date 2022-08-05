@@ -9,54 +9,74 @@
  */
 
 #include "prach_generator_test_data.h"
+#include "srsgnb/phy/lower/modulation/modulation_factories.h"
+#include "srsgnb/phy/support/support_factories.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsgnb/ran/prach/prach_preamble_information.h"
+#include "srsgnb/srslog/bundled/fmt/ostream.h"
+#include <gtest/gtest.h>
+
+namespace srsgnb {
+
+std::ostream& operator<<(std::ostream& os, test_case_t test_case)
+{
+  fmt::print(os,
+             "Format={}; RootSequenceIndex={}; PreambleIndex={}; RestrictedSet={}; ZeroCorrelationZone={};",
+             static_cast<unsigned>(test_case.config.format),
+             test_case.config.root_sequence_index,
+             test_case.config.preamble_index,
+             static_cast<unsigned>(test_case.config.restricted_set),
+             test_case.config.zero_correlation_zone);
+  return os;
+}
+
+} // namespace srsgnb
 
 using namespace srsgnb;
 
-static constexpr float ASSERT_MAX_ERROR = 1E-4F;
-
-int main()
+class prach_generator_test : public ::testing::TestWithParam<test_case_t>
 {
-  unsigned                               nof_prb_ul_grid = 0;
-  unsigned                               dft_size_15kHz  = 0;
-  std::shared_ptr<dft_processor_factory> dft_factory     = create_dft_processor_factory_generic();
-  TESTASSERT(dft_factory);
+protected:
+  std::unique_ptr<prach_generator> generator;
 
-  std::unique_ptr<prach_generator> prach_generator = nullptr;
+  void SetUp() override
+  {
+    std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
+    ASSERT_TRUE(dft_factory);
 
-  for (const test_case_t& test_case : prach_generator_test_data) {
-    // Detect if the UL grid size or DFT size for 15kHz have changed.
-    if (test_case.context.nof_prb_ul_grid != nof_prb_ul_grid || test_case.context.dft_size_15kHz != dft_size_15kHz) {
-      nof_prb_ul_grid = test_case.context.nof_prb_ul_grid;
-      dft_size_15kHz  = test_case.context.dft_size_15kHz;
+    std::shared_ptr<prach_generator_factory> generator_factory = create_prach_generator_factory_sw(dft_factory);
+    ASSERT_TRUE(generator_factory);
 
-      std::shared_ptr<prach_generator_factory> prach_gen_factory =
-          create_prach_generator_factory_sw(dft_factory, nof_prb_ul_grid, dft_size_15kHz);
-      TESTASSERT(prach_gen_factory);
+    generator = generator_factory->create();
+    ASSERT_TRUE(generator);
+  }
+};
 
-      prach_generator = prach_gen_factory->create();
-      TESTASSERT(prach_generator);
-    }
+TEST_P(prach_generator_test, vector)
+{
+  const test_case_t& test_case = GetParam();
 
-    span<const cf_t> sequence = prach_generator->generate(test_case.context.config);
-
-    const std::vector<cf_t> expected = test_case.sequence.read();
-
-    TESTASSERT_EQ(sequence.size(),
-                  expected.size(),
-                  "Preamble format {}.",
-                  static_cast<unsigned>(test_case.context.config.format));
-    for (unsigned i = 0; i != sequence.size(); ++i) {
-      float error = std::abs(sequence[i] - expected[i]);
-      TESTASSERT(error < ASSERT_MAX_ERROR,
-                 "Error {} exceeds maximum for sample {}. Sequence generated {} but expected {}.",
-                 error,
-                 i,
-                 sequence[i],
-                 expected[i]);
-    }
+  // Restricted sets are not implemented. Skip.
+  if (test_case.config.restricted_set != restricted_set_config::UNRESTRICTED) {
+    GTEST_SKIP();
   }
 
-  return 0;
+  std::vector<cf_t> expected_output = test_case.sequence.read();
+
+  // Run generator.
+  span<const cf_t> output = generator->generate(test_case.config);
+
+  // Make sure sizes match.
+  ASSERT_EQ(expected_output.size(), output.size());
+
+  // For each element...
+  for (unsigned index = 0; index != output.size(); ++index) {
+    EXPECT_NEAR(expected_output[index].real(), output[index].real(), 0.0001);
+    EXPECT_NEAR(expected_output[index].imag(), output[index].imag(), 0.0001);
+  }
 }
+
+// Creates test suite that combines all possible parameters. Denote zero_correlation_zone exceeds the maximum by one.
+INSTANTIATE_TEST_SUITE_P(ofdm_prach_demodulator_vectortest,
+                         prach_generator_test,
+                         ::testing::ValuesIn(prach_generator_test_data));
