@@ -6,9 +6,7 @@
 # the distribution.
 #
 
-add_subdirectory(modulation)
-add_subdirectory(processors)
-
-add_executable(lower_phy_test lower_phy_test.cpp)
-target_link_libraries(lower_phy_test srsgnb_lower_phy srslog)
-add_test(lower_phy_test lower_phy_test)
+add_library(srsgnb_lower_phy_prach_processor STATIC
+  prach_processor_factories.cpp
+  prach_processor_worker.cpp)
+target_link_libraries(srsgnb_lower_phy_prach_processor srsgnb_lower_phy_modulation)

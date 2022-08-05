@@ -11,7 +11,7 @@
 #pragma once
 
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/phy/lower/prach_processor.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor.h"
 #include <memory>
 
 namespace srsgnb {

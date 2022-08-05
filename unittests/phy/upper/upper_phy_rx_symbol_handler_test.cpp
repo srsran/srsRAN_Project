@@ -26,7 +26,7 @@ protected:
   std::unique_ptr<uplink_processor_pool> ul_processor_pool;
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_context                   context;
-  prach_buffer_dummy                     buffer_dummy;
+  prach_buffer_spy                       buffer_dummy;
   prach_detector::configuration          config;
 
   void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }

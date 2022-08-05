@@ -12,7 +12,7 @@
 
 namespace srsgnb {
 
-class prach_buffer_context;
+struct prach_buffer_context;
 class prach_buffer;
 
 /// \brief Lower physical layer PRACH processor - Request handler interface.

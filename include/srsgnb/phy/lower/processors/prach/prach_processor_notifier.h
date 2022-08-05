@@ -12,7 +12,7 @@
 
 namespace srsgnb {
 
-class prach_buffer_context;
+struct prach_buffer_context;
 class prach_buffer;
 
 /// \brief Lower physical layer PRACH processor - Notifier interface.
@@ -28,16 +28,20 @@ public:
   /// \brief Notifies a PRACH request outside the slot window.
   ///
   /// See \ref lower_phy_error_notifier::on_prach_request_late for more information.
+  /// \param[in] context PRACH context.
   virtual void on_prach_request_late(const prach_buffer_context& context) = 0;
 
   /// \brief Notifies an excess of PRACH requests.
   ///
   /// See \ref lower_phy_error_notifier::on_prach_request_late for more information.
+  /// \param[in] context PRACH context.
   virtual void on_prach_request_overflow(const prach_buffer_context& context) = 0;
 
   /// \brief Notifies the completion of the PRACH request processing.
   ///
   /// See \ref lower_phy_error_notifier::on_prach_request_late for more information.
+  /// \param[in] buffer  PRACH buffer.
+  /// \param[in] context PRACH context.
   virtual void on_rx_prach_window(const prach_buffer& buffer, const prach_buffer_context& context) = 0;
 };
 

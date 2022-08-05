@@ -27,7 +27,7 @@ TEST(UplinkProcessor, calling_process_prach_enqueue_task)
   upper_phy_rx_results_notifier_spy       results_notifier;
   uplink_processor_single_executor_impl   ul_processor(std::move(det), executor, results_notifier);
 
-  prach_buffer_dummy buffer;
+  prach_buffer_spy buffer;
   ul_processor.process_prach(buffer, {});
 
   ASSERT_FALSE(detector.has_detect_method_been_called());
@@ -42,7 +42,7 @@ TEST(UplinkProcessor, after_detect_prach_is_executed_results_notifier_is_called)
   upper_phy_rx_results_notifier_spy       results_notifier;
   uplink_processor_single_executor_impl   ul_processor(std::move(det), executor, results_notifier);
 
-  prach_buffer_dummy buffer;
+  prach_buffer_spy buffer;
   ul_processor.process_prach(buffer, {});
 
   ASSERT_FALSE(results_notifier.has_prach_result_been_notified());

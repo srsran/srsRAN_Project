@@ -11,7 +11,6 @@
 #pragma once
 
 #include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
