@@ -17,8 +17,8 @@ using namespace asn1::rrc_nr;
 
 rrc_entity::rrc_entity(const rrc_cfg_t&              cfg_,
                        rrc_ue_du_processor_notifier& rrc_ue_du_proc_notif_,
-                       rrc_ue_ngap_notifier&         ngap_notif_) :
-  cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_), ngap_notifier(ngap_notif_)
+                       rrc_ue_nas_notifier&          nas_notif_) :
+  cfg(cfg_), rrc_ue_du_proc_notifier(rrc_ue_du_proc_notif_), nas_notifier(nas_notif_)
 {
 }
 
@@ -36,7 +36,7 @@ rrc_ue_entity_interface* rrc_entity::add_user(rrc_ue_creation_message msg)
   ue_db.emplace(ue_index,
                 std::make_unique<rrc_ue_entity>(*this,
                                                 rrc_ue_du_proc_notifier,
-                                                ngap_notifier,
+                                                nas_notifier,
                                                 msg.ue_index,
                                                 msg.c_rnti,
                                                 cfg.ue_default_cfg,

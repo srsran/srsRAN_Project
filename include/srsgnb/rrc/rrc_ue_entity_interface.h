@@ -106,10 +106,10 @@ struct dl_nas_transport_message {
 };
 
 /// Interface to notify about NAS messages.
-class rrc_ue_ngap_notifier
+class rrc_ue_nas_notifier
 {
 public:
-  virtual ~rrc_ue_ngap_notifier() = default;
+  virtual ~rrc_ue_nas_notifier() = default;
 
   /// \brief Notify about the Initial UE Message.
   /// \param[in] msg The initial UE message.

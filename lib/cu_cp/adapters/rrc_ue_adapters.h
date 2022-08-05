@@ -97,7 +97,7 @@ private:
 };
 
 // Adapter between RRC UE and NGAP
-class rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
+class rrc_ue_ngap_adapter : public rrc_ue_nas_notifier
 {
 public:
   void on_initial_ue_message(const initial_ue_message& msg) override {}

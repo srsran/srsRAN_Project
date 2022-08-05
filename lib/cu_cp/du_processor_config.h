@@ -24,7 +24,7 @@ struct du_processor_config_t {
   srslog::basic_logger&       logger                  = srslog::fetch_basic_logger("CU-CP");
   f1c_du_management_notifier* f1c_du_mgmt_notifier    = nullptr;
   f1c_message_notifier*       f1c_notifier            = nullptr;
-  rrc_ue_ngap_notifier*       rrc_ue_ngap_ev_notifier = nullptr;
+  rrc_ue_nas_notifier*        rrc_ue_ngap_ev_notifier = nullptr;
   rrc_cfg_t                   rrc_cfg; // TODO: do we put subcomponent configs here?
 };
 

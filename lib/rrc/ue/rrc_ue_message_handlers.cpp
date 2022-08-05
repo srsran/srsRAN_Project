@@ -136,7 +136,7 @@ void rrc_ue_entity::handle_ul_info_transfer(const ul_info_transfer_ies_s& ul_inf
   ul_nas_msg.ded_nas_msg = ul_info_transfer.ded_nas_msg;
   // TODO: add cgi
 
-  ngap_notifier.on_ul_nas_transport_message(ul_nas_msg);
+  nas_notifier.on_ul_nas_transport_message(ul_nas_msg);
 }
 
 void rrc_ue_entity::handle_dl_nas_transport_message(const dl_nas_transport_message& msg)

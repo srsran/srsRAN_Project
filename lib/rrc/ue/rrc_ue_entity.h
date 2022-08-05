@@ -31,7 +31,7 @@ class rrc_ue_entity : public rrc_ue_entity_interface,
 public:
   rrc_ue_entity(rrc_entity_ue_interface&               parent_,
                 rrc_ue_du_processor_notifier&          du_proc_notif_,
-                rrc_ue_ngap_notifier&                  ngap_notif_,
+                rrc_ue_nas_notifier&                   nas_notif_,
                 const ue_index_t                       ue_index_,
                 const rnti_t                           c_rnti_,
                 const rrc_ue_cfg_t&                    cfg_,
@@ -99,7 +99,7 @@ private:
   rrc_ue_context_t              context;
   rrc_entity_ue_interface&      rrc_du;                // reference to the parant RRC object
   rrc_ue_du_processor_notifier& du_processor_notifier; // notifier to the DU processor
-  rrc_ue_ngap_notifier&         ngap_notifier;         // notifier to the NGAP
+  rrc_ue_nas_notifier&          nas_notifier;          // notifier to the NGAP
   srb_notifiers                 srbs;                  // set notifiers for all SRBs
   byte_buffer                   du_to_cu_container;    // initial RRC message from DU to CU
   rrc_ue_task_scheduler&        task_sched;

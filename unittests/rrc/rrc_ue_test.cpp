@@ -81,7 +81,7 @@ private:
   dummy_du_processor_rrc_ue_interface* du_processor_rrc_ue_handler = nullptr;
 };
 
-class dummy_rrc_ue_ngap_adapter : public rrc_ue_ngap_notifier
+class dummy_rrc_ue_ngap_adapter : public rrc_ue_nas_notifier
 {
 public:
   void on_initial_ue_message(const initial_ue_message& msg) override { logger.info("Received Initial UE Message"); }
