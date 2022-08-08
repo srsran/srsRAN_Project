@@ -9,7 +9,6 @@
  */
 
 #include "../../lib/rlc/rlc_am_entity.h"
-#include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -83,13 +82,29 @@ protected:
   {
     logger.info("Creating RLC AM ({} bit)", to_number(sn_size));
 
-    sn_size   = sn_size_;
-    config.rx = std::make_unique<rlc_rx_am_config>(rlc_rx_am_config{sn_size, 35, 8});
-    config.tx = std::make_unique<rlc_tx_am_config>(rlc_tx_am_config{sn_size, 45, 4, 4, 25});
-    rlc1      = std::make_unique<rlc_am_entity>(
+    sn_size = sn_size_;
+
+    // Set Rx config
+    config.rx                    = std::make_unique<rlc_rx_am_config>(rlc_rx_am_config{});
+    config.rx->sn_field_length   = sn_size;
+    config.rx->t_reassembly      = 35;
+    config.rx->t_status_prohibit = 8;
+
+    // Set Tx config
+    config.tx                  = std::make_unique<rlc_tx_am_config>(rlc_tx_am_config{});
+    config.tx->sn_field_length = sn_size;
+    config.tx->t_poll_retx     = 45;
+    config.tx->max_retx_thresh = 4;
+    config.tx->poll_pdu        = 4;
+    config.tx->poll_byte       = 25;
+
+    // Create RLC entities
+    rlc1 = std::make_unique<rlc_am_entity>(
         du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
     rlc2 = std::make_unique<rlc_am_entity>(
         du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+
+    // Bind interfaces
     rlc1_rx_lower = rlc2->get_rx_pdu_handler();
     rlc1_tx_upper = rlc1->get_tx_sdu_handler();
     rlc1_tx_lower = rlc1->get_tx_pdu_transmitter();
