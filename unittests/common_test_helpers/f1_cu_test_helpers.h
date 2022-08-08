@@ -12,32 +12,59 @@
 
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/f1_interface/common/f1c_common.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu.h"
+#include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
+#include "unittests/f1_interface/common/test_helpers.h"
+#include <gtest/gtest.h>
 
 namespace srsgnb {
 namespace srs_cu_cp {
 
+/// Fixture class for F1AP
+class f1ap_cu_test : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
+
+    f1c_pdu_notifier      = std::make_unique<dummy_f1c_pdu_notifier>(nullptr);
+    du_processor_notifier = std::make_unique<dummy_f1c_du_processor_notifier>();
+    f1c_du_mgmt_notifier  = std::make_unique<dummy_f1c_du_management_notifier>(nullptr);
+
+    f1ap = create_f1ap(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
+  }
+
+  std::unique_ptr<f1_interface>                     f1ap;
+  std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
+  std::unique_ptr<dummy_f1c_du_processor_notifier>  du_processor_notifier;
+  std::unique_ptr<dummy_f1c_du_management_notifier> f1c_du_mgmt_notifier;
+  srslog::basic_logger&                             test_logger = srslog::fetch_basic_logger("TEST");
+};
+
 f1c_msg generate_f1_setup_request_base()
 {
-  f1c_msg f1c_msg = {};
+  f1c_msg f1_setup_request_base = {};
 
-  f1c_msg.pdu.set_init_msg();
-  f1c_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
+  f1_setup_request_base.pdu.set_init_msg();
+  f1_setup_request_base.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
 
-  auto& setup_req                 = f1c_msg.pdu.init_msg().value.f1_setup_request();
+  auto& setup_req                 = f1_setup_request_base.pdu.init_msg().value.f1_setup_request();
   setup_req->transaction_id.value = 99;
   setup_req->gnb_du_id.value      = 0x11;
   setup_req->gnb_du_name_present  = true;
   setup_req->gnb_du_name.value.from_string("srsDU");
   setup_req->gnb_du_rrc_version.value.latest_rrc_version.from_number(1);
 
-  return f1c_msg;
+  return f1_setup_request_base;
 }
 
 f1c_msg generate_valid_f1_setup_request()
 {
-  f1c_msg f1c_msg = generate_f1_setup_request_base();
+  f1c_msg f1_setup_request = generate_f1_setup_request_base();
 
-  auto& setup_req                             = f1c_msg.pdu.init_msg().value.f1_setup_request();
+  auto& setup_req                             = f1_setup_request.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = true;
   setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
   setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
@@ -80,7 +107,7 @@ f1c_msg generate_valid_f1_setup_request()
 
   setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
 
-  return f1c_msg;
+  return f1_setup_request;
 }
 
 f1c_msg generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
