@@ -214,12 +214,12 @@ enum test_mode { acked, max_retx_reached, invalid_retx_params };
 /// Test DL HARQ process in different states: empty, allocated and waiting for ACK, allocated with pending reTx
 void test_dl_harq_proc(test_mode tmode)
 {
-  constexpr unsigned harq_delay   = 4;
-  constexpr unsigned tx_gnb_delay = 2;
-  constexpr unsigned max_retx     = 1;
-  constexpr unsigned pid          = 1;
-  constexpr unsigned mcs          = 8;
-  constexpr unsigned tbs          = 1224;
+  constexpr unsigned  harq_delay   = 4;
+  constexpr unsigned  tx_gnb_delay = 2;
+  constexpr unsigned  max_retx     = 1;
+  constexpr harq_id_t pid          = to_harq_id(1);
+  constexpr unsigned  mcs          = 8;
+  constexpr unsigned  tbs          = 1224;
 
   dl_harq_process dl_proc{pid};
   prb_grant       prbgrant{prb_interval{0, 60}};
@@ -306,7 +306,7 @@ void test_dl_invalid_paths(srslog::basic_logger& harq_logger)
 
   // Test parameters
   constexpr uint32_t        max_n_rtx      = 3;
-  constexpr uint32_t        pid            = 2;
+  constexpr harq_id_t       pid            = to_harq_id(2);
   constexpr uint32_t        nof_prbs       = 52;
   constexpr uint32_t        nof_h_procs    = 4;
   constexpr uint32_t        arq_slot_delay = 1;
@@ -379,7 +379,7 @@ void test_ul_invalid_paths(srslog::basic_logger& harq_logger)
 
   // Test parameters
   constexpr uint32_t        max_n_rtx   = 3;
-  constexpr uint32_t        pid         = 2;
+  constexpr harq_id_t       pid         = to_harq_id(2);
   constexpr uint32_t        nof_prbs    = 52;
   constexpr uint32_t        nof_h_procs = 4;
   constexpr uint32_t        ul_tx_delay = 4;

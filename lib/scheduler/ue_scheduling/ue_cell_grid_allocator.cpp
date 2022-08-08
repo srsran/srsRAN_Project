@@ -8,6 +8,8 @@
  */
 
 #include "ue_cell_grid_allocator.h"
+#include "../support/config_helpers.h"
+#include "../support/dmrs_helpers.h"
 
 using namespace srsgnb;
 
@@ -38,7 +40,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
     return false;
   }
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
-  subcarrier_spacing           scs         = ue_cc->cfg().dl_bwps[ue_cc->active_bwp_id()]->scs;
+  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  subcarrier_spacing           scs         = ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()]->scs;
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
@@ -57,12 +60,14 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Find a SearchSpace candidate.
-  search_space_id ss_id = MAX_NOF_SEARCH_SPACES;
+  const search_space_configuration* ss_cfg = nullptr;
   for (const search_space_configuration& ss : ue_cell_cfg.get_dl_search_spaces(ue_cc->active_bwp_id())) {
-    // TODO: Check if uses the same DCI format.
-    ss_id = ss.id;
+    if (search_space_supports_dl_dci_format(ss, grant.dci_fmt)) {
+      ss_cfg = &ss;
+      break;
+    }
   }
-  if (ss_id == MAX_NOF_SEARCH_SPACES) {
+  if (ss_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
   }
@@ -71,7 +76,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   pdcch_dl_information* pdcch =
       get_pdcch_sched(grant.cell_index)
           .alloc_dl_pdcch_ue(
-              pdcch_alloc, u.crnti, ue_cc->cfg(), ue_cc->active_bwp_id(), ss_id, grant.aggr_lvl, grant.dci_fmt);
+              pdcch_alloc, u.crnti, ue_cc->cfg(), ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, grant.dci_fmt);
   if (pdcch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
@@ -80,13 +85,52 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   // Mark resources as occupied in the ResourceGrid.
   pdsch_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch, scs, grant.symbols, grant.crbs});
 
-  // Allocate PDSCH.
+  // Allocate UE DL HARQ.
+  uint8_t          time_resource = 0; // TODO.
+  prb_interval     prbs          = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  dl_harq_process& h_dl          = ue_cc->harqs.dl_harq(grant.h_id);
+  slot_point       uci_slot      = pdsch_alloc.slot + 4; // TODO.
+  if (h_dl.empty()) {
+    // It is a new tx.
+    const static unsigned mcs      = 10; // TODO.
+    const static unsigned max_retx = 4;  // TODO.
+    bool                  success  = h_dl.new_tx(pdsch_alloc.slot, uci_slot, prbs, mcs, max_retx);
+    srsgnb_assert(success, "Failed to allocate DL HARQ newtx");
+  } else {
+    // It is a retx.
+    bool success = h_dl.new_retx(pdsch_alloc.slot, uci_slot, prbs);
+    srsgnb_assert(success, "Failed to allocate DL HARQ retx");
+  }
+
+  // Fill DL PDCCH DCI.
+  // TODO.
+
+  // Fill PDSCH.
   pdsch_alloc.result.dl.ue_grants.emplace_back();
-  dl_msg_alloc& msg = pdsch_alloc.result.dl.ue_grants.back();
-  msg.crnti         = u.crnti;
-  msg.tbs.emplace_back();
-  msg.tbs.back().lc_lst.emplace_back();
-  msg.tbs.back().lc_lst.back().lcid = lcid_t::LCID_SRB0;
+  dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.back();
+  msg.pdsch_cfg.rnti    = u.crnti;
+  msg.pdsch_cfg.bwp_cfg = pdcch->ctx.bwp_cfg;
+  msg.pdsch_cfg.prbs    = crb_to_prb(*msg.pdsch_cfg.bwp_cfg, grant.crbs);
+  msg.pdsch_cfg.symbols = grant.symbols;
+  // TODO: Use UE-dedicated DMRS info.
+  msg.pdsch_cfg.dmrs = make_dmrs_info_common(
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+  // See TS 38.211, 7.3.1.1. - Scrambling.
+  msg.pdsch_cfg.n_id = cell_cfg.pci; // TODO.
+  // Add codeword.
+  msg.pdsch_cfg.codewords.emplace_back();
+  pdsch_codeword&                          cw     = msg.pdsch_cfg.codewords.back();
+  static constexpr std::array<unsigned, 4> rv_idx = {0, 2, 3, 1};
+  cw.rv_index                                     = rv_idx[h_dl.nof_retx() % rv_idx.size()];
+  cw.mcs_index                                    = h_dl.mcs(0);
+  cw.mcs_table                                    = pdsch_mcs_table::qam64;
+  sch_mcs_description mcs_config                  = pdsch_mcs_get_config(cw.mcs_table, cw.mcs_index);
+  cw.qam_mod                                      = mcs_config.modulation;
+  cw.target_code_rate                             = mcs_config.target_code_rate;
+  // Set MAC logical channels to schedule in this PDU.
+  msg.tb_list.emplace_back();
+  msg.tb_list.back().lc_lst.emplace_back();
+  msg.tb_list.back().lc_lst.back().lcid = lcid_t::LCID_SRB0;
 
   return true;
 }

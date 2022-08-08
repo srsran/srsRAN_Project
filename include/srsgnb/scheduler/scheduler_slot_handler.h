@@ -44,6 +44,8 @@ constexpr size_t MAX_RAR_PDUS_PER_SLOT = 16;
 /// Maximum number of PRACH occasions within a slot as per TS38.211, Tables 6.3.3.2-[2-4] and maximum msg1-FDM of 8
 /// according to TS 38.331.
 const static size_t MAX_NOF_PRACHS_PER_SLOT = 56;
+/// Maximum number of codewords per PDSCH grant. Implementation-specific.
+const static size_t MAX_NOF_CODEWORDS_PER_PDSCH = 2;
 
 struct beamforming_info {
   // TODO
@@ -132,12 +134,12 @@ struct pdsch_codeword {
 /// Information related to a PDSCH allocation.
 /// \remark See FAPI PDSCH PDU.
 struct pdsch_information {
-  rnti_t                           rnti;
-  const bwp_configuration*         bwp_cfg;
-  prb_grant                        prbs;
-  ofdm_symbol_range                symbols;
-  static_vector<pdsch_codeword, 2> codewords;
-  dmrs_information                 dmrs;
+  rnti_t                                                     rnti;
+  const bwp_configuration*                                   bwp_cfg;
+  prb_grant                                                  prbs;
+  ofdm_symbol_range                                          symbols;
+  static_vector<pdsch_codeword, MAX_NOF_CODEWORDS_PER_PDSCH> codewords;
+  dmrs_information                                           dmrs;
   /// Parameter n_ID, used for scrambling, as per TS 38.211, Section 7.3.1.1.
   unsigned n_id;
 };
@@ -158,7 +160,7 @@ struct dl_msg_tb_info {
 struct dl_msg_alloc {
   rnti_t                                        crnti;
   pdsch_information                             pdsch_cfg;
-  static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tbs;
+  static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tb_list;
 };
 
 struct pusch_information {
@@ -187,9 +189,9 @@ struct rar_ul_grant {
   bool     csi_req;
 };
 
-/// See ORAN WG8, 9.2.3.3.10 - RAR information.
+/// Stores the information associated to an RAR.
 struct rar_information {
-  pdcch_dl_information*                   pdcch_cfg;
+  const pdcch_dl_information*             pdcch_cfg;
   pdsch_information                       pdsch_cfg;
   static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };

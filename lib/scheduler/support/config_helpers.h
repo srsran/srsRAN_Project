@@ -61,4 +61,28 @@ inline unsigned get_coreset_nof_cces(const coreset_configuration& cs_cfg)
   return nof_rbs / pdcch_constants::NOF_REG_PER_CCE;
 }
 
+inline bool search_space_supports_dl_dci_format(const search_space_configuration& ss_cfg, dci_dl_format dci_fmt)
+{
+  if (ss_cfg.type == search_space_configuration::type::common) {
+    switch (dci_fmt) {
+      case dci_dl_format::f1_0:
+        return ss_cfg.common.f0_0_and_f1_0;
+      case dci_dl_format::f2_0:
+        return ss_cfg.common.f2_0;
+      default:
+        srsgnb_assertion_failure("DCI format {} not supported for common SearchSpace", dci_fmt);
+    }
+  } else {
+    switch (dci_fmt) {
+      case dci_dl_format::f1_0:
+        return ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_0_and_f1_0;
+      case dci_dl_format::f1_1:
+        return ss_cfg.ue_specific == search_space_configuration::ue_specific_dci_format::f0_1_and_1_1;
+      default:
+        srsgnb_assertion_failure("DCI format {} not supported for UE-dedicated SearchSpace", dci_fmt);
+    }
+  }
+  return false;
+}
+
 } // namespace srsgnb

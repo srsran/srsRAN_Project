@@ -57,7 +57,7 @@ private:
   struct pending_msg3 {
     rach_indication_message ind_msg{};
     /// UL Harq used to schedule Msg3.
-    ul_harq_process harq{0};
+    ul_harq_process harq{MAX_HARQ_ID};
   };
   struct msg3_alloc_candidate {
     unsigned     pusch_td_res_index;

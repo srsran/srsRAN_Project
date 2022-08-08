@@ -147,10 +147,10 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 
   // Assemble data grants.
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-    for (const dl_msg_tb_info& tb_info : grant.tbs) {
+    for (const dl_msg_tb_info& tb_info : grant.tb_list) {
       for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
         // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
+        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, bearer_alloc.lcid);
         srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         unsigned rem_bytes = bearer_alloc.sched_bytes;
@@ -172,16 +172,16 @@ void mac_cell_processor::assemble_dl_data_request(mac_dl_data_result&    data_re
 void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_result& dl_res)
 {
   for (const dl_msg_alloc& grant : dl_res.ue_grants) {
-    for (const dl_msg_tb_info& tb_info : grant.tbs) {
+    for (const dl_msg_tb_info& tb_info : grant.tb_list) {
       for (const dl_msg_lc_info& bearer_alloc : tb_info.lc_lst) {
         // Fetch RLC Bearer.
-        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.crnti, bearer_alloc.lcid);
+        mac_sdu_tx_builder* bearer = ue_mng.get_bearer(grant.pdsch_cfg.rnti, bearer_alloc.lcid);
         srsgnb_sanity_check(bearer != nullptr, "Scheduler is allocating inexistent bearers");
 
         // Update DL BSR for the allocated logical channel.
         dl_bsr_indication_message bsr{};
-        bsr.ue_index = ue_mng.get_ue_index(grant.crnti);
-        bsr.rnti     = grant.crnti;
+        bsr.ue_index = ue_mng.get_ue_index(grant.pdsch_cfg.rnti);
+        bsr.rnti     = grant.pdsch_cfg.rnti;
         bsr.lcid     = bearer_alloc.lcid;
         bsr.bsr      = bearer->on_buffer_state_update();
         sched_bsr_updater.handle_dl_bsr_indication(bsr);

@@ -19,11 +19,19 @@
 
 namespace srsgnb {
 
+/// Identification of an HARQ process.
+enum harq_id_t { MAX_HARQ_ID = 15, MAX_NOF_HARQS = 16 };
+
+constexpr inline harq_id_t to_harq_id(unsigned h_id)
+{
+  return static_cast<harq_id_t>(h_id);
+}
+
 /// Basic class for HARQ processes: will be extended by DL and UL HARQ process classes
 class harq_process
 {
 public:
-  explicit harq_process(uint32_t id_) : pid(id_) {}
+  explicit harq_process(harq_id_t id_) : pid(id_) {}
 
   /// \brief Indicate the beginning of a new slot.
   void slot_indication(slot_point slot_rx);
@@ -65,7 +73,7 @@ public:
 
   int ack_info(uint32_t tb_idx, bool ack);
 
-  const uint32_t pid;
+  const harq_id_t pid;
 
 protected:
   bool new_tx_common(slot_point slot_tx, slot_point slot_ack, const prb_grant& grant, uint32_t mcs, uint32_t max_retx);
@@ -95,7 +103,7 @@ protected:
 class dl_harq_process : public harq_process
 {
 public:
-  explicit dl_harq_process(uint32_t id_);
+  explicit dl_harq_process(harq_id_t id_);
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
@@ -108,7 +116,7 @@ public:
 class ul_harq_process : public harq_process
 {
 public:
-  explicit ul_harq_process(uint32_t id_) : harq_process(id_) {}
+  explicit ul_harq_process(harq_id_t id_) : harq_process(id_) {}
 
   /// \brief Called on every new transmission. It marks this HARQ process as busy and stores respective TB
   /// information.
@@ -134,7 +142,9 @@ public:
   uint32_t               nof_dl_harqs() const { return dl_harqs.size(); }
   uint32_t               nof_ul_harqs() const { return ul_harqs.size(); }
   const dl_harq_process& dl_harq(uint32_t pid) const { return dl_harqs[pid]; }
+  dl_harq_process&       dl_harq(uint32_t pid) { return dl_harqs[pid]; }
   const ul_harq_process& ul_harq(uint32_t pid) const { return ul_harqs[pid]; }
+  ul_harq_process&       ul_harq(uint32_t pid) { return ul_harqs[pid]; }
 
   dl_harq_process* find_pending_dl_retx()
   {
