@@ -10,13 +10,13 @@
 
 #pragma once
 
+#include "srsgnb/phy/lower/modulation/modulation_factories.h"
+#include "srsgnb/phy/lower/prach_processor.h"
 #include <memory>
 
 namespace srsgnb {
 
-class prach_processor;
 class task_executor;
-class ofdm_prach_demodulator_factory;
 
 /// PRACH processor factory.
 class prach_processor_factory

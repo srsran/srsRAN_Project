@@ -15,7 +15,9 @@ namespace srsgnb {
 class prach_buffer_context;
 class prach_buffer;
 
-/// Lower physical layer PRACH processor - Request handler interface.
+/// \brief Lower physical layer PRACH processor - Request handler interface.
+///
+/// This class provides an interface for requesting the capture and demodulation of PRACH occasions.
 class prach_processor_request_handler
 {
 public:
@@ -23,6 +25,10 @@ public:
   virtual ~prach_processor_request_handler() = default;
 
   /// \brief Handles a new PRACH request.
+  ///
+  /// The request is not processed immediately. The results of the method are asynchronously notified through \ref
+  /// prach_processor_notifier interface.
+  ///
   /// \param[in] buffer  PRACH Buffer.
   /// \param[in] context PRACH context.
   virtual void handle_request(prach_buffer& buffer, const prach_buffer_context& context) = 0;

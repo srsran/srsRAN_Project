@@ -11,12 +11,10 @@
 #pragma once
 
 #include "srsgnb/adt/complex.h"
+#include "srsgnb/adt/span.h"
+#include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
-
-class slot_point;
-template <typename T>
-class span;
 
 /// \brief Lower physical layer PRACH processor - Baseband interface.
 ///
@@ -31,7 +29,7 @@ public:
   struct symbol_context {
     // Current slot.
     slot_point slot;
-    // Current slot index within the slot.
+    // Current symbol index within the slot.
     unsigned symbol;
     // Sector identifier.
     unsigned sector;
@@ -39,7 +37,7 @@ public:
     unsigned port;
   };
 
-  /// \brief Process a baseband OFDM symbol.
+  /// \brief Processes a baseband OFDM symbol.
   ///
   /// \param[in] samples Baseband samples to process.
   /// \param[in] context OFDM Symbol context.

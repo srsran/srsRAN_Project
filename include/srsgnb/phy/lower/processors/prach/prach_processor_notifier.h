@@ -25,7 +25,7 @@ public:
   /// Default destructor.
   virtual ~prach_processor_notifier() = default;
 
-  /// Notifies a PRACH request outside of the slot window. See \ref lower_phy_error_notifier::on_prach_request_late for
+  /// Notifies a PRACH request outside the slot window. See \ref lower_phy_error_notifier::on_prach_request_late for
   /// more information.
   virtual void on_prach_request_late(const prach_buffer_context& context) = 0;
 

@@ -18,7 +18,7 @@ class prach_processor_baseband;
 
 /// \brief PRACH processor main interface.
 ///
-/// Provide a single access point to all PRACH-related interfaces, that is prach_processor_notifier,
+/// Provides a single access point to all PRACH-related interfaces, that is prach_processor_notifier,
 /// prach_processor_request_handler and prach_processor_baseband.
 ///
 /// \note All implementations of this interface must raise a fatal error if the PRACH processor is not connected to a

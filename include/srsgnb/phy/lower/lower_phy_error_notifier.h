@@ -45,7 +45,7 @@ public:
   /// \sa lower_phy_rg_handler::handle_resource_grid.
   virtual void on_late_resource_grid(const late_resource_grid_context& context) = 0;
 
-  /// \brief Notifies a PRACH request outside of the slot window.
+  /// \brief Notifies a PRACH request outside the slot window.
   ///
   /// This error occurs when a PRACH request for slot \f$n\f$ is received after slot \f$n\f$ started being
   /// processed.
