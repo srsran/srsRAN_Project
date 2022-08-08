@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-void upper_phy_rx_results_notifier_proxy::on_new_prach_results(const prach_detector::detection_result& result)
+void upper_phy_rx_results_notifier_proxy::on_new_prach_results(const ul_prach_results& result)
 {
   report_fatal_error_if_not(notifier, "Invalid results notifier object.");
   notifier->on_new_prach_results(result);

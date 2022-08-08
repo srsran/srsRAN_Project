@@ -19,7 +19,7 @@ class upper_phy_rx_results_notifier_spy : public upper_phy_rx_results_notifier
   bool prach_results_notified = false;
 
 public:
-  void on_new_prach_results(const prach_detector::detection_result& result) override { prach_results_notified = true; }
+  void on_new_prach_results(const ul_prach_results& result) override { prach_results_notified = true; }
 
   bool has_prach_result_been_notified() const { return prach_results_notified; }
 };

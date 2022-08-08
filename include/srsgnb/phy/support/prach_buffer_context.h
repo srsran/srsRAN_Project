@@ -37,6 +37,8 @@ struct prach_buffer_context {
   ///
   /// Here, OFDM symbol indexing assumes a subcarrier spacing equal to \c pusch_scs.
   unsigned start_symbol;
+  /// Frequency domain occasion index \c n {0...7} as per TS38.211 section 6.3.3.2.
+  unsigned fd_ra_index;
   /// Preamble format.
   preamble_format format;
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain

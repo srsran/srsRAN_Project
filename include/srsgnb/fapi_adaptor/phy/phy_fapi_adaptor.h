@@ -14,6 +14,7 @@ namespace srsgnb {
 
 namespace fapi {
 class slot_message_gateway;
+class slot_data_message_notifier;
 class slot_time_message_notifier;
 } // namespace fapi
 
@@ -37,10 +38,15 @@ public:
   /// Returns the adaptor's slot message gateway.
   virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
 
-  /// \brief Configures the adaptor's FAPI slot message notifier to the given one.
+  /// \brief Configures the adaptor's FAPI slot time message notifier to the given one.
   ///
-  /// \param fapi_time_notifier FAPI slot message notifier to set in the adaptor.
+  /// \param fapi_time_notifier FAPI slot time message notifier to set in the adaptor.
   virtual void set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;
+
+  /// \brief Configures the adaptor's FAPI slot data message notifier to the given one.
+  ///
+  /// \param fapi_data_notifier FAPI slot data message notifier to set in the adaptor.
+  virtual void set_fapi_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) = 0;
 };
 
 } // namespace fapi_adaptor

@@ -37,8 +37,6 @@ struct pdcch_group {
 
 } // namespace
 
-static const std::string log_name = "MAC-FAPI adaptor";
-
 static static_vector<unsigned, MAX_DL_PDUS_PER_SLOT>
 find_same_bwp_and_coreset_for_first_element(const static_vector<pdcch_group, MAX_DL_PDUS_PER_SLOT>& candidates)
 {
@@ -145,18 +143,7 @@ void mac_to_fapi_translator::on_new_downlink_scheduler_results(const mac_dl_sche
   error_type<validator_report> result = validate_dl_tti_request(msg);
 
   if (!result) {
-    srslog::fetch_basic_logger(log_name).error(
-        "DL_TTI.request bad-formed in SFN ({}) and slot ({}).", result.error().sfn, result.error().slot);
-    for (const auto& error : result.error().reports) {
-      srslog::fetch_basic_logger(log_name).error(
-          "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
-          error.message_type,
-          error.pdu_type.has_value() ? error.pdu_type.value() : -1,
-          error.property_name,
-          error.value,
-          error.expected_value_range.first,
-          error.expected_value_range.second);
-    }
+    log_validator_report(result.error());
 
     return;
   }
@@ -217,18 +204,7 @@ void mac_to_fapi_translator::on_new_uplink_scheduler_results(const mac_ul_sched_
   error_type<validator_report> result = validate_ul_tti_request(msg);
 
   if (!result) {
-    srslog::fetch_basic_logger(log_name).error(
-        "UL_TTI.request bad-formed in SFN ({}) and slot ({}).", result.error().sfn, result.error().slot);
-    for (const auto& error : result.error().reports) {
-      srslog::fetch_basic_logger(log_name).error(
-          "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
-          error.message_type,
-          error.pdu_type.has_value() ? error.pdu_type.value() : -1,
-          error.property_name,
-          error.value,
-          error.expected_value_range.first,
-          error.expected_value_range.second);
-    }
+    log_validator_report(result.error());
 
     return;
   }

@@ -1224,17 +1224,17 @@ public:
   /// \note These parameters are specified in SCF-222 v4.0 section 3.4.11 in table RACH.indication message body.
   /// \note Units for timing advace offset parameter are specified in SCF-222 v4.0 section 3.4.11 in table
   /// RACH.indication message body, and this function expect this units.
-  rach_indication_pdu_builder& add_preamble(optional<unsigned> timing_advance_offset,
+  rach_indication_pdu_builder& add_preamble(unsigned           preamble_index,
+                                            optional<unsigned> timing_advance_offset,
                                             optional<uint32_t> timing_advance_offset_ns,
                                             optional<float>    preamble_power,
                                             optional<float>    preamble_snr)
 
   {
-    unsigned index = pdu.preambles.size();
     pdu.preambles.emplace_back();
     auto& preamble = pdu.preambles.back();
 
-    preamble.preamble_index = index;
+    preamble.preamble_index = preamble_index;
 
     // :TODO: Units for this measure.
     preamble.timing_advance_offset =

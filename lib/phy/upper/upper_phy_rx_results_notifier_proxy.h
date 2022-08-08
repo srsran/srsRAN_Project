@@ -21,7 +21,7 @@ class upper_phy_rx_results_notifier_proxy : public upper_phy_rx_results_notifier
 {
 public:
   // See interface for documentation.
-  void on_new_prach_results(const prach_detector::detection_result& result) override;
+  void on_new_prach_results(const ul_prach_results& result) override;
 
   /// Connects this proxy to the notifier the notifications of new upper PHY receive results are forwarded to.
   ///

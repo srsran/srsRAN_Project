@@ -47,7 +47,12 @@ void uplink_processor_single_executor_impl::process_prach(const prach_buffer&   
     prach_detector::configuration           configuration = get_prach_dectector_config_from_prach_context(context);
     const prach_detector::detection_result& result        = detector->detect(buffer, configuration);
 
+    // Data adaptation.
+    ul_prach_results ul_results;
+    ul_results.context = context;
+    ul_results.result  = result;
+
     // Notify the PRACH results.
-    results_notifier.on_new_prach_results(result);
+    results_notifier.on_new_prach_results(ul_results);
   });
 }

@@ -29,6 +29,7 @@ static void test_rach_indication_builder_ok()
   std::uniform_int_distribution<int>      rsrp_dist(-150, 5);
   std::uniform_int_distribution<int>      snr_dist(-70, 70);
   std::uniform_int_distribution<unsigned> timing_dist(0, 3846);
+  std::uniform_int_distribution<unsigned> index_dist(0, 63);
   std::uniform_int_distribution<unsigned> timing_ns_dist(0, 3000000);
 
   for (unsigned i = 0; i != 10; ++i) {
@@ -46,6 +47,7 @@ static void test_rach_indication_builder_ok()
     int      snr_dis      = snr_dist(gen);
     unsigned timing_di    = timing_dist(gen);
     unsigned timing_ns_di = timing_ns_dist(gen);
+    unsigned index        = index_dist(gen);
 
     optional<float> rssi;
     if (-140 <= rssi_di && rssi_di <= 30) {
@@ -88,7 +90,7 @@ static void test_rach_indication_builder_ok()
       preamble_snr.emplace(prem_snr);
     }
 
-    pdu_builder.add_preamble(timing, timing_ns, preamble_power, preamble_snr);
+    pdu_builder.add_preamble(index, timing, timing_ns, preamble_power, preamble_snr);
 
     TESTASSERT_EQ(sfn, msg.sfn);
     TESTASSERT_EQ(slot, msg.slot);
@@ -108,7 +110,7 @@ static void test_rach_indication_builder_ok()
     TESTASSERT_EQ(1, pdu.preambles.size());
 
     const auto& preamble = pdu.preambles.back();
-    TESTASSERT_EQ(0, preamble.preamble_index);
+    TESTASSERT_EQ(index, preamble.preamble_index);
     TESTASSERT_EQ(timing ? timing.value() : std::numeric_limits<uint16_t>::max(), preamble.timing_advance_offset);
     TESTASSERT_EQ(timing_ns ? timing_ns.value() : std::numeric_limits<uint32_t>::max(),
                   preamble.timing_advance_offset_ns);

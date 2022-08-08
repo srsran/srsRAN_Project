@@ -40,3 +40,8 @@ fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()
 {
   return fapi_translator;
 }
+
+void phy_fapi_adaptor_impl::set_fapi_slot_data_message_notifier(slot_data_message_notifier& fapi_data_notifier)
+{
+  phy_translator.set_fapi_slot_data_message_notifier(fapi_data_notifier);
+}

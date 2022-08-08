@@ -707,3 +707,21 @@ error_type<validator_report> srsgnb::fapi::validate_ul_tti_request(const ul_tti_
 
   return {};
 }
+
+void srsgnb::fapi::log_validator_report(const validator_report& report)
+{
+  static const std::string log_name = "FAPI";
+
+  srslog::fetch_basic_logger(log_name).error(
+      "UL_TTI.request bad-formed in SFN ({}) and slot ({}).", report.sfn, report.slot);
+  for (const auto& error : report.reports) {
+    srslog::fetch_basic_logger(log_name).error(
+        "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",
+        error.message_type,
+        error.pdu_type.has_value() ? error.pdu_type.value() : -1,
+        error.property_name,
+        error.value,
+        error.expected_value_range.first,
+        error.expected_value_range.second);
+  }
+}
