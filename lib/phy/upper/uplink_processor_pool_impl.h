@@ -45,7 +45,7 @@ public:
 
 private:
   /// Container for uplink processors. Each entry belongs to a different sector.
-  std::vector<pool_procesor_sector<uplink_processor>> processors;
+  std::vector<processor_pool_repository<uplink_processor>> processors;
 };
 
 } // namespace srsgnb

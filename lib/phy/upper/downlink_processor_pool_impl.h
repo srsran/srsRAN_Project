@@ -47,7 +47,7 @@ public:
 
 private:
   /// Container for downlink processors. Each entry belongs to a different sector.
-  std::vector<pool_procesor_sector<downlink_processor>> processors;
+  std::vector<processor_pool_repository<downlink_processor>> processors;
 };
 
 } // namespace srsgnb

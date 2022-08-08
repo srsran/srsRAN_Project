@@ -16,14 +16,21 @@
 
 namespace srsgnb {
 
-/// \brief Represents a sector in the pool of processors.
+/// \brief Repository of processor pools.
+///
+/// Stores channel processor pools, organized according to the underlying numerology.
+/// \tparam T Type of the processor.
 template <typename T>
-class pool_procesor_sector
+class processor_pool_repository
 {
-  /// Container of processors<T>. Each entry belongs to a different slot.
+  /// \brief Container of processors.
+  ///
+  /// Each entry corresponds to a different slot.
   using processor_pool = std::vector<std::unique_ptr<T>>;
 
-  /// Container of processor pools. Each entry belongs to a different numerology.
+  /// \brief Container of processor pools.
+  ///
+  /// Each entry corresponds to a different numerology.
   std::array<processor_pool, NOF_NUMEROLOGIES> numerologies;
 
 public:
@@ -40,10 +47,10 @@ public:
     return *pool[index];
   }
 
-  /// \brief Associates the given processor pool with this sector.
+  /// \brief Associates the given processor pool with this repository.
   ///
   /// \param[in] scs Subcarrier spacing.
-  /// \param[in] obj New processor pool for the current sector.
+  /// \param[in] obj New processor pool for the given numerology.
   void insert(subcarrier_spacing scs, processor_pool&& obj)
   {
     unsigned numerology = to_numerology_value(scs);
