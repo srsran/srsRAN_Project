@@ -10,8 +10,8 @@
 
 #include "upper_phy_rx_symbol_handler_impl.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
+#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/uplink_processor.h"
-#include "srsgnb/support/executors/task_executor.h"
 
 using namespace srsgnb;
 

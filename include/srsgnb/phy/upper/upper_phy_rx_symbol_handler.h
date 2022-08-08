@@ -13,13 +13,13 @@
 
 #pragma once
 
-#include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
 
 class prach_buffer;
 struct prach_buffer_context;
+class resource_grid_reader;
 
 /// Describes the context of a newly received symbol.
 struct upper_phy_rx_symbol_context {
