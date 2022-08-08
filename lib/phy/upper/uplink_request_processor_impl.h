@@ -20,9 +20,8 @@ class upper_phy_rx_symbol_request_notifier;
 /// \brief Implementation of the uplink request processor interface.
 ///
 /// This implementation processes uplink data requests according to the following steps.
-///     1. It adds the received configuration to a ring buffer indexed by slot.
-///     2. It resolves all the dependencies.
-///     3. It calls a method from the internal upper_phy_rx_symbol_request_notifier object. This will produce and notify
+///     1. It resolves all the dependencies.
+///     2. It calls a method from the internal upper_phy_rx_symbol_request_notifier object. This will produce and notify
 ///     an event that requests the capture of slot symbol data.
 class uplink_request_processor_impl : public uplink_request_processor
 {
