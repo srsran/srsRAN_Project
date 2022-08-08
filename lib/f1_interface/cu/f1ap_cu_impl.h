@@ -64,6 +64,8 @@ private:
   void handle_initiating_message(const asn1::f1ap::init_msg_s& msg);
 
   /// \brief Notify about the reception of an Initial UL RRC Message Transfer message.
+  /// This starts the UE and SRB creation at the DU processor, F1 and RRC UE.
+  /// @see rrc_setup_procedure.
   /// \param[in] msg The F1AP initial UL RRC message.
   void handle_initial_ul_rrc_message(const asn1::f1ap::init_ulrrc_msg_transfer_s& msg);
 
