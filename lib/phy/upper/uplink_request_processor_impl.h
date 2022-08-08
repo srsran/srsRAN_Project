@@ -14,7 +14,6 @@
 
 namespace srsgnb {
 
-class prach_circular_array;
 class prach_buffer_pool;
 class upper_phy_rx_symbol_request_notifier;
 
@@ -29,20 +28,16 @@ class uplink_request_processor_impl : public uplink_request_processor
 {
 public:
   uplink_request_processor_impl(upper_phy_rx_symbol_request_notifier& symbol_request_notifier,
-                                prach_buffer_pool&                    prach_memory_pool,
-                                prach_circular_array&                 prach_ring);
+                                prach_buffer_pool&                    prach_memory_pool);
 
   // See interface for documentation.
-  void process_prach_request(const prach_buffer_context&               context,
-                             const prach_detector::slot_configuration& configuration) override;
+  void process_prach_request(const prach_buffer_context& context) override;
 
 private:
-  /// Symbol resquest notifier.
+  /// Symbol request notifier.
   upper_phy_rx_symbol_request_notifier& symbol_request_notifier;
   /// PRACH buffer pool.
   prach_buffer_pool& prach_memory_pool;
-  /// PRACH configurations buffer.
-  prach_circular_array& prach_config_ring;
 };
 
 } // namespace srsgnb

@@ -10,8 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
-
 namespace srsgnb {
 
 struct prach_buffer_context;
@@ -32,9 +30,7 @@ public:
   /// "on_new_prach_results" event notification.
   ///
   /// \param[in] context Context used by the underlying PRACH detector.
-  /// \param[in] configuration Configuration parameters to detect any potential PRACH preambles.
-  virtual void process_prach_request(const prach_buffer_context&               context,
-                                     const prach_detector::slot_configuration& configuration) = 0;
+  virtual void process_prach_request(const prach_buffer_context& context) = 0;
 };
 
 } // namespace srsgnb

@@ -12,6 +12,7 @@
 
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/prach/prach_subcarrier_spacing.h"
+#include "srsgnb/ran/prach/restricted_set_config.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 
@@ -45,6 +46,19 @@ struct prach_buffer_context {
   unsigned rb_offset;
   /// PUSCH subcarrier spacing.
   subcarrier_spacing pusch_scs;
+  /// Root sequence index {0...837}.
+  unsigned root_sequence_index;
+  /// Frequency offset between Point A and the PRB overlapping with the lowest RE of the PRACH signal in RB with \c
+  /// pusch_scs SCS.
+  unsigned frequency_offset;
+  /// Restricted set configuration.
+  restricted_set_config restricted_set;
+  /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1.
+  unsigned zero_correlation_zone;
+  /// Start of preamble logical index to monitor in the PRACH occasions signaled in this slot {0...63}.
+  unsigned start_preamble_index;
+  /// Number of preamble indices to monitor {1...64}.
+  unsigned nof_preamble_indices;
 };
 
 } // namespace srsgnb
