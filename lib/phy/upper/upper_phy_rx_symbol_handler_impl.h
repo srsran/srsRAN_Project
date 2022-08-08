@@ -34,7 +34,7 @@ public:
   void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override;
 
   // See interface for documentation.
-  void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer& buffer) override;
+  void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) override;
 
   // See interface for documentation.
   void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override;

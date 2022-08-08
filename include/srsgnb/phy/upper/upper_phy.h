@@ -14,11 +14,15 @@ namespace srsgnb {
 
 class downlink_processor_pool;
 class resource_grid_pool;
+class uplink_request_processor;
+class upper_phy_rx_results_notifier;
 class upper_phy_rx_symbol_handler;
 class upper_phy_timing_handler;
 class upper_phy_timing_notifier;
 
-/// \brief This interface describes the upper PHY layer giving access to its gateways and event notifications.
+/// \brief Upper PHY interface.
+///
+/// This interface describes the upper PHY layer giving access to its gateways and event notifiers.
 ///
 /// The downlink part of the upper PHY processes different PDU types such as PDCCH, PDSCH, NZI-CSI-RS and SSB PDUs and
 /// then sends the resulting resource grid through the configured \c resource_grid_gateway.
@@ -28,14 +32,14 @@ class upper_phy_timing_notifier;
 class upper_phy
 {
 public:
-  /// Default destructor used for destroying implementations from a pointer to the interface.
+  /// Default destructor.
   virtual ~upper_phy() = default;
 
-  /// \brief Returns a reference to the reception symbol handler of this upper PHY.
-  virtual upper_phy_rx_symbol_handler& get_upper_phy_rx_symbol_handler() = 0;
+  /// \brief Returns a reference to the receive symbol handler of this upper PHY.
+  virtual upper_phy_rx_symbol_handler& get_rx_symbol_handler() = 0;
 
   /// \brief Returns a reference to the timing handler of this upper PHY.
-  virtual upper_phy_timing_handler& get_upper_phy_timing_handler() = 0;
+  virtual upper_phy_timing_handler& get_timing_handler() = 0;
 
   /// \brief Returns the downlink processor pool of this upper PHY.
   virtual downlink_processor_pool& get_downlink_processor_pool() = 0;
@@ -43,10 +47,18 @@ public:
   /// \brief Returns the downlink resource grid pool of this upper PHY.
   virtual resource_grid_pool& get_downlink_resource_grid_pool() = 0;
 
-  /// \brief Sets the upper_phy_timing_notifier for this upper PHY to the given one.
+  /// \brief Returns the uplink request processor of this upper PHY.
+  virtual uplink_request_processor& get_uplink_request_processor() = 0;
+
+  /// \brief Sets the upper PHY timing notifier for this upper PHY.
   ///
-  /// \param notifier Notifier to be set.
-  virtual void set_upper_phy_notifier(upper_phy_timing_notifier& notifier) = 0;
+  /// \param[in] notifier Notifier assigned to this upper PHY.
+  virtual void set_timing_notifier(upper_phy_timing_notifier& notifier) = 0;
+
+  /// \brief \brief Sets the receive result notifier for this upper PHY.
+  ///
+  /// \param[in] notifier Notifier assigned to this upper PHY.
+  virtual void set_results_notifier(upper_phy_rx_results_notifier& notifier) = 0;
 };
 
 } // namespace srsgnb

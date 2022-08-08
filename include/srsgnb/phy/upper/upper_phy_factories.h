@@ -17,8 +17,9 @@
 
 namespace srsgnb {
 
-class upper_phy_rg_gateway;
 class task_executor;
+class upper_phy_rg_gateway;
+class upper_phy_rx_symbol_request_notifier;
 
 /// Configuration parameters for uplink processors.
 struct uplink_processor_config {
@@ -100,7 +101,7 @@ std::unique_ptr<downlink_processor_pool> create_dl_processor_pool(downlink_proce
 
 /// Upper PHY configuration parameters used to create a new upper PHY object.
 struct upper_phy_config {
-  /// Base station sector identifier.
+  /// Radio sector identifier.
   unsigned sector_id;
   /// Port identifier within the sector.
   unsigned nof_ports;
@@ -114,6 +115,16 @@ struct upper_phy_config {
   upper_phy_rg_gateway* gateway;
   /// Downlink task executor.
   task_executor* dl_executor;
+  /// Number of uplink processors.
+  unsigned nof_ul_processors;
+  /// Uplink task executor.
+  task_executor* ul_executor;
+  /// DFT size for a 15kHz subcarrier spacing.
+  unsigned dft_size_15kHz;
+  /// Number of RBs for uplink.
+  unsigned ul_bw_rb;
+  /// Received symbol request notifier.
+  upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
 };
 
 /// \brief Factory that builds upper PHY objects.

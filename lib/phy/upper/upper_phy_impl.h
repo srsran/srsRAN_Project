@@ -10,14 +10,16 @@
 
 #pragma once
 
+#include "srsgnb/phy/support/prach_buffer_pool.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsgnb/phy/upper/uplink_processor.h"
 #include "srsgnb/phy/upper/upper_phy.h"
+#include "uplink_request_processor_impl.h"
+#include "upper_phy_rx_results_notifier_proxy.h"
+#include "upper_phy_rx_symbol_handler_impl.h"
 
 // :TODO: remove these includes when the objects are created.
-#include "srsgnb/phy/support/prach_buffer.h"
-#include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/phy/upper/upper_phy_rx_symbol_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_handler.h"
 #include "srsgnb/phy/upper/upper_phy_timing_notifier.h"
 
@@ -46,27 +48,20 @@ class upper_phy_impl : public upper_phy
     void set_upper_phy_notifier(upper_phy_timing_notifier& notif) { notifier = std::ref(notif); }
   };
 
-  /// Dummy Upper PHY rx symbol handler.
-  class upper_phy_rx_symbol_handler_dummy : public upper_phy_rx_symbol_handler
-  {
-  public:
-    void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) override {}
-
-    void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer& buffer) override {}
-
-    void handle_rx_srs_symbol(const upper_phy_rx_symbol_context& context) override {}
-  };
-
 public:
   upper_phy_impl(unsigned                                 sector_id_,
                  std::unique_ptr<downlink_processor_pool> dl_processor_pool,
-                 std::unique_ptr<resource_grid_pool>      rg_pool_);
+                 std::unique_ptr<resource_grid_pool>      dl_rg_pool_,
+                 std::unique_ptr<uplink_processor_pool>   ul_processor_pool_,
+                 std::unique_ptr<prach_buffer_pool>       prach_pool_,
+                 upper_phy_rx_results_notifier_proxy&&    notifier_proxy,
+                 upper_phy_rx_symbol_request_notifier&    symbol_request_notifier);
 
   // See interface for documentation.
-  upper_phy_rx_symbol_handler& get_upper_phy_rx_symbol_handler() override;
+  upper_phy_rx_symbol_handler& get_rx_symbol_handler() override;
 
   // See interface for documentation.
-  upper_phy_timing_handler& get_upper_phy_timing_handler() override;
+  upper_phy_timing_handler& get_timing_handler() override;
 
   // See interface for documentation.
   downlink_processor_pool& get_downlink_processor_pool() override;
@@ -75,16 +70,34 @@ public:
   resource_grid_pool& get_downlink_resource_grid_pool() override;
 
   // See interface for documentation.
-  void set_upper_phy_notifier(upper_phy_timing_notifier& notifier) override;
+  uplink_request_processor& get_uplink_request_processor() override;
+
+  // See interface for documentation.
+  void set_timing_notifier(upper_phy_timing_notifier& notifier) override;
+
+  // See interface for documentation.
+  void set_results_notifier(upper_phy_rx_results_notifier& notifier) override;
 
 private:
-  const unsigned                           sector_id;
+  /// Base station sector identifier.
+  const unsigned sector_id;
+  /// Downlink processor pool.
   std::unique_ptr<downlink_processor_pool> dl_processor_pool;
-  std::unique_ptr<resource_grid_pool>      rg_pool;
+  /// Downlink resource grid pool.
+  std::unique_ptr<resource_grid_pool> dl_rg_pool;
+  /// Uplink processor pool.
+  std::unique_ptr<uplink_processor_pool> ul_processor_pool;
+  /// PRACH buffer pool.
+  std::unique_ptr<prach_buffer_pool> prach_pool;
+  /// Received symbols handler.
+  upper_phy_rx_symbol_handler_impl symbol_handler;
+  /// Upper PHY results notifier.
+  upper_phy_rx_results_notifier_proxy results_notifier_proxy;
+  /// Uplink request processor.
+  uplink_request_processor_impl ul_request_processor;
 
-  // :TODO: Create implementations for these 2 handlers, and remove the unique_ptr.
-  upper_phy_rx_symbol_handler_dummy symbol_handler;
-  upper_phy_timing_handler_dummy    timing_handler;
+  // :TODO: Create implementation for this handler.
+  upper_phy_timing_handler_dummy timing_handler;
 };
 
 } // namespace srsgnb

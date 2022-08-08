@@ -29,7 +29,7 @@ protected:
   prach_buffer_dummy                     buffer_dummy;
   prach_detector::configuration          config;
 
-  void handle_prach_symbol() { rx_handler.handle_rx_prach_symbol(context, buffer_dummy); }
+  void handle_prach_symbol() { rx_handler.handle_rx_prach_window(context, buffer_dummy); }
 
   UpperPhyRxSymbolHandlerFixture() : ul_processor_pool(create_ul_processor_pool()), rx_handler(*ul_processor_pool)
   {

@@ -17,6 +17,7 @@
 #include "uplink_processor_pool_impl.h"
 #include "uplink_processor_single_executor_impl.h"
 #include "upper_phy_impl.h"
+#include "upper_phy_rx_results_notifier_proxy.h"
 
 // :TODO: remove this include list when the processor factories are moved to the channel_processor folder.
 #include "srsgnb/phy/upper/channel_processors/ssb_processor.h"
@@ -229,13 +230,13 @@ private:
   task_executor&                           executor;
 };
 
-static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const upper_phy_config& config)
+static std::unique_ptr<downlink_processor_pool> create_downlink_processor_pool(const upper_phy_config& config)
 {
   downlink_processor_single_executor_factory factory(*config.gateway, *config.dl_executor);
 
   downlink_processor_pool_config config_pool;
   config_pool.num_sectors = 1;
-  // :TODO: Change how to manage the numerologies in the future.
+  // :TODO: Only processors for SCS 15kHz are being created. Fix this in the future.
   downlink_processor_pool_config::sector_dl_processor info = {0, subcarrier_spacing::kHz15, {}};
 
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
@@ -249,7 +250,7 @@ static std::unique_ptr<downlink_processor_pool> build_dl_processor_pool(const up
   return create_dl_processor_pool(std::move(config_pool));
 }
 
-static std::unique_ptr<resource_grid_pool> build_dl_resource_grid_pool(const upper_phy_config& config)
+static std::unique_ptr<resource_grid_pool> create_dl_resource_grid_pool(const upper_phy_config& config)
 {
   // Configure one pool per upper PHY.
   unsigned                                    nof_sectors = 1;
@@ -267,17 +268,81 @@ static std::unique_ptr<resource_grid_pool> build_dl_resource_grid_pool(const upp
   return create_resource_grid_pool(nof_sectors, nof_slots, std::move(grids));
 }
 
+static std::unique_ptr<uplink_processor_pool> create_ul_processor_pool(const upper_phy_config&        config,
+                                                                       upper_phy_rx_results_notifier& notifier)
+{
+  std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_fftw();
+  if (!dft_factory) {
+    dft_factory = create_dft_processor_factory_generic();
+    report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
+  }
+
+  std::shared_ptr<prach_generator_factory> prach_gen_factory =
+      create_prach_generator_factory_sw(dft_factory, config.ul_bw_rb, config.dft_size_15kHz);
+  report_fatal_error_if_not(prach_gen_factory, "Invalid PRACH generator factory.");
+
+  std::shared_ptr<prach_detector_factory> prach_detector_factory =
+      create_prach_detector_factory_simple(dft_factory, prach_gen_factory, config.dft_size_15kHz);
+  report_fatal_error_if_not(prach_detector_factory, "Invalid PRACH detector factory.");
+
+  uplink_processor_single_executor_factory factory(prach_detector_factory, *config.ul_executor, notifier);
+
+  uplink_processor_pool_config config_pool;
+  config_pool.num_sectors = 1;
+  // :TODO: Only processors for SCS 15kHz are being created. Fix this in the future.
+  uplink_processor_pool_config::sector_ul_processors info = {0, subcarrier_spacing::kHz15, {}};
+
+  for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
+    std::unique_ptr<uplink_processor> ul_proc = factory.create({});
+    report_fatal_error_if_not(ul_proc, "Invalid uplink processor.");
+
+    info.procs.push_back(std::move(ul_proc));
+  }
+
+  config_pool.ul_processors.push_back(std::move(info));
+
+  return create_uplink_processor_pool(std::move(config_pool));
+}
+
+static std::unique_ptr<prach_buffer_pool> create_prach_pool(const upper_phy_config& config)
+{
+  std::vector<std::unique_ptr<prach_buffer>> prach_mem;
+  prach_mem.reserve(config.nof_ul_processors);
+
+  for (unsigned i = 0, e = config.nof_ul_processors; i != e; ++i) {
+    std::unique_ptr<prach_buffer> buffer = create_prach_buffer_long();
+    report_fatal_error_if_not(buffer, "Invalid PRACH buffer.");
+    prach_mem.push_back(std::move(buffer));
+  }
+
+  return create_prach_buffer_pool(std::move(prach_mem));
+}
+
 class upper_phy_factory_impl : public upper_phy_factory
 {
 public:
   std::unique_ptr<upper_phy> create(const upper_phy_config& config) override
   {
-    std::unique_ptr<resource_grid_pool> rg_pool = build_dl_resource_grid_pool(config);
-    srsgnb_assert(rg_pool, "Invalid resource grid pool");
-    std::unique_ptr<downlink_processor_pool> dl_pool = build_dl_processor_pool(config);
-    srsgnb_assert(dl_pool, "Invalid downlink processor pool");
+    std::unique_ptr<resource_grid_pool> rg_pool = create_dl_resource_grid_pool(config);
+    report_fatal_error_if_not(rg_pool, "Invalid downlink resource grid pool.");
 
-    return std::make_unique<upper_phy_impl>(config.sector_id, std::move(dl_pool), std::move(rg_pool));
+    std::unique_ptr<downlink_processor_pool> dl_pool = create_downlink_processor_pool(config);
+    report_fatal_error_if_not(dl_pool, "Invalid downlink processor pool.");
+
+    upper_phy_rx_results_notifier_proxy    notifier_proxy;
+    std::unique_ptr<uplink_processor_pool> ul_pool = create_ul_processor_pool(config, notifier_proxy);
+    report_fatal_error_if_not(ul_pool, "Invalid uplink processor pool.");
+
+    std::unique_ptr<prach_buffer_pool> prach_pool = create_prach_pool(config);
+    report_fatal_error_if_not(prach_pool, "Invalid PRACH buffer pool.");
+
+    return std::make_unique<upper_phy_impl>(config.sector_id,
+                                            std::move(dl_pool),
+                                            std::move(rg_pool),
+                                            std::move(ul_pool),
+                                            std::move(prach_pool),
+                                            std::move(notifier_proxy),
+                                            *config.symbol_request_notifier);
   }
 };
 

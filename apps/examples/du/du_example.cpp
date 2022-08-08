@@ -570,8 +570,8 @@ int main(int argc, char** argv)
   test_logger.info("Upper PHY created successfully");
 
   // Connections between lower-upper PHYs.
-  rx_symbol_adapter.connect(&upper->get_upper_phy_rx_symbol_handler());
-  timing_adapter.connect(&upper->get_upper_phy_timing_handler());
+  rx_symbol_adapter.connect(&upper->get_rx_symbol_handler());
+  timing_adapter.connect(&upper->get_timing_handler());
   rg_gateway_adapter.connect(&lower->get_rg_handler());
 
   // Create FAPI adaptors.
@@ -592,7 +592,7 @@ int main(int argc, char** argv)
   test_logger.info("FAPI adaptors created successfully");
 
   phy_adaptor->set_slot_message_notifier(mac_adaptor->get_slot_notifier());
-  upper->set_upper_phy_notifier(phy_adaptor->get_upper_phy_timing_notifier());
+  upper->set_timing_notifier(phy_adaptor->get_upper_phy_timing_notifier());
 
   // Configuration for the cell.
   srslog::fetch_basic_logger("MAC").set_level(srslog::basic_levels::info);

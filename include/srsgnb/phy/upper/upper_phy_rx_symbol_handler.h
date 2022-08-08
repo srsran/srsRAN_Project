@@ -43,10 +43,10 @@ public:
   /// \param[in] grid    Resource grid for the current slot (encompasses all receive antenna ports).
   virtual void handle_rx_symbol(const upper_phy_rx_symbol_context& context, const resource_grid_reader& grid) = 0;
 
-  /// \brief Handles the arrival of PRACH sequences at a given symbol.
+  /// \brief Handles the arrival of PRACH sequences.
   /// \param[in] context PRACH context: specifies sector, slot and window.
   /// \param[in] buffer  Read-only buffer containing the PRACH sequence.
-  virtual void handle_rx_prach_symbol(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
+  virtual void handle_rx_prach_window(const prach_buffer_context& context, const prach_buffer& buffer) = 0;
 
   /// \brief Handles the arrival of SRS packets at a given symbol.
   /// \param[in] context Notification context: specifies sector, slot and symbol.

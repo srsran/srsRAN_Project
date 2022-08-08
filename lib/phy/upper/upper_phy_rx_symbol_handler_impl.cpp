@@ -28,7 +28,7 @@ void upper_phy_rx_symbol_handler_impl::handle_rx_symbol(const upper_phy_rx_symbo
   // :TODO: Implement me!!!
 }
 
-void upper_phy_rx_symbol_handler_impl::handle_rx_prach_symbol(const prach_buffer_context& context,
+void upper_phy_rx_symbol_handler_impl::handle_rx_prach_window(const prach_buffer_context& context,
                                                               const prach_buffer&         buffer)
 {
   // Get uplink processor.
