@@ -21,6 +21,7 @@ namespace srsgnb {
 class downlink_processor;
 class downlink_processor_pool;
 class resource_grid_pool;
+class uplink_request_processor;
 
 namespace fapi_adaptor {
 
@@ -72,11 +73,18 @@ public:
   /// \param dl_processor_pool Downlink processor pool that will be used to process PDUs.
   /// \param rg_pool Resource grid pool that will be used to process PDUs.
   /// \param scs_common subcarrier spacing common, as per TS 38.331, Section 6.2.2,
-  fapi_to_phy_translator(unsigned                 sector_id,
-                         downlink_processor_pool& dl_processor_pool,
-                         resource_grid_pool&      rg_pool,
-                         subcarrier_spacing       scs_common) :
-    sector_id(sector_id), dl_processor_pool(dl_processor_pool), rg_pool(rg_pool), scs_common(scs_common)
+  fapi_to_phy_translator(unsigned                  sector_id,
+                         downlink_processor_pool&  dl_processor_pool,
+                         resource_grid_pool&       rg_pool,
+                         uplink_request_processor& ul_request_processor,
+                         subcarrier_spacing        scs_common,
+                         fapi::multi_prach_config  prach_config) :
+    sector_id(sector_id),
+    dl_processor_pool(dl_processor_pool),
+    rg_pool(rg_pool),
+    ul_request_processor(ul_request_processor),
+    scs_common(scs_common),
+    prach_config(std::move(prach_config))
   {
   }
 
@@ -106,9 +114,10 @@ public:
   void handle_new_slot(slot_point slot);
 
 private:
-  const unsigned           sector_id;
-  downlink_processor_pool& dl_processor_pool;
-  resource_grid_pool&      rg_pool;
+  const unsigned            sector_id;
+  downlink_processor_pool&  dl_processor_pool;
+  resource_grid_pool&       rg_pool;
+  uplink_request_processor& ul_request_processor;
 
   slot_based_upper_phy_controller                                                   current_slot_controller;
   static_vector<pdsch_processor::pdu_t, fapi::dl_tti_request_message::MAX_NUM_PDUS> pdsch_pdus;
@@ -117,7 +126,8 @@ private:
   std::mutex mutex;
 
   // :TODO: this variable should be asked to the cell configuration. Remove it when it's available.
-  const subcarrier_spacing scs_common;
+  const subcarrier_spacing       scs_common;
+  const fapi::multi_prach_config prach_config;
 };
 
 } // namespace fapi_adaptor

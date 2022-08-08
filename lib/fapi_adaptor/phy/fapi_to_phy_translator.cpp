@@ -12,9 +12,12 @@
 #include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdcch.h"
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsgnb/fapi_adaptor/phy/messages/prach.h"
 #include "srsgnb/fapi_adaptor/phy/messages/ssb.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
+#include "srsgnb/phy/upper/uplink_request_processor.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -114,7 +117,34 @@ void fapi_to_phy_translator::dl_tti_request(const dl_tti_request_message& msg)
   }
 }
 
-void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg) {}
+void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
+{
+  // :TODO: check the messages order. Do this in a different class.
+
+  std::lock_guard<std::mutex> lock(mutex);
+
+  for (const auto& pdu : msg.pdus) {
+    switch (pdu.pdu_type) {
+      case ul_pdu_type::PRACH: {
+        prach_buffer_context context;
+        context.sector = sector_id;
+        // :TODO: how to fill the slot. Which numerology to use, cell or pusch?
+        subcarrier_spacing scs = context.slot =
+            prach_config.prachs[pdu.prach_pdu.maintenance_v3.prach_res_config_index].prach_ul_bwp_pusch_scs;
+        slot_point(to_subcarrier_spacing(scs), msg.sfn, msg.slot);
+        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_config);
+        ul_request_processor.process_prach_request(context);
+        break;
+      }
+      case ul_pdu_type::PUCCH:
+      case ul_pdu_type::PUSCH:
+      case ul_pdu_type::SRS:
+      case ul_pdu_type::msg_a_PUSCH:
+      default:
+        srsgnb_assert(0, "UL_TTI.request PDU type value ([]) not recognized.", static_cast<unsigned>(pdu.pdu_type));
+    }
+  }
+}
 
 void fapi_to_phy_translator::ul_dci_request(const ul_dci_request_message& msg) {}
 
