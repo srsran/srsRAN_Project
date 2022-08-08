@@ -19,8 +19,8 @@ namespace srsgnb {
 
 /// \brief On-demand PRACH time-domain signal generator.
 ///
-/// It generates PRACH time-domain signals on demand instead of generating and storing. It minimizes memory footprint at
-/// the cost of longer processing time.
+/// It generates PRACH frequency-domain signals on demand instead of generating and storing them off-line. It minimizes
+/// memory footprint at the cost of longer processing time.
 class prach_generator_impl : public prach_generator
 {
 private:
@@ -37,21 +37,21 @@ private:
   /// Calculates sequence number \f$u\f$ as per TS38.211 Table 6.3.3.1-3.
   static unsigned get_sequence_number_long(unsigned root_sequence_index);
 
-  /// \brief Generates the \f$y_{u,v}\f$ sequence.
+  /// \brief Generates the sequence \f$y_{u,v}\f$.
   /// \param[in] u   Sequence number.
   /// \param[in] C_v Sequence shift.
   /// \return A read-only view of the generated sequence.
   span<const cf_t> generate_y_u_v_long(unsigned u, unsigned C_v);
 
 public:
-  /// \brief PRACH generator constructor.
+  /// \brief Constructor - Acquires ownership of the internal components.
   ///
-  /// The PRACH generator depends on the DFT to generate the time-domain signals.
+  /// The PRACH generator depends on the DFT to generate the frequency-domain signals.
   ///
-  /// \param dft_l839_ DFT processor for generating long sequences.
-  /// \param dft_l139_ DFT processor for generating short sequences.
-  prach_generator_impl(std::unique_ptr<dft_processor> dft_l839_, std::unique_ptr<dft_processor> dft_l139_) :
-    dft_long(std::move(dft_l839_)), dft_short(std::move(dft_l139_))
+  /// \param dft_long_ DFT processor for generating long sequences.
+  /// \param dft_short_ DFT processor for generating short sequences.
+  prach_generator_impl(std::unique_ptr<dft_processor> dft_long_, std::unique_ptr<dft_processor> dft_short_) :
+    dft_long(std::move(dft_long_)), dft_short(std::move(dft_short_))
   {
     report_fatal_error_if_not(dft_long, "Invalid L839 DFT pointer");
     report_fatal_error_if_not(dft_long->get_direction() == dft_processor::direction::DIRECT,

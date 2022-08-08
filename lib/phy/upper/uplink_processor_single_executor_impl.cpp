@@ -17,16 +17,13 @@
 using namespace srsgnb;
 
 /// \brief Returns a PRACH detector slot configuration using the given PRACH buffer context.
-static prach_detector::slot_configuration
-get_prach_dectector_config_from_prach_context(const prach_buffer_context& context)
+static prach_detector::configuration get_prach_dectector_config_from_prach_context(const prach_buffer_context& context)
 {
-  prach_detector::slot_configuration config;
+  prach_detector::configuration config;
   config.root_sequence_index   = context.root_sequence_index;
-  config.frequency_offset      = context.frequency_offset;
   config.format                = context.format;
   config.restricted_set        = context.restricted_set;
   config.zero_correlation_zone = context.zero_correlation_zone;
-  config.pusch_scs             = context.pusch_scs;
   config.start_preamble_index  = context.start_preamble_index;
   config.nof_preamble_indices  = context.nof_preamble_indices;
 
@@ -46,9 +43,9 @@ void uplink_processor_single_executor_impl::process_prach(const prach_buffer&   
                                                           const prach_buffer_context& context)
 {
   // :TODO: not sure what data adaptation goes here. Please review it when the PRACH_detector is updated.
-  executor.execute([samples = buffer.get_symbol(context.start_symbol), context, this]() {
-    prach_detector::slot_configuration      configuration = get_prach_dectector_config_from_prach_context(context);
-    const prach_detector::detection_result& result        = detector->detect(samples, configuration);
+  executor.execute([&buffer, context, this]() {
+    prach_detector::configuration           configuration = get_prach_dectector_config_from_prach_context(context);
+    const prach_detector::detection_result& result        = detector->detect(buffer, configuration);
 
     // Notify the PRACH results.
     results_notifier.on_new_prach_results(result);

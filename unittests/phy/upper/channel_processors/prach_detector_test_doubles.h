@@ -19,7 +19,7 @@ class prach_detector_spy : public prach_detector
   bool detect_method_been_called = false;
 
 public:
-  detection_result detect(span<const cf_t> signal, const slot_configuration& config) override
+  detection_result detect(const prach_buffer& input, const configuration& config) override
   {
     detect_method_been_called = true;
 

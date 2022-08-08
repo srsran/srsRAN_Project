@@ -28,8 +28,8 @@ public:
   /// Maximum number of preambles that can be detected in a slot.
   static constexpr unsigned MAX_NOF_PREAMBLES_PER_SLOT = 16;
 
-  /// Describes the PRACH detector slot configuration for detecting PRACH.
-  struct slot_configuration {
+  /// Configuration for PRACH detection.
+  struct configuration {
     /// Root sequence index. Possibles values are {0, ..., 837} for long preambles and {0, ..., 137} for short
     /// preambles.
     unsigned root_sequence_index;
@@ -37,7 +37,7 @@ public:
     preamble_format format;
     /// Restricted set configuration.
     restricted_set_config restricted_set;
-    /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1.
+    /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 Section 6.3.3.1.
     unsigned zero_correlation_zone;
     /// Start preamble index to monitor. Possible values are {0, ..., 63}.
     unsigned start_preamble_index;
@@ -47,11 +47,11 @@ public:
 
   /// Describes the detection of a single preamble.
   struct preamble_indication {
-    /// Indicates the detected preamble index. Possible values are {0, ..., 63}.
+    /// Index of the detected preamble. Possible values are {0, ..., 63}.
     unsigned preamble_index;
     /// Timing advance between the observed arrival time (for the considered UE) and the reference uplink time.
     phy_time_unit time_advance;
-    /// Average RSRP value in dB, relative to 1.
+    /// Average RSRP value in dB.
     float power_dB;
     /// Average SNR value in dB.
     float snr_dB;
@@ -59,9 +59,11 @@ public:
 
   /// Describes a detection result.
   struct detection_result {
-    /// Average RSSI value in dB, relative to 1.
+    /// Average RSSI value in dB.
     float rssi_dB;
-    /// Detector time resolution. This is given by the DFT size of the detector and the PRACH subcarrier spacing.
+    /// \brief Detector time resolution.
+    ///
+    /// This is equal to the PRACH subcarrier spacing divided by the DFT size of the detector.
     phy_time_unit time_resolution;
     /// List of detected preambles.
     static_vector<preamble_indication, MAX_NOF_PREAMBLES_PER_SLOT> preambles;
@@ -70,15 +72,17 @@ public:
   /// Default destructor.
   virtual ~prach_detector() = default;
 
-  /// \brief Detects PRACH transmissions described by \c config.
+  /// \brief Detects PRACH transmissions according to the given configuration.
   ///
   /// The PRACH detector assumes that \c signal is captured at the start of the PRACH reception window and it is at
   /// least as long as the PRACH preamble sequence.
   ///
-  /// \param[in] signal Provides the baseband signal buffer.
-  /// \param[in] config Provides the PRACH configuration for the slot.
+  /// An assertion is triggered if the sum of start preamble index and number of preambles exceeds 64.
+  ///
+  /// \param[in] signal Baseband signal buffer.
+  /// \param[in] config PRACH configuration for the slot.
   /// \return The detection result.
-  virtual detection_result detect(const prach_buffer& input, const slot_configuration& config) = 0;
+  virtual detection_result detect(const prach_buffer& input, const configuration& config) = 0;
 };
 
 } // namespace srsgnb

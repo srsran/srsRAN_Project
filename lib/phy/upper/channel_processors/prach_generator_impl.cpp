@@ -15,6 +15,8 @@
 
 using namespace srsgnb;
 
+namespace {
+
 template <unsigned L>
 class prach_generator_cexp_table : public std::array<cf_t, 2 * L>
 {
@@ -28,6 +30,8 @@ public:
 };
 
 static const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> prach_generator_cexp_table_l839;
+
+} // namespace
 
 unsigned prach_generator_impl::get_sequence_number_long(unsigned root_sequence_index)
 {

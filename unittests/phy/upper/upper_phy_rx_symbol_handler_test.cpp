@@ -27,7 +27,7 @@ protected:
   upper_phy_rx_symbol_handler_impl       rx_handler;
   prach_buffer_context                   context;
   prach_buffer_dummy                     buffer_dummy;
-  prach_detector::slot_configuration     config;
+  prach_detector::configuration          config;
 
   void handle_prach_symbol() { rx_handler.handle_rx_prach_symbol(context, buffer_dummy); }
 

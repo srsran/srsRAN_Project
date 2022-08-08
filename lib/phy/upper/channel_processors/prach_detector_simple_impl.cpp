@@ -19,8 +19,8 @@
 
 using namespace srsgnb;
 
-prach_detector::detection_result prach_detector_simple_impl::detect(const prach_buffer&       input,
-                                                                    const slot_configuration& config)
+prach_detector::detection_result prach_detector_simple_impl::detect(const prach_buffer&  input,
+                                                                    const configuration& config)
 {
   srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= 64,
                 "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
@@ -80,13 +80,13 @@ prach_detector::detection_result prach_detector_simple_impl::detect(const prach_
     // Select first symbol in the buffer.
     span<const cf_t> signal_freq = input.get_symbol(0);
 
-    // Perform correlation in frequency-domain and store in the IDFT input.
+    // Perform correlation in frequency-domain and store the result in the IDFT input.
     srsvec::prod_conj(
         signal_freq.first(sequence_length_lower), preamble_freq.first(sequence_length_lower), idft_lower_grid);
     srsvec::prod_conj(
         signal_freq.last(sequence_length_upper), preamble_freq.last(sequence_length_upper), idft_upper_grid);
 
-    // Convert to correlation to time-domain.
+    // Convert the correlation to the time domain.
     span<const cf_t> correlation = idft->run();
 
     // Find delay and power of the maximum absolute value.

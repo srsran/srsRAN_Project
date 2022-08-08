@@ -19,11 +19,13 @@
 
 namespace srsgnb {
 
+/// \brief PRACH generator interface.
+///
 /// Generates the PRACH frequency-domain sequences as per TS38.211 Section 6.3.3.
 class prach_generator
 {
 public:
-  /// Collects the necessary parameters to generate a PRACH time domain signal.
+  /// Collects the necessary parameters to generate a PRACH frequency-domain signal.
   struct configuration {
     /// Preamble format.
     preamble_format format;
