@@ -152,14 +152,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
     logger.log_error("Failed to pack AMD PDU header");
   }
 
-  // Update TX Next
-  st.tx_next = (st.tx_next + 1) % mod;
-
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(sdu.buf);
   logger.log_debug("Created RLC PDU - {} bytes", pdu_buf.length());
+
+  // Update TX Next
+  st.tx_next = (st.tx_next + 1) % mod;
 
   return pdu_buf;
 }
@@ -189,9 +189,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_b
   }
 
   uint32_t segment_payload_len = nof_bytes - head_min_size;
-  tx_pdu.next_so += segment_payload_len; // Store segmentation progress
 
-  // Save SN of PDU under segmentation
+  // Save SN of SDU under segmentation
   // This needs to be done before calculating the polling bit
   // To make sure we check correctly that the buffers are empty.
   sn_under_segmentation = st.tx_next;
@@ -203,7 +202,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_b
   hdr.si                = rlc_si_field::first_segment;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
-  hdr.so                = 0;
+  hdr.so                = tx_pdu.next_so;
   tx_pdu.header         = hdr;
   logger.log_debug("AMD PDU header: {}", hdr);
 
@@ -217,16 +216,106 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_b
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, hdr.so + segment_payload_len));
+  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, segment_payload_len));
   logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
+
+  // Store segmentation progress
+  tx_pdu.next_so += segment_payload_len;
 
   return pdu_buf;
 }
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
-  // TODO
-  return {};
+  logger.log_info("Creating continued PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+
+  // Sanity check: is there an initial SDU segment?
+  if (tx_pdu.next_so == 0) {
+    logger.log_error(
+        "build_continuation_sdu_segment was called, but there was no initial segment. SN={}, Tx SDU ({} B), "
+        "nof_bytes={} B ",
+        sn_under_segmentation,
+        tx_pdu.sdu.length(),
+        nof_bytes);
+    sn_under_segmentation = INVALID_RLC_SN;
+    return {};
+  }
+
+  logger.log_debug("continuing SDU segment. SN={}, next_so={}", sn_under_segmentation, tx_pdu.next_so);
+
+  // Sanity check: last byte must be smaller than SDU size
+  if (tx_pdu.next_so >= tx_pdu.sdu.length()) {
+    logger.log_error(
+        "segmentation progress exceeds SDU length. SDU len={} B, next_so={} B", tx_pdu.sdu.length(), tx_pdu.next_so);
+    sn_under_segmentation = INVALID_RLC_SN;
+    return {};
+  }
+
+  // Sanity check: can this SDU be sent considering header overhead?
+  if (nof_bytes <= head_max_size) { // Large header, since continued segment has SO field, ref: TS 38.322 Sec. 6.2.2.4
+    logger.log_info(
+        "Cannot build new sdu_segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
+        "head_max_size={}",
+        nof_bytes,
+        head_max_size);
+    return {};
+  }
+
+  uint32_t     segment_payload_len = tx_pdu.sdu.length() - tx_pdu.next_so;
+  rlc_si_field si                  = {};
+
+  if (segment_payload_len + head_max_size > nof_bytes) {
+    logger.log_info(
+        "grant is not large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
+        segment_payload_len,
+        head_max_size,
+        nof_bytes);
+    si                  = rlc_si_field::middle_segment;
+    segment_payload_len = nof_bytes - head_max_size;
+  } else {
+    logger.log_info("grant is large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
+                    segment_payload_len,
+                    head_max_size,
+                    nof_bytes);
+    si = rlc_si_field::last_segment;
+
+    // Release SN of SDU under segmentation
+    sn_under_segmentation = INVALID_RLC_SN;
+  }
+
+  // Prepare header
+  rlc_am_pdu_header hdr = {};
+  hdr.dc                = rlc_dc_field::data;
+  hdr.p                 = get_polling_bit(st.tx_next, false, segment_payload_len);
+  hdr.si                = si;
+  hdr.sn_size           = cfg.sn_field_length;
+  hdr.sn                = st.tx_next;
+  hdr.so                = tx_pdu.next_so;
+  tx_pdu.header         = hdr;
+  logger.log_debug("AMD PDU header: {}", hdr);
+
+  // Pack header
+  byte_buffer header_buf = {};
+  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    // TODO: actually, pack function always returns true, so we never come here
+    logger.log_error("Failed to pack AMD PDU header");
+  }
+
+  // Assemble PDU
+  byte_buffer_slice_chain pdu_buf = {};
+  pdu_buf.push_front(std::move(header_buf));
+  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, segment_payload_len));
+  logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
+
+  // Store segmentation progress
+  tx_pdu.next_so += segment_payload_len;
+
+  // Update TX Next (when segmentation has finished)
+  if (si == rlc_si_field::last_segment) {
+    st.tx_next = (st.tx_next + 1) % mod;
+  }
+
+  return pdu_buf;
 }
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
@@ -268,6 +357,14 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
 
   // minimum bytes needed to tx SDU under segmentation + header (if applicable)
   uint32_t segment_bytes = 0;
+  if (sn_under_segmentation != INVALID_RLC_SN) {
+    if (tx_window->has_sn(sn_under_segmentation)) {
+      rlc_tx_amd_pdu_box& tx_pdu = (*tx_window)[sn_under_segmentation];
+      segment_bytes              = tx_pdu.sdu.length() - tx_pdu.next_so + head_max_size;
+    } else {
+      logger.log_info("Buffer state: ignore SN under segmentation: SN={} not in tx_window", sn_under_segmentation);
+    }
+  }
   // TODO: SDU under segmentation
 
   // TODO: retx bytes

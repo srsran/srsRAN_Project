@@ -147,6 +147,73 @@ protected:
     EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
   }
 
+  /// \brief Obtains RLC AMD PDU segments from generated SDUs that are passed through an RLC AM entity
+  /// \param[out] out_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDU segments
+  /// \param[in] n_pdus Length of the out_pdus array
+  /// \param[in] pdu_size Maximum size of each PDU that is read from RLC AM entity
+  /// \param[in] n_sdus Number of SDUs to push into RLC AM entity
+  /// \param[in] sdu_size Size of each SDU that is pushed into RLC AM entity
+  void tx_segmented_pdus(byte_buffer_slice_chain* out_pdus,
+                         uint32_t                 n_pdus,
+                         uint32_t                 pdu_size,
+                         uint32_t                 n_sdus,
+                         uint32_t                 sdu_size)
+  {
+    uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+    uint32_t header_so_size  = 2;
+
+    // Precondition
+    ASSERT_LT(pdu_size, sdu_size + header_min_size) << "PDU size fits whole SDU; PDUs won't be segmented";
+
+    // Push "n_sdus" SDUs into RLC1
+    byte_buffer sdu_bufs[n_sdus];
+    for (uint32_t i = 0; i < n_sdus; i++) {
+      sdu_bufs[i] = byte_buffer();
+      for (uint32_t k = 0; k < sdu_size; ++k) {
+        sdu_bufs[i].append(i + k);
+      }
+
+      // write SDU into upper end
+      rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
+      rlc1_tx_upper->handle_sdu(std::move(sdu));
+    }
+
+    // Read "n_pdus" PDUs from RLC1
+    uint32_t sdu_idx = 0;
+    uint32_t sdu_so  = 0;
+    for (uint32_t i = 0; i < n_pdus && rlc1_tx_lower->get_buffer_state() > 0; i++) {
+      uint32_t header_size = header_min_size + (sdu_so == 0 ? 0 : header_so_size);
+      out_pdus[i]          = rlc1_tx_lower->pull_pdu(pdu_size);
+
+      // Check PDU size
+      EXPECT_GT(out_pdus[i].length(), header_size);
+      EXPECT_LE(out_pdus[i].length(), pdu_size);
+
+      // Check PDU payload
+      auto pdu_begin = out_pdus[i].begin() + header_size;
+      auto pdu_end   = out_pdus[i].end();
+      auto sdu_begin = sdu_bufs[sdu_idx].begin() + sdu_so;
+      ASSERT_TRUE(std::equal(pdu_begin, pdu_end, sdu_begin))
+          << "sdu_idx=" << sdu_idx << ", sdu_so=" << sdu_so << ", i=" << i << ", header_size=" << header_size;
+
+      // Check remaining buffer state
+      uint32_t rem_sdus      = n_sdus - sdu_idx - 1;
+      uint32_t rem_seg_bytes = sdu_bufs[sdu_idx].length() - sdu_so - out_pdus[i].length() + header_size;
+      uint32_t rem_seg_hdr   = rem_seg_bytes > 0 ? header_min_size + header_so_size : 0;
+      EXPECT_EQ(rlc1_tx_lower->get_buffer_state(),
+                rem_sdus * (sdu_size + header_min_size) + rem_seg_bytes + rem_seg_hdr);
+
+      // Update payload offsets
+      if (rem_seg_bytes == 0) {
+        sdu_idx++;
+        sdu_so = 0;
+      } else {
+        sdu_so += out_pdus[i].length() - header_size;
+      }
+    }
+    EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+  }
+
   srslog::basic_logger&          logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                 sn_size = GetParam();
   rlc_am_config                  config;
@@ -185,6 +252,28 @@ TEST_P(rlc_am_tx_test, tx_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 
   tx_full_pdus(pdus, n_pdus, 5);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, tx_with_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus   = 5;
+  const uint32_t sdu_size = 9;
+
+  const uint32_t n_splits = 3;
+
+  const uint32_t n_pdus      = n_sdus * n_splits;
+  const uint32_t header_size = (sn_size == rlc_am_sn_size::size12bits ? 2 : 3);
+  const uint32_t so_size     = 2;
+  const uint32_t pdu_size    = header_size + so_size + (sdu_size / n_splits);
+
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size);
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
