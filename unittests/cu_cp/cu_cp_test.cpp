@@ -230,12 +230,9 @@ TEST_F(cu_cp_test, when_amf_connection_drop_then_reject_ue)
     // The UE should not exists in the CU-CP though
     EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
 
-    // FIXME: release injection should be done automatically by DU processor
-
     // Inject UE Context Release Complete message
     f1c_msg ue_context_release_complete_msg =
         generate_f1_ue_context_release_complete_msg(second_ue_cu_ue_id, second_ue_c_rnti);
-
     test_logger.info("Injecting UE Context Release Complete message");
     cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(ue_context_release_complete_msg);
 
