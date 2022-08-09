@@ -19,9 +19,9 @@ namespace srsgnb {
 class uplink_request_processor;
 
 namespace fapi {
-struct prach_config;
 struct carrier_config;
-}
+struct prach_config;
+} // namespace fapi
 
 namespace fapi_adaptor {
 
@@ -32,12 +32,13 @@ namespace fapi_adaptor {
 class phy_fapi_adaptor_impl : public phy_fapi_adaptor
 {
 public:
-  phy_fapi_adaptor_impl(unsigned                  sector_id,
-                        downlink_processor_pool&  dl_processor_pool,
-                        resource_grid_pool&       rg_pool,
-                        subcarrier_spacing        scs_common,
-                        uplink_request_processor& ul_request_processor,
-                        const fapi::prach_config& prach_tlv,const fapi::carrier_config &carrier_tlv);
+  phy_fapi_adaptor_impl(unsigned                    sector_id,
+                        downlink_processor_pool&    dl_processor_pool,
+                        resource_grid_pool&         rg_pool,
+                        subcarrier_spacing          scs_common,
+                        uplink_request_processor&   ul_request_processor,
+                        const fapi::prach_config&   prach_tlv,
+                        const fapi::carrier_config& carrier_tlv);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_upper_phy_timing_notifier() override;

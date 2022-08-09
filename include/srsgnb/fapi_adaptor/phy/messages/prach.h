@@ -23,7 +23,7 @@ namespace fapi_adaptor {
 /// \param[out] context Context for the PRACH buffer.
 /// \param[in] fapi_pdu FAPI PRACH PDU.
 /// \param[in] prach_tlv PRACH configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
-/// \param[in] carrier_tlv Carrier configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102D.
+/// \param[in] carrier_tlv Carrier configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
 /// \param[in] sfn System frame number.
 /// \param[in] slot Slot number.
 /// \param[in] sector_id Base station sector identifier.

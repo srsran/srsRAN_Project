@@ -31,7 +31,7 @@ struct phy_fapi_adaptor_factory_config {
   subcarrier_spacing scs_common;
   /// PRACH configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
   fapi::prach_config prach_cfg;
-  /// Carrier configuration TLV per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102D.
+  /// Carrier configuration TLV per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
   fapi::carrier_config carrier_cfg;
 };
 

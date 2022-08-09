@@ -46,9 +46,10 @@ struct prach_buffer_context {
   unsigned rb_offset;
   /// PUSCH subcarrier spacing.
   subcarrier_spacing pusch_scs;
-  /// \brief Number of PRBs for the UL grid {0...275}.
+  /// \brief Uplink resource grid size in PRBs.
   ///
-  /// The number of PRBs is based on the PUSCH subcarrier spacing.
+  /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
+  /// assuming a subcarrier spacing equal to \c pusch_scs.
   unsigned nof_prb_ul_grid;
   /// Root sequence index {0...837}.
   unsigned root_sequence_index;

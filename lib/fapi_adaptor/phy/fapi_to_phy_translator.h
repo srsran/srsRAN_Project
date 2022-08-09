@@ -127,10 +127,10 @@ private:
   //: TODO: make this lock free.
   std::mutex mutex;
 
-  // :TODO: this variable should be asked to the cell configuration. Remove it when it's available.
-  const subcarrier_spacing    scs_common;
-  const fapi::prach_config    prach_tlv;
-  const fapi::carrier_config& carrier_tlv;
+  // :TODO: these variables should be asked to the cell configuration. Remove them when they're available.
+  const subcarrier_spacing   scs_common;
+  const fapi::prach_config   prach_tlv;
+  const fapi::carrier_config carrier_tlv;
 };
 
 } // namespace fapi_adaptor
