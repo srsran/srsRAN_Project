@@ -19,20 +19,6 @@ using namespace srsgnb;
 
 using namespace srs_du;
 
-const unsigned NOF_SSB_SUBCARRIERS        = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
-const unsigned KHZ_TO_HZ                  = 1000;
-const double   HZ_TO_KHZ                  = 1e-3;
-const unsigned MIN_ARFCN_3_GHZ_24_5_GHZ   = 600000;
-const unsigned MIN_ARFCN_24_5_GHZ_100_GHZ = 2016667;
-const double   N_SIZE_SYNC_RASTER_1_HZ    = 1200e3;
-const unsigned N_UB_SYNC_RASTER_1         = 2500;
-const unsigned N_UB_SYNC_RASTER_2         = 14757;
-const double   M_SIZE_SYNC_RASTER_1_HZ    = 50e3;
-const double   N_SIZE_SYNC_RASTER_2_HZ    = 1440e3;
-
-// This expressed in Hz.
-const double N_REF_OFFSET_3_GHZ_24_5_GHZ = 3e9;
-
 // ------------------ Static functions --------------------.
 
 static double get_f_ssb_0_hz(double ss_ref, subcarrier_spacing scs_ssb)
@@ -53,8 +39,8 @@ compute_offset_to_pointA(double f_ssb_0_hz, double point_A_hz, subcarrier_spacin
     offset_to_pA = static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * HZ_TO_KHZ) /
                    (NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15));
   } else if (scs_common == subcarrier_spacing::kHz30) {
-    offset_to_pA = 2 * static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * HZ_TO_KHZ) /
-                   (2 * NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15));
+    offset_to_pA = 2 * (static_cast<unsigned>((f_ssb_0_hz - point_A_hz) * HZ_TO_KHZ) /
+                        (2 * NOF_SUBCARRIERS_PER_RB * scs_to_khz(subcarrier_spacing::kHz15)));
   } else {
     srsgnb_assert(scs_common <= subcarrier_spacing::kHz30, "FR2 not supported");
   }
@@ -107,10 +93,12 @@ du_config_generator::du_config_generator(unsigned           dl_arfcn_,
   n_rbs(n_rbs_),
   scs_common{scs_common_},
   scs_ssb{scs_ssb_},
-  ssb_case{band_helper::get_ssb_pattern(nr_band_, scs_ssb)}
+  ssb_case{band_helper::get_ssb_pattern(nr_band_, scs_ssb)},
+  N_raster{0},
+  M_raster{0}
 {
   f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
-  point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(dl_arfcn, n_rbs, scs_common);
+  point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
   bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ;
 
   double f_ssb_min_hz = point_A_hz + static_cast<double>(scs_to_khz(scs_ssb) * KHZ_TO_HZ * NOF_SSB_SUBCARRIERS / 2);
@@ -124,11 +112,12 @@ du_config_generator::du_config_generator(unsigned           dl_arfcn_,
     srsgnb_assert(dl_arfcn < MIN_ARFCN_24_5_GHZ_100_GHZ, "FR2 frequencies not supported");
   }
 
-  ssb_first_symbol = ssb_case == ssb_pattern_case::B ? 4 : 2;
+  // This constraint comes from the scheduler, which cannot allocate PDCCH starting at symbols different from 0;
+  // therefore, as per Table 13-11, TS 38.213, only the searchSpaceZero indices with starting symbol 0 are those with
+  // index <= 9.
+  max_ss0_idx = 9;
 
-  for (unsigned ss0_idx = 0; ss0_idx < 10; ++ss0_idx) {
-    searchspace0_idx_list.push_back(ss0_idx);
-  }
+  ssb_first_symbol = ssb_case == ssb_pattern_case::B ? 4 : 2;
 }
 
 double du_config_generator::get_ss_ref_hz(unsigned N, unsigned M)
@@ -142,7 +131,7 @@ double du_config_generator::get_ss_ref_hz(unsigned N, unsigned M)
 
 unsigned du_config_generator::find_M_raster()
 {
-  srsgnb_assert(dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ, "This function should be called only for DL-ARFCN < 600000");
+  // srsgnb_assert(dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ, "This function should be called only for DL-ARFCN < 600000");
 
   // If M_raster > 0, no need  to find the same value again.
   if (M_raster > 0) {
@@ -232,7 +221,7 @@ du_ssb_sib1_location srsgnb::srs_du::get_ssb_sib1_freq_location(unsigned        
 
   // Select 1st SSB. Select first searchspace0_idx and find viable coreset0
   ssb_freq_location ssb = du_cfg.get_next_ssb();
-  while (not ssb.is_valid) {
+  while (ssb.is_valid) {
     unsigned crbs_ssb =
         scs_common == subcarrier_spacing::kHz15 ? ssb.offset_to_point_A.to_uint() : ssb.offset_to_point_A.to_uint() / 2;
     // Iterate over
@@ -247,7 +236,7 @@ du_ssb_sib1_location srsgnb::srs_du::get_ssb_sib1_freq_location(unsigned        
           get_max_coreset0_index(scs_common, scs_ssb, band_helper::get_min_channel_bw(nr_band, scs_common));
 
       // Iterate over the coreset0_indices and corresponding configurations.
-      for (unsigned cset0_idx = 0; cset0_idx < max_cset0_idx; ++cset0_idx) {
+      for (unsigned cset0_idx = 0; cset0_idx <= max_cset0_idx; ++cset0_idx) {
         auto coreset0_cfg = pdcch_type0_css_coreset_get(
             band_helper::get_min_channel_bw(nr_band, scs_common), scs_ssb, scs_common, cset0_idx, ssb.k_ssb.to_uint());
 

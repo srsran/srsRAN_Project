@@ -10,4 +10,4 @@
 set(SOURCES f1c_configuration_helpers.cpp config_generator.cpp)
 
 add_library(du_manager_converters STATIC ${SOURCES})
-target_link_libraries(du_manager_converters rrc_nr_asn1 f1ap_asn1)
+target_link_libraries(du_manager_converters rrc_nr_asn1 srsgnb_support srsgnb_ran srsgnb_sched f1ap_asn1)

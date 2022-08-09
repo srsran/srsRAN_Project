@@ -14,6 +14,20 @@
 
 namespace srsgnb {
 
+const unsigned NOF_SSB_SUBCARRIERS        = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
+const unsigned KHZ_TO_HZ                  = 1000;
+const double   HZ_TO_KHZ                  = 1e-3;
+const unsigned MIN_ARFCN_3_GHZ_24_5_GHZ   = 600000;
+const unsigned MIN_ARFCN_24_5_GHZ_100_GHZ = 2016667;
+const double   N_SIZE_SYNC_RASTER_1_HZ    = 1200e3;
+const unsigned N_UB_SYNC_RASTER_1         = 2500;
+const unsigned N_UB_SYNC_RASTER_2         = 14757;
+const double   M_SIZE_SYNC_RASTER_1_HZ    = 50e3;
+const double   N_SIZE_SYNC_RASTER_2_HZ    = 1440e3;
+
+// This expressed in Hz.
+const double N_REF_OFFSET_3_GHZ_24_5_GHZ = 3e9;
+
 namespace srs_du {
 
 struct du_ssb_sib1_location {
@@ -67,8 +81,6 @@ private:
   unsigned N_raster;
   /// This is the \f$M\f$ parameter in the synchronization raster.
   unsigned M_raster;
-
-  std::vector<unsigned> searchspace0_idx_list;
 };
 
 /// \brief Derive packed cell MIB from DU cell configuration.

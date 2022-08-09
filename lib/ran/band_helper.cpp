@@ -525,6 +525,14 @@ min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(unsigned nr_band, 
         return min_channel_bandwidth::invalid;
       }
     }
+    case 77:
+    case 78: {
+      if (scs <= subcarrier_spacing::kHz60) {
+        return min_channel_bandwidth::MHz10;
+      } else {
+        return min_channel_bandwidth::invalid;
+      }
+    }
     case 79: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz40;
