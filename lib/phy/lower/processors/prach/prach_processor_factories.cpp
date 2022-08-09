@@ -12,7 +12,6 @@
 #include "prach_processor_impl.h"
 #include "prach_processor_worker.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
-#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -33,9 +32,9 @@ public:
     dft_size_15kHz(dft_size_15kHz_),
     max_nof_concurrent_requests(max_nof_concurrent_requests_)
   {
-    report_fatal_error_if_not(ofdm_prach_factory, "Invalid OFDM PRACH factory.");
-    report_fatal_error_if_not(dft_size_15kHz, "Zero is an invalid DFT size of 15kHz.");
-    report_fatal_error_if_not(max_nof_concurrent_requests, "Zero is an invalid maximum number of concurrent reqs.");
+    srsgnb_assert(ofdm_prach_factory, "Invalid OFDM PRACH factory.");
+    srsgnb_assert(dft_size_15kHz, "Zero is an invalid DFT size of 15kHz.");
+    srsgnb_assert(max_nof_concurrent_requests, "Zero is an invalid maximum number of concurrent reqs.");
   }
 
   std::unique_ptr<prach_processor> create(task_executor& async_task_executor) override
