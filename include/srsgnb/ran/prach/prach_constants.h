@@ -10,6 +10,8 @@
 
 #pragma once
 
+#include "srsgnb/ran/phy_time_unit.h"
+
 namespace srsgnb {
 
 namespace prach_constants {
@@ -27,6 +29,10 @@ static constexpr unsigned SHORT_SEQUENCE_LENGTH = 139U;
 /// Maximum number of OFDM symbols per slot containing short-sequence PRACH preambles. Inferred from TS38.211
 /// Table 6.3.3.1-2.
 static constexpr unsigned SHORT_SEQUENCE_MAX_NOF_SYMBOLS = 12U;
+
+/// Maximum length in the time domain. Inferred from TS38.211 Tables 6.3.3.1-1 and 6.3.3.1-2, the maximum of
+/// \f$N_u+N_{CP}^{RA}\f$.
+static constexpr phy_time_unit MAX_LENGTH_TIME_DOMAIN = phy_time_unit::from_units_of_kappa(4 * 24576 + 4688);
 
 } // namespace prach_constants
 

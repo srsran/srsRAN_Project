@@ -16,6 +16,7 @@
 #include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/ran/phy_time_unit.h"
+#include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/support/executors/task_executor.h"
 
@@ -32,9 +33,6 @@ namespace srsgnb {
 class prach_processor_worker
 {
 private:
-  /// Temporary baseband buffer size.
-  static constexpr phy_time_unit TEMP_BASEBAND_BUFFER_SIZE = phy_time_unit::from_seconds(5e-3);
-
   /// Worker internal states.
   enum class states {
     /// The worker has not been configured yet with any request or the previously configured request has already been
@@ -91,9 +89,9 @@ public:
     demodulator(std::move(demodulator_)),
     async_task_executor(async_task_executor_),
     sampling_rate_Hz(dft_size_15kHz * 15000),
-    temp_baseband(TEMP_BASEBAND_BUFFER_SIZE.to_samples(sampling_rate_Hz))
+    temp_baseband(prach_constants::MAX_LENGTH_TIME_DOMAIN.to_samples(sampling_rate_Hz))
   {
-    srsgnb_assert(sampling_rate_Hz && TEMP_BASEBAND_BUFFER_SIZE.is_sample_accurate(sampling_rate_Hz),
+    srsgnb_assert(sampling_rate_Hz && prach_constants::MAX_LENGTH_TIME_DOMAIN.is_sample_accurate(sampling_rate_Hz),
                   "Invalid sampling rate of {} Hz.",
                   sampling_rate_Hz);
   }
