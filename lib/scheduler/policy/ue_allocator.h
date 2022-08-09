@@ -21,9 +21,9 @@ struct ue_pdsch_grant {
   const ue*         user;
   du_cell_index_t   cell_index;
   harq_id_t         h_id;
+  search_space_id   ss_id;
+  unsigned          time_res_index;
   crb_interval      crbs;
-  ofdm_symbol_range symbols;
-  unsigned          k0 = 0;
   dci_dl_format     dci_fmt;
   aggregation_level aggr_lvl = aggregation_level::n4;
 };

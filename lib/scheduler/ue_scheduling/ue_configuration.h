@@ -42,6 +42,9 @@ public:
     return dl_bwps_cfg[bwpid].bwp_dl_ded->pdcch_cfg->ss_to_addmod_list;
   }
 
+  /// Get UE list of pdsch-TimeDomainAllocationList as per TS38.214 clause 5.1.2.1.1.
+  span<const pdsch_time_domain_resource_allocation> get_pdsch_time_domain_list(search_space_id ss_id) const;
+
 private:
   void addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl);
   void addmod_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl);
@@ -51,6 +54,9 @@ private:
 
   /// List of UE BWP configurations.
   slot_array<bwp_downlink, MAX_NOF_BWPS> dl_bwps_cfg;
+
+  /// Mapping of coreset-IDs to BWP-IDs.
+  std::array<bwp_id_t, MAX_NOF_CORESETS> coreset_to_bwp_id = {};
 };
 
 } // namespace srsgnb

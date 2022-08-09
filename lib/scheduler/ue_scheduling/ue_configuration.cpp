@@ -1,6 +1,7 @@
 
 #include "ue_configuration.h"
 #include "../../asn1/asn1_diff_utils.h"
+#include "../support/pdsch/pdsch_default_time_allocation.h"
 
 using namespace srsgnb;
 
@@ -131,4 +132,28 @@ void ue_cell_configuration::rel_bwp_ded_cfg(bwp_id_t bwpid)
 {
   srsgnb_assert(dl_bwps_cfg.contains(bwpid), "BWP-id={} does not exist", bwpid);
   dl_bwps_cfg.erase(bwpid);
+}
+
+span<const pdsch_time_domain_resource_allocation>
+ue_cell_configuration::get_pdsch_time_domain_list(search_space_id ss_id) const
+{
+  const search_space_configuration& ss_cfg = *dl_search_spaces[ss_id];
+  const bwp_downlink&               bwp_dl = *dl_bwps[coreset_to_bwp_id[dl_search_spaces[ss_id]->cs_id]];
+
+  if (ss_cfg.type != search_space_configuration::type::common or ss_cfg.cs_id != to_coreset_id(0)) {
+    if (not bwp_dl.bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list.empty()) {
+      // UE dedicated pdsch-TimeDomain list.
+      return bwp_dl.bwp_dl_ded->pdsch_cfg->pdsch_td_alloc_list;
+    }
+  }
+
+  if (not bwp_dl.bwp_dl_common->pdsch_common.pdsch_td_alloc_list.empty()) {
+    // common pdsch-TimeDomain list.
+    return bwp_dl.bwp_dl_common->pdsch_common.pdsch_td_alloc_list;
+  }
+
+  // default A table case.
+  return pdsch_default_time_allocations_default_A_table(
+      bwp_dl.bwp_dl_common->generic_params.cp_extended ? cyclic_prefix::EXTENDED : cyclic_prefix::NORMAL,
+      cell_cfg_common.dmrs_typeA_pos);
 }

@@ -48,4 +48,12 @@ static constexpr pdsch_default_time_allocation_config PDSCH_DEFAULT_TIME_ALLOCAT
 pdsch_default_time_allocation_config
 pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned row_index, dmrs_typeA_position dmrs_pos);
 
+/// \brief Determines the table of default PDSCH time-domain resource allocation A.
+///
+/// \param[in] cp        Cyclic prefix.
+/// \param[in] dmrs_pos  DM-RS for mapping Type A position.
+/// \return A list of valid PDSCH time-domain allocation configurations to choose from.
+span<const pdsch_time_domain_resource_allocation>
+pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos);
+
 } // namespace srsgnb

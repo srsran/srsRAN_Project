@@ -27,8 +27,8 @@ void ue_cell_grid_allocator::add_cell(du_cell_index_t          cell_index,
 
 bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
 {
-  srsgnb_sanity_check(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
-  srsgnb_sanity_check(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
+  srsgnb_assert(ues.contains(grant.user->ue_index), "Invalid UE candidate index={}", grant.user->ue_index);
+  srsgnb_assert(has_cell(grant.cell_index), "Invalid UE candidate cell_index={}", grant.cell_index);
   ue& u = ues[grant.user->ue_index];
 
   // Verify UE carrier is active.
@@ -39,35 +39,31 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
                    grant.cell_index);
     return false;
   }
-  const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
-  const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  const bwp_downlink&          bwp_dl      = *ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()];
-  subcarrier_spacing           scs         = bwp_dl.bwp_dl_common->generic_params.scs;
+  const ue_cell_configuration&                 ue_cell_cfg = ue_cc->cfg();
+  const cell_configuration&                    cell_cfg    = ue_cell_cfg.cell_cfg_common;
+  const bwp_downlink&                          bwp_dl      = *ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()];
+  subcarrier_spacing                           scs         = bwp_dl.bwp_dl_common->generic_params.scs;
+  const pdsch_time_domain_resource_allocation& pdsch_td_cfg =
+      ue_cc->cfg().get_pdsch_time_domain_list(grant.ss_id)[grant.time_res_index];
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];
-  cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[grant.k0];
+  cell_slot_resource_allocator& pdsch_alloc = get_res_alloc(grant.cell_index)[pdsch_td_cfg.k0];
 
   // Verify there is space in PDSCH and PDCCH result lists for new allocations.
-  if (pdcch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
+  if (pdsch_alloc.result.dl.ue_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
     logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler output list");
     return false;
   }
 
   // Verify there is no RB collision.
-  if (pdsch_alloc.dl_res_grid.collides(scs, grant.symbols, grant.crbs)) {
+  if (pdsch_alloc.dl_res_grid.collides(scs, pdsch_td_cfg.symbols, grant.crbs)) {
     logger.warning("Failed to allocate PDSCH. Cause: No space available in scheduler RB resource grid.");
     return false;
   }
 
   // Find a SearchSpace candidate.
-  const search_space_configuration* ss_cfg = nullptr;
-  for (const search_space_configuration& ss : ue_cell_cfg.get_dl_search_spaces(ue_cc->active_bwp_id())) {
-    if (search_space_supports_dl_dci_format(ss, grant.dci_fmt)) {
-      ss_cfg = &ss;
-      break;
-    }
-  }
+  const search_space_configuration* ss_cfg = ue_cell_cfg.dl_search_spaces[grant.ss_id];
   if (ss_cfg == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No valid SearchSpace found.");
     return false;
@@ -77,20 +73,19 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   pdcch_dl_information* pdcch =
       get_pdcch_sched(grant.cell_index)
           .alloc_dl_pdcch_ue(
-              pdcch_alloc, u.crnti, ue_cc->cfg(), ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, grant.dci_fmt);
+              pdcch_alloc, u.crnti, ue_cell_cfg, ue_cc->active_bwp_id(), ss_cfg->id, grant.aggr_lvl, grant.dci_fmt);
   if (pdcch == nullptr) {
     logger.warning("Failed to allocate PDSCH. Cause: No space in PDCCH.");
     return false;
   }
 
   // Mark resources as occupied in the ResourceGrid.
-  pdsch_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch, scs, grant.symbols, grant.crbs});
+  pdsch_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch, scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
-  uint8_t          time_resource = 0; // TODO.
-  prb_interval     prbs          = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
-  dl_harq_process& h_dl          = ue_cc->harqs.dl_harq(grant.h_id);
-  slot_point       uci_slot      = pdsch_alloc.slot + 4; // TODO.
+  prb_interval     prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);
+  dl_harq_process& h_dl     = ue_cc->harqs.dl_harq(grant.h_id);
+  slot_point       uci_slot = pdsch_alloc.slot + 4; // TODO.
   if (h_dl.empty()) {
     // It is a new tx.
     const static unsigned mcs      = 10; // TODO.
@@ -111,13 +106,18 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   dl_msg_alloc& msg     = pdsch_alloc.result.dl.ue_grants.back();
   msg.pdsch_cfg.rnti    = u.crnti;
   msg.pdsch_cfg.bwp_cfg = pdcch->ctx.bwp_cfg;
-  msg.pdsch_cfg.prbs    = crb_to_prb(*msg.pdsch_cfg.bwp_cfg, grant.crbs);
-  msg.pdsch_cfg.symbols = grant.symbols;
+  msg.pdsch_cfg.prbs    = prbs;
+  msg.pdsch_cfg.symbols = pdsch_td_cfg.symbols;
   // TODO: Use UE-dedicated DMRS info.
   msg.pdsch_cfg.dmrs = make_dmrs_info_common(
-      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, time_resource, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
+      cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common, grant.time_res_index, cell_cfg.pci, cell_cfg.dmrs_typeA_pos);
   // See TS 38.211, 7.3.1.1. - Scrambling.
-  msg.pdsch_cfg.n_id = cell_cfg.pci; // TODO.
+  if (bwp_dl.bwp_dl_ded.has_value() and bwp_dl.bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch.has_value() and
+      (grant.dci_fmt != dci_dl_format::f1_0 or ss_cfg->type != search_space_configuration::type::common)) {
+    msg.pdsch_cfg.n_id = *bwp_dl.bwp_dl_ded->pdsch_cfg->data_scrambling_id_pdsch;
+  } else {
+    msg.pdsch_cfg.n_id = cell_cfg.pci;
+  }
   // Add codeword.
   msg.pdsch_cfg.codewords.emplace_back();
   pdsch_codeword&                          cw     = msg.pdsch_cfg.codewords.back();

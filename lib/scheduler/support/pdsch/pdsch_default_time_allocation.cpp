@@ -104,3 +104,27 @@ srsgnb::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned r
       return pdsch_default_time_allocation_default_A_get_extended(row_index, dmrs_pos);
   }
 }
+
+span<const pdsch_time_domain_resource_allocation>
+srsgnb::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
+{
+  // Build PDSCH-TimeDomain tables statically.
+  auto table_builder = [](cyclic_prefix cp, dmrs_typeA_position dmrs_pos) {
+    std::array<pdsch_time_domain_resource_allocation, 16> table;
+    for (unsigned i = 0; i < 16; ++i) {
+      pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp, i, dmrs_pos);
+      table[i].k0                              = cfg.pdcch_to_pdsch_delay;
+      table[i].map_type                        = cfg.mapping_type;
+      table[i].symbols                         = {cfg.start_symbol, cfg.duration};
+    }
+    return table;
+  };
+  static const std::array<std::array<pdsch_time_domain_resource_allocation, 16>, 4> tables = {
+      table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos2),
+      table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos3),
+      table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos2),
+      table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos3)};
+
+  // Retrieve respective table.
+  return tables[static_cast<unsigned>(cp.value) * 2 + (static_cast<unsigned>(dmrs_pos) - 2)];
+}
