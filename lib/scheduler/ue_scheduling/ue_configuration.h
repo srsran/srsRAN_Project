@@ -19,8 +19,8 @@ public:
 
   const cell_configuration& cell_cfg_common;
 
-  /// This array maps BWP-Ids (the array indexes) to DL BWP configurations (the array values).
-  std::array<const bwp_configuration*, MAX_NOF_BWPS> dl_bwps = {};
+  /// This array maps BWP-Ids (the array indexes) to DL BWPs (the array values).
+  std::array<const bwp_downlink*, MAX_NOF_BWPS> dl_bwps = {};
 
   /// This array maps Coreset-Ids (the array indexes) to CORESET configurations (the array values).
   /// Note: The ID space of CoresetIds is common across all the BWPs of a Serving Cell.
@@ -36,12 +36,18 @@ public:
   /// Get Search Space List for a given BWP-Id.
   span<const search_space_configuration> get_dl_search_spaces(bwp_id_t bwpid) const
   {
-    return dl_bwps_cfg[bwpid].bwp_dl_ded.pdcch_cfg->ss_to_addmod_list;
+    if (bwpid == to_bwp_id(0)) {
+      return dl_bwps_cfg[bwpid].bwp_dl_common->pdcch_common.search_spaces;
+    }
+    return dl_bwps_cfg[bwpid].bwp_dl_ded->pdcch_cfg->ss_to_addmod_list;
   }
 
 private:
+  void addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl);
+  void addmod_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl);
   void addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded);
   void rel_bwp_ded_cfg(bwp_id_t bwpid);
+  void update_config_maps();
 
   /// List of UE BWP configurations.
   slot_array<bwp_downlink, MAX_NOF_BWPS> dl_bwps_cfg;

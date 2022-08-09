@@ -41,7 +41,8 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
   const ue_cell_configuration& ue_cell_cfg = ue_cc->cfg();
   const cell_configuration&    cell_cfg    = ue_cell_cfg.cell_cfg_common;
-  subcarrier_spacing           scs         = ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()]->scs;
+  const bwp_downlink&          bwp_dl      = *ue_cell_cfg.dl_bwps[ue_cc->active_bwp_id()];
+  subcarrier_spacing           scs         = bwp_dl.bwp_dl_common->generic_params.scs;
 
   // Fetch PDCCH and PDSCH resource grid allocators.
   cell_slot_resource_allocator& pdcch_alloc = get_res_alloc(grant.cell_index)[0];

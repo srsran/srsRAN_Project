@@ -164,8 +164,8 @@ inline dl_config_common make_default_dl_config_common(const du_cell_config_defau
   // Configure initial DL BWP.
   cfg.init_dl_bwp.generic_params = make_default_init_bwp(params);
   cfg.init_dl_bwp.pdcch_common.coreset0.emplace(make_default_coreset0_config(params));
-  cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(0, make_default_search_space_zero_config());
-  cfg.init_dl_bwp.pdcch_common.search_spaces.emplace(1, make_default_common_search_space_config());
+  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_search_space_zero_config());
+  cfg.init_dl_bwp.pdcch_common.search_spaces.push_back(make_default_common_search_space_config());
   cfg.init_dl_bwp.pdcch_common.sib1_search_space_id     = to_search_space_id(0);
   cfg.init_dl_bwp.pdcch_common.other_si_search_space_id = MAX_NOF_SEARCH_SPACES;
   cfg.init_dl_bwp.pdcch_common.paging_search_space_id   = to_search_space_id(1);

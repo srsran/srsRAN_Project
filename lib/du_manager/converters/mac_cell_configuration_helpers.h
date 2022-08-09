@@ -39,6 +39,8 @@ inline mac_ue_create_request_message make_default_ue_creation_request()
   dl_bwp.pdcch_cfg->coreset_to_addmod_list.emplace_back(du_config_helpers::make_default_coreset_config());
   coreset_configuration& cs_cfg = dl_bwp.pdcch_cfg->coreset_to_addmod_list.back();
   cs_cfg.id                     = to_coreset_id(1);
+  dl_bwp.pdsch_cfg.emplace();
+  dl_bwp.pdsch_cfg->data_scrambling_id_pdsch = 0;
 
   dl_bwp.pdcch_cfg->ss_to_addmod_list.emplace_back(du_config_helpers::make_default_ue_search_space_config());
   return msg;

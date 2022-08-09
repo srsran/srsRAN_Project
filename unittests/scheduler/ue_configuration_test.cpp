@@ -17,12 +17,16 @@ void test_ue_cfg_creation()
 
   // Test Common Config.
   TESTASSERT(ue_cfg.dl_bwps[0] != nullptr);
-  TESTASSERT(ue_cfg.dl_bwps[0]->crbs == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.crbs);
-  TESTASSERT(ue_cfg.dl_coresets[0] == &*cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0);
+  TESTASSERT(ue_cfg.dl_bwps[0]->bwp_dl_common->generic_params == cell_cfg.dl_cfg_common.init_dl_bwp.generic_params);
+  TESTASSERT(ue_cfg.dl_coresets[0]->id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.coreset0->id);
   TESTASSERT_EQ(0, ue_cfg.dl_search_spaces[0]->id);
-  TESTASSERT(ue_cfg.dl_search_spaces[0] == &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0]);
+  TESTASSERT(ue_cfg.dl_search_spaces[0]->id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].id);
+  TESTASSERT(ue_cfg.dl_search_spaces[0]->cs_id ==
+             cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[0].cs_id);
   TESTASSERT_EQ(1, ue_cfg.dl_search_spaces[1]->id);
-  TESTASSERT(ue_cfg.dl_search_spaces[1] == &cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1]);
+  TESTASSERT(ue_cfg.dl_search_spaces[1]->id == cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].id);
+  TESTASSERT(ue_cfg.dl_search_spaces[1]->cs_id ==
+             cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.search_spaces[1].cs_id);
 
   // Test Dedicated Config.
   TESTASSERT(ue_cfg.dl_coresets[1]->id ==

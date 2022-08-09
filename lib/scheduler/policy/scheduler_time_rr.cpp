@@ -52,12 +52,13 @@ bool alloc_dl_ue(const ue& u, ue_pdsch_allocator& pdsch_alloc, bool is_retx)
       continue;
     }
     const cell_slot_resource_grid& grid = pdsch_alloc.dl_resource_grid(ue_cc->cell_index, 0);
-    for (const bwp_configuration* bwp : ue_cc->cfg().dl_bwps) {
+    for (const bwp_downlink* bwp : ue_cc->cfg().dl_bwps) {
       if (bwp == nullptr) {
         continue;
       }
-      prb_bitmap   used_crbs     = grid.used_crbs(*bwp, pdsch_symbols);
-      crb_interval ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp->crbs.length(), 0);
+      const bwp_configuration& bwp_cfg       = bwp->bwp_dl_common->generic_params;
+      prb_bitmap               used_crbs     = grid.used_crbs(bwp_cfg, pdsch_symbols);
+      crb_interval             ue_grant_crbs = find_empty_interval_of_length(used_crbs, bwp_cfg.crbs.length(), 0);
       if (not ue_grant_crbs.empty()) {
         pdsch_alloc.allocate_pdsch(ue_pdsch_grant{&u,
                                                   ue_cc->cell_index,

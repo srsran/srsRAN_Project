@@ -72,17 +72,26 @@ struct pdcch_config {
   // TODO: add remaining fields.
 };
 
+/// UE-dedicated PDSCH Configuration as per TS38.331, "PDSCH-Config".
+struct pdsch_config {
+  /// Identifier used to initialize data scrambling (c_init) for PDSCH. If the field is absent, the UE applies the PCI.
+  /// See TS38.331 and TS38.211, 7.3.1.1. Values: {0,...,1023}.
+  uint16_t data_scrambling_id_pdsch;
+  // TODO: Remaining.
+};
+
 /// \remark See TS 38.331, "BWP-DownlinkDedicated"
 struct bwp_downlink_dedicated {
   optional<pdcch_config> pdcch_cfg;
+  optional<pdsch_config> pdsch_cfg;
   // TODO: Remaining
 };
 
 /// \remark TS 38.331, "BWP-Downlink".
 struct bwp_downlink {
-  bwp_id_t               bwp_id;
-  bwp_downlink_common    bwp_dl_common;
-  bwp_downlink_dedicated bwp_dl_ded;
+  bwp_id_t                         bwp_id;
+  optional<bwp_downlink_common>    bwp_dl_common;
+  optional<bwp_downlink_dedicated> bwp_dl_ded;
 };
 
 /// \remark See TS 38.331, "ServingCellConfig"

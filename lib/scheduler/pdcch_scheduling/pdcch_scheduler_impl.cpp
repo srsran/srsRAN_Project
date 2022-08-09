@@ -255,7 +255,7 @@ pdcch_dl_information* pdcch_scheduler_impl::alloc_dl_pdcch_ue(cell_slot_resource
 {
   // Find Common or UE-specific BWP and CORESET configurations.
   srsgnb_sanity_check(user.dl_bwps[bwpid] != nullptr, "Invalid BWP-Id");
-  const bwp_configuration& bwp_cfg = *user.dl_bwps[bwpid];
+  const bwp_configuration& bwp_cfg = user.dl_bwps[bwpid]->bwp_dl_common->generic_params;
   srsgnb_sanity_check(user.dl_search_spaces[ss_id] != nullptr, "Invalid SearchSpaceId");
   const search_space_configuration& ss_cfg = *user.dl_search_spaces[ss_id];
   srsgnb_sanity_check(user.dl_coresets[ss_cfg.cs_id] != nullptr, "Invalid CoresetId");
@@ -273,7 +273,7 @@ pdcch_ul_information* pdcch_scheduler_impl::alloc_ul_pdcch_ue(cell_slot_resource
                                                               dci_ul_format                 dci_fmt)
 {
   // Find Common or UE-specific BWP and CORESET configurations.
-  const bwp_configuration&          bwp_cfg = *user.dl_bwps[bwpid];
+  const bwp_configuration&          bwp_cfg = user.dl_bwps[bwpid]->bwp_dl_common->generic_params;
   const search_space_configuration& ss_cfg  = *user.dl_search_spaces[ss_id];
   const coreset_configuration&      cs_cfg  = *user.dl_coresets[ss_cfg.cs_id];
 

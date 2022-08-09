@@ -85,7 +85,7 @@ struct pdcch_config_common {
   /// Contains common Coreset.
   optional<coreset_configuration> common_coreset;
   /// Contains SearchSpaceZero and commonSearchSpaceList. Size: (0..4).
-  slot_vector<search_space_configuration> search_spaces;
+  std::vector<search_space_configuration> search_spaces;
   search_space_id                         sib1_search_space_id;
   search_space_id                         other_si_search_space_id;
   search_space_id                         paging_search_space_id;
@@ -110,6 +110,11 @@ struct bwp_configuration {
   subcarrier_spacing scs;
   /// Common RBs where the BWP is located. CRB=0 overlaps with pointA.
   crb_interval crbs;
+
+  bool operator==(const bwp_configuration& other) const
+  {
+    return scs == other.scs and crbs == other.crbs and cp_extended == other.cp_extended;
+  }
 };
 
 /// PDSCH Mapping Type. TypeA can start only at symbol 2 or 3 within a slot.
