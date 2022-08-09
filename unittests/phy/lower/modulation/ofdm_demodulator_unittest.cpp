@@ -108,7 +108,7 @@ int main()
           }
 
           // Reset DFT spy entries.
-          dft.reset();
+          dft.clear_entries();
 
           // Demodulate signal.
           resource_grid_writer_spy rg(MAX_PORTS, MAX_NSYMB_PER_SLOT, ofdm_config.bw_rb);

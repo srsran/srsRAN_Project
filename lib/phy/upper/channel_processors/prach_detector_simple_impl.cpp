@@ -59,6 +59,11 @@ prach_detector::detection_result prach_detector_simple_impl::detect(const prach_
   result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
   result.preambles.clear();
 
+  // Early stop if the RSSI is zero.
+  if (!std::isnormal(rssi)) {
+    return result;
+  }
+
   // For each preamble to detect...
   for (unsigned preamble_index     = config.start_preamble_index,
                 preamble_index_end = config.start_preamble_index + config.nof_preamble_indices;
@@ -95,7 +100,7 @@ prach_detector::detection_result prach_detector_simple_impl::detect(const prach_
     float                      max_power = max_abs.second;
 
     // Check if the maximum value gets over the threshold.
-    float norm_corr = max_power / (rssi * preamble_power * idft->get_size() * idft->get_size() * idft->get_size());
+    float norm_corr = max_power / (rssi * preamble_power * idft->get_size() * idft->get_size());
     if (norm_corr < DETECTION_THRESHOLD) {
       continue;
     }

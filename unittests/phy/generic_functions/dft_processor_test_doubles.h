@@ -11,27 +11,19 @@
 #pragma once
 
 #include "srsgnb/phy/generic_functions/generic_functions_factories.h"
+#include "srsgnb/support/error_handling.h"
 #include <random>
 
 namespace srsgnb {
 
 class dft_processor_spy : public dft_processor
 {
-private:
+public:
   struct entry {
     std::vector<cf_t> input;
     std::vector<cf_t> output;
   };
 
-  unsigned                              size;
-  direction                             dir;
-  std::vector<cf_t>                     input_buffer;
-  std::vector<cf_t>                     output_buffer;
-  std::mt19937                          rgen;
-  std::uniform_real_distribution<float> dist;
-  std::vector<entry>                    entries;
-
-public:
   dft_processor_spy(unsigned seed, const configuration& config) :
     size(config.size), dir(config.dir), input_buffer(config.size), output_buffer(config.size), rgen(seed), dist(-1, 1)
   {
@@ -42,9 +34,11 @@ public:
   span<cf_t>       get_input() override { return input_buffer; }
   span<const cf_t> run() override
   {
-    // Generate some random output.
-    for (cf_t& value : output_buffer) {
-      value = {dist(rgen), dist(rgen)};
+    // Generate some random output if ouput buffer was not set.
+    if (generate_random_output) {
+      for (cf_t& value : output_buffer) {
+        value = {dist(rgen), dist(rgen)};
+      }
     }
 
     entries.emplace_back();
@@ -54,9 +48,28 @@ public:
 
     return output_buffer;
   }
-  void reset() { entries.clear(); }
+
+  void clear_entries() { entries.clear(); }
 
   const std::vector<entry>& get_entries() const { return entries; }
+
+  void set_output_buffer(const std::vector<cf_t>& buffer)
+  {
+    report_fatal_error_if_not(
+        buffer.size() == size, "Buffer size {} is not equal to the DFT size {}.", buffer.size(), size);
+    generate_random_output = false;
+    output_buffer          = buffer;
+  }
+
+private:
+  bool                                  generate_random_output = true;
+  unsigned                              size;
+  direction                             dir;
+  std::vector<cf_t>                     input_buffer;
+  std::vector<cf_t>                     output_buffer;
+  std::mt19937                          rgen;
+  std::uniform_real_distribution<float> dist;
+  std::vector<entry>                    entries;
 };
 
 class dft_processor_factory_spy : public dft_processor_factory

@@ -11,43 +11,62 @@
 #pragma once
 
 #include "srsgnb/phy/support/prach_buffer.h"
+#include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
 
 class prach_buffer_spy : public prach_buffer
 {
-private:
-  unsigned         count_get_sequence_length = 0;
-  unsigned         count_get_max_nof_symbols = 0;
-  unsigned         count_get_symbol          = 0;
-  mutable unsigned count_get_symbol_const    = 0;
-
 public:
-  unsigned   get_sequence_length() const override { return 0; }
-  unsigned   get_max_nof_symbols() const override { return 0; }
+  unsigned   get_sequence_length() const override { return symbol_data.size(); }
+  unsigned   get_max_nof_symbols() const override { return 1; }
   span<cf_t> get_symbol(unsigned symbol_index) override
   {
-    ++count_get_symbol;
-    return span<cf_t>();
+    report_fatal_error_if_not(
+        symbol_index < nof_symbols, "The symbol index {} exceeds the number of symbols {}.", symbol_index, nof_symbols);
+    get_symbol_entries.emplace_back(symbol_index);
+    return span<cf_t>(symbol_data).subspan(symbol_size * symbol_index, symbol_size);
   }
   span<const cf_t> get_symbol(unsigned symbol_index) const override
   {
-    ++count_get_symbol_const;
-    return span<const cf_t>();
+    report_fatal_error_if_not(
+        symbol_index < nof_symbols, "The symbol index {} exceeds the number of symbols {}.", symbol_index, nof_symbols);
+    get_symbol_const_entries.emplace_back(symbol_index);
+    return span<const cf_t>(symbol_data).subspan(symbol_size * symbol_index, symbol_size);
   }
 
   unsigned get_total_count() const
   {
-    return count_get_sequence_length + count_get_max_nof_symbols + count_get_symbol + count_get_symbol_const;
+    return count_get_sequence_length + count_get_max_nof_symbols + get_symbol_entries.size() +
+           get_symbol_const_entries.size();
   }
+
+  void set_symbol_data(const std::vector<cf_t>& data, unsigned symbol_size_, unsigned nof_symbols_)
+  {
+    report_fatal_error_if_not(data.size() == symbol_size_ * nof_symbols_,
+                              "The symbols data size is not consistent with the symbol size and number of symbols.");
+    symbol_data = data;
+    symbol_size = symbol_size_;
+    nof_symbols = nof_symbols_;
+  }
+
+  const std::vector<unsigned>& get_get_symbol_entries() { return get_symbol_entries; };
+  const std::vector<unsigned>& get_get_symbol_const_entries() { return get_symbol_const_entries; };
 
   void clear()
   {
     count_get_sequence_length = 0;
     count_get_max_nof_symbols = 0;
-    count_get_symbol          = 0;
-    count_get_symbol_const    = 0;
   }
+
+private:
+  unsigned                      symbol_size;
+  unsigned                      nof_symbols;
+  std::vector<cf_t>             symbol_data;
+  unsigned                      count_get_sequence_length = 0;
+  unsigned                      count_get_max_nof_symbols = 0;
+  std::vector<unsigned>         get_symbol_entries;
+  mutable std::vector<unsigned> get_symbol_const_entries;
 };
 
 } // namespace srsgnb

@@ -109,7 +109,7 @@ int main()
           }
 
           // Reset DFT spy entries.
-          dft.reset();
+          dft.clear_entries();
 
           // Modulate signal.
           std::vector<cf_t> output(ofdm->get_slot_size(slot_idx));
