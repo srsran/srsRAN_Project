@@ -113,6 +113,36 @@ protected:
     rlc2_tx_lower = rlc2->get_tx_pdu_transmitter();
   }
 
+  /// \brief Creates a byte_buffer serving as SDU for RLC
+  ///
+  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
+  /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
+  /// \param sdu_size Size of the SDU
+  /// \param first_byte Value of the first byte
+  /// \return the produced SDU as a byte_buffer
+  byte_buffer create_sdu(uint32_t sdu_size, uint8_t first_byte = 0) const
+  {
+    byte_buffer sdu_buf;
+    for (uint32_t k = 0; k < sdu_size; ++k) {
+      sdu_buf.append(first_byte + k);
+    }
+    return sdu_buf;
+  }
+
+  /// \brief Creates a new rlc_sdu
+  ///
+  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
+  /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
+  /// \param pdcp_sn Sequence number coming from PDCP
+  /// \param sdu_size Size of the SDU
+  /// \param first_byte Value of the first byte
+  /// \return the produced SDU as a rlc_sdu
+  rlc_sdu create_rlc_sdu(uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte = 0) const
+  {
+    rlc_sdu sdu = {pdcp_sn, create_sdu(sdu_size, first_byte)};
+    return sdu;
+  }
+
   /// \brief Obtains full RLC AMD PDUs from generated SDUs that are passed through an RLC AM entity
   /// \param[out] out_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDUs
   /// \param[in] n_pdus Length of the out_pdus array
@@ -122,10 +152,7 @@ protected:
     // Push "n_pdus" SDUs into RLC1
     byte_buffer sdu_bufs[n_pdus];
     for (uint32_t i = 0; i < n_pdus; i++) {
-      sdu_bufs[i] = byte_buffer();
-      for (uint32_t k = 0; k < sdu_size; ++k) {
-        sdu_bufs[i].append(i + k);
-      }
+      sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
       rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
@@ -168,10 +195,7 @@ protected:
     // Push "n_sdus" SDUs into RLC1
     byte_buffer sdu_bufs[n_sdus];
     for (uint32_t i = 0; i < n_sdus; i++) {
-      sdu_bufs[i] = byte_buffer();
-      for (uint32_t k = 0; k < sdu_size; ++k) {
-        sdu_bufs[i].append(i + k);
-      }
+      sdu_bufs[i] = create_sdu(sdu_size, i);
 
       // write SDU into upper end
       rlc_sdu sdu = {i, sdu_bufs[i].deep_copy()}; // no std::move - keep local copy for later comparison
@@ -255,7 +279,7 @@ TEST_P(rlc_am_tx_test, tx_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, tx_with_segmentation)
+TEST_P(rlc_am_tx_test, tx_small_grant_)
 {
   init(GetParam());
   const uint32_t n_sdus   = 5;
@@ -274,6 +298,68 @@ TEST_P(rlc_am_tx_test, tx_with_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 
   tx_segmented_pdus(pdus, n_pdus, pdu_size, n_sdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, tx_insufficient_space_new_sdu)
+{
+  init(GetParam());
+  const uint32_t sdu_size        = 1;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t short_size      = header_min_size;
+  const uint32_t fit_size        = header_min_size + sdu_size;
+
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+  rlc1_tx_upper->handle_sdu(create_rlc_sdu(0, sdu_size));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  byte_buffer_slice_chain pdu;
+
+  // short read - expect empty PDU
+  pdu = rlc1_tx_lower->pull_pdu(short_size);
+  EXPECT_EQ(pdu.length(), 0);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  // fitting read
+  pdu = rlc1_tx_lower->pull_pdu(fit_size);
+  EXPECT_EQ(pdu.length(), fit_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, tx_insufficient_space_continued_sdu)
+{
+  init(GetParam());
+  const uint32_t sdu_size        = 3;
+  const uint32_t header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t header_so_size  = 2;
+  const uint32_t min_size_first  = header_min_size + 1;
+  const uint32_t short_size      = header_min_size + header_so_size;
+  const uint32_t min_size_seg    = header_min_size + header_so_size + 1;
+
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+  rlc1_tx_upper->handle_sdu(create_rlc_sdu(0, sdu_size));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  byte_buffer_slice_chain pdu;
+
+  // kick-off segmentation
+  pdu = rlc1_tx_lower->pull_pdu(min_size_first);
+  EXPECT_EQ(pdu.length(), min_size_first);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), (sdu_size - 1) + header_min_size + header_so_size);
+
+  // short read - expect empty PDU
+  pdu = rlc1_tx_lower->pull_pdu(short_size);
+  EXPECT_EQ(pdu.length(), 0);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), (sdu_size - 1) + header_min_size + header_so_size);
+
+  // minimum-length read (middle segment)
+  pdu = rlc1_tx_lower->pull_pdu(min_size_seg);
+  EXPECT_EQ(pdu.length(), min_size_seg);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), (sdu_size - 2) + header_min_size + header_so_size);
+
+  // minimum-length read (last segment)
+  pdu = rlc1_tx_lower->pull_pdu(min_size_seg);
+  EXPECT_EQ(pdu.length(), min_size_seg);
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
