@@ -108,6 +108,9 @@ private:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
+    //
+    // TODO: avoid string construction
+    //
     channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
   }
 
@@ -116,6 +119,9 @@ private:
   {
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
+    //
+    // TODO: avoid string construction
+    //
     channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
   }
 };
