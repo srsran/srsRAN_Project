@@ -109,13 +109,13 @@ static void add_ssb_pdus_to_request(dl_tti_request_message_builder& builder, con
 }
 
 static void add_pdsch_pdus_to_request(dl_tti_request_message_builder& builder,
-                                      pdsch_pdu_registy&              pdsch_registry,
+                                      pdsch_pdu_registry&             pdsch_registry,
                                       const mac_dl_sched_result&      dl_res)
 {
   for (const auto& pdu : dl_res.dl_res->bc.sibs) {
     dl_pdsch_pdu_builder pdsch_builder = builder.add_pdsch_pdu();
     convert_pdsch_mac_to_fapi(pdsch_builder, pdu);
-    pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registy::sib);
+    pdsch_registry.register_pdu(pdsch_builder.get_pdu_id(), pdsch_pdu_registry::sib);
   }
 }
 
@@ -169,19 +169,19 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   std::lock_guard<std::mutex> lock(mutex);
 
   // Sanity checks.
-  srsgnb_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
+  srsgnb_assert(dl_data.sib1_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::sib),
                 "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::sib),
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::sib),
                 dl_data.sib1_pdus.size());
 
-  srsgnb_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
+  srsgnb_assert(dl_data.rar_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::rar),
                 "Number of PDUs ({}) and Payloads ({}) for RAR PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::rar),
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::rar),
                 dl_data.rar_pdus.size());
 
-  srsgnb_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
+  srsgnb_assert(dl_data.ue_pdus.size() == pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
                 "Number of PDUs ({}) and Payloads ({}) for SIB PDUs doesn't match",
-                pdsch_registry.get_nof_pdus(pdsch_pdu_registy::ue),
+                pdsch_registry.get_nof_pdus(pdsch_pdu_registry::ue),
                 dl_data.ue_pdus.size());
 
   tx_data_request_message msg;
@@ -193,7 +193,7 @@ void mac_to_fapi_translator::on_new_downlink_data(const mac_dl_data_result& dl_d
   const static_vector<span<const uint8_t>, MAX_SIB1_PDUS_PER_SLOT>& sib1_pdus = dl_data.sib1_pdus;
   for (unsigned i = 0, e = sib1_pdus.size(); i != e; ++i) {
     builder.add_pdu_custom_payload(
-        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registy::sib), 1, {sib1_pdus[i].data(), sib1_pdus[i].size()});
+        pdsch_registry.get_fapi_pdu_index(i, pdsch_pdu_registry::sib), 1, {sib1_pdus[i].data(), sib1_pdus[i].size()});
   }
 
   // Send the message.

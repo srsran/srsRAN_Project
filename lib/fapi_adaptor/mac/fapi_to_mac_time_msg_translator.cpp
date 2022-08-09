@@ -27,8 +27,8 @@ public:
 
 } // namespace
 
-/// This dummy instance is used by the FAPI-to-MAC translator in construction to be later replaced by the user provided
-/// MAC cell slot handler.
+/// This dummy object is passed to the constructor of the FAPI-to-MAC translator as a placeholder for the actual,
+/// cell-specific MAC slot handler, which will be later set up through the \ref set_cell_slot_handler() method.
 static mac_cell_slot_handler_dummy mac_dummy_handler;
 
 fapi_to_mac_time_msg_translator::fapi_to_mac_time_msg_translator(mac_to_fapi_translator& translator,

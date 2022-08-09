@@ -17,7 +17,7 @@ struct slot_indication_message;
 
 /// \brief Slot-based, time-specific message notifier interface.
 ///
-/// This interface notifies the reception of FAPI slot based, time-specific messages from the underlying PHY.
+/// This interface notifies the reception of slot-based, time-specific FAPI messages from the underlying PHY.
 class slot_time_message_notifier
 {
 public:

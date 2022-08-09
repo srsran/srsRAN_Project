@@ -23,8 +23,8 @@ namespace fapi_adaptor {
 
 /// \brief PDSCH PDU registry.
 ///
-/// This class acts as a repository of the index positions for the PDSCH PDUs carried in the FAPI DL_TTI.request.
-class pdsch_pdu_registy
+/// This class stores the index positions of the PDSCH PDUs carried in the FAPI DL_TTI.request.
+class pdsch_pdu_registry
 {
 public:
   /// Labels for the different types of PDSCH PDUs.
@@ -91,7 +91,7 @@ public:
 
   /// \brief Handles a new slot.
   ///
-  /// When a new slot is notified, the PDSCH PDUs from the previous slot should be discarded, in turn, the PDSCH PDU
+  /// When a new slot is notified, the PDSCH PDUs from the previous slot should be discarded and, in turn, the PDSCH PDU
   /// registry has to be reset.
   ///
   /// \param[in] slot Identifies the new slot.
@@ -106,7 +106,7 @@ private:
   /// FAPI message gateway to the outside world.
   fapi::slot_message_gateway& msg_gw;
   /// PDSCH PDU registry helper object.
-  pdsch_pdu_registy pdsch_registry;
+  pdsch_pdu_registry pdsch_registry;
   // Protects pdsch_registry.
   //: TODO: make this lock free.
   std::mutex mutex;

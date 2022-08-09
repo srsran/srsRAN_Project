@@ -22,7 +22,7 @@ struct uci_indication_message;
 
 /// \brief Slot-based, data-specific message notifier interface.
 ///
-/// This interface notifies the reception of FAPI slot based, data-specific messages from the underlying PHY.
+/// This interface notifies the reception of slot-based, data-specific FAPI messages from the underlying PHY.
 class slot_data_message_notifier
 {
 public:
