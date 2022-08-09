@@ -26,6 +26,7 @@ struct du_cfg_gen_input_params {
   subcarrier_spacing scs_ssb;
 };
 
+// Helper that compares the SSB and Coreset0 paramters returned by du_config_generator.
 static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_freq_location& rhs)
 {
   bool result = lhs.is_valid && rhs.is_valid && lhs.k_ssb.to_uint() == rhs.k_ssb.to_uint() &&
@@ -33,6 +34,7 @@ static bool compare_ssb_freq_location(const ssb_freq_location& lhs, const ssb_fr
   return result;
 }
 
+// Helper that compares the SSB parameters returned by du_config_generator.
 static bool compare_ssb_coreset0_allocation(const du_ssb_sib1_location& lhs, const du_ssb_sib1_location& rhs)
 {
   bool result = lhs.is_valid && rhs.is_valid && lhs.k_ssb.to_uint() == rhs.k_ssb.to_uint() &&
@@ -41,7 +43,12 @@ static bool compare_ssb_coreset0_allocation(const du_ssb_sib1_location& lhs, con
   return result;
 }
 
-TEST(du_config_generator_tester, first_param_set)
+/*
+ *      ===========    TEST GENERATION OF SSB POSITION WITHIN THE BAND    ===========
+ */
+
+// Test all possible SSB position within a given band returned by the DU config generator.
+TEST(du_config_generator_tester, band_3)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 365000,
                                     /* NR-band*/ 3,
@@ -52,6 +59,7 @@ TEST(du_config_generator_tester, first_param_set)
   ssb_freq_location expected{true, 5, 2};
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 11;
   expected.k_ssb             = 10;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
@@ -68,10 +76,12 @@ TEST(du_config_generator_tester, first_param_set)
   expected.k_ssb             = 10;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Verify there are no possible SSB positions within the band.
   ASSERT_TRUE(not cfg_generator.get_next_ssb().is_valid);
 }
 
-TEST(du_config_generator_tester, second_param_set)
+// Test all possible SSB position within a given band returned by the DU config generator.
+TEST(du_config_generator_tester, band_7)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 531720,
                                     /* NR-band*/ 7,
@@ -82,10 +92,12 @@ TEST(du_config_generator_tester, second_param_set)
   ssb_freq_location expected{true, 0, 0};
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   ASSERT_FALSE(cfg_generator.get_next_ssb().is_valid);
 }
 
-TEST(du_config_generator_tester, scs_ssb_15kHz_common_30kHz)
+// Test all possible SSB position within a given band returned by the DU config generator.
+TEST(du_config_generator_tester, band_25)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 391180,
                                     /* NR-band*/ 25,
@@ -96,6 +108,7 @@ TEST(du_config_generator_tester, scs_ssb_15kHz_common_30kHz)
   ssb_freq_location expected{true, 2, 2};
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Get next SSB position and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 8;
   expected.k_ssb             = 10;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
@@ -127,9 +140,13 @@ TEST(du_config_generator_tester, scs_ssb_15kHz_common_30kHz)
   expected.offset_to_point_A = 54;
   expected.k_ssb             = 18;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
+
+  // Verify there are no possible SSB positions within the band.
+  ASSERT_FALSE(cfg_generator.get_next_ssb().is_valid);
 }
 
-TEST(du_config_generator_tester, third_param_set)
+// Test all possible SSB position within a given band returned by the DU config generator.
+TEST(du_config_generator_tester, band_51)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 435740,
                                     /* NR-band*/ 66,
@@ -140,6 +157,7 @@ TEST(du_config_generator_tester, third_param_set)
   ssb_freq_location expected{true, 0, 22};
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Get next SSB position(s) and verify its position in terms of offsetToPointA and k_SSB.
   expected.offset_to_point_A = 8;
   expected.k_ssb             = 6;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
@@ -176,19 +194,18 @@ TEST(du_config_generator_tester, third_param_set)
   expected.k_ssb             = 22;
   ASSERT_TRUE(compare_ssb_freq_location(expected, cfg_generator.get_next_ssb()));
 
+  // Verify there are no possible SSB positions within the band.
   ASSERT_FALSE(cfg_generator.get_next_ssb().is_valid);
 }
 
-class du_config_generator_fixture
+/*
+ *      =====    TEST GENERATION OF SSB AND CORESET0 POSITIONS WITHIN THE BAND    =====
+ */
+
+class ssb_coreset0_param_generator_test
   : public ::testing::TestWithParam<std::pair<du_ssb_sib1_location, du_cfg_gen_input_params>>
 {
 protected:
-  ssb_freq_location get_ssb_freq_location(du_cfg_gen_input_params in_param)
-  {
-    du_config_generator cfg_generator{
-        in_param.dl_arfcn, in_param.nr_band, in_param.n_rbs, in_param.scs_common, in_param.scs_ssb};
-    return cfg_generator.get_next_ssb();
-  }
   du_ssb_sib1_location get_ssb_coreset0_location(du_cfg_gen_input_params in_param)
   {
     return get_ssb_sib1_freq_location(
@@ -196,7 +213,8 @@ protected:
   }
 };
 
-TEST_P(du_config_generator_fixture, test_du_ssb_coreset0_idx)
+// Test whether the position of SSB and Coreset0/SS0 indices are correctly generated.
+TEST_P(ssb_coreset0_param_generator_test, test_du_ssb_coreset0_idx)
 {
   std::pair<du_ssb_sib1_location, du_cfg_gen_input_params> params = GetParam();
 
@@ -205,20 +223,12 @@ TEST_P(du_config_generator_fixture, test_du_ssb_coreset0_idx)
 
   du_ssb_sib1_location ssb_coreset0_alloc = get_ssb_coreset0_location(input_params);
 
-  //
-  test_ssb_coreset0_allocation(input_params.dl_arfcn,
-                               input_params.nr_band,
-                               input_params.n_rbs,
-                               input_params.scs_common,
-                               input_params.scs_ssb,
-                               ssb_coreset0_alloc);
-
   compare_ssb_coreset0_allocation(expected_res, ssb_coreset0_alloc);
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    Generate_ssb_coreset0_test,
-    du_config_generator_fixture,
+    du_ssb_coreset0_idx,
+    ssb_coreset0_param_generator_test,
     testing::Values(
 
         std::make_pair(du_ssb_sib1_location{true, 5, 2, 0, 0},
@@ -232,7 +242,11 @@ INSTANTIATE_TEST_SUITE_P(
         std::make_pair(du_ssb_sib1_location{true, 14, 18, 0, 0},
                        du_cfg_gen_input_params{391180, 25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15})));
 
-class du_config_ssb_coreset0_fixture : public ::testing::TestWithParam<du_cfg_gen_input_params>
+/*
+ *      =====    TEST SSB IS WITHIN SYNC RASTER AND CORESET0 IS WITHIN THE BAND    =====
+ */
+
+class ssb_coreset0_compatibility_with_raster_and_band : public ::testing::TestWithParam<du_cfg_gen_input_params>
 {
 protected:
   du_ssb_sib1_location get_ssb_coreset0_allocation(du_cfg_gen_input_params in_param)
@@ -242,7 +256,8 @@ protected:
   }
 };
 
-TEST_P(du_config_ssb_coreset0_fixture, test_du_ssb_coreset0_consitency)
+// Test whether the SSB f_ref correspond to sync raster and Coreset0 is within the band.
+TEST_P(ssb_coreset0_compatibility_with_raster_and_band, test_ssb_raster_and_cset0_band)
 {
   du_cfg_gen_input_params params = GetParam();
 
@@ -260,11 +275,10 @@ TEST_P(du_config_ssb_coreset0_fixture, test_du_ssb_coreset0_consitency)
 }
 
 INSTANTIATE_TEST_SUITE_P(
-    ssb_coreset0_consistency_test,
-    du_config_ssb_coreset0_fixture,
+    ssb_raster_and_cset0_band,
+    ssb_coreset0_compatibility_with_raster_and_band,
     testing::Values(du_cfg_gen_input_params{365000, 3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
                     du_cfg_gen_input_params{531720, 7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
-                       du_cfg_gen_input_params{643265, 78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30},
-                       du_cfg_gen_input_params{435740, 66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30},
-                       du_cfg_gen_input_params{391180, 25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}
-                    ));
+                    du_cfg_gen_input_params{643265, 78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30},
+                    du_cfg_gen_input_params{435740, 66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30},
+                    du_cfg_gen_input_params{391180, 25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}));

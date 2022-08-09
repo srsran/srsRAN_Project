@@ -177,6 +177,11 @@ double get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, uint32_t nof_rbs
 /// \return \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr);
 
+/// \brief Returns the minimum BS Channel Bandwidth for a given band and SCS from Table 5.3.5-1, TS 38.104, for FR1.
+///
+/// \param[in] bw is the <em>BS channel bandwidth<\em>, defined in TS 38.104, Section 5.3.
+/// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
+/// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
 min_channel_bandwidth get_min_channel_bw(unsigned nr_band, subcarrier_spacing scs);
 
 } // namespace band_helper
