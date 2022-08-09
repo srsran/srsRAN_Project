@@ -26,11 +26,11 @@ public:
 
   /// \brief Handles a new PRACH request.
   ///
-  /// The request is not processed immediately. The results of the method are asynchronously notified through \ref
-  /// prach_processor_notifier interface.
+  /// The PRACH buffer and context provided to this method are forwarded to a dedicated block that takes care of the
+  /// request asynchronously. A notification through the \ref prach_processor_notifier interface will inform the client
+  /// that the request has been processed and that the PRACH demodulated sequence is available in \c buffer.
   ///
-  /// \param[in] buffer Destination PRACH buffer. It is forwarded to the processor notifier after writing the PRACH
-  /// demodulated signal.
+  /// \param[in] buffer Destination PRACH buffer.
   /// \param[in] context PRACH context.
   virtual void handle_request(prach_buffer& buffer, const prach_buffer_context& context) = 0;
 };
