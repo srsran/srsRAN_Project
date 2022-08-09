@@ -119,10 +119,6 @@ struct upper_phy_config {
   unsigned nof_ul_processors;
   /// Uplink task executor.
   task_executor* ul_executor;
-  /// DFT size for a 15kHz subcarrier spacing.
-  unsigned dft_size_15kHz;
-  /// Number of RBs for uplink.
-  unsigned ul_bw_rb;
   /// Received symbol request notifier.
   upper_phy_rx_symbol_request_notifier* symbol_request_notifier;
 };
