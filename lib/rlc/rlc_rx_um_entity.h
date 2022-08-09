@@ -83,12 +83,8 @@ private:
 
   void log_state(srslog::basic_levels level)
   {
-    logger.log(level,
-               "rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}, t_reassembly={}",
-               st.rx_next_reassembly,
-               st.rx_timer_trigger,
-               st.rx_next_highest,
-               reassembly_timer.is_running() ? "running" : "stopped");
+    logger.log(
+        level, "RX entity state: st=[{}], t_reassembly={}", st, reassembly_timer.is_running() ? "running" : "stopped");
   }
 
 public:
@@ -104,3 +100,25 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_rx_um_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_rx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "rx_next_reassembly={}, rx_timer_trigger={}, rx_next_highest={}",
+                     st.rx_next_reassembly,
+                     st.rx_timer_trigger,
+                     st.rx_next_highest);
+  }
+};
+
+} // namespace fmt

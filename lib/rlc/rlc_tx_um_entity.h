@@ -82,7 +82,25 @@ private:
 
   uint32_t get_buffer_state_nolock();
 
-  void log_state(srslog::basic_levels level) { logger.log(level, "tx_next={}, next_so={}", st.tx_next, next_so); }
+  void log_state(srslog::basic_levels level) { logger.log(level, "TX entity state: st=[{}], next_so={}", st, next_so); }
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_tx_um_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_tx_um_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "tx_next={}", st.tx_next);
+  }
+};
+
+} // namespace fmt

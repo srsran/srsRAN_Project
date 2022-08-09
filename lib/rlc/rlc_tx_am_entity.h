@@ -170,6 +170,44 @@ private:
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
   static std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> create_tx_window(rlc_am_sn_size sn_size);
+
+  void log_state(srslog::basic_levels level)
+  {
+    fmt::memory_buffer buffer;
+    if (sn_under_segmentation == INVALID_RLC_SN) {
+      fmt::format_to(buffer, "{}", "none");
+    } else {
+      fmt::format_to(buffer, "{}", sn_under_segmentation);
+    }
+    //
+    // TODO: avoid string construction
+    //
+    logger.log(level, "TX entity state: st=[{}], sn_under_segmentation={}", st, fmt::to_string(buffer));
+  }
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_tx_am_state> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_tx_am_state& st, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "tx_next_ack={}, tx_next={}, poll_sn={}, pdu_without_poll={}, byte_without_poll={}",
+                     st.tx_next_ack,
+                     st.tx_next,
+                     st.poll_sn,
+                     st.pdu_without_poll,
+                     st.byte_without_poll);
+  }
+};
+
+} // namespace fmt
