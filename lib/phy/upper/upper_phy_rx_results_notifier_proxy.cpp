@@ -9,6 +9,7 @@
  */
 
 #include "upper_phy_rx_results_notifier_proxy.h"
+#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -17,7 +18,10 @@ namespace {
 class upper_phy_rx_results_notifier_dummy : public upper_phy_rx_results_notifier
 {
 public:
-  void on_new_prach_results(const prach_detector::detection_result& result) override {}
+  void on_new_prach_results(const prach_detector::detection_result& result) override
+  {
+    report_fatal_error("This module needs an upper_phy_results_notifier to work properly.");
+  }
 };
 
 } // namespace

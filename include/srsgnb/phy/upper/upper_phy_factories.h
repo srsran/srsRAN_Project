@@ -107,7 +107,7 @@ struct upper_phy_config {
   unsigned nof_ports;
   /// Number of slots the downlink resource grid will support.
   unsigned nof_slots_dl_rg;
-  /// Number of downlink processors.
+  /// Maximum number of concurrent downlink processes.
   unsigned nof_dl_processors;
   /// Number of RBs for downlink.
   unsigned dl_bw_rb;
@@ -115,7 +115,7 @@ struct upper_phy_config {
   upper_phy_rg_gateway* gateway;
   /// Downlink task executor.
   task_executor* dl_executor;
-  /// Number of uplink processors.
+  /// Maximum number of concurrent uplink processes.
   unsigned nof_ul_processors;
   /// Uplink task executor.
   task_executor* ul_executor;
