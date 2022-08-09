@@ -18,6 +18,7 @@
 #include "srsgnb/support/executors/manual_task_worker.h"
 #include "srsgnb/support/test_utils.h"
 #include "unittests/f1_interface/common/test_helpers.h"
+#include <gtest/gtest.h>
 
 using namespace srsgnb;
 
@@ -56,65 +57,64 @@ struct du_high_worker_manager {
   cell_dl_executor_mapper                dl_exec_mapper{{&dl_execs[0], &dl_execs[1]}};
 };
 
-/// Test the f1 setup procedure
-void test_f1_setup()
+/// Fixture class for successful F1Setup
+class cu_du_test : public ::testing::Test
 {
-  test_delimit_logger delimiter{"Test F1 setup procedure between DU and CU-CP"};
+protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
+    srslog::init();
 
-  // create worker thread and executer
-  task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
-  std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
+    // create worker thread and executer
+    task_worker                    task_worker("thread", 1, false, os_thread_realtime_priority::MAX_PRIO);
+    std::unique_ptr<task_executor> task_executor = make_task_executor(task_worker);
 
-  // create message handler for CU and DU to relay messages back and forth
-  dummy_cu_cp_f1c_pdu_notifier cu_msg_handler(nullptr, nullptr);
-  dummy_f1c_pdu_notifier       du_msg_handler(nullptr);
+    // create message handler for CU and DU to relay messages back and forth
+    dummy_cu_cp_f1c_pdu_notifier cu_msg_handler(nullptr, nullptr);
+    dummy_f1c_pdu_notifier       du_msg_handler(nullptr);
 
-  // create CU-CP config
-  srs_cu_cp::cu_cp_configuration cu_cfg;
-  cu_cfg.cu_executor  = task_executor.get();
-  cu_cfg.f1c_notifier = &cu_msg_handler;
+    // create CU-CP config
+    srs_cu_cp::cu_cp_configuration cu_cfg;
+    cu_cfg.cu_executor  = task_executor.get();
+    cu_cfg.f1c_notifier = &cu_msg_handler;
 
-  // create and start CU
-  srs_cu_cp::cu_cp cu_cp_obj(cu_cfg);
+    // create and start CU
+    cu_cp_obj = std::make_unique<srs_cu_cp::cu_cp>(std::move(cu_cfg));
 
-  // create and start DU
-  du_high_worker_manager workers;
-  phy_dummy              phy;
+    // create and start DU
+    phy_dummy phy;
 
-  srsgnb::srs_du::du_high_configuration du_cfg{};
-  du_cfg.du_mng_executor = &workers.ctrl_worker;
-  du_cfg.dl_executors    = &workers.dl_exec_mapper;
-  du_cfg.ul_executors    = &workers.ul_exec_mapper;
-  du_cfg.f1c_notifier    = &du_msg_handler;
-  du_cfg.phy_adapter     = &phy;
-  du_cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
+    srsgnb::srs_du::du_high_configuration du_cfg{};
+    du_cfg.du_mng_executor = &workers.ctrl_worker;
+    du_cfg.dl_executors    = &workers.dl_exec_mapper;
+    du_cfg.ul_executors    = &workers.ul_exec_mapper;
+    du_cfg.f1c_notifier    = &du_msg_handler;
+    du_cfg.phy_adapter     = &phy;
+    du_cfg.cells           = {du_config_helpers::make_default_du_cell_config()};
 
-  // create DU object
-  srsgnb::srs_du::du_high du_obj(du_cfg);
+    // create DU object
+    du_obj = std::make_unique<srs_du::du_high>(std::move(du_cfg));
 
-  // attach DU msg handler to CU message handler and vice-versa (in this order)
-  cu_msg_handler.attach_handler(&cu_cp_obj, &du_obj.get_f1c_message_handler());
-  du_msg_handler.attach_handler(&cu_cp_obj.get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
+    // attach DU msg handler to CU message handler and vice-versa (in this order)
+    cu_msg_handler.attach_handler(cu_cp_obj.get(), &du_obj->get_f1c_message_handler());
+    du_msg_handler.attach_handler(&cu_cp_obj->get_f1c_message_handler(srs_cu_cp::int_to_du_index(0)));
 
-  // start CU and DU
-  cu_cp_obj.start();
-  du_obj.start();
+    // start CU and DU
+    cu_cp_obj->start();
+    du_obj->start();
+  }
 
-  // TODO: check that DU has been added
-  TESTASSERT_EQ(1, cu_cp_obj.get_nof_dus());
+public:
+  std::unique_ptr<srs_cu_cp::cu_cp> cu_cp_obj;
+  std::unique_ptr<srs_du::du_high>  du_obj;
+  du_high_worker_manager            workers;
+  srslog::basic_logger&             test_logger = srslog::fetch_basic_logger("TEST");
+};
 
-  workers.stop();
-
-  return;
-}
-
-int main()
+/// Test the f1 setup procedure was successful
+TEST_F(cu_du_test, when_f1setup_successful_then_du_connected)
 {
-  srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
-
-  srslog::init();
-
-  test_f1_setup();
-
-  return 0;
+  // check that DU has been added
+  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1);
 }

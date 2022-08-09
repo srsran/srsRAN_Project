@@ -7,6 +7,6 @@
 #
 
 add_executable(cu_du_test cu_du_test.cpp)
-target_link_libraries(cu_du_test srsgnb_cu_cp srsgnb_du_high srsgnb_f1 srsgnb_rrc srsgnb_support srslog f1ap_asn1)
+target_link_libraries(cu_du_test srsgnb_cu_cp srsgnb_du_high srsgnb_f1 srsgnb_rrc srsgnb_support srslog f1ap_asn1 gtest gtest_main)
 target_include_directories(cu_du_test PRIVATE ${CMAKE_SOURCE_DIR})
-add_test(cu_du_test cu_du_test)
+gtest_discover_tests(cu_du_test)
