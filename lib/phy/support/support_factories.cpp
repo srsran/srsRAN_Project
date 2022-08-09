@@ -13,6 +13,7 @@
 #include "prach_buffer_pool_impl.h"
 #include "resource_grid_impl.h"
 #include "resource_grid_pool_impl.h"
+#include "srsgnb/ran/prach/prach_constants.h"
 
 using namespace srsgnb;
 
@@ -37,10 +38,12 @@ srsgnb::create_prach_buffer_pool(std::vector<std::unique_ptr<prach_buffer>>&& el
 
 std::unique_ptr<prach_buffer> srsgnb::create_prach_buffer_long()
 {
-  return std::make_unique<prach_buffer_static<839, 4>>();
+  return std::make_unique<
+      prach_buffer_static<prach_constants::LONG_SEQUENCE_LENGTH, prach_constants::LONG_SEQUENCE_MAX_NOF_SYMBOLS>>();
 }
 
 std::unique_ptr<prach_buffer> srsgnb::create_prach_buffer_short()
 {
-  return std::make_unique<prach_buffer_static<139, 12>>();
+  return std::make_unique<
+      prach_buffer_static<prach_constants::SHORT_SEQUENCE_LENGTH, prach_constants::SHORT_SEQUENCE_MAX_NOF_SYMBOLS>>();
 }
