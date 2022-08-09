@@ -63,15 +63,18 @@ void ue_cell_configuration::update_config_maps()
   }
 
   // Update DL CORESETs.
-  dl_coresets = {};
+  dl_coresets       = {};
+  coreset_to_bwp_id = {};
   for (const bwp_downlink& bwp_dl : dl_bwps_cfg) {
     if (bwp_dl.bwp_dl_common.has_value()) {
       if (bwp_dl.bwp_dl_common->pdcch_common.coreset0.has_value()) {
-        dl_coresets[0] = &*bwp_dl.bwp_dl_common->pdcch_common.coreset0;
+        dl_coresets[0]       = &*bwp_dl.bwp_dl_common->pdcch_common.coreset0;
+        coreset_to_bwp_id[0] = bwp_dl.bwp_id;
       }
       if (bwp_dl.bwp_dl_common->pdcch_common.common_coreset.has_value()) {
         dl_coresets[bwp_dl.bwp_dl_common->pdcch_common.common_coreset->id] =
             &*bwp_dl.bwp_dl_common->pdcch_common.common_coreset;
+        coreset_to_bwp_id[bwp_dl.bwp_dl_common->pdcch_common.common_coreset->id] = bwp_dl.bwp_id;
       }
     }
     if (bwp_dl.bwp_dl_ded.has_value()) {
@@ -80,7 +83,8 @@ void ue_cell_configuration::update_config_maps()
       // the configuration from PDCCH-Config always takes precedence and should not be updated by the UE based on
       // servingCellConfigCommon.
       for (const coreset_configuration& cs_cfg : bwp_dl.bwp_dl_ded->pdcch_cfg->coreset_to_addmod_list) {
-        dl_coresets[cs_cfg.id] = &cs_cfg;
+        dl_coresets[cs_cfg.id]       = &cs_cfg;
+        coreset_to_bwp_id[cs_cfg.id] = bwp_dl.bwp_id;
       }
     }
   }
