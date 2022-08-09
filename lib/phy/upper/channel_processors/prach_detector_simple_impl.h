@@ -46,7 +46,7 @@ public:
   };
 
   // See interface for documentation.
-  detection_result detect(const prach_buffer& input, const configuration& config) override;
+  prach_detection_result detect(const prach_buffer& input, const configuration& config) override;
 };
 
 } // namespace srsgnb

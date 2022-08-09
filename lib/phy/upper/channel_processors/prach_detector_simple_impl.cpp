@@ -19,8 +19,7 @@
 
 using namespace srsgnb;
 
-prach_detector::detection_result prach_detector_simple_impl::detect(const prach_buffer&  input,
-                                                                    const configuration& config)
+prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& input, const configuration& config)
 {
   srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= 64,
                 "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
@@ -54,7 +53,7 @@ prach_detector::detection_result prach_detector_simple_impl::detect(const prach_
   float rssi = srsvec::average_power(input.get_symbol(0));
 
   // Prepare results.
-  prach_detector::detection_result result;
+  prach_detection_result result;
   result.rssi_dB         = convert_power_to_dB(rssi);
   result.time_resolution = phy_time_unit::from_seconds(1.0 / static_cast<double>(sampling_rate_Hz));
   result.preambles.clear();
@@ -106,8 +105,8 @@ prach_detector::detection_result prach_detector_simple_impl::detect(const prach_
     }
 
     result.preambles.emplace_back();
-    preamble_indication& info = result.preambles.back();
-    info.preamble_index       = preamble_index;
+    prach_detection_result::preamble_indication& info = result.preambles.back();
+    info.preamble_index                               = preamble_index;
     info.time_advance =
         phy_time_unit::from_seconds(static_cast<double>(delay_n) / static_cast<double>(sampling_rate_Hz));
     info.power_dB = convert_power_to_dB(max_power);

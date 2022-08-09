@@ -50,7 +50,7 @@ public:
   void set_fapi_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_slot_notifier) override;
 
   // See interface for documentation.
-  void set_fapi_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier)override;
+  void set_fapi_slot_data_message_notifier(fapi::slot_data_message_notifier& fapi_data_notifier) override;
 
 private:
   phy_to_fapi_translator phy_translator;

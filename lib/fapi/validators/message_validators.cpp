@@ -713,7 +713,7 @@ void srsgnb::fapi::log_validator_report(const validator_report& report)
   static const std::string log_name = "FAPI";
 
   srslog::fetch_basic_logger(log_name).error(
-      "UL_TTI.request bad-formed in SFN ({}) and slot ({}).", report.sfn, report.slot);
+      "FAPI message bad-formed in SFN ({}) and slot ({}).", report.sfn, report.slot);
   for (const auto& error : report.reports) {
     srslog::fetch_basic_logger(log_name).error(
         "Error message ({}), PDU ({}),  in property ({}), value ({}), expected [{} - {}]",

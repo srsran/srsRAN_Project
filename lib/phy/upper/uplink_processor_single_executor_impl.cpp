@@ -42,15 +42,13 @@ uplink_processor_single_executor_impl::uplink_processor_single_executor_impl(
 void uplink_processor_single_executor_impl::process_prach(const prach_buffer&         buffer,
                                                           const prach_buffer_context& context)
 {
-  // :TODO: not sure what data adaptation goes here. Please review it when the PRACH_detector is updated.
   executor.execute([&buffer, context, this]() {
-    prach_detector::configuration           configuration = get_prach_dectector_config_from_prach_context(context);
-    const prach_detector::detection_result& result        = detector->detect(buffer, configuration);
+    prach_detector::configuration configuration = get_prach_dectector_config_from_prach_context(context);
 
     // Data adaptation.
     ul_prach_results ul_results;
     ul_results.context = context;
-    ul_results.result  = result;
+    ul_results.result  = detector->detect(buffer, configuration);
 
     // Notify the PRACH results.
     results_notifier.on_new_prach_results(ul_results);

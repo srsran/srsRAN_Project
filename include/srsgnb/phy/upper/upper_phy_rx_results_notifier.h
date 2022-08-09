@@ -15,7 +15,7 @@
 #pragma once
 
 #include "srsgnb/phy/support/prach_buffer_context.h"
-#include "srsgnb/phy/upper/channel_processors/prach_detector.h"
+#include "srsgnb/phy/upper/channel_processors/prach_detection_result.h"
 
 namespace srsgnb {
 
@@ -24,7 +24,7 @@ struct ul_prach_results {
   /// PRACH buffer context associated with this uplink PRACH results.
   prach_buffer_context context;
   /// PRACH detection result.
-  prach_detector::detection_result result;
+  prach_detection_result result;
 };
 
 /// \brief Interface of the upper-PHY notifier in charge of messages carrying the result of uplink detection and

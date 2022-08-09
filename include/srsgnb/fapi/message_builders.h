@@ -747,7 +747,6 @@ public:
     pdu.pdsch_parameters_v4.coreset_rm_pattern_bmp_by_ref.assign(coreset_rm_pattern_bitmap_by_reference.begin(),
                                                                  coreset_rm_pattern_bitmap_by_reference.end());
 
-    // :TODO: check the incoming data format for this field. It will probably change once the MAC structure is defined.
     pdu.pdsch_parameters_v4.lte_crs_mbsfn_pattern.assign(lte_crs_mbsfn_pattern.begin(), lte_crs_mbsfn_pattern.end());
 
     return *this;
@@ -1236,7 +1235,6 @@ public:
 
     preamble.preamble_index = preamble_index;
 
-    // :TODO: Units for this measure.
     preamble.timing_advance_offset =
         (timing_advance_offset) ? timing_advance_offset.value() : std::numeric_limits<uint16_t>::max();
 

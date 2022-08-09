@@ -75,22 +75,16 @@ void phy_to_fapi_translator::on_new_prach_results(const ul_prach_results& result
   slot_point slot = result.context.slot;
   builder.set_basic_parameters(slot.sfn(), slot.slot_index());
 
-  // NOTE: Currently not managing handle
-  static constexpr unsigned   handle      = 0;
-  rach_indication_pdu_builder builder_pdu = builder.add_pdu(handle,
-                                                            result.context.start_symbol,
-                                                            slot.slot_index(),
-                                                            result.context.fd_ra_index,
-                                                            optional<float>(result.result.rssi_dB),
-                                                            {},
-                                                            {});
+  // NOTE: Currently not managing handle.
+  static constexpr unsigned handle = 0U;
+  // NOTE: Currently not supporting PRACH multiplexed in frequency domain.
+  static constexpr unsigned   fd_ra_index = 0U;
+  rach_indication_pdu_builder builder_pdu = builder.add_pdu(
+      handle, result.context.start_symbol, slot.slot_index(), fd_ra_index, result.result.rssi_dB, {}, {});
 
   for (const auto& preamble : result.result.preambles) {
-    builder_pdu.add_preamble(preamble.preamble_index,
-                             {},
-                             {preamble.time_advance.to_seconds() * 1e9},
-                             {preamble.power_dB},
-                             {preamble.snr_dB});
+    builder_pdu.add_preamble(
+        preamble.preamble_index, {}, preamble.time_advance.to_seconds() * 1e9, preamble.power_dB, preamble.snr_dB);
   }
 
   error_type<validator_report> validation_result = validate_rach_indication(msg);

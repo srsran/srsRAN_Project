@@ -97,7 +97,7 @@ TEST_P(prach_detector_test, processing)
   detector_config.nof_preamble_indices  = nof_preamble_indices_dist(rgen) % (64 - detector_config.start_preamble_index);
 
   // Run the detector.
-  prach_detector::detection_result detection_result = detector->detect(buffer, detector_config);
+  prach_detection_result detection_result = detector->detect(buffer, detector_config);
 
   // Verify the buffer calls.
   ASSERT_EQ(detector_config.nof_preamble_indices + 1, buffer.get_get_symbol_const_entries().size());
@@ -179,7 +179,7 @@ TEST_P(prach_detector_test, rssi_zero)
   detector_config.nof_preamble_indices  = nof_preamble_indices_dist(rgen) % (64 - detector_config.start_preamble_index);
 
   // Run the detector.
-  prach_detector::detection_result detection_result = detector->detect(buffer, detector_config);
+  prach_detection_result detection_result = detector->detect(buffer, detector_config);
 
   // Verify the buffer calls.
   ASSERT_EQ(1, buffer.get_get_symbol_const_entries().size());
@@ -234,7 +234,7 @@ TEST_P(prach_detector_test, threshold_test)
   detector_config.nof_preamble_indices  = 1;
 
   // Run the detector.
-  prach_detector::detection_result detection_result = detector->detect(buffer, detector_config);
+  prach_detection_result detection_result = detector->detect(buffer, detector_config);
 
   // Verify the buffer calls.
   ASSERT_EQ(detector_config.nof_preamble_indices + 1, buffer.get_get_symbol_const_entries().size());

@@ -13,7 +13,6 @@
 #include "srsgnb/fapi/slot_data_message_notifier.h"
 #include "srsgnb/fapi/slot_time_message_notifier.h"
 #include "srsgnb/phy/upper/upper_phy_rx_results_notifier.h"
-
 #include "srsgnb/ran/slot_point.h"
 #include <functional>
 
