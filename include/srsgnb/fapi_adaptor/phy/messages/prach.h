@@ -22,16 +22,18 @@ namespace fapi_adaptor {
 ///
 /// \param[out] context Context for the PRACH buffer.
 /// \param[in] fapi_pdu FAPI PRACH PDU.
-/// \param[in] prach_config_tlv PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4 TLV 0x1031.
+/// \param[in] prach_tlv PRACH configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
+/// \param[in] carrier_tlv Carrier configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102D.
 /// \param[in] sfn System frame number.
 /// \param[in] slot Slot number.
 /// \param[in] sector_id Base station sector identifier.
-void convert_prach_fapi_to_phy(prach_buffer_context&     context,
-                               const fapi::ul_prach_pdu& fapi_pdu,
-                               const fapi::prach_config& prach_config_tlv,
-                               unsigned                  sfn,
-                               unsigned                  slot,
-                               unsigned                  sector_id);
+void convert_prach_fapi_to_phy(prach_buffer_context&       context,
+                               const fapi::ul_prach_pdu&   fapi_pdu,
+                               const fapi::prach_config&   prach_tlv,
+                               const fapi::carrier_config& carrier_tlv,
+                               unsigned                    sfn,
+                               unsigned                    slot,
+                               unsigned                    sector_id);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb

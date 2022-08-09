@@ -17,8 +17,13 @@ using namespace fapi_adaptor;
 
 std::unique_ptr<phy_fapi_adaptor> phy_fapi_adaptor_factory_impl::create(const phy_fapi_adaptor_factory_config& config)
 {
-  return std::make_unique<phy_fapi_adaptor_impl>(
-      config.sector_id, dl_processor_pool, rg_pool, config.scs_common, ul_request_processor, config.prach_cfg);
+  return std::make_unique<phy_fapi_adaptor_impl>(config.sector_id,
+                                                 dl_processor_pool,
+                                                 rg_pool,
+                                                 config.scs_common,
+                                                 ul_request_processor,
+                                                 config.prach_cfg,
+                                                 config.carrier_cfg);
 }
 
 std::unique_ptr<phy_fapi_adaptor_factory>

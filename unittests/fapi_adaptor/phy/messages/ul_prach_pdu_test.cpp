@@ -48,13 +48,15 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   ocass.prach_guardband_offset    = 21;
   ocass.prach_zero_corr_conf      = 3;
   ocass.unused_root_sequences.emplace_back(3);
-  unsigned   sfn     = 1;
-  unsigned   slot_id = 2;
-  unsigned   sector  = 0;
-  slot_point slot(to_numerology_value(prach.prach_ul_bwp_pusch_scs), sfn, slot_id);
+  unsigned       sfn     = 1;
+  unsigned       slot_id = 2;
+  unsigned       sector  = 0;
+  slot_point     slot(to_numerology_value(prach.prach_ul_bwp_pusch_scs), sfn, slot_id);
+  carrier_config carrier_cfg;
+  carrier_cfg.ul_grid_size = {25, 50, 100, 150, 170};
 
   prach_buffer_context context;
-  convert_prach_fapi_to_phy(context, fapi_pdu, prach, sfn, slot_id, sector);
+  convert_prach_fapi_to_phy(context, fapi_pdu, prach, carrier_cfg, sfn, slot_id, sector);
 
   ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
   ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
@@ -68,4 +70,5 @@ TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
   ASSERT_EQ(ocass.prach_zero_corr_conf, context.zero_correlation_zone);
   ASSERT_EQ(slot, context.slot);
   ASSERT_EQ(sector, context.sector);
+  ASSERT_EQ(carrier_cfg.ul_grid_size[to_numerology_value(prach.prach_ul_bwp_pusch_scs)], context.nof_prb_ul_grid);
 }

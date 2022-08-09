@@ -73,18 +73,20 @@ public:
   /// \param dl_processor_pool Downlink processor pool that will be used to process PDUs.
   /// \param rg_pool Resource grid pool that will be used to process PDUs.
   /// \param scs_common subcarrier spacing common, as per TS 38.331, Section 6.2.2,
-  fapi_to_phy_translator(unsigned                  sector_id,
-                         downlink_processor_pool&  dl_processor_pool,
-                         resource_grid_pool&       rg_pool,
-                         uplink_request_processor& ul_request_processor,
-                         subcarrier_spacing        scs_common,
-                         const fapi::prach_config& prach_tlv) :
+  fapi_to_phy_translator(unsigned                    sector_id,
+                         downlink_processor_pool&    dl_processor_pool,
+                         resource_grid_pool&         rg_pool,
+                         uplink_request_processor&   ul_request_processor,
+                         subcarrier_spacing          scs_common,
+                         const fapi::prach_config&   prach_tlv,
+                         const fapi::carrier_config& carrier_tlv) :
     sector_id(sector_id),
     dl_processor_pool(dl_processor_pool),
     rg_pool(rg_pool),
     ul_request_processor(ul_request_processor),
     scs_common(scs_common),
-    prach_tlv(prach_tlv)
+    prach_tlv(prach_tlv),
+    carrier_tlv(carrier_tlv)
   {
   }
 
@@ -126,8 +128,9 @@ private:
   std::mutex mutex;
 
   // :TODO: this variable should be asked to the cell configuration. Remove it when it's available.
-  const subcarrier_spacing scs_common;
-  const fapi::prach_config prach_tlv;
+  const subcarrier_spacing    scs_common;
+  const fapi::prach_config    prach_tlv;
+  const fapi::carrier_config& carrier_tlv;
 };
 
 } // namespace fapi_adaptor

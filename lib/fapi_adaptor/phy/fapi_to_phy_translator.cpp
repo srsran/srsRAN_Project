@@ -127,7 +127,7 @@ void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
     switch (pdu.pdu_type) {
       case ul_pdu_type::PRACH: {
         prach_buffer_context context;
-        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_tlv, msg.sfn, msg.slot, sector_id);
+        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_tlv, carrier_tlv, msg.sfn, msg.slot, sector_id);
         ul_request_processor.process_prach_request(context);
         break;
       }
