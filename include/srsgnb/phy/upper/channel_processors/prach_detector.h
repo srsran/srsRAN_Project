@@ -41,7 +41,8 @@ public:
     unsigned zero_correlation_zone;
     /// Start preamble index to monitor. Possible values are {0, ..., 63}.
     unsigned start_preamble_index;
-    /// Number of preamble indices to monitor. Possible values are {1, ..., 64}.
+    /// \brief Number of preamble indices to monitor. Possible values are {1, ..., 64}.
+    /// \note The sum <tt>start_preamble_index + nof_preamble_indices</tt> should be not larger than 64.
     unsigned nof_preamble_indices;
   };
 

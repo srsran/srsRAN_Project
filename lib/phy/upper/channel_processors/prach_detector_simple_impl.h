@@ -32,7 +32,7 @@ class prach_detector_simple_impl : public prach_detector
 
 public:
   /// \brief Constructor - Acquires ownership of the internal components.
-  /// \param[in] idft_      Inverse DFT.
+  /// \param[in] idft_      Inverse DFT processor.
   /// \param[in] generator_ PRACH frequency-domain sequence generator.
   prach_detector_simple_impl(std::unique_ptr<dft_processor> idft_, std::unique_ptr<prach_generator> generator_) :
     idft(std::move(idft_)), generator(std::move(generator_))

@@ -29,7 +29,7 @@ public:
   }
 };
 
-static const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> prach_generator_cexp_table_l839;
+const prach_generator_cexp_table<prach_constants::LONG_SEQUENCE_LENGTH> prach_generator_cexp_table_long;
 
 } // namespace
 
@@ -81,8 +81,8 @@ span<const cf_t> prach_generator_impl::generate_y_u_v_long(unsigned sequence_num
 {
   span<cf_t> x_u_v = dft_long->get_input();
   for (unsigned n = 0; n != LONG; ++n) {
-    uint64_t x_u_v_index = (sequence_number * n * (n + 1UL)) % prach_generator_cexp_table_l839.size();
-    x_u_v[(n + (LONG - cyclic_shift)) % LONG] = prach_generator_cexp_table_l839[x_u_v_index];
+    uint64_t x_u_v_index = (sequence_number * n * (n + 1UL)) % prach_generator_cexp_table_long.size();
+    x_u_v[(n + (LONG - cyclic_shift)) % LONG] = prach_generator_cexp_table_long[x_u_v_index];
   }
 
   return dft_long->run();
