@@ -453,7 +453,58 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
 
 void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
 {
-  // TODO
+  std::unique_lock<std::mutex> lock(mutex);
+
+  // t-PollRetransmit
+  if (poll_retransmit_timer.is_valid() && poll_retransmit_timer.id() == timeout_id) {
+    logger.log_debug("Poll retransmission timer expired after {}ms", poll_retransmit_timer.duration());
+    log_state(srslog::basic_levels::debug);
+    /*
+     * - if both the transmission buffer and the retransmission buffer are empty
+     *   (excluding transmitted RLC SDU or RLC SDU segment awaiting acknowledgements); or
+     * - if no new RLC SDU or RLC SDU segment can be transmitted (e.g. due to window stalling):
+     *   - consider the RLC SDU with the highest SN among the RLC SDUs submitted to lower layer for
+     *   retransmission; or
+     *   - consider any RLC SDU which has not been positively acknowledged for retransmission.
+     * - include a poll in an AMD PDU as described in section 5.3.3.2.
+     */
+    if ((sdu_queue.is_empty() && retx_queue.empty()) || tx_window->full()) {
+      if (tx_window->empty()) {
+        logger.log_error(
+            "t-PollRetransmit expired, but the tx_window is empty. st=[{}], tx_window_size={}", st, tx_window->size());
+        return;
+      }
+      if (not tx_window->has_sn(st.tx_next_ack)) {
+        logger.log_error(
+            "t-PollRetransmit expired, but Tx_Next_Ack is not in the tx_window. st=[{}], tx_window_size={}",
+            st,
+            tx_window->size());
+        return;
+      }
+      // ReTx first RLC SDU that has not been ACKed
+      // or first SDU segment of the first RLC SDU
+      // that has not been acked
+      rlc_tx_amd_retx& retx = retx_queue.push();
+      retx.sn               = st.tx_next_ack;
+
+      //
+      // TODO: Revise this: shall we send a minimum-sized segment instead?
+      //
+
+      // Full SDU
+      retx.is_segment     = false;
+      retx.so_start       = 0;
+      retx.segment_length = (*tx_window)[st.tx_next_ack].sdu.length();
+      retx.current_so     = 0;
+
+      logger.log_debug(
+          "Retransmission because of t-PollRetransmit. ReTx SN={}, is_segment={}, so_start={}, segment_length={}",
+          retx.sn,
+          retx.is_segment ? "true" : "false",
+          retx.so_start,
+          retx.segment_length);
+    }
+  }
 }
 
 std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
