@@ -14,11 +14,14 @@ using namespace srsgnb;
 using namespace fapi;
 using namespace fapi_adaptor;
 
-phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int             sector_id,
-                                             downlink_processor_pool& dl_processor_pool,
-                                             resource_grid_pool&      rg_pool,
-                                             subcarrier_spacing       scs_common) :
-  fapi_translator(sector_id, dl_processor_pool, rg_pool, scs_common), slot_dispatcher(phy_translator, fapi_translator)
+phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int              sector_id,
+                                             downlink_processor_pool&  dl_processor_pool,
+                                             resource_grid_pool&       rg_pool,
+                                             subcarrier_spacing        scs_common,
+                                             uplink_request_processor& ul_request_processor,
+                                             fapi::multi_prach_config  prach_config) :
+  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, std::move(prach_config)),
+  slot_dispatcher(phy_translator, fapi_translator)
 {
 }
 

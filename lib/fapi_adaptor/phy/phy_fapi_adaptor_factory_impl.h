@@ -13,18 +13,16 @@
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor_factory.h"
 
 namespace srsgnb {
-
-class downlink_processor_pool;
-class resource_grid_pool;
-
 namespace fapi_adaptor {
 
 /// Implementation of the PHY-FAPI adaptor factory.
 class phy_fapi_adaptor_factory_impl : public phy_fapi_adaptor_factory
 {
 public:
-  phy_fapi_adaptor_factory_impl(downlink_processor_pool& dl_processor_pool, resource_grid_pool& rg_pool) :
-    dl_processor_pool(dl_processor_pool), rg_pool(rg_pool)
+  phy_fapi_adaptor_factory_impl(downlink_processor_pool&  dl_processor_pool,
+                                resource_grid_pool&       rg_pool,
+                                uplink_request_processor& ul_request_processor) :
+    dl_processor_pool(dl_processor_pool), rg_pool(rg_pool), ul_request_processor(ul_request_processor)
   {
   }
 
@@ -32,8 +30,9 @@ public:
   std::unique_ptr<phy_fapi_adaptor> create(phy_fapi_adaptor_factory_config config) override;
 
 private:
-  downlink_processor_pool& dl_processor_pool;
-  resource_grid_pool&      rg_pool;
+  downlink_processor_pool&  dl_processor_pool;
+  resource_grid_pool&       rg_pool;
+  uplink_request_processor& ul_request_processor;
 };
 
 } // namespace fapi_adaptor

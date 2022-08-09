@@ -433,11 +433,12 @@ create_radio(const std::string& radio_driver, task_executor& executor, radio_not
   return factory->create(radio_config, executor, radio_handler);
 }
 
-static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_processor_pool& dl_processor_pool,
-                                                                resource_grid_pool&      dl_rg_pool)
+static std::unique_ptr<phy_fapi_adaptor> build_phy_fapi_adaptor(downlink_processor_pool&  dl_processor_pool,
+                                                                resource_grid_pool&       dl_rg_pool,
+                                                                uplink_request_processor& ul_request_processor)
 {
   std::unique_ptr<phy_fapi_adaptor_factory> phy_factory =
-      create_phy_fapi_adaptor_factory(dl_processor_pool, dl_rg_pool);
+      create_phy_fapi_adaptor_factory(dl_processor_pool, dl_rg_pool, ul_request_processor);
 
   phy_fapi_adaptor_factory_config phy_fapi_config;
   phy_fapi_config.sector_id  = sector_id;
@@ -608,8 +609,9 @@ int main(int argc, char** argv)
 
   // Create FAPI adaptors.
   test_logger.info("Creating FAPI adaptors...");
-  std::unique_ptr<phy_fapi_adaptor> phy_adaptor =
-      build_phy_fapi_adaptor(upper->get_downlink_processor_pool(), upper->get_downlink_resource_grid_pool());
+  std::unique_ptr<phy_fapi_adaptor> phy_adaptor = build_phy_fapi_adaptor(upper->get_downlink_processor_pool(),
+                                                                         upper->get_downlink_resource_grid_pool(),
+                                                                         upper->get_uplink_request_processor());
   if (!phy_adaptor) {
     test_logger.error("Failed to create PHY-FAPI adaptor");
 

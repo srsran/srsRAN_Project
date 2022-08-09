@@ -128,10 +128,9 @@ void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
       case ul_pdu_type::PRACH: {
         prach_buffer_context context;
         context.sector = sector_id;
-        // :TODO: how to fill the slot. Which numerology to use, cell or pusch?
-        subcarrier_spacing scs = context.slot =
+        subcarrier_spacing scs =
             prach_config.prachs[pdu.prach_pdu.maintenance_v3.prach_res_config_index].prach_ul_bwp_pusch_scs;
-        slot_point(to_subcarrier_spacing(scs), msg.sfn, msg.slot);
+        context.slot = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
         convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_config);
         ul_request_processor.process_prach_request(context);
         break;

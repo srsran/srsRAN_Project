@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "srsgnb/fapi/messages.h"
 #include "srsgnb/fapi_adaptor/phy/phy_fapi_adaptor.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include <memory>
@@ -18,13 +19,15 @@ namespace srsgnb {
 
 class downlink_processor_pool;
 class resource_grid_pool;
+class uplink_request_processor;
 
 namespace fapi_adaptor {
 
 struct phy_fapi_adaptor_factory_config {
   unsigned sector_id;
   /// Subcarrier spacing common, as per TS 38.331, Section 6.2.2,
-  subcarrier_spacing scs_common;
+  subcarrier_spacing       scs_common;
+  fapi::multi_prach_config multi_prach_cfg;
 };
 
 /// Factory that creates phy_fapi adaptors.
@@ -38,8 +41,10 @@ public:
 };
 
 /// Creates and returns a phy_fapi_adaptor_factory;
-std::unique_ptr<phy_fapi_adaptor_factory> create_phy_fapi_adaptor_factory(downlink_processor_pool& dl_processor_pool,
-                                                                          resource_grid_pool&      rg_pool);
+std::unique_ptr<phy_fapi_adaptor_factory>
+create_phy_fapi_adaptor_factory(downlink_processor_pool&  dl_processor_pool,
+                                resource_grid_pool&       rg_pool,
+                                uplink_request_processor& ul_request_processor);
 
 } // namespace fapi_adaptor
 } // namespace srsgnb

@@ -10,6 +10,7 @@
 
 #include "../../../fapi/validators/helpers.h"
 #include "srsgnb/fapi_adaptor/phy/messages/prach.h"
+#include "srsgnb/phy/support/prach_buffer_context.h"
 #include <gtest/gtest.h>
 
 using namespace srsgnb;
@@ -50,16 +51,17 @@ TEST(FAPI_PHY_UL_PRACH_PDU_ADAPTOR_TEST, valid_pdu_pass)
   ocass.prach_zero_corr_conf      = 3;
   ocass.unused_root_sequences.emplace_back(3);
 
-  prach_detector::slot_configuration slot_config;
-  convert_prach_fapi_to_phy(slot_config, fapi_pdu, config);
+  prach_buffer_context context;
+  convert_prach_fapi_to_phy(context, fapi_pdu, config);
 
-  ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(slot_config.format));
+  ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
+  ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
   const ul_prach_maintenance_v3& v3 = fapi_pdu.maintenance_v3;
-  ASSERT_EQ(v3.start_preamble_index, slot_config.start_preamble_index);
-  ASSERT_EQ(v3.num_preamble_indices, slot_config.nof_preamble_indices);
-  ASSERT_EQ(static_cast<unsigned>(prach.restricted_set), static_cast<unsigned>(slot_config.restricted_set));
-  ASSERT_EQ(static_cast<unsigned>(prach.prach_ul_bwp_pusch_scs), static_cast<unsigned>(slot_config.pusch_scs));
-  ASSERT_EQ(ocass.prach_root_sequence_index, slot_config.root_sequence_index);
-  ASSERT_EQ(ocass.prach_freq_offset, slot_config.frequency_offset);
-  ASSERT_EQ(ocass.prach_zero_corr_conf, slot_config.zero_correlation_zone);
+  ASSERT_EQ(v3.start_preamble_index, context.start_preamble_index);
+  ASSERT_EQ(v3.num_preamble_indices, context.nof_preamble_indices);
+  ASSERT_EQ(static_cast<unsigned>(prach.restricted_set), static_cast<unsigned>(context.restricted_set));
+  ASSERT_EQ(static_cast<unsigned>(prach.prach_ul_bwp_pusch_scs), static_cast<unsigned>(context.pusch_scs));
+  ASSERT_EQ(ocass.prach_root_sequence_index, context.root_sequence_index);
+  ASSERT_EQ(ocass.prach_freq_offset, context.rb_offset);
+  ASSERT_EQ(fapi_pdu.num_cs, context.zero_correlation_zone);
 }

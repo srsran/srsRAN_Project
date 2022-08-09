@@ -12,6 +12,7 @@
 #include "../../fapi/validators/helpers.h"
 #include "../../phy/support/resource_grid_test_doubles.h"
 #include "../../phy/upper/downlink_processor_test_doubles.h"
+#include "../../phy/upper/uplink_request_processor_test_doubles.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/phy/upper/downlink_processor.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -59,12 +60,13 @@ public:
 
 static void test_downlink_processor_is_configured_on_new_slot()
 {
-  resource_grid_spy             grid;
-  downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool(grid);
-  unsigned                      sector_id = 0;
+  resource_grid_spy              grid;
+  downlink_processor_pool_dummy  dl_processor_pool;
+  resource_grid_pool_dummy       rg_pool(grid);
+  uplink_request_processor_dummy ul_request_processor;
+  unsigned                       sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, {});
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -81,12 +83,13 @@ static void test_downlink_processor_is_configured_on_new_slot()
 
 static void test_current_grid_is_send_on_new_slot()
 {
-  resource_grid_spy             grid;
-  downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool(grid);
-  unsigned                      sector_id = 0;
+  resource_grid_spy              grid;
+  downlink_processor_pool_dummy  dl_processor_pool;
+  resource_grid_pool_dummy       rg_pool(grid);
+  uplink_request_processor_dummy ul_request_processor;
+  unsigned                       sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, {});
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -110,12 +113,13 @@ static void test_current_grid_is_send_on_new_slot()
 
 static void test_dl_ssb_pdu_is_processed()
 {
-  resource_grid_spy             grid;
-  downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool(grid);
-  unsigned                      sector_id = 0;
+  resource_grid_spy              grid;
+  downlink_processor_pool_dummy  dl_processor_pool;
+  resource_grid_pool_dummy       rg_pool(grid);
+  uplink_request_processor_dummy ul_request_processor;
+  unsigned                       sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, {});
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_configure_resource_grid_method_been_called());
@@ -147,12 +151,13 @@ static void test_dl_ssb_pdu_is_processed()
 
 static void test_calling_dl_tti_request_without_handling_slot_does_nothing()
 {
-  resource_grid_spy             grid;
-  downlink_processor_pool_dummy dl_processor_pool;
-  resource_grid_pool_dummy      rg_pool(grid);
-  unsigned                      sector_id = 0;
+  resource_grid_spy              grid;
+  downlink_processor_pool_dummy  dl_processor_pool;
+  resource_grid_pool_dummy       rg_pool(grid);
+  uplink_request_processor_dummy ul_request_processor;
+  unsigned                       sector_id = 0;
 
-  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, scs_common);
+  fapi_to_phy_translator translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, {});
   slot_point             slot(1, 1, 0);
 
   TESTASSERT(!dl_processor_pool.processor(slot).has_process_ssb_method_been_called());
