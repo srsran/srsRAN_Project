@@ -138,7 +138,7 @@ protected:
     ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
     ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0, *ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier.get());
 
-    task_sched_handle = dynamic_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
+    task_sched_handle = static_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
   }
 
   asn1::rrc_nr::dl_ccch_msg_type_c::c1_c_::types_opts::options get_pdu_type()
