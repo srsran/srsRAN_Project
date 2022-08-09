@@ -18,7 +18,7 @@ using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittest;
 
-TEST(FAPI_PHY_UL_PRACH_PDU_ADAPTOR_TEST, valid_pdu_pass)
+TEST(FapiPhyUlPrachPduAdaptorTest, valid_pdu_pass)
 {
   ul_prach_pdu fapi_pdu = build_valid_ul_prach_pdu();
 
@@ -27,10 +27,8 @@ TEST(FAPI_PHY_UL_PRACH_PDU_ADAPTOR_TEST, valid_pdu_pass)
   fapi_pdu.maintenance_v3.prach_res_config_index = 0;
 
   // Creation of the multi-PRACH config TLV. Used random values from the range of the document SCF-222 v4.0
-  // section 3.3.2.4 in table Multi-PRACH configuration table.
-  multi_prach_config config;
-  config.prachs.emplace_back();
-  prach_config& prach            = config.prachs.back();
+  // section 3.3.2.4 in table PRACH configuration table.
+  prach_config prach;
   prach.prach_res_config_index   = 0;
   prach.prach_sequence_length    = 1;
   prach.prach_subcarrier_spacing = 2;
@@ -50,9 +48,13 @@ TEST(FAPI_PHY_UL_PRACH_PDU_ADAPTOR_TEST, valid_pdu_pass)
   ocass.prach_guardband_offset    = 21;
   ocass.prach_zero_corr_conf      = 3;
   ocass.unused_root_sequences.emplace_back(3);
+  unsigned   sfn     = 1;
+  unsigned   slot_id = 2;
+  unsigned   sector  = 0;
+  slot_point slot(to_numerology_value(prach.prach_ul_bwp_pusch_scs), sfn, slot_id);
 
   prach_buffer_context context;
-  convert_prach_fapi_to_phy(context, fapi_pdu, config);
+  convert_prach_fapi_to_phy(context, fapi_pdu, prach, sfn, slot_id, sector);
 
   ASSERT_EQ(static_cast<unsigned>(fapi_pdu.prach_format), static_cast<unsigned>(context.format));
   ASSERT_EQ(fapi_pdu.prach_start_symbol, context.start_symbol);
@@ -63,5 +65,7 @@ TEST(FAPI_PHY_UL_PRACH_PDU_ADAPTOR_TEST, valid_pdu_pass)
   ASSERT_EQ(static_cast<unsigned>(prach.prach_ul_bwp_pusch_scs), static_cast<unsigned>(context.pusch_scs));
   ASSERT_EQ(ocass.prach_root_sequence_index, context.root_sequence_index);
   ASSERT_EQ(ocass.prach_freq_offset, context.rb_offset);
-  ASSERT_EQ(fapi_pdu.num_cs, context.zero_correlation_zone);
+  ASSERT_EQ(ocass.prach_zero_corr_conf, context.zero_correlation_zone);
+  ASSERT_EQ(slot, context.slot);
+  ASSERT_EQ(sector, context.sector);
 }

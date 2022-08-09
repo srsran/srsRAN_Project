@@ -127,11 +127,7 @@ void fapi_to_phy_translator::ul_tti_request(const ul_tti_request_message& msg)
     switch (pdu.pdu_type) {
       case ul_pdu_type::PRACH: {
         prach_buffer_context context;
-        context.sector = sector_id;
-        subcarrier_spacing scs =
-            prach_config.prachs[pdu.prach_pdu.maintenance_v3.prach_res_config_index].prach_ul_bwp_pusch_scs;
-        context.slot = slot_point(to_numerology_value(scs), msg.sfn, msg.slot);
-        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_config);
+        convert_prach_fapi_to_phy(context, pdu.prach_pdu, prach_tlv, msg.sfn, msg.slot, sector_id);
         ul_request_processor.process_prach_request(context);
         break;
       }

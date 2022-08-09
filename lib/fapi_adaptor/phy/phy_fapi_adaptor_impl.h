@@ -36,7 +36,7 @@ public:
                         resource_grid_pool&       rg_pool,
                         subcarrier_spacing        scs_common,
                         uplink_request_processor& ul_request_processor,
-                        fapi::multi_prach_config  prach_config);
+                        const fapi::prach_config& prach_tlv);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_upper_phy_timing_notifier() override;

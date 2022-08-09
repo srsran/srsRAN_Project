@@ -26,8 +26,9 @@ namespace fapi_adaptor {
 struct phy_fapi_adaptor_factory_config {
   unsigned sector_id;
   /// Subcarrier spacing common, as per TS 38.331, Section 6.2.2,
-  subcarrier_spacing       scs_common;
-  fapi::multi_prach_config multi_prach_cfg;
+  subcarrier_spacing scs_common;
+  /// PRACH configuration TLV as per SCF-222 v4.0 section 3.3.2.4 TLV 0x1031.
+  fapi::prach_config prach_cfg;
 };
 
 /// Factory that creates phy_fapi adaptors.
@@ -37,7 +38,7 @@ public:
   virtual ~phy_fapi_adaptor_factory() = default;
 
   /// Creates and returns a phy_fapi_adaptor using the given configuration.
-  virtual std::unique_ptr<phy_fapi_adaptor> create(phy_fapi_adaptor_factory_config config) = 0;
+  virtual std::unique_ptr<phy_fapi_adaptor> create(const phy_fapi_adaptor_factory_config& config) = 0;
 };
 
 /// Creates and returns a phy_fapi_adaptor_factory;

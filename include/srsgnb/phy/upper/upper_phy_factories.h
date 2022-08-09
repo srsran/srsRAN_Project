@@ -45,7 +45,7 @@ public:
 struct uplink_processor_pool_config {
   /// Uplink processors for a given sector and numerology.
   struct sector_ul_processors {
-    /// Base station sector identifie.
+    /// Base station sector identifier.
     unsigned sector;
     /// Subcarrier spacing.
     subcarrier_spacing scs;
@@ -82,7 +82,7 @@ public:
 struct downlink_processor_pool_config {
   /// Downlink processors for a given sector and numerology.
   struct sector_dl_processor {
-    /// Base station sector identifie.
+    /// Base station sector identifier.
     unsigned sector;
     /// Subcarrier spacing.
     subcarrier_spacing scs;

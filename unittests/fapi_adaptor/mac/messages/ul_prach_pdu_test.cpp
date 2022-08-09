@@ -17,7 +17,7 @@ using namespace fapi;
 using namespace fapi_adaptor;
 using namespace unittests;
 
-TEST(UL_PRACH_PDU_Test, valid_prach_should_pass)
+TEST(UlPrachPduTest, valid_prach_should_pass)
 {
   const prach_occasion_info& mac_pdu = build_valid_prach_occassion();
   ul_prach_pdu               fapi_pdu;
@@ -34,6 +34,6 @@ TEST(UL_PRACH_PDU_Test, valid_prach_should_pass)
   ASSERT_EQ(0, fapi_pdu.maintenance_v3.prach_res_config_index);
   ASSERT_EQ(mac_pdu.start_preamble_index, fapi_pdu.maintenance_v3.start_preamble_index);
   ASSERT_EQ(mac_pdu.nof_preamble_indexes, fapi_pdu.maintenance_v3.num_preamble_indices);
-  ASSERT_EQ(static_cast<unsigned>(prach_config_scope_type::common_context),
+  ASSERT_EQ(static_cast<unsigned>(prach_config_scope_type::phy_context),
             static_cast<unsigned>(fapi_pdu.maintenance_v3.prach_config_scope));
 }

@@ -471,13 +471,6 @@ rx_data_indication_message unittest::build_valid_rx_data_indication()
   return msg;
 }
 
-static uint8_t generate_num_prach_ocas()
-{
-  std::uniform_int_distribution<unsigned> dist(1, 7);
-
-  return dist(gen);
-}
-
 static uint8_t generate_index_fd_ra()
 {
   std::uniform_int_distribution<unsigned> dist(0, 7);
@@ -513,13 +506,6 @@ static prach_format_type generate_prach_format()
   return static_cast<prach_format_type>(dist(gen));
 }
 
-static prach_config_scope_type generate_prach_config_scope()
-{
-  std::uniform_int_distribution<unsigned> dist(0, 1);
-
-  return static_cast<prach_config_scope_type>(dist(gen));
-}
-
 static uint8_t generate_start_preamble()
 {
   unsigned value = generate_num_cs();
@@ -539,7 +525,7 @@ ul_prach_pdu unittest::build_valid_ul_prach_pdu()
   ul_prach_pdu pdu;
 
   pdu.phys_cell_id                = generate_pci();
-  pdu.num_prach_ocas              = generate_num_prach_ocas();
+  pdu.num_prach_ocas              = 1;
   pdu.prach_format                = generate_prach_format();
   pdu.index_fd_ra                 = generate_index_fd_ra();
   pdu.prach_start_symbol          = generate_prach_start_symbol();
@@ -549,7 +535,7 @@ ul_prach_pdu unittest::build_valid_ul_prach_pdu()
 
   // Maintenance v3 parameters.
   auto& v3                = pdu.maintenance_v3;
-  v3.prach_config_scope   = generate_prach_config_scope();
+  v3.prach_config_scope   = prach_config_scope_type::phy_context;
   v3.num_fd_ra            = generate_index_fd_ra() + 1U;
   v3.start_preamble_index = generate_start_preamble();
   v3.num_preamble_indices = generate_num_preambles_indices();

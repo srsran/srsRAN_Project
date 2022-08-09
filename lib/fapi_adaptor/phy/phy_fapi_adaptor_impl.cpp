@@ -19,8 +19,8 @@ phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned int              sector_id
                                              resource_grid_pool&       rg_pool,
                                              subcarrier_spacing        scs_common,
                                              uplink_request_processor& ul_request_processor,
-                                             fapi::multi_prach_config  prach_config) :
-  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, std::move(prach_config)),
+                                             const fapi::prach_config& prach_tlv) :
+  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, prach_tlv),
   slot_dispatcher(phy_translator, fapi_translator)
 {
 }

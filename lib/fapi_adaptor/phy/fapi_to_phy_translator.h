@@ -78,13 +78,13 @@ public:
                          resource_grid_pool&       rg_pool,
                          uplink_request_processor& ul_request_processor,
                          subcarrier_spacing        scs_common,
-                         fapi::multi_prach_config  prach_config) :
+                         const fapi::prach_config& prach_tlv) :
     sector_id(sector_id),
     dl_processor_pool(dl_processor_pool),
     rg_pool(rg_pool),
     ul_request_processor(ul_request_processor),
     scs_common(scs_common),
-    prach_config(std::move(prach_config))
+    prach_tlv(prach_tlv)
   {
   }
 
@@ -126,8 +126,8 @@ private:
   std::mutex mutex;
 
   // :TODO: this variable should be asked to the cell configuration. Remove it when it's available.
-  const subcarrier_spacing       scs_common;
-  const fapi::multi_prach_config prach_config;
+  const subcarrier_spacing scs_common;
+  const fapi::prach_config prach_tlv;
 };
 
 } // namespace fapi_adaptor

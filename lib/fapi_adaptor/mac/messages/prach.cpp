@@ -50,12 +50,14 @@ void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder&
                                mac_pdu.start_symbol,
                                mac_pdu.nof_cs);
 
-  // NOTE: parameter not used for now, setting value to 0.
+  // NOTE: Parameter not used for now, setting value to 0.
   static constexpr unsigned handle = 0;
-  // NOTE: as only one configuration is supported, the prach index is set to 0.
+  // NOTE: As only one configuration is supported, the prach index is set to 0.
   static constexpr unsigned prach_config_index = 0;
+  // NOTE: Only supporting PHY context.
+  static constexpr prach_config_scope_type context = prach_config_scope_type::phy_context;
   builder.set_maintenance_v3_basic_parameters(handle,
-                                              prach_config_scope_type::common_context,
+                                              context,
                                               prach_config_index,
                                               mac_pdu.nof_fd_ra,
                                               mac_pdu.start_preamble_index,
