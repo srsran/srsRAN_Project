@@ -20,8 +20,6 @@ namespace srsgnb {
 class upper_phy_rx_results_notifier_proxy : public upper_phy_rx_results_notifier
 {
 public:
-  upper_phy_rx_results_notifier_proxy();
-
   // See interface for documentation.
   void on_new_prach_results(const prach_detector::detection_result& result) override;
 
@@ -31,8 +29,8 @@ public:
   void connect(upper_phy_rx_results_notifier& notif);
 
 private:
-  /// Reference to the upper PHY receive results notifier.
-  std::reference_wrapper<upper_phy_rx_results_notifier> notifier;
+  /// Pointer to the upper PHY receive results notifier.
+  upper_phy_rx_results_notifier* notifier = nullptr;
 };
 
 } // namespace srsgnb
