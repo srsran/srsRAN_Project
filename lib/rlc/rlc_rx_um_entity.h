@@ -52,7 +52,8 @@ private:
   // Rx state variables
   rlc_rx_um_state st;
 
-  const uint32_t mod; // Rx counter modulus
+  /// Rx counter modulus
+  const uint32_t mod;
   const uint32_t um_window_size;
 
   // Rx window

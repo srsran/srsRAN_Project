@@ -83,7 +83,7 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  // Tx counter modulus
+  /// Tx counter modulus
   const uint32_t     mod;
   constexpr uint32_t tx_mod_base(uint32_t x) { return (x - st.tx_next_ack) % mod; }
 

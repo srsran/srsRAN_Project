@@ -48,7 +48,7 @@ private:
   // Mutexes
   std::mutex mutex;
 
-  // Tx counter modulus
+  /// Tx counter modulus
   const uint32_t mod;
 
   // Header sizes are computed upon construction based on SN length

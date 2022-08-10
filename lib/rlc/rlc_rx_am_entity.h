@@ -26,7 +26,8 @@ private:
   // Status handler
   rlc_tx_am_status_handler* status_handler = nullptr;
 
-  const uint32_t mod; // Rx counter modulus
+  /// Rx counter modulus
+  const uint32_t mod;
 
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
