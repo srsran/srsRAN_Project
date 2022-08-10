@@ -11,6 +11,7 @@
 #pragma once
 
 #include "lower_phy_state_fsm.h"
+#include "processors/adaptors/processor_notifier_adaptor.h"
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
@@ -24,6 +25,7 @@
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 
 namespace srsgnb {
@@ -34,6 +36,8 @@ struct lower_phy_common_configuration {
   std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
   /// Provides OFDM demodulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
+  /// PRACH processor.
+  std::unique_ptr<prach_processor> prach_proc;
 };
 
 template <class RG>
@@ -107,6 +111,8 @@ private:
   std::vector<std::unique_ptr<ofdm_symbol_modulator>> modulators;
   /// Container for OFDM demodulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
+  /// PRACH processor.
+  std::unique_ptr<prach_processor> prach_proc;
   /// Receive-to-transmit delay in clock ticks.
   const baseband_gateway_timestamp rx_to_tx_delay;
   /// Maximum allowed processing delay in slots.
@@ -123,6 +129,8 @@ private:
   unsigned symbol_slot_idx = 0;
   /// State of the lower PHY finite-state machine.
   lower_phy_state_fsm state_fsm;
+  /// Processor notification adaptor.
+  processor_notifier_adaptor notification_adaptor;
 
   /// \brief Processes an uplink symbol.
   /// \param[in] symbol_idx Symbol index within a subframe.
@@ -145,7 +153,7 @@ public:
   /// \param[in] common_config Provides the factory specific necessary parameters to construct the lower physical
   /// layer.
   /// \param[in] config Provides the common lower PHY parameters to construct the lower physical layer.
-  explicit lower_phy_impl(lower_phy_common_configuration& common_config, const lower_phy_configuration& config);
+  explicit lower_phy_impl(lower_phy_common_configuration&& common_config, const lower_phy_configuration& config);
 
   // See interface for documentation.
   void start(task_executor& realtime_task_executor) override;

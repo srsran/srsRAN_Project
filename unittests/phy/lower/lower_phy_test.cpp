@@ -13,6 +13,7 @@
 #include "lower_phy_test_doubles.h"
 #include "modulation/ofdm_demodulator_test_doubles.h"
 #include "modulation/ofdm_modulator_test_doubles.h"
+#include "processors/prach/prach_processor_test_doubles.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/ran/prach/prach_configuration.h"
 #include "srsgnb/srsvec/sc_prod.h"
@@ -35,6 +36,7 @@ static std::string   log_level      = "debug";
 
 static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory   = nullptr;
 static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory = nullptr;
+static std::shared_ptr<prach_processor_factory_spy>  prach_factory       = nullptr;
 static std::shared_ptr<lower_phy_factory>            phy_factory         = nullptr;
 
 static lower_phy_configuration create_phy_config(baseband_gateway_spy&         bb_gateway,
@@ -234,11 +236,12 @@ int main()
   TESTASSERT(modulator_factory);
   demodulator_factory = std::make_shared<ofdm_demodulator_factory_spy>();
   TESTASSERT(demodulator_factory);
+  demodulator_factory = std::make_shared<ofdm_demodulator_factory_spy>();
+  TESTASSERT(demodulator_factory);
+  prach_factory = std::make_shared<prach_processor_factory_spy>();
+  TESTASSERT(demodulator_factory);
 
-  lower_phy_factory_generic_configuration factory_config;
-  factory_config.modulator_factory   = modulator_factory;
-  factory_config.demodulator_factory = demodulator_factory;
-  phy_factory                        = create_lower_phy_factory_generic(factory_config);
+  phy_factory = create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory);
   TESTASSERT(phy_factory);
 
   test_start_run_stop();

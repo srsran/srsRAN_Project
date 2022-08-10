@@ -17,6 +17,6 @@
 namespace srsgnb {
 
 /// Creates a generic lower PHY.
-std::unique_ptr<lower_phy> create_lower_phy(const lower_phy_configuration& config);
+std::unique_ptr<lower_phy> create_lower_phy(lower_phy_configuration& config);
 
 } // namespace srsgnb

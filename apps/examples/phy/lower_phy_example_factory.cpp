@@ -13,7 +13,7 @@
 
 using namespace srsgnb;
 
-std::unique_ptr<lower_phy> srsgnb::create_lower_phy(const lower_phy_configuration& config)
+std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& config)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
   // based factory.
@@ -21,7 +21,7 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(const lower_phy_configuratio
   if (dft_factory == nullptr) {
     dft_factory = create_dft_processor_factory_fftx();
   }
-  srsgnb_assert(dft_factory, "Failed to create DFT factory.");
+  report_fatal_error_if_not(dft_factory, "Failed to create DFT factory.");
 
   // Create OFDM modulator factory.
   ofdm_factory_generic_configuration ofdm_common_config;
@@ -34,11 +34,18 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(const lower_phy_configuratio
       create_ofdm_demodulator_factory_generic(ofdm_common_config);
   report_fatal_error_if_not(demodulator_factory, "Failed to create OFDM demodulator factory.");
 
+  // Create OFDM PRACH demodulator factory.
+  std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.dft_size_15kHz, config.sectors.front().bandwidth_rb);
+
+  // Create PRACH processor factory.
+  std::shared_ptr<prach_processor_factory> prach_processor_factory =
+      create_prach_processor_factory_sw(prach_demodulator_factory, config.dft_size_15kHz, 1);
+  report_fatal_error_if_not(prach_processor_factory, "Failed to create PRACH processor factory.");
+
   // Create Lower PHY factory.
-  lower_phy_factory_generic_configuration lower_phy_common_config;
-  lower_phy_common_config.modulator_factory       = modulator_factory;
-  lower_phy_common_config.demodulator_factory     = demodulator_factory;
-  std::shared_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_generic(lower_phy_common_config);
+  std::shared_ptr<lower_phy_factory> lphy_factory =
+      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_processor_factory);
   report_fatal_error_if_not(lphy_factory, "Failed to create lower PHY factory.");
 
   return lphy_factory->create(config);

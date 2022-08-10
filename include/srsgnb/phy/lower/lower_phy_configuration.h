@@ -67,6 +67,8 @@ struct lower_phy_configuration {
   lower_phy_timing_notifier* timing_notifier;
   /// Provides the error handler to notify runtime errors.
   lower_phy_error_notifier* error_notifier;
+  /// PRACH asynchronous task executor.
+  task_executor* prach_async_executor;
   /// Provides the sectors configuration.
   std::vector<lower_phy_sector_description> sectors;
   /// Indicates the numbers of channels for every baseband stream.

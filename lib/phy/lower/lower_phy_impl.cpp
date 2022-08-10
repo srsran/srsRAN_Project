@@ -9,6 +9,8 @@
  */
 
 #include "lower_phy_impl.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
 #include "srsgnb/srsvec/zero.h"
 
 using namespace srsgnb;
@@ -60,9 +62,6 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
 
     // Select resource grid from the UL pool and skip sector processing if there is no grid.
     resource_grid* ul_rg = ul_grid_buffer.get_grid(sector_id);
-    if (ul_rg == nullptr) {
-      continue;
-    }
 
     // For each port of the sector.
     for (unsigned port_id = 0; port_id != sector.port_mapping.size(); ++port_id) {
@@ -73,8 +72,18 @@ baseband_gateway_timestamp lower_phy_impl::process_ul_symbol(unsigned symbol_id)
       span<const radio_sample_type> buffer =
           radio_buffers[port_mapping.stream_id].get_channel_buffer(port_mapping.channel_id);
 
-      //  Actual signal demodulation.
-      demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
+      // Call PRACH processor.
+      prach_processor_baseband::symbol_context prach_context;
+      prach_context.slot   = ul_slot_context;
+      prach_context.symbol = symbol_id;
+      prach_context.sector = sector_id;
+      prach_context.port   = port_id;
+      prach_proc->get_baseband().process_symbol(buffer, prach_context);
+
+      // Call uplink processor.
+      if (ul_rg) {
+        demodulators[sector_id]->demodulate(*ul_rg, buffer, port_id, symbol_id);
+      }
     }
 
     // Notify the received symbols.
@@ -226,7 +235,7 @@ void lower_phy_impl::handle_resource_grid(const resource_grid_context& context, 
   dl_rg_buffers[context.slot.system_slot()].set_grid(grid, context.sector);
 }
 
-lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, const lower_phy_configuration& config) :
+lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, const lower_phy_configuration& config) :
   logger(srslog::fetch_basic_logger("Low-PHY")),
   transmitter(config.bb_gateway->get_transmitter()),
   receiver(config.bb_gateway->get_receiver()),
@@ -235,6 +244,7 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
   error_notifier(*config.error_notifier),
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
+  prach_proc(std::move(common_config.prach_proc)),
   rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
@@ -302,6 +312,13 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration& common_config, co
 
   // Signal a successful initialization.
   state_fsm.on_successful_init();
+
+  // Connect notification adaptor to the notification interfaces.
+  notification_adaptor.connect_error_notifier(*config.error_notifier);
+  notification_adaptor.connect_rx_symbol_notifier(*config.rx_symbol_notifier);
+
+  // Connect PRACH processor to the notification adaptor.
+  prach_proc->connect(notification_adaptor.get_prach_notifier());
 }
 
 void lower_phy_impl::start(task_executor& realtime_task_executor)
@@ -319,7 +336,7 @@ void lower_phy_impl::stop()
 
 void lower_phy_impl::request_prach_window(const prach_buffer_context& context, prach_buffer& buffer)
 {
-  // Not implemented.
+  prach_proc->get_request_handler().handle_request(buffer, context);
 }
 
 void lower_phy_impl::request_uplink_slot(const resource_grid_context& context, resource_grid& grid)

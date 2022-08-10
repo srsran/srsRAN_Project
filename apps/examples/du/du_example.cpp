@@ -340,11 +340,30 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
+#if 0
+  // Create OFDM PRACH demodulator factory.
+  std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz, nof_prb_ul_grid);
+  if (!demodulator_factory) {
+    srslog::fetch_basic_logger("TEST").error("Failed to create OFDM PRACH demodulator factory");
+
+    return nullptr;
+  }
+
+  // Create PRACH processor factory.
+  std::shared_ptr<prach_processor_factory> prach_factory =
+      create_prach_processor_factory_sw(prach_demodulator_factory, dft_size_15kHz, max_nof_concurrent_requests);
+  if (!demodulator_factory) {
+    srslog::fetch_basic_logger("TEST").error("Failed to create PRACH processor factory");
+    return nullptr;
+  }
+#else
+  std::shared_ptr<prach_processor_factory> prach_factory = nullptr;
+#endif
+
   // Create Lower PHY factory.
-  lower_phy_factory_generic_configuration lower_phy_common_config;
-  lower_phy_common_config.modulator_factory       = modulator_factory;
-  lower_phy_common_config.demodulator_factory     = demodulator_factory;
-  std::shared_ptr<lower_phy_factory> lphy_factory = create_lower_phy_factory_generic(lower_phy_common_config);
+  std::shared_ptr<lower_phy_factory> lphy_factory =
+      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory);
   if (!lphy_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create lower PHY factory");
 

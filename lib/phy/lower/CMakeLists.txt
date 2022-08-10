@@ -10,4 +10,8 @@ add_subdirectory(modulation)
 add_subdirectory(processors)
 
 add_library(srsgnb_lower_phy STATIC lower_phy_factory.cpp lower_phy_impl.cpp)
-target_link_libraries(srsgnb_lower_phy srsgnb_generic_funcs srsgnb_lower_phy_modulation)
+target_link_libraries(srsgnb_lower_phy
+  srsgnb_generic_funcs
+  srsgnb_lower_phy_adaptors
+  srsgnb_lower_phy_modulation
+  srsgnb_lower_phy_prach_processor)

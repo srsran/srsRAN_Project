@@ -6,5 +6,5 @@
 # the distribution.
 #
 
-add_subdirectory(adaptors)
-add_subdirectory(prach)
+add_library(srsgnb_lower_phy_adaptors STATIC
+        processor_notifier_adapter.cpp)

@@ -10,7 +10,10 @@
 
 #pragma once
 
+#include "srsgnb/phy/lower/processors/prach/prach_processor_baseband.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor_notifier.h"
+#include "srsgnb/phy/lower/processors/prach/prach_processor_request_handler.h"
 #include "srsgnb/phy/support/prach_buffer.h"
 #include "srsgnb/phy/support/prach_buffer_context.h"
 #include "srsgnb/srslog/srslog.h"
@@ -32,7 +35,7 @@ private:
   std::vector<rx_prach_window_entry> rx_prach_window_entries;
 
 public:
-  prach_processor_notifier_spy(const std::string& log_level = "info") :
+  explicit prach_processor_notifier_spy(const std::string& log_level = "info") :
     logger(srslog::fetch_basic_logger("Notifier", false))
   {
     srslog::init();
@@ -89,6 +92,45 @@ public:
   const std::vector<prach_buffer_context>& get_request_overflow_entries() const { return request_overflow_entries; }
 
   const std::vector<rx_prach_window_entry>& get_rx_prach_window_entries() const { return rx_prach_window_entries; }
+};
+
+class prach_processor_baseband_spy : public prach_processor_baseband
+{
+public:
+  void process_symbol(span<const cf_t> samples, const symbol_context& context) override
+  {
+    // TBD.
+  }
+};
+
+class prach_processor_request_handler_spy : public prach_processor_request_handler
+{
+public:
+  void handle_request(prach_buffer& buffer, const prach_buffer_context& context) override
+  {
+    // TBD.
+  }
+};
+
+class prach_processor_spy : public prach_processor
+{
+public:
+  void                             connect(prach_processor_notifier& notifier) override {}
+  prach_processor_request_handler& get_request_handler() override { return request_handler; }
+  prach_processor_baseband&        get_baseband() override { return baseband; }
+
+private:
+  prach_processor_request_handler_spy request_handler;
+  prach_processor_baseband_spy        baseband;
+};
+
+class prach_processor_factory_spy : public prach_processor_factory
+{
+public:
+  std::unique_ptr<prach_processor> create(task_executor& /**/) override
+  {
+    return std::make_unique<prach_processor_spy>();
+  }
 };
 
 } // namespace srsgnb
