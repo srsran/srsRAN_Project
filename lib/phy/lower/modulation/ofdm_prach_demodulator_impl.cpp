@@ -47,14 +47,14 @@ void ofdm_prach_demodulator_impl::demodulate(prach_buffer&                      
 
   // Prepare PRACH resource grid.
   unsigned K               = pusch_scs_Hz / prach_scs_Hz;
-  unsigned prach_grid_size = nof_prb_ul_grid * K * NRE;
+  unsigned prach_grid_size = config.nof_prb_ul_grid * K * NRE;
   srsgnb_assert(
       dft.get_size() > prach_grid_size,
       "DFT size {} for PRACH SCS {} is not sufficient for K={}, N_RB={}. The minimum expected DFT size is {}.",
       dft.get_size(),
       prach_scs_Hz,
       K,
-      nof_prb_ul_grid,
+      config.nof_prb_ul_grid,
       prach_grid_size);
 
   // Calculate initial subcarrier.

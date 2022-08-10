@@ -26,21 +26,16 @@ private:
   std::unique_ptr<dft_processor> dft_1_25kHz;
   /// DFT processor for 5kHz subcarrier spacing.
   std::unique_ptr<dft_processor> dft_5kHz;
-  /// Number of PRB contained in the UL resource grid.
-  unsigned nof_prb_ul_grid;
 
 public:
-  ofdm_prach_demodulator_impl(std::unique_ptr<dft_processor> dft_1_25kHz_,
-                              std::unique_ptr<dft_processor> dft_5kHz_,
-                              unsigned                       nof_prb_ul_grid_) :
-    dft_1_25kHz(std::move(dft_1_25kHz_)), dft_5kHz(std::move(dft_5kHz_)), nof_prb_ul_grid(nof_prb_ul_grid_)
+  ofdm_prach_demodulator_impl(std::unique_ptr<dft_processor> dft_1_25kHz_, std::unique_ptr<dft_processor> dft_5kHz_) :
+    dft_1_25kHz(std::move(dft_1_25kHz_)), dft_5kHz(std::move(dft_5kHz_))
   {
-    report_fatal_error_if_not(dft_1_25kHz, "Invalid DFT for 1.25kHz SCS");
-    report_fatal_error_if_not(dft_1_25kHz->get_direction() == dft_processor::direction::DIRECT,
-                              "Invalid DFT direction for 1.25kHz SCS");
-    report_fatal_error_if_not(dft_5kHz, "Invalid DFT for 1.25kHz SCS");
-    report_fatal_error_if_not(dft_5kHz->get_direction() == dft_processor::direction::DIRECT,
-                              "Invalid DFT direction for 5kHz SCS");
+    srsgnb_assert(dft_1_25kHz, "Invalid DFT for 1.25kHz SCS");
+    srsgnb_assert(dft_1_25kHz->get_direction() == dft_processor::direction::DIRECT,
+                  "Invalid DFT direction for 1.25kHz SCS");
+    srsgnb_assert(dft_5kHz, "Invalid DFT for 1.25kHz SCS");
+    srsgnb_assert(dft_5kHz->get_direction() == dft_processor::direction::DIRECT, "Invalid DFT direction for 5kHz SCS");
   }
 
   // See interface for documentation.

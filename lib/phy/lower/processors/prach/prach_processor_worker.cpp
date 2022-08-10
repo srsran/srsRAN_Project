@@ -83,9 +83,10 @@ void prach_processor_worker::accumulate_samples(span<const cf_t> samples)
 
   async_task_executor.execute([this]() {
     ofdm_prach_demodulator::configuration config;
-    config.format    = prach_context.format;
-    config.pusch_scs = prach_context.pusch_scs;
-    config.rb_offset = prach_context.rb_offset;
+    config.format          = prach_context.format;
+    config.rb_offset       = prach_context.rb_offset;
+    config.nof_prb_ul_grid = prach_context.nof_prb_ul_grid;
+    config.pusch_scs       = prach_context.pusch_scs;
 
     demodulator->demodulate(*buffer, temp_baseband.first(nof_samples), config);
 

@@ -85,10 +85,7 @@ create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configuration& conf
 /// \brief Creates a software generic PRACH demodulator.
 /// \param[in] dft_factory     DFT factory.
 /// \param[in] dft_size_15kHz  DFT size for 15kHz subcarrier spacing.
-/// \param[in] nof_prb_ul_grid Uplink resource grid size in PRBs.
 std::shared_ptr<ofdm_prach_demodulator_factory>
-create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
-                                         unsigned                               dft_size_15kHz,
-                                         unsigned                               nof_prb_ul_grid);
+create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory, unsigned dft_size_15kHz);
 
 } // namespace srsgnb

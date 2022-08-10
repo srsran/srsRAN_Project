@@ -321,13 +321,14 @@ TEST_P(prach_processor_test, single_baseband_symbol)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector       = 1;
-  context.port         = 3;
-  context.slot         = TEST_SLOT_BEGIN;
-  context.start_symbol = 1;
-  context.format       = preamble_format::FORMAT0;
-  context.rb_offset    = 123;
-  context.pusch_scs    = subcarrier_spacing::kHz30;
+  context.sector          = 1;
+  context.port            = 3;
+  context.slot            = TEST_SLOT_BEGIN;
+  context.start_symbol    = 1;
+  context.format          = preamble_format::FORMAT0;
+  context.rb_offset       = 123;
+  context.nof_prb_ul_grid = 52;
+  context.pusch_scs       = subcarrier_spacing::kHz30;
 
   unsigned                   dft_size_15kHz   = std::get<0>(GetParam());
   unsigned                   sampling_rate_Hz = dft_size_15kHz * 15000;
@@ -375,8 +376,9 @@ TEST_P(prach_processor_test, single_baseband_symbol)
   ASSERT_EQ(demodulate_entry.buffer, &buffer);
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
-  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
+  ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
+  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_TRUE(std::equal(demodulate_entry.input.begin(), demodulate_entry.input.end(), samples.begin()));
 
   // Verify the received PRACH window has been processed.
@@ -400,13 +402,14 @@ TEST_P(prach_processor_test, three_baseband_symbol)
 {
   // Prepare context with the count as sector.
   prach_buffer_context context;
-  context.sector       = 1;
-  context.port         = 3;
-  context.slot         = TEST_SLOT_BEGIN;
-  context.start_symbol = 1;
-  context.format       = preamble_format::FORMAT0;
-  context.rb_offset    = 123;
-  context.pusch_scs    = subcarrier_spacing::kHz30;
+  context.sector          = 1;
+  context.port            = 3;
+  context.slot            = TEST_SLOT_BEGIN;
+  context.start_symbol    = 1;
+  context.format          = preamble_format::FORMAT0;
+  context.rb_offset       = 123;
+  context.nof_prb_ul_grid = 52;
+  context.pusch_scs       = subcarrier_spacing::kHz30;
 
   unsigned                   dft_size_15kHz   = std::get<0>(GetParam());
   unsigned                   sampling_rate_Hz = dft_size_15kHz * 15000;
@@ -509,8 +512,9 @@ TEST_P(prach_processor_test, three_baseband_symbol)
   ASSERT_EQ(demodulate_entry.buffer, &buffer);
   ASSERT_EQ(demodulate_entry.input.size(), prach_window_length);
   ASSERT_EQ(demodulate_entry.config.format, context.format);
-  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_EQ(demodulate_entry.config.rb_offset, context.rb_offset);
+  ASSERT_EQ(demodulate_entry.config.nof_prb_ul_grid, context.nof_prb_ul_grid);
+  ASSERT_EQ(demodulate_entry.config.pusch_scs, context.pusch_scs);
   ASSERT_TRUE(std::equal(demodulate_entry.input.begin(), demodulate_entry.input.end(), samples.begin()));
 
   // Verify the received PRACH window has been processed.

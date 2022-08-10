@@ -12,7 +12,6 @@
 #include "ofdm_demodulator_impl.h"
 #include "ofdm_modulator_impl.h"
 #include "ofdm_prach_demodulator_impl.h"
-#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -77,17 +76,13 @@ class ofdm_prach_demodulator_factory_sw : public ofdm_prach_demodulator_factory
 private:
   std::shared_ptr<dft_processor_factory> dft_factory;
   unsigned                               dft_size_15kHz;
-  unsigned                               nof_prb_ul_grid;
 
 public:
-  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_,
-                                    unsigned                               dft_size_15kHz_,
-                                    unsigned                               nof_prb_ul_grid_) :
-    dft_factory(dft_factory_), dft_size_15kHz(dft_size_15kHz_), nof_prb_ul_grid(nof_prb_ul_grid_)
+  ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_, unsigned dft_size_15kHz_) :
+    dft_factory(dft_factory_), dft_size_15kHz(dft_size_15kHz_)
   {
-    report_fatal_error_if_not(dft_factory, "Invalid DFT factory.");
-    report_fatal_error_if_not(dft_size_15kHz, "Invalid DFT size for 15kHz.");
-    report_fatal_error_if_not(nof_prb_ul_grid, "Invalid number of PRB for the UL grid.");
+    srsgnb_assert(dft_factory, "Invalid DFT factory.");
+    srsgnb_assert(dft_size_15kHz, "Invalid DFT size for 15kHz.");
   }
 
   std::unique_ptr<ofdm_prach_demodulator> create() override
@@ -100,8 +95,8 @@ public:
     dft_config_5_kHz.size = (dft_size_15kHz * 15000) / 5000;
     dft_config_5_kHz.dir  = dft_processor::direction::DIRECT;
 
-    return std::make_unique<ofdm_prach_demodulator_impl>(
-        dft_factory->create(dft_config_1_25_kHz), dft_factory->create(dft_config_5_kHz), nof_prb_ul_grid);
+    return std::make_unique<ofdm_prach_demodulator_impl>(dft_factory->create(dft_config_1_25_kHz),
+                                                         dft_factory->create(dft_config_5_kHz));
   }
 };
 
@@ -121,8 +116,7 @@ srsgnb::create_ofdm_demodulator_factory_generic(ofdm_factory_generic_configurati
 
 std::shared_ptr<ofdm_prach_demodulator_factory>
 srsgnb::create_ofdm_prach_demodulator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory,
-                                                 unsigned                               dft_size_15kHz,
-                                                 unsigned                               nof_prb_ul_grid)
+                                                 unsigned                               dft_size_15kHz)
 {
-  return std::make_shared<ofdm_prach_demodulator_factory_sw>(dft_factory, dft_size_15kHz, nof_prb_ul_grid);
+  return std::make_shared<ofdm_prach_demodulator_factory_sw>(dft_factory, dft_size_15kHz);
 }

@@ -20,11 +20,11 @@ namespace srsgnb {
 std::ostream& operator<<(std::ostream& os, test_case_t test_case)
 {
   fmt::print(os,
-             "srate={:.2f}MHz; BW={}PRB; Format={}; RBOffset={}; SCS={}kHz;",
+             "srate={:.2f}MHz; Format={}; RBOffset={}; BW={}PRB; SCS={}kHz;",
              static_cast<double>(test_case.context.dft_size_15kHz * 15000) / 1e6,
-             test_case.context.nof_prb_ul_grid,
              static_cast<unsigned>(test_case.context.config.format),
              test_case.context.config.rb_offset,
+             test_case.context.config.nof_prb_ul_grid,
              scs_to_khz(test_case.context.config.pusch_scs));
   return os;
 }
@@ -43,11 +43,10 @@ protected:
     std::shared_ptr<dft_processor_factory> dft_factory = create_dft_processor_factory_generic();
     ASSERT_TRUE(dft_factory);
 
-    unsigned dft_size_15kHz  = GetParam().context.dft_size_15kHz;
-    unsigned nof_prb_ul_grid = GetParam().context.nof_prb_ul_grid;
+    unsigned dft_size_15kHz = GetParam().context.dft_size_15kHz;
 
     std::shared_ptr<ofdm_prach_demodulator_factory> ofdm_factory =
-        create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz, nof_prb_ul_grid);
+        create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz);
     ASSERT_TRUE(ofdm_factory);
 
     demodulator = ofdm_factory->create();

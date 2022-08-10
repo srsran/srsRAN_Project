@@ -28,9 +28,11 @@ public:
   struct configuration {
     /// PRACH preamble format.
     preamble_format format;
-    /// PRACH frequency location (see \ref prach_context::rb_offset).
+    /// PRACH frequency location (see \ref prach_buffer_context::rb_offset).
     unsigned rb_offset;
-    /// PUSCH subcarrier spacing.
+    /// Uplink resource grid size (see \ref prach_buffer_context::nof_prb_ul_grid).
+    unsigned nof_prb_ul_grid;
+    /// Uplink resource grid subcarrier spacing. Expresses the numerology \f$\mu\f$.
     subcarrier_spacing pusch_scs;
   };
 

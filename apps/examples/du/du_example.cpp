@@ -165,14 +165,15 @@ static const unsigned                            nof_sectors                = 1;
 static std::string                               driver_name                = "zmq";
 static std::vector<std::string>                  tx_channel_args;
 static std::vector<std::string>                  rx_channel_args;
-static double                                    sampling_rate_hz = 61.44e6;
-static unsigned                                  bw_rb            = 106;
-static unsigned                                  offset_to_pointA = 40;
-static unsigned                                  K_ssb            = 6;
-static unsigned                                  coreset0_index   = 6;
-static radio_configuration::clock_sources        clock_src        = {};
-static std::string                               log_level        = "info";
-static radio_configuration::over_the_wire_format otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
+static double                                    sampling_rate_hz            = 61.44e6;
+static unsigned                                  bw_rb                       = 106;
+static unsigned                                  offset_to_pointA            = 40;
+static unsigned                                  K_ssb                       = 6;
+static unsigned                                  coreset0_index              = 6;
+static unsigned                                  max_nof_concurrent_requests = 1;
+static radio_configuration::clock_sources        clock_src                   = {};
+static std::string                               log_level                   = "info";
+static radio_configuration::over_the_wire_format otw_format = radio_configuration::over_the_wire_format::DEFAULT;
 static std::string                               device_arguments;
 static std::atomic<bool>                         is_running = {true};
 
@@ -344,10 +345,10 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
-#if 0
   // Create OFDM PRACH demodulator factory.
+  unsigned                                        dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
-      create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz, nof_prb_ul_grid);
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz);
   if (!demodulator_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create OFDM PRACH demodulator factory");
 
@@ -361,9 +362,6 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     srslog::fetch_basic_logger("TEST").error("Failed to create PRACH processor factory");
     return nullptr;
   }
-#else
-  std::shared_ptr<prach_processor_factory> prach_factory = nullptr;
-#endif
 
   // Create Lower PHY factory.
   std::shared_ptr<lower_phy_factory> lphy_factory =

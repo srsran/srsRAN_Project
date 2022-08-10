@@ -42,24 +42,28 @@ struct prach_buffer_context {
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
   /// PRACH occasion.
   ///
-  /// The number of PRBs is computed assuming a subcarrier spacing equal to \c pusch_scs.
+  /// Corresponds to parameter \f$k_1\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed assuming a subcarrier
+  /// spacing equal to \c pusch_scs.
   unsigned rb_offset;
-  /// PUSCH subcarrier spacing.
-  subcarrier_spacing pusch_scs;
   /// \brief Uplink resource grid size in PRBs.
   ///
   /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
   /// assuming a subcarrier spacing equal to \c pusch_scs.
   unsigned nof_prb_ul_grid;
-  /// Root sequence index {0...837}.
+  /// PUSCH subcarrier spacing.
+  subcarrier_spacing pusch_scs;
+  /// Root sequence index {0, ..., 837}.
   unsigned root_sequence_index;
   /// Restricted set configuration.
   restricted_set_config restricted_set;
-  /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1.
+  /// Zero-correlation zone configuration index to calculate \f$N_{CS}\f$ as per TS38.211 section 6.3.3.1. Range {0,
+  /// ..., 15}.
   unsigned zero_correlation_zone;
-  /// Start of preamble logical index to monitor in the PRACH occasions signaled in this slot {0...63}.
+  /// Start of preamble logical index to monitor the PRACH occasions signaled in this slot. Range {0, ..., 63}.
   unsigned start_preamble_index;
-  /// Number of preamble indices to monitor {1...64}.
+  /// \brief Number of preamble indices to monitor {1, ..., 64}.
+  ///
+  /// The sum <tt>start_preamble_index + nof_preamble_indices</tt> should not exceed 64.
   unsigned nof_preamble_indices;
 };
 

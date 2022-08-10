@@ -36,7 +36,7 @@ std::unique_ptr<lower_phy> srsgnb::create_lower_phy(lower_phy_configuration& con
 
   // Create OFDM PRACH demodulator factory.
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
-      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.dft_size_15kHz, config.sectors.front().bandwidth_rb);
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, config.dft_size_15kHz);
 
   // Create PRACH processor factory.
   std::shared_ptr<prach_processor_factory> prach_processor_factory =
