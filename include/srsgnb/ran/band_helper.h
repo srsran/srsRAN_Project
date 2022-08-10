@@ -24,6 +24,9 @@ enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
 enum class min_channel_bandwidth;
 
+const unsigned KHZ_TO_HZ = 1000U;
+const double   HZ_TO_KHZ = 1e-3;
+
 /// \brief NR operating bands in FR1 and FR2.
 ///
 /// This enumeration abstracts the NR operating bands for FR1 and FR2 described in TS 38.104, Table 5.2-1 and
@@ -182,7 +185,7 @@ unsigned get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, 
 /// \param[in] bw is the <em>BS channel bandwidth<\em>, defined in TS 38.104, Section 5.3.
 /// \param[in] scs is the subcarrier spacing of reference for \f$N_{RB}\f$, as per TS 38.104, Table 5.3.2-1.
 /// \return The minimum BS channel BW for the given band and SCS, as per TS 38.104, Table 5.3.5-1.
-min_channel_bandwidth get_min_channel_bw(unsigned nr_band, subcarrier_spacing scs);
+min_channel_bandwidth get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs);
 
 } // namespace band_helper
 

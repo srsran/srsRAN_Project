@@ -15,7 +15,7 @@
 namespace srsgnb {
 
 void test_ssb_coreset0_allocation(unsigned                            dl_arfcn,
-                                  unsigned                            nr_band,
+                                  nr_band                             nr_band,
                                   unsigned                            n_rbs_,
                                   subcarrier_spacing                  scs_common,
                                   subcarrier_spacing                  scs_ssb,

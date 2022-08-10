@@ -89,12 +89,11 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
 // --------------- du_config_generator class functions ----------------.
 
 du_config_generator::du_config_generator(unsigned           dl_arfcn_,
-                                         unsigned           nr_band_,
+                                         nr_band            nr_band_,
                                          unsigned           n_rbs_,
                                          subcarrier_spacing scs_common_,
                                          subcarrier_spacing scs_ssb_) :
   dl_arfcn{dl_arfcn_},
-  nr_band{nr_band_},
   n_rbs(n_rbs_),
   scs_common{scs_common_},
   scs_ssb{scs_ssb_},
@@ -227,7 +226,7 @@ ssb_freq_location du_config_generator::get_next_ssb()
 }
 
 du_ssb_sib1_location srsgnb::srs_du::get_ssb_sib1_freq_location(unsigned           dl_arfcn,
-                                                                unsigned           nr_band,
+                                                                nr_band            nr_band,
                                                                 unsigned           n_rbs,
                                                                 subcarrier_spacing scs_common,
                                                                 subcarrier_spacing scs_ssb)

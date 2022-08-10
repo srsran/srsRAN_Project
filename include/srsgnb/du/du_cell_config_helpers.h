@@ -36,7 +36,7 @@ struct du_cell_config_default_params {
   /// This ARFCN represents "f_ref" for DL, as perTS 38.211, Section 5.4.2.1.
   unsigned dl_arfcn = 365000;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2, TS 38.104.
-  uint16_t nr_band = 3;
+  nr_band band = nr_band::n3;
   /// offsetToPointA, as per TS 38.211, Section 4.4.4.2; \ref ssb_offset_to_pointA.
   ssb_offset_to_pointA offset_to_point_a{12};
   /// This is \c controlResourceSetZero, as per TS38.213, Section 13.
@@ -87,7 +87,7 @@ inline coreset_configuration make_default_coreset0_config(const du_cell_config_d
   coreset_configuration cfg = make_default_coreset_config(params);
   cfg.id                    = to_coreset_id(0);
   // TODO: derive this from some table.
-  min_channel_bandwidth min_channel_bw = band_helper::get_min_channel_bw(params.nr_band, params.scs_common);
+  min_channel_bandwidth               min_channel_bw = band_helper::get_min_channel_bw(params.band, params.scs_common);
   pdcch_type0_css_coreset_description desc =
       pdcch_type0_css_coreset_get(min_channel_bw, params.scs_common, params.scs_common, params.coreset0_index, 0);
 

@@ -15,8 +15,6 @@
 namespace srsgnb {
 
 const unsigned NOF_SSB_SUBCARRIERS        = NOF_SSB_PRBS * NOF_SUBCARRIERS_PER_RB;
-const unsigned KHZ_TO_HZ                  = 1000;
-const double   HZ_TO_KHZ                  = 1e-3;
 const unsigned MIN_ARFCN_3_GHZ_24_5_GHZ   = 600000;
 const unsigned MIN_ARFCN_24_5_GHZ_100_GHZ = 2016667;
 const double   N_SIZE_SYNC_RASTER_1_HZ    = 1200e3;
@@ -53,7 +51,7 @@ class du_config_generator
 {
 public:
   explicit du_config_generator(unsigned           dl_arfcn,
-                               unsigned           nr_band,
+                               nr_band            nr_band,
                                unsigned           n_rbs_,
                                subcarrier_spacing scs_common,
                                subcarrier_spacing scs_ssb);
@@ -72,7 +70,6 @@ private:
 
   /// Parameters that are passed to the constructor.
   const unsigned dl_arfcn;
-  const unsigned nr_band;
   /// Transmission bandwidth configuration N_RB, as per Table 5.3.2-1, TS 38.104.
   const unsigned           n_rbs;
   const subcarrier_spacing scs_common;
@@ -100,7 +97,7 @@ private:
 /// \brief Compute the position of the SSB within the band and the Coreset0/SS0 indices given some initial parameters.
 /// \return The parameters defining the position of the SSB within the band and Coreset0/SS0 indices.
 du_ssb_sib1_location get_ssb_sib1_freq_location(unsigned           dl_arfcn,
-                                                unsigned           nr_band,
+                                                nr_band            nr_band,
                                                 unsigned           n_rbs,
                                                 subcarrier_spacing scs_common,
                                                 subcarrier_spacing scs_ssb);

@@ -20,7 +20,7 @@ using namespace srs_du;
 // Define struct to pass parameters from test functions.
 struct du_cfg_gen_input_params {
   unsigned           dl_arfcn;
-  unsigned           nr_band;
+  nr_band            band;
   unsigned           n_rbs;
   subcarrier_spacing scs_common;
   subcarrier_spacing scs_ssb;
@@ -51,7 +51,7 @@ static bool compare_ssb_coreset0_allocation(const du_ssb_sib1_location& lhs, con
 TEST(du_config_generator_tester, band_3)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 365000,
-                                    /* NR-band*/ 3,
+                                    /* NR-band*/ nr_band::n3,
                                     /* N_RBs */ 52,
                                     /* SCS_common */ subcarrier_spacing::kHz15,
                                     /* SCS_SSB */ subcarrier_spacing::kHz15};
@@ -84,7 +84,7 @@ TEST(du_config_generator_tester, band_3)
 TEST(du_config_generator_tester, band_7)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 531720,
-                                    /* NR-band*/ 7,
+                                    /* NR-band*/ nr_band::n7,
                                     /* N_RBs */ 25,
                                     /* SCS_common */ subcarrier_spacing::kHz15,
                                     /* SCS_SSB */ subcarrier_spacing::kHz15};
@@ -100,7 +100,7 @@ TEST(du_config_generator_tester, band_7)
 TEST(du_config_generator_tester, band_25)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 391180,
-                                    /* NR-band*/ 25,
+                                    /* NR-band*/ nr_band::n25,
                                     /* N_RBs */ 38,
                                     /* SCS_common */ subcarrier_spacing::kHz30,
                                     /* SCS_SSB */ subcarrier_spacing::kHz15};
@@ -149,7 +149,7 @@ TEST(du_config_generator_tester, band_25)
 TEST(du_config_generator_tester, band_51)
 {
   du_config_generator cfg_generator{/* DL-ARFCN*/ 435740,
-                                    /* NR-band*/ 66,
+                                    /* NR-band*/ nr_band::n66,
                                     /* N_RBs */ 51,
                                     /* SCS_common */ subcarrier_spacing::kHz30,
                                     /* SCS_SSB */ subcarrier_spacing::kHz30};
@@ -209,7 +209,7 @@ protected:
   du_ssb_sib1_location get_ssb_coreset0_location(du_cfg_gen_input_params in_param)
   {
     return get_ssb_sib1_freq_location(
-        in_param.dl_arfcn, in_param.nr_band, in_param.n_rbs, in_param.scs_common, in_param.scs_ssb);
+        in_param.dl_arfcn, in_param.band, in_param.n_rbs, in_param.scs_common, in_param.scs_ssb);
   }
 };
 
@@ -231,16 +231,21 @@ INSTANTIATE_TEST_SUITE_P(
     ssb_coreset0_param_generator_test,
     testing::Values(
 
-        std::make_pair(du_ssb_sib1_location{true, 5, 2, 0, 0},
-                       du_cfg_gen_input_params{365000, 3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}),
-        std::make_pair(du_ssb_sib1_location{true, 0, 0, 0, 0},
-                       du_cfg_gen_input_params{531720, 7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}),
-        std::make_pair(du_ssb_sib1_location{true, 8, 7, 1, 0},
-                       du_cfg_gen_input_params{643265, 78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30}),
-        std::make_pair(du_ssb_sib1_location{true, 0, 22, 0, 0},
-                       du_cfg_gen_input_params{435740, 66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}),
-        std::make_pair(du_ssb_sib1_location{true, 14, 18, 0, 0},
-                       du_cfg_gen_input_params{391180, 25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15})));
+        std::make_pair(
+            du_ssb_sib1_location{true, 5, 2, 0, 0},
+            du_cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}),
+        std::make_pair(
+            du_ssb_sib1_location{true, 0, 0, 0, 0},
+            du_cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15}),
+        std::make_pair(
+            du_ssb_sib1_location{true, 8, 7, 1, 0},
+            du_cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30}),
+        std::make_pair(
+            du_ssb_sib1_location{true, 0, 22, 0, 0},
+            du_cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30}),
+        std::make_pair(
+            du_ssb_sib1_location{true, 14, 18, 0, 0},
+            du_cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15})));
 
 /*
  *      =====    TEST SSB IS WITHIN SYNC RASTER AND CORESET0 IS WITHIN THE BAND    =====
@@ -252,7 +257,7 @@ protected:
   du_ssb_sib1_location get_ssb_coreset0_allocation(du_cfg_gen_input_params in_param)
   {
     return get_ssb_sib1_freq_location(
-        in_param.dl_arfcn, in_param.nr_band, in_param.n_rbs, in_param.scs_common, in_param.scs_ssb);
+        in_param.dl_arfcn, in_param.band, in_param.n_rbs, in_param.scs_common, in_param.scs_ssb);
   }
 };
 
@@ -267,7 +272,7 @@ TEST_P(ssb_coreset0_compatibility_with_raster_and_band, test_ssb_raster_and_cset
 
   // This function test the SSB and CORESET0 allocation consitency.
   test_ssb_coreset0_allocation(input_params.dl_arfcn,
-                               input_params.nr_band,
+                               input_params.band,
                                input_params.n_rbs,
                                input_params.scs_common,
                                input_params.scs_ssb,
@@ -277,8 +282,9 @@ TEST_P(ssb_coreset0_compatibility_with_raster_and_band, test_ssb_raster_and_cset
 INSTANTIATE_TEST_SUITE_P(
     ssb_raster_and_cset0_band,
     ssb_coreset0_compatibility_with_raster_and_band,
-    testing::Values(du_cfg_gen_input_params{365000, 3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
-                    du_cfg_gen_input_params{531720, 7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
-                    du_cfg_gen_input_params{643265, 78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30},
-                    du_cfg_gen_input_params{435740, 66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30},
-                    du_cfg_gen_input_params{391180, 25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}));
+    testing::Values(
+        du_cfg_gen_input_params{365000, nr_band::n3, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
+        du_cfg_gen_input_params{531720, nr_band::n7, 25, subcarrier_spacing::kHz15, subcarrier_spacing::kHz15},
+        du_cfg_gen_input_params{643265, nr_band::n78, 52, subcarrier_spacing::kHz15, subcarrier_spacing::kHz30},
+        du_cfg_gen_input_params{435740, nr_band::n66, 51, subcarrier_spacing::kHz30, subcarrier_spacing::kHz30},
+        du_cfg_gen_input_params{391180, nr_band::n25, 38, subcarrier_spacing::kHz30, subcarrier_spacing::kHz15}));

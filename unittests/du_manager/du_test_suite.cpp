@@ -41,7 +41,7 @@ static void test_ssb_belong_to_sync_raster(double ss_ssb_hz)
 }
 
 void srsgnb::test_ssb_coreset0_allocation(unsigned                            dl_arfcn,
-                                          unsigned                            nr_band,
+                                          nr_band                             nr_band,
                                           unsigned                            n_rbs,
                                           subcarrier_spacing                  scs_common,
                                           subcarrier_spacing                  scs_ssb,

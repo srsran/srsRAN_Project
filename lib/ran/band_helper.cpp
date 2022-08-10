@@ -397,7 +397,7 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_center_freq(uint32_t nof_p
 
   // For FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
   // TODO: add offset_to_carrier.
-  return center_freq - (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
+  return center_freq - (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
 }
 
 uint32_t srsgnb::band_helper::get_abs_freq_point_a_arfcn(uint32_t nof_prb, uint32_t arfcn)
@@ -411,7 +411,7 @@ double srsgnb::band_helper::get_center_freq_from_abs_freq_point_a(uint32_t nof_p
   // for FR1 unit of resources blocks for freq calc is always 180kHz regardless for actual SCS of carrier.
   // TODO: add offset_to_carrier
   double abs_freq_point_a_freq = nr_arfcn_to_freq(freq_point_a_arfcn);
-  return abs_freq_point_a_freq + (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * 1000 * NRE);
+  return abs_freq_point_a_freq + (nof_prb / 2 * scs_to_khz(subcarrier_spacing::kHz15) * KHZ_TO_HZ * NRE);
 }
 
 double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32_t nof_rbs, subcarrier_spacing scs)
@@ -428,7 +428,7 @@ double srsgnb::band_helper::get_abs_freq_point_a_from_f_ref(double f_ref, uint32
   // and CRB index, depending on the size of N_RB. Below we compute the value in unit of subcarriers, meaning we don't
   // need to separate the cases of even and odd N_RB.
   unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
-  return f_ref - static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * 1000U);
+  return f_ref - static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);
 }
 
 double
@@ -440,7 +440,7 @@ srsgnb::band_helper::get_f_ref_from_abs_freq_point_a(double abs_freq_point_a, ui
   constexpr static unsigned NRE_half = 6;
   // The procedure used in this function is the inverse of what explained in TS 38.104, Section 5.4.2.2.
   unsigned delta_point_a_f_ref = nof_rbs * NRE_half;
-  return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * 1000U);
+  return abs_freq_point_a + static_cast<double>(delta_point_a_f_ref * scs_to_khz(scs) * KHZ_TO_HZ);
 }
 
 unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, subcarrier_spacing scs, frequency_range fr)
@@ -465,26 +465,26 @@ unsigned srsgnb::band_helper::get_n_rbs_from_bw(bs_channel_bandwidth_fr1 bw, sub
   return 0;
 }
 
-min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(unsigned nr_band, subcarrier_spacing scs)
+min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(nr_band nr_band, subcarrier_spacing scs)
 {
   switch (nr_band) {
-    case 1:
-    case 2:
-    case 3:
-    case 7:
-    case 25:
-    case 34:
-    case 38:
-    case 39:
-    case 40:
-    case 50:
-    case 66:
-    case 70:
-    case 74:
-    case 75:
-    case 80:
-    case 84:
-    case 86: {
+    case nr_band::n1:
+    case nr_band::n2:
+    case nr_band::n3:
+    case nr_band::n7:
+    case nr_band::n25:
+    case nr_band::n34:
+    case nr_band::n38:
+    case nr_band::n39:
+    case nr_band::n40:
+    case nr_band::n50:
+    case nr_band::n66:
+    case nr_band::n70:
+    case nr_band::n74:
+    case nr_band::n75:
+    case nr_band::n80:
+    case nr_band::n84:
+    case nr_band::n86: {
       if (scs == subcarrier_spacing::kHz15) {
         return min_channel_bandwidth::MHz5;
       } else if (scs == subcarrier_spacing::kHz30 or scs == subcarrier_spacing::kHz60) {
@@ -493,15 +493,15 @@ min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(unsigned nr_band, 
         return min_channel_bandwidth::invalid;
       }
     }
-    case 5:
-    case 8:
-    case 12:
-    case 20:
-    case 28:
-    case 71:
-    case 81:
-    case 82:
-    case 83: {
+    case nr_band::n5:
+    case nr_band::n8:
+    case nr_band::n12:
+    case nr_band::n20:
+    case nr_band::n28:
+    case nr_band::n71:
+    case nr_band::n81:
+    case nr_band::n82:
+    case nr_band::n83: {
       if (scs == subcarrier_spacing::kHz15) {
         return min_channel_bandwidth::MHz5;
       } else if (scs == subcarrier_spacing::kHz30) {
@@ -510,30 +510,30 @@ min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(unsigned nr_band, 
         return min_channel_bandwidth::invalid;
       }
     }
-    case 41: {
+    case nr_band::n41: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz10;
       } else {
         return min_channel_bandwidth::invalid;
       }
     }
-    case 51:
-    case 76: {
+    case nr_band::n51:
+    case nr_band::n76: {
       if (scs == subcarrier_spacing::kHz15) {
         return min_channel_bandwidth::MHz5;
       } else {
         return min_channel_bandwidth::invalid;
       }
     }
-    case 77:
-    case 78: {
+    case nr_band::n77:
+    case nr_band::n78: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz10;
       } else {
         return min_channel_bandwidth::invalid;
       }
     }
-    case 79: {
+    case nr_band::n79: {
       if (scs <= subcarrier_spacing::kHz60) {
         return min_channel_bandwidth::MHz40;
       } else {

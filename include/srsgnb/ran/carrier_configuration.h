@@ -23,7 +23,7 @@ struct carrier_configuration {
   /// NR Absolute Radio Frequency Channel Number (NR-ARFCN) point A in kHz. Values: (450000..52600000).
   uint32_t arfcn;
   /// <em>NR operating band<\em>, as per Table 5.2-1 and 5.2-2. TS 38.104.
-  uint16_t nr_band;
+  nr_band band;
   /// Number of antennas. Values: (0..65355).
   uint16_t nof_ant;
 };
