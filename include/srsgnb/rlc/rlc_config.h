@@ -19,7 +19,7 @@ namespace srsgnb {
 
 /// RLC NR modes
 enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
-inline const char* to_string(const rlc_mode& mode)
+inline const char* to_c_str(const rlc_mode& mode)
 {
   constexpr static const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
   return options[static_cast<unsigned>(mode)];
@@ -67,7 +67,7 @@ constexpr unsigned to_number(const rlc_dc_field& dc)
   return static_cast<unsigned>(dc);
 }
 
-inline std::string to_string(const rlc_dc_field& dc)
+inline const char* to_c_str(const rlc_dc_field& dc)
 {
   constexpr static const char* options[] = {"Control PDU", "Data PDU"};
   return options[to_number(dc)];
@@ -86,7 +86,7 @@ constexpr uint16_t to_number(const rlc_si_field& si_field)
   return static_cast<uint16_t>(si_field);
 }
 
-inline std::string to_string(const rlc_si_field& si)
+inline const char* to_c_str(const rlc_si_field& si)
 {
   constexpr static const char* options[] = {"full", "first", "last", "middle"};
   return options[to_number(si)];
@@ -98,10 +98,10 @@ constexpr uint16_t to_number(const rlc_control_pdu_type& type)
   return static_cast<uint16_t>(type);
 }
 
-inline std::string to_string(const rlc_control_pdu_type& cpt)
+inline const char* to_c_str(const rlc_control_pdu_type& type)
 {
   constexpr static const char* options[] = {"Control PDU"};
-  return options[to_number(cpt)];
+  return options[to_number(type)];
 }
 
 /// \brief Configurable Rx parameters for RLC AM
@@ -176,7 +176,7 @@ struct formatter<srsgnb::rlc_dc_field> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_dc_field& dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", to_string(dc));
+    return format_to(ctx.out(), "{}", to_c_str(dc));
   }
 };
 
@@ -191,7 +191,7 @@ struct formatter<srsgnb::rlc_si_field> {
   template <typename FormatContext>
   auto format(const srsgnb::rlc_si_field& si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", to_string(si));
+    return format_to(ctx.out(), "{}", to_c_str(si));
   }
 };
 
@@ -207,7 +207,7 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
   auto format(const srsgnb::rlc_control_pdu_type& cpt, FormatContext& ctx)
       -> decltype(std::declval<FormatContext>().out())
   {
-    return format_to(ctx.out(), "{}", to_string(cpt));
+    return format_to(ctx.out(), "{}", to_c_str(cpt));
   }
 };
 } // namespace fmt

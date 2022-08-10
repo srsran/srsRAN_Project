@@ -103,7 +103,7 @@ byte_buffer_slice_chain rlc_tx_um_entity::pull_pdu(uint32_t nof_bytes)
   uint32_t to_move = space >= sdu.buf.length() - next_so ? sdu.buf.length() - next_so : space;
 
   // Log
-  logger.log_debug("adding {} - ({}/{})", to_string(header.si).c_str(), to_move, sdu.buf.length());
+  logger.log_debug("adding {} - ({}/{})", to_c_str(header.si), to_move, sdu.buf.length());
 
   // Move data from SDU to PDU
   byte_buffer_slice_chain pdu_buf = {};

@@ -70,7 +70,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
       logger.log_debug(rx_pdu.payload.begin(),
                        rx_pdu.payload.end(),
                        "placing {} segment of SN={} ({} B) in Rx buffer",
-                       to_string(header.si).c_str(),
+                       to_c_str(header.si),
                        header.sn,
                        rx_pdu.payload.length());
       rlc_umd_pdu_segments pdu_segments = {};
@@ -111,7 +111,7 @@ void rlc_rx_um_entity::handle_rx_buffer_update(const uint32_t sn)
     auto& pdu = rx_window.at(sn);
     for (auto it = pdu.segments.begin(); it != pdu.segments.end();) {
       logger.log_debug("Have {} segment with SO={} for SN={}",
-                       to_string(it->second.header.si).c_str(),
+                       to_c_str(it->second.header.si),
                        it->second.header.so,
                        it->second.header.sn);
       if (it->second.header.so == pdu.next_expected_so) {
