@@ -49,7 +49,7 @@ private:
   void addmod_bwp_cfg(bwp_id_t bwpid, const bwp_downlink& bwp_dl);
   void addmod_bwp_common_cfg(bwp_id_t bwpid, const bwp_downlink_common& bwp_dl);
   void addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlink_dedicated& bwp_dl_ded);
-  void rel_bwp_ded_cfg(bwp_id_t bwpid);
+  void release_bwp_ded_cfg(bwp_id_t bwpid);
   void update_config_maps();
 
   /// List of UE BWP configurations.

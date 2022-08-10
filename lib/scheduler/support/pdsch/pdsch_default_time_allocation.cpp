@@ -108,10 +108,13 @@ srsgnb::pdsch_default_time_allocation_default_A_get(cyclic_prefix cp, unsigned r
 span<const pdsch_time_domain_resource_allocation>
 srsgnb::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_typeA_position dmrs_pos)
 {
+  // TS38.214 Table 5.1.2.1.1-2.
+  static constexpr size_t PDSCH_TD_RES_ALLOC_TABLE_SIZE = 16;
+
   // Build PDSCH-TimeDomain tables statically.
   auto table_builder = [](cyclic_prefix cp, dmrs_typeA_position dmrs_pos) {
-    std::array<pdsch_time_domain_resource_allocation, 16> table;
-    for (unsigned i = 0; i < 16; ++i) {
+    std::array<pdsch_time_domain_resource_allocation, PDSCH_TD_RES_ALLOC_TABLE_SIZE> table;
+    for (unsigned i = 0; i < PDSCH_TD_RES_ALLOC_TABLE_SIZE; ++i) {
       pdsch_default_time_allocation_config cfg = pdsch_default_time_allocation_default_A_get(cp, i, dmrs_pos);
       table[i].k0                              = cfg.pdcch_to_pdsch_delay;
       table[i].map_type                        = cfg.mapping_type;
@@ -119,11 +122,11 @@ srsgnb::pdsch_default_time_allocations_default_A_table(cyclic_prefix cp, dmrs_ty
     }
     return table;
   };
-  static const std::array<std::array<pdsch_time_domain_resource_allocation, 16>, 4> tables = {
-      table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos2),
-      table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos3),
-      table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos2),
-      table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos3)};
+  static const std::array<std::array<pdsch_time_domain_resource_allocation, PDSCH_TD_RES_ALLOC_TABLE_SIZE>, 4> tables =
+      {table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos2),
+       table_builder(cyclic_prefix::NORMAL, dmrs_typeA_position::pos3),
+       table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos2),
+       table_builder(cyclic_prefix::EXTENDED, dmrs_typeA_position::pos3)};
 
   // Retrieve respective table.
   return tables[static_cast<unsigned>(cp.value) * 2 + (static_cast<unsigned>(dmrs_pos) - 2)];

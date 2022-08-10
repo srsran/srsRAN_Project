@@ -189,21 +189,21 @@ struct rar_ul_grant {
   bool     csi_req;
 };
 
-/// Stores the information associated to an RAR.
+/// Stores the information associated with a RAR.
 struct rar_information {
   const pdcch_dl_information*             pdcch_cfg;
   pdsch_information                       pdsch_cfg;
   static_vector<rar_ul_grant, MAX_GRANTS> grants;
 };
 
-/// Stores the information associated to an SSB.
+/// Stores the information associated with an SSB.
 struct ssb_information {
   unsigned          ssb_index;
   crb_interval      crbs;
   ofdm_symbol_range symbols;
 };
 
-/// Stores the information associated to an SIB1 or other SI allocation.
+/// Stores the information associated with an SIB1 or other SI allocation.
 struct sib_information {
   enum si_indicator_type { sib1, other_si } si_indicator;
   unsigned                    nof_txs;

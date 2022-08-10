@@ -25,7 +25,7 @@ void ue_cell_configuration::reconfigure(const serving_cell_ue_configuration_requ
     addmod_bwp_ded_cfg(to_bwp_id(0), *cell_cfg_ded_req.init_dl_bwp);
   }
   for (bwp_id_t bwpid : cell_cfg_ded_req.dl_bwps_to_rel_list) {
-    rel_bwp_ded_cfg(bwpid);
+    release_bwp_ded_cfg(bwpid);
   }
   for (const bwp_downlink& dl_bwp : cell_cfg_ded_req.dl_bwps_to_addmod_list) {
     addmod_bwp_cfg(dl_bwp.bwp_id, dl_bwp);
@@ -132,7 +132,7 @@ void ue_cell_configuration::addmod_bwp_ded_cfg(bwp_id_t bwpid, const bwp_downlin
                            [](const search_space_configuration& ss) { return ss.id; });
 }
 
-void ue_cell_configuration::rel_bwp_ded_cfg(bwp_id_t bwpid)
+void ue_cell_configuration::release_bwp_ded_cfg(bwp_id_t bwpid)
 {
   srsgnb_assert(dl_bwps_cfg.contains(bwpid), "BWP-id={} does not exist", bwpid);
   dl_bwps_cfg.erase(bwpid);
