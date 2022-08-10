@@ -305,17 +305,17 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
   // TODO
 }
 
-std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
+std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::create_tx_window(rlc_am_sn_size sn_size)
 {
-  std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> tx_window;
+  std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> tx_window;
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:
       tx_window =
-          std::make_unique<rlc_ringbuffer<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size12bits))>>();
+          std::make_unique<rlc_pdu_window<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size12bits))>>();
       break;
     case rlc_am_sn_size::size18bits:
       tx_window =
-          std::make_unique<rlc_ringbuffer<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size18bits))>>();
+          std::make_unique<rlc_pdu_window<rlc_tx_amd_pdu_box, window_size(to_number(rlc_am_sn_size::size18bits))>>();
       break;
     default:
       srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");

@@ -12,8 +12,8 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
+#include "rlc_pdu_window.h"
 #include "rlc_retx_queue.h"
-#include "rlc_ringbuffer.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
 #include "srsgnb/support/srsgnb_assert.h"
@@ -89,7 +89,7 @@ private:
 
   // Tx window
   const uint32_t                                           tx_window_size;
-  std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> tx_window;
+  std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
   const uint32_t head_min_size;
@@ -169,7 +169,7 @@ private:
   /// Creates the tx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to tx_window instance
-  static std::unique_ptr<rlc_ringbuffer_base<rlc_tx_amd_pdu_box>> create_tx_window(rlc_am_sn_size sn_size);
+  static std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> create_tx_window(rlc_am_sn_size sn_size);
 };
 
 } // namespace srsgnb

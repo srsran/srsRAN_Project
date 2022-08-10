@@ -17,8 +17,8 @@
 namespace srsgnb {
 
 template <class T>
-struct rlc_ringbuffer_base {
-  virtual ~rlc_ringbuffer_base()           = default;
+struct rlc_pdu_window_base {
+  virtual ~rlc_pdu_window_base()           = default;
   virtual T&     add_pdu(size_t sn)        = 0;
   virtual void   remove_pdu(size_t sn)     = 0;
   virtual T&     operator[](size_t sn)     = 0;
@@ -33,8 +33,8 @@ struct rlc_ringbuffer_base {
 /// @tparam T storage type
 /// @tparam WINDOW_SIZE size of the RLC AM window
 template <class T, std::size_t WINDOW_SIZE>
-struct rlc_ringbuffer : public rlc_ringbuffer_base<T> {
-  ~rlc_ringbuffer() = default;
+struct rlc_pdu_window final : public rlc_pdu_window_base<T> {
+  ~rlc_pdu_window() = default;
 
   T& add_pdu(size_t sn) override
   {
