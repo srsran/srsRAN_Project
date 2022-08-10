@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "band_helper.h"
 #include <cstdint>
 
 namespace srsgnb {
