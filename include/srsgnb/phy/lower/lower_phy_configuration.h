@@ -16,6 +16,7 @@
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
 #include "srsgnb/phy/lower/modulation/ofdm_demodulator.h"
 #include "srsgnb/phy/lower/modulation/ofdm_modulator.h"
+#include "srsgnb/phy/lower/sampling_rate.h"
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
@@ -42,19 +43,47 @@ struct lower_phy_sector_description {
   std::vector<lower_phy_sector_port_mapping> port_mapping;
 };
 
-/// Describes the lower PHY configuration.
+/// \brief Time advance offset - parameter \f$N_{TA,offset}\f$ is TS38.211 Section 4.3.3.
+///
+/// This value must be selected from the parameter \e n-TimingAdvanceOffset (TS38.331 Section 6.3.2, Information Element
+/// \e ServingCellConfigCommon) if it is present. Otherwise, it is given by TS38.133 Section 7.1.2 depending on the
+/// duplex mode of the cell and the frequency range.
+///
+/// The values are given in units if \f$T_c\f$.
+enum class lower_phy_ta_offset {
+  /// For FR1 FDD band with LTE-NR coexistence case.
+  n0 = 0,
+  /// For FR1 FDD band without LTE-NR coexistence case or FR1 TDD band without LTE-NR coexistence case
+  n25600 = 25600,
+  /// For FR2.
+  n13792 = 13792,
+  /// For FR1 TDD band with LTE-NR coexistence case.
+  n39936 = 39936
+};
+
+/// Lower physical layer configuration.
 struct lower_phy_configuration {
   /// Indicates the DFT size for a 15kHz SCS.
-  unsigned dft_size_15kHz;
+  sampling_rate srate;
   /// Indicates the subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
-  /// Indicates the number of slots that the timing handler is notified in advance. This sets the maximum allowed
-  /// processing delay in slots.
+  /// \brief Number of slots that the timing handler is notified in advance.
+  ///
+  /// Sets the maximum allowed processing delay in slots.
   unsigned max_processing_delay_slots;
-  /// Indicates the UL/DL slot context offset.
-  unsigned ul_to_dl_slot_offset;
-  /// Indicates the Rx to Tx delay in seconds.
-  double rx_to_tx_delay;
+  /// \brief Indicates the UL-to-DL slot context offset.
+  ///
+  /// Determines the time offset between the UL and DL processing in subframes, equivalent to a granularity of one
+  /// millisecond.
+  ///
+  /// An assertion is triggered if it is equal to zero.
+  unsigned ul_to_dl_subframe_offset;
+  /// \brief Time in advance calibration.
+  ///
+  /// Subtracts to the UL-to-DL time offset processing for calibrating the baseband device.
+  phy_time_unit time_advance_calibration;
+  /// Time alignment offset.
+  lower_phy_ta_offset ta_offset;
   /// OFDM modulator scale.
   float tx_scale;
   /// Indicates the cyclic prefix.

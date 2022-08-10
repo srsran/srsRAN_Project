@@ -20,19 +20,18 @@
 
 using namespace srsgnb;
 
-static double             sampling_rate_Hz           = 61.44e6;
-static subcarrier_spacing scs                        = subcarrier_spacing::kHz15;
-static unsigned           max_processing_delay_slots = 4;
-static unsigned           ul_to_dl_slot_offset       = 1;
-static unsigned           nof_dl_rg_buffers =
-    divide_ceil(10240 * pow2(to_numerology_value(scs)) * max_processing_delay_slots, 10240);
-static double        rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
-static float         tx_scale       = 1.0F;
-static cyclic_prefix cp             = cyclic_prefix::NORMAL;
-static unsigned      bandwidth_rb   = 52;
-static double        dl_freq_hz     = 2.65e9;
-static double        ul_freq_hz     = 2.55e9;
-static std::string   log_level      = "debug";
+static sampling_rate       srate                      = sampling_rate::from_MHz(61.44);
+static subcarrier_spacing  scs                        = subcarrier_spacing::kHz15;
+static unsigned            max_processing_delay_slots = 4;
+static unsigned            ul_to_dl_subframe_offset   = 1;
+static phy_time_unit       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
+static lower_phy_ta_offset ta_offset                  = lower_phy_ta_offset::n0;
+static float               tx_scale                   = 1.0F;
+static cyclic_prefix       cp                         = cyclic_prefix::NORMAL;
+static unsigned            bandwidth_rb               = 52;
+static double              dl_freq_hz                 = 2.65e9;
+static double              ul_freq_hz                 = 2.55e9;
+static std::string         log_level                  = "debug";
 
 static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory   = nullptr;
 static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory = nullptr;
@@ -45,11 +44,12 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
                                                  lower_phy_timing_notifier&    timing_notifier)
 {
   lower_phy_configuration config;
-  config.dft_size_15kHz             = static_cast<unsigned>(sampling_rate_Hz / 15e3F);
+  config.srate                      = srate;
   config.scs                        = scs;
   config.max_processing_delay_slots = max_processing_delay_slots;
-  config.ul_to_dl_slot_offset       = ul_to_dl_slot_offset;
-  config.rx_to_tx_delay             = rx_to_tx_delay;
+  config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
+  config.time_advance_calibration   = time_advance_calibration;
+  config.ta_offset                  = ta_offset;
   config.tx_scale                   = tx_scale;
   config.cp                         = cp;
   config.bb_gateway                 = &bb_gateway;
@@ -75,6 +75,11 @@ static void test_start_run_stop()
   lower_phy_error_notifier_spy     error_notifier(log_level);
   lower_phy_rx_symbol_notifier_spy rx_symbol_notifier(log_level);
   lower_phy_timing_notifier_spy    timing_notifier(log_level);
+
+  // Calculate Rx-to-Tx delay in samples.
+  unsigned rx_to_tx_delay = (phy_time_unit::from_seconds(0.001 * ul_to_dl_subframe_offset) - time_advance_calibration -
+                             phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset)))
+                                .to_samples(srate.to_Hz());
 
   lower_phy_configuration phy_config =
       create_phy_config(bb_gateway, error_notifier, rx_symbol_notifier, timing_notifier);
@@ -109,15 +114,15 @@ static void test_start_run_stop()
   for (unsigned slot_count = 0; slot_count != 10 * max_processing_delay_slots; ++slot_count) {
     // Derive downlink and uplink expected slots.
     slot_point expected_dl_slot(to_numerology_value(scs),
-                                slot_count + ul_to_dl_slot_offset + max_processing_delay_slots);
+                                slot_count + ul_to_dl_subframe_offset + max_processing_delay_slots);
     slot_point expected_ul_slot(to_numerology_value(scs), slot_count);
-    slot_point expected_late_slot(to_numerology_value(scs), slot_count + ul_to_dl_slot_offset);
+    slot_point expected_late_slot(to_numerology_value(scs), slot_count + ul_to_dl_subframe_offset);
 
     // Run all symbols in the slot.
     for (unsigned symbol_count = 0; symbol_count != get_nsymb_per_slot(cp); ++symbol_count) {
       // Derive the expected symbol size including the cyclic prefix.
-      unsigned expected_symbol_sz = phy_config.dft_size_15kHz / pow2(to_numerology_value(scs));
-      expected_symbol_sz += cp.get_length(symbol_count, scs).to_samples(sampling_rate_Hz);
+      unsigned expected_symbol_sz = srate.get_dft_size(scs);
+      expected_symbol_sz += cp.get_length(symbol_count, scs).to_samples(srate.to_Hz());
 
       // Run a single symbol.
       TESTASSERT(manual_task_executor.try_run_next());
@@ -132,8 +137,7 @@ static void test_start_run_stop()
       const auto& bb_gateway_tx_entry = bb_gateway.get_transmit_entries().front();
       TESTASSERT_EQ(0, bb_gateway_tx_entry.stream_id);
       TESTASSERT_EQ(expected_symbol_sz, bb_gateway_tx_entry.data.get_nof_samples());
-      TESTASSERT_EQ(bb_gateway_rx_entry.metadata.ts + static_cast<unsigned>(rx_to_tx_delay * sampling_rate_Hz),
-                    bb_gateway_tx_entry.metadata.ts);
+      TESTASSERT_EQ(bb_gateway_rx_entry.metadata.ts + rx_to_tx_delay, bb_gateway_tx_entry.metadata.ts);
 
       // Detect slot boundary.
       if (symbol_count == 0) {

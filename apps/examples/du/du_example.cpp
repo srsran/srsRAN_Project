@@ -158,7 +158,9 @@ static subcarrier_spacing                        scs                        = su
 static subcarrier_spacing                        scs_common                 = subcarrier_spacing::kHz15;
 static const double                              tx_gain                    = 60.0;
 static const unsigned                            max_processing_delay_slots = 4;
-static const unsigned                            ul_to_dl_slot_offset       = 1;
+static const unsigned                            ul_to_dl_subframe_offset   = 1;
+static const phy_time_unit                       time_advance_calibration   = phy_time_unit::from_seconds(0.0);
+static const lower_phy_ta_offset                 ta_offset                  = lower_phy_ta_offset::n0;
 static const cyclic_prefix                       cp                         = cyclic_prefix::NORMAL;
 static double                                    dl_center_freq             = 2680.1e6;
 static unsigned                                  dl_arfcn                   = 536020;
@@ -169,7 +171,7 @@ static const unsigned                            nof_sectors                = 1;
 static std::string                               driver_name                = "zmq";
 static std::vector<std::string>                  tx_channel_args;
 static std::vector<std::string>                  rx_channel_args;
-static double                                    sampling_rate_hz            = 61.44e6;
+static sampling_rate                             srate                       = sampling_rate::from_MHz(61.44);
 static unsigned                                  bw_rb                       = 106;
 static unsigned                                  offset_to_pointA            = 40;
 static unsigned                                  K_ssb                       = 6;
@@ -190,7 +192,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "";
        scs              = subcarrier_spacing::kHz15;
        scs_common       = subcarrier_spacing::kHz15;
-       sampling_rate_hz = 61.44e6;
+       srate            = sampling_rate::from_MHz(61.44);
        dl_arfcn         = 536020;
        K_ssb            = 6;
        offset_to_pointA = 40;
@@ -215,7 +217,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "type=b200";
        scs              = subcarrier_spacing::kHz15;
        scs_common       = subcarrier_spacing::kHz15;
-       sampling_rate_hz = 23.04e6;
+       srate            = sampling_rate::from_MHz(23.04);
        dl_arfcn         = 536020;
        K_ssb            = 6;
        offset_to_pointA = 40;
@@ -231,7 +233,7 @@ static const std::vector<configuration_profile> profiles = {
        device_arguments = "";
        scs              = subcarrier_spacing::kHz15;
        scs_common       = subcarrier_spacing::kHz15;
-       sampling_rate_hz = 61.44e6;
+       srate            = sampling_rate::from_MHz(61.44);
        bw_rb            = 106;
        dl_arfcn         = 520000;
        coreset0_index   = 8;
@@ -278,16 +280,15 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
                                                        task_executor&                prach_executor)
 {
   // Derived parameters.
-  unsigned dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
-  float    tx_scale       = 1.0F / std::sqrt(NRE * bw_rb);
-  double   rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
+  float tx_scale = 1.0F / std::sqrt(NRE * bw_rb);
 
   lower_phy_configuration phy_config;
-  phy_config.dft_size_15kHz             = dft_size_15kHz;
+  phy_config.srate                      = srate;
   phy_config.scs                        = scs;
   phy_config.max_processing_delay_slots = max_processing_delay_slots;
-  phy_config.ul_to_dl_slot_offset       = ul_to_dl_slot_offset;
-  phy_config.rx_to_tx_delay             = rx_to_tx_delay;
+  phy_config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
+  phy_config.time_advance_calibration   = time_advance_calibration;
+  phy_config.ta_offset                  = ta_offset;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.bb_gateway                 = &bb_gateway;
@@ -353,9 +354,8 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
   }
 
   // Create OFDM PRACH demodulator factory.
-  unsigned                                        dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
   std::shared_ptr<ofdm_prach_demodulator_factory> prach_demodulator_factory =
-      create_ofdm_prach_demodulator_factory_sw(dft_factory, dft_size_15kHz);
+      create_ofdm_prach_demodulator_factory_sw(dft_factory, srate.get_dft_size(15e3));
   if (!demodulator_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create OFDM PRACH demodulator factory");
 
@@ -363,8 +363,8 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
   }
 
   // Create PRACH processor factory.
-  std::shared_ptr<prach_processor_factory> prach_factory =
-      create_prach_processor_factory_sw(prach_demodulator_factory, dft_size_15kHz, max_nof_concurrent_requests);
+  std::shared_ptr<prach_processor_factory> prach_factory = create_prach_processor_factory_sw(
+      prach_demodulator_factory, srate.get_dft_size(15e3), max_nof_concurrent_requests);
   if (!demodulator_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create PRACH processor factory");
     return nullptr;
@@ -389,7 +389,7 @@ static radio_configuration::radio create_radio_configuration()
 {
   radio_configuration::radio radio_config;
   radio_config.clock            = clock_src;
-  radio_config.sampling_rate_hz = sampling_rate_hz;
+  radio_config.sampling_rate_hz = srate.to_Hz<double>();
   radio_config.otw_format       = otw_format;
   radio_config.args             = device_arguments;
   radio_config.log_level        = log_level;

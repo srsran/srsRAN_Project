@@ -114,7 +114,7 @@ private:
   /// PRACH processor.
   std::unique_ptr<prach_processor> prach_proc;
   /// Receive-to-transmit delay in clock ticks.
-  const baseband_gateway_timestamp rx_to_tx_delay;
+  baseband_gateway_timestamp rx_to_tx_delay;
   /// Maximum allowed processing delay in slots.
   const unsigned max_processing_delay_slots;
   /// Number of symbols per slot.

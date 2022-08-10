@@ -48,7 +48,7 @@ static std::string log_level = "warning";
 // Program parameters.
 static subcarrier_spacing                        scs                        = subcarrier_spacing::kHz15;
 static unsigned                                  max_processing_delay_slots = 4;
-static unsigned                                  ul_to_dl_slot_offset       = 1;
+static unsigned                                  ul_to_dl_subframe_offset   = 1;
 static cyclic_prefix                             cp                         = cyclic_prefix::NORMAL;
 static double                                    dl_center_freq             = 3489.42e6;
 static double                                    ssb_center_freq            = 3488.16e6;
@@ -61,7 +61,7 @@ static std::string                               driver_name                = "u
 static std::string                               device_arguments           = "type=b200";
 static std::vector<std::string>                  tx_channel_args            = {};
 static std::vector<std::string>                  rx_channel_args            = {};
-static double                                    sampling_rate_hz           = 23.04e6;
+static sampling_rate                             srate                      = sampling_rate::from_MHz(23.04);
 static unsigned                                  bw_rb                      = 52;
 static radio_configuration::over_the_wire_format otw_format     = radio_configuration::over_the_wire_format::SC16;
 static unsigned                                  duration_slots = 60000;
@@ -79,7 +79,7 @@ static const std::vector<configuration_profile> profiles = {
      "Single channel B200 USRP 50MHz bandwidth.",
      []() {
        device_arguments = "type=b200";
-       sampling_rate_hz = 61.44e6;
+       srate            = sampling_rate::from_MHz(61.44);
        bw_rb            = 270;
        otw_format       = radio_configuration::over_the_wire_format::SC12;
      }},
@@ -87,7 +87,7 @@ static const std::vector<configuration_profile> profiles = {
      "Single channel X3x0 USRP 50MHz bandwidth.",
      []() {
        device_arguments = "type=x300";
-       sampling_rate_hz = 92.16e6;
+       srate            = sampling_rate::from_MHz(92.16);
        tx_gain          = 10;
        rx_gain          = 10;
      }},
@@ -97,7 +97,7 @@ static const std::vector<configuration_profile> profiles = {
        driver_name      = "zmq";
        device_arguments = "";
        scs              = subcarrier_spacing::kHz15;
-       sampling_rate_hz = 61.44e6;
+       srate            = sampling_rate::from_MHz(61.44);
        bw_rb            = 106;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
        dl_center_freq   = 2680.1e6;
@@ -130,7 +130,7 @@ static const std::vector<configuration_profile> profiles = {
        driver_name      = "zmq";
        device_arguments = "";
        scs              = subcarrier_spacing::kHz30;
-       sampling_rate_hz = 61.44e6;
+       srate            = sampling_rate::from_MHz(61.44);
        bw_rb            = 52;
        otw_format       = radio_configuration::over_the_wire_format::DEFAULT;
        dl_center_freq   = 3489.42e6;
@@ -265,7 +265,7 @@ static void parse_args(int argc, char** argv)
 static radio_configuration::radio create_radio_configuration()
 {
   radio_configuration::radio radio_config = {};
-  radio_config.sampling_rate_hz           = sampling_rate_hz;
+  radio_config.sampling_rate_hz           = srate.to_Hz<double>();
   radio_config.otw_format                 = otw_format;
   radio_config.args                       = device_arguments;
   radio_config.log_level                  = log_level;
@@ -297,19 +297,18 @@ static radio_configuration::radio create_radio_configuration()
   return radio_config;
 }
 
-lower_phy_configuration create_lower_phy_configuration(unsigned                      dft_size_15kHz,
-                                                       double                        rx_to_tx_delay,
-                                                       float                         tx_scale,
+lower_phy_configuration create_lower_phy_configuration(float                         tx_scale,
                                                        lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
                                                        lower_phy_timing_notifier*    timing_notifier)
 {
   lower_phy_configuration phy_config;
-  phy_config.dft_size_15kHz             = dft_size_15kHz;
+  phy_config.srate                      = srate;
   phy_config.scs                        = scs;
   phy_config.max_processing_delay_slots = max_processing_delay_slots;
-  phy_config.ul_to_dl_slot_offset       = ul_to_dl_slot_offset;
-  phy_config.rx_to_tx_delay             = rx_to_tx_delay;
+  phy_config.ul_to_dl_subframe_offset   = ul_to_dl_subframe_offset;
+  phy_config.time_advance_calibration   = phy_time_unit::from_seconds(0);
+  phy_config.ta_offset                  = lower_phy_ta_offset::n0;
   phy_config.tx_scale                   = tx_scale;
   phy_config.cp                         = cp;
   phy_config.bb_gateway                 = &radio->get_baseband_gateway();
@@ -344,20 +343,16 @@ int main(int argc, char** argv)
   srslog::fetch_basic_logger("POOL").set_level(srslog::str_to_basic_level(log_level));
 
   // Derived parameters.
-  unsigned dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
-  float    tx_scale       = 1.0F / std::sqrt(NRE * bw_rb);
-  double   rx_to_tx_delay = static_cast<double>(ul_to_dl_slot_offset * 1e-3) / pow2(to_numerology_value(scs));
+  float tx_scale = 1.0F / std::sqrt(NRE * bw_rb);
 
   // Make sure parameters are valid.
-  report_fatal_error_if_not(std::remainder(sampling_rate_hz, 15e3) < 1e-3,
-                            "Sampling rate ({:.3f} MHz) must be multiple of 15kHz.",
-                            sampling_rate_hz / 1e6);
   report_fatal_error_if_not(
-      cp.is_valid(scs, dft_size_15kHz / pow2(to_numerology_value(scs))),
-      "The cyclic prefix ({}) numerology ({}) and sampling rate ({:.3f}) combination is invalid .",
-      cp.to_string(),
-      to_numerology_value(scs),
-      sampling_rate_hz);
+      srate.is_valid(scs), "Sampling rate ({}) must be multiple of {}kHz.", srate, scs_to_khz(scs));
+  report_fatal_error_if_not(cp.is_valid(scs, srate.get_dft_size(scs)),
+                            "The cyclic prefix ({}) numerology ({}) and sampling rate ({}) combination is invalid .",
+                            cp.to_string(),
+                            to_numerology_value(scs),
+                            srate);
 
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
@@ -392,8 +387,8 @@ int main(int argc, char** argv)
 
   // Create lower physical layer.
   {
-    lower_phy_configuration phy_config = create_lower_phy_configuration(
-        dft_size_15kHz, rx_to_tx_delay, tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
+    lower_phy_configuration phy_config =
+        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy_instance = create_lower_phy(phy_config);
     srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }

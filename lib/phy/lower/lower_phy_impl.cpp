@@ -245,25 +245,28 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
   prach_proc(std::move(common_config.prach_proc)),
-  rx_to_tx_delay(static_cast<unsigned>(config.rx_to_tx_delay * (config.dft_size_15kHz * 15e3))),
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   sectors(config.sectors),
   ul_slot_context(to_numerology_value(config.scs), 0),
-  dl_slot_context(ul_slot_context + config.ul_to_dl_slot_offset)
+  dl_slot_context(ul_slot_context + config.ul_to_dl_subframe_offset * ul_slot_context.nof_slots_per_subframe())
 {
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
-  // Assert parameters.
-  srsgnb_assert(std::isnormal(config.rx_to_tx_delay), "Invalid Rx to Tx delay.");
-  srsgnb_assert(config.ul_to_dl_slot_offset > 0, "The UL to DL slot offset must be greater than 0.");
+  rx_to_tx_delay =
+      (phy_time_unit::from_seconds(0.001 * static_cast<double>(config.ul_to_dl_subframe_offset)) -
+       config.time_advance_calibration - phy_time_unit::from_units_of_Tc(static_cast<unsigned>(config.ta_offset)))
+          .to_samples(config.srate.to_Hz());
 
-  logger.info(
-      "Initialized with rx_to_tx_delay={:.4f} us ({} samples), ul_to_dl_slot_offset={}, max_processing_delay_slots={}.",
-      config.rx_to_tx_delay,
-      rx_to_tx_delay,
-      config.ul_to_dl_slot_offset,
-      config.max_processing_delay_slots);
+  // Assert parameters.
+  srsgnb_assert(config.ul_to_dl_subframe_offset > 0, "The UL to DL slot offset must be greater than 0.");
+
+  logger.info("Initialized with time_advance_calibration={:.4f} us ({} samples), ul_to_dl_subframe_offset={}, "
+              "max_processing_delay_slots={}.",
+              config.time_advance_calibration.to_seconds() * 1e6,
+              config.time_advance_calibration.to_samples(config.srate.to_Hz()),
+              config.ul_to_dl_subframe_offset,
+              config.max_processing_delay_slots);
 
   // Make sure dependencies are valid.
   srsgnb_assert(config.bb_gateway != nullptr, "Invalid baseband gateway pointer.");
@@ -287,17 +290,17 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
 
   // Create radio buffers and receive metadata.
   for (unsigned nof_channels : config.nof_channels_per_stream) {
-    radio_buffers.emplace_back(nof_channels, 2 * config.dft_size_15kHz);
+    radio_buffers.emplace_back(nof_channels, 2 * config.srate.get_dft_size(15e3));
   }
   receive_metadata.resize(config.nof_channels_per_stream.size());
 
   // Create pool of transmit resource grids.
+  unsigned ul_to_dl_slot_offset = config.ul_to_dl_subframe_offset * ul_slot_context.nof_slots_per_subframe();
   for (unsigned slot_count = 0; slot_count != dl_rg_buffers.size(); ++slot_count) {
     dl_rg_buffers[slot_count].set_nof_sectors(sectors.size());
 
     // If the slot is inside the start transition, then set an initial resource grid reader than is empty.
-    if (slot_count >= config.ul_to_dl_slot_offset &&
-        slot_count < config.ul_to_dl_slot_offset + max_processing_delay_slots) {
+    if (slot_count >= ul_to_dl_slot_offset && slot_count < ul_to_dl_slot_offset + max_processing_delay_slots) {
       for (unsigned sector_id = 0; sector_id != sectors.size(); ++sector_id) {
         logger.debug("Writing initial DL resource grid for sector {} and slot {}.", sector_id, slot_count);
         dl_rg_buffers[slot_count].set_grid(rg_reader_empty, sector_id);

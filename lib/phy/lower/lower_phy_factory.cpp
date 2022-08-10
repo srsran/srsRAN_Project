@@ -44,7 +44,7 @@ public:
       ofdm_modulator_configuration configuration = {};
       configuration.numerology                   = to_numerology_value(config.scs);
       configuration.bw_rb                        = sector.bandwidth_rb;
-      configuration.dft_size                     = config.dft_size_15kHz / pow2(to_numerology_value(config.scs));
+      configuration.dft_size                     = config.srate.get_dft_size(config.scs);
       configuration.cp                           = config.cp;
       configuration.scale                        = config.tx_scale;
       configuration.center_freq_hz               = sector.dl_freq_hz;
@@ -62,7 +62,7 @@ public:
       ofdm_demodulator_configuration configuration = {};
       configuration.numerology                     = to_numerology_value(config.scs);
       configuration.bw_rb                          = sector.bandwidth_rb;
-      configuration.dft_size                       = config.dft_size_15kHz / pow2(to_numerology_value(config.scs));
+      configuration.dft_size                       = config.srate.get_dft_size(config.scs);
       configuration.cp                             = config.cp;
       configuration.scale                          = config.tx_scale;
       configuration.center_freq_hz                 = sector.ul_freq_hz;

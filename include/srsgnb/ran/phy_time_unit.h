@@ -38,7 +38,7 @@ private:
   /// Actual value as multiple of \f$T_c\f$.
   value_type value = 0;
 
-  /// Private constructor from a value in units of \f$\kappa\f$.
+  /// Private constructor from a value in units of \f$T_c\f$.
   explicit constexpr phy_time_unit(value_type value_) : value(value_)
   {
     // Do nothing.
@@ -101,10 +101,23 @@ public:
     return *this;
   }
 
+  /// Overload subtract operator.
+  constexpr phy_time_unit operator-(phy_time_unit other)
+  {
+    value -= other.value;
+    return *this;
+  }
+
   /// Creates a physical layer time from multiples of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
   {
     return phy_time_unit(static_cast<value_type>(units_of_kappa) * KAPPA);
+  }
+
+  /// Creates a physical layer time from units of \f$T_c\f$.
+  static constexpr inline phy_time_unit from_units_of_Tc(unsigned units_of_Tc)
+  {
+    return phy_time_unit(static_cast<value_type>(units_of_Tc));
   }
 
   /// Creates a physical layer time from seconds.
