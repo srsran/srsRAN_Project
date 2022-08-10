@@ -16,6 +16,7 @@
 #include "srsgnb/phy/adapters/phy_error_adapter.h"
 #include "srsgnb/phy/adapters/phy_rg_gateway_adapter.h"
 #include "srsgnb/phy/adapters/phy_rx_symbol_adapter.h"
+#include "srsgnb/phy/adapters/phy_rx_symbol_request_adapter.h"
 #include "srsgnb/phy/adapters/phy_timing_adapter.h"
 #include "srsgnb/phy/lower/lower_phy_factory.h"
 #include "srsgnb/phy/support/support_factories.h"
@@ -114,7 +115,8 @@ struct worker_manager {
 
     ctrl_worker.stop();
     rt_task_worker.stop();
-    upper_worker.stop();
+    upper_dl_worker.stop();
+    upper_ul_worker.stop();
     radio_worker.stop();
   }
 
@@ -128,8 +130,10 @@ struct worker_manager {
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::MAX_PRIO};
   task_worker_executor rt_task_executor{{rt_task_worker}};
   // Upper phy task executor
-  task_worker          upper_worker{"PHY worker", task_worker_queue_size};
-  task_worker_executor upper_executor{upper_worker};
+  task_worker          upper_dl_worker{"PHY DL worker", task_worker_queue_size};
+  task_worker_executor upper_dl_executor{upper_dl_worker};
+  task_worker          upper_ul_worker{"PHY UL worker", task_worker_queue_size};
+  task_worker_executor upper_ul_executor{upper_ul_worker};
   // Radio task executor
   task_worker          radio_worker{"Radio worker", task_worker_queue_size};
   task_worker_executor radio_executor{radio_worker};
@@ -450,19 +454,25 @@ static std::unique_ptr<mac_fapi_adaptor> build_mac_fapi_adaptor(slot_message_gat
   return mac_factory->create(mac_fapi_config);
 }
 
-static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway& gateway, task_executor& executor)
+static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway&                 gateway,
+                                              task_executor&                        dl_executor,
+                                              task_executor&                        ul_executor,
+                                              upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier)
 {
   // Upper.
   std::unique_ptr<upper_phy_factory> up_phy_factory = create_upper_phy_factory();
 
   upper_phy_config upper_config;
-  upper_config.sector_id         = 1;
-  upper_config.nof_ports         = 1;
-  upper_config.nof_slots_dl_rg   = 40;
-  upper_config.nof_dl_processors = 10;
-  upper_config.dl_bw_rb          = bw_rb;
-  upper_config.gateway           = &gateway;
-  upper_config.dl_executor       = &executor;
+  upper_config.sector_id               = 1;
+  upper_config.nof_ports               = 1;
+  upper_config.nof_slots_dl_rg         = 40;
+  upper_config.nof_dl_processors       = 10;
+  upper_config.dl_bw_rb                = bw_rb;
+  upper_config.gateway                 = &gateway;
+  upper_config.dl_executor             = &dl_executor;
+  upper_config.nof_ul_processors       = 60;
+  upper_config.ul_executor             = &ul_executor;
+  upper_config.symbol_request_notifier = &rx_symbol_request_notifier;
 
   return up_phy_factory->create(upper_config);
 }
@@ -565,10 +575,11 @@ int main(int argc, char** argv)
   }
 
   // Create Lower-Upper adapters.
-  phy_error_adapter      error_adapter(log_level);
-  phy_rx_symbol_adapter  rx_symbol_adapter;
-  phy_rg_gateway_adapter rg_gateway_adapter;
-  phy_timing_adapter     timing_adapter;
+  phy_error_adapter             error_adapter(log_level);
+  phy_rx_symbol_adapter         rx_symbol_adapter;
+  phy_rg_gateway_adapter        rg_gateway_adapter;
+  phy_timing_adapter            timing_adapter;
+  phy_rx_symbol_request_adapter rx_symbol_request_adapter;
 
   // Create lower PHY.
   test_logger.info("Creating lower PHY object...");
@@ -581,7 +592,8 @@ int main(int argc, char** argv)
   test_logger.info("Lower PHY created successfully");
 
   test_logger.info("Creating upper PHY object...");
-  std::unique_ptr<upper_phy> upper = build_upper(rg_gateway_adapter, workers.upper_executor);
+  std::unique_ptr<upper_phy> upper =
+      build_upper(rg_gateway_adapter, workers.upper_dl_executor, workers.upper_ul_executor, rx_symbol_request_adapter);
   if (!upper) {
     test_logger.error("Failed to create Upper PHY");
     return -1;
@@ -592,6 +604,7 @@ int main(int argc, char** argv)
   rx_symbol_adapter.connect(&upper->get_rx_symbol_handler());
   timing_adapter.connect(&upper->get_timing_handler());
   rg_gateway_adapter.connect(&lower->get_rg_handler());
+  rx_symbol_request_adapter.connect(&lower->get_request_handler());
 
   // Create FAPI adaptors.
   test_logger.info("Creating FAPI adaptors...");
