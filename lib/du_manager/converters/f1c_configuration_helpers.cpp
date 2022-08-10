@@ -288,6 +288,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   const rach_config_common& rach_cfg      = *cfg.init_ul_bwp.rach_cfg_common;
   out.init_ul_bwp.rach_cfg_common_present = true;
   rach_cfg_common_s& rach                 = out.init_ul_bwp.rach_cfg_common.set_setup();
+  rach.rach_cfg_generic.prach_cfg_idx     = rach_cfg.rach_cfg_generic.prach_config_index;
   rach.rach_cfg_generic.msg1_fdm.value    = rach_msg1_fdm_convert_to_asn1(rach_cfg.rach_cfg_generic.msg1_fdm);
   rach.rach_cfg_generic.msg1_freq_start   = static_cast<uint16_t>(rach_cfg.rach_cfg_generic.msg1_frequency_start);
   rach.rach_cfg_generic.zero_correlation_zone_cfg =
