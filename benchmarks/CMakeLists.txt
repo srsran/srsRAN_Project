@@ -11,3 +11,4 @@ remove_definitions(-DPARANOID_ASSERTS_ENABLED)
 
 add_subdirectory(adt)
 add_subdirectory(phy)
+add_subdirectory(scheduler)
