@@ -199,7 +199,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
                                      cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common.sib1_search_space_id,
                                      sib1_dci_aggr_lev);
   if (pdcch == nullptr) {
-    logger.error("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
+    logger.warning("SCHED: Could not allocated SIB1's DCI in PDCCH for beam idx: {}", beam_idx);
     return false;
   }
 
@@ -212,7 +212,7 @@ bool sib1_scheduler::allocate_sib1(cell_slot_resource_allocator& res_grid, unsig
 
   // 4. Delegate filling SIB1 grants to helper function.
   fill_sib1_grant(res_grid, sib1_crbs, time_resource, dmrs_info, sib1_prbs_tbs.tbs_bytes);
-  logger.info("SCHED: Allocated SIB1 at slot {} for SSB beam idx: {}", res_grid.slot.to_uint(), beam_idx);
+  logger.info("SCHED: SIB1, cell={}, SSB beam idx: {}, crbs={}", res_grid.cfg.cell_index, beam_idx, sib1_crbs);
   return true;
 }
 
