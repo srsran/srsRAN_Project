@@ -174,7 +174,6 @@ bool pdcch_scheduler_impl::pdcch_slot_allocator::allocate_cce(cell_slot_resource
   const coreset_configuration& cs_cfg  = *record.pdcch_ctx->coreset_cfg;
   prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, cell_cfg.pci, record.pdcch_ctx->cces.aggr_lvl, ncce);
   grant_info     grant;
-  grant.ch  = grant_info::channel::cch;
   grant.scs = bwp_cfg.scs;
 
   // Check the current CCE position collides with an existing one.

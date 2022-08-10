@@ -72,10 +72,6 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
       cached_prach_occasion& cached_prach = cached_prachs.back();
 
       // Pre-compute PRACH symbol x RB resources.
-      cached_prach.grant_resources.ch = grant_info::channel::prach;
-      // TODO: address the case of SCS for non-initial access PRACH ("\Delta_f is the subcarrier spacing of the initial
-      //       uplink bandwidth part during initial access. Otherwise, \Delta_f is the subcarrier spacing of the active
-      //       uplink bandwidth part", Section 5.3.2, Ts 38.211).
       cached_prach.grant_resources.scs = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs;
       if (prach_cfg.format < preamble_format::OTHER) {
         double   length_msecs                = (info.cp_length.to_seconds() + info.symbol_length.to_seconds()) * 1000;

@@ -85,7 +85,7 @@ bool carrier_subslot_resource_grid::all_set(ofdm_symbol_range symbols, crb_inter
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 cell_slot_resource_grid::carrier_resource_grid::carrier_resource_grid(const scs_specific_carrier& carrier_cfg) :
-  sch_crbs(carrier_cfg.carrier_bandwidth), subslot_rbs(carrier_cfg)
+  subslot_rbs(carrier_cfg)
 {
 }
 
@@ -93,7 +93,6 @@ cell_slot_resource_grid::cell_slot_resource_grid(span<const scs_specific_carrier
 {
   std::fill(numerology_to_grid_idx.begin(), numerology_to_grid_idx.end(), std::numeric_limits<unsigned>::max());
 
-  // TODO: For UL, use UL carrier list instead.
   carrier_grids.reserve(scs_carriers.size());
   for (const auto& scs_carrier : scs_carriers) {
     carrier_grids.emplace_back(scs_carrier);
@@ -105,7 +104,6 @@ void cell_slot_resource_grid::clear()
 {
   for (auto& carrier : carrier_grids) {
     carrier.subslot_rbs.clear();
-    carrier.sch_crbs.reset();
   }
 }
 
@@ -115,9 +113,6 @@ void cell_slot_resource_grid::fill(grant_info grant)
 
   // Fill RB grid.
   carrier.subslot_rbs.fill(grant.symbols, grant.crbs);
-  if (grant.ch == grant_info::channel::sch) {
-    carrier.sch_crbs.fill(grant.crbs.start(), grant.crbs.stop());
-  }
 }
 
 bool cell_slot_resource_grid::collides(grant_info grant) const
@@ -130,16 +125,6 @@ bool cell_slot_resource_grid::collides(subcarrier_spacing scs, ofdm_symbol_range
 {
   const carrier_resource_grid& carrier = get_carrier(scs);
   return carrier.subslot_rbs.collides(ofdm_symbols, crbs);
-}
-
-prb_bitmap cell_slot_resource_grid::sch_crbs(const bwp_configuration& bwp_cfg) const
-{
-  const carrier_resource_grid& carrier = get_carrier(bwp_cfg.scs);
-  prb_bitmap                   crbs    = carrier.sch_crbs;
-  // Set as used (true) the CRBs outside of the BWP.
-  crbs.fill(0, bwp_cfg.crbs.start());
-  crbs.fill(bwp_cfg.crbs.stop(), crbs.size());
-  return crbs;
 }
 
 prb_bitmap cell_slot_resource_grid::used_crbs(const bwp_configuration& bwp_cfg, ofdm_symbol_range symbols) const
@@ -208,19 +193,27 @@ void cell_slot_resource_allocator::clear()
 cell_resource_allocator::cell_resource_allocator(const cell_configuration& cfg_) : cfg(cfg_)
 {
   // Create cell_slot_resource_allocator objects.
-  std::vector<scs_specific_carrier> slot_scs_carriers;
+  std::vector<scs_specific_carrier> dl_scs_carriers, ul_scs_carriers;
   subcarrier_spacing                max_scs = cfg.dl_cfg_common.freq_info_dl.scs_carrier_list.back().scs;
+  max_scs = std::max(max_scs, cfg.ul_cfg_common.freq_info_ul.scs_carrier_list.back().scs);
   slots.resize(GRID_NOF_SUBFRAMES * get_nof_slots_per_subframe(max_scs));
   unsigned nof_slots_per_subframe = get_nof_slots_per_subframe(max_scs);
   for (unsigned i = 0; i < slots.size(); ++i) {
     for (const auto& carrier : cfg.dl_cfg_common.freq_info_dl.scs_carrier_list) {
       unsigned current_slot_dur = nof_slots_per_subframe / get_nof_slots_per_subframe(carrier.scs);
       if (i % current_slot_dur == 0) {
-        slot_scs_carriers.emplace_back(carrier);
+        dl_scs_carriers.emplace_back(carrier);
       }
     }
-    slots[i] = std::make_unique<cell_slot_resource_allocator>(cfg, slot_scs_carriers, slot_scs_carriers);
-    slot_scs_carriers.clear();
+    for (const auto& carrier : cfg.ul_cfg_common.freq_info_ul.scs_carrier_list) {
+      unsigned current_slot_dur = nof_slots_per_subframe / get_nof_slots_per_subframe(carrier.scs);
+      if (i % current_slot_dur == 0) {
+        ul_scs_carriers.emplace_back(carrier);
+      }
+    }
+    slots[i] = std::make_unique<cell_slot_resource_allocator>(cfg, dl_scs_carriers, ul_scs_carriers);
+    dl_scs_carriers.clear();
+    ul_scs_carriers.clear();
   }
 }
 

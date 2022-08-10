@@ -201,8 +201,9 @@ void srsgnb::schedule_ssb(cell_slot_resource_allocator& res_grid,
 
   // Update the used DL PRBs with those allocated to the SSBs.
   for (auto& ssb : ssb_list) {
-    grant_info grant{
-        grant_info::channel::ssb, cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
+    // TODO: In case, SSB SCS != init DL BWP SCS, we should do an adaptation of symbols and CRBs to the numerology
+    // of the latter.
+    grant_info grant{cell_cfg.dl_cfg_common.init_dl_bwp.generic_params.scs, ssb.symbols, ssb.crbs};
     res_grid.dl_res_grid.fill(grant);
   }
 }

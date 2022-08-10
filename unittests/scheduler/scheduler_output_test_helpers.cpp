@@ -24,8 +24,7 @@ std::vector<grant_info> srsgnb::get_pdcch_grant_info(pci_t pci, const pdcch_dl_i
   prb_index_list pdcch_prbs = cce_to_prb_mapping(bwp_cfg, cs_cfg, pci, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
   for (unsigned prb : pdcch_prbs) {
     unsigned crb = prb_to_crb(bwp_cfg, prb);
-    grants.push_back(grant_info{
-        grant_info::channel::cch, bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});
+    grants.push_back(grant_info{bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});
   }
   return grants;
 }
@@ -40,8 +39,7 @@ std::vector<grant_info> srsgnb::get_pdcch_grant_info(const pdcch_ul_information&
       cce_to_prb_mapping(bwp_cfg, cs_cfg, MAX_PCI + 1, pdcch.ctx.cces.aggr_lvl, pdcch.ctx.cces.ncce);
   for (unsigned prb : pdcch_prbs) {
     unsigned crb = prb_to_crb(bwp_cfg, prb);
-    grants.push_back(grant_info{
-        grant_info::channel::cch, bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});
+    grants.push_back(grant_info{bwp_cfg.scs, ofdm_symbol_range{0U, (uint8_t)cs_cfg.duration}, {crb, crb + 1}});
   }
   return grants;
 }
@@ -52,19 +50,19 @@ grant_info srsgnb::get_pdsch_grant_info(const bwp_downlink_common& bwp_cfg, cons
   coreset0_bwp_cfg.crbs              = bwp_cfg.pdcch_common.coreset0->coreset0_crbs();
 
   crb_interval crbs = prb_to_crb(coreset0_bwp_cfg, sib.pdsch_cfg.prbs.prbs());
-  return grant_info{grant_info::channel::sch, sib.pdsch_cfg.bwp_cfg->scs, sib.pdsch_cfg.symbols, crbs};
+  return grant_info{sib.pdsch_cfg.bwp_cfg->scs, sib.pdsch_cfg.symbols, crbs};
 }
 
 grant_info srsgnb::get_pdsch_grant_info(const rar_information& rar)
 {
   crb_interval crbs = prb_to_crb(*rar.pdsch_cfg.bwp_cfg, rar.pdsch_cfg.prbs.prbs());
-  return grant_info{grant_info::channel::sch, rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
+  return grant_info{rar.pdsch_cfg.bwp_cfg->scs, rar.pdsch_cfg.symbols, crbs};
 }
 
 grant_info srsgnb::get_pdsch_grant_info(const dl_msg_alloc& ue_grant)
 {
   crb_interval crbs = prb_to_crb(*ue_grant.pdsch_cfg.bwp_cfg, ue_grant.pdsch_cfg.prbs.prbs());
-  return grant_info{grant_info::channel::sch, ue_grant.pdsch_cfg.bwp_cfg->scs, ue_grant.pdsch_cfg.symbols, crbs};
+  return grant_info{ue_grant.pdsch_cfg.bwp_cfg->scs, ue_grant.pdsch_cfg.symbols, crbs};
 }
 
 std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cell_cfg, const dl_sched_result& dl_res)
@@ -76,7 +74,7 @@ std::vector<test_grant_info> srsgnb::get_dl_grants(const cell_configuration& cel
     grants.emplace_back();
     grants.back().type  = test_grant_info::SSB;
     grants.back().rnti  = INVALID_RNTI;
-    grants.back().grant = grant_info{grant_info::channel::ssb, cell_cfg.ssb_cfg.scs, ssb.symbols, ssb.crbs};
+    grants.back().grant = grant_info{cell_cfg.ssb_cfg.scs, ssb.symbols, ssb.crbs};
   }
 
   // Fill DL PDCCHs.
@@ -145,10 +143,9 @@ std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cel
       prb_interval prbs{prb_start, prb_start + 6}; // TODO: Derive nof RBs.
       crb_interval crbs = prb_to_crb(cell_cfg.ul_cfg_common.init_ul_bwp.generic_params, prbs);
       grants.emplace_back();
-      grants.back().type = test_grant_info::PRACH;
-      grants.back().rnti = INVALID_RNTI;
-      grants.back().grant =
-          grant_info{grant_info::channel::sch, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
+      grants.back().type  = test_grant_info::PRACH;
+      grants.back().rnti  = INVALID_RNTI;
+      grants.back().grant = grant_info{cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs, symbols, crbs};
     }
   }
 
@@ -157,10 +154,9 @@ std::vector<test_grant_info> srsgnb::get_ul_grants(const cell_configuration& cel
     const bwp_configuration& bwp_cfg = *pusch.pusch_cfg.bwp_cfg;
     crb_interval             crbs    = prb_to_crb(bwp_cfg, pusch.pusch_cfg.prbs.prbs());
     grants.emplace_back();
-    grants.back().type = test_grant_info::UE_UL;
-    grants.back().rnti = INVALID_RNTI;
-    grants.back().grant =
-        grant_info{grant_info::channel::sch, pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
+    grants.back().type  = test_grant_info::UE_UL;
+    grants.back().rnti  = INVALID_RNTI;
+    grants.back().grant = grant_info{pusch.pusch_cfg.bwp_cfg->scs, pusch.pusch_cfg.symbols, crbs};
   }
 
   return grants;

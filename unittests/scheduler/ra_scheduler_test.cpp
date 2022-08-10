@@ -281,7 +281,7 @@ static void test_rar_general_allocation(cell_resource_allocator& resource_grid)
   cell_slot_resource_allocator& rar_alloc = resource_grid[0];
 
   if (rar_alloc.result.dl.rar_grants.size() > 0) {
-    TESTASSERT(rar_alloc.dl_res_grid.sch_crbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    TESTASSERT(rar_alloc.dl_res_grid.used_crbs(rar_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).any());
   }
 }
 
@@ -595,7 +595,8 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       // RAR allocated right after PRACH is detected
       cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
 
-      TESTASSERT(pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+      TESTASSERT(
+          pdcch_sl_res.dl_res_grid.used_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).any());
 
       TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
       test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);
@@ -607,8 +608,9 @@ void test_ra_sched_fdd_single_rach(const ra_sched_param& params)
       test_rach_ind_in_rar(bench.cfg, rach_ind, rar);
       TESTASSERT_EQ(1, rar.grants.size());
     } else {
-      TESTASSERT(
-          bench.res_grid[0].dl_res_grid.sch_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params).none());
+      TESTASSERT(bench.res_grid[0]
+                     .dl_res_grid.used_crbs(bench.res_grid.cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14})
+                     .none());
     }
 
     sl_rx++;
@@ -673,7 +675,8 @@ void test_ra_sched_tdd_single_rach()
     cell_slot_resource_allocator& pdcch_sl_res = bench.res_grid[0];
     cell_slot_resource_allocator& msg3_sl_res  = bench.res_grid[msg3_delay];
 
-    TESTASSERT(pdcch_sl_res.dl_res_grid.sch_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+    TESTASSERT(
+        pdcch_sl_res.dl_res_grid.used_crbs(pdcch_sl_res.cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).any());
 
     TESTASSERT_EQ(1, pdcch_sl_res.result.dl.rar_grants.size());
     test_rar_consistency(bench.cfg, pdcch_sl_res.result.dl.rar_grants);

@@ -344,10 +344,8 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
   dci.tb_scaling               = 0; // TODO.
 
   // Allocate RBs and space for RAR.
-  rar_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch,
-                                        get_dl_bwp_cfg().scs,
-                                        get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols,
-                                        rar_crbs});
+  rar_alloc.dl_res_grid.fill(
+      grant_info{get_dl_bwp_cfg().scs, get_pdsch_cfg().pdsch_td_alloc_list[pdsch_time_res_index].symbols, rar_crbs});
 
   // Fill RAR PDSCH.
   rar_alloc.result.dl.rar_grants.emplace_back();
@@ -394,8 +392,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
     // Allocate Msg3 RBs.
     const ofdm_symbol_range& symbols = get_pusch_cfg().pusch_td_alloc_list[msg3_candidate.pusch_td_res_index].symbols;
-    msg3_alloc.ul_res_grid.fill(
-        grant_info{grant_info::channel::sch, get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
+    msg3_alloc.ul_res_grid.fill(grant_info{get_dl_bwp_cfg().scs, symbols, msg3_candidate.crbs});
     msg3_alloc.result.ul.puschs.emplace_back();
 
     // Fill PUSCH for Msg3.

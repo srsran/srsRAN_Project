@@ -41,20 +41,18 @@ struct bwp_sch_grant_info {
 
 /// Parameters of a grant allocation in the cell resource grid.
 struct grant_info {
-  enum class channel { cch, sch, ssb, prach };
-  channel            ch;
   subcarrier_spacing scs;
   ofdm_symbol_range  symbols;
   /// Common RBs of the grant. RB==0 corresponds to the RB that overlaps with the pointA.
   crb_interval crbs;
 
   grant_info() = default;
-  grant_info(grant_info::channel ch_, subcarrier_spacing scs_, ofdm_symbol_range symbols_, crb_interval crbs_) :
-    ch(ch_), scs(scs_), symbols(symbols_), crbs(crbs_)
+  grant_info(subcarrier_spacing scs_, ofdm_symbol_range symbols_, crb_interval crbs_) :
+    scs(scs_), symbols(symbols_), crbs(crbs_)
   {
   }
   grant_info(const bwp_sch_grant_info& grant) :
-    ch(channel::sch), scs(grant.bwp_cfg->scs), symbols(grant.symbols), crbs(prb_to_crb(*grant.bwp_cfg, grant.prbs))
+    scs(grant.bwp_cfg->scs), symbols(grant.symbols), crbs(prb_to_crb(*grant.bwp_cfg, grant.prbs))
   {
   }
 };
@@ -140,9 +138,6 @@ public:
   bool collides(grant_info grant) const;
   bool collides(subcarrier_spacing scs, ofdm_symbol_range ofdm_symbols, crb_interval crbs) const;
 
-  /// \brief Returns a bitmap of the carrier CRBs that are being used by SCH.
-  crb_bitmap sch_crbs(const bwp_configuration& bwp_cfg) const;
-
   /// \brief Calculates a bitmap where each bit set to one represents a CRB that is occupied or unavailable.
   /// A CRB is considered occupied if it is outside of the provided BWP CRB boundaries or if it is already allocated
   /// in at least one OFDM symbol of the provided OFDM symbol range.
@@ -161,9 +156,6 @@ private:
   friend struct cell_resource_allocator;
 
   struct carrier_resource_grid {
-    /// Stores the sum of all CRBs used for SCH grants.
-    prb_bitmap sch_crbs;
-
     /// Stores the sum of all symbol x CRB resources used for data and control grants.
     carrier_subslot_resource_grid subslot_rbs;
 

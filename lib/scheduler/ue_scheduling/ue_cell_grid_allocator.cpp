@@ -80,7 +80,7 @@ bool ue_cell_grid_allocator::allocate_pdsch(const ue_pdsch_grant& grant)
   }
 
   // Mark resources as occupied in the ResourceGrid.
-  pdsch_alloc.dl_res_grid.fill(grant_info{grant_info::channel::sch, scs, pdsch_td_cfg.symbols, grant.crbs});
+  pdsch_alloc.dl_res_grid.fill(grant_info{scs, pdsch_td_cfg.symbols, grant.crbs});
 
   // Allocate UE DL HARQ.
   prb_interval     prbs     = crb_to_prb(*pdcch->ctx.bwp_cfg, grant.crbs);

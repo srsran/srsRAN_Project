@@ -216,10 +216,10 @@ struct test_bench {
   {
     // Tests if PRBs have been allocated.
     if (got_allocated) {
-      TESTASSERT(res_grid[0].dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+      TESTASSERT(res_grid[0].dl_res_grid.used_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).any());
     } else {
       // Tests if PRBs are still unused.
-      TESTASSERT(not res_grid[0].dl_res_grid.sch_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params).any());
+      TESTASSERT(res_grid[0].dl_res_grid.used_crbs(cfg.dl_cfg_common.init_dl_bwp.generic_params, {0, 14}).none());
     }
   }
 };

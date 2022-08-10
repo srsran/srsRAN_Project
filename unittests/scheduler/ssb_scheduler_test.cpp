@@ -141,7 +141,7 @@ void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
   unsigned ssb_crb_stop  = k_ssb.to_uint() > 0 ? ssb_crb_start + NOF_SSB_PRBS + 1 : ssb_crb_start + NOF_SSB_PRBS;
 
   // Verify resources on the left-side of SSB (lower CRBs) are unused.
-  grant_info empty_space{grant_info::channel::ssb, scs, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}, {0, ssb_crb_start}};
+  grant_info empty_space{scs, {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP}, {0, ssb_crb_start}};
   TESTASSERT(not res_grid.collides(empty_space),
              "PRBs {} over symbols {} should be empty",
              empty_space.crbs,
@@ -156,7 +156,7 @@ void test_ssb_grid_allocation(const cell_slot_resource_grid& res_grid,
              empty_space.symbols);
 
   // Verify resources for SSB in the grid are set.
-  grant_info ssb_resources{grant_info::channel::ssb, scs, ssb_symbols, ssb_crbs};
+  grant_info ssb_resources{scs, ssb_symbols, ssb_crbs};
   TESTASSERT(res_grid.all_set(ssb_resources),
              "PRBs {} over symbols {} should be set",
              ssb_resources.crbs,
@@ -256,8 +256,7 @@ void test_ssb_case_A_C(const slot_point&             slot_tx,
 
     // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
     if (expected_ssb_per_slot == 0) {
-      grant_info empty_space{grant_info::channel::ssb,
-                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+      grant_info empty_space{slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                              {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
                              {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
       TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
@@ -342,8 +341,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
 
     // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
     if (expected_ssb_per_slot == 0) {
-      grant_info empty_space{grant_info::channel::ssb,
-                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+      grant_info empty_space{slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                              {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
                              {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
       TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
@@ -391,8 +389,7 @@ void test_ssb_case_B(const slot_point&             slot_tx,
 
     // Verify that the grid of symbols/PRBs is empty in the slots when SSBs are not expected.
     if (expected_ssb_per_slot == 0) {
-      grant_info empty_space{grant_info::channel::ssb,
-                             slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
+      grant_info empty_space{slot_alloc.cfg.dl_cfg_common.init_dl_bwp.generic_params.scs,
                              {0, NOF_OFDM_SYM_PER_SLOT_NORMAL_CP},
                              {0, slot_alloc.cfg.dl_cfg_common.freq_info_dl.scs_carrier_list[0].carrier_bandwidth}};
       TESTASSERT(not slot_alloc.dl_res_grid.collides(empty_space), "PRBs {} should be empty", empty_space.crbs);
