@@ -54,19 +54,22 @@ const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_in
 {
   auto& cell = cells[cell_index];
 
-  // 1. Reset cell resource grid state.
+  // > Reset cell resource grid state.
   cell.slot_indication(sl_tx);
 
-  // 2. SSB scheduling.
+  // > SSB scheduling.
   schedule_ssb(cell.res_grid[0], sl_tx, cell.cell_cfg);
 
-  // 3. Schedule DL signalling.
+  // > Schedule DL signalling.
   cell.sib1_sch.schedule_sib1(cell.res_grid[0], sl_tx);
 
-  // 4. Schedule RARs and Msg3.
+  // > Schedule PRACH PDUs.
+  cell.prach_sch.run_slot(cell.res_grid[0]);
+
+  // > Schedule RARs and Msg3.
   cell.ra_sch.run_slot(cell.res_grid);
 
-  // 5. Schedule UE DL and UL data.
+  // > Schedule UE DL and UL data.
   ue_sched->run_slot(sl_tx, cell_index);
 
   // Return result for the slot.

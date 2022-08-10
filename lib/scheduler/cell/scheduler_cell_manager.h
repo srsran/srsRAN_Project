@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common_scheduling/prach_scheduler.h"
 #include "../common_scheduling/ra_scheduler.h"
 #include "../common_scheduling/sib_scheduler.h"
 #include "../pdcch_scheduling/pdcch_scheduler_impl.h"
@@ -28,6 +29,7 @@ public:
     res_grid(cell_cfg),
     pdcch_sch(cell_cfg),
     ra_sch(cell_cfg, pdcch_sch),
+    prach_sch(cell_cfg),
     sib1_sch(cell_cfg, pdcch_sch, msg)
   {
   }
@@ -43,6 +45,7 @@ public:
 
   pdcch_scheduler_impl pdcch_sch;
   ra_scheduler         ra_sch;
+  prach_scheduler      prach_sch;
   sib1_scheduler       sib1_sch;
 };
 
