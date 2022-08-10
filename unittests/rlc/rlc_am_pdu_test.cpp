@@ -852,7 +852,7 @@ void test_control_pdu_invalid_e3_extension_cross_boundary_18bit()
 // Test merge of NACKs upon status PDU creation -- previous NACK: non-range; next NACK: non-range
 void rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(rlc_am_sn_size sn_size)
 {
-  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: SDU + SDU", to_number(sn_size));
+  test_delimit_logger delimiter("Control PDU ({}) test NACK merge: SDU + SDU", sn_size);
 
   const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
   const uint32_t mod_nr        = cardinality(to_number(sn_size));
@@ -1346,7 +1346,7 @@ void rlc_am_nr_control_pdu_test_nack_merge_sdu_sdu(rlc_am_sn_size sn_size)
 // Test merge of NACKs upon status PDU creation -- previous NACK: range; next NACK: non-range
 void rlc_am_nr_control_pdu_test_nack_merge_range_sdu(rlc_am_sn_size sn_size)
 {
-  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: range + SDU", to_number(sn_size));
+  test_delimit_logger delimiter("Control PDU ({}) test NACK merge: range + SDU", sn_size);
 
   const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
   const uint32_t mod_nr        = cardinality(to_number(sn_size));
@@ -1840,7 +1840,7 @@ void rlc_am_nr_control_pdu_test_nack_merge_range_sdu(rlc_am_sn_size sn_size)
 // Test merge of NACKs upon status PDU creation -- previous NACK: non-range; next NACK: range
 void rlc_am_nr_control_pdu_test_nack_merge_sdu_range(rlc_am_sn_size sn_size)
 {
-  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: SDU + range", to_number(sn_size));
+  test_delimit_logger delimiter("Control PDU ({}) test NACK merge: SDU + range", sn_size);
 
   const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
   const uint32_t mod_nr        = cardinality(to_number(sn_size));
@@ -2334,7 +2334,7 @@ void rlc_am_nr_control_pdu_test_nack_merge_sdu_range(rlc_am_sn_size sn_size)
 // Test merge of NACKs upon status PDU creation -- previous NACK: range; next NACK: range
 void rlc_am_nr_control_pdu_test_nack_merge_range_range(rlc_am_sn_size sn_size)
 {
-  test_delimit_logger delimiter("Control PDU ({} bit SN) test NACK merge: range + SDU", to_number(sn_size));
+  test_delimit_logger delimiter("Control PDU ({}) test NACK merge: range + SDU", sn_size);
 
   const uint16_t so_end_of_sdu = rlc_am_status_nack::so_end_of_sdu;
   const uint32_t mod_nr        = cardinality(to_number(sn_size));
@@ -2830,7 +2830,7 @@ void rlc_am_nr_control_pdu_test_nack_merge_range_range(rlc_am_sn_size sn_size)
 // 2) Test step-wise growth and trimming of status PDU while covering several corner cases
 void rlc_am_nr_control_pdu_test_trimming(rlc_am_sn_size sn_size)
 {
-  test_delimit_logger delimiter("Control PDU ({} bit SN) test trimming", to_number(sn_size));
+  test_delimit_logger delimiter("Control PDU ({}) test trimming", sn_size);
 
   // status PDU with no NACKs
   {

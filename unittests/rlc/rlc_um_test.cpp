@@ -55,7 +55,7 @@ public:
 
 void test_full_sdus(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - Full SDUs, no Segmentation", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - Full SDUs, no Segmentation", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
@@ -125,9 +125,8 @@ void test_full_sdus(rlc_um_sn_size sn_size)
 
 void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
 {
-  test_delimit_logger delimiter{
-      "RLC UM ({} bit) - Segmented SDU{}", to_number(sn_size), reverse_rx ? ", reverse rx" : ""};
-  rlc_um_config config;
+  test_delimit_logger delimiter{"RLC UM ({}) - Segmented SDU{}", sn_size, reverse_rx ? ", reverse rx" : ""};
+  rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
@@ -215,7 +214,7 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
 
 void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - Multiple segmented SDUs", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - Multiple segmented SDUs", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
@@ -313,9 +312,8 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
 
 void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32_t last_sn)
 {
-  test_delimit_logger delimiter{
-      "RLC UM ({} bit) - Segmented SDU with PDU duplicates (last_sn={})", to_number(sn_size), last_sn};
-  rlc_um_config config;
+  test_delimit_logger delimiter{"RLC UM ({}) - Segmented SDU with PDU duplicates (last_sn={})", sn_size, last_sn};
+  rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
@@ -404,7 +402,7 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
 
 void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - reassembly window wrap-around", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - reassembly window wrap-around", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
@@ -482,7 +480,7 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
 
 void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - lost PDU outside reassembly window", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - lost PDU outside reassembly window", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
@@ -569,7 +567,7 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
 
 void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - lost segment outside reassembly window", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - lost segment outside reassembly window", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
@@ -656,7 +654,7 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
 
 void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
 {
-  test_delimit_logger delimiter{"RLC UM ({} bit) - out-of-order segments across different SDUs", to_number(sn_size)};
+  test_delimit_logger delimiter{"RLC UM ({}) - out-of-order segments across different SDUs", sn_size};
   rlc_um_config       config;
   config.rx = std::make_unique<rlc_rx_um_config>(rlc_rx_um_config{sn_size, 5});
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});

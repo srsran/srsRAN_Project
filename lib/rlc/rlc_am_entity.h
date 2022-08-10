@@ -38,7 +38,7 @@ public:
         std::make_unique<rlc_tx_am_entity>(du_index, lcid, *config.tx, upper_cn, buffer_state_notifier, timers);
     logger.log_info(
         "RLC TX AM configured: sn_field_length={}, t_poll_retx={}, max_retx_thresh={}, poll_pdu={}, poll_byte={}",
-        to_number(config.tx->sn_field_length),
+        config.tx->sn_field_length,
         config.tx->t_poll_retx,
         config.tx->max_retx_thresh,
         config.tx->poll_pdu,
@@ -47,7 +47,7 @@ public:
     std::unique_ptr<rlc_rx_am_entity> rx_am =
         std::make_unique<rlc_rx_am_entity>(du_index, lcid, *config.rx, upper_dn, timers);
     logger.log_info("RLC RX AM configured: sn_field_length={}, t_reassembly={}, t_status_prohibit={}",
-                    to_number(config.rx->sn_field_length),
+                    config.rx->sn_field_length,
                     config.rx->t_reassembly,
                     config.rx->t_status_prohibit);
 
