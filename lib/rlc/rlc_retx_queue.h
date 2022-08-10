@@ -34,26 +34,6 @@ struct rlc_tx_amd_retx {
 };
 
 template <class T>
-class pdu_retx_queue_base
-{
-public:
-  virtual ~pdu_retx_queue_base() = default;
-  virtual T&     push()          = 0;
-  virtual void   pop()           = 0;
-  virtual T&     front()         = 0;
-  virtual void   clear()         = 0;
-  virtual size_t size() const    = 0;
-  virtual bool   empty() const   = 0;
-  virtual bool   full() const    = 0;
-
-  virtual T&       operator[](size_t idx)       = 0;
-  virtual const T& operator[](size_t idx) const = 0;
-
-  virtual bool has_sn(uint32_t sn) const              = 0;
-  virtual bool has_sn(uint32_t sn, uint32_t so) const = 0;
-};
-
-template <class T>
 class pdu_retx_queue_list
 {
   std::list<T> queue;
