@@ -102,7 +102,21 @@ public:
   }
 
   /// Overload subtract operator.
+  constexpr phy_time_unit operator+=(phy_time_unit other)
+  {
+    value += other.value;
+    return *this;
+  }
+
+  /// Overload subtract operator.
   constexpr phy_time_unit operator-(phy_time_unit other)
+  {
+    value -= other.value;
+    return *this;
+  }
+
+  /// Overload subtract operator.
+  constexpr phy_time_unit operator-=(phy_time_unit other)
   {
     value -= other.value;
     return *this;

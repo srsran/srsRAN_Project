@@ -114,7 +114,7 @@ private:
   /// PRACH processor.
   std::unique_ptr<prach_processor> prach_proc;
   /// Receive-to-transmit delay in clock ticks.
-  baseband_gateway_timestamp rx_to_tx_delay;
+  const baseband_gateway_timestamp rx_to_tx_delay;
   /// Maximum allowed processing delay in slots.
   const unsigned max_processing_delay_slots;
   /// Number of symbols per slot.
@@ -147,6 +147,48 @@ private:
 
   /// Runs the lower physical layer.
   void realtime_process_loop(task_executor& realtime_task_executor);
+
+  /// \brief Calculates the Rx-to-Tx delay in samples.
+  ///
+  /// The Rx-to-Tx delay \f$N\f$ is the number of samples between the baseband reception and a transmission.
+  ///
+  /// The downlink subframes are transmitted \c ul_to_dl_subframe_offset subframes earlier than the uplink ones are
+  /// received.
+  ///
+  /// Then, for a received symbol at time \f$N_{UL}\f$, there is an associated transmitted symbol at time \f$N_{DL}\f$.
+  /// The difference between them is \f$N_{offset}=N_{DL} - N_{UL}\f$ expressed by the argument \c
+  /// ul_to_dl_subframe_offset in subframes (one millisecond per subframe).
+  ///
+  /// The parameter \c time_advance_calibration (\f$N_{cal}\f$) is for compensating the baseband unit reception to
+  /// transmission timing offset.
+  ///
+  /// The parameter \f$N_{TA,offset}\f$ defined in TS38.211 Section 4.3.3.
+  ///
+  /// Finally, the final Rx-to-Tx delay is \f$N=N_{offset}-N_{cal}-N_{TA, offset}\f$ expressed in physical layer units
+  /// of time.
+  ///
+  /// \param[in] ul_to_dl_subframe_offset UL-to-DL subframe offset.
+  /// \param[in] time_advance_calibration Time in advance baseband calibration time.
+  /// \param[in] ta_offset                Time advance offset (see \ref lower_phy_ta_offset for more information).
+  /// \param[in] srate                    Sampling rate.
+  /// \return The reception to transmission timestamp in number of samples.
+  static inline unsigned get_rx_to_tx_delay(unsigned            ul_to_dl_subframe_offset,
+                                            phy_time_unit       time_advance_calibration,
+                                            lower_phy_ta_offset ta_offset,
+                                            sampling_rate       srate)
+  {
+    // Calculate time between the UL signal reception and the transmission.
+    phy_time_unit ul_to_dl_delay = phy_time_unit::from_seconds(0.001 * static_cast<double>(ul_to_dl_subframe_offset));
+
+    // Apply time advance calibration.
+    ul_to_dl_delay -= time_advance_calibration;
+
+    // Apply the time aligment offset.
+    ul_to_dl_delay -= phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset));
+
+    // Convert to samples.
+    return ul_to_dl_delay.to_samples(srate.to_Hz());
+  }
 
 public:
   /// \brief Constructs a generic lower physical layer.

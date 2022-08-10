@@ -65,7 +65,6 @@ public:
   ///
   /// An assertion is triggered if the combination of sampling rate and subcarrier spacing is invalid (see is_valid()).
   ///
-  /// \tparam T Any type convertible to \ref value_type.
   /// \param[in] scs_Hz The given subcarrier spacing in Hz.
   /// \return The DFT size according to the value and the subcarrier spacing.
   constexpr unsigned get_dft_size(subcarrier_spacing scs) const { return get_dft_size(scs_to_khz(scs) * 1000); }

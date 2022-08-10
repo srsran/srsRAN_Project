@@ -63,7 +63,7 @@ enum class lower_phy_ta_offset {
 
 /// Lower physical layer configuration.
 struct lower_phy_configuration {
-  /// Indicates the DFT size for a 15kHz SCS.
+  /// Sampling rate.
   sampling_rate srate;
   /// Indicates the subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;

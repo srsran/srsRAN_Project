@@ -245,6 +245,10 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   modulators(std::move(common_config.modulators)),
   demodulators(std::move(common_config.demodulators)),
   prach_proc(std::move(common_config.prach_proc)),
+  rx_to_tx_delay(get_rx_to_tx_delay(config.ul_to_dl_subframe_offset,
+                                    config.time_advance_calibration,
+                                    config.ta_offset,
+                                    config.srate)),
   max_processing_delay_slots(config.max_processing_delay_slots),
   nof_symbols_per_slot(get_nsymb_per_slot(config.cp)),
   sectors(config.sectors),
@@ -252,11 +256,6 @@ lower_phy_impl::lower_phy_impl(lower_phy_common_configuration&& common_config, c
   dl_slot_context(ul_slot_context + config.ul_to_dl_subframe_offset * ul_slot_context.nof_slots_per_subframe())
 {
   logger.set_level(srslog::str_to_basic_level(config.log_level));
-
-  rx_to_tx_delay =
-      (phy_time_unit::from_seconds(0.001 * static_cast<double>(config.ul_to_dl_subframe_offset)) -
-       config.time_advance_calibration - phy_time_unit::from_units_of_Tc(static_cast<unsigned>(config.ta_offset)))
-          .to_samples(config.srate.to_Hz());
 
   // Assert parameters.
   srsgnb_assert(config.ul_to_dl_subframe_offset > 0, "The UL to DL slot offset must be greater than 0.");
