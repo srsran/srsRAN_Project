@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pdcch_processor.h"
+#include "../../phy_test_utils.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 
 namespace srsgnb {
 
@@ -25,5 +26,7 @@ public:
   /// Returns true if the process method has been called, false otherwise.
   bool is_process_called() const { return process_method_called; }
 };
+
+PHY_SPY_FACTORY_TEMPLATE(pdcch_processor);
 
 } // namespace srsgnb

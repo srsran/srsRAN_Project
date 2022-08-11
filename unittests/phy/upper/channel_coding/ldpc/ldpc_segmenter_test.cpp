@@ -27,10 +27,8 @@ int main()
   std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
   TESTASSERT(crc_calculator_factory);
 
-  ldpc_segmenter_tx_factory_sw_configuration segmenter_tx_factory_config;
-  segmenter_tx_factory_config.crc_factory = crc_calculator_factory;
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_tx_factory =
-      create_ldpc_segmenter_tx_factory_sw(segmenter_tx_factory_config);
+      create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
   TESTASSERT(segmenter_tx_factory);
 
   std::shared_ptr<ldpc_segmenter_rx_factory> segmenter_rx_factory = create_ldpc_segmenter_rx_factory_sw();

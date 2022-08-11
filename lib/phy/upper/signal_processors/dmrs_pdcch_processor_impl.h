@@ -77,7 +77,4 @@ public:
   void map(resource_grid_writer& grid, const config_t& config) override;
 };
 
-/// Creates a generic DMRS for PDCCH instance.
-std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
-
 } // namespace srsgnb

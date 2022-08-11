@@ -172,8 +172,3 @@ void pdsch_processor_impl::process(resource_grid_writer&                        
   // Prepare DMRS configuration and generate.
   put_dmrs(grid, pdu);
 }
-
-std::unique_ptr<pdsch_processor> srsgnb::create_pdsch_processor(pdsch_processor_configuration& config)
-{
-  return std::make_unique<pdsch_processor_impl>(config);
-}

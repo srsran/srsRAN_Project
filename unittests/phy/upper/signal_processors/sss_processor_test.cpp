@@ -10,7 +10,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/signal_processors/sss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <random>
 
 using namespace srsgnb;
@@ -85,8 +85,12 @@ static void test_case(sss_processor& sss, const sss_processor::config_t& sss_arg
 
 int main()
 {
-  // Create SSS processor
-  std::unique_ptr<sss_processor> sss = create_sss_processor();
+  std::shared_ptr<sss_processor_factory> sss_factory = create_sss_processor_factory_sw();
+  TESTASSERT(sss_factory);
+
+  // Create SSS processor.
+  std::unique_ptr<sss_processor> sss = sss_factory->create();
+  TESTASSERT(sss);
 
   // Random distributions
   std::uniform_int_distribution<unsigned> dist_cell_id(0, phys_cell_id::NOF_NID - 1);

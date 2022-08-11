@@ -44,7 +44,4 @@ public:
   virtual void map(resource_grid_writer& grid, const config_t& config) = 0;
 };
 
-/// Creates a generic PSS processor instance
-std::unique_ptr<pss_processor> create_pss_processor();
-
 } // namespace srsgnb

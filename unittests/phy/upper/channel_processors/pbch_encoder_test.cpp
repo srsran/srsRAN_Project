@@ -17,7 +17,21 @@ using namespace srsgnb;
 
 int main()
 {
-  std::unique_ptr<pbch_encoder> encoder = create_pbch_encoder();
+  std::shared_ptr<crc_calculator_factory> crc_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_factory);
+
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<polar_factory> polar_factory = create_polar_factory_sw();
+  TESTASSERT(polar_factory);
+
+  std::shared_ptr<pbch_encoder_factory> encoder_factory =
+      create_pbch_encoder_factory_sw(crc_factory, prg_factory, polar_factory);
+  TESTASSERT(encoder_factory);
+
+  std::unique_ptr<pbch_encoder> encoder = encoder_factory->create();
+  TESTASSERT(encoder);
 
   for (const test_case_t& test_case : pbch_encoder_test_data) {
     // Encode PBCH message.

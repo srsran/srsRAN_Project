@@ -15,8 +15,15 @@ using namespace srsgnb;
 
 int main()
 {
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_factory =
+      create_dmrs_pdcch_processor_factory_sw(prg_factory);
+  TESTASSERT(dmrs_pdcch_factory);
+
   // Create DMRS-PDSCH processor.
-  std::unique_ptr<dmrs_pdcch_processor> dmrs_pdcch = create_dmrs_pdcch_processor();
+  std::unique_ptr<dmrs_pdcch_processor> dmrs_pdcch = dmrs_pdcch_factory->create();
 
   for (const test_case_t& test_case : dmrs_pdcch_processor_test_data) {
     int prb_idx_high = test_case.config.rb_mask.find_highest();

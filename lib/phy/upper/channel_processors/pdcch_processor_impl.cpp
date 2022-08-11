@@ -109,8 +109,3 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdc
     dmrs->map(grid, dmrs_pdcch_config);
   }
 }
-
-std::unique_ptr<pdcch_processor> srsgnb::create_pdcch_processor(pdcch_processor_config_t& config)
-{
-  return std::make_unique<pdcch_processor_impl>(config);
-}

@@ -6,14 +6,32 @@
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdcch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 
 namespace srsgnb {
 
 std::unique_ptr<csi_rs_processor> create_csi_rs_processor();
 
-std::unique_ptr<dmrs_pbch_processor> create_dmrs_pbch_processor();
+class dmrs_pbch_processor_factory
+{
+public:
+  virtual ~dmrs_pbch_processor_factory()                = default;
+  virtual std::unique_ptr<dmrs_pbch_processor> create() = 0;
+};
 
-std::unique_ptr<dmrs_pdcch_processor> create_dmrs_pdcch_processor();
+std::shared_ptr<dmrs_pbch_processor_factory>
+create_dmrs_pbch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
+
+class dmrs_pdcch_processor_factory
+{
+public:
+  virtual ~dmrs_pdcch_processor_factory()                = default;
+  virtual std::unique_ptr<dmrs_pdcch_processor> create() = 0;
+};
+
+std::shared_ptr<dmrs_pdcch_processor_factory>
+create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory);
 
 class dmrs_pdsch_processor_factory
 {
@@ -30,5 +48,23 @@ struct pusch_estimator_generic_configuration {
 };
 
 std::unique_ptr<dmrs_pusch_estimator> create_pusch_estimator_generic(pusch_estimator_generic_configuration& config);
+
+class pss_processor_factory
+{
+public:
+  virtual ~pss_processor_factory()                = default;
+  virtual std::unique_ptr<pss_processor> create() = 0;
+};
+
+std::shared_ptr<pss_processor_factory> create_pss_processor_factory_sw();
+
+class sss_processor_factory
+{
+public:
+  virtual ~sss_processor_factory()                = default;
+  virtual std::unique_ptr<sss_processor> create() = 0;
+};
+
+std::shared_ptr<sss_processor_factory> create_sss_processor_factory_sw();
 
 } // namespace srsgnb

@@ -22,24 +22,6 @@
 
 using namespace srsgnb;
 
-namespace srsgnb {
-
-struct pdcch_processor_config_t {
-  std::unique_ptr<pdcch_encoder>        encoder;
-  std::unique_ptr<pdcch_modulator>      modulator;
-  std::unique_ptr<dmrs_pdcch_processor> dmrs;
-};
-std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
-
-struct pdsch_processor_configuration {
-  std::unique_ptr<pdsch_encoder>        encoder;
-  std::unique_ptr<pdsch_modulator>      modulator;
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
-};
-std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
-
-} // namespace srsgnb
-
 static void process_test_case_pdsch(const test_case_t& test_case, pdsch_processor& pdsch)
 {
   for (const pdsch_transmission& pdsch_data : test_case.pdsch) {
@@ -111,10 +93,8 @@ int main()
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
   TESTASSERT(ldpc_rate_matcher_factory);
 
-  ldpc_segmenter_tx_factory_sw_configuration ldpc_segmenter_tx_factory_config = {};
-  ldpc_segmenter_tx_factory_config.crc_factory                                = crc_calculator_factory;
   std::shared_ptr<ldpc_segmenter_tx_factory> ldpc_segmenter_tx_factory =
-      create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_config);
+      create_ldpc_segmenter_tx_factory_sw(crc_calculator_factory);
   TESTASSERT(ldpc_segmenter_tx_factory);
 
   pdsch_encoder_factory_sw_configuration pdsch_encoder_factory_config = {};
@@ -138,6 +118,10 @@ int main()
       create_dmrs_pdsch_processor_factory_sw(prg_factory);
   TESTASSERT(dmrs_pdsch_factory);
 
+  std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_pdcch_factory =
+      create_dmrs_pdcch_processor_factory_sw(prg_factory);
+  TESTASSERT(dmrs_pdcch_factory);
+
   std::shared_ptr<pdcch_modulator_factory> pdcch_modulator_factory =
       create_pdcch_modulator_factory_sw(modulator_factory, prg_factory);
   TESTASSERT(pdcch_modulator_factory);
@@ -150,28 +134,19 @@ int main()
       create_pdcch_encoder_factory_sw(crc_calculator_factory, polar_code_factory);
   TESTASSERT(pdcch_encoder_factory);
 
-  // Create PDCCH processor
-  std::unique_ptr<pdcch_processor> pdcch = nullptr;
-  {
-    pdcch_processor_config_t pdcch_processor_config;
-    pdcch_processor_config.dmrs      = create_dmrs_pdcch_processor();
-    pdcch_processor_config.encoder   = pdcch_encoder_factory->create();
-    pdcch_processor_config.modulator = pdcch_modulator_factory->create();
-    pdcch                            = create_pdcch_processor(pdcch_processor_config);
-    TESTASSERT(pdcch);
-  }
+  std::shared_ptr<pdcch_processor_factory> pdcch_proc_factory =
+      create_pdcch_processor_factory_sw(pdcch_encoder_factory, pdcch_modulator_factory, dmrs_pdcch_factory);
+  TESTASSERT(pdcch_proc_factory);
 
-  // Create PDSCH processor.
-  std::unique_ptr<pdsch_processor> pdsch = nullptr;
-  {
-    pdsch_processor_configuration processor_config;
-    processor_config.encoder   = pdsch_encoder_factory->create();
-    processor_config.modulator = pdsch_modulator_factory->create();
-    processor_config.dmrs      = dmrs_pdsch_factory->create();
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
+      create_pdsch_processor_factory_sw(pdsch_encoder_factory, pdsch_modulator_factory, dmrs_pdsch_factory);
+  TESTASSERT(pdsch_proc_factory);
 
-    pdsch = create_pdsch_processor(processor_config);
-    TESTASSERT(pdsch);
-  }
+  std::unique_ptr<pdcch_processor> pdcch = pdcch_proc_factory->create();
+  TESTASSERT(pdcch);
+
+  std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
+  TESTASSERT(pdsch);
 
   // Iterate all test cases.
   for (const test_case_t& test_case : dl_processor_test_data) {

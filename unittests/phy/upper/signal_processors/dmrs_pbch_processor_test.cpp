@@ -15,8 +15,15 @@ using namespace srsgnb;
 
 int main()
 {
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
+  TESTASSERT(prg_factory);
+
+  std::shared_ptr<dmrs_pbch_processor_factory> dmrs_pbch_factory = create_dmrs_pbch_processor_factory_sw(prg_factory);
+  TESTASSERT(dmrs_pbch_factory);
+
   // Create DMRS-PBCH processor
-  std::unique_ptr<dmrs_pbch_processor> dmrs_pbch = create_dmrs_pbch_processor();
+  std::unique_ptr<dmrs_pbch_processor> dmrs_pbch = dmrs_pbch_factory->create();
+  TESTASSERT(dmrs_pbch);
 
   for (const test_case_t& test_case : dmrs_pbch_processor_test_data) {
     // Create resource grid

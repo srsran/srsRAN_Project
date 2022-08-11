@@ -12,19 +12,11 @@
 #include "../signal_processors/dmrs_pdsch_processor_test_doubles.h"
 #include "pdsch_encoder_test_doubles.h"
 #include "pdsch_modulator_test_doubles.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/phy/upper/channel_processors/pdsch_processor.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <random>
-
-namespace srsgnb {
-struct pdsch_processor_configuration {
-  std::unique_ptr<pdsch_encoder>        encoder;
-  std::unique_ptr<pdsch_modulator>      modulator;
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
-};
-std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
-} // namespace srsgnb
 
 using namespace srsgnb;
 
@@ -41,15 +33,22 @@ int main()
   std::uniform_int_distribution<unsigned> dist_mod(0, modulations.size() - 1);
   std::uniform_real_distribution<float>   dist_power(-6, 6);
 
-  pdsch_encoder_spy*        encoder_spy   = new pdsch_encoder_spy;
-  pdsch_modulator_spy*      modulator_spy = new pdsch_modulator_spy;
-  dmrs_pdsch_processor_spy* dmrs_spy      = new dmrs_pdsch_processor_spy;
+  std::shared_ptr<pdsch_encoder_factory_spy>   encoder_factory_spy   = std::make_shared<pdsch_encoder_factory_spy>();
+  std::shared_ptr<pdsch_modulator_factory_spy> modulator_factory_spy = std::make_shared<pdsch_modulator_factory_spy>();
+  std::shared_ptr<dmrs_pdsch_processor_factory_spy> dmrs_factory_spy =
+      std::make_shared<dmrs_pdsch_processor_factory_spy>();
 
-  pdsch_processor_configuration configuration;
-  configuration.encoder                  = std::unique_ptr<pdsch_encoder>(encoder_spy);
-  configuration.modulator                = std::unique_ptr<pdsch_modulator>(modulator_spy);
-  configuration.dmrs                     = std::unique_ptr<dmrs_pdsch_processor>(dmrs_spy);
-  std::unique_ptr<pdsch_processor> pdsch = create_pdsch_processor(configuration);
+  std::shared_ptr<pdsch_processor_factory> pdsch_proc_factory =
+      create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>(encoder_factory_spy),
+                                        std::shared_ptr<pdsch_modulator_factory>(modulator_factory_spy),
+                                        std::shared_ptr<dmrs_pdsch_processor_factory>(dmrs_factory_spy));
+  TESTASSERT(pdsch_proc_factory);
+
+  pdsch_encoder_spy*        encoder_spy   = encoder_factory_spy->get_entries().front();
+  pdsch_modulator_spy*      modulator_spy = modulator_factory_spy->get_entries().front();
+  dmrs_pdsch_processor_spy* dmrs_spy      = dmrs_factory_spy->get_entries().front();
+
+  std::unique_ptr<pdsch_processor> pdsch = pdsch_proc_factory->create();
   TESTASSERT(pdsch);
 
   for (unsigned nof_layers : {1, 5, 8}) {

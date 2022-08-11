@@ -1,7 +1,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pdsch_encoder.h"
+#include "../../phy_test_utils.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/srsvec/copy.h"
 
 namespace srsgnb {
@@ -41,5 +42,7 @@ public:
   unsigned                    get_nof_entries() const { return entries.size(); }
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
+
+PHY_SPY_FACTORY_TEMPLATE(pdsch_encoder);
 
 } // namespace srsgnb

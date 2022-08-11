@@ -66,6 +66,10 @@ std::unique_ptr<uplink_processor_pool> create_uplink_processor_pool(uplink_proce
 struct downlink_processor_config {
   /// Radio sector identifier.
   unsigned id;
+  /// Resource grid gateway.
+  upper_phy_rg_gateway* gateway;
+  /// Task executor.
+  task_executor* executor;
 };
 
 /// Factory that allows to create downlink processors.

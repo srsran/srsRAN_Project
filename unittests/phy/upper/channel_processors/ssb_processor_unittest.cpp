@@ -21,18 +21,6 @@
 
 using namespace srsgnb;
 
-namespace srsgnb {
-struct ssb_processor_config {
-  std::unique_ptr<pbch_encoder>        encoder;
-  std::unique_ptr<pbch_modulator>      modulator;
-  std::unique_ptr<dmrs_pbch_processor> dmrs;
-  std::unique_ptr<pss_processor>       pss;
-  std::unique_ptr<sss_processor>       sss;
-};
-
-std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
-} // namespace srsgnb
-
 static std::mt19937 rgen(0);
 
 int main()
@@ -46,20 +34,31 @@ int main()
 
   resource_grid_dummy grid;
 
-  pbch_encoder_spy*        encoder   = new pbch_encoder_spy;
-  pbch_modulator_spy*      modulator = new pbch_modulator_spy;
-  dmrs_pbch_processor_spy* dmrs      = new dmrs_pbch_processor_spy;
-  pss_processor_spy*       pss       = new pss_processor_spy;
-  sss_processor_spy*       sss       = new sss_processor_spy;
+  std::shared_ptr<pbch_encoder_factory_spy>   encoder_factory_spy   = std::make_shared<pbch_encoder_factory_spy>();
+  std::shared_ptr<pbch_modulator_factory_spy> modulator_factory_spy = std::make_shared<pbch_modulator_factory_spy>();
+  std::shared_ptr<dmrs_pbch_processor_factory_spy> dmrs_factory_spy =
+      std::make_shared<dmrs_pbch_processor_factory_spy>();
+  std::shared_ptr<pss_processor_factory_spy> pss_factory_spy = std::make_shared<pss_processor_factory_spy>();
+  std::shared_ptr<sss_processor_factory_spy> sss_factory_spy = std::make_shared<sss_processor_factory_spy>();
 
-  ssb_processor_config config = {};
-  config.encoder              = std::unique_ptr<pbch_encoder>(encoder);
-  config.modulator            = std::unique_ptr<pbch_modulator>(modulator);
-  config.dmrs                 = std::unique_ptr<dmrs_pbch_processor>(dmrs);
-  config.pss                  = std::unique_ptr<pss_processor>(pss);
-  config.sss                  = std::unique_ptr<sss_processor>(sss);
+  // Create channel processors - SSB
+  ssb_processor_factory_sw_configuration ssb_factory_config;
+  ssb_factory_config.encoder_factory                      = encoder_factory_spy;
+  ssb_factory_config.modulator_factory                    = modulator_factory_spy;
+  ssb_factory_config.dmrs_factory                         = dmrs_factory_spy;
+  ssb_factory_config.pss_factory                          = pss_factory_spy;
+  ssb_factory_config.sss_factory                          = sss_factory_spy;
+  std::shared_ptr<ssb_processor_factory> ssb_proc_factory = create_ssb_processor_factory_sw(ssb_factory_config);
+  TESTASSERT(ssb_proc_factory);
 
-  std::unique_ptr<ssb_processor> pbch = create_ssb_processor(config);
+  std::unique_ptr<ssb_processor> pbch = ssb_proc_factory->create();
+  TESTASSERT(pbch);
+
+  pbch_encoder_spy*        encoder   = encoder_factory_spy->get_entries().front();
+  pbch_modulator_spy*      modulator = modulator_factory_spy->get_entries().front();
+  dmrs_pbch_processor_spy* dmrs      = dmrs_factory_spy->get_entries().front();
+  pss_processor_spy*       pss       = pss_factory_spy->get_entries().front();
+  sss_processor_spy*       sss       = sss_factory_spy->get_entries().front();
 
   // Iterate all possible SSB pattern cases.
   for (const ssb_pattern_case& pattern_case :

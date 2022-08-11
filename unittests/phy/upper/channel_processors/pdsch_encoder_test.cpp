@@ -17,8 +17,8 @@ using namespace srsgnb::ldpc;
 
 int main()
 {
-  std::shared_ptr<crc_calculator_factory> crc_calculator_factory = create_crc_calculator_factory_sw();
-  TESTASSERT(crc_calculator_factory);
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_calc_factory);
 
   std::shared_ptr<ldpc_encoder_factory> ldpc_encoder_factory = create_ldpc_encoder_factory_sw("generic");
   TESTASSERT(ldpc_encoder_factory);
@@ -26,10 +26,7 @@ int main()
   std::shared_ptr<ldpc_rate_matcher_factory> ldpc_rate_matcher_factory = create_ldpc_rate_matcher_factory_sw();
   TESTASSERT(ldpc_rate_matcher_factory);
 
-  ldpc_segmenter_tx_factory_sw_configuration segmenter_factory_config;
-  segmenter_factory_config.crc_factory = crc_calculator_factory;
-  std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory =
-      create_ldpc_segmenter_tx_factory_sw(segmenter_factory_config);
+  std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory = create_ldpc_segmenter_tx_factory_sw(crc_calc_factory);
   TESTASSERT(segmenter_factory);
 
   pdsch_encoder_factory_sw_configuration encoder_factory_config;

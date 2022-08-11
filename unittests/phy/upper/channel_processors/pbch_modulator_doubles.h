@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/channel_processors/pbch_modulator.h"
+#include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include <vector>
 
 namespace srsgnb {
@@ -39,4 +39,7 @@ public:
   unsigned                    get_nof_entries() const { return entries.size(); }
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
+
+PHY_SPY_FACTORY_TEMPLATE(pbch_modulator);
+
 } // namespace srsgnb

@@ -158,33 +158,6 @@ public:
 
 } // namespace
 
-namespace srsgnb {
-
-struct pdcch_processor_config_t {
-  std::unique_ptr<pdcch_encoder>        encoder;
-  std::unique_ptr<pdcch_modulator>      modulator;
-  std::unique_ptr<dmrs_pdcch_processor> dmrs;
-};
-std::unique_ptr<pdcch_processor> create_pdcch_processor(pdcch_processor_config_t& config);
-
-struct pdsch_processor_configuration {
-  std::unique_ptr<pdsch_encoder>        encoder;
-  std::unique_ptr<pdsch_modulator>      modulator;
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
-};
-std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
-
-struct ssb_processor_config {
-  std::unique_ptr<pbch_encoder>        encoder;
-  std::unique_ptr<pbch_modulator>      modulator;
-  std::unique_ptr<dmrs_pbch_processor> dmrs;
-  std::unique_ptr<pss_processor>       pss;
-  std::unique_ptr<sss_processor>       sss;
-};
-std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
-
-} // namespace srsgnb
-
 #define ASSERT_FACTORY(FACTORY_PTR)                                                                                    \
   do {                                                                                                                 \
     if (!FACTORY_PTR) {                                                                                                \
@@ -198,28 +171,47 @@ std::unique_ptr<upper_phy_ssb_example> srsgnb::upper_phy_ssb_example::create(con
   srslog::basic_logger& logger = srslog::fetch_basic_logger("UpperPHY", false);
   logger.set_level(srslog::str_to_basic_level(config.log_level));
 
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  ASSERT_FACTORY(crc_calc_factory);
+
   std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
   ASSERT_FACTORY(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   ASSERT_FACTORY(prg_factory);
 
-  std::shared_ptr<pbch_modulator_factory> pbch_modulator_factory =
+  std::shared_ptr<polar_factory> polar_factory = create_polar_factory_sw();
+  ASSERT_FACTORY(polar_factory);
+
+  std::shared_ptr<pbch_encoder_factory> pbch_enc_factory =
+      create_pbch_encoder_factory_sw(crc_calc_factory, prg_factory, polar_factory);
+  ASSERT_FACTORY(polar_factory);
+
+  std::shared_ptr<pbch_modulator_factory> pbch_mod_factory =
       create_pbch_modulator_factory_sw(modulator_factory, prg_factory);
-  ASSERT_FACTORY(pbch_modulator_factory);
+  ASSERT_FACTORY(pbch_mod_factory);
+
+  std::shared_ptr<dmrs_pbch_processor_factory> pbch_dmrs_factory = create_dmrs_pbch_processor_factory_sw(prg_factory);
+  ASSERT_FACTORY(pbch_dmrs_factory);
+
+  std::shared_ptr<pss_processor_factory> pss_factory = create_pss_processor_factory_sw();
+  ASSERT_FACTORY(pss_factory);
+
+  std::shared_ptr<sss_processor_factory> sss_factory = create_sss_processor_factory_sw();
+  ASSERT_FACTORY(sss_factory);
+
+  ssb_processor_factory_sw_configuration ssb_factory_config;
+  ssb_factory_config.encoder_factory                 = pbch_enc_factory;
+  ssb_factory_config.modulator_factory               = pbch_mod_factory;
+  ssb_factory_config.dmrs_factory                    = pbch_dmrs_factory;
+  ssb_factory_config.pss_factory                     = pss_factory;
+  ssb_factory_config.sss_factory                     = sss_factory;
+  std::shared_ptr<ssb_processor_factory> ssb_factory = create_ssb_processor_factory_sw(ssb_factory_config);
+  ASSERT_FACTORY(ssb_factory);
 
   // Create SSB processor.
-  std::unique_ptr<ssb_processor> ssb = nullptr;
-  {
-    ssb_processor_config ssb_config;
-    ssb_config.encoder   = create_pbch_encoder();
-    ssb_config.modulator = pbch_modulator_factory->create();
-    ssb_config.dmrs      = create_dmrs_pbch_processor();
-    ssb_config.pss       = create_pss_processor();
-    ssb_config.sss       = create_sss_processor();
-    ssb                  = create_ssb_processor(ssb_config);
-    ASSERT_FACTORY(ssb);
-  }
+  std::unique_ptr<ssb_processor> ssb = ssb_factory->create();
+  ASSERT_FACTORY(ssb);
 
   // Create DL resource grid pool configuration.
   std::unique_ptr<resource_grid_pool> dl_rg_pool = nullptr;

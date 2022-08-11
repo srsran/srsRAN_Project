@@ -97,21 +97,21 @@ public:
 class ldpc_segmenter_tx_factory_sw : public ldpc_segmenter_tx_factory
 {
 private:
-  crc_calculator_factory& crc_factory;
+  std::shared_ptr<crc_calculator_factory> crc_factory;
 
 public:
-  explicit ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config) :
-    crc_factory(*config.crc_factory)
+  explicit ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory_) :
+    crc_factory(crc_factory_)
   {
-    report_fatal_error_if_not(config.crc_factory, "Invalid CRC calculator factory.");
+    srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
   }
 
   std::unique_ptr<ldpc_segmenter_tx> create() override
   {
     ldpc_segmenter_impl::sch_crc sch_crc = {
-        crc_factory.create(crc_generator_poly::CRC16),
-        crc_factory.create(crc_generator_poly::CRC24A),
-        crc_factory.create(crc_generator_poly::CRC24B),
+        crc_factory->create(crc_generator_poly::CRC16),
+        crc_factory->create(crc_generator_poly::CRC24A),
+        crc_factory->create(crc_generator_poly::CRC24B),
     };
     return ldpc_segmenter_impl::create_ldpc_segmenter_impl_tx(sch_crc);
   }
@@ -177,9 +177,9 @@ std::shared_ptr<ldpc_rate_matcher_factory> srsgnb::create_ldpc_rate_matcher_fact
 }
 
 std::shared_ptr<ldpc_segmenter_tx_factory>
-srsgnb::create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config)
+srsgnb::create_ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory)
 {
-  return std::make_shared<ldpc_segmenter_tx_factory_sw>(config);
+  return std::make_shared<ldpc_segmenter_tx_factory_sw>(crc_factory);
 }
 
 std::shared_ptr<ldpc_segmenter_rx_factory> srsgnb::create_ldpc_segmenter_rx_factory_sw()

@@ -14,40 +14,53 @@
 #include "srsgnb/phy/upper/signal_processors/sss_processor.h"
 #include "ssb_processor_test_data.h"
 
-namespace srsgnb {
-struct ssb_processor_config {
-  std::unique_ptr<pbch_encoder>        encoder;
-  std::unique_ptr<pbch_modulator>      modulator;
-  std::unique_ptr<dmrs_pbch_processor> dmrs;
-  std::unique_ptr<pss_processor>       pss;
-  std::unique_ptr<sss_processor>       sss;
-};
-
-std::unique_ptr<ssb_processor> create_ssb_processor(ssb_processor_config& config);
-} // namespace srsgnb
-
 using namespace srsgnb;
 
 int main()
 {
+  std::shared_ptr<crc_calculator_factory> crc_calc_factory = create_crc_calculator_factory_sw();
+  TESTASSERT(crc_calc_factory);
+
   std::shared_ptr<channel_modulation_factory> modulator_factory = create_channel_modulation_sw_factory();
   TESTASSERT(modulator_factory);
 
   std::shared_ptr<pseudo_random_generator_factory> prg_factory = create_pseudo_random_generator_sw_factory();
   TESTASSERT(prg_factory);
 
-  std::shared_ptr<pbch_modulator_factory> pbch_modulator_factory =
+  std::shared_ptr<polar_factory> polar_factory = create_polar_factory_sw();
+  TESTASSERT(polar_factory);
+
+  std::shared_ptr<pbch_encoder_factory> pbch_enc_factory =
+      create_pbch_encoder_factory_sw(crc_calc_factory, prg_factory, polar_factory);
+  TESTASSERT(polar_factory);
+
+  std::shared_ptr<pbch_modulator_factory> pbch_mod_factory =
       create_pbch_modulator_factory_sw(modulator_factory, prg_factory);
-  TESTASSERT(modulator_factory);
+  TESTASSERT(pbch_mod_factory);
 
-  ssb_processor_config config = {};
-  config.encoder              = create_pbch_encoder();
-  config.modulator            = pbch_modulator_factory->create();
-  config.dmrs                 = create_dmrs_pbch_processor();
-  config.pss                  = create_pss_processor();
-  config.sss                  = create_sss_processor();
+  std::shared_ptr<dmrs_pbch_processor_factory> dmrs_pbch_proc_factory =
+      create_dmrs_pbch_processor_factory_sw(prg_factory);
+  TESTASSERT(dmrs_pbch_proc_factory, "Invalid DMRS PBCH factory.");
 
-  std::unique_ptr<ssb_processor> ssb = create_ssb_processor(config);
+  std::shared_ptr<pss_processor_factory> pss_proc_factory = create_pss_processor_factory_sw();
+  TESTASSERT(pss_proc_factory, "Invalid PSS factory.");
+
+  std::shared_ptr<sss_processor_factory> sss_proc_factory = create_sss_processor_factory_sw();
+  TESTASSERT(sss_proc_factory, "Invalid SSS factory.");
+
+  // Create channel processors - SSB
+  ssb_processor_factory_sw_configuration ssb_factory_config;
+  ssb_factory_config.encoder_factory                 = pbch_enc_factory;
+  ssb_factory_config.modulator_factory               = pbch_mod_factory;
+  ssb_factory_config.dmrs_factory                    = dmrs_pbch_proc_factory;
+  ssb_factory_config.pss_factory                     = pss_proc_factory;
+  ssb_factory_config.sss_factory                     = sss_proc_factory;
+  std::shared_ptr<ssb_processor_factory> ssb_factory = create_ssb_processor_factory_sw(ssb_factory_config);
+  TESTASSERT(ssb_factory);
+
+  // Create SSB processor.
+  std::unique_ptr<ssb_processor> ssb = ssb_factory->create();
+  TESTASSERT(ssb);
 
   for (const test_case_t& test_case : ssb_processor_test_data) {
     // The test data was generated with 64 ports, the symbol indexes are relative to half frame and the bandwidth is

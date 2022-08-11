@@ -16,16 +16,6 @@
 
 namespace srsgnb {
 
-/// Groups the necessary parameters to construct a generic PDSCH processor.
-struct pdsch_processor_configuration {
-  /// Provides a PDSCH encoder instance. Ownership is transferred to the processor.
-  std::unique_ptr<pdsch_encoder> encoder;
-  /// Provides a PDSCH modulator instance. Ownership is transferred to the processor.
-  std::unique_ptr<pdsch_modulator> modulator;
-  /// Provides a DMRS for PDSCH processor. Ownership is transferred to the processor.
-  std::unique_ptr<dmrs_pdsch_processor> dmrs;
-};
-
 /// Describes a generic PDSCH processor.
 class pdsch_processor_impl : public pdsch_processor
 {
@@ -68,8 +58,10 @@ private:
 public:
   /// \brief Creates a generic PDSCH processor.
   /// \param[in] config Provides the necessary configuration.
-  pdsch_processor_impl(pdsch_processor_configuration& config) :
-    encoder(std::move(config.encoder)), modulator(std::move(config.modulator)), dmrs(std::move(config.dmrs))
+  pdsch_processor_impl(std::unique_ptr<pdsch_encoder>        encoder_,
+                       std::unique_ptr<pdsch_modulator>      modulator_,
+                       std::unique_ptr<dmrs_pdsch_processor> dmrs_) :
+    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
   {
     srsgnb_assert(encoder != nullptr, "Invalid encoder pointer.");
     srsgnb_assert(modulator != nullptr, "Invalid modulator pointer.");
@@ -81,7 +73,5 @@ public:
                static_vector<span<const uint8_t>, MAX_NOF_TRANSPORT_BLOCKS> data,
                const pdu_t&                                                 pdu) override;
 };
-
-std::unique_ptr<pdsch_processor> create_pdsch_processor(pdsch_processor_configuration& config);
 
 } // namespace srsgnb

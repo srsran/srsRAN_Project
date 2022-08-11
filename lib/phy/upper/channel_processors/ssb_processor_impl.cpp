@@ -93,8 +93,3 @@ void ssb_processor_impl::process(const pdu_t& pdu, resource_grid_writer& grid)
   // Put SSS
   sss->map(grid, sss_config);
 }
-
-std::unique_ptr<ssb_processor> srsgnb::create_ssb_processor(ssb_processor_config& config)
-{
-  return std::make_unique<ssb_processor_impl>(config);
-}

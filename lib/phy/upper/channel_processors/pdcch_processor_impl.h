@@ -53,13 +53,15 @@ private:
   static bounded_bitset<MAX_RB> compute_rb_mask(const coreset_description& coreset, const dci_description& dci);
 
 public:
-  /// \brief Generic PDSCH modulator instance constructor.
-  ///
-  /// \param[in] config Provides the internal dependencies instances.
-  pdcch_processor_impl(pdcch_processor_config_t& config) :
-    encoder(std::move(config.encoder)), modulator(std::move(config.modulator)), dmrs(std::move(config.dmrs))
+  /// Generic PDSCH modulator instance constructor.
+  pdcch_processor_impl(std::unique_ptr<pdcch_encoder>        encoder_,
+                       std::unique_ptr<pdcch_modulator>      modulator_,
+                       std::unique_ptr<dmrs_pdcch_processor> dmrs_) :
+    encoder(std::move(encoder_)), modulator(std::move(modulator_)), dmrs(std::move(dmrs_))
   {
-    // Do nothing.
+    srsgnb_assert(encoder, "Invalid encoder.");
+    srsgnb_assert(modulator, "Invalid modulator.");
+    srsgnb_assert(dmrs, "Invalid DMRS generator.");
   }
 
   // See interface for documentation.

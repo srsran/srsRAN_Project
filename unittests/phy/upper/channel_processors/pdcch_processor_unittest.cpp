@@ -50,19 +50,21 @@ int main()
   std::uniform_int_distribution<unsigned> dist_port_idx(0, 15);
 
   // Create dummies and spies.
-  resource_grid_dummy       grid;
-  pdcch_modulator_spy*      modulator = new pdcch_modulator_spy;
-  pdcch_encoder_spy*        encoder   = new pdcch_encoder_spy;
-  dmrs_pdcch_processor_spy* dmrs      = new dmrs_pdcch_processor_spy;
+  resource_grid_dummy                          grid;
+  std::shared_ptr<pdcch_encoder_factory_spy>   encoder_factory_spy   = std::make_shared<pdcch_encoder_factory_spy>();
+  std::shared_ptr<pdcch_modulator_factory_spy> modulator_factory_spy = std::make_shared<pdcch_modulator_factory_spy>();
+  std::shared_ptr<dmrs_pdcch_processor_factory_spy> dmrs_factory_spy =
+      std::make_shared<dmrs_pdcch_processor_factory_spy>();
 
-  // Create PDCCH processor configuration.
-  pdcch_processor_config_t config = {};
-  config.encoder                  = std::unique_ptr<pdcch_encoder>(encoder);
-  config.modulator                = std::unique_ptr<pdcch_modulator>(modulator);
-  config.dmrs                     = std::unique_ptr<dmrs_pdcch_processor>(dmrs);
+  std::shared_ptr<pdcch_processor_factory> pdcch_factory =
+      create_pdcch_processor_factory_sw(encoder_factory_spy, modulator_factory_spy, dmrs_factory_spy);
+  TESTASSERT(pdcch_factory);
 
-  // Create generic PDCCH processor.
-  std::unique_ptr<pdcch_processor> pdcch = create_pdcch_processor(config);
+  std::unique_ptr<pdcch_processor> pdcch = pdcch_factory->create();
+
+  pdcch_encoder_spy*        encoder   = encoder_factory_spy->get_entries().front();
+  pdcch_modulator_spy*      modulator = modulator_factory_spy->get_entries().front();
+  dmrs_pdcch_processor_spy* dmrs      = dmrs_factory_spy->get_entries().front();
 
   for (unsigned bwp_size_rb : {52, 104}) {
     for (unsigned bwp_start_rb : {0, 1}) {

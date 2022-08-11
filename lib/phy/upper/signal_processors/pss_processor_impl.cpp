@@ -78,8 +78,3 @@ void srsgnb::pss_processor_impl::map(resource_grid_writer& grid, const config_t&
   // Mapping to physical resources
   mapping(sequence, grid, config);
 }
-
-std::unique_ptr<pss_processor> srsgnb::create_pss_processor()
-{
-  return std::make_unique<pss_processor_impl>();
-}

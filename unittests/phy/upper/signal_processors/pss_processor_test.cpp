@@ -10,7 +10,7 @@
 
 #include "../../support/resource_grid_test_doubles.h"
 #include "srsgnb/phy/constants.h"
-#include "srsgnb/phy/upper/signal_processors/pss_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 #include <random>
 
 using namespace srsgnb;
@@ -74,17 +74,21 @@ static void test_case(pss_processor& pss, const pss_processor::config_t& pss_arg
 
 int main()
 {
-  // Create PSS processor
-  std::unique_ptr<pss_processor> pss = create_pss_processor();
+  std::shared_ptr<pss_processor_factory> pss_factory = create_pss_processor_factory_sw();
+  TESTASSERT(pss_factory);
 
-  // Random distributions
+  // Create PSS processor.
+  std::unique_ptr<pss_processor> pss = pss_factory->create();
+  TESTASSERT(pss);
+
+  // Random distributions.
   std::uniform_int_distribution<unsigned> dist_cell_id(0, phys_cell_id::NOF_NID - 1);
   std::uniform_int_distribution<unsigned> dist_ssb_first_subcarrier(0, 270 * 12);
   std::uniform_int_distribution<unsigned> dist_ssb_first_symbol(0, 13);
   std::uniform_int_distribution<uint8_t>  dist_port(0, MAX_PORTS - 1);
 
   for (unsigned rep = 0; rep != repetitions; ++rep) {
-    // PSS arguments
+    // PSS arguments.
     pss_processor::config_t pss_args = {};
     pss_args.phys_cell_id            = dist_cell_id(rgen);
     pss_args.ssb_first_subcarrier    = dist_ssb_first_subcarrier(rgen);

@@ -39,4 +39,7 @@ public:
   unsigned                    get_nof_entries() const { return entries.size(); }
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
+
+PHY_SPY_FACTORY_TEMPLATE(pdcch_modulator);
+
 } // namespace srsgnb

@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/channel_processors/channel_processor_factories.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include <random>
@@ -52,22 +53,6 @@ private:
   std::vector<generate_entry> entries;
 };
 
-class prach_generator_factory_spy : public prach_generator_factory
-{
-public:
-  std::unique_ptr<prach_generator> create() override
-  {
-    std::unique_ptr<prach_generator_spy> generator = std::make_unique<prach_generator_spy>();
-    entries.emplace_back(generator.get());
-    return generator;
-  }
-
-  const std::vector<prach_generator_spy*>& get_entries() const { return entries; }
-
-  void clear_entries() { entries.clear(); }
-
-private:
-  std::vector<prach_generator_spy*> entries;
-};
+PHY_SPY_FACTORY_TEMPLATE(prach_generator);
 
 } // namespace srsgnb

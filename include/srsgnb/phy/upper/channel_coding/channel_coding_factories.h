@@ -88,12 +88,8 @@ public:
   virtual std::unique_ptr<ldpc_segmenter_tx> create() = 0;
 };
 
-struct ldpc_segmenter_tx_factory_sw_configuration {
-  std::shared_ptr<crc_calculator_factory> crc_factory;
-};
-
 std::shared_ptr<ldpc_segmenter_tx_factory>
-create_ldpc_segmenter_tx_factory_sw(ldpc_segmenter_tx_factory_sw_configuration& config);
+create_ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory);
 
 class polar_factory
 {

@@ -1,7 +1,9 @@
 
 #pragma once
 
+#include "../../phy_test_utils.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pdsch_processor.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
 
 namespace srsgnb {
 
@@ -26,5 +28,7 @@ public:
   unsigned                    get_nof_entries() const { return entries.size(); }
   const std::vector<entry_t>& get_entries() const { return entries; }
 };
+
+PHY_SPY_FACTORY_TEMPLATE(dmrs_pdsch_processor);
 
 } // namespace srsgnb
