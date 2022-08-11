@@ -9,7 +9,7 @@
 set_directory_properties(PROPERTIES LABELS "adt")
 
 add_executable(bounded_bitset_test bounded_bitset_test.cpp)
-target_link_libraries(bounded_bitset_test srslog)
+target_link_libraries(bounded_bitset_test srslog gtest gtest_main)
 add_test(bounded_bitset_test bounded_bitset_test)
 
 add_executable(byte_buffer_test byte_buffer_test.cpp)
