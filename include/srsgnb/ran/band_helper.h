@@ -29,7 +29,7 @@ enum class frequency_range;
 /// Table 5.2-2, respectively.
 enum class nr_band {
   invalid = 0,
-  /// FR1 bands.
+  // FR1 bands.
   n1  = 1,
   n2  = 2,
   n3  = 3,
@@ -62,18 +62,12 @@ enum class nr_band {
   n83 = 83,
   n84 = 84,
   n86 = 86,
-  /// FR2 bands.
+  // FR2 bands.
   n257 = 257,
   n258 = 258,
   n260 = 260,
   n261 = 261
 };
-
-/// Returns the numeric value associated with the NR operating band label.
-constexpr inline unsigned nr_band_to_uint(nr_band band)
-{
-  return static_cast<unsigned>(band);
-}
 
 namespace band_helper {
 

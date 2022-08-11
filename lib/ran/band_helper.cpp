@@ -128,7 +128,7 @@ static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_ope
     {nr_band::n83, duplex_mode::SUL},
     {nr_band::n84, duplex_mode::SUL},
     {nr_band::n86, duplex_mode::SUL}
-       // clang-format on
+    // clang-format on
 }};
 
 // NR operating band in FR1 with SSB Subcarrier Spacing and SSB pattern case. See TS 38.101-1 Table 5.2-1.
@@ -351,12 +351,12 @@ subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(nr_band band)
   // Look for the given band and SCS
   for (const nr_band_ssb_scs_case& ss_raster : nr_ssb_band_scs_case_table_fr1) {
     // Check if band and SCS match!
-    if (nr_band_to_uint(ss_raster.band) == nr_band_to_uint(band)) {
+    if (ss_raster.band == band) {
       return ss_raster.scs;
     }
 
     // As bands are in ascending order, do not waste more time if the current band is bigger
-    if (nr_band_to_uint(ss_raster.band) > nr_band_to_uint(band)) {
+    if (ss_raster.band > band) {
       return subcarrier_spacing::invalid;
     }
   }
@@ -370,7 +370,7 @@ duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band band)
   // Look for the given band.
   for (const nr_operating_band& b : nr_operating_bands_fr1) {
     // Check if band and SCS match!
-    if (nr_band_to_uint(b.band) == nr_band_to_uint(band)) {
+    if (b.band == band) {
       return b.duplex;
     }
 
