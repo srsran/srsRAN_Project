@@ -17,6 +17,7 @@ class slot_data_message_notifier;
 class slot_time_message_notifier;
 } // namespace fapi
 
+class mac_cell_rach_handler;
 class mac_cell_result_notifier;
 class mac_cell_slot_handler;
 
@@ -44,6 +45,9 @@ public:
 
   /// \brief Configures the MAC cell slot handler to the given one.
   virtual void set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler) = 0;
+
+  /// \brief Configures the MAC cell RACH handler to the given one.
+  virtual void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler) = 0;
 
   // :TODO: add the rest of the MAC handlers.
 

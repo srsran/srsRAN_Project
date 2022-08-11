@@ -709,6 +709,7 @@ int main(int argc, char** argv)
 
   // Configure the DU slot handler.
   mac_adaptor->set_cell_slot_handler(du_obj.get_slot_handler(static_cast<du_cell_index_t>(0)));
+  mac_adaptor->set_cell_rach_handler(du_obj.get_rach_handler(static_cast<du_cell_index_t>(0)));
 
   // Set signal handler.
   signal(SIGINT, signal_handler);

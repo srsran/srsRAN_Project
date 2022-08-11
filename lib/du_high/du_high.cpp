@@ -101,3 +101,8 @@ mac_cell_slot_handler& du_high::get_slot_handler(du_cell_index_t cell_idx)
   }
   return mac->get_slot_handler(cell_idx);
 }
+
+mac_cell_rach_handler& du_high::get_rach_handler(du_cell_index_t cell_index)
+{
+  return mac->get_rach_handler(cell_index);
+}

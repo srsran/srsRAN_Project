@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/fapi/slot_data_message_notifier.h"
+#include "srsgnb/mac/mac_cell_rach_handler.h"
 
 namespace srsgnb {
 namespace fapi_adaptor {
@@ -22,6 +23,8 @@ namespace fapi_adaptor {
 class fapi_to_mac_data_msg_translator : public fapi::slot_data_message_notifier
 {
 public:
+  explicit fapi_to_mac_data_msg_translator(subcarrier_spacing scs);
+
   // See interface for documentation.
   void on_dl_tti_response(const fapi::dl_tti_response_message& msg) override;
 
@@ -39,6 +42,15 @@ public:
 
   // See interface for documentation.
   void on_rach_indication(const fapi::rach_indication_message& msg) override;
+
+  /// \brief Configures the MAC cell RACH handler to the given one.
+  void set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler);
+
+private:
+  std::reference_wrapper<mac_cell_rach_handler> rach_handler;
+
+  // :TODO: subcarrier spacing should be retrieved from the cells configuration in the future.
+  const subcarrier_spacing scs;
 };
 
 } // namespace fapi_adaptor

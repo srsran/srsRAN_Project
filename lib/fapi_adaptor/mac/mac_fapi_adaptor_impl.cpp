@@ -17,7 +17,7 @@ using namespace fapi_adaptor;
 mac_fapi_adaptor_impl::mac_fapi_adaptor_impl(slot_message_gateway& msg_gw,
                                              unsigned              sector_id_,
                                              subcarrier_spacing    scs) :
-  sector_id(sector_id_), mac_translator(msg_gw), fapi_data_translator(), fapi_time_translator(mac_translator, scs)
+  sector_id(sector_id_), mac_translator(msg_gw), fapi_data_translator(scs), fapi_time_translator(mac_translator, scs)
 {
   // :TODO: remove this when sector id is used (in logging)
   (void)(sector_id);
@@ -41,4 +41,9 @@ mac_cell_result_notifier& mac_fapi_adaptor_impl::get_cell_result_notifier()
 void mac_fapi_adaptor_impl::set_cell_slot_handler(mac_cell_slot_handler& mac_slot_handler)
 {
   fapi_time_translator.set_cell_slot_handler(mac_slot_handler);
+}
+
+void mac_fapi_adaptor_impl::set_cell_rach_handler(mac_cell_rach_handler& mac_rach_handler)
+{
+  fapi_data_translator.set_cell_rach_handler(mac_rach_handler);
 }

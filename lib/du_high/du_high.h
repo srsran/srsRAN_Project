@@ -41,6 +41,8 @@ public:
 
   mac_cell_slot_handler& get_slot_handler(du_cell_index_t cell_index);
 
+  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index);
+
 private:
   du_high_configuration cfg;
 
