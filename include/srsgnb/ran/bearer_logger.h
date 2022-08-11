@@ -14,6 +14,17 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 
+namespace fmt {
+
+template <size_t N>
+const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
+{
+  mem_buffer.push_back('\0');
+  return mem_buffer.data();
+}
+
+} // namespace fmt
+
 namespace srsgnb {
 
 /// Class used to store common logging parameters for all types RLC entities.
@@ -106,23 +117,23 @@ private:
   template <typename... Args>
   void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args)
   {
+    if (!channel.enabled()) {
+      return;
+    }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    //
-    // TODO: avoid string construction
-    //
-    channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
+    channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_c_str(buffer));
   }
 
   template <typename It, typename... Args>
   void log_helper(It it_begin, It it_end, srslog::log_channel& channel, const char* fmt, Args&&... args)
   {
+    if (!channel.enabled()) {
+      return;
+    }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    //
-    // TODO: avoid string construction
-    //
-    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, fmt::to_string(buffer));
+    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, fmt::to_c_str(buffer));
   }
 };
 
