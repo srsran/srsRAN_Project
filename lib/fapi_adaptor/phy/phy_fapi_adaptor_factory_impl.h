@@ -15,7 +15,7 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Implementation of the PHY-FAPI adaptor factory.
+/// Implementation of the PHY&ndash;FAPI adaptor factory.
 class phy_fapi_adaptor_factory_impl : public phy_fapi_adaptor_factory
 {
 public:

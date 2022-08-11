@@ -18,7 +18,7 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Configuration parameters for the MAC–FAPI adaptor factory.
+/// Configuration parameters for the MAC&ndash;FAPI adaptor factory.
 struct mac_fapi_adaptor_factory_config {
   mac_fapi_adaptor_factory_config(unsigned sector_id, subcarrier_spacing scs, fapi::slot_message_gateway& gateway) :
     sector_id(sector_id), gateway(gateway), scs(scs)

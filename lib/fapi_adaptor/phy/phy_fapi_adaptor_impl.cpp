@@ -19,9 +19,9 @@ phy_fapi_adaptor_impl::phy_fapi_adaptor_impl(unsigned                    sector_
                                              resource_grid_pool&         rg_pool,
                                              uplink_request_processor&   ul_request_processor,
                                              subcarrier_spacing          scs_common,
-                                             const fapi::prach_config&   prach_tlv,
-                                             const fapi::carrier_config& carrier_tlv) :
-  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, prach_tlv, carrier_tlv),
+                                             const fapi::prach_config&   prach_cfg,
+                                             const fapi::carrier_config& carrier_cfg) :
+  fapi_translator(sector_id, dl_processor_pool, rg_pool, ul_request_processor, scs_common, prach_cfg, carrier_cfg),
   time_translator(fapi_translator)
 {
 }

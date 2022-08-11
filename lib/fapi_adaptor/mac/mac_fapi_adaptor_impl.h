@@ -22,6 +22,11 @@ namespace fapi_adaptor {
 class mac_fapi_adaptor_impl : public mac_fapi_adaptor
 {
 public:
+  /// \brief Constructor for the MAC&ndash;FAPI bidirectional adaptor.
+  ///
+  /// \param[in] msg_gw FAPI message gateway.
+  /// \param[in] sector_id_ Sector identifier.
+  /// \param[in] subcarrier_spacing Subcarrier spacing, as per TS38.331 Section 6.2.2.
   mac_fapi_adaptor_impl(fapi::slot_message_gateway& msg_gw, unsigned sector_id_, subcarrier_spacing scs);
 
   // See interface for documentation.

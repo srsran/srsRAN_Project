@@ -64,7 +64,9 @@ class fapi_to_phy_translator : public fapi::slot_message_gateway
 
     ~slot_based_upper_phy_controller();
 
-    downlink_processor*       operator->() { return &dl_processor.get(); }
+    /// Overloaded member of pointer operator.
+    downlink_processor* operator->() { return &dl_processor.get(); }
+    /// Overloaded member of pointer operator.
     const downlink_processor* operator->() const { return &dl_processor.get(); }
   };
 
@@ -76,22 +78,22 @@ public:
   /// \param[in] rg_pool Resource grid pool that will be used to process PDUs.
   /// \param[in] ul_request_processor Uplink request processor.
   /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
-  /// \param[in] prach_tlv PRACH configuration TLV.
-  /// \param[in] carrier_tlv Carrier configuration TLV.
+  /// \param[in] prach_cfg PRACH configuration.
+  /// \param[in] carrier_cfg Carrier configuration.
   fapi_to_phy_translator(unsigned                    sector_id,
                          downlink_processor_pool&    dl_processor_pool,
                          resource_grid_pool&         rg_pool,
                          uplink_request_processor&   ul_request_processor,
                          subcarrier_spacing          scs_common,
-                         const fapi::prach_config&   prach_tlv,
-                         const fapi::carrier_config& carrier_tlv) :
+                         const fapi::prach_config&   prach_cfg,
+                         const fapi::carrier_config& carrier_cfg) :
     sector_id(sector_id),
     dl_processor_pool(dl_processor_pool),
     rg_pool(rg_pool),
     ul_request_processor(ul_request_processor),
     scs_common(scs_common),
-    prach_tlv(prach_tlv),
-    carrier_tlv(carrier_tlv)
+    prach_cfg(prach_cfg),
+    carrier_cfg(carrier_cfg)
   {
   }
 
@@ -140,9 +142,9 @@ private:
   /// Common subcarrier spacing.
   const subcarrier_spacing scs_common;
   /// PRACH configuration.
-  const fapi::prach_config prach_tlv;
+  const fapi::prach_config prach_cfg;
   /// Carrier configuration.
-  const fapi::carrier_config carrier_tlv;
+  const fapi::carrier_config carrier_cfg;
 };
 
 } // namespace fapi_adaptor

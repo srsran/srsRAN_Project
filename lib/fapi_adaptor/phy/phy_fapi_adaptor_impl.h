@@ -36,15 +36,15 @@ public:
   /// \param[in] rg_pool Resource grid pool that will be used to process PDUs.
   /// \param[in] ul_request_processor Uplink request processor.
   /// \param[in] scs_common Common subcarrier spacing, as per TS38.331 Section 6.2.2.
-  /// \param[in] prach_tlv PRACH configuration TLV.
-  /// \param[in] carrier_tlv Carrier configuration TLV.
+  /// \param[in] prach_cfg PRACH configuration.
+  /// \param[in] carrier_cfg Carrier configuration.
   phy_fapi_adaptor_impl(unsigned                    sector_id,
                         downlink_processor_pool&    dl_processor_pool,
                         resource_grid_pool&         rg_pool,
                         uplink_request_processor&   ul_request_processor,
                         subcarrier_spacing          scs_common,
-                        const fapi::prach_config&   prach_tlv,
-                        const fapi::carrier_config& carrier_tlv);
+                        const fapi::prach_config&   prach_cfg,
+                        const fapi::carrier_config& carrier_cfg);
 
   // See interface for documentation.
   upper_phy_timing_notifier& get_timing_notifier() override;

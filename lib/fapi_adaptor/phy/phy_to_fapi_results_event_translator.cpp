@@ -32,7 +32,7 @@ public:
 } // namespace
 
 /// This dummy object is passed to the constructor of the PHY-to-FAPI data event translator as a placeholder for the
-/// actual, data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
+/// actual data-specific notifier, which will be later set up through the \ref set_slot_data_message_notifier() method.
 static slot_data_message_notifier_dummy dummy_data_notifier;
 
 phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() : data_notifier(dummy_data_notifier) {}

@@ -23,15 +23,15 @@ class uplink_request_processor;
 
 namespace fapi_adaptor {
 
-/// Configuration parameters for the PHY–FAPI adaptor factory.
+/// Configuration parameters for the PHY&ndash;FAPI adaptor factory.
 struct phy_fapi_adaptor_factory_config {
   /// Base station sector identifier.
   unsigned sector_id;
   /// Common subcarrier spacing as per TS38.331 Section 6.2.2.
   subcarrier_spacing scs_common;
-  /// PRACH configuration TLV as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
+  /// PRACH configuration as per SCF-222 v4.0 Section 3.3.2.4 TLV 0x1031.
   fapi::prach_config prach_cfg;
-  /// Carrier configuration TLV per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
+  /// Carrier configuration per SCF-222 v4.0 Section 3.3.2.4 TLV 0x102d.
   fapi::carrier_config carrier_cfg;
 };
 

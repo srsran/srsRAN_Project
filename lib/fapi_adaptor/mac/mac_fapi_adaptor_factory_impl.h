@@ -15,7 +15,7 @@
 namespace srsgnb {
 namespace fapi_adaptor {
 
-/// Implementation of the MAC-FAPI adaptor factory.
+/// Implementation of the MAC&ndash;FAPI adaptor factory.
 class mac_fapi_adaptor_factory_impl : public mac_fapi_adaptor_factory
 {
 public:
