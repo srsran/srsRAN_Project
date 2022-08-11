@@ -13,17 +13,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
-
-namespace fmt {
-
-template <size_t N>
-const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
-{
-  mem_buffer.push_back('\0');
-  return mem_buffer.data();
-}
-
-} // namespace fmt
+#include "srsgnb/support/format_utils.h"
 
 namespace srsgnb {
 
@@ -122,7 +112,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel("UE={}, LCID={}: {}", du_index, lcid, fmt::to_c_str(buffer));
+    channel("UE={}, LCID={}: {}", du_index, lcid, to_c_str(buffer));
   }
 
   template <typename It, typename... Args>
@@ -133,7 +123,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, fmt::to_c_str(buffer));
+    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, to_c_str(buffer));
   }
 };
 

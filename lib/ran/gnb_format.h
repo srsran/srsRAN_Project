@@ -14,15 +14,9 @@
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/srslog/srslog.h"
+#include "srsgnb/support/format_utils.h"
 
 namespace srsgnb {
-
-template <size_t N>
-const char* to_c_str(fmt::basic_memory_buffer<char, N>& mem_buffer)
-{
-  mem_buffer.push_back('\0');
-  return mem_buffer.data();
-}
 
 struct ue_event_prefix {
   const char*     direction;
@@ -39,7 +33,8 @@ struct ue_event_prefix {
                   const char*     channel_  = nullptr,
                   lcid_t          lcid_     = INVALID_LCID) :
     direction(dir_), ue_index(ue_index_), rnti(rnti_), cell_index(cell_idx_), channel(channel_), lcid(lcid_)
-  {}
+  {
+  }
 
   ue_event_prefix& set_type(const char* t)
   {
