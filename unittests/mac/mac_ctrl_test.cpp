@@ -21,18 +21,19 @@ void test_mac_ctrl_ue_procedures()
 {
   test_delimit_logger delimiter{"Test UE procedures"};
 
-  manual_task_worker          worker{128};
-  dummy_ul_executor_mapper    ul_exec_mapper{worker};
-  dummy_dl_executor_mapper    dl_exec_mapper{&worker};
-  dummy_mac_event_indicator   du_mng_notifier;
-  dummy_mac_result_notifier   phy_notifier;
-  mac_common_config_t         cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier};
-  mac_ul_dummy_configurer     ul_unit;
-  mac_dl_dummy_configurer     dl_unit;
-  mac_scheduler_dummy_adapter sched_cfg_adapter;
-  du_rnti_table               rnti_table;
+  manual_task_worker              worker{128};
+  dummy_ul_executor_mapper        ul_exec_mapper{worker};
+  dummy_dl_executor_mapper        dl_exec_mapper{&worker};
+  dummy_mac_event_indicator       du_mng_notifier;
+  dummy_mac_result_notifier       phy_notifier;
+  mac_common_config_t             cfg{du_mng_notifier, ul_exec_mapper, dl_exec_mapper, worker, phy_notifier};
+  mac_ul_dummy_configurer         ul_unit;
+  mac_dl_dummy_configurer         dl_unit;
+  mac_scheduler_dummy_adapter     sched_cfg_adapter;
+  du_rnti_table                   rnti_table;
+  dummy_rach_handler_configurator rach_hdl;
 
-  mac_controller mac_ctrl(cfg, ul_unit, dl_unit, rnti_table, sched_cfg_adapter);
+  mac_controller mac_ctrl(cfg, ul_unit, dl_unit, rach_hdl, rnti_table, sched_cfg_adapter);
 
   // Action 1: Create UE
   mac_ue_create_request_message ue_create_msg{};

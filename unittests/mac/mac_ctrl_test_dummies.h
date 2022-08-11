@@ -41,7 +41,7 @@ public:
 
   async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_create_request = msg;
       CORO_AWAIT(ue_created_ev);
@@ -51,7 +51,7 @@ public:
 
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<void> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_delete_request = msg;
       CORO_RETURN();
@@ -60,7 +60,7 @@ public:
 
   async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_reconfiguration_request = msg;
       CORO_RETURN(true);
@@ -75,7 +75,7 @@ class mac_cell_dummy_controller final : public mac_cell_controller
 public:
   async_task<void> start() override
   {
-    return launch_async([](coro_context<async_task<void> >& ctx) {
+    return launch_async([](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN();
     });
@@ -95,7 +95,7 @@ public:
 
   async_task<bool> add_ue(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_create_request = msg;
       CORO_AWAIT(ue_created_ev);
@@ -104,7 +104,7 @@ public:
   }
   async_task<void> remove_ue(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<void> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<void>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_delete_request = msg;
       CORO_RETURN();
@@ -113,7 +113,7 @@ public:
 
   async_task<bool> reconfigure_ue(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([this, msg](coro_context<async_task<bool> >& ctx) {
+    return launch_async([this, msg](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       last_ue_reconfiguration_request = msg;
       CORO_RETURN(true);
@@ -123,6 +123,13 @@ public:
   void                 add_cell(const mac_cell_creation_request& cell_cfg) override {}
   void                 remove_cell(du_cell_index_t cell_index) override {}
   mac_cell_controller& get_cell_controller(du_cell_index_t cell_index) override { return cell_ctrl; }
+};
+
+class dummy_rach_handler_configurator : public rach_handler_configurator
+{
+public:
+  void add_cell(du_cell_index_t cell_index) override {}
+  void remove_cell(du_cell_index_t cell_index) override {}
 };
 
 class dummy_ul_executor_mapper : public du_l2_ul_executor_mapper
@@ -194,7 +201,7 @@ public:
 
   async_task<bool> handle_ue_creation_request(const mac_ue_create_request_message& msg) override
   {
-    return launch_async([](coro_context<async_task<bool> >& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
     });
@@ -202,7 +209,7 @@ public:
 
   async_task<bool> handle_ue_reconfiguration_request(const mac_ue_reconfiguration_request_message& msg) override
   {
-    return launch_async([](coro_context<async_task<bool> >& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
     });
@@ -210,7 +217,7 @@ public:
 
   async_task<bool> handle_ue_deletion_request(const mac_ue_delete_request_message& msg) override
   {
-    return launch_async([](coro_context<async_task<bool> >& ctx) {
+    return launch_async([](coro_context<async_task<bool>>& ctx) {
       CORO_BEGIN(ctx);
       CORO_RETURN(true);
     });

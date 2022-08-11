@@ -32,6 +32,7 @@ public:
   mac_controller(mac_common_config_t&        cfg,
                  mac_ul_configurator&        ul_unit_,
                  mac_dl_configurator&        dl_unit_,
+                 rach_handler_configurator&  rach_unit_,
                  du_rnti_table&              rnti_table_,
                  mac_scheduler_configurator& sched_cfg_);
 
@@ -76,6 +77,7 @@ private:
   srslog::basic_logger&       logger;
   mac_ul_configurator&        ul_unit;
   mac_dl_configurator&        dl_unit;
+  rach_handler_configurator&  rach_unit;
   du_rnti_table&              rnti_table;
   mac_scheduler_configurator& sched_cfg;
 

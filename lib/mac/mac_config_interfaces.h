@@ -42,4 +42,12 @@ public:
   virtual void remove_ue(du_ue_index_t ue_index)                                        = 0;
 };
 
+class rach_handler_configurator
+{
+public:
+  virtual ~rach_handler_configurator()                 = default;
+  virtual void add_cell(du_cell_index_t cell_index)    = 0;
+  virtual void remove_cell(du_cell_index_t cell_index) = 0;
+};
+
 } // namespace srsgnb

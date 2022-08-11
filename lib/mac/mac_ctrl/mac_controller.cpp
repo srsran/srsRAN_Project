@@ -19,19 +19,29 @@ using namespace srsgnb;
 mac_controller::mac_controller(mac_common_config_t&        cfg_,
                                mac_ul_configurator&        ul_unit_,
                                mac_dl_configurator&        dl_unit_,
+                               rach_handler_configurator&  rach_unit_,
                                du_rnti_table&              rnti_table_,
                                mac_scheduler_configurator& sched_cfg_) :
-  cfg(cfg_), logger(cfg.logger), ul_unit(ul_unit_), dl_unit(dl_unit_), rnti_table(rnti_table_), sched_cfg(sched_cfg_)
+  cfg(cfg_),
+  logger(cfg.logger),
+  ul_unit(ul_unit_),
+  dl_unit(dl_unit_),
+  rach_unit(rach_unit_),
+  rnti_table(rnti_table_),
+  sched_cfg(sched_cfg_)
 {
 }
 
 void mac_controller::add_cell(const mac_cell_creation_request& cell_cfg)
 {
-  // 1. Fill sched cell configuration message and pass it to the scheduler.
+  // > Fill sched cell configuration message and pass it to the scheduler.
   sched_cfg.add_cell(cell_cfg);
 
-  // 2. Create MAC Cell Handler.
+  // > Create MAC Cell DL Handler.
   dl_unit.add_cell(cell_cfg);
+
+  // > Create RACH Cell Handler.
+  rach_unit.add_cell(cell_cfg.cell_index);
 }
 
 void mac_controller::remove_cell(du_cell_index_t cell_index)

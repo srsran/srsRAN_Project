@@ -33,7 +33,7 @@ public:
                     task_executor&            ctrl_exec,
                     mac_result_notifier&      phy_notifier_);
 
-  mac_rach_handler& get_rach_handler(du_cell_index_t cell_index) override { return rach_hdl; }
+  mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) override { return rach_hdl.get_cell(cell_index); }
 
   mac_ue_configurator& get_ue_configurator() override { return ctrl_unit; }
 
@@ -68,8 +68,8 @@ private:
 
   mac_dl_processor dl_unit;
   mac_ul_processor ul_unit;
-  mac_controller   ctrl_unit;
   rach_handler     rach_hdl;
+  mac_controller   ctrl_unit;
 };
 
 } // namespace srsgnb

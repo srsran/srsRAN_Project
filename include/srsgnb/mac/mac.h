@@ -12,9 +12,9 @@
 
 #include "srsgnb/mac/mac_cell_control_information_handler.h"
 #include "srsgnb/mac/mac_cell_manager.h"
+#include "srsgnb/mac/mac_cell_rach_handler.h"
 #include "srsgnb/mac/mac_cell_slot_handler.h"
 #include "srsgnb/mac/mac_pdu_handler.h"
-#include "srsgnb/mac/mac_rach_handler.h"
 #include "srsgnb/mac/mac_ue_configurator.h"
 #include "srsgnb/mac/mac_ue_control_information_handler.h"
 #include <memory>
@@ -27,7 +27,7 @@ public:
   virtual ~mac_interface() = default;
 
   /// Returns handler of PRACHs.
-  virtual mac_rach_handler& get_rach_handler(du_cell_index_t cell_index) = 0;
+  virtual mac_cell_rach_handler& get_rach_handler(du_cell_index_t cell_index) = 0;
 
   /// Returns handler for UL and DL control information for a given cell.
   virtual mac_cell_control_information_handler& get_control_info_handler(du_cell_index_t cell_index) = 0;
