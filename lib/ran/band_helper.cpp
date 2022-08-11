@@ -21,16 +21,16 @@ using namespace band_helper;
 // Possible values of delta f_raster in Table 5.4.2.3-1 and Table 5.4.2.3-2
 enum class delta_freq_raster {
   DEFAULT = 0, // for bands with 2 possible values for delta_f_raster (e.g. 15 and 30 kHz), the lower is chosen
-  KHz15,
-  KHz30,
-  KHz60,
-  KHz100,
-  KHz120
+  kHz15,
+  kHz30,
+  kHz60,
+  kHz100,
+  kHz120
 };
 
 // NR operating band and DL ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
-struct nr_band {
-  nr_band_fr1       band;
+struct nr_band_raster {
+  nr_band           band;
   delta_freq_raster delta_f_rast;
   uint32_t          ul_nref_first;
   uint32_t          ul_nref_step;
@@ -47,131 +47,131 @@ const uint32_t nof_nr_DL_bands_fr1 = 36;
 // Table with NR operating FR1 band and related ARFCN lower-bound and upper-bound. See Table 5.4.2.3-1 in TS 38.104.
 // NOTE: It only includes FDD, TDD, and SDL bands.
 // NOTE: Band 2 is a subset of band 25
-static constexpr std::array<nr_band, nof_nr_DL_bands_fr1> nr_band_table_fr1 = {{
+static constexpr std::array<nr_band_raster, nof_nr_DL_bands_fr1> nr_band_table_fr1 = {{
     // clang-format off
-    {nr_band_fr1::n1,  delta_freq_raster::KHz100, 384000, 20, 396000, 422000, 20, 434000},
-    {nr_band_fr1::n2,  delta_freq_raster::KHz100, 370000, 20, 382000, 386000, 20, 398000},
-    {nr_band_fr1::n3,  delta_freq_raster::KHz100, 342000, 20, 357000, 361000, 20, 376000},
-    {nr_band_fr1::n5,  delta_freq_raster::KHz100, 164800, 20, 169800, 173800, 20, 178800},
-    {nr_band_fr1::n7,  delta_freq_raster::KHz100, 500000, 20, 514000, 524000, 20, 538000},
-    {nr_band_fr1::n8,  delta_freq_raster::KHz100, 176000, 20, 183000, 185000, 20, 192000},
-    {nr_band_fr1::n12, delta_freq_raster::KHz100, 139800, 20, 143200, 145800, 20, 149200},
-    {nr_band_fr1::n20, delta_freq_raster::KHz100, 166400, 20, 172400, 158200, 20, 164200},
-    {nr_band_fr1::n25, delta_freq_raster::KHz100, 370000, 20, 383000, 386000, 20, 399000},
-    {nr_band_fr1::n28, delta_freq_raster::KHz100, 140600, 20, 149600, 151600, 20, 160600},
-    {nr_band_fr1::n34, delta_freq_raster::KHz100, 402000, 20, 405000, 402000, 20, 405000},
-    {nr_band_fr1::n38, delta_freq_raster::KHz100, 514000, 20, 524000, 514000, 20, 524000},
-    {nr_band_fr1::n39, delta_freq_raster::KHz100, 376000, 20, 384000, 376000, 20, 384000},
-    {nr_band_fr1::n40, delta_freq_raster::KHz100, 460000, 20, 480000, 460000, 20, 480000},
-    {nr_band_fr1::n41, delta_freq_raster::KHz15,  499200,  3, 537999, 499200,  3, 537999},
-    {nr_band_fr1::n41, delta_freq_raster::KHz30,  499200,  6, 537996, 499200,  6, 537996},
-    {nr_band_fr1::n50, delta_freq_raster::KHz100, 286400, 20, 303400, 286400, 20, 303400},
-    {nr_band_fr1::n51, delta_freq_raster::KHz100, 285400, 20, 286400, 285400, 20, 286400},
-    {nr_band_fr1::n66, delta_freq_raster::KHz100, 342000, 20, 356000, 422000, 20, 440000},
-    {nr_band_fr1::n70, delta_freq_raster::KHz100, 339000, 20, 342000, 399000, 20, 404000},
-    {nr_band_fr1::n71, delta_freq_raster::KHz100, 132600, 20, 139600, 123400, 20, 130400},
-    {nr_band_fr1::n74, delta_freq_raster::KHz100, 285400, 20, 294000, 295000, 20, 303600},
-    {nr_band_fr1::n75, delta_freq_raster::KHz100,      0,  0,      0, 286400, 20, 303400},
-    {nr_band_fr1::n76, delta_freq_raster::KHz100,      0,  0,      0, 285400, 20, 286400},
-    {nr_band_fr1::n77, delta_freq_raster::KHz15,  620000,  1, 680000, 620000,  1, 680000},
-    {nr_band_fr1::n77, delta_freq_raster::KHz30,  620000,  2, 680000, 620000,  2, 680000},
-    {nr_band_fr1::n78, delta_freq_raster::KHz15,  620000,  1, 653333, 620000,  1, 653333},
-    {nr_band_fr1::n78, delta_freq_raster::KHz30,  620000,  2, 653332, 620000,  2, 653332},
-    {nr_band_fr1::n79, delta_freq_raster::KHz15,  693334,  2, 733333, 693334,  2, 733333},
-    {nr_band_fr1::n79, delta_freq_raster::KHz30,  693334,  2, 733332, 693334,  2, 733332},
-    {nr_band_fr1::n80, delta_freq_raster::KHz100, 342000,  20, 357000,     0,  0,      0},
-    {nr_band_fr1::n81, delta_freq_raster::KHz100, 176000,  20, 183000,     0,  0,      0},
-    {nr_band_fr1::n82, delta_freq_raster::KHz100, 166400,  20, 172400,     0,  0,      0},
-    {nr_band_fr1::n83, delta_freq_raster::KHz100, 140600,  20, 149600,     0,  0,      0},
-    {nr_band_fr1::n84, delta_freq_raster::KHz100, 384000,  20, 396000,     0,  0,      0},
-    {nr_band_fr1::n86, delta_freq_raster::KHz100, 342000,  20, 356000,     0,  0,      0}
+    {nr_band::n1,  delta_freq_raster::kHz100, 384000, 20, 396000, 422000, 20, 434000},
+    {nr_band::n2,  delta_freq_raster::kHz100, 370000, 20, 382000, 386000, 20, 398000},
+    {nr_band::n3,  delta_freq_raster::kHz100, 342000, 20, 357000, 361000, 20, 376000},
+    {nr_band::n5,  delta_freq_raster::kHz100, 164800, 20, 169800, 173800, 20, 178800},
+    {nr_band::n7,  delta_freq_raster::kHz100, 500000, 20, 514000, 524000, 20, 538000},
+    {nr_band::n8,  delta_freq_raster::kHz100, 176000, 20, 183000, 185000, 20, 192000},
+    {nr_band::n12, delta_freq_raster::kHz100, 139800, 20, 143200, 145800, 20, 149200},
+    {nr_band::n20, delta_freq_raster::kHz100, 166400, 20, 172400, 158200, 20, 164200},
+    {nr_band::n25, delta_freq_raster::kHz100, 370000, 20, 383000, 386000, 20, 399000},
+    {nr_band::n28, delta_freq_raster::kHz100, 140600, 20, 149600, 151600, 20, 160600},
+    {nr_band::n34, delta_freq_raster::kHz100, 402000, 20, 405000, 402000, 20, 405000},
+    {nr_band::n38, delta_freq_raster::kHz100, 514000, 20, 524000, 514000, 20, 524000},
+    {nr_band::n39, delta_freq_raster::kHz100, 376000, 20, 384000, 376000, 20, 384000},
+    {nr_band::n40, delta_freq_raster::kHz100, 460000, 20, 480000, 460000, 20, 480000},
+    {nr_band::n41, delta_freq_raster::kHz15,  499200,  3, 537999, 499200,  3, 537999},
+    {nr_band::n41, delta_freq_raster::kHz30,  499200,  6, 537996, 499200,  6, 537996},
+    {nr_band::n50, delta_freq_raster::kHz100, 286400, 20, 303400, 286400, 20, 303400},
+    {nr_band::n51, delta_freq_raster::kHz100, 285400, 20, 286400, 285400, 20, 286400},
+    {nr_band::n66, delta_freq_raster::kHz100, 342000, 20, 356000, 422000, 20, 440000},
+    {nr_band::n70, delta_freq_raster::kHz100, 339000, 20, 342000, 399000, 20, 404000},
+    {nr_band::n71, delta_freq_raster::kHz100, 132600, 20, 139600, 123400, 20, 130400},
+    {nr_band::n74, delta_freq_raster::kHz100, 285400, 20, 294000, 295000, 20, 303600},
+    {nr_band::n75, delta_freq_raster::kHz100,      0,  0,      0, 286400, 20, 303400},
+    {nr_band::n76, delta_freq_raster::kHz100,      0,  0,      0, 285400, 20, 286400},
+    {nr_band::n77, delta_freq_raster::kHz15,  620000,  1, 680000, 620000,  1, 680000},
+    {nr_band::n77, delta_freq_raster::kHz30,  620000,  2, 680000, 620000,  2, 680000},
+    {nr_band::n78, delta_freq_raster::kHz15,  620000,  1, 653333, 620000,  1, 653333},
+    {nr_band::n78, delta_freq_raster::kHz30,  620000,  2, 653332, 620000,  2, 653332},
+    {nr_band::n79, delta_freq_raster::kHz15,  693334,  2, 733333, 693334,  2, 733333},
+    {nr_band::n79, delta_freq_raster::kHz30,  693334,  2, 733332, 693334,  2, 733332},
+    {nr_band::n80, delta_freq_raster::kHz100, 342000,  20, 357000,     0,  0,      0},
+    {nr_band::n81, delta_freq_raster::kHz100, 176000,  20, 183000,     0,  0,      0},
+    {nr_band::n82, delta_freq_raster::kHz100, 166400,  20, 172400,     0,  0,      0},
+    {nr_band::n83, delta_freq_raster::kHz100, 140600,  20, 149600,     0,  0,      0},
+    {nr_band::n84, delta_freq_raster::kHz100, 384000,  20, 396000,     0,  0,      0},
+    {nr_band::n86, delta_freq_raster::kHz100, 342000,  20, 356000,     0,  0,      0}
     // clang-format on
 }};
 
 // NR operating band in FR1 with related Duplex Mode. See TS 38.101-1 Table 5.2-1.
 struct nr_operating_band {
-  nr_band_fr1 band;
+  nr_band     band;
   duplex_mode duplex;
 };
 static const uint32_t                                                     nof_nr_operating_band_fr1 = 32;
 static constexpr std::array<nr_operating_band, nof_nr_operating_band_fr1> nr_operating_bands_fr1    = {{
-    // clang-format off
-    {nr_band_fr1::n1,  duplex_mode::FDD},
-    {nr_band_fr1::n2,  duplex_mode::FDD},
-    {nr_band_fr1::n3,  duplex_mode::FDD},
-    {nr_band_fr1::n5,  duplex_mode::FDD},
-    {nr_band_fr1::n7,  duplex_mode::FDD},
-    {nr_band_fr1::n8,  duplex_mode::FDD},
-    {nr_band_fr1::n12, duplex_mode::FDD},
-    {nr_band_fr1::n20, duplex_mode::FDD},
-    {nr_band_fr1::n25, duplex_mode::FDD},
-    {nr_band_fr1::n28, duplex_mode::FDD},
-    {nr_band_fr1::n34, duplex_mode::TDD},
-    {nr_band_fr1::n38, duplex_mode::TDD},
-    {nr_band_fr1::n39, duplex_mode::TDD},
-    {nr_band_fr1::n40, duplex_mode::TDD},
-    {nr_band_fr1::n41, duplex_mode::TDD},
-    {nr_band_fr1::n50, duplex_mode::TDD},
-    {nr_band_fr1::n51, duplex_mode::TDD},
-    {nr_band_fr1::n66, duplex_mode::FDD},
-    {nr_band_fr1::n70, duplex_mode::FDD},
-    {nr_band_fr1::n71, duplex_mode::FDD},
-    {nr_band_fr1::n74, duplex_mode::FDD},
-    {nr_band_fr1::n75, duplex_mode::TDD},
-    {nr_band_fr1::n76, duplex_mode::TDD},
-    {nr_band_fr1::n77, duplex_mode::TDD},
-    {nr_band_fr1::n78, duplex_mode::TDD},
-    {nr_band_fr1::n79, duplex_mode::TDD},
-    {nr_band_fr1::n80, duplex_mode::SUL},
-    {nr_band_fr1::n81, duplex_mode::SUL},
-    {nr_band_fr1::n82, duplex_mode::SUL},
-    {nr_band_fr1::n83, duplex_mode::SUL},
-    {nr_band_fr1::n84, duplex_mode::SUL},
-    {nr_band_fr1::n86, duplex_mode::SUL}
-    // clang-format on
+       // clang-format off
+    {nr_band::n1,  duplex_mode::FDD},
+    {nr_band::n2,  duplex_mode::FDD},
+    {nr_band::n3,  duplex_mode::FDD},
+    {nr_band::n5,  duplex_mode::FDD},
+    {nr_band::n7,  duplex_mode::FDD},
+    {nr_band::n8,  duplex_mode::FDD},
+    {nr_band::n12, duplex_mode::FDD},
+    {nr_band::n20, duplex_mode::FDD},
+    {nr_band::n25, duplex_mode::FDD},
+    {nr_band::n28, duplex_mode::FDD},
+    {nr_band::n34, duplex_mode::TDD},
+    {nr_band::n38, duplex_mode::TDD},
+    {nr_band::n39, duplex_mode::TDD},
+    {nr_band::n40, duplex_mode::TDD},
+    {nr_band::n41, duplex_mode::TDD},
+    {nr_band::n50, duplex_mode::TDD},
+    {nr_band::n51, duplex_mode::TDD},
+    {nr_band::n66, duplex_mode::FDD},
+    {nr_band::n70, duplex_mode::FDD},
+    {nr_band::n71, duplex_mode::FDD},
+    {nr_band::n74, duplex_mode::FDD},
+    {nr_band::n75, duplex_mode::TDD},
+    {nr_band::n76, duplex_mode::TDD},
+    {nr_band::n77, duplex_mode::TDD},
+    {nr_band::n78, duplex_mode::TDD},
+    {nr_band::n79, duplex_mode::TDD},
+    {nr_band::n80, duplex_mode::SUL},
+    {nr_band::n81, duplex_mode::SUL},
+    {nr_band::n82, duplex_mode::SUL},
+    {nr_band::n83, duplex_mode::SUL},
+    {nr_band::n84, duplex_mode::SUL},
+    {nr_band::n86, duplex_mode::SUL}
+       // clang-format on
 }};
 
 // NR operating band in FR1 with SSB Subcarrier Spacing and SSB pattern case. See TS 38.101-1 Table 5.2-1.
 struct nr_band_ssb_scs_case {
-  nr_band_fr1        band;
+  nr_band            band;
   subcarrier_spacing scs;
   ssb_pattern_case   pattern;
 };
 static const uint32_t                                                   nof_nr_ssb_bands_fr1           = 32;
 static constexpr std::array<nr_band_ssb_scs_case, nof_nr_ssb_bands_fr1> nr_ssb_band_scs_case_table_fr1 = {{
     // clang-format off
-    {nr_band_fr1::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n2,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n3,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n5,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n5,  subcarrier_spacing::kHz30, ssb_pattern_case::B},
-    {nr_band_fr1::n7,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n8,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n12, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n20, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n25, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n28, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n34, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n34, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n38, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n38, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n39, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n39, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n40, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n41, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n41, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n50, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n51, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n66, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n66, subcarrier_spacing::kHz30, ssb_pattern_case::B},
-    {nr_band_fr1::n70, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n71, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n74, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n75, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n76, subcarrier_spacing::kHz15, ssb_pattern_case::A},
-    {nr_band_fr1::n77, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n78, subcarrier_spacing::kHz30, ssb_pattern_case::C},
-    {nr_band_fr1::n79, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n1,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n2,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n3,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n5,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n5,  subcarrier_spacing::kHz30, ssb_pattern_case::B},
+    {nr_band::n7,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n8,  subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n12, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n20, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n25, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n28, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n34, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n34, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n38, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n38, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n39, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n39, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n40, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n41, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n41, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n50, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n51, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n66, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n66, subcarrier_spacing::kHz30, ssb_pattern_case::B},
+    {nr_band::n70, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n71, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n74, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n75, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n76, subcarrier_spacing::kHz15, ssb_pattern_case::A},
+    {nr_band::n77, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n78, subcarrier_spacing::kHz30, ssb_pattern_case::C},
+    {nr_band::n79, subcarrier_spacing::kHz30, ssb_pattern_case::C},
     // clang-format on
 }};
 
@@ -278,15 +278,15 @@ static bool is_valid_raster_param(const nr_raster_params& raster)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-nr_band_fr1 srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
+nr_band srsgnb::band_helper::get_band_from_dl_arfcn(uint32_t arfcn)
 {
-  for (const nr_band& band : nr_band_table_fr1) {
+  for (const nr_band_raster& band : nr_band_table_fr1) {
     // Check given ARFCN is between the first and last possible ARFCN.
     if (arfcn >= band.dl_nref_first and arfcn <= band.dl_nref_last) {
       return band.band;
     }
   }
-  return nr_band_fr1::invalid;
+  return nr_band::invalid;
 }
 
 uint32_t srsgnb::band_helper::get_ul_arfcn_from_dl_arfcn(uint32_t dl_arfcn)
@@ -328,7 +328,7 @@ uint32_t srsgnb::band_helper::freq_to_nr_arfcn(double freq)
                                params.N_REF_Offs);
 }
 
-ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band_fr1 band, subcarrier_spacing scs)
+ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band band, subcarrier_spacing scs)
 {
   // Look for the given band and SCS.
   for (const nr_band_ssb_scs_case& ssb_scs_case : nr_ssb_band_scs_case_table_fr1) {
@@ -346,7 +346,7 @@ ssb_pattern_case srsgnb::band_helper::get_ssb_pattern(nr_band_fr1 band, subcarri
   return ssb_pattern_case::invalid;
 }
 
-subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(nr_band_fr1 band)
+subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(nr_band band)
 {
   // Look for the given band and SCS
   for (const nr_band_ssb_scs_case& ss_raster : nr_ssb_band_scs_case_table_fr1) {
@@ -365,7 +365,7 @@ subcarrier_spacing srsgnb::band_helper::get_lowest_ssb_scs(nr_band_fr1 band)
   return subcarrier_spacing::invalid;
 }
 
-duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band_fr1 band)
+duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band band)
 {
   // Look for the given band.
   for (const nr_operating_band& b : nr_operating_bands_fr1) {
@@ -384,7 +384,7 @@ duplex_mode srsgnb::band_helper::get_duplex_mode(nr_band_fr1 band)
   return duplex_mode::INVALID;
 }
 
-bool srsgnb::band_helper::is_paired_spectrum(nr_band_fr1 band)
+bool srsgnb::band_helper::is_paired_spectrum(nr_band band)
 {
   duplex_mode mode = get_duplex_mode(band);
   srsgnb_assert(mode < duplex_mode::INVALID, "Returned invalid duplex MODE");

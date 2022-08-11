@@ -13,7 +13,6 @@
 /// This header is currently used only by the MAC to compute extra SSB parameters (needed for scheduling) from those
 /// provided by DU.
 
-#include <limits.h>
 #include <stdint.h>
 
 namespace srsgnb {
@@ -24,45 +23,54 @@ enum class ssb_pattern_case;
 enum class bs_channel_bandwidth_fr1;
 enum class frequency_range;
 
-/// \brief NR operating bands in FR1, as per TS 38.104, Table 5.2-1.
-enum class nr_band_fr1 {
+/// \brief NR operating bands in FR1 and FR2.
+///
+/// This enumeration abstracts the NR operating bands for FR1 and FR2 described in TS 38.104, Table 5.2-1 and
+/// Table 5.2-2, respectively.
+enum class nr_band {
   invalid = 0,
-  n1      = 1,
-  n2      = 2,
-  n3      = 3,
-  n5      = 5,
-  n7      = 7,
-  n8      = 8,
-  n12     = 12,
-  n20     = 20,
-  n25     = 25,
-  n28     = 28,
-  n34     = 34,
-  n38     = 38,
-  n39     = 39,
-  n40     = 40,
-  n41     = 41,
-  n50     = 50,
-  n51     = 51,
-  n66     = 66,
-  n70     = 70,
-  n71     = 71,
-  n74     = 74,
-  n75     = 75,
-  n76     = 76,
-  n77     = 77,
-  n78     = 78,
-  n79     = 79,
-  n80     = 80,
-  n81     = 81,
-  n82     = 82,
-  n83     = 83,
-  n84     = 84,
-  n86     = 86,
+  /// FR1 bands.
+  n1  = 1,
+  n2  = 2,
+  n3  = 3,
+  n5  = 5,
+  n7  = 7,
+  n8  = 8,
+  n12 = 12,
+  n20 = 20,
+  n25 = 25,
+  n28 = 28,
+  n34 = 34,
+  n38 = 38,
+  n39 = 39,
+  n40 = 40,
+  n41 = 41,
+  n50 = 50,
+  n51 = 51,
+  n66 = 66,
+  n70 = 70,
+  n71 = 71,
+  n74 = 74,
+  n75 = 75,
+  n76 = 76,
+  n77 = 77,
+  n78 = 78,
+  n79 = 79,
+  n80 = 80,
+  n81 = 81,
+  n82 = 82,
+  n83 = 83,
+  n84 = 84,
+  n86 = 86,
+  /// FR2 bands.
+  n257 = 257,
+  n258 = 258,
+  n260 = 260,
+  n261 = 261
 };
 
-/// Converts the BS channel bandwidth label into the actual BW value in MHz.
-constexpr inline unsigned nr_band_to_uint(nr_band_fr1 band)
+/// Returns the numeric value associated with the NR operating band label.
+constexpr inline unsigned nr_band_to_uint(nr_band band)
 {
   return static_cast<unsigned>(band);
 }
@@ -72,13 +80,13 @@ namespace band_helper {
 /// \brief     Gets the NR band duplex mode.
 /// \param[in] band Given band.
 /// \return    A valid duplex_mode if the band is valid, duplex_mode::INVALID otherwise.
-duplex_mode get_duplex_mode(nr_band_fr1 band);
+duplex_mode get_duplex_mode(nr_band band);
 
 /// \brief     Gets the lowest band that includes a given Downlink ARFCN.
 /// \remark    Some bands can be subset of others, e.g., band 2 is a subset of band 25.
 /// \param[in] arfcn Given Downlink ARFCN.
 /// \return    The band number if the ARFCN is bounded in a band, UINT16_MAX otherwise.
-nr_band_fr1 get_band_from_dl_arfcn(uint32_t arfcn);
+nr_band get_band_from_dl_arfcn(uint32_t arfcn);
 
 /// @brief Get the respective UL ARFCN of a DL ARFCN.
 ///
@@ -104,18 +112,18 @@ uint32_t freq_to_nr_arfcn(double freq);
 /// \param[in] band NR Band number.
 /// \param[in] scs SSB Subcarrier spacing.
 /// \return    The SSB pattern case if band and subcarrier spacing match, invalid otherwise.
-ssb_pattern_case get_ssb_pattern(nr_band_fr1 band, subcarrier_spacing scs);
+ssb_pattern_case get_ssb_pattern(nr_band band, subcarrier_spacing scs);
 
 /// \brief Selects the lowest SSB subcarrier spacing valid for this band.
 /// \param[in] band NR band number.
 /// \return The SSB subcarrier spacing.
-subcarrier_spacing get_lowest_ssb_scs(nr_band_fr1 band);
+subcarrier_spacing get_lowest_ssb_scs(nr_band band);
 
 /// \brief     Returns boolean indicating whether the band is in paired spectrum.
 /// \remark    Paired spectrum is FDD, unpaired spectrum is TDD, SUL, SDL.
 /// \param[in] band Given band.
 /// \return    true for paired specrum, false otherwise.
-bool is_paired_spectrum(nr_band_fr1 band);
+bool is_paired_spectrum(nr_band band);
 
 /// @brief Compute the absolute pointA for a NR carrier from its bandwidth and the center frequency.
 ///

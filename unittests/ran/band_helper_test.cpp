@@ -19,21 +19,21 @@ using namespace srsgnb;
 
 TEST(test_get_band_from_arfcn, mix_bands)
 {
-  ASSERT_NE(nr_band_fr1::invalid, band_helper::get_band_from_dl_arfcn(530000U));
-  ASSERT_EQ(nr_band_fr1::invalid, band_helper::get_band_from_dl_arfcn(5300000U));
-  ASSERT_EQ(nr_band_fr1::n1, band_helper::get_band_from_dl_arfcn(423000U));
-  ASSERT_EQ(nr_band_fr1::n3, band_helper::get_band_from_dl_arfcn(365000U));
-  ASSERT_EQ(nr_band_fr1::n5, band_helper::get_band_from_dl_arfcn(175000U));
-  ASSERT_EQ(nr_band_fr1::n7, band_helper::get_band_from_dl_arfcn(530000U));
-  ASSERT_EQ(nr_band_fr1::n25, band_helper::get_band_from_dl_arfcn(399000U));
-  ASSERT_EQ(nr_band_fr1::n34, band_helper::get_band_from_dl_arfcn(404000U));
-  ASSERT_EQ(nr_band_fr1::n38, band_helper::get_band_from_dl_arfcn(515000U));
-  ASSERT_EQ(nr_band_fr1::n41, band_helper::get_band_from_dl_arfcn(499900U));
-  ASSERT_EQ(nr_band_fr1::n41, band_helper::get_band_from_dl_arfcn(504000U));
-  ASSERT_EQ(nr_band_fr1::n50, band_helper::get_band_from_dl_arfcn(286500U));
-  ASSERT_EQ(nr_band_fr1::n51, band_helper::get_band_from_dl_arfcn(285500U));
-  ASSERT_EQ(nr_band_fr1::n70, band_helper::get_band_from_dl_arfcn(400000U));
-  ASSERT_EQ(nr_band_fr1::n77, band_helper::get_band_from_dl_arfcn(630500U));
+  ASSERT_NE(nr_band::invalid, band_helper::get_band_from_dl_arfcn(530000U));
+  ASSERT_EQ(nr_band::invalid, band_helper::get_band_from_dl_arfcn(5300000U));
+  ASSERT_EQ(nr_band::n1, band_helper::get_band_from_dl_arfcn(423000U));
+  ASSERT_EQ(nr_band::n3, band_helper::get_band_from_dl_arfcn(365000U));
+  ASSERT_EQ(nr_band::n5, band_helper::get_band_from_dl_arfcn(175000U));
+  ASSERT_EQ(nr_band::n7, band_helper::get_band_from_dl_arfcn(530000U));
+  ASSERT_EQ(nr_band::n25, band_helper::get_band_from_dl_arfcn(399000U));
+  ASSERT_EQ(nr_band::n34, band_helper::get_band_from_dl_arfcn(404000U));
+  ASSERT_EQ(nr_band::n38, band_helper::get_band_from_dl_arfcn(515000U));
+  ASSERT_EQ(nr_band::n41, band_helper::get_band_from_dl_arfcn(499900U));
+  ASSERT_EQ(nr_band::n41, band_helper::get_band_from_dl_arfcn(504000U));
+  ASSERT_EQ(nr_band::n50, band_helper::get_band_from_dl_arfcn(286500U));
+  ASSERT_EQ(nr_band::n51, band_helper::get_band_from_dl_arfcn(285500U));
+  ASSERT_EQ(nr_band::n70, band_helper::get_band_from_dl_arfcn(400000U));
+  ASSERT_EQ(nr_band::n77, band_helper::get_band_from_dl_arfcn(630500U));
 }
 
 TEST(test_arfcn_freq_conversion, arfcn_to_freq)
@@ -132,64 +132,64 @@ TEST(test_center_freq_conversion, freq_center)
 
 TEST(test_is_paired_spectrum, paired)
 {
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n1));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n3));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n7));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n25));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n28));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n66));
-  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band_fr1::n74));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n1));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n3));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n7));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n25));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n28));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n66));
+  ASSERT_TRUE(band_helper::is_paired_spectrum(nr_band::n74));
 }
 
 TEST(test_is_paired_spectrum, unpaired)
 {
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n34));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n40));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n51));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n75));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n76));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n77));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n79));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n81));
-  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band_fr1::n84));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n34));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n40));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n51));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n75));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n76));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n77));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n79));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n81));
+  ASSERT_FALSE(band_helper::is_paired_spectrum(nr_band::n84));
 }
 
 TEST(test_ssb_pattern, ssb_pattern_case_A)
 {
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n1, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n3, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n25, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n34, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n38, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n39, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n41, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n51, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n66, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band_fr1::n70, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n1, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n3, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n25, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n34, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n38, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n39, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n41, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n51, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n66, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::A, band_helper::get_ssb_pattern(nr_band::n70, subcarrier_spacing::kHz15));
 }
 
 TEST(test_ssb_pattern, ssb_pattern_case_B)
 {
-  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band_fr1::n5, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band_fr1::n5, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band_fr1::n66, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band::n5, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band::n5, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::B, band_helper::get_ssb_pattern(nr_band::n66, subcarrier_spacing::kHz30));
 }
 
 TEST(test_ssb_pattern, ssb_pattern_case_C)
 {
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n34, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n38, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n39, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n40, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n41, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n50, subcarrier_spacing::kHz30));
-  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band_fr1::n78, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n34, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n38, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n39, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n40, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n41, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n50, subcarrier_spacing::kHz30));
+  ASSERT_EQ(ssb_pattern_case::C, band_helper::get_ssb_pattern(nr_band::n78, subcarrier_spacing::kHz30));
 }
 
 TEST(test_ssb_pattern, ssb_pattern_case_invalid)
 {
-  ASSERT_GT(ssb_pattern_case::invalid, band_helper::get_ssb_pattern(nr_band_fr1::n1, subcarrier_spacing::kHz15));
-  ASSERT_EQ(ssb_pattern_case::invalid, band_helper::get_ssb_pattern(nr_band_fr1::n3, subcarrier_spacing::kHz30));
+  ASSERT_GT(ssb_pattern_case::invalid, band_helper::get_ssb_pattern(nr_band::n1, subcarrier_spacing::kHz15));
+  ASSERT_EQ(ssb_pattern_case::invalid, band_helper::get_ssb_pattern(nr_band::n3, subcarrier_spacing::kHz30));
 }
 
 TEST(test_get_point_a_from_f_req, scs_kHz15)

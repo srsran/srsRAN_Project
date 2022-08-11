@@ -17,8 +17,8 @@ using namespace srsgnb;
 
 ssb_pattern_case srsgnb::ssb_get_ssb_pattern(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 {
-  nr_band_fr1 dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
-  srsgnb_assert(dl_idx_nr_band > nr_band_fr1::invalid, "Invalid NR band index");
+  nr_band dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
+  srsgnb_assert(dl_idx_nr_band > nr_band::invalid, "Invalid NR band index");
   return band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
 }
 
@@ -28,8 +28,8 @@ uint8_t srsgnb::ssb_get_L_max(subcarrier_spacing ssb_scs, unsigned dl_arfcn)
 
   // Derive the SSB-specific parameters (SSB pattern case, SSB L_max and SSB paired_spectrum flag) from those in the
   // MAC Cell config.
-  nr_band_fr1 dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
-  srsgnb_assert(dl_idx_nr_band > nr_band_fr1::invalid, "Invalid NR band index");
+  nr_band dl_idx_nr_band = band_helper::get_band_from_dl_arfcn(dl_arfcn);
+  srsgnb_assert(dl_idx_nr_band > nr_band::invalid, "Invalid NR band index");
   ssb_pattern_case ssb_case = band_helper::get_ssb_pattern(dl_idx_nr_band, ssb_scs);
   // Flag indicating whether cell is on paired spectrum (FDD) or unpaired (TDD, SDL, SUL).
   bool paired_spectrum = band_helper::is_paired_spectrum(dl_idx_nr_band);
