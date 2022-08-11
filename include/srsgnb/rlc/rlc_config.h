@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "srsgnb/srslog/formatter.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -43,6 +43,7 @@ constexpr uint16_t to_number(rlc_am_sn_size sn_size)
 /// \return cardinality of sn_size
 constexpr uint32_t cardinality(uint16_t sn_size)
 {
+  srsgnb_assert(sn_size < 32, "Cardinality of SN size {} bit exceeds return type 'uint32_t'", sn_size);
   return (1 << sn_size);
 }
 
