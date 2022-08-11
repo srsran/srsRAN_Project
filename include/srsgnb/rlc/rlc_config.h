@@ -22,7 +22,7 @@ enum class rlc_mode { tm, um_bidir, um_unidir_ul, um_unidir_dl, am };
 
 /// RLC UM NR sequence number field
 enum class rlc_um_sn_size : uint16_t { size6bits = 6, size12bits = 12 };
-constexpr uint16_t to_number(const rlc_um_sn_size& sn_size)
+constexpr uint16_t to_number(rlc_um_sn_size sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
@@ -33,7 +33,7 @@ enum class rlc_am_sn_size : uint16_t { size12bits = 12, size18bits = 18 };
 /// \brief Converts sequence number field to numeric its value
 /// \param sn_size sequence number size
 /// \return numeric value of the sequence number field
-constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
+constexpr uint16_t to_number(rlc_am_sn_size sn_size)
 {
   return static_cast<uint16_t>(sn_size);
 }
@@ -41,7 +41,7 @@ constexpr uint16_t to_number(const rlc_am_sn_size& sn_size)
 /// \brief Returns the value range of the sequence numbers
 /// \param sn_size Length of the sequence number field in bits
 /// \return cardinality of sn_size
-constexpr uint32_t cardinality(const uint16_t sn_size)
+constexpr uint32_t cardinality(uint16_t sn_size)
 {
   return (1 << sn_size);
 }
@@ -50,14 +50,14 @@ constexpr uint32_t cardinality(const uint16_t sn_size)
 /// Ref: 3GPP TS 38.322 Sec. 7.2
 /// \param sn_size Length of the sequence number field in bits
 /// \return size of the window
-constexpr uint32_t window_size(const uint16_t sn_size)
+constexpr uint32_t window_size(uint16_t sn_size)
 {
   return cardinality(sn_size - 1);
 }
 
 /// RLC AM NR segmentation info
 enum class rlc_dc_field : unsigned { control = 0b00, data = 0b01 };
-constexpr unsigned to_number(const rlc_dc_field& dc)
+constexpr unsigned to_number(rlc_dc_field dc)
 {
   return static_cast<unsigned>(dc);
 }
@@ -70,13 +70,13 @@ enum class rlc_si_field : unsigned {
   middle_segment = 0b11
 };
 
-constexpr uint16_t to_number(const rlc_si_field& si_field)
+constexpr uint16_t to_number(rlc_si_field si_field)
 {
   return static_cast<uint16_t>(si_field);
 }
 
 enum class rlc_control_pdu_type : unsigned { status_pdu = 0b000 };
-constexpr uint16_t to_number(const rlc_control_pdu_type& type)
+constexpr uint16_t to_number(rlc_control_pdu_type type)
 {
   return static_cast<uint16_t>(type);
 }
@@ -152,7 +152,7 @@ struct formatter<srsgnb::rlc_mode> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_mode& mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_mode mode, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"TM", "UM Bi-dir", "UM Uni-dir-UL", "UM Uni-dir-DL", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
@@ -168,8 +168,7 @@ struct formatter<srsgnb::rlc_um_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_um_sn_size& sn_size, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_um_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} bit", to_number(sn_size));
   }
@@ -184,8 +183,7 @@ struct formatter<srsgnb::rlc_am_sn_size> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_am_sn_size& sn_size, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_am_sn_size sn_size, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     return format_to(ctx.out(), "{} bit", to_number(sn_size));
   }
@@ -200,7 +198,7 @@ struct formatter<srsgnb::rlc_dc_field> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_dc_field& dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_dc_field dc, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"Control PDU", "Data PDU"};
     return format_to(ctx.out(), "{}", options[to_number(dc)]);
@@ -216,7 +214,7 @@ struct formatter<srsgnb::rlc_si_field> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_si_field& si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_si_field si, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"full", "first", "last", "middle"};
     return format_to(ctx.out(), "{}", options[to_number(si)]);
@@ -232,8 +230,7 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
   }
 
   template <typename FormatContext>
-  auto format(const srsgnb::rlc_control_pdu_type& type, FormatContext& ctx)
-      -> decltype(std::declval<FormatContext>().out())
+  auto format(srsgnb::rlc_control_pdu_type type, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
   {
     constexpr static const char* options[] = {"Control PDU"};
     return format_to(ctx.out(), "{}", options[to_number(type)]);
