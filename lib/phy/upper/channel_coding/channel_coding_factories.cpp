@@ -11,6 +11,7 @@
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
 #include "crc_calculator_impl.h"
 #include "ldpc/ldpc_decoder_impl.h"
+#include "ldpc/ldpc_encoder_avx2.h"
 #include "ldpc/ldpc_encoder_impl.h"
 #include "ldpc/ldpc_rate_dematcher_impl.h"
 #include "ldpc/ldpc_rate_matcher_impl.h"
@@ -71,9 +72,11 @@ public:
     if (enc_type == "generic") {
       return std::make_unique<ldpc_encoder_generic>();
     }
+#ifdef HAVE_AVX2
     if (enc_type == "avx2") {
       return std::make_unique<ldpc_encoder_avx2>();
     }
+#endif // HAVE_AVX2
     return {};
   }
 };

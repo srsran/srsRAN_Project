@@ -9,7 +9,7 @@
  */
 
 /// \file
-/// \brief LDPC encoder declaration.
+/// \brief LDPC encoder - Declarations for generic version.
 #pragma once
 
 #include "ldpc_graph_impl.h"
@@ -24,7 +24,7 @@ namespace srsgnb {
 class ldpc_encoder_impl : public ldpc_encoder
 {
 public:
-  /// \name Constructors, destructor, copy and move operators
+  /// \name Constructors, destructor, copy and move operators.
   /// Either default or deleted.
 
   ///@{
@@ -113,19 +113,6 @@ class ldpc_encoder_generic : public ldpc_encoder_impl
   std::array<std::array<uint8_t, ldpc::MAX_LIFTING_SIZE>, ldpc::MAX_BG_M> auxiliary = {};
   /// Register to store computed encoded bits.
   std::array<uint8_t, static_cast<size_t>(ldpc::MAX_BG_N_FULL* ldpc::MAX_LIFTING_SIZE)> codeblock = {};
-};
-
-/// LDPC encoder implementation based on AVX2 intrinsics.
-class ldpc_encoder_avx2 : public ldpc_encoder_impl
-{
-  void select_strategy() override { not_implemented(); };
-  void load_input(span<const uint8_t> /*in*/) override { not_implemented(); }
-  void preprocess_systematic_bits() override { not_implemented(); };
-  void encode_high_rate() override { not_implemented(); }
-  void encode_ext_region() override { not_implemented(); }
-  void write_codeblock(span<uint8_t> /*out*/) override { not_implemented(); }
-
-  static void not_implemented() { srsgnb_terminate("AVX2 Encoder - not implemented yet"); }
 };
 
 } // namespace srsgnb

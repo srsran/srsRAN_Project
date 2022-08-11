@@ -158,6 +158,10 @@ public:
   /// Prints the time execution measurements in nanoseconds.
   void print_percentiles_time() const
   {
+    if (benchmark_results.empty()) {
+      return;
+    }
+
     unsigned percentile_width = get_percentile_width_time();
     unsigned descr_width      = get_description_width();
 

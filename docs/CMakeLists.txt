@@ -31,6 +31,7 @@ if (DOXYGEN_FOUND)
   set(DOXYGEN_CALL_GRAPH "YES")
   set(DOXYGEN_CALLER_GRAPH "YES")
   set(DOXYGEN_DISTRIBUTE_GROUP_DOC "YES")
+  set(DOXYGEN_PREDEFINED "HAVE_AVX2:=1")
 
   # find plantuml
   find_program(PLANTUML_PATH plantuml.jar PATH_SUFFIXES PlantUML plantuml Plantuml
