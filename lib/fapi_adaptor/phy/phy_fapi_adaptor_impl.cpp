@@ -45,3 +45,8 @@ fapi::slot_message_gateway& phy_fapi_adaptor_impl::get_slot_message_gateway()
 {
   return fapi_translator;
 }
+
+upper_phy_rx_results_notifier& phy_fapi_adaptor_impl::get_rx_results_notifier()
+{
+  return results_translator;
+}

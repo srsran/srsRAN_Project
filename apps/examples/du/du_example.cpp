@@ -117,6 +117,7 @@ struct worker_manager {
     rt_task_worker.stop();
     upper_dl_worker.stop();
     upper_ul_worker.stop();
+    lower_prach_worker.stop();
     radio_worker.stop();
   }
 
@@ -129,6 +130,9 @@ struct worker_manager {
   // Lower PHY RT task executor.
   task_worker          rt_task_worker{"phy_rt_thread", 1, false, os_thread_realtime_priority::MAX_PRIO};
   task_worker_executor rt_task_executor{{rt_task_worker}};
+  // PRACH lower PHY executor
+  task_worker          lower_prach_worker{"Lower PHY PRACH worker", task_worker_queue_size};
+  task_worker_executor lower_prach_executor{lower_prach_worker};
   // Upper phy task executor
   task_worker          upper_dl_worker{"PHY DL worker", task_worker_queue_size};
   task_worker_executor upper_dl_executor{upper_dl_worker};
@@ -270,7 +274,8 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
                                                        lower_phy_rx_symbol_notifier& rx_symbol_notifier,
                                                        lower_phy_timing_notifier&    timing_notifier,
                                                        lower_phy_error_notifier&     error_notifier,
-                                                       resource_grid_pool&           ul_resource_grid_pool)
+                                                       resource_grid_pool&           ul_resource_grid_pool,
+                                                       task_executor&                prach_executor)
 {
   // Derived parameters.
   unsigned dft_size_15kHz = static_cast<unsigned>(sampling_rate_hz / 15e3);
@@ -289,6 +294,7 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
   phy_config.rx_symbol_notifier         = &rx_symbol_notifier;
   phy_config.timing_notifier            = &timing_notifier;
   phy_config.error_notifier             = &error_notifier;
+  phy_config.prach_async_executor       = &prach_executor;
 
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     lower_phy_sector_description sector_config;
@@ -313,7 +319,8 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
                                                   lower_phy_rx_symbol_notifier& rx_symbol_notifier,
                                                   lower_phy_timing_notifier&    timing_notifier,
                                                   lower_phy_error_notifier&     error_notifier,
-                                                  resource_grid_pool&           ul_resource_grid_pool)
+                                                  resource_grid_pool&           ul_resource_grid_pool,
+                                                  task_executor&                prach_executor)
 {
   // Create DFT factory. It tries to create a FFTW based factory. If FFTW library is not available, it creates a FFTX
   // based factory.
@@ -372,8 +379,8 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
-  lower_phy_configuration config =
-      create_lower_phy_config(bb_gateway, rx_symbol_notifier, timing_notifier, error_notifier, ul_resource_grid_pool);
+  lower_phy_configuration config = create_lower_phy_config(
+      bb_gateway, rx_symbol_notifier, timing_notifier, error_notifier, ul_resource_grid_pool, prach_executor);
 
   return lphy_factory->create(config);
 }
@@ -582,8 +589,12 @@ int main(int argc, char** argv)
 
   // Create lower PHY.
   test_logger.info("Creating lower PHY object...");
-  std::unique_ptr<lower_phy> lower =
-      build_lower_phy(radio->get_baseband_gateway(), rx_symbol_adapter, timing_adapter, error_adapter, *ul_rg_pool);
+  std::unique_ptr<lower_phy> lower = build_lower_phy(radio->get_baseband_gateway(),
+                                                     rx_symbol_adapter,
+                                                     timing_adapter,
+                                                     error_adapter,
+                                                     *ul_rg_pool,
+                                                     workers.lower_prach_executor);
   if (!lower) {
     test_logger.error("Failed to create Lower PHY");
     return -1;
@@ -615,6 +626,8 @@ int main(int argc, char** argv)
 
     return -1;
   }
+
+  upper->set_results_notifier(phy_adaptor->get_rx_results_notifier());
 
   std::unique_ptr<mac_fapi_adaptor> mac_adaptor = build_mac_fapi_adaptor(phy_adaptor->get_slot_message_gateway());
   if (!mac_adaptor) {

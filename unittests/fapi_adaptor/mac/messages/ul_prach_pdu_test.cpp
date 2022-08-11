@@ -25,7 +25,7 @@ TEST(UlPrachPduTest, valid_prach_should_pass)
   convert_prach_mac_to_fapi(fapi_pdu, mac_pdu);
 
   ASSERT_EQ(static_cast<unsigned>(prach_format_type::one), static_cast<unsigned>(fapi_pdu.prach_format));
-  ASSERT_EQ(mac_pdu.nof_prach_occasions, fapi_pdu.num_prach_ocas);
+  ASSERT_EQ(mac_pdu.format.is_long_preamble() ? 1 : mac_pdu.nof_prach_occasions, fapi_pdu.num_prach_ocas);
   ASSERT_EQ(mac_pdu.index_fd_ra, fapi_pdu.index_fd_ra);
   ASSERT_EQ(mac_pdu.pci, fapi_pdu.phys_cell_id);
   ASSERT_EQ(mac_pdu.nof_fd_ra, fapi_pdu.maintenance_v3.num_fd_ra);

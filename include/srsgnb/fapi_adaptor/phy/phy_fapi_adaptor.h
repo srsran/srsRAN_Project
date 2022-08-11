@@ -19,6 +19,7 @@ class slot_time_message_notifier;
 } // namespace fapi
 
 class upper_phy_timing_notifier;
+class upper_phy_rx_results_notifier;
 
 namespace fapi_adaptor {
 
@@ -38,6 +39,9 @@ public:
 
   /// \brief Returns a reference to the slot-based message gateway used by the adaptor.
   virtual fapi::slot_message_gateway& get_slot_message_gateway() = 0;
+
+  /// \brief Returns a reference to the results notifier used by the adaptor.
+  virtual upper_phy_rx_results_notifier& get_rx_results_notifier() = 0;
 
   /// \brief Configures the slot-based, time-specific message notifier to the given one.
   virtual void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) = 0;

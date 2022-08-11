@@ -18,7 +18,7 @@ namespace srsgnb {
 /// Describes a PRACH detection result.
 struct prach_detection_result {
   /// Maximum number of preambles that can be detected in a slot.
-  static constexpr unsigned MAX_NOF_PREAMBLES_PER_SLOT = 16;
+  static constexpr unsigned MAX_NOF_PREAMBLES_PER_SLOT = 64;
 
   /// Describes the detection of a single preamble.
   struct preamble_indication {

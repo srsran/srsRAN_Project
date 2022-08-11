@@ -11,6 +11,7 @@
 #include "phy_to_fapi_results_event_translator.h"
 #include "srsgnb/fapi/message_builders.h"
 #include "srsgnb/fapi/message_validators.h"
+#include "srsgnb/support/math_utils.h"
 
 using namespace srsgnb;
 using namespace fapi;
@@ -39,6 +40,10 @@ phy_to_fapi_results_event_translator::phy_to_fapi_results_event_translator() : d
 
 void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_results& result)
 {
+  if (result.result.preambles.empty()) {
+    return;
+  }
+
   rach_indication_message         msg;
   rach_indication_message_builder builder(msg);
 
@@ -49,13 +54,30 @@ void phy_to_fapi_results_event_translator::on_new_prach_results(const ul_prach_r
   static constexpr unsigned handle = 0U;
   // NOTE: Currently not supporting PRACH multiplexed in frequency domain.
   static constexpr unsigned fd_ra_index = 0U;
-
-  rach_indication_pdu_builder builder_pdu = builder.add_pdu(
-      handle, result.context.start_symbol, slot.slot_index(), fd_ra_index, result.result.rssi_dB, {}, {});
+  // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
+  static constexpr float      MIN_AVG_RSSI_VALUE = -140.F;
+  static constexpr float      MAX_AVG_RSSI_VALUE = 30.F;
+  rach_indication_pdu_builder builder_pdu =
+      builder.add_pdu(handle,
+                      result.context.start_symbol,
+                      slot.slot_index(),
+                      fd_ra_index,
+                      clamp(result.result.rssi_dB, MIN_AVG_RSSI_VALUE, MAX_AVG_RSSI_VALUE),
+                      {},
+                      {});
 
   for (const auto& preamble : result.result.preambles) {
-    builder_pdu.add_preamble(
-        preamble.preamble_index, {}, preamble.time_advance.to_seconds() * 1e9, preamble.power_dB, preamble.snr_dB);
+    // NOTE: Clamp values defined in SCF-222 v4.0 Section 3.4.11 Table RACH.indication message body.
+    static constexpr float MIN_PREAMBLE_POWER_VALUE = -140.F;
+    static constexpr float MAX_PREAMBLE_POWER_VALUE = 30.F;
+    static constexpr float MIN_PREAMBLE_SNR_VALUE   = -64.F;
+    static constexpr float MAX_PREAMBLE_SNR_VALUE   = 63.F;
+
+    builder_pdu.add_preamble(preamble.preamble_index,
+                             {},
+                             preamble.time_advance.to_seconds() * 1e9,
+                             clamp(preamble.power_dB, MIN_PREAMBLE_POWER_VALUE, MAX_PREAMBLE_POWER_VALUE),
+                             clamp(preamble.snr_dB, MIN_PREAMBLE_SNR_VALUE, MAX_PREAMBLE_SNR_VALUE));
   }
 
   error_type<validator_report> validation_result = validate_rach_indication(msg);

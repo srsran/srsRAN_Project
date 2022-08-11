@@ -26,20 +26,20 @@ public:
 
 static upper_phy_timing_notifier_dummy notifier_dummy;
 
-upper_phy_impl::upper_phy_impl(unsigned                                 sector_id_,
-                               std::unique_ptr<downlink_processor_pool> dl_processor_pool_,
-                               std::unique_ptr<resource_grid_pool>      dl_rg_pool_,
-                               std::unique_ptr<uplink_processor_pool>   ul_processor_pool_,
-                               std::unique_ptr<prach_buffer_pool>       prach_pool_,
-                               upper_phy_rx_results_notifier_proxy&&    notifier_proxy,
-                               upper_phy_rx_symbol_request_notifier&    symbol_request_notifier) :
+upper_phy_impl::upper_phy_impl(unsigned                                             sector_id_,
+                               std::unique_ptr<downlink_processor_pool>             dl_processor_pool_,
+                               std::unique_ptr<resource_grid_pool>                  dl_rg_pool_,
+                               std::unique_ptr<uplink_processor_pool>               ul_processor_pool_,
+                               std::unique_ptr<prach_buffer_pool>                   prach_pool_,
+                               std::unique_ptr<upper_phy_rx_results_notifier_proxy> notifier_proxy_,
+                               upper_phy_rx_symbol_request_notifier&                symbol_request_notifier) :
   sector_id(sector_id_),
   dl_processor_pool(std::move(dl_processor_pool_)),
   dl_rg_pool(std::move(dl_rg_pool_)),
   ul_processor_pool(std::move(ul_processor_pool_)),
   prach_pool(std::move(prach_pool_)),
   symbol_handler(*ul_processor_pool),
-  results_notifier_proxy(std::move(notifier_proxy)),
+  results_notifier_proxy(std::move(notifier_proxy_)),
   ul_request_processor(symbol_request_notifier, *prach_pool),
   timing_handler(notifier_dummy)
 {
@@ -47,6 +47,7 @@ upper_phy_impl::upper_phy_impl(unsigned                                 sector_i
   srsgnb_assert(dl_rg_pool, "Invalid downlink resource grid pool");
   srsgnb_assert(ul_processor_pool, "Invalid uplink processor pool");
   srsgnb_assert(prach_pool, "Invalid PRACH buffer pool");
+  srsgnb_assert(results_notifier_proxy, "Invalid rx results notifier");
 
   // :TODO: Add a logger here.
   (void)sector_id;
@@ -84,5 +85,5 @@ void upper_phy_impl::set_timing_notifier(srsgnb::upper_phy_timing_notifier& noti
 
 void upper_phy_impl::set_results_notifier(upper_phy_rx_results_notifier& notifier)
 {
-  results_notifier_proxy.connect(notifier);
+  results_notifier_proxy->connect(notifier);
 }

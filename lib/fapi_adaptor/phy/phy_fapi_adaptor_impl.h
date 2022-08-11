@@ -53,6 +53,9 @@ public:
   fapi::slot_message_gateway& get_slot_message_gateway() override;
 
   // See interface for documentation.
+  upper_phy_rx_results_notifier& get_rx_results_notifier() override;
+
+  // See interface for documentation.
   void set_slot_time_message_notifier(fapi::slot_time_message_notifier& fapi_time_notifier) override;
 
   // See interface for documentation.

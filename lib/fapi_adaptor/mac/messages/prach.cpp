@@ -43,8 +43,12 @@ static prach_format_type convert_to_fapi_prach_format(preamble_format format)
 void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder& builder,
                                                      const prach_occasion_info&  mac_pdu)
 {
+  // NOTE: For long preambles the number of time-domain PRACH occasions parameter does not apply, so set it to 1 to be
+  // compliant with the FAPI specification.
+  unsigned nof_prach_occasions = mac_pdu.format.is_long_preamble() ? 1U : mac_pdu.nof_prach_occasions;
+
   builder.set_basic_parameters(mac_pdu.pci,
-                               mac_pdu.nof_prach_occasions,
+                               nof_prach_occasions,
                                convert_to_fapi_prach_format(mac_pdu.format),
                                mac_pdu.index_fd_ra,
                                mac_pdu.start_symbol,
@@ -52,13 +56,13 @@ void srsgnb::fapi_adaptor::convert_prach_mac_to_fapi(fapi::ul_prach_pdu_builder&
 
   // NOTE: Parameter not used for now, setting value to 0.
   static constexpr unsigned handle = 0;
-  // NOTE: As only one configuration is supported, the prach index is set to 0.
-  static constexpr unsigned prach_config_index = 0;
+  // NOTE: As only one configuration is supported, the prach res config index is set to 0.
+  static constexpr unsigned prach_res_config_index = 0;
   // NOTE: Only supporting PHY context.
   static constexpr prach_config_scope_type context = prach_config_scope_type::phy_context;
   builder.set_maintenance_v3_basic_parameters(handle,
                                               context,
-                                              prach_config_index,
+                                              prach_res_config_index,
                                               mac_pdu.nof_fd_ra,
                                               mac_pdu.start_preamble_index,
                                               mac_pdu.nof_preamble_indexes);

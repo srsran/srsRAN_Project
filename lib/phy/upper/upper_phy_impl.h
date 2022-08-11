@@ -49,13 +49,13 @@ class upper_phy_impl : public upper_phy
   };
 
 public:
-  upper_phy_impl(unsigned                                 sector_id_,
-                 std::unique_ptr<downlink_processor_pool> dl_processor_pool,
-                 std::unique_ptr<resource_grid_pool>      dl_rg_pool_,
-                 std::unique_ptr<uplink_processor_pool>   ul_processor_pool_,
-                 std::unique_ptr<prach_buffer_pool>       prach_pool_,
-                 upper_phy_rx_results_notifier_proxy&&    notifier_proxy,
-                 upper_phy_rx_symbol_request_notifier&    symbol_request_notifier);
+  upper_phy_impl(unsigned                                             sector_id_,
+                 std::unique_ptr<downlink_processor_pool>             dl_processor_pool_,
+                 std::unique_ptr<resource_grid_pool>                  dl_rg_pool_,
+                 std::unique_ptr<uplink_processor_pool>               ul_processor_pool_,
+                 std::unique_ptr<prach_buffer_pool>                   prach_pool_,
+                 std::unique_ptr<upper_phy_rx_results_notifier_proxy> notifier_proxy_,
+                 upper_phy_rx_symbol_request_notifier&                symbol_request_notifier);
 
   // See interface for documentation.
   upper_phy_rx_symbol_handler& get_rx_symbol_handler() override;
@@ -92,7 +92,7 @@ private:
   /// Received symbols handler.
   upper_phy_rx_symbol_handler_impl symbol_handler;
   /// Upper PHY results notifier.
-  upper_phy_rx_results_notifier_proxy results_notifier_proxy;
+  std::unique_ptr<upper_phy_rx_results_notifier_proxy> results_notifier_proxy;
   /// Uplink request processor.
   uplink_request_processor_impl ul_request_processor;
 

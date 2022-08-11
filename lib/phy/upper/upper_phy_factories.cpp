@@ -328,8 +328,9 @@ public:
     std::unique_ptr<downlink_processor_pool> dl_pool = create_downlink_processor_pool(config);
     report_fatal_error_if_not(dl_pool, "Invalid downlink processor pool.");
 
-    upper_phy_rx_results_notifier_proxy    notifier_proxy;
-    std::unique_ptr<uplink_processor_pool> ul_pool = create_ul_processor_pool(config, notifier_proxy);
+    auto notifier_proxy = std::make_unique<upper_phy_rx_results_notifier_proxy>();
+
+    std::unique_ptr<uplink_processor_pool> ul_pool = create_ul_processor_pool(config, *notifier_proxy);
     report_fatal_error_if_not(ul_pool, "Invalid uplink processor pool.");
 
     std::unique_ptr<prach_buffer_pool> prach_pool = create_prach_pool(config);
