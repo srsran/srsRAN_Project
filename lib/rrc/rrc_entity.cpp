@@ -47,6 +47,11 @@ rrc_ue_entity_interface* rrc_entity::add_user(rrc_ue_creation_message msg)
   return u.get();
 }
 
+void rrc_entity::remove_ue(ue_index_t ue_index)
+{
+  ue_db.erase(ue_index);
+}
+
 void rrc_entity::release_ues()
 {
   // release all UEs connected to this RRC entity

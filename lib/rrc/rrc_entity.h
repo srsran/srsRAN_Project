@@ -29,6 +29,7 @@ public:
 
   // rrc_entity_du_interface
   rrc_ue_entity_interface* add_user(rrc_ue_creation_message msg) override;
+  void                     remove_ue(ue_index_t ue_index) override;
   void                     release_ues() override;
   void                     handle_amf_connection() override;
   void                     handle_amf_connection_drop() override;

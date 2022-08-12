@@ -47,6 +47,10 @@ public:
   /// Creates a new RRC UE object and returns a handle to it.
   virtual rrc_ue_entity_interface* add_user(rrc_ue_creation_message msg) = 0;
 
+  /// Remove a RRC UE object.
+  /// \param[in] ue_index The index of the UE object to remove.
+  virtual void remove_ue(ue_index_t ue_index) = 0;
+
   /// Send RRC Release to all UEs connected to this DU.
   virtual void release_ues() = 0;
 };
