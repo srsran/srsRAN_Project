@@ -220,7 +220,7 @@ TEST_P(ssb_coreset0_param_generator_test, test_du_ssb_coreset0_idx)
   std::pair<ssb_coreset0_freq_location, du_cfg_gen_input_params> params = GetParam();
 
   ssb_coreset0_freq_location expected_res = params.first;
-  du_cfg_gen_input_params input_params = params.second;
+  du_cfg_gen_input_params    input_params = params.second;
 
   ssb_coreset0_freq_location ssb_coreset0_alloc = get_ssb_coreset0_location(input_params);
 
