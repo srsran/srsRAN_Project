@@ -99,8 +99,9 @@ prach_scheduler::prach_scheduler(const cell_configuration& cfg_) :
           info.scs, rach_cfg_common().restricted_set, rach_cfg_common().rach_cfg_generic.zero_correlation_zone_config);
       cached_prach.occasion.index_fd_ra = id_fd_ra;
       cached_prach.occasion.nof_fd_ra   = rach_cfg_common().rach_cfg_generic.msg1_fdm;
-      cached_prach.occasion.start_preamble_index =
-          cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->prach_root_seq_index;
+      // We assume all the preambles from 0 to 64 are assigned to the same PRACH occasion.
+      // TODO: adapt scheduler to difference preamble indices intervals.
+      cached_prach.occasion.start_preamble_index = 0;
       cached_prach.occasion.nof_preamble_indexes =
           cell_cfg.ul_cfg_common.init_ul_bwp.rach_cfg_common->total_nof_ra_preambles;
     }

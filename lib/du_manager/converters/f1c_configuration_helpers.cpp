@@ -300,7 +300,7 @@ static asn1::rrc_nr::ul_cfg_common_sib_s make_asn1_rrc_ul_config_common(const ul
   srsgnb_assert(success, "Invalid ra-WindowSize");
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb_present = true;
   rach.ssb_per_rach_occasion_and_cb_preambs_per_ssb.set_one().value =
-      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n8;
+      asn1::rrc_nr::rach_cfg_common_s::ssb_per_rach_occasion_and_cb_preambs_per_ssb_c_::one_opts::n64;
   rach.ra_contention_resolution_timer.value =
       asn1::rrc_nr::rach_cfg_common_s::ra_contention_resolution_timer_opts::sf64;
   if (rach_cfg.prach_root_seq_index_l839_present) {

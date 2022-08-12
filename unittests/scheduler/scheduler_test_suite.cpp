@@ -90,7 +90,7 @@ void srsgnb::test_prach_opportunity_validity(const cell_configuration& cell_cfg,
     // Check if the PRACH matches cell configuration.
     ASSERT_EQ(prach_cfg.format, prach.format);
     if (prach.start_preamble_index != 255) {
-      ASSERT_EQ(prach.start_preamble_index, rach_cfg_common.prach_root_seq_index);
+      ASSERT_EQ(0, prach.start_preamble_index);
     }
     ASSERT_EQ(rach_cfg_common.total_nof_ra_preambles, prach.nof_preamble_indexes);
     ASSERT_EQ(prach_cfg.nof_occasions_within_slot, prach.nof_prach_occasions);
