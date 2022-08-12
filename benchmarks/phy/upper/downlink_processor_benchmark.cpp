@@ -226,7 +226,7 @@ int main(int argc, char** argv)
       // Create transport block.
       std::vector<uint8_t> transport_block(pdsch_tbs_nbytes);
       std::generate(
-          transport_block.begin(), transport_block.end(), [&]() { return static_cast<unsigned>(rgen() & 0xFF); });
+          transport_block.begin(), transport_block.end(), [&]() { return static_cast<unsigned>(rgen() & 0xff); });
       static_vector<span<const uint8_t>, pdsch_processor::MAX_NOF_TRANSPORT_BLOCKS> data = {transport_block};
 
       // Prepare PDU.
