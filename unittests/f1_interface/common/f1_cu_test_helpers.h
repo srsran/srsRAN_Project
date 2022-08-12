@@ -36,6 +36,12 @@ protected:
     f1ap = create_f1ap(*f1c_pdu_notifier, *du_processor_notifier, *f1c_du_mgmt_notifier);
   }
 
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
   std::unique_ptr<f1_interface>                     f1ap;
   std::unique_ptr<dummy_f1c_pdu_notifier>           f1c_pdu_notifier;
   std::unique_ptr<dummy_f1c_du_processor_notifier>  du_processor_notifier;
@@ -60,22 +66,16 @@ f1c_message generate_f1_setup_request_base()
   return f1_setup_request_base;
 }
 
-f1c_message generate_valid_f1_setup_request()
+asn1::protocol_ie_single_container_s<asn1::f1ap::gnb_du_served_cells_item_ies_o>
+generate_served_cells_item(unsigned nrcell_id, unsigned nrpci)
 {
-  f1c_message f1_setup_request = generate_f1_setup_request_base();
-
-  auto& setup_req                             = f1_setup_request.pdu.init_msg().value.f1_setup_request();
-  setup_req->gnb_du_served_cells_list_present = true;
-  setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
-  setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
-
   asn1::protocol_ie_single_container_s<asn1::f1ap::gnb_du_served_cells_item_ies_o> served_cells_item_container = {};
   served_cells_item_container.set_item(ASN1_F1AP_ID_GNB_DU_SERVED_CELLS_ITEM);
 
   auto& served_cells_item = served_cells_item_container.value().gnb_du_served_cells_item();
   served_cells_item.served_cell_info.nrcgi.plmn_id.from_string("208991");
-  served_cells_item.served_cell_info.nrcgi.nrcell_id.from_number(12345678);
-  served_cells_item.served_cell_info.nrpci               = 0;
+  served_cells_item.served_cell_info.nrcgi.nrcell_id.from_number(nrcell_id);
+  served_cells_item.served_cell_info.nrpci               = nrpci;
   served_cells_item.served_cell_info.five_gs_tac_present = true;
   served_cells_item.served_cell_info.five_gs_tac.from_number(1);
 
@@ -105,7 +105,19 @@ f1c_message generate_valid_f1_setup_request()
       "92002808241099000001000000000a4213407800008c98d6d8d7f616e0804000020107e28180008000088a0dc7008000088a0007141a22"
       "81c874cc00020000232d5c6b6c65462001ec4cc5fc9c0493946a98d4d1e99355c00a1aba010580ec024646f62180");
 
-  setup_req->gnb_du_served_cells_list.value.push_back(served_cells_item_container);
+  return served_cells_item_container;
+}
+
+f1c_message generate_valid_f1_setup_request()
+{
+  f1c_message f1_setup_request = generate_f1_setup_request_base();
+
+  auto& setup_req                             = f1_setup_request.pdu.init_msg().value.f1_setup_request();
+  setup_req->gnb_du_served_cells_list_present = true;
+  setup_req->gnb_du_served_cells_list.id      = ASN1_F1AP_ID_G_NB_DU_SERVED_CELLS_LIST;
+  setup_req->gnb_du_served_cells_list.crit    = asn1::crit_opts::reject;
+
+  setup_req->gnb_du_served_cells_list.value.push_back(generate_served_cells_item(12345678, 0));
 
   return f1_setup_request;
 }
