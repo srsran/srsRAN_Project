@@ -11,26 +11,20 @@
 #pragma once
 
 #include "rlc_am_pdu.h"
-#include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 #include <list>
 
 namespace srsgnb {
 
 struct rlc_tx_amd_retx {
-  uint32_t sn             = INVALID_RLC_SN; ///< sequence number
-  bool     is_segment     = false;          ///< flag whether this is a segment or not
-  uint32_t so_start       = 0;              ///< offset to first byte of this segment
-  uint32_t segment_length = 0;              ///< number of bytes contained in this segment
-  uint32_t current_so     = 0;              ///< stores progressing SO during segmentation of this object
+  uint32_t sn     = INVALID_RLC_SN; ///< sequence number
+  uint32_t so     = 0;              ///< offset to first byte of this ReTx within the associated SDU
+  uint32_t length = 0;              ///< length of this ReTx
 
   /// \brief Implements a check whether the range of this retransmission object includes the given segment offset
   /// \param segment_offset The segment offset to check
   /// \return true if the segment offset is covered by the retransmission object. Otherwise false
-  bool includes(uint32_t segment_offset) const
-  {
-    return (segment_offset >= so_start) && (segment_offset < current_so + segment_length);
-  }
+  bool includes(uint32_t segment_offset) const { return (segment_offset >= so) && (segment_offset < so + length); }
 };
 
 template <class T>
@@ -85,7 +79,7 @@ public:
     }
     for (auto elem : queue) {
       if (elem.sn == sn) {
-        if (elem.overlaps(so)) {
+        if (elem.includes(so)) {
           return true;
         }
       }
@@ -115,3 +109,20 @@ public:
 };
 
 } // namespace srsgnb
+
+namespace fmt {
+template <>
+struct formatter<srsgnb::rlc_tx_amd_retx> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_tx_amd_retx retx, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "SN={}, SO={}, length={}", retx.sn, retx.so, retx.length);
+  }
+};
+} // namespace fmt

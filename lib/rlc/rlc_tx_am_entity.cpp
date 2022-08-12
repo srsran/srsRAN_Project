@@ -81,7 +81,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      return build_continuation_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
+      return build_continuation_pdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
     } else {
       sn_under_segmentation = INVALID_RLC_SN;
       logger.log_error("SDU currently being segmented does not exist in tx_window. Aborting segmentation SN={}",
@@ -131,14 +131,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   // Segment new SDU if necessary
   if (tx_pdu.sdu.length() + head_min_size > nof_bytes) {
     logger.log_info("Trying to build PDU segment from SDU.");
-    return build_new_sdu_segment(tx_pdu, nof_bytes);
+    return build_new_pdu_segment(tx_pdu, nof_bytes);
   }
   logger.log_info("Creating PDU. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
   // Prepare header
   rlc_am_pdu_header hdr = {};
   hdr.dc                = rlc_dc_field::data;
-  hdr.p                 = get_polling_bit(st.tx_next, false, sdu.buf.length());
+  hdr.p                 = get_polling_bit(st.tx_next, /* is_retx = */ false, sdu.buf.length());
   hdr.si                = rlc_si_field::full_sdu;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
@@ -164,7 +164,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
   logger.log_info("Creating new PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
@@ -225,7 +225,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_sdu_segment(rlc_tx_amd_pdu_b
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
   logger.log_info("Creating continued PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
@@ -320,20 +320,119 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_sdu_segment(rlc_tx_
 
 byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
 {
-  // TODO
-  return {};
-}
+  // Check there is at least 1 element before calling front()
+  if (retx_queue.empty()) {
+    logger.log_error("in build_retx_pdu(): retx_queue is empty");
+    return {};
+  }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu_without_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes)
-{
-  // TODO
-  return {};
-}
+  rlc_tx_amd_retx& retx_queue_front = retx_queue.front();
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu_with_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes)
-{
-  // TODO
-  return {};
+  // Sanity check - drop any retx SNs not present in tx_window
+  while (not tx_window->has_sn(retx_queue_front.sn)) {
+    logger.log_info("SN={} not in tx window, probably already ACKed. Skip and remove from retx queue",
+                    retx_queue_front.sn);
+    retx_queue.pop();
+    if (!retx_queue.empty()) {
+      retx_queue_front = retx_queue.front();
+    } else {
+      logger.log_info("empty retx queue, cannot provide any retx PDU");
+      return {};
+    }
+  }
+
+  rlc_tx_amd_retx& retx = retx_queue_front; // local copy since we may delete or update front element later
+  logger.log_debug("RETX: {}", retx);
+
+  // Get tx_pdu info from tx_window
+  rlc_tx_amd_pdu_box& tx_pdu = (*tx_window)[retx.sn];
+
+  // Check ReTx boundaries
+  if (retx.so + retx.length > tx_pdu.sdu.length()) {
+    logger.log_error(
+        "Skipping invalid ReTx that exceeds SDU boundaries. SDU length={}, ReTx: {}", tx_pdu.sdu.length(), retx);
+    retx_queue.pop();
+    return {};
+  }
+
+  // Get expected header and payload len
+  uint32_t expected_hdr_len = get_retx_expected_hdr_len(retx);
+  uint32_t retx_payload_len = std::min(retx.length, nof_bytes - expected_hdr_len);
+  bool     pdu_complete     = retx.so + retx_payload_len == tx_pdu.sdu.length();
+
+  // Configure SI
+  rlc_si_field si = rlc_si_field::full_sdu;
+  if (retx.so == 0) {
+    // either full PDU or first segment
+    if (pdu_complete) {
+      si = rlc_si_field::full_sdu;
+    } else {
+      si = rlc_si_field::first_segment;
+    }
+  } else {
+    // either middle segment or last segment
+    if (pdu_complete) {
+      si = rlc_si_field::last_segment;
+    } else {
+      si = rlc_si_field::middle_segment;
+    }
+  }
+
+  // Log ReTx info
+  logger.log_debug("Creating PDU{} ({}) for ReTx [{}], nof_bytes={}, expected_hdr_len={}, retx_payload_len={}",
+                   si == rlc_si_field::full_sdu ? "" : " segment",
+                   si,
+                   retx,
+                   nof_bytes,
+                   expected_hdr_len,
+                   retx_payload_len);
+
+  // Update ReTx queue. This must be done before calculating
+  // the polling bit, to make sure the poll bit is calculated correctly
+  if (pdu_complete) {
+    // remove ReTx from queue
+    retx_queue.pop();
+  } else {
+    // update SO and length of first element
+    retx_queue_front.so += retx_payload_len;
+    retx_queue_front.length -= retx_payload_len;
+  }
+
+  // Prepare header
+  rlc_am_pdu_header hdr = {};
+  hdr.dc                = rlc_dc_field::data;
+  hdr.p                 = get_polling_bit(retx.sn, /* is_retx = */ true, 0);
+  hdr.si                = si;
+  hdr.sn_size           = cfg.sn_field_length;
+  hdr.sn                = retx.sn;
+  hdr.so                = retx.so;
+  tx_pdu.header         = hdr;
+  logger.log_debug("AMD PDU header: {}", hdr);
+
+  // Pack header
+  byte_buffer header_buf = {};
+  if (!rlc_am_write_data_pdu_header(hdr, header_buf)) {
+    // TODO: actually, pack function always returns true, so we never come here
+    logger.log_error("Failed to pack AMD PDU header");
+  }
+  srsgnb_assert(header_buf.length() == expected_hdr_len,
+                "ReTx header length ({}) differs from expected_hdr_len ({})",
+                header_buf.length(),
+                expected_hdr_len);
+
+  // Assemble PDU
+  byte_buffer_slice_chain pdu_buf = {};
+  pdu_buf.push_front(std::move(header_buf));
+  tx_pdu.sdu.make_slice(hdr.so, retx_payload_len);
+  logger.log_debug("Created RLC ReTx PDU{} ({}) - {} bytes",
+                   hdr.si == rlc_si_field::full_sdu ? "" : " segment",
+                   si,
+                   pdu_buf.length());
+
+  // Log state
+  log_state(srslog::basic_levels::debug);
+
+  return pdu_buf;
 }
 
 // TS 38.322 v16.2.0 Sec 5.5
@@ -485,24 +584,17 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
       // or first SDU segment of the first RLC SDU
       // that has not been acked
       rlc_tx_amd_retx& retx = retx_queue.push();
+      retx.so               = 0;
       retx.sn               = st.tx_next_ack;
-
+      retx.length           = (*tx_window)[st.tx_next_ack].sdu.length();
       //
       // TODO: Revise this: shall we send a minimum-sized segment instead?
       //
 
-      // Full SDU
-      retx.is_segment     = false;
-      retx.so_start       = 0;
-      retx.segment_length = (*tx_window)[st.tx_next_ack].sdu.length();
-      retx.current_so     = 0;
-
-      logger.log_debug(
-          "Retransmission because of t-PollRetransmit. ReTx SN={}, is_segment={}, so_start={}, segment_length={}",
-          retx.sn,
-          retx.is_segment ? "true" : "false",
-          retx.so_start,
-          retx.segment_length);
+      logger.log_debug("Retransmission because of t-PollRetransmit. ReTx: {}", retx);
+      //
+      // TODO: Increment ReTx counter, handle max_retx
+      //
     }
   }
 }

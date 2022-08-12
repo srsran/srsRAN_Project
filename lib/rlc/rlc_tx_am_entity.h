@@ -154,12 +154,28 @@ private:
   /// \param tx_pdu the tx_pdu info contained in the tx_window.
   /// \param nof_bytes Limits the maximum size of the requested PDU.
   /// \return One PDU segment
-  byte_buffer_slice_chain build_new_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+  byte_buffer_slice_chain build_new_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
 
-  byte_buffer_slice_chain build_continuation_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+  /// \brief Build PDU segment for an RLC SDU that is already on-going segmentation.
+  /// \param tx_pdu The tx_pdu info contained in the tx_window.
+  /// \param nof_bytes Limits the maximum size of the requested PDU.
+  /// \return One PDU segment
+  byte_buffer_slice_chain build_continuation_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+
+  /// \brief Builds a retx RLC PDU.
+  ///
+  /// This will use the retx_queue to get information about the RLC PDU
+  /// being retx'ed. The retx may have been previously transmitted as
+  /// a full PDU or an PDU segment(s).
+  ///
+  /// \param nof_bytes Limits the maximum size of the requested PDU.
+  /// \return One PDU or PDU segment segment
   byte_buffer_slice_chain build_retx_pdu(uint32_t nof_bytes);
-  byte_buffer_slice_chain build_retx_pdu_without_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes);
-  byte_buffer_slice_chain build_retx_pdu_with_segmentation(rlc_tx_amd_retx& retx, uint32_t nof_bytes);
+
+  constexpr uint32_t get_retx_expected_hdr_len(const rlc_tx_amd_retx retx)
+  {
+    return retx.so == 0 ? head_min_size : head_max_size;
+  }
 
   /// Called when buffer state needs to be updated and forwarded to lower layers.
   void handle_buffer_state_update();
