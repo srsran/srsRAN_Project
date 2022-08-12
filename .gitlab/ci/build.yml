@@ -157,8 +157,7 @@ cmake flag check:
           --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
-          --exclude-lines-by-pattern ".*srsgnb_assert.*" \
-          --exclude-lines-by-pattern ".*srsgnb_sanity_check.*" \
+          --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
           --root ${CI_PROJECT_DIR} -o coverage.xml
         
         filesize=$(stat -c%s coverage.xml)
