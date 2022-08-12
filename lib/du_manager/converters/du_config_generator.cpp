@@ -88,11 +88,11 @@ get_max_coreset0_index(subcarrier_spacing scs_common, subcarrier_spacing scs_ssb
 
 // --------------- du_config_generator class functions ----------------.
 
-du_config_generator::du_config_generator(unsigned           dl_arfcn_,
-                                         nr_band            nr_band_,
-                                         unsigned           n_rbs_,
-                                         subcarrier_spacing scs_common_,
-                                         subcarrier_spacing scs_ssb_) :
+ssb_freq_position_generator::ssb_freq_position_generator(unsigned           dl_arfcn_,
+                                                         nr_band            nr_band_,
+                                                         unsigned           n_rbs_,
+                                                         subcarrier_spacing scs_common_,
+                                                         subcarrier_spacing scs_ssb_) :
   dl_arfcn{dl_arfcn_},
   n_rbs(n_rbs_),
   scs_common{scs_common_},
@@ -101,7 +101,7 @@ du_config_generator::du_config_generator(unsigned           dl_arfcn_,
   N_raster{0},
   M_raster{0}
 {
-  // Compute the centre frequency, pointA and upper-bound of the band.
+  // Compute the RF reference frequency, pointA and upper-bound of the band.
   f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
   point_A_hz = band_helper::get_abs_freq_point_a_from_f_ref(f_ref_hz, n_rbs, scs_common);
   bw_ub_hz   = point_A_hz + n_rbs * NOF_SUBCARRIERS_PER_RB * scs_to_khz(scs_common) * KHZ_TO_HZ;
@@ -130,8 +130,9 @@ du_config_generator::du_config_generator(unsigned           dl_arfcn_,
   ssb_first_symbol = ssb_case == ssb_pattern_case::B ? 4 : 2;
 }
 
-double du_config_generator::get_ss_ref_hz(unsigned N, unsigned M)
+double ssb_freq_position_generator::get_ss_ref_hz(unsigned N, unsigned M)
 {
+  // Get SS_ref given the parameters N, M, as per Table 5.4.3.1-1, TS 38.104.
   double ss_ref =
       dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ
           ? static_cast<double>(N) * N_SIZE_SYNC_RASTER_1_HZ + static_cast<double>(M) * M_SIZE_SYNC_RASTER_1_HZ
@@ -139,10 +140,8 @@ double du_config_generator::get_ss_ref_hz(unsigned N, unsigned M)
   return ss_ref;
 }
 
-unsigned du_config_generator::find_M_raster()
+unsigned ssb_freq_position_generator::find_M_raster()
 {
-  // srsgnb_assert(dl_arfcn < MIN_ARFCN_3_GHZ_24_5_GHZ, "This function should be called only for DL-ARFCN < 600000");
-
   // If M_raster > 0, no need  to find the same value again.
   if (M_raster > 0) {
     return M_raster;
@@ -155,9 +154,9 @@ unsigned du_config_generator::find_M_raster()
 
     bool is_ssb_inside_band = (f_ssb_0_hz >= point_A_hz) && (f_ssb_ub_hz <= bw_ub_hz);
 
-    // An SSB centre frequency SS_ref is satisfactory if (i) if the SSb falls within the band and (ii) SS_ref falls into
+    // An SSB centre frequency SS_ref is satisfactory if (i) if the SSB falls within the band and (ii) SS_ref falls into
     // the subcarrier grid of CRBs; or, equivalently, if the distance of the first SSB's subcarrier from pointA can be
-    // expressed as a multiple of SCS.
+    // expressed as a multiple of the min(SCS_common, SCS_SSB).
     if (is_ssb_inside_band) {
       bool is_scs_30khz_spacing = scs_common == subcarrier_spacing::kHz30 && scs_ssb == subcarrier_spacing::kHz30;
       bool is_multiple_of_scs   = is_scs_30khz_spacing ? fmod(static_cast<unsigned>(f_ssb_0_hz - point_A_hz),
@@ -176,7 +175,7 @@ unsigned du_config_generator::find_M_raster()
   return 0;
 }
 
-ssb_freq_location du_config_generator::get_next_ssb()
+ssb_freq_location ssb_freq_position_generator::get_next_ssb_location()
 {
   ssb_freq_location ssb{.is_valid = false};
 
@@ -184,9 +183,8 @@ ssb_freq_location du_config_generator::get_next_ssb()
 
   while (N_raster < N_raster_max) {
     // If M_raster > 0, no need  to find the same value again.
-    // NOTE: (i) Once the value of M is found, all the possible SSB position within the raster that viable will be
-    // obtained
-    //       for the same value of M, by varying N.
+    // NOTE: (i) Once the value of M is found, all the possible SSB positions within the raster that are viable will be
+    // obtained for the same value of M, by varying N.
     //      (ii) For NR-bands above 3GHz, M is not used.
     if (M_raster == 0) {
       M_raster = find_M_raster();
@@ -225,20 +223,24 @@ ssb_freq_location du_config_generator::get_next_ssb()
   return ssb;
 }
 
-du_ssb_sib1_location srsgnb::srs_du::get_ssb_sib1_freq_location(unsigned           dl_arfcn,
-                                                                nr_band            nr_band,
-                                                                unsigned           n_rbs,
-                                                                subcarrier_spacing scs_common,
-                                                                subcarrier_spacing scs_ssb)
+ssb_coreset0_freq_location srsgnb::srs_du::get_ssb_coreset0_freq_location(unsigned           dl_arfcn,
+                                                                          nr_band            nr_band,
+                                                                          unsigned           n_rbs,
+                                                                          subcarrier_spacing scs_common,
+                                                                          subcarrier_spacing scs_ssb)
 {
+  srsgnb_assert(nr_band != nr_band::n34 && nr_band != nr_band::n38 && nr_band != nr_band::n39 &&
+                    nr_band != nr_band::n41 && nr_band != nr_band::n79,
+                "Bands n34, n38, n39, n41 and n79 not currently supported");
+
   // Get f_ref, point_A from dl_arfcn, band and bandwidth.
-  du_config_generator du_cfg{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
+  ssb_freq_position_generator du_cfg{dl_arfcn, nr_band, n_rbs, scs_common, scs_ssb};
 
   // Initialized the results.
-  du_ssb_sib1_location results{.is_valid = false};
+  ssb_coreset0_freq_location results{.is_valid = false};
 
   // Select 1st SSB. Select first searchspace0_idx and find viable coreset0 index.
-  ssb_freq_location ssb = du_cfg.get_next_ssb();
+  ssb_freq_location ssb = du_cfg.get_next_ssb_location();
   while (ssb.is_valid) {
     // CRB index where the first SSB's subcarrier is located.
     unsigned crbs_ssb =
@@ -278,7 +280,7 @@ du_ssb_sib1_location srsgnb::srs_du::get_ssb_sib1_freq_location(unsigned        
       }
     }
 
-    ssb = du_cfg.get_next_ssb();
+    ssb = du_cfg.get_next_ssb_location();
   }
 
   // If no configuration is good, then the function returns a configuration with \c .is_valid == false.

@@ -16,6 +16,8 @@
 
 using namespace srsgnb;
 
+// Verify that the frequency ss_ssb_hz, or frequency corresponding to the 120th subcarrier of the SSB, is compatible
+// with the synchronization raster defined in Table 5.4.3.1-1, TS 38.104.
 static void test_ssb_belong_to_sync_raster(double ss_ssb_hz)
 {
   if (band_helper::freq_to_nr_arfcn(ss_ssb_hz) < MIN_ARFCN_3_GHZ_24_5_GHZ) {
@@ -40,12 +42,12 @@ static void test_ssb_belong_to_sync_raster(double ss_ssb_hz)
   }
 }
 
-void srsgnb::test_ssb_coreset0_allocation(unsigned                            dl_arfcn,
-                                          nr_band                             nr_band,
-                                          unsigned                            n_rbs,
-                                          subcarrier_spacing                  scs_common,
-                                          subcarrier_spacing                  scs_ssb,
-                                          const srs_du::du_ssb_sib1_location& params)
+void srsgnb::test_ssb_coreset0_allocation(unsigned                                  dl_arfcn,
+                                          nr_band                                   nr_band,
+                                          unsigned                                  n_rbs,
+                                          subcarrier_spacing                        scs_common,
+                                          subcarrier_spacing                        scs_ssb,
+                                          const srs_du::ssb_coreset0_freq_location& params)
 {
   // Position of SSB central carrier, located at the 120th SSB's subcarrier.
   double f_ref_hz   = band_helper::nr_arfcn_to_freq(dl_arfcn);
