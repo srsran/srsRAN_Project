@@ -149,25 +149,34 @@ class bounded_bitset_tester : public ::testing::Test
 protected:
   using bitset_type = BoundedBitset;
 
-  unsigned max_size() const { return bitset_type::max_size(); }
+  static constexpr unsigned max_size() { return bitset_type::max_size(); }
 
   unsigned get_random_size() const { return std::uniform_int_distribution<unsigned>{1, bitset_type::max_size()}(g); }
 
   bitset_type create_bitset_with_zeros(unsigned size) const { return bitset_type(size); }
 
-  bitset_type create_bitset_with_ones(unsigned size) const
+  static bitset_type create_bitset_with_ones(unsigned size)
   {
     std::vector<bool> data(size, true);
     return bitset_type(data.begin(), data.end());
   }
 
-  bitset_type create_random_bitset(unsigned size) const
+  static bitset_type create_random_bitset(unsigned size)
   {
     std::vector<bool> data(size);
     for (auto it = data.begin(); it != data.end(); ++it) {
       *it = std::bernoulli_distribution{}(g);
     }
     return bitset_type(data.begin(), data.end());
+  }
+
+  static std::vector<bool> create_random_vector(unsigned size)
+  {
+    std::vector<bool> vec(size);
+    for (auto it = vec.begin(); it != vec.end(); ++it) {
+      *it = std::bernoulli_distribution{}(g);
+    }
+    return vec;
   }
 };
 using bitset_types =
@@ -216,10 +225,7 @@ TYPED_TEST(bounded_bitset_tester, initializer_list_constructor)
 
 TYPED_TEST(bounded_bitset_tester, iterator_constructor)
 {
-  std::vector<bool> data(std::uniform_int_distribution<unsigned>{1, this->max_size()}(g));
-  for (auto it = data.begin(); it != data.end(); ++it) {
-    *it = std::bernoulli_distribution{}(g);
-  }
+  std::vector<bool>                 data = this->create_random_vector(this->get_random_size());
   typename TestFixture::bitset_type bitmap(data.begin(), data.end());
   ASSERT_EQ(bitmap.size(), data.size());
 
@@ -248,6 +254,78 @@ TYPED_TEST(bounded_bitset_tester, flip)
   ASSERT_EQ(bitmap.size(), original_bitmap.size());
   for (unsigned i = 0; i != bitmap.size(); ++i) {
     ASSERT_NE(bitmap.test(i), original_bitmap.test(i));
+  }
+}
+
+TYPED_TEST(bounded_bitset_tester, set_bit)
+{
+  std::vector<bool>                 data = this->create_random_vector(this->get_random_size());
+  typename TestFixture::bitset_type bitmap(data.size());
+  typename TestFixture::bitset_type expected_bitmap(data.begin(), data.end());
+
+  for (unsigned i = 0; i != data.size(); ++i) {
+    if (data[i]) {
+      bitmap.set(i);
+    }
+  }
+  ASSERT_EQ(bitmap, expected_bitmap) << fmt::format("failed {} != {}", bitmap, expected_bitmap);
+}
+
+TYPED_TEST(bounded_bitset_tester, bitwise_or)
+{
+  typename TestFixture::bitset_type bitmap       = this->create_random_bitset(this->get_random_size());
+  typename TestFixture::bitset_type zeros_bitmap = this->create_bitset_with_zeros(bitmap.size());
+  typename TestFixture::bitset_type ones_bitmap  = this->create_bitset_with_ones(bitmap.size());
+
+  ASSERT_EQ(bitmap | bitmap, bitmap);
+  ASSERT_EQ(bitmap | zeros_bitmap, bitmap);
+  ASSERT_EQ(zeros_bitmap | bitmap, bitmap);
+  ASSERT_EQ(bitmap | ones_bitmap, ones_bitmap);
+  ASSERT_EQ(ones_bitmap | bitmap, ones_bitmap);
+
+  auto flipped_bitmap = bitmap;
+  flipped_bitmap.flip();
+  ASSERT_EQ(flipped_bitmap | bitmap, this->create_bitset_with_ones(bitmap.size()));
+  ASSERT_EQ(bitmap | flipped_bitmap, this->create_bitset_with_ones(bitmap.size()));
+
+  bitmap |= flipped_bitmap;
+  ASSERT_EQ(bitmap, this->create_bitset_with_ones(bitmap.size()));
+}
+
+TYPED_TEST(bounded_bitset_tester, bitwise_and)
+{
+  typename TestFixture::bitset_type bitmap       = this->create_random_bitset(this->get_random_size());
+  typename TestFixture::bitset_type zeros_bitmap = this->create_bitset_with_zeros(bitmap.size());
+  typename TestFixture::bitset_type ones_bitmap  = this->create_bitset_with_ones(bitmap.size());
+
+  ASSERT_EQ(bitmap & bitmap, bitmap);
+  ASSERT_EQ(bitmap & zeros_bitmap, zeros_bitmap);
+  ASSERT_EQ(zeros_bitmap & bitmap, zeros_bitmap);
+  ASSERT_EQ(bitmap & ones_bitmap, bitmap);
+  ASSERT_EQ(ones_bitmap & bitmap, bitmap);
+
+  auto flipped_bitmap = bitmap;
+  flipped_bitmap.flip();
+  ASSERT_EQ(flipped_bitmap & bitmap, this->create_bitset_with_zeros(bitmap.size()));
+  ASSERT_EQ(bitmap & flipped_bitmap, this->create_bitset_with_zeros(bitmap.size()));
+
+  bitmap &= flipped_bitmap;
+  ASSERT_EQ(bitmap, this->create_bitset_with_zeros(bitmap.size()));
+}
+
+TYPED_TEST(bounded_bitset_tester, any_range)
+{
+  std::vector<bool>                 vec = this->create_random_vector(this->get_random_size());
+  typename TestFixture::bitset_type bitmap(vec.begin(), vec.end());
+
+  for (unsigned l = 1; l < vec.size(); ++l) {
+    for (unsigned i = 0; i < vec.size() - l; ++i) {
+      bool expected_val = false;
+      for (unsigned j = 0; j != l; ++j) {
+        expected_val |= vec[i + j];
+      }
+      ASSERT_EQ(expected_val, bitmap.any(i, i + l));
+    }
   }
 }
 
@@ -314,22 +392,6 @@ TEST(BoundedBitset, setting_bit)
   ASSERT_TRUE(not mask3.all(19, 25));
   ASSERT_TRUE(mask3.any(20, 25));
   ASSERT_TRUE(mask3.any());
-}
-
-TEST(BoundedBitset, bitwise_oper)
-{
-  bounded_bitset<25> mask(23);
-  bounded_bitset<25> mask2(23);
-
-  mask.set(10);
-  ASSERT_TRUE(mask != mask2);
-  mask2 |= mask;
-  ASSERT_TRUE(mask == mask2);
-
-  mask.set(11);
-  mask2 &= mask;
-  ASSERT_TRUE(mask != mask2);
-  ASSERT_TRUE(mask2.test(10) and not mask2.test(11));
 }
 
 TEST(BoundedBitset, bitwise_format)
