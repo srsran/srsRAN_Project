@@ -351,14 +351,25 @@ public:
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
     assert_range_bounds_(startpos, endpos);
-    // NOTE: can be optimized.
-    if (value) {
-      for (size_t i = startpos; i < endpos; ++i) {
-        set_(i);
+    if (reversed) {
+      std::swap(startpos, endpos);
+      startpos = get_bitidx_(startpos) + 1;
+      endpos   = get_bitidx_(endpos) + 1;
+    }
+    size_t start_word = word_idx_(startpos);
+    size_t end_word   = word_idx_(endpos) + (endpos % bits_per_word > 0 ? 1U : 0U);
+    for (size_t i = start_word; i != end_word; ++i) {
+      word_t w = ~static_cast<word_t>(0);
+      if (i == start_word) {
+        w &= mask_lsb_zeros<word_t>(startpos % bits_per_word);
       }
-    } else {
-      for (size_t i = startpos; i < endpos; ++i) {
-        reset_(i);
+      if (i == end_word - 1) {
+        w &= mask_msb_zeros<word_t>(end_word * bits_per_word - endpos);
+      }
+      if (value) {
+        buffer[i] |= w;
+      } else {
+        buffer[i] &= ~w;
       }
     }
     return *this;
@@ -484,12 +495,12 @@ public:
     for (size_t i = start_word; i != end_word; ++i) {
       word_t w = buffer[i];
       if (i == start_word) {
-        w |= mask_lsb_ones<word_t>(start - start_word * bits_per_word);
+        w |= mask_lsb_ones<word_t>(start % bits_per_word);
       }
       if (i == end_word - 1) {
         w |= mask_msb_ones<word_t>(end_word * bits_per_word - stop);
       }
-      if (w != std::numeric_limits<word_t>::max()) {
+      if (w != ~static_cast<word_t>(0)) {
         return false;
       }
     }
@@ -547,10 +558,10 @@ public:
     for (size_t i = start_word; i <= end_word; ++i) {
       word_t w = buffer[i];
       if (i == start_word) {
-        w &= mask_lsb_zeros<word_t>(start - start_word * bits_per_word);
+        w &= mask_lsb_zeros<word_t>(start % bits_per_word);
       }
       if (i == end_word) {
-        w &= mask_lsb_ones<word_t>(stop - end_word * bits_per_word);
+        w &= mask_lsb_ones<word_t>(stop % bits_per_word);
       }
       if (w != 0) {
         return true;

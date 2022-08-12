@@ -365,17 +365,34 @@ TYPED_TEST(bounded_bitset_tester, all_range)
   }
 }
 
-TYPED_TEST(bounded_bitset_tester, fill)
+TYPED_TEST(bounded_bitset_tester, fill_ones)
 {
-  unsigned bitset_size = this->get_random_size();
+  unsigned   bitset_size  = this->get_random_size();
+  const auto zeros_bitmap = this->create_bitset_with_zeros(bitset_size);
 
   for (unsigned l = 1; l < bitset_size; ++l) {
     for (unsigned i = 0; i < bitset_size - l; ++i) {
-      typename TestFixture::bitset_type zeros_bitmap = this->create_bitset_with_zeros(bitset_size);
-      zeros_bitmap.fill(i, i + l);
-      ASSERT_FALSE(zeros_bitmap.any(0, i));
-      ASSERT_TRUE(zeros_bitmap.all(i, i + l));
-      ASSERT_FALSE(zeros_bitmap.any(i + l, bitset_size));
+      auto bitmap = zeros_bitmap;
+      bitmap.fill(i, i + l);
+      ASSERT_FALSE(bitmap.any(0, i));
+      ASSERT_TRUE(bitmap.all(i, i + l));
+      ASSERT_FALSE(bitmap.any(i + l, bitset_size));
+    }
+  }
+}
+
+TYPED_TEST(bounded_bitset_tester, fill_zeros)
+{
+  unsigned   bitset_size = this->get_random_size();
+  const auto ones_bitmap = this->create_bitset_with_ones(bitset_size);
+
+  for (unsigned l = 1; l < bitset_size; ++l) {
+    for (unsigned i = 0; i < bitset_size - l; ++i) {
+      auto bitmap = ones_bitmap;
+      bitmap.fill(i, i + l, false);
+      ASSERT_TRUE(bitmap.all(0, i));
+      ASSERT_FALSE(bitmap.any(i, i + l));
+      ASSERT_TRUE(bitmap.all(i + l, bitset_size));
     }
   }
 }
