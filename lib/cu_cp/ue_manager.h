@@ -27,7 +27,7 @@ public:
   ue_context* add_ue(rnti_t rnti) override;
   void        remove_ue(ue_index_t ue_index) override;
   ue_context* find_ue(ue_index_t ue_index) override;
-  ue_context* find_rnti(rnti_t rnti) override;
+  ue_index_t  find_ue_index(rnti_t rnti) override;
   size_t      get_nof_ues() override;
 
 private:
@@ -45,7 +45,7 @@ private:
   srslog::basic_logger& logger;
 
   slot_array<ue_context, MAX_NOF_UES> ue_db;
-  std::array<int, MAX_NOF_UES>        rnti_to_ue_index;
+  std::map<rnti_t, ue_index_t>        rnti_to_ue_index;
 };
 
 } // namespace srs_cu_cp

@@ -31,7 +31,7 @@ public:
   virtual ue_context* add_ue(rnti_t rnti)            = 0;
   virtual void        remove_ue(ue_index_t ue_index) = 0;
   virtual ue_context* find_ue(ue_index_t ue_index)   = 0;
-  virtual ue_context* find_rnti(rnti_t rnti)         = 0;
+  virtual ue_index_t  find_ue_index(rnti_t rnti)     = 0;
   virtual size_t      get_nof_ues()                  = 0;
 };
 

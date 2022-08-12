@@ -14,10 +14,7 @@
 using namespace srsgnb;
 using namespace srs_cu_cp;
 
-ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_)
-{
-  std::fill(rnti_to_ue_index.begin(), rnti_to_ue_index.end(), -1);
-}
+ue_manager::ue_manager(srslog::basic_logger& logger_) : logger(logger_) {}
 
 ue_context* ue_manager::find_ue(ue_index_t ue_index)
 {
@@ -25,19 +22,28 @@ ue_context* ue_manager::find_ue(ue_index_t ue_index)
   return ue_db.contains(ue_index) ? &ue_db[ue_index] : nullptr;
 }
 
-ue_context* ue_manager::find_rnti(rnti_t rnti)
+ue_index_t ue_manager::find_ue_index(rnti_t rnti)
 {
-  if (rnti_to_ue_index[rnti % MAX_NOF_UES] < 0) {
-    return nullptr;
+  auto it = rnti_to_ue_index.find(rnti);
+  if (it == rnti_to_ue_index.end()) {
+    logger.debug("UE index for rnti={} not found", rnti);
+    return INVALID_UE_INDEX;
   }
-  return &ue_db[rnti_to_ue_index[rnti % MAX_NOF_UES]];
+
+  return it->second;
 }
 
 ue_context* ue_manager::add_ue(rnti_t rnti)
 {
+  // check if RNTI is valid
+  if (rnti == INVALID_RNTI) {
+    logger.error("Invalid rnti={}", rnti);
+    return nullptr;
+  }
+
   // check if the UE is already present
-  if (find_rnti(rnti) != nullptr) {
-    logger.info("UE with rnti={} already exists", rnti);
+  if (find_ue_index(rnti) != INVALID_UE_INDEX) {
+    logger.error("UE with rnti={} already exists", rnti);
     return nullptr;
   }
 
@@ -55,8 +61,7 @@ ue_context* ue_manager::add_ue(rnti_t rnti)
   u.ue_index = new_idx;
 
   // Update RNTI -> UE index map
-  srsgnb_sanity_check(rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] < 0, "Invalid RNTI=0x{:x}", u.c_rnti);
-  rnti_to_ue_index[u.c_rnti % MAX_NOF_UES] = new_idx;
+  rnti_to_ue_index.emplace(u.c_rnti, new_idx);
 
   return &u;
 }
@@ -67,7 +72,13 @@ void ue_manager::remove_ue(ue_index_t ue_index)
   logger.debug("Scheduling ueId={} deletion", ue_index);
 
   srsgnb_assert(ue_db.contains(ue_index), "Remove UE called for inexistent ueId={}", ue_index);
+
+  // remove UE from RNTI -> UE index map
+  rnti_to_ue_index.erase(ue_db[ue_index].c_rnti);
+
+  // remove UE from database
   ue_db.erase(ue_index);
+
   logger.info("Removed ueId={}", ue_index);
   return;
 }
