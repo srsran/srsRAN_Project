@@ -16,17 +16,17 @@ namespace srsgnb {
 
 /// \brief Physical layer time unit.
 ///
-/// This class abstracts the reference time units of the physical layer described in TS38.211 Section 4.1.
+/// This class abstracts the PHY reference time unit \f$T_c\f$ described in TS38.211 Section 4.1.
 class phy_time_unit
 {
 private:
   /// Internal value type. It uses 64-bit word to avoid intermediate multiplications to overflow.
   using value_type = int64_t;
-  /// Maximum subcarrier spacing in Hz, constant \f$\Delta f_{max}\f$.
+  /// Maximum subcarrier spacing in hertz, constant \f$\Delta f_{max}\f$.
   static constexpr value_type MAX_SCS_HZ = 480 * 1000;
   /// Constant \f$N_f\f$.
   static constexpr value_type N_F = 4096;
-  /// Reference chip time in seconds, constant \f$T_c = 1/(\Delta f_{max} \times N_f)\f$.
+  /// Reference time unit in seconds, that is \f$T_c = 1/(\Delta f_{max} \times N_f)\f$.
   static constexpr double T_C = 1.0 / static_cast<double>(MAX_SCS_HZ * N_F);
   /// Reference subcarrier spacing, constant \f$\Delta f_{ref}\f$
   static constexpr value_type SCS_REF_HZ = 15 * 1000;
@@ -35,7 +35,7 @@ private:
   /// Constant \f$\kappa=T_s/T_c=64\f$.
   static constexpr value_type KAPPA = 64;
 
-  /// Actual value as multiple of \f$T_c\f$.
+  /// Actual value as a multiple of \f$T_c\f$.
   value_type value = 0;
 
   /// Private constructor from a value in units of \f$T_c\f$.
@@ -45,10 +45,10 @@ private:
   }
 
 public:
-  /// Creates a default physical layer time unit of zero.
+  /// Creates a default physical layer time of zero units.
   phy_time_unit() = default;
 
-  /// \brief Get the time in seconds.
+  /// \brief Gets the time in seconds.
   /// \tparam U Return type. Must be a floating point type (default: double).
   template <class U = double>
   constexpr U to_seconds() const
@@ -57,14 +57,14 @@ public:
     return static_cast<U>(value) * static_cast<U>(T_C);
   }
 
-  /// \brief Determines if the time value is sample accurate given a sampling rate in Hz.
+  /// \brief Determines if the time value is sample accurate given a sampling rate in hertz.
   ///
   /// The time value is sample accurate if the time is equivalent to an integer number of samples for the given sampling
   /// rate.
   ///
   /// \tparam U Any data type that can be converted to \c value_type.
-  /// \param[in] sampling_rate_Hz Sample rate in Hz.
-  /// \return True if the time is equivalent to an integer number of samples. Otherwise, false.
+  /// \param[in] sampling_rate_Hz Sample rate in hertz.
+  /// \return True if the time is equivalent to an integer number of samples, false otherwise.
   template <class U>
   constexpr bool is_sample_accurate(U sampling_rate_Hz_) const
   {
@@ -73,12 +73,12 @@ public:
     return ((value * sampling_rate_Hz) % (SCS_REF_HZ * N_F_REF * KAPPA)) == 0;
   }
 
-  /// \brief Gets the time expressed in a number of samples from the sampling rate in Hz.
+  /// \brief Gets the time expressed as a number of samples for the given sampling rate.
   ///
   /// An assertion is triggered if the result would be a non-integer number of samples.
   ///
   /// \tparam U Any data type that can be converted to \c value_type.
-  /// \param[in] scs      Subcarrier spacing.
+  /// \param[in] scs      Subcarrier spacing in hertz.
   /// \param[in] dft_size DFT size corresponding to the subcarrier spacing.
   /// \return The time value in samples.
   template <typename U>
@@ -94,35 +94,35 @@ public:
     return static_cast<unsigned>((value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA));
   }
 
-  /// Overload sum operator.
+  /// Overload addition operator.
   constexpr phy_time_unit operator+(phy_time_unit other)
   {
     value += other.value;
     return *this;
   }
 
-  /// Overload subtract operator.
+  /// Overload addition operator.
   constexpr phy_time_unit operator+=(phy_time_unit other)
   {
     value += other.value;
     return *this;
   }
 
-  /// Overload subtract operator.
+  /// Overload subtraction operator.
   constexpr phy_time_unit operator-(phy_time_unit other)
   {
     value -= other.value;
     return *this;
   }
 
-  /// Overload subtract operator.
+  /// Overload subtraction operator.
   constexpr phy_time_unit operator-=(phy_time_unit other)
   {
     value -= other.value;
     return *this;
   }
 
-  /// Creates a physical layer time from multiples of \f$\kappa\f$.
+  /// Creates a physical layer time from units of \f$\kappa\f$.
   static constexpr inline phy_time_unit from_units_of_kappa(unsigned units_of_kappa)
   {
     return phy_time_unit(static_cast<value_type>(units_of_kappa) * KAPPA);
@@ -145,7 +145,7 @@ public:
 /// \tparam U       Return data type. Must be convertible to unsigned (default: double).
 /// \param[in] scs  Subcarrier spacing.
 /// \param dft_size DFT size.
-/// \return The sampling rate in Hz from the given SCS and DFT size.
+/// \return The sampling rate in hertz from the given SCS and DFT size.
 template <typename U = double>
 inline constexpr U to_sampling_rate_Hz(subcarrier_spacing scs, unsigned dft_size)
 {

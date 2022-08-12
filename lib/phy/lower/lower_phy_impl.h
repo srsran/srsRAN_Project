@@ -148,30 +148,40 @@ private:
   /// Runs the lower physical layer.
   void realtime_process_loop(task_executor& realtime_task_executor);
 
-  /// \brief Calculates the Rx-to-Tx delay in samples.
+  /// \brief Calculates the reception-to-transmission (Rx-to-Tx) delay as a number of samples.
   ///
-  /// The Rx-to-Tx delay \f$N\f$ is the number of samples between the baseband reception and a transmission.
+  /// On the radio channel, uplink and downlink frames coexist on the same carrier. As explained in TS38.211
+  /// Section 4.3.1, the sequence of uplink frames precedes the sequence of downlink frames by a given time
+  /// \f$T_{\mathrm{offset}} = N_{\mathrm{TA,offset}} * T_c\f$ (recall that TS38.211 Section 4.3.1 describes the issue
+  /// from the UE standpoint, hence the extra term \f$N_{\mathrm{TA}} * T_c\f$). In other words, uplink frame \f$i\f$
+  /// starts \f$T_{\mathrm{offset}}\f$ units of time before the downlink frame with the same index \f$i\f$.
+  /// Equivalently, one can index the OFDM symbols comprising the frames and draw the same timing relationship between
+  /// symbols with the same index. By increasing the granularity even further, the alignment can be thought of as if at
+  /// sample level.
   ///
-  /// The downlink subframes are transmitted \c ul_to_dl_subframe_offset subframes earlier than the uplink ones are
-  /// received.
+  /// On the other hand, for an uplink and a downlink sample to coincide on the carrier at the same time, it is required
+  /// that the lower PHY processes the downlink (transmit) sample in advance with respect to the uplink (receive) one,
+  /// because of the delays introduced by the underlying radio device. The Rx-to-Tx delay is thus the number of
+  /// samples by which the sequence of transmitted samples must precede that of received samples, as seen by the lower
+  /// PHY processor, in order to achieve the aforementioned carrier alignment between uplink and downlink frames.
   ///
-  /// Then, for a received symbol at time \f$N_{UL}\f$, there is an associated transmitted symbol at time \f$N_{DL}\f$.
-  /// The difference between them is \f$N_{offset}=N_{DL} - N_{UL}\f$ expressed by the argument \c
-  /// ul_to_dl_subframe_offset in subframes (one millisecond per subframe).
+  /// More specifically, let \f$N_{\mathrm{offset}}\f$ be the "round-trip" delay introduced by the radio device
+  /// (i.e., it is the sum of the delay experienced by a received sample before reaching the lower PHY plus the delay
+  /// undergone by a downlink sample leaving the lower PHY, before transmission). Also, let \f$N_{\mathrm{TA,
+  /// offset}}\f$ be the time-advance offset between downlink and uplink, as defined in TS38.211 Section 4.3.1. Finally,
+  /// let \f$N_{\mathrm{cal}}\f$ be a calibration term that takes into account time-advance impairments due radio
+  /// device buffering. All three offsets are expressed as a number of samples. Then, the Rx-to-Tx delay \f$N\f$ is
+  /// given by \f[ N=N_{\mathrm{offset}} - N_{\mathrm{cal}} + N_{\mathrm{TA, offset}} \f] samples or, equivalently,
+  /// physical layer units of time.
   ///
-  /// The parameter \c time_advance_calibration (\f$N_{cal}\f$) is for compensating the baseband unit reception to
-  /// transmission timing offset.
-  ///
-  /// The parameter \f$N_{TA,offset}\f$ defined in TS38.211 Section 4.3.3.
-  ///
-  /// Finally, the final Rx-to-Tx delay is \f$N=N_{offset}-N_{cal}-N_{TA, offset}\f$ expressed in physical layer units
-  /// of time.
-  ///
-  /// \param[in] ul_to_dl_subframe_offset UL-to-DL subframe offset.
-  /// \param[in] time_advance_calibration Time in advance baseband calibration time.
-  /// \param[in] ta_offset                Time advance offset (see \ref lower_phy_ta_offset for more information).
+  /// \param[in] ul_to_dl_subframe_offset UL-to-DL offset in subframes (recall, 1 subframe = 1ms). It maps to
+  ///                                     \f$N_{\mathrm{offset}}\f$.
+  /// \param[in] time_advance_calibration Time-advance radio calibration time, in physical layer units of time. It
+  ///                                     maps to \f$N_{\mathrm{cal}}\f$.
+  /// \param[in] ta_offset                Time advance offset (see \ref lower_phy_ta_offset for more information). It
+  ///                                     maps to \f$N_{\mathrm{TA, offset}}\f$.
   /// \param[in] srate                    Sampling rate.
-  /// \return The reception to transmission timestamp in number of samples.
+  /// \return The reception-to-transmission delay as a number of samples.
   static inline unsigned get_rx_to_tx_delay(unsigned            ul_to_dl_subframe_offset,
                                             phy_time_unit       time_advance_calibration,
                                             lower_phy_ta_offset ta_offset,
@@ -183,8 +193,8 @@ private:
     // Apply time advance calibration.
     ul_to_dl_delay -= time_advance_calibration;
 
-    // Apply the time aligment offset.
-    ul_to_dl_delay -= phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset));
+    // Apply the time alignment offset.
+    ul_to_dl_delay += phy_time_unit::from_units_of_Tc(static_cast<unsigned>(ta_offset));
 
     // Convert to samples.
     return ul_to_dl_delay.to_samples(srate.to_Hz());

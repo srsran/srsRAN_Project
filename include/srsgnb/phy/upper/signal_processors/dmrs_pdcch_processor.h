@@ -27,7 +27,7 @@ public:
   struct config_t {
     /// Provides the slot timing and numerology.
     slot_point slot;
-    /// Indicates the cyclic prefix.
+    /// Cyclic prefix.
     cyclic_prefix cp;
     /// Reference point for PDCCH DMRS \e k in RBs.
     unsigned reference_point_k_rb;

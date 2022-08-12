@@ -16,7 +16,11 @@
 
 namespace srsgnb {
 
-/// Sampling rate.
+/// \brief Sampling rate.
+///
+/// This class abstracts the concept of sampling rate from its units of measure. Specifically, the sampling rate is
+/// stored, privately, in a convenient representation and it can be accessed by getter and setter methods that
+/// automatically convert the sampling rate to and from, respectively, the desired representation/unit of measure.
 class sampling_rate
 {
 public:
@@ -28,7 +32,7 @@ public:
 
   /// \brief Determines if the sampling rate is valid for a certain subcarrier spacing.
   /// \tparam T Any type convertible to \ref value_type.
-  /// \param[in] scs Subcarrier spacing in Hz.
+  /// \param[in] scs_Hz Subcarrier spacing in hertz.
   /// \return True if the sampling rate value is not zero and is divisible by the subcarrier spacing, false
   /// otherwise.
   template <typename T>
@@ -42,18 +46,18 @@ public:
   }
 
   /// \brief Determines if the sampling rate is valid for a certain subcarrier spacing.
-  /// \param[in] scs Subcarrier spacing enumarator.
+  /// \param[in] scs Subcarrier spacing enumerator.
   /// \return True if the sampling rate value is not zero and is divisible by the subcarrier spacing, false
   /// otherwise.
   constexpr bool is_valid(subcarrier_spacing scs) const { return is_valid(scs_to_khz(scs) * 1000); }
 
-  /// \brief Get the DFT size for a given subcarrier spacing.
+  /// \brief Gets the DFT size corresponding to the sampling rate, for a given subcarrier spacing.
   ///
   /// An assertion is triggered if the combination of sampling rate and subcarrier spacing is invalid (see is_valid()).
   ///
   /// \tparam T Any type convertible to \ref value_type.
-  /// \param[in] scs_Hz The given subcarrier spacing in Hz.
-  /// \return The DFT size according to the value and the subcarrier spacing.
+  /// \param[in] scs_Hz The given subcarrier spacing in hertz.
+  /// \return The sampling rate represented as the size of a DFT with the given subcarrier spacing.
   template <typename T>
   constexpr unsigned get_dft_size(T scs_Hz) const
   {
@@ -61,17 +65,17 @@ public:
     return value / static_cast<value_type>(scs_Hz);
   }
 
-  /// \brief Get the DFT size for a given subcarrier spacing.
+  /// \brief Gets the DFT size corresponding to the sampling rate, for a given subcarrier spacing.
   ///
   /// An assertion is triggered if the combination of sampling rate and subcarrier spacing is invalid (see is_valid()).
   ///
-  /// \param[in] scs_Hz The given subcarrier spacing in Hz.
-  /// \return The DFT size according to the value and the subcarrier spacing.
+  /// \param[in] scs Subcarrier spacing enumerator.
+  /// \return The sampling rate represented as the size of a DFT with the given subcarrier spacing.
   constexpr unsigned get_dft_size(subcarrier_spacing scs) const { return get_dft_size(scs_to_khz(scs) * 1000); }
 
-  /// \brief Gets the value in Hz.
+  /// \brief Gets the sampling rate in hertz.
   /// \tparam T Any type that can be converted from \ref value_type.
-  /// \return The value in Hz.
+  /// \return The value in hertz.
   template <typename T = unsigned>
   constexpr T to_Hz() const
   {
@@ -79,17 +83,27 @@ public:
     return static_cast<T>(value);
   }
 
-  /// Gets the value in MHz.
+  /// \brief Gets the sampling rate in kHz.
+  /// \tparam T Any type that can be converted from \ref value_type.
+  /// \return The value in hertz.
+  template <typename T = unsigned>
+  constexpr T to_kHz() const
+  {
+    static_assert(std::is_convertible<value_type, T>::value, "Invalid data type.");
+    return static_cast<T>(value / 1000);
+  }
+
+  /// Gets the sampling rate in MHz.
   constexpr double to_MHz() const { return static_cast<double>(value) / 1e6; }
 
-  /// \brief Create from a value in Hz.
+  /// \brief Creates a \c sampling_rate object from its value in hertz.
   ///
   /// An assertion is triggered if:
   /// - the sampling rate is zero, or
-  /// - it is not multiple of 15kHz.
+  /// - it is not a multiple of 15kHz.
   ///
   /// \tparam T Any type convertible to \ref value_type.
-  /// \param[in] value_Hz Sampling rate in Hz.
+  /// \param[in] value_Hz Sampling rate in hertz.
   template <typename T>
   static sampling_rate from_Hz(T value_Hz)
   {
@@ -97,14 +111,28 @@ public:
     return sampling_rate(static_cast<value_type>(value_Hz));
   }
 
-  /// \brief Create from a value in MHz.
+  /// \brief Creates a \c sampling_rate object from its value in kHz.
   ///
   /// An assertion is triggered if:
   /// - the sampling rate is zero, or
   /// - it is not multiple of 15kHz.
   ///
   /// \tparam T Any type convertible to \ref value_type.
-  /// \param[in] value_Hz Sampling rate in Hz.
+  /// \param[in] value_kHz Sampling rate in kHz.
+  template <typename T>
+  static sampling_rate from_kHz(T value_kHz)
+  {
+    return from_Hz(value_kHz * 1e3);
+  }
+
+  /// \brief Creates a \c sampling_rate object from its value in MHz.
+  ///
+  /// An assertion is triggered if:
+  /// - the sampling rate is zero, or
+  /// - it is not multiple of 15kHz.
+  ///
+  /// \tparam T Any type convertible to \ref value_type.
+  /// \param[in] value_MHz Sampling rate in Mhz.
   template <typename T>
   static sampling_rate from_MHz(T value_MHz)
   {
@@ -115,10 +143,10 @@ private:
   /// Private constructor.
   constexpr explicit sampling_rate(value_type value_) : value(value_)
   {
-    srsgnb_assert(is_valid(15000), "Sampling rate cannot be zero.");
+    srsgnb_assert(is_valid(15000), "The sampling rate must be multiple of 15kHz.");
   }
 
-  /// Actual value in Hz.
+  /// Actual value in hertz.
   value_type value = 0;
 };
 

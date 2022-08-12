@@ -34,7 +34,7 @@ public:
     pucch_format format;
     /// Provides the slot timing and numerology.
     slot_point slot;
-    /// Indicates the cyclic prefix.
+    /// Cyclic prefix.
     cyclic_prefix cp;
     /// Configuration of group and sequence hopping.
     pucch_group_hopping group_hopping;

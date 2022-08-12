@@ -25,7 +25,7 @@ struct ofdm_modulator_configuration {
   unsigned bw_rb;
   /// Indicates the DFT size.
   unsigned dft_size;
-  /// Indicates the cyclic prefix.
+  /// Cyclic prefix.
   cyclic_prefix cp;
   /// Scaling factor at the DFT output.
   float scale;

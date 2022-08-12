@@ -43,17 +43,17 @@ struct lower_phy_sector_description {
   std::vector<lower_phy_sector_port_mapping> port_mapping;
 };
 
-/// \brief Time advance offset - parameter \f$N_{TA,offset}\f$ is TS38.211 Section 4.3.3.
+/// \brief Time advance offset - parameter \f$N_{TA,offset}\f$ in TS38.211 Section 4.3.3.
 ///
 /// This value must be selected from the parameter \e n-TimingAdvanceOffset (TS38.331 Section 6.3.2, Information Element
 /// \e ServingCellConfigCommon) if it is present. Otherwise, it is given by TS38.133 Section 7.1.2 depending on the
 /// duplex mode of the cell and the frequency range.
 ///
-/// The values are given in units if \f$T_c\f$.
+/// The values are given in units of \f$T_c\f$ (see TS38.211 Section 4.1).
 enum class lower_phy_ta_offset {
   /// For FR1 FDD band with LTE-NR coexistence case.
   n0 = 0,
-  /// For FR1 FDD band without LTE-NR coexistence case or FR1 TDD band without LTE-NR coexistence case
+  /// For FR1 FDD band without LTE-NR coexistence case or for FR1 TDD band without LTE-NR coexistence case.
   n25600 = 25600,
   /// For FR2.
   n13792 = 13792,
@@ -65,28 +65,28 @@ enum class lower_phy_ta_offset {
 struct lower_phy_configuration {
   /// Sampling rate.
   sampling_rate srate;
-  /// Indicates the subcarrier spacing for the overall PHY.
+  /// Subcarrier spacing for the overall PHY.
   subcarrier_spacing scs;
-  /// \brief Number of slots that the timing handler is notified in advance.
+  /// \brief Number of slots the timing handler is notified in advance of the transmission time.
   ///
   /// Sets the maximum allowed processing delay in slots.
   unsigned max_processing_delay_slots;
   /// \brief Indicates the UL-to-DL slot context offset.
   ///
-  /// Determines the time offset between the UL and DL processing in subframes, equivalent to a granularity of one
-  /// millisecond.
+  /// Determines the time offset between the UL and DL processes in subframes or, equivalently, with a granularity of
+  /// one millisecond.
   ///
   /// An assertion is triggered if it is equal to zero.
   unsigned ul_to_dl_subframe_offset;
-  /// \brief Time in advance calibration.
+  /// \brief Time-advance calibration.
   ///
-  /// Subtracts to the UL-to-DL time offset processing for calibrating the baseband device.
+  /// This time adjustment is subtracted from the UL-to-DL processing time offset for calibrating the baseband device.
   phy_time_unit time_advance_calibration;
   /// Time alignment offset.
   lower_phy_ta_offset ta_offset;
   /// OFDM modulator scale.
   float tx_scale;
-  /// Indicates the cyclic prefix.
+  /// Cyclic prefix.
   cyclic_prefix cp;
   /// Provides the baseband gateway.
   baseband_gateway* bb_gateway;
