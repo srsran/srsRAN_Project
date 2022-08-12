@@ -510,13 +510,6 @@ min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(nr_band nr_band, s
         return min_channel_bandwidth::invalid;
       }
     }
-    case nr_band::n41: {
-      if (scs <= subcarrier_spacing::kHz60) {
-        return min_channel_bandwidth::MHz10;
-      } else {
-        return min_channel_bandwidth::invalid;
-      }
-    }
     case nr_band::n51:
     case nr_band::n76: {
       if (scs == subcarrier_spacing::kHz15) {
@@ -525,6 +518,7 @@ min_channel_bandwidth srsgnb::band_helper::get_min_channel_bw(nr_band nr_band, s
         return min_channel_bandwidth::invalid;
       }
     }
+    case nr_band::n41:
     case nr_band::n77:
     case nr_band::n78: {
       if (scs <= subcarrier_spacing::kHz60) {
