@@ -32,28 +32,28 @@ public:
   }
 
   template <typename... Args>
-  void log_debug(const char* fmt, Args&&... args)
+  void log_debug(const char* fmt, Args&&... args) const
   {
     log_helper(logger.debug, fmt, std::forward<Args>(args)...);
   }
   template <typename... Args>
-  void log_info(const char* fmt, Args&&... args)
+  void log_info(const char* fmt, Args&&... args) const
   {
     log_helper(logger.info, fmt, std::forward<Args>(args)...);
   }
   template <typename... Args>
-  void log_warning(const char* fmt, Args&&... args)
+  void log_warning(const char* fmt, Args&&... args) const
   {
     log_helper(logger.warning, fmt, std::forward<Args>(args)...);
   }
   template <typename... Args>
-  void log_error(const char* fmt, Args&&... args)
+  void log_error(const char* fmt, Args&&... args) const
   {
     log_helper(logger.error, fmt, std::forward<Args>(args)...);
   }
 
   template <typename... Args>
-  void log(const srslog::basic_levels level, const char* fmt, Args&&... args)
+  void log(const srslog::basic_levels level, const char* fmt, Args&&... args) const
   {
     switch (level) {
       case srslog::basic_levels::debug:
@@ -78,22 +78,22 @@ public:
   }
 
   template <typename It, typename... Args>
-  void log_debug(It it_begin, It it_end, const char* fmt, Args&&... args)
+  void log_debug(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.debug, fmt, std::forward<Args>(args)...);
   }
   template <typename It, typename... Args>
-  void log_info(It it_begin, It it_end, const char* fmt, Args&&... args)
+  void log_info(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.info, fmt, std::forward<Args>(args)...);
   }
   template <typename It, typename... Args>
-  void log_warning(It it_begin, It it_end, const char* fmt, Args&&... args)
+  void log_warning(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.warning, fmt, std::forward<Args>(args)...);
   }
   template <typename It, typename... Args>
-  void log_error(It it_begin, It it_end, const char* fmt, Args&&... args)
+  void log_error(It it_begin, It it_end, const char* fmt, Args&&... args) const
   {
     log_helper(it_begin, it_end, logger.error, fmt, std::forward<Args>(args)...);
   }
@@ -105,7 +105,7 @@ private:
   srslog::basic_logger& logger;
 
   template <typename... Args>
-  void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args)
+  void log_helper(srslog::log_channel& channel, const char* fmt, Args&&... args) const
   {
     if (!channel.enabled()) {
       return;
@@ -116,7 +116,7 @@ private:
   }
 
   template <typename It, typename... Args>
-  void log_helper(It it_begin, It it_end, srslog::log_channel& channel, const char* fmt, Args&&... args)
+  void log_helper(It it_begin, It it_end, srslog::log_channel& channel, const char* fmt, Args&&... args) const
   {
     if (!channel.enabled()) {
       return;
