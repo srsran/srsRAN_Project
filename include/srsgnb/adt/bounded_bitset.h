@@ -473,8 +473,7 @@ public:
   /// \return Returns true if all the bits within the range are 1.
   bool all(size_t start, size_t stop) const
   {
-    assert_within_bounds_(start, false);
-    assert_within_bounds_(stop, false);
+    assert_range_bounds_(start, stop);
     // NOTE: can be optimized.
     for (size_t i = start; i < stop; ++i) {
       if (!test_(i)) {
@@ -544,12 +543,6 @@ public:
         return true;
       }
     }
-    //    // NOTE: can be optimized
-    //    for (size_t i = start; i < stop; ++i) {
-    //      if (test_(i)) {
-    //        return true;
-    //      }
-    //    }
     return false;
   }
 

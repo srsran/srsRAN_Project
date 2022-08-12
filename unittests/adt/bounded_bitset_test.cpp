@@ -10,15 +10,7 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/support/test_utils.h"
-// Disable GCC 5's -Wsuggest-override warnings in gtest.
-#pragma GCC diagnostic push
-#ifdef __clang__
-#pragma GCC diagnostic ignored "-Wall"
-#else // __clang__
-#pragma GCC diagnostic ignored "-Wsuggest-override"
-#endif // __clang__
 #include <gtest/gtest.h>
-#pragma GCC diagnostic pop
 #include <random>
 
 // Disable GCC 5's -Wsuggest-override warnings in gtest.
@@ -195,8 +187,12 @@ protected:
     return vec;
   }
 };
-using bitset_types =
-    ::testing::Types<bounded_bitset<25>, bounded_bitset<25, true>, bounded_bitset<120>, bounded_bitset<120, true>>;
+using bitset_types = ::testing::Types<bounded_bitset<25>,
+                                      bounded_bitset<25, true>,
+                                      bounded_bitset<120>,
+                                      bounded_bitset<120, true>,
+                                      bounded_bitset<512>,
+                                      bounded_bitset<512, true>>;
 TYPED_TEST_SUITE(bounded_bitset_tester, bitset_types);
 
 TYPED_TEST(bounded_bitset_tester, all_zeros)
@@ -338,7 +334,10 @@ TYPED_TEST(bounded_bitset_tester, any_range)
     for (unsigned i = 0; i < vec.size() - l; ++i) {
       bool expected_val = false;
       for (unsigned j = 0; j != l; ++j) {
-        expected_val |= vec[i + j];
+        if (vec[i + j]) {
+          expected_val = true;
+          break;
+        }
       }
       ASSERT_EQ(expected_val, bitmap.any(i, i + l))
           << fmt::format("For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
@@ -355,7 +354,10 @@ TYPED_TEST(bounded_bitset_tester, all_range)
     for (unsigned i = 0; i < vec.size() - l; ++i) {
       bool expected_val = true;
       for (unsigned j = 0; j != l; ++j) {
-        expected_val &= vec[i + j];
+        if (not vec[i + j]) {
+          expected_val = false;
+          break;
+        }
       }
       ASSERT_EQ(expected_val, bitmap.all(i, i + l));
     }
