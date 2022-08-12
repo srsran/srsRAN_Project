@@ -57,8 +57,15 @@ void du_processor::handle_f1_setup_request(const f1_setup_request_message& msg)
     const auto&     cell_item = served_cell.value().gnb_du_served_cells_item();
     du_cell_context du_cell;
     du_cell.cell_index = get_next_du_cell_index();
-    du_cell.pci        = cell_item.served_cell_info.nrpci;
-    du_cell.cgi        = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
+
+    if (du_cell.cell_index == INVALID_DU_CELL_INDEX) {
+      logger.error("Not handling F1 setup, maximum number of DU cells reached");
+      send_f1_setup_failure(asn1::f1ap::cause_c::types::options::radio_network);
+      return;
+    }
+
+    du_cell.pci = cell_item.served_cell_info.nrpci;
+    du_cell.cgi = cgi_from_asn1(cell_item.served_cell_info.nrcgi);
 
     if (not cell_item.gnb_du_sys_info_present) {
       logger.error("Not handling served cells without system information");
@@ -122,7 +129,7 @@ void du_processor::send_f1_setup_failure(asn1::f1ap::cause_c::types::options cau
 
 du_cell_index_t du_processor::get_next_du_cell_index()
 {
-  for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DUS; du_cell_idx_int++) {
+  for (int du_cell_idx_int = MIN_DU_CELL_INDEX; du_cell_idx_int < MAX_NOF_DU_CELLS; du_cell_idx_int++) {
     du_cell_index_t cell_idx = int_to_du_cell_index(du_cell_idx_int);
     if (!cell_db.contains(cell_idx)) {
       return cell_idx;
@@ -137,27 +144,28 @@ ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_c
   ue_creation_complete_message ue_creation_complete_msg = {};
   ue_creation_complete_msg.ue_index                     = INVALID_UE_INDEX;
 
-  // 1. Create new UE context
-  ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
-  if (ue_ctxt == nullptr) {
-    logger.error("Could not create UE context");
-    return ue_creation_complete_msg;
-  }
-
-  // 2. Set parameters from creation message
+  // 1. Check that creation message is valid
   du_cell_index_t pcell_index = find_cell(msg.cgi.nci.packed);
   if (pcell_index == INVALID_DU_CELL_INDEX) {
     logger.error("Could not find cell with cell_id={}", msg.cgi.nci.packed);
     return ue_creation_complete_msg;
   }
 
+  // 2. Create new UE context
+  ue_context* ue_ctxt = ue_mng.add_ue(msg.c_rnti);
+  if (ue_ctxt == nullptr) {
+    logger.error("Could not create UE context");
+    return ue_creation_complete_msg;
+  }
+
+  // 3. Set parameters from creation message
   ue_ctxt->pcell_index = pcell_index;
   ue_ctxt->c_rnti      = msg.c_rnti;
 
-  // 3. Create a UE task scheduler notifier.
+  // 4. Create a UE task scheduler notifier.
   ue_ctxt->task_sched = std::make_unique<rrc_to_du_ue_task_scheduler>(ue_ctxt->ue_index, *this);
 
-  // 4. Create new RRC UE entity
+  // 5. Create new RRC UE entity
   rrc_ue_creation_message rrc_ue_create_msg{};
   rrc_ue_create_msg.ue_index = ue_ctxt->ue_index;
   rrc_ue_create_msg.c_rnti   = ue_ctxt->c_rnti;
@@ -167,12 +175,8 @@ ue_creation_complete_message du_processor::handle_ue_creation_request(const ue_c
   rrc_ue_create_msg.du_to_cu_container = std::move(msg.du_to_cu_rrc_container);
   rrc_ue_create_msg.ue_task_sched      = ue_ctxt->task_sched.get();
   ue_ctxt->rrc                         = rrc->add_user(std::move(rrc_ue_create_msg));
-  if (ue_ctxt->rrc == nullptr) {
-    logger.error("Could not create RRC UE entity");
-    return ue_creation_complete_msg;
-  }
 
-  // 5. Create SRB0 bearer and notifier
+  // 6. Create SRB0 bearer and notifier
   srb_creation_message srb0_msg{};
   srb0_msg.srb_id   = srb_id_t::srb0;
   srb0_msg.ue_index = ue_ctxt->ue_index;
@@ -259,10 +263,11 @@ void du_processor::handle_ue_context_release_command(const ue_context_release_co
       logger.info("Removed UE(ue_index={}) from F1AP.", f1ap_msg.ue_index);
     }
 
-    // TODO: remove UE from RRC
-
     CORO_RETURN();
   });
+
+  // Remove UE from RRC
+  rrc->remove_ue(msg.ue_index);
 
   // Remove UE from UE database
   logger.info("Removing UE (id={})", msg.ue_index);
