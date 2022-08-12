@@ -76,6 +76,12 @@ protected:
     f1ap = create_f1ap(msg_notifier, f1c_task_sched, ctrl_worker, ue_exec_mapper);
   }
 
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+  }
+
   f1c_null_notifier             msg_notifier = {};
   timer_manager                 timers;
   dummy_f1c_task_scheduler      f1c_task_sched{timers};
