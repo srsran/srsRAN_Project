@@ -15,6 +15,7 @@
 #include "srsgnb/ran/carrier_configuration.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
+#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sib_configuration.h"
 #include "srsgnb/ran/slot_point.h"
@@ -134,13 +135,12 @@ struct sched_ue_delete_message {
 struct rach_indication_message {
   du_cell_index_t cell_index;
   rnti_t          crnti;
-  unsigned        timing_info;
   slot_point      slot_rx;
   /// Index of the first OFDM Symbol where RACH was detected.
-  unsigned symbol_index;
-  unsigned frequency_index;
-  unsigned preamble_id;
-  unsigned timing_advance;
+  unsigned      symbol_index;
+  unsigned      frequency_index;
+  unsigned      preamble_id;
+  phy_time_unit timing_advance;
 };
 
 /// Interface to Add/Remove UEs and Cells.

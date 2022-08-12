@@ -1,20 +1,30 @@
 
 #pragma once
 
-#include "srsgnb/ran/du_types.h"
-#include "srsgnb/ran/slot_point.h"
+#include "srsgnb/ran/phy_time_unit.h"
 
 namespace srsgnb {
 
-using timing_advance_report = uint16_t;
-
 struct mac_rach_indication {
-  slot_point slot_rx;
-  /// Index of the first OFDM Symbol where RACH was detected.
-  unsigned symbol_index;
-  unsigned frequency_index;
-  unsigned preamble_id;
-  unsigned timing_advance;
+  static constexpr unsigned MAX_PREAMBLES = 64;
+  static constexpr unsigned MAX_OCCASIONS = 4;
+
+  struct rach_preamble {
+    unsigned      index;
+    phy_time_unit time_advance;
+    float         power_dB;
+    float         snr_dB;
+  };
+  struct rach_occasion {
+    unsigned                                    start_symbol;
+    unsigned                                    slot_index;
+    unsigned                                    frequency_index;
+    float                                       rssi_dB;
+    static_vector<rach_preamble, MAX_PREAMBLES> preambles;
+  };
+
+  slot_point                                  slot_rx;
+  static_vector<rach_occasion, MAX_OCCASIONS> occasions;
 };
 
 class mac_cell_rach_handler

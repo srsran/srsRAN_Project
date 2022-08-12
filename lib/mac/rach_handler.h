@@ -73,16 +73,19 @@ private:
   /// Notify Scheduler of handled RACH indication.
   void notify_sched(const mac_rach_indication& rach_ind, rnti_t rnti)
   {
-    rach_indication_message sched_rach{};
-    sched_rach.cell_index      = cell_index;
-    sched_rach.timing_info     = 0; // TODO
-    sched_rach.slot_rx         = rach_ind.slot_rx;
-    sched_rach.symbol_index    = rach_ind.symbol_index;
-    sched_rach.frequency_index = rach_ind.frequency_index;
-    sched_rach.preamble_id     = rach_ind.preamble_id;
-    sched_rach.timing_advance  = rach_ind.timing_advance;
-    sched_rach.crnti           = rnti;
-    sched.handle_rach_indication(sched_rach);
+    for (const auto& occasion : rach_ind.occasions) {
+      for (const auto& preamble : occasion.preambles) {
+        rach_indication_message sched_rach{};
+        sched_rach.cell_index      = cell_index;
+        sched_rach.slot_rx         = rach_ind.slot_rx;
+        sched_rach.symbol_index    = occasion.start_symbol;
+        sched_rach.frequency_index = occasion.frequency_index;
+        sched_rach.preamble_id     = preamble.index;
+        sched_rach.timing_advance  = preamble.time_advance;
+        sched_rach.crnti           = rnti;
+        sched.handle_rach_indication(sched_rach);
+      }
+    }
   }
 
   srslog::basic_logger&   logger;

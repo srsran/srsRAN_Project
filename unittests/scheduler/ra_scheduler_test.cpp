@@ -148,10 +148,14 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
 /// Helper function that tests match between MSG3 grant with RACH Indication message.
 /// \param rach_ind scheduled RACH indication.
 /// \param msg3_grant MSG3 grant.
-static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind, const rar_ul_grant& msg3_grant)
+static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind,
+                                     const rar_ul_grant&            msg3_grant,
+                                     subcarrier_spacing             ul_scs)
 {
-  TESTASSERT_EQ(
-      rach_ind.timing_advance, msg3_grant.ta, "Time-advance mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
+  TESTASSERT_EQ(rach_ind.timing_advance.to_Ta(ul_scs),
+                msg3_grant.ta,
+                "Time-advance mismatch for MSG3 RAPID '{}'",
+                rach_ind.preamble_id);
   TESTASSERT_EQ(rach_ind.crnti, msg3_grant.temp_crnti, "C-RNTI mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
 }
 
@@ -171,7 +175,7 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
 
   for (const rar_ul_grant& msg3 : rar.grants) {
     if (rach_ind.crnti == msg3.temp_crnti) {
-      test_rach_ind_msg3_grant(rach_ind, msg3);
+      test_rach_ind_msg3_grant(rach_ind, msg3, cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
       return true;
     }
   }
@@ -386,7 +390,8 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
 
       TESTASSERT(wanted_msg3_grant_rapid != wanted_rar_ra_rnti->grants.end(), "RAPID '{}' not found", rapid);
 
-      test_rach_ind_msg3_grant(rach_ind_rapid, *wanted_msg3_grant_rapid);
+      test_rach_ind_msg3_grant(
+          rach_ind_rapid, *wanted_msg3_grant_rapid, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
     }
   }
 }

@@ -29,12 +29,11 @@ rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t t
   rach_indication_message msg{};
   msg.cell_index      = to_du_cell_index(0);
   msg.crnti           = temp_crnti;
-  msg.timing_info     = 0;
   msg.slot_rx         = prach_slot_rx;
   msg.symbol_index    = 0;
   msg.frequency_index = 0;
   msg.preamble_id     = rapid;
-  msg.timing_advance  = 0;
+  msg.timing_advance  = phy_time_unit::from_seconds(0);
   return msg;
 }
 

@@ -82,7 +82,7 @@ bool ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
               msg.preamble_id,
               ra_rnti,
               msg.crnti,
-              msg.timing_advance);
+              msg.timing_advance.to_Ta(get_ul_bwp_cfg().scs));
 
   // Check if TC-RNTI value to be scheduled is already under use
   if (not pending_msg3s[msg.crnti % MAX_NOF_MSG3].harq.empty()) {
@@ -381,7 +381,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     rar.grants.emplace_back();
     rar_ul_grant& msg3_info            = rar.grants.back();
     msg3_info.rapid                    = pending_msg3.ind_msg.preamble_id;
-    msg3_info.ta                       = pending_msg3.ind_msg.timing_advance;
+    msg3_info.ta                       = pending_msg3.ind_msg.timing_advance.to_Ta(get_ul_bwp_cfg().scs);
     msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
     msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
