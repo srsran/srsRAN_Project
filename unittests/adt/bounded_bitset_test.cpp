@@ -10,7 +10,15 @@
 
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/support/test_utils.h"
+// Disable GCC 5's -Wsuggest-override warnings in gtest.
+#pragma GCC diagnostic push
+#ifdef __clang__
+#pragma GCC diagnostic ignored "-Wall"
+#else // __clang__
+#pragma GCC diagnostic ignored "-Wsuggest-override"
+#endif // __clang__
 #include <gtest/gtest.h>
+#pragma GCC diagnostic pop
 #include <random>
 
 // Disable GCC 5's -Wsuggest-override warnings in gtest.
