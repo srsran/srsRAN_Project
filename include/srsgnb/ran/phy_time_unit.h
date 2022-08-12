@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/ran/subcarrier_spacing.h"
+#include "srsgnb/support/math_utils.h"
 
 namespace srsgnb {
 
@@ -92,6 +93,16 @@ public:
                   (sampling_rate_Hz % 1000000) / 10000,
                   value);
     return static_cast<unsigned>((value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA));
+  }
+
+  /// \brief Gets the time expressed in units of \f$T_A\f$.
+  ///
+  /// Conversion is performed as per TS38.213 Section 4.2.
+  ///
+  /// \param[in] scs Subcarrier spacing.
+  constexpr unsigned to_Ta(subcarrier_spacing scs) const
+  {
+    return value * pow2(to_numerology_value(scs)) / (16 * KAPPA);
   }
 
   /// Overload addition operator.
