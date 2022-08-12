@@ -9,9 +9,9 @@
  */
 
 #include "../../lib/cu_cp/cu_cp.h"
-#include "../common_test_helpers/f1_cu_test_helpers.h"
 #include "srsgnb/cu_cp/cu_cp_types.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/common_test_helpers/f1_cu_test_helpers.h"
 #include "unittests/f1_interface/common/test_helpers.h"
 #include <gtest/gtest.h>
 
@@ -19,11 +19,7 @@ using namespace srsgnb;
 using namespace srs_cu_cp;
 using namespace asn1::f1ap;
 
-//////////////////////////////////////////////////////////////////////////////////////
-/* F1 Setup Successful                                                              */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Fixture class for successful F1Setup
+/// Fixture class for CU-CP test
 class cu_cp_test : public ::testing::Test
 {
 protected:
@@ -48,32 +44,47 @@ protected:
     cu_cp_obj->start();
   }
 
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+
+    cu_cp_obj->stop();
+  }
+
   std::unique_ptr<cu_cp>                  cu_cp_obj;
   std::unique_ptr<dummy_f1c_pdu_notifier> f1c_pdu_notifier;
   srslog::basic_logger&                   test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-/// Test the f1 setup procedure
-TEST_F(cu_cp_test, when_valid_f1setup_sent_then_du_connected)
+//////////////////////////////////////////////////////////////////////////////////////
+/* DU connection handling                                                           */
+//////////////////////////////////////////////////////////////////////////////////////
+
+/// Test the DU connection
+TEST_F(cu_cp_test, when_new_connection_then_du_added)
 {
   // Connect DU
   cu_cp_obj->on_new_connection();
 
-  // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
-
   // check that DU has been added
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1);
+}
 
-  // Check response is F1SetupResponse
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::successful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.successful_outcome().value.type(),
-            f1_ap_elem_procs_o::successful_outcome_c::types_opts::options::f1_setup_resp);
+/// Test the DU connection
+TEST_F(cu_cp_test, when_du_remove_request_received_then_du_removed)
+{
+  // Connect DU
+  cu_cp_obj->on_new_connection();
 
-  cu_cp_obj->stop();
+  // Check that DU has been added
+  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 1);
+
+  // Remove DU
+  cu_cp_obj->handle_du_remove_request(MIN_DU_INDEX);
+
+  // Check that DU has been removed
+  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0);
 }
 
 /// Test exeeding the maximum number of connected DUs
@@ -83,73 +94,22 @@ TEST_F(cu_cp_test, when_max_nof_dus_connected_then_reject_new_connection)
     cu_cp_obj->on_new_connection();
   }
 
-  // check that MAX_NOF_DUS are connected
+  // Check that MAX_NOF_DUS are connected
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
 
   cu_cp_obj->on_new_connection();
 
-  // check that MAX_NOF_DUS are connected
+  // Check that MAX_NOF_DUS are connected
   EXPECT_EQ(cu_cp_obj->get_nof_dus(), MAX_NOF_DUS);
 
   cu_cp_obj->stop();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////
-/* F1 Setup Failure                                                                 */
+/* AMF connection handling                                                          */
 //////////////////////////////////////////////////////////////////////////////////////
 
-TEST_F(cu_cp_test, when_du_served_cells_list_missing_then_f1setup_rejected)
-{
-  // Connect DU
-  cu_cp_obj->on_new_connection();
-
-  // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_f1_setup_request_base();
-
-  auto& setup_req                             = f1setup_msg.pdu.init_msg().value.f1_setup_request();
-  setup_req->gnb_du_served_cells_list_present = false;
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
-
-  // check that DU has not been added
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0);
-
-  // Check the generated PDU is indeed the F1 Setup failure
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
-            f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
-}
-
-TEST_F(cu_cp_test, when_gnb_du_sys_info_missing_then_f1setup_rejected)
-{
-  // Connect DU
-  cu_cp_obj->on_new_connection();
-
-  // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
-
-  auto& setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
-  setup_req->gnb_du_served_cells_list.value[0].value().gnb_du_served_cells_item().gnb_du_sys_info_present = false;
-
-  // Pass message to CU-CP
-  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
-
-  // check that DU has not been added
-  EXPECT_EQ(cu_cp_obj->get_nof_dus(), 0);
-
-  // Check the generated PDU is indeed the F1 Setup failure
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.type(), f1_ap_pdu_c::types_opts::options::unsuccessful_outcome);
-  EXPECT_EQ(f1c_pdu_notifier->last_f1c_msg.pdu.unsuccessful_outcome().value.type(),
-            f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::f1_setup_fail);
-}
-
-//////////////////////////////////////////////////////////////////////////////////////
-/* Initial UL RRC message transfer                                                  */
-//////////////////////////////////////////////////////////////////////////////////////
-
-/// Test the f1 initial UL RRC message transfer procedure
-TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
+TEST_F(cu_cp_test, when_amf_connected_then_ue_added)
 {
   // Connect DU
   cu_cp_obj->on_new_connection();
@@ -175,6 +135,26 @@ TEST_F(cu_cp_test, when_valid_init_ul_rrc_msg_sent_then_ue_added)
 
   // check that UE has been added
   EXPECT_EQ(cu_cp_obj->get_nof_ues(), 1);
+}
+
+TEST_F(cu_cp_test, when_amf_not_connected_then_ue_rejected)
+{
+  // Connect DU
+  cu_cp_obj->on_new_connection();
+
+  // Generate F1SetupRequest
+  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
+
+  // Pass message to CU-CP
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(f1setup_msg);
+
+  // Inject Initial UL RRC message
+  f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  test_logger.info("Injecting Initial UL RRC message");
+  cu_cp_obj->get_f1c_message_handler(int_to_du_index(0)).handle_message(init_ul_rrc_msg);
+
+  // check that UE has been added
+  EXPECT_EQ(cu_cp_obj->get_nof_ues(), 0);
 }
 
 /// Test the f1 initial UL RRC message transfer procedure
