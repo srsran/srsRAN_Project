@@ -359,7 +359,8 @@ TYPED_TEST(bounded_bitset_tester, all_range)
           break;
         }
       }
-      ASSERT_EQ(expected_val, bitmap.all(i, i + l));
+      ASSERT_EQ(expected_val, bitmap.all(i, i + l))
+          << fmt::format("For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
     }
   }
 }

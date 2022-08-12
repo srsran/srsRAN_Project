@@ -474,9 +474,22 @@ public:
   bool all(size_t start, size_t stop) const
   {
     assert_range_bounds_(start, stop);
-    // NOTE: can be optimized.
-    for (size_t i = start; i < stop; ++i) {
-      if (!test_(i)) {
+    if (reversed) {
+      std::swap(start, stop);
+      start = get_bitidx_(start) + 1;
+      stop  = get_bitidx_(stop) + 1;
+    }
+    size_t start_word = word_idx_(start);
+    size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
+    for (size_t i = start_word; i != end_word; ++i) {
+      word_t w = buffer[i];
+      if (i == start_word) {
+        w |= mask_lsb_ones<word_t>(start - start_word * bits_per_word);
+      }
+      if (i == end_word - 1) {
+        w |= mask_msb_ones<word_t>(end_word * bits_per_word - stop);
+      }
+      if (w != std::numeric_limits<word_t>::max()) {
         return false;
       }
     }
