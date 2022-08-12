@@ -12,14 +12,12 @@
 
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/ran/phy_time_unit.h"
+#include "srsgnb/ran/prach/prach_constants.h"
 
 namespace srsgnb {
 
 /// Describes a PRACH detection result.
 struct prach_detection_result {
-  /// Maximum number of preambles that can be detected in a slot.
-  static constexpr unsigned MAX_NOF_PREAMBLES_PER_SLOT = 64;
-
   /// Describes the detection of a single preamble.
   struct preamble_indication {
     /// Index of the detected preamble. Possible values are {0, ..., 63}.
@@ -39,7 +37,7 @@ struct prach_detection_result {
   /// This is equal to the PRACH subcarrier spacing divided by the DFT size of the detector.
   phy_time_unit time_resolution;
   /// List of detected preambles.
-  static_vector<preamble_indication, MAX_NOF_PREAMBLES_PER_SLOT> preambles;
+  static_vector<preamble_indication, prach_constants::MAX_NUM_PREAMBLES> preambles;
 };
 
 } // namespace srsgnb

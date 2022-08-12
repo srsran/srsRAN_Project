@@ -34,6 +34,12 @@ static constexpr unsigned SHORT_SEQUENCE_MAX_NOF_SYMBOLS = 12U;
 /// \f$N_u+N_{CP}^{RA}\f$.
 static constexpr phy_time_unit MAX_LENGTH_TIME_DOMAIN = phy_time_unit::from_units_of_kappa(4 * 24576 + 4688);
 
+/// Maximum number of preambles per time-frequency PRACH occasion as per TS38.211 Section 6.3.3.1.
+static constexpr unsigned MAX_NUM_PREAMBLES = 64;
+
+/// Maximum number of supported PRACH occasions.
+static constexpr unsigned MAX_PRACH_OCCASIONS = 1;
+
 } // namespace prach_constants
 
 } // namespace srsgnb

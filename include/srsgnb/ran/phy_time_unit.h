@@ -95,7 +95,7 @@ public:
     return static_cast<unsigned>((value * sampling_rate_Hz) / (SCS_REF_HZ * N_F_REF * KAPPA));
   }
 
-  /// \brief Gets the time expressed in units of \f$T_A\f$.
+  /// \brief Gets the time expressed in units of \f$T_{\mathrm{A}}\f$.
   ///
   /// Conversion is performed as per TS38.213 Section 4.2.
   ///

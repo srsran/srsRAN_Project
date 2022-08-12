@@ -21,7 +21,7 @@ using namespace srsgnb;
 
 prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& input, const configuration& config)
 {
-  srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= 64,
+  srsgnb_assert(config.start_preamble_index + config.nof_preamble_indices <= prach_constants::MAX_NUM_PREAMBLES,
                 "The start preamble index {} and the number of preambles to detect {}, exceed the maximum of 64.",
                 config.start_preamble_index,
                 config.nof_preamble_indices);
