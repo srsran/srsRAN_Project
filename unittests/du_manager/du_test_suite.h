@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../lib/du_manager/converters/config_generator.h"
+#include "../../lib/du_manager/converters/du_config_generator.h"
 
 namespace srsgnb {
 

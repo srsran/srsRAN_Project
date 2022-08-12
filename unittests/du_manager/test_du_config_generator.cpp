@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../lib/du_manager/converters/config_generator.h"
+#include "../../lib/du_manager/converters/du_config_generator.h"
 #include "../du_manager/du_test_suite.h"
 #include "srsgnb/support/test_utils.h"
 #include <gtest/gtest.h>
