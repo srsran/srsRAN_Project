@@ -329,6 +329,37 @@ TYPED_TEST(bounded_bitset_tester, any_range)
   }
 }
 
+TYPED_TEST(bounded_bitset_tester, all_range)
+{
+  std::vector<bool>                 vec = this->create_random_vector(this->get_random_size());
+  typename TestFixture::bitset_type bitmap(vec.begin(), vec.end());
+
+  for (unsigned l = 1; l < vec.size(); ++l) {
+    for (unsigned i = 0; i < vec.size() - l; ++i) {
+      bool expected_val = true;
+      for (unsigned j = 0; j != l; ++j) {
+        expected_val &= vec[i + j];
+      }
+      ASSERT_EQ(expected_val, bitmap.all(i, i + l));
+    }
+  }
+}
+
+TYPED_TEST(bounded_bitset_tester, fill)
+{
+  unsigned bitset_size = this->get_random_size();
+
+  for (unsigned l = 1; l < bitset_size; ++l) {
+    for (unsigned i = 0; i < bitset_size - l; ++i) {
+      typename TestFixture::bitset_type zeros_bitmap = this->create_bitset_with_zeros(bitset_size);
+      zeros_bitmap.fill(i, i + l);
+      ASSERT_FALSE(zeros_bitmap.any(0, i));
+      ASSERT_TRUE(zeros_bitmap.all(i, i + l));
+      ASSERT_FALSE(zeros_bitmap.any(i + l, bitset_size));
+    }
+  }
+}
+
 TEST(BoundedBitset, integer_bitset_conversion)
 {
   unsigned           bitset_size = 23;
