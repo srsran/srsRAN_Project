@@ -35,7 +35,7 @@ class StaticVectorPrinter(object):
 
 
 def make_static_vector(val):
-    if 'static_vector<' in str(val.type):
+    if 'static_vector<' in str(val.type) and str(val.type).endswith('>'):
         return StaticVectorPrinter(val)
 gdb.pretty_printers.append(make_static_vector)
 
@@ -65,7 +65,7 @@ class BoundedBitsetPrinter(object):
 
 
 def make_bounded_bitset(val):
-    if 'bounded_bitset<' in str(val.type):
+    if 'bounded_bitset<' in str(val.type) and str(val.type).endswith('>'):
       return BoundedBitsetPrinter(val)
 gdb.pretty_printers.append(make_bounded_bitset)
 

@@ -48,7 +48,8 @@ TYPED_TEST(bitmask_tester, lsb_ones)
   using Integer = typename TestFixture::Integer;
   // sanity checks.
   ASSERT_EQ(0, mask_lsb_ones<Integer>(0));
-  ASSERT_EQ(static_cast<Integer>(-1), mask_lsb_ones<Integer>(this->nof_bits));
+  ASSERT_EQ(static_cast<Integer>(-1), mask_lsb_ones<Integer>(this->nof_bits))
+      << "for nof_bits=" << (unsigned)this->nof_bits;
   ASSERT_EQ(0b11, mask_lsb_ones<Integer>(2));
 
   // test all combinations.
@@ -339,7 +340,8 @@ TYPED_TEST(bounded_bitset_tester, any_range)
       for (unsigned j = 0; j != l; ++j) {
         expected_val |= vec[i + j];
       }
-      ASSERT_EQ(expected_val, bitmap.any(i, i + l));
+      ASSERT_EQ(expected_val, bitmap.any(i, i + l))
+          << fmt::format("For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
     }
   }
 }

@@ -524,14 +524,32 @@ public:
   /// \return Returns true if at least one bit equal to 1 was found within the range.
   bool any(size_t start, size_t stop) const
   {
-    assert_within_bounds_(start, false);
-    assert_within_bounds_(stop, false);
-    // NOTE: can be optimized
-    for (size_t i = start; i < stop; ++i) {
-      if (test_(i)) {
+    assert_range_bounds_(start, stop);
+    if (reversed) {
+      std::swap(start, stop);
+      start = get_bitidx_(start) + 1;
+      stop  = get_bitidx_(stop) + 1;
+    }
+    size_t start_word = word_idx_(start);
+    size_t end_word   = word_idx_(stop);
+    for (size_t i = start_word; i <= end_word; ++i) {
+      word_t w = buffer[i];
+      if (i == start_word) {
+        w &= mask_lsb_zeros<word_t>(start - start_word * bits_per_word);
+      }
+      if (i == end_word) {
+        w &= mask_lsb_ones<word_t>(stop - end_word * bits_per_word);
+      }
+      if (w != 0) {
         return true;
       }
     }
+    //    // NOTE: can be optimized
+    //    for (size_t i = start; i < stop; ++i) {
+    //      if (test_(i)) {
+    //        return true;
+    //      }
+    //    }
     return false;
   }
 
@@ -749,7 +767,7 @@ private:
 
   const word_t& get_word_(size_t bitidx) const { return buffer[bitidx / bits_per_word]; }
 
-  size_t word_idx_(size_t pos) const { return pos / bits_per_word; }
+  size_t word_idx_(size_t bitidx) const { return bitidx / bits_per_word; }
 
   void assert_within_bounds_(size_t pos, bool strict) const noexcept
   {
