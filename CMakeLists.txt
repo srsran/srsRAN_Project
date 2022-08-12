@@ -161,14 +161,14 @@ endif (BUILD_TESTS)
 # Instruction Set Architecture setup
 ########################################################################
 if (AUTO_DETECT_ISA)
-    find_package(SSE)
-
     if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(GCC_ARCH armv8-a CACHE STRING "GCC compile for specific architecture.")
         message(STATUS "Detected aarch64 processor")
     else (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
         set(GCC_ARCH native CACHE STRING "GCC compile for specific architecture.")
     endif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "aarch64")
+
+    find_package(SSE)
 
     ADD_CXX_COMPILER_FLAG_IF_AVAILABLE("-march=${GCC_ARCH}" HAVE_MARCH_${GCC_ARCH})
     if (HAVE_AVX2)
