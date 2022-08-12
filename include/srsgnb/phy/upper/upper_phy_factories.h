@@ -82,6 +82,20 @@ public:
   virtual std::unique_ptr<downlink_processor> create(const downlink_processor_config& config) = 0;
 };
 
+/// Downlink processor software factory configuration.
+struct downlink_processor_factory_sw_config {
+  /// \brief LDPC encoder type
+  ///
+  /// Use of there options:
+  /// - \c generic: for using unoptimized LDPC encoder, or
+  /// - \c avx2: for using AVX2 optimized LDPC encoder.
+  std::string ldpc_encoder_type;
+};
+
+/// Creates a full software based downlink processor factory.
+std::shared_ptr<downlink_processor_factory>
+create_downlink_processor_factory_sw(const downlink_processor_factory_sw_config& config);
+
 /// Describes all downlink processors in a pool.
 struct downlink_processor_pool_config {
   /// Downlink processors for a given sector and numerology.
@@ -138,6 +152,7 @@ public:
 };
 
 /// Creates and returns an upper PHY factory.
-std::unique_ptr<upper_phy_factory> create_upper_phy_factory();
+std::unique_ptr<upper_phy_factory>
+create_upper_phy_factory(std::shared_ptr<downlink_processor_factory> downlink_proc_factory);
 
 } // namespace srsgnb

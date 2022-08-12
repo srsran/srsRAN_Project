@@ -465,8 +465,14 @@ static std::unique_ptr<upper_phy> build_upper(upper_phy_rg_gateway&             
                                               task_executor&                        ul_executor,
                                               upper_phy_rx_symbol_request_notifier& rx_symbol_request_notifier)
 {
+  downlink_processor_factory_sw_config dl_proc_config;
+  dl_proc_config.ldpc_encoder_type = "generic";
+
+  std::shared_ptr<downlink_processor_factory> dl_proc_factory = create_downlink_processor_factory_sw(dl_proc_config);
+  report_fatal_error_if_not(dl_proc_factory, "Invalid DL processor factory.");
+
   // Upper.
-  std::unique_ptr<upper_phy_factory> up_phy_factory = create_upper_phy_factory();
+  std::unique_ptr<upper_phy_factory> up_phy_factory = create_upper_phy_factory(dl_proc_factory);
 
   upper_phy_config upper_config;
   upper_config.sector_id               = 1;
