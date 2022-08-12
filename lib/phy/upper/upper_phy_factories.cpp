@@ -106,7 +106,7 @@ create_downlink_processor_pool(std::shared_ptr<downlink_processor_factory> facto
 
   for (unsigned i = 0, e = config.nof_dl_processors; i != e; ++i) {
     downlink_processor_config processor_config;
-    processor_config.id                         = 0;
+    processor_config.id                         = i;
     processor_config.gateway                    = config.gateway;
     processor_config.executor                   = config.dl_executor;
     std::unique_ptr<downlink_processor> dl_proc = factory->create(processor_config);

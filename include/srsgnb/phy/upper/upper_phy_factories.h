@@ -84,6 +84,8 @@ public:
 
 /// Downlink processor software factory configuration.
 struct downlink_processor_factory_sw_config {
+  const std::string LDPC_ENCODER_TYPE_GENERIC = "generic";
+
   /// \brief LDPC encoder type
   ///
   /// Use of there options:

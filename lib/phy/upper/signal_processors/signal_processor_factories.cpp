@@ -26,7 +26,7 @@ private:
 
 public:
   explicit dmrs_pbch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(prg_factory_)
+    prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
@@ -44,7 +44,7 @@ private:
 
 public:
   explicit dmrs_pdcch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(prg_factory_)
+    prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
@@ -62,7 +62,7 @@ private:
 
 public:
   explicit dmrs_pdsch_processor_sw_factory(std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    prg_factory(prg_factory_)
+    prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
   }
@@ -90,19 +90,19 @@ public:
 std::shared_ptr<dmrs_pbch_processor_factory>
 srsgnb::create_dmrs_pbch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<dmrs_pbch_processor_sw_factory>(prg_factory);
+  return std::make_shared<dmrs_pbch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<dmrs_pdcch_processor_factory>
 srsgnb::create_dmrs_pdcch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<dmrs_pdcch_processor_sw_factory>(prg_factory);
+  return std::make_shared<dmrs_pdcch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<dmrs_pdsch_processor_factory>
 srsgnb::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<dmrs_pdsch_processor_sw_factory>(prg_factory);
+  return std::make_shared<dmrs_pdsch_processor_sw_factory>(std::move(prg_factory));
 }
 
 std::shared_ptr<pss_processor_factory> srsgnb::create_pss_processor_factory_sw()

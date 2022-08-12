@@ -87,7 +87,7 @@ public:
 };
 
 std::shared_ptr<pdcch_processor_factory>
-create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_fcatory,
+create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory,
                                   std::shared_ptr<pdcch_modulator_factory>      modulator_factory,
                                   std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory);
 

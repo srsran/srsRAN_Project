@@ -23,7 +23,6 @@
 #include "polar/polar_interleaver_impl.h"
 #include "polar/polar_rate_dematcher_impl.h"
 #include "polar/polar_rate_matcher_impl.h"
-#include "srsgnb/support/error_handling.h"
 
 using namespace srsgnb;
 
@@ -44,7 +43,7 @@ private:
   std::string dec_type;
 
 public:
-  explicit ldpc_decoder_factory_sw(std::string dec_type_) : dec_type(dec_type_) {}
+  explicit ldpc_decoder_factory_sw(std::string dec_type_) : dec_type(std::move(dec_type_)) {}
 
   std::unique_ptr<ldpc_decoder> create() override
   {
@@ -64,7 +63,7 @@ private:
   std::string enc_type;
 
 public:
-  explicit ldpc_encoder_factory_sw(const std::string& enc_type_) : enc_type(enc_type_) {}
+  explicit ldpc_encoder_factory_sw(std::string enc_type_) : enc_type(std::move(enc_type_)) {}
 
   std::unique_ptr<ldpc_encoder> create() override
   {
@@ -101,7 +100,7 @@ private:
 
 public:
   explicit ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory_) :
-    crc_factory(crc_factory_)
+    crc_factory(std::move(crc_factory_))
   {
     srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
   }
@@ -156,12 +155,12 @@ public:
 
 } // namespace
 
-std::shared_ptr<ldpc_decoder_factory> srsgnb::create_ldpc_decoder_factory_sw(std::string dec_type)
+std::shared_ptr<ldpc_decoder_factory> srsgnb::create_ldpc_decoder_factory_sw(const std::string& dec_type)
 {
   return std::make_unique<ldpc_decoder_factory_sw>(dec_type);
 }
 
-std::shared_ptr<ldpc_encoder_factory> srsgnb::create_ldpc_encoder_factory_sw(std::string enc_type)
+std::shared_ptr<ldpc_encoder_factory> srsgnb::create_ldpc_encoder_factory_sw(const std::string& enc_type)
 {
   return std::make_unique<ldpc_encoder_factory_sw>(enc_type);
 }
@@ -179,7 +178,7 @@ std::shared_ptr<ldpc_rate_matcher_factory> srsgnb::create_ldpc_rate_matcher_fact
 std::shared_ptr<ldpc_segmenter_tx_factory>
 srsgnb::create_ldpc_segmenter_tx_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory)
 {
-  return std::make_shared<ldpc_segmenter_tx_factory_sw>(crc_factory);
+  return std::make_shared<ldpc_segmenter_tx_factory_sw>(std::move(crc_factory));
 }
 
 std::shared_ptr<ldpc_segmenter_rx_factory> srsgnb::create_ldpc_segmenter_rx_factory_sw()

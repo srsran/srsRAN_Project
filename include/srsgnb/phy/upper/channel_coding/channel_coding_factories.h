@@ -43,7 +43,7 @@ public:
   virtual std::unique_ptr<ldpc_decoder> create() = 0;
 };
 
-std::shared_ptr<ldpc_decoder_factory> create_ldpc_decoder_factory_sw(std::string dec_type);
+std::shared_ptr<ldpc_decoder_factory> create_ldpc_decoder_factory_sw(const std::string& dec_type);
 
 class ldpc_encoder_factory
 {
@@ -52,7 +52,7 @@ public:
   virtual std::unique_ptr<ldpc_encoder> create() = 0;
 };
 
-std::shared_ptr<ldpc_encoder_factory> create_ldpc_encoder_factory_sw(std::string enc_type);
+std::shared_ptr<ldpc_encoder_factory> create_ldpc_encoder_factory_sw(const std::string& enc_type);
 
 class ldpc_rate_dematcher_factory
 {

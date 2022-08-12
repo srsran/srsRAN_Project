@@ -34,7 +34,9 @@ public:
   pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>          crc_calc_factory_,
                           std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
                           std::shared_ptr<polar_factory>                   polar_fec_factory_) :
-    crc_calc_factory(crc_calc_factory_), prg_factory(prg_factory_), polar_fec_factory(polar_fec_factory_)
+    crc_calc_factory(std::move(crc_calc_factory_)),
+    prg_factory(std::move(prg_factory_)),
+    polar_fec_factory(std::move(polar_fec_factory_))
   {
     srsgnb_assert(crc_calc_factory, "Invalid CRC factory.");
     srsgnb_assert(prg_factory, "Invalid CRC factory.");
@@ -67,7 +69,7 @@ private:
 public:
   pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                             std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    modulator_factory(modulator_factory_), prg_factory(prg_factory_)
+    modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
@@ -88,7 +90,7 @@ private:
 public:
   pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    modulator_factory(modulator_factory_), prg_factory(prg_factory_)
+    modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
@@ -109,7 +111,7 @@ private:
 public:
   pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory_,
                            std::shared_ptr<polar_factory>          polar_code_factory_) :
-    crc_factory(crc_factory_), polar_code_factory(polar_code_factory_)
+    crc_factory(std::move(crc_factory_)), polar_code_factory(std::move(polar_code_factory_))
   {
     srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
     srsgnb_assert(polar_code_factory, "Invalid Polar code factory.");
@@ -137,7 +139,9 @@ public:
   pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>        encoder_factory_,
                              std::shared_ptr<pdcch_modulator_factory>      modulator_factory_,
                              std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory_) :
-    encoder_factory(encoder_factory_), modulator_factory(modulator_factory_), dmrs_factory(dmrs_factory_)
+    encoder_factory(std::move(encoder_factory_)),
+    modulator_factory(std::move(modulator_factory_)),
+    dmrs_factory(std::move(dmrs_factory_))
   {
     srsgnb_assert(encoder_factory, "Invalid encoder factory.");
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
@@ -159,10 +163,10 @@ private:
   std::shared_ptr<ldpc_segmenter_tx_factory> segmenter_factory;
 
 public:
-  pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config) :
-    encoder_factory(config.encoder_factory),
-    rate_matcher_factory(config.rate_matcher_factory),
-    segmenter_factory(config.segmenter_factory)
+  explicit pdsch_encoder_factory_sw(pdsch_encoder_factory_sw_configuration& config) :
+    encoder_factory(std::move(config.encoder_factory)),
+    rate_matcher_factory(std::move(config.rate_matcher_factory)),
+    segmenter_factory(std::move(config.segmenter_factory))
   {
     srsgnb_assert(encoder_factory, "Invalid LDPC encoder factory.");
     srsgnb_assert(rate_matcher_factory, "Invalid LDPC RM factory.");
@@ -185,7 +189,7 @@ private:
 public:
   pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory_,
                              std::shared_ptr<pseudo_random_generator_factory> prg_factory_) :
-    modulator_factory(modulator_factory_), prg_factory(prg_factory_)
+    modulator_factory(std::move(modulator_factory_)), prg_factory(std::move(prg_factory_))
   {
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
     srsgnb_assert(prg_factory, "Invalid PRG factory.");
@@ -208,7 +212,9 @@ public:
   pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>        encoder_factory_,
                              std::shared_ptr<pdsch_modulator_factory>      modulator_factory_,
                              std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory_) :
-    encoder_factory(encoder_factory_), modulator_factory(modulator_factory_), dmrs_factory(dmrs_factory_)
+    encoder_factory(std::move(encoder_factory_)),
+    modulator_factory(std::move(modulator_factory_)),
+    dmrs_factory(std::move(dmrs_factory_))
   {
     srsgnb_assert(encoder_factory, "Invalid encoder factory.");
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
@@ -231,16 +237,17 @@ private:
 public:
   prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory_,
                                 std::shared_ptr<prach_generator_factory> prach_gen_factory_) :
-    dft_factory(dft_factory_), prach_gen_factory(prach_gen_factory_)
+    dft_factory(std::move(dft_factory_)), prach_gen_factory(std::move(prach_gen_factory_))
   {
-    // Do nothing.
+    srsgnb_assert(dft_factory, "Invalid DFT factory.");
+    srsgnb_assert(prach_gen_factory, "Invalid PRACH generator factory.");
   }
 
   std::unique_ptr<prach_detector> create() override
   {
-    dft_processor::configuration idft_config;
-    idft_config.size = 1024;
-    idft_config.dir  = dft_processor::direction::INVERSE;
+    dft_processor::configuration idft_config = {};
+    idft_config.size                         = 1024;
+    idft_config.dir                          = dft_processor::direction::INVERSE;
     return std::make_unique<prach_detector_simple_impl>(dft_factory->create(idft_config), prach_gen_factory->create());
   }
 };
@@ -251,19 +258,20 @@ private:
   std::shared_ptr<dft_processor_factory> dft_factory;
 
 public:
-  prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_) : dft_factory(dft_factory_)
+  explicit prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory_) :
+    dft_factory(std::move(dft_factory_))
   {
     srsgnb_assert(dft_factory, "Invalid DFT factory.");
   }
 
   std::unique_ptr<prach_generator> create() override
   {
-    dft_processor::configuration dft_config_l839;
-    dft_config_l839.size = 839;
-    dft_config_l839.dir  = dft_processor::direction::DIRECT;
-    dft_processor::configuration dft_config_l139;
-    dft_config_l139.size = 139;
-    dft_config_l139.dir  = dft_processor::direction::DIRECT;
+    dft_processor::configuration dft_config_l839 = {};
+    dft_config_l839.size                         = 839;
+    dft_config_l839.dir                          = dft_processor::direction::DIRECT;
+    dft_processor::configuration dft_config_l139 = {};
+    dft_config_l139.size                         = 139;
+    dft_config_l139.dir                          = dft_processor::direction::DIRECT;
     return std::make_unique<prach_generator_impl>(dft_factory->create(dft_config_l839),
                                                   dft_factory->create(dft_config_l139));
   }
@@ -278,11 +286,11 @@ private:
   std::shared_ptr<ldpc_segmenter_rx_factory>   segmenter_factory;
 
 public:
-  pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config) :
-    crc_factory(config.crc_factory),
-    decoder_factory(config.decoder_factory),
-    dematcher_factory(config.dematcher_factory),
-    segmenter_factory(config.segmenter_factory)
+  explicit pusch_decoder_factory_sw(pusch_decoder_factory_sw_configuration& config) :
+    crc_factory(std::move(config.crc_factory)),
+    decoder_factory(std::move(config.decoder_factory)),
+    dematcher_factory(std::move(config.dematcher_factory)),
+    segmenter_factory(std::move(config.segmenter_factory))
   {
     srsgnb_assert(crc_factory, "Invalid CRC calculator factory.");
     srsgnb_assert(decoder_factory, "Invalid LDPC decoder factory.");
@@ -307,7 +315,7 @@ private:
   // TBD.
 
 public:
-  pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config)
+  explicit pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& /**/)
   {
     // TBD.
   }
@@ -325,12 +333,12 @@ public:
 class ssb_processor_factory_sw : public ssb_processor_factory
 {
 public:
-  ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config) :
-    encoder_factory(config.encoder_factory),
-    modulator_factory(config.modulator_factory),
-    dmrs_factory(config.dmrs_factory),
-    pss_factory(config.pss_factory),
-    sss_factory(config.sss_factory)
+  explicit ssb_processor_factory_sw(ssb_processor_factory_sw_configuration& config) :
+    encoder_factory(std::move(config.encoder_factory)),
+    modulator_factory(std::move(config.modulator_factory)),
+    dmrs_factory(std::move(config.dmrs_factory)),
+    pss_factory(std::move(config.pss_factory)),
+    sss_factory(std::move(config.sss_factory))
   {
     srsgnb_assert(encoder_factory, "Invalid encoder factory");
     srsgnb_assert(modulator_factory, "Invalid modulator factory");
@@ -366,28 +374,29 @@ srsgnb::create_pbch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory>  
                                        std::shared_ptr<pseudo_random_generator_factory> prg_factory,
                                        std::shared_ptr<polar_factory>                   polar_factory)
 {
-  return std::make_shared<pbch_encoder_factory_sw>(crc_factory, prg_factory, polar_factory);
+  return std::make_shared<pbch_encoder_factory_sw>(
+      std::move(crc_factory), std::move(prg_factory), std::move(polar_factory));
 }
 
 std::shared_ptr<pbch_modulator_factory>
 srsgnb::create_pbch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                          std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<pbch_modulator_factory_sw>(modulator_factory, prg_factory);
+  return std::make_shared<pbch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdcch_encoder_factory>
 srsgnb::create_pdcch_encoder_factory_sw(std::shared_ptr<crc_calculator_factory> crc_factory,
                                         std::shared_ptr<polar_factory>          encoder_factory)
 {
-  return std::make_shared<pdcch_encoder_factory_sw>(crc_factory, encoder_factory);
+  return std::make_shared<pdcch_encoder_factory_sw>(std::move(crc_factory), std::move(encoder_factory));
 }
 
 std::shared_ptr<pdcch_modulator_factory>
 srsgnb::create_pdcch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<pdcch_modulator_factory_sw>(modulator_factory, prg_factory);
+  return std::make_shared<pdcch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdcch_processor_factory>
@@ -395,7 +404,8 @@ srsgnb::create_pdcch_processor_factory_sw(std::shared_ptr<pdcch_encoder_factory>
                                           std::shared_ptr<pdcch_modulator_factory>      modulator_factory,
                                           std::shared_ptr<dmrs_pdcch_processor_factory> dmrs_factory)
 {
-  return std::make_shared<pdcch_processor_factory_sw>(encoder_factory, modulator_factory, dmrs_factory);
+  return std::make_shared<pdcch_processor_factory_sw>(
+      std::move(encoder_factory), std::move(modulator_factory), std::move(dmrs_factory));
 }
 
 std::shared_ptr<pdsch_encoder_factory>
@@ -408,7 +418,7 @@ std::shared_ptr<pdsch_modulator_factory>
 srsgnb::create_pdsch_modulator_factory_sw(std::shared_ptr<channel_modulation_factory>      modulator_factory,
                                           std::shared_ptr<pseudo_random_generator_factory> prg_factory)
 {
-  return std::make_shared<pdsch_modulator_factory_sw>(modulator_factory, prg_factory);
+  return std::make_shared<pdsch_modulator_factory_sw>(std::move(modulator_factory), std::move(prg_factory));
 }
 
 std::shared_ptr<pdsch_processor_factory>
@@ -416,20 +426,21 @@ srsgnb::create_pdsch_processor_factory_sw(std::shared_ptr<pdsch_encoder_factory>
                                           std::shared_ptr<pdsch_modulator_factory>      modulator_factory,
                                           std::shared_ptr<dmrs_pdsch_processor_factory> dmrs_factory)
 {
-  return std::make_shared<pdsch_processor_factory_sw>(encoder_factory, modulator_factory, dmrs_factory);
+  return std::make_shared<pdsch_processor_factory_sw>(
+      std::move(encoder_factory), std::move(modulator_factory), std::move(dmrs_factory));
 }
 
 std::shared_ptr<prach_detector_factory>
 srsgnb::create_prach_detector_factory_simple(std::shared_ptr<dft_processor_factory>   dft_factory,
                                              std::shared_ptr<prach_generator_factory> prach_gen_factory)
 {
-  return std::make_shared<prach_detector_factory_simple>(dft_factory, prach_gen_factory);
+  return std::make_shared<prach_detector_factory_simple>(std::move(dft_factory), std::move(prach_gen_factory));
 }
 
 std::shared_ptr<prach_generator_factory>
 srsgnb::create_prach_generator_factory_sw(std::shared_ptr<dft_processor_factory> dft_factory)
 {
-  return std::make_shared<prach_generator_factory_sw>(dft_factory);
+  return std::make_shared<prach_generator_factory_sw>(std::move(dft_factory));
 }
 
 std::shared_ptr<pusch_decoder_factory>
