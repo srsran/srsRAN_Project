@@ -10,6 +10,7 @@
 
 #include "ldpc_encoder_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/srsvec/binary.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
@@ -110,10 +111,19 @@ void ldpc_encoder_generic::preprocess_systematic_bits()
         continue;
       }
 
-      for (uint16_t l = 0; l != lifting_size; ++l) {
-        uint16_t shifted_index = (node_shift + l) % lifting_size;
-        auxiliary[m][l] ^= 1U & message_chunk[shifted_index];
-      }
+      // Rotate node. Equivalent to:
+      // for (uint16_t l = 0; l != lifting_size; ++l) {
+      //   uint16_t shifted_index = (node_shift + l) % lifting_size;
+      //   auxiliary[m][l] ^= message_chunk[shifted_index];
+      //   auxiliary[m][l] &= 1U;
+      // }
+      span<uint8_t> auxiliary_chunk = span<uint8_t>(auxiliary[m].data(), lifting_size);
+      srsvec::binary_xor(auxiliary_chunk.first(lifting_size - node_shift),
+                         message_chunk.last(lifting_size - node_shift),
+                         auxiliary_chunk.first(lifting_size - node_shift));
+      srsvec::binary_xor(
+          auxiliary_chunk.last(node_shift), message_chunk.first(node_shift), auxiliary_chunk.last(node_shift));
+      std::for_each(auxiliary_chunk.begin(), auxiliary_chunk.end(), [](uint8_t& v) { v &= 1; });
     }
   }
 
@@ -129,7 +139,7 @@ void ldpc_encoder_generic::encode_ext_region()
   for (unsigned m = 4; m < nof_layers; ++m) {
     unsigned skip = (bg_K + m) * lifting_size;
     for (unsigned i = 0; i != lifting_size; ++i) {
-      codeblock[skip + i] = auxiliary[m][i];
+      uint8_t temp_bit = auxiliary[m][i];
       for (unsigned k = 0; k != 4; ++k) {
         uint16_t node_shift = current_graph->get_lifted_node(m, bg_K + k);
         if (node_shift == NO_EDGE) {
@@ -137,8 +147,9 @@ void ldpc_encoder_generic::encode_ext_region()
         }
         unsigned current_index = (bg_K + k) * lifting_size + ((i + node_shift) % lifting_size);
         uint8_t  current_bit   = codeblock[current_index];
-        codeblock[skip + i] ^= current_bit;
+        temp_bit ^= current_bit;
       }
+      codeblock[skip + i] = temp_bit;
     }
   }
 }

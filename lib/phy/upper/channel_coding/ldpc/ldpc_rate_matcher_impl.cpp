@@ -10,6 +10,7 @@
 
 #include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
@@ -73,23 +74,77 @@ void ldpc_rate_matcher_impl::rate_match(span<uint8_t>                           
 
 void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> in) const
 {
-  unsigned in_index = shift_k0 % buffer_length;
-  for (auto& this_out : out) {
+  unsigned output_length = out.size();
+  unsigned out_index     = 0;
+  unsigned in_index      = shift_k0;
+
+  // Equivalent code:
+  // unsigned in_index = shift_k0 % buffer_length;
+  // for (auto& this_out : out) {
+  //   while (in[in_index] == FILLER_BIT) {
+  //     in_index = (in_index + 1) % buffer_length;
+  //   }
+  //   this_out = in[in_index];
+  //   in_index = (in_index + 1) % buffer_length;
+  // }
+
+  // as long as the ouput index does not reach the output length...
+  while (out_index < output_length) {
+    // Count the number of bits between in_index and the next filler bit.
+    unsigned count = 0;
+    for (unsigned index = in_index; index != buffer_length; ++index) {
+      if (in[index] == FILLER_BIT) {
+        break;
+      }
+      ++count;
+    }
+
+    // Trim the count to the remainder bits.
+    count = std::min(count, output_length - out_index);
+
+    // Append a consecutive number of bits.
+    srsvec::copy(out.subspan(out_index, count), in.subspan(in_index, count));
+    out_index += count;
+
+    // Advance in_index the amount of written bits.
+    in_index = (in_index + count) % buffer_length;
+
+    // Skip filler bits.
     while (in[in_index] == FILLER_BIT) {
       in_index = (in_index + 1) % buffer_length;
     }
-    this_out = in[in_index];
-    in_index = (in_index + 1) % buffer_length;
   }
 }
 
-void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
+namespace {
+template <unsigned Qm>
+void interleave_bits_Qm(span<uint8_t> out, span<const uint8_t> in)
 {
   unsigned E = out.size();
+  unsigned K = E / Qm;
+  for (unsigned out_index = 0, i = 0; i != K; ++i) {
+    for (unsigned j = 0; j != Qm; ++j, ++out_index) {
+      out[out_index] = in[K * j + i];
+    }
+  }
+}
+} // namespace
 
-  for (unsigned out_index = 0; out_index != E; ++out_index) {
-    unsigned help_index = out_index % modulation_order;
-    unsigned in_index   = (out_index + help_index * (E - 1)) / modulation_order;
-    out[out_index]      = in[in_index];
+void ldpc_rate_matcher_impl::interleave_bits(span<uint8_t> out, span<const uint8_t> in) const
+{
+  switch (modulation_order) {
+    case 2:
+      interleave_bits_Qm<2>(out, in);
+      break;
+    case 4:
+      interleave_bits_Qm<4>(out, in);
+      break;
+    case 6:
+      interleave_bits_Qm<6>(out, in);
+      break;
+    case 8:
+    default:
+      interleave_bits_Qm<8>(out, in);
+      break;
   }
 }
