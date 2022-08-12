@@ -143,25 +143,51 @@ TYPED_TEST(bitmask_tester, first_msb_one)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST(BoundedBitset, all_zeros)
+template <typename BoundedBitset>
+class bounded_bitset_tester : public ::testing::Test
 {
-  constexpr size_t         MAX_SIZE = 25;
-  unsigned                 size     = std::uniform_int_distribution<unsigned>{1, MAX_SIZE - 1}(g);
-  bounded_bitset<MAX_SIZE> zero_mask(size);
+protected:
+  using bitset_type = BoundedBitset;
 
-  ASSERT_EQ(MAX_SIZE, zero_mask.max_size());
-  ASSERT_EQ(size, zero_mask.size());
+  unsigned max_size() const { return bitset_type::max_size(); }
+
+  unsigned get_random_size() const { return std::uniform_int_distribution<unsigned>{1, bitset_type::max_size()}(g); }
+
+  bitset_type create_bitset_with_zeros(unsigned size) const { return bitset_type(size); }
+
+  bitset_type create_bitset_with_ones(unsigned size) const
+  {
+    std::vector<bool> data(size, true);
+    return bitset_type(data.begin(), data.end());
+  }
+
+  bitset_type create_random_bitset(unsigned size) const
+  {
+    std::vector<bool> data(size);
+    for (auto it = data.begin(); it != data.end(); ++it) {
+      *it = std::bernoulli_distribution{}(g);
+    }
+    return bitset_type(data.begin(), data.end());
+  }
+};
+using bitset_types =
+    ::testing::Types<bounded_bitset<25>, bounded_bitset<25, true>, bounded_bitset<120>, bounded_bitset<120, true>>;
+TYPED_TEST_SUITE(bounded_bitset_tester, bitset_types);
+
+TYPED_TEST(bounded_bitset_tester, all_zeros)
+{
+  auto zero_mask = this->create_bitset_with_zeros(this->get_random_size());
+  ASSERT_GT(zero_mask.size(), 0);
   ASSERT_EQ(0, zero_mask.count());
   ASSERT_TRUE(zero_mask.none());
   ASSERT_FALSE(zero_mask.any());
   ASSERT_FALSE(zero_mask.all());
 }
 
-TEST(BoundedBitset, empty_bitset)
+TYPED_TEST(bounded_bitset_tester, empty_bitset)
 {
-  constexpr size_t         MAX_SIZE = 25;
-  bounded_bitset<MAX_SIZE> zero_sized_mask;
-  ASSERT_EQ(MAX_SIZE, zero_sized_mask.max_size());
+  auto zero_sized_mask = this->create_bitset_with_zeros(0);
+  ASSERT_EQ(this->max_size(), zero_sized_mask.max_size());
   ASSERT_EQ(0, zero_sized_mask.size());
   ASSERT_EQ(0, zero_sized_mask.count());
   ASSERT_TRUE(zero_sized_mask.none());
@@ -172,15 +198,15 @@ TEST(BoundedBitset, empty_bitset)
   ASSERT_TRUE(zero_sized_mask.none()) << "Flipping empty bitset should be a no-op";
   ASSERT_EQ(0, zero_sized_mask.size()) << "Flipping empty bitset should be a no-op";
 
-  bounded_bitset<MAX_SIZE> zero_mask(std::uniform_int_distribution<unsigned>{1, MAX_SIZE - 1}(g));
+  auto zero_mask = this->create_bitset_with_zeros(this->get_random_size());
   ASSERT_NE(zero_mask, zero_sized_mask);
   zero_sized_mask.resize(zero_mask.size());
   ASSERT_EQ(zero_mask, zero_sized_mask);
 }
 
-TEST(BoundedBitset, initializer_list_constructor)
+TYPED_TEST(bounded_bitset_tester, initializer_list_constructor)
 {
-  bounded_bitset<25> bitmap = {true, true, true, true, false};
+  typename TestFixture::bitset_type bitmap = {true, true, true, true, false};
   ASSERT_EQ(bitmap.size(), 5);
   ASSERT_TRUE(bitmap.test(0));
   ASSERT_TRUE(bitmap.test(1));
@@ -188,13 +214,13 @@ TEST(BoundedBitset, initializer_list_constructor)
   ASSERT_FALSE(bitmap.test(4));
 }
 
-TEST(BoundedBitset, iterator_constructor)
+TYPED_TEST(bounded_bitset_tester, iterator_constructor)
 {
-  std::vector<bool> data(std::uniform_int_distribution<unsigned>{1, 24}(g));
+  std::vector<bool> data(std::uniform_int_distribution<unsigned>{1, this->max_size()}(g));
   for (auto it = data.begin(); it != data.end(); ++it) {
     *it = std::bernoulli_distribution{}(g);
   }
-  bounded_bitset<25> bitmap(data.begin(), data.end());
+  typename TestFixture::bitset_type bitmap(data.begin(), data.end());
   ASSERT_EQ(bitmap.size(), data.size());
 
   for (unsigned i = 0; i != data.size(); ++i) {
@@ -202,16 +228,27 @@ TEST(BoundedBitset, iterator_constructor)
   }
 }
 
-TEST(BoundedBitset, all_ones)
+TYPED_TEST(bounded_bitset_tester, all_ones)
 {
-  unsigned           bitset_size = std::uniform_int_distribution<unsigned>{1, 24}(g);
-  std::vector<bool>  vec(bitset_size, true);
-  bounded_bitset<25> mask(vec.begin(), vec.end());
+  typename TestFixture::bitset_type ones_bitmap = this->create_bitset_with_ones(this->get_random_size());
 
-  ASSERT_TRUE(mask.all());
-  ASSERT_TRUE(mask.any());
-  ASSERT_FALSE(mask.none());
-  ASSERT_EQ(mask.size(), mask.count());
+  ASSERT_TRUE(ones_bitmap.all());
+  ASSERT_TRUE(ones_bitmap.any());
+  ASSERT_FALSE(ones_bitmap.none());
+  ASSERT_EQ(ones_bitmap.size(), ones_bitmap.count());
+}
+
+TYPED_TEST(bounded_bitset_tester, flip)
+{
+  auto bitmap          = this->create_random_bitset(this->get_random_size());
+  auto original_bitmap = bitmap;
+  bitmap.flip();
+
+  ASSERT_GT(bitmap.size(), 0);
+  ASSERT_EQ(bitmap.size(), original_bitmap.size());
+  for (unsigned i = 0; i != bitmap.size(); ++i) {
+    ASSERT_NE(bitmap.test(i), original_bitmap.test(i));
+  }
 }
 
 TEST(BoundedBitset, integer_bitset_conversion)
@@ -227,19 +264,6 @@ TEST(BoundedBitset, integer_bitset_conversion)
   ASSERT_TRUE(mask.any());
   ASSERT_FALSE(mask.none());
   ASSERT_EQ(integermask, mask.to_uint64());
-}
-
-TEST(BoundedBitset, flip)
-{
-  unsigned           bitset_size = std::uniform_int_distribution<unsigned>{1, 24}(g);
-  bounded_bitset<25> mask(bitset_size);
-  uint64_t integerbitmap  = std::uniform_int_distribution<uint64_t>{0, mask_lsb_ones<unsigned>(bitset_size)}(g);
-  uint64_t flipped_bitmap = (~integerbitmap) & mask_lsb_ones<uint64_t>(bitset_size);
-
-  mask.from_uint64(integerbitmap);
-  ASSERT_EQ(integerbitmap, mask.to_uint64());
-  mask.flip();
-  ASSERT_EQ(flipped_bitmap, mask.to_uint64()) << fmt::format("For original bitmap {:#b}", integerbitmap);
 }
 
 TEST(BoundedBitset, setting_bit)

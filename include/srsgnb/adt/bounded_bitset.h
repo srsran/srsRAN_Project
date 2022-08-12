@@ -240,7 +240,7 @@ public:
     std::for_each(values.begin(), values.end(), [this, n = 0](bool value) mutable { set(n++, value); });
   }
 
-  constexpr size_t max_size() const noexcept { return N; }
+  static constexpr size_t max_size() noexcept { return N; }
 
   /// Current size of the bounded_bitset.
   size_t size() const noexcept { return cur_size; }
