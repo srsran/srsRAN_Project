@@ -6,9 +6,9 @@
 # the distribution.
 #
 
-add_executable(bounded_bitset_benchmark bounded_bitset_count_benchmark.cpp)
-target_link_libraries(bounded_bitset_benchmark srslog)
-add_test(bounded_bitset_benchmark bounded_bitset_benchmark -R 100)
+add_executable(bounded_bitset_count_benchmark bounded_bitset_count_benchmark.cpp)
+target_link_libraries(bounded_bitset_count_benchmark srslog)
+add_test(bounded_bitset_count_benchmark bounded_bitset_count_benchmark -R 100)
 
 add_executable(bounded_bitset_any_benchmark bounded_bitset_any_benchmark.cpp)
 target_link_libraries(bounded_bitset_any_benchmark srslog)

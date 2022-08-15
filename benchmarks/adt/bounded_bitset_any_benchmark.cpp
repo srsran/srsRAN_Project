@@ -8,10 +8,10 @@
  *
  */
 
+#include "bounded_bitset_benchmark_helpers.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include <getopt.h>
-#include <random>
 
 using namespace srsgnb;
 
@@ -80,78 +80,26 @@ static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitse
 }
 
 template <unsigned N>
-static void run_benchmark(const srsgnb::bounded_bitset<N>& bitset, std::array<bool, N> array, std::string description)
+static void run_benchmark(const std::array<bool, N>& array, std::string description)
 {
+  bounded_bitset<N> bitset(array.begin(), array.end());
+
   benchmark_bounded_bitset_any<N>(bitset, "bitset:" + description + ":any");
   benchmark_bounded_bitset_test<N>(bitset, "bitset:" + description + ":test");
 }
 
-template <unsigned N>
-static void benchmark_count_contiguous()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-  for (unsigned i = 0; i != N; ++i) {
-    if (i < N / 2) {
-      bitset.set(i);
-      array[i] = true;
-    }
-  }
-
-  run_benchmark<N>(bitset, array, "contiguous");
-}
-
-template <unsigned N>
-static void benchmark_count_all_set()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-  for (unsigned i = 0; i != N; ++i) {
-    bitset.set(i);
-    array[i] = true;
-  }
-
-  run_benchmark<N>(bitset, array, "all_set");
-}
-
-template <unsigned N>
-static void benchmark_count_none_set()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-
-  run_benchmark<N>(bitset, array, "none");
-}
-
-template <unsigned N>
-static void benchmark_count_random_set()
-{
-  std::mt19937                            rgen;
-  std::uniform_int_distribution<unsigned> dist(0, N - 1);
-  srsgnb::bounded_bitset<N>               bitset(N);
-  std::array<bool, N>                     array = {};
-
-  for (unsigned i = 0; i != N / 2; ++i) {
-    unsigned pos;
-    do {
-      pos = dist(rgen);
-    } while (array[pos]);
-
-    bitset.set(pos);
-    array[pos] = true;
-  }
-
-  run_benchmark<N>(bitset, array, "random");
-}
-
 int main(int argc, char** argv)
 {
+  constexpr size_t N = 275 * 14;
+
   parse_args(argc, argv, params);
+
   bm = std::make_unique<benchmarker>("bounded_bitset any bit set in range", params.nof_repetitions);
 
-  benchmark_count_contiguous<275 * 14>();
-  benchmark_count_all_set<275 * 14>();
-  benchmark_count_none_set<275 * 14>();
-  benchmark_count_random_set<275 * 14>();
+  run_benchmark<N>(create_contiguous_array<N>(N / 2), "contiguous");
+  run_benchmark<N>(create_contiguous_array<N>(N), "all_set");
+  run_benchmark<N>(create_contiguous_array<N>(0), "none");
+  run_benchmark<N>(shuffle_array(create_contiguous_array<N>(N / 2)), "random");
+
   bm->print_percentiles_time();
 }

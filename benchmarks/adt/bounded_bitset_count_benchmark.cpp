@@ -8,11 +8,10 @@
  *
  */
 
+#include "bounded_bitset_benchmark_helpers.h"
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/support/benchmark_utils.h"
-#include "srsgnb/support/srsgnb_test.h"
 #include <getopt.h>
-#include <random>
 
 using namespace srsgnb;
 
@@ -41,16 +40,12 @@ static void parse_args(int argc, char** argv)
   }
 }
 
-static benchmarker& get_benchmarker()
-{
-  static benchmarker bm("bounded_bitset count ones", nof_repetitions);
-  return bm;
-}
+std::unique_ptr<benchmarker> bm;
 
 template <unsigned N>
 static void benchmark_bounded_bitset_count(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  get_benchmarker().new_measure(description, nof_repetitions, [&bitset]() {
+  bm->new_measure(description, nof_repetitions, [&bitset]() {
     unsigned count = bitset.count();
     do_not_optimize(count);
   });
@@ -59,7 +54,7 @@ static void benchmark_bounded_bitset_count(const srsgnb::bounded_bitset<N>& bits
 template <unsigned N>
 static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  get_benchmarker().new_measure(description, nof_repetitions, [&bitset]() {
+  bm->new_measure(description, nof_repetitions, [&bitset]() {
     unsigned count = 0;
     for (unsigned i = 0; i != N; ++i) {
       if (bitset.test(i)) {
@@ -148,7 +143,7 @@ public:
 template <unsigned N>
 static void benchmark_bounded_bitset_foreach(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  get_benchmarker().new_measure(description, nof_repetitions, [&bitset]() {
+  bm->new_measure(description, nof_repetitions, [&bitset]() {
     unsigned count = 0;
     bitset.for_each(0, bitset.size(), [&count](size_t i) { count++; });
     do_not_optimize(count);
@@ -158,7 +153,7 @@ static void benchmark_bounded_bitset_foreach(const srsgnb::bounded_bitset<N>& bi
 template <unsigned N>
 static void benchmark_bounded_bitset_iterator(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
-  get_benchmarker().new_measure(description, nof_repetitions, [&bitset]() {
+  bm->new_measure(description, nof_repetitions, [&bitset]() {
     unsigned                   count = 0;
     bounded_bitset_iterable<N> iterable(bitset);
     for (bounded_bitset_iterator<N> it = iterable.begin(), end = iterable.end(); it != end; ++it) {
@@ -171,15 +166,17 @@ static void benchmark_bounded_bitset_iterator(const srsgnb::bounded_bitset<N>& b
 template <unsigned N>
 static void benchmark_array_count(const std::array<bool, N>& array, std::string description)
 {
-  get_benchmarker().new_measure(description, nof_repetitions, [&array]() {
+  bm->new_measure(description, nof_repetitions, [&array]() {
     unsigned count = std::count(array.begin(), array.end(), true);
     do_not_optimize(count);
   });
 }
 
 template <unsigned N>
-static void run_benchmark(const srsgnb::bounded_bitset<N>& bitset, std::array<bool, N> array, std::string description)
+static void run_benchmark(std::array<bool, N> array, std::string description)
 {
+  srsgnb::bounded_bitset<N> bitset(array.begin(), array.end());
+
   benchmark_bounded_bitset_count<N>(bitset, "bitset:" + description + ":count");
   benchmark_bounded_bitset_test<N>(bitset, "bitset:" + description + ":test");
   benchmark_bounded_bitset_iterator<N>(bitset, "bitset:" + description + ":iterator");
@@ -187,71 +184,17 @@ static void run_benchmark(const srsgnb::bounded_bitset<N>& bitset, std::array<bo
   benchmark_array_count<N>(array, "array:" + description + ":count");
 }
 
-template <unsigned N>
-static void benchmark_count_contiguous()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-  for (unsigned i = 0; i != N; ++i) {
-    if (i < N / 2) {
-      bitset.set(i);
-      array[i] = true;
-    }
-  }
-
-  run_benchmark<N>(bitset, array, "contiguous");
-}
-
-template <unsigned N>
-static void benchmark_count_all_set()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-  for (unsigned i = 0; i != N; ++i) {
-    bitset.set(i);
-    array[i] = true;
-  }
-
-  run_benchmark<N>(bitset, array, "all_set");
-}
-
-template <unsigned N>
-static void benchmark_count_none_set()
-{
-  srsgnb::bounded_bitset<N> bitset(N);
-  std::array<bool, N>       array = {};
-
-  run_benchmark<N>(bitset, array, "none");
-}
-
-template <unsigned N>
-static void benchmark_count_random_set()
-{
-  std::mt19937                            rgen;
-  std::uniform_int_distribution<unsigned> dist(0, N - 1);
-  srsgnb::bounded_bitset<N>               bitset(N);
-  std::array<bool, N>                     array = {};
-
-  for (unsigned i = 0; i != N / 2; ++i) {
-    unsigned pos;
-    do {
-      pos = dist(rgen);
-    } while (array[pos]);
-
-    bitset.set(pos);
-    array[pos] = true;
-  }
-
-  run_benchmark<N>(bitset, array, "random");
-}
-
 int main(int argc, char** argv)
 {
+  constexpr size_t N = 275 * 14;
+
   parse_args(argc, argv);
 
-  benchmark_count_contiguous<275 * 12>();
-  benchmark_count_all_set<275 * 12>();
-  benchmark_count_none_set<275 * 12>();
-  benchmark_count_random_set<275 * 12>();
-  get_benchmarker().print_percentiles_time();
+  bm = std::make_unique<benchmarker>("bounded_bitset count ones", nof_repetitions);
+
+  run_benchmark<N>(create_contiguous_array<N>(N / 2), "contiguous");
+  run_benchmark<N>(create_contiguous_array<N>(N), "all_set");
+  run_benchmark<N>(create_contiguous_array<N>(0), "none");
+  run_benchmark<N>(shuffle_array(create_contiguous_array<N>(N / 2)), "random");
+  bm->print_percentiles_time();
 }
