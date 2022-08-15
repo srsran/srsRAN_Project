@@ -411,14 +411,21 @@ TYPED_TEST(bounded_bitset_tester, slice)
   using small_bitset_type  = bounded_bitset<N_small, big_bitset_type::bit_order()>;
   unsigned small_bitset_size =
       std::uniform_int_distribution<unsigned>{0, std::min((unsigned)N_small, big_bitset_size - 1)}(g);
-  unsigned offset     = std::uniform_int_distribution<unsigned>{0, small_bitset_size - 1}(g);
+  unsigned offset     = std::uniform_int_distribution<unsigned>{0, small_bitset_size}(g);
   unsigned end_offset = std::uniform_int_distribution<unsigned>{offset, small_bitset_size}(g);
 
   small_bitset_type small_bitmap = big_bitmap.template slice<N_small>(offset, end_offset);
   ASSERT_EQ(end_offset - offset, small_bitmap.size());
 
   for (unsigned i = 0; i != small_bitmap.size(); ++i) {
-    ASSERT_EQ(small_bitmap.test(i), big_bitmap.test(i + offset));
+    ASSERT_EQ(small_bitmap.test(i), big_bitmap.test(i + offset))
+        << fmt::format("For slice={} of size={} taken from [{}, {}) of big_bitmap={} of size={}",
+                       small_bitmap,
+                       small_bitmap.size(),
+                       offset,
+                       end_offset,
+                       big_bitmap,
+                       big_bitmap.size());
   }
 }
 
@@ -731,7 +738,7 @@ TEST(BoundedBitset, fold_and_accumulate)
     big_bitmap.set(i);
   }
 
-  bounded_bitset<6> fold_bitset = fold_and_accumulate<6, false>(big_bitmap, fold_size);
+  bounded_bitset<6> fold_bitset = fold_and_accumulate<6>(big_bitmap, fold_size);
   ASSERT_EQ(big_bitmap.size() / fold_size, fold_bitset.count());
   ASSERT_EQ(fold_bitset.count(), big_bitmap.count());
   ASSERT_TRUE(fold_bitset.is_contiguous());

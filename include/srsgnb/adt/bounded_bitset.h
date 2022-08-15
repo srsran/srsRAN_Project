@@ -364,19 +364,38 @@ public:
   }
 
   /// \brief Returns bounded_bitset<> that represents a slice or subview of the original bounded_bitset. Unless
-  /// it is specified, the returned slice has the same template parameters "N" and "reversed" of this.
+  /// it is specified, the returned slice has the same template parameters "N" and "reversed" of "this".
+  ///
   /// \param[in] startpos The bit index where the subview starts.
   /// \param[in] endpos The bit index where the subview stops.
-  template <size_t N2 = N, bool reversed2 = reversed>
-  bounded_bitset<N2, reversed2> slice(size_t startpos, size_t endpos) const
+  template <size_t N2 = N>
+  bounded_bitset<N2, reversed> slice(size_t startpos, size_t endpos) const
   {
-    // NOTE: can be optimized.
-    assert_range_bounds_(startpos, endpos);
-    bounded_bitset<N2, reversed2> crbs(endpos - startpos);
-    for (size_t i = startpos; i != endpos; ++i) {
-      crbs.set(i - startpos, test_(i));
+    bounded_bitset<N2, reversed> sliced(endpos - startpos);
+    if (reversed) {
+      std::swap(startpos, endpos);
+      startpos = get_bitidx_(startpos) + 1;
+      endpos   = get_bitidx_(endpos) + 1;
     }
-    return crbs;
+    unsigned start_word = startpos / bits_per_word;
+    unsigned start_mod  = startpos % bits_per_word;
+
+    if (start_mod != 0) {
+      word_t left_mask  = mask_lsb_ones<word_t>(bits_per_word - start_mod);
+      word_t right_mask = mask_lsb_ones<word_t>(start_mod);
+      for (unsigned i = 0; i != sliced.nof_words_(); ++i) {
+        sliced.buffer[i] = (buffer[i + start_word] >> start_mod) & left_mask;
+        if (i + start_word + 1 < nof_words_()) {
+          sliced.buffer[i] |= (buffer[i + start_word + 1] & right_mask) << (bits_per_word - start_mod);
+        }
+      }
+    } else {
+      for (unsigned i = 0; i != sliced.nof_words_(); ++i) {
+        sliced.buffer[i] = buffer[i + start_word];
+      }
+    }
+    sliced.sanitize_();
+    return sliced;
   }
 
   /// \brief Finds the lowest bit with value set to the value passed as argument.
@@ -700,8 +719,11 @@ public:
   }
 
 private:
-  word_t buffer[(N - 1) / bits_per_word + 1] = {0};
-  size_t cur_size                            = 0;
+  template <size_t N2, bool reversed2>
+  friend class bounded_bitset;
+
+  std::array<word_t, (N - 1) / bits_per_word + 1> buffer   = {0};
+  size_t                                          cur_size = 0;
 
   void sanitize_()
   {
@@ -927,23 +949,22 @@ inline bounded_bitset<N, reversed> fliplr(const bounded_bitset<N, reversed>& oth
 /// 3. Slice the bitset obtained in 2. with offset O=1 and slice length K=2: 10.
 ///
 /// \tparam N2 maximum bitset size for returned bitset.
-/// \tparam reversed2 internal bit order representation of returned bitset.
 /// \param[in] other original bitset of length "S".
 /// \param[in] fold_length length of each folded bitset "L".
 /// \param[in] slice_offset offset from where to slice each fold "O".
 /// \param[in] slice_length length of the slice taken from each fold "K".
 /// \return bitset of size slice_length with the or-accumulated folds.
-template <size_t N2, bool reversed2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                         size_t                             fold_length,
-                                                         size_t                             slice_offset,
-                                                         size_t                             slice_length) noexcept
+template <size_t N2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                        size_t                             fold_length,
+                                                        size_t                             slice_offset,
+                                                        size_t                             slice_length) noexcept
 {
   srsgnb_assert(
       other.size() % fold_length == 0, "Invalid fold length={} for bitset of size={}", fold_length, other.size());
-  bounded_bitset<N2, reversed2> ret(slice_length);
+  bounded_bitset<N2, reversed> ret(slice_length);
   for (size_t i = 0; i != other.size(); i += fold_length) {
-    ret |= other.template slice<N2, reversed2>(i + slice_offset, i + slice_offset + slice_length);
+    ret |= other.template slice<N2>(i + slice_offset, i + slice_offset + slice_length);
   }
   return ret;
 }
@@ -951,15 +972,15 @@ inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N,
 /// \brief Performs the fold and accumulate operation, but without slicing at the end.
 ///
 /// \tparam N2 maximum bitset size for returned bitset.
-/// \tparam reversed2 internal bit order representation of returned bitset.
+/// \tparam reversed internal bit order representation of returned bitset.
 /// \param[in] other original bitset from where folds are generated.
 /// \param[in] fold_length length of each fold bitset.
 /// \return bitset of size fold_length with the accumulated folds.
-template <size_t N2, bool reversed2, size_t N, bool reversed>
-inline bounded_bitset<N2, reversed2> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
-                                                         size_t                             fold_length) noexcept
+template <size_t N2, size_t N, bool reversed>
+inline bounded_bitset<N2, reversed> fold_and_accumulate(const bounded_bitset<N, reversed>& other,
+                                                        size_t                             fold_length) noexcept
 {
-  return fold_and_accumulate<N2, reversed2, N, reversed>(other, fold_length, 0, fold_length);
+  return fold_and_accumulate<N2, N, reversed>(other, fold_length, 0, fold_length);
 }
 
 } // namespace srsgnb

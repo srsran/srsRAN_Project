@@ -124,6 +124,33 @@ static void benchmark_bounded_bitset_fillset(srsgnb::bounded_bitset<N>& bitset, 
 }
 
 template <unsigned N>
+static void benchmark_bounded_bitset_slice(srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  unsigned slice_start = params.start_offset;
+  unsigned slice_end   = slice_start + (params.last_offset - params.start_offset) / 2;
+  bm->new_measure(description, params.nof_repetitions, [&bitset, slice_start, slice_end]() {
+    bounded_bitset<N / 2> slice = bitset.template slice<N / 2>(slice_start, slice_end);
+    do_not_optimize(slice.test(params.start_offset));
+  });
+}
+
+template <unsigned N>
+static void benchmark_bounded_bitset_slicetestset(srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  unsigned slice_start = params.start_offset;
+  unsigned slice_end   = slice_start + (params.last_offset - params.start_offset) / 2;
+  bm->new_measure(description, params.nof_repetitions, [&bitset, slice_start, slice_end]() {
+    bounded_bitset<N / 2> slice(N / 2);
+    for (unsigned i = slice_start; i != slice_end; ++i) {
+      if (bitset.test(i)) {
+        slice.set(i - slice_start);
+      }
+    }
+    do_not_optimize(slice.test(params.start_offset));
+  });
+}
+
+template <unsigned N>
 static void run_benchmark(const std::array<bool, N>& array, std::string description)
 {
   bounded_bitset<N> bitset(array.begin(), array.end());
@@ -134,6 +161,8 @@ static void run_benchmark(const std::array<bool, N>& array, std::string descript
   benchmark_bounded_bitset_alltest<N>(bitset, "bitset:" + description + ":all_test");
   benchmark_bounded_bitset_fill<N>(bitset, "bitset:" + description + ":fill");
   benchmark_bounded_bitset_fillset<N>(bitset, "bitset:" + description + ":fill_set");
+  benchmark_bounded_bitset_slice<N>(bitset, "bitset:" + description + ":slice");
+  benchmark_bounded_bitset_slicetestset<N>(bitset, "bitset:" + description + ":slice_testset");
 }
 
 int main(int argc, char** argv)

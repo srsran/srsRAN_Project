@@ -108,7 +108,7 @@ private:
   /// Represents a matrix of symbol index x carrier RB index. The matrix dimensions get scaled based on the number
   /// of carrier RBs. RB index=0 corresponds to the carrier offset. Resources in the bitset are represented in the
   /// following order: [{symb=0,RB=0}, {symb=0,RB=1}, ..., {symb=1,RB=0}, ..., {symb=14,RB=carrierRBs}]
-  using slot_rb_bitmap = bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * MAX_NOF_PRBS>;
+  using slot_rb_bitmap = bounded_bitset<NOF_OFDM_SYM_PER_SLOT_NORMAL_CP * MAX_NOF_PRBS, true>;
 
   /// Carrier configuration containining numerology, carrier offset and carrier bandwidth.
   scs_specific_carrier carrier_cfg;
