@@ -400,6 +400,28 @@ TYPED_TEST(bounded_bitset_tester, fill_zeros)
   }
 }
 
+TYPED_TEST(bounded_bitset_tester, slice)
+{
+  using big_bitset_type                   = typename TestFixture::bitset_type;
+  unsigned                big_bitset_size = this->get_random_size();
+  const std::vector<bool> vec             = this->create_random_vector(big_bitset_size);
+  big_bitset_type         big_bitmap(vec.begin(), vec.end());
+
+  constexpr size_t N_small = TestFixture::bitset_type::max_size() / 2;
+  using small_bitset_type  = bounded_bitset<N_small, big_bitset_type::bit_order()>;
+  unsigned small_bitset_size =
+      std::uniform_int_distribution<unsigned>{0, std::min((unsigned)N_small, big_bitset_size - 1)}(g);
+  unsigned offset     = std::uniform_int_distribution<unsigned>{0, small_bitset_size - 1}(g);
+  unsigned end_offset = std::uniform_int_distribution<unsigned>{offset, small_bitset_size}(g);
+
+  small_bitset_type small_bitmap = big_bitmap.template slice<N_small>(offset, end_offset);
+  ASSERT_EQ(end_offset - offset, small_bitmap.size());
+
+  for (unsigned i = 0; i != small_bitmap.size(); ++i) {
+    ASSERT_EQ(small_bitmap.test(i), big_bitmap.test(i + offset));
+  }
+}
+
 TEST(BoundedBitset, integer_bitset_conversion)
 {
   unsigned           bitset_size = 23;
@@ -698,17 +720,6 @@ TEST(BoundedBitset, push_back)
     bitset.push_back(0xbU, 4);
     ASSERT_EQ(bitset, bounded_bitset<10>({1, 0, 1, 1}));
   }
-}
-
-TEST(BoundedBitset, slice)
-{
-  bounded_bitset<100> big_bitmap(95);
-  big_bitmap.fill(5, 70);
-
-  bounded_bitset<35> small_bitmap = big_bitmap.slice<35>(50, 80);
-  ASSERT_EQ(30, small_bitmap.size());
-  ASSERT_EQ(20, small_bitmap.count());
-  ASSERT_EQ(1048575, small_bitmap.to_uint64());
 }
 
 TEST(BoundedBitset, fold_and_accumulate)
