@@ -6,7 +6,13 @@
 # the distribution.
 #
 
-set(SOURCES ngap_factory.cpp)
+set(SOURCES
+        ngap_factory.cpp
+        ngap_impl.cpp
+        procedures/ngap_setup_procedure.cpp
+    )
 
 add_library(srsgnb_ngap STATIC ${SOURCES})
-target_link_libraries(srsgnb_ngap)
+target_link_libraries(srsgnb_ngap ngap_asn1)
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})

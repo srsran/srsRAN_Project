@@ -10,15 +10,16 @@
 
 #pragma once
 
-#include "srsgnb/ngap/ngap.h"
+#include "ngap.h"
+#include "srsgnb/support/timers.h"
 #include <memory>
 
 namespace srsgnb {
 
 namespace srs_cu_cp {
 
-/// Creates an instance of an NGAP.
-std::unique_ptr<ngap> create_ngap();
+/// Creates an instance of an NGAP interface, notifying outgoing packets on the specified listener object.
+std::unique_ptr<ngap_interface> create_ngap(timer_manager& timer_db, ng_message_notifier& event_notifier);
 
 } // namespace srs_cu_cp
 

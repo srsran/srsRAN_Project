@@ -11,6 +11,7 @@
 #pragma once
 
 #include "adapters/f1ap_adapters.h"
+#include "adapters/ngap_adapters.h"
 #include "du_processor.h"
 #include "du_processor_config.h"
 #include "srsgnb/cu_cp/cu_cp.h"
@@ -75,7 +76,7 @@ private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("CU-CP");
 
   // Components
-  std::unique_ptr<ngap> ngap_entity;
+  std::unique_ptr<ngap_interface> ngap_entity;
 
   slot_array<std::unique_ptr<du_processor>, MAX_NOF_DUS> du_db;
 
@@ -90,6 +91,9 @@ private:
 
   // RRC UE to NGAP adapter
   rrc_ue_ngap_adapter rrc_ue_ngap_ev_notifier;
+
+  // NGAP to AMF adapter
+  ngap_amf_adapter ngap_amf_ev_notifier;
 };
 
 } // namespace srs_cu_cp

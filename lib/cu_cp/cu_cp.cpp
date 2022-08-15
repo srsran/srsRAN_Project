@@ -31,7 +31,7 @@ cu_cp::cu_cp(const cu_cp_configuration& config_) : cfg(config_), main_ctrl_loop(
   }
 
   // Create layers
-  ngap_entity = create_ngap();
+  ngap_entity = create_ngap(timers, ngap_amf_ev_notifier);
 
   // connect event notifier to layers
   f1ap_ev_notifier.connect_cu_cp(*this);
