@@ -11,17 +11,44 @@
 #include "srsgnb/asn1/e1ap.h"
 #include "srsgnb/pcap/e1ap_pcap.h"
 #include "srsgnb/support/test_utils.h"
+#include <gtest/gtest.h>
 
-using namespace std;
 using namespace asn1;
 
 #define JSON_OUTPUT 1
 
-const char* log_id = "ASN1";
+class asn1_e1ap_test : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    srslog::fetch_basic_logger("ASN1").set_level(srslog::basic_levels::debug);
+    srslog::fetch_basic_logger("ASN1").set_hex_dump_max_size(-1);
 
-static srsgnb::e1ap_pcap pcap_writer;
+    test_logger.set_level(srslog::basic_levels::debug);
+    test_logger.set_hex_dump_max_size(-1);
 
-void gnb_cu_up_e1_setup_test()
+    srslog::init();
+
+    pcap_writer.open("e1ap.pcap");
+
+    // Start the log backend.
+    srslog::init();
+  }
+
+  void TearDown() override
+  {
+    // flush logger after each test
+    srslog::flush();
+
+    pcap_writer.close();
+  }
+
+  srsgnb::e1ap_pcap     pcap_writer;
+  srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
+};
+
+TEST_F(asn1_e1ap_test, when_gnb_du_up_e1_setup_correct_then_packing_successful)
 {
   auto& logger = srslog::fetch_basic_logger("ASN1", false);
   logger.set_level(srslog::basic_levels::debug);
@@ -46,7 +73,7 @@ void gnb_cu_up_e1_setup_test()
 
   srsgnb::byte_buffer buffer;
   asn1::bit_ref       bref(buffer);
-  TESTASSERT(pdu.pack(bref) == SRSASN_SUCCESS);
+  EXPECT_EQ(pdu.pack(bref), SRSASN_SUCCESS);
 
   // TODO: Accept byte buffer in pcap and log.
   std::vector<uint8_t> bytes{buffer.begin(), buffer.end()};
@@ -58,27 +85,7 @@ void gnb_cu_up_e1_setup_test()
   int               unpacked_len = bref.distance_bytes();
   asn1::json_writer json_writer1;
   pdu.to_json(json_writer1);
-  logger.info(
+  test_logger.info(
       bytes.data(), unpacked_len, "E1AP unpacked ({} B): \n {}", unpacked_len, json_writer1.to_string().c_str());
 #endif
-}
-
-int main()
-{
-  auto& asn1_logger = srslog::fetch_basic_logger(log_id);
-  asn1_logger.set_level(srslog::basic_levels::debug);
-  asn1_logger.set_hex_dump_max_size(-1);
-
-  pcap_writer.open("e1ap.pcap");
-
-  // Start the log backend.
-  srslog::init();
-
-  gnb_cu_up_e1_setup_test();
-
-  pcap_writer.close();
-
-  srslog::flush();
-
-  return 0;
 }
