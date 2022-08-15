@@ -15,8 +15,6 @@
 using namespace srsgnb;
 using namespace srs_du;
 
-enum class test_outcome { success, failure };
-
 /// Test successful f1 setup procedure
 TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 {
