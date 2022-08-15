@@ -30,6 +30,12 @@ target_compile_options(e1ap_asn1 PRIVATE "-Os")
 target_link_libraries(e1ap_asn1 asn1_utils)
 INSTALL(TARGETS e1ap_asn1 DESTINATION ${LIBRARY_DIR})
 
+# NGAP ASN1
+add_library(ngap_asn1 STATIC ngap.cpp)
+target_compile_options(ngap_asn1 PRIVATE "-Os")
+target_link_libraries(ngap_asn1 asn1_utils)
+INSTALL(TARGETS ngap_asn1 DESTINATION ${LIBRARY_DIR})
+
 # RRC NR ASN1 helpers
 add_library(rrc_nr_asn1_helpers STATIC rrc_nr/tdd_cfg_helper.cpp)
 target_compile_options(rrc_nr_asn1_helpers PRIVATE "-Os")

@@ -145,7 +145,7 @@ cmake flag check:
     # Launch coverage
     - cd ${CI_PROJECT_DIR}/build
     - |
-      if [ $enable_coverage = "true" ]; then 
+      if [ $enable_coverage = "true" ]; then
         gcovr --xml --print-summary -j "$(nproc --all)" --exclude-unreachable-branches \
           --exclude-directories unittests \
           --exclude-directories integrationtests  \
@@ -156,10 +156,11 @@ cmake flag check:
           --exclude "${CI_PROJECT_DIR}/include/srsgnb/asn1/rrc_nr/.*" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/e1ap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/f1ap.cpp" \
+          --exclude "${CI_PROJECT_DIR}/lib/asn1/ngap.cpp" \
           --exclude "${CI_PROJECT_DIR}/lib/asn1/rrc_nr/.*" \
           --exclude-lines-by-pattern ".*srsgnb_assert.*|.*srsgnb_sanity_check.*" \
           --root ${CI_PROJECT_DIR} -o coverage.xml
-        
+
         filesize=$(stat -c%s coverage.xml)
         maxsize=$((10*1204*1024))
         (( filesize > maxsize )) && echo "coverage.xml is greater than 10MB, over gitlab limit" && exit 1
@@ -211,7 +212,7 @@ unit coverage:
     - |
       download_from_registry() {
         apk add --update curl
-        
+
         cd ${CI_PROJECT_DIR}
         http_code=$(curl -w "%{http_code}" --header "PRIVATE-TOKEN: $CODEBOT_TOKEN" "${PACKAGE_URL}" -o output.tar.gz)
         if [[ $http_code == "200" ]]; then
