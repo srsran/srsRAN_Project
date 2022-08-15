@@ -350,28 +350,14 @@ public:
   /// \return Returns a reference to this object.
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
-    assert_range_bounds_(startpos, endpos);
-    if (reversed) {
-      std::swap(startpos, endpos);
-      startpos = get_bitidx_(startpos) + 1;
-      endpos   = get_bitidx_(endpos) + 1;
-    }
-    size_t start_word = word_idx_(startpos);
-    size_t end_word   = word_idx_(endpos) + (endpos % bits_per_word > 0 ? 1U : 0U);
-    for (size_t i = start_word; i != end_word; ++i) {
-      word_t w = ~static_cast<word_t>(0);
-      if (i == start_word) {
-        w &= mask_lsb_zeros<word_t>(startpos % bits_per_word);
-      }
-      if (i == end_word - 1) {
-        w &= mask_msb_zeros<word_t>(end_word * bits_per_word - endpos);
-      }
+    apply_first_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
       if (value) {
-        buffer[i] |= w;
+        buffer[word_idx] |= mask;
       } else {
-        buffer[i] &= ~w;
+        buffer[word_idx] &= ~mask;
       }
-    }
+      return false;
+    });
     return *this;
   }
 
@@ -484,27 +470,10 @@ public:
   /// \return Returns true if all the bits within the range are 1.
   bool all(size_t start, size_t stop) const
   {
-    assert_range_bounds_(start, stop);
-    if (reversed) {
-      std::swap(start, stop);
-      start = get_bitidx_(start) + 1;
-      stop  = get_bitidx_(stop) + 1;
-    }
-    size_t start_word = word_idx_(start);
-    size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
-    for (size_t i = start_word; i != end_word; ++i) {
-      word_t w = buffer[i];
-      if (i == start_word) {
-        w |= mask_lsb_ones<word_t>(start % bits_per_word);
-      }
-      if (i == end_word - 1) {
-        w |= mask_msb_ones<word_t>(end_word * bits_per_word - stop);
-      }
-      if (w != ~static_cast<word_t>(0)) {
-        return false;
-      }
-    }
-    return true;
+    bool not_all_found = apply_first_(start, stop, [this](size_t word_idx, const word_t& mask) {
+      return (buffer[word_idx] | ~mask) != ~static_cast<word_t>(0);
+    });
+    return !not_all_found;
   }
 
   /// \brief Finds the highest bit with value set to the value passed as argument.
@@ -547,27 +516,10 @@ public:
   /// \return Returns true if at least one bit equal to 1 was found within the range.
   bool any(size_t start, size_t stop) const
   {
-    assert_range_bounds_(start, stop);
-    if (reversed) {
-      std::swap(start, stop);
-      start = get_bitidx_(start) + 1;
-      stop  = get_bitidx_(stop) + 1;
-    }
-    size_t start_word = word_idx_(start);
-    size_t end_word   = word_idx_(stop);
-    for (size_t i = start_word; i <= end_word; ++i) {
-      word_t w = buffer[i];
-      if (i == start_word) {
-        w &= mask_lsb_zeros<word_t>(start % bits_per_word);
-      }
-      if (i == end_word) {
-        w &= mask_lsb_ones<word_t>(stop % bits_per_word);
-      }
-      if (w != 0) {
-        return true;
-      }
-    }
-    return false;
+    bool any_found = apply_first_(start, stop, [this](size_t word_idx, const word_t& mask) {
+      return (buffer[word_idx] & mask) != static_cast<word_t>(0);
+    });
+    return any_found;
   }
 
   /// \brief Checks if at no bit in the bitset is set to 1.
@@ -885,6 +837,42 @@ private:
       }
     }
     return -1;
+  }
+
+  template <typename C>
+  bool apply_first_(size_t start, size_t stop, const C& c) const
+  {
+    assert_range_bounds_(start, stop);
+    return apply_first_(start, stop, c, std::integral_constant<bool, reversed>{});
+  }
+
+  template <typename C>
+  bool apply_first_(size_t start, size_t stop, const C& c, std::true_type t) const
+  {
+    std::swap(start, stop);
+    start = get_bitidx_(start) + 1;
+    stop  = get_bitidx_(stop) + 1;
+    return apply_first_(start, stop, c, std::false_type{});
+  }
+
+  template <typename C>
+  bool apply_first_(size_t start, size_t stop, const C& c, std::false_type t) const
+  {
+    size_t start_word = word_idx_(start);
+    size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
+    for (size_t i = start_word; i != end_word; ++i) {
+      word_t mask = ~static_cast<word_t>(0);
+      if (i == start_word) {
+        mask &= mask_lsb_zeros<word_t>(start % bits_per_word);
+      }
+      if (i == end_word - 1) {
+        mask &= mask_msb_zeros<word_t>(end_word * bits_per_word - stop);
+      }
+      if (c(i, mask)) {
+        return true;
+      }
+    }
+    return false;
   }
 };
 

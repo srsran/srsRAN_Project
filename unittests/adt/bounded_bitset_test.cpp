@@ -375,7 +375,8 @@ TYPED_TEST(bounded_bitset_tester, fill_ones)
       auto bitmap = zeros_bitmap;
       bitmap.fill(i, i + l);
       ASSERT_FALSE(bitmap.any(0, i));
-      ASSERT_TRUE(bitmap.all(i, i + l));
+      ASSERT_TRUE(bitmap.all(i, i + l)) << fmt::format(
+          "For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
       ASSERT_FALSE(bitmap.any(i + l, bitset_size));
     }
   }
@@ -390,9 +391,11 @@ TYPED_TEST(bounded_bitset_tester, fill_zeros)
     for (unsigned i = 0; i < bitset_size - l; ++i) {
       auto bitmap = ones_bitmap;
       bitmap.fill(i, i + l, false);
-      ASSERT_TRUE(bitmap.all(0, i));
+      ASSERT_TRUE(bitmap.all(0, i)) << fmt::format(
+          "For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
       ASSERT_FALSE(bitmap.any(i, i + l));
-      ASSERT_TRUE(bitmap.all(i + l, bitset_size));
+      ASSERT_TRUE(bitmap.all(i + l, bitset_size))
+          << fmt::format("For bitmap={:x} of size={} in [{}, {})", bitmap, bitmap.size(), i, i + l);
     }
   }
 }
