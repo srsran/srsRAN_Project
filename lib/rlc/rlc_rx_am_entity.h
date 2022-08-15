@@ -45,7 +45,16 @@ public:
     metrics_add_pdus(1, buf.length());
     logger.log_info("Rx PDU ({} B)", buf.length());
     metrics_add_sdus(1, buf.length());
-    // TODO
+    if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
+      rlc_am_status_pdu status_pdu(cfg.sn_field_length);
+      if (status_pdu.unpack(buf.view())) {
+        status_handler->handle_status_pdu(std::move(status_pdu));
+      } else {
+        logger.log_error("Failed to unpack control PDU ({} B)", buf.length());
+      }
+    } else {
+      // TODO: handle data PDU
+    }
   }
 
   // Status provider for RX entity

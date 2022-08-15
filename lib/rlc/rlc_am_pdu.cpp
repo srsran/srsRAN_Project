@@ -167,13 +167,12 @@ uint32_t rlc_am_status_pdu::nack_size(const rlc_am_status_nack& nack) const
  * Ref: 3GPP TS 38.322 v16.2.0 Section 6.2.2.5
  ***************************************************************************/
 
-bool rlc_am_status_pdu::is_control_pdu(const byte_buffer& pdu)
+bool rlc_am_status_pdu::is_control_pdu(const byte_buffer_view& pdu)
 {
-  byte_buffer_reader pdu_reader = pdu;
-  return ((*(pdu_reader) >> 7U) & 0x01U) == to_number(rlc_dc_field::control);
+  return ((*(pdu.begin()) >> 7U) & 0x01U) == to_number(rlc_dc_field::control);
 }
 
-bool rlc_am_status_pdu::unpack_12bit(const byte_buffer& pdu)
+bool rlc_am_status_pdu::unpack_12bit(const byte_buffer_view& pdu)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
@@ -279,7 +278,7 @@ bool rlc_am_status_pdu::unpack_12bit(const byte_buffer& pdu)
   return true;
 }
 
-bool rlc_am_status_pdu::unpack_18bit(const byte_buffer& pdu)
+bool rlc_am_status_pdu::unpack_18bit(const byte_buffer_view& pdu)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.length() < rlc_am_nr_status_pdu_sizeof_header_ack_sn) {
@@ -390,7 +389,7 @@ bool rlc_am_status_pdu::unpack_18bit(const byte_buffer& pdu)
   return true;
 }
 
-bool rlc_am_status_pdu::unpack(const byte_buffer& pdu)
+bool rlc_am_status_pdu::unpack(const byte_buffer_view& pdu)
 {
   switch (sn_size) {
     case rlc_am_sn_size::size12bits:

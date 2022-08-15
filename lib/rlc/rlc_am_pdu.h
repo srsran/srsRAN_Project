@@ -111,8 +111,8 @@ private:
   uint32_t nack_size(const rlc_am_status_nack& nack) const;
   bool     pack_12bit(byte_buffer& pdu) const;
   bool     pack_18bit(byte_buffer& pdu) const;
-  bool     unpack_12bit(const byte_buffer& pdu);
-  bool     unpack_18bit(const byte_buffer& pdu);
+  bool     unpack_12bit(const byte_buffer_view& pdu);
+  bool     unpack_18bit(const byte_buffer_view& pdu);
 
 public:
   /// Control PDU type
@@ -137,15 +137,15 @@ public:
   /// \return true if PDU was written successfully, false otherwise
   bool pack(byte_buffer& pdu) const;
 
-  /// \brief Read a RLC AM status PDU from a PDU buffer
-  /// \param pdu A reference to a byte_buffer
+  /// \brief Read a RLC AM status PDU from a PDU buffer view
+  /// \param pdu A reference to a byte_buffer_view
   /// \return true if PDU was read successfully, false otherwise
-  bool unpack(const byte_buffer& pdu);
+  bool unpack(const byte_buffer_view& pdu);
 
-  /// \brief Checks if a PDU buffer contains a control PDU
-  /// \param pdu A reference to a byte_buffer
+  /// \brief Checks if a PDU buffer view contains a control PDU
+  /// \param pdu A reference to a byte_buffer_view
   /// \return true if the byte buffer contains a control PDU, false otherwise
-  static bool is_control_pdu(const byte_buffer& pdu);
+  static bool is_control_pdu(const byte_buffer_view& pdu);
 };
 
 /****************************************************************************
