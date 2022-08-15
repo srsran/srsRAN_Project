@@ -23,3 +23,8 @@ gtest_discover_tests(asn1_e1ap_test)
 add_executable(asn1_f1ap_test asn1_f1ap_test.cpp)
 target_link_libraries(asn1_f1ap_test f1ap_asn1 srslog srsgnb_pcap gtest gtest_main)
 gtest_discover_tests(asn1_f1ap_test)
+
+
+add_executable(asn1_ngap_test asn1_ngap_test.cpp)
+target_link_libraries(asn1_ngap_test ngap_asn1 srslog srsgnb_pcap gtest gtest_main)
+gtest_discover_tests(asn1_ngap_test)
