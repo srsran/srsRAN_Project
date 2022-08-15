@@ -65,7 +65,7 @@ static void benchmark_bounded_bitset_any(const srsgnb::bounded_bitset<N>& bitset
 }
 
 template <unsigned N>
-static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+static void benchmark_bounded_bitset_anytest(const srsgnb::bounded_bitset<N>& bitset, std::string description)
 {
   bm->new_measure(description, params.nof_repetitions, [&bitset]() {
     bool value = false;
@@ -80,12 +80,60 @@ static void benchmark_bounded_bitset_test(const srsgnb::bounded_bitset<N>& bitse
 }
 
 template <unsigned N>
+static void benchmark_bounded_bitset_all(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  bm->new_measure(description, params.nof_repetitions, [&bitset]() {
+    bool value = bitset.all(params.start_offset, params.last_offset);
+    do_not_optimize(value);
+  });
+}
+
+template <unsigned N>
+static void benchmark_bounded_bitset_alltest(const srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  bm->new_measure(description, params.nof_repetitions, [&bitset]() {
+    bool value = true;
+    for (unsigned i = params.start_offset; i != params.last_offset; ++i) {
+      if (not bitset.test(i)) {
+        value = false;
+        break;
+      }
+    }
+    do_not_optimize(value);
+  });
+}
+
+template <unsigned N>
+static void benchmark_bounded_bitset_fill(srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  bm->new_measure(description, params.nof_repetitions, [&bitset]() {
+    bitset.fill(params.start_offset, params.last_offset);
+    do_not_optimize(bitset.test(params.start_offset));
+  });
+}
+
+template <unsigned N>
+static void benchmark_bounded_bitset_fillset(srsgnb::bounded_bitset<N>& bitset, std::string description)
+{
+  bm->new_measure(description, params.nof_repetitions, [&bitset]() {
+    for (unsigned i = params.start_offset; i != params.last_offset; ++i) {
+      bitset.set(i);
+    }
+    do_not_optimize(bitset.test(params.start_offset));
+  });
+}
+
+template <unsigned N>
 static void run_benchmark(const std::array<bool, N>& array, std::string description)
 {
   bounded_bitset<N> bitset(array.begin(), array.end());
 
   benchmark_bounded_bitset_any<N>(bitset, "bitset:" + description + ":any");
-  benchmark_bounded_bitset_test<N>(bitset, "bitset:" + description + ":test");
+  benchmark_bounded_bitset_anytest<N>(bitset, "bitset:" + description + ":any_test");
+  benchmark_bounded_bitset_all<N>(bitset, "bitset:" + description + ":all");
+  benchmark_bounded_bitset_alltest<N>(bitset, "bitset:" + description + ":all_test");
+  benchmark_bounded_bitset_fill<N>(bitset, "bitset:" + description + ":fill");
+  benchmark_bounded_bitset_fillset<N>(bitset, "bitset:" + description + ":fill_set");
 }
 
 int main(int argc, char** argv)
