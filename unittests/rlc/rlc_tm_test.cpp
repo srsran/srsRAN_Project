@@ -29,6 +29,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 }
 
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
+                       public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
@@ -42,7 +43,9 @@ public:
     rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);
   }
-  void on_ack_received() override {}
+
+  // rlc_tx_upper_layer_data_notifier interface
+  void on_delivered_sdu(uint32_t pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -56,7 +59,7 @@ void test_rx()
 {
   test_delimit_logger delimiter{"RLC TM - Rx SDUs"};
   rlc_test_frame      tester;
-  rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester);
+  rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester, tester);
 
   rlc_rx_pdu_handler* rlc1_rx_lower = rlc1.get_rx_pdu_handler();
 
@@ -82,7 +85,7 @@ void test_tx()
 {
   test_delimit_logger delimiter{"RLC TM - Tx PDUs"};
   rlc_test_frame      tester;
-  rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester);
+  rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester, tester);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();

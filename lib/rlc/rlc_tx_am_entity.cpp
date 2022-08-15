@@ -15,10 +15,11 @@ using namespace srsgnb;
 rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index,
                                    lcid_t                               lcid,
                                    const rlc_tx_am_config&              config,
+                                   rlc_tx_upper_layer_data_notifier&    upper_dn,
                                    rlc_tx_upper_layer_control_notifier& upper_cn,
                                    rlc_tx_buffer_state_update_notifier& buffer_state_notif,
                                    timer_manager&                       timers) :
-  rlc_tx_entity(du_index, lcid, upper_cn, buffer_state_notif),
+  rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, buffer_state_notif),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   tx_window_size(window_size(to_number(cfg.sn_field_length))),

@@ -28,13 +28,17 @@ public:
     f1ap->handle_pdu(std::move(msg));
   }
 
-  void on_ack_received() override
+private:
+  f1ap_rrc_message_transfer_procedure_handler* f1ap = nullptr;
+};
+
+class rlc_tx_data_notifier : public rlc_tx_upper_layer_data_notifier
+{
+public:
+  void on_delivered_sdu(uint32_t pdcp_sn) override
   {
     // TODO
   }
-
-private:
-  f1ap_rrc_message_transfer_procedure_handler* f1ap = nullptr;
 };
 
 class rlc_tx_control_notifier : public rlc_tx_upper_layer_control_notifier

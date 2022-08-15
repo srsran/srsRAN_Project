@@ -83,11 +83,14 @@ void ue_creation_procedure::create_srb0()
   du_logical_channel_context& srb0 = ue_ctx.bearers[LCID_SRB0];
   srb0.lcid                        = LCID_SRB0;
 
-  // Create RLC -> F1AP adapter.
-  srb0.rlc_ul_sdu_notif = std::make_unique<rlc_rx_rrc_sdu_adapter>(*cfg.f1ap_rrc);
+  // Create RLC RX -> F1AP adapter.
+  srb0.rlc_rx_ul_sdu_notif = std::make_unique<rlc_rx_rrc_sdu_adapter>(*cfg.f1ap_rrc);
 
-  // Create RLC CTRL adapter.
-  srb0.rlc_ctrl_notif = std::make_unique<rlc_tx_control_notifier>();
+  // Create RLC TX data adapter.
+  srb0.rlc_tx_ul_data_notif = std::make_unique<rlc_tx_data_notifier>();
+
+  // Create RLC TX control adapter.
+  srb0.rlc_tx_ul_ctrl_notif = std::make_unique<rlc_tx_control_notifier>();
 
   // Create RLC BSR update notification adapter.
   srb0.rlc_bsr_notifier =
@@ -97,8 +100,9 @@ void ue_creation_procedure::create_srb0()
   rlc_entity_creation_message rlc_msg{};
   rlc_msg.ue_index            = ue_ctx.ue_index;
   rlc_msg.lcid                = LCID_SRB0;
-  rlc_msg.upper_dn            = srb0.rlc_ul_sdu_notif.get();
-  rlc_msg.upper_cn            = srb0.rlc_ctrl_notif.get();
+  rlc_msg.rx_upper_dn         = srb0.rlc_rx_ul_sdu_notif.get();
+  rlc_msg.tx_upper_dn         = srb0.rlc_tx_ul_data_notif.get();
+  rlc_msg.tx_upper_cn         = srb0.rlc_tx_ul_ctrl_notif.get();
   rlc_msg.bsr_update_notifier = srb0.rlc_bsr_notifier.get();
   rlc_msg.config.mode         = rlc_mode::tm;
   srb0.rlc_bearer             = create_rlc_entity(rlc_msg);

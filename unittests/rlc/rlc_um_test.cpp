@@ -30,6 +30,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 }
 
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
+                       public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
@@ -43,7 +44,9 @@ public:
     rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);
   }
-  void on_ack_received() override {}
+
+  // rlc_tx_upper_layer_data_notifier interface
+  void on_delivered_sdu(uint32_t pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -61,8 +64,10 @@ void test_full_sdus(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -131,8 +136,10 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -220,8 +227,10 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -318,8 +327,10 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -408,8 +419,10 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -494,8 +507,10 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -593,8 +608,10 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
@@ -680,8 +697,10 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
   config.tx = std::make_unique<rlc_tx_um_config>(rlc_tx_um_config{sn_size});
   timer_manager  timers;
   rlc_test_frame tester1, tester2;
-  rlc_um_entity  rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
-  rlc_um_entity  rlc2(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+  rlc_um_entity  rlc1(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+  rlc_um_entity rlc2(
+      du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
   rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
   rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();

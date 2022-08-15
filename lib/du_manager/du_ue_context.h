@@ -22,8 +22,9 @@ namespace srs_du {
 
 struct du_logical_channel_context {
   lcid_t                                               lcid;
-  std::unique_ptr<rlc_rx_upper_layer_data_notifier>    rlc_ul_sdu_notif;
-  std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_ctrl_notif;
+  std::unique_ptr<rlc_rx_upper_layer_data_notifier>    rlc_rx_ul_sdu_notif;
+  std::unique_ptr<rlc_tx_upper_layer_data_notifier>    rlc_tx_ul_data_notif;
+  std::unique_ptr<rlc_tx_upper_layer_control_notifier> rlc_tx_ul_ctrl_notif;
   std::unique_ptr<rlc_entity>                          rlc_bearer;
   std::unique_ptr<rlc_tx_buffer_state_update_notifier> rlc_bsr_notifier;
   std::unique_ptr<mac_sdu_rx_notifier>                 mac_rx_notifier;

@@ -31,8 +31,6 @@ public:
 
 /// This interface represents the data exit point of the receiving side of a RLC entity.
 /// The RLC will use this class to pass SDUs to the upper-layers.
-/// For the case of RLC AM we will use this class also to notify the upper-layers.
-/// that an SDU was fully acknowledged.
 class rlc_rx_upper_layer_data_notifier
 {
 public:
@@ -40,7 +38,6 @@ public:
 
   /// This method is called to pass the SDU to the upper layers
   virtual void on_new_sdu(byte_buffer_slice pdu) = 0;
-  virtual void on_ack_received()                 = 0;
 };
 
 /// Structure used to represent an RLC SDU. An RLC SDU
@@ -86,6 +83,17 @@ public:
   /// This is the gross total size required to fully flush the TX entity (potentially by multiple calls to pull_pdu).
   /// \return Provides the current buffer state
   virtual uint32_t get_buffer_state() = 0;
+};
+
+/// This interface represents the data upper layer that the RLC bearer must notify on successful delivery of an SDU, so
+/// it can stop its discard timer. For RLC AM this is on reception of a corresponding ACK; for RLC UM this is the moment
+/// the transmission of the SDU begins.
+class rlc_tx_upper_layer_data_notifier
+{
+public:
+  virtual ~rlc_tx_upper_layer_data_notifier() = default;
+
+  virtual void on_delivered_sdu(uint32_t pdcp_sn) = 0;
 };
 
 /// This interface represents the control upper layer that the

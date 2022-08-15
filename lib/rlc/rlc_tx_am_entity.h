@@ -105,6 +105,7 @@ public:
   rlc_tx_am_entity(du_ue_index_t                        du_index,
                    lcid_t                               lcid,
                    const rlc_tx_am_config&              config,
+                   rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
                    rlc_tx_buffer_state_update_notifier& buffer_state_notif,
                    timer_manager&                       timers);

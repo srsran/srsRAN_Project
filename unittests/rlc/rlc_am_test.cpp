@@ -31,6 +31,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 
 /// Mocking class of the surrounding layers invoked by the RLC.
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
+                       public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
@@ -44,7 +45,9 @@ public:
     rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
     sdu_queue.write(boxed_sdu);
   }
-  void on_ack_received() override {}
+
+  // rlc_tx_upper_layer_data_notifier interface
+  void on_delivered_sdu(uint32_t pdcp_sn) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -100,16 +103,16 @@ protected:
 
     // Create RLC entities
     rlc1 = std::make_unique<rlc_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, timers);
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
     rlc2 = std::make_unique<rlc_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, timers);
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
     // Bind interfaces
-    rlc1_rx_lower = rlc2->get_rx_pdu_handler();
+    rlc1_rx_lower = rlc1->get_rx_pdu_handler();
     rlc1_tx_upper = rlc1->get_tx_sdu_handler();
     rlc1_tx_lower = rlc1->get_tx_pdu_transmitter();
     rlc2_rx_lower = rlc2->get_rx_pdu_handler();
-    rlc2_tx_upper = rlc1->get_tx_sdu_handler();
+    rlc2_tx_upper = rlc2->get_tx_sdu_handler();
     rlc2_tx_lower = rlc2->get_tx_pdu_transmitter();
   }
 
