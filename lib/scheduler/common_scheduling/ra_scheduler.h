@@ -44,6 +44,9 @@ public:
   /// \remark See TS 38.321, 5.1.3 - RAP transmission.
   void handle_rach_indication(const rach_indication_message& msg);
 
+  /// Handle UL CRC directed at Msg3 HARQ.
+  void handle_crc_indication(const ul_crc_pdu_indication& crc);
+
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
 
@@ -70,6 +73,8 @@ private:
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
 
   bool handle_rach_indication_impl(const rach_indication_message& msg);
+
+  void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
 
   void log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const;
   void log_rars(const cell_resource_allocator& res_alloc) const;
@@ -100,6 +105,7 @@ private:
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;
+  slot_event_list<ul_crc_pdu_indication>   pending_crcs;
   std::deque<pending_rar_t>                pending_rars;
   std::vector<pending_msg3>                pending_msg3s;
 };

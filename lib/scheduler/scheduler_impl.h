@@ -52,7 +52,7 @@ public:
   { // TODO
   }
 
-  void handle_crc_indication(const ul_crc_indication& crc) override { feedback_handler.handle_crc_indication(crc); }
+  void handle_crc_indication(const ul_crc_indication& crc) override;
 
 private:
   sched_configuration_notifier& mac_notifier;

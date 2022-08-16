@@ -18,7 +18,7 @@ void harq_process::slot_indication(slot_point slot_rx)
     return;
   }
   if (slot_rx < slot_ack) {
-    // Wait more slots for ACK/NACK to arrive
+    // Wait more slots for ACK/NACK to arrive.
     return;
   }
   if (tb[0].state == tb_t::state_t::waiting_ack) {

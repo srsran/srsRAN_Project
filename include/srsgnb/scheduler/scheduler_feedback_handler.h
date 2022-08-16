@@ -48,6 +48,9 @@ struct ul_bsr_indication_message {
 };
 
 struct ul_crc_pdu_indication {
+  rnti_t rnti;
+  /// UE index associated to the UL CRC. In case, there is no UE with the respective RNTI (e.g. Msg3), this value is
+  /// set to INVALID_DU_UE_INDEX.
   du_ue_index_t ue_index;
   uint8_t       harq_id;
   bool          tb_crc_success;

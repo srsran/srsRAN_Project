@@ -136,9 +136,57 @@ bool ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
   return true;
 }
 
+void ra_scheduler::handle_crc_indication(const ul_crc_pdu_indication& crc)
+{
+  pending_crcs.push(crc);
+}
+
+void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
+{
+  // Pop pending CRCs and process them.
+  pending_crcs.slot_indication();
+  span<const ul_crc_pdu_indication> new_crcs = pending_crcs.get_events();
+  for (const ul_crc_pdu_indication& crc : new_crcs) {
+    auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
+    if (pending_msg3.ind_msg.crnti != crc.rnti) {
+      logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
+                     cfg.cell_index,
+                     crc.rnti,
+                     crc.harq_id);
+      continue;
+    }
+    if (pending_msg3.harq.pid != crc.harq_id) {
+      logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
+                     cfg.cell_index,
+                     crc.rnti,
+                     crc.harq_id,
+                     crc.harq_id,
+                     pending_msg3.harq.pid);
+      continue;
+    }
+    // TODO: Fetch TB.
+    pending_msg3.harq.ack_info(0, crc.tb_crc_success);
+  }
+
+  // Allocate pending Msg3 retransmissions.
+  slot_point sl_rx = res_alloc.slot_tx() - 4U;
+  for (auto& pending_msg3 : pending_msg3s) {
+    if (not pending_msg3.harq.empty()) {
+      pending_msg3.harq.slot_indication(sl_rx);
+      if (pending_msg3.harq.has_pending_retx()) {
+        // TODO: Support Msg3 retransmissions.
+        pending_msg3.harq.reset();
+      }
+    }
+  }
+}
+
 void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
   slot_point pdcch_slot = res_alloc.slot_tx();
+
+  // Handle pending CRCs.
+  handle_pending_crc_indications_impl(res_alloc);
 
   // Pop pending RACHs and process them.
   pending_rachs.slot_indication();

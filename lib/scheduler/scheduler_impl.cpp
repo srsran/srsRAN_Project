@@ -50,6 +50,22 @@ void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
   cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
 }
 
+void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc)
+{
+  // TODO: Optimize.
+  ul_crc_indication ue_crcs{};
+  ue_crcs.cell_index = crc.cell_index;
+  for (const ul_crc_pdu_indication& crc_pdu : crc.crcs) {
+    if (crc_pdu.ue_index == INVALID_DU_UE_INDEX) {
+      // No UE found. The CRC is directed at a Msg3 HARQ.
+      cells[crc.cell_index].ra_sch.handle_crc_indication(crc_pdu);
+    } else {
+      ue_crcs.crcs.push_back(crc_pdu);
+    }
+  }
+  feedback_handler.handle_crc_indication(ue_crcs);
+}
+
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)
 {
   auto& cell = cells[cell_index];
