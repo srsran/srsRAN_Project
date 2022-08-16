@@ -44,9 +44,9 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
                                                  const pdu_t&        pdu)
 {
   // Select codeword specific parameters.
-  unsigned                                   rv         = pdu.codewords[codeword_id].rv;
-  modulation_scheme                          modulation = pdu.codewords[codeword_id].modulation;
-  static_vector<uint8_t, MAX_CODEWORD_SIZE>& codeword   = codewords[codeword_id];
+  unsigned                                rv           = pdu.codewords[codeword_id].rv;
+  modulation_scheme                       modulation   = pdu.codewords[codeword_id].modulation;
+  std::array<uint8_t, MAX_CODEWORD_SIZE>& tmp_codeword = temp_codewords[codeword_id];
 
   // Prepare encoder configuration.
   segmenter_config encoder_config;
@@ -58,7 +58,7 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
   encoder_config.nof_ch_symbols = Nre;
 
   // Prepare codeword size.
-  codeword.resize(Nre * nof_layers * get_bits_per_symbol(modulation));
+  span<uint8_t> codeword = span<uint8_t>(tmp_codeword).first(Nre * nof_layers * get_bits_per_symbol(modulation));
 
   // Encode codeword.
   encoder->encode(codeword, data, encoder_config);
@@ -68,10 +68,10 @@ span<const uint8_t> pdsch_processor_impl::encode(span<const uint8_t> data,
 }
 
 void pdsch_processor_impl::modulate(resource_grid_writer&           grid,
-                                    span<const span<const uint8_t>> temp_codewords,
+                                    span<const span<const uint8_t>> codewords,
                                     const pdu_t&                    pdu)
 {
-  unsigned nof_codewords = temp_codewords.size();
+  unsigned nof_codewords = codewords.size();
 
   pdsch_modulator::config_t modulator_config;
   modulator_config.rnti               = pdu.rnti;
@@ -89,7 +89,7 @@ void pdsch_processor_impl::modulate(resource_grid_writer&           grid,
   modulator_config.reserved                    = pdu.reserved;
   modulator_config.ports                       = pdu.ports;
 
-  modulator->modulate(grid, temp_codewords, modulator_config);
+  modulator->modulate(grid, codewords, modulator_config);
 }
 
 void pdsch_processor_impl::put_dmrs(resource_grid_writer& grid, const pdu_t& pdu)

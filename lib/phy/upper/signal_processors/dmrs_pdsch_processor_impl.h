@@ -75,7 +75,7 @@ private:
                const config_t&       config);
 
   /// Temporal resource element storage, just in case weights or precoding is applied for each port.
-  static_vector<static_vector<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> temp_re;
+  std::array<std::array<cf_t, MAX_DMRS_PER_SYMBOL>, MAX_PORTS> static_temp_re;
 
 public:
   dmrs_pdsch_processor_impl(std::unique_ptr<pseudo_random_generator> pseudo_random_generator) :

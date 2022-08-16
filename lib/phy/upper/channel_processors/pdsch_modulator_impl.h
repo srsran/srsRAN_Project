@@ -70,8 +70,8 @@ private:
   map_to_prb_other(resource_grid_writer& grid, static_vector<span<cf_t>, MAX_PORTS> x_pdsch, const config_t& config);
 
   /// Temporal modulated data
-  static_vector<static_vector<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>         temp_d;
-  static_vector<static_vector<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
+  std::array<std::array<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>         temp_d;
+  std::array<std::array<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
 public:
   /// \brief Generic PDSCH modulator instance constructor.

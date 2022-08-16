@@ -20,10 +20,10 @@ namespace srsgnb {
 class pdsch_processor_impl : public pdsch_processor
 {
 private:
-  std::unique_ptr<pdsch_encoder>                                                  encoder;
-  std::unique_ptr<pdsch_modulator>                                                modulator;
-  std::unique_ptr<dmrs_pdsch_processor>                                           dmrs;
-  std::array<static_vector<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> codewords;
+  std::unique_ptr<pdsch_encoder>                                               encoder;
+  std::unique_ptr<pdsch_modulator>                                             modulator;
+  std::unique_ptr<dmrs_pdsch_processor>                                        dmrs;
+  std::array<std::array<uint8_t, MAX_CODEWORD_SIZE>, MAX_NOF_TRANSPORT_BLOCKS> temp_codewords;
 
   /// \brief Computes the number of RE used for mapping PDSCH data.
   ///

@@ -66,8 +66,7 @@ void pdsch_modulator_impl::layer_map(static_vector<span<cf_t>, MAX_PORTS>&      
 
   // Set up each layer reference.
   for (unsigned layer = 0; layer != nof_layers_cw0; ++layer) {
-    temp_x[layer].resize(M_layer_symb);
-    x_pdsch[layer] = temp_x[layer];
+    x_pdsch[layer] = span<cf_t>(temp_x[layer].data(), M_layer_symb);
   }
 
   // Apply TS 38.211 Table 7.3.1.3-1: Codeword-to-layer mapping for spatial multiplexing.
@@ -244,10 +243,6 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
   srsgnb_assert(
       codewords.size() == nof_codewords, "For %d layers, %d codewords are required", nof_layers, codewords.size());
 
-  // Setup temporal buffers
-  temp_d.resize(nof_codewords);
-  temp_x.resize(nof_layers);
-
   // Process codewords.
   static_vector<span<cf_t>, MAX_NOF_CODEWORDS> d_pdsch(nof_codewords);
   for (unsigned cw_idx = 0; cw_idx != nof_codewords; ++cw_idx) {
@@ -266,8 +261,7 @@ void pdsch_modulator_impl::modulate(srsgnb::resource_grid_writer&               
     scramble(d, codewords[cw_idx], cw_idx, config);
 
     // Prepare destination buffer view.
-    temp_d[cw_idx].resize(nof_re);
-    d_pdsch[cw_idx] = temp_d[cw_idx];
+    d_pdsch[cw_idx] = span<cf_t>(temp_d[cw_idx].data(), nof_re);
 
     // Modulate codeword.
     modulate(d_pdsch[cw_idx], d, mod, config.scaling);

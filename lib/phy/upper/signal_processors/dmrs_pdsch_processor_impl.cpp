@@ -96,25 +96,25 @@ void srsgnb::dmrs_pdsch_processor_impl::mapping(resource_grid_writer& grid,
     }
 
     // Setup temporal RE.
-    temp_re[port].resize(sequence.size());
+    span<cf_t> temp_re_port = span<cf_t>(static_temp_re[port]).first(sequence.size());
 
     // Apply w_t weight can be +1 or -1 depending on l_prime and port.
     if (params.w_t[l_prime] != +1.0f) {
-      srsvec::sc_prod(sequence, -1, temp_re[port]);
+      srsvec::sc_prod(sequence, -1, temp_re_port);
     } else {
-      srsvec::copy(temp_re[port], sequence);
+      srsvec::copy(temp_re_port, sequence);
     }
 
     // Apply w_f weight. It can be {+1, +1} or {+1, -1} depending on l_prime and port. On the first case, no operation
     // is required. On the second case, re with odd sequence indexes are multiplied by -1.
     if (params.w_f[0] != params.w_f[1]) {
-      for (unsigned i = 1; i < temp_re[port].size(); i += 2) {
-        temp_re[port][i] *= -1;
+      for (unsigned i = 1; i < temp_re_port.size(); i += 2) {
+        temp_re_port[i] *= -1;
       }
     }
 
     // Setup RE
-    re[port] = temp_re[port];
+    re[port] = temp_re_port;
   }
 
   // For each port put elements in grid.
@@ -148,9 +148,6 @@ void srsgnb::dmrs_pdsch_processor_impl::map(resource_grid_writer& grid, const co
   // Create RG OFDM symbol mask. Identical for all OFDM symbols.
   static_vector<bool, MAX_RB* NRE> rg_subc_mask =
       get_rg_subc_mask(config.rb_mask, config.type == dmrs_type::TYPE1 ? re_mask_type1 : re_mask_type2);
-
-  // Resize temporal RE for the symbol according to the number of ports.
-  temp_re.resize(config.ports.size());
 
   // For each symbol in the slot....
   for (unsigned symbol = 0; symbol < MAX_NSYMB_PER_SLOT; ++symbol) {
