@@ -36,7 +36,9 @@ class rlc_tx_am_status_handler
 public:
   virtual ~rlc_tx_am_status_handler() = default;
 
-  virtual void handle_status_pdu(rlc_am_status_pdu status_pdu) = 0;
+  /// \brief Status PDU handler for TX entity
+  /// \param status The status PDU to be processed by the RLC TX AM entity
+  virtual void handle_status_pdu(rlc_am_status_pdu status) = 0;
 };
 
 } // namespace srsgnb
