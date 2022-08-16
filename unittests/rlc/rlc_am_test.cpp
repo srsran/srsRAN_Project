@@ -366,6 +366,255 @@ TEST_P(rlc_am_tx_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
+TEST_P(rlc_am_tx_test, retx_pdu_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  // Read ReTx as full PDU
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_min_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(std::equal(retx_pdu.begin(), retx_pdu.end(), pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end()));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_with_segmentation)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          so_size         = 2;
+  const uint32_t          header_max_size = header_min_size + so_size;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  // Read ReTx in segments
+  byte_buffer_slice_chain retx_pdu;
+  for (uint32_t i = 0; i < sdu_size; i++) {
+    uint32_t header_size = i == 0 ? header_min_size : header_max_size;
+    retx_pdu             = rlc1_tx_lower->pull_pdu(1 + header_size);
+    logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+    logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+    EXPECT_TRUE(
+        std::equal(retx_pdu.begin() + header_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size + i));
+  }
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_first_segment_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3 0:1
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  nack.so_start           = 0;
+  nack.so_end             = 1;
+  nack.has_so             = true;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_min_size);
+
+  // Read ReTx without extra segmentation
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_min_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(
+      std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_middle_segment_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          so_size         = 2;
+  const uint32_t          header_max_size = header_min_size + so_size;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3 1:1
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  nack.so_start           = 1;
+  nack.so_end             = 1;
+  nack.has_so             = true;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
+
+  // Read ReTx without extra segmentation
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_max_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
+                         retx_pdu.end(),
+                         pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_last_segment_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          so_size         = 2;
+  const uint32_t          header_max_size = header_min_size + so_size;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3 1:2
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  nack.so_start           = 1;
+  nack.so_end             = 2;
+  nack.has_so             = true;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), nack.so_end - nack.so_start + 1 + header_max_size);
+
+  // Read ReTx without extra segmentation
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_max_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(std::equal(retx_pdu.begin() + header_max_size,
+                         retx_pdu.end(),
+                         pdus[nack.nack_sn].begin() + header_min_size + nack.so_start));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_segment_invalid_so_start_and_so_end)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3 3:3
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  nack.so_start           = 3; // out of bounds
+  nack.so_end             = 3; // out of bounds
+  nack.has_so             = true;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), sdu_size + header_min_size);
+
+  // Read ReTx without extra segmentation
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_min_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(
+      std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_am_tx_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
+{
+  init(GetParam());
+  const uint32_t          sdu_size        = 3;
+  const uint32_t          header_min_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+  const uint32_t          n_pdus          = 5;
+  byte_buffer_slice_chain pdus[n_pdus];
+
+  tx_full_pdus(pdus, n_pdus, sdu_size);
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+
+  // NACK SN=3 3:2
+  rlc_am_status_nack nack = {};
+  nack.nack_sn            = 3;
+  nack.so_start           = 2; // larger than so_end
+  nack.so_end             = 1; // smaller than so_start
+  nack.has_so             = true;
+  rlc_am_status_pdu status_pdu(sn_size);
+  status_pdu.ack_sn = n_pdus;
+  status_pdu.push_nack(nack);
+  byte_buffer status_pdu_buf;
+  status_pdu.pack(status_pdu_buf);
+  rlc1_rx_lower->handle_pdu(std::move(status_pdu_buf));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), nack.so_end + 1 + header_min_size);
+
+  // Read ReTx without extra segmentation
+  byte_buffer_slice_chain retx_pdu;
+  retx_pdu = rlc1_tx_lower->pull_pdu(sdu_size + header_min_size);
+  logger.debug(retx_pdu.begin(), retx_pdu.end(), "retx_pdu:");
+  logger.debug(pdus[nack.nack_sn].begin(), pdus[nack.nack_sn].end(), "pdus[{}]:", nack.nack_sn);
+  EXPECT_TRUE(
+      std::equal(retx_pdu.begin() + header_min_size, retx_pdu.end(), pdus[nack.nack_sn].begin() + header_min_size));
+  EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Finally, instantiate all testcases for each supported SN size
 ///////////////////////////////////////////////////////////////////////////////
