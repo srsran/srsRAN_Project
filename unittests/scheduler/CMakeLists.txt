@@ -61,6 +61,10 @@ add_executable(ra_scheduler_test ra_scheduler_test.cpp)
 target_link_libraries(ra_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite)
 add_test(ra_scheduler_test ra_scheduler_test)
 
+add_executable(ra_scheduler_test_alt ra_scheduler_test_alt.cpp)
+target_link_libraries(ra_scheduler_test_alt srsgnb_sched du_manager_converters srslog mac_configuration_helpers scheduler_test_suite gtest gtest_main)
+add_test(ra_scheduler_test_alt ra_scheduler_test_alt)
+
 add_executable(pdcch_scheduler_test pdcch_scheduler_test.cpp)
 target_link_libraries(pdcch_scheduler_test srsgnb_sched du_manager_converters srslog mac_configuration_helpers)
 add_test(pdcch_scheduler_test pdcch_scheduler_test)

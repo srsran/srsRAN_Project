@@ -184,7 +184,11 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
 
 void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
 {
+  static const unsigned pdsch_time_res_index = 0;
+
   slot_point pdcch_slot = res_alloc.slot_tx();
+  slot_point pdsch_slot =
+      pdcch_slot + cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].k0;
 
   // Handle pending CRCs.
   handle_pending_crc_indications_impl(res_alloc);
@@ -197,7 +201,7 @@ void ra_scheduler::run_slot(cell_resource_allocator& res_alloc)
   }
 
   // Ensure slot for RAR PDCCH+PDSCH has DL enabled.
-  if (not cfg.is_dl_enabled(pdcch_slot)) {
+  if (not cfg.is_dl_enabled(pdcch_slot) or not cfg.is_dl_enabled(pdsch_slot)) {
     // Early exit. RAR scheduling only possible when PDCCH and PDSCH are available.
     return;
   }
@@ -281,10 +285,12 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   static const unsigned nof_prbs_per_rar = 4, nof_prbs_per_msg3 = 3;
   static const unsigned pdsch_time_res_index = 0;
 
-  cell_slot_resource_allocator& rar_alloc = res_alloc[0];
+  cell_slot_resource_allocator& pdcch_alloc = res_alloc[0];
+  cell_slot_resource_allocator& pdsch_alloc =
+      res_alloc[cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].k0];
 
   // 1. Check space in DL sched result for RAR.
-  if (rar_alloc.result.dl.rar_grants.full() or rar_alloc.result.dl.dl_pdcchs.full()) {
+  if (pdsch_alloc.result.dl.rar_grants.full() or pdcch_alloc.result.dl.dl_pdcchs.full()) {
     // early exit.
     log_postponed_rar(rar, "No PDCCH/PDSCH space for RAR.");
     return 0;
@@ -299,7 +305,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
     unsigned          nof_rar_rbs = nof_prbs_per_rar * max_nof_allocs;
     ofdm_symbol_range symbols =
         cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdsch_time_res_index].symbols;
-    crb_bitmap used_crbs = rar_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, symbols);
+    crb_bitmap used_crbs = pdsch_alloc.dl_res_grid.used_crbs(initial_active_dl_bwp, symbols);
     rar_crbs             = find_empty_interval_of_length(used_crbs, nof_rar_rbs, 0);
     max_nof_allocs       = rar_crbs.length() / nof_prbs_per_rar;
     if (max_nof_allocs == 0) {
@@ -353,7 +359,7 @@ unsigned ra_scheduler::schedule_rar(const pending_rar_t& rar, cell_resource_allo
   // 7. Find space in PDCCH for RAR.
   const static aggregation_level aggr_lvl = aggregation_level::n4;
   search_space_id                ss_id    = cfg.dl_cfg_common.init_dl_bwp.pdcch_common.ra_search_space_id;
-  pdcch_dl_information*          pdcch    = pdcch_sch.alloc_pdcch_common(rar_alloc, rar.ra_rnti, ss_id, aggr_lvl);
+  pdcch_dl_information*          pdcch    = pdcch_sch.alloc_pdcch_common(pdcch_alloc, rar.ra_rnti, ss_id, aggr_lvl);
   if (pdcch == nullptr) {
     return 0;
   }
@@ -467,7 +473,7 @@ void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause
 void ra_scheduler::log_rar_helper(fmt::memory_buffer& fmtbuf, const rar_information& rar) const
 {
   const char* prefix = "";
-  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3s=[", rar.pdcch_cfg->ctx.rnti);
+  fmt::format_to(fmtbuf, "ra-rnti={:#x}, msg3 grants ({} allocated): [", rar.pdcch_cfg->ctx.rnti, rar.grants.size());
   for (const rar_ul_grant& msg3 : rar.grants) {
     fmt::format_to(fmtbuf,
                    "{}{{{:#x}: rapid={}, prbs={}, ta={}}}",

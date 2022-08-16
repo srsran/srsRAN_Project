@@ -25,7 +25,7 @@ void srsgnb::test_pdcch_pdsch_common_consistency(const cell_configuration&   cel
                                                  const pdsch_information&    pdsch)
 {
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
-  TESTASSERT(pdcch.ctx.bwp_cfg == pdsch.bwp_cfg);
+  TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
 
   uint8_t time_assignment = 0;
   switch (pdcch.dci.type) {
