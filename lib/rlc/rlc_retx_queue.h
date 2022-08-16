@@ -21,10 +21,14 @@ struct rlc_tx_amd_retx {
   uint32_t so     = 0;              ///< offset to first byte of this ReTx within the associated SDU
   uint32_t length = 0;              ///< length of this ReTx
 
-  /// \brief Implements a check whether the range of this retransmission object includes the given segment offset
+  /// \brief Implements a check whether the range of this retransmission object includes the given segment range
   /// \param segment_offset The segment offset to check
+  /// \param segment_length Length of the segment to check
   /// \return true if the segment offset is covered by the retransmission object. Otherwise false
-  bool includes(uint32_t segment_offset) const { return (segment_offset >= so) && (segment_offset < so + length); }
+  bool includes(uint32_t segment_offset, uint32_t segment_length) const
+  {
+    return (segment_offset >= so) && (segment_offset + segment_length <= so + length);
+  }
 };
 
 template <class T>
@@ -59,6 +63,9 @@ public:
   size_t size() const { return queue.size(); }
   bool   empty() const { return queue.empty(); }
 
+  /// Checks if the queue contains an element with a given SN.
+  /// \param sn The sequence number to look up
+  /// \return true if queue contains the SN, false otherwise
   bool has_sn(uint32_t sn) const
   {
     if (queue.empty()) {
@@ -72,14 +79,20 @@ public:
     return false;
   };
 
-  bool has_sn(uint32_t sn, uint32_t so) const
+  /// Checks if the queue contains an element with a given SN and also includes a specified segment interval given by a
+  /// segment offset and segment length.
+  /// \param sn The sequence number to look up
+  /// \param so The segment offset to check
+  /// \param length The segment length to check
+  /// \return true if queue contains the SN and the element includes the given segment interval, false otherwise
+  bool has_sn(uint32_t sn, uint32_t so, uint32_t length) const
   {
     if (queue.empty()) {
       return false;
     }
     for (auto elem : queue) {
       if (elem.sn == sn) {
-        if (elem.includes(so)) {
+        if (elem.includes(so, length)) {
           return true;
         }
       }

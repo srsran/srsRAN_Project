@@ -16,7 +16,9 @@
 #include "rlc_retx_queue.h"
 #include "rlc_sdu_queue.h"
 #include "rlc_tx_entity.h"
+#include "srsgnb/adt/static_vector.h"
 #include "srsgnb/support/timers.h"
+#include <set>
 
 namespace srsgnb {
 
@@ -85,7 +87,7 @@ private:
 
   /// Tx counter modulus
   const uint32_t     mod;
-  constexpr uint32_t tx_mod_base(uint32_t x) { return (x - st.tx_next_ack) % mod; }
+  constexpr uint32_t tx_mod_base(uint32_t x) const { return (x - st.tx_next_ack) % mod; }
 
   // Tx window
   const uint32_t                                           tx_window_size;
@@ -122,10 +124,7 @@ public:
   uint32_t get_buffer_state() override;
 
   // Status PDU handler for TX entity
-  void handle_status_pdu(rlc_am_status_pdu status_pdu) override
-  {
-    // TODO
-  }
+  void handle_status_pdu(rlc_am_status_pdu status) override;
 
   /// \brief Determines whether the polling bit in a PDU header has to be set or not
   /// Ref: TS 38.322, Sec. 5.3.3.2
@@ -137,6 +136,22 @@ public:
 
   // Timers
   void timer_expired(uint32_t timeout_id);
+
+  // Window helpers
+
+  /// \brief Checks if a sequence number is inside the Tx window
+  /// \param sn Sequence Number to check
+  /// \return true if sn is inside the Tx window, false otherwise
+  bool inside_tx_window(uint32_t sn) const;
+
+  /// \brief This function is used to check if a received status report as a valid ACK_SN.
+  ///
+  /// ACK_SN may be equal to TX_NEXT + AM_Window_Size if the PDU with SN=TX_NEXT+AM_Window_Size has been received by the
+  /// RX An ACK_SN == Tx_Next_Ack doesn't ACK or NACKs any PDUs, as such, such a status report can be discarded.
+  ///
+  /// \param sn Sequence Number to check
+  /// \return true if sn is valid, false otherwise
+  bool valid_ack_sn(uint32_t sn) const;
 
 private:
   /// \brief Builds a new RLC PDU.
@@ -177,6 +192,27 @@ private:
   {
     return retx.so == 0 ? head_min_size : head_max_size;
   }
+
+  /// \brief Schedules ReTx for NACK'ed PDUs
+  ///
+  /// NACKs will be dropped if the SN falls out of the tx window or if the NACK'ed
+  /// PDU or PDU segment is already queued for ReTx.
+  /// Invalid or out of bounds segment offsets are adjusted to SDU boundaries
+  ///
+  /// Note: This function must not be called with NACKs that have a nack range.
+  /// Instead, nacks with nack range must be decomposed into individual NACKs.
+  ///
+  /// \param nack The NACK to be processed. The NACK must not have a nack range.
+  /// \return true if NACK was handled and queued successfully, false if NACK has been ignored
+  bool handle_nack(rlc_am_status_nack nack);
+
+  /// \brief Helper to check if a SN has reached the max reTx threshold
+  ///
+  /// Caller _must_ hold the mutex when calling the function.
+  /// If the retx has been reached for a SN the upper layers (i.e. RRC/PDCP) will be informed.
+  /// The SN is _not_ removed from the Tx window, so retransmissions of that SN can still occur.
+  /// \param sn The SN of the PDU to check
+  void check_sn_reached_max_retx(uint32_t sn);
 
   /// Called when buffer state needs to be updated and forwarded to lower layers.
   void handle_buffer_state_update();

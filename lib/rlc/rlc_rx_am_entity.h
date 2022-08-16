@@ -48,9 +48,10 @@ public:
     if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
       rlc_am_status_pdu status_pdu(cfg.sn_field_length);
       if (status_pdu.unpack(buf.view())) {
+        logger.log_debug(buf.begin(), buf.end(), "Successfully unpacked control PDU ({} B)", buf.length());
         status_handler->handle_status_pdu(std::move(status_pdu));
       } else {
-        logger.log_error("Failed to unpack control PDU ({} B)", buf.length());
+        logger.log_error(buf.begin(), buf.end(), "Failed to unpack control PDU ({} B)", buf.length());
       }
     } else {
       // TODO: handle data PDU

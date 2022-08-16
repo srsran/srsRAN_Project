@@ -11,6 +11,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/rlc/rlc_config.h"
+#include "srsgnb/support/format_utils.h"
 
 namespace srsgnb {
 
@@ -247,6 +248,59 @@ struct formatter<srsgnb::rlc_am_pdu_header> {
   {
     return format_to(
         ctx.out(), "[{}, P={}, SI={}, SN_SIZE={}, SN={}, SO={}]", hdr.dc, hdr.p, hdr.si, hdr.sn_size, hdr.sn, hdr.so);
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_am_status_nack> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_am_status_nack& nack, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    if (nack.has_nack_range) {
+      if (nack.has_so) {
+        return format_to(ctx.out(), "[{} {}:{} r{}]", nack.nack_sn, nack.so_start, nack.so_end, nack.nack_range);
+      } else {
+        return format_to(ctx.out(), "[{} r{}]", nack.nack_sn, nack.nack_range);
+      }
+    } else {
+      if (nack.has_so) {
+        return format_to(ctx.out(), "[{} {}:{}]", nack.nack_sn, nack.so_start, nack.so_end);
+      } else {
+        return format_to(ctx.out(), "[{}]", nack.nack_sn);
+      }
+    }
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_am_status_pdu> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(const srsgnb::rlc_am_status_pdu& status, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    memory_buffer buffer;
+    format_to(buffer, "ACK_SN={}, N_nack={}", status.ack_sn, status.nacks.size());
+    if (status.nacks.size() > 0) {
+      format_to(buffer, ", NACK_SN=");
+      for (auto nack : status.nacks) {
+        format_to(buffer, "[{}]", nack);
+      }
+    }
+
+    return format_to(ctx.out(), "{}", srsgnb::to_c_str(buffer));
   }
 };
 } // namespace fmt

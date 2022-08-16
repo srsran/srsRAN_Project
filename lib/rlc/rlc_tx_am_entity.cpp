@@ -9,6 +9,7 @@
  */
 
 #include "rlc_tx_am_entity.h"
+#include "srsgnb/support/srsgnb_assert.h"
 
 using namespace srsgnb;
 
@@ -436,6 +437,189 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   return pdu_buf;
 }
 
+void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
+{
+  std::lock_guard<std::mutex> lock(mutex);
+  logger.log_info("Processing status PDU: {}", status);
+
+  /*
+   * Sanity check the received status report.
+   * Checking if the ACK_SN is inside the valid ACK_SN window (the TX window "off-by-one")
+   * makes sure we discard out of order status reports.
+   * Checking if ACK_SN > Tx_Next + 1 makes sure we do not receive a ACK/NACK for something we did not TX
+   * ACK_SN may be equal to TX_NEXT + 1, if not all SDU segments with SN=TX_NEXT have been transmitted.
+   */
+  if (not valid_ack_sn(status.ack_sn)) {
+    logger.log_info(
+        "Received ACK with SN outside of TX_WINDOW, ignoring status report. ACK_SN={}, st=[{}]", status.ack_sn, st);
+    return;
+  }
+
+  if (tx_mod_base(status.ack_sn) > tx_mod_base(st.tx_next + 1)) {
+    logger.log_warning(
+        "Received ACK with SN larger than TX_NEXT, ignoring status report. ACK_SN={}, st=[{}]", status.ack_sn, st);
+    return;
+  }
+
+  /**
+   * Section 5.3.3.3: Reception of a STATUS report
+   * - if the STATUS report comprises a positive or negative acknowledgement for the RLC SDU with sequence
+   *   number equal to POLL_SN:
+   *   - if t-PollRetransmit is running:
+   *     - stop and reset t-PollRetransmit.
+   */
+  if (tx_mod_base(st.poll_sn) < tx_mod_base(status.ack_sn)) {
+    if (poll_retransmit_timer.is_running()) {
+      logger.log_debug("Received ACK or NACK for POLL_SN={}. Stopping t-PollRetransmit", st.poll_sn);
+      poll_retransmit_timer.stop();
+    } else {
+      logger.log_debug("Received ACK or NACK for POLL_SN={}. t-PollRetransmit already stopped", st.poll_sn);
+    }
+  } else {
+    logger.log_debug("POLL_SN={} > ACK_SN={}. Not stopping t-PollRetransmit ", st.poll_sn, status.ack_sn);
+  }
+
+  /*
+   * - if the SN of the corresponding RLC SDU falls within the range
+   *   TX_Next_Ack <= SN < = the highest SN of the AMD PDU among the AMD PDUs submitted to lower layer:
+   *   - consider the RLC SDU or the RLC SDU segment for which a negative acknowledgement was received for
+   *     retransmission.
+   */
+  // Process ACKs
+  uint32_t stop_sn = status.nacks.size() == 0
+                         ? status.ack_sn
+                         : status.nacks[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
+  for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
+    if (tx_window->has_sn(sn)) {
+      upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_sn); // notify upper layer
+      retx_queue.remove_sn(sn);                            // remove any pending retx for that SN
+      tx_window->remove_pdu(sn);
+      st.tx_next_ack = (sn + 1) % mod;
+    } else {
+      logger.log_error("Missing ACKed SN from TX window");
+      break;
+    }
+  }
+  logger.log_debug("Processed status report ACKs. ACK_SN={}. Tx_Next_Ack={}", status.ack_sn, st.tx_next_ack);
+
+  // Process NACKs
+  std::set<uint32_t> retx_sn_set; // Set of PDU SNs added for retransmission (no duplicates)
+  for (uint32_t nack_idx = 0; nack_idx < status.nacks.size(); nack_idx++) {
+    if (status.nacks[nack_idx].has_nack_range) {
+      for (uint32_t range_sn = status.nacks[nack_idx].nack_sn;
+           range_sn < status.nacks[nack_idx].nack_sn + status.nacks[nack_idx].nack_range;
+           range_sn++) {
+        rlc_am_status_nack nack = {};
+        nack.nack_sn            = range_sn;
+        if (status.nacks[nack_idx].has_so) {
+          // Apply so_start to first range item
+          if (range_sn == status.nacks[nack_idx].nack_sn) {
+            nack.so_start = status.nacks[nack_idx].so_start;
+          }
+          // Apply so_end to last range item
+          if (range_sn == (status.nacks[nack_idx].nack_sn + status.nacks[nack_idx].nack_range - 1)) {
+            nack.so_end = status.nacks[nack_idx].so_end;
+          }
+          // Enable has_so only if the offsets do not span the whole SDU
+          nack.has_so = (nack.so_start != 0) || (nack.so_end != rlc_am_status_nack::so_end_of_sdu);
+        }
+        if (handle_nack(nack)) {
+          retx_sn_set.insert(nack.nack_sn);
+        }
+      }
+    } else {
+      if (handle_nack(status.nacks[nack_idx])) {
+        retx_sn_set.insert(status.nacks[nack_idx].nack_sn);
+      }
+    }
+  }
+
+  // Process retx_count and inform upper layers if needed
+  for (uint32_t retx_sn : retx_sn_set) {
+    auto& pdu = (*tx_window)[retx_sn];
+    // Increment retx_count
+    if (pdu.retx_count == RETX_COUNT_NOT_STARTED) {
+      // Set retx_count = 0 on first RE-transmission of associated SDU (38.322 Sec. 5.3.2)
+      pdu.retx_count = 0;
+    } else {
+      // Increment otherwise
+      pdu.retx_count++;
+    }
+
+    // Inform upper layers if needed
+    check_sn_reached_max_retx(retx_sn);
+  }
+}
+
+bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
+{
+  if (nack.has_nack_range) {
+    logger.log_error("handle_nack must not be called with nacks that have a nack range. Ignoring NACK=[{}]", nack);
+    return false;
+  }
+
+  logger.log_debug("Handling NACK=[{}]", nack);
+
+  // Check if NACK applies to a SN within tx window
+  if (!(tx_mod_base(st.tx_next_ack) <= tx_mod_base(nack.nack_sn) &&
+        tx_mod_base(nack.nack_sn) <= tx_mod_base(st.tx_next))) {
+    logger.log_info("NACK SN not in expected range. Tx_Next_Ack={}, Tx_Next={}, NACK=[{}]",
+                    nack.nack_sn,
+                    st.tx_next_ack,
+                    st.tx_next);
+    return false;
+  }
+
+  uint32_t sdu_length = (*tx_window)[nack.nack_sn].sdu.length();
+
+  // Check NACK segment offsets and lengths
+  if (nack.has_so) {
+    // Replace "end"-mark with actual SDU length
+    if (nack.so_end == rlc_am_status_nack::so_end_of_sdu) {
+      nack.so_end = sdu_length - 1;
+    }
+    // Sanity checks
+    if (nack.so_start > nack.so_end) {
+      logger.log_warning("NACK so_start > so_end. sdu_length={}, NACK=[{}]", sdu_length, nack);
+      nack.so_start = 0;
+    }
+    if (nack.so_start >= sdu_length) {
+      logger.log_warning("NACK so_start out of bounds. sdu_length={}, NACK=[{}]", sdu_length, nack);
+      nack.so_start = 0;
+    }
+    if (nack.so_end >= sdu_length) {
+      logger.log_warning("NACK so_end out of bounds. sdu_length={}, NACK=[{}]", sdu_length, nack);
+      nack.so_end = 0;
+    }
+  }
+
+  // Enqueue ReTx
+  if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
+    rlc_tx_amd_retx& retx = retx_queue.push();
+    retx.so               = nack.so_start;
+    retx.sn               = st.tx_next_ack;
+    retx.length           = nack.so_end - nack.so_start + 1;
+    logger.log_debug("Scheduled ReTx=[{}]. NACK=[{}]", retx, nack);
+  } else {
+    logger.log_info("NACK'ed PDU or PDU segment is already queued for ReTx. NACK=[{}]", nack);
+    return false;
+  }
+
+  return true;
+}
+
+void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
+{
+  if ((*tx_window)[sn].retx_count == cfg.max_retx_thresh) {
+    logger.log_warning("Signaling max number of reTx={} for SN={}", (*tx_window)[sn].retx_count, sn);
+    upper_cn.on_max_retx();
+    // TODO: notify upper layer data plane of SDU failure
+    // upper_dn.on_failed_sdu((*tx_window)[sn].pdcp_sn);
+
+    metrics_add_lost_sdus(1);
+  }
+}
+
 // TS 38.322 v16.2.0 Sec 5.5
 uint32_t rlc_tx_am_entity::get_buffer_state()
 {
@@ -616,4 +800,16 @@ std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::creat
       srsgnb_assertion_failure("Cannot create tx_window: unsupported SN field length");
   }
   return tx_window;
+}
+
+bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const
+{
+  // TX_Next_Ack <= SN < TX_Next_Ack + AM_Window_Size
+  return tx_mod_base(sn) < tx_window_size;
+}
+
+bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const
+{
+  // Tx_Next_Ack < SN <= TX_Next + AM_Window_Size
+  return (0 < tx_mod_base(sn)) && (tx_mod_base(sn) <= tx_window_size);
 }
