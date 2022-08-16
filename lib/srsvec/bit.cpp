@@ -12,7 +12,7 @@
 #include "srsgnb/support/math_utils.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
-#if HAVE_SSE
+#ifdef HAVE_SSE
 #include <immintrin.h>
 #endif // HAVE_SSE
 

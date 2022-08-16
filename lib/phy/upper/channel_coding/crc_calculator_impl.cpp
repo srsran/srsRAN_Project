@@ -10,6 +10,7 @@
 
 #include "crc_calculator_impl.h"
 #include "srsgnb/srsvec/bit.h"
+#include "srsgnb/support/math_utils.h"
 
 #if HAVE_SSE
 #include <immintrin.h>
@@ -108,34 +109,33 @@ crc_calculator_checksum_t crc_calculator_impl::calculate_bit(srsgnb::span<const 
 
   int a = 0;
 
-  // Pack bits into bytes
+  // Pack bits into bytes.
   unsigned nbytes = input.size() / 8;
   unsigned res8   = input.size() % 8;
   if (res8 > 0) {
     a = 1;
   }
 
-  // Calculate CRC
-  for (unsigned i = 0; i < nbytes + a; i++) {
-    uint8_t byte = 0x00;
-    if (i == nbytes) {
-      for (unsigned k = 0; k < res8; k++) {
-        byte |= (uint8_t)((input[i * 8 + k]) << (7U - k));
-      }
-    } else {
-      span<const uint8_t> pter = input.subspan(8U * i, 8);
+  // Calculate CRC.
+  for (unsigned i = 0; i < nbytes; i++) {
+    // Get pack a byte from 8 bits.
+    span<const uint8_t> pter = input.subspan(8U * i, 8);
 #ifdef HAVE_SSE
-      // Get 8 Bit
-      __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter.data()), _mm_set1_pi8(0));
+    // Get 8 Bit
+    __m64 mask = _mm_cmpgt_pi8(*((__m64*)pter.data()), _mm_set1_pi8(0));
 
-      // Reverse
-      mask = _mm_shuffle_pi8(mask, _mm_set_pi8(0, 1, 2, 3, 4, 5, 6, 7));
-
-      // Get mask and write
-      byte = (uint8_t)_mm_movemask_pi8(mask);
+    // Get mask and reverse.
+    uint8_t byte = reverse_byte(static_cast<uint8_t>(_mm_movemask_pi8(mask)));
 #else  // HAVE_SSE
-      byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
+    uint8_t byte = (uint8_t)(srsvec::bit_pack(pter, 8) & 0xff);
 #endif // HAVE_SSE
+    put_byte(byte);
+  }
+
+  for (unsigned i = nbytes; i < nbytes + a; i++) {
+    uint8_t byte = 0x00;
+    for (unsigned k = 0; k < res8; k++) {
+      byte |= (uint8_t)((input[i * 8 + k]) << (7U - k));
     }
     put_byte(byte);
   }

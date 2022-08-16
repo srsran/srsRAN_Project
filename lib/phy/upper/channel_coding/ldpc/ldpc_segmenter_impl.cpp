@@ -186,10 +186,17 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
   unsigned input_idx = 0;
   unsigned cw_offset = 0;
   for (unsigned i_segment = 0; i_segment != nof_segments; ++i_segment) {
-    segment_data tmp_data(segment_length);
+    described_segments.emplace_back();
+    segment_data&       tmp_data        = described_segments[i_segment].first;
+    codeblock_metadata& tmp_description = described_segments[i_segment].second;
+
     // Number of filler bits in this segment.
     unsigned nof_filler_bits = segment_length - max_info_bits - nof_crc_bits;
 
+    // Prepare segment temporal buffer.
+    tmp_data.resize(segment_length);
+
+    // Fill the segment.
     fill_segment(tmp_data,
                  span<uint8_t>(buffer).subspan(input_idx, max_info_bits),
                  crc_set.crc24B,
@@ -197,15 +204,14 @@ void ldpc_segmenter_impl::segment(static_vector<described_segment, MAX_NOF_SEGME
                  nof_filler_bits);
     input_idx += max_info_bits;
 
-    codeblock_metadata tmp_description =
+    tmp_description =
         generate_cb_metadata({i_segment, cw_length, cw_offset, nof_filler_bits, nof_crc_bits, nof_tb_crc_bits}, cfg);
 
     cw_offset += tmp_description.cb_specific.rm_length;
-
-    described_segments.push_back({tmp_data, tmp_description});
   }
   // After accumulating all codeblock rate-matched lengths, cw_offset should be the same as cw_length.
-  assert(cw_length == cw_offset);
+  srsgnb_assert(
+      cw_length == cw_offset, "Codeblock offset ({}) must be equal to the codeword size ({}).", cw_offset, cw_length);
 }
 
 static void check_inputs_rx(span<const log_likelihood_ratio> codeword_llrs, const segmenter_config& cfg)
