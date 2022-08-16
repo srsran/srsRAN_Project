@@ -328,22 +328,18 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
     return {};
   }
 
-  rlc_tx_amd_retx& retx_queue_front = retx_queue.front();
-
   // Sanity check - drop any retx SNs not present in tx_window
-  while (not tx_window->has_sn(retx_queue_front.sn)) {
+  while (not tx_window->has_sn(retx_queue.front().sn)) {
     logger.log_info("SN={} not in tx window, probably already ACKed. Skip and remove from retx queue",
-                    retx_queue_front.sn);
+                    retx_queue.front().sn);
     retx_queue.pop();
-    if (!retx_queue.empty()) {
-      retx_queue_front = retx_queue.front();
-    } else {
+    if (retx_queue.empty()) {
       logger.log_info("empty retx queue, cannot provide any retx PDU");
       return {};
     }
   }
 
-  rlc_tx_amd_retx& retx = retx_queue_front; // local copy since we may delete or update front element later
+  const rlc_tx_amd_retx retx = retx_queue.front(); // local copy, since front may change below
   logger.log_debug("RETX: {}", retx);
 
   // Get tx_pdu info from tx_window
@@ -395,9 +391,11 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
     // remove ReTx from queue
     retx_queue.pop();
   } else {
-    // update SO and length of first element
-    retx_queue_front.so += retx_payload_len;
-    retx_queue_front.length -= retx_payload_len;
+    // update SO and length of front element
+    rlc_tx_amd_retx retx_remainder = retx_queue.front();
+    retx_remainder.so += retx_payload_len;
+    retx_remainder.length -= retx_payload_len;
+    retx_queue.replace_front(retx_remainder);
   }
 
   // Prepare header
@@ -595,11 +593,12 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 
   // Enqueue ReTx
   if (!retx_queue.has_sn(nack.nack_sn, nack.so_start, nack.so_end - nack.so_start + 1)) {
-    rlc_tx_amd_retx& retx = retx_queue.push();
-    retx.so               = nack.so_start;
-    retx.sn               = st.tx_next_ack;
-    retx.length           = nack.so_end - nack.so_start + 1;
-    logger.log_debug("Scheduled ReTx=[{}]. NACK=[{}]", retx, nack);
+    rlc_tx_amd_retx retx = {};
+    retx.so              = nack.so_start;
+    retx.sn              = st.tx_next_ack;
+    retx.length          = nack.so_end - nack.so_start + 1;
+    retx_queue.push(retx);
+    logger.log_debug("Scheduled ReTx=[{}]. NACK={}", retx, nack);
   } else {
     logger.log_info("NACK'ed PDU or PDU segment is already queued for ReTx. NACK=[{}]", nack);
     return false;
@@ -768,10 +767,11 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
       // ReTx first RLC SDU that has not been ACKed
       // or first SDU segment of the first RLC SDU
       // that has not been acked
-      rlc_tx_amd_retx& retx = retx_queue.push();
+      rlc_tx_amd_retx retx  = {};
       retx.so               = 0;
       retx.sn               = st.tx_next_ack;
       retx.length           = (*tx_window)[st.tx_next_ack].sdu.length();
+      retx_queue.push(retx);
       //
       // TODO: Revise this: shall we send a minimum-sized segment instead?
       //

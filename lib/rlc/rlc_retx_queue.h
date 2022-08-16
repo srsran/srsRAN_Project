@@ -11,6 +11,7 @@
 #pragma once
 
 #include "rlc_am_pdu.h"
+#include "srsgnb/support/srsgnb_assert.h"
 #include <cstdint>
 #include <list>
 
@@ -31,37 +32,93 @@ struct rlc_tx_amd_retx {
   }
 };
 
-template <class T>
-class pdu_retx_queue_list
+class rlc_retx_queue_state
 {
-  std::list<T> queue;
+  uint32_t retx_bytes        = 0; ///< Total amount of queued PDU payload bytes across all queued ReTx
+  uint32_t n_retx_so_zero    = 0; ///< Number of queued ReTx with zero segment offset, i.e. need small PDU header
+  uint32_t n_retx_so_nonzero = 0; ///< Number of queued ReTx with non-zero segment offset, i.e. need large PDU header
 
 public:
-  ~pdu_retx_queue_list() = default;
-  T& push()
+  uint32_t get_retx_bytes() const { return retx_bytes; }
+  uint32_t get_n_retx_so_zero() const { return n_retx_so_zero; }
+  uint32_t get_n_retx_so_nonzero() const { return n_retx_so_nonzero; }
+
+  void add(const rlc_tx_amd_retx& elem)
   {
-    queue.emplace_back();
-    return queue.back();
+    retx_bytes += elem.length;
+    if (elem.so == 0) {
+      n_retx_so_zero++;
+    } else {
+      n_retx_so_nonzero++;
+    }
+  }
+
+  void subtract(const rlc_tx_amd_retx& elem)
+  {
+    if (retx_bytes >= elem.length) {
+      retx_bytes -= elem.length;
+    } else {
+      retx_bytes = 0;
+    }
+    if (elem.so == 0) {
+      if (n_retx_so_zero > 0) {
+        n_retx_so_zero--;
+      }
+    } else {
+      if (n_retx_so_nonzero > 0) {
+        n_retx_so_nonzero--;
+      }
+    }
+  }
+};
+
+class rlc_retx_queue
+{
+  std::list<rlc_tx_amd_retx> queue;
+  rlc_retx_queue_state       st;
+
+public:
+  ~rlc_retx_queue() = default;
+
+  void push(const rlc_tx_amd_retx& elem)
+  {
+    st.add(elem);
+    queue.push_back(elem);
   }
 
   void pop()
   {
     if (not queue.empty()) {
+      st.subtract(queue.front());
       queue.pop_front();
     }
   }
 
-  T& front()
+  const rlc_tx_amd_retx& front() const
   {
-    assert(not queue.empty());
+    srsgnb_assert(not queue.empty(), "Cannot return front element of empty queue");
     return queue.front();
   }
 
-  const std::list<T>& get_inner_queue() const { return queue; }
+  void replace_front(const rlc_tx_amd_retx& elem)
+  {
+    srsgnb_assert(not queue.empty(), "Cannot replace front of empty queue");
+    st.subtract(queue.front());
+    st.add(elem);
+    queue.front() = elem;
+  }
 
-  void   clear() { queue.clear(); }
+  const std::list<rlc_tx_amd_retx>& get_inner_queue() const { return queue; }
+
+  void clear()
+  {
+    st = {};
+    queue.clear();
+  }
   size_t size() const { return queue.size(); }
   bool   empty() const { return queue.empty(); }
+
+  rlc_retx_queue_state state() const { return st; }
 
   /// Checks if the queue contains an element with a given SN.
   /// \param sn The sequence number to look up
@@ -111,6 +168,7 @@ public:
     auto iter = queue.begin();
     while (iter != queue.end()) {
       if (iter->sn == sn) {
+        st.subtract(*iter);
         iter = queue.erase(iter);
         return true;
       } else {

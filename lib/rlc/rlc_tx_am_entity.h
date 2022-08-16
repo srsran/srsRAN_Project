@@ -80,7 +80,7 @@ private:
   uint32_t      sn_under_segmentation = INVALID_RLC_SN; // SN of the SDU currently being segmented
 
   // ReTx buffers
-  pdu_retx_queue_list<rlc_tx_amd_retx> retx_queue;
+  rlc_retx_queue retx_queue;
 
   // Mutexes
   std::mutex mutex;
