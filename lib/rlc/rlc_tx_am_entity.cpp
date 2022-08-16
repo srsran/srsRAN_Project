@@ -773,10 +773,10 @@ void rlc_tx_am_entity::timer_expired(uint32_t timeout_id)
       // ReTx first RLC SDU that has not been ACKed
       // or first SDU segment of the first RLC SDU
       // that has not been acked
-      rlc_tx_amd_retx retx  = {};
-      retx.so               = 0;
-      retx.sn               = st.tx_next_ack;
-      retx.length           = (*tx_window)[st.tx_next_ack].sdu.length();
+      rlc_tx_amd_retx retx = {};
+      retx.so              = 0;
+      retx.sn              = st.tx_next_ack;
+      retx.length          = (*tx_window)[st.tx_next_ack].sdu.length();
       retx_queue.push(retx);
       //
       // TODO: Revise this: shall we send a minimum-sized segment instead?
