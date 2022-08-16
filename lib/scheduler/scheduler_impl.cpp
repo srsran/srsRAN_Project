@@ -50,20 +50,27 @@ void scheduler_impl::handle_rach_indication(const rach_indication_message& msg)
   cells[msg.cell_index].ra_sch.handle_rach_indication(msg);
 }
 
-void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc)
+void scheduler_impl::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  // TODO: Optimize.
-  ul_crc_indication ue_crcs{};
-  ue_crcs.cell_index = crc.cell_index;
-  for (const ul_crc_pdu_indication& crc_pdu : crc.crcs) {
-    if (crc_pdu.ue_index == INVALID_DU_UE_INDEX) {
-      // No UE found. The CRC is directed at a Msg3 HARQ.
-      cells[crc.cell_index].ra_sch.handle_crc_indication(crc_pdu);
-    } else {
-      ue_crcs.crcs.push_back(crc_pdu);
+  bool has_msg3_crcs = std::any_of(
+      crc_ind.crcs.begin(), crc_ind.crcs.end(), [](const auto& pdu) { return pdu.ue_index == INVALID_DU_UE_INDEX; });
+
+  if (has_msg3_crcs) {
+    ul_crc_indication msg3_crcs{}, ue_crcs{};
+    for (const ul_crc_pdu_indication& crc_pdu : crc_ind.crcs) {
+      if (crc_pdu.ue_index == INVALID_DU_UE_INDEX) {
+        msg3_crcs.crcs.push_back(crc_pdu);
+      } else {
+        ue_crcs.crcs.push_back(crc_pdu);
+      }
     }
+    // Forward CRC to Msg3 HARQs that has no ueId yet associated.
+    cells[crc_ind.cell_index].ra_sch.handle_crc_indication(msg3_crcs);
+    // Forward remaining CRCs to UE scheduler.
+    feedback_handler.handle_crc_indication(ue_crcs);
+  } else {
+    feedback_handler.handle_crc_indication(crc_ind);
   }
-  feedback_handler.handle_crc_indication(ue_crcs);
 }
 
 const sched_result* scheduler_impl::slot_indication(slot_point sl_tx, du_cell_index_t cell_index)

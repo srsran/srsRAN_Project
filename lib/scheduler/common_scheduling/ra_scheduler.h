@@ -45,7 +45,7 @@ public:
   void handle_rach_indication(const rach_indication_message& msg);
 
   /// Handle UL CRC directed at Msg3 HARQ.
-  void handle_crc_indication(const ul_crc_pdu_indication& crc);
+  void handle_crc_indication(const ul_crc_indication& crc_ind);
 
   /// Allocate pending RARs + Msg3s
   void run_slot(cell_resource_allocator& res_alloc);
@@ -106,7 +106,7 @@ private:
 
   // variables
   slot_event_list<rach_indication_message> pending_rachs;
-  slot_event_list<ul_crc_pdu_indication>   pending_crcs;
+  slot_event_list<ul_crc_indication>       pending_crcs;
   std::deque<pending_rar_t>                pending_rars;
   std::vector<pending_msg3>                pending_msg3s;
 };

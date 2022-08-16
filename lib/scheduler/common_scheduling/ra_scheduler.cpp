@@ -134,36 +134,39 @@ void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& ms
   }
 }
 
-void ra_scheduler::handle_crc_indication(const ul_crc_pdu_indication& crc)
+void ra_scheduler::handle_crc_indication(const ul_crc_indication& crc_ind)
 {
-  pending_crcs.push(crc);
+  pending_crcs.push(crc_ind);
 }
 
 void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc)
 {
   // Pop pending CRCs and process them.
   pending_crcs.slot_indication();
-  span<const ul_crc_pdu_indication> new_crcs = pending_crcs.get_events();
-  for (const ul_crc_pdu_indication& crc : new_crcs) {
-    auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
-    if (pending_msg3.preamble.tc_rnti != crc.rnti) {
-      logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
-                     cfg.cell_index,
-                     crc.rnti,
-                     crc.harq_id);
-      continue;
+  span<const ul_crc_indication> new_crc_inds = pending_crcs.get_events();
+  for (const ul_crc_indication& crc_ind : new_crc_inds) {
+    for (const ul_crc_pdu_indication& crc : crc_ind.crcs) {
+      srsgnb_assert(crc.ue_index == INVALID_DU_UE_INDEX, "Msg3 HARQ CRCs cannot have a ueId assigned yet");
+      auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
+      if (pending_msg3.preamble.tc_rnti != crc.rnti) {
+        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
+                       cfg.cell_index,
+                       crc.rnti,
+                       crc.harq_id);
+        continue;
+      }
+      if (pending_msg3.harq.pid != crc.harq_id) {
+        logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
+                       cfg.cell_index,
+                       crc.rnti,
+                       crc.harq_id,
+                       crc.harq_id,
+                       pending_msg3.harq.pid);
+        continue;
+      }
+      // TODO: Fetch TB.
+      pending_msg3.harq.ack_info(0, crc.tb_crc_success);
     }
-    if (pending_msg3.harq.pid != crc.harq_id) {
-      logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: HARQ-Ids do not match ({} != {})",
-                     cfg.cell_index,
-                     crc.rnti,
-                     crc.harq_id,
-                     crc.harq_id,
-                     pending_msg3.harq.pid);
-      continue;
-    }
-    // TODO: Fetch TB.
-    pending_msg3.harq.ack_info(0, crc.tb_crc_success);
   }
 
   // Allocate pending Msg3 retransmissions.
