@@ -18,15 +18,15 @@ using namespace srsgnb;
 
 rlc_am_status_pdu::rlc_am_status_pdu(rlc_am_sn_size sn_size) : sn_size(sn_size), mod_nr(cardinality(to_number(sn_size)))
 {
-  nacks_.reserve(RLC_AM_NR_TYP_NACKS);
+  nacks.reserve(RLC_AM_NR_TYP_NACKS);
 }
 
 void rlc_am_status_pdu::reset()
 {
   cpt    = rlc_control_pdu_type::status_pdu;
   ack_sn = INVALID_RLC_SN;
-  nacks_.clear();
-  packed_size_ = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
+  nacks.clear();
+  packed_size = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
 }
 
 bool rlc_am_status_pdu::is_continuous_sequence(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const
@@ -51,22 +51,22 @@ bool rlc_am_status_pdu::is_continuous_sequence(const rlc_am_status_nack& left, c
 
 void rlc_am_status_pdu::push_nack(const rlc_am_status_nack& nack)
 {
-  if (nacks_.size() == 0) {
-    nacks_.push_back(nack);
-    packed_size_ += nack_size(nack);
+  if (nacks.size() == 0) {
+    nacks.push_back(nack);
+    packed_size += nack_size(nack);
     return;
   }
 
-  rlc_am_status_nack& prev = nacks_.back();
+  rlc_am_status_nack& prev = nacks.back();
   if (is_continuous_sequence(prev, nack) == false) {
-    nacks_.push_back(nack);
-    packed_size_ += nack_size(nack);
+    nacks.push_back(nack);
+    packed_size += nack_size(nack);
     return;
   }
 
   // expand previous NACK
   // subtract size of previous NACK (add updated size later)
-  packed_size_ -= nack_size(prev);
+  packed_size -= nack_size(prev);
 
   // enable and update NACK range
   if (nack.has_nack_range == true) {
@@ -107,12 +107,12 @@ void rlc_am_status_pdu::push_nack(const rlc_am_status_nack& nack)
   }
 
   // add updated size
-  packed_size_ += nack_size(prev);
+  packed_size += nack_size(prev);
 }
 
 bool rlc_am_status_pdu::trim(uint32_t max_packed_size)
 {
-  if (max_packed_size >= packed_size_) {
+  if (max_packed_size >= packed_size) {
     // no trimming required
     return true;
   }
@@ -126,19 +126,19 @@ bool rlc_am_status_pdu::trim(uint32_t max_packed_size)
   // see TS 38.322 Sec. 5.3.4:
   //   "set the ACK_SN to the SN of the next not received RLC SDU
   //   which is not indicated as missing in the resulting STATUS PDU."
-  while (nacks_.size() > 0 && (max_packed_size < packed_size_ || nacks_.back().nack_sn == ack_sn)) {
-    packed_size_ -= nack_size(nacks_.back());
-    ack_sn = nacks_.back().nack_sn;
-    nacks_.pop_back();
+  while (nacks.size() > 0 && (max_packed_size < packed_size || nacks.back().nack_sn == ack_sn)) {
+    packed_size -= nack_size(nacks.back());
+    ack_sn = nacks.back().nack_sn;
+    nacks.pop_back();
   }
   return true;
 }
 
 void rlc_am_status_pdu::refresh_packed_size()
 {
-  packed_size_ = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
-  for (auto nack : nacks_) {
-    packed_size_ += nack_size(nack);
+  packed_size = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
+  for (auto nack : nacks) {
+    packed_size += nack_size(nack);
   }
 }
 

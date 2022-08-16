@@ -486,9 +486,9 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
    *     retransmission.
    */
   // Process ACKs
-  uint32_t stop_sn = status.nacks.size() == 0
+  uint32_t stop_sn = status.get_nacks().size() == 0
                          ? status.ack_sn
-                         : status.nacks[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
+                         : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
       upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_sn); // notify upper layer
@@ -504,21 +504,21 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 
   // Process NACKs
   std::set<uint32_t> retx_sn_set; // Set of PDU SNs added for retransmission (no duplicates)
-  for (uint32_t nack_idx = 0; nack_idx < status.nacks.size(); nack_idx++) {
-    if (status.nacks[nack_idx].has_nack_range) {
-      for (uint32_t range_sn = status.nacks[nack_idx].nack_sn;
-           range_sn < status.nacks[nack_idx].nack_sn + status.nacks[nack_idx].nack_range;
+  for (uint32_t nack_idx = 0; nack_idx < status.get_nacks().size(); nack_idx++) {
+    if (status.get_nacks()[nack_idx].has_nack_range) {
+      for (uint32_t range_sn = status.get_nacks()[nack_idx].nack_sn;
+           range_sn < status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range;
            range_sn++) {
         rlc_am_status_nack nack = {};
         nack.nack_sn            = range_sn;
-        if (status.nacks[nack_idx].has_so) {
+        if (status.get_nacks()[nack_idx].has_so) {
           // Apply so_start to first range item
-          if (range_sn == status.nacks[nack_idx].nack_sn) {
-            nack.so_start = status.nacks[nack_idx].so_start;
+          if (range_sn == status.get_nacks()[nack_idx].nack_sn) {
+            nack.so_start = status.get_nacks()[nack_idx].so_start;
           }
           // Apply so_end to last range item
-          if (range_sn == (status.nacks[nack_idx].nack_sn + status.nacks[nack_idx].nack_range - 1)) {
-            nack.so_end = status.nacks[nack_idx].so_end;
+          if (range_sn == (status.get_nacks()[nack_idx].nack_sn + status.get_nacks()[nack_idx].nack_range - 1)) {
+            nack.so_end = status.get_nacks()[nack_idx].so_end;
           }
           // Enable has_so only if the offsets do not span the whole SDU
           nack.has_so = (nack.so_start != 0) || (nack.so_end != rlc_am_status_nack::so_end_of_sdu);
@@ -528,8 +528,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
         }
       }
     } else {
-      if (handle_nack(status.nacks[nack_idx])) {
-        retx_sn_set.insert(status.nacks[nack_idx].nack_sn);
+      if (handle_nack(status.get_nacks()[nack_idx])) {
+        retx_sn_set.insert(status.get_nacks()[nack_idx].nack_sn);
       }
     }
   }

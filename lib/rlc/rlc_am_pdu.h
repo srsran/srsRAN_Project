@@ -104,9 +104,9 @@ private:
   /// Stored modulus to determine continuous sequences across SN overflows
   uint32_t mod_nr = cardinality(to_number(rlc_am_sn_size::size12bits));
   /// Internal NACK container; keep in sync with packed_size_
-  std::vector<rlc_am_status_nack> nacks_ = {};
+  std::vector<rlc_am_status_nack> nacks = {};
   /// Stores the current packed size; sync on each change of nacks_
-  uint32_t packed_size_ = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
+  uint32_t packed_size = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
 
   void     refresh_packed_size();
   uint32_t nack_size(const rlc_am_status_nack& nack) const;
@@ -120,16 +120,12 @@ public:
   rlc_control_pdu_type cpt = rlc_control_pdu_type::status_pdu;
   /// SN of the next not received RLC Data PDU
   uint32_t ack_sn = INVALID_RLC_SN;
-  /// Read-only reference to NACKs
-  const std::vector<rlc_am_status_nack>& nacks = nacks_;
-  /// Read-only reference to packed size
-  const uint32_t& packed_size = packed_size_;
 
   rlc_am_status_pdu(rlc_am_sn_size sn_size);
   void reset();
   bool is_continuous_sequence(const rlc_am_status_nack& left, const rlc_am_status_nack& right) const;
   void push_nack(const rlc_am_status_nack& nack);
-  const std::vector<rlc_am_status_nack>& get_nacks() const { return nacks_; }
+  const std::vector<rlc_am_status_nack>& get_nacks() const { return nacks; }
   uint32_t                               get_packed_size() const { return packed_size; }
   bool                                   trim(uint32_t max_packed_size);
 
@@ -292,10 +288,10 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
       -> decltype(std::declval<FormatContext>().out())
   {
     memory_buffer buffer;
-    format_to(buffer, "ACK_SN={}, N_nack={}", status.ack_sn, status.nacks.size());
-    if (status.nacks.size() > 0) {
+    format_to(buffer, "ACK_SN={}, N_nack={}", status.ack_sn, status.get_nacks().size());
+    if (status.get_nacks().size() > 0) {
       format_to(buffer, ", NACK_SN=");
-      for (auto nack : status.nacks) {
+      for (auto nack : status.get_nacks()) {
         format_to(buffer, "[{}]", nack);
       }
     }
