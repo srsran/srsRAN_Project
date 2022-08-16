@@ -356,7 +356,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Get expected header and payload len
   uint32_t expected_hdr_len = get_retx_expected_hdr_len(retx);
   uint32_t retx_payload_len = std::min(retx.length, nof_bytes - expected_hdr_len);
-  bool     pdu_complete     = retx.so + retx_payload_len == tx_pdu.sdu.length();
+  bool     pdu_complete     = retx_payload_len == retx.length;
 
   // Configure SI
   rlc_si_field si = rlc_si_field::full_sdu;
