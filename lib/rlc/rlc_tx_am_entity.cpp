@@ -653,10 +653,11 @@ uint32_t rlc_tx_am_entity::get_buffer_state_nolock()
       logger.log_info("Buffer state: ignore SN under segmentation: SN={} not in tx_window", sn_under_segmentation);
     }
   }
-  // TODO: SDU under segmentation
 
-  // TODO: retx bytes
-  uint32_t retx_bytes = 0;
+  // minimum bytes needed to tx all queued ReTx + each header; ReTx can also be segments
+  rlc_retx_queue_state retx_state = retx_queue.state();
+  uint32_t             retx_bytes = retx_state.get_retx_bytes() + retx_state.get_n_retx_so_zero() * head_min_size +
+                        retx_state.get_n_retx_so_nonzero() * head_max_size;
 
   // TODO: status report size
   uint32_t status_bytes = 0;
