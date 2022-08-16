@@ -9,7 +9,6 @@
  */
 
 #include "resource_grid_impl.h"
-#include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/srsvec/zero.h"
 #include "srsgnb/support/error_handling.h"
@@ -57,39 +56,16 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
                                          span<const bool> mask,
                                          span<const cf_t> symbol_buffer)
 {
-  srsgnb_assert(l < nof_symb, "Symbol index {} exceeds the number of symbols (max {}).", l, nof_symb);
-  srsgnb_assert(mask.size() <= nof_subc,
-                "The subcarrier mask size {} exceeds the number of subcarriers (max {}).",
-                mask.size(),
-                nof_subc);
+  assert(l < nof_symb);
+  assert(mask.size() <= nof_subc);
+
   // Select buffer from the port index
-  srsgnb_assert(port < nof_ports, "The port index {} exceeds the number of ports (max {}).", port, nof_ports);
+  assert(port < nof_ports);
   span<cf_t> buffer = port_buffers[port];
 
   // Select destination symbol in buffer
   span<cf_t> symb = buffer.subspan(l * nof_subc, nof_subc);
 
-#if 1
-  // Detect burst of true values. Efficient for "large" burst of contiguous transmissions.
-  unsigned offset = 0;
-  while (offset != mask.size()) {
-    const bool* first_subc = srsvec::find(mask.subspan(offset, mask.size() - offset), true);
-    offset                 = static_cast<unsigned>(first_subc - mask.begin());
-
-    const bool* last_subc = srsvec::find(mask.subspan(offset, mask.size() - offset), false);
-    unsigned    count     = static_cast<unsigned>(last_subc - first_subc);
-
-    if (count != 0) {
-      put(port, l, k_init + offset, symbol_buffer.first(count));
-      srsvec::copy(symb.subspan(k_init + offset, count), symbol_buffer.first(count));
-
-      symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
-    }
-
-    // Advance offset.
-    offset += count;
-  }
-#else
   // Iterate mask
   unsigned count = 0;
   for (unsigned k = 0; k != mask.size(); ++k) {
@@ -101,10 +77,7 @@ span<const cf_t> resource_grid_impl::put(unsigned         port,
   empty[port] = false;
 
   // Update symbol buffer
-  symbol_buffer = symbol_buffer.last(symbol_buffer.size() - count);
-#endif
-
-  return symbol_buffer;
+  return symbol_buffer.last(symbol_buffer.size() - count);
 }
 void resource_grid_impl::put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols)
 {
