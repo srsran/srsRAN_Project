@@ -39,6 +39,29 @@ demodulate_soft_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, 
   });
 }
 
+static void
+demodulate_soft_PI_2_BPSK(span<log_likelihood_ratio> llrs, span<const cf_t> symbols, span<const float> noise_vars)
+{
+  // Maximum (absolute) value considered for quantization. Larger values will be clipped.
+  constexpr float RANGE_LIMIT_FLOAT = 600;
+
+  // Even-indexed symbols.
+  auto*       out = llrs.begin();
+  const auto* in  = symbols.begin();
+  const auto* n   = noise_vars.begin();
+  for (; out < llrs.end(); out += 2, in += 2, n += 2) {
+    *out = demod_BPSK_symbol(*in, *n, RANGE_LIMIT_FLOAT);
+  }
+
+  // Odd-indexed symbols.
+  out = llrs.begin() + 1;
+  in  = symbols.begin() + 1;
+  n   = noise_vars.begin() + 1;
+  for (; out < llrs.end(); out += 2, in += 2, n += 2) {
+    *out = demod_BPSK_symbol(cf_t(std::imag(*in), -std::real(*in)), *n, RANGE_LIMIT_FLOAT);
+  }
+}
+
 static log_likelihood_ratio demod_QPSK_symbol(float x, float noise_var, float range_limit)
 {
   float l_value = 2.0F * M_SQRT2f32 * x / noise_var;
@@ -352,6 +375,9 @@ void demodulation_mapper_impl::demodulate_soft(span<log_likelihood_ratio> llrs,
   switch (mod) {
     case modulation_scheme::BPSK:
       demodulate_soft_BPSK(llrs, symbols, noise_vars);
+      break;
+    case modulation_scheme::PI_2_BPSK:
+      demodulate_soft_PI_2_BPSK(llrs, symbols, noise_vars);
       break;
     case modulation_scheme::QPSK:
       demodulate_soft_QPSK(llrs, symbols, noise_vars);
