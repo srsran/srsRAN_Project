@@ -8,7 +8,7 @@
  *
  */
 
-#include "du_config_generator.h"
+#include "ssb_coreset0_freq_pos_generator.h"
 #include "../../scheduler/support/pdcch/pdcch_type0_css_occasions.h"
 #include "srsgnb/ran/band_helper.h"
 #include "srsgnb/ran/bs_channel_bandwidth.h"

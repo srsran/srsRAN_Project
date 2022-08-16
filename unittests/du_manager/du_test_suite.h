@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "../../lib/du_manager/converters/du_config_generator.h"
+#include "../../lib/du_manager/converters/ssb_coreset0_freq_pos_generator.h"
 
 namespace srsgnb {
 
