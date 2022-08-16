@@ -423,7 +423,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  tx_pdu.sdu.make_slice(hdr.so, retx_payload_len);
+  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, retx_payload_len));
   logger.log_debug("Created RLC ReTx PDU{} ({}) - {} bytes",
                    hdr.si == rlc_si_field::full_sdu ? "" : " segment",
                    si,
