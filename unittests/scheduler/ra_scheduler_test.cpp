@@ -100,8 +100,7 @@ private:
 void test_rar_consistency(const cell_configuration& cfg, span<const rar_information> rars)
 {
   prb_bitmap                 total_ul_prbs(cfg.nof_ul_prbs);
-  prb_bitmap                 total_dl_prbs(cfg.nof_dl_prbs);
-  std::set<rnti_t>           temp_crntis, ra_rntis;
+  std::set<rnti_t>           temp_crntis;
   const pdsch_config_common& pdsch_cfg     = cfg.dl_cfg_common.init_dl_bwp.pdsch_common;
   const pusch_config_common& pusch_cfg     = *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common;
   crb_interval               coreset0_lims = get_coreset0_crbs(cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
@@ -109,12 +108,6 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
   bwp_cfg.crbs                             = coreset0_lims;
 
   for (const rar_information& rar : rars) {
-    rnti_t ra_rnti = rar.pdcch_cfg->ctx.rnti;
-    TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
-
-    TESTASSERT(ra_rntis.count(ra_rnti) == 0, "Repeated RA-RNTI detected.");
-    ra_rntis.insert(ra_rnti);
-
     // Test DCI content.
     TESTASSERT_EQ(dci_dl_rnti_config_type::ra_f1_0, rar.pdcch_cfg->dci.type);
     const dci_1_0_ra_rnti_configuration& f1_0 = rar.pdcch_cfg->dci.ra_f1_0;
@@ -123,10 +116,6 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
     prb_interval                     prbs     = {ra_s_l.start_vrb, ra_s_l.start_vrb + ra_s_l.length_vrb};
     crb_interval                     rar_crbs = prb_to_crb(bwp_cfg, prbs);
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
-
-    // Verify no collisions in PDSCH.
-    TESTASSERT(not total_dl_prbs.any(rar_crbs.start(), rar_crbs.stop()), "Collision between RAR RBs detected.");
-    total_dl_prbs.fill(rar_crbs.start(), rar_crbs.stop());
 
     for (const rar_ul_grant& msg3 : rar.grants) {
       ra_s_l                 = ra_frequency_type1_from_riv(cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(),
