@@ -60,9 +60,31 @@ public:
   /// Handles detected PRACHs by allocating a temporary C-RNTI and signalling the scheduler to allocate an RAR.
   void handle_rach_indication(const mac_rach_indication& rach_ind) override
   {
-    rnti_t alloc_temp_crnti = rnti_alloc.allocate();
-    if (alloc_temp_crnti != INITIAL_RNTI) {
-      notify_sched(rach_ind, alloc_temp_crnti);
+    rach_indication_message sched_rach{};
+    sched_rach.cell_index = cell_index;
+    sched_rach.slot_rx    = rach_ind.slot_rx;
+    for (const auto& occasion : rach_ind.occasions) {
+      sched_rach.occasions.emplace_back();
+      auto& sched_occasion           = sched_rach.occasions.back();
+      sched_occasion.start_symbol    = occasion.start_symbol;
+      sched_occasion.frequency_index = occasion.frequency_index;
+      for (const auto& preamble : occasion.preambles) {
+        rnti_t alloc_tc_rnti = rnti_alloc.allocate();
+        if (alloc_tc_rnti == INITIAL_RNTI) {
+          logger.warning(
+              "Ignoring PRACH, cell={} preamble id={}. Cause: Failed to allocate TC-RNTI.", cell_index, preamble.index);
+          continue;
+        }
+        sched_occasion.preambles.emplace_back();
+        auto& sched_preamble        = sched_occasion.preambles.back();
+        sched_preamble.preamble_id  = preamble.index;
+        sched_preamble.tc_rnti      = alloc_tc_rnti;
+        sched_preamble.time_advance = preamble.time_advance;
+      }
+      if (sched_occasion.preambles.empty()) {
+        // No preamble was added. Remove occasion.
+        sched_rach.occasions.pop_back();
+      }
     }
   }
 
@@ -71,22 +93,7 @@ private:
   static constexpr rnti_t INITIAL_RNTI = to_rnti(0x4601);
 
   /// Notify Scheduler of handled RACH indication.
-  void notify_sched(const mac_rach_indication& rach_ind, rnti_t rnti)
-  {
-    for (const auto& occasion : rach_ind.occasions) {
-      for (const auto& preamble : occasion.preambles) {
-        rach_indication_message sched_rach{};
-        sched_rach.cell_index      = cell_index;
-        sched_rach.slot_rx         = rach_ind.slot_rx;
-        sched_rach.symbol_index    = occasion.start_symbol;
-        sched_rach.frequency_index = occasion.frequency_index;
-        sched_rach.preamble_id     = preamble.index;
-        sched_rach.timing_advance  = preamble.time_advance;
-        sched_rach.crnti           = rnti;
-        sched.handle_rach_indication(sched_rach);
-      }
-    }
-  }
+  void notify_sched(const rach_indication_message& rach_ind) { sched.handle_rach_indication(rach_ind); }
 
   srslog::basic_logger&   logger;
   const du_cell_index_t   cell_index;

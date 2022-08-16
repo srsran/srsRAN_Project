@@ -27,7 +27,7 @@ unsigned get_msg3_delay(const pusch_time_domain_resource_allocation& pusch_td_re
 
 /// Get RA-RNTI based on PRACH parameters.
 /// \remark See 38.321, 5.1.3 - Random Access Preamble transmission
-uint16_t get_ra_rnti(const rach_indication_message& rach_ind, bool is_sul = false);
+uint16_t get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul = false);
 
 /// Scheduler for PRACH occasions, RAR PDSCHs and Msg3 PUSCH grants.
 class ra_scheduler
@@ -52,13 +52,14 @@ public:
 
 private:
   struct pending_rar_t {
-    rnti_t                               ra_rnti = INVALID_RNTI;
-    slot_point                           prach_slot_rx;
-    slot_interval                        rar_window;
-    static_vector<rnti_t, MAX_MSG3_LIST> tc_rntis;
+    rnti_t                                                    ra_rnti = INVALID_RNTI;
+    slot_point                                                prach_slot_rx;
+    slot_interval                                             rar_window;
+    static_vector<rnti_t, prach_constants::MAX_NUM_PREAMBLES> tc_rntis;
   };
   struct pending_msg3 {
-    rach_indication_message ind_msg{};
+    /// Detected PRACH Preamble associated to this Msg3.
+    rach_indication_message::preamble preamble{};
     /// UL Harq used to schedule Msg3.
     ul_harq_process harq{MAX_HARQ_ID};
   };
@@ -72,7 +73,7 @@ private:
   const bwp_configuration&   get_ul_bwp_cfg() const { return cfg.ul_cfg_common.init_ul_bwp.generic_params; }
   const pusch_config_common& get_pusch_cfg() const { return *cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common; }
 
-  bool handle_rach_indication_impl(const rach_indication_message& msg);
+  void handle_rach_indication_impl(const rach_indication_message& msg);
 
   void handle_pending_crc_indications_impl(cell_resource_allocator& res_alloc);
 

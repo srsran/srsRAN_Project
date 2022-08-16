@@ -97,7 +97,8 @@ void benchmark_rach_scheduling()
     sch->slot_indication(sl_tx, to_du_cell_index(0));
     ++sl_tx;
     rach_ind.slot_rx++;
-    rach_ind.crnti = to_rnti(1 + (unsigned)rach_ind.crnti);
+    rach_ind.occasions.back().preambles.back().tc_rnti =
+        to_rnti(1 + (unsigned)rach_ind.occasions.back().preambles.back().tc_rnti);
   });
 }
 

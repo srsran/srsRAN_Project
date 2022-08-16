@@ -148,15 +148,16 @@ void test_rar_consistency(const cell_configuration& cfg, span<const rar_informat
 /// Helper function that tests match between MSG3 grant with RACH Indication message.
 /// \param rach_ind scheduled RACH indication.
 /// \param msg3_grant MSG3 grant.
-static void test_rach_ind_msg3_grant(const rach_indication_message& rach_ind,
-                                     const rar_ul_grant&            msg3_grant,
-                                     subcarrier_spacing             ul_scs)
+static void test_rach_ind_msg3_grant(const rach_indication_message::preamble& preamble_rach,
+                                     const rar_ul_grant&                      msg3_grant,
+                                     subcarrier_spacing                       ul_scs)
 {
-  TESTASSERT_EQ(rach_ind.timing_advance.to_Ta(ul_scs),
+  TESTASSERT_EQ(preamble_rach.time_advance.to_Ta(ul_scs),
                 msg3_grant.ta,
                 "Time-advance mismatch for MSG3 RAPID '{}'",
-                rach_ind.preamble_id);
-  TESTASSERT_EQ(rach_ind.crnti, msg3_grant.temp_crnti, "C-RNTI mismatch for MSG3 RAPID '{}'", rach_ind.preamble_id);
+                preamble_rach.preamble_id);
+  TESTASSERT_EQ(
+      preamble_rach.tc_rnti, msg3_grant.temp_crnti, "C-RNTI mismatch for MSG3 RAPID '{}'", preamble_rach.preamble_id);
 }
 
 /// Tests whether a RACH indication is served in RAR grant and verify RAR and Msg3 parameter consistency with RACH
@@ -170,13 +171,18 @@ bool test_rach_ind_in_rar(const cell_configuration&      cfg,
                           const rach_indication_message& rach_ind,
                           const rar_information&         rar)
 {
-  uint16_t ra_rnti = get_ra_rnti(rach_ind);
-  TESTASSERT_EQ(ra_rnti, rar.pdcch_cfg->ctx.rnti);
+  for (const auto& prach_occ : rach_ind.occasions) {
+    uint16_t ra_rnti = get_ra_rnti(rach_ind.slot_rx, prach_occ.start_symbol, prach_occ.frequency_index);
+    TESTASSERT_EQ(ra_rnti, rar.pdcch_cfg->ctx.rnti);
+    TESTASSERT_EQ(prach_occ.preambles.size(), rar.grants.size());
 
-  for (const rar_ul_grant& msg3 : rar.grants) {
-    if (rach_ind.crnti == msg3.temp_crnti) {
-      test_rach_ind_msg3_grant(rach_ind, msg3, cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
-      return true;
+    for (const auto& prach_preamble : prach_occ.preambles) {
+      auto it = std::find_if(rar.grants.begin(), rar.grants.end(), [&prach_preamble](const auto& grant) {
+        return grant.temp_crnti == prach_preamble.tc_rnti;
+      });
+      TESTASSERT(it != rar.grants.end());
+      const rar_ul_grant& msg3 = *it;
+      test_rach_ind_msg3_grant(prach_preamble, msg3, cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
     }
   }
   return false;
@@ -326,16 +332,23 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
     if (rach_ind_to_process.slot_rx > slot_rx) {
       break;
     }
-    uint16_t ra_rnti = get_ra_rnti(rach_ind_to_process);
-    // If the map has no list for the RA-RNTI, build one
-    if (rach_per_ra_rnti_map.find(ra_rnti) == rach_per_ra_rnti_map.end()) {
-      rach_per_ra_rnti_map.emplace(ra_rnti, std::list<rach_indication_message>{});
+    for (const auto& prach_occ : rach_ind_to_process.occasions) {
+      uint16_t ra_rnti = get_ra_rnti(rach_ind_to_process.slot_rx, prach_occ.start_symbol, prach_occ.frequency_index);
+
+      // If the map has no list for the RA-RNTI, build one
+      if (rach_per_ra_rnti_map.find(ra_rnti) == rach_per_ra_rnti_map.end()) {
+        rach_per_ra_rnti_map.emplace(ra_rnti, std::list<rach_indication_message>{});
+      }
+
+      // Copy the rach_indication_message to the RA-RNTI RACH list
+      rach_per_ra_rnti_map[ra_rnti].push_back(rach_ind_to_process);
+      msg3_grant_cnt++;
+      // The iterator is moved from for( ; ; ) to here to avoid iterator invalidation due to popping from the list
+      // Remove RACH indication from the input list
+      if (msg3_grant_cnt >= nof_allocations) {
+        break;
+      }
     }
-    // Copy the rach_indication_message to the RA-RNTI RACH list
-    rach_per_ra_rnti_map[ra_rnti].push_back(rach_ind_to_process);
-    msg3_grant_cnt++;
-    // The iterator is moved from for( ; ; ) to here to avoid iterator invalidation due to popping from the list
-    // Remove RACH indication from the input list
     if (msg3_grant_cnt >= nof_allocations) {
       break;
     }
@@ -383,15 +396,19 @@ static void test_per_ra_ranti_rapid_grants(const cell_configuration&            
 
     // Per-RAPID checks on MSG3 grants. For the RA-RNTI RACH list, test each MSG3 grant (MSG3 <--> RAPID)
     for (const auto& rach_ind_rapid : rach_ra_rnti_list) {
-      unsigned rapid = rach_ind_rapid.preamble_id;
+      for (const auto& prach_occ : rach_ind_rapid.occasions) {
+        for (const auto& prach_preamble : prach_occ.preambles) {
+          unsigned rapid = prach_preamble.preamble_id;
 
-      // Retrieve MSG3 for RAPID for the corresponding to RACH indication message
-      auto wanted_msg3_grant_rapid = find_rapid(wanted_rar_ra_rnti->grants, rapid);
+          // Retrieve MSG3 for RAPID for the corresponding to RACH indication message
+          auto wanted_msg3_grant_rapid = find_rapid(wanted_rar_ra_rnti->grants, rapid);
 
-      TESTASSERT(wanted_msg3_grant_rapid != wanted_rar_ra_rnti->grants.end(), "RAPID '{}' not found", rapid);
+          TESTASSERT(wanted_msg3_grant_rapid != wanted_rar_ra_rnti->grants.end(), "RAPID '{}' not found", rapid);
 
-      test_rach_ind_msg3_grant(
-          rach_ind_rapid, *wanted_msg3_grant_rapid, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+          test_rach_ind_msg3_grant(
+              prach_preamble, *wanted_msg3_grant_rapid, cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+        }
+      }
     }
   }
 }
@@ -423,12 +440,18 @@ void test_ra_sched_fdd_1_rar_multiple_msg3(const ra_sched_param& params)
   // different RAPIDs)
   std::list<rach_indication_message> rach_ind_list;
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    rnti_t crnti = to_rnti(0x4601 + n);
-    rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
-                                                    .slot_rx         = slot_point{0, slot_rx_prach},
-                                                    .symbol_index    = 0,
-                                                    .frequency_index = 0,
-                                                    .preamble_id     = n});
+    rnti_t                  crnti = to_rnti(0x4601 + n);
+    rach_indication_message msg{};
+    msg.slot_rx    = slot_point{0, slot_rx_prach};
+    msg.cell_index = to_du_cell_index(0);
+    msg.occasions.emplace_back();
+    msg.occasions.back().start_symbol    = 0;
+    msg.occasions.back().frequency_index = 0;
+    msg.occasions.back().preambles.emplace_back();
+    msg.occasions.back().preambles.back().tc_rnti      = crnti;
+    msg.occasions.back().preambles.back().time_advance = phy_time_unit::from_seconds(0);
+    msg.occasions.back().preambles.back().preamble_id  = n;
+    rach_ind_list.push_back(msg);
   }
 
   for (unsigned t = 0; t < nof_test_slots; ++t) {
@@ -487,45 +510,39 @@ void test_ra_sched_fdd_multiple_rar_multiple_msg3(const ra_sched_param& params)
   // Create the list of RACH indication messages with different RA-RNTIs and different RAPIDs
   std::list<rach_indication_message> rach_ind_list;
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    rnti_t crnti = to_rnti(0x4601 + n);
-    rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
-                                                    .slot_rx         = slot_point{0, slot_rx_prach},
-                                                    .symbol_index    = 0,
-                                                    .frequency_index = 0,
-                                                    .preamble_id     = n});
+    rnti_t                  crnti = to_rnti(0x4601 + n);
+    rach_indication_message msg   = generate_rach_ind_msg(slot_point{0, slot_rx_prach}, crnti, n);
+    rach_ind_list.push_back(msg);
   }
 
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   uint16_t last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    rnti_t crnti = to_rnti(last_crnti + n);
-    rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
-                                                    .slot_rx         = slot_point{0, slot_rx_prach},
-                                                    .symbol_index    = 2,
-                                                    .frequency_index = 1,
-                                                    .preamble_id     = n});
+    rnti_t                  crnti        = to_rnti(last_crnti + n);
+    rach_indication_message msg          = generate_rach_ind_msg(slot_point{0, slot_rx_prach}, crnti, n);
+    msg.occasions.back().frequency_index = 1;
+    msg.occasions.back().start_symbol    = 2;
+    rach_ind_list.push_back(msg);
   }
 
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    rnti_t crnti = to_rnti(last_crnti + n);
-    rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
-                                                    .slot_rx         = slot_point{0, slot_rx_prach},
-                                                    .symbol_index    = 4,
-                                                    .frequency_index = 2,
-                                                    .preamble_id     = n});
+    rnti_t                  crnti        = to_rnti(last_crnti + n);
+    rach_indication_message msg          = generate_rach_ind_msg(slot_point{0, slot_rx_prach}, crnti, n);
+    msg.occasions.back().frequency_index = 2;
+    msg.occasions.back().start_symbol    = 4;
+    rach_ind_list.push_back(msg);
   }
 
   // Add nof_grants_per_rar RACH indication for a second RA-RNTI
   last_crnti = 0x4601 + rach_ind_list.size();
   for (unsigned n = 0; n < nof_grants_per_rar; n++) {
-    rnti_t crnti = to_rnti(last_crnti + n);
-    rach_ind_list.push_back(rach_indication_message{.crnti           = crnti,
-                                                    .slot_rx         = slot_point{0, slot_rx_prach},
-                                                    .symbol_index    = 6,
-                                                    .frequency_index = 3,
-                                                    .preamble_id     = n});
+    rnti_t                  crnti        = to_rnti(last_crnti + n);
+    rach_indication_message msg          = generate_rach_ind_msg(slot_point{0, slot_rx_prach}, crnti, n);
+    msg.occasions.back().frequency_index = 3;
+    msg.occasions.back().start_symbol    = 6;
+    rach_ind_list.push_back(msg);
   }
 
   for (unsigned t = 0; t < nof_test_slots; ++t) {

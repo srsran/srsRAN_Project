@@ -16,6 +16,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/pci.h"
 #include "srsgnb/ran/phy_time_unit.h"
+#include "srsgnb/ran/prach/prach_constants.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/sib_configuration.h"
 #include "srsgnb/ran/slot_point.h"
@@ -130,17 +131,25 @@ struct sched_ue_delete_message {
   du_cell_index_t pcell_index;
 };
 
-/// RACH indication Message.
-/// \remark See ORAN WG8 9.2.3.2.12.
+/// RACH indication Message. It contains all the RACHs detected in a given slot and cell.
 struct rach_indication_message {
   du_cell_index_t cell_index;
-  rnti_t          crnti;
   slot_point      slot_rx;
-  /// Index of the first OFDM Symbol where RACH was detected.
-  unsigned      symbol_index;
-  unsigned      frequency_index;
-  unsigned      preamble_id;
-  phy_time_unit timing_advance;
+
+  struct preamble {
+    unsigned      preamble_id;
+    rnti_t        tc_rnti;
+    phy_time_unit time_advance;
+  };
+
+  struct occasion {
+    /// Index of the first OFDM Symbol where RACH was detected.
+    unsigned                                                    start_symbol;
+    unsigned                                                    frequency_index;
+    static_vector<preamble, prach_constants::MAX_NUM_PREAMBLES> preambles;
+  };
+
+  static_vector<occasion, prach_constants::MAX_PRACH_OCCASIONS> occasions;
 };
 
 /// Interface to Add/Remove UEs and Cells.

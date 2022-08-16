@@ -27,13 +27,15 @@ inline sched_cell_configuration_request_message make_default_sched_cell_configur
 rach_indication_message generate_rach_ind_msg(slot_point prach_slot_rx, rnti_t temp_crnti, unsigned rapid = 0)
 {
   rach_indication_message msg{};
-  msg.cell_index      = to_du_cell_index(0);
-  msg.crnti           = temp_crnti;
-  msg.slot_rx         = prach_slot_rx;
-  msg.symbol_index    = 0;
-  msg.frequency_index = 0;
-  msg.preamble_id     = rapid;
-  msg.timing_advance  = phy_time_unit::from_seconds(0);
+  msg.cell_index = to_du_cell_index(0);
+  msg.slot_rx    = prach_slot_rx;
+  msg.occasions.emplace_back();
+  msg.occasions.back().frequency_index = 0;
+  msg.occasions.back().start_symbol    = 0;
+  msg.occasions.back().preambles.emplace_back();
+  msg.occasions.back().preambles.back().preamble_id  = rapid;
+  msg.occasions.back().preambles.back().tc_rnti      = temp_crnti;
+  msg.occasions.back().preambles.back().time_advance = phy_time_unit::from_seconds(0);
   return msg;
 }
 

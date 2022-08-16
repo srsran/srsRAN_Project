@@ -34,7 +34,7 @@ unsigned srsgnb::get_msg3_delay(const pusch_time_domain_resource_allocation& pus
   return static_cast<int>(pusch_td_res_alloc.k2 + DELTAS[to_numerology_value(pusch_scs)]);
 }
 
-uint16_t srsgnb::get_ra_rnti(const rach_indication_message& rach_ind, bool is_sul)
+uint16_t srsgnb::get_ra_rnti(slot_point sl_rx, unsigned symbol_index, unsigned frequency_index, bool is_sul)
 {
   // See 38.321, 5.1.3 - Random Access Preamble transmission
   // RA-RNTI = 1 + s_id + 14 × t_id + 14 × 80 × f_id + 14 × 80 × 8 × ul_carrier_id
@@ -42,8 +42,8 @@ uint16_t srsgnb::get_ra_rnti(const rach_indication_message& rach_ind, bool is_su
   // t_id = index of first slot of the PRACH (0 <= t_id < 80)
   // f_id = index of the PRACH in the freq domain (0 <= f_id < 8) (for FDD, f_id=0)
   // ul_carrier_id = 0 for NUL and 1 for SUL carrier
-  uint16_t ra_rnti = 1 + rach_ind.symbol_index + 14 * rach_ind.slot_rx.slot_index() +
-                     14 * 80 * rach_ind.frequency_index + (14 * 80 * 8 * (is_sul ? 1 : 0));
+  uint16_t ra_rnti = 1U + symbol_index + 14U * sl_rx.slot_index() + 14U * 80U * frequency_index +
+                     (14U * 80U * 8U * (is_sul ? 1U : 0U));
   return ra_rnti;
 }
 
@@ -71,69 +71,67 @@ void ra_scheduler::handle_rach_indication(const rach_indication_message& msg)
   pending_rachs.push(msg);
 }
 
-bool ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
+void ra_scheduler::handle_rach_indication_impl(const rach_indication_message& msg)
 {
   const static unsigned prach_duration = 1; // TODO: Take from config
 
-  uint16_t ra_rnti = get_ra_rnti(msg);
+  for (const auto& prach_occ : msg.occasions) {
+    uint16_t ra_rnti = get_ra_rnti(msg.slot_rx, prach_occ.start_symbol, prach_occ.frequency_index);
 
-  logger.info("SCHED: New PRACH slot={}, preamble={}, ra-rnti=0x{:x}, temp_crnti=0x{:x}, ta_cmd={}",
-              msg.slot_rx,
-              msg.preamble_id,
-              ra_rnti,
-              msg.crnti,
-              msg.timing_advance.to_Ta(get_ul_bwp_cfg().scs));
-
-  // Check if TC-RNTI value to be scheduled is already under use
-  if (not pending_msg3s[msg.crnti % MAX_NOF_MSG3].harq.empty()) {
-    logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", msg.crnti);
-    return false;
-  }
-
-  // Find pending RAR with same RA-RNTI
-  bool rar_found = false;
-  for (pending_rar_t& r : pending_rars) {
-    if (r.prach_slot_rx == msg.slot_rx and ra_rnti == r.ra_rnti) {
-      if (r.tc_rntis.full()) {
-        logger.warning("PRACH ignored, as the the maximum number of RAR grants per slot has been reached.");
-        return false;
+    pending_rar_t* rar_req = nullptr;
+    for (pending_rar_t& rar : pending_rars) {
+      if (rar.ra_rnti == ra_rnti and rar.prach_slot_rx == msg.slot_rx) {
+        rar_req = &rar;
+        break;
       }
-      r.tc_rntis.push_back(msg.crnti);
-      rar_found = true;
-      break;
     }
-  }
+    if (rar_req == nullptr) {
+      // Create new pending RAR
+      pending_rars.emplace_back();
+      rar_req                = &pending_rars.back();
+      rar_req->ra_rnti       = to_rnti(ra_rnti);
+      rar_req->prach_slot_rx = msg.slot_rx;
+    }
 
-  if (not rar_found) {
-    // Create new pending RAR
-    pending_rars.emplace_back();
-    auto& rar_req         = pending_rars.back();
-    rar_req.ra_rnti       = to_rnti(ra_rnti);
-    rar_req.prach_slot_rx = msg.slot_rx;
-    // First slot after PRACH with active DL slot represents the start of the RAR window.
+    // Set RAR window. First slot after PRACH with active DL slot represents the start of the RAR window.
     if (cfg.tdd_cfg_common.has_value()) {
       // TDD case.
       unsigned period = nof_slots_per_tdd_period(*cfg.tdd_cfg_common);
       for (unsigned sl_idx = 0; sl_idx < period; ++sl_idx) {
-        slot_point sl_start = rar_req.prach_slot_rx + prach_duration + sl_idx;
+        slot_point sl_start = rar_req->prach_slot_rx + prach_duration + sl_idx;
         if (cfg.is_dl_enabled(sl_start)) {
-          rar_req.rar_window = {sl_start, sl_start + ra_win_nof_slots};
+          rar_req->rar_window = {sl_start, sl_start + ra_win_nof_slots};
           break;
         }
       }
-      srsgnb_sanity_check(rar_req.rar_window.length() != 0, "Invalid configuration");
+      srsgnb_sanity_check(rar_req->rar_window.length() != 0, "Invalid configuration");
     } else {
       // FDD case.
-      rar_req.rar_window = {rar_req.prach_slot_rx + prach_duration,
-                            rar_req.prach_slot_rx + prach_duration + ra_win_nof_slots};
+      rar_req->rar_window = {rar_req->prach_slot_rx + prach_duration,
+                             rar_req->prach_slot_rx + prach_duration + ra_win_nof_slots};
     }
-    rar_req.tc_rntis.push_back(msg.crnti);
+
+    for (const auto& prach_preamble : prach_occ.preambles) {
+      logger.info("SCHED: New PRACH slot={}, preamble={}, ra-rnti=0x{:x}, temp_crnti=0x{:x}, ta_cmd={}",
+                  msg.slot_rx,
+                  prach_preamble.preamble_id,
+                  ra_rnti,
+                  prach_preamble.tc_rnti,
+                  prach_preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs));
+
+      // Check if TC-RNTI value to be scheduled is already under use
+      if (not pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].harq.empty()) {
+        logger.warning("PRACH ignored, as the allocated TC-RNTI=0x{:x} is already under use", prach_preamble.tc_rnti);
+        continue;
+      }
+
+      // Store TC-RNTI of the preamble.
+      rar_req->tc_rntis.emplace_back(prach_preamble.tc_rnti);
+
+      // Store Msg3 to allocate.
+      pending_msg3s[prach_preamble.tc_rnti % MAX_NOF_MSG3].preamble = prach_preamble;
+    }
   }
-
-  // Store Msg3 to allocate
-  pending_msg3s[msg.crnti % MAX_NOF_MSG3].ind_msg = msg;
-
-  return true;
 }
 
 void ra_scheduler::handle_crc_indication(const ul_crc_pdu_indication& crc)
@@ -148,7 +146,7 @@ void ra_scheduler::handle_pending_crc_indications_impl(cell_resource_allocator& 
   span<const ul_crc_pdu_indication> new_crcs = pending_crcs.get_events();
   for (const ul_crc_pdu_indication& crc : new_crcs) {
     auto& pending_msg3 = pending_msg3s[crc.rnti % MAX_NOF_MSG3];
-    if (pending_msg3.ind_msg.crnti != crc.rnti) {
+    if (pending_msg3.preamble.tc_rnti != crc.rnti) {
       logger.warning("Invalid UL CRC, cell={}, rnti={:#x}, h_id={}. Cause: Inexistent rnti.",
                      cfg.cell_index,
                      crc.rnti,
@@ -428,9 +426,9 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
     // Add MAC SDU with UL grant (Msg3) in RAR PDU.
     rar.grants.emplace_back();
     rar_ul_grant& msg3_info            = rar.grants.back();
-    msg3_info.rapid                    = pending_msg3.ind_msg.preamble_id;
-    msg3_info.ta                       = pending_msg3.ind_msg.timing_advance.to_Ta(get_ul_bwp_cfg().scs);
-    msg3_info.temp_crnti               = pending_msg3.ind_msg.crnti;
+    msg3_info.rapid                    = pending_msg3.preamble.preamble_id;
+    msg3_info.ta                       = pending_msg3.preamble.time_advance.to_Ta(get_ul_bwp_cfg().scs);
+    msg3_info.temp_crnti               = pending_msg3.preamble.tc_rnti;
     msg3_info.time_resource_assignment = msg3_candidate.pusch_td_res_index;
     msg3_info.freq_resource_assignment = ra_frequency_type1_get_riv(ra_frequency_type1_configuration{
         cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length(), prbs.start(), prbs.length()});
@@ -445,7 +443,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
     // Fill PUSCH for Msg3.
     ul_sched_info& pusch    = msg3_alloc.result.ul.puschs.back();
-    pusch.crnti             = pending_msg3.ind_msg.crnti;
+    pusch.crnti             = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.bwp_cfg = &get_ul_bwp_cfg();
     pusch.pusch_cfg.prbs    = prbs;
     pusch.pusch_cfg.symbols = symbols;
@@ -459,7 +457,7 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
 void ra_scheduler::log_postponed_rar(const pending_rar_t& rar, const char* cause_str) const
 {
-  logger.debug("SCHED: RAR allocation for ra-rnti={} was postponed. Cause: {}", rar.ra_rnti, cause_str);
+  logger.debug("SCHED: RAR allocation for ra-rnti={:#x} was postponed. Cause: {}", rar.ra_rnti, cause_str);
 }
 
 /// Helper to log single RAR grant.
