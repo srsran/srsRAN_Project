@@ -10,6 +10,7 @@
 
 #include "ldpc_rate_matcher_impl.h"
 #include "ldpc_luts_impl.h"
+#include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/copy.h"
 #include "srsgnb/support/srsgnb_assert.h"
 
@@ -90,29 +91,30 @@ void ldpc_rate_matcher_impl::select_bits(span<uint8_t> out, span<const uint8_t> 
 
   // as long as the ouput index does not reach the output length...
   while (out_index < output_length) {
-    // Count the number of bits between in_index and the next filler bit.
-    unsigned count = 0;
-    for (unsigned index = in_index; index != buffer_length; ++index) {
-      if (in[index] == FILLER_BIT) {
-        break;
-      }
-      ++count;
+    // Skip filler bits.
+    while (in[in_index] == FILLER_BIT) {
+      in_index = (in_index + 1) % buffer_length;
     }
+
+    // Select remainder input.
+    span<const uint8_t> input_chunk = in.subspan(in_index, in.size() - in_index);
+
+    // Find the first filler bit, or end of the input buffer if no filler bit is found. This indicates the end of
+    // contiguous data to read from the input buffer.
+    const uint8_t* filler_bit_it = srsvec::find(input_chunk, FILLER_BIT);
+
+    // Calculate number of bits to copy from in_index to the end of the input contiguous data.
+    unsigned count = static_cast<unsigned>(filler_bit_it - input_chunk.begin());
 
     // Trim the count to the remainder bits.
     count = std::min(count, output_length - out_index);
 
-    // Append a consecutive number of bits.
+    // Append the consecutive number of bits.
     srsvec::copy(out.subspan(out_index, count), in.subspan(in_index, count));
     out_index += count;
 
     // Advance in_index the amount of written bits.
     in_index = (in_index + count) % buffer_length;
-
-    // Skip filler bits.
-    while (in[in_index] == FILLER_BIT) {
-      in_index = (in_index + 1) % buffer_length;
-    }
   }
 }
 

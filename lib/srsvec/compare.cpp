@@ -17,6 +17,39 @@
 using namespace srsgnb;
 using namespace srsvec;
 
+const char* srsgnb::srsvec::detail::find(span<const char> input, char value)
+{
+  // Input index.
+  unsigned index = 0;
+
+#ifdef HAVE_AVX2
+  // Advances the input index to either the first SIMD word that contains value or the last index rounded to 32.
+  for (unsigned simd_index_end = 32 * (input.size() / 32); index != simd_index_end; index += 32) {
+    // Load 32 consecutive words starting at index.
+    __m256i simd_input = _mm256_loadu_si256((__m256i*)&input[index]);
+    // Compare the 32 words with the value.
+    __m256i simd_eq_filler_bit = _mm256_cmpeq_epi8(_mm256_set1_epi8(value), simd_input);
+    // Get the MSB of each word.
+    unsigned mask = _mm256_movemask_epi8(simd_eq_filler_bit);
+    // If it is not zero, it means at least one of the words in the SIMD register is equal to value.
+    if (mask > 0) {
+      break;
+    }
+  }
+#endif // HAVE_AVX2
+
+  // Keeps iterating from the current index to the end.
+  for (; index != input.size(); ++index) {
+    // Early return if a word is equal to value.
+    if (input[index] == value) {
+      return &input[index];
+    }
+  }
+
+  // There is no word equal to value if the execution reached here.
+  return input.end();
+}
+
 std::pair<unsigned, float> srsgnb::srsvec::max_abs_element(span<const cf_t> x)
 {
   unsigned max_index = 0;
