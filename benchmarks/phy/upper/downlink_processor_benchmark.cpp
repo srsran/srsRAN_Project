@@ -220,7 +220,7 @@ int main(int argc, char** argv)
                                   get_bits_per_symbol(pdsch_modulation);
       unsigned pdsch_tbs_nbytes = static_cast<unsigned>(static_cast<double>(nof_channel_bits) * pdsch_rate / 8);
 
-      // Deduce LDPC base graph from rate and TBS .
+      // Deduce LDPC base graph from rate and TBS.
       ldpc_base_graph_type pdsch_base_graph = get_ldpc_base_graph(pdsch_rate, pdsch_tbs_nbytes * 8);
 
       // Create transport block.
