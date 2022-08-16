@@ -352,7 +352,7 @@ public:
   /// \return Returns a reference to this object.
   bounded_bitset<N, reversed>& fill(size_t startpos, size_t endpos, bool value = true)
   {
-    apply_first_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
+    find_first_word_(startpos, endpos, [this, value](size_t word_idx, const word_t& mask) {
       if (value) {
         buffer[word_idx] |= mask;
       } else {
@@ -491,7 +491,7 @@ public:
   /// \return Returns true if all the bits within the range are 1.
   bool all(size_t start, size_t stop) const
   {
-    bool not_all_found = apply_first_(start, stop, [this](size_t word_idx, const word_t& mask) {
+    bool not_all_found = find_first_word_(start, stop, [this](size_t word_idx, const word_t& mask) {
       return (buffer[word_idx] | ~mask) != ~static_cast<word_t>(0);
     });
     return !not_all_found;
@@ -537,7 +537,7 @@ public:
   /// \return Returns true if at least one bit equal to 1 was found within the range.
   bool any(size_t start, size_t stop) const
   {
-    bool any_found = apply_first_(start, stop, [this](size_t word_idx, const word_t& mask) {
+    bool any_found = find_first_word_(start, stop, [this](size_t word_idx, const word_t& mask) {
       return (buffer[word_idx] & mask) != static_cast<word_t>(0);
     });
     return any_found;
@@ -863,24 +863,33 @@ private:
     return -1;
   }
 
+  /// Iterates the bitset word-wise, and for each word, compute the mask of active bits, and call callback that
+  /// receives as an argument the word index and the active-bit mask. If the callback returns true, the iteration stops
+  /// and the function returns true.
+  ///
+  /// \param start first bit index.
+  /// \param stop end bit index.
+  /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
+  ///          When this callback returns true, the iteration is stopped.
+  /// \return true if iteration was stopped early.
   template <typename C>
-  bool apply_first_(size_t start, size_t stop, const C& c) const
+  bool find_first_word_(size_t start, size_t stop, const C& c) const
   {
     assert_range_bounds_(start, stop);
-    return apply_first_(start, stop, c, std::integral_constant<bool, reversed>{});
+    return find_first_word_(start, stop, c, std::integral_constant<bool, reversed>{});
   }
 
   template <typename C>
-  bool apply_first_(size_t start, size_t stop, const C& c, std::true_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::true_type t) const
   {
     std::swap(start, stop);
     start = get_bitidx_(start) + 1;
     stop  = get_bitidx_(stop) + 1;
-    return apply_first_(start, stop, c, std::false_type{});
+    return find_first_word_(start, stop, c, std::false_type{});
   }
 
   template <typename C>
-  bool apply_first_(size_t start, size_t stop, const C& c, std::false_type t) const
+  bool find_first_word_(size_t start, size_t stop, const C& c, std::false_type t) const
   {
     size_t start_word = word_idx_(start);
     size_t end_word   = word_idx_(stop) + (stop % bits_per_word > 0 ? 1U : 0U);
