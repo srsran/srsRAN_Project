@@ -552,19 +552,17 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
 bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 {
   if (nack.has_nack_range) {
-    logger.log_error("handle_nack must not be called with nacks that have a nack range. Ignoring NACK=[{}]", nack);
+    logger.log_error("handle_nack must not be called with nacks that have a nack range. Ignoring NACK={}", nack);
     return false;
   }
 
-  logger.log_debug("Handling NACK=[{}]", nack);
+  logger.log_debug("Handling NACK={}", nack);
 
   // Check if NACK applies to a SN within tx window
   if (!(tx_mod_base(st.tx_next_ack) <= tx_mod_base(nack.nack_sn) &&
         tx_mod_base(nack.nack_sn) <= tx_mod_base(st.tx_next))) {
-    logger.log_info("NACK SN not in expected range. Tx_Next_Ack={}, Tx_Next={}, NACK=[{}]",
-                    nack.nack_sn,
-                    st.tx_next_ack,
-                    st.tx_next);
+    logger.log_info(
+        "NACK SN not in expected range. Tx_Next_Ack={}, Tx_Next={}, NACK={}", nack.nack_sn, st.tx_next_ack, st.tx_next);
     return false;
   }
 
@@ -600,7 +598,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     retx_queue.push(retx);
     logger.log_debug("Scheduled ReTx=[{}]. NACK={}", retx, nack);
   } else {
-    logger.log_info("NACK'ed PDU or PDU segment is already queued for ReTx. NACK=[{}]", nack);
+    logger.log_info("NACK'ed PDU or PDU segment is already queued for ReTx. NACK={}", nack);
     return false;
   }
 
