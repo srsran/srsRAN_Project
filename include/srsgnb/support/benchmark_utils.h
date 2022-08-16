@@ -188,7 +188,7 @@ public:
     unsigned percentile_width = get_percentile_width_throughput();
     unsigned descr_with       = get_description_width();
 
-    print_percentile_header(descr_with, percentile_width, "millions of " + units + " per second");
+    print_percentile_header(descr_with, percentile_width, "mega" + units + " per second");
     for (const benchmark_result& result : benchmark_results) {
       fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
                  result.description,
