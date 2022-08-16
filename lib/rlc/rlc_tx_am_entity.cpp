@@ -568,25 +568,32 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 
   uint32_t sdu_length = (*tx_window)[nack.nack_sn].sdu.length();
 
-  // Check NACK segment offsets and lengths
-  if (nack.has_so) {
-    // Replace "end"-mark with actual SDU length
-    if (nack.so_end == rlc_am_status_nack::so_end_of_sdu) {
-      nack.so_end = sdu_length - 1;
-    }
-    // Sanity checks
-    if (nack.so_start > nack.so_end) {
-      logger.log_warning("NACK so_start > so_end. sdu_length={}, NACK=[{}]", sdu_length, nack);
-      nack.so_start = 0;
-    }
-    if (nack.so_start >= sdu_length) {
-      logger.log_warning("NACK so_start out of bounds. sdu_length={}, NACK=[{}]", sdu_length, nack);
-      nack.so_start = 0;
-    }
-    if (nack.so_end >= sdu_length) {
-      logger.log_warning("NACK so_end out of bounds. sdu_length={}, NACK=[{}]", sdu_length, nack);
-      nack.so_end = 0;
-    }
+  // Convert NACK for full PDUs into NACK with segment offset and length
+  if (!nack.has_so) {
+    nack.so_start = 0;
+    nack.so_end   = sdu_length - 1;
+  }
+  // Replace "end"-mark with actual SDU length
+  if (nack.so_end == rlc_am_status_nack::so_end_of_sdu) {
+    nack.so_end = sdu_length - 1;
+  }
+  // Sanity checks
+  if (nack.so_start > nack.so_end) {
+    logger.log_warning(
+        "Invalid NACK: so_start > so_end. sdu_length={}, NACK={}. Setting so_start to 0", sdu_length, nack);
+    nack.so_start = 0;
+  }
+  if (nack.so_start >= sdu_length) {
+    logger.log_warning(
+        "Invalid NACK: so_start out of bounds. sdu_length={}, NACK={}. Setting so_start to 0", sdu_length, nack);
+    nack.so_start = 0;
+  }
+  if (nack.so_end >= sdu_length) {
+    logger.log_warning("Invalid NACK: so_end out of bounds. sdu_length={}, NACK={}. Setting so_end to {}",
+                       sdu_length,
+                       nack,
+                       sdu_length - 1);
+    nack.so_end = sdu_length - 1;
   }
 
   // Enqueue ReTx
