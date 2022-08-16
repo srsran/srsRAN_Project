@@ -51,6 +51,7 @@ public:
   void                handle_sr_indication(const sr_indication_message& sr) override {}
   void                handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override {}
   void                handle_dl_bsr_indication(const dl_bsr_indication_message& bsr) override {}
+  void                handle_crc_indication(const ul_crc_indication& crc) override {}
 };
 
 /// Enum used to track the progress of the test task
@@ -130,7 +131,7 @@ void test_dl_ue_procedure_execution_contexts()
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(cfg, sched_obj, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cell.
   mac_cell_creation_request mac_cell_cfg = test_helpers::make_default_mac_cell_config();
@@ -176,7 +177,7 @@ void test_dl_ue_procedure_tsan()
   srs_sched_config_adapter sched_cfg_adapter{cfg};
   dummy_sched              sched_obj{sched_cfg_adapter.get_sched_notifier()};
   sched_cfg_adapter.set_sched(sched_obj);
-  mac_dl_processor mac_dl(cfg, sched_obj, sched_obj, rnti_table);
+  mac_dl_processor mac_dl(cfg, sched_obj, rnti_table);
 
   // Action: Add Cells.
   mac_cell_creation_request cell_cfg1 = test_helpers::make_default_mac_cell_config();

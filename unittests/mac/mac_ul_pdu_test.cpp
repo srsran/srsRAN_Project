@@ -26,6 +26,7 @@ public:
   dummy_scheduler_feedback_handler() = default;
   void handle_sr_indication(const sr_indication_message& sr) override { last_shed_req_msg = sr; };
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override { last_bsr_msg = bsr; };
+  void handle_crc_indication(const ul_crc_indication& crc) override {}
 
   // Compare last_shed_req_msg with a test message passed to the function.
   bool verify_sched_req_msg(const sr_indication_message& sr)

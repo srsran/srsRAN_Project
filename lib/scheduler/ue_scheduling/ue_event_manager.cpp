@@ -128,9 +128,23 @@ void ue_event_manager::handle_ul_bsr_indication(const ul_bsr_indication_message&
   srsgnb_sanity_check(cell_exists(bsr_ind.cell_index), "Invalid cell index");
 
   common_events.emplace(bsr_ind.ue_index, [this, bsr_ind](event_logger& ev_logger) {
-    ev_logger.enqueue("handle_ul_bsr_indication(ueId={})", bsr_ind.ue_index);
+    ev_logger.enqueue("ul_bsr(ueId={})", bsr_ind.ue_index);
     ue_db[bsr_ind.ue_index].handle_bsr_indication(bsr_ind);
   });
+}
+
+void ue_event_manager::handle_crc_indication(const ul_crc_indication& crc_ind)
+{
+  srsgnb_sanity_check(cell_exists(crc_ind.cell_index), "Invalid cell index");
+
+  for (unsigned i = 0; i != crc_ind.crcs.size(); ++i) {
+    cell_specific_events[crc_ind.cell_index].emplace(
+        crc_ind.crcs[i].ue_index, [crc = crc_ind.crcs[i]](ue_carrier& ue_cc, event_logger& ev_logger) {
+          ev_logger.enqueue("crc(ueId={})", crc.ue_index);
+          // TODO: Derive TB.
+          ue_cc.harqs.ul_harq(crc.harq_id).ack_info(0, crc.tb_crc_success);
+        });
+  }
 }
 
 void ue_event_manager::process_common(slot_point sl, du_cell_index_t cell_index)

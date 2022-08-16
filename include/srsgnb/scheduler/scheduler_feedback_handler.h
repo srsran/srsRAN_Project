@@ -13,7 +13,9 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/mac/bsr_format.h"
+#include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/du_types.h"
+#include "srsgnb/ran/phy_time_unit.h"
 #include "srsgnb/ran/rnti.h"
 
 namespace srsgnb {
@@ -45,12 +47,25 @@ struct ul_bsr_indication_message {
   ul_bsr_lcg_report_list reported_lcgs;
 };
 
+struct ul_crc_pdu_indication {
+  du_ue_index_t ue_index;
+  uint8_t       harq_id;
+  bool          tb_crc_success;
+};
+
+/// \brief UL HARQ CRC indication for a given UE PDU.
+struct ul_crc_indication {
+  du_cell_index_t                                            cell_index;
+  static_vector<ul_crc_pdu_indication, MAX_UL_PDUS_PER_SLOT> crcs;
+};
+
 class scheduler_feedback_handler
 {
 public:
   virtual ~scheduler_feedback_handler()                                       = default;
   virtual void handle_sr_indication(const sr_indication_message& sr)          = 0;
   virtual void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) = 0;
+  virtual void handle_crc_indication(const ul_crc_indication& crc)            = 0;
 };
 
 } // namespace srsgnb

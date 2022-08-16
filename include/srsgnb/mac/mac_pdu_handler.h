@@ -3,16 +3,13 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/mac/mac_constants.h"
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 
 namespace srsgnb {
-
-/// Maximum number of PDUs per slot. This value is implementation-defined.
-/// \remark It should match FAPI MaxULPDUsPerSlot.
-constexpr size_t MAX_UL_PDUS_PER_SLOT = 16;
 
 /// HARQ process ID value.
 using harq_pid_value = uint8_t;

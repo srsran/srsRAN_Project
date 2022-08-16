@@ -15,11 +15,10 @@
 
 using namespace srsgnb;
 
-mac_cell_processor::mac_cell_processor(mac_common_config_t&                 cfg_,
-                                       const mac_cell_creation_request&     cell_cfg_req_,
-                                       scheduler_slot_handler&              sched_,
-                                       scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
-                                       mac_dl_ue_manager&                   ue_mng_) :
+mac_cell_processor::mac_cell_processor(mac_common_config_t&             cfg_,
+                                       const mac_cell_creation_request& cell_cfg_req_,
+                                       mac_scheduler&                   sched_,
+                                       mac_dl_ue_manager&               ue_mng_) :
   cfg(cfg_),
   logger(cfg.logger),
   cell_cfg(cell_cfg_req_),
@@ -29,7 +28,6 @@ mac_cell_processor::mac_cell_processor(mac_common_config_t&                 cfg_
   sib_assembler(cell_cfg_req_.bcch_dl_sch_payload),
   rar_assembler(cell_cfg_req_),
   sched_obj(sched_),
-  sched_bsr_updater(sched_bsr_updater_),
   ue_mng(ue_mng_)
 {
 }
@@ -48,6 +46,19 @@ void mac_cell_processor::handle_slot_indication(slot_point sl_tx)
 {
   // Change execution context to DL executors.
   cell_exec.execute([this, sl_tx]() { handle_slot_indication_impl(sl_tx); });
+}
+
+void mac_cell_processor::handle_crc(const mac_crc_indication_message& msg)
+{
+  ul_crc_indication ind{};
+  ind.cell_index = cell_cfg.cell_index;
+  ind.crcs.resize(msg.crcs.size());
+  for (unsigned i = 0; i != ind.crcs.size(); ++i) {
+    ind.crcs[i].ue_index       = ue_mng.get_ue_index(msg.crcs[i].rnti);
+    ind.crcs[i].harq_id        = msg.crcs[i].harq_id;
+    ind.crcs[i].tb_crc_success = msg.crcs[i].tb_crc_success;
+  }
+  sched_obj.handle_crc_indication(ind);
 }
 
 void mac_cell_processor::handle_slot_indication_impl(slot_point sl_tx)
@@ -184,7 +195,7 @@ void mac_cell_processor::update_logical_channel_dl_buffer_states(const dl_sched_
         bsr.rnti     = grant.pdsch_cfg.rnti;
         bsr.lcid     = bearer_alloc.lcid;
         bsr.bsr      = bearer->on_buffer_state_update();
-        sched_bsr_updater.handle_dl_bsr_indication(bsr);
+        sched_obj.handle_dl_bsr_indication(bsr);
       }
     }
   }

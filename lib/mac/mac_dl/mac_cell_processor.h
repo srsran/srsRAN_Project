@@ -15,20 +15,20 @@
 #include "rar_pdu_assembler.h"
 #include "sib_pdu_assembler.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/scheduler/scheduler_dl_buffer_state_indicator.h"
-#include "srsgnb/scheduler/scheduler_slot_handler.h"
+#include "srsgnb/scheduler/mac_scheduler.h"
 #include "ssb_assembler.h"
 
 namespace srsgnb {
 
-class mac_cell_processor final : public mac_cell_slot_handler, public mac_cell_controller
+class mac_cell_processor final : public mac_cell_slot_handler,
+                                 public mac_cell_controller,
+                                 public mac_cell_control_information_handler
 {
 public:
-  mac_cell_processor(mac_common_config_t&                 cfg_,
-                     const mac_cell_creation_request&     cell_cfg_req_,
-                     scheduler_slot_handler&              sched_,
-                     scheduler_dl_buffer_state_indicator& sched_bsr_updater_,
-                     mac_dl_ue_manager&                   ue_mng);
+  mac_cell_processor(mac_common_config_t&             cfg_,
+                     const mac_cell_creation_request& cell_cfg_req_,
+                     mac_scheduler&                   sched_,
+                     mac_dl_ue_manager&               ue_mng);
 
   /// Starts configured cell.
   async_task<void> start() override;
@@ -36,11 +36,9 @@ public:
   /// Stops configured cell.
   async_task<void> stop() override;
 
-  /// \brief Processing of a new Slot Indication. This operation involves the following sub-tasks:
-  /// - The scheduler generates the scheduling grants for the provided slot and cell.
-  /// - The scheduling grants are passed to the PHY.
-  /// - The MAC DL PDUs are generated and passed to the PHY as well.
   void handle_slot_indication(slot_point sl_tx) override;
+
+  void handle_crc(const mac_crc_indication_message& msg) override;
 
 private:
   void handle_slot_indication_impl(slot_point sl_tx);
@@ -75,9 +73,8 @@ private:
   sib_pdu_assembler sib_assembler;
   rar_pdu_assembler rar_assembler;
 
-  scheduler_slot_handler&              sched_obj;
-  scheduler_dl_buffer_state_indicator& sched_bsr_updater;
-  mac_dl_ue_manager&                   ue_mng;
+  mac_scheduler&     sched_obj;
+  mac_dl_ue_manager& ue_mng;
 
   /// Represents activation cell state.
   // Note: For now, cells start active.

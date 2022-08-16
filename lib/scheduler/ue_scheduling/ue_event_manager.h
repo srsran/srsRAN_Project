@@ -37,6 +37,7 @@ public:
   /// Scheduler feedback handler interface.
   void handle_sr_indication(const sr_indication_message& sr) override;
   void handle_ul_bsr_indication(const ul_bsr_indication_message& bsr) override;
+  void handle_crc_indication(const ul_crc_indication& crc) override;
 
   /// Process events for a given slot and cell index.
   void run(slot_point sl, du_cell_index_t cell_index);
@@ -52,7 +53,7 @@ private:
   };
   struct carrier_event_t {
     du_ue_index_t                                           ue_index = MAX_NOF_DU_UES;
-    unique_function<void(ue_carrier& ue_cc, event_logger&)> callback;
+    unique_function<void(ue_carrier&, event_logger&)>       callback;
 
     template <typename Callable>
     carrier_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
