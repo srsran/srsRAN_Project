@@ -8,19 +8,35 @@
  *
  */
 
+/// \file
+/// \brief In this file, we provide a list of common checks to verify the validity of the scheduler output for a given
+/// cell configuration. To maximize their applicability, these chosen checks should solely depend on the (assumed
+/// immutable) cell configuration, and shouldn't depend on the scheduler or UE states. We assume that unit tests
+/// checks should cover the latter cases.
+
 #pragma once
 
-#include "lib/scheduler/cell/cell_configuration.h"
 #include "srsgnb/scheduler/scheduler_slot_handler.h"
 
 namespace srsgnb {
 
+class cell_configuration;
+struct cell_resource_allocator;
+
 /// \brief Current checks:
 /// - RNTIs match.
 /// - The PDSCH symbols match chosen DCI time domain resource assignment.
-void test_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
-                                         const pdcch_dl_information& pdcch,
-                                         const pdsch_information&    pdsch);
+/// - The PDSCH PRBs match the chosen DCI freq domain resource assignment.
+void assert_pdcch_pdsch_common_consistency(const cell_configuration&   cell_cfg,
+                                           const pdcch_dl_information& pdcch,
+                                           const pdsch_information&    pdsch);
+
+/// \brief Verifies that DL PDCCHs have an associated PDSCH and that the common parameters between both match. Current
+/// checks:
+/// - A DL PDCCH always has an associated PDSCH with the same RNTI, taking into account k0 >= 0.
+/// - The symbol and PRB parameters of the DCI content match the PDSCH parameters.
+void assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_cfg,
+                                           const cell_resource_allocator& cell_res_grid);
 
 /// \brief Current checks:
 /// - If CORESET#0 is not defined, SIB1 cannot be scheduled.
@@ -44,5 +60,9 @@ void test_ul_resource_grid_collisions(const cell_configuration& cell_cfg, const 
 
 /// \brief Run all consistency checks for the scheduler result.
 void test_scheduler_result_consistency(const cell_configuration& cell_cfg, const sched_result& result);
+
+/// \brief Run all consistency checks for multiple slot scheduler results.
+void test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
+                                       const cell_resource_allocator& cell_res_grid);
 
 } // namespace srsgnb

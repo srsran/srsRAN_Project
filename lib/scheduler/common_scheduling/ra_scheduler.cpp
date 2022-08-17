@@ -452,10 +452,10 @@ void ra_scheduler::fill_rar_grant(cell_resource_allocator&         res_alloc,
 
     // Fill PUSCH for Msg3.
     ul_sched_info& pusch    = msg3_alloc.result.ul.puschs.back();
-    pusch.crnti             = pending_msg3.preamble.tc_rnti;
     pusch.pusch_cfg.bwp_cfg = &get_ul_bwp_cfg();
     pusch.pusch_cfg.prbs    = prbs;
     pusch.pusch_cfg.symbols = symbols;
+    pusch.pusch_cfg.rnti    = pending_msg3.preamble.tc_rnti;
     // TODO
 
     // Allocate Msg3 UL HARQ

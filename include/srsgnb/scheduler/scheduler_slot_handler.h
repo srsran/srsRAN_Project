@@ -158,7 +158,6 @@ struct dl_msg_tb_info {
 
 /// Dedicated DL Grant for UEs.
 struct dl_msg_alloc {
-  rnti_t                                        crnti;
   pdsch_information                             pdsch_cfg;
   static_vector<dl_msg_tb_info, MAX_NOF_LAYERS> tb_list;
 };
@@ -235,7 +234,6 @@ struct dl_sched_result {
 };
 
 struct ul_sched_info {
-  rnti_t            crnti;
   pusch_information pusch_cfg;
 };
 
