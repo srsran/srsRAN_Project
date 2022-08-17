@@ -71,18 +71,6 @@ public:
   static constexpr unsigned MAX_NOF_CSI_PART2_LLR =
       MAX_RB * pusch_constants::MAX_NRE_PER_RB * UCI_ON_PUSCH_MAX_ALPHA * pusch_constants::MAX_MODULATION_ORDER;
 
-  /// Data LLR buffer type.
-  using data_llr_buffer = static_vector<log_likelihood_ratio, MAX_NOF_DATA_LLR>;
-
-  /// HARQ-ACK LLR buffer type.
-  using harq_ack_llr_buffer = static_vector<log_likelihood_ratio, MAX_NOF_HARQ_ACK_LLR>;
-
-  /// CSI Part1 LLR buffer type.
-  using csi_part1_llr = static_vector<log_likelihood_ratio, MAX_NOF_CSI_PART1_LLR>;
-
-  /// CSI Part2 LLR buffer type.
-  using csi_part2_llr = static_vector<log_likelihood_ratio, MAX_NOF_CSI_PART2_LLR>;
-
   /// Parameters defining the demodulation procedure of a PUSCH transmission.
   struct configuration {
     /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.1.1.
@@ -140,10 +128,10 @@ public:
   /// \param[in]  grid      Resource grid for the current slot.
   /// \param[in]  estimates Channel estimates for the REs allocated to the PUSCH transmission.
   /// \param[in]  config    Configuration parameters.
-  virtual void demodulate(data_llr_buffer&            data,
-                          harq_ack_llr_buffer&        harq_ack,
-                          csi_part1_llr&              csi_part1,
-                          csi_part2_llr&              csi_part2,
+  virtual void demodulate(span<log_likelihood_ratio>  data,
+                          span<log_likelihood_ratio>  harq_ack,
+                          span<log_likelihood_ratio>  csi_part1,
+                          span<log_likelihood_ratio>  csi_part2,
                           const resource_grid_reader& grid,
                           const channel_estimate&     estimates,
                           const configuration&        config) = 0;

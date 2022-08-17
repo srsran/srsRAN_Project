@@ -15,10 +15,10 @@
 
 using namespace srsgnb;
 
-void pusch_demodulator_impl::demodulate(data_llr_buffer&            data,
-                                        harq_ack_llr_buffer&        harq_ack,
-                                        csi_part1_llr&              csi_part1,
-                                        csi_part2_llr&              csi_part2,
+void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
+                                        span<log_likelihood_ratio>  harq_ack,
+                                        span<log_likelihood_ratio>  csi_part1,
+                                        span<log_likelihood_ratio>  csi_part2,
                                         const resource_grid_reader& grid,
                                         const channel_estimate&     estimates,
                                         const configuration&        config)

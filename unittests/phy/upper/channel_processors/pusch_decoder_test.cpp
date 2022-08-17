@@ -95,7 +95,7 @@ int main(int argc, char** argv)
   std::unique_ptr<pusch_decoder> decoder = pusch_decoder_factory->create();
   TESTASSERT(decoder);
 
-  pusch_decoder::statistics dec_stats = {};
+  pusch_decoder_result dec_stats = {};
 
   rx_softbuffer_pool_description pool_config = {};
 

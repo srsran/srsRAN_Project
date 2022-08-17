@@ -14,6 +14,7 @@
 #pragma once
 
 #include "srsgnb/adt/span.h"
+#include "srsgnb/phy/upper/channel_processors/pusch_decoder_result.h"
 #include "srsgnb/phy/upper/codeblock_metadata.h"
 #include "srsgnb/phy/upper/log_likelihood_ratio.h"
 #include "srsgnb/phy/upper/rx_softbuffer.h"
@@ -39,20 +40,6 @@ public:
     bool new_data = true;
   };
 
-  /// PUSCH decoding statistics.
-  struct statistics {
-    /// Denotes whether the received transport block passed the CRC.
-    bool tb_crc_ok = false;
-    /// Total number of codeblocks in the current codeword.
-    unsigned nof_codeblocks_total = 0;
-    /// \brief LDPC decoding statistics.
-    ///
-    /// Provides access to LDPC decoding statistics such as the number of decoded codeblocks (via
-    /// <tt>ldpc_stats->get_nof_observations()</tt>) or the average number of iterations for correctly decoded
-    /// codeblocks (via <tt>ldpc_stats->get_mean()</tt>).
-    sample_statistics<unsigned> ldpc_decoder_stats = {};
-  };
-
   /// Default destructor.
   virtual ~pusch_decoder() = default;
 
@@ -73,7 +60,7 @@ public:
   /// \param[in]     blk_cfg         Transport block configuration.
   /// \param[in]     alg_cfg         LDPC decoding algorithm configuration.
   virtual void decode(span<uint8_t>                    transport_block,
-                      statistics&                      stats,
+                      pusch_decoder_result&            stats,
                       rx_softbuffer*                   soft_codeword,
                       span<const log_likelihood_ratio> llrs,
                       const configuration&             cfg) = 0;

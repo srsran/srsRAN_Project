@@ -17,6 +17,7 @@
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/constants.h"
+#include "srsgnb/phy/upper/channel_state_information.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/pusch/pusch_constants.h"
 #include "srsgnb/support/srsgnb_assert.h"
@@ -152,6 +153,14 @@ public:
     unsigned view_start = view_size * (rx_port + nof_rx_ports * tx_layer);
     return span<const cf_t>(ce).subspan(view_start, view_size);
   }
+
+  /// Returns the general Channel State Information.
+  channel_state_information get_channel_state_information() const
+  {
+    channel_state_information csi = {};
+    return csi;
+  }
+
   ///@}
 
   /// \name Setters.

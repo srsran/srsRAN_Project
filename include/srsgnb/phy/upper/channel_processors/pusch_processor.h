@@ -13,6 +13,7 @@
 #include "srsgnb/adt/static_vector.h"
 #include "srsgnb/phy/support/resource_grid.h"
 #include "srsgnb/phy/upper/channel_coding/ldpc/ldpc.h"
+#include "srsgnb/phy/upper/channel_processors/pusch_processor_result.h"
 #include "srsgnb/phy/upper/dmrs_mapping.h"
 #include "srsgnb/phy/upper/rb_allocation.h"
 #include "srsgnb/phy/upper/re_pattern.h"
@@ -30,11 +31,6 @@ namespace srsgnb {
 class pusch_processor
 {
 public:
-  /// \brief Maximum number of resource elements per resource block in a shared channel transmission.
-  ///
-  /// As per TS38.214 section 6.1.4.2 Transport block size determination.
-  static constexpr unsigned MAX_NRE_PER_RB = 156;
-
   /// \brief Describes a codeword configuration.
   /// \note The transport block size is given by the transport block data size.
   struct codeword_description {
@@ -144,39 +140,6 @@ public:
     float ratio_pusch_data_to_sss_dB;
   };
 
-  /// Describes channel state information from the received DMRS.
-  struct csi_indication {
-    /// Time alignment measurement in microseconds.
-    float time_aligment_us;
-    /// Average EPRE in decibels relative to 1.
-    float epre_dB;
-    /// Average RSRP in decibels relative to 1.
-    float rsrp_dB;
-    /// Average SINR in decibels.
-    float sinr_dB;
-  };
-
-  /// Describes the data information.
-  struct data_indication {
-    /// Set to true
-    bool crc;
-    /// Average number of iterations.
-    float average_iterations;
-  };
-
-  /// Describes the UCI information.
-  struct uci_indication {
-    // TBD.
-  };
-
-  /// Groups the PUSCH processor outcome.
-  struct outcome {
-    /// CSI from DMRS.
-    csi_indication csi;
-    /// SCH decoding information
-    data_indication data;
-  };
-
   /// Default destructor.
   virtual ~pusch_processor() = default;
 
@@ -188,7 +151,7 @@ public:
   /// \param[in,out] softbuffer Provides the data reception softbuffer.
   /// \param[in] grid Provides the destination resource grid.
   /// \param[in] pdu Provides the necessary parameters to process the PUSCH transmission.
-  virtual void
+  virtual pusch_processor_result
   process(span<uint8_t> data, rx_softbuffer& softbuffer, const resource_grid_reader& grid, const pdu_t& pdu) = 0;
 };
 

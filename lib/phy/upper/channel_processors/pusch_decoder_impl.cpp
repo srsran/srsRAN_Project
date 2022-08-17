@@ -116,7 +116,7 @@ static bool is_tb_crc_ok(span<const uint8_t>              transport_block_bytes,
 }
 
 void pusch_decoder_impl::decode(span<uint8_t>                    transport_block,
-                                statistics&                      stats,
+                                pusch_decoder_result&            stats,
                                 rx_softbuffer*                   soft_codeword,
                                 span<const log_likelihood_ratio> llrs,
                                 const configuration&             cfg)

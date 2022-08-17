@@ -36,10 +36,10 @@ public:
   }
 
   // See interface for the documentation.
-  void demodulate(data_llr_buffer&            data,
-                  harq_ack_llr_buffer&        harq_ack,
-                  csi_part1_llr&              csi_part1,
-                  csi_part2_llr&              csi_part2,
+  void demodulate(span<log_likelihood_ratio>  data,
+                  span<log_likelihood_ratio>  harq_ack,
+                  span<log_likelihood_ratio>  csi_part1,
+                  span<log_likelihood_ratio>  csi_part2,
                   const resource_grid_reader& grid,
                   const channel_estimate&     estimates,
                   const configuration&        config) override;
@@ -82,7 +82,8 @@ private:
   /// \param[in]     config   Configuration parameters.
   /// \remark The elements of \c data corresponding to HARQ-ACK bits will be set to zero (i.e., fully indeterminate data
   /// soft bit).
-  void extract_harq_ack(harq_ack_llr_buffer& harq_ack, data_llr_buffer& data, const configuration& config)
+  void
+  extract_harq_ack(span<log_likelihood_ratio> harq_ack, span<log_likelihood_ratio> data, const configuration& config)
   {
     // For now, do nothing.
   }
@@ -95,7 +96,9 @@ private:
   /// \param[in]     config    Configuration parameters.
   /// \remark The elements of \c data corresponding to CSI Part1 bits will be set to zero (i.e., fully indeterminate
   /// data soft bit).
-  void extract_csi_part1(csi_part1_llr& csi_part1, data_llr_buffer& data, const configuration& config)
+  void extract_csi_part1(span<log_likelihood_ratio>& csi_part1,
+                         span<log_likelihood_ratio>& data,
+                         const configuration&        config)
   {
     // For now, do nothing.
   }
@@ -108,7 +111,8 @@ private:
   /// \param[in]     config    Configuration parameters.
   /// \remark The elements of \c data corresponding to CSI Part2 bits will be set to zero (i.e., fully indeterminate
   /// data soft bit).
-  void extract_csi_part2(csi_part2_llr& csi_part2, data_llr_buffer& data, const configuration& config)
+  void
+  extract_csi_part2(span<log_likelihood_ratio> csi_part2, span<log_likelihood_ratio> data, const configuration& config)
   {
     // For now, do nothing.
   }

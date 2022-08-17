@@ -311,23 +311,33 @@ public:
 
 class pusch_processor_factory_sw : public pusch_processor_factory
 {
-private:
-  // TBD.
-
 public:
-  explicit pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& /**/)
+  explicit pusch_processor_factory_sw(pusch_processor_factory_sw_configuration& config) :
+    estimator_factory(config.estimator_factory),
+    demodulator_factory(config.demodulator_factory),
+    decoder_factory(config.decoder_factory),
+    ch_estimate_dimensions(config.ch_estimate_dimensions)
   {
-    // TBD.
+    srsgnb_assert(estimator_factory, "Invalid channel estimation factory.");
+    srsgnb_assert(demodulator_factory, "Invalid demodulation factory.");
+    srsgnb_assert(decoder_factory, "Invalid decoder factory.");
   }
 
   std::unique_ptr<pusch_processor> create() override
   {
     pusch_processor_configuration config;
-    config.estimator   = nullptr;
-    config.decoder     = nullptr;
-    config.demodulator = nullptr;
+    config.estimator   = estimator_factory->create();
+    config.decoder     = decoder_factory->create();
+    config.demodulator = demodulator_factory->create();
+    config.ce_dims     = ch_estimate_dimensions;
     return std::make_unique<pusch_processor_impl>(config);
   }
+
+private:
+  std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory;
+  std::shared_ptr<pusch_demodulator_factory>    demodulator_factory;
+  std::shared_ptr<pusch_decoder_factory>        decoder_factory;
+  channel_estimate::channel_estimate_dimensions ch_estimate_dimensions;
 };
 
 class ssb_processor_factory_sw : public ssb_processor_factory

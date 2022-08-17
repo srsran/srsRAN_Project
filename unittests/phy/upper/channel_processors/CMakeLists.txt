@@ -120,7 +120,8 @@ add_custom_command(
         VERBATIM)
 
 add_executable(pusch_processor_unittest pusch_processor_unittest.cpp)
-target_link_libraries(pusch_processor_unittest srsgnb_channel_processors srslog)
+target_link_libraries(pusch_processor_unittest srsgnb_channel_processors srslog gtest gtest_main)
+add_test(pusch_processor_unittest pusch_processor_unittest)
 
 add_executable(ssb_processor_unittest ssb_processor_unittest.cpp)
 target_link_libraries(ssb_processor_unittest srsgnb_channel_processors srslog)

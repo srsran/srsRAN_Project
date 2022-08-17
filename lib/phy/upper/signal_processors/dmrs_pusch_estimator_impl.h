@@ -13,8 +13,8 @@
 
 #pragma once
 
-#include "srsgnb/phy/upper/port_channel_estimator.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
+#include "srsgnb/phy/upper/signal_processors/port_channel_estimator.h"
 
 namespace srsgnb {
 
