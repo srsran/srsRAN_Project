@@ -40,7 +40,7 @@ void f1ap_ue_context_release_procedure::operator()(coro_context<async_task<ue_in
 void f1ap_ue_context_release_procedure::send_f1_ue_context_release_command()
 {
   // Pack message into PDU
-  f1c_msg f1c_ue_ctxt_rel_msg;
+  f1c_message f1c_ue_ctxt_rel_msg;
   f1c_ue_ctxt_rel_msg.pdu.set_init_msg();
   f1c_ue_ctxt_rel_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   f1c_ue_ctxt_rel_msg.pdu.init_msg().value.ue_context_release_cmd() = command;

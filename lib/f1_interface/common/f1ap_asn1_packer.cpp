@@ -24,7 +24,7 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
   logger.info("Received PDU of {} bytes", bytes.length());
 
   asn1::cbit_ref bref(bytes);
-  f1c_msg        msg = {};
+  f1c_message    msg = {};
   if (msg.pdu.unpack(bref) != asn1::SRSASN_SUCCESS) {
     logger.error("Couldn't unpack F1C PDU");
     return;
@@ -35,7 +35,7 @@ void f1ap_asn1_packer::handle_packed_pdu(const byte_buffer& bytes)
 }
 
 // Receive populated ASN1 struct that needs to be packed and forwarded.
-void f1ap_asn1_packer::handle_message(const f1c_msg& msg)
+void f1ap_asn1_packer::handle_message(const f1c_message& msg)
 {
   // pack PDU into temporary buffer
   byte_buffer   tx_pdu;

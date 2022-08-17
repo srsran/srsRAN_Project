@@ -14,7 +14,7 @@
 
 namespace srsgnb {
 
-struct f1c_msg {
+struct f1c_message {
   asn1::f1ap::f1_ap_pdu_c pdu;
 };
 
@@ -25,7 +25,7 @@ public:
   virtual ~f1c_message_handler() = default;
 
   /// Handle the incoming F1AP message.
-  virtual void handle_message(const f1c_msg& msg) = 0;
+  virtual void handle_message(const f1c_message& msg) = 0;
 };
 
 /// Interface used by F1 to inform about events.
@@ -43,7 +43,7 @@ public:
   virtual ~f1c_message_notifier() = default;
 
   /// This callback is invoked on each received F1AP message.
-  virtual void on_new_message(const f1c_msg& msg) = 0;
+  virtual void on_new_message(const f1c_message& msg) = 0;
 };
 
 } // namespace srsgnb

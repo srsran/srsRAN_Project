@@ -69,11 +69,11 @@ public:
 
   void attach_handler(f1c_message_handler* handler_) { handler = handler_; };
 
-  void on_new_message(const f1c_msg& msg) override
+  void on_new_message(const f1c_message& msg) override
   {
     if (msg.pdu.type() == asn1::f1ap::f1_ap_pdu_c::types::init_msg) {
       // Generate a fake F1 Setup response message and pass it back to the DU.
-      f1c_msg response;
+      f1c_message response;
 
       response.pdu.set_successful_outcome();
       response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);

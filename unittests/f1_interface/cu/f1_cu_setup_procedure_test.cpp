@@ -26,7 +26,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   test_logger.info("TEST: Receive F1SetupRequest message...");
 
   // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_valid_f1_setup_request();
+  f1c_message f1setup_msg = generate_valid_f1_setup_request();
 
   f1ap->handle_message(f1setup_msg);
 
@@ -50,7 +50,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 {
   // Generate F1SetupRequest
-  f1c_msg f1setup_msg = generate_f1_setup_request_base();
+  f1c_message f1setup_msg = generate_f1_setup_request_base();
 
   auto& setup_req = f1setup_msg.pdu.init_msg().value.f1_setup_request();
 

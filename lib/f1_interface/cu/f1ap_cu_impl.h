@@ -51,7 +51,7 @@ public:
 
   // f1c message handler functions
 
-  void handle_message(const f1c_msg& msg) override;
+  void handle_message(const f1c_message& msg) override;
 
   void handle_connection_loss() override {}
 

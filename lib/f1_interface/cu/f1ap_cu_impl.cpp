@@ -53,7 +53,7 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
 void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
 {
   // Pack message into PDU
-  f1c_msg f1c_msg;
+  f1c_message f1c_msg;
   if (msg.success) {
     // TODO send response
     logger.info("Transmitting F1SetupResponse message");
@@ -101,7 +101,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 
   logger.info("Transmitting DL RRC message");
   // Pack message into PDU
-  f1c_msg f1c_dl_rrc_msg;
+  f1c_message f1c_dl_rrc_msg;
   f1c_dl_rrc_msg.pdu.set_init_msg();
   f1c_dl_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_DLRRC_MSG_TRANSFER);
   f1c_dl_rrc_msg.pdu.init_msg().value.dlrrc_msg_transfer() = dlrrc_msg;
@@ -193,7 +193,7 @@ f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_
   });
 }
 
-void f1ap_cu_impl::handle_message(const f1c_msg& msg)
+void f1ap_cu_impl::handle_message(const f1c_message& msg)
 {
   logger.info("Handling F1AP PDU of type {}", msg.pdu.type().to_string());
 

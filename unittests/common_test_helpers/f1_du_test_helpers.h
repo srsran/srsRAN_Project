@@ -52,9 +52,9 @@ f1_setup_request_message generate_f1_setup_request_message()
   return request_msg;
 }
 
-f1c_msg generate_f1_setup_response_message(unsigned transaction_id)
+f1c_message generate_f1_setup_response_message(unsigned transaction_id)
 {
-  f1c_msg f1_setup_response = {};
+  f1c_message f1_setup_response = {};
 
   f1_setup_response.pdu.set_successful_outcome();
   f1_setup_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -68,9 +68,9 @@ f1c_msg generate_f1_setup_response_message(unsigned transaction_id)
   return f1_setup_response;
 }
 
-f1c_msg generate_f1_setup_failure_message(unsigned transaction_id)
+f1c_message generate_f1_setup_failure_message(unsigned transaction_id)
 {
-  f1c_msg f1_setup_failure = {};
+  f1c_message f1_setup_failure = {};
 
   f1_setup_failure.pdu.set_unsuccessful_outcome();
   f1_setup_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -87,10 +87,10 @@ f1c_msg generate_f1_setup_failure_message(unsigned transaction_id)
   return f1_setup_failure;
 }
 
-f1c_msg generate_f1_setup_failure_message_with_time_to_wait(unsigned                   transaction_id,
-                                                            asn1::f1ap::time_to_wait_e time_to_wait)
+f1c_message generate_f1_setup_failure_message_with_time_to_wait(unsigned                   transaction_id,
+                                                                asn1::f1ap::time_to_wait_e time_to_wait)
 {
-  f1c_msg f1_setup_failure = generate_f1_setup_failure_message(transaction_id);
+  f1c_message f1_setup_failure = generate_f1_setup_failure_message(transaction_id);
 
   auto& setup_fail                 = f1_setup_failure.pdu.unsuccessful_outcome().value.f1_setup_fail();
   setup_fail->time_to_wait_present = true;

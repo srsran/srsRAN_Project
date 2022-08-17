@@ -96,7 +96,7 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
   log_ue_event(logger, ue_event_prefix{"UL", pdu.ue_index}.set_channel("SRB0"), "Received PDU.");
 
   // FIXME: fill message
-  f1c_msg msg;
+  f1c_message msg;
 
   // Make it an initial message to let test pass.
   msg.pdu.set_init_msg();
@@ -105,7 +105,7 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
   f1c_notifier.on_new_message(msg);
 }
 
-void f1ap_du_impl::handle_message(const f1c_msg& msg)
+void f1ap_du_impl::handle_message(const f1c_message& msg)
 {
   expected<uint8_t> transaction_id = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {

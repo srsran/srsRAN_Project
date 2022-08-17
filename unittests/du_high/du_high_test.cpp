@@ -87,8 +87,8 @@ void test_f1_setup_network()
     sctp_network_gateway gw;
     f1ap_asn1_packer     packer;
 
-    f1c_msg last_f1c_msg;
-    void    handle_message(const f1c_msg& msg) override { last_f1c_msg = msg; }
+    f1c_message last_f1c_msg;
+    void        handle_message(const f1c_message& msg) override { last_f1c_msg = msg; }
   };
 
   du_high_worker_manager workers;
@@ -118,9 +118,9 @@ void test_du_ue_create()
   class dummy_f1c_pdu_handler : public f1c_message_handler
   {
   public:
-    f1c_msg        last_f1c_msg;
+    f1c_message    last_f1c_msg;
     task_executor* ctrl_exec;
-    void           handle_message(const f1c_msg& msg) override
+    void           handle_message(const f1c_message& msg) override
     {
       ctrl_exec->execute([this, msg]() { last_f1c_msg = msg; });
     }
@@ -149,7 +149,7 @@ void test_du_ue_create()
   du_obj.start();
 
   // Push F1c setup response to DU, signaling that the CU accepted the f1c connection.
-  f1c_msg f1c_msg;
+  f1c_message f1c_msg;
   f1c_msg.pdu.set_successful_outcome().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
   f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list_present = true;
   f1c_msg.pdu.successful_outcome().value.f1_setup_resp()->cells_to_be_activ_list.value.resize(1);

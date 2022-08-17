@@ -43,9 +43,9 @@ protected:
   srslog::basic_logger&                             test_logger = srslog::fetch_basic_logger("TEST");
 };
 
-f1c_msg generate_f1_setup_request_base()
+f1c_message generate_f1_setup_request_base()
 {
-  f1c_msg f1_setup_request_base = {};
+  f1c_message f1_setup_request_base = {};
 
   f1_setup_request_base.pdu.set_init_msg();
   f1_setup_request_base.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_F1_SETUP);
@@ -60,9 +60,9 @@ f1c_msg generate_f1_setup_request_base()
   return f1_setup_request_base;
 }
 
-f1c_msg generate_valid_f1_setup_request()
+f1c_message generate_valid_f1_setup_request()
 {
-  f1c_msg f1_setup_request = generate_f1_setup_request_base();
+  f1c_message f1_setup_request = generate_f1_setup_request_base();
 
   auto& setup_req                             = f1_setup_request.pdu.init_msg().value.f1_setup_request();
   setup_req->gnb_du_served_cells_list_present = true;
@@ -110,9 +110,9 @@ f1c_msg generate_valid_f1_setup_request()
   return f1_setup_request;
 }
 
-f1c_msg generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
+f1c_message generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
 {
-  f1c_msg init_ul_rrc_msg = {};
+  f1c_message init_ul_rrc_msg = {};
 
   init_ul_rrc_msg.pdu.set_init_msg();
   init_ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_INIT_ULRRC_MSG_TRANSFER);
@@ -134,9 +134,9 @@ f1c_msg generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
   return init_ul_rrc_msg;
 }
 
-f1c_msg generate_valid_rrc_setup_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+f1c_message generate_valid_rrc_setup_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
 {
-  f1c_msg ul_rrc_msg = {};
+  f1c_message ul_rrc_msg = {};
 
   ul_rrc_msg.pdu.set_init_msg();
   ul_rrc_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_ULRRC_MSG_TRANSFER);
@@ -154,9 +154,9 @@ f1c_msg generate_valid_rrc_setup_complete_msg(unsigned int cu_ue_id, unsigned in
   return ul_rrc_msg;
 }
 
-f1c_msg generate_f1_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+f1c_message generate_f1_ue_context_release_complete_msg(unsigned int cu_ue_id, unsigned int c_rnti)
 {
-  f1c_msg ue_ctxt_rel_complete_msg = {};
+  f1c_message ue_ctxt_rel_complete_msg = {};
   ue_ctxt_rel_complete_msg.pdu.set_successful_outcome();
   ue_ctxt_rel_complete_msg.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_RELEASE);
   auto& rel_complete_msg = ue_ctxt_rel_complete_msg.pdu.successful_outcome().value.ue_context_release_complete();

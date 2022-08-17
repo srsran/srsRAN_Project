@@ -25,7 +25,7 @@ public:
 
   void handle_packed_pdu(const byte_buffer& pdu);
 
-  void handle_message(const f1c_msg& msg) override;
+  void handle_message(const f1c_message& msg) override;
 
 private:
   srslog::basic_logger&         logger;

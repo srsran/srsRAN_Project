@@ -38,7 +38,7 @@ public:
   void handle_ul_rrc_message_transfer(const f1ap_ul_rrc_msg& msg) override {}
 
   // f1c message handler functions
-  void handle_message(const f1c_msg& msg) override;
+  void handle_message(const f1c_message& msg) override;
   void handle_connection_loss() override {}
 
   // f1ap ue context manager functions

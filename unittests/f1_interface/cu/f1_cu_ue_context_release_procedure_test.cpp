@@ -20,7 +20,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
 {
   // Action 1: Add UE
   test_logger.info("Injecting Initial UL RRC message");
-  f1c_msg init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
+  f1c_message init_ul_rrc_msg = generate_valid_f1_init_ul_rrc_msg(41255);
   f1ap->handle_message(init_ul_rrc_msg);
 
   EXPECT_EQ(f1ap->get_nof_ues(), 1);
@@ -40,7 +40,7 @@ TEST_F(f1ap_cu_test, when_ue_release_command_received_then_ue_removed)
 
   // Action 3: Inject UE Context Release Complete message
   test_logger.info("Injecting UE Context Release Complete message");
-  f1c_msg ue_ctxt_rel_complete_msg = generate_f1_ue_context_release_complete_msg(0, 41255);
+  f1c_message ue_ctxt_rel_complete_msg = generate_f1_ue_context_release_complete_msg(0, 41255);
   f1ap->handle_message(ue_ctxt_rel_complete_msg);
 
   EXPECT_TRUE(t.ready());
