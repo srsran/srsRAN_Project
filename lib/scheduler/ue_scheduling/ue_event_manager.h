@@ -49,15 +49,17 @@ private:
 
     template <typename Callable>
     common_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
-    {}
+    {
+    }
   };
   struct carrier_event_t {
-    du_ue_index_t                                           ue_index = MAX_NOF_DU_UES;
-    unique_function<void(ue_carrier&, event_logger&)>       callback;
+    du_ue_index_t                                     ue_index = MAX_NOF_DU_UES;
+    unique_function<void(ue_carrier&, event_logger&)> callback;
 
     template <typename Callable>
     carrier_event_t(du_ue_index_t ue_index_, Callable&& c) : ue_index(ue_index_), callback(std::forward<Callable>(c))
-    {}
+    {
+    }
   };
 
   void process_common(slot_point sl, du_cell_index_t cell_index);

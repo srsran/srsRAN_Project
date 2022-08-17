@@ -53,7 +53,7 @@ namespace detail {
   fmtbuf.push_back('\0'); // make it a c-string
 
   srslog::flush();
-  fmt::print(stderr, fmtbuf.data());
+  fmt::print(stderr, "{}", fmtbuf.data());
   std::abort();
 }
 

@@ -863,15 +863,19 @@ private:
     return -1;
   }
 
-  /// Iterates the bitset word-wise, and for each word, compute the mask of active bits, and call callback that
-  /// receives as an argument the word index and the active-bit mask. If the callback returns true, the iteration stops
-  /// and the function returns true.
+  /// \brief Finds first word, aka integer bitmap, within the provided bit index bounds for which the provided callback
+  /// returns true.
+  /// This helper function iterates through the bounded_bitset on a word-by-word basis. Note that operations over words
+  /// are generally faster than operations over individual bits.
+  /// For each iterated word, a mask of the selected bits is computed (which depends on the provided "start" and
+  /// "stop" bit indexes), and the provided callback is invoked. The callback receives as arguments the word index
+  /// and the selected-bit mask. If the callback returns true, the iteration stops and the function returns true.
   ///
-  /// \param start first bit index.
-  /// \param stop end bit index.
+  /// \param start first bit index of the bounded_bitset.
+  /// \param stop end bit index of the bounded_bitset.
   /// \param c Callback with signature "bool(size_t word_index, word_t active_mask)" called for each word of the bitset.
   ///          When this callback returns true, the iteration is stopped.
-  /// \return true if iteration was stopped early.
+  /// \return true if the provided callback returns true for a given word. False otherwise.
   template <typename C>
   bool find_first_word_(size_t start, size_t stop, const C& c) const
   {
