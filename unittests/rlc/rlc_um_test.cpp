@@ -10,6 +10,7 @@
 
 #include "../../lib/rlc/rlc_um_entity.h"
 #include "srsgnb/support/test_utils.h"
+#include <queue>
 
 namespace srsgnb {
 
@@ -35,14 +36,14 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
 public:
-  rlc_sdu_queue sdu_queue;
-  uint32_t      sdu_counter = 0;
+  std::queue<byte_buffer_slice> sdu_queue;
+  uint32_t                      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice sdu) override
   {
-    rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
-    sdu_queue.write(boxed_sdu);
+    sdu_queue.push(std::move(sdu));
+    sdu_counter++;
   }
 
   // rlc_tx_upper_layer_data_notifier interface
@@ -122,9 +123,11 @@ void test_full_sdus(rlc_um_sn_size sn_size)
   // Read SDUs from RLC2's upper layer
   TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT(sdu_bufs[i] == boxed_sdu.buf);
+    TESTASSERT(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    TESTASSERT_EQ(sdu_size, rx_sdu.length());
+    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    tester2.sdu_queue.pop();
   }
 }
 
@@ -212,10 +215,11 @@ void test_segmented_sdu(rlc_um_sn_size sn_size, bool reverse_rx = false)
   // Read SDUs from RLC2's upper layer
   TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-    TESTASSERT(sdu_bufs[i] == boxed_sdu.buf);
+    TESTASSERT(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    TESTASSERT_EQ(sdu_size, rx_sdu.length());
+    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    tester2.sdu_queue.pop();
   }
 }
 
@@ -312,10 +316,11 @@ void test_multiple_segmented_sdus(rlc_um_sn_size sn_size)
   // Therefore compare with initial testvectors in reverse order
   TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-    TESTASSERT(sdu_bufs[num_sdus - 1 - i] == boxed_sdu.buf);
+    TESTASSERT(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    TESTASSERT_EQ(sdu_size, rx_sdu.length());
+    TESTASSERT(sdu_bufs[num_sdus - 1 - i] == rx_sdu);
+    tester2.sdu_queue.pop();
   }
 }
 
@@ -404,10 +409,11 @@ void test_segmented_sdu_with_pdu_duplicates(rlc_um_sn_size sn_size, const uint32
   // Read SDUs from RLC2's upper layer
   TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-    TESTASSERT(sdu_bufs[i] == boxed_sdu.buf);
+    TESTASSERT(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    TESTASSERT_EQ(sdu_size, rx_sdu.length());
+    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    tester2.sdu_queue.pop();
   }
 }
 
@@ -483,11 +489,11 @@ void test_reassembly_window_wrap_around(rlc_um_sn_size sn_size)
     rlc2_rx_lower->handle_pdu(std::move(pdu));
 
     // Read SDU and check content
-    while (!tester2.sdu_queue.is_empty() && rx_sdu_idx < num_sdus) {
-      rlc_sdu boxed_sdu = {};
-      TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-      TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-      TESTASSERT(sdu_bufs[rx_sdu_idx] == boxed_sdu.buf);
+    while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
+      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      TESTASSERT_EQ(sdu_size, rx_sdu.length());
+      TESTASSERT(sdu_bufs[rx_sdu_idx] == rx_sdu);
+      tester2.sdu_queue.pop();
       rx_sdu_idx++;
     }
   }
@@ -576,11 +582,11 @@ void test_lost_pdu_outside_reassembly_window(rlc_um_sn_size sn_size)
     }
 
     // Read SDU and check content
-    while (!tester2.sdu_queue.is_empty() && rx_sdu_idx < num_sdus) {
-      rlc_sdu boxed_sdu = {};
-      TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-      TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-      TESTASSERT(sdu_bufs[rx_sdu_idx] == boxed_sdu.buf);
+    while (!tester2.sdu_queue.empty() && rx_sdu_idx < num_sdus) {
+      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      TESTASSERT_EQ(sdu_size, rx_sdu.length());
+      TESTASSERT(sdu_bufs[rx_sdu_idx] == rx_sdu);
+      tester2.sdu_queue.pop();
       rx_sdu_idx++;
     }
   }
@@ -679,10 +685,14 @@ void test_lost_segment_outside_reassembly_window(rlc_um_sn_size sn_size)
 
   // Read SDUs from RLC2's upper layer
   TESTASSERT_EQ(num_sdus - 1, tester2.sdu_counter);
-  for (uint32_t i = 0; i < tester2.sdu_counter; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
+  for (uint32_t i = 0; i < num_sdus; i++) {
+    if (i != 1) {
+      TESTASSERT(tester2.sdu_queue.empty() == false);
+      byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+      TESTASSERT_EQ(sdu_size, rx_sdu.length());
+      TESTASSERT(sdu_bufs[i] == rx_sdu);
+      tester2.sdu_queue.pop();
+    }
   }
 
   rlc_bearer_metrics_container rlc2_metrics = rlc2.get_metrics();
@@ -769,10 +779,11 @@ void test_out_of_order_segments_across_sdus(rlc_um_sn_size sn_size)
   // Read SDUs from RLC2's upper layer
   TESTASSERT_EQ(num_sdus, tester2.sdu_counter);
   for (uint32_t i = 0; i < num_sdus; i++) {
-    rlc_sdu boxed_sdu = {};
-    TESTASSERT_EQ(true, tester2.sdu_queue.read(boxed_sdu));
-    TESTASSERT_EQ(sdu_size, boxed_sdu.buf.length());
-    TESTASSERT(sdu_bufs[i] == boxed_sdu.buf);
+    TESTASSERT(tester2.sdu_queue.empty() == false);
+    byte_buffer_slice rx_sdu = tester2.sdu_queue.front();
+    TESTASSERT_EQ(sdu_size, rx_sdu.length());
+    TESTASSERT(sdu_bufs[i] == rx_sdu);
+    tester2.sdu_queue.pop();
   }
 
   rlc_bearer_metrics_container rlc2_metrics = rlc2.get_metrics();

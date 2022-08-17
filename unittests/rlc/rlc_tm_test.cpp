@@ -10,6 +10,7 @@
 
 #include "../../lib/rlc/rlc_tm_entity.h"
 #include "srsgnb/support/test_utils.h"
+#include <queue>
 
 namespace srsgnb {
 
@@ -34,14 +35,14 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
 public:
-  rlc_sdu_queue sdu_queue;
-  uint32_t      sdu_counter = 0;
+  std::queue<byte_buffer_slice> sdu_queue;
+  uint32_t                      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice sdu) override
   {
-    rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
-    sdu_queue.write(boxed_sdu);
+    sdu_queue.push(std::move(sdu));
+    sdu_counter++;
   }
 
   // rlc_tx_upper_layer_data_notifier interface
@@ -73,12 +74,11 @@ void test_rx()
   rlc1_rx_lower->handle_pdu(byte_buffer_slice{std::move(pdu)});
 
   // read cached SDU from tester
-  TESTASSERT(tester.sdu_queue.is_empty() == false);
-  rlc_sdu boxed_sdu = {};
-  TESTASSERT(tester.sdu_queue.read(boxed_sdu) == true);
+  TESTASSERT(tester.sdu_queue.empty() == false);
+  byte_buffer_slice rx_sdu = tester.sdu_queue.front();
 
-  TESTASSERT(boxed_sdu.buf == sdu);
-  TESTASSERT(boxed_sdu.pdcp_count == 0);
+  TESTASSERT(rx_sdu == sdu);
+  TESTASSERT(tester.sdu_counter == 1);
 }
 
 void test_tx()
@@ -98,7 +98,7 @@ void test_tx()
 
   {
     // write SDU into upper end
-    rlc_sdu sdu = {0, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {0, make_byte_buffer_and_log(tv_sdu)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -123,7 +123,7 @@ void test_tx()
 
   {
     // write another SDU into upper end
-    rlc_sdu sdu = {1, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {1, make_byte_buffer_and_log(tv_sdu)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();
@@ -141,7 +141,7 @@ void test_tx()
   {
     // write another SDU into upper end
     // there should now be two SDUs in the queue
-    rlc_sdu sdu = {2, byte_buffer_slice{make_byte_buffer_and_log(tv_sdu)}};
+    rlc_sdu sdu = {2, make_byte_buffer_and_log(tv_sdu)};
     rlc1_tx_upper->handle_sdu(std::move(sdu));
   }
   buffer_state = rlc1_tx_lower->get_buffer_state();

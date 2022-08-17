@@ -10,6 +10,7 @@
 
 #include "../../lib/rlc/rlc_am_entity.h"
 #include <gtest/gtest.h>
+#include <queue>
 
 using namespace srsgnb;
 
@@ -36,14 +37,14 @@ class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_buffer_state_update_notifier
 {
 public:
-  rlc_sdu_queue sdu_queue;
-  uint32_t      sdu_counter = 0;
+  std::queue<byte_buffer_slice> sdu_queue;
+  uint32_t                      sdu_counter = 0;
 
   // rlc_rx_upper_layer_data_notifier interface
   void on_new_sdu(byte_buffer_slice sdu) override
   {
-    rlc_sdu boxed_sdu(sdu_counter++, std::move(sdu));
-    sdu_queue.write(boxed_sdu);
+    sdu_queue.push(std::move(sdu));
+    sdu_counter++;
   }
 
   // rlc_tx_upper_layer_data_notifier interface

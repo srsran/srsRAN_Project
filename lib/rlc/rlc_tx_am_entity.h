@@ -23,11 +23,11 @@
 namespace srsgnb {
 
 struct rlc_tx_amd_pdu_box {
-  const uint32_t    rlc_sn     = INVALID_RLC_SN;
-  uint32_t          pdcp_count = INVALID_RLC_SN;
-  byte_buffer_slice sdu        = {};
-  uint32_t          next_so    = 0;
-  uint32_t          retx_count = RETX_COUNT_NOT_STARTED;
+  const uint32_t rlc_sn     = INVALID_RLC_SN;
+  uint32_t       pdcp_count = INVALID_RLC_SN;
+  byte_buffer    sdu        = {};
+  uint32_t       next_so    = 0;
+  uint32_t       retx_count = RETX_COUNT_NOT_STARTED;
   explicit rlc_tx_amd_pdu_box(uint32_t sn) : rlc_sn(sn) {}
 };
 

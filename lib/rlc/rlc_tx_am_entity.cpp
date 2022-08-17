@@ -158,7 +158,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(sdu.buf);
+  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu});
   logger.log_debug("Created RLC PDU - {} bytes", pdu_buf.length());
 
   // Update TX Next
@@ -218,7 +218,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_b
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, segment_payload_len));
+  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
   logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
@@ -305,7 +305,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, segment_payload_len));
+  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
   logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
@@ -421,7 +421,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Assemble PDU
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
-  pdu_buf.push_back(tx_pdu.sdu.make_slice(hdr.so, retx_payload_len));
+  pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, retx_payload_len});
   logger.log_debug("Created RLC ReTx PDU{} ({}) - {} bytes",
                    hdr.si == rlc_si_field::full_sdu ? "" : " segment",
                    si,

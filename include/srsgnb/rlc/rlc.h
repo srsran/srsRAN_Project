@@ -44,10 +44,10 @@ public:
 /// must be accompanied with the corresponding PDCP Count
 /// so that RLC AM can notify the PDCP of ACKs
 struct rlc_sdu {
-  uint32_t          pdcp_count = 0;
-  byte_buffer_slice buf        = {};
-  rlc_sdu()                    = default;
-  rlc_sdu(uint32_t pdcp_count, byte_buffer_slice buf) : pdcp_count(pdcp_count), buf(std::move(buf)) {}
+  uint32_t    pdcp_count = 0;
+  byte_buffer buf        = {};
+  rlc_sdu()              = default;
+  rlc_sdu(uint32_t pdcp_count, byte_buffer buf) : pdcp_count(pdcp_count), buf(std::move(buf)) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
