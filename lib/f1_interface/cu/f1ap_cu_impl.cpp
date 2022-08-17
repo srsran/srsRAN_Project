@@ -119,9 +119,16 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 async_task<f1ap_ue_context_setup_response_message>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request)
 {
-  f1ap_event_manager::f1ap_ue_context_setup_outcome_t f1_ue_ctx_setup_resp;
+  // Pack message into PDU
+  f1c_message f1c_ue_ctxt_setup_request_msg;
+  f1c_ue_ctxt_setup_request_msg.pdu.set_init_msg();
+  f1c_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
+  f1c_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request() = request.msg;
 
-  // TODO: send msg
+  // send UE context setup request message
+  pdu_notifier.on_new_message(f1c_ue_ctxt_setup_request_msg);
+
+  f1ap_event_manager::f1ap_ue_context_setup_outcome_t f1_ue_ctx_setup_resp;
 
   return launch_async([this, f1_ue_ctx_setup_resp, res = f1ap_ue_context_setup_response_message{}, request](
                           coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx) mutable {
@@ -169,9 +176,16 @@ f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_co
 async_task<f1ap_ue_context_modification_response_message>
 f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request)
 {
-  f1ap_event_manager::f1ap_ue_context_modification_outcome_t f1ap_ue_ctx_mod_resp;
+  // Pack message into PDU
+  f1c_message f1c_ue_ctxt_modification_request_msg;
+  f1c_ue_ctxt_modification_request_msg.pdu.set_init_msg();
+  f1c_ue_ctxt_modification_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+  f1c_ue_ctxt_modification_request_msg.pdu.init_msg().value.ue_context_mod_request() = request.msg;
 
-  // TODO: send msg
+  // send UE context modification request message
+  pdu_notifier.on_new_message(f1c_ue_ctxt_modification_request_msg);
+
+  f1ap_event_manager::f1ap_ue_context_modification_outcome_t f1ap_ue_ctx_mod_resp;
 
   return launch_async([this, f1ap_ue_ctx_mod_resp, res = f1ap_ue_context_modification_response_message{}, request](
                           coro_context<async_task<f1ap_ue_context_modification_response_message>>& ctx) mutable {
