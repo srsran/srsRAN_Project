@@ -122,21 +122,21 @@ static void pdcch_conversion_test()
                   TESTASSERT_EQ(duration_symbol, proc_pdu.coreset.duration);
 
                   if (type == pdcch_coreset_type::pbch_or_sib1) {
-                    TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
-                               pdcch_processor::coreset_description::CORESET0);
+                    TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
+                               pdcch_processor::cce_to_reg_mapping_type::CORESET0);
                     TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
                     TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
                     TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);
                   } else {
                     if (cce_reg_mapping == cce_to_reg_mapping_type::non_interleaved) {
-                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
-                                 pdcch_processor::coreset_description::NON_INTERLEAVED);
+                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
+                                 pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED);
                       TESTASSERT_EQ(0, proc_pdu.coreset.reg_bundle_size);
                       TESTASSERT_EQ(0, proc_pdu.coreset.interleaver_size);
                       TESTASSERT_EQ(0, proc_pdu.coreset.shift_index);
                     } else {
-                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping_type ==
-                                 pdcch_processor::coreset_description::INTERLEAVED);
+                      TESTASSERT(proc_pdu.coreset.cce_to_reg_mapping ==
+                                 pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED);
                       TESTASSERT_EQ(reg_bundle, proc_pdu.coreset.reg_bundle_size);
                       TESTASSERT_EQ(interleaver_size, proc_pdu.coreset.interleaver_size);
                       TESTASSERT_EQ(shift_index, proc_pdu.coreset.shift_index);

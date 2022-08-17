@@ -59,6 +59,16 @@ public:
     static_vector<uint8_t, MAX_PORTS> ports;
   };
 
+  /// CCE-to-REG mapping types as per TS38.211 Section 7.3.2.2.
+  enum class cce_to_reg_mapping_type {
+    /// CORESET is configured by the PBCH or SIB1, (subcarrier 0 of the CORESET)
+    CORESET0 = 0,
+    /// Not configured by PBCH or SIB 1, and non-interleaved.
+    NON_INTERLEAVED,
+    /// Not configured by PBCH or SIB 1, and interleaved.
+    INTERLEAVED
+  };
+
   /// \brief Describes CORESET parameters.
   ///
   /// Provides the Control Resource Set (CORESET, TS38.331 \c ControlResourceSet for more information) related
@@ -84,15 +94,8 @@ public:
     /// This is a bitmap defining non-overlapping groups of 6 PRBs in ascending order. Defined as \f$N_{CORESET}^RB\f$
     /// as per TS38.211 Section 7.3.2.2.
     bounded_bitset<pdcch_constants::MAX_NOF_FREQ_RESOURCES> frequency_resources;
-    /// Indicates the CCE-to-REG mapping type as per TS38.211 Section 7.3.2.2.
-    enum {
-      /// CORESET is configured by the PBCH or SIB1, (subcarrier 0 of the CORESET)
-      CORESET0 = 0,
-      /// Not configured by PBCH or SIB 1, and non-interleaved.
-      NON_INTERLEAVED,
-      /// Not configured by PBCH or SIB 1, and interleaved.
-      INTERLEAVED
-    } cce_to_reg_mapping_type;
+    /// CCE-to-REG mapping.
+    cce_to_reg_mapping_type cce_to_reg_mapping;
     /// \brief The number of REGs in a bundle. Corresponds to parameter \f$L\f$ in TS38.211 7.3.2.2.
     ///
     /// Ignored for \c cce_to_reg_mapping_type set to \c INTERLEAVED or \c CORESET0. It must be:

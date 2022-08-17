@@ -19,8 +19,8 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
                                                              const dci_description&     dci)
 {
   prb_index_list prb_indexes;
-  switch (coreset.cce_to_reg_mapping_type) {
-    case coreset_description::CORESET0:
+  switch (coreset.cce_to_reg_mapping) {
+    case cce_to_reg_mapping_type::CORESET0:
       prb_indexes = cce_to_prb_mapping_coreset0(coreset.bwp_start_rb,
                                                 coreset.bwp_size_rb,
                                                 coreset.duration,
@@ -28,11 +28,11 @@ bounded_bitset<MAX_RB> pdcch_processor_impl::compute_rb_mask(const coreset_descr
                                                 dci.aggregation_level,
                                                 dci.cce_index);
       break;
-    case coreset_description::NON_INTERLEAVED:
+    case cce_to_reg_mapping_type::NON_INTERLEAVED:
       prb_indexes = cce_to_prb_mapping_non_interleaved(
           coreset.bwp_start_rb, coreset.frequency_resources, coreset.duration, dci.aggregation_level, dci.cce_index);
       break;
-    case coreset_description::INTERLEAVED:
+    case cce_to_reg_mapping_type::INTERLEAVED:
       prb_indexes = cce_to_prb_mapping_interleaved(coreset.bwp_start_rb,
                                                    coreset.frequency_resources,
                                                    coreset.duration,
@@ -91,7 +91,7 @@ void pdcch_processor_impl::process(srsgnb::resource_grid_writer& grid, const pdc
     modulator->modulate(grid, encoded, modulator_config);
 
     unsigned reference_point_k_rb =
-        coreset.cce_to_reg_mapping_type == coreset_description::CORESET0 ? coreset.bwp_start_rb : 0;
+        coreset.cce_to_reg_mapping == cce_to_reg_mapping_type::CORESET0 ? coreset.bwp_start_rb : 0;
 
     // Populate DMRS for PDCCH configuration.
     dmrs_pdcch_processor::config_t dmrs_pdcch_config = {};

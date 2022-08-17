@@ -185,14 +185,19 @@ public:
   /// \param[in] units Units counted in the throughput (ie. bits, symbols, etc.).
   void print_percentiles_throughput(const std::string& units) const
   {
-    unsigned percentile_width = get_percentile_width_throughput();
-    unsigned descr_with       = get_description_width();
+    if (benchmark_results.empty()) {
+      fmt::print("No benchmark results for {}.\n", title);
+      return;
+    }
 
-    print_percentile_header(descr_with, percentile_width, "mega" + units + " per second");
+    unsigned percentile_width = get_percentile_width_throughput();
+    unsigned descr_width      = get_description_width();
+
+    print_percentile_header(descr_width, percentile_width, "mega" + units + " per second");
     for (const benchmark_result& result : benchmark_results) {
       fmt::print(" {:{}}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|{:{}.1f}|\n",
                  result.description,
-                 descr_with,
+                 descr_width,
                  convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.5)], result.size),
                  percentile_width,
                  convert_to_throughput(result.measurements[static_cast<size_t>(nof_repetitions * 0.75)], result.size),

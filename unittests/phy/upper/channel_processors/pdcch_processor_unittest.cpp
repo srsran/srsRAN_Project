@@ -72,16 +72,16 @@ int main()
         for (unsigned duration : {1, 2, 3}) {
           for (cyclic_prefix cp : {cyclic_prefix::NORMAL, cyclic_prefix::EXTENDED}) {
             for (unsigned aggregation_level : {1, 2, 4, 8, 16}) {
-              for (auto cce_to_reg_mapping_type : {pdcch_processor::coreset_description::CORESET0,
-                                                   pdcch_processor::coreset_description::NON_INTERLEAVED,
-                                                   pdcch_processor::coreset_description::INTERLEAVED}) {
+              for (auto cce_to_reg_mapping : {pdcch_processor::cce_to_reg_mapping_type::CORESET0,
+                                              pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED,
+                                              pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED}) {
                 // Skip if it cannot fit a candidate.
                 if (duration * (bwp_size_rb / 6) < aggregation_level) {
                   continue;
                 }
 
                 unsigned numerology  = dist_numerology(rgen);
-                bool     is_coreset0 = (cce_to_reg_mapping_type == pdcch_processor::coreset_description::CORESET0);
+                bool     is_coreset0 = (cce_to_reg_mapping == pdcch_processor::cce_to_reg_mapping_type::CORESET0);
                 unsigned E =
                     aggregation_level * pdcch_constants::NOF_REG_PER_CCE * pdcch_constants::NOF_RE_PDCCH_PER_RB * 2;
 
@@ -99,7 +99,7 @@ int main()
                 coreset.start_symbol_index                    = start_symbol_index;
                 coreset.duration                              = duration;
                 coreset.frequency_resources                   = frequency_resources;
-                coreset.cce_to_reg_mapping_type               = cce_to_reg_mapping_type;
+                coreset.cce_to_reg_mapping                    = cce_to_reg_mapping;
                 coreset.reg_bundle_size                       = 6;
                 coreset.interleaver_size                      = 2;
                 coreset.shift_index                           = 0;

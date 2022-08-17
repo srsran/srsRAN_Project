@@ -63,7 +63,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
   // Configure CCE-to-REG mapping depending on PDCCH CORESET.
   if (fapi_pdu.coreset_type == pdcch_coreset_type::pbch_or_sib1) {
     // The PDCCH is located in CORESET0.
-    coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::CORESET0;
+    coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::CORESET0;
 
     // The REG bundle size and interleaver size are ignored.
     coreset.reg_bundle_size  = 0;
@@ -73,7 +73,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
     // The PDCCH is NOt located in CORESET0.
     if (fapi_pdu.cce_reg_mapping_type == cce_to_reg_mapping_type::non_interleaved) {
       // Non-interleaved case.
-      coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::NON_INTERLEAVED;
+      coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::NON_INTERLEAVED;
 
       // The REG bundle size and interleaver size are ignored.
       coreset.reg_bundle_size  = 0;
@@ -81,7 +81,7 @@ static void fill_coreset(pdcch_processor::coreset_description& coreset, const dl
       coreset.shift_index      = 0;
     } else {
       // Interleaved case.
-      coreset.cce_to_reg_mapping_type = pdcch_processor::coreset_description::INTERLEAVED;
+      coreset.cce_to_reg_mapping = pdcch_processor::cce_to_reg_mapping_type::INTERLEAVED;
 
       // The REG bundle size and interleaver size are ignored.
       coreset.reg_bundle_size  = fapi_pdu.reg_bundle_size;
