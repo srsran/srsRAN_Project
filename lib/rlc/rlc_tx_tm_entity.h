@@ -27,8 +27,8 @@ public:
                    lcid_t                               lcid,
                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_buffer_state_update_notifier& buffer_state_notifier) :
-    rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, buffer_state_notifier)
+                   rlc_tx_lower_notifier&               lower_dn) :
+    rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn)
   {
   }
 
@@ -92,7 +92,7 @@ public:
   {
     std::lock_guard<std::mutex> lock(buffer_state_mutex);
     unsigned                    bytes = get_buffer_state();
-    buffer_state_notifier.on_buffer_state_update(bytes);
+    lower_dn.on_buffer_state_update(bytes);
   }
 };
 

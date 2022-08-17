@@ -28,17 +28,21 @@ class rlc_base_entity : public rlc_entity
 {
 public:
   rlc_base_entity(du_ue_index_t du_index, lcid_t lcid) : logger("RLC", du_index, lcid) {}
-  ~rlc_base_entity() override = default;
+  ~rlc_base_entity() override                         = default;
+  rlc_base_entity(const rlc_base_entity&)             = delete;
+  rlc_base_entity& operator=(const rlc_base_entity&)  = delete;
+  rlc_base_entity(const rlc_base_entity&&)            = delete;
+  rlc_base_entity& operator=(const rlc_base_entity&&) = delete;
 
-  rlc_tx_sdu_handler*     get_tx_sdu_handler() final { return tx.get(); };
-  rlc_tx_pdu_transmitter* get_tx_pdu_transmitter() final { return tx.get(); };
-  rlc_rx_pdu_handler*     get_rx_pdu_handler() final { return rx.get(); };
+  rlc_tx_upper_data_interface* get_tx_upper_data_interface() final { return tx.get(); };
+  rlc_tx_lower_interface*      get_tx_lower_interface() final { return tx.get(); };
+  rlc_rx_lower_interface*      get_rx_lower_interface() final { return rx.get(); };
 
   rlc_bearer_metrics_container get_metrics()
   {
-    rlc_bearer_metrics_container metrics;
-    metrics.tx = tx->get_metrics();
-    metrics.rx = rx->get_metrics();
+    rlc_bearer_metrics_container metrics = {};
+    metrics.tx                           = tx->get_metrics();
+    metrics.rx                           = rx->get_metrics();
     return metrics;
   }
 

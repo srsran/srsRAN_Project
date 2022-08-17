@@ -18,9 +18,9 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
                                    const rlc_tx_am_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                                   rlc_tx_buffer_state_update_notifier& buffer_state_notif,
+                                   rlc_tx_lower_notifier&               lower_dn,
                                    timer_manager&                       timers) :
-  rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, buffer_state_notif),
+  rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
@@ -626,7 +626,7 @@ void rlc_tx_am_entity::handle_buffer_state_update()
 {
   std::lock_guard<std::mutex> lock(mutex);
   uint32_t                    bytes = get_buffer_state_nolock();
-  buffer_state_notifier.on_buffer_state_update(bytes);
+  lower_dn.on_buffer_state_update(bytes);
 }
 
 uint32_t rlc_tx_am_entity::get_buffer_state_nolock()

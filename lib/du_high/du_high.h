@@ -17,7 +17,8 @@
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/mac/mac_cell_result.h"
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
 #include <memory>

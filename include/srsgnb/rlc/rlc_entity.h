@@ -10,7 +10,8 @@
 
 #pragma once
 
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_tx.h"
 
 namespace srsgnb {
 
@@ -22,9 +23,9 @@ public:
   rlc_entity()          = default;
   virtual ~rlc_entity() = default;
 
-  virtual rlc_tx_sdu_handler*     get_tx_sdu_handler()     = 0;
-  virtual rlc_tx_pdu_transmitter* get_tx_pdu_transmitter() = 0;
-  virtual rlc_rx_pdu_handler*     get_rx_pdu_handler()     = 0;
+  virtual rlc_tx_upper_data_interface* get_tx_upper_data_interface() = 0;
+  virtual rlc_tx_lower_interface*      get_tx_lower_interface()      = 0;
+  virtual rlc_rx_lower_interface*      get_rx_lower_interface()      = 0;
 };
 
 } // namespace srsgnb

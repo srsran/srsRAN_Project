@@ -22,10 +22,10 @@ public:
   rlc_am_entity(du_ue_index_t                        du_index,
                 lcid_t                               lcid,
                 const rlc_am_config&                 config,
-                rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
+                rlc_rx_upper_data_notifier&          rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
-                rlc_tx_buffer_state_update_notifier& buffer_state_notifier,
+                rlc_tx_lower_notifier&               tx_lower_dn,
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
@@ -35,8 +35,8 @@ public:
                   config.rx == nullptr ? " RX" : "");
 
     // Create AM entities
-    std::unique_ptr<rlc_tx_am_entity> tx_am = std::make_unique<rlc_tx_am_entity>(
-        du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, buffer_state_notifier, timers);
+    std::unique_ptr<rlc_tx_am_entity> tx_am =
+        std::make_unique<rlc_tx_am_entity>(du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers);
     logger.log_info(
         "RLC TX AM configured: sn_field_length={}, t_poll_retx={}, max_retx_thresh={}, poll_pdu={}, poll_byte={}",
         config.tx->sn_field_length,

@@ -31,10 +31,10 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 }
 
 /// Mocking class of the surrounding layers invoked by the RLC.
-class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
+class rlc_test_frame : public rlc_rx_upper_data_notifier,
                        public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
-                       public rlc_tx_buffer_state_update_notifier
+                       public rlc_tx_lower_notifier
 {
 public:
   std::queue<byte_buffer_slice> sdu_queue;
@@ -109,12 +109,12 @@ protected:
         du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester2, tester2, tester2, tester2, timers);
 
     // Bind interfaces
-    rlc1_rx_lower = rlc1->get_rx_pdu_handler();
-    rlc1_tx_upper = rlc1->get_tx_sdu_handler();
-    rlc1_tx_lower = rlc1->get_tx_pdu_transmitter();
-    rlc2_rx_lower = rlc2->get_rx_pdu_handler();
-    rlc2_tx_upper = rlc2->get_tx_sdu_handler();
-    rlc2_tx_lower = rlc2->get_tx_pdu_transmitter();
+    rlc1_rx_lower = rlc2->get_rx_lower_interface();
+    rlc1_tx_upper = rlc1->get_tx_upper_data_interface();
+    rlc1_tx_lower = rlc1->get_tx_lower_interface();
+    rlc2_rx_lower = rlc2->get_rx_lower_interface();
+    rlc2_tx_upper = rlc1->get_tx_upper_data_interface();
+    rlc2_tx_lower = rlc2->get_tx_lower_interface();
   }
 
   /// \brief Creates a byte_buffer serving as SDU for RLC
@@ -248,12 +248,12 @@ protected:
   timer_manager                  timers;
   rlc_test_frame                 tester1, tester2;
   std::unique_ptr<rlc_am_entity> rlc1, rlc2;
-  rlc_rx_pdu_handler*            rlc1_rx_lower = nullptr;
-  rlc_tx_sdu_handler*            rlc1_tx_upper = nullptr;
-  rlc_tx_pdu_transmitter*        rlc1_tx_lower = nullptr;
-  rlc_rx_pdu_handler*            rlc2_rx_lower = nullptr;
-  rlc_tx_sdu_handler*            rlc2_tx_upper = nullptr;
-  rlc_tx_pdu_transmitter*        rlc2_tx_lower = nullptr;
+  rlc_rx_lower_interface*        rlc1_rx_lower = nullptr;
+  rlc_tx_upper_data_interface*   rlc1_tx_upper = nullptr;
+  rlc_tx_lower_interface*        rlc1_tx_lower = nullptr;
+  rlc_rx_lower_interface*        rlc2_rx_lower = nullptr;
+  rlc_tx_upper_data_interface*   rlc2_tx_upper = nullptr;
+  rlc_tx_lower_interface*        rlc2_tx_lower = nullptr;
 };
 
 TEST_P(rlc_tx_am_test, create_new_entity)

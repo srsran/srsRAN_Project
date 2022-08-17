@@ -11,23 +11,24 @@
 #pragma once
 
 #include "srsgnb/ran/bearer_logger.h"
-#include "srsgnb/rlc/rlc.h"
 #include "srsgnb/rlc/rlc_metrics.h"
+#include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_tx.h"
 
 namespace srsgnb {
 
 /// Base class used for receiving RLC bearers.
 /// It provides interfaces for the RLC bearers, for the lower layers
-class rlc_rx_entity : public rlc_rx_pdu_handler, public rlc_bearer_rx_metrics
+class rlc_rx_entity : public rlc_rx_lower_interface, public rlc_bearer_rx_metrics
 {
 protected:
-  rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_layer_data_notifier& upper_dn) :
+  rlc_rx_entity(du_ue_index_t du_index, lcid_t lcid, rlc_rx_upper_data_notifier& upper_dn) :
     logger("RLC", du_index, lcid), upper_dn(upper_dn)
   {
   }
 
-  bearer_logger                     logger;
-  rlc_rx_upper_layer_data_notifier& upper_dn;
+  bearer_logger               logger;
+  rlc_rx_upper_data_notifier& upper_dn;
 };
 
 } // namespace srsgnb

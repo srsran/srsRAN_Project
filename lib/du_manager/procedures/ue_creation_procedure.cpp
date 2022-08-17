@@ -93,23 +93,23 @@ void ue_creation_procedure::create_srb0()
   srb0.rlc_tx_ul_ctrl_notif = std::make_unique<rlc_tx_control_notifier>();
 
   // Create RLC BSR update notification adapter.
-  srb0.rlc_bsr_notifier =
+  srb0.rlc_tx_ll_data_notif =
       std::make_unique<rlc_tx_mac_buffer_state_updater>(ue_ctx.ue_index, LCID_SRB0, *cfg.mac_ue_ctrl);
 
   // Create RLC entity.
   rlc_entity_creation_message rlc_msg{};
-  rlc_msg.ue_index            = ue_ctx.ue_index;
-  rlc_msg.lcid                = LCID_SRB0;
-  rlc_msg.rx_upper_dn         = srb0.rlc_rx_ul_sdu_notif.get();
-  rlc_msg.tx_upper_dn         = srb0.rlc_tx_ul_data_notif.get();
-  rlc_msg.tx_upper_cn         = srb0.rlc_tx_ul_ctrl_notif.get();
-  rlc_msg.bsr_update_notifier = srb0.rlc_bsr_notifier.get();
-  rlc_msg.config.mode         = rlc_mode::tm;
-  srb0.rlc_bearer             = create_rlc_entity(rlc_msg);
+  rlc_msg.ue_index    = ue_ctx.ue_index;
+  rlc_msg.lcid        = LCID_SRB0;
+  rlc_msg.rx_upper_dn = srb0.rlc_rx_ul_sdu_notif.get();
+  rlc_msg.tx_upper_dn = srb0.rlc_tx_ul_data_notif.get();
+  rlc_msg.tx_upper_cn = srb0.rlc_tx_ul_ctrl_notif.get();
+  rlc_msg.tx_lower_dn = srb0.rlc_tx_ll_data_notif.get();
+  rlc_msg.config.mode = rlc_mode::tm;
+  srb0.rlc_bearer     = create_rlc_entity(rlc_msg);
 
   // Create MAC -> RLC adapters.
-  srb0.mac_rx_notifier = std::make_unique<mac_sdu_rx_adapter>(*srb0.rlc_bearer->get_rx_pdu_handler());
-  srb0.mac_tx_notifier = std::make_unique<mac_sdu_tx_adapter>(*srb0.rlc_bearer->get_tx_pdu_transmitter());
+  srb0.mac_rx_notifier = std::make_unique<mac_sdu_rx_adapter>(*srb0.rlc_bearer->get_rx_lower_interface());
+  srb0.mac_tx_notifier = std::make_unique<mac_sdu_tx_adapter>(*srb0.rlc_bearer->get_tx_lower_interface());
 }
 
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()

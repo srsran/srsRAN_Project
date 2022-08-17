@@ -22,16 +22,15 @@ public:
   rlc_um_entity(du_ue_index_t                        du_index,
                 lcid_t                               lcid,
                 const rlc_um_config&                 config,
-                rlc_rx_upper_layer_data_notifier&    rx_upper_dn,
+                rlc_rx_upper_data_notifier&          rx_upper_dn,
                 rlc_tx_upper_layer_data_notifier&    tx_upper_dn,
                 rlc_tx_upper_layer_control_notifier& tx_upper_cn,
-                rlc_tx_buffer_state_update_notifier& buffer_state_notifier,
+                rlc_tx_lower_notifier&               tx_lower_dn,
                 timer_manager&                       timers) :
     rlc_base_entity(du_index, lcid)
   {
     if (config.tx != nullptr) {
-      tx = std::make_unique<rlc_tx_um_entity>(
-          du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, buffer_state_notifier);
+      tx = std::make_unique<rlc_tx_um_entity>(du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn);
       logger.log_info("RLC TX UM configured: sn_field_length={}", config.tx->sn_field_length);
     } else {
       logger.log_info("Configured RLC UM without TX entity");

@@ -5,7 +5,8 @@
 #include "srsgnb/du/du_cell_config.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/mac/mac.h"
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_rx.h"
+#include "srsgnb/rlc/rlc_tx.h"
 #include "srsgnb/support/executors/task_executor.h"
 #include "srsgnb/support/timers.h"
 

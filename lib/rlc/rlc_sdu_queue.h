@@ -12,7 +12,7 @@
 
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/circular_buffer.h"
-#include "srsgnb/rlc/rlc.h"
+#include "srsgnb/rlc/rlc_tx.h"
 #include <cstdint>
 #include <functional>
 #include <list>

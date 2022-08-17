@@ -16,7 +16,7 @@
 namespace srsgnb {
 namespace srs_du {
 
-class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_layer_data_notifier
+class rlc_rx_rrc_sdu_adapter : public rlc_rx_upper_data_notifier
 {
 public:
   explicit rlc_rx_rrc_sdu_adapter(f1ap_rrc_message_transfer_procedure_handler& f1ap_rrc_) : f1ap(&f1ap_rrc_) {}
@@ -55,7 +55,7 @@ public:
   }
 };
 
-class rlc_tx_mac_buffer_state_updater : public rlc_tx_buffer_state_update_notifier
+class rlc_tx_mac_buffer_state_updater : public rlc_tx_lower_notifier
 {
 public:
   rlc_tx_mac_buffer_state_updater(du_ue_index_t ue_index_, lcid_t lcid_, mac_ue_control_information_handler& mac_) :

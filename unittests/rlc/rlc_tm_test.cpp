@@ -29,10 +29,10 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
   return pdu;
 }
 
-class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
+class rlc_test_frame : public rlc_rx_upper_data_notifier,
                        public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
-                       public rlc_tx_buffer_state_update_notifier
+                       public rlc_tx_lower_notifier
 {
 public:
   std::queue<byte_buffer_slice> sdu_queue;
@@ -62,7 +62,7 @@ void test_rx()
   rlc_test_frame      tester;
   rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester, tester);
 
-  rlc_rx_pdu_handler* rlc1_rx_lower = rlc1.get_rx_pdu_handler();
+  rlc_rx_lower_interface* rlc1_rx_lower = rlc1.get_rx_lower_interface();
 
   const int                              payload_len = 4;
   const std::array<uint8_t, payload_len> tv_sdu      = {0xc0, 0xca, 0xc0, 0x1a};
@@ -87,8 +87,8 @@ void test_tx()
   rlc_test_frame      tester;
   rlc_tm_entity       rlc1(du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, tester, tester, tester, tester);
 
-  rlc_tx_sdu_handler*     rlc1_tx_upper = rlc1.get_tx_sdu_handler();
-  rlc_tx_pdu_transmitter* rlc1_tx_lower = rlc1.get_tx_pdu_transmitter();
+  rlc_tx_upper_data_interface* rlc1_tx_upper = rlc1.get_tx_upper_data_interface();
+  rlc_tx_lower_interface*      rlc1_tx_lower = rlc1.get_tx_lower_interface();
 
   uint32_t buffer_state = 0;
 
