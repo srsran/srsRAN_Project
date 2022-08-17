@@ -69,7 +69,7 @@ private:
   void
   map_to_prb_other(resource_grid_writer& grid, static_vector<span<cf_t>, MAX_PORTS> x_pdsch, const config_t& config);
 
-  /// Temporal modulated data
+  /// Temporary modulated data.
   std::array<std::array<cf_t, MAX_CODEWORD_SIZE>, MAX_NOF_CODEWORDS>         temp_d;
   std::array<std::array<cf_t, MAX_RB * NRE * MAX_NSYMB_PER_SLOT>, MAX_PORTS> temp_x;
 
