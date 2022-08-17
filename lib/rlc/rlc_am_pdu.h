@@ -62,6 +62,25 @@ struct rlc_am_pdu_header {
   rlc_am_sn_size sn_size; ///< Sequence number size (12 or 18 bits)
   uint32_t       sn;      ///< Sequence number
   uint16_t       so;      ///< Sequence offset
+  uint32_t       get_packed_size() const
+  {
+    if (si == rlc_si_field::last_segment || si == rlc_si_field::middle_segment) {
+      return rlc_am_pdu_header_max_size(sn_size);
+    }
+    return rlc_am_pdu_header_min_size(sn_size);
+    ;
+  }
+};
+
+/// AM SDU segment container
+struct rlc_am_sdu_segment {
+  rlc_am_pdu_header header;  ///< PDU header
+  byte_buffer_slice payload; ///< PDU payload
+};
+
+/// AM SDU segment compare object
+struct rlc_am_sdu_segment_cmp {
+  bool operator()(const rlc_am_sdu_segment& a, const rlc_am_sdu_segment& b) const { return a.header.so < b.header.so; }
 };
 
 /// Status PDU NACK
@@ -149,7 +168,8 @@ public:
  * Header pack/unpack helper functions
  * Ref: 3GPP TS 38.322 v15.3.0 Section 6.2.2.4
  ***************************************************************************/
-inline bool rlc_am_read_data_pdu_header(const byte_buffer& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
+inline bool
+rlc_am_read_data_pdu_header(const byte_buffer_view& pdu, const rlc_am_sn_size sn_size, rlc_am_pdu_header* header)
 {
   byte_buffer_reader pdu_reader = pdu;
   if (pdu_reader.empty()) {

@@ -17,7 +17,11 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
                                    const rlc_rx_am_config&           config,
                                    rlc_rx_upper_layer_data_notifier& upper_dn,
                                    timer_manager&                    timers) :
-  rlc_rx_entity(du_index, lcid, upper_dn), cfg(config), mod(cardinality(to_number(cfg.sn_field_length)))
+  rlc_rx_entity(du_index, lcid, upper_dn),
+  cfg(config),
+  mod(cardinality(to_number(cfg.sn_field_length))),
+  am_window_size(window_size(to_number(cfg.sn_field_length))),
+  reassembly_timer(timers.create_unique_timer())
 {
 }
 
@@ -28,16 +32,304 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
   logger.log_info("Rx PDU ({} B)", buf.length());
   metrics_add_sdus(1, buf.length());
   if (rlc_am_status_pdu::is_control_pdu(buf.view())) {
-    rlc_am_status_pdu status_pdu(cfg.sn_field_length);
-    if (status_pdu.unpack(buf.view())) {
-      logger.log_debug(buf.begin(), buf.end(), "Successfully unpacked control PDU ({} B)", buf.length());
-      status_handler->handle_status_pdu(std::move(status_pdu));
-    } else {
-      logger.log_error(buf.begin(), buf.end(), "Failed to unpack control PDU ({} B)", buf.length());
-    }
+    handle_control_pdu(std::move(buf));
   } else {
-    // TODO: handle data PDU
+    handle_data_pdu(std::move(buf));
   }
+}
+
+void rlc_rx_am_entity::handle_control_pdu(byte_buffer_slice buf)
+{
+  rlc_am_status_pdu status_pdu(cfg.sn_field_length);
+  if (status_pdu.unpack(buf.view())) {
+    logger.log_debug(buf.begin(), buf.end(), "Successfully unpacked control PDU ({} B)", buf.length());
+    status_handler->handle_status_pdu(std::move(status_pdu));
+  } else {
+    logger.log_error(buf.begin(), buf.end(), "Failed to unpack control PDU ({} B)", buf.length());
+  }
+}
+
+void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
+{
+  logger.log_debug(buf.begin(), buf.end(), "Rx data PDU ({} B)", buf.length());
+  rlc_am_pdu_header header = {};
+  if (not rlc_am_read_data_pdu_header(buf.view(), cfg.sn_field_length, &header)) {
+    logger.log_warning("Failed to unpack header of RLC PDU");
+    metrics_add_malformed_pdus(1);
+    return;
+  }
+  logger.log_debug("PDU header: {}", header);
+
+  // strip header, extract payload
+  size_t            header_len = header.get_packed_size();
+  byte_buffer_slice payload    = buf.make_slice(header_len, buf.length() - header_len);
+
+  // Trigger polling if poll bit is set.
+  // We do this before checking if the PDU is inside the RX window,
+  // as the RX window may have advanced without the TX having received the ACKs
+  // This can cause a data stall, whereby the TX keeps retransmiting
+  // a PDU outside of the Rx window.
+  // Also, we do this before discarding duplicate SDUs/SDU segments
+  // Because t-PollRetransmit may transmit a PDU that was already
+  // received.
+  if (header.p != 0U) {
+    logger.log_info("status packet requested through polling bit");
+    do_status = true;
+  }
+
+  // Check whether SDU is within Rx Window
+  if (!inside_rx_window(header.sn)) {
+    logger.log_info(
+        "SN={} outside rx window [{}:{}] - discarding", header.sn, st.rx_next, (st.rx_next + am_window_size) % mod);
+    return;
+  }
+
+  // Section 5.2.3.2.2, discard duplicate PDUs
+  if (rx_window.find(header.sn) != rx_window.end() && rx_window.at(header.sn).fully_received) {
+    logger.log_info("discarding duplicate SN={}", header.sn);
+    return;
+  }
+
+  // Section 5.2.3.2.2, discard segments with overlapping bytes
+  if (rx_window.find(header.sn) != rx_window.end() && header.si != rlc_si_field::full_sdu) {
+    for (const auto& segm : rx_window.at(header.sn).segments) {
+      uint32_t segm_last_byte = segm.header.so + segm.payload.length() - 1;
+      uint32_t pdu_last_byte  = header.so + payload.length() - 1;
+      if ((header.so >= segm.header.so && header.so <= segm_last_byte) ||
+          (pdu_last_byte >= segm.header.so && pdu_last_byte <= segm_last_byte)) {
+        logger.log_info("Got SDU segment with duplicate bytes. Discarding.");
+        logger.log_info("Discarded SDU segment. SN={}, SO={}, last_byte={}, length={}",
+                        header.sn,
+                        header.so,
+                        pdu_last_byte,
+                        payload.length());
+        logger.log_info("Overlaping with SDU segment: SN={}, SO={}, last_byte={}, length={}",
+                        header.sn,
+                        segm.header.so,
+                        segm_last_byte,
+                        segm.payload.length());
+        return;
+      }
+    }
+  }
+
+  // Write to rx window either full SDU or SDU segment
+  if (header.si == rlc_si_field::full_sdu) {
+    handle_full_data_sdu(header, payload);
+  } else {
+    handle_segment_data_sdu(header, payload);
+  }
+
+  logger.log_debug("State: {}", st);
+
+  // 5.2.3.2.3 Actions when an AMD PDU is placed in the reception buffer
+  /*
+   * - if x >= RX_Next_Highest
+   *   - update RX_Next_Highest to x+ 1.
+   */
+  if (rx_mod_base_nr(header.sn) >= rx_mod_base_nr(st.rx_next_highest)) {
+    st.rx_next_highest = (header.sn + 1) % mod;
+  }
+
+  /*
+   * - if all bytes of the RLC SDU with SN = x are received:
+   */
+  if (rx_window.find(header.sn) != rx_window.end() && rx_window.at(header.sn).fully_received) {
+    /*
+     * - reassemble the RLC SDU from AMD PDU(s) with SN = x, remove RLC headers when doing so and deliver
+     *   the reassembled RLC SDU to upper layer;
+     */
+    rlc_amd_sdu_composer& pdu = rx_window.at(header.sn);
+    logger.log_info("Rx SDU ({} B)", pdu.sdu.length());
+    metrics_add_sdus(1, pdu.sdu.length());
+    //
+    // TODO: avoid copy, pass byte_buffer_slice_chain upwards
+    //
+    byte_buffer sdu = {pdu.sdu.begin(), pdu.sdu.end()};
+    upper_dn.on_new_sdu(std::move(sdu));
+
+    // delete PDU from rx_window
+    rx_window.erase(header.sn);
+
+    /*
+     * - if x = RX_Highest_Status,
+     *   - update RX_Highest_Status to the SN of the first RLC SDU with SN > current RX_Highest_Status for which not
+     * all bytes have been received.
+     */
+    if (rx_mod_base_nr(header.sn) == rx_mod_base_nr(st.rx_highest_status)) {
+      uint32_t sn_upd = 0;
+      for (sn_upd = (st.rx_highest_status + 1) % mod; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+           sn_upd = (sn_upd + 1) % mod) {
+        if (rx_window.find(sn_upd) != rx_window.end()) {
+          if (not rx_window.at(sn_upd).fully_received) {
+            break; // first SDU not fully received
+          }
+        } else {
+          break; // first SDU not fully received
+        }
+      }
+      // Update to the SN of the first SDU with missing bytes.
+      // If it not exists, update to the end of the rx_window.
+      st.rx_highest_status = sn_upd;
+    }
+    /*
+     * - if x = RX_Next:
+     *   - update RX_Next to the SN of the first RLC SDU with SN > current RX_Next for which not all bytes
+     *     have been received.
+     */
+    if (rx_mod_base_nr(header.sn) == rx_mod_base_nr(st.rx_next)) {
+      uint32_t sn_upd = 0;
+      // move rx_next forward and remove all fully received SDUs from rx_window
+      for (sn_upd = (st.rx_next) % mod; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+           sn_upd = (sn_upd + 1) % mod) {
+        if (rx_window.find(sn_upd) != rx_window.end()) {
+          if (not rx_window.at(sn_upd).fully_received) {
+            break; // first SDU not fully received
+          }
+          // RX_Next serves as the lower edge of the receiving window
+          // As such, we remove any SDU from the window if we update this value
+          rx_window.erase(sn_upd);
+        } else {
+          break; // first SDU not fully received
+        }
+      }
+      // Update to the SN of the first SDU with missing bytes.
+      // If it not exists, update to the end of the rx_window.
+      st.rx_next = sn_upd;
+    }
+  }
+
+  if (reassembly_timer.is_running()) {
+    // if t-Reassembly is running:
+    /*
+     * - if RX_Next_Status_Trigger = RX_Next; or
+     * - if RX_Next_Status_Trigger = RX_Next + 1 and there is no missing byte segment of the SDU associated with
+     *   SN = RX_Next before the last byte of all received segments of this SDU; or
+     * - if RX_Next_Status_Trigger falls outside of the receiving window and RX_Next_Status_Trigger is not equal
+     *   to RX_Next + AM_Window_Size:
+     * - stop and reset t-Reassembly.
+     */
+    bool stop_reassembly_timer = false;
+    if (st.rx_next_status_trigger == st.rx_next) {
+      stop_reassembly_timer = true;
+    }
+    if (rx_mod_base_nr(st.rx_next_status_trigger) == rx_mod_base_nr(st.rx_next + 1)) {
+      if (not rx_window.at(st.rx_next).has_gap) {
+        stop_reassembly_timer = true;
+      }
+    }
+    if (not inside_rx_window(st.rx_next_status_trigger)) {
+      stop_reassembly_timer = true;
+    }
+    if (stop_reassembly_timer) {
+      reassembly_timer.stop();
+    }
+  }
+
+  if (not reassembly_timer.is_running()) {
+    // if t-Reassembly is not running (includes the case t-Reassembly is stopped due to actions above):
+    /*
+     * - if RX_Next_Highest> RX_Next +1; or
+     * - if RX_Next_Highest = RX_Next + 1 and there is at least one missing byte segment of the SDU associated
+     *   with SN = RX_Next before the last byte of all received segments of this SDU:
+     *   - start t-Reassembly;
+     *   - set RX_Next_Status_Trigger to RX_Next_Highest.
+     */
+    bool restart_reassembly_timer = false;
+    if (rx_mod_base_nr(st.rx_next_highest) > rx_mod_base_nr(st.rx_next + 1)) {
+      restart_reassembly_timer = true;
+    }
+    if (rx_mod_base_nr(st.rx_next_highest) == rx_mod_base_nr(st.rx_next + 1)) {
+      if (rx_window.find(st.rx_next) != rx_window.end() && rx_window.at(st.rx_next).has_gap) {
+        restart_reassembly_timer = true;
+      }
+    }
+    if (restart_reassembly_timer) {
+      reassembly_timer.run();
+      st.rx_next_status_trigger = st.rx_next_highest;
+    }
+  }
+}
+
+void rlc_rx_am_entity::handle_full_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload)
+{
+  srsgnb_assert(header.si == rlc_si_field::full_sdu, "called {} with SDU segment. Header: {}", __FUNCTION__, header);
+
+  // Full SDU received. Add to Rx window and use full payload as SDU.
+  rlc_amd_sdu_composer& rx_sdu = rx_window[header.sn];
+  rx_sdu.segments.clear();
+  //
+  // TODO: avoid copy
+  //
+  rx_sdu.sdu            = byte_buffer{payload.begin(), payload.end()};
+  rx_sdu.fully_received = true;
+  rx_sdu.has_gap        = false;
+}
+
+void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload)
+{
+  srsgnb_assert(header.si != rlc_si_field::full_sdu, "called {} with full SDU. Header: {}", __FUNCTION__, header);
+
+  // Log SDU segment reception
+  logger.log_debug("PDU SI: {}", header.sn);
+
+  // Add a new SDU segment to the RX window if necessary
+  rlc_amd_sdu_composer& rx_sdu = rx_window[header.sn];
+
+  // Create SDU segment, to be stored later
+  rlc_am_sdu_segment segment = {};
+  segment.header             = header;
+  segment.payload            = std::move(payload);
+
+  // Store SDU segment. Sort by SO and check for duplicate bytes.
+  rx_sdu.segments.insert(std::move(segment));
+
+  // Check whether all segments have been received
+  update_segment_inventory(rx_sdu);
+  if (rx_sdu.fully_received) {
+    logger.log_info("Segmented SDU completed. SN={}.", header.sn);
+
+    // Assemble SDU from segments
+    //
+    // TODO: avoid copy
+    //
+    for (const auto& it : rx_sdu.segments) {
+      if (it.header.so + it.payload.length() > rx_sdu.sdu.length()) {
+        uint32_t piece_length = it.header.so + it.payload.length() - rx_sdu.sdu.length();
+        rx_sdu.sdu.append(it.payload.view().view(it.payload.length() - piece_length, piece_length));
+      }
+    }
+  }
+}
+
+void rlc_rx_am_entity::update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) const
+{
+  if (rx_sdu.segments.empty()) {
+    rx_sdu.fully_received = false;
+    rx_sdu.has_gap        = false;
+    return;
+  }
+
+  // Check for gaps and if all segments have been received
+  uint32_t next_byte = 0;
+  for (const auto& it : rx_sdu.segments) {
+    if (it.header.so != next_byte) {
+      // Found gap: set flags and return
+      rx_sdu.has_gap        = true;
+      rx_sdu.fully_received = false;
+      return;
+    }
+    if (it.header.si == rlc_si_field::last_segment) {
+      // Reached last segment without any gaps: set flags and return
+      rx_sdu.has_gap        = false;
+      rx_sdu.fully_received = true;
+      return;
+    }
+    next_byte += it.payload.length();
+  }
+  // No gaps, but last segment not yet received
+  rx_sdu.has_gap        = false;
+  rx_sdu.fully_received = false;
 }
 
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
@@ -54,6 +346,5 @@ uint32_t rlc_rx_am_entity::get_status_pdu_length()
 
 bool rlc_rx_am_entity::status_report_required()
 {
-  // TODO
-  return false;
+  return do_status;
 }
