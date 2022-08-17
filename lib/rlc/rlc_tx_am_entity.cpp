@@ -146,7 +146,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   hdr.si                = rlc_si_field::full_sdu;
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
-  tx_pdu.header         = hdr;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
@@ -207,7 +206,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_b
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
   hdr.so                = tx_pdu.next_so;
-  tx_pdu.header         = hdr;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
@@ -295,7 +293,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = st.tx_next;
   hdr.so                = tx_pdu.next_so;
-  tx_pdu.header         = hdr;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header
@@ -408,7 +405,6 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   hdr.sn_size           = cfg.sn_field_length;
   hdr.sn                = retx.sn;
   hdr.so                = retx.so;
-  tx_pdu.header         = hdr;
   logger.log_debug("AMD PDU header: {}", hdr);
 
   // Pack header

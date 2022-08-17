@@ -25,7 +25,6 @@ namespace srsgnb {
 struct rlc_tx_amd_pdu_box {
   const uint32_t    rlc_sn     = INVALID_RLC_SN;
   uint32_t          pdcp_count = INVALID_RLC_SN;
-  rlc_am_pdu_header header     = {};
   byte_buffer_slice sdu        = {};
   uint32_t          next_so    = 0;
   uint32_t          retx_count = RETX_COUNT_NOT_STARTED;
