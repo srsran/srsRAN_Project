@@ -47,11 +47,11 @@ int main()
     std::vector<log_likelihood_ratio> soft_bits(nof_bits);
     demodulator->demodulate_soft(soft_bits, symbols, noise_var, mod);
 
-    const std::vector<log_likelihood_ratio> soft_bits_true = test_case.soft_bits.read();
-    TESTASSERT_EQ(soft_bits_true.size(), nof_bits, "Error reading soft bits.");
+    const std::vector<log_likelihood_ratio> soft_bits_expected = test_case.soft_bits.read();
+    TESTASSERT_EQ(soft_bits_expected.size(), nof_bits, "Error reading soft bits.");
 
-    TESTASSERT_EQ(span<const log_likelihood_ratio>(soft_bits),
-                  span<const log_likelihood_ratio>(soft_bits_true),
+    TESTASSERT_EQ(span<const log_likelihood_ratio>(soft_bits_expected),
+                  span<const log_likelihood_ratio>(soft_bits),
                   "Soft bits are not sufficiently precise.");
 
     std::vector<uint8_t> hard_bits(nof_bits);
