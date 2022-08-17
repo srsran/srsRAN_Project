@@ -45,7 +45,7 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_delivered_sdu(uint32_t pdcp_sn) override {}
+  void on_delivered_sdu(uint32_t pdcp_count) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -78,7 +78,7 @@ void test_rx()
   TESTASSERT(tester.sdu_queue.read(boxed_sdu) == true);
 
   TESTASSERT(boxed_sdu.buf == sdu);
-  TESTASSERT(boxed_sdu.pdcp_sn == 0);
+  TESTASSERT(boxed_sdu.pdcp_count == 0);
 }
 
 void test_tx()

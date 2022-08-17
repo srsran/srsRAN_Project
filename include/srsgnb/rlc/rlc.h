@@ -41,13 +41,13 @@ public:
 };
 
 /// Structure used to represent an RLC SDU. An RLC SDU
-/// must be accompanied with the corresponding PDCP SN
+/// must be accompanied with the corresponding PDCP Count
 /// so that RLC AM can notify the PDCP of ACKs
 struct rlc_sdu {
-  uint32_t          pdcp_sn = 0;
-  byte_buffer_slice buf     = {};
-  rlc_sdu()                 = default;
-  rlc_sdu(uint32_t pdcp_sn, byte_buffer_slice buf) : pdcp_sn(pdcp_sn), buf(std::move(buf)) {}
+  uint32_t          pdcp_count = 0;
+  byte_buffer_slice buf        = {};
+  rlc_sdu()                    = default;
+  rlc_sdu(uint32_t pdcp_count, byte_buffer_slice buf) : pdcp_count(pdcp_count), buf(std::move(buf)) {}
 };
 
 /// This interface represents the data entry point of the transmitting side of a RLC entity.
@@ -61,7 +61,7 @@ public:
   /// \param sdu SDU to be handled
   virtual void handle_sdu(rlc_sdu sdu) = 0;
 
-  // TODO: discard_sdu(uint32_t pdcp_sn)
+  // TODO: discard_sdu(uint32_t pdcp_count)
 };
 
 /// This interface represents the data exit point of the transmitting side of a RLC entity.
@@ -93,7 +93,7 @@ class rlc_tx_upper_layer_data_notifier
 public:
   virtual ~rlc_tx_upper_layer_data_notifier() = default;
 
-  virtual void on_delivered_sdu(uint32_t pdcp_sn) = 0;
+  virtual void on_delivered_sdu(uint32_t pdcp_count) = 0;
 };
 
 /// This interface represents the control upper layer that the

@@ -47,7 +47,7 @@ public:
   }
 
   // rlc_tx_upper_layer_data_notifier interface
-  void on_delivered_sdu(uint32_t pdcp_sn) override {}
+  void on_delivered_sdu(uint32_t pdcp_count) override {}
 
   // rlc_tx_upper_layer_control_notifier interface
   void on_protocol_failure() override {}
@@ -136,13 +136,13 @@ protected:
   ///
   /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
   /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
-  /// \param pdcp_sn Sequence number coming from PDCP
+  /// \param pdcp_count PDCP count value
   /// \param sdu_size Size of the SDU
   /// \param first_byte Value of the first byte
   /// \return the produced SDU as a rlc_sdu
-  rlc_sdu create_rlc_sdu(uint32_t pdcp_sn, uint32_t sdu_size, uint8_t first_byte = 0) const
+  rlc_sdu create_rlc_sdu(uint32_t pdcp_count, uint32_t sdu_size, uint8_t first_byte = 0) const
   {
-    rlc_sdu sdu = {pdcp_sn, create_sdu(sdu_size, first_byte)};
+    rlc_sdu sdu = {pdcp_count, create_sdu(sdu_size, first_byte)};
     return sdu;
   }
 

@@ -47,13 +47,15 @@ void rlc_tx_am_entity::handle_sdu(rlc_sdu sdu)
                   sdu.buf.end(),
                   "Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
                   sdu.buf.length(),
-                  sdu.pdcp_sn,
+                  sdu.pdcp_count,
                   sdu_queue.size_sdus());
   if (sdu_queue.write(sdu)) {
     metrics_add_sdus(1, sdu_length);
   } else {
-    logger.log_warning(
-        "Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}", sdu_length, sdu.pdcp_sn, sdu_queue.size_sdus());
+    logger.log_warning("Dropped Tx SDU (length: {} B, PDCP SN: {}, enqueued SDUs: {}",
+                       sdu_length,
+                       sdu.pdcp_count,
+                       sdu_queue.size_sdus());
     metrics_add_lost_sdus(1);
   }
 }
@@ -122,12 +124,12 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
     logger.log_debug("No SDUs left in the tx queue.");
     return {};
   }
-  logger.log_debug("Read RLC SDU - RLC_SN={}, PDCP_SN={}, {} bytes", st.tx_next, sdu.pdcp_sn, sdu.buf.length());
+  logger.log_debug("Read RLC SDU - RLC_SN={}, PDCP_SN={}, {} bytes", st.tx_next, sdu.pdcp_count, sdu.buf.length());
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
   rlc_tx_amd_pdu_box& tx_pdu = tx_window->add_pdu(st.tx_next);
-  tx_pdu.pdcp_sn             = sdu.pdcp_sn;
+  tx_pdu.pdcp_count          = sdu.pdcp_count;
   tx_pdu.sdu                 = std::move(sdu.buf); // Move SDU into TX window SDU box
 
   // Segment new SDU if necessary
@@ -489,8 +491,8 @@ void rlc_tx_am_entity::handle_status_pdu(rlc_am_status_pdu status)
                          : status.get_nacks()[0].nack_sn; // Stop processing ACKs at the first NACK, if it exists.
   for (uint32_t sn = st.tx_next_ack; tx_mod_base(sn) < tx_mod_base(stop_sn); sn = (sn + 1) % mod) {
     if (tx_window->has_sn(sn)) {
-      upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_sn); // notify upper layer
-      retx_queue.remove_sn(sn);                            // remove any pending retx for that SN
+      upper_dn.on_delivered_sdu((*tx_window)[sn].pdcp_count); // notify upper layer
+      retx_queue.remove_sn(sn);                               // remove any pending retx for that SN
       tx_window->remove_pdu(sn);
       st.tx_next_ack = (sn + 1) % mod;
     } else {
@@ -618,7 +620,7 @@ void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
     logger.log_warning("Signaling max number of reTx={} for SN={}", (*tx_window)[sn].retx_count, sn);
     upper_cn.on_max_retx();
     // TODO: notify upper layer data plane of SDU failure
-    // upper_dn.on_failed_sdu((*tx_window)[sn].pdcp_sn);
+    // upper_dn.on_failed_sdu((*tx_window)[sn].pdcp_count);
 
     metrics_add_lost_sdus(1);
   }
