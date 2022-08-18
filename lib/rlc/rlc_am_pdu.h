@@ -103,9 +103,9 @@ private:
   rlc_am_sn_size sn_size = rlc_am_sn_size::size12bits;
   /// Stored modulus to determine continuous sequences across SN overflows
   uint32_t mod_nr = cardinality(to_number(rlc_am_sn_size::size12bits));
-  /// Internal NACK container; keep in sync with packed_size_
+  /// Internal NACK container; keep in sync with packed_size
   std::vector<rlc_am_status_nack> nacks = {};
-  /// Stores the current packed size; sync on each change of nacks_
+  /// Stores the current packed size; sync on each change of nacks
   uint32_t packed_size = rlc_am_nr_status_pdu_sizeof_header_ack_sn;
 
   void     refresh_packed_size();
@@ -290,7 +290,7 @@ struct formatter<srsgnb::rlc_am_status_pdu> {
     memory_buffer buffer;
     format_to(buffer, "ACK_SN={}, N_nack={}", status.ack_sn, status.get_nacks().size());
     if (status.get_nacks().size() > 0) {
-      format_to(buffer, ", NACK_SN=");
+      format_to(buffer, ", NACK=");
       for (auto nack : status.get_nacks()) {
         format_to(buffer, "[{}]", nack);
       }

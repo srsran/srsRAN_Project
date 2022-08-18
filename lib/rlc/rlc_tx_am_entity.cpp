@@ -124,7 +124,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
     logger.log_debug("No SDUs left in the tx queue.");
     return {};
   }
-  logger.log_debug("Read RLC SDU - RLC_SN={}, PDCP_SN={}, {} bytes", st.tx_next, sdu.pdcp_count, sdu.buf.length());
+  logger.log_debug("Read RLC SDU - SN={}, pdcp_count={}, {} bytes", st.tx_next, sdu.pdcp_count, sdu.buf.length());
 
   // insert newly assigned SN into window and use reference for in-place operations
   // NOTE: from now on, we can't return from this function anymore before increasing tx_next
