@@ -18,7 +18,7 @@ struct rlc_bearer_tx_metrics_container {
   // SDU metrics
   uint32_t num_sdus;         ///< Number of SDUs
   size_t   num_sdu_bytes;    ///< Number of SDU bytes
-  uint32_t num_dropped_sdus; ///< Number of dropped SDUs (full queue, max ReTx)
+  uint32_t num_dropped_sdus; ///< Number of dropped SDUs (due to full queue)
 
   // PDU metrics
   uint32_t num_pdus;      ///< Number of PDUs

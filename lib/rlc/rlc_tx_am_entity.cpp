@@ -612,8 +612,6 @@ void rlc_tx_am_entity::check_sn_reached_max_retx(uint32_t sn)
     upper_cn.on_max_retx();
     // TODO: notify upper layer data plane of SDU failure
     // upper_dn.on_failed_sdu((*tx_window)[sn].pdcp_count);
-
-    metrics_add_lost_sdus(1);
   }
 }
 
