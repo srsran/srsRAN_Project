@@ -8,11 +8,11 @@
  *
  */
 
-#include "../../common_test_helpers/f1_cu_test_helpers.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include "srsgnb/support/test_utils.h"
+#include "unittests/f1_interface/common/f1_cu_test_helpers.h"
 #include "unittests/f1_interface/common/test_helpers.h"
 #include <gtest/gtest.h>
 
@@ -31,7 +31,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
   f1ap->handle_message(f1setup_msg);
 
   // Action 2: Check if F1SetupRequest was forwarded to CU manager
-  EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11);
+  EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
 
   // Action 3: Transmit F1SetupResponse message
   test_logger.info("TEST: Transmit F1SetupResponse message...");
@@ -61,7 +61,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
   f1ap->handle_message(f1setup_msg);
 
   // Action 2: Check if F1SetupRequest was forwarded to CU manager
-  EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11);
+  EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
 
   // Action 3: Transmit F1SetupFailure message
   test_logger.info("TEST: Transmit F1SetupFailure message...");

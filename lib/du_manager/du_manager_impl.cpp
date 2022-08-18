@@ -16,7 +16,8 @@ using namespace srs_du;
 
 du_manager_impl::du_manager_impl(const du_manager_config_t& cfg_) :
   cfg(cfg_), cell_mng(cfg), ue_mng(cfg), main_ctrl_loop(128)
-{}
+{
+}
 
 void du_manager_impl::start()
 {
@@ -36,6 +37,11 @@ void du_manager_impl::handle_ul_ccch_indication(const ul_ccch_indication_message
     // Start UE create procedure
     ue_mng.handle_ue_create_request(msg);
   });
+}
+
+du_manager_ue_task_scheduler& du_manager_impl::get_ue_task_scheduler(du_ue_index_t ue_index)
+{
+  return ue_mng.get_ue_task_scheduler(ue_index);
 }
 
 size_t du_manager_impl::nof_ues()

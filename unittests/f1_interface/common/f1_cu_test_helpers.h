@@ -14,7 +14,7 @@
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu_factory.h"
-#include "unittests/f1_interface/common/test_helpers.h"
+#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {

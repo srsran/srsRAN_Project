@@ -15,6 +15,7 @@
 #include "srsgnb/ran/bs_channel_bandwidth.h"
 #include "srsgnb/ran/pdcch/pdcch_type0_css_coreset_config.h"
 #include "srsgnb/ran/tdd_ul_dl_config.h"
+#include "srsgnb/support/error_handling.h"
 
 // TODO: This file is temporary. Eventually we will receive cell configurations from the DU config file.
 

@@ -16,11 +16,38 @@
 #include "srsgnb/f1_interface/common/f1c_common.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
-#include "unittests/f1_interface/common/test_helpers.h"
+#include "srsgnb/support/async/async_task_loop.h"
+#include "test_helpers.h"
 #include <gtest/gtest.h>
 
 namespace srsgnb {
 namespace srs_du {
+
+class dummy_f1c_task_scheduler : public f1c_task_scheduler
+{
+public:
+  struct dummy_ue_task_sched : public f1c_ue_task_scheduler {
+    dummy_f1c_task_scheduler* parent;
+
+    dummy_ue_task_sched(dummy_f1c_task_scheduler* parent_) : parent(parent_) {}
+
+    unique_timer create_timer() override { return parent->timers.create_unique_timer(); }
+
+    /// \brief Schedule Async Task respective to a given UE.
+    void schedule_async_task(async_task<void>&& task) override { parent->task_loop.schedule(std::move(task)); }
+  };
+
+  timer_manager&       timers;
+  async_task_sequencer task_loop;
+  dummy_ue_task_sched  ue_sched;
+
+  explicit dummy_f1c_task_scheduler(timer_manager& timers_) : timers(timers_), task_loop(128), ue_sched(this) {}
+
+  timer_manager& get_timer_manager() override { return timers; }
+
+  /// \brief Retrieve task scheduler specific to a given UE.
+  f1c_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) override { return ue_sched; }
+};
 
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
@@ -31,12 +58,13 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    f1ap = create_f1ap(timers, msg_notifier);
+    f1ap = create_f1ap(msg_notifier, f1c_task_sched);
   }
 
   std::unique_ptr<f1_interface> f1ap;
   f1c_null_notifier             msg_notifier = {};
   timer_manager                 timers;
+  dummy_f1c_task_scheduler      f1c_task_sched{timers};
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

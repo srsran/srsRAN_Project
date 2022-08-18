@@ -25,7 +25,7 @@ class f1ap_event_manager;
 class f1ap_du_impl final : public f1_interface
 {
 public:
-  f1ap_du_impl(timer_manager& timers_, f1c_message_notifier& event_notifier_);
+  f1ap_du_impl(f1c_message_notifier& event_notifier_, f1c_task_scheduler& task_sched_);
   ~f1ap_du_impl();
 
   // f1ap connection manager functions
@@ -67,8 +67,8 @@ private:
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
   srslog::basic_logger& logger;
-  timer_manager&        timers;
   f1c_message_notifier& f1c_notifier;
+  f1c_task_scheduler&   task_sched;
 
   unique_timer f1c_setup_timer;
 

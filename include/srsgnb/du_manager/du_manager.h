@@ -6,6 +6,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/ran/rnti.h"
+#include "srsgnb/support/async/async_task.h"
 #include <string>
 
 namespace srsgnb {
@@ -26,6 +27,24 @@ public:
   virtual void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) = 0;
 };
 
+/// Interface to schedule asynchronous tasks respective to a given UE.
+class du_manager_ue_task_scheduler
+{
+public:
+  virtual ~du_manager_ue_task_scheduler() = default;
+
+  /// \brief Schedule asynchronous task that is specific to a UE.
+  virtual void schedule_async_task(async_task<void>&& task) = 0;
+};
+
+class du_manager_task_scheduler
+{
+public:
+  virtual ~du_manager_task_scheduler() = default;
+
+  virtual du_manager_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) = 0;
+};
+
 class du_manager_interface_query
 {
 public:
@@ -43,7 +62,8 @@ public:
 
 class du_manager_interface : public du_manager_interface_query,
                              public du_manager_ccch_handler,
-                             public du_manager_controller
+                             public du_manager_controller,
+                             public du_manager_task_scheduler
 {
 public:
   virtual ~du_manager_interface() = default;

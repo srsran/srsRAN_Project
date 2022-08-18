@@ -8,6 +8,7 @@
 #include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/support/async/async_task.h"
+#include "srsgnb/support/timers.h"
 
 namespace srsgnb {
 namespace srs_du {
@@ -144,6 +145,31 @@ public:
   /// \brief Initiate the Notify procedure as per TS 38.473 section 8.3.7
   /// \param[in] msg The Notify message to transmit.
   virtual void handle_notify(const f1ap_notify_message& msg) = 0;
+};
+
+/// Handle scheduled tasks relative to a given UE.
+class f1c_ue_task_scheduler
+{
+public:
+  virtual ~f1c_ue_task_scheduler() = default;
+
+  /// \brief Create timer for a given UE.
+  virtual unique_timer create_timer() = 0;
+
+  /// \brief Schedule Async Task respective to a given UE.
+  virtual void schedule_async_task(async_task<void>&& task) = 0;
+};
+
+/// Class to manage scheduling of asynchronous F1c tasks and timers.
+class f1c_task_scheduler
+{
+public:
+  virtual ~f1c_task_scheduler() = default;
+
+  virtual timer_manager& get_timer_manager() = 0;
+
+  /// \brief Retrieve task scheduler specific to a given UE.
+  virtual f1c_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) = 0;
 };
 
 /// Combined entry point for F1C/U handling.

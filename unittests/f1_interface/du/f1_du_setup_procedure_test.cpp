@@ -8,7 +8,7 @@
  *
  */
 
-#include "../../common_test_helpers/f1_du_test_helpers.h"
+#include "../common/f1_du_test_helpers.h"
 #include "srsgnb/support/async/async_test_utils.h"
 #include <gtest/gtest.h>
 
@@ -42,7 +42,7 @@ TEST_F(f1ap_du_test, when_f1_setup_response_received_then_du_connected)
 
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2);
+  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and successful retry
@@ -84,7 +84,7 @@ TEST_F(f1ap_du_test, when_f1_setup_failure_with_time_to_wait_received_then_retry
 
   EXPECT_TRUE(t.ready());
   EXPECT_TRUE(t.get().success);
-  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2);
+  EXPECT_EQ(t.get().msg->gnb_cu_rrc_version.value.latest_rrc_version.to_number(), 2U);
 }
 
 /// Test unsuccessful f1 setup procedure with time to wait and unsuccessful retry

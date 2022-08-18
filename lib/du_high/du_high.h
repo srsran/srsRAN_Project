@@ -19,6 +19,7 @@
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
+#include "task_scheduler_adapters.h"
 #include <memory>
 
 namespace srsgnb {
@@ -43,6 +44,8 @@ private:
   du_high_configuration cfg;
 
   timer_manager timers;
+
+  f1c_task_scheduler_adapter f1c_task_sched;
 
   std::unique_ptr<du_manager_interface> du_manager;
   std::unique_ptr<f1_interface>         f1ap;

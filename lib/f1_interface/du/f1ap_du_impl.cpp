@@ -18,13 +18,13 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-f1ap_du_impl::f1ap_du_impl(timer_manager& timers_, f1c_message_notifier& message_notifier_) :
+f1ap_du_impl::f1ap_du_impl(f1c_message_notifier& message_notifier_, f1c_task_scheduler& task_sched_) :
   logger(srslog::fetch_basic_logger("DU-F1AP")),
-  timers(timers_),
   f1c_notifier(message_notifier_),
-  events(std::make_unique<f1ap_event_manager>(timers))
+  task_sched(task_sched_),
+  events(std::make_unique<f1ap_event_manager>(task_sched.get_timer_manager()))
 {
-  f1c_setup_timer = timers.create_unique_timer();
+  f1c_setup_timer = task_sched.get_timer_manager().create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
     // TODO
   });

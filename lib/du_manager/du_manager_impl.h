@@ -34,6 +34,9 @@ public:
   // MAC interface
   void handle_ul_ccch_indication(const ul_ccch_indication_message& msg) override;
 
+  // Task scheduling interface.
+  du_manager_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) override;
+
   size_t nof_ues() override;
 
 private:

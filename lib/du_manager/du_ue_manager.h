@@ -31,6 +31,8 @@ public:
 
   const slot_array<du_ue_context, MAX_NOF_DU_UES>& get_ues() { return ue_db; }
 
+  du_manager_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) { return ue_ctrl_loop[ue_index]; }
+
 private:
   du_ue_context* add_ue(du_ue_context ue_ctx) override;
   du_ue_context* find_ue(du_ue_index_t ue_index) override;
@@ -43,8 +45,18 @@ private:
   slot_array<du_ue_context, MAX_NOF_DU_UES> ue_db;
   std::array<int, MAX_NOF_DU_UES>           rnti_to_ue_index;
 
+  struct ue_task_manager final : public du_manager_ue_task_scheduler {
+    // task event loop for a given UE.
+    async_task_sequencer task_loop;
+
+    explicit ue_task_manager(unsigned max_number_of_pending_procedures) : task_loop(max_number_of_pending_procedures) {}
+
+    // Interface used by other DU components to schedule tasks.
+    void schedule_async_task(async_task<void>&& task) override { task_loop.schedule(std::move(task)); }
+  };
+
   // task event loops indexed by ue_index
-  slot_array<async_task_sequencer, MAX_NOF_DU_UES> ue_ctrl_loop;
+  slot_array<ue_task_manager, MAX_NOF_DU_UES> ue_ctrl_loop;
 };
 
 } // namespace srs_du
