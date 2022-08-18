@@ -10,6 +10,7 @@
 
 #include "scheduler_test_suite.h"
 #include "lib/scheduler/cell/resource_grid.h"
+#include "lib/scheduler/common_scheduling/ra_scheduler.h"
 #include "lib/scheduler/support/bwp_helpers.h"
 #include "lib/scheduler/support/config_helpers.h"
 #include "scheduler_output_test_helpers.h"
@@ -27,18 +28,26 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
 {
   TESTASSERT_EQ(pdcch.ctx.rnti, pdsch.rnti);
   TESTASSERT(*pdcch.ctx.bwp_cfg == *pdsch.bwp_cfg);
+  crb_interval coreset0_rb_lims = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
 
-  uint8_t time_assignment = 0;
-  uint8_t freq_assignment = 0;
+  uint8_t  time_assignment = 0;
+  uint8_t  freq_assignment = 0;
+  unsigned N_rb_dl_bwp     = 0;
   switch (pdcch.dci.type) {
     case dci_dl_rnti_config_type::si_f1_0: {
+      TESTASSERT_EQ(pdcch.ctx.rnti, SI_RNTI);
       time_assignment = pdcch.dci.si_f1_0.time_resource;
-      freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
+      freq_assignment = pdcch.dci.si_f1_0.frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.si_f1_0.N_rb_dl_bwp;
+      TESTASSERT_EQ(N_rb_dl_bwp, coreset0_rb_lims.length());
       break;
     }
     case dci_dl_rnti_config_type::ra_f1_0: {
       time_assignment = pdcch.dci.ra_f1_0.time_resource;
+      TESTASSERT(time_assignment < cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list.size());
       freq_assignment = pdcch.dci.ra_f1_0.frequency_resource;
+      N_rb_dl_bwp     = pdcch.dci.ra_f1_0.N_rb_dl_bwp;
+      TESTASSERT_EQ(N_rb_dl_bwp, coreset0_rb_lims.length());
     } break;
     default:
       srsgnb_terminate("DCI type not supported");
@@ -47,11 +56,9 @@ void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&   c
       cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[time_assignment].symbols;
   TESTASSERT(symbols == pdsch.symbols, "Mismatch of time-domain resource assignment and PDSCH symbols");
 
-  uint8_t pdsch_freq_assignment = ra_frequency_type1_get_riv(
-      ra_frequency_type1_configuration{get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common).length(),
-                                       pdsch.prbs.prbs().start(),
-                                       pdsch.prbs.prbs().length()});
-  TESTASSERT_EQ(freq_assignment, pdsch_freq_assignment);
+  uint8_t pdsch_freq_resource = ra_frequency_type1_get_riv(
+      ra_frequency_type1_configuration{N_rb_dl_bwp, pdsch.prbs.prbs().start(), pdsch.prbs.prbs().length()});
+  TESTASSERT_EQ(pdsch_freq_resource, freq_assignment, "DCI frequency resource does not match PDSCH PRBs");
 }
 
 void srsgnb::assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_cfg,
@@ -104,27 +111,82 @@ void srsgnb::test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span
   }
 }
 
-/// Tests whether the fields in a list of RAR grant are consistent. Current tests:
-/// - No repeated RA-RNTIs across RAR grants and no repeated C-RNTIs across Msg3 grants.
-/// - RAR CRBs fall within the CORESET#0 CRB limits.
-/// - Consistent content in DCI of RARs (e.g. has to be 1_0, PRBs fall within CORESET#0 RB limits).
-void test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars)
+void srsgnb::test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars)
 {
   std::set<rnti_t>  ra_rntis;
-  crb_interval      coreset0_lims = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
-  bwp_configuration bwp_cfg       = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
-  bwp_cfg.crbs                    = coreset0_lims;
+  crb_interval      coreset0_lims          = get_coreset0_crbs(cell_cfg.dl_cfg_common.init_dl_bwp.pdcch_common);
+  bwp_configuration effective_init_bwp_cfg = cell_cfg.dl_cfg_common.init_dl_bwp.generic_params;
+  effective_init_bwp_cfg.crbs              = coreset0_lims;
 
   for (const rar_information& rar : rars) {
     rnti_t ra_rnti = rar.pdsch_cfg.rnti;
     TESTASSERT(not rar.grants.empty(), "RAR with RA-RNTI={:#x} has no corresponding MSG3 grants", ra_rnti);
     TESTASSERT(rar.pdsch_cfg.prbs.is_alloc_type1(), "Invalid allocation type for RAR");
 
-    crb_interval rar_crbs = prb_to_crb(bwp_cfg, rar.pdsch_cfg.prbs.prbs());
+    crb_interval rar_crbs = prb_to_crb(effective_init_bwp_cfg, rar.pdsch_cfg.prbs.prbs());
     TESTASSERT(coreset0_lims.contains(rar_crbs), "RAR outside of initial active DL BWP RB limits");
 
     TESTASSERT(not ra_rntis.count(ra_rnti), "Repeated RA-RNTI={:#x} detected", ra_rnti);
     ra_rntis.emplace(ra_rnti);
+  }
+}
+
+void assert_rar_grant_msg3_pusch_consistency(const cell_configuration& cell_cfg,
+                                             const rar_ul_grant&       rar_grant,
+                                             const pusch_information&  msg3_pusch)
+{
+  TESTASSERT_EQ(rar_grant.temp_crnti, msg3_pusch.rnti);
+  TESTASSERT(msg3_pusch.prbs.is_alloc_type1());
+  TESTASSERT(not msg3_pusch.prbs.prbs().empty(), "Msg3 with temp-CRNTI={:#x} has no RBs", msg3_pusch.rnti);
+
+  unsigned     N_rb_ul_bwp = cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.crbs.length();
+  prb_interval prbs        = msg3_pusch.prbs.prbs();
+  uint8_t      pusch_freq_resource =
+      ra_frequency_type1_get_riv(ra_frequency_type1_configuration{N_rb_ul_bwp, prbs.start(), prbs.length()});
+  TESTASSERT_EQ(rar_grant.freq_resource_assignment,
+                pusch_freq_resource,
+                "Mismatch between RAR grant frequency assignment and corresponding Msg3 PUSCH PRBs");
+}
+
+void assert_rar_grant_msg3_pusch_consistency(const cell_configuration&      cell_cfg,
+                                             const cell_resource_allocator& res_grid)
+{
+  std::set<rnti_t> tc_rntis;
+  const auto&      pusch_td_list = cell_cfg.ul_cfg_common.init_ul_bwp.pusch_cfg_common->pusch_td_alloc_list;
+
+  span<const pdcch_dl_information> pdcchs = res_grid[0].result.dl.dl_pdcchs;
+  for (const pdcch_dl_information& pdcch : pdcchs) {
+    if (pdcch.dci.type != dci_dl_rnti_config_type::ra_f1_0) {
+      continue;
+    }
+
+    // For a given PDCCH for a RAR, search for the respective RAR PDSCH.
+    uint8_t k0 =
+        cell_cfg.dl_cfg_common.init_dl_bwp.pdsch_common.pdsch_td_alloc_list[pdcch.dci.ra_f1_0.time_resource].k0;
+    span<const rar_information> rars   = res_grid[k0].result.dl.rar_grants;
+    auto                        rar_it = std::find_if(
+        rars.begin(), rars.end(), [&pdcch](const auto& rar) { return rar.pdsch_cfg.rnti == pdcch.ctx.rnti; });
+    TESTASSERT(rar_it != rars.end());
+    const rar_information& rar = *rar_it;
+
+    // For all RAR grants within the same RAR, check that they are consistent with the respective Msg3 PUSCHs.
+    for (const rar_ul_grant& rar_grant : rar.grants) {
+      TESTASSERT(rar_grant.time_resource_assignment < pusch_td_list.size());
+      uint8_t k2 = get_msg3_delay(pusch_td_list[rar_grant.time_resource_assignment],
+                                  cell_cfg.ul_cfg_common.init_ul_bwp.generic_params.scs);
+
+      span<const ul_sched_info> ul_grants = res_grid[k2].result.ul.puschs;
+      auto it = std::find_if(ul_grants.begin(), ul_grants.end(), [&rar_grant](const auto& ulgrant) {
+        return ulgrant.pusch_cfg.rnti == rar_grant.temp_crnti;
+      });
+      TESTASSERT(it != ul_grants.end(),
+                 "Msg3 was not found for the scheduled RAR grant with TC-RNTI={:#x}",
+                 rar_grant.temp_crnti);
+      assert_rar_grant_msg3_pusch_consistency(cell_cfg, rar_grant, it->pusch_cfg);
+
+      TESTASSERT(tc_rntis.count(rar_grant.temp_crnti) == 0, "Repeated TC-RNTI detected");
+      tc_rntis.emplace(rar_grant.temp_crnti);
+    }
   }
 }
 
@@ -183,9 +245,24 @@ void srsgnb::test_scheduler_result_consistency(const cell_configuration& cell_cf
   test_ul_resource_grid_collisions(cell_cfg, result.ul);
 }
 
+/// \brief Verifies that the cell resource grid PRBs and symbols was filled with the allocated PDSCHs.
+void assert_dl_resource_grid_filled(const cell_configuration& cell_cfg, const cell_resource_allocator& cell_res_grid)
+{
+  std::vector<test_grant_info> dl_grants = get_dl_grants(cell_cfg, cell_res_grid[0].result.dl);
+  for (const test_grant_info& test_grant : dl_grants) {
+    if (test_grant.type != srsgnb::test_grant_info::DL_PDCCH) {
+      TESTASSERT(cell_res_grid[0].dl_res_grid.all_set(test_grant.grant),
+                 "The allocation with rnti={:#x} was not registered in the cell resource grid",
+                 test_grant.rnti);
+    }
+  }
+}
+
 void srsgnb::test_scheduler_result_consistency(const cell_configuration&      cell_cfg,
                                                const cell_resource_allocator& cell_res_grid)
 {
   test_scheduler_result_consistency(cell_cfg, cell_res_grid[0].result);
   assert_pdcch_pdsch_common_consistency(cell_cfg, cell_res_grid);
+  assert_dl_resource_grid_filled(cell_cfg, cell_res_grid);
+  assert_rar_grant_msg3_pusch_consistency(cell_cfg, cell_res_grid);
 }

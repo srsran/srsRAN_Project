@@ -46,6 +46,13 @@ void assert_pdcch_pdsch_common_consistency(const cell_configuration&      cell_c
 /// \param sibs Scheduled SIBs in a given slot.
 void test_pdsch_sib_consistency(const cell_configuration& cell_cfg, span<const sib_information> sibs);
 
+/// \brief Verify RAR content is valid. Current checks:
+/// - RAR PRBS must fall within CORESET#0 RB boundaries.
+/// - RAR must be alloc_type_1.
+/// - No repeated RA-RNTIs across RAR grants and no repeated C-RNTIs across Msg3 grants.
+/// - Consistent content in DCI of RARs (e.g. has to be f1_0, PRBs fall within CORESET#0 RB limits).
+void test_pdsch_rar_consistency(const cell_configuration& cell_cfg, span<const rar_information> rars);
+
 /// \brief Current checks:
 /// - PRACH occasions parameters match RACH-ConfigCommon present in cell_cfg.
 /// \param cell_cfg Cell configuration.
