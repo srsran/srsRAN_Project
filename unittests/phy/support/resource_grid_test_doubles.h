@@ -290,23 +290,15 @@ private:
 /// Describes a resource grid spy.
 class resource_grid_spy : public resource_grid
 {
-  resource_grid_reader_spy reader;
-  resource_grid_writer_spy writer;
-  bool                     method_set_all_zero_has_been_called = false;
-  bool                     empty                               = true;
-
 public:
   resource_grid_spy() : writer(MAX_PORTS, MAX_NSYMB_PER_SLOT, MAX_RB)
   {
     // Do nothing.
   }
 
-  /// Returns true if the \c set_all_zero() method has been called, otherwise false.
-  bool has_set_all_zero_method_been_called() const { return method_set_all_zero_has_been_called; }
-
   void set_all_zero() override
   {
-    method_set_all_zero_has_been_called = true;
+    ++set_all_zero_count;
 
     // Reset the reader and writer.
     reader.reset();
@@ -319,34 +311,61 @@ public:
 
   void get(span<cf_t> symbols, unsigned port, span<const resource_grid_coordinate> coordinates) const override
   {
+    ++get_count;
     reader.get(symbols, port, coordinates);
   }
 
   span<cf_t> get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init, span<const bool> mask) const override
   {
+    ++get_count;
     return reader.get(symbols, port, l, k_init, mask);
   }
 
   void get(span<cf_t> symbols, unsigned port, unsigned l, unsigned k_init) const override
   {
+    ++get_count;
     reader.get(symbols, port, l, k_init);
   }
 
   void put(unsigned port, span<const resource_grid_coordinate> coordinates, span<const cf_t> symbols) override
   {
+    ++put_count;
     writer.put(port, coordinates, symbols);
   }
 
   span<const cf_t>
   put(unsigned port, unsigned l, unsigned k_init, span<const bool> mask, span<const cf_t> symbols) override
   {
+    ++put_count;
     return writer.put(port, l, k_init, mask, symbols);
   }
 
   void put(unsigned port, unsigned l, unsigned k_init, span<const cf_t> symbols) override
   {
+    ++put_count;
     writer.put(port, l, k_init, symbols);
   }
+  /// Returns true if the \c set_all_zero() method has been called, otherwise false.
+  bool has_set_all_zero_method_been_called() const { return set_all_zero_count > 0; }
+
+  /// Returns the number of times methods have been called.
+  unsigned get_total_count() const { return set_all_zero_count + put_count + get_count; }
+
+  /// Resets all counters.
+  void clear()
+  {
+    set_all_zero_count = 0;
+    put_count          = 0;
+    get_count          = 0;
+  }
+
+private:
+  resource_grid_reader_spy reader;
+  resource_grid_writer_spy writer;
+  bool                     empty              = true;
+  unsigned                 set_all_zero_count = 0;
+  unsigned                 put_count          = 0;
+  mutable unsigned         get_count          = 0;
 };
 
 /// \brief Describes a resource grid dummy used for testing classes that handle resource grids but do not use the

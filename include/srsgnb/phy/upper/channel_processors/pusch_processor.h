@@ -31,11 +31,9 @@ namespace srsgnb {
 class pusch_processor
 {
 public:
-  /// \brief Describes a codeword configuration.
+  /// \brief Collects specific codeword parameters.
   /// \note The transport block size is given by the transport block data size.
   struct codeword_description {
-    /// Indicates the modulation scheme.
-    modulation_scheme modulation;
     /// Redundancy version index.
     unsigned rv;
     /// LDPC base graph to use for CW generation.
@@ -79,6 +77,8 @@ public:
     unsigned bwp_start_rb;
     /// Cyclic prefix type.
     cyclic_prefix cp;
+    /// Modulation scheme, common for data and UCI.
+    modulation_scheme modulation;
     /// Provides codeword description if present.
     optional<codeword_description> codeword;
     /// Provides UCI if present.
@@ -89,18 +89,12 @@ public:
     /// - {0...1023} if the higher-layer parameter dataScramblingIdentityPUSCH if configured,
     /// - \f$N^{cell}_{ID}\f$ otherwise.
     unsigned n_id;
-    /// Port indexes the PUSCH transmission is mapped to. The number of ports indicates the number of layers.
-    static_vector<uint8_t, MAX_PORTS> ports;
+    /// Number of transmission layers as per TS38.211 Section 6.3.1.3.
+    unsigned nof_tx_layers;
+    /// Port indexes the PUSCH reception is mapped to.
+    static_vector<uint8_t, MAX_PORTS> rx_ports;
     // Ignores the transmission scheme.
     // ...
-    /// Indicates the reference point for PUSCH DMRS \c k.
-    enum {
-      /// When the reference point is subcarrier 0 of the common resource block 0 (CRB 0).
-      CRB0,
-      ///  When the reference point is subcarrier 0 of the physical resource block 0 of the bandwidth part (BWP). Use
-      ///  this option when PUSCH is signalled by CORESET 0. For this case, the BWP parameters must align with CORESET0.
-      PRB0
-    } ref_point;
     /// Indicates which symbol in the slot transmit DMRS.
     std::array<bool, MAX_NSYMB_PER_SLOT> dmrs_symbol_mask;
     /// Indicates the DMRS type.
@@ -132,12 +126,6 @@ public:
     /// \remark Use <tt> ldpc::MAX_CODEBLOCK_SIZE / 8 </tt> for maximum length.
     /// \remark Zero is reserved.
     unsigned tbs_lbrm_bytes;
-    /// Indicates the reserved resource elements which cannot carry PUSCH.
-    re_pattern_list reserved;
-    /// Ratio of PUSCH DMRS EPRE to SSS EPRE in decibels.
-    float ratio_pusch_dmrs_to_sss_dB;
-    /// Ratio of PUSCH data EPRE to SSS EPRE in decibels.
-    float ratio_pusch_data_to_sss_dB;
   };
 
   /// Default destructor.

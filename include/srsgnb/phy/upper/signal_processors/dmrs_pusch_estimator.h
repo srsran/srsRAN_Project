@@ -31,16 +31,18 @@ public:
   struct configuration {
     /// Slot context for sequence initialization.
     slot_point slot;
-    /// Reference point for PUSCH DM-RS \e k in RBs.
-    unsigned reference_point_k_rb;
     /// DL DM-RS configuration type.
     dmrs_type type;
     /// PUSCH DM-RS scrambling ID.
     unsigned scrambling_id;
     /// DM-RS sequence initialization (parameter \f$n_{SCID}\f$ in the TS).
     bool n_scid;
-    /// Generated signal linear amplitude.
-    float amplitude;
+    /// \brief Linear ratio PUSCH EPRE to DM-RS EPRE.
+    ///
+    /// Amplitude scaling factor \f$\beta _{PUSCH}^{DMRS}\f$ as per TS38.211 Section 6.4.1.1.3. It must be selected
+    /// according to \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}=10^{-\beta _{\mathrm{DMRS}}/20}\f$ as per TS38.214
+    /// Section 6.2.2. Where \f$\beta _{\mathrm{DMRS}}\f$ is given in TS38.214 Table 6.2.2-1.
+    float scaling;
     /// Subcarrier spacing of the PUSCH.
     subcarrier_spacing scs = subcarrier_spacing::kHz15;
     /// Cyclic prefix.

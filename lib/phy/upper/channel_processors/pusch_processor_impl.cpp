@@ -9,6 +9,7 @@
  */
 
 #include "pusch_processor_impl.h"
+#include "srsgnb/ran/sch_dmrs_power.h"
 
 using namespace srsgnb;
 
@@ -32,14 +33,28 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
 
   // Calculate number of LLR.
   unsigned nof_codeword_llr =
-      pdu.freq_alloc.get_nof_rb() * pdu.nof_symbols * pdu.ports.size() * get_bits_per_symbol(pdu.codeword->modulation);
+      pdu.freq_alloc.get_nof_rb() * pdu.nof_symbols * pdu.nof_tx_layers * get_bits_per_symbol(pdu.modulation);
   unsigned nof_harq_ack_llr  = 0;
   unsigned nof_csi_part1_llr = 0;
   unsigned nof_csi_part2_llr = 0;
 
+  // Get RB mask relative to Point A. It assumes PUSCH is never interleaved.
+  bounded_bitset<MAX_RB> rb_mask = pdu.freq_alloc.get_prb_mask(pdu.bwp_start_rb, pdu.bwp_size_rb);
+
   // Estimate channel.
   dmrs_pusch_estimator::configuration ch_est_config;
-  ch_est_config.slot = pdu.slot;
+  ch_est_config.slot          = pdu.slot;
+  ch_est_config.type          = pdu.dmrs;
+  ch_est_config.scrambling_id = pdu.scrambling_id;
+  ch_est_config.n_scid        = pdu.n_scid;
+  ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
+  ch_est_config.scs           = to_subcarrier_spacing(pdu.slot.numerology());
+  ch_est_config.c_prefix      = pdu.cp;
+  ch_est_config.rb_mask       = rb_mask;
+  ch_est_config.first_symbol  = pdu.start_symbol_index;
+  ch_est_config.nof_symbols   = pdu.nof_symbols;
+  ch_est_config.nof_tx_layers = pdu.nof_tx_layers;
+  ch_est_config.rx_ports.assign(pdu.rx_ports.begin(), pdu.rx_ports.end());
   estimator->estimate(ch_estimate, grid, ch_est_config);
 
   // Fill result channel state information.
@@ -51,14 +66,22 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   span<log_likelihood_ratio> csi_part1_llr = span<log_likelihood_ratio>(temp_csi_part1_llr).first(nof_csi_part1_llr);
   span<log_likelihood_ratio> csi_part2_llr = span<log_likelihood_ratio>(temp_csi_part2_llr).first(nof_csi_part2_llr);
 
-  // Prepare demodulator configuration.
-  pusch_demodulator::configuration demod_config;
-  demod_config.rnti = pdu.rnti;
-
   // Demodulate.
+  pusch_demodulator::configuration demod_config;
+  demod_config.rnti                        = pdu.rnti;
+  demod_config.rb_mask                     = rb_mask;
+  demod_config.modulation                  = pdu.modulation;
+  demod_config.start_symbol_index          = pdu.start_symbol_index;
+  demod_config.nof_symbols                 = pdu.nof_symbols;
+  demod_config.dmrs_symb_pos               = pdu.dmrs_symbol_mask;
+  demod_config.dmrs_config_type            = pdu.dmrs;
+  demod_config.nof_cdm_groups_without_data = pdu.nof_cdm_groups_without_data;
+  demod_config.n_id                        = pdu.n_id;
+  demod_config.nof_tx_layers               = pdu.nof_tx_layers;
+  demod_config.rx_ports                    = pdu.rx_ports;
   demodulator->demodulate(codeword_llr, harq_ack_llr, csi_part1_llr, csi_part2_llr, grid, ch_estimate, demod_config);
 
-  // Process codeword.
+  // Decode codeword if present.
   if (pdu.codeword) {
     // Set the data field to present.
     result.data.emplace();
@@ -71,7 +94,7 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
     decoder->decode(data, result.data.value(), &softbuffer, codeword_llr, decoder_config);
   }
 
-  // Process UCI.
+  // Decode UCI if present.
   if (pdu.uci) {
     // TBD.
   }

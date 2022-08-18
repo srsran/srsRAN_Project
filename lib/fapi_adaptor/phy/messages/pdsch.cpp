@@ -9,6 +9,7 @@
  */
 
 #include "srsgnb/fapi_adaptor/phy/messages/pdsch.h"
+#include "srsgnb/ran/sch_dmrs_power.h"
 
 using namespace srsgnb;
 using namespace fapi_adaptor;
@@ -83,12 +84,8 @@ static void fill_power_values(pdsch_processor::pdu_t& proc_pdu, const dl_pdsch_p
         static_cast<float>(fapi_pdu.pdsch_maintenance_v3.pdsch_dmrs_power_offset_profile_sss) * 0.001F;
   } else {
     // Otherwise, determines the PDSCH DMRS power from the PDSCH data power as per TS38.214 Table 4.1-1.
-    srsgnb_assert(fapi_pdu.num_dmrs_cdm_grps_no_data > 0 && fapi_pdu.num_dmrs_cdm_grps_no_data < 4,
-                  "Invalid number of DMRS CDM groups without data.");
-    static constexpr std::array<float, 4> beta_dmrs_values = {NAN, 0, -3, -4.77};
-
     proc_pdu.ratio_pdsch_dmrs_to_sss_dB =
-        proc_pdu.ratio_pdsch_data_to_sss_dB + beta_dmrs_values[fapi_pdu.num_dmrs_cdm_grps_no_data];
+        proc_pdu.ratio_pdsch_data_to_sss_dB + get_sch_to_dmrs_ratio_dB(fapi_pdu.num_dmrs_cdm_grps_no_data);
   }
 }
 

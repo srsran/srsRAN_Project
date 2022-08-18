@@ -75,14 +75,10 @@ public:
   struct configuration {
     /// Radio Network Temporary Identifier, see parameter \f$n_{RNTI}\f$ in TS38.211 Section 6.3.1.1.
     uint16_t rnti;
-    /// Number of contiguous PRBs allocated to the BWP.
-    unsigned bwp_size_rb;
-    /// BWP start RB index from reference CRB.
-    unsigned bwp_start_rb;
+    /// Allocation RB list: the entries set to true are used for transmission.
+    bounded_bitset<MAX_RB> rb_mask;
     /// Modulation scheme used for transmission.
     modulation_scheme modulation;
-    /// Frequency domain allocation.
-    rb_allocation freq_allocation;
     /// Time domain allocation within a slot: start symbol index {0, ..., 12}.
     unsigned start_symbol_index;
     /// Time domain allocation within a slot: number of symbols {1, ..., 14}.
@@ -95,11 +91,6 @@ public:
     unsigned nof_cdm_groups_without_data;
     /// Scrambling identifier, see parameter \f$n_{ID}\f$ in TS38.211 Section 6.3.1.1. Range is {0, ..., 1023}.
     unsigned n_id;
-    /// Scaling factor applied to the resource elements according to PUSCH power allocation in TS38.214 Section 6.1
-    /// (see also TS38.213 Section 7.1).
-    float scaling;
-    /// Reserved RE pattern where PUSCH is not mapped.
-    re_pattern_list reserved;
     /// Number of transmit layers.
     unsigned nof_tx_layers;
     /// Receive antenna port indices the PUSCH transmission is mapped to.
