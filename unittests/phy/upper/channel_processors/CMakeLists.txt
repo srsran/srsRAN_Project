@@ -90,16 +90,20 @@ add_custom_command(
 add_executable(pdsch_processor_unittest pdsch_processor_unittest.cpp)
 target_link_libraries(pdsch_processor_unittest srsgnb_channel_processors srslog)
 
-add_executable(prach_detector_test prach_detector_unittest.cpp)
-target_link_libraries(prach_detector_test srsgnb_channel_processors srsgnb_generic_funcs srslog gtest gtest_main)
-add_test(prach_detector_test prach_detector_test)
+add_executable(prach_detector_unittest prach_detector_unittest.cpp)
+target_link_libraries(prach_detector_unittest srsgnb_channel_processors srsgnb_generic_funcs srslog gtest gtest_main)
+add_test(prach_detector_unittest prach_detector_unittest)
+
+add_executable(prach_detector_vectortest prach_detector_vectortest.cpp)
+target_link_libraries(prach_detector_vectortest srsgnb_channel_processors srsgnb_generic_funcs srsgnb_phy_support srslog gtest gtest_main)
+add_test(prach_detector_vectortest prach_detector_vectortest)
 
 add_executable(prach_generator_vectortest prach_generator_vectortest.cpp)
 target_link_libraries(prach_generator_vectortest srsgnb_channel_processors srsgnb_generic_funcs srslog gtest gtest_main)
 add_test(prach_generator_vectortest prach_generator_vectortest)
 
 add_custom_command(
-        TARGET prach_generator_vectortest
+        TARGET prach_generator_vectortest prach_detector_vectortest
         POST_BUILD
         WORKING_DIRECTORY ${TEST_DATA_DIR}
         COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/prach_generator_test_data.tar.gz

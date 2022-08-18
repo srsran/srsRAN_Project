@@ -39,7 +39,7 @@ public:
   {
     report_fatal_error_if_not(idft, "Invalid IDFT processor.");
     report_fatal_error_if_not(idft->get_direction() == dft_processor::direction::INVERSE, "Expected IDFT.");
-    report_fatal_error_if_not(idft->get_size() > prach_constants::LONG_SEQUENCE_LENGTH,
+    report_fatal_error_if_not(idft->get_size() >= prach_constants::LONG_SEQUENCE_LENGTH,
                               "IDFT size {} must be at least {}.",
                               idft->get_size(),
                               prach_constants::LONG_SEQUENCE_LENGTH);

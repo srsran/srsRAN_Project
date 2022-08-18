@@ -247,7 +247,7 @@ public:
   std::unique_ptr<prach_detector> create() override
   {
     dft_processor::configuration idft_config = {};
-    idft_config.size                         = 1024;
+    idft_config.size                         = 839;
     idft_config.dir                          = dft_processor::direction::INVERSE;
     return std::make_unique<prach_detector_simple_impl>(dft_factory->create(idft_config), prach_gen_factory->create());
   }

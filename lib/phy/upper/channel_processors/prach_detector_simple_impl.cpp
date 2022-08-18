@@ -9,6 +9,7 @@
  */
 
 #include "prach_detector_simple_impl.h"
+#include "srsgnb/ran/prach/prach_cyclic_shifts.h"
 #include "srsgnb/ran/prach/prach_preamble_information.h"
 #include "srsgnb/srsvec/compare.h"
 #include "srsgnb/srsvec/dot_prod.h"
@@ -63,6 +64,15 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
     return result;
   }
 
+  // Get cyclic shift.
+  unsigned N_cs = prach_cyclic_shifts_get(preamble_info.scs, config.restricted_set, config.zero_correlation_zone);
+
+  // Calculate maximum delay.
+  unsigned delay_n_maximum = idft->get_size();
+  if (N_cs != 0) {
+    delay_n_maximum = (N_cs * preamble_info.sequence_length) / idft->get_size();
+  }
+
   // For each preamble to detect...
   for (unsigned preamble_index     = config.start_preamble_index,
                 preamble_index_end = config.start_preamble_index + config.nof_preamble_indices;
@@ -99,8 +109,13 @@ prach_detection_result prach_detector_simple_impl::detect(const prach_buffer& in
     float                      max_power = max_abs.second;
 
     // Check if the maximum value gets over the threshold.
-    float norm_corr = max_power / (rssi * preamble_power * idft->get_size() * idft->get_size());
+    float norm_corr = max_power / (rssi * preamble_power * preamble_freq.size() * preamble_freq.size());
     if (norm_corr < DETECTION_THRESHOLD) {
+      continue;
+    }
+
+    // Skip if the delay could be due to the cyclic shift.
+    if (delay_n >= delay_n_maximum) {
       continue;
     }
 

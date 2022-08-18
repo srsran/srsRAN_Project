@@ -42,15 +42,15 @@ struct prach_buffer_context {
   /// \brief Offset, in PRBs, between Point A and the PRB overlapping with the lowest RE of the first frequency-domain
   /// PRACH occasion.
   ///
-  /// Corresponds to parameter \f$k_1\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed assuming a subcarrier
-  /// spacing equal to \c pusch_scs.
+  /// Corresponds to parameter \f$k_1/N_{\mathrm{sc}}^{\mathrm{RB}}\f$ in TS38.211 Section 5.3.2. The number of PRBs is
+  /// computed assuming a subcarrier spacing equal to \c pusch_scs.
   unsigned rb_offset;
   /// \brief Uplink resource grid size in PRBs.
   ///
   /// Corresponds to parameter \f$N_{grid}^{size,\mu}\f$ in TS38.211 Section 5.3.2. The number of PRBs is computed
   /// assuming a subcarrier spacing equal to \c pusch_scs.
   unsigned nof_prb_ul_grid;
-  /// PUSCH subcarrier spacing.
+  /// PUSCH subcarrier spacing, parameter \f$\mu\f$ in TS38.211 Section 5.3.2.
   subcarrier_spacing pusch_scs;
   /// Root sequence index {0, ..., 837}.
   unsigned root_sequence_index;
