@@ -77,6 +77,18 @@ private:
   };
   /// Rx window
   std::map<uint32_t, rlc_amd_sdu_composer> rx_window;
+  /// Indicates whether the rx_window changed since last rebuild of status PDU.
+  bool rx_window_changed = false;
+
+  /// Cached status report
+  rlc_am_status_pdu status_report = {cfg.sn_field_length};
+  std::mutex        status_report_mutex;
+
+  /// \brief t-StatusProhibit
+  /// This timer is used by the receiving side of an AM RLC entity in order to prohibit transmission of a STATUS PDU
+  /// (see sub clause 5.3.4).
+  /// Ref: TS 38.322 Sec. 7.3
+  unique_timer status_prohibit_timer;
 
   /// \brief t-Reassembly
   /// This timer is used by the receiving side of an AM RLC entity [...] in order to detect loss of RLC PDUs at lower
@@ -110,6 +122,10 @@ private:
   void handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload);
 
   void update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) const;
+
+  /// Rebuilds the cached status_report according to missing SDUs and SDU segments in rx_window
+  /// and resets the rx_window_changed flag
+  void refresh_status_report();
 
   inline uint32_t rx_mod_base_nr(uint32_t sn) const { return (sn - st.rx_next) % mod; }
   inline bool     inside_rx_window(uint32_t sn) const

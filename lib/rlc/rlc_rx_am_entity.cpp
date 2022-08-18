@@ -35,6 +35,9 @@ void rlc_rx_am_entity::handle_pdu(byte_buffer_slice buf)
     handle_control_pdu(std::move(buf));
   } else {
     handle_data_pdu(std::move(buf));
+    if (rx_window_changed) {
+      refresh_status_report();
+    }
   }
 }
 
@@ -119,6 +122,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
   } else {
     handle_segment_data_sdu(header, payload);
   }
+  rx_window_changed = true;
 
   logger.log_debug("State: {}", st);
 
@@ -332,19 +336,107 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) co
   rx_sdu.fully_received = false;
 }
 
+void rlc_rx_am_entity::refresh_status_report()
+{
+  std::unique_lock<std::mutex> lock(status_report_mutex);
+  status_report.reset();
+  /*
+   * - for the RLC SDUs with SN such that RX_Next <= SN < RX_Highest_Status that has not been completely
+   *   received yet, in increasing SN order of RLC SDUs and increasing byte segment order within RLC SDUs,
+   *   starting with SN = RX_Next up to the point where the resulting STATUS PDU still fits to the total size of RLC
+   *   PDU(s) indicated by lower layer:
+   */
+  logger.log_debug("Generating status PDU");
+  for (uint32_t i = st.rx_next; rx_mod_base_nr(i) < rx_mod_base_nr(st.rx_highest_status); i = (i + 1) % mod) {
+    if ((rx_window.find(i) != rx_window.end() && rx_window.at(i).fully_received)) {
+      logger.log_debug("SDU SN={} is fully received", i);
+    } else {
+      if (rx_window.find(i) == rx_window.end()) {
+        // No segment received, NACK the whole SDU
+        rlc_am_status_nack nack;
+        nack.nack_sn = i;
+        nack.has_so  = false;
+        logger.log_debug("Adding NACK={}", nack);
+        status_report.push_nack(nack);
+      } else if (not rx_window.at(i).fully_received) {
+        // Some segments were received, but not all.
+        // NACK non consecutive missing bytes
+        uint32_t last_so         = 0;
+        bool     last_segment_rx = false;
+        for (auto segm = rx_window.at(i).segments.begin(); segm != rx_window.at(i).segments.end(); segm++) {
+          if (segm->header.so != last_so) {
+            // Some bytes were not received
+            rlc_am_status_nack nack;
+            nack.nack_sn  = i;
+            nack.has_so   = true;
+            nack.so_start = last_so;
+            nack.so_end   = segm->header.so - 1; // set to last missing byte
+            logger.log_debug("Adding NACK={}", nack);
+            status_report.push_nack(nack);
+
+            // Sanity check
+            if (nack.so_start > nack.so_end) {
+              // Print segment list
+              for (auto segm_it = rx_window.at(i).segments.begin(); segm_it != rx_window.at(i).segments.end();
+                   segm_it++) {
+                logger.log_error("Segment: so={}, length={}", segm_it->header.so, segm_it->payload.length());
+              }
+              logger.log_error("Error: so_start > so_end in NACK={}, Segment: so={}", nack, segm->header.so);
+              srsgnb_assert(nack.so_start <= nack.so_end,
+                            "Error: so_start > so_end in NACK={}, Segment: so={}",
+                            nack,
+                            segm->header.so);
+            }
+          }
+          if (segm->header.si == rlc_si_field::last_segment) {
+            last_segment_rx = true;
+          }
+          last_so = segm->header.so + segm->payload.length();
+        } // Segment loop
+
+        // Check for last segment
+        if (not last_segment_rx) {
+          rlc_am_status_nack nack;
+          nack.nack_sn  = i;
+          nack.has_so   = true;
+          nack.so_start = last_so;
+          nack.so_end   = rlc_am_status_nack::so_end_of_sdu;
+          logger.log_debug("Adding NACK={}", nack);
+          status_report.push_nack(nack);
+          // Sanity check
+          srsgnb_assert(nack.so_start <= nack.so_end, "Error: so_start > so_end in NACK={}", nack);
+        }
+      }
+    }
+  } // NACK loop
+
+  /*
+   * - set the ACK_SN to the SN of the next not received RLC SDU which is not
+   * indicated as missing in the resulting STATUS PDU.
+   */
+  status_report.ack_sn = st.rx_highest_status;
+
+  // Flag rx_window as unchanged
+  rx_window_changed = false;
+}
+
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
 {
-  // TODO
-  return rlc_am_status_pdu(cfg.sn_field_length);
+  do_status = false;
+  if (status_prohibit_timer.is_valid()) {
+    status_prohibit_timer.run();
+  }
+  std::unique_lock<std::mutex> lock(status_report_mutex);
+  return status_report;
 }
 
 uint32_t rlc_rx_am_entity::get_status_pdu_length()
 {
-  // TODO
-  return 0;
+  std::unique_lock<std::mutex> lock(status_report_mutex);
+  return status_report.get_packed_size();
 }
 
 bool rlc_rx_am_entity::status_report_required()
 {
-  return do_status;
+  return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
 }
