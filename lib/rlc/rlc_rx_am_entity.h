@@ -66,7 +66,6 @@ private:
   // TODO Refactor this struct
   //
   struct rlc_amd_sdu_composer {
-    // uint32_t                                             sn             = INVALID_RLC_SN;
     bool                                                 fully_received = false;
     bool                                                 has_gap        = false;
     std::set<rlc_am_sdu_segment, rlc_am_sdu_segment_cmp> segments; // Map of segments with SO as key
@@ -95,7 +94,7 @@ private:
   /// layer (see sub clauses 5.2.2.2 and 5.2.3.2). If t-Reassembly is running, t-Reassembly shall not be started
   /// additionally, i.e.only one t-Reassembly per RLC entity is running at a given time.
   /// Ref: TS 38.322 Sec. 7.3
-  unique_timer reassembly_timer; // to detect loss of RLC PDUs at lower layers
+  unique_timer reassembly_timer;
 
 public:
   rlc_rx_am_entity(du_ue_index_t                     du_index,
