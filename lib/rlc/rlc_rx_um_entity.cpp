@@ -44,6 +44,7 @@ void rlc_rx_um_entity::handle_pdu(byte_buffer_slice buf)
     metrics_add_malformed_pdus(1);
     return;
   }
+  logger.log_debug("PDU header: {}", header);
 
   // strip header, extract payload
   size_t            header_len = rlc_um_nr_packed_length(header);
