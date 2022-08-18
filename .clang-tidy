@@ -27,6 +27,7 @@ Checks: '*,-fuchsia-*,
          -readability-function-cognitive-complexity,-readability-isolate-declaration,
          -misc-non-private-member-variables-in-classes,-altera-struct-pack-align,-readability-uppercase-literal-suffix,
          -cppcoreguidelines-non-private-member-variables-in-classes,
+         -readability-identifier-length,
          readability-identifier-naming'
 HeaderFilterRegex: ''
 AnalyzeTemporaryDtors: false
