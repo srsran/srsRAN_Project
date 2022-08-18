@@ -85,7 +85,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::pull_pdu(uint32_t nof_bytes)
   // Send remaining segment, if it exists
   if (sn_under_segmentation != INVALID_RLC_SN) {
     if (tx_window->has_sn(sn_under_segmentation)) {
-      return build_continuation_pdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
+      return build_continued_sdu_segment((*tx_window)[sn_under_segmentation], nof_bytes);
     } else {
       sn_under_segmentation = INVALID_RLC_SN;
       logger.log_error("SDU currently being segmented does not exist in tx_window. Aborting segmentation SN={}",
@@ -134,8 +134,8 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
 
   // Segment new SDU if necessary
   if (tx_pdu.sdu.length() + head_min_size > nof_bytes) {
-    logger.log_info("Trying to build PDU segment from SDU.");
-    return build_new_pdu_segment(tx_pdu, nof_bytes);
+    logger.log_info("Trying to build PDU from SDU segment.");
+    return build_first_sdu_segment(tx_pdu, nof_bytes);
   }
   logger.log_info("Creating PDU. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
@@ -159,7 +159,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu});
-  logger.log_debug("Created RLC PDU - {} bytes", pdu_buf.length());
+  logger.log_debug("Created RLC PDU (full SDU) - {} bytes", pdu_buf.length());
 
   // Update TX Next
   st.tx_next = (st.tx_next + 1) % mod;
@@ -167,9 +167,9 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu(uint32_t nof_bytes)
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_first_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
-  logger.log_info("Creating new PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+  logger.log_info("Creating new SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
   // Sanity check: can this SDU be sent this in a single PDU?
   if ((tx_pdu.sdu.length() + head_min_size) <= nof_bytes) {
@@ -184,7 +184,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_b
   // Sanity check: can this SDU be sent considering header overhead?
   if (nof_bytes <= head_min_size) { // Small header, since first segment has no SO field, ref: TS 38.322 Sec. 6.2.2.4
     logger.log_info(
-        "Cannot build new sdu_segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
+        "Cannot build first SDU segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
         "head_min_size={}",
         nof_bytes,
         head_min_size);
@@ -219,7 +219,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_b
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
-  logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
+  logger.log_debug("Created RLC PDU (SDU segment) - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
   tx_pdu.next_so += segment_payload_len;
@@ -227,28 +227,27 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_new_pdu_segment(rlc_tx_amd_pdu_b
   return pdu_buf;
 }
 
-byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
+byte_buffer_slice_chain rlc_tx_am_entity::build_continued_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes)
 {
-  logger.log_info("Creating continued PDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
+  logger.log_info("Creating continued SDU segment. Tx SDU ({} B), nof_bytes={} B ", tx_pdu.sdu.length(), nof_bytes);
 
   // Sanity check: is there an initial SDU segment?
   if (tx_pdu.next_so == 0) {
-    logger.log_error(
-        "build_continuation_sdu_segment was called, but there was no initial segment. SN={}, Tx SDU ({} B), "
-        "nof_bytes={} B ",
-        sn_under_segmentation,
-        tx_pdu.sdu.length(),
-        nof_bytes);
+    logger.log_error("build_continued_sdu_segment was called, but there was no initial segment. SN={}, Tx SDU ({} B), "
+                     "nof_bytes={} B ",
+                     sn_under_segmentation,
+                     tx_pdu.sdu.length(),
+                     nof_bytes);
     sn_under_segmentation = INVALID_RLC_SN;
     return {};
   }
 
-  logger.log_debug("continuing SDU segment. SN={}, next_so={}", sn_under_segmentation, tx_pdu.next_so);
+  logger.log_debug("Continuing SDU segment. SN={}, next_so={}", sn_under_segmentation, tx_pdu.next_so);
 
   // Sanity check: last byte must be smaller than SDU size
   if (tx_pdu.next_so >= tx_pdu.sdu.length()) {
     logger.log_error(
-        "segmentation progress exceeds SDU length. SDU len={} B, next_so={} B", tx_pdu.sdu.length(), tx_pdu.next_so);
+        "Segmentation progress exceeds SDU length. SDU len={} B, next_so={} B", tx_pdu.sdu.length(), tx_pdu.next_so);
     sn_under_segmentation = INVALID_RLC_SN;
     return {};
   }
@@ -256,7 +255,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_
   // Sanity check: can this SDU be sent considering header overhead?
   if (nof_bytes <= head_max_size) { // Large header, since continued segment has SO field, ref: TS 38.322 Sec. 6.2.2.4
     logger.log_info(
-        "Cannot build new sdu_segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
+        "Cannot build SDU segment, there are not enough bytes allocated to tx header plus data. nof_bytes={}, "
         "head_max_size={}",
         nof_bytes,
         head_max_size);
@@ -268,14 +267,14 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_
 
   if (segment_payload_len + head_max_size > nof_bytes) {
     logger.log_info(
-        "grant is not large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
+        "Grant is not large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
         segment_payload_len,
         head_max_size,
         nof_bytes);
     si                  = rlc_si_field::middle_segment;
     segment_payload_len = nof_bytes - head_max_size;
   } else {
-    logger.log_info("grant is large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
+    logger.log_info("Grant is large enough for remaining SDU bytes. SDU bytes left {}, head_max_size={}, nof_bytes {}",
                     segment_payload_len,
                     head_max_size,
                     nof_bytes);
@@ -306,7 +305,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_continuation_pdu_segment(rlc_tx_
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, segment_payload_len});
-  logger.log_debug("Created RLC PDU segment - {} bytes", pdu_buf.length());
+  logger.log_debug("Created RLC PDU (SDU segment) - {} bytes", pdu_buf.length());
 
   // Store segmentation progress
   tx_pdu.next_so += segment_payload_len;
@@ -355,20 +354,20 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   // Get expected header and payload len
   uint32_t expected_hdr_len = get_retx_expected_hdr_len(retx);
   uint32_t retx_payload_len = std::min(retx.length, nof_bytes - expected_hdr_len);
-  bool     pdu_complete     = retx_payload_len == retx.length;
+  bool     sdu_complete     = retx_payload_len == retx.length;
 
   // Configure SI
   rlc_si_field si = rlc_si_field::full_sdu;
   if (retx.so == 0) {
-    // either full PDU or first segment
-    if (pdu_complete) {
+    // either full SDU or first segment
+    if (sdu_complete) {
       si = rlc_si_field::full_sdu;
     } else {
       si = rlc_si_field::first_segment;
     }
   } else {
     // either middle segment or last segment
-    if (pdu_complete) {
+    if (sdu_complete) {
       si = rlc_si_field::last_segment;
     } else {
       si = rlc_si_field::middle_segment;
@@ -376,8 +375,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   }
 
   // Log ReTx info
-  logger.log_debug("Creating PDU{} ({}) for ReTx [{}], nof_bytes={}, expected_hdr_len={}, retx_payload_len={}",
-                   si == rlc_si_field::full_sdu ? "" : " segment",
+  logger.log_debug("Creating PDU ({}) for ReTx [{}], nof_bytes={}, expected_hdr_len={}, retx_payload_len={}",
                    si,
                    retx,
                    nof_bytes,
@@ -386,7 +384,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
 
   // Update ReTx queue. This must be done before calculating
   // the polling bit, to make sure the poll bit is calculated correctly
-  if (pdu_complete) {
+  if (sdu_complete) {
     // remove ReTx from queue
     retx_queue.pop();
   } else {
@@ -422,10 +420,7 @@ byte_buffer_slice_chain rlc_tx_am_entity::build_retx_pdu(uint32_t nof_bytes)
   byte_buffer_slice_chain pdu_buf = {};
   pdu_buf.push_front(std::move(header_buf));
   pdu_buf.push_back(byte_buffer_slice{tx_pdu.sdu, hdr.so, retx_payload_len});
-  logger.log_debug("Created RLC ReTx PDU{} ({}) - {} bytes",
-                   hdr.si == rlc_si_field::full_sdu ? "" : " segment",
-                   si,
-                   pdu_buf.length());
+  logger.log_debug("Created RLC ReTx PDU ({}) - {} bytes", si, pdu_buf.length());
 
   // Log state
   log_state(srslog::basic_levels::debug);
@@ -566,7 +561,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
 
   uint32_t sdu_length = (*tx_window)[nack.nack_sn].sdu.length();
 
-  // Convert NACK for full PDUs into NACK with segment offset and length
+  // Convert NACK for full SDUs into NACK with segment offset and length
   if (!nack.has_so) {
     nack.so_start = 0;
     nack.so_end   = sdu_length - 1;
@@ -603,7 +598,7 @@ bool rlc_tx_am_entity::handle_nack(rlc_am_status_nack nack)
     retx_queue.push(retx);
     logger.log_debug("Scheduled ReTx=[{}]. NACK={}", retx, nack);
   } else {
-    logger.log_info("NACK'ed PDU or PDU segment is already queued for ReTx. NACK={}", nack);
+    logger.log_info("NACK'ed SDU or SDU segment is already queued for ReTx. NACK={}", nack);
     return false;
   }
 
@@ -670,7 +665,7 @@ uint8_t rlc_tx_am_entity::get_polling_bit(uint32_t sn, bool is_retx, uint32_t pa
                    is_retx ? "true" : "false",
                    payload_size,
                    st.poll_sn);
-  /* For each AMD PDU or AMD PDU segment that has not been previoulsy tranmitted:
+  /* For each AMD PDU containing a SDU or SDU segment that has not been previoulsy tranmitted:
    * - increment PDU_WITHOUT_POLL by one;
    * - increment BYTE_WITHOUT_POLL by every new byte of Data field element that it maps to the Data field of the AMD
    * PDU;

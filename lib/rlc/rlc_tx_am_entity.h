@@ -165,17 +165,24 @@ private:
   /// \return One PDU
   byte_buffer_slice_chain build_new_pdu(uint32_t nof_bytes);
 
-  /// \brief Builds a new RLC PDU segment, from a RLC SDU.
+  /// \brief Builds a RLC PDU containing the first segment of a new SDU.
+  ///
+  /// This function will set sn_under_segmentation to the sequence number of the SDU under segmentation.
+  ///
   /// \param tx_pdu the tx_pdu info contained in the tx_window.
   /// \param nof_bytes Limits the maximum size of the requested PDU.
-  /// \return One PDU segment
-  byte_buffer_slice_chain build_new_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+  /// \return One PDU
+  byte_buffer_slice_chain build_first_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
 
-  /// \brief Build PDU segment for an RLC SDU that is already on-going segmentation.
+  /// \brief Builds a RLC PDU containing an SDU segment for an SDU that is undergoing segmentation.
+  ///
+  /// This function will reset sn_under_segmentation to RLC_INVALID_SN if the produced PDU contains
+  /// the last segment of the SDU under segmentation.
+  ///
   /// \param tx_pdu The tx_pdu info contained in the tx_window.
   /// \param nof_bytes Limits the maximum size of the requested PDU.
-  /// \return One PDU segment
-  byte_buffer_slice_chain build_continuation_pdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
+  /// \return One PDU
+  byte_buffer_slice_chain build_continued_sdu_segment(rlc_tx_amd_pdu_box& tx_pdu, uint32_t nof_bytes);
 
   /// \brief Builds a retx RLC PDU.
   ///
