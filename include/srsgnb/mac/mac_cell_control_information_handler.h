@@ -27,10 +27,11 @@ using rssi_report = uint16_t;
 
 /// CRC indication for a given PDU.
 struct mac_crc_pdu {
-  rnti_t                          rnti;
-  uint8_t                         rapid;
-  uint8_t                         harq_id;
-  bool                            tb_crc_success;
+  rnti_t  rnti;
+  uint8_t rapid;
+  uint8_t harq_id;
+  bool    tb_crc_success;
+  /// Codeblocks CRC status.
   bounded_bitset<MAX_CBS_PER_PDU> cb_crc_status;
   uint16_t                        ul_sinr_metric;
   phy_time_unit                   ta;
