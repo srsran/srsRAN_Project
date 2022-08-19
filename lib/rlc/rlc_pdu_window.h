@@ -39,7 +39,7 @@ struct rlc_pdu_window final : public rlc_pdu_window_base<T> {
   T& add_pdu(size_t sn) override
   {
     srsgnb_assert(not has_sn(sn), "The same SN={} should not be added twice", sn);
-    window.overwrite(sn, T(sn));
+    window.overwrite(sn, T());
     return window[sn];
   }
   void remove_pdu(size_t sn) override
