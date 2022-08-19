@@ -19,12 +19,12 @@
 namespace srsgnb {
 
 struct mac_common_config_t {
-  srslog::basic_logger&     logger;
-  mac_ul_ccch_notifier&     event_notifier;
+  srslog::basic_logger&       logger;
+  mac_ul_ccch_notifier&       event_notifier;
   du_high_ue_executor_mapper& ul_exec_mapper;
-  du_l2_dl_executor_mapper& dl_exec_mapper;
-  task_executor&            ctrl_exec;
-  mac_result_notifier&      phy_notifier;
+  du_l2_dl_executor_mapper&   dl_exec_mapper;
+  task_executor&              ctrl_exec;
+  mac_result_notifier&        phy_notifier;
 
   mac_common_config_t(mac_ul_ccch_notifier&       event_notifier_,
                       du_high_ue_executor_mapper& ul_exec_,
@@ -37,7 +37,8 @@ struct mac_common_config_t {
     dl_exec_mapper(dl_exec_),
     ctrl_exec(ctrl_exec_),
     phy_notifier(phy_notifier_)
-  {}
+  {
+  }
 };
 
 } // namespace srsgnb

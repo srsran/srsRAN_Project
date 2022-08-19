@@ -71,10 +71,8 @@ private:
   /// \param[in] msg The DL RRC message transfer message.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
-  srslog::basic_logger&       logger;
-  f1c_message_notifier&       f1c_notifier;
-  task_executor&              ctrl_exec;
-  du_high_ue_executor_mapper& ue_exec_mapper;
+  srslog::basic_logger& logger;
+  f1c_message_notifier& f1c_notifier;
 
   std::unique_ptr<f1c_task_scheduler> task_sched;
 
