@@ -156,7 +156,7 @@ protected:
       rlc_rx_lower->handle_pdu(std::move(pdu));
     }
 
-    uint32_t header_size         = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+    uint32_t header_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
 
     // Read "n_pdus" SDUs from upper layer
     EXPECT_EQ(tester.sdu_queue.size(), n_pdus);
