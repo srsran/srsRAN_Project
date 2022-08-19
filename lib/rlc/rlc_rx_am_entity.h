@@ -126,11 +126,26 @@ private:
   /// and resets the rx_window_changed flag
   void refresh_status_report();
 
+  void on_expired_status_prohibit_timer(uint32_t timeout_id);
+  void on_expired_reassembly_timer(uint32_t timeout_id);
+
   inline uint32_t rx_mod_base_nr(uint32_t sn) const { return (sn - st.rx_next) % mod; }
   inline bool     inside_rx_window(uint32_t sn) const
   {
     // RX_Next <= SN < RX_Next + AM_Window_Size
     return rx_mod_base_nr(sn) < am_window_size;
+  }
+
+  /// \brief This function is used to check if the Rx_Highest_Status is valid when t-Reasseambly expires.
+  ///
+  /// ACK_SN may be equal to RX_NEXT + AM_Window_Size if the PDU with SN=RX_NEXT+AM_Window_Size has been received by the
+  /// RX. An ACK_SN == Rx_Next should not update Rx_Highest_Status,it should be updated when Rx_Next is updated.
+  /// \param sn
+  /// \return
+  inline bool valid_ack_sn(uint32_t sn) const
+  {
+    // RX_Next < SN <= RX_Next + AM_Window_Size
+    return (0 < rx_mod_base_nr(sn)) && (rx_mod_base_nr(sn) <= am_window_size);
   }
 };
 

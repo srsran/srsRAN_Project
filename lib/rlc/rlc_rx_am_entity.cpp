@@ -21,8 +21,24 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
+  status_prohibit_timer(timers.create_unique_timer()),
   reassembly_timer(timers.create_unique_timer())
 {
+  // check status_prohibit_timer
+  srsgnb_assert(status_prohibit_timer.is_valid(), "Cannot create RLC RX AM: status_prohibit_timer not configured");
+  // check reassembly_timer
+  srsgnb_assert(reassembly_timer.is_valid(), "Cannot create RLC RX AM: reassembly_timer not configured");
+
+  // configure status_prohibit_timer
+  if (cfg.t_status_prohibit > 0) {
+    status_prohibit_timer.set(static_cast<uint32_t>(cfg.t_status_prohibit),
+                              [this](uint32_t tid) { on_expired_status_prohibit_timer(tid); });
+  }
+  // configure reassembly_timer
+  if (cfg.t_reassembly > 0) {
+    reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly),
+                         [this](uint32_t tid) { on_expired_reassembly_timer(tid); });
+  }
 }
 
 // Interfaces for lower layers
@@ -336,6 +352,62 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) co
   rx_sdu.fully_received = false;
 }
 
+void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
+{
+  // Reassembly
+  if (reassembly_timer.is_valid() && reassembly_timer.id() == timeout_id) {
+    logger.log_debug("Reassembly timer expired after {}ms", reassembly_timer.duration());
+    /*
+     * 5.2.3.2.4 Actions when t-Reassembly expires:
+     * - update RX_Highest_Status to the SN of the first RLC SDU with SN >= RX_Next_Status_Trigger for which not
+     *   all bytes have been received;
+     * - if RX_Next_Highest> RX_Highest_Status +1: or
+     * - if RX_Next_Highest = RX_Highest_Status + 1 and there is at least one missing byte segment of the SDU
+     *   associated with SN = RX_Highest_Status before the last byte of all received segments of this SDU:
+     *   - start t-Reassembly;
+     *   - set RX_Next_Status_Trigger to RX_Next_Highest.
+     */
+    uint32_t sn_upd = {};
+    for (sn_upd = st.rx_next_status_trigger; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+         sn_upd = (sn_upd + 1) % mod) {
+      if (rx_window.find(sn_upd) == rx_window.end() ||
+          (rx_window.find(sn_upd) != rx_window.end() && not rx_window.at(sn_upd).fully_received)) {
+        break;
+      }
+    }
+    st.rx_highest_status = sn_upd;
+    if (not valid_ack_sn(st.rx_highest_status)) {
+      logger.log_error("Rx_Highest_Status not inside RX window");
+      logger.log_debug("State: {}", st);
+    }
+    srsgnb_assert(valid_ack_sn(st.rx_highest_status), "Error: rx_highest_status assigned outside rx window");
+
+    bool restart_reassembly_timer = false;
+    if (rx_mod_base_nr(st.rx_next_highest) > rx_mod_base_nr(st.rx_highest_status + 1)) {
+      restart_reassembly_timer = true;
+    }
+    if (rx_mod_base_nr(st.rx_next_highest) == rx_mod_base_nr(st.rx_highest_status + 1)) {
+      if (rx_window.find(st.rx_highest_status) != rx_window.end() && rx_window.at(st.rx_highest_status).has_gap) {
+        restart_reassembly_timer = true;
+      }
+    }
+    if (restart_reassembly_timer) {
+      reassembly_timer.run();
+      st.rx_next_status_trigger = st.rx_next_highest;
+    }
+
+    /* 5.3.4 Status reporting:
+     * - The receiving side of an AM RLC entity shall trigger a STATUS report when t-Reassembly expires.
+     *   NOTE 2: The expiry of t-Reassembly triggers both RX_Highest_Status to be updated and a STATUS report to be
+     *   triggered, but the STATUS report shall be triggered after RX_Highest_Status is updated.
+     */
+    do_status = true;
+    logger.log_debug("State: {}", st);
+    logger.log_debug("SDUs in rx_window: {}", st.rx_next, st.rx_next_highest, rx_window.size());
+    return;
+  }
+}
+
 void rlc_rx_am_entity::refresh_status_report()
 {
   std::unique_lock<std::mutex> lock(status_report_mutex);
@@ -439,4 +511,12 @@ uint32_t rlc_rx_am_entity::get_status_pdu_length()
 bool rlc_rx_am_entity::status_report_required()
 {
   return do_status.load(std::memory_order_relaxed) && not status_prohibit_timer.is_running();
+}
+
+void rlc_rx_am_entity::on_expired_status_prohibit_timer(uint32_t timeout_id)
+{
+  if (status_prohibit_timer.is_valid() && status_prohibit_timer.id() == timeout_id) {
+    logger.log_debug("Status prohibit timer expired after {}ms", status_prohibit_timer.duration());
+    return;
+  }
 }
