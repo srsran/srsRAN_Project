@@ -10,7 +10,9 @@
 
 #include "../../lib/rlc/rlc_rx_am_entity.h"
 #include <gtest/gtest.h>
+#include <list>
 #include <queue>
+#include <utility>
 
 using namespace srsgnb;
 
@@ -83,7 +85,23 @@ protected:
     rlc->set_status_handler(tester.get());
   }
 
-  /// \brief Creates as byte_buffer containing a RLC AMD PDU with a full RLC SDU
+  /// \brief Creates a byte_buffer serving as SDU for RLC
+  ///
+  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
+  /// i.e. if first_byte = 0xfc, the SDU will be 0xfc 0xfe 0xff 0x00 0x01 ...
+  /// \param sdu_size Size of the SDU
+  /// \param first_byte Value of the first byte
+  /// \return the produced SDU as a byte_buffer
+  byte_buffer create_sdu(uint32_t sdu_size, uint8_t first_byte = 0) const
+  {
+    byte_buffer sdu_buf;
+    for (uint32_t k = 0; k < sdu_size; ++k) {
+      sdu_buf.append(first_byte + k);
+    }
+    return sdu_buf;
+  }
+
+  /// \brief Creates a byte_buffer containing a RLC AMD PDU with a full RLC SDU
   ///
   /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
   /// i.e. if first_byte = 0xfc, the PDU will be <header> 0xfc 0xfe 0xff 0x00 0x01 ...
@@ -103,11 +121,75 @@ protected:
     hdr.so                = 0;
     logger.debug("AMD PDU header: {}", hdr);
     rlc_am_write_data_pdu_header(hdr, pdu_buf);
-
-    for (uint32_t k = 0; k < sdu_size; ++k) {
-      pdu_buf.append(first_byte + k);
-    }
+    pdu_buf.append(create_sdu(sdu_size, first_byte));
     return pdu_buf;
+  }
+
+  /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments
+  /// \param sn The sequence number to be put in the header
+  /// \param sdu_size Size of the SDU
+  /// \param segment_size Maximum payload size of each SDU or SDU segment
+  /// \param first_byte Value of the first SDU payload byte
+  /// \return A pair consisting of a RLC AMD PDU list and the associated RLC SDU
+  std::pair<std::list<byte_buffer>, byte_buffer>
+  create_pdus_with_sdu_segments(uint32_t sn, uint32_t sdu_size, uint32_t segment_size, uint8_t first_byte = 0) const
+  {
+    if (sdu_size == 0) {
+      sdu_size = 1;
+    }
+    if (segment_size == 0) {
+      segment_size = sdu_size;
+    }
+
+    byte_buffer            sdu_buf  = create_sdu(sdu_size, first_byte);
+    std::list<byte_buffer> pdu_list = {};
+    byte_buffer_view       rest     = {sdu_buf};
+
+    rlc_am_pdu_header hdr = {};
+    hdr.dc                = rlc_dc_field::data;
+    hdr.p                 = 0;
+    hdr.si                = rlc_si_field::full_sdu;
+    hdr.sn_size           = config.sn_field_length;
+    hdr.sn                = sn;
+    hdr.so                = 0;
+    do {
+      byte_buffer_view payload = {};
+      if (rest.length() > segment_size) {
+        // first or middle segment
+        if (hdr.so == 0) {
+          hdr.si = rlc_si_field::first_segment;
+        } else {
+          hdr.si = rlc_si_field::middle_segment;
+        }
+
+        // split into payload and rest
+        std::pair<byte_buffer_view, byte_buffer_view> split = rest.split(segment_size);
+
+        payload = std::move(split.first);
+        rest    = std::move(split.second);
+      } else {
+        // last segment or full PDU
+        if (hdr.so == 0) {
+          hdr.si = rlc_si_field::full_sdu;
+        } else {
+          hdr.si = rlc_si_field::last_segment;
+        }
+
+        // full payload, no rest
+        payload = std::move(rest);
+        rest    = {};
+      }
+      byte_buffer pdu_buf;
+      logger.debug("AMD PDU header: {}", hdr);
+      rlc_am_write_data_pdu_header(hdr, pdu_buf);
+      pdu_buf.append(payload);
+      pdu_list.push_back(std::move(pdu_buf));
+
+      // update segment offset for next iteration
+      hdr.so += payload.length();
+    } while (rest.length() > 0);
+
+    return {std::move(pdu_list), std::move(sdu_buf)};
   }
 
   /// \brief Obtains RLC AMD PDUs from generated SDUs that are passed through an RLC AM entity
@@ -131,7 +213,9 @@ protected:
 
     // Create and push "n_pdus" PDUs into RLC
     for (uint32_t i = 0; i < n_pdus; i++) {
-      injected_pdus[i] = create_pdu_with_full_sdu(sn_state, sdu_size, sn_state);
+      std::pair<std::list<byte_buffer>, byte_buffer> pair =
+          create_pdus_with_sdu_segments(sn_state, sdu_size, sdu_size, sn_state);
+      injected_pdus[i] = std::move(pair.first.front());
       sn_state++;
 
       // write PDU into lower end
@@ -149,7 +233,7 @@ protected:
     uint32_t header_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
 
     // Read "n_pdus" SDUs from upper layer
-    EXPECT_EQ(tester->sdu_queue.size(), n_pdus);
+    ASSERT_EQ(tester->sdu_queue.size(), n_pdus);
     for (uint32_t i = 0; i < n_pdus; i++) {
       EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
       EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(),
