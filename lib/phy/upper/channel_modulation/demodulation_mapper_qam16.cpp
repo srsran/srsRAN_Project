@@ -34,13 +34,16 @@ inline void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   // Load noise.
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
 
+  // Make noise reciprocal.
+  __m256 rcp_noise_0 = _mm256_div_ps(_mm256_set1_ps(1), noise_0);
+
   // Repeat noise values for real and imaginary parts.
-  __m256 noise_1 = _mm256_unpackhi_ps(noise_0, noise_0);
-  noise_0        = _mm256_unpacklo_ps(noise_0, noise_0);
+  __m256 rcp_noise_1 = _mm256_unpackhi_ps(rcp_noise_0, rcp_noise_0);
+  rcp_noise_0        = _mm256_unpacklo_ps(rcp_noise_0, rcp_noise_0);
 
   // Re-collocate SSE registers.
-  __m256 noise_0_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x20);
-  __m256 noise_1_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x31);
+  __m256 rcp_noise_0_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x20);
+  __m256 rcp_noise_1_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x31);
 
   // Calculate l_value for bits 0 and 1.
   __m256 GAIN_FIRST         = _mm256_set1_ps(4.0F * M_SQRT1_10);
@@ -66,11 +69,11 @@ inline void demod_QAM16_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   __m256 l_value_23_0 = _mm256_sub_ps(CONST_0_8, mm256::abs_ps(l_value_01_first_0));
   __m256 l_value_23_1 = _mm256_sub_ps(CONST_0_8, mm256::abs_ps(l_value_01_first_1));
 
-  // Divide by noise.
-  l_value_01_0 = _mm256_div_ps(l_value_01_0, noise_0_);
-  l_value_01_1 = _mm256_div_ps(l_value_01_1, noise_1_);
-  l_value_23_0 = _mm256_div_ps(l_value_23_0, noise_0_);
-  l_value_23_1 = _mm256_div_ps(l_value_23_1, noise_1_);
+  // Multiply by noise reciprocal.
+  l_value_01_0 = _mm256_mul_ps(l_value_01_0, rcp_noise_0_);
+  l_value_01_1 = _mm256_mul_ps(l_value_01_1, rcp_noise_1_);
+  l_value_23_0 = _mm256_mul_ps(l_value_23_0, rcp_noise_0_);
+  l_value_23_1 = _mm256_mul_ps(l_value_23_1, rcp_noise_1_);
 
   // Re-collocate values.
   __m256 l_value_0 = _mm256_shuffle_ps(l_value_01_0, l_value_23_0, _MM_SHUFFLE(1, 0, 1, 0));

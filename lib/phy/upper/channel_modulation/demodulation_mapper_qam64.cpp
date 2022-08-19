@@ -25,58 +25,42 @@ static const float M_SQRT1_42 = 1.0F / std::sqrt(42.0F);
 // Maximum (absolute) value considered for quantization. Larger values will be clipped.
 static constexpr float RANGE_LIMIT_FLOAT = 150;
 
+static constexpr int              NOF_INTERVALS_01  = 8;
+static const float                INTERVAL_WIDTH_01 = 2 * M_SQRT1_42;
+static const std::array<float, 8> SLOPE_01          = {16 * M_SQRT1_42,
+                                                       12 * M_SQRT1_42,
+                                                       8 * M_SQRT1_42,
+                                                       4 * M_SQRT1_42,
+                                                       4 * M_SQRT1_42,
+                                                       8 * M_SQRT1_42,
+                                                       12 * M_SQRT1_42,
+                                                       16 * M_SQRT1_42};
+static const std::array<float, 8> INTERCEPT_01 =
+    {24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
+
+constexpr int                     NOF_INTERVALS_23  = 8;
+const float                       INTERVAL_WIDTH_23 = 2 * M_SQRT1_42;
+static const std::array<float, 8> SLOPE_23          = {8 * M_SQRT1_42,
+                                                       4 * M_SQRT1_42,
+                                                       4 * M_SQRT1_42,
+                                                       8 * M_SQRT1_42,
+                                                       -8 * M_SQRT1_42,
+                                                       -4 * M_SQRT1_42,
+                                                       -4 * M_SQRT1_42,
+                                                       -8 * M_SQRT1_42};
+static const std::array<float, 8> INTERCEPT_23 =
+    {20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
+
+static constexpr int              NOF_INTERVALS_45  = 4;
+static const float                INTERVAL_WIDTH_45 = 4 * M_SQRT1_42;
+static const std::array<float, 8> SLOPE_45 =
+    {4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42, 0, 0, 0, 0};
+static const std::array<float, 8> INTERCEPT_45 = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21, 0, 0, 0, 0};
+
 #ifdef HAVE_AVX2
-
-template <typename Table>
-inline __m256 make_magic(__m256       value,
-                         __m256       noise,
-                         float        interval_width,
-                         int          nof_intervals,
-                         const Table& slopes,
-                         const Table& intercepts)
-{
-  __m256i interval_index = mm256::compute_interval_idx(value, interval_width, nof_intervals);
-
-  __m256 slope     = mm256::look_up_table(slopes, interval_index);
-  __m256 intercept = mm256::look_up_table(intercepts, interval_index);
-
-  return _mm256_div_ps(_mm256_add_ps(_mm256_mul_ps(slope, value), intercept), noise);
-}
 
 inline void demod_QAM64_avx2(log_likelihood_ratio* llr, const cf_t* symbol, const float* noise_var)
 {
-  static constexpr int              NOF_INTERVALS_01  = 8;
-  static const float                INTERVAL_WIDTH_01 = 2 * M_SQRT1_42;
-  static const std::array<float, 8> SLOPE_01          = {16 * M_SQRT1_42,
-                                                         12 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         12 * M_SQRT1_42,
-                                                         16 * M_SQRT1_42};
-  static const std::array<float, 8> INTERCEPT_01      = {
-           24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
-
-  constexpr int                     NOF_INTERVALS_23  = 8;
-  const float                       INTERVAL_WIDTH_23 = 2 * M_SQRT1_42;
-  static const std::array<float, 8> SLOPE_23          = {8 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         4 * M_SQRT1_42,
-                                                         8 * M_SQRT1_42,
-                                                         -8 * M_SQRT1_42,
-                                                         -4 * M_SQRT1_42,
-                                                         -4 * M_SQRT1_42,
-                                                         -8 * M_SQRT1_42};
-  static const std::array<float, 8> INTERCEPT_23      = {
-           20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
-
-  static constexpr int              NOF_INTERVALS_45  = 4;
-  static const float                INTERVAL_WIDTH_45 = 4 * M_SQRT1_42;
-  static const std::array<float, 8> SLOPE_45          = {
-               4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42, 0, 0, 0, 0};
-  static const std::array<float, 8> INTERCEPT_45 = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21, 0, 0, 0, 0};
-
   // Load symbols.
   __m256 symbols_0 = _mm256_loadu_ps(reinterpret_cast<const float*>(symbol + 0));
   __m256 symbols_1 = _mm256_loadu_ps(reinterpret_cast<const float*>(symbol + 4));
@@ -87,35 +71,51 @@ inline void demod_QAM64_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
   __m256 noise_0 = _mm256_loadu_ps(noise_var + 0);
   __m256 noise_1 = _mm256_loadu_ps(noise_var + 8);
 
+  // Make noise reciprocal.
+  __m256 rcp_noise_0 = _mm256_div_ps(_mm256_set1_ps(1), noise_0);
+  __m256 rcp_noise_1 = _mm256_div_ps(_mm256_set1_ps(1), noise_1);
+
   // Repeat noise values for real and imaginary parts.
-  __m256 noise_3 = _mm256_unpackhi_ps(noise_1, noise_1);
-  __m256 noise_2 = _mm256_unpacklo_ps(noise_1, noise_1);
-  noise_1        = _mm256_unpackhi_ps(noise_0, noise_0);
-  noise_0        = _mm256_unpacklo_ps(noise_0, noise_0);
+  __m256 rcp_noise_3 = _mm256_unpackhi_ps(rcp_noise_1, rcp_noise_1);
+  __m256 rcp_noise_2 = _mm256_unpacklo_ps(rcp_noise_1, rcp_noise_1);
+  rcp_noise_1        = _mm256_unpackhi_ps(rcp_noise_0, rcp_noise_0);
+  rcp_noise_0        = _mm256_unpacklo_ps(rcp_noise_0, rcp_noise_0);
 
   // Re-collocate SSE registers.
-  __m256 noise_0_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x20);
-  __m256 noise_1_ = _mm256_permute2f128_ps(noise_0, noise_1, 0x31);
-  __m256 noise_2_ = _mm256_permute2f128_ps(noise_2, noise_3, 0x20);
-  __m256 noise_3_ = _mm256_permute2f128_ps(noise_2, noise_3, 0x31);
+  __m256 rcp_noise_0_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x20);
+  __m256 rcp_noise_1_ = _mm256_permute2f128_ps(rcp_noise_0, rcp_noise_1, 0x31);
+  __m256 rcp_noise_2_ = _mm256_permute2f128_ps(rcp_noise_2, rcp_noise_3, 0x20);
+  __m256 rcp_noise_3_ = _mm256_permute2f128_ps(rcp_noise_2, rcp_noise_3, 0x31);
 
   // Calculate l_value for bits 0 and 1.
-  __m256 l_value_01_0 = make_magic(symbols_0, noise_0_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
-  __m256 l_value_01_1 = make_magic(symbols_1, noise_1_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
-  __m256 l_value_01_2 = make_magic(symbols_2, noise_2_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
-  __m256 l_value_01_3 = make_magic(symbols_3, noise_3_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m256 l_value_01_0 =
+      mm256::make_magic(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m256 l_value_01_1 =
+      mm256::make_magic(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m256 l_value_01_2 =
+      mm256::make_magic(symbols_2, rcp_noise_2_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
+  __m256 l_value_01_3 =
+      mm256::make_magic(symbols_3, rcp_noise_3_, INTERVAL_WIDTH_01, NOF_INTERVALS_01, SLOPE_01, INTERCEPT_01);
 
   // Calculate l_value for bits 2 and 3.
-  __m256 l_value_23_0 = make_magic(symbols_0, noise_0_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
-  __m256 l_value_23_1 = make_magic(symbols_1, noise_1_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
-  __m256 l_value_23_2 = make_magic(symbols_2, noise_2_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
-  __m256 l_value_23_3 = make_magic(symbols_3, noise_3_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m256 l_value_23_0 =
+      mm256::make_magic(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m256 l_value_23_1 =
+      mm256::make_magic(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m256 l_value_23_2 =
+      mm256::make_magic(symbols_2, rcp_noise_2_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
+  __m256 l_value_23_3 =
+      mm256::make_magic(symbols_3, rcp_noise_3_, INTERVAL_WIDTH_23, NOF_INTERVALS_23, SLOPE_23, INTERCEPT_23);
 
   // Calculate l_value for bits 4 and 5.
-  __m256 l_value_45_0 = make_magic(symbols_0, noise_0_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
-  __m256 l_value_45_1 = make_magic(symbols_1, noise_1_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
-  __m256 l_value_45_2 = make_magic(symbols_2, noise_2_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
-  __m256 l_value_45_3 = make_magic(symbols_3, noise_3_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m256 l_value_45_0 =
+      mm256::make_magic(symbols_0, rcp_noise_0_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m256 l_value_45_1 =
+      mm256::make_magic(symbols_1, rcp_noise_1_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m256 l_value_45_2 =
+      mm256::make_magic(symbols_2, rcp_noise_2_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
+  __m256 l_value_45_3 =
+      mm256::make_magic(symbols_3, rcp_noise_3_, INTERVAL_WIDTH_45, NOF_INTERVALS_45, SLOPE_45, INTERCEPT_45);
 
   // Re-collocate values.
   __m256 l_value_0  = _mm256_shuffle_ps(l_value_01_0, l_value_23_0, _MM_SHUFFLE(1, 0, 1, 0));
@@ -155,58 +155,30 @@ inline void demod_QAM64_avx2(log_likelihood_ratio* llr, const cf_t* symbol, cons
 }
 #endif // HAVE_AVX2
 
-static log_likelihood_ratio demod_64QAM_symbol_01(float x, float noise_var)
+inline log_likelihood_ratio demod_64QAM_symbol_01(float x, float noise_var)
 {
-  constexpr unsigned                            NOF_INTERVALS = 8;
-  static const std::array<float, NOF_INTERVALS> SLOPE         = {16 * M_SQRT1_42,
-                                                                 12 * M_SQRT1_42,
-                                                                 8 * M_SQRT1_42,
-                                                                 4 * M_SQRT1_42,
-                                                                 4 * M_SQRT1_42,
-                                                                 8 * M_SQRT1_42,
-                                                                 12 * M_SQRT1_42,
-                                                                 16 * M_SQRT1_42};
-  static const std::array<float, NOF_INTERVALS> INTERCEPT     = {
-          24.0F / 21, 12.0F / 21, 4.0F / 21, 0.0F, 0.0F, -4.0F / 21, -12.0F / 21, -24.0F / 21};
-
-  unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_42, NOF_INTERVALS);
-  float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
+  unsigned idx     = compute_interval_idx(x, INTERVAL_WIDTH_01, NOF_INTERVALS_01);
+  float    l_value = SLOPE_01[idx] * x + INTERCEPT_01[idx];
   l_value /= noise_var;
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-static log_likelihood_ratio demod_64QAM_symbol_23(float x, float noise_var)
+inline log_likelihood_ratio demod_64QAM_symbol_23(float x, float noise_var)
 {
-  constexpr unsigned                            NOF_INTERVALS = 8;
-  static const std::array<float, NOF_INTERVALS> SLOPE         = {8 * M_SQRT1_42,
-                                                                 4 * M_SQRT1_42,
-                                                                 4 * M_SQRT1_42,
-                                                                 8 * M_SQRT1_42,
-                                                                 -8 * M_SQRT1_42,
-                                                                 -4 * M_SQRT1_42,
-                                                                 -4 * M_SQRT1_42,
-                                                                 -8 * M_SQRT1_42};
-  static const std::array<float, NOF_INTERVALS> INTERCEPT     = {
-          20.0F / 21, 8.0F / 21, 8.0F / 21, 12.0F / 21, 12.0F / 21, 8.0F / 21, 8.0F / 21, 20.0F / 21};
-
-  unsigned idx     = compute_interval_idx(x, 2 * M_SQRT1_42, NOF_INTERVALS);
-  float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
+  unsigned idx     = compute_interval_idx(x, INTERVAL_WIDTH_23, NOF_INTERVALS_23);
+  float    l_value = SLOPE_23[idx] * x + INTERCEPT_23[idx];
   l_value /= noise_var;
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
 
-static log_likelihood_ratio demod_64QAM_symbol_45(float x, float noise_var)
+inline log_likelihood_ratio demod_64QAM_symbol_45(float x, float noise_var)
 {
-  constexpr unsigned                            NOF_INTERVALS = 4;
-  static const std::array<float, NOF_INTERVALS> SLOPE         = {
-              4 * M_SQRT1_42, -4 * M_SQRT1_42, 4 * M_SQRT1_42, -4 * M_SQRT1_42};
-  static const std::array<float, NOF_INTERVALS> INTERCEPT = {12.0F / 21, -4.0F / 21, -4.0F / 21, 12.0F / 21};
-
-  unsigned idx     = compute_interval_idx(x, 4 * M_SQRT1_42, NOF_INTERVALS);
-  float    l_value = SLOPE[idx] * x + INTERCEPT[idx];
+  unsigned idx     = compute_interval_idx(x, INTERVAL_WIDTH_45, NOF_INTERVALS_45);
+  float    l_value = SLOPE_45[idx] * x + INTERCEPT_45[idx];
   l_value /= noise_var;
   return log_likelihood_ratio::quantize(l_value, RANGE_LIMIT_FLOAT);
 }
+
 } // namespace
 
 void srsgnb::demodulate_soft_QAM64(span<log_likelihood_ratio> llrs,

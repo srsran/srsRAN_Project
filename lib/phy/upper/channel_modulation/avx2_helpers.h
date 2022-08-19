@@ -206,5 +206,21 @@ inline __m256 look_up_table(const std::array<float, 16>& table, __m256i indexes)
   return _mm256_blendv_ps(lower, upper, (__m256)mask);
 }
 
+template <typename Table>
+inline __m256 make_magic(__m256       value,
+                         __m256       rcp_noise,
+                         float        interval_width,
+                         int          nof_intervals,
+                         const Table& slopes,
+                         const Table& intercepts)
+{
+  __m256i interval_index = mm256::compute_interval_idx(value, interval_width, nof_intervals);
+
+  __m256 slope     = mm256::look_up_table(slopes, interval_index);
+  __m256 intercept = mm256::look_up_table(intercepts, interval_index);
+
+  return _mm256_mul_ps(_mm256_add_ps(_mm256_mul_ps(slope, value), intercept), rcp_noise);
+}
+
 } // namespace mm256
 } // namespace srsgnb
