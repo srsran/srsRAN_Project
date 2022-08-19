@@ -62,7 +62,7 @@ public:
                    const rlc_tx_um_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_lower_notifier&               lower_dn);
+                   rlc_tx_lower_layer_notifier&         lower_dn);
 
   // Interfaces for higher layers
   void handle_sdu(rlc_sdu sdu) override;

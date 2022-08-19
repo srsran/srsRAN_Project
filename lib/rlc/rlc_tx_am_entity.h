@@ -108,7 +108,7 @@ public:
                    const rlc_tx_am_config&              config,
                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_lower_notifier&               lower_dn,
+                   rlc_tx_lower_layer_notifier&         lower_dn,
                    timer_manager&                       timers);
 
   // Tx/Rx interconnect

@@ -20,7 +20,7 @@
  * This file will hold the interfaces and notifiers for the RLC entity.
  * They follow the following nomenclature:
  *
- *   rlc_{tx/rx}_{lower/upper}_{[control/data]}_{interface/notifier}
+ *   rlc_{tx/rx}_{lower/upper}_layer_{[control/data]}_{interface/notifier}
  *
  * 1. TX/RX indicates whether the interface is intended for the
  *    TX or RX side of the entity
@@ -36,23 +36,40 @@
  *
  */
 namespace srsgnb {
+
+/***************************************
+ * Interfaces/notifiers for upper layers
+ ***************************************/
 /// This interface represents the data entry point of the receiving side of a RLC entity.
 /// The lower-layers will use this class to pass PDUs into the RLC.
-class rlc_rx_lower_interface
+class rlc_rx_lower_layer_interface
 {
 public:
-  virtual ~rlc_rx_lower_interface() = default;
+  rlc_rx_lower_layer_interface()                                                = default;
+  virtual ~rlc_rx_lower_layer_interface()                                       = default;
+  rlc_rx_lower_layer_interface(const rlc_rx_lower_layer_interface&)             = delete;
+  rlc_rx_lower_layer_interface& operator=(const rlc_rx_lower_layer_interface&)  = delete;
+  rlc_rx_lower_layer_interface(const rlc_rx_lower_layer_interface&&)            = delete;
+  rlc_rx_lower_layer_interface& operator=(const rlc_rx_lower_layer_interface&&) = delete;
 
   /// Handle the incoming PDU.
   virtual void handle_pdu(byte_buffer_slice pdu) = 0;
 };
 
+/***************************************
+ * Interfaces/notifiers for lower layers
+ ***************************************/
 /// This interface represents the data exit point of the receiving side of a RLC entity.
 /// The RLC will use this class to pass SDUs to the upper-layers.
-class rlc_rx_upper_data_notifier
+class rlc_rx_upper_layer_data_notifier
 {
 public:
-  virtual ~rlc_rx_upper_data_notifier() = default;
+  rlc_rx_upper_layer_data_notifier()                                                    = default;
+  virtual ~rlc_rx_upper_layer_data_notifier()                                           = default;
+  rlc_rx_upper_layer_data_notifier(const rlc_rx_upper_layer_data_notifier&)             = delete;
+  rlc_rx_upper_layer_data_notifier& operator=(const rlc_rx_upper_layer_data_notifier&)  = delete;
+  rlc_rx_upper_layer_data_notifier(const rlc_rx_upper_layer_data_notifier&&)            = delete;
+  rlc_rx_upper_layer_data_notifier& operator=(const rlc_rx_upper_layer_data_notifier&&) = delete;
 
   /// This method is called to pass the SDU to the upper layers
   virtual void on_new_sdu(byte_buffer_slice pdu) = 0;

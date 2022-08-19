@@ -99,11 +99,11 @@ private:
   unique_timer reassembly_timer;
 
 public:
-  rlc_rx_am_entity(du_ue_index_t               du_index,
-                   lcid_t                      lcid,
-                   const rlc_rx_am_config&     config,
-                   rlc_rx_upper_data_notifier& upper_dn,
-                   timer_manager&              timers);
+  rlc_rx_am_entity(du_ue_index_t                     du_index,
+                   lcid_t                            lcid,
+                   const rlc_rx_am_config&           config,
+                   rlc_rx_upper_layer_data_notifier& upper_dn,
+                   timer_manager&                    timers);
 
   // Rx/Tx interconnect
   void set_status_handler(rlc_tx_am_status_handler* status_handler_) { status_handler = status_handler_; }

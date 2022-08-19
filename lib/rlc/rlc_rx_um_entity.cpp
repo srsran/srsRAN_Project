@@ -12,11 +12,11 @@
 
 using namespace srsgnb;
 
-rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t               du_index,
-                                   lcid_t                      lcid,
-                                   const rlc_rx_um_config&     config,
-                                   rlc_rx_upper_data_notifier& upper_dn,
-                                   timer_manager&              timers) :
+rlc_rx_um_entity::rlc_rx_um_entity(du_ue_index_t                     du_index,
+                                   lcid_t                            lcid,
+                                   const rlc_rx_um_config&           config,
+                                   rlc_rx_upper_layer_data_notifier& upper_dn,
+                                   timer_manager&                    timers) :
   rlc_rx_entity(du_index, lcid, upper_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),

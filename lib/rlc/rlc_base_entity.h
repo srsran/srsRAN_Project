@@ -34,9 +34,9 @@ public:
   rlc_base_entity(const rlc_base_entity&&)            = delete;
   rlc_base_entity& operator=(const rlc_base_entity&&) = delete;
 
-  rlc_tx_upper_data_interface* get_tx_upper_data_interface() final { return tx.get(); };
-  rlc_tx_lower_interface*      get_tx_lower_interface() final { return tx.get(); };
-  rlc_rx_lower_interface*      get_rx_lower_interface() final { return rx.get(); };
+  rlc_tx_upper_layer_data_interface* get_tx_upper_layer_data_interface() final { return tx.get(); };
+  rlc_tx_lower_layer_interface*      get_tx_lower_layer_interface() final { return tx.get(); };
+  rlc_rx_lower_layer_interface*      get_rx_lower_layer_interface() final { return rx.get(); };
 
   rlc_bearer_metrics_container get_metrics()
   {

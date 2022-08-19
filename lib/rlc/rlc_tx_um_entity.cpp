@@ -17,7 +17,7 @@ rlc_tx_um_entity::rlc_tx_um_entity(du_ue_index_t                        du_index
                                    const rlc_tx_um_config&              config,
                                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                                   rlc_tx_lower_notifier&               lower_dn) :
+                                   rlc_tx_lower_layer_notifier&         lower_dn) :
   rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),

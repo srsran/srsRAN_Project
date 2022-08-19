@@ -27,7 +27,7 @@ public:
                    lcid_t                               lcid,
                    rlc_tx_upper_layer_data_notifier&    upper_dn,
                    rlc_tx_upper_layer_control_notifier& upper_cn,
-                   rlc_tx_lower_notifier&               lower_dn) :
+                   rlc_tx_lower_layer_notifier&         lower_dn) :
     rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, lower_dn)
   {
   }

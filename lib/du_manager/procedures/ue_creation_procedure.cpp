@@ -108,8 +108,8 @@ void ue_creation_procedure::create_srb0()
   srb0.rlc_bearer     = create_rlc_entity(rlc_msg);
 
   // Create MAC -> RLC adapters.
-  srb0.mac_rx_notifier = std::make_unique<mac_sdu_rx_adapter>(*srb0.rlc_bearer->get_rx_lower_interface());
-  srb0.mac_tx_notifier = std::make_unique<mac_sdu_tx_adapter>(*srb0.rlc_bearer->get_tx_lower_interface());
+  srb0.mac_rx_notifier = std::make_unique<mac_sdu_rx_adapter>(*srb0.rlc_bearer->get_rx_lower_layer_interface());
+  srb0.mac_tx_notifier = std::make_unique<mac_sdu_tx_adapter>(*srb0.rlc_bearer->get_tx_lower_layer_interface());
 }
 
 async_task<mac_ue_create_response_message> ue_creation_procedure::make_mac_ue_create_req()

@@ -34,7 +34,7 @@ byte_buffer_slice_chain make_rlc_byte_buffer_and_log(const std::array<uint8_t, N
 class rlc_test_frame : public rlc_rx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_data_notifier,
                        public rlc_tx_upper_layer_control_notifier,
-                       public rlc_tx_buffer_state_update_notifier
+                       public rlc_tx_lower_layer_notifier
 {
 public:
   std::queue<byte_buffer_slice> sdu_queue;
@@ -107,20 +107,20 @@ protected:
         du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
 
     // Bind interfaces
-    rlc_rx_lower = rlc->get_rx_pdu_handler();
-    rlc_tx_upper = rlc->get_tx_sdu_handler();
-    rlc_tx_lower = rlc->get_tx_pdu_transmitter();
+    rlc_rx_lower = rlc->get_rx_lower_layer_interface();
+    rlc_tx_upper = rlc->get_tx_upper_layer_data_interface();
+    rlc_tx_lower = rlc->get_tx_lower_layer_interface();
   }
 
-  srslog::basic_logger&          logger  = srslog::fetch_basic_logger("TEST", false);
-  rlc_am_sn_size                 sn_size = GetParam();
-  rlc_am_config                  config;
-  timer_manager                  timers;
-  rlc_test_frame                 tester1, tester2;
-  std::unique_ptr<rlc_am_entity> rlc;
-  rlc_rx_pdu_handler*            rlc_rx_lower = nullptr;
-  rlc_tx_sdu_handler*            rlc_tx_upper = nullptr;
-  rlc_tx_pdu_transmitter*        rlc_tx_lower = nullptr;
+  srslog::basic_logger&              logger  = srslog::fetch_basic_logger("TEST", false);
+  rlc_am_sn_size                     sn_size = GetParam();
+  rlc_am_config                      config;
+  timer_manager                      timers;
+  rlc_test_frame                     tester1, tester2;
+  std::unique_ptr<rlc_am_entity>     rlc;
+  rlc_rx_lower_layer_interface*      rlc_rx_lower = nullptr;
+  rlc_tx_upper_layer_data_interface* rlc_tx_upper = nullptr;
+  rlc_tx_lower_layer_interface*      rlc_tx_lower = nullptr;
 };
 
 TEST_P(rlc_rx_am_test, create_new_entity)

@@ -20,25 +20,25 @@ namespace srs_du {
 class mac_sdu_rx_adapter : public mac_sdu_rx_notifier
 {
 public:
-  explicit mac_sdu_rx_adapter(rlc_rx_lower_interface& rlc_rx) : rlc_handler(rlc_rx) {}
+  explicit mac_sdu_rx_adapter(rlc_rx_lower_layer_interface& rlc_rx) : rlc_handler(rlc_rx) {}
 
   void on_new_sdu(byte_buffer_slice sdu) override { rlc_handler.handle_pdu(std::move(sdu)); }
 
 private:
-  rlc_rx_lower_interface& rlc_handler;
+  rlc_rx_lower_layer_interface& rlc_handler;
 };
 
 class mac_sdu_tx_adapter : public mac_sdu_tx_builder
 {
 public:
-  explicit mac_sdu_tx_adapter(rlc_tx_lower_interface& rlc_tx) : rlc_handler(rlc_tx) {}
+  explicit mac_sdu_tx_adapter(rlc_tx_lower_layer_interface& rlc_tx) : rlc_handler(rlc_tx) {}
 
   byte_buffer_slice_chain on_new_tx_sdu(unsigned nof_bytes) override { return rlc_handler.pull_pdu(nof_bytes); }
 
   unsigned on_buffer_state_update() override { return rlc_handler.get_buffer_state(); }
 
 private:
-  rlc_tx_lower_interface& rlc_handler;
+  rlc_tx_lower_layer_interface& rlc_handler;
 };
 
 } // namespace srs_du
