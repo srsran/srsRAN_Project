@@ -12,9 +12,9 @@
 
 #include "rlc_am_interconnect.h"
 #include "rlc_am_pdu.h"
+#include "rlc_pdu_window.h"
 #include "rlc_rx_entity.h"
 #include "srsgnb/support/timers.h"
-#include <map>
 #include <set>
 
 namespace srsgnb {
@@ -75,7 +75,7 @@ private:
     // rlc_amd_sdu_composer(uint32_t sn) : sn(sn) {}
   };
   /// Rx window
-  std::map<uint32_t, rlc_amd_sdu_composer> rx_window;
+  std::unique_ptr<rlc_pdu_window_base<rlc_amd_sdu_composer>> rx_window;
   /// Indicates whether the rx_window changed since last rebuild of status PDU.
   bool rx_window_changed = false;
 
@@ -147,6 +147,11 @@ private:
     // RX_Next < SN <= RX_Next + AM_Window_Size
     return (0 < rx_mod_base_nr(sn)) && (rx_mod_base_nr(sn) <= am_window_size);
   }
+
+  /// Creates the rx_window according to sn_size
+  /// \param sn_size Size of the sequence number (SN)
+  /// \return unique pointer to rx_window instance
+  static std::unique_ptr<rlc_pdu_window_base<rlc_amd_sdu_composer>> create_rx_window(rlc_am_sn_size sn_size);
 };
 
 } // namespace srsgnb
