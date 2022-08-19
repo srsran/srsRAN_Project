@@ -12,6 +12,7 @@
 
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/f1_interface/common/f1c_types.h"
 #include "srsgnb/support/error_handling.h"
 
 namespace srsgnb {
@@ -122,6 +123,45 @@ inline expected<uint8_t> get_transaction_id(const asn1::f1ap::f1_ap_pdu_c& pdu)
       return get_transaction_id(pdu.successful_outcome());
     case f1_ap_pdu_c::types_opts::unsuccessful_outcome:
       return get_transaction_id(pdu.unsuccessful_outcome());
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::init_msg_s& init_msg)
+{
+  using namespace asn1::f1ap;
+  switch (init_msg.value.type()) {
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::dlrrc_msg_transfer:
+      return (gnb_du_ue_f1ap_id_t)init_msg.value.dlrrc_msg_transfer()->gnb_du_ue_f1_ap_id->value;
+    default:
+      break;
+  }
+  return {default_error_t{}};
+}
+
+inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::successful_outcome_s& success_outcome)
+{
+  return {default_error_t{}};
+}
+
+inline expected<gnb_du_ue_f1ap_id_t>
+get_gnb_du_ue_f1ap_id(const asn1::f1ap::unsuccessful_outcome_s& unsuccessful_outcome)
+{
+  return {default_error_t{}};
+}
+
+inline expected<gnb_du_ue_f1ap_id_t> get_gnb_du_ue_f1ap_id(const asn1::f1ap::f1_ap_pdu_c& pdu)
+{
+  using namespace asn1::f1ap;
+  switch (pdu.type().value) {
+    case f1_ap_pdu_c::types_opts::init_msg:
+      return get_gnb_du_ue_f1ap_id(pdu.init_msg());
+    case f1_ap_pdu_c::types_opts::successful_outcome:
+      return get_gnb_du_ue_f1ap_id(pdu.successful_outcome());
+    case f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+      return get_gnb_du_ue_f1ap_id(pdu.unsuccessful_outcome());
     default:
       break;
   }

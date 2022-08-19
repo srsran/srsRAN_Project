@@ -11,6 +11,7 @@
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
 #include "du/procedures/f1ap_du_setup_procedure.h"
+#include "du/procedures/f1ap_du_ue_creation_procedure.h"
 #include "handlers/f1c_task_scheduler_impl.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
@@ -25,6 +26,8 @@ f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
                            du_high_ue_executor_mapper& ue_exec_mapper_) :
   logger(srslog::fetch_basic_logger("DU-F1AP")),
   f1c_notifier(message_notifier_),
+  ctrl_exec(ctrl_exec_),
+  ue_exec_mapper(ue_exec_mapper_),
   task_sched(std::make_unique<f1c_task_scheduler_impl>(task_sched_, ctrl_exec_, ue_exec_mapper_)),
   events(std::make_unique<f1ap_event_manager>(task_sched->get_timer_manager()))
 {
@@ -44,22 +47,7 @@ async_task<f1_setup_response_message> f1ap_du_impl::handle_f1ap_setup_request(co
 
 async_task<f1ap_ue_create_response> f1ap_du_impl::handle_ue_creation_request(const f1ap_ue_create_request& msg)
 {
-  // TODO: add UE create procedure
-  // TODO: Change execution context.
-  return launch_async(
-      [this, msg, resp = f1ap_ue_create_response{}](coro_context<async_task<f1ap_ue_create_response>>& ctx) mutable {
-        CORO_BEGIN(ctx);
-        resp.result = false;
-        if (not ctxt.ue_ctxt_manager.contains(msg.ue_index)) {
-          ctxt.ue_ctxt_manager.emplace(msg.ue_index);
-          ctxt.ue_ctxt_manager[msg.ue_index].crnti             = INVALID_RNTI; // Needed?
-          ctxt.ue_ctxt_manager[msg.ue_index].gnb_du_f1ap_ue_id = msg.ue_index;
-          ctxt.ue_ctxt_manager[msg.ue_index].gnb_cu_f1ap_ue_id = (du_ue_index_t)-1; // TODO
-
-          resp.result = true;
-        }
-        CORO_RETURN(resp);
-      });
+  return launch_async<f1ap_du_ue_creation_procedure>(msg, ues, ue_exec_mapper, ctrl_exec);
 }
 
 void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg)
@@ -111,30 +99,47 @@ void f1ap_du_impl::handle_pdu(f1_rx_pdu pdu)
 
 void f1ap_du_impl::handle_message(const f1c_message& msg)
 {
-  expected<uint8_t> transaction_id = get_transaction_id(msg.pdu);
+  expected<gnb_du_ue_f1ap_id_t> gnb_du_ue_f1ap_id = get_gnb_du_ue_f1ap_id(msg.pdu);
+  expected<uint8_t>             transaction_id    = get_transaction_id(msg.pdu);
   if (transaction_id.has_value()) {
-    logger.info("Handling F1AP PDU of type \"{}.{}\" with transaction id={}",
+    logger.info("F1AP SDU, \"{}.{}\", transaction id={}",
                 msg.pdu.type().to_string(),
                 get_message_type_str(msg.pdu),
                 transaction_id.value());
+  } else if (gnb_du_ue_f1ap_id.has_value()) {
+    logger.info("F1AP SDU, \"{}.{}\", GNB-DU-UE-F1AP-ID={}", msg.pdu.type().to_string(), gnb_du_ue_f1ap_id.value());
   } else {
-    logger.info("Handling F1AP PDU of type \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
+    logger.info("F1AP SDU, \"{}.{}\"", msg.pdu.type().to_string(), get_message_type_str(msg.pdu));
   }
 
-  switch (msg.pdu.type().value) {
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
-      handle_initiating_message(msg.pdu.init_msg());
-      break;
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
-      handle_successful_outcome(msg.pdu.successful_outcome());
-      break;
-    case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
-      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
-      break;
-    default:
-      logger.error("Invalid PDU type");
-      break;
+  // Dispatch F1AP message to UE-specific executor if GNB-UE-F1AP-ID is specified. Otherwise, run in CTRL executor.
+  task_executor* exec = nullptr;
+  if (not gnb_du_ue_f1ap_id.has_value()) {
+    exec = &ctrl_exec;
+  } else {
+    du_ue_index_t ue_index = ues.get_ue_index(gnb_du_ue_f1ap_id.value());
+    if (ue_index == INVALID_DU_UE_INDEX) {
+      logger.warning("Discarding F1AP SDU. Cause: GNB-DU-UE-F1AP-ID={} does not exist", gnb_du_ue_f1ap_id.value());
+      return;
+    }
+    exec = &ue_exec_mapper.executor(ue_index);
   }
+  exec->execute([this, pdu = msg.pdu]() {
+    switch (pdu.type().value) {
+      case asn1::f1ap::f1_ap_pdu_c::types_opts::init_msg:
+        handle_initiating_message(pdu.init_msg());
+        break;
+      case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
+        handle_successful_outcome(pdu.successful_outcome());
+        break;
+      case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+        handle_unsuccessful_outcome(pdu.unsuccessful_outcome());
+        break;
+      default:
+        logger.error("Invalid PDU type");
+        break;
+    }
+  });
 }
 
 void f1ap_du_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)

@@ -11,6 +11,7 @@
 #pragma once
 
 #include "f1ap_du_context.h"
+#include "f1ap_du_ue.h"
 #include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/du_high/du_high_ue_executor_mapper.h"
@@ -71,12 +72,16 @@ private:
   /// \param[in] msg The DL RRC message transfer message.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
-  srslog::basic_logger& logger;
-  f1c_message_notifier& f1c_notifier;
+  srslog::basic_logger&       logger;
+  f1c_message_notifier&       f1c_notifier;
+  task_executor&              ctrl_exec;
+  du_high_ue_executor_mapper& ue_exec_mapper;
 
   std::unique_ptr<f1c_task_scheduler> task_sched;
 
   unique_timer f1c_setup_timer;
+
+  f1ap_du_ue_manager ues;
 
   f1ap_du_context ctxt;
 
