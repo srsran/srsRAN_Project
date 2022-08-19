@@ -112,6 +112,65 @@ protected:
     rlc_tx_lower = rlc->get_tx_lower_layer_interface();
   }
 
+ /// \brief create_pdu_with_full_sdu Creates as byte_buffer containing a RLC PDU with a full RLC SDU
+  ///
+  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
+  /// i.e. if first_byte = 0xfc, the PDU will be <header> 0xfc 0xfe 0xff 0x00 0x01 ...
+  /// \param sn The sequence number to be put in the header
+  /// \param sdu_size Size of the SDU
+  /// \param first_byte Value of the first byte
+  /// \return the produced PDU as a byte_buffer
+  byte_buffer create_pdu_with_full_sdu(uint32_t sn, uint32_t sdu_size, uint8_t first_byte = 0) const
+  {
+    byte_buffer       pdu_buf;
+    rlc_am_pdu_header hdr = {};
+    hdr.dc                = rlc_dc_field::data;
+    hdr.p                 = 0;
+    hdr.si                = rlc_si_field::full_sdu;
+    hdr.sn_size           = config.rx->sn_field_length;
+    hdr.sn                = sn;
+    hdr.so                = 0;
+    logger.debug("AMD PDU header: {}", hdr);
+    rlc_am_write_data_pdu_header(hdr, pdu_buf);
+
+    for (uint32_t k = 0; k < sdu_size; ++k) {
+      pdu_buf.append(first_byte + k);
+    }
+    return pdu_buf;
+  }
+
+  /// \brief Obtains RLC AMD PDUs from generated SDUs that are passed through an RLC AM entity
+  /// \param[out] out_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDUs
+  /// \param[in] n_pdus Length of the out_pdus array
+  /// \param[in] sdu_size Size of SDU that is passed through RLC AM entity
+
+  void rx_full_pdus(byte_buffer* injected_pdus, uint32_t n_pdus, uint32_t sn_start, uint32_t sdu_size = 1)
+  {
+    // Create and push "n_pdus" PDUs into RLC
+    for (uint32_t i = 0; i < n_pdus; i++) {
+      injected_pdus[i] = create_pdu_with_full_sdu(sn_start, sdu_size, sn_start);
+      sn_start++;
+
+      // write PDU into lower end
+      byte_buffer_slice pdu = {injected_pdus[i].deep_copy()}; // no std::move - we need to return the injected PDUs
+      rlc_rx_lower->handle_pdu(std::move(pdu));
+    }
+
+    uint32_t header_size         = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
+
+    // Read "n_pdus" SDUs from upper layer
+    EXPECT_EQ(tester.sdu_queue.size(), n_pdus);
+    for (uint32_t i = 0; i < n_pdus; i++) {
+      EXPECT_EQ(tester.sdu_queue.front().length(), sdu_size);
+      EXPECT_TRUE(std::equal(tester.sdu_queue.front().begin(),
+                             tester.sdu_queue.front().end(),
+                             injected_pdus[i].begin() + header_size,
+                             injected_pdus[i].end()));
+      tester.sdu_queue.pop();
+    }
+    EXPECT_EQ(tester.sdu_queue.size(), 0);
+  }
+
   srslog::basic_logger&              logger  = srslog::fetch_basic_logger("TEST", false);
   rlc_am_sn_size                     sn_size = GetParam();
   rlc_am_config                      config;
@@ -131,6 +190,19 @@ TEST_P(rlc_rx_am_test, create_new_entity)
   ASSERT_NE(rlc_tx_lower, nullptr);
 
   EXPECT_EQ(rlc_tx_lower->get_buffer_state(), 0);
+}
+
+TEST_P(rlc_rx_am_test, rx_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_pdus = 5;
+  uint32_t       sn     = 0;
+  byte_buffer    pdus[n_pdus];
+
+  rx_full_pdus(pdus, n_pdus, sn, 1);
+  sn += n_pdus;
+
+  rx_full_pdus(pdus, n_pdus, sn, 5);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
