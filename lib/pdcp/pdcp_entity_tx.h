@@ -21,12 +21,17 @@ namespace srsgnb {
 class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower_interface
 {
 public:
-  pdcp_entity_tx(pdcp_tx_lower_notifier& lower_dn, pdcp_tx_upper_control_notifier& upper_cn) :
-    lower_dn(lower_dn), upper_cn(upper_cn)
+  pdcp_entity_tx(uint32_t                        ue_index,
+                 lcid_t                          lcid,
+                 pdcp_tx_lower_notifier&         lower_dn,
+                 pdcp_tx_upper_control_notifier& upper_cn) :
+    logger("PDCP", ue_index, lcid), lower_dn(lower_dn), upper_cn(upper_cn)
   {
   }
 
 private:
+  bearer_logger logger;
+
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
 

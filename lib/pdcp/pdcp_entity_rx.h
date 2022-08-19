@@ -21,9 +21,14 @@ namespace srsgnb {
 class pdcp_entity_rx : public pdcp_rx_lower_interface
 {
 public:
-  pdcp_entity_rx(pdcp_rx_upper_data_notifier& upper_dn_) : upper_dn(upper_dn_) {}
+  pdcp_entity_rx(uint32_t ue_index, lcid_t lcid, pdcp_rx_upper_data_notifier& upper_dn_) :
+    logger("PDCP", ue_index, lcid), upper_dn(upper_dn_)
+  {
+  }
 
 private:
+  bearer_logger logger;
+
   void handle_pdu(byte_buffer buf) final
   {
     std::printf("[PDCP] RX PDU of %zd B\n", buf.length());

@@ -10,7 +10,6 @@
 
 #pragma once
 
-#include "srsgnb/ran/du_types.h"
 #include "srsgnb/ran/lcid.h"
 #include "srsgnb/srslog/srslog.h"
 #include "srsgnb/support/format_utils.h"
@@ -26,8 +25,8 @@ namespace srsgnb {
 class bearer_logger
 {
 public:
-  bearer_logger(const std::string& log_name, du_ue_index_t du_index, lcid_t lcid) :
-    du_index(du_index), lcid(lcid), logger(srslog::fetch_basic_logger(log_name, false))
+  bearer_logger(const std::string& log_name, uint32_t ue_index, lcid_t lcid) :
+    ue_index(ue_index), lcid(lcid), logger(srslog::fetch_basic_logger(log_name, false))
   {
   }
 
@@ -98,8 +97,8 @@ public:
     log_helper(it_begin, it_end, logger.error, fmt, std::forward<Args>(args)...);
   }
 
-  const du_ue_index_t du_index;
-  const lcid_t        lcid;
+  const uint32_t ue_index;
+  const lcid_t   lcid;
 
 private:
   srslog::basic_logger& logger;
@@ -112,7 +111,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel("UE={}, LCID={}: {}", du_index, lcid, to_c_str(buffer));
+    channel("UE={}, LCID={}: {}", ue_index, lcid, to_c_str(buffer));
   }
 
   template <typename It, typename... Args>
@@ -123,7 +122,7 @@ private:
     }
     fmt::memory_buffer buffer;
     fmt::format_to(buffer, fmt, std::forward<Args>(args)...);
-    channel(it_begin, it_end, "UE={}, LCID={}: {}", du_index, lcid, to_c_str(buffer));
+    channel(it_begin, it_end, "UE={}, LCID={}: {}", ue_index, lcid, to_c_str(buffer));
   }
 };
 
