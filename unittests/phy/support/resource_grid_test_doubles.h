@@ -348,7 +348,7 @@ public:
   /// Returns true if the \c set_all_zero() method has been called, otherwise false.
   bool has_set_all_zero_method_been_called() const { return set_all_zero_count > 0; }
 
-  /// Returns the number of times methods have been called.
+  /// Returns the global number of calls to any method.
   unsigned get_total_count() const { return set_all_zero_count + put_count + get_count; }
 
   /// Resets all counters.

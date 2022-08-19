@@ -37,11 +37,14 @@ public:
     unsigned scrambling_id;
     /// DM-RS sequence initialization (parameter \f$n_{SCID}\f$ in the TS).
     bool n_scid;
-    /// \brief Linear ratio PUSCH EPRE to DM-RS EPRE.
+    /// \brif DM-RS amplitude scaling factor.
     ///
-    /// Amplitude scaling factor \f$\beta _{PUSCH}^{DMRS}\f$ as per TS38.211 Section 6.4.1.1.3. It must be selected
-    /// according to \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}=10^{-\beta _{\mathrm{DMRS}}/20}\f$ as per TS38.214
-    /// Section 6.2.2. Where \f$\beta _{\mathrm{DMRS}}\f$ is given in TS38.214 Table 6.2.2-1.
+    /// Parameter \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}\f$ as per TS38.211 Section 6.4.1.1.3. It must be set
+    /// to \f$\beta _{\mathrm{PUSCH}}^{\mathrm{DMRS}}=10^{-\beta_{\mathrm{DMRS}}/20}\f$, as per TS38.214
+    /// Section 6.2.2, where \f$\beta_{\mathrm{DMRS}}\f$ is the PUSCH EPRE to DM-RS EPRE ratio expressed in decibels, as
+    /// specified in TS38.214 Table 6.2.2-1.
+    ///
+    /// \sa get_sch_to_dmrs_ratio_dB()
     float scaling;
     /// Subcarrier spacing of the PUSCH.
     subcarrier_spacing scs = subcarrier_spacing::kHz15;
