@@ -23,7 +23,7 @@ rlc_tx_am_entity::rlc_tx_am_entity(du_ue_index_t                        du_index
   rlc_tx_entity(du_index, lcid, upper_dn, upper_cn, buffer_state_notif),
   cfg(config),
   mod(cardinality(to_number(cfg.sn_field_length))),
-  tx_window_size(window_size(to_number(cfg.sn_field_length))),
+  am_window_size(window_size(to_number(cfg.sn_field_length))),
   tx_window(create_tx_window(cfg.sn_field_length)),
   head_min_size(rlc_am_pdu_header_min_size(cfg.sn_field_length)),
   head_max_size(rlc_am_pdu_header_max_size(cfg.sn_field_length)),
@@ -802,11 +802,11 @@ std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> rlc_tx_am_entity::creat
 bool rlc_tx_am_entity::inside_tx_window(uint32_t sn) const
 {
   // TX_Next_Ack <= SN < TX_Next_Ack + AM_Window_Size
-  return tx_mod_base(sn) < tx_window_size;
+  return tx_mod_base(sn) < am_window_size;
 }
 
 bool rlc_tx_am_entity::valid_ack_sn(uint32_t sn) const
 {
   // Tx_Next_Ack < SN <= TX_Next + AM_Window_Size
-  return (0 < tx_mod_base(sn)) && (tx_mod_base(sn) <= tx_window_size);
+  return (0 < tx_mod_base(sn)) && (tx_mod_base(sn) <= am_window_size);
 }

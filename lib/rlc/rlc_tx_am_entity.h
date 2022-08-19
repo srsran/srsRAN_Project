@@ -88,8 +88,10 @@ private:
   const uint32_t     mod;
   constexpr uint32_t tx_mod_base(uint32_t x) const { return (x - st.tx_next_ack) % mod; }
 
-  // Tx window
-  const uint32_t                                           tx_window_size;
+  /// AM window size
+  const uint32_t am_window_size;
+
+  /// Tx window
   std::unique_ptr<rlc_pdu_window_base<rlc_tx_amd_pdu_box>> tx_window;
 
   // Header sizes are computed upon construction based on SN length
