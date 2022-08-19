@@ -54,6 +54,22 @@ inline __m256 clip_ps(__m256 value, __m256 range_ceil, __m256 range_floor)
   return value;
 }
 
+/// \brief Clips the values of a single-precision AVX register.
+///
+/// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
+/// limits.
+///
+/// \param[in] value       Input values.
+/// \param[in] range_ceil  Ceiling values.
+/// \param[in] range_floor Floor values.
+/// \return A single-precision AVX register containing the clipped values.
+inline __m256i clip_epi32(__m256i value, __m256i range_ceil, __m256i range_floor)
+{
+  value = _mm256_blendv_epi8(value, range_ceil, _mm256_cmpgt_epi32(value, range_ceil));
+  value = _mm256_blendv_epi8(value, range_floor, _mm256_cmpgt_epi32(range_floor, value));
+  return value;
+}
+
 /// \brief Clips and quantizes four single-precision AVX registers, continuous log-likelihood ratio to the discrete
 /// representation of type \c log_likelihood_ratio in a single AVX register.
 ///
@@ -107,6 +123,87 @@ inline __m256i quantize_ps(__m256 value_0, __m256 value_1, __m256 value_2, __m25
 
   // Conversion to 8 bit.
   return _mm256_packs_epi16(llr_i16_0_, llr_i16_1_);
+}
+
+inline __m256i compute_interval_idx(__m256 value, float interval_width, int nof_intervals)
+{
+  __m256i nof_intervals_minus_one = _mm256_set1_epi32(nof_intervals - 1);
+  __m256i nof_intervals_half      = _mm256_set1_epi32(nof_intervals / 2);
+
+  // Scale.
+  value = _mm256_mul_ps(value, _mm256_set1_ps(1.0F / interval_width));
+
+  // Round to lowest integer.
+  value = _mm256_round_ps(value, _MM_FROUND_FLOOR);
+
+  // Convert to int32.
+  __m256i idx = _mm256_cvtps_epi32(value);
+
+  // Add interval offset.
+  idx = _mm256_add_epi32(idx, nof_intervals_half);
+
+  // Clip index.
+  idx = clip_epi32(idx, nof_intervals_minus_one, _mm256_setzero_si256());
+
+  // Clip integer and return.
+  return idx;
+}
+
+template <typename Container>
+inline __m256 look_up_table(const Container& table, __m256i indexes)
+{
+  // Get 3 bit LSB.
+  __m256i indexes_lsb = _mm256_and_si256(indexes, _mm256_set1_epi32(0b111));
+
+  // Get MSBs.
+  __m256i indexes_msb = _mm256_srai_epi32(indexes, 3);
+
+  // Initialise result.
+  __m256 result = _mm256_setzero_ps();
+
+  for (int index_msb = 0, index_msb_end = table.size() / 8; index_msb != index_msb_end; ++index_msb) {
+    // Load eight values.
+    __m256 small_table = _mm256_loadu_ps(&table[index_msb * 8]);
+
+    // Select values from eight value table.
+    __m256 result_lut = _mm256_permutevar8x32_ps(small_table, indexes_lsb);
+
+    // Select mask if the MSB of the index matches.
+    __m256i mask = _mm256_cmpeq_epi32(_mm256_set1_epi32(index_msb), indexes_msb);
+
+    // Selects values.
+    result = _mm256_blendv_ps(result, result_lut, (__m256)mask);
+  }
+
+  return result;
+}
+
+template <>
+inline __m256 look_up_table(const std::array<float, 8>& table, __m256i indexes)
+{
+  return _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes);
+}
+
+template <>
+inline __m256 look_up_table(const std::array<float, 16>& table, __m256i indexes)
+{
+  // Get 3 bit LSB.
+  __m256i indexes_lsb = _mm256_and_si256(indexes, _mm256_set1_epi32(0b111));
+
+  // Get MSBs.
+  __m256i indexes_msb = _mm256_srai_epi32(indexes, 3);
+
+  // Get lower part of the table.
+  __m256 lower = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes_lsb);
+
+  // Get upper part of the table.
+  __m256 upper = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data() + 8), indexes_lsb);
+
+  // Generate mask. Set to true if the MSB of the index is greater than zero.
+  __m256i mask = _mm256_cmpgt_epi32(indexes_msb, _mm256_setzero_si256());
+
+  // Select upper or lower value.
+  return _mm256_blendv_ps(lower, upper, (__m256)mask);
 }
 
 } // namespace mm256

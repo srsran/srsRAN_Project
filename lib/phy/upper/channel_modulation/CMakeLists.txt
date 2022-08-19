@@ -7,12 +7,14 @@
 #
 
 set(SOURCES
-        channel_modulation_factories.cpp
-        modulation_mapper_impl.cpp
-        demodulation_mapper_impl.cpp
-        demodulation_mapper_qpsk.cpp
-        demodulation_mapper_qam16.cpp
-        )
+  channel_modulation_factories.cpp
+  modulation_mapper_impl.cpp
+  demodulation_mapper_impl.cpp
+  demodulation_mapper_qam16.cpp
+  demodulation_mapper_qam64.cpp
+  demodulation_mapper_qam256.cpp
+  demodulation_mapper_qpsk.cpp
+  )
 
 include_directories(../../../../include/srsgnb/phy/upper/channel_modulation)
 
