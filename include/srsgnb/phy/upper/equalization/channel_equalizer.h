@@ -16,6 +16,7 @@
 #include "srsgnb/adt/complex.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_estimation.h"
+#include "srsgnb/srsvec/copy.h"
 
 namespace srsgnb {
 
@@ -88,15 +89,13 @@ public:
   /// Returns a read-write view over the RE measurements corresponding to the given \ref slice0be287 "slice".
   span<measure_type> get_slice(unsigned i_slice)
   {
-    auto first = re_meas.begin() + i_slice * slice_size;
-    return span<measure_type>(first, slice_size);
+    return span<measure_type>(re_meas).subspan(i_slice * slice_size, slice_size);
   }
 
   /// Returns a read-only view over the RE measurements corresponding to the given \ref slice0be287 "slice".
   span<const measure_type> get_slice(unsigned i_slice) const
   {
-    auto first = re_meas.begin() + i_slice * slice_size;
-    return span<const measure_type>(first, slice_size);
+    return span<const measure_type>(re_meas).subspan(i_slice * slice_size, slice_size);
   }
 
   /// \brief Writes data on a \ref slice0be287 "slice".
@@ -104,13 +103,13 @@ public:
   /// \param[in] data     Input data.
   /// \param[in] i_slice  Index of the destination slice.
   /// \remark The size of \c data should be equal to the number of REs in a slice.
-  void set_slice(span<measure_type> data, unsigned i_slice)
+  void set_slice(span<const measure_type> data, unsigned i_slice)
   {
     srsgnb_assert(i_slice <= nof_slices, "Requested slice {}, but only {} slices are supported.", i_slice, nof_slices);
     srsgnb_assert(data.size() == slice_size, "Slice size mismatch: given {}, current {}.", data.size(), slice_size);
 
     span<measure_type> slice = get_slice(i_slice);
-    std::copy(data.begin(), data.end(), slice);
+    srsvec::copy(slice, data);
   }
 
   /// \brief Updates the size of the internal buffer to the given dimensions.
@@ -137,10 +136,20 @@ public:
     srsgnb_assert(total_size <= MAX_BUFFER_SIZE,
                   "Total requested REs ({}) exceed maximum available ({}).",
                   total_size,
-                  MAX_BUFFER_SIZE);
+                  static_cast<unsigned>(MAX_BUFFER_SIZE));
 
     // Resize the internal buffer.
     re_meas.resize(nof_slices * slice_size);
+  }
+
+  /// Returns the RE measurements dimensions.
+  re_measurement_dimensions size() const
+  {
+    re_measurement_dimensions tmp;
+    tmp.nof_prb     = nof_subcarriers / NRE;
+    tmp.nof_symbols = nof_symbols;
+    tmp.nof_slices  = nof_slices;
+    return tmp;
   }
 
 private:
@@ -195,10 +204,12 @@ public:
   /// \param[out] noise_vars  Estimated noise variances (after equalization).
   /// \param[in]  ch_symbols  Channel symbols, i.e., complex samples from the receive ports.
   /// \param[in]  ch_estimate Channel coefficients (typically provided by the channel estimator).
+  /// \param[in]  scaling     Amplitude scaling of the modulation symbols.
   virtual void equalize(re_measurement<cf_t>&       mod_symbols,
                         re_measurement<float>&      noise_vars,
                         const re_measurement<cf_t>& ch_symbols,
-                        const channel_estimate&     ch_estimates);
+                        const channel_estimate&     ch_estimates,
+                        float                       scaling) = 0;
 };
 
 } // namespace srsgnb

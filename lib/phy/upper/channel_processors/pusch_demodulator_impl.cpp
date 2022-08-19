@@ -12,6 +12,7 @@
 /// \brief PUSCH demodulator implementation definition.
 
 #include "pusch_demodulator_impl.h"
+#include "srsgnb/ran/sch_dmrs_power.h"
 
 using namespace srsgnb;
 
@@ -37,8 +38,11 @@ void pusch_demodulator_impl::demodulate(span<log_likelihood_ratio>  data,
   mod_symbols_eq.resize(re_dims);
   noise_vars_eq.resize(re_dims);
 
+  // Get PUSCH data to DM-RS scaling ratio in linear.
+  float scaling = convert_dB_to_amplitude(get_sch_to_dmrs_ratio_dB(config.nof_cdm_groups_without_data));
+
   // Equalize channels and, for each Tx layer, combine contribution from all Rx antenna ports.
-  equalizer->equalize(mod_symbols_eq, noise_vars_eq, ch_symbols, estimates);
+  equalizer->equalize(mod_symbols_eq, noise_vars_eq, ch_symbols, estimates, scaling);
 
   // Remove REs that were assigned to DM-RS symbols or reserved.
   remove_dmrs(mod_symbols_data, noise_vars_data, mod_symbols_eq, noise_vars_eq, config);

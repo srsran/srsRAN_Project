@@ -55,9 +55,22 @@ public:
     unsigned nof_tx_layers = 0;
   };
 
+  /// Default constructor: reserves internal memory.
+  channel_estimate() : nof_subcarriers(0), nof_symbols(0), nof_rx_ports(0), nof_tx_layers(0)
+  {
+    ce.reserve({MAX_RB * NRE, MAX_NSYMB_PER_SLOT, MAX_RX_PORTS, MAX_TX_LAYERS});
+    noise_variance.reserve(MAX_TX_RX_PATHS);
+    epre.reserve(MAX_TX_RX_PATHS);
+    rsrp.reserve(MAX_TX_RX_PATHS);
+    snr.reserve(MAX_TX_RX_PATHS);
+  }
+
   /// Constructor: sets the size of the internal buffers.
   explicit channel_estimate(const channel_estimate_dimensions& dims) :
-    nof_subcarriers(dims.nof_prb * NRE), nof_symbols(dims.nof_symbols), nof_rx_ports(dims.nof_rx_ports)
+    nof_subcarriers(dims.nof_prb * NRE),
+    nof_symbols(dims.nof_symbols),
+    nof_rx_ports(dims.nof_rx_ports),
+    nof_tx_layers(dims.nof_tx_layers)
   {
     srsgnb_assert(dims.nof_prb <= MAX_RB, "Requested {} RBs, but at most {} are allowed.", dims.nof_prb, MAX_RB);
     srsgnb_assert(dims.nof_symbols <= MAX_NSYMB_PER_SLOT,
@@ -195,17 +208,19 @@ public:
   }
   ///@}
 
+  /// Resizes internal buffers.
   void resize(const channel_estimate_dimensions& dims)
   {
     nof_subcarriers = dims.nof_prb * NRE;
     nof_symbols     = dims.nof_symbols;
     nof_rx_ports    = dims.nof_rx_ports;
+    nof_tx_layers   = dims.nof_tx_layers;
 
-    unsigned nof_paths = dims.nof_rx_ports * dims.nof_tx_layers;
+    unsigned nof_paths = nof_rx_ports * nof_tx_layers;
     srsgnb_assert(nof_paths <= MAX_TX_RX_PATHS,
                   "Total requested paths ({}) exceed maximum available ({}).",
                   nof_paths,
-                  MAX_TX_RX_PATHS);
+                  static_cast<unsigned>(MAX_TX_RX_PATHS));
     noise_variance.resize(nof_paths);
     epre.resize(nof_paths);
     rsrp.resize(nof_paths);
@@ -215,8 +230,19 @@ public:
     srsgnb_assert(nof_res <= MAX_BUFFER_SIZE,
                   "Total requested REs ({}) exceed maximum available ({}).",
                   nof_res,
-                  MAX_BUFFER_SIZE);
+                  static_cast<unsigned>(MAX_BUFFER_SIZE));
     ce.resize({NRE * dims.nof_prb, dims.nof_symbols, dims.nof_rx_ports, dims.nof_tx_layers});
+  }
+
+  /// Returns channel estimate dimensions.
+  channel_estimate_dimensions size() const
+  {
+    channel_estimate_dimensions tmp;
+    tmp.nof_prb       = nof_subcarriers / NRE;
+    tmp.nof_symbols   = nof_symbols;
+    tmp.nof_rx_ports  = nof_rx_ports;
+    tmp.nof_tx_layers = nof_tx_layers;
+    return tmp;
   }
 
 private:
@@ -226,8 +252,11 @@ private:
   /// Number of OFDM symbols considered for channel estimation.
   unsigned nof_symbols;
 
-  /// Number of receive ports.
+  /// Number of receive antenna ports.
   unsigned nof_rx_ports;
+
+  /// Number of transmission layers.
+  unsigned nof_tx_layers;
 
   /// \name Containers for channel statistics.
   /// The statistics are stored in one-dimensional vectors. Indices vary, first, with the Rx port and, second, with the
@@ -255,11 +284,24 @@ private:
   dynamic_tensor<4, cf_t> ce;
 
   /// Transforms a port-layer pair into a linear index.
-  unsigned path_to_index(unsigned rx_port, unsigned tx_layer = 0) const { return rx_port + nof_rx_ports * tx_layer; }
+  unsigned path_to_index(unsigned rx_port, unsigned tx_layer = 0) const
+  {
+    srsgnb_assert(
+        rx_port < nof_rx_ports, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_rx_ports);
+    srsgnb_assert(
+        tx_layer < nof_tx_layers, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_tx_layers);
+    return rx_port + nof_rx_ports * tx_layer;
+  }
 
   /// Transforms a four-dimensional coordinate into a linear index.
   unsigned coords_to_index(unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0) const
   {
+    srsgnb_assert(
+        subcarrier < nof_subcarriers, "Requested subcarrier {} is out of bound (max. {})", subcarrier, nof_subcarriers);
+    srsgnb_assert(symbol < nof_symbols, "Requested OFDM symbol {} is out of bound (max. {})", symbol, nof_symbols);
+    srsgnb_assert(
+        rx_port < nof_rx_ports, "Requested Rx antenna port {} is out of bound (max. {})", rx_port, nof_rx_ports);
+    srsgnb_assert(tx_layer < nof_tx_layers, "Requested Tx layer {} is out of bound (max. {})", tx_layer, nof_tx_layers);
     return subcarrier + nof_subcarriers * (symbol + nof_symbols * (rx_port + nof_rx_ports * tx_layer));
   }
 };
