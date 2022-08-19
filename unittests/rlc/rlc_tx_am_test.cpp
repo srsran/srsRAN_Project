@@ -60,7 +60,7 @@ public:
 
 /// Fixture class for RLC AM Tx tests
 /// It requires TEST_P() and INSTANTIATE_TEST_SUITE_P() to create/spawn tests for each supported SN size
-class rlc_am_tx_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>
+class rlc_tx_am_test : public ::testing::Test, public ::testing::WithParamInterface<rlc_am_sn_size>
 {
 protected:
   void SetUp() override
@@ -256,7 +256,7 @@ protected:
   rlc_tx_pdu_transmitter*        rlc2_tx_lower = nullptr;
 };
 
-TEST_P(rlc_am_tx_test, create_new_entity)
+TEST_P(rlc_tx_am_test, create_new_entity)
 {
   init(GetParam());
   EXPECT_NE(rlc1_rx_lower, nullptr);
@@ -270,7 +270,7 @@ TEST_P(rlc_am_tx_test, create_new_entity)
   EXPECT_EQ(rlc2_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, tx_without_segmentation)
+TEST_P(rlc_tx_am_test, tx_without_segmentation)
 {
   init(GetParam());
   const uint32_t          n_pdus = 5;
@@ -283,7 +283,7 @@ TEST_P(rlc_am_tx_test, tx_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, tx_small_grant_)
+TEST_P(rlc_tx_am_test, tx_small_grant_)
 {
   init(GetParam());
   const uint32_t n_sdus   = 5;
@@ -305,7 +305,7 @@ TEST_P(rlc_am_tx_test, tx_small_grant_)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, tx_insufficient_space_new_sdu)
+TEST_P(rlc_tx_am_test, tx_insufficient_space_new_sdu)
 {
   init(GetParam());
   const uint32_t sdu_size        = 1;
@@ -330,7 +330,7 @@ TEST_P(rlc_am_tx_test, tx_insufficient_space_new_sdu)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, tx_insufficient_space_continued_sdu)
+TEST_P(rlc_tx_am_test, tx_insufficient_space_continued_sdu)
 {
   init(GetParam());
   const uint32_t sdu_size        = 3;
@@ -367,7 +367,7 @@ TEST_P(rlc_am_tx_test, tx_insufficient_space_continued_sdu)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_without_segmentation)
+TEST_P(rlc_tx_am_test, retx_pdu_without_segmentation)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -398,7 +398,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_with_segmentation)
+TEST_P(rlc_tx_am_test, retx_pdu_with_segmentation)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -435,7 +435,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_with_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_first_segment_without_segmentation)
+TEST_P(rlc_tx_am_test, retx_pdu_first_segment_without_segmentation)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -470,7 +470,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_first_segment_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_middle_segment_without_segmentation)
+TEST_P(rlc_tx_am_test, retx_pdu_middle_segment_without_segmentation)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -508,7 +508,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_middle_segment_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_last_segment_without_segmentation)
+TEST_P(rlc_tx_am_test, retx_pdu_last_segment_without_segmentation)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -546,7 +546,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_last_segment_without_segmentation)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_segment_invalid_so_start_and_so_end)
+TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_and_so_end)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -581,7 +581,7 @@ TEST_P(rlc_am_tx_test, retx_pdu_segment_invalid_so_start_and_so_end)
   EXPECT_EQ(rlc1_tx_lower->get_buffer_state(), 0);
 }
 
-TEST_P(rlc_am_tx_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
+TEST_P(rlc_tx_am_test, retx_pdu_segment_invalid_so_start_larger_than_so_end)
 {
   init(GetParam());
   const uint32_t          sdu_size        = 3;
@@ -627,7 +627,7 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<rlc_am_sn_s
   return fmt::to_string(buffer);
 }
 
-INSTANTIATE_TEST_SUITE_P(rlc_am_tx_test_all_sn_sizes,
-                         rlc_am_tx_test,
+INSTANTIATE_TEST_SUITE_P(rlc_tx_am_test_each_sn_size,
+                         rlc_tx_am_test,
                          ::testing::Values(rlc_am_sn_size::size12bits, rlc_am_sn_size::size18bits),
                          test_param_info_to_string);
