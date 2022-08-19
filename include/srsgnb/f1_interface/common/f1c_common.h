@@ -18,7 +18,7 @@ struct f1c_message {
   asn1::f1ap::f1_ap_pdu_c pdu;
 };
 
-/// This interface represents the F1-C interface used to transmit F1AP messages.
+/// This interface is used to push F1AP messages to the F1 interface.
 class f1c_message_handler
 {
 public:
