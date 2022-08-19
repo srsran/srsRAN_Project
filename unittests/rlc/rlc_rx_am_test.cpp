@@ -122,6 +122,13 @@ protected:
   /// \param[in] sdu_size Size of the SDU payload in each PDU that is pushed into the RLC AM entity
   void rx_full_pdus(byte_buffer* injected_pdus, uint32_t n_pdus, uint32_t& sn_state, uint32_t sdu_size = 1)
   {
+    // check status report
+    rlc_am_status_pdu status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
     // Create and push "n_pdus" PDUs into RLC
     for (uint32_t i = 0; i < n_pdus; i++) {
       injected_pdus[i] = create_pdu_with_full_sdu(sn_state, sdu_size, sn_state);
@@ -130,6 +137,13 @@ protected:
       // write PDU into lower end
       byte_buffer_slice pdu = {injected_pdus[i].deep_copy()}; // no std::move - we need to return the injected PDUs
       rlc->handle_pdu(std::move(pdu));
+
+      // check status report
+      status_report = rlc->get_status_pdu();
+      EXPECT_EQ(status_report.ack_sn, sn_state);
+      EXPECT_EQ(status_report.get_nacks().size(), 0);
+      EXPECT_EQ(status_report.get_packed_size(), 3);
+      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
     }
 
     uint32_t header_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
@@ -159,6 +173,17 @@ TEST_P(rlc_rx_am_test, create_new_entity)
 {
   init(GetParam());
   EXPECT_NE(rlc, nullptr);
+}
+
+TEST_P(rlc_rx_am_test, read_initial_status)
+{
+  init(GetParam());
+  EXPECT_FALSE(rlc->status_report_required());
+  rlc_am_status_pdu status_report = rlc->get_status_pdu();
+  EXPECT_EQ(status_report.ack_sn, 0);
+  EXPECT_EQ(status_report.get_nacks().size(), 0);
+  EXPECT_EQ(status_report.get_packed_size(), 3);
+  EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 }
 
 TEST_P(rlc_rx_am_test, rx_without_segmentation)

@@ -22,6 +22,7 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
   mod(cardinality(to_number(cfg.sn_field_length))),
   am_window_size(window_size(to_number(cfg.sn_field_length))),
   rx_window(create_rx_window(cfg.sn_field_length)),
+  status_report(cfg.sn_field_length),
   status_prohibit_timer(timers.create_unique_timer()),
   reassembly_timer(timers.create_unique_timer())
 {
@@ -40,6 +41,9 @@ rlc_rx_am_entity::rlc_rx_am_entity(du_ue_index_t                     du_index,
     reassembly_timer.set(static_cast<uint32_t>(cfg.t_reassembly),
                          [this](uint32_t tid) { on_expired_reassembly_timer(tid); });
   }
+
+  // initialize status report
+  status_report.ack_sn = st.rx_next_highest;
 }
 
 // Interfaces for lower layers

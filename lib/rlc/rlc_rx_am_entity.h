@@ -81,7 +81,7 @@ private:
   static const bool rx_window_changed = true;
 
   /// Cached status report
-  rlc_am_status_pdu status_report = {cfg.sn_field_length};
+  rlc_am_status_pdu status_report;
   /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
   std::mutex status_report_mutex;
 
