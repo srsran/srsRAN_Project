@@ -129,11 +129,11 @@ private:
   void on_expired_status_prohibit_timer(uint32_t timeout_id);
   void on_expired_reassembly_timer(uint32_t timeout_id);
 
-  inline uint32_t rx_mod_base_nr(uint32_t sn) const { return (sn - st.rx_next) % mod; }
+  inline uint32_t rx_mod_base(uint32_t sn) const { return (sn - st.rx_next) % mod; }
   inline bool     inside_rx_window(uint32_t sn) const
   {
     // RX_Next <= SN < RX_Next + AM_Window_Size
-    return rx_mod_base_nr(sn) < am_window_size;
+    return rx_mod_base(sn) < am_window_size;
   }
 
   /// \brief This function is used to check if the Rx_Highest_Status is valid when t-Reasseambly expires.
@@ -145,7 +145,7 @@ private:
   inline bool valid_ack_sn(uint32_t sn) const
   {
     // RX_Next < SN <= RX_Next + AM_Window_Size
-    return (0 < rx_mod_base_nr(sn)) && (rx_mod_base_nr(sn) <= am_window_size);
+    return (0 < rx_mod_base(sn)) && (rx_mod_base(sn) <= am_window_size);
   }
 
   /// Creates the rx_window according to sn_size

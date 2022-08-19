@@ -148,7 +148,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
    * - if x >= RX_Next_Highest
    *   - update RX_Next_Highest to x+ 1.
    */
-  if (rx_mod_base_nr(header.sn) >= rx_mod_base_nr(st.rx_next_highest)) {
+  if (rx_mod_base(header.sn) >= rx_mod_base(st.rx_next_highest)) {
     st.rx_next_highest = (header.sn + 1) % mod;
   }
 
@@ -174,9 +174,9 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      *   - update RX_Highest_Status to the SN of the first RLC SDU with SN > current RX_Highest_Status for which not
      * all bytes have been received.
      */
-    if (rx_mod_base_nr(header.sn) == rx_mod_base_nr(st.rx_highest_status)) {
+    if (rx_mod_base(header.sn) == rx_mod_base(st.rx_highest_status)) {
       uint32_t sn_upd = 0;
-      for (sn_upd = (st.rx_highest_status + 1) % mod; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+      for (sn_upd = (st.rx_highest_status + 1) % mod; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest);
            sn_upd = (sn_upd + 1) % mod) {
         if (rx_window->has_sn(sn_upd)) {
           if (not(*rx_window)[sn_upd].fully_received) {
@@ -195,10 +195,10 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      *   - update RX_Next to the SN of the first RLC SDU with SN > current RX_Next for which not all bytes
      *     have been received.
      */
-    if (rx_mod_base_nr(header.sn) == rx_mod_base_nr(st.rx_next)) {
+    if (rx_mod_base(header.sn) == rx_mod_base(st.rx_next)) {
       uint32_t sn_upd = 0;
       // move rx_next forward and remove all fully received SDUs from rx_window
-      for (sn_upd = (st.rx_next) % mod; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+      for (sn_upd = (st.rx_next) % mod; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest);
            sn_upd = (sn_upd + 1) % mod) {
         if (rx_window->has_sn(sn_upd)) {
           if (not(*rx_window)[sn_upd].fully_received) {
@@ -231,7 +231,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
     if (st.rx_next_status_trigger == st.rx_next) {
       stop_reassembly_timer = true;
     }
-    if (rx_mod_base_nr(st.rx_next_status_trigger) == rx_mod_base_nr(st.rx_next + 1)) {
+    if (rx_mod_base(st.rx_next_status_trigger) == rx_mod_base(st.rx_next + 1)) {
       if (not(*rx_window)[st.rx_next].has_gap) {
         stop_reassembly_timer = true;
       }
@@ -254,10 +254,10 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
      *   - set RX_Next_Status_Trigger to RX_Next_Highest.
      */
     bool restart_reassembly_timer = false;
-    if (rx_mod_base_nr(st.rx_next_highest) > rx_mod_base_nr(st.rx_next + 1)) {
+    if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_next + 1)) {
       restart_reassembly_timer = true;
     }
-    if (rx_mod_base_nr(st.rx_next_highest) == rx_mod_base_nr(st.rx_next + 1)) {
+    if (rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_next + 1)) {
       if (rx_window->has_sn(st.rx_next) && (*rx_window)[st.rx_next].has_gap) {
         restart_reassembly_timer = true;
       }
@@ -366,7 +366,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
      *   - set RX_Next_Status_Trigger to RX_Next_Highest.
      */
     uint32_t sn_upd = {};
-    for (sn_upd = st.rx_next_status_trigger; rx_mod_base_nr(sn_upd) < rx_mod_base_nr(st.rx_next_highest);
+    for (sn_upd = st.rx_next_status_trigger; rx_mod_base(sn_upd) < rx_mod_base(st.rx_next_highest);
          sn_upd = (sn_upd + 1) % mod) {
       if (not rx_window->has_sn(sn_upd) || (rx_window->has_sn(sn_upd) && not(*rx_window)[sn_upd].fully_received)) {
         break;
@@ -380,10 +380,10 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
     srsgnb_assert(valid_ack_sn(st.rx_highest_status), "Error: rx_highest_status assigned outside rx window");
 
     bool restart_reassembly_timer = false;
-    if (rx_mod_base_nr(st.rx_next_highest) > rx_mod_base_nr(st.rx_highest_status + 1)) {
+    if (rx_mod_base(st.rx_next_highest) > rx_mod_base(st.rx_highest_status + 1)) {
       restart_reassembly_timer = true;
     }
-    if (rx_mod_base_nr(st.rx_next_highest) == rx_mod_base_nr(st.rx_highest_status + 1)) {
+    if (rx_mod_base(st.rx_next_highest) == rx_mod_base(st.rx_highest_status + 1)) {
       if (rx_window->has_sn(st.rx_highest_status) && (*rx_window)[st.rx_highest_status].has_gap) {
         restart_reassembly_timer = true;
       }
@@ -416,7 +416,7 @@ void rlc_rx_am_entity::refresh_status_report()
    *   PDU(s) indicated by lower layer:
    */
   logger.log_debug("Generating status PDU");
-  for (uint32_t i = st.rx_next; rx_mod_base_nr(i) < rx_mod_base_nr(st.rx_highest_status); i = (i + 1) % mod) {
+  for (uint32_t i = st.rx_next; rx_mod_base(i) < rx_mod_base(st.rx_highest_status); i = (i + 1) % mod) {
     if ((rx_window->has_sn(i) && (*rx_window)[i].fully_received)) {
       logger.log_debug("SDU SN={} is fully received", i);
     } else {
