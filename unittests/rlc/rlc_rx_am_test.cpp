@@ -104,7 +104,7 @@ protected:
 
     // Create RLC entities
     rlc = std::make_unique<rlc_am_entity>(
-        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester1, tester1, tester1, tester1, timers);
+        du_ue_index_t::MIN_DU_UE_INDEX, lcid_t::LCID_SRB0, config, tester, tester, tester, tester, timers);
 
     // Bind interfaces
     rlc_rx_lower = rlc->get_rx_lower_layer_interface();
@@ -116,7 +116,7 @@ protected:
   rlc_am_sn_size                     sn_size = GetParam();
   rlc_am_config                      config;
   timer_manager                      timers;
-  rlc_test_frame                     tester1, tester2;
+  rlc_test_frame                     tester;
   std::unique_ptr<rlc_am_entity>     rlc;
   rlc_rx_lower_layer_interface*      rlc_rx_lower = nullptr;
   rlc_tx_upper_layer_data_interface* rlc_tx_upper = nullptr;
