@@ -11,10 +11,10 @@
 #include "du_high.h"
 #include "adapters.h"
 #include "du_high_executor_strategies.h"
+#include "f1ap_adapters.h"
 #include "srsgnb/du_manager/du_manager_factory.h"
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/mac/mac_factory.h"
-#include "task_scheduler_adapters.h"
 
 using namespace srsgnb;
 using namespace srs_du;
@@ -53,7 +53,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
 
   // Create layers
   mac  = create_mac(mac_ev_notifier, *cfg.ul_executors, *cfg.dl_executors, *cfg.du_mng_executor, *cfg.phy_adapter);
-  f1ap       = create_f1ap(*cfg.f1c_notifier, f1c_task_sched);
+  f1ap       = create_f1ap(*cfg.f1c_notifier, f1c_task_sched, *cfg.du_mng_executor, *cfg.ul_executors);
   du_manager = create_du_manager(timers,
                                  mac->get_ue_configurator(),
                                  mac->get_cell_manager(),
@@ -66,7 +66,7 @@ du_high::du_high(const du_high_configuration& config_) : cfg(config_), timers(12
 
   // Connect Layer<->DU manager adapters.
   mac_ev_notifier.connect(*du_manager);
-  f1c_task_sched.connect(*du_manager, *cfg.du_mng_executor, *cfg.ul_executors);
+  f1c_task_sched.connect(*du_manager);
 
   // Cell slot handler.
   main_cell_slot_handler = std::make_unique<du_high_slot_handler>(timers, *mac);

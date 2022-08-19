@@ -11,6 +11,7 @@
 #include "f1ap_du_impl.h"
 #include "../../ran/gnb_format.h"
 #include "du/procedures/f1ap_du_setup_procedure.h"
+#include "handlers/f1c_task_scheduler_impl.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/support/async/event_signal.h"
 
@@ -18,13 +19,18 @@ using namespace srsgnb;
 using namespace asn1::f1ap;
 using namespace srs_du;
 
-f1ap_du_impl::f1ap_du_impl(f1c_message_notifier& message_notifier_, f1c_task_scheduler& task_sched_) :
+f1ap_du_impl::f1ap_du_impl(f1c_message_notifier&       message_notifier_,
+                           f1c_task_scheduler&         task_sched_,
+                           task_executor&              ctrl_exec_,
+                           du_high_ue_executor_mapper& ue_exec_mapper_) :
   logger(srslog::fetch_basic_logger("DU-F1AP")),
   f1c_notifier(message_notifier_),
-  task_sched(task_sched_),
-  events(std::make_unique<f1ap_event_manager>(task_sched.get_timer_manager()))
+  ctrl_exec(ctrl_exec_),
+  ue_exec_mapper(ue_exec_mapper_),
+  task_sched(std::make_unique<f1c_task_scheduler_impl>(task_sched_, ctrl_exec_, ue_exec_mapper_)),
+  events(std::make_unique<f1ap_event_manager>(task_sched->get_timer_manager()))
 {
-  f1c_setup_timer = task_sched.get_timer_manager().create_unique_timer();
+  f1c_setup_timer = task_sched->get_timer_manager().create_unique_timer();
   f1c_setup_timer.set(1000, [](uint32_t tid) {
     // TODO
   });

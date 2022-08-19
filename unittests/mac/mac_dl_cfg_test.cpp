@@ -121,7 +121,7 @@ void test_dl_ue_procedure_execution_contexts()
   manual_task_worker          ctrl_worker{128};
   manual_task_worker          dl_worker{128};
   std::vector<task_executor*> dl_execs = {&dl_worker};
-  dummy_ul_executor_mapper    ul_exec_mapper{ctrl_worker};
+  dummy_ue_executor_mapper    ul_exec_mapper{ctrl_worker};
   dummy_dl_executor_mapper    dl_exec_mapper{dl_execs[0]};
   dummy_mac_event_indicator   du_mng_notifier;
   dummy_mac_result_notifier   phy_notifier;
@@ -167,7 +167,7 @@ void test_dl_ue_procedure_tsan()
   blocking_task_worker      ctrl_worker{128};
   task_worker               dl_workers[] = {{"DL#1", 128}, {"DL#2", 128}};
   task_worker_executor      dl_execs[]   = {{dl_workers[0]}, {dl_workers[1]}};
-  dummy_ul_executor_mapper  ul_exec_mapper{ctrl_worker};
+  dummy_ue_executor_mapper  ul_exec_mapper{ctrl_worker};
   dummy_dl_executor_mapper  dl_exec_mapper{&dl_execs[0], &dl_execs[1]};
   dummy_mac_event_indicator du_mng_notifier;
   dummy_mac_result_notifier phy_notifier;

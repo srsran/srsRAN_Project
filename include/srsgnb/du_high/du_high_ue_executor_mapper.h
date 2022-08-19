@@ -7,10 +7,10 @@
 namespace srsgnb {
 
 /// This interface is used to allow the DU to choose between different UL task scheduling strategies.
-class du_l2_ul_executor_mapper
+class du_high_ue_executor_mapper
 {
 public:
-  virtual ~du_l2_ul_executor_mapper() = default;
+  virtual ~du_high_ue_executor_mapper() = default;
   /// Method to signal the detection of a new UE and potentially change its executor based on its
   /// parameters (e.g. PCell).
   /// \param ue_index Index of the UE.

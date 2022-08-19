@@ -60,7 +60,7 @@ protected:
 
   // Run all async tasks in same thread.
   manual_task_worker        worker{128};
-  dummy_ul_executor_mapper  ul_exec_mapper{worker};
+  dummy_ue_executor_mapper  ul_exec_mapper{worker};
   dummy_dl_executor_mapper  dl_exec_mapper{&worker};
   dummy_mac_event_indicator du_mng_notif;
   dummy_mac_result_notifier phy_notifier;

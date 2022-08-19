@@ -127,7 +127,7 @@ struct test_bench {
 
 private:
   manual_task_worker               task_exec;
-  dummy_ul_executor_mapper         ul_exec_mapper;
+  dummy_ue_executor_mapper         ul_exec_mapper;
   dummy_dl_executor_mapper         dl_exec_mapper;
   dummy_mac_result_notifier        phy_notifier;
   dummy_mac_event_indicator        du_mng_notifier;

@@ -12,13 +12,13 @@
 
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/span.h"
+#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
-#include "srsgnb/du_high/du_l2_ul_executor_mapper.h"
 
 namespace srsgnb {
 
 /// L2 UL executor mapper that maps UEs based on their RNTI.
-class ue_index_based_ul_executor_mapper final : public du_l2_ul_executor_mapper
+class ue_index_based_ul_executor_mapper final : public du_high_ue_executor_mapper
 {
 public:
   ue_index_based_ul_executor_mapper(span<task_executor*> execs_) : execs(execs_.begin(), execs_.end()) {}
@@ -41,7 +41,7 @@ private:
 };
 
 /// L2 UL executor mapper that maps UEs based on their PCell.
-class pcell_ul_executor_mapper final : public du_l2_ul_executor_mapper
+class pcell_ul_executor_mapper final : public du_high_ue_executor_mapper
 {
 public:
   explicit pcell_ul_executor_mapper(const std::initializer_list<task_executor*>& execs_) :

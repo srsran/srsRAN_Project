@@ -17,6 +17,7 @@
 #include "srsgnb/f1_interface/du/f1ap_du.h"
 #include "srsgnb/f1_interface/du/f1ap_du_factory.h"
 #include "srsgnb/support/async/async_task_loop.h"
+#include "srsgnb/support/executors/manual_task_worker.h"
 #include "test_helpers.h"
 #include <gtest/gtest.h>
 
@@ -49,6 +50,20 @@ public:
   f1c_ue_task_scheduler& get_ue_task_scheduler(du_ue_index_t ue_index) override { return ue_sched; }
 };
 
+class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
+{
+public:
+  dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
+
+  task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
+  {
+    return executor(ue_index);
+  }
+  task_executor& executor(du_ue_index_t ue_index) override { return exec; }
+
+  task_executor& exec;
+};
+
 /// Fixture class for F1AP
 class f1ap_du_test : public ::testing::Test
 {
@@ -58,13 +73,15 @@ protected:
     srslog::fetch_basic_logger("TEST").set_level(srslog::basic_levels::debug);
     srslog::init();
 
-    f1ap = create_f1ap(msg_notifier, f1c_task_sched);
+    f1ap = create_f1ap(msg_notifier, f1c_task_sched, ctrl_worker, ue_exec_mapper);
   }
 
-  std::unique_ptr<f1_interface> f1ap;
   f1c_null_notifier             msg_notifier = {};
   timer_manager                 timers;
   dummy_f1c_task_scheduler      f1c_task_sched{timers};
+  manual_task_worker            ctrl_worker{128};
+  dummy_ue_executor_mapper      ue_exec_mapper{ctrl_worker};
+  std::unique_ptr<f1_interface> f1ap;
 
   srslog::basic_logger& test_logger = srslog::fetch_basic_logger("TEST");
 };

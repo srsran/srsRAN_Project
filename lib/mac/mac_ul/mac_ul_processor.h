@@ -15,7 +15,7 @@
 #include "../mac_config_interfaces.h"
 #include "mac_ul_ue_manager.h"
 #include "pdu_rx_handler.h"
-#include "srsgnb/du_high/du_l2_ul_executor_mapper.h"
+#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/mac/mac.h"
 #include "srsgnb/scheduler/scheduler_feedback_handler.h"
 #include "srsgnb/support/async/execute_on.h"

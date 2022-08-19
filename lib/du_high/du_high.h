@@ -11,6 +11,7 @@
 #pragma once
 
 #include "adapters.h"
+#include "f1ap_adapters.h"
 #include "srsgnb/du_high/du_high_configuration.h"
 #include "srsgnb/du_manager/du_manager.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
@@ -19,7 +20,6 @@
 #include "srsgnb/rlc/rlc.h"
 #include "srsgnb/support/executors/task_worker.h"
 #include "srsgnb/support/timers.h"
-#include "task_scheduler_adapters.h"
 #include <memory>
 
 namespace srsgnb {

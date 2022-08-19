@@ -13,7 +13,9 @@
 #include "f1ap_du_context.h"
 #include "handlers/f1c_du_packet_handler.h"
 #include "srsgnb/asn1/f1ap.h"
+#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/f1_interface/du/f1ap_du.h"
+
 #include "srsgnb/support/timers.h"
 #include <memory>
 
@@ -25,7 +27,10 @@ class f1ap_event_manager;
 class f1ap_du_impl final : public f1_interface
 {
 public:
-  f1ap_du_impl(f1c_message_notifier& event_notifier_, f1c_task_scheduler& task_sched_);
+  f1ap_du_impl(f1c_message_notifier&       event_notifier_,
+               f1c_task_scheduler&         task_sched_,
+               task_executor&              ctrl_exec,
+               du_high_ue_executor_mapper& ue_exec_mapper);
   ~f1ap_du_impl();
 
   // f1ap connection manager functions
@@ -66,9 +71,12 @@ private:
   /// \param[in] msg The DL RRC message transfer message.
   void handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_transfer_s& msg);
 
-  srslog::basic_logger& logger;
-  f1c_message_notifier& f1c_notifier;
-  f1c_task_scheduler&   task_sched;
+  srslog::basic_logger&       logger;
+  f1c_message_notifier&       f1c_notifier;
+  task_executor&              ctrl_exec;
+  du_high_ue_executor_mapper& ue_exec_mapper;
+
+  std::unique_ptr<f1c_task_scheduler> task_sched;
 
   unique_timer f1c_setup_timer;
 

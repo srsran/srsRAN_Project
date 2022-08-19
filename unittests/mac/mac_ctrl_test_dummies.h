@@ -13,8 +13,8 @@
 #include "../../lib/mac/mac_config_interfaces.h"
 #include "../../lib/mac/mac_ctrl/mac_scheduler_configurator.h"
 #include "srsgnb/adt/optional.h"
+#include "srsgnb/du_high/du_high_ue_executor_mapper.h"
 #include "srsgnb/du_high/du_l2_dl_executor_mapper.h"
-#include "srsgnb/du_high/du_l2_ul_executor_mapper.h"
 #include "srsgnb/mac/mac_cell_result.h"
 #include "srsgnb/support/async/manual_event.h"
 #include "srsgnb/support/executors/task_executor.h"
@@ -132,10 +132,10 @@ public:
   void remove_cell(du_cell_index_t cell_index) override {}
 };
 
-class dummy_ul_executor_mapper : public du_l2_ul_executor_mapper
+class dummy_ue_executor_mapper : public du_high_ue_executor_mapper
 {
 public:
-  dummy_ul_executor_mapper(task_executor& exec_) : exec(exec_) {}
+  dummy_ue_executor_mapper(task_executor& exec_) : exec(exec_) {}
 
   task_executor& rebind_executor(du_ue_index_t ue_index, du_cell_index_t pcell_index) override
   {
