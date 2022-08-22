@@ -65,7 +65,7 @@ private:
   //
   // TODO Refactor this struct
   //
-  struct rlc_amd_sdu_composer {
+  struct sdu_info {
     bool                                                 fully_received = false;
     bool                                                 has_gap        = false;
     std::set<rlc_am_sdu_segment, rlc_am_sdu_segment_cmp> segments; // Map of segments with SO as key
@@ -74,7 +74,7 @@ private:
     uint32_t                                             total_sdu_length = 0;
   };
   /// Rx window
-  std::unique_ptr<rlc_pdu_window_base<rlc_amd_sdu_composer>> rx_window;
+  std::unique_ptr<rlc_pdu_window_base<sdu_info>> rx_window;
   /// Indicates the rx_window has not been changed, i.e. no need to rebuild status report.
   static const bool rx_window_not_changed = false;
   /// Indicates the rx_window has been changed, i.e. need to rebuild status report.
@@ -143,7 +143,7 @@ private:
   /// \return True if the rx_window changed and requires the cached status PDU to be rebuilt, false otherwise
   bool handle_segment_data_sdu(const rlc_am_pdu_header& header, byte_buffer_slice& payload);
 
-  void update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) const;
+  void update_segment_inventory(sdu_info& rx_sdu) const;
 
   /// Rebuilds the cached status_report according to missing SDUs and SDU segments in rx_window
   /// and resets the rx_window_changed flag
@@ -174,7 +174,7 @@ private:
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
   /// \return unique pointer to rx_window instance
-  static std::unique_ptr<rlc_pdu_window_base<rlc_amd_sdu_composer>> create_rx_window(rlc_am_sn_size sn_size);
+  static std::unique_ptr<rlc_pdu_window_base<sdu_info>> create_rx_window(rlc_am_sn_size sn_size);
 };
 
 } // namespace srsgnb
