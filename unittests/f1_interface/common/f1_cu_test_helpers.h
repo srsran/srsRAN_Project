@@ -212,5 +212,39 @@ f1c_message generate_ue_context_setup_failure_msg(unsigned int cu_ue_id, unsigne
   return ue_context_setup_failure;
 }
 
+f1c_message generate_ue_context_modification_response_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+{
+  f1c_message ue_context_modification_response = {};
+
+  ue_context_modification_response.pdu.set_successful_outcome();
+  ue_context_modification_response.pdu.successful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+
+  auto& ue_context_mod_resp = ue_context_modification_response.pdu.successful_outcome().value.ue_context_mod_resp();
+  ue_context_mod_resp->gnb_cu_ue_f1_ap_id.value = cu_ue_id;
+  ue_context_mod_resp->gnb_du_ue_f1_ap_id.value = c_rnti;
+  ue_context_mod_resp->c_rnti_present           = true;
+  ue_context_mod_resp->c_rnti.value             = c_rnti;
+
+  return ue_context_modification_response;
+}
+
+f1c_message generate_ue_context_modification_failure_msg(unsigned int cu_ue_id, unsigned int c_rnti)
+{
+  f1c_message ue_context_modification_failure = {};
+
+  ue_context_modification_failure.pdu.set_unsuccessful_outcome();
+  ue_context_modification_failure.pdu.unsuccessful_outcome().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_MOD);
+
+  auto& ue_context_mod_fail = ue_context_modification_failure.pdu.unsuccessful_outcome().value.ue_context_mod_fail();
+  ue_context_mod_fail->gnb_cu_ue_f1_ap_id.value = cu_ue_id;
+  ue_context_mod_fail->gnb_du_ue_f1_ap_id.value = c_rnti;
+  ue_context_mod_fail->cause.value.set_radio_network();
+  ue_context_mod_fail->cause.value.radio_network() =
+      asn1::f1ap::cause_radio_network_opts::options::unknown_or_already_allocated_gnb_cu_ue_f1ap_id;
+  ;
+
+  return ue_context_modification_failure;
+}
+
 } // namespace srs_cu_cp
 } // namespace srsgnb
