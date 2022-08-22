@@ -27,8 +27,7 @@ public:
   /// F1 UE context setup procedure outcome.
   using f1ap_ue_context_setup_outcome_t =
       expected<const asn1::f1ap::ue_context_setup_resp_s*, const asn1::f1ap::ue_context_setup_fail_s*>;
-
-  event_signal<f1ap_ue_context_setup_outcome_t> f1ap_ue_context_setup_response;
+  event_signal<f1ap_ue_context_setup_outcome_t> f1ap_ue_context_setup_response_message;
 
   /// F1 UE Context Modification procedure outcome.
   using f1ap_ue_context_modification_outcome_t =

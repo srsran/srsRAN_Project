@@ -119,34 +119,7 @@ void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg
 async_task<f1ap_ue_context_setup_response_message>
 f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_request_message& request)
 {
-  // Pack message into PDU
-  f1c_message f1c_ue_ctxt_setup_request_msg;
-  f1c_ue_ctxt_setup_request_msg.pdu.set_init_msg();
-  f1c_ue_ctxt_setup_request_msg.pdu.init_msg().load_info_obj(ASN1_F1AP_ID_UE_CONTEXT_SETUP);
-  f1c_ue_ctxt_setup_request_msg.pdu.init_msg().value.ue_context_setup_request() = request.msg;
-
-  // send UE context setup request message
-  pdu_notifier.on_new_message(f1c_ue_ctxt_setup_request_msg);
-
-  f1ap_event_manager::f1ap_ue_context_setup_outcome_t f1_ue_ctx_setup_resp;
-
-  return launch_async([this, f1_ue_ctx_setup_resp, res = f1ap_ue_context_setup_response_message{}, request](
-                          coro_context<async_task<f1ap_ue_context_setup_response_message>>& ctx) mutable {
-    CORO_BEGIN(ctx);
-
-    CORO_AWAIT_VALUE(f1_ue_ctx_setup_resp, events->f1ap_ue_context_setup_response);
-
-    if (f1_ue_ctx_setup_resp.has_value()) {
-      logger.info("Received F1AP PDU with successful outcome.");
-      res.msg     = *f1_ue_ctx_setup_resp.value();
-      res.success = true;
-    } else {
-      logger.info("Received F1AP PDU with unsuccessful outcome.");
-      res.success = false;
-    }
-
-    CORO_RETURN(res);
-  });
+  return launch_async<f1ap_ue_context_setup_procedure>(request.msg, pdu_notifier, *events, logger);
 }
 
 async_task<ue_index_t>
@@ -217,6 +190,9 @@ void f1ap_cu_impl::handle_message(const f1c_message& msg)
       break;
     case asn1::f1ap::f1_ap_pdu_c::types_opts::successful_outcome:
       handle_successful_outcome(msg.pdu.successful_outcome());
+      break;
+    case asn1::f1ap::f1_ap_pdu_c::types_opts::unsuccessful_outcome:
+      handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
       logger.error("Invalid PDU type");
@@ -327,8 +303,22 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
     case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_release_complete: {
       events->f1ap_ue_context_release_complete.set(&outcome.value.ue_context_release_complete());
     } break;
+    case asn1::f1ap::f1_ap_elem_procs_o::successful_outcome_c::types_opts::ue_context_setup_resp: {
+      events->f1ap_ue_context_setup_response_message.set(&outcome.value.ue_context_setup_resp());
+    } break;
     default:
       logger.error("Successful outcome of type {} is not supported", outcome.value.type().to_string());
+  }
+}
+
+void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome)
+{
+  switch (outcome.value.type().value) {
+    case asn1::f1ap::f1_ap_elem_procs_o::unsuccessful_outcome_c::types_opts::ue_context_setup_fail: {
+      events->f1ap_ue_context_setup_response_message.set(&outcome.value.ue_context_setup_fail());
+    } break;
+    default:
+      logger.error("Unsuccessful outcome of type {} is not supported", outcome.value.type().to_string());
   }
 }
 

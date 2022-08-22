@@ -11,6 +11,7 @@
 #pragma once
 
 #include "procedures/f1ap_ue_context_release_procedure.h"
+#include "procedures/f1ap_ue_context_setup_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
 #include "srsgnb/f1_interface/cu/f1ap_cu.h"
 #include "srsgnb/ran/nr_cgi.h"
@@ -76,6 +77,10 @@ private:
   /// \brief Notify about the reception of an successful outcome.
   /// \param[in] msg The received successful outcome message.
   void handle_successful_outcome(const asn1::f1ap::successful_outcome_s& outcome);
+
+  /// \brief Notify about the reception of an unsuccessful outcome.
+  /// \param[in] msg The received unsuccessful outcome message.
+  void handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_outcome_s& outcome);
 
   /// \brief Notify about the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.

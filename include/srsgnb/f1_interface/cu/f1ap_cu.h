@@ -79,7 +79,8 @@ struct f1ap_ue_context_setup_request_message {
 };
 
 struct f1ap_ue_context_setup_response_message {
-  asn1::f1ap::ue_context_setup_resp_s msg;
+  asn1::f1ap::ue_context_setup_resp_s response;
+  asn1::f1ap::ue_context_setup_fail_s failure;
   bool                                success;
 };
 
