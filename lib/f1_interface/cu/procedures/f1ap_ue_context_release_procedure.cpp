@@ -28,16 +28,16 @@ void f1ap_ue_context_release_procedure::operator()(coro_context<async_task<ue_in
   CORO_BEGIN(ctx);
 
   // Send command to DU.
-  send_f1_ue_context_release_command();
+  send_ue_context_release_command();
 
   // Await CU response.
   CORO_AWAIT_VALUE(f1_ue_ctxt_rel_outcome, ev_mng.f1ap_ue_context_release_complete);
 
   // Handle response from DU and return UE index
-  CORO_RETURN(handle_f1ap_ue_context_release_complete(*f1_ue_ctxt_rel_outcome));
+  CORO_RETURN(create_ue_context_release_complete(*f1_ue_ctxt_rel_outcome));
 }
 
-void f1ap_ue_context_release_procedure::send_f1_ue_context_release_command()
+void f1ap_ue_context_release_procedure::send_ue_context_release_command()
 {
   // Pack message into PDU
   f1c_message f1c_ue_ctxt_rel_msg;
@@ -55,7 +55,7 @@ void f1ap_ue_context_release_procedure::send_f1_ue_context_release_command()
   f1c_notifier.on_new_message(f1c_ue_ctxt_rel_msg);
 }
 
-ue_index_t f1ap_ue_context_release_procedure::handle_f1ap_ue_context_release_complete(
+ue_index_t f1ap_ue_context_release_procedure::create_ue_context_release_complete(
     const asn1::f1ap::ue_context_release_complete_s msg)
 {
   logger.info("Received F1AP UE Context Release Complete.");
