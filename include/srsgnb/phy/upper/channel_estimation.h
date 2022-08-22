@@ -282,8 +282,10 @@ using dmrs_symbol_list = static_vector<cf_t, MAX_NOF_LAYER_DMRS_SYMBOLS>;
 /// element \f$l\f$ of the time mask are set to true.
 struct dmrs_mask {
   /// Boolean mask to specify the OFDM symbols carrying DM-RS symbols.
-  static_vector<bool, MAX_NSYMB_PER_SLOT> symbols;
-  /// Boolean mask to specify the subcarriers carrying DM-RS symbols.
-  bounded_bitset<MAX_RB * NRE / 2> res_elements;
+  std::array<bool, MAX_NSYMB_PER_SLOT> symbols;
+  /// Boolean mask to specify the resource blocks carrying DM-RS symbols.
+  bounded_bitset<MAX_RB> rb_mask;
+  /// Boolean mask to specify the resource elements within the resource blocks carrying DM-RS symbols.
+  std::array<bool, NRE> re_mask;
 };
 } // namespace srsgnb

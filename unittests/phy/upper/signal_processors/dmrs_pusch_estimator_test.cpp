@@ -10,8 +10,10 @@
 
 #include "../../../../lib/phy/upper/signal_processors/dmrs_pusch_estimator_impl.h"
 #include "../../support/resource_grid_test_doubles.h"
+#include "dmrs_pusch_estimator_test_data.h"
 #include "srsgnb/phy/upper/signal_processors/dmrs_pusch_estimator.h"
-#include "srsgnb/support/srsgnb_test.h"
+#include "srsgnb/phy/upper/signal_processors/signal_processor_factories.h"
+#include "gtest/gtest.h"
 
 using namespace srsgnb;
 
@@ -47,59 +49,53 @@ std::unique_ptr<dmrs_pusch_estimator> create_dmrs_pusch_estimator()
   return std::make_unique<dmrs_pusch_estimator_impl>(std::move(ch_est));
 }
 
-int main()
+class DmrsPuschEstimatorFixture : public ::testing::TestWithParam<test_case_t>
 {
-  // SETUP
-  // Total number of resource blocks.
-  unsigned nof_rb = 20;
-  // Cyclic prefix.
-  cyclic_prefix cp = cyclic_prefix::NORMAL;
+protected:
+  std::unique_ptr<dmrs_pusch_estimator> estimator;
+  resource_grid_reader_spy              rg_spy;
 
-  // Channel estimation container.
-  channel_estimate::channel_estimate_dimensions ch_est_dims = {};
+  void SetUp() override
+  {
+    test_case_t test_case = GetParam();
 
-  ch_est_dims.nof_tx_layers = 2;
-  ch_est_dims.nof_rx_ports  = 4;
-  ch_est_dims.nof_symbols   = 10;
-  ch_est_dims.nof_prb       = 14;
+    // Create port estimator.
+    std::shared_ptr<port_channel_estimator_factory> port_estimator_factory = create_port_channel_estimator_factory_sw();
+    ASSERT_TRUE(port_estimator_factory);
 
-  channel_estimate ch_est(ch_est_dims);
+    // Create estimator factory.
+    std::shared_ptr<dmrs_pusch_estimator_factory> estimator_factory =
+        create_dmrs_pusch_estimator_factory_sw(port_estimator_factory);
+    ASSERT_TRUE(estimator_factory);
 
-  for (unsigned i_layer = 0; i_layer != ch_est_dims.nof_tx_layers; ++i_layer) {
-    for (unsigned i_port = 0; i_port != ch_est_dims.nof_rx_ports; ++i_port) {
-      span<const cf_t> path_ch_est = ch_est.get_path_ch_estimate(i_port, i_layer);
-      TESTASSERT(std::all_of(path_ch_est.begin(), path_ch_est.end(), [](cf_t a) { return (a == 1.0F); }),
-                 "Channel estimate not properly initialized.");
-    }
+    // Create actual channel estimator.
+    estimator = estimator_factory->create();
+
+    // Setup resource grid symbols.
+    std::vector<resource_grid_reader_spy::expected_entry_t> rg_entries = test_case.symbols.read();
+    rg_spy.write(rg_entries);
   }
+};
 
-  // PUSCH channel estimator instance.
-  std::unique_ptr<dmrs_pusch_estimator> pusch_est_test = create_dmrs_pusch_estimator();
+TEST_P(DmrsPuschEstimatorFixture, Average)
+{
+  dmrs_pusch_estimator::configuration config = GetParam().config;
 
-  // PUSCH channel estimator configuration object.
-  dmrs_pusch_estimator::configuration cfg = {};
-  cfg.rb_mask                             = {false, false, false, false, true, true, true, true, true,  true,
-                                             true,  true,  true,  true,  true, true, true, true, false, false};
-  srsgnb_assert(cfg.rb_mask.size() == nof_rb, "Check rm_mask!");
-  srsgnb_assert(cfg.rb_mask.count() == ch_est_dims.nof_prb, "Check rm_mask!");
-  cfg.nof_symbols  = ch_est_dims.nof_symbols;
-  cfg.first_symbol = 2;
-  cfg.rx_ports.resize(ch_est_dims.nof_rx_ports);
-  cfg.nof_tx_layers = ch_est_dims.nof_tx_layers;
-  cfg.c_prefix      = cp;
+  // Prepare channel estimate.
+  channel_estimate::channel_estimate_dimensions ch_estimate_dims;
+  ch_estimate_dims.nof_prb       = config.rb_mask.count();
+  ch_estimate_dims.nof_symbols   = config.nof_symbols;
+  ch_estimate_dims.nof_rx_ports  = config.rx_ports.size();
+  ch_estimate_dims.nof_tx_layers = config.nof_tx_layers;
+  channel_estimate ch_est(ch_estimate_dims);
 
-  unsigned nof_slot_symbols = get_nsymb_per_slot(cp);
-  srsgnb_assert(nof_slot_symbols >= cfg.first_symbol + cfg.nof_symbols, "Check OFDM symbols.");
-
-  std::unique_ptr<resource_grid_reader> grid = create_rg_reader();
-
-  // RUN ESTIMATION ROUTINE
-  pusch_est_test->estimate(ch_est, *grid, cfg);
+  // Estimate.
+  estimator->estimate(ch_est, rg_spy, config);
 
   // Check the results. The dummy channel estimator sets all RE elements corresponding to one TX-RX path to a number
   // equal to 10 * Rx port index + layer index.
-  unsigned nof_rx_ports = cfg.rx_ports.size();
-  for (unsigned i_layer = 0; i_layer != cfg.nof_tx_layers; ++i_layer) {
+  unsigned nof_rx_ports = config.rx_ports.size();
+  for (unsigned i_layer = 0; i_layer != config.nof_tx_layers; ++i_layer) {
     for (unsigned i_port = 0; i_port != nof_rx_ports; ++i_port) {
       span<const cf_t> path   = ch_est.get_path_ch_estimate(i_port, i_layer);
       float            marker = static_cast<float>(10 * i_port + i_layer);
@@ -109,3 +105,8 @@ int main()
     }
   }
 }
+
+// Creates test suite with al the test cases.
+INSTANTIATE_TEST_SUITE_P(DmrsPuschEstimatorTest,
+                         DmrsPuschEstimatorFixture,
+                         ::testing::ValuesIn(dmrs_pusch_estimator_test_data));

@@ -44,6 +44,7 @@ public:
   /// Constructor - sets the channel estimator.
   explicit dmrs_pusch_estimator_impl(std::unique_ptr<port_channel_estimator> ch_est) : ch_estimator(std::move(ch_est))
   {
+    srsgnb_assert(ch_est, "Invalid port channel estimator.");
   }
 
   // See interface for the documentation.

@@ -48,7 +48,6 @@ pusch_processor_result pusch_processor_impl::process(span<uint8_t>              
   ch_est_config.scrambling_id = pdu.scrambling_id;
   ch_est_config.n_scid        = pdu.n_scid;
   ch_est_config.scaling       = convert_dB_to_amplitude(-get_sch_to_dmrs_ratio_dB(pdu.nof_cdm_groups_without_data));
-  ch_est_config.scs           = to_subcarrier_spacing(pdu.slot.numerology());
   ch_est_config.c_prefix      = pdu.cp;
   ch_est_config.rb_mask       = rb_mask;
   ch_est_config.first_symbol  = pdu.start_symbol_index;

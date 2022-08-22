@@ -46,10 +46,10 @@ public:
     ///
     /// \sa get_sch_to_dmrs_ratio_dB()
     float scaling;
-    /// Subcarrier spacing of the PUSCH.
-    subcarrier_spacing scs = subcarrier_spacing::kHz15;
     /// Cyclic prefix.
     cyclic_prefix c_prefix = cyclic_prefix::NORMAL;
+    /// DMRS symbol position indexes.
+    std::array<bool, MAX_NSYMB_PER_SLOT> symbols_mask;
     /// Allocation RB list: the entries set to true are used for transmission.
     bounded_bitset<MAX_RB> rb_mask;
     /// First OFDM symbol within the slot for which the channel should be estimated.

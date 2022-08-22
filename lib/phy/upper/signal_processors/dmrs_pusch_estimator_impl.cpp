@@ -1,4 +1,5 @@
 #include "dmrs_pusch_estimator_impl.h"
+#include "dmrs_helper.h"
 
 using namespace srsgnb;
 
@@ -24,14 +25,13 @@ void dmrs_pusch_generator_impl::generate(span<dmrs_symbol_list> symbols, span<dm
 
   for (unsigned layer_ix = 0; layer_ix != nof_tx_layers; ++layer_ix) {
     symbols[layer_ix].resize(nof_dmrs_per_symbol, -1);
-    mask[layer_ix].symbols.resize(cfg.nof_symbols, false);
-    // Second and last-but-one symbols are used for DM-RS.
-    mask[layer_ix].symbols[1]                   = true;
-    mask[layer_ix].symbols[cfg.nof_symbols - 2] = true;
-    mask[layer_ix].res_elements.resize(nof_dmrs_per_symbol / 2);
-    mask[layer_ix].res_elements.reset();
-    for (unsigned i_el = 0, max_el = mask[layer_ix].res_elements.size(); i_el < max_el; i_el += 2) {
-      mask[layer_ix].res_elements.set(i_el);
+    mask[layer_ix].symbols = cfg.symbols_mask;
+    mask[layer_ix].rb_mask = cfg.rb_mask;
+
+    if (cfg.type == dmrs_type::TYPE1) {
+      mask[layer_ix].re_mask = {true, false, true, false, true, false, true, false, true, false, true, false};
+    } else {
+      mask[layer_ix].re_mask = {true, true, false, false, false, false, true, true, false, false, false, false};
     }
   }
 }
@@ -51,7 +51,7 @@ void dmrs_pusch_estimator_impl::estimate(channel_estimate&           estimate,
   port_channel_estimator::configuration est_cfg = {};
 
   est_cfg.rb_mask       = config.rb_mask;
-  est_cfg.scs           = config.scs;
+  est_cfg.scs           = to_subcarrier_spacing(config.slot.numerology());
   est_cfg.c_prefix      = config.c_prefix;
   est_cfg.nof_tx_layers = nof_tx_layers;
   est_cfg.nof_rx_ports  = nof_rx_ports;
