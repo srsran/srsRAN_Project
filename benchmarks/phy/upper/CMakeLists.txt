@@ -6,6 +6,7 @@
 # the distribution.
 #
 
+add_subdirectory(channel_coding)
 add_subdirectory(channel_modulation)
 
 add_executable(downlink_processor_benchmark downlink_processor_benchmark.cpp)
