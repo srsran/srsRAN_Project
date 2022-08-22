@@ -112,7 +112,7 @@ void rlc_rx_am_entity::handle_data_pdu(byte_buffer_slice buf)
 
   // Section 5.2.3.2.2, discard segments with overlapping bytes
   if (rx_window->has_sn(header.sn) && header.si != rlc_si_field::full_sdu) {
-    for (const auto& segm : (*rx_window)[header.sn].segments) {
+    for (const rlc_am_sdu_segment& segm : (*rx_window)[header.sn].segments) {
       uint32_t segm_last_byte = segm.header.so + segm.payload.length() - 1;
       uint32_t pdu_last_byte  = header.so + payload.length() - 1;
       if ((header.so >= segm.header.so && header.so <= segm_last_byte) ||
@@ -311,10 +311,10 @@ void rlc_rx_am_entity::handle_segment_data_sdu(const rlc_am_pdu_header& header, 
     //
     // TODO: avoid copy
     //
-    for (const auto& it : rx_sdu.segments) {
-      if (it.header.so + it.payload.length() > rx_sdu.sdu.length()) {
-        uint32_t piece_length = it.header.so + it.payload.length() - rx_sdu.sdu.length();
-        rx_sdu.sdu.append(it.payload.view().view(it.payload.length() - piece_length, piece_length));
+    for (const rlc_am_sdu_segment& segm : rx_sdu.segments) {
+      if (segm.header.so + segm.payload.length() > rx_sdu.sdu.length()) {
+        uint32_t piece_length = segm.header.so + segm.payload.length() - rx_sdu.sdu.length();
+        rx_sdu.sdu.append(segm.payload.view().view(segm.payload.length() - piece_length, piece_length));
       }
     }
   }
@@ -330,20 +330,20 @@ void rlc_rx_am_entity::update_segment_inventory(rlc_amd_sdu_composer& rx_sdu) co
 
   // Check for gaps and if all segments have been received
   uint32_t next_byte = 0;
-  for (const auto& it : rx_sdu.segments) {
-    if (it.header.so != next_byte) {
+  for (const rlc_am_sdu_segment& segm : rx_sdu.segments) {
+    if (segm.header.so != next_byte) {
       // Found gap: set flags and return
       rx_sdu.has_gap        = true;
       rx_sdu.fully_received = false;
       return;
     }
-    if (it.header.si == rlc_si_field::last_segment) {
+    if (segm.header.si == rlc_si_field::last_segment) {
       // Reached last segment without any gaps: set flags and return
       rx_sdu.has_gap        = false;
       rx_sdu.fully_received = true;
       return;
     }
-    next_byte += it.payload.length();
+    next_byte += segm.payload.length();
   }
   // No gaps, but last segment not yet received
   rx_sdu.has_gap        = false;
