@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "procedures/f1ap_ue_context_modification_procedure.h"
 #include "procedures/f1ap_ue_context_release_procedure.h"
 #include "procedures/f1ap_ue_context_setup_procedure.h"
 #include "srsgnb/asn1/f1ap.h"
