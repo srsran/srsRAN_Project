@@ -51,7 +51,7 @@ public:
   async_task<f1ap_ue_create_response> handle_ue_creation_request(const f1ap_ue_create_request& msg) override;
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
   async_task<f1ap_ue_context_modification_response_message>
-       handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) override;
+       handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override;
   void handle_ue_inactivity_notification(const f1ap_ue_inactivity_notification_message& msg) override {}
   void handle_notify(const f1ap_notify_message& msg) override {}
 

@@ -145,7 +145,7 @@ public:
   /// \return Returns a f1ap_ue_context_modification_response_message struct with the success member set to 'true' in
   /// case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) = 0;
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) = 0;
 
   /// \brief Indicate an UE activity event as per TS 38.473 section 8.3.6
   /// \param[in] msg The UE Inactivity Nofication message to transmit.

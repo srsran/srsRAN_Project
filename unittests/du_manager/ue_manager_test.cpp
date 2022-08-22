@@ -63,7 +63,7 @@ public:
   void handle_ue_context_release_request(const f1ap_ue_context_release_request_message& request) override {}
 
   async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg) override
+  handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg) override
   {
     return wait_ue_mod.launch();
   }

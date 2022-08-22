@@ -53,7 +53,7 @@ void f1ap_du_impl::handle_dl_rrc_message_transfer(const asn1::f1ap::dlrrc_msg_tr
 }
 
 async_task<f1ap_ue_context_modification_response_message>
-f1ap_du_impl::handle_ue_context_modification(const f1ap_ue_context_modification_required_message& msg)
+f1ap_du_impl::handle_ue_context_modification_required(const f1ap_ue_context_modification_required_message& msg)
 {
   // TODO: add procedure implementation
 
