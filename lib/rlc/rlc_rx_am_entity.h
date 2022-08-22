@@ -72,7 +72,6 @@ private:
     byte_buffer                                          sdu              = {};
     uint32_t                                             next_expected_so = 0;
     uint32_t                                             total_sdu_length = 0;
-    // rlc_amd_sdu_composer(uint32_t sn) : sn(sn) {}
   };
   /// Rx window
   std::unique_ptr<rlc_pdu_window_base<rlc_amd_sdu_composer>> rx_window;
