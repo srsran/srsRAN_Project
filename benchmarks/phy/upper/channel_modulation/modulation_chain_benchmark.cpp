@@ -74,10 +74,6 @@ int main(int argc, char** argv)
     benchmarker perf_meas_demodulator("Demodulation mapper " + to_string(modulation), nof_repetitions);
 
     for (unsigned nof_symbols : {1, 123, 256, 512, 1024, 3300, 6600, 38880}) {
-      // Performance measurements.
-      std::vector<unsigned> perf_results;
-      perf_results.reserve(nof_repetitions);
-
       // Calculate number of bytes.
       unsigned nof_bits = nof_symbols * get_bits_per_symbol(modulation);
 

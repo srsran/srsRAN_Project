@@ -123,11 +123,11 @@ void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
   const cf_t*           symbols_it   = symbols.begin();
   const float*          noise_it     = noise_vars.begin();
   log_likelihood_ratio* llr_it       = llrs.begin();
-  unsigned              symbol_index = 0;
+  std::size_t           symbol_index = 0;
 
 #ifdef HAVE_AVX2
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 8 symbols.
-  for (unsigned symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
+  for (std::size_t symbol_index_end = (symbols.size() / 8) * 8; symbol_index != symbol_index_end; symbol_index += 8) {
     demod_QAM16_avx2(llr_it, symbols_it, noise_it, RANGE_LIMIT_FLOAT);
 
     llr_it += 32;
@@ -136,7 +136,7 @@ void srsgnb::demodulate_soft_QAM16(span<log_likelihood_ratio> llrs,
   }
 #endif // HAVE_AVX2
 
-  for (unsigned symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
+  for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     *llr_it++ = demod_16QAM_symbol_01(std::real(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
     *llr_it++ = demod_16QAM_symbol_01(std::imag(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);
     *llr_it++ = demod_16QAM_symbol_23(std::real(*symbols_it), *noise_it, RANGE_LIMIT_FLOAT);

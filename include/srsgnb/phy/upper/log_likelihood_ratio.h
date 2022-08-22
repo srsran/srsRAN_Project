@@ -53,7 +53,7 @@ public:
     srsgnb_assert(((val <= LLR_MAX) && (val >= -LLR_MAX)) || (val == LLR_INFTY) || (val == -LLR_INFTY),
                   "Invalid LLR value.");
     value = static_cast<value_type>(val);
-  };
+  }
 
   /// \name Conversion operators.
   ///@{

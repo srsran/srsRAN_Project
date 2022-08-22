@@ -75,11 +75,12 @@ void srsgnb::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
   const cf_t*           symbols_it   = symbols.begin();
   const float*          noise_it     = noise_vars.begin();
   log_likelihood_ratio* llr_it       = llrs.begin();
-  unsigned              symbol_index = 0;
+  std::size_t           symbol_index = 0;
 
 #ifdef HAVE_AVX2
   // For AVX2, it generates 32 LLRs simultaneously. The input is read in batches of 16 symbols.
-  for (unsigned symbol_index_end = (symbols.size() / 16) * 16; symbol_index != symbol_index_end; symbol_index += 16) {
+  for (std::size_t symbol_index_end = (symbols.size() / 16) * 16; symbol_index != symbol_index_end;
+       symbol_index += 16) {
     demod_QPSK_avx2(llr_it, symbols_it, noise_it, RANGE_LIMIT_FLOAT);
 
     llr_it += 32;
@@ -89,7 +90,7 @@ void srsgnb::demodulate_soft_QPSK(span<log_likelihood_ratio> llrs,
 #endif // HAVE_AVX2
 
   // Process remainder symbols with the generic algorithm.
-  for (unsigned symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
+  for (std::size_t symbol_index_end = symbols.size(); symbol_index != symbol_index_end; ++symbol_index) {
     cf_t this_symbol = *symbols_it++;
     *llr_it++        = demod_QPSK_symbol(std::real(this_symbol), *noise_it, RANGE_LIMIT_FLOAT);
     *llr_it++        = demod_QPSK_symbol(std::imag(this_symbol), *noise_it, RANGE_LIMIT_FLOAT);

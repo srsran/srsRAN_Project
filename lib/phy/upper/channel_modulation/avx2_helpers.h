@@ -54,7 +54,7 @@ inline __m256 clip_ps(__m256 value, __m256 range_ceil, __m256 range_floor)
   return value;
 }
 
-/// \brief Clips the values of a single-precision AVX register.
+/// \brief Clips the values of an AVX register carrying eight signed 32-bit integers.
 ///
 /// The values greater than \c range_ceil or lower than \c range_floor are substituted by their corresponding range
 /// limits.
@@ -62,7 +62,7 @@ inline __m256 clip_ps(__m256 value, __m256 range_ceil, __m256 range_floor)
 /// \param[in] value       Input values.
 /// \param[in] range_ceil  Ceiling values.
 /// \param[in] range_floor Floor values.
-/// \return A single-precision AVX register containing the clipped values.
+/// \return An AVX register containing the clipped values.
 inline __m256i clip_epi32(__m256i value, __m256i range_ceil, __m256i range_floor)
 {
   value = _mm256_blendv_epi8(value, range_ceil, _mm256_cmpgt_epi32(value, range_ceil));
@@ -125,94 +125,77 @@ inline __m256i quantize_ps(__m256 value_0, __m256 value_1, __m256 value_2, __m25
   return _mm256_packs_epi16(llr_i16_0_, llr_i16_1_);
 }
 
+/// \brief Helper function to calculate an interval index from single-precision AVX register values.
+/// \param[in] value          Input AVX register.
+/// \param[in] interval_width Interval width.
+/// \param[in] nof_intervals  Number of intervals.
+/// \return An AVX register carrying eight signed 32-bit integers with the corresponding interval indexes.
 inline __m256i compute_interval_idx(__m256 value, float interval_width, int nof_intervals)
 {
-  __m256i nof_intervals_minus_one = _mm256_set1_epi32(nof_intervals - 1);
-  __m256i nof_intervals_half      = _mm256_set1_epi32(nof_intervals / 2);
-
   // Scale.
   value = _mm256_mul_ps(value, _mm256_set1_ps(1.0F / interval_width));
 
-  // Round to lowest integer.
+  // Round to the lowest integer.
   value = _mm256_round_ps(value, _MM_FROUND_FLOOR);
 
   // Convert to int32.
   __m256i idx = _mm256_cvtps_epi32(value);
 
   // Add interval offset.
-  idx = _mm256_add_epi32(idx, nof_intervals_half);
+  idx = _mm256_add_epi32(idx, _mm256_set1_epi32(nof_intervals / 2));
 
   // Clip index.
-  idx = clip_epi32(idx, nof_intervals_minus_one, _mm256_setzero_si256());
+  idx = clip_epi32(idx, _mm256_set1_epi32(nof_intervals - 1), _mm256_setzero_si256());
 
   // Clip integer and return.
   return idx;
 }
 
-template <typename Container>
-inline __m256 look_up_table(const Container& table, __m256i indexes)
-{
-  // Get 3 bit LSB.
-  __m256i indexes_lsb = _mm256_and_si256(indexes, _mm256_set1_epi32(0b111));
-
-  // Get MSBs.
-  __m256i indexes_msb = _mm256_srai_epi32(indexes, 3);
-
-  // Initialise result.
-  __m256 result = _mm256_setzero_ps();
-
-  for (int index_msb = 0, index_msb_end = table.size() / 8; index_msb != index_msb_end; ++index_msb) {
-    // Load eight values.
-    __m256 small_table = _mm256_loadu_ps(&table[index_msb * 8]);
-
-    // Select values from eight value table.
-    __m256 result_lut = _mm256_permutevar8x32_ps(small_table, indexes_lsb);
-
-    // Select mask if the MSB of the index matches.
-    __m256i mask = _mm256_cmpeq_epi32(_mm256_set1_epi32(index_msb), indexes_msb);
-
-    // Selects values.
-    result = _mm256_blendv_ps(result, result_lut, (__m256)mask);
-  }
-
-  return result;
-}
-
-template <>
+/// \brief Get values from a look-up table.
+/// \param[in] table   Look-up table containing eight single-precision values.
+/// \param[in] indexes AVX register containing eight indexes.
+/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
 inline __m256 look_up_table(const std::array<float, 8>& table, __m256i indexes)
 {
   return _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes);
 }
 
-template <>
+/// \brief Get values from a look-up table.
+/// \param[in] table   Look-up table containing sixteen single-precision values.
+/// \param[in] indexes AVX register containing eight indexes.
+/// \return A single-precision AVX register containing the eight values corresponding to the indexes.
 inline __m256 look_up_table(const std::array<float, 16>& table, __m256i indexes)
 {
-  // Get 3 bit LSB.
-  __m256i indexes_lsb = _mm256_and_si256(indexes, _mm256_set1_epi32(0b111));
-
-  // Get MSBs.
-  __m256i indexes_msb = _mm256_srai_epi32(indexes, 3);
-
   // Get lower part of the table.
-  __m256 lower = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes_lsb);
+  __m256 lower = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data()), indexes);
 
   // Get upper part of the table.
-  __m256 upper = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data() + 8), indexes_lsb);
+  __m256 upper = _mm256_permutevar8x32_ps(_mm256_loadu_ps(table.data() + 8), indexes);
 
   // Generate mask. Set to true if the MSB of the index is greater than zero.
-  __m256i mask = _mm256_cmpgt_epi32(indexes_msb, _mm256_setzero_si256());
+  __m256i mask = _mm256_cmpgt_epi32(indexes, _mm256_set1_epi32(0b111));
 
   // Select upper or lower value.
   return _mm256_blendv_ps(lower, upper, (__m256)mask);
 }
 
+/// \brief Applies an interval function to a series of values.
+/// \tparam Table             Look-up table type. All tables mut be of the same type.
+/// \param[in] value          Single-precision AVX register with eight input values.
+/// \param[in] rcp_noise      Single-precision AVX register with the reciprocal noise corresponding to the values.
+/// \param[in] nof_intervals  Number of intervals.
+/// \param[in] interval_width Interval width to quantify the interval indexes.
+/// \param[in] slopes         Table with the slope of each interval.
+/// \param[in] intercepts     Table with the interception points of each interval.
+/// \return A single-precision AVX register containing the results of the interval function.
+/// \remark The number of intervals must be lower than or equal to \c Table size.
 template <typename Table>
-inline __m256 make_magic(__m256       value,
-                         __m256       rcp_noise,
-                         float        interval_width,
-                         int          nof_intervals,
-                         const Table& slopes,
-                         const Table& intercepts)
+inline __m256 interval_function(__m256       value,
+                                __m256       rcp_noise,
+                                float        interval_width,
+                                unsigned     nof_intervals,
+                                const Table& slopes,
+                                const Table& intercepts)
 {
   __m256i interval_index = mm256::compute_interval_idx(value, interval_width, nof_intervals);
 
