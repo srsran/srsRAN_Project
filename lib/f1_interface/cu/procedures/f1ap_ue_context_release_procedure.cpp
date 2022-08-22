@@ -62,9 +62,9 @@ ue_index_t f1ap_ue_context_release_procedure::handle_f1ap_ue_context_release_com
 
   ue_index_t ret = INVALID_UE_INDEX;
 
-  if (msg->gnb_du_ue_f1_ap_id.value == ue_ctxt.du_ue_f1ap_id) {
+  if (msg->gnb_du_ue_f1_ap_id.value == gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id)) {
     ret                   = ue_ctxt.ue_index;
-    ue_ctxt.du_ue_f1ap_id = INVALID_F1AP_UE_ID;
+    ue_ctxt.du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
     ue_ctxt.ue_index      = INVALID_UE_INDEX;
   }
 

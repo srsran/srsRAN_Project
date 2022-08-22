@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include "../common/f1c_types.h"
 #include "srsgnb/adt/byte_buffer.h"
 #include "srsgnb/adt/expected.h"
 #include "srsgnb/asn1/f1ap.h"
@@ -20,17 +21,6 @@
 
 namespace srsgnb {
 namespace srs_cu_cp {
-
-/// \remark See TS 38.473 Section 9.3.1.4: CU and DU F1AP DU valid values: (0..2^32-1)
-enum f1ap_ue_id_t : uint64_t {
-  INVALID_F1AP_UE_ID = 0x1ffffffff,
-};
-
-/// Convert integer to F1AP UE ID type.
-constexpr inline f1ap_ue_id_t int_to_f1ap_ue_id(std::underlying_type_t<f1ap_ue_id_t> idx)
-{
-  return static_cast<f1ap_ue_id_t>(idx);
-}
 
 struct f1ap_initial_ul_rrc_message {
   asn1::f1ap::init_ulrrc_msg_transfer_s msg;
@@ -166,9 +156,9 @@ private:
 using f1ap_srb_notifiers = std::array<f1c_rrc_message_notifier*, MAX_NOF_SRBS>;
 
 struct f1ap_ue_context {
-  f1ap_ue_id_t       du_ue_f1ap_id = INVALID_F1AP_UE_ID;
-  ue_index_t         ue_index      = INVALID_UE_INDEX;
-  f1ap_srb_notifiers srbs;
+  gnb_du_ue_f1ap_id_t du_ue_f1ap_id = gnb_du_ue_f1ap_id_t::invalid;
+  ue_index_t          ue_index      = INVALID_UE_INDEX;
+  f1ap_srb_notifiers  srbs;
 };
 
 struct f1ap_srb_creation_message {

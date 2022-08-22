@@ -39,13 +39,13 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
     logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
 
-  f1ap_ue_id_t cu_ue_id = find_cu_ue_id(ue_index);
-  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+  gnb_cu_ue_f1ap_id_t cu_ue_id = find_cu_ue_id(ue_index);
+  if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.error("Connection of SRB notifier failed.");
     return;
   }
 
-  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
   ue_ctxt.srbs[srb_id] = &notifier;
 }
@@ -90,12 +90,12 @@ void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& m
 
 void f1ap_cu_impl::handle_dl_rrc_message_transfer(const f1ap_dl_rrc_message& msg)
 {
-  f1ap_ue_id_t    cu_ue_id = find_cu_ue_id(msg.ue_index);
-  f1ap_ue_context ue_ctxt  = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+  gnb_cu_ue_f1ap_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
+  f1ap_ue_context     ue_ctxt  = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
   asn1::f1ap::dlrrc_msg_transfer_s dlrrc_msg = {};
-  dlrrc_msg->gnb_cu_ue_f1_ap_id.value        = cu_ue_id;
-  dlrrc_msg->gnb_du_ue_f1_ap_id.value        = ue_ctxt.du_ue_f1ap_id;
+  dlrrc_msg->gnb_cu_ue_f1_ap_id.value        = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  dlrrc_msg->gnb_du_ue_f1_ap_id.value        = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   dlrrc_msg->srbid.value                     = (uint8_t)msg.srb_id;
   dlrrc_msg->rrc_container.value             = msg.rrc_container;
 
@@ -152,9 +152,9 @@ f1ap_cu_impl::handle_ue_context_setup_request(const f1ap_ue_context_setup_reques
 async_task<ue_index_t>
 f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg)
 {
-  f1ap_ue_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
+  gnb_cu_ue_f1ap_id_t cu_ue_id = find_cu_ue_id(msg.ue_index);
 
-  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+  if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.error("Can't find UE to release (ue_index={})", msg.ue_index);
 
     return launch_async([](coro_context<async_task<ue_index_t>>& ctx) mutable {
@@ -163,11 +163,11 @@ f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_co
     });
   }
 
-  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[cu_ue_id];
+  f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
   asn1::f1ap::ue_context_release_cmd_s ue_ctxt_rel_cmd = {};
-  ue_ctxt_rel_cmd->gnb_cu_ue_f1_ap_id.value            = cu_ue_id;
-  ue_ctxt_rel_cmd->gnb_du_ue_f1_ap_id.value            = ue_ctxt.du_ue_f1ap_id;
+  ue_ctxt_rel_cmd->gnb_cu_ue_f1_ap_id.value            = gnb_cu_ue_f1ap_id_to_uint(cu_ue_id);
+  ue_ctxt_rel_cmd->gnb_du_ue_f1_ap_id.value            = gnb_du_ue_f1ap_id_to_uint(ue_ctxt.du_ue_f1ap_id);
   ue_ctxt_rel_cmd->cause.value                         = msg.cause;
 
   return launch_async<f1ap_ue_context_release_procedure>(ue_ctxt, ue_ctxt_rel_cmd, pdu_notifier, *events, logger);
@@ -272,8 +272,8 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
     logger.debug("Ignoring SUL access indicator");
   }
 
-  f1ap_ue_id_t cu_ue_id = get_next_cu_ue_id();
-  if (cu_ue_id == INVALID_F1AP_UE_ID) {
+  gnb_cu_ue_f1ap_id_t cu_ue_id = get_next_cu_ue_id();
+  if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
     logger.error("No CU UE F1AP ID available.");
     return;
   }
@@ -289,11 +289,11 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
   }
 
   // Create UE context and store it
-  f1ap_ue_context ue_ctxt               = {};
-  ue_ctxt.du_ue_f1ap_id                 = int_to_f1ap_ue_id(msg->gnb_du_ue_f1_ap_id.value);
-  ue_ctxt.ue_index                      = ue_creation_complete_msg.ue_index;
-  ue_ctxt.srbs                          = ue_creation_complete_msg.srbs;
-  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = ue_ctxt;
+  f1ap_ue_context ue_ctxt = {};
+  ue_ctxt.du_ue_f1ap_id   = int_to_gnb_du_ue_f1ap_id(msg->gnb_du_ue_f1_ap_id.value);
+  ue_ctxt.ue_index        = ue_creation_complete_msg.ue_index;
+  ue_ctxt.srbs            = ue_creation_complete_msg.srbs;
+  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)] = ue_ctxt;
 
   logger.debug(
       "Added UE (cu_ue_f1ap_id={}, du_ue_f1ap_id={}, ue_index={}).", cu_ue_id, ue_ctxt.du_ue_f1ap_id, ue_ctxt.ue_index);
@@ -301,13 +301,14 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    cu_ue_id_to_f1ap_ue_context[cu_ue_id].srbs[srb_id_t::srb1]->on_new_rrc_message(
+    cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)].srbs[srb_id_t::srb1]->on_new_rrc_message(
         msg->rrc_container_rrc_setup_complete.value);
     return;
   }
 
   // Pass container to RRC
-  cu_ue_id_to_f1ap_ue_context[cu_ue_id].srbs[srb_id_t::srb0]->on_new_rrc_message(msg->rrc_container.value);
+  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)].srbs[srb_id_t::srb0]->on_new_rrc_message(
+      msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)
@@ -336,32 +337,32 @@ void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& 
   du_management_notifier.on_du_remove_request_received(du_index);
 }
 
-f1ap_ue_id_t f1ap_cu_impl::get_next_cu_ue_id()
+gnb_cu_ue_f1ap_id_t f1ap_cu_impl::get_next_cu_ue_id()
 {
   for (int cu_ue_id = MIN_UE_INDEX; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
-    if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == INVALID_UE_INDEX) {
-      return int_to_f1ap_ue_id(cu_ue_id);
+    if (cu_ue_id_to_f1ap_ue_context[cu_ue_id].ue_index == INVALID_UE_INDEX) {
+      return int_to_gnb_cu_ue_f1ap_id(cu_ue_id);
     }
   }
   logger.error("No CU UE ID available");
-  return INVALID_F1AP_UE_ID;
+  return gnb_cu_ue_f1ap_id_t::invalid;
 }
 
-f1ap_ue_id_t f1ap_cu_impl::find_cu_ue_id(ue_index_t ue_index)
+gnb_cu_ue_f1ap_id_t f1ap_cu_impl::find_cu_ue_id(ue_index_t ue_index)
 {
   for (int cu_ue_id = MIN_UE_INDEX; cu_ue_id < MAX_NOF_UES; cu_ue_id++) {
-    if (cu_ue_id_to_f1ap_ue_context[int_to_f1ap_ue_id(cu_ue_id)].ue_index == ue_index) {
-      return int_to_f1ap_ue_id(cu_ue_id);
+    if (cu_ue_id_to_f1ap_ue_context[cu_ue_id].ue_index == ue_index) {
+      return int_to_gnb_cu_ue_f1ap_id(cu_ue_id);
     }
   }
   logger.error("CU UE ID for ue_index={} not found", ue_index);
-  return INVALID_F1AP_UE_ID;
+  return gnb_cu_ue_f1ap_id_t::invalid;
 }
 
-void f1ap_cu_impl::remove_ue(f1ap_ue_id_t cu_ue_id)
+void f1ap_cu_impl::remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
 {
-  f1ap_ue_context empty_context         = {};
-  empty_context.du_ue_f1ap_id           = INVALID_F1AP_UE_ID;
-  empty_context.ue_index                = INVALID_UE_INDEX;
-  cu_ue_id_to_f1ap_ue_context[cu_ue_id] = empty_context;
+  f1ap_ue_context empty_context                                    = {};
+  empty_context.du_ue_f1ap_id                                      = gnb_du_ue_f1ap_id_t::invalid;
+  empty_context.ue_index                                           = INVALID_UE_INDEX;
+  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)] = empty_context;
 }

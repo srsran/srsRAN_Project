@@ -83,16 +83,16 @@ private:
 
   /// \brief Get the next available CU UE ID.
   /// \return The CU UE ID.
-  f1ap_ue_id_t get_next_cu_ue_id();
+  gnb_cu_ue_f1ap_id_t get_next_cu_ue_id();
 
   /// \brief Find the CU UE ID by a given UE index.
   /// \param[in] ue_index The UE index used to find the CU UE ID.
   /// \return The CU UE ID.
-  f1ap_ue_id_t find_cu_ue_id(ue_index_t ue_index);
+  gnb_cu_ue_f1ap_id_t find_cu_ue_id(ue_index_t ue_index);
 
   /// \brief Remove a UE context from the F1AP.
   /// \param[in] cu_ue_id The ID of the UE.
-  void remove_ue(f1ap_ue_id_t cu_ue_id);
+  void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id);
 
   srslog::basic_logger& logger;
 
