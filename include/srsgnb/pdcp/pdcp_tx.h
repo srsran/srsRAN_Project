@@ -91,7 +91,12 @@ public:
 class pdcp_tx_upper_control_notifier
 {
 public:
-  virtual ~pdcp_tx_upper_control_notifier() = default;
+  pdcp_tx_upper_control_notifier()                                                  = default;
+  virtual ~pdcp_tx_upper_control_notifier()                                         = default;
+  pdcp_tx_upper_control_notifier(const pdcp_tx_upper_control_notifier&)             = delete;
+  pdcp_tx_upper_control_notifier& operator=(const pdcp_tx_upper_control_notifier&)  = delete;
+  pdcp_tx_upper_control_notifier(const pdcp_tx_upper_control_notifier&&)            = delete;
+  pdcp_tx_upper_control_notifier& operator=(const pdcp_tx_upper_control_notifier&&) = delete;
 
   virtual void on_protocol_failure() = 0;
   virtual void on_max_hfn_reached()  = 0;

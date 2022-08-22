@@ -12,8 +12,10 @@
 
 #include "pdcp_entity_rx.h"
 #include "pdcp_entity_tx.h"
+#include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/pdcp/pdcp_entity.h"
 #include "srsgnb/ran/bearer_logger.h"
+#include "srsgnb/support/timers.h"
 #include <cstdio>
 #include <memory>
 
@@ -24,9 +26,11 @@ class pdcp_entity_impl : public pdcp_entity
 public:
   pdcp_entity_impl(uint32_t                        ue_index,
                    lcid_t                          lcid,
+                   pdcp_config                     config,
                    pdcp_tx_lower_notifier&         tx_lower_dn,
                    pdcp_tx_upper_control_notifier& tx_upper_cn,
-                   pdcp_rx_upper_data_notifier&    rx_upper_dn) :
+                   pdcp_rx_upper_data_notifier&    rx_upper_dn,
+                   timer_manager&                  timers) :
     logger("PDCP", ue_index, lcid)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, tx_lower_dn, tx_upper_cn);

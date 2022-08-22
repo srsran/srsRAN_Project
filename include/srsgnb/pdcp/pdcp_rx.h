@@ -70,6 +70,7 @@ public:
 class pdcp_rx_upper_control_notifier
 {
 public:
+  pdcp_rx_upper_control_notifier()                                                  = default;
   virtual ~pdcp_rx_upper_control_notifier()                                         = default;
   pdcp_rx_upper_control_notifier(const pdcp_rx_upper_control_notifier&)             = delete;
   pdcp_rx_upper_control_notifier& operator=(const pdcp_rx_upper_control_notifier&)  = delete;
