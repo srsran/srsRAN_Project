@@ -8,6 +8,9 @@
  *
  */
 
+/// \file
+/// \brief Amplitude controller implementation using clipping.
+
 #pragma once
 
 #include "srsgnb/phy/lower/amplitude_controller/amplitude_controller.h"
