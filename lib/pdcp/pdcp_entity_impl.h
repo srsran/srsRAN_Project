@@ -34,7 +34,17 @@ public:
     logger("PDCP", ue_index, lcid)
   {
     tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, tx_lower_dn, tx_upper_cn);
+    logger.log_info("PDCP TX configured: rb_type={}, rlc_mode={}, sn_size={}, discard_timer={}",
+                    config.tx.rb_type,
+                    config.tx.rlc_mode,
+                    config.tx.sn_size,
+                    config.tx.discard_timer);
     rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, rx_upper_dn);
+    logger.log_info("PDCP RX configured: rb_type={}, rlc_mode={}, sn_size={}, t_reordering={}",
+                    config.rx.rb_type,
+                    config.rx.rlc_mode,
+                    config.rx.sn_size,
+                    config.rx.t_reordering);
   }
   ~pdcp_entity_impl() override = default;
   pdcp_tx_upper_data_interface& get_tx_upper_data_interface() final { return (*tx); };

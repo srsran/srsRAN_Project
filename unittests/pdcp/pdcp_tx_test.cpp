@@ -94,16 +94,17 @@ protected:
     sn_size = sn_size_;
 
     // Set Rx config
-    config.rx.sn_size = sn_size;
-    // config.rx->t_reassembly      = 35;
-    // config.rx->t_status_prohibit = 8;
+    config.rx.rb_type               = pdcp_rb_type::drb;
+    config.rx.rlc_mode              = pdcp_rlc_mode::am;
+    config.rx.sn_size               = sn_size;
+    config.rx.out_of_order_delivery = false;
+    config.rx.t_reordering          = pdcp_t_reordering::ms10;
 
     // Set Tx config
-    config.tx.sn_size = sn_size;
-    // config.tx->t_poll_retx     = 45;
-    // config.tx->max_retx_thresh = 4;
-    // config.tx->poll_pdu        = 4;
-    // config.tx->poll_byte       = 25;
+    config.tx.rb_type       = pdcp_rb_type::drb;
+    config.tx.rlc_mode      = pdcp_rlc_mode::am;
+    config.tx.sn_size       = sn_size;
+    config.tx.discard_timer = pdcp_discard_timer::ms50;
 
     // Create RLC entities
     std::unique_ptr<pdcp_entity> pdcp =
