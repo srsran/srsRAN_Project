@@ -30,8 +30,14 @@ enum lcid_t : uint16_t {
 /// \remark See TS 38.331, maxLC-ID.
 constexpr lcid_t MAX_LCID = LCID_MAX_DRB;
 
-enum srb_id_t : uint16_t { srb0 = 0, srb1, srb2, srb3, nulltype };
-constexpr std::size_t MAX_NOF_SRBS = srb3;
+enum class srb_id_t : uint16_t { srb0 = 0, srb1, srb2, srb3, nulltype };
+
+constexpr inline uint16_t srb_id_to_uint(srb_id_t id)
+{
+  return static_cast<uint16_t>(id);
+}
+
+constexpr std::size_t MAX_NOF_SRBS = srb_id_to_uint(srsgnb::srb_id_t::srb3);
 
 inline bool is_srb(lcid_t lcid)
 {

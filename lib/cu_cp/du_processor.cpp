@@ -198,7 +198,7 @@ void du_processor::create_srb(const srb_creation_message& msg)
   srsgnb_assert(ue_ctxt != nullptr, "Could not find UE context");
 
   // create entry for SRB
-  cu_srb_context& srb = ue_ctxt->srbs[msg.srb_id];
+  cu_srb_context& srb = ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)];
 
   // create adapter objects and PDCP bearer as needed
   if (msg.srb_id == srb_id_t::srb0) {
@@ -207,7 +207,7 @@ void du_processor::create_srb(const srb_creation_message& msg)
     srb.rrc_tx_notifier = std::make_unique<rrc_ue_f1ap_adapter>(*f1ap, ue_ctxt->ue_index);
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier.get());
+    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
   } else if (msg.srb_id <= srb_id_t::srb2) {
     // create PDCP context for this SRB
     srb.pdcp_context.emplace();
@@ -237,10 +237,11 @@ void du_processor::create_srb(const srb_creation_message& msg)
         std::make_unique<rrc_ue_pdcp_adapter>(srb.pdcp_context->pdcp_bearer->get_tx_upper_data_interface());
 
     // update notifier in RRC
-    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rrc_tx_notifier.get());
+    ue_ctxt->rrc->connect_srb_notifier(msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.get());
 
     // update notifier in F1AP
-    f1ap->connect_srb_notifier(ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[msg.srb_id].rx_notifier.get());
+    f1ap->connect_srb_notifier(
+        ue_ctxt->ue_index, msg.srb_id, *ue_ctxt->srbs[srb_id_to_uint(msg.srb_id)].rx_notifier.get());
   } else {
     logger.error("Couldn't create SRB{}.", msg.srb_id);
   }

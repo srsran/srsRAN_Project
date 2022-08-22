@@ -46,7 +46,7 @@ public:
   void create_srb(const srb_creation_message& msg) override
   {
     // set notifier to a known value (i.e. nullptr) to be able to check if it was called
-    ue_ctxt.srbs[msg.srb_id].rrc_tx_notifier.reset();
+    ue_ctxt.srbs[srb_id_to_uint(msg.srb_id)].rrc_tx_notifier.reset();
     last_srb = msg;
   }
 
@@ -135,8 +135,10 @@ protected:
     ue_ctxt.rrc                     = rrc->add_user(std::move(rrc_ue_create_msg));
 
     // connect SRB0 with RRC to "F1" adapter
-    ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier = std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
-    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0, *ue_ctxt.srbs[srb_id_t::srb0].rrc_tx_notifier.get());
+    ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier =
+        std::make_unique<dummy_rrc_pdu_notifier>(tx_pdu_handler);
+    ue_ctxt.rrc->connect_srb_notifier(srb_id_t::srb0,
+                                      *ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb0)].rrc_tx_notifier.get());
 
     task_sched_handle = static_cast<dummy_ue_task_scheduler*>(ue_ctxt.task_sched.get());
   }
@@ -172,7 +174,7 @@ protected:
     ue_ctxt.rrc->get_ul_dcch_pdu_handler().handle_ul_dcch_pdu(byte_buffer{rrc_setup_complete_pdu});
   }
 
-  void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_t::srb1].rrc_tx_notifier, nullptr); }
+  void check_srb1_exists() { EXPECT_EQ(ue_ctxt.srbs[srb_id_to_uint(srb_id_t::srb1)].rrc_tx_notifier, nullptr); }
 
   void tick_timer()
   {

@@ -35,7 +35,7 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier)
 {
-  if (srb_id >= MAX_NOF_SRBS) {
+  if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
     logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
 
@@ -47,7 +47,7 @@ void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1
 
   f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
-  ue_ctxt.srbs[srb_id] = &notifier;
+  ue_ctxt.srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
 void f1ap_cu_impl::handle_f1ap_setup_response(const f1_setup_response_message& msg)
@@ -301,14 +301,16 @@ void f1ap_cu_impl::handle_initial_ul_rrc_message(const init_ulrrc_msg_transfer_s
   // Forward RRC container
   if (msg->rrc_container_rrc_setup_complete_present) {
     // RRC setup complete over SRB1
-    cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)].srbs[srb_id_t::srb1]->on_new_rrc_message(
-        msg->rrc_container_rrc_setup_complete.value);
+    cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)]
+        .srbs[srb_id_to_uint(srb_id_t::srb1)]
+        ->on_new_rrc_message(msg->rrc_container_rrc_setup_complete.value);
     return;
   }
 
   // Pass container to RRC
-  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)].srbs[srb_id_t::srb0]->on_new_rrc_message(
-      msg->rrc_container.value);
+  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)]
+      .srbs[srb_id_to_uint(srb_id_t::srb0)]
+      ->on_new_rrc_message(msg->rrc_container.value);
 }
 
 void f1ap_cu_impl::handle_ul_rrc_message(const ulrrc_msg_transfer_s& msg)

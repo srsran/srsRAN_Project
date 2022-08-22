@@ -50,10 +50,10 @@ rrc_ul_dcch_pdu_handler& rrc_ue_entity::get_ul_dcch_pdu_handler()
 
 void rrc_ue_entity::connect_srb_notifier(srb_id_t srb_id, rrc_pdu_notifier& notifier)
 {
-  if (srb_id >= MAX_NOF_SRBS) {
+  if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
     logger.error("Couldn't connect notifier for SRB{}", srb_id);
   }
-  srbs[srb_id] = &notifier;
+  srbs[srb_id_to_uint(srb_id)] = &notifier;
 }
 
 void rrc_ue_entity::on_new_dl_ccch(const asn1::rrc_nr::dl_ccch_msg_s& dl_ccch_msg)

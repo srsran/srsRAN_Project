@@ -59,5 +59,5 @@ void rrc_ue_entity::send_rrc_reject(uint8_t reject_wait_time_secs)
 
 void rrc_ue_entity::send_srb_pdu(srb_id_t srb_id, byte_buffer pdu)
 {
-  srbs[srb_id]->on_new_pdu({std::move(pdu)});
+  srbs[srb_id_to_uint(srb_id)]->on_new_pdu({std::move(pdu)});
 }
