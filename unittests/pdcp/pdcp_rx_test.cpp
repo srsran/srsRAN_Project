@@ -17,7 +17,7 @@
 
 using namespace srsgnb;
 
-TEST_P(pdcp_test, tx_create_new_entity)
+TEST_P(pdcp_test, rx_create_new_entity)
 {
   init(GetParam());
 
@@ -36,7 +36,7 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_siz
   return fmt::to_string(buffer);
 }
 
-INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
+INSTANTIATE_TEST_SUITE_P(pdcp_rx_test_all_sn_sizes,
                          pdcp_test,
                          ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                          test_param_info_to_string);
