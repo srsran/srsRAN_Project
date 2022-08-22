@@ -83,7 +83,8 @@ private:
 
   /// Cached status report
   rlc_am_status_pdu status_report = {cfg.sn_field_length};
-  std::mutex        status_report_mutex;
+  /// Mutex for controlled access to the cached status report, e.g. read by the Tx entity in a different executor
+  std::mutex status_report_mutex;
 
   /// \brief t-StatusProhibit
   /// This timer is used by the receiving side of an AM RLC entity in order to prohibit transmission of a STATUS PDU
