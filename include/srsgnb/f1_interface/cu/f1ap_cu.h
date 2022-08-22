@@ -123,7 +123,7 @@ public:
   /// \return Returns a f1ap_ue_context_modification_response_message struct struct with the success member set to
   /// 'true' in case of a successful outcome, 'false' otherwise.
   virtual async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) = 0;
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request) = 0;
 };
 
 /// Interface to notify the reception of an new RRC message.

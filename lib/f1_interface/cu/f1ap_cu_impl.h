@@ -47,7 +47,7 @@ public:
   async_task<ue_index_t> handle_ue_context_release_command(const f1ap_ue_context_release_command_message& msg) override;
 
   async_task<f1ap_ue_context_modification_response_message>
-  handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request) override;
+  handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request) override;
 
   // f1c message handler functions
 

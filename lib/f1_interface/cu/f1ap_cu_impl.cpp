@@ -174,7 +174,7 @@ f1ap_cu_impl::handle_ue_context_release_command(const f1ap_ue_context_release_co
 }
 
 async_task<f1ap_ue_context_modification_response_message>
-f1ap_cu_impl::handle_ue_context_modification(const f1ap_ue_context_modification_request_message& request)
+f1ap_cu_impl::handle_ue_context_modification_request(const f1ap_ue_context_modification_request_message& request)
 {
   // Pack message into PDU
   f1c_message f1c_ue_ctxt_modification_request_msg;
@@ -334,8 +334,7 @@ void f1ap_cu_impl::handle_successful_outcome(const asn1::f1ap::successful_outcom
 
 void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)
 {
-  // TODO: get real du_index
-  du_index_t du_index = int_to_du_index(0);
+  du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
 }
 
