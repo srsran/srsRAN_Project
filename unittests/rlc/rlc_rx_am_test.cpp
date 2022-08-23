@@ -108,24 +108,25 @@ protected:
   /// Note: Segmentation is applied if segment_size < sdu_size; Otherwise only one PDU with full SDU is produced,
   /// and the resulting list will hold only one PDU
   ///
-  /// \param sn The sequence number to be put in the header
-  /// \param sdu_size Size of the SDU
-  /// \param segment_size Maximum payload size of each SDU or SDU segment.
-  /// \param first_byte Value of the first SDU payload byte
-  /// \return A pair consisting of a RLC AMD PDU list and the associated RLC SDU
-  std::pair<std::list<byte_buffer>, byte_buffer>
-  create_pdus(uint32_t sn, uint32_t sdu_size, uint32_t segment_size, uint8_t first_byte = 0) const
+  /// \param[out] pdu_list Reference to a list<byte_buffer> that is filled with the produced PDU(s)
+  /// \param[out] sdu Reference to a byte_buffer that is filled with the associated SDU
+  /// \param[in] sn The sequence number to be put in the PDU header
+  /// \param[in] sdu_size Size of the SDU
+  /// \param[in] segment_size Maximum payload size of each SDU or SDU segment.
+  /// \param[in] first_byte Value of the first SDU payload byte
+  void create_pdus(std::list<byte_buffer>& pdu_list,
+                   byte_buffer&            sdu,
+                   uint32_t                sn,
+                   uint32_t                sdu_size,
+                   uint32_t                segment_size,
+                   uint8_t                 first_byte = 0) const
   {
-    if (sdu_size == 0) {
-      sdu_size = 1;
-    }
-    if (segment_size == 0) {
-      segment_size = sdu_size;
-    }
+    ASSERT_GT(sdu_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU";
+    ASSERT_GT(segment_size, 0) << "Invalid argument: Cannot create PDUs with zero-sized SDU segments";
 
-    byte_buffer            sdu_buf  = create_sdu(sdu_size, first_byte);
-    std::list<byte_buffer> pdu_list = {};
-    byte_buffer_view       rest     = {sdu_buf};
+    sdu = create_sdu(sdu_size, first_byte);
+    pdu_list.clear();
+    byte_buffer_view rest = {sdu};
 
     rlc_am_pdu_header hdr = {};
     hdr.dc                = rlc_dc_field::data;
@@ -170,8 +171,6 @@ protected:
       // update segment offset for next iteration
       hdr.so += payload.length();
     } while (rest.length() > 0);
-
-    return {std::move(pdu_list), std::move(sdu_buf)};
   }
 
   /// \brief Injects RLC AMD PDUs with full SDUs into the RLC AM entity starting from Sequence number sn_state
@@ -194,14 +193,16 @@ protected:
     std::list<byte_buffer> pdu_originals = {};
     std::list<byte_buffer> sdu_originals = {};
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::pair<std::list<byte_buffer>, byte_buffer> pair = create_pdus(sn_state, sdu_size, sdu_size, sn_state);
+      std::list<byte_buffer> pdu_list = {};
+      byte_buffer            sdu;
+      ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, sdu_size, sn_state));
       sn_state++;
 
       // save original PDU
-      pdu_originals.push_back(std::move(pair.first.front()));
+      pdu_originals.push_back(std::move(pdu_list.front()));
 
       // save original SDU
-      sdu_originals.push_back(std::move(pair.second));
+      sdu_originals.push_back(std::move(sdu));
     }
 
     if (reverse_sdus) {
@@ -284,14 +285,16 @@ protected:
 
     // Create SDUs and PDUs with SDU segments
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::pair<std::list<byte_buffer>, byte_buffer> pair = create_pdus(sn_state, sdu_size, segment_size, sn_state);
+      std::list<byte_buffer> pdu_list = {};
+      byte_buffer            sdu;
+      ASSERT_NO_FATAL_FAILURE(create_pdus(pdu_list, sdu, sn_state, sdu_size, segment_size, sn_state));
       sn_state++;
 
       // save original PDUs
-      pdu_originals.push_back(std::move(pair.first));
+      pdu_originals.push_back(std::move(pdu_list));
 
       // save original SDU
-      sdu_originals.push_back(std::move(pair.second));
+      sdu_originals.push_back(std::move(sdu));
 
       if (reverse_segments) {
         pdu_originals.back().reverse();
