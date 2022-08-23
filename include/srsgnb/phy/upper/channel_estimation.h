@@ -16,6 +16,7 @@
 #include "srsgnb/adt/bounded_bitset.h"
 #include "srsgnb/adt/span.h"
 #include "srsgnb/adt/static_vector.h"
+#include "srsgnb/adt/tensor.h"
 #include "srsgnb/phy/constants.h"
 #include "srsgnb/phy/upper/channel_state_information.h"
 #include "srsgnb/ran/cyclic_prefix.h"
@@ -72,12 +73,14 @@ public:
                   dims.nof_tx_layers,
                   static_cast<unsigned>(MAX_TX_LAYERS));
 
-    unsigned slot_len_re = dims.nof_prb * NRE * dims.nof_symbols;
-    unsigned nof_paths   = dims.nof_tx_layers * dims.nof_rx_ports;
+    unsigned nof_paths = dims.nof_tx_layers * dims.nof_rx_ports;
 
     // Reserve memory for channel estimates and initialize with 1.0.
-    ce.reserve(MAX_BUFFER_SIZE);
-    ce.resize(slot_len_re * nof_paths, 1.0F);
+    ce.resize({dims.nof_prb * NRE, dims.nof_symbols, dims.nof_rx_ports, dims.nof_tx_layers});
+
+    // Set all reserved data to one.
+    span<cf_t> data = ce.get_view<4>({});
+    std::fill(data.begin(), data.end(), 1.0F);
 
     // Reserve memory for the rest of channel statistics.
     noise_variance.reserve(MAX_TX_RX_PATHS);
@@ -139,9 +142,7 @@ public:
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
   span<cf_t> get_path_ch_estimate(unsigned rx_port, unsigned tx_layer = 0)
   {
-    unsigned view_size  = nof_subcarriers * nof_symbols;
-    unsigned view_start = view_size * (rx_port + nof_rx_ports * tx_layer);
-    return span<cf_t>(ce).subspan(view_start, view_size);
+    return ce.get_view<2>({rx_port, tx_layer});
   }
 
   /// \brief Returns a read-only view to the RE channel estimates  of the path between the given Rx port and Tx layer.
@@ -149,9 +150,7 @@ public:
   /// The view is represented as a vector indexed by i) subcarriers and ii) OFDM symbols.
   span<const cf_t> get_path_ch_estimate(unsigned rx_port, unsigned tx_layer = 0) const
   {
-    unsigned view_size  = nof_subcarriers * nof_symbols;
-    unsigned view_start = view_size * (rx_port + nof_rx_ports * tx_layer);
-    return span<const cf_t>(ce).subspan(view_start, view_size);
+    return ce.get_view<2>({rx_port, tx_layer});
   }
 
   /// Returns the general Channel State Information.
@@ -192,8 +191,7 @@ public:
   /// Sets the channel estimate for the resource element at the given coordinates.
   void set_ch_estimate(float ce_val, unsigned subcarrier, unsigned symbol, unsigned rx_port = 0, unsigned tx_layer = 0)
   {
-    unsigned index = coords_to_index(subcarrier, symbol, rx_port, tx_layer);
-    ce[index]      = ce_val;
+    ce[{subcarrier, symbol, rx_port, tx_layer}] = ce_val;
   }
   ///@}
 
@@ -218,7 +216,7 @@ public:
                   "Total requested REs ({}) exceed maximum available ({}).",
                   nof_res,
                   MAX_BUFFER_SIZE);
-    ce.resize(nof_res);
+    ce.resize({NRE * dims.nof_prb, dims.nof_symbols, dims.nof_rx_ports, dims.nof_tx_layers});
   }
 
 private:
@@ -254,7 +252,7 @@ private:
   /// The channel estimate should be thought as four-dimensional tensor with dimensions representing, in order,
   /// subcarriers, OFDM symbols, receive ports and, finally, transmit layers. However, it is represented as a single
   /// vector, indexed in the same order: i) subcarriers, ii) OFDM symbols, iii) Rx ports, and iv) Tx layers.
-  std::vector<cf_t> ce;
+  dynamic_tensor<4, cf_t> ce;
 
   /// Transforms a port-layer pair into a linear index.
   unsigned path_to_index(unsigned rx_port, unsigned tx_layer = 0) const { return rx_port + nof_rx_ports * tx_layer; }
