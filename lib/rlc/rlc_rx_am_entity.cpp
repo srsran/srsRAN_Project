@@ -521,8 +521,7 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
     }
     st.rx_highest_status = sn_upd;
     if (not valid_ack_sn(st.rx_highest_status)) {
-      logger.log_error("Rx_Highest_Status not inside RX window");
-      logger.log_debug("State: {}", st);
+      logger.log_error("Rx_Highest_Status not inside RX window. State: {}", st);
     }
     srsgnb_assert(valid_ack_sn(st.rx_highest_status), "Error: rx_highest_status assigned outside rx window");
 
