@@ -122,7 +122,7 @@ f1c_message generate_valid_f1_setup_request()
   return f1_setup_request;
 }
 
-f1c_message generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
+f1c_message generate_f1_init_ul_rrc_msg_base(unsigned int c_rnti)
 {
   f1c_message init_ul_rrc_msg = {};
 
@@ -136,7 +136,19 @@ f1c_message generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
   init_ul_rrc->nrcgi.value.plmn_id.from_string("02f899");
   init_ul_rrc->c_rnti.value = c_rnti;
 
+  init_ul_rrc->sul_access_ind_present     = true;
+  init_ul_rrc->sul_access_ind.value.value = asn1::f1ap::sul_access_ind_opts::options::true_value;
+
   init_ul_rrc->rrc_container.value.from_string("1dec89d05766");
+
+  return init_ul_rrc_msg;
+}
+
+f1c_message generate_valid_f1_init_ul_rrc_msg(unsigned int c_rnti)
+{
+  f1c_message init_ul_rrc_msg = generate_f1_init_ul_rrc_msg_base(c_rnti);
+
+  auto& init_ul_rrc                         = init_ul_rrc_msg.pdu.init_msg().value.init_ulrrc_msg_transfer();
   init_ul_rrc->duto_currc_container_present = true;
   init_ul_rrc->duto_currc_container.value.from_string(
       "5c00b001117aec701061e0007c20408d07810020a2090480ca8000f800000000008370842000088165000048200002069a06aa49880002"

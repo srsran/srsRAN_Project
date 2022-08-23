@@ -25,7 +25,10 @@ public:
   void on_new_rrc_message(asn1::unbounded_octstring<true> rrc_container) override
   {
     logger.info("Received RRC message.");
+    last_rrc_container = rrc_container;
   };
+
+  asn1::unbounded_octstring<true> last_rrc_container;
 
 private:
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST");
@@ -60,13 +63,15 @@ public:
     return ret;
   }
 
-  srs_cu_cp::f1_setup_request_message    last_f1_setup_request_msg;
-  srs_cu_cp::f1ap_initial_ul_rrc_message last_ue_creation_request_msg;
+  void set_ue_index(uint16_t ue_index_) { ue_index = srs_cu_cp::int_to_ue_index(ue_index_); }
+
+  srs_cu_cp::f1_setup_request_message             last_f1_setup_request_msg;
+  srs_cu_cp::f1ap_initial_ul_rrc_message          last_ue_creation_request_msg;
+  std::unique_ptr<dummy_f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
 
 private:
-  srslog::basic_logger&                                logger;
-  uint16_t                                             ue_index    = srs_cu_cp::MIN_UE_INDEX;
-  std::unique_ptr<srs_cu_cp::f1c_rrc_message_notifier> rx_notifier = std::make_unique<dummy_f1c_rrc_message_notifier>();
+  srslog::basic_logger& logger;
+  uint16_t              ue_index = srs_cu_cp::MIN_UE_INDEX;
 };
 
 /// Reusable class implementing the notifier interface.

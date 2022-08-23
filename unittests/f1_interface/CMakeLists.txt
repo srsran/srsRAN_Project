@@ -43,3 +43,8 @@ add_executable(f1_cu_ue_context_modification_procedure_test cu/f1_cu_ue_context_
 target_link_libraries(f1_cu_ue_context_modification_procedure_test srsgnb_f1 srsgnb_support srslog f1ap_asn1 gtest gtest_main)
 target_include_directories(f1_cu_ue_context_modification_procedure_test PRIVATE ${CMAKE_SOURCE_DIR})
 gtest_discover_tests(f1_cu_ue_context_modification_procedure_test)
+
+add_executable(f1ap_cu_test cu/f1ap_cu_test.cpp)
+target_link_libraries(f1ap_cu_test srsgnb_f1 srsgnb_support srslog f1ap_asn1 gtest gtest_main)
+target_include_directories(f1ap_cu_test PRIVATE ${CMAKE_SOURCE_DIR})
+gtest_discover_tests(f1ap_cu_test)
