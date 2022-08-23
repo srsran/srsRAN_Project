@@ -238,6 +238,39 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
   }
 };
 
+// RLC UM TX config formatter
+template <>
+struct formatter<srsgnb::rlc_tx_um_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_tx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "sn_field_length={}", cfg.sn_field_length);
+  }
+};
+
+// RLC UM RX config formatter
+template <>
+struct formatter<srsgnb::rlc_rx_um_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_rx_um_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(), "sn_field_length={}, t_reassembly_ms={}", cfg.sn_field_length, cfg.t_reassembly_ms);
+  }
+};
+
+// RLC AM TX config formatter
 template <>
 struct formatter<srsgnb::rlc_tx_am_config> {
   template <typename ParseContext>
@@ -259,6 +292,7 @@ struct formatter<srsgnb::rlc_tx_am_config> {
   }
 };
 
+// RLC AM RX config formatter
 template <>
 struct formatter<srsgnb::rlc_rx_am_config> {
   template <typename ParseContext>
