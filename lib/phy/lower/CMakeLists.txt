@@ -16,4 +16,4 @@ target_link_libraries(srsgnb_lower_phy
   srsgnb_lower_phy_adaptors
   srsgnb_lower_phy_modulation
   srsgnb_lower_phy_prach_processor
-  srsgnb_lower_phy_amplitude_control)
+  srsgnb_lower_phy_amplitude_controller)

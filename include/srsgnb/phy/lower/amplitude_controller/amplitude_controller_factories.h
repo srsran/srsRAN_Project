@@ -17,7 +17,7 @@
 
 namespace srsgnb {
 
-/// Describes an amplitude control configuration.
+/// Describes an amplitude controller configuration.
 struct amplitude_controller_configuration {
   /// Enables or disables the clipping process.
   bool enable_clipping;
@@ -29,7 +29,7 @@ struct amplitude_controller_configuration {
   float ceiling_dBFS;
 };
 
-/// Describes an amplitude control factory.
+/// Describes an amplitude controller factory.
 class amplitude_controller_factory
 {
 public:

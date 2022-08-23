@@ -15,8 +15,8 @@
 #include "srsgnb/adt/circular_array.h"
 #include "srsgnb/adt/optional.h"
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
-#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/amplitude_controller/amplitude_controller.h"
+#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/lower_phy_controller.h"
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
@@ -115,7 +115,7 @@ private:
   /// Container for OFDM demodulators. Each entry belongs to a different sector.
   std::vector<std::unique_ptr<ofdm_symbol_demodulator>> demodulators;
   /// Container for amplitude controllers. Each entry belongs to a different sector.
-  std::vector<std::unique_ptr<amplitude_controller>> amplitude_controllers;  
+  std::vector<std::unique_ptr<amplitude_controller>> amplitude_controllers;
   /// PRACH processor.
   std::unique_ptr<prach_processor> prach_proc;
   /// Receive-to-transmit delay in clock ticks.

@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-add_library(srsgnb_lower_phy_amplitude_control STATIC
+add_library(srsgnb_lower_phy_amplitude_controller STATIC
         amplitude_controller_impl.cpp
         amplitude_controller_factories.cpp)
-target_link_libraries(srsgnb_lower_phy_amplitude_control srsvec)
+target_link_libraries(srsgnb_lower_phy_amplitude_controller srsvec)

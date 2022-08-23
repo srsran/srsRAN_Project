@@ -31,7 +31,8 @@ struct amplitude_controller_metrics {
   uint64_t nof_processed_samples;
   /// Total number of samples clipped by the clipping stage.
   uint64_t nof_clipped_samples;
-  /// Expected probability that an input sample is clipped, calculated as \c nof_clipped_samples / \c nof_processed_samples.
+  /// Expected probability that an input sample is clipped, calculated as \c nof_clipped_samples /
+  /// \c nof_processed_samples.
   long double clipping_probability;
 };
 
@@ -53,7 +54,7 @@ public:
 
   /// \brief Gets the amplitude controller metrics.
   /// \return Amplitude controller metrics, including power measurements and clipping statistics.
-  virtual const amplitude_controller_metrics get_metrics() const = 0;
+  virtual amplitude_controller_metrics get_metrics() const = 0;
 };
 
 } // namespace srsgnb

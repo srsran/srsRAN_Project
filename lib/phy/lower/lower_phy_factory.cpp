@@ -33,7 +33,7 @@ public:
     srsgnb_assert(modulator_factory, "Invalid modulator factory.");
     srsgnb_assert(demodulator_factory, "Invalid demodulator factory.");
     srsgnb_assert(prach_factory, "Invalid PRACH processor factory.");
-    srsgnb_assert(amplitude_control_factory, "Invalid amplitude control factory");
+    srsgnb_assert(amplitude_control_factory, "Invalid amplitude controller factory");
   }
 
   std::unique_ptr<srsgnb::lower_phy> create(lower_phy_configuration& config) override

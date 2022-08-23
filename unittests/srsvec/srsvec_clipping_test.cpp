@@ -11,7 +11,6 @@
 /// \file
 /// \brief Unit test for the \c srsvec::clip \c function.
 
-#include "srsgnb/srsvec/add.h"
 #include "srsgnb/srsvec/aligned_vec.h"
 #include "srsgnb/srsvec/clip.h"
 #include "srsgnb/support/srsgnb_test.h"
@@ -47,7 +46,7 @@ static void test_clip_function(std::size_t nof_samples, float max_amplitude, flo
     }
   }
   // Clip with the tested function.
-  unsigned nof_clipped_sps = srsvec::clip(input, output, clip_threshold);
+  unsigned nof_clipped_sps = srsvec::clip(input, clip_threshold, output);
 
   // Determine the amount of error.
   for (size_t i = 0; i != nof_samples; ++i) {

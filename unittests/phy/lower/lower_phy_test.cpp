@@ -33,10 +33,10 @@ static double              dl_freq_hz                 = 2.65e9;
 static double              ul_freq_hz                 = 2.55e9;
 static std::string         log_level                  = "debug";
 
-static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory   = nullptr;
-static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory = nullptr;
-static std::shared_ptr<prach_processor_factory_spy>  prach_factory       = nullptr;
-static std::shared_ptr<lower_phy_factory>            phy_factory         = nullptr;
+static std::shared_ptr<ofdm_modulator_factory_spy>   modulator_factory         = nullptr;
+static std::shared_ptr<ofdm_demodulator_factory_spy> demodulator_factory       = nullptr;
+static std::shared_ptr<prach_processor_factory_spy>  prach_factory             = nullptr;
+static std::shared_ptr<lower_phy_factory>            phy_factory               = nullptr;
 static std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = nullptr;
 
 static lower_phy_configuration create_phy_config(baseband_gateway_spy&         bb_gateway,
@@ -68,8 +68,8 @@ static lower_phy_configuration create_phy_config(baseband_gateway_spy&         b
   config.log_level                                     = log_level;
 
   // Keep the amplitude control clipping disabled throughout the test.
-  config.amplitude_config                              = {};
-  
+  config.amplitude_config = {false, 0.0F, 1.0F, 0.0F};
+
   return config;
 }
 
@@ -251,7 +251,8 @@ int main()
   amplitude_control_factory = create_amplitude_controller_factory();
   TESTASSERT(amplitude_control_factory);
 
-  phy_factory = create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory, amplitude_control_factory);
+  phy_factory =
+      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory, amplitude_control_factory);
   TESTASSERT(phy_factory);
 
   test_start_run_stop();

@@ -41,7 +41,7 @@ amplitude_controller_metrics amplitude_controller_impl::process(span<cf_t> outpu
   if (clipping_enabled) {
     metrics.nof_processed_samples += input.size();
     if (peak_amplitude * gain_lin > ceiling_lin) {
-      metrics.nof_clipped_samples += srsvec::clip(output, output, ceiling_lin);
+      metrics.nof_clipped_samples += srsvec::clip(output, ceiling_lin, output);
     }
     metrics.clipping_probability =
         (long double)metrics.nof_clipped_samples / (long double)metrics.nof_processed_samples;

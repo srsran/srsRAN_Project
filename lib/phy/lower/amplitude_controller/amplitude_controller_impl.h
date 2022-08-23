@@ -53,7 +53,7 @@ public:
   amplitude_controller_metrics process(span<cf_t> output, span<const cf_t> input) override;
 
   /// See interface for documentation.
-  const amplitude_controller_metrics get_metrics() const override { return metrics; }
+  amplitude_controller_metrics get_metrics() const override { return metrics; }
 };
 
 } // namespace srsgnb.

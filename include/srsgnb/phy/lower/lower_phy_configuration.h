@@ -11,6 +11,7 @@
 #pragma once
 
 #include "srsgnb/gateways/baseband/baseband_gateway.h"
+#include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 #include "srsgnb/phy/lower/lower_phy_error_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_rx_symbol_notifier.h"
 #include "srsgnb/phy/lower/lower_phy_timing_notifier.h"
@@ -20,7 +21,6 @@
 #include "srsgnb/phy/support/resource_grid_pool.h"
 #include "srsgnb/ran/cyclic_prefix.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
-#include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
 
 namespace srsgnb {
 

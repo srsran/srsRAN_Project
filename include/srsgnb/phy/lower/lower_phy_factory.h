@@ -9,8 +9,8 @@
  */
 #pragma once
 
-#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/amplitude_controller/amplitude_controller_factories.h"
+#include "srsgnb/phy/lower/lower_phy.h"
 #include "srsgnb/phy/lower/lower_phy_configuration.h"
 #include "srsgnb/phy/lower/modulation/modulation_factories.h"
 #include "srsgnb/phy/lower/processors/prach/prach_processor_factories.h"
@@ -31,9 +31,9 @@ public:
 
 /// Creates a software based lower physical layer factory.
 std::unique_ptr<lower_phy_factory>
-create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>        modulator_factory,
-                            std::shared_ptr<ofdm_demodulator_factory>      demodulator_factory,
-                            std::shared_ptr<prach_processor_factory>       prach_processor_factory,
-                            std::shared_ptr<amplitude_controller_factory>  amplitude_control_factory);
+create_lower_phy_factory_sw(std::shared_ptr<ofdm_modulator_factory>       modulator_factory,
+                            std::shared_ptr<ofdm_demodulator_factory>     demodulator_factory,
+                            std::shared_ptr<prach_processor_factory>      prach_processor_factory,
+                            std::shared_ptr<amplitude_controller_factory> amplitude_control_factory);
 
 } // namespace srsgnb

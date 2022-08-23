@@ -1,12 +1,12 @@
 /*
-*
-* Copyright 2013-2022 Software Radio Systems Limited
-*
-* By using this file, you agree to the terms and conditions set
-* forth in the LICENSE file which can be found at the top level of
-* the distribution.
-*
-*/
+ *
+ * Copyright 2013-2022 Software Radio Systems Limited
+ *
+ * By using this file, you agree to the terms and conditions set
+ * forth in the LICENSE file which can be found at the top level of
+ * the distribution.
+ *
+ */
 
 #include "srsgnb/srsvec/clip.h"
 #include "srsgnb/srsvec/copy.h"
@@ -14,7 +14,7 @@
 
 using namespace srsgnb;
 
-unsigned srsvec::clip(span<const cf_t> x, span<cf_t> y, float threshold)
+unsigned srsvec::clip(span<const cf_t> x, float threshold, span<cf_t> y)
 {
   srsgnb_srsvec_assert_size(x, y);
 

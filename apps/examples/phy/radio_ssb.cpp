@@ -316,8 +316,7 @@ static radio_configuration::radio create_radio_configuration()
 lower_phy_configuration create_lower_phy_configuration(float                         tx_scale,
                                                        lower_phy_error_notifier*     error_notifier,
                                                        lower_phy_rx_symbol_notifier* rx_symbol_notifier,
-                                                       lower_phy_timing_notifier*    timing_notifier,
-                                                       amplitude_controller_configuration& amplitude_config)
+                                                       lower_phy_timing_notifier*    timing_notifier)
 {
   lower_phy_configuration phy_config;
   phy_config.srate                      = srate;
@@ -332,7 +331,13 @@ lower_phy_configuration create_lower_phy_configuration(float                    
   phy_config.error_notifier             = error_notifier;
   phy_config.rx_symbol_notifier         = rx_symbol_notifier;
   phy_config.timing_notifier            = timing_notifier;
-  phy_config.amplitude_config           = amplitude_config;
+
+  // Amplitude controller configuration.
+  phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
+  phy_config.amplitude_config.ceiling_dBFS    = amplitude_ceiling_dBFS;
+  phy_config.amplitude_config.enable_clipping = enable_clipping;
+  phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
+
   for (unsigned sector_id = 0; sector_id != nof_sectors; ++sector_id) {
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = bw_rb;
@@ -372,13 +377,6 @@ int main(int argc, char** argv)
                             to_numerology_value(scs),
                             srate);
 
-  // Amplitude controller configuration.
-  amplitude_controller_configuration amplitude_config = {};
-  amplitude_config.full_scale_lin                     = full_scale_amplitude;
-  amplitude_config.ceiling_dBFS                       = amplitude_ceiling_dBFS;
-  amplitude_config.enable_clipping                    = enable_clipping;
-  amplitude_config.input_gain_dB                      = baseband_gain_dB;
-
   // Radio asynchronous task executor.
   task_worker                    async_task_worker("async_thread", nof_sectors + 1);
   std::unique_ptr<task_executor> async_task_executor = make_task_executor(async_task_worker);
@@ -413,7 +411,7 @@ int main(int argc, char** argv)
   // Create lower physical layer.
   {
     lower_phy_configuration phy_config =
-        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter, amplitude_config);
+        create_lower_phy_configuration(tx_scale, &error_adapter, &rx_symbol_adapter, &timing_adapter);
     lower_phy_instance = create_lower_phy(phy_config);
     srsgnb_assert(lower_phy_instance, "Failed to create lower physical layer.");
   }

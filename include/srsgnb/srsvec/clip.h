@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "srsgnb/adt/span.h"
 #include "srsgnb/srsvec/types.h"
 
 namespace srsgnb {
@@ -30,11 +29,11 @@ namespace srsvec {
 /// \f]
 /// Where \f$ T_c \f$ is the clipping threshold.
 ///
-/// \param x Input Span.
-/// \param y Output Span.
-/// \param threshold Clipping threshold.
+/// \param [in]  x Input Span.
+/// \param [in]  threshold Clipping threshold.
+/// \param [out] y Output Span.
 /// \return The number of clipped samples.
-unsigned clip(span<const cf_t> x, span<cf_t> y, float threshold);
+unsigned clip(span<const cf_t> x, float threshold, span<cf_t> y);
 
 } // namespace srsvec
 } // namespace srsgnb
