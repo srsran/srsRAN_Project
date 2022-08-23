@@ -54,7 +54,8 @@ public:
 };
 
 std::shared_ptr<dmrs_pusch_estimator_factory>
-create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory);
+create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                       std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory);
 
 class port_channel_estimator_factory
 {

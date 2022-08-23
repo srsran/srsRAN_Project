@@ -27,6 +27,14 @@ static constexpr unsigned MAX_MODULATION_ORDER = 8;
 /// Maximum number of PUSCH transmission layers, as per TS38.211 Section 6.3.1.3.
 static constexpr unsigned MAX_NOF_LAYERS = 4;
 
+/// Maximum number of OFDM symbols carrying DM-RS in a slot is at most \f$4 \times 2\f$, being 4 the maximum
+/// number of positions \f$\bar{l}\f$ and 2 the maximum number of indices \f$l'\f$, as per TS38.211 Section 6.4.1.1.
+static constexpr unsigned MAX_NOF_DMRS_SYMBOLS = 4 * 2;
+
+/// Maximum number of subcarriers carrying DM-RS in a symbol. It is at most half of the total number of subcarriers
+/// (i.e., <tt>MAX_RB * NRE / 2</tt>) is assigned a DM-RS symbol.
+static constexpr unsigned MAX_NOF_DMRS_SUBC = MAX_RB * NRE / 2;
+
 } // namespace pusch_constants
 
 } // namespace srsgnb

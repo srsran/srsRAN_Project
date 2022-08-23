@@ -25,6 +25,9 @@ public:
   // Constructs object. It does not perform any file operation.
   file_vector(std::string filename) : file_name(std::move(filename)) {}
 
+  /// Get file name.
+  const std::string& get_file_name() const { return file_name; }
+
   // Open the file and appends in a \c std::vector<T> all the file entries.
   std::vector<T> read() const
   {

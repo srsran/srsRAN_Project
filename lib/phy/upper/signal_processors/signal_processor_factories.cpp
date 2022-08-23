@@ -13,6 +13,7 @@
 #include "dmrs_pdcch_processor_impl.h"
 #include "dmrs_pdsch_processor_impl.h"
 #include "dmrs_pusch_estimator_impl.h"
+#include "port_channel_estimator_average_impl.h"
 #include "pss_processor_impl.h"
 #include "sss_processor_impl.h"
 
@@ -77,25 +78,31 @@ public:
 class dmrs_pusch_estimator_factory_sw : public dmrs_pusch_estimator_factory
 {
 public:
-  dmrs_pusch_estimator_factory_sw(std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory_) :
-    ch_estimator_factory(std::move(ch_estimator_factory_))
+  dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory_,
+                                  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory_) :
+    prg_factory(std::move(prg_factory_)), ch_estimator_factory(std::move(ch_estimator_factory_))
   {
+    srsgnb_assert(prg_factory, "Invalid PRG factory.");
     srsgnb_assert(ch_estimator_factory, "Invalid channel estimator factory.");
   }
 
   std::unique_ptr<dmrs_pusch_estimator> create() override
   {
-    return std::make_unique<dmrs_pusch_estimator_impl>(ch_estimator_factory->create());
+    return std::make_unique<dmrs_pusch_estimator_impl>(prg_factory->create(), ch_estimator_factory->create());
   }
 
 private:
-  std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory;
+  std::shared_ptr<pseudo_random_generator_factory> prg_factory;
+  std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory;
 };
 
 class port_channel_estimator_factory_sw : public port_channel_estimator_factory
 {
 public:
-  std::unique_ptr<port_channel_estimator> create() override { return nullptr; }
+  std::unique_ptr<port_channel_estimator> create() override
+  {
+    return std::make_unique<port_channel_estimator_average_impl>();
+  }
 };
 
 class pss_processor_factory_sw : public pss_processor_factory
@@ -131,9 +138,10 @@ srsgnb::create_dmrs_pdsch_processor_factory_sw(std::shared_ptr<pseudo_random_gen
 }
 
 std::shared_ptr<dmrs_pusch_estimator_factory>
-srsgnb::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<port_channel_estimator_factory> ch_estimator_factory)
+srsgnb::create_dmrs_pusch_estimator_factory_sw(std::shared_ptr<pseudo_random_generator_factory> prg_factory,
+                                               std::shared_ptr<port_channel_estimator_factory>  ch_estimator_factory)
 {
-  return std::make_shared<dmrs_pusch_estimator_factory_sw>(std::move(ch_estimator_factory));
+  return std::make_shared<dmrs_pusch_estimator_factory_sw>(std::move(prg_factory), std::move(ch_estimator_factory));
 }
 
 std::shared_ptr<port_channel_estimator_factory> srsgnb::create_port_channel_estimator_factory_sw()

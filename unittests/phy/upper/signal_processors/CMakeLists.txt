@@ -80,5 +80,13 @@ add_custom_command(
         VERBATIM)
 
 add_executable(dmrs_pusch_estimator_test dmrs_pusch_estimator_test.cpp)
-target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsvec srslog gtest gtest_main)
+target_link_libraries(dmrs_pusch_estimator_test  srsgnb_signal_processors srsgnb_sequence_generators srsgnb_phy_support srsvec srslog gtest gtest_main)
 add_test(dmrs_pusch_estimator_test dmrs_pusch_estimator_test)
+
+add_custom_command(
+  TARGET dmrs_pusch_estimator_test
+  POST_BUILD
+  WORKING_DIRECTORY ${TEST_DATA_DIR}
+  COMMAND ${CMAKE_COMMAND} -E tar xf ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pusch_estimator_test_data.tar.gz
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/dmrs_pusch_estimator_test_data.tar.gz
+  VERBATIM)

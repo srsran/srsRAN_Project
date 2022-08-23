@@ -12,6 +12,7 @@ set(SOURCES
         dmrs_pdcch_processor_impl.cpp
         dmrs_pdsch_processor_impl.cpp
         dmrs_pusch_estimator_impl.cpp
+        port_channel_estimator_average_impl.cpp
         pucch/dmrs_pucch_processor_format1_impl.cpp
         pucch/dmrs_pucch_processor_format2_impl.cpp
         pucch/dmrs_pucch_processor_factories.cpp

@@ -278,7 +278,7 @@ private:
 
     // Ensure the resource element exist.
     srsgnb_assert(entries.count(key) == 1,
-                  "Resource grid for port=%d, symbol=%d and subcarrier=%d does not exist.",
+                  "Resource grid for port={}, symbol={} and subcarrier={} does not exist.",
                   port,
                   symbol,
                   subcarrier);
