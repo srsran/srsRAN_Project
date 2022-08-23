@@ -8,22 +8,18 @@
  *
  */
 
-#include "srsgnb/adt/span.h"
 #include "srsgnb/phy/upper/channel_coding/channel_coding_factories.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_decoder.h"
-#include "srsgnb/phy/upper/channel_coding/ldpc/ldpc_encoder.h"
 #include "srsgnb/support/benchmark_utils.h"
 #include "srsgnb/support/srsgnb_test.h"
 #include <getopt.h>
 #include <random>
-#include <string>
 
-// Random generator.
-static std::mt19937 rgen(0);
-
-static std::string enc_type        = "generic";
-static unsigned    nof_repetitions = 1000;
-static bool        silent          = false;
+namespace {
+std::mt19937 rgen(0);
+std::string  enc_type        = "generic";
+unsigned     nof_repetitions = 1000;
+bool         silent          = false;
+} // namespace
 
 static void usage(const char* prog)
 {
