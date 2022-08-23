@@ -85,7 +85,7 @@ private:
 
   /// \brief Notify about the reception of an F1 Removal Request.
   /// \param[in] msg The F1 Removal Request message.
-  void handle_f1_removal_resquest(const f1_removal_request_message& msg);
+  void handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg);
 
   /// \brief Get the next available CU UE ID.
   /// \return The CU UE ID.
@@ -95,10 +95,6 @@ private:
   /// \param[in] ue_index The UE index used to find the CU UE ID.
   /// \return The CU UE ID.
   gnb_cu_ue_f1ap_id_t find_cu_ue_id(ue_index_t ue_index);
-
-  /// \brief Remove a UE context from the F1AP.
-  /// \param[in] cu_ue_id The ID of the UE.
-  void remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id);
 
   srslog::basic_logger& logger;
 

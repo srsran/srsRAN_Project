@@ -57,10 +57,6 @@ struct f1_setup_request_message {
   asn1::f1ap::f1_setup_request_s request;
 };
 
-struct f1_removal_request_message {
-  asn1::f1ap::f1_removal_request_s request;
-};
-
 /// Handle F1AP interface management procedures as defined in TS 38.473 section 8.2.
 class f1ap_connection_manager
 {

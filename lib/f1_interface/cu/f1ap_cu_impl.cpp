@@ -35,15 +35,7 @@ f1ap_cu_impl::~f1ap_cu_impl() {}
 
 void f1ap_cu_impl::connect_srb_notifier(ue_index_t ue_index, srb_id_t srb_id, f1c_rrc_message_notifier& notifier)
 {
-  if (srb_id_to_uint(srb_id) >= MAX_NOF_SRBS) {
-    logger.error("Couldn't connect notifier for SRB{}", srb_id);
-  }
-
   gnb_cu_ue_f1ap_id_t cu_ue_id = find_cu_ue_id(ue_index);
-  if (cu_ue_id == gnb_cu_ue_f1ap_id_t::invalid) {
-    logger.error("Connection of SRB notifier failed.");
-    return;
-  }
 
   f1ap_ue_context& ue_ctxt = cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)];
 
@@ -167,7 +159,7 @@ void f1ap_cu_impl::handle_message(const f1c_message& msg)
       handle_unsuccessful_outcome(msg.pdu.unsuccessful_outcome());
       break;
     default:
-      logger.error("Invalid PDU type");
+      logger.error("Invalid F1AP PDU type");
       break;
   }
 }
@@ -196,6 +188,9 @@ void f1ap_cu_impl::handle_initiating_message(const asn1::f1ap::init_msg_s& msg)
     } break;
     case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::ulrrc_msg_transfer: {
       handle_ul_rrc_message(msg.value.ulrrc_msg_transfer());
+    } break;
+    case asn1::f1ap::f1_ap_elem_procs_o::init_msg_c::types_opts::f1_removal_request: {
+      handle_f1_removal_request(msg.value.f1_removal_request());
     } break;
     default:
       logger.error("Initiating message of type {} is not supported", msg.value.type().to_string());
@@ -300,7 +295,7 @@ void f1ap_cu_impl::handle_unsuccessful_outcome(const asn1::f1ap::unsuccessful_ou
   }
 }
 
-void f1ap_cu_impl::handle_f1_removal_resquest(const f1_removal_request_message& msg)
+void f1ap_cu_impl::handle_f1_removal_request(const asn1::f1ap::f1_removal_request_s& msg)
 {
   du_index_t du_index = du_processor_notifier.get_du_index();
   du_management_notifier.on_du_remove_request_received(du_index);
@@ -326,12 +321,4 @@ gnb_cu_ue_f1ap_id_t f1ap_cu_impl::find_cu_ue_id(ue_index_t ue_index)
   }
   logger.error("CU UE ID for ue_index={} not found", ue_index);
   return gnb_cu_ue_f1ap_id_t::invalid;
-}
-
-void f1ap_cu_impl::remove_ue(gnb_cu_ue_f1ap_id_t cu_ue_id)
-{
-  f1ap_ue_context empty_context                                    = {};
-  empty_context.du_ue_f1ap_id                                      = gnb_du_ue_f1ap_id_t::invalid;
-  empty_context.ue_index                                           = INVALID_UE_INDEX;
-  cu_ue_id_to_f1ap_ue_context[gnb_cu_ue_f1ap_id_to_uint(cu_ue_id)] = empty_context;
 }
