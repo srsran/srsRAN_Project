@@ -195,6 +195,7 @@ protected:
   /// \param[inout] sn_state Reference to the sequence number for the first SDU. Will be incremented for each SDU
   /// \param[in] n_sdus Number of SDUs
   /// \param[in] sdu_size SDU payload size
+  /// \param[in] reverse_sdus Inject PDUs in reverse SDU order
   void rx_full_sdus(uint32_t& sn_state, uint32_t n_sdus, uint32_t sdu_size = 1, bool reverse_sdus = false)
   {
     // check status report
@@ -206,7 +207,7 @@ protected:
 
     uint32_t expected_sn_state = sn_state;
 
-    // Create SDUs and PDUs
+    // Create SDUs and PDUs with full SDUs
     std::list<byte_buffer> pdu_originals = {};
     std::list<byte_buffer> sdu_originals = {};
     for (uint32_t i = 0; i < n_sdus; i++) {
@@ -276,8 +277,15 @@ protected:
   /// \param[inout] sn_state Reference to the sequence number for the first SDU. Will be incremented for each SDU
   /// \param[in] n_sdus Number of SDUs
   /// \param[in] sdu_size SDU payload size
-  /// \param[in] segment_size Maximums size of each SDU segment
-  void rx_sdu_segments(uint32_t& sn_state, uint32_t n_sdus, uint32_t sdu_size = 3, uint32_t segment_size = 1)
+  /// \param[in] segment_size Maximum size of each SDU segment
+  /// \param[in] reverse_sdus Reverse SDU order of injected PDUs
+  /// \param[in] reverse_segments Reverse segment order of injected PDUs
+  void rx_sdu_segments(uint32_t& sn_state,
+                       uint32_t  n_sdus,
+                       uint32_t  sdu_size         = 3,
+                       uint32_t  segment_size     = 1,
+                       bool      reverse_sdus     = false,
+                       bool      reverse_segments = false)
   {
     // check status report
     rlc_am_status_pdu status_report = rlc->get_status_pdu();
@@ -286,30 +294,66 @@ protected:
     EXPECT_EQ(status_report.get_packed_size(), 3);
     EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
-    std::list<byte_buffer> sdu_originals = {};
+    uint32_t expected_sn_state = sn_state;
 
-    // Create and push "n_sdus" PDUs with SDU segments into RLC
+    // Create SDUs and PDUs
+    std::list<std::list<byte_buffer>> pdu_originals = {};
+    std::list<byte_buffer>            sdu_originals = {};
+
+    // Create SDUs and PDUs with SDU segments
     for (uint32_t i = 0; i < n_sdus; i++) {
       std::pair<std::list<byte_buffer>, byte_buffer> pair =
           create_pdus_with_sdu_segments(sn_state, sdu_size, segment_size, sn_state);
       sn_state++;
 
-      // write PDUs into lower end
-      for (byte_buffer& pdu_buf : pair.first) {
-        byte_buffer_slice pdu = {std::move(pdu_buf)};
-        rlc->handle_pdu(std::move(pdu));
-      }
+      // save original PDUs
+      pdu_originals.push_back(std::move(pair.first));
 
       // save original SDU
       sdu_originals.push_back(std::move(pair.second));
 
-      // check status report
-      status_report = rlc->get_status_pdu();
-      EXPECT_EQ(status_report.ack_sn, sn_state);
-      EXPECT_EQ(status_report.get_nacks().size(), 0);
-      EXPECT_EQ(status_report.get_packed_size(), 3);
-      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+      if (reverse_segments) {
+        pdu_originals.back().reverse();
+      }
     }
+
+    if (reverse_sdus) {
+      pdu_originals.reverse();
+      sdu_originals.reverse();
+    }
+
+    // Push PDUs into RLC
+    for (std::list<byte_buffer>& segment_list : pdu_originals) {
+      for (byte_buffer& pdu_buf : segment_list) {
+        // check status report
+        status_report = rlc->get_status_pdu();
+        EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+        EXPECT_EQ(status_report.get_nacks().size(), 0);
+        EXPECT_EQ(status_report.get_packed_size(), 3);
+        EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+        byte_buffer_slice pdu = {std::move(pdu_buf)};
+        rlc->handle_pdu(std::move(pdu));
+      }
+
+      if (not reverse_sdus) {
+        // According to 5.2.3.2.3, when transmitting in order:
+        // st.rx_highest_status is advanced on each fully-received SDU.
+        ++expected_sn_state;
+      }
+    }
+
+    if (reverse_sdus) {
+      // According to 5.2.3.2.3, when transmitting in reverse order:
+      // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
+      expected_sn_state = sn_state;
+    }
+    // check status report
+    status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
     // Read "n_sdus" SDUs from upper layer
     ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
@@ -376,8 +420,38 @@ TEST_P(rlc_rx_am_test, rx_with_segmentation)
   const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
 
-  rx_sdu_segments(sn, n_sdus, 2, 1);
-  rx_sdu_segments(sn, n_sdus, 8, 3);
+  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ false, /* reverse_segments = */ false);
+  rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ false);
+}
+
+TEST_P(rlc_rx_am_test, rx_reverse_with_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus = 5;
+  uint32_t       sn     = 0;
+
+  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ true, /* reverse_segments = */ false);
+  rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ false);
+}
+
+TEST_P(rlc_rx_am_test, rx_with_reversed_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus = 5;
+  uint32_t       sn     = 0;
+
+  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ false, /* reverse_segments = */ true);
+  rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ false, /* reverse_segments = */ true);
+}
+
+TEST_P(rlc_rx_am_test, rx_reverse_with_reversed_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus = 5;
+  uint32_t       sn     = 0;
+
+  rx_sdu_segments(sn, n_sdus, 2, 1, /* reverse_sdus = */ true, /* reverse_segments = */ true);
+  rx_sdu_segments(sn, n_sdus, 8, 3, /* reverse_sdus = */ true, /* reverse_segments = */ true);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
