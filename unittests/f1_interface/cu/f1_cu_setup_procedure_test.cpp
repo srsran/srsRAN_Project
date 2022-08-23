@@ -30,7 +30,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_valid_then_connect_du)
 
   f1ap->handle_message(f1setup_msg);
 
-  // Action 2: Check if F1SetupRequest was forwarded to CU manager
+  // Action 2: Check if F1SetupRequest was forwarded to DU processor
   EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
 
   // Action 3: Transmit F1SetupResponse message
@@ -60,7 +60,7 @@ TEST_F(f1ap_cu_test, when_f1_setup_request_invalid_then_reject_du)
 
   f1ap->handle_message(f1setup_msg);
 
-  // Action 2: Check if F1SetupRequest was forwarded to CU manager
+  // Action 2: Check if F1SetupRequest was forwarded to DU processor
   EXPECT_EQ(du_processor_notifier->last_f1_setup_request_msg.request->gnb_du_id.value, 0x11U);
 
   // Action 3: Transmit F1SetupFailure message
