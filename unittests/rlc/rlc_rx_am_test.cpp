@@ -16,7 +16,6 @@
 
 using namespace srsgnb;
 
-
 /// Mocking class of the surrounding layers invoked by the RLC AM Rx entity.
 class rlc_rx_am_test_frame : public rlc_rx_upper_layer_data_notifier, public rlc_tx_am_status_handler
 {
@@ -192,17 +191,11 @@ protected:
     return {std::move(pdu_list), std::move(sdu_buf)};
   }
 
-  /// \brief Obtains RLC AMD PDUs from generated SDUs that are passed through an RLC AM entity
-  /// \param[out] out_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDUs
-  /// \param[in] n_pdus Length of the out_pdus array
-  /// \param[in] sdu_size Size of SDU that is passed through RLC AM entity
-
-  /// \brief Injects RLC AMD PDUs into the RLC AM entity starting from Sequence number sn_start
-  /// \param[out] injected_pdus Pre-allocated array of size n_pdus for the resulting RLC AMD PDUs
-  /// \param[in] n_pdus Length of the injected_pdus array
-  /// \param[in] sn_state Reference to the sequence number for the first PDU. Will be incremented for each PDU
-  /// \param[in] sdu_size Size of the SDU payload in each PDU that is pushed into the RLC AM entity
-  void rx_full_pdus(byte_buffer* injected_pdus, uint32_t n_pdus, uint32_t& sn_state, uint32_t sdu_size = 1)
+  /// \brief Injects RLC AMD PDUs with full SDUs into the RLC AM entity starting from Sequence number sn_state
+  /// \param[inout] sn_state Reference to the sequence number for the first SDU. Will be incremented for each SDU
+  /// \param[in] n_sdus Number of SDUs
+  /// \param[in] sdu_size SDU payload size
+  void rx_full_sdus(uint32_t& sn_state, uint32_t n_sdus, uint32_t sdu_size = 1, bool reverse_sdus = false)
   {
     // check status report
     rlc_am_status_pdu status_report = rlc->get_status_pdu();
@@ -211,16 +204,104 @@ protected:
     EXPECT_EQ(status_report.get_packed_size(), 3);
     EXPECT_EQ(rlc->get_status_pdu_length(), 3);
 
-    // Create and push "n_pdus" PDUs into RLC
-    for (uint32_t i = 0; i < n_pdus; i++) {
+    uint32_t expected_sn_state = sn_state;
+
+    // Create SDUs and PDUs
+    std::list<byte_buffer> pdu_originals = {};
+    std::list<byte_buffer> sdu_originals = {};
+    for (uint32_t i = 0; i < n_sdus; i++) {
       std::pair<std::list<byte_buffer>, byte_buffer> pair =
           create_pdus_with_sdu_segments(sn_state, sdu_size, sdu_size, sn_state);
-      injected_pdus[i] = std::move(pair.first.front());
       sn_state++;
 
+      // save original PDU
+      pdu_originals.push_back(std::move(pair.first.front()));
+
+      // save original SDU
+      sdu_originals.push_back(std::move(pair.second));
+    }
+
+    if (reverse_sdus) {
+      pdu_originals.reverse();
+      sdu_originals.reverse();
+    }
+
+    // Push PDUs into RLC
+    for (byte_buffer& pdu_buf : pdu_originals) {
+      // check status report
+      status_report = rlc->get_status_pdu();
+      EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+      EXPECT_EQ(status_report.get_nacks().size(), 0);
+      EXPECT_EQ(status_report.get_packed_size(), 3);
+      EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
       // write PDU into lower end
-      byte_buffer_slice pdu = {injected_pdus[i].deep_copy()}; // no std::move - we need to return the injected PDUs
+      byte_buffer_slice pdu = {std::move(pdu_buf)};
       rlc->handle_pdu(std::move(pdu));
+
+      if (not reverse_sdus) {
+        // According to 5.2.3.2.3, when transmitting in order:
+        // st.rx_highest_status is advanced on each fully-received SDU.
+        ++expected_sn_state;
+      }
+    }
+
+    if (reverse_sdus) {
+      // According to 5.2.3.2.3, when transmitting in reverse order:
+      // st.rx_highest_status is only advanced after SDU with SN = (previous) st.rx_highest_status is fully received.
+      expected_sn_state = sn_state;
+    }
+    // check status report
+    status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, expected_sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+    // Read "n_pdus" SDUs from upper layer
+    ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
+    for (uint32_t i = 0; i < n_sdus; i++) {
+      EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
+      EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(),
+                             tester->sdu_queue.front().end(),
+                             sdu_originals.front().begin(),
+                             sdu_originals.front().end()));
+      tester->sdu_queue.pop();
+      sdu_originals.pop_front();
+    }
+    EXPECT_EQ(tester->sdu_queue.size(), 0);
+  }
+
+  /// \brief Injects RLC AMD PDUs with SDU segments into the RLC AM entity starting from Sequence number sn_state
+  /// \param[inout] sn_state Reference to the sequence number for the first SDU. Will be incremented for each SDU
+  /// \param[in] n_sdus Number of SDUs
+  /// \param[in] sdu_size SDU payload size
+  /// \param[in] segment_size Maximums size of each SDU segment
+  void rx_sdu_segments(uint32_t& sn_state, uint32_t n_sdus, uint32_t sdu_size = 3, uint32_t segment_size = 1)
+  {
+    // check status report
+    rlc_am_status_pdu status_report = rlc->get_status_pdu();
+    EXPECT_EQ(status_report.ack_sn, sn_state);
+    EXPECT_EQ(status_report.get_nacks().size(), 0);
+    EXPECT_EQ(status_report.get_packed_size(), 3);
+    EXPECT_EQ(rlc->get_status_pdu_length(), 3);
+
+    std::list<byte_buffer> sdu_originals = {};
+
+    // Create and push "n_sdus" PDUs with SDU segments into RLC
+    for (uint32_t i = 0; i < n_sdus; i++) {
+      std::pair<std::list<byte_buffer>, byte_buffer> pair =
+          create_pdus_with_sdu_segments(sn_state, sdu_size, segment_size, sn_state);
+      sn_state++;
+
+      // write PDUs into lower end
+      for (byte_buffer& pdu_buf : pair.first) {
+        byte_buffer_slice pdu = {std::move(pdu_buf)};
+        rlc->handle_pdu(std::move(pdu));
+      }
+
+      // save original SDU
+      sdu_originals.push_back(std::move(pair.second));
 
       // check status report
       status_report = rlc->get_status_pdu();
@@ -230,17 +311,16 @@ protected:
       EXPECT_EQ(rlc->get_status_pdu_length(), 3);
     }
 
-    uint32_t header_size = sn_size == rlc_am_sn_size::size12bits ? 2 : 3;
-
-    // Read "n_pdus" SDUs from upper layer
-    ASSERT_EQ(tester->sdu_queue.size(), n_pdus);
-    for (uint32_t i = 0; i < n_pdus; i++) {
+    // Read "n_sdus" SDUs from upper layer
+    ASSERT_EQ(tester->sdu_queue.size(), n_sdus);
+    for (uint32_t i = 0; i < n_sdus; i++) {
       EXPECT_EQ(tester->sdu_queue.front().length(), sdu_size);
       EXPECT_TRUE(std::equal(tester->sdu_queue.front().begin(),
                              tester->sdu_queue.front().end(),
-                             injected_pdus[i].begin() + header_size,
-                             injected_pdus[i].end()));
+                             sdu_originals.front().begin(),
+                             sdu_originals.front().end()));
       tester->sdu_queue.pop();
+      sdu_originals.pop_front();
     }
     EXPECT_EQ(tester->sdu_queue.size(), 0);
   }
@@ -273,12 +353,31 @@ TEST_P(rlc_rx_am_test, read_initial_status)
 TEST_P(rlc_rx_am_test, rx_without_segmentation)
 {
   init(GetParam());
-  const uint32_t n_pdus = 5;
+  const uint32_t n_sdus = 5;
   uint32_t       sn     = 0;
-  byte_buffer    pdus[n_pdus];
 
-  rx_full_pdus(pdus, n_pdus, sn, 1);
-  rx_full_pdus(pdus, n_pdus, sn, 5);
+  rx_full_sdus(sn, n_sdus, 1, /* reverse_sdus = */ false);
+  rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ false);
+}
+
+TEST_P(rlc_rx_am_test, rx_reverse_without_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus = 5;
+  uint32_t       sn     = 0;
+
+  rx_full_sdus(sn, n_sdus, 1, /* reverse_sdus = */ true);
+  rx_full_sdus(sn, n_sdus, 5, /* reverse_sdus = */ true);
+}
+
+TEST_P(rlc_rx_am_test, rx_with_segmentation)
+{
+  init(GetParam());
+  const uint32_t n_sdus = 5;
+  uint32_t       sn     = 0;
+
+  rx_sdu_segments(sn, n_sdus, 2, 1);
+  rx_sdu_segments(sn, n_sdus, 8, 3);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
