@@ -100,38 +100,21 @@ protected:
     return sdu_buf;
   }
 
-  /// \brief Creates a byte_buffer containing a RLC AMD PDU with a full RLC SDU
-  ///
-  /// The produced SDU contains an incremental sequence of bytes starting with the value given by first_byte,
-  /// i.e. if first_byte = 0xfc, the PDU will be <header> 0xfc 0xfe 0xff 0x00 0x01 ...
-  /// \param sn The sequence number to be put in the header
-  /// \param sdu_size Size of the SDU
-  /// \param first_byte Value of the first byte
-  /// \return the produced PDU as a byte_buffer
-  byte_buffer create_pdu_with_full_sdu(uint32_t sn, uint32_t sdu_size, uint8_t first_byte = 0) const
-  {
-    byte_buffer       pdu_buf;
-    rlc_am_pdu_header hdr = {};
-    hdr.dc                = rlc_dc_field::data;
-    hdr.p                 = 0;
-    hdr.si                = rlc_si_field::full_sdu;
-    hdr.sn_size           = config.sn_field_length;
-    hdr.sn                = sn;
-    hdr.so                = 0;
-    logger.debug("AMD PDU header: {}", hdr);
-    rlc_am_write_data_pdu_header(hdr, pdu_buf);
-    pdu_buf.append(create_sdu(sdu_size, first_byte));
-    return pdu_buf;
-  }
-
   /// \brief Creates a list of RLC AMD PDU(s) containing either one RLC SDU or multiple RLC SDU segments
+  ///
+  /// The associated SDU contains an incremental sequence of bytes starting with the value given by first_byte,
+  /// i.e. if first_byte = 0xfc and no segmentation, the PDU will be <header> 0xfc 0xfe 0xff 0x00 0x01 ...
+  ///
+  /// Note: Segmentation is applied if segment_size < sdu_size; Otherwise only one PDU with full SDU is produced,
+  /// and the resulting list will hold only one PDU
+  ///
   /// \param sn The sequence number to be put in the header
   /// \param sdu_size Size of the SDU
-  /// \param segment_size Maximum payload size of each SDU or SDU segment
+  /// \param segment_size Maximum payload size of each SDU or SDU segment.
   /// \param first_byte Value of the first SDU payload byte
   /// \return A pair consisting of a RLC AMD PDU list and the associated RLC SDU
   std::pair<std::list<byte_buffer>, byte_buffer>
-  create_pdus_with_sdu_segments(uint32_t sn, uint32_t sdu_size, uint32_t segment_size, uint8_t first_byte = 0) const
+  create_pdus(uint32_t sn, uint32_t sdu_size, uint32_t segment_size, uint8_t first_byte = 0) const
   {
     if (sdu_size == 0) {
       sdu_size = 1;
@@ -211,8 +194,7 @@ protected:
     std::list<byte_buffer> pdu_originals = {};
     std::list<byte_buffer> sdu_originals = {};
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::pair<std::list<byte_buffer>, byte_buffer> pair =
-          create_pdus_with_sdu_segments(sn_state, sdu_size, sdu_size, sn_state);
+      std::pair<std::list<byte_buffer>, byte_buffer> pair = create_pdus(sn_state, sdu_size, sdu_size, sn_state);
       sn_state++;
 
       // save original PDU
@@ -302,8 +284,7 @@ protected:
 
     // Create SDUs and PDUs with SDU segments
     for (uint32_t i = 0; i < n_sdus; i++) {
-      std::pair<std::list<byte_buffer>, byte_buffer> pair =
-          create_pdus_with_sdu_segments(sn_state, sdu_size, segment_size, sn_state);
+      std::pair<std::list<byte_buffer>, byte_buffer> pair = create_pdus(sn_state, sdu_size, segment_size, sn_state);
       sn_state++;
 
       // save original PDUs
