@@ -444,6 +444,7 @@ void rlc_rx_am_entity::refresh_status_report()
    * indicated as missing in the resulting STATUS PDU.
    */
   status_report.ack_sn = st.rx_highest_status;
+  logger.log_debug("Refreshed status_report: {}", status_report);
 }
 
 rlc_am_status_pdu rlc_rx_am_entity::get_status_pdu()
@@ -544,7 +545,9 @@ void rlc_rx_am_entity::on_expired_reassembly_timer(uint32_t timeout_id)
      *   NOTE 2: The expiry of t-Reassembly triggers both RX_Highest_Status to be updated and a STATUS report to be
      *   triggered, but the STATUS report shall be triggered after RX_Highest_Status is updated.
      */
+    refresh_status_report();
     do_status = true;
+
     logger.log_debug("State: {}", st);
     logger.log_debug("SDUs in rx_window: {}", st.rx_next, st.rx_next_highest, rx_window->size());
     return;
