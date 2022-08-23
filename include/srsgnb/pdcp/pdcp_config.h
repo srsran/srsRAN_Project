@@ -30,7 +30,9 @@ constexpr uint16_t to_number(pdcp_sn_size sn_size)
   return static_cast<uint16_t>(sn_size);
 }
 
-// Taken from PDCP-Config Information Element (TS 38.331 version 15.2.1)
+/// PDCP NR t-Reordering timer values.
+/// This timer is used to detect loss of PDCP Data PDUs.
+/// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
 enum class pdcp_t_reordering {
   ms0      = 0,
   ms1      = 1,
@@ -71,32 +73,34 @@ enum class pdcp_t_reordering {
   infinity = -1
 };
 
-// Taken from PDCP-Config (TS 38.331 version 15.2.1)
+/// PDCP NR discard timer values.
+/// This timer is configured only for DRBs. In the transmitter,
+/// a new timer is started upon reception of an SDU from upper layer.
+/// See TS 38.322 for timer description and TS 38.331 for valid timer durations.
 enum class pdcp_discard_timer {
-  ms10     = 10,
-  ms20     = 20,
-  ms30     = 30,
-  ms40     = 40,
-  ms50     = 50,
-  ms60     = 60,
-  ms75     = 75,
-  ms100    = 100,
-  ms150    = 150,
-  ms200    = 200,
-  ms250    = 250,
-  ms300    = 300,
-  ms500    = 500,
-  ms750    = 750,
-  ms1500   = 1500,
-  infinity = -1
+  not_configured = 0,
+  ms10           = 10,
+  ms20           = 20,
+  ms30           = 30,
+  ms40           = 40,
+  ms50           = 50,
+  ms60           = 60,
+  ms75           = 75,
+  ms100          = 100,
+  ms150          = 150,
+  ms200          = 200,
+  ms250          = 250,
+  ms300          = 300,
+  ms500          = 500,
+  ms750          = 750,
+  ms1500         = 1500,
+  infinity       = -1
 };
 
-///
 /// \brief Configurable parameters for PDCP that are common
 /// for both TX and RX.
 ///
 /// Ref: 3GPP TS 38.331 version 15.2.1
-///
 struct pdcp_config_common {
   pdcp_rb_type  rb_type;
   pdcp_rlc_mode rlc_mode;
@@ -105,14 +109,12 @@ struct pdcp_config_common {
   bool          ciphering_required;
 };
 
-///
 /// \brief Configurable parameters for PDCP
 ///
 /// Parameters and valid values for them are taken from
 /// the RRC-NR PDCP-Config Information Element.
 ///
 /// Ref: 3GPP TS 38.331 version 15.2.1
-///
 struct pdcp_config {
   struct pdcp_tx_config : pdcp_config_common {
     pdcp_discard_timer discard_timer;
@@ -161,6 +163,50 @@ struct formatter<srsgnb::pdcp_rlc_mode> {
   {
     constexpr static const char* options[] = {"UM", "AM"};
     return format_to(ctx.out(), "{}", options[static_cast<unsigned>(mode)]);
+  }
+};
+
+// TX config
+template <>
+struct formatter<srsgnb::pdcp_config::pdcp_tx_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::pdcp_config::pdcp_tx_config cfg, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "rb_type={}, rlc_mode={}, sn_size={}, discard_timer={}",
+                     cfg.rb_type,
+                     cfg.rlc_mode,
+                     cfg.sn_size,
+                     cfg.discard_timer);
+  }
+};
+
+// RX config
+template <>
+struct formatter<srsgnb::pdcp_config::pdcp_rx_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::pdcp_config::pdcp_rx_config cfg, FormatContext& ctx)
+      -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "rb_type={}, rlc_mode={}, sn_size={}, t_reordering={}",
+                     cfg.rb_type,
+                     cfg.rlc_mode,
+                     cfg.sn_size,
+                     cfg.t_reordering);
   }
 };
 } // namespace fmt

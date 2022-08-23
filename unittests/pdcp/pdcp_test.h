@@ -44,23 +44,23 @@ public:
   std::queue<byte_buffer> sdu_queue   = {};
   uint32_t                sdu_counter = 0;
 
-  // PDCP RX upper layer data notifier
+  /// PDCP RX upper layer data notifier
   void on_new_sdu(byte_buffer sdu) override
   {
     sdu_queue.push(std::move(sdu));
     sdu_counter++;
   }
 
-  // PDCP RX upper layer control notifier
+  /// PDCP RX upper layer control notifier
   void on_integrity_failure() override {}
 
-  // PDCP TX/RX upper layer control notifier
+  /// PDCP TX/RX upper layer control notifier
   void on_protocol_failure() override {}
 
-  // PDCP TX upper layer control notifier
+  /// PDCP TX upper layer control notifier
   void on_max_hfn_reached() override {}
 
-  // PDCP TX lower layer notifier
+  /// PDCP TX lower layer notifier
   void on_new_pdu(byte_buffer buf) override {}
   void on_discard_pdu(uint32_t pdcp_count) override {}
 };
@@ -113,7 +113,6 @@ protected:
         std::make_unique<pdcp_entity_impl>(0, LCID_SRB1, config, test_frame, test_frame, test_frame, timers);
 
     // Bind interfaces
-
     pdcp_rx_lower      = &pdcp->get_rx_lower_interface();
     pdcp_tx_lower      = &pdcp->get_tx_lower_interface();
     pdcp_tx_upper_data = &pdcp->get_tx_upper_data_interface();
