@@ -37,20 +37,11 @@ public:
     // Create AM entities
     std::unique_ptr<rlc_tx_am_entity> tx_am =
         std::make_unique<rlc_tx_am_entity>(du_index, lcid, *config.tx, tx_upper_dn, tx_upper_cn, tx_lower_dn, timers);
-    logger.log_info(
-        "RLC TX AM configured: sn_field_length={}, t_poll_retx={}, max_retx_thresh={}, poll_pdu={}, poll_byte={}",
-        config.tx->sn_field_length,
-        config.tx->t_poll_retx,
-        config.tx->max_retx_thresh,
-        config.tx->poll_pdu,
-        config.tx->poll_byte);
+    logger.log_info("RLC TX AM configured: {}", *config.tx);
 
     std::unique_ptr<rlc_rx_am_entity> rx_am =
         std::make_unique<rlc_rx_am_entity>(du_index, lcid, *config.rx, rx_upper_dn, timers);
-    logger.log_info("RLC RX AM configured: sn_field_length={}, t_reassembly={}, t_status_prohibit={}",
-                    config.rx->sn_field_length,
-                    config.rx->t_reassembly,
-                    config.rx->t_status_prohibit);
+    logger.log_info("RLC RX AM configured: {}", *config.rx);
 
     // Tx/Rx interconnect
     tx_am->set_status_provider(rx_am.get());

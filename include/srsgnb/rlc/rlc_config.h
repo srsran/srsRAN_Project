@@ -237,4 +237,44 @@ struct formatter<srsgnb::rlc_control_pdu_type> {
     return format_to(ctx.out(), "{}", options[to_number(type)]);
   }
 };
+
+template <>
+struct formatter<srsgnb::rlc_tx_am_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_tx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "sn_field_length={}, t_poll_retx={}, max_retx_thresh={}, poll_pdu={}, poll_byte={}",
+                     cfg.sn_field_length,
+                     cfg.t_poll_retx,
+                     cfg.max_retx_thresh,
+                     cfg.poll_pdu,
+                     cfg.poll_byte);
+  }
+};
+
+template <>
+struct formatter<srsgnb::rlc_rx_am_config> {
+  template <typename ParseContext>
+  auto parse(ParseContext& ctx) -> decltype(ctx.begin())
+  {
+    return ctx.begin();
+  }
+
+  template <typename FormatContext>
+  auto format(srsgnb::rlc_rx_am_config cfg, FormatContext& ctx) -> decltype(std::declval<FormatContext>().out())
+  {
+    return format_to(ctx.out(),
+                     "sn_field_length={}, t_reassembly={}, t_status_prohibit={}",
+                     cfg.sn_field_length,
+                     cfg.t_reassembly,
+                     cfg.t_status_prohibit);
+  }
+};
 } // namespace fmt
