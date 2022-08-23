@@ -116,6 +116,47 @@ public:
   uint32_t          get_status_pdu_length() override;
   bool              status_report_required() override;
 
+  /*
+   * Window helpers
+   */
+
+  /// \brief Helper function for arithmetic comparisons of state variables or SN values
+  ///
+  /// When performing arithmetic comparisons of state variables or SN values, a modulus base shall be used.
+  ///
+  /// (...) RX_Next shall be assumed as the modulus base at the (...) receiving side of an AM RLC entity (...). This
+  /// modulus base is subtracted from all the values involved, and then an absolute comparison is performed (e.g.
+  /// RX_Next <= SN < RX_Next + AM_Window_Size is evaluated as [RX_Next – RX_Next] modulo 2^[sn-FieldLength] <= [SN –
+  /// RX_Next] modulo 2^[sn-FieldLength] < [RX_Next + AM_Window_Size – RX_Next] modulo 2^[sn-FieldLength]), where
+  /// sn-FieldLength is 12 or 18 for 12 bit SN and 18 bit SN, respectively.
+  ///
+  /// Ref: TS 38.322 Sec. 7.1
+  ///
+  /// \param sn The sequence number to be rebased from RX_Next
+  /// \return The rebased value of sn
+  uint32_t rx_mod_base(uint32_t sn) const { return (sn - st.rx_next) % mod; }
+
+  /// Checks whether a sequence number is inside the current Rx window
+  /// \param sn The sequence number to be checked
+  /// \return True if sn is inside the Rx window, false otherwise
+  bool inside_rx_window(uint32_t sn) const
+  {
+    // RX_Next <= SN < RX_Next + AM_Window_Size
+    return rx_mod_base(sn) < am_window_size;
+  }
+
+  /// This function is used to check if the Rx_Highest_Status is valid when t-Reasseambly expires.
+  ///
+  /// ACK_SN may be equal to RX_NEXT + AM_Window_Size if the PDU with SN=RX_NEXT+AM_Window_Size has been received by the
+  /// RX. An ACK_SN == Rx_Next should not update Rx_Highest_Status,it should be updated when Rx_Next is updated.
+  /// \param sn The sequence number to be checked
+  /// \return True if sn is inside the Rx window, false otherwise
+  bool valid_ack_sn(uint32_t sn) const
+  {
+    // RX_Next < SN <= RX_Next + AM_Window_Size
+    return (0 < rx_mod_base(sn)) && (rx_mod_base(sn) <= am_window_size);
+  }
+
 private:
   /// Handles a received control PDU. The PDU is unpacked and forwarded to the RX entity
   /// \param buf The control PDU to be handled (including header and payload)
@@ -151,25 +192,6 @@ private:
 
   void on_expired_status_prohibit_timer(uint32_t timeout_id);
   void on_expired_reassembly_timer(uint32_t timeout_id);
-
-  inline uint32_t rx_mod_base(uint32_t sn) const { return (sn - st.rx_next) % mod; }
-  inline bool     inside_rx_window(uint32_t sn) const
-  {
-    // RX_Next <= SN < RX_Next + AM_Window_Size
-    return rx_mod_base(sn) < am_window_size;
-  }
-
-  /// \brief This function is used to check if the Rx_Highest_Status is valid when t-Reasseambly expires.
-  ///
-  /// ACK_SN may be equal to RX_NEXT + AM_Window_Size if the PDU with SN=RX_NEXT+AM_Window_Size has been received by the
-  /// RX. An ACK_SN == Rx_Next should not update Rx_Highest_Status,it should be updated when Rx_Next is updated.
-  /// \param sn
-  /// \return
-  inline bool valid_ack_sn(uint32_t sn) const
-  {
-    // RX_Next < SN <= RX_Next + AM_Window_Size
-    return (0 < rx_mod_base(sn)) && (rx_mod_base(sn) <= am_window_size);
-  }
 
   /// Creates the rx_window according to sn_size
   /// \param sn_size Size of the sequence number (SN)
