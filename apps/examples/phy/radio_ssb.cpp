@@ -215,7 +215,7 @@ static void usage(std::string prog)
   fmt::print("\t-D Duration in slots. [Default {}]\n", duration_slots);
   fmt::print("\t-L Set ZMQ loopback. Set to 0 to disable, otherwise true. [Default {}]\n", zmq_loopback);
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
-  fmt::print("\t-c Enable amplitude clipping. Set to 0 to disable, otherwise true. [Default {}]\n", enable_clipping);
+  fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
   fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
   fmt::print("\t-h Print this message.\n");
 }

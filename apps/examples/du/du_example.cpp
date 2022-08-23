@@ -183,6 +183,12 @@ static radio_configuration::over_the_wire_format otw_format = radio_configuratio
 static std::string                               device_arguments;
 static std::atomic<bool>                         is_running = {true};
 
+// Amplitude control args.
+static float baseband_gain_dB       = -3.0F;
+static bool  enable_clipping        = false;
+static float full_scale_amplitude   = 1.0F;
+static float amplitude_ceiling_dBFS = -0.1F;
+
 /// Defines a set of configuration profiles.
 static const std::vector<configuration_profile> profiles = {
     {"zmq_20MHz_n7",
@@ -297,6 +303,12 @@ static lower_phy_configuration create_lower_phy_config(baseband_gateway&        
   phy_config.error_notifier             = &error_notifier;
   phy_config.prach_async_executor       = &prach_executor;
 
+  // Amplitude controller configuration.
+  phy_config.amplitude_config.full_scale_lin  = full_scale_amplitude;
+  phy_config.amplitude_config.ceiling_dBFS    = amplitude_ceiling_dBFS;
+  phy_config.amplitude_config.enable_clipping = enable_clipping;
+  phy_config.amplitude_config.input_gain_dB   = baseband_gain_dB;
+
   for (unsigned sector_idx = 0; sector_idx != nof_sectors; ++sector_idx) {
     lower_phy_sector_description sector_config;
     sector_config.bandwidth_rb = bw_rb;
@@ -370,9 +382,16 @@ static std::unique_ptr<lower_phy> build_lower_phy(baseband_gateway&             
     return nullptr;
   }
 
+  // Create amplitude control factory.
+  std::shared_ptr<amplitude_controller_factory> amplitude_control_factory = create_amplitude_controller_factory();
+  if (!amplitude_control_factory) {
+    srslog::fetch_basic_logger("TEST").error("Failed to create amplitude controller factory");
+    return nullptr;
+  }
+
   // Create Lower PHY factory.
   std::shared_ptr<lower_phy_factory> lphy_factory =
-      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory);
+      create_lower_phy_factory_sw(modulator_factory, demodulator_factory, prach_factory, amplitude_control_factory);
   if (!lphy_factory) {
     srslog::fetch_basic_logger("TEST").error("Failed to create lower PHY factory");
 
@@ -503,6 +522,8 @@ static void usage(std::string prog)
     fmt::print("\t\t {:<30}{}\n", profile.name, profile.description);
   }
   fmt::print("\t-v Logging level. [Default {}]\n", log_level);
+  fmt::print("\t-c Enable amplitude clipping. [Default {}]\n", enable_clipping);
+  fmt::print("\t-b Baseband gain prior to clipping (in dB). [Default {}]\n", baseband_gain_dB);
   fmt::print("\t-h print this message.\n");
 }
 
@@ -511,7 +532,7 @@ static int parse_args(int argc, char** argv)
   std::string profile_name;
 
   int opt = 0;
-  while ((opt = getopt(argc, argv, "D:P:L:v:h")) != -1) {
+  while ((opt = getopt(argc, argv, "D:P:L:v:b:ch")) != -1) {
     switch (opt) {
       case 'P':
         if (optarg != nullptr) {
@@ -520,6 +541,14 @@ static int parse_args(int argc, char** argv)
         break;
       case 'v':
         log_level = std::string(optarg);
+        break;
+      case 'c':
+        enable_clipping = true;
+        break;
+      case 'b':
+        if (optarg != nullptr) {
+          baseband_gain_dB = std::strtof(optarg, nullptr);
+        }
         break;
       case 'h':
       default:
