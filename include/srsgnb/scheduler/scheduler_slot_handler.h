@@ -24,10 +24,12 @@
 #include "srsgnb/ran/pdsch/pdsch_mcs.h"
 #include "srsgnb/ran/prach/prach_preamble_format.h"
 #include "srsgnb/ran/pusch/pusch_mcs.h"
+#include "srsgnb/ran/pucch/pucch_mapping.h"
 #include "srsgnb/ran/rnti.h"
 #include "srsgnb/ran/slot_point.h"
 #include "srsgnb/ran/subcarrier_spacing.h"
 #include "srsgnb/scheduler/dmrs.h"
+#include "srsgnb/scheduler/scheduler_pucch_format.h"
 #include <cstddef>
 
 namespace srsgnb {
@@ -314,11 +316,27 @@ struct prach_occasion_info {
   uint8_t nof_preamble_indexes;
 };
 
+struct ul_pucch_info {
+  rnti_t                   crnti;
+  const bwp_configuration* bwp_cfg;
+  pucch_format             format;
+  pucch_resources          resources;
+  union {
+    pucch_format_0 format_0;
+    pucch_format_1 format_1;
+    pucch_format_2 format_2;
+    pucch_format_3 format_3;
+    pucch_format_4 format_4;
+  };
+};
+
 struct ul_sched_result {
   /// PUSCH grants allocated in the current slot.
   static_vector<ul_sched_info, MAX_GRANTS> puschs;
   /// PRACH occasions within the given slot.
   static_vector<prach_occasion_info, MAX_NOF_PRACHS_PER_SLOT> prachs;
+  /// PUCCH grants allocated in the current slot.
+  static_vector<ul_pucch_info, MAX_GRANTS> pucchs;
 };
 
 /// Scheduler decision made for DL and UL in a given slot.
