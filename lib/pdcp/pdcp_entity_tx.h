@@ -24,14 +24,26 @@ class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
                  lcid_t                          lcid,
+                 pdcp_config::pdcp_tx_config     cfg_,
                  pdcp_tx_lower_notifier&         lower_dn,
                  pdcp_tx_upper_control_notifier& upper_cn) :
-    logger("PDCP", ue_index, lcid), lower_dn(lower_dn), upper_cn(upper_cn)
+    hdr_len_bytes(to_number(cfg_.sn_size) % 8),
+    logger("PDCP", ue_index, lcid),
+    cfg(cfg_),
+    lower_dn(lower_dn),
+    upper_cn(upper_cn)
   {
   }
 
+  /*
+   * Header helpers
+   */
+  const uint32_t hdr_len_bytes;
+  void           write_data_pdu_header(byte_buffer& buf, uint32_t count);
+
 private:
-  bearer_logger logger;
+  bearer_logger               logger;
+  pdcp_config::pdcp_tx_config cfg;
 
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;
@@ -45,5 +57,11 @@ private:
     lower_dn.on_new_pdu(std::move(buf));
   }
   void stop_discard_timer(uint32_t count) final {}
+
+  /*
+   * RB helpers
+   */
+  bool is_srb() { return cfg.rb_type == pdcp_rb_type::srb; }
+  bool is_drb() { return cfg.rb_type == pdcp_rb_type::drb; }
 };
 } // namespace srsgnb
