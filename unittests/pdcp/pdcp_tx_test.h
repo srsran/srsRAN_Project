@@ -71,8 +71,7 @@ protected:
     config.discard_timer = pdcp_discard_timer::ms10;
 
     // Create RLC entities
-    std::unique_ptr<pdcp_entity_tx> pdcp =
-        std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, config, test_frame, test_frame);
+    pdcp_tx = std::make_unique<pdcp_entity_tx>(0, LCID_SRB1, test_frame, test_frame);
   }
 
   srslog::basic_logger& logger = srslog::fetch_basic_logger("TEST", false);

@@ -42,7 +42,7 @@ private:
 
   void handle_pdu(byte_buffer buf) final
   {
-    logger.log_info("RX PDU of %zd B\n", buf.length());
+    logger.log_info("RX PDU of {} B\n", buf.length());
 
     // strip away the first two bytes containing the PDCP header
     byte_buffer sdu(buf.begin() + 2, buf.end());

@@ -24,16 +24,14 @@ class pdcp_entity_tx : public pdcp_tx_upper_data_interface, public pdcp_tx_lower
 public:
   pdcp_entity_tx(uint32_t                        ue_index,
                  lcid_t                          lcid,
-                 pdcp_config::pdcp_tx_config     config,
                  pdcp_tx_lower_notifier&         lower_dn,
                  pdcp_tx_upper_control_notifier& upper_cn) :
-    logger("PDCP", ue_index, lcid), config(config), lower_dn(lower_dn), upper_cn(upper_cn)
+    logger("PDCP", ue_index, lcid), lower_dn(lower_dn), upper_cn(upper_cn)
   {
   }
 
 private:
-  bearer_logger               logger;
-  pdcp_config::pdcp_tx_config config;
+  bearer_logger logger;
 
   pdcp_tx_lower_notifier&         lower_dn;
   pdcp_tx_upper_control_notifier& upper_cn;

@@ -33,7 +33,7 @@ public:
                    timer_manager&                  timers) :
     logger("PDCP", ue_index, lcid)
   {
-    tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, config.tx, tx_lower_dn, tx_upper_cn);
+    tx = std::make_unique<pdcp_entity_tx>(ue_index, lcid, tx_lower_dn, tx_upper_cn);
     logger.log_info("PDCP TX configured: {}", config.tx);
     rx = std::make_unique<pdcp_entity_rx>(ue_index, lcid, config.rx, rx_upper_dn);
     logger.log_info("PDCP RX configured: {}", config.rx);
