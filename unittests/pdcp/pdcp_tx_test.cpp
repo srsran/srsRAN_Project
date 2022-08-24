@@ -8,8 +8,8 @@
  *
  */
 
+#include "pdcp_tx_test.h"
 #include "../../lib/pdcp/pdcp_entity_impl.h"
-#include "pdcp_test.h"
 #include "srsgnb/pdcp/pdcp_config.h"
 #include "srsgnb/support/timers.h"
 #include <gtest/gtest.h>
@@ -17,13 +17,11 @@
 
 using namespace srsgnb;
 
-TEST_P(pdcp_test, tx_create_new_entity)
+TEST_P(pdcp_tx_test, create_new_entity)
 {
   init(GetParam());
 
-  ASSERT_NE(pdcp_rx_lower, nullptr);
-  ASSERT_NE(pdcp_tx_upper_data, nullptr);
-  ASSERT_NE(pdcp_tx_lower, nullptr);
+  ASSERT_NE(pdcp_tx, nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -37,6 +35,6 @@ std::string test_param_info_to_string(const ::testing::TestParamInfo<pdcp_sn_siz
 }
 
 INSTANTIATE_TEST_SUITE_P(pdcp_tx_test_all_sn_sizes,
-                         pdcp_test,
+                         pdcp_tx_test,
                          ::testing::Values(pdcp_sn_size::size12bits, pdcp_sn_size::size18bits),
                          test_param_info_to_string);

@@ -26,17 +26,15 @@ public:
                  lcid_t                       lcid,
                  pdcp_config::pdcp_rx_config  cfg_,
                  pdcp_rx_upper_data_notifier& upper_dn_) :
-    logger("PDCP", ue_index, lcid), cfg(cfg_), upper_dn(upper_dn_)
+    hdr_len_bytes(to_number(cfg_.sn_size) % 8), logger("PDCP", ue_index, lcid), cfg(cfg_), upper_dn(upper_dn_)
   {
-    switch (cfg.sn_size) {
-      case pdcp_sn_size::size12bits:
-        hdr_len_bytes = 2;
-        break;
-      case pdcp_sn_size::size18bits:
-        hdr_len_bytes = 3;
-        break;
-    }
   }
+
+  /*
+   * Header helpers
+   */
+  const uint32_t hdr_len_bytes;
+  bool           read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const;
 
 private:
   bearer_logger               logger;
@@ -54,16 +52,11 @@ private:
   /*
    * SN, HFN and COUNT helpers
    */
-  uint32_t SN(uint32_t count) { return count & (0xFFFFFFFFU >> (32U - to_number(cfg.sn_size))); }
+  uint32_t SN(uint32_t count) { return count & (0xffffffffU >> (32U - to_number(cfg.sn_size))); }
 
   /*
-   * PDU Helpers
+   * Notifiers
    */
-  /// \brief Read PDCP SN from PDU.
-  /// Does not modify the PDU buffer.
-  uint32_t hdr_len_bytes;
-  bool     read_data_pdu_header(const byte_buffer& buf, uint32_t& sn);
-
   pdcp_rx_upper_data_notifier& upper_dn;
 };
 

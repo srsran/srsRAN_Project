@@ -6,7 +6,7 @@
 # the distribution.
 #
 
-set(SOURCES pdcp_factory.cpp)
+set(SOURCES pdcp_factory.cpp pdcp_entity_rx.cpp)
 
 add_library(srsgnb_pdcp STATIC ${SOURCES})
 target_link_libraries(srsgnb_pdcp)

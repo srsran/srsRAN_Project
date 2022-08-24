@@ -8,13 +8,11 @@
  *
  */
 
-#pragma once
-
 #include "pdcp_entity_rx.h"
 
 using namespace srsgnb;
 
-bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn)
+bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn) const
 {
   byte_buffer_reader buf_reader = buf;
   if (buf_reader.empty()) {
@@ -37,9 +35,9 @@ bool pdcp_entity_rx::read_data_pdu_header(const byte_buffer& buf, uint32_t& sn)
       ++buf_reader;
       break;
     case pdcp_sn_size::size18bits:
-      sn = (*buf_reader & 0x0fU) << 16U; // first 4 bits SN
+      sn = (*buf_reader & 0x03U) << 16U; // first 2 bits SN
       ++buf_reader;
-      sn |= (*buf_reader & 0xffU) << 8U; // last 8 bits SN
+      sn |= (*buf_reader & 0xffU) << 8U; // middle 8 bits SN
       ++buf_reader;
       sn |= (*buf_reader & 0xffU); // last 8 bits SN
       ++buf_reader;
