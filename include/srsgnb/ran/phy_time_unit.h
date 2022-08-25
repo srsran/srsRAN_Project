@@ -160,7 +160,12 @@ public:
   /// Creates a physical layer time from seconds.
   static constexpr inline phy_time_unit from_seconds(double seconds)
   {
-    return phy_time_unit(static_cast<value_type>(std::round(seconds / T_C)));
+    // Convert to units of Tc.
+    double tc_units_dbl = seconds / T_C;
+    // Multiply by ten and convert to value_type.
+    value_type tc_units = static_cast<value_type>(tc_units_dbl * 10.0);
+    // Round to the nearest integer avoiding using std::round.
+    return phy_time_unit(tc_units / 10 + (tc_units % 10) / 5);
   }
 };
 
