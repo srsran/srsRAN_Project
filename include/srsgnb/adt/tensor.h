@@ -28,9 +28,9 @@ public:
   /// Default destructor.
   virtual ~tensor() = default;
 
-  /// \brief Gets a view of the first dimension.
-  /// \tparam N      Number of dimensions to return.
-  /// \param[in] key Indices of each dimension except the first one.
+  /// \brief Gets a view of the lowest \c N dimensions.
+  /// \tparam N          Number of dimensions to return.
+  /// \param[in] indices Indices of each dimension except the \c N lowest ones.
   /// \return A view of the elements along the first dimension.
   template <unsigned N>
   span<Type> get_view(const std::array<unsigned, NDIMS - N>& indices)
@@ -44,9 +44,9 @@ public:
     return data.subspan(get_view_offset<N>(indices), view_size);
   }
 
-  /// \brief Gets a read-only view of the lowest \N dimensions.
-  /// \tparam N      Number of dimensions to return.
-  /// \param[in] key Indices of each dimension except the first one.
+  /// \brief Gets a read-only view of the lowest \c N dimensions.
+  /// \tparam N          Number of dimensions to return.
+  /// \param[in] indices Indices of each dimension except the \c N lowest ones.
   /// \return A read-only view of the elements along the first dimension.
   template <unsigned N>
   span<const Type> get_view(const std::array<unsigned, NDIMS - N>& indices) const
@@ -193,7 +193,7 @@ public:
     // Do nothing.
   }
 
-  /// Reserve memory the tensor.
+  /// Reserves memory for the tensor.
   void reserve(const dimensions_size_type& dims)
   {
     dimensions_size     = dims;
