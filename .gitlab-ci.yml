@@ -25,6 +25,10 @@ stages:
   needs: []
   variables:
     GIT_DEPTH: 0
+  artifacts:
+    paths:
+      - ci.patch
+    when: on_failure
 
 code-format:
   extends: .static
@@ -32,10 +36,18 @@ code-format:
     - run-clang-format-diff.sh $CI_MERGE_REQUEST_DIFF_BASE_SHA
     - hex2lowercase.sh
     - is-pristine-repo.sh
-  artifacts:
-    paths:
-      - clang-format.patch
-    when: on_failure
+
+full-code-format:
+  extends: .static
+  rules:
+    - if: $ON_MR
+      changes:
+        - .clang-tidy
+  script:
+    - FILE_EXTENSION_REGEX='.*\.(cpp|cc|c\+\+|cxx|c|cl|h|hh|hpp)$'
+    - files=$(find . | grep -E "${FILE_EXTENSION_REGEX}" | tr '\n' ' ')
+    - clang-format -style=file -i ${files}
+    - is-pristine-repo.sh  
 
 include-guards:
   extends: .static
